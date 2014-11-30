@@ -20,6 +20,7 @@
 
 package net.biomodels.jummp.core.model.identifier.decorator
 
+import java.util.concurrent.atomic.AtomicReference
 import net.biomodels.jummp.core.model.identifier.ModelIdentifier
 import net.biomodels.jummp.core.events.ModelIdentifierDecoratorUpdatedEvent
 import org.apache.commons.logging.Log
@@ -36,16 +37,21 @@ import org.springframework.context.ApplicationEvent
  */
 abstract class AbstractAppendingDecorator implements OrderedModelIdentifierDecorator {
     /**
-     * The value that an implementation of this interface will use to decorate the next model
-     * identifier.
+     * Reference to the value used to decorate the next model identifier.
      */
-    String nextValue
-    /* the class logger */
+    final AtomicReference<String> nextValue = new AtomicReference<>()
+    /**
+     * The class logger
+     */
     private static final Log log = LogFactory.getLog(this)
-    /* The main application context, set during bootstrap. */
+    /*
+     * The main application context, set during bootstrap.
+     */
     protected static GrailsApplicationContext context
-    /* the position of the decorator in the queue of a ModelIdentifierGenerator. */
-    protected int ORDER
+    /**
+     * The position of the decorator in the queue of a ModelIdentifierGenerator.
+     */
+    protected volatile int ORDER
 
     abstract ModelIdentifier decorate(ModelIdentifier modelIdentifier)
 
@@ -77,7 +83,7 @@ abstract class AbstractAppendingDecorator implements OrderedModelIdentifierDecor
 
     @Override
     String toString() {
-        "${this.getClass().name} order: $ORDER nextValue: $nextValue"
+        "${this.getClass().name} order: $ORDER nextValue: ${nextValue.get()}"
     }
 
     /**

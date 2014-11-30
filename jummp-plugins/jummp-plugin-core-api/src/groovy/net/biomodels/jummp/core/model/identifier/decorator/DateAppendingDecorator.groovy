@@ -65,7 +65,7 @@ public class DateAppendingDecorator extends AbstractAppendingDecorator {
         if (IS_INFO_ENABLED) {
             log.info "Creating $this that formats ${new Date()} as $sampleDate"
         }
-        nextValue = sampleDate
+        nextValue.compareAndSet(null, sampleDate)
         FORMAT = format
     }
 
@@ -77,14 +77,15 @@ public class DateAppendingDecorator extends AbstractAppendingDecorator {
         if (modelIdentifier) {
             String currentId = modelIdentifier.getCurrentId()
             if (IS_INFO_ENABLED) {
-                log.info "Decorating $currentId with $nextValue."
+                final String next = nextValue.get()
+                log.info "Decorating $currentId with $next."
             }
-            modelIdentifier.append(nextValue)
+            modelIdentifier.append(next)
             return modelIdentifier
         } else {
             log.warn "Undefined model identifier encountered - decorating a new one instead."
             ModelIdentifier result = new ModelIdentifier()
-            result.id.append(nextValue)
+            result.id.append(nextValue.get())
             return result
         }
     }
@@ -105,14 +106,15 @@ public class DateAppendingDecorator extends AbstractAppendingDecorator {
     }
 
     private void updateNextValueIfNeeded() {
-        String currentDate = new Date().format(FORMAT)
-        boolean needsUpdating = currentDate != nextValue
+        String expectedDate = new Date().format(FORMAT)
+        String currentDate = nextValue.get()
+        boolean needsUpdating = expectedDate != currentDate
         if (needsUpdating) {
             if (IS_INFO_ENABLED) {
-                log.info "Updating nextValue from $nextValue to $currentDate."
+                log.info "Updating nextValue from $currentDate to $expectedDate."
             }
-            nextValue = currentDate
-            super.publishEvent(new DateModelIdentifierDecoratorUpdatedEvent(this, nextValue))
+            nextValue.compareAndSet(currentDate, expectedDate)
+            super.publishEvent(new DateModelIdentifierDecoratorUpdatedEvent(this, currentDate))
         }
     }
 }

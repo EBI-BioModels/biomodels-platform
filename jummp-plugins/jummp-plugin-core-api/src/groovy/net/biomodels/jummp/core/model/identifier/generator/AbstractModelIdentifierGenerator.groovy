@@ -20,6 +20,7 @@
 
 package net.biomodels.jummp.core.model.identifier.generator
 
+import net.biomodels.jummp.core.model.identifier.ModelIdentifier
 import net.biomodels.jummp.core.events.DateModelIdentifierDecoratorUpdatedEvent
 import net.biomodels.jummp.core.events.ModelIdentifierDecoratorUpdatedEvent
 import net.biomodels.jummp.core.model.identifier.decorator.OrderedModelIdentifierDecorator
@@ -57,18 +58,20 @@ abstract class AbstractModelIdentifierGenerator implements ModelIdentifierGenera
         if (IS_INFO_ENABLED) {
             log.info "Processing event ${decoratorUpdatedEvent.inspect()}"
         }
-        if (decoratorUpdatedEvent instanceof DateModelIdentifierDecoratorUpdatedEvent) {
-            // finds the first variable digit decorator and reset its value.
-            VariableDigitAppendingDecorator d = DECORATOR_REGISTRY.find { d ->
-                d instanceof VariableDigitAppendingDecorator
-            }
-            if (d) {
-                final String NEW_VALUE = "1".padLeft(d.WIDTH, '0')
-                d.nextValue = NEW_VALUE
-                d.nextSuffix = 1
-                d.lastUsedSuffix = -1
-                if (IS_INFO_ENABLED) {
-                    log.info "Attribute 'nextValue' of $d has been reset to $NEW_VALUE."
+        synchronized(ModelIdentifier.class) {
+            if (decoratorUpdatedEvent instanceof DateModelIdentifierDecoratorUpdatedEvent) {
+                // finds the first variable digit decorator and reset its value.
+                VariableDigitAppendingDecorator d = DECORATOR_REGISTRY.find { d ->
+                    d instanceof VariableDigitAppendingDecorator
+                }
+                if (d) {
+                    final String NEW_VALUE = "1".padLeft(d.WIDTH, '0')
+                    d.nextValue.set(NEW_VALUE)
+                    d.nextSuffix.set(1)
+                    d.lastUsedSuffix.set(-1)
+                    if (IS_INFO_ENABLED) {
+                        log.info "Attribute 'nextValue' of $d has been reset to $NEW_VALUE."
+                    }
                 }
             }
         }

@@ -242,7 +242,7 @@ The configuration settings lack the rules for generating model identifiers!"""
                     // this decorator sets nextValue to today's date, which is sensible
                     d = new DateAppendingDecorator(i, p.format)
                     // don't lose the last value used by this decorator
-                    d.nextValue = p.value
+                    d.nextValue.set(p.value)
                     break
                 case ChecksumModelIdentifierPartition:
                     char sep = ChecksumAppendingDecorator.DEFAULT_SEPARATOR
@@ -260,7 +260,7 @@ The configuration settings lack the rules for generating model identifiers!"""
                     } else {
                         d = new VariableDigitAppendingDecorator(i, suffix, p.width)
                         // trigger decorator update
-                        d.lastUsedSuffix = suffix
+                        d.lastUsedSuffix.set(suffix)
                     }
                     break
                 default:

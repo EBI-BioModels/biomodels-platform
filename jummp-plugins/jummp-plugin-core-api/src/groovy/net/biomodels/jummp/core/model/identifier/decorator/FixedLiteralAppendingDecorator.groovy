@@ -59,7 +59,7 @@ class FixedLiteralAppendingDecorator extends AbstractAppendingDecorator {
         if (IS_INFO_ENABLED) {
             log.info "Creating $this with suffix $suffix"
         }
-        nextValue = suffix
+        nextValue.set(suffix)
         SUFFIX = suffix
     }
 
@@ -70,15 +70,14 @@ class FixedLiteralAppendingDecorator extends AbstractAppendingDecorator {
         if (modelIdentifier) {
             String currentId = modelIdentifier.getCurrentId()
             if (IS_INFO_ENABLED) {
-                log.info "Decorating $currentId with $nextValue."
+                final String next = nextValue.get()
+                log.info "Decorating $currentId with $next"
             }
-            modelIdentifier.append(nextValue)
-            return modelIdentifier
+            return modelIdentifier.append(next)
         } else {
             log.warn "Undefined model identifier encountered - decorating a new one instead."
             ModelIdentifier result = new ModelIdentifier()
-            result.append(nextValue)
-            return result
+            return result.append(nextValue.get())
         }
     }
 
