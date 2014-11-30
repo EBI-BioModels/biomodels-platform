@@ -37,10 +37,10 @@ public class ModelIdentifier {
     /* semaphore for the log threshold */
     private static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
     /* the value of this model identifier */
-    private StringBuilder id
+    private final StringBuffer id
 
     ModelIdentifier() {
-        id = new StringBuilder()
+        id = new StringBuffer()
     }
 
     ModelIdentifier decorate(ModelIdentifierDecorator decorator) {
@@ -75,6 +75,6 @@ public class ModelIdentifier {
         return id.toString()
     }
 
-    private void setId(StringBuilder ignored) {
+    private void setId(StringBuffer ignored) {
     }
 }
