@@ -67,7 +67,9 @@ class ModelIdentifierGeneratorRegistryService {
         if (IS_INFO_ENABLED) {
             log.info("Triggering an update of all generators: ${registry.inspect()}")
         }
-        registry.each { g -> g.updateDecorators() }
+        synchronized(ModelIdentifierGeneratorRegistryService.class) {
+            registry.each { g -> g.updateDecorators() }
+        }
         if (IS_INFO_ENABLED) {
             log.info("Generators have been updated.")
         }
