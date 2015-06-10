@@ -40,8 +40,8 @@ import net.biomodels.jummp.plugins.security.Person
 
 import grails.test.*
 
+@TestFor(Publication)
 class PublicationTests {
-    @SuppressWarnings('UnusedVariable')
     void testConstraints() {
         mockForConstraintsTests(Publication)
         // test for nullable

@@ -31,13 +31,10 @@
   </div>
 
   <div id="header-full">
-  
-   <div id="header"><div class="section clearfix">
+      <div id="header"><div class="section clearfix">
 
           <a href="${createLink(uri: '/', absolute: true)}" title="Home" rel="home" id="logo"><g:img dir="images/ddmore" file="logo.png" alt="DDMoRe Logo"/></a>
-    
-    
-    
+
       <div class="region region-header">
       	<div id="block-system-user-menu" class="block block-system user-menu block-menu first odd">      
       		<div class="content">
@@ -50,7 +47,7 @@
       				</li>
       				<li class="leaf" id="notificationCount">
       					<a title="View ${sec.username()}'s Notifications" href='<g:createLink controller="notification" action="list"/>'>
-      						<img width="20px" height="auto" src="http://www.ebi.ac.uk/web_guidelines/images/icons/EBI-Generic/Generic%20icons/email.png"/>
+                            <img width="20" height="auto" title="notifications" src="http://www.ebi.ac.uk/web_guidelines/images/icons/EBI-Generic/Generic%20icons/email.png"/>
       						<span id="notificationLink" style="display: none;"></span>
       					</a>
       				</li>

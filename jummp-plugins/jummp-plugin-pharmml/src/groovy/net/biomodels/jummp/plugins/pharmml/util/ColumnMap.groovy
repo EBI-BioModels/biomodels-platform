@@ -31,7 +31,7 @@
 
 package net.biomodels.jummp.plugins.pharmml.util
 
-import eu.ddmore.libpharmml.dom.dataset.ColumnMappingType
+import eu.ddmore.libpharmml.dom.dataset.ColumnMapping
 import org.perf4j.aop.Profiled
 
 class ColumnMap {
@@ -39,11 +39,11 @@ class ColumnMap {
 
     protected ColumnMap() {}
 
-    public ColumnMap(List<ColumnMappingType> mapping) {
+    public ColumnMap(List<ColumnMapping> mapping) {
         final int SIZE = mapping ? mapping.size() : 0
         columns = new LinkedHashMap<>(SIZE + 1, 1.0f)
         if (mapping) {
-            for (ColumnMappingType m: mapping) {
+            for (ColumnMapping m: mapping) {
                 String key = m.columnRef?.columnIdRef
                 if (!key) {
                     throw new IllegalArgumentException("Column references cannot be null.")

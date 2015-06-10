@@ -36,6 +36,7 @@ package net.biomodels.jummp.model
 
 import grails.test.*
 import grails.test.mixin.TestFor
+import net.biomodels.jummp.plugins.security.Person
 import net.biomodels.jummp.plugins.security.User
 
 @TestFor(Model)
@@ -66,8 +67,14 @@ class ModelTests {
         assertEquals("nullable", model.errors["vcsIdentifier"])
         assertEquals("validator", model.errors["revisions"])
         model = new Model()
-        User owner = new User(username: "testUser", password: "secret", userRealName: "Test User", email: "test@user.org", enabled: true, accountExpired: false, accountLocked: false, passwordExpired: false)
-        Revision revision = new Revision(model: model, vcsId: "2", revisionNumber: 2, owner: owner, minorRevision: true, uploadDate: new Date(), name:'test',description:'pointless', comment: 'fictional', format: new ModelFormat(identifier: "UNKNOWN", name: "unknown"))
+        Person testUser = new Person(userRealName: 'Test User')
+        User owner = new User(username: "testUser", password: "secret", person: testUser,
+                email: "test@user.org", enabled: true, accountExpired: false,
+                accountLocked: false, passwordExpired: false)
+        Revision revision = new Revision(model: model, vcsId: "2", revisionNumber: 2,
+                owner: owner, minorRevision: true, uploadDate: new Date(), name:'test',
+                description:'pointless', comment: 'fictional',
+                format: new ModelFormat(identifier: "UNKNOWN", name: "unknown"))
         mockDomain(Revision, [revision])
         model.revisions = [revision] as Set
         model.vcsIdentifier = "1234"

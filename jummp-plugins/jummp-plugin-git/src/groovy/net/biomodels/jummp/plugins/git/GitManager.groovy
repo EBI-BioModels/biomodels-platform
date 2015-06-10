@@ -40,38 +40,39 @@ import java.nio.channels.FileLock
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
-import net.biomodels.jummp.core.vcs.*
+import net.biomodels.jummp.core.vcs.VcsManager
+import net.biomodels.jummp.core.vcs.VcsException
+import net.biomodels.jummp.core.vcs.VcsFileDetails
 import org.apache.commons.io.FileUtils
 import org.eclipse.jgit.api.AddCommand
-import org.eclipse.jgit.api.RmCommand
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.InitCommand
+import org.eclipse.jgit.api.LogCommand
+import org.eclipse.jgit.api.RmCommand
 import org.eclipse.jgit.lib.Config
 import org.eclipse.jgit.lib.ConfigConstants
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.Repository
-import org.eclipse.jgit.revwalk.DepthWalk.RevWalk;
+import org.eclipse.jgit.revwalk.DepthWalk.RevWalk
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.perf4j.aop.Profiled
-import org.eclipse.jgit.api.LogCommand;
-import net.biomodels.jummp.core.vcs.VcsFileDetails
 
 /**
  * @short GitManager provides the interface to a local git clone.
  *
  * This class is the concrete implementation of the VcsManager for git. It manages importing files,
  * updating files and retrieving files. Each model is stored as a separate directory with its own repository.
- * If a model repository does not exist, it is created. It uses the high level 
+ * If a model repository does not exist, it is created. It uses the high level
  * API of JGit for managing the clone.
  *
  * GitManager uses ReentrantLocks in all of its method to make it thread safe
- * These locks are at the level of model repositories. 
- * Nevertheless this does not ensure that the clone is kept in a correct state. 
- * If two GitManager access the same model, the lock cannot protect and 
- * GitManager is also not able to detect whether the model has been changed 
- * outside the class. It is important to let the instance of the GitManager be 
- * the only resource accessing the model repositories! 
+ * These locks are at the level of model repositories.
+ * Nevertheless this does not ensure that the clone is kept in a correct state.
+ * If two GitManager access the same model, the lock cannot protect and
+ * GitManager is also not able to detect whether the model has been changed
+ * outside the class. It is important to let the instance of the GitManager be
+ * the only resource accessing the model repositories!
  * @author Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  */
@@ -79,10 +80,10 @@ class GitManager implements VcsManager {
     // uid for generating unique checkout directory names
     private static final AtomicInteger uid = new AtomicInteger(0)
     // locks to ensure model directories are not accessed concurrently
-    private final ConcurrentHashMap<String, ReentrantLock> locks= new ConcurrentHashMap<String, ReentrantLock>()
-    private final ConcurrentHashMap<String, FileLock> diskLocks=new ConcurrentHashMap<String, FileLock>()
+    private final ConcurrentHashMap<String, ReentrantLock> locks = new ConcurrentHashMap<String, ReentrantLock>()
+    private final ConcurrentHashMap<String, FileLock> diskLocks = new ConcurrentHashMap<String, FileLock>()
     // cache of initialised repositories
-    private final Map<File, Git>  initedRepositories=Collections.synchronizedMap(new LruCache<File, Git>(20))
+    private final Map<File, Git>  initedRepositories = Collections.synchronizedMap(new LruCache<File, Git>(20))
     // exchange directory
     private File exchangeDirectory
     // legacy parameter specifying remoteness. Probably useless.
@@ -140,39 +141,35 @@ class GitManager implements VcsManager {
     }
 
     private FileChannel getRepositoryChannel(File modelDirectory) {
-        File repositoryFile=new File(modelDirectory, ".git/.locker.txt")
-        FileChannel channel=new RandomAccessFile(repositoryFile, "rw").getChannel()
+        File repositoryFile = new File(modelDirectory, ".git/.locker.txt")
+        FileChannel channel = new RandomAccessFile(repositoryFile, "rw").getChannel()
         return channel
     }
 
     private FileLock obtainExclusiveLock(File modelDirectory) {
-        FileLock lock=null
-        long accumulate=0
-        try
-        {
-            while (accumulate<300000) {
-                try
-                {
-                    FileChannel channel=getRepositoryChannel(modelDirectory)
-                    lock=channel.tryLock()
+        FileLock lock = null
+        long accumulate = 0
+        try {
+            while (accumulate < 300000) {
+                try {
+                    FileChannel channel = getRepositoryChannel(modelDirectory)
+                    lock = channel.tryLock()
                     //Write something to file, otherwise file isnt really locked
-                    channel.write(ByteBuffer.wrap("\n".getBytes())) 
-                }
-                catch(Exception ignore) {
+                    channel.write(ByteBuffer.wrap("\n".getBytes()))
+                } catch(Exception ignore) {
                 }
                 if (lock) {
                     return lock
                 }
                 Thread.sleep(100)
-                accumulate+=100
+                accumulate += 100
             }
             //lock=channel.lock()
-        }
-        catch(Exception e) {
+        } catch(Exception e) {
             e.printStackTrace()
         }
         if (!lock) {
-            throw new Exception("Error obtaining disk based lock, waited "+accumulate+" ms")
+            throw new Exception("Error obtaining disk based lock, waited $accumulate ms")
         }
         return lock
     }

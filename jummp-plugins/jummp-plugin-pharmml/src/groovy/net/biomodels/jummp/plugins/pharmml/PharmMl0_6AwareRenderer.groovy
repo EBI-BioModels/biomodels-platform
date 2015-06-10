@@ -1,33 +1,33 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
-* Deutsches Krebsforschungszentrum (DKFZ)
-*
-* This file is part of Jummp.
-*
-* Jummp is free software; you can redistribute it and/or modify it under the
-* terms of the GNU Affero General Public License as published by the Free
-* Software Foundation; either version 3 of the License, or (at your option) any
-* later version.
-*
-* Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
-* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-* A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
-* details.
-*
-* You should have received a copy of the GNU Affero General Public License along
-* with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
-*
-* Additional permission under GNU Affero GPL version 3 section 7
-*
-* If you modify Jummp, or any covered work, by linking or combining it with
-* Apache Tika, Apache Commons, LibPharmml, Perf4j (or a modified version of these
-* libraries), containing parts covered by the terms of Apache License v2.0,
-* the licensors of this Program grant you additional permission to convey the
-* resulting work.
-* {Corresponding Source for a non-source form of such a combination shall
-* include the source code for the parts of Apache Tika, Apache Commons,
-* LibPharmml, Perf4j used as well as that of the covered work.}
-**/
+ * Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Deutsches Krebsforschungszentrum (DKFZ)
+ *
+ * This file is part of Jummp.
+ *
+ * Jummp is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation; either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along
+ * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
+ *
+ * Additional permission under GNU Affero GPL version 3 section 7
+ *
+ * If you modify Jummp, or any covered work, by linking or combining it with
+ * Apache Tika, Apache Commons, LibPharmml, Perf4j (or a modified version of these
+ * libraries), containing parts covered by the terms of Apache License v2.0,
+ * the licensors of this Program grant you additional permission to convey the
+ * resulting work.
+ * {Corresponding Source for a non-source form of such a combination shall
+ * include the source code for the parts of Apache Tika, Apache Commons,
+ * LibPharmml, Perf4j used as well as that of the covered work.}
+ **/
 
 package net.biomodels.jummp.plugins.pharmml
 
@@ -37,6 +37,7 @@ import net.biomodels.jummp.core.model.RevisionTransportCommand
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable
 import eu.ddmore.libpharmml.dom.commontypes.FunctionParameter
 import eu.ddmore.libpharmml.dom.commontypes.FunctionDefinition
+import eu.ddmore.libpharmml.dom.commontypes.BooleanValue
 import eu.ddmore.libpharmml.dom.commontypes.IdValue
 import eu.ddmore.libpharmml.dom.commontypes.IntValue
 import eu.ddmore.libpharmml.dom.commontypes.Interpolation
@@ -48,7 +49,7 @@ import eu.ddmore.libpharmml.dom.commontypes.StringValue
 import eu.ddmore.libpharmml.dom.commontypes.SymbolRef
 import eu.ddmore.libpharmml.dom.commontypes.VariableDefinition
 import eu.ddmore.libpharmml.dom.commontypes.Vector as CTVector
-import eu.ddmore.libpharmml.dom.dataset.DataSetTableDefnType
+import eu.ddmore.libpharmml.dom.dataset.DataSet
 import eu.ddmore.libpharmml.dom.maths.Binop
 import eu.ddmore.libpharmml.dom.maths.Constant
 import eu.ddmore.libpharmml.dom.maths.Equation
@@ -85,7 +86,7 @@ import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.perf4j.aop.Profiled
 
-class PharmMl0_3AwareRenderer extends AbstractPharmMlRenderer {
+class PharmMl0_6AwareRenderer extends AbstractPharmMlRenderer {
     /* the class logger */
     private static final Log log = LogFactory.getLog(this.getClass())
     private static final String IS_DEBUG_ENABLED = log.isDebugEnabled()
@@ -94,27 +95,27 @@ class PharmMl0_3AwareRenderer extends AbstractPharmMlRenderer {
     def groovyPageRenderer = Holders.applicationContext.getBean("groovyPageRenderer")
 
     /* lazy-loaded instance of this class.*/
-    private static PharmMl0_3AwareRenderer instance = null
+    private static PharmMl0_6AwareRenderer instance = null
 
     /* Enforce the singleton pattern by keeping the constructor private. */
-    private PharmMl0_3AwareRenderer() {}
+    private PharmMl0_6AwareRenderer() {}
 
-    @Profiled(tag = "pharmMl0_3AwareRenderer.getInstance")
-    public static PharmMl0_3AwareRenderer getInstance() {
+    @Profiled(tag = "pharmMl0_6AwareRenderer.getInstance")
+    public static PharmMl0_6AwareRenderer getInstance() {
         if (instance == null) {
-            synchronized(PharmMl0_3AwareRenderer.class) {
+            synchronized(PharmMl0_6AwareRenderer.class) {
                 if (instance == null) {
                     if (IS_DEBUG_ENABLED) {
-                        log.debug "Initialising the renderer for PharmML 0.3"
+                        log.debug "Initialising the renderer for PharmML 0.6"
                     }
-                    instance = new PharmMl0_3AwareRenderer()
+                    instance = new PharmMl0_6AwareRenderer()
                 }
             }
         } else if (IS_DEBUG_ENABLED) {
-            log.debug "Returning the already-initialised instance of the PharmML 0.3 renderer"
+            log.debug "Returning the already-initialised instance of the PharmML 0.6 renderer"
         }
         if (IS_INFO_ENABLED) {
-            log.info "Returning the PharmML 0.3 renderer."
+            log.info "Returning the PharmML 0.6 renderer."
         }
         return instance
     }
@@ -122,7 +123,7 @@ class PharmMl0_3AwareRenderer extends AbstractPharmMlRenderer {
     /**
      * @param independentVariable the independent variable to render
      */
-    @Profiled(tag = "pharmMl0_3AwareRenderer.renderIndependentVariable")
+    @Profiled(tag = "pharmMl0_6AwareRenderer.renderIndependentVariable")
     String renderIndependentVariable(String independentVariable) {
         if (IS_INFO_ENABLED) {
             log.info "Rendering independent variable $independentVariable"
@@ -135,7 +136,7 @@ class PharmMl0_3AwareRenderer extends AbstractPharmMlRenderer {
      * @param functionDefinitions the list of
      * {@link eu.ddmore.libpharmml.dom.commontypes.FunctionDefinition}s.
      */
-    @Profiled(tag = "pharmMl0_3AwareRenderer.renderFunctionDefinitions")
+    @Profiled(tag = "pharmMl0_6AwareRenderer.renderFunctionDefinitions")
     String renderFunctionDefinitions(List functionDefinitions) {
         def definitionList = []
         try {
@@ -164,7 +165,7 @@ class PharmMl0_3AwareRenderer extends AbstractPharmMlRenderer {
     /**
      * @param modelDefinition an instance of {@link eu.ddmore.libpharmml.dom.modeldefn.ModelDefinition}
      */
-    @Profiled(tag = "pharmMl0_3AwareRenderer.renderModelDefinition")
+    @Profiled(tag = "pharmMl0_6AwareRenderer.renderModelDefinition")
     String renderModelDefinition(ModelDefinition modelDefinition) {}
 
     /**
@@ -172,7 +173,7 @@ class PharmMl0_3AwareRenderer extends AbstractPharmMlRenderer {
      * {@link eu.ddmore.libpharmml.dom.modeldefn.CovariateModel}s.
      * @param transfMap the transformations for continuous covariates.
      */
-    @Profiled(tag = "pharmMl0_3AwareRenderer.renderCovariateModel")
+    @Profiled(tag = "pharmMl0_6AwareRenderer.renderCovariateModel")
     String renderCovariateModel(List covModel, Map transfMap) {
         def model = [:]
         def result = []
@@ -193,7 +194,7 @@ class PharmMl0_3AwareRenderer extends AbstractPharmMlRenderer {
             log.error("Error rendering the covariates ${covModel.inspect()} ${covModel.properties} ${transfMap.inspect()}: ${e.message}", e)
         } finally {
             model["covariateModels"] = result
-            model["version"] = "0.3.1"
+            model["version"] = "0.6"
             model["transfMap"] = transfMap
             return groovyPageRenderer.render(template: "/templates/0.2/covariateModel",
                         model: model)
@@ -205,7 +206,7 @@ class PharmMl0_3AwareRenderer extends AbstractPharmMlRenderer {
      * @param blkId the block identifier of the covariate model where @p cov are defined.
      * @param transfMap the transformations for continuous covariates.
      */
-    @Profiled(tag = "pharmMl0_3AwareRenderer.renderCovariates")
+    @Profiled(tag = "pharmMl0_6AwareRenderer.renderCovariates")
     String renderCovariates(List<CovariateDefinition> cov, String blkId, Map transfMap) {
         def model = [:]
         def covariates = []
@@ -217,17 +218,21 @@ class PharmMl0_3AwareRenderer extends AbstractPharmMlRenderer {
                 if (c.continuous) {
                     def cc = c.continuous
                     def ccMap = [:]
-                    if (cc.transformation) {
-                        final EquationType TRANSF_EQ = cc.transformation.equation
-                        final String TRANSF = convertToMathML("Transformation", TRANSF_EQ)
+                    def transformations = cc.getListOfTransformation()
+                    if (transformations) {
+                        ccMap['transf'] = []
+                        transformations.each { t ->
+                            final EquationType TRANSF_EQ = t.equation
+                            final String TRANSF = convertToMathML("Transformation", TRANSF_EQ)
+                            final String COV_KEY = "${blkId}_${t.transformedCovariate.symbId}"
+                            transfMap[COV_KEY] = TRANSF_EQ
+                            ccMap["transf"] << TRANSF
+                        }
                         final def COV_DISTRIB = cc.abstractContinuousUnivariateDistribution
                         if (COV_DISTRIB) {
                             final String DISTRIB = distributionAssignment(symbol, COV_DISTRIB)
                             ccMap["dist"] = DISTRIB
                         }
-                        final String COV_KEY = "${blkId}_${symbol}"
-                        transfMap[COV_KEY] = TRANSF_EQ
-                        ccMap["transf"] = TRANSF
                     }
                     thisCov["continuous"] = ccMap
                 } else if (c.categorical) {
@@ -253,9 +258,9 @@ class PharmMl0_3AwareRenderer extends AbstractPharmMlRenderer {
             model["error"] = "Sorry, something went wrong while rendering the covariates."
         } finally {
             model["covariates"] = covariates
-            model["version"] = "0.3.1"
+            model["version"] = "0.6"
             model["transfMap"] = transfMap
-            return groovyPageRenderer.render(template: "/templates/0.2/covariates", model: model)
+            return groovyPageRenderer.render(template: "/templates/0.6/covariates", model: model)
         }
     }
 
@@ -263,7 +268,7 @@ class PharmMl0_3AwareRenderer extends AbstractPharmMlRenderer {
      * @param variabilityModels a list of
      * {@link eu.ddmore.libpharmml.dom.modeldefn.VariabilityDefnBlock}s.
      */
-    @Profiled(tag = "pharmMl0_3AwareRenderer.renderIndependentVariable")
+    @Profiled(tag = "pharmMl0_6AwareRenderer.renderIndependentVariable")
     String renderVariabilityModel(List<VariabilityDefnBlock> variabilityModels) {
         def models = []
         variabilityModels.each { m ->
@@ -291,6 +296,7 @@ class PharmMl0_3AwareRenderer extends AbstractPharmMlRenderer {
         return result
     }
 
+    @Override
     protected StringBuilder rhs(Rhs r, StringBuilder text) {
         if (r.interpolation) {
             return text.append(renderInterpolation(r.interpolation))
@@ -320,7 +326,7 @@ class PharmMl0_3AwareRenderer extends AbstractPharmMlRenderer {
      * @param covariates a list of covariate models.
      * @param transfMap the transformations for the continuous covariates.
      */
-    @Profiled(tag = "pharmMl0_3AwareRenderer.renderParameterModel")
+    @Profiled(tag = "pharmMl0_6AwareRenderer.renderParameterModel")
     String renderParameterModel(List parameterModel,
             List covariates, Map transfMap) {
 
@@ -373,10 +379,10 @@ class PharmMl0_3AwareRenderer extends AbstractPharmMlRenderer {
      * {@link eu.ddmore.libpharmml.dom.modeldefn.StructuralModel}s.
      * @param iv the independent variable of the model
      */
-    @Profiled(tag = "pharmMl0_3AwareRenderer.renderStructuralModel")
+    @Profiled(tag = "pharmMl0_6AwareRenderer.renderStructuralModel")
     String renderStructuralModel(List<StructuralModel> structuralModels, String iv) {
         def model = [:]
-        model["version"] = "0.3.1"
+        model["version"] = "0.6"
         try {
             structuralModels.each { sm ->
                 String modelName = sm.name?.value ?: sm.blkId
@@ -426,7 +432,7 @@ class PharmMl0_3AwareRenderer extends AbstractPharmMlRenderer {
     String renderCommonVariables(List vars, String iv) {
         def model = [:]
         // manually set this because we need it for rendering initial conditions
-        model["version"] = "0.3.1"
+        model["version"] = "0.6"
         def initialConditions = [:]
         def variableList = []
         try {
@@ -488,7 +494,7 @@ class PharmMl0_3AwareRenderer extends AbstractPharmMlRenderer {
      * @param observationModels a list of
      * {@link eu.ddmore.libpharmml.dom.modeldefn.ObservationModel}s.
      */
-    @Profiled(tag = "pharmMl0_3AwareRenderer.renderObservationModel")
+    @Profiled(tag = "pharmMl0_6AwareRenderer.renderObservationModel")
     String renderObservationModel(List<ObservationModel> observations,
                 List<CovariateModel> covariates) {
         StringBuilder result = new StringBuilder()
@@ -496,20 +502,23 @@ class PharmMl0_3AwareRenderer extends AbstractPharmMlRenderer {
         try {
             observations.each { om ->
                 result.append("<h4>Observation")
-                // the API returns a JAXBElement, not ObservationErrorType
-                def obsErr = om.observationError?.value
+                def continuousObs = om.continuousData
+                if (!continuousObs) {
+                    log.error "We should support discrete observation ${om.dump()}"
+                }
+                def obsErr = continuousObs.observationError
                 if (obsErr) {
                     result.append(" <span class='italic'>").append(obsErr.symbId).append("</span>")
                 }
                 result.append("</h4>\n")
                 result.append("<span class=\"bold\">Parameters </span>")
-                def simpleParameters = om.commonParameterElement.value.findAll {
+                def simpleParameters = continuousObs.commonParameterElement.value.findAll {
                     it instanceof SimpleParameter
                 }
-                def rv = om.commonParameterElement.value.findAll {
+                def rv = continuousObs.commonParameterElement.value.findAll {
                     it instanceof ParameterRandomVariable
                 }
-                def individualParameters = om.commonParameterElement.value.findAll {
+                def individualParameters = continuousObs.commonParameterElement.value.findAll {
                        it instanceof IndividualParameter
                 }
                 result.append(simpleParams(simpleParameters))
@@ -525,10 +534,10 @@ class PharmMl0_3AwareRenderer extends AbstractPharmMlRenderer {
                 if (individuals) {
                    result.append(individuals)
                 }
-                if (om.correlation) {
+                if (continuousObs.correlation) {
                     def processor = new PharmMl0_3AwareCorrelationProcessor()
                     List<CorrelationMatrix> matrices = processor.convertToStringMatrix(
-                        om.correlation, obsRandomVariableMap)
+                        continuousObs.correlation, obsRandomVariableMap)
                     if (matrices) {
                         displayCorrelationMatrices(matrices, result)
                     }
@@ -555,13 +564,13 @@ class PharmMl0_3AwareRenderer extends AbstractPharmMlRenderer {
     /**
      * @param trialDesign an instance of {@link eu.ddmore.libpharmml.dom.trialdesign.TrialDesign}
      */
-    @Profiled(tag = "pharmMl0_3AwareRenderer.renderTrialDesign")
+    @Profiled(tag = "pharmMl0_6AwareRenderer.renderTrialDesign")
     String renderTrialDesign(TrialDesign trialDesign) {}
 
     /**
      * @param structure - an instance of {@link eu.ddmore.libpharmml.dom.trialdesign.TrialStructure}
      */
-    @Profiled(tag = "pharmMl0_3AwareRenderer.renderTrialDesignStructure")
+    @Profiled(tag = "pharmMl0_6AwareRenderer.renderTrialDesignStructure")
     String renderTrialDesignStructure(TrialStructure structure) {
         def result = new StringBuilder()
         TrialDesignStructure tds
@@ -595,7 +604,7 @@ class PharmMl0_3AwareRenderer extends AbstractPharmMlRenderer {
             errMsg.append("using helper ${tds.trialDesignStructure.inspect()}: ")
             log.error(errMsg, e)
         }
-        StringBuilder segActBuilder=new StringBuilder();
+        StringBuilder segActBuilder = new StringBuilder()
         try {
             /* segments and activities */
             List activities = structure.activity
@@ -603,7 +612,7 @@ class PharmMl0_3AwareRenderer extends AbstractPharmMlRenderer {
             segmentActivitiesMap = new HashMap(activities.size() + 1, 1.0)
             structure.segment.each { s ->
                 segmentActivitiesMap[s.oid] = s.activityRef.collect{ a ->
-                    structure.activity.find{ a.oidRef.equals(it.oid) }
+                    structure.activity.find { a.oidRef.equals(it.oid) }
                 }
             }
             boolean showDosingFootnote = false
@@ -693,7 +702,7 @@ class PharmMl0_3AwareRenderer extends AbstractPharmMlRenderer {
     /**
      * @param dosing - a list of {@link eu.ddmore.libpharmml.dom.trialdesign.IndividualDosing}
      */
-    @Profiled(tag = "pharmMl0_3AwareRenderer.renderIndividualDosing")
+    @Profiled(tag = "pharmMl0_6AwareRenderer.renderIndividualDosing")
     String renderIndividualDosing(List<IndividualDosing> dosing, RevisionTransportCommand rev, String downloadLink) {
         def result = new StringBuilder()
         try {
@@ -716,7 +725,7 @@ class PharmMl0_3AwareRenderer extends AbstractPharmMlRenderer {
     /**
      * @param population an instance of {@link eu.ddmore.libpharmml.dom.trialdesign.Population}
      */
-    @Profiled(tag = "pharmMl0_3AwareRenderer.renderPopulation")
+    @Profiled(tag = "pharmMl0_6AwareRenderer.renderPopulation")
     String renderPopulation(Population pop, RevisionTransportCommand rev, String downloadLink) {
         def result = new StringBuilder("<h4>Population</h4>\n")
         if (pop.variabilityReference) {
@@ -742,19 +751,19 @@ class PharmMl0_3AwareRenderer extends AbstractPharmMlRenderer {
     /**
      * @param steps an instance of {@link eu.ddmore.libpharmml.dom.modellingsteps.ModellingSteps}
      */
-    @Profiled(tag = "pharmMl0_3AwareRenderer.renderModellingSteps")
+    @Profiled(tag = "pharmMl0_6AwareRenderer.renderModellingSteps")
     String renderModellingSteps(ModellingSteps steps) {}
 
     /**
      * @param steps a list of {@link eu.ddmore.libpharmml.dom.modellingsteps.CommonModellingStep}s.
      */
-    @Profiled(tag = "pharmMl0_3AwareRenderer.renderCommonModellingSteps")
+    @Profiled(tag = "pharmMl0_6AwareRenderer.renderCommonModellingSteps")
     String renderCommonModellingSteps(List<CommonModellingStep> steps) {}
 
     /**
      * @param steps a list of {@link eu.ddmore.libpharmml.dom.modellingsteps.Simulation}s.
      */
-    @Profiled(tag = "pharmMl0_3AwareRenderer.renderSimulationSteps")
+    @Profiled(tag = "pharmMl0_6AwareRenderer.renderSimulationSteps")
     String renderSimulationSteps(List<Simulation> steps, String iv) {
         def result = new StringBuilder("<h3>Simulation Steps</h3>\n")
         steps.each { s ->
@@ -814,10 +823,92 @@ class PharmMl0_3AwareRenderer extends AbstractPharmMlRenderer {
         return result
     }
 
+    @Override
+    protected StringBuilder jaxbVector(CTVector vector) {
+        if (!vector) {
+            return new StringBuilder()
+        }
+        def result = new StringBuilder("")
+        def values = []
+        vector.getVectorElements().elements.inject(result) { r, e ->
+            switch(e) {
+               case Sequence:
+                    values << sequence(e)
+                    break
+                case IntValue:
+                case RealValue:
+                case StringValue:
+                case IdValue:
+                case BooleanValue:
+                    values << scalar(e)
+                    break
+                default:
+                    log.error("Funny element ${e.dump()} in ${vector.vectorElements.elements}")
+                    values << scalar(e)
+            }
+        }
+        if (values) {
+            result.append(values.size() > 1 ? "[${values.join(', ')}]" : values.first())
+        }
+        return result
+    }
+
+
+    @Override
+    protected StringBuilder dataSet(DataSet dataSet, Map variableMap,
+            StringBuilder sb, RevisionTransportCommand rev, String downloadLink) {
+        List tables = dataSet.getListOfColumnDefinition()
+        if (tables) {
+            def columnOrder = tables.inject([:]) { order, colDef ->
+                order << [(colDef.columnNum) : (colDef.columnId)]
+            }
+            sb.append("\n<table><thead><tr>")
+
+            tables.inject(sb) { txt, d ->
+                def key = columnOrder[d.columnNum]
+                if (key && variableMap && variableMap[key]) {
+                    txt.append(["<th>", "</th>"].join(variableMap[key]))
+                } else {
+                    txt.append(["<th>", "</th>"].join(d.columnId))
+                }
+            }
+            sb.append("</tr></thead><tbody>")
+            dataSet.getListOfRow().each { i ->
+                sb.append("\n<tr>")
+                i.getListOfValue().each { td ->
+                    sb.append(["<td class='default'>", "</td>"].join(scalar(td)))
+                }
+                sb.append("</tr>")
+            }
+            sb.append("</tbody></table>\n")
+        }
+        if (dataSet.externalFile) {
+            def rftc = rev.files.find {
+                File file = new File(it.path)
+                return file.getName() == dataSet.externalFile.path
+            }
+            if (rftc) {
+                sb.append("This model refers to an external data file: <a href='");
+                sb.append(downloadLink)
+                sb.append("?filename=")
+                sb.append(new File(rftc.path).getName())
+                sb.append("' title='Download ")
+                sb.append(rftc.mimeType)
+                sb.append(" file'>Download</a>")
+            }
+            else {
+                sb.append("This model refers to an external data file named '")
+                sb.append(dataSet.externalFile.name)
+                sb.append("', but the file is not available in the repository. ")
+            }
+        }
+        return sb
+    }
+
     /**
      * @param steps a list of {@link eu.ddmore.libpharmml.dom.modellingsteps.Estimation}s.
      */
-    @Profiled(tag = "pharmMl0_3AwareRenderer.renderEstimationSteps")
+    @Profiled(tag = "pharmMl0_6AwareRenderer.renderEstimationSteps")
     String renderEstimationSteps(List<Estimation> steps, RevisionTransportCommand rev, String downloadLink) {
         def result = new StringBuilder("<h3>Estimation Steps</h3>\n")
         steps.each { s ->
@@ -841,7 +932,7 @@ class PharmMl0_3AwareRenderer extends AbstractPharmMlRenderer {
     /**
      * @param dependencies a list of {@link eu.ddmore.libpharmml.dom.modellingsteps.StepDependency}s.
      */
-    @Profiled(tag = "pharmMl0_3AwareRenderer.renderStepDependencies")
+    @Profiled(tag = "pharmMl0_6AwareRenderer.renderStepDependencies")
     String renderStepDependencies(StepDependency dependencies) {
         StringBuilder result = new StringBuilder()
         if (!dependencies || !dependencies.step) {
@@ -1259,7 +1350,6 @@ Could not extract the population parameter of individual parameter ${p.symbId}."
         }
         return equation
     }
-
 
     protected def extractAttributeFromEquation(EquationType eq) {
         if (!eq) {

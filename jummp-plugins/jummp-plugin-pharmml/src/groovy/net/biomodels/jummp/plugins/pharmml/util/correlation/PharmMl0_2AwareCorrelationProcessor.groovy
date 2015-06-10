@@ -32,7 +32,7 @@
 package net.biomodels.jummp.plugins.pharmml.util.correlation
 
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs
-import eu.ddmore.libpharmml.dom.modeldefn.CorrelationType
+import eu.ddmore.libpharmml.dom.modeldefn.Correlation
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 
@@ -51,7 +51,7 @@ public class PharmMl0_2AwareCorrelationProcessor implements ICorrelationProcesso
      * {@inheritDoc}
      */
     @Override
-    List<CorrelationMatrix> convertToStringMatrix(List<CorrelationType> correlations,
+    List<CorrelationMatrix> convertToStringMatrix(List<Correlation> correlations,
                 Map<String, List<String>> randomEffectsPerLevel) {
 
         def matricesByLevel = new HashMap<String, CorrelationMatrix>()

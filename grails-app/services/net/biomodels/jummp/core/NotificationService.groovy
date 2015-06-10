@@ -32,6 +32,7 @@
 
 
 package net.biomodels.jummp.core
+
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.webapp.Notification
 import net.biomodels.jummp.webapp.NotificationType
@@ -42,225 +43,214 @@ import net.biomodels.jummp.core.model.ModelTransportCommand
 import org.springframework.security.access.prepost.PreAuthorize
 
 /**
- * Service asynchronously called by Camel plugin, in response to various messages. 
+ * Service asynchronously called by Camel plugin, in response to various messages.
  * Sends notifications to users.
  *
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  * @date 20141015
  */
 class NotificationService {
-	
-	def modelDelegateService
-	def grailsApplication
-	def mailService
-	def springSecurityService
-	def messageSource
-	def searchService
+    def modelDelegateService
+    def grailsApplication
+    def mailService
+    def springSecurityService
+    def messageSource
+    def searchService
 
-	Set<User> getUsersFromUsernames(def usernames) {
-		Set<User> users = new HashSet<User>();
-		usernames.each {
-			users.add(User.findByUsername(it));
-		}
-		return users;
-	}
-	
-	Set<User> getNotificationRecipients(ModelTransportCommand model, NotificationType type) {
-		Set<String> creators  = model.creatorUsernames;
-		return getUsersFromUsernames(creators);
-	}
-	
-	Set<User> getNotificationRecipients(def permissionsMap) {
-		def usernames = permissionsMap.findAll { ptc ->
-			ptc.write
-		}
-		return getUsersFromUsernames(usernames.collect { it.id });
-	}
-	
-	NotificationTypePreferences getPreference(User user, NotificationType type) {
-		NotificationTypePreferences pref = NotificationTypePreferences.findByUserAndNotificationType(user, type);
-		if (!pref) {
-			pref = NotificationTypePreferences.getDefault(user, type);
-		}
-		return pref;
-	}
-	
-	void updatePreferences(List<NotificationTypePreferences> preferences) {
-		User user = User.findByUsername(preferences.first().user.username);
-		preferences.each { updated ->
-			NotificationTypePreferences existing = getPreference(user, updated.notificationType);
-			if (existing.sendMail != updated.sendMail || existing.sendNotification != updated.sendNotification) {
-				existing.sendMail = updated.sendMail;
-				existing.sendNotification = updated.sendNotification;
-				existing.save(failOnError: true);
-			}
-		}
-	}
-	
-	void sendNotificationToUser(User user, Notification notification) {
-		NotificationTypePreferences pref = getPreference(user, notification.notificationType);
-		if (pref.sendMail) {
-			String emailBody = notification.body
-            String emailSubject = notification.title
-            mailService.sendMail {
-                to user.email
-                from grailsApplication.config.jummp.security.registration.email.sender
-                subject emailSubject
-                body emailBody
+    Set<User> getUsersFromUsernames(def usernames) {
+        return usernames.collect { User.findByUsername(it) }
+    }
+
+    Set<User> getNotificationRecipients(ModelTransportCommand model, NotificationType type) {
+        Set<String> creators  = model.creatorUsernames
+        return getUsersFromUsernames(creators)
+    }
+
+    Set<User> getNotificationRecipients(def permissionsMap) {
+        def usernames = permissionsMap.findAll { ptc -> ptc.write }
+        return getUsersFromUsernames(usernames.collect { it.id })
+    }
+
+    NotificationTypePreferences getPreference(User user, NotificationType type) {
+        NotificationTypePreferences pref = NotificationTypePreferences.findByUserAndNotificationType(user, type)
+        if (!pref) {
+            pref = NotificationTypePreferences.getDefault(user, type)
+        }
+        return pref
+    }
+
+    void updatePreferences(List<NotificationTypePreferences> preferences) {
+        User user = User.findByUsername(preferences.first().user.username)
+        preferences.each { updated ->
+            NotificationTypePreferences existing = getPreference(user, updated.notificationType)
+            if (existing.sendMail != updated.sendMail || existing.sendNotification != updated.sendNotification) {
+                existing.sendMail = updated.sendMail
+                existing.sendNotification = updated.sendNotification
+                if (!existing.save()) {
+                    log.error "Failed to update notification preferences ${existing} for user ${user}"
+                }
             }
-		}
-		if (pref.sendNotification) {
-			NotificationUser userNotify = new NotificationUser(notification: notification,
-															   user: user);
-			userNotify.save(failOnError: true);
-		}
-	}
-	
-	void sendNotification(ModelTransportCommand model, Notification notification, Set<User> watchers) {
-		notification.save(failOnError:true);
-		watchers.each {
-			sendNotificationToUser(it, notification);
-		}
-	}
-	
-	void modelPublished(def body) {
-		RevisionTransportCommand rev  = body.revision as RevisionTransportCommand;
-		useGenericNotificationStructure("notification.model.published.title",
-    								 	[rev.name] as String[],
-    								    "notification.model.published.body",
-    								    [rev.name, body.user] as String[],
-    								    NotificationType.PUBLISH,
-    								    body.user,
-    								    getNotificationRecipients(body.perms),
-    								    rev.model)
-         searchService.makePublic(rev)
-	}
-    
-    void readAccessGranted(def body) {
-    	ModelTransportCommand model  = body.model as ModelTransportCommand;
-		useGenericNotificationStructure("notification.model.readgranted.title",
-    								 	[model.name] as String[],
-    								    "notification.model.readgranted.body",
-    								    [model.name, body.user, body.grantedTo.username] as String[],
-    								    NotificationType.ACCESS_GRANTED,
-    								    body.user,
-    								    getNotificationRecipients(body.perms),
-    								    model)
-    	
-		useGenericNotificationStructure("notification.model.readgrantedTo.title",
-    								 	[model.name] as String[],
-    								    "notification.model.readgrantedTo.body",
-    								    [model.name, body.user] as String[],
-    								    NotificationType.ACCESS_GRANTED_TO,
-    								    body.user,
-    								    getUsersFromUsernames([body.grantedTo.username]),
-    								    model)
+        }
     }
-    
-    void writeAccessGranted(def body) {
-    	ModelTransportCommand model  = body.model as ModelTransportCommand;
-		useGenericNotificationStructure("notification.model.writegranted.title",
-    								 	[model.name] as String[],
-    								    "notification.model.writegranted.body",
-    								    [model.name, body.user, body.grantedTo.username] as String[],
-    								    NotificationType.ACCESS_GRANTED,
-    								    body.user,
-    								    getNotificationRecipients(body.perms) - User.findByUsername(body.grantedTo.username),
-    								    model)
-    	
-		useGenericNotificationStructure("notification.model.writegrantedTo.title",
-    								 	[model.name] as String[],
-    								    "notification.model.writegrantedTo.body",
-    								    [model.name, body.user] as String[],
-    								    NotificationType.ACCESS_GRANTED_TO,
-    								    body.user,
-    								    getUsersFromUsernames([body.grantedTo.username]),
-    								    model)
 
+    void sendNotificationToUser(User user, Notification notification) {
+        NotificationTypePreferences pref = getPreference(user, notification.notificationType)
+        if (pref.sendMail) {
+            String emailBody = notification.body
+                String emailSubject = notification.title
+                mailService.sendMail {
+                    to user.email
+                    from grailsApplication.config.jummp.security.registration.email.sender
+                    subject emailSubject
+                    body emailBody
+                }
+        }
+        if (pref.sendNotification) {
+            NotificationUser userNotify = new NotificationUser(notification: notification,
+                    user: user)
+            if (!userNotify.save()) {
+                log.error "Was not able to deliver notification ${userNotify.inspect()}"
+            }
+        }
     }
-    
+
+    void sendNotification(ModelTransportCommand model, Notification notification, Set<User> watchers) {
+        if (!notification.save()) {
+            log.error("Notification $notification for users $watchers was not persisted")
+        } else {
+            watchers.each { sendNotificationToUser(it, notification) }
+        }
+    }
+
+    void modelPublished(def body) {
+        RevisionTransportCommand rev  = body.revision as RevisionTransportCommand
+        useGenericNotificationStructure("notification.model.published.title",
+                [rev.name] as String[],
+                "notification.model.published.body",
+                [rev.name, body.user] as String[],
+                NotificationType.PUBLISH,
+                body.user,
+                getNotificationRecipients(body.perms),
+                rev.model)
+            searchService.makePublic(rev)
+    }
+
+    void readAccessGranted(def body) {
+        ModelTransportCommand model  = body.model as ModelTransportCommand
+        useGenericNotificationStructure("notification.model.readgranted.title",
+                [model.name] as String[],
+                "notification.model.readgranted.body",
+                [model.name, body.user, body.grantedTo.username] as String[],
+                NotificationType.ACCESS_GRANTED,
+                body.user,
+                getNotificationRecipients(body.perms),
+                model)
+
+            useGenericNotificationStructure("notification.model.readgrantedTo.title",
+                    [model.name] as String[],
+                    "notification.model.readgrantedTo.body",
+                    [model.name, body.user] as String[],
+                    NotificationType.ACCESS_GRANTED_TO,
+                    body.user,
+                    getUsersFromUsernames([body.grantedTo.username]),
+                    model)
+    }
+
+    void writeAccessGranted(def body) {
+        ModelTransportCommand model  = body.model as ModelTransportCommand
+        useGenericNotificationStructure("notification.model.writegranted.title",
+                [model.name] as String[],
+                "notification.model.writegranted.body",
+                [model.name, body.user, body.grantedTo.username] as String[],
+                NotificationType.ACCESS_GRANTED,
+                body.user,
+                getNotificationRecipients(body.perms) - User.findByUsername(body.grantedTo.username),
+                model)
+
+            useGenericNotificationStructure("notification.model.writegrantedTo.title",
+                    [model.name] as String[],
+                    "notification.model.writegrantedTo.body",
+                    [model.name, body.user] as String[],
+                    NotificationType.ACCESS_GRANTED_TO,
+                    body.user,
+                    getUsersFromUsernames([body.grantedTo.username]),
+                    model)
+    }
+
     void useGenericNotificationStructure(String notificationTitle,
-    								  String[] titleParams,
-    								  String notificationBody,
-    								  String[] bodyParams,
-    								  NotificationType type,
-    								  String sender,
-    								  Set<User> watchers,
-    								  ModelTransportCommand model) {
-    	Notification notification = new Notification();
-		notification.title = messageSource.getMessage(notificationTitle, titleParams, null)
-		notification.body = messageSource.getMessage(notificationBody, bodyParams, null) 
-		notification.notificationType = type;
-		notification.sender = User.findByUsername(sender);
-		watchers = watchers - [notification.sender]
-		sendNotification(model, notification, watchers);
-    
+            String[] titleParams, String notificationBody, String[] bodyParams,
+            NotificationType type, String sender, Set<User> watchers,
+            ModelTransportCommand model) {
+        Notification notification = new Notification()
+        notification.title = messageSource.getMessage(notificationTitle, titleParams, null)
+        notification.body = messageSource.getMessage(notificationBody, bodyParams, null)
+        notification.notificationType = type
+        notification.sender = User.findByUsername(sender)
+        watchers = watchers - [notification.sender]
+        sendNotification(model, notification, watchers)
     }
-    
+
     int unreadNotificationCount() {
-    	User notificationsFor = User.findByUsername(springSecurityService.authentication.name)
-    	def notifications = NotificationUser.findAllNotNotificationSeenByUser(notificationsFor);
-    	if (notifications) {
-    		return notifications.size();
-    	}
-		return 0;    	
+        User notificationsFor = User.findByUsername(springSecurityService.authentication.name)
+        def notifications = NotificationUser.findAllNotNotificationSeenByUser(notificationsFor)
+        if (notifications) {
+            return notifications.size()
+        }
+        return 0
     }
-    
-    @PreAuthorize("isAuthenticated()") 
+
+    @PreAuthorize("isAuthenticated()")
     def getNotificationPermissions(String username) {
-    	User notificationsFor = User.findByUsername(username)
-    	def retval = [];
-    	NotificationType.values().each {
-    		retval.add(getPreference(notificationsFor, it));
-    	}
-    	return retval
+        User notificationsFor = User.findByUsername(username)
+        def retval = []
+        NotificationType.values().each {
+            retval.add(getPreference(notificationsFor, it))
+        }
+        return retval
     }
-    
-    @PreAuthorize("isAuthenticated()") 
+
+    @PreAuthorize("isAuthenticated()")
     def list(String username, int maxSize = -1) {
-    	User notificationsFor = User.findByUsername(username)
-    	def notifications = NotificationUser.findAllByUser(notificationsFor).reverse();
-    	if (maxSize==-1 || notifications.size() < maxSize) {
-    		return notifications
-    	}
-    	return notifications[0..maxSize-1]
+        User notificationsFor = User.findByUsername(username)
+        def notifications = NotificationUser.findAllByUser(notificationsFor).reverse()
+        if (maxSize == -1 || notifications.size() < maxSize) {
+            return notifications
+        }
+        return notifications[0..maxSize-1]
     }
-    
+
     void markAsRead(def msgID, String username) {
-    	Notification notification = Notification.get(msgID);
-    	User notificationsFor = User.findByUsername(username)
-    	NotificationUser notificationUser = NotificationUser.findByNotificationAndUser(notification, notificationsFor);
-		notificationUser.setNotificationSeen(true);
-    	notificationUser.save();
+        Notification notification = Notification.get(msgID)
+        User notificationsFor = User.findByUsername(username)
+        NotificationUser notificationUser = NotificationUser.findByNotificationAndUser(notification, notificationsFor)
+        notificationUser.setNotificationSeen(true)
+        notificationUser.save()
     }
-    
+
     void delete(def body) {
-    	ModelTransportCommand model  = body.model as ModelTransportCommand;
-		useGenericNotificationStructure("notification.model.deleted.title",
-    								 	[model.name] as String[],
-    								    "notification.model.published.body",
-    								    [model.name, body.user] as String[],
-    								    NotificationType.DELETED,
-    								    body.user,
-    								    getNotificationRecipients(body.perms),
-    								    model)
-    	searchService.setDeleted(model)
+        ModelTransportCommand model  = body.model as ModelTransportCommand
+        useGenericNotificationStructure("notification.model.deleted.title",
+                [model.name] as String[],
+                "notification.model.published.body",
+                [model.name, body.user] as String[],
+                NotificationType.DELETED,
+                body.user,
+                getNotificationRecipients(body.perms),
+                model)
+        searchService.setDeleted(model)
     }
-    
+
     void update(def body) {
-		ModelTransportCommand model  = body.model as ModelTransportCommand;
-		def updates = []
-		body.update.each {
-			updates.add(it);
-		}
-		useGenericNotificationStructure("notification.model.updated.title",
-    								 	[model.name] as String[],
-    								    "notification.model.updated.body",
-    								    [model.name, body.user, updates.join(",")] as String[],
-    								    NotificationType.VERSION_CREATED,
-    								    body.user,
-    								    getNotificationRecipients(body.perms),
-    								    model)
-   }
-    
+        ModelTransportCommand model  = body.model as ModelTransportCommand
+        def updates = []
+        body.update.each { updates.add(it) }
+        useGenericNotificationStructure("notification.model.updated.title",
+                [model.name] as String[],
+                "notification.model.updated.body",
+                [model.name, body.user, updates.join(",")] as String[],
+                NotificationType.VERSION_CREATED,
+                body.user,
+                getNotificationRecipients(body.perms),
+                model)
+    }
 }

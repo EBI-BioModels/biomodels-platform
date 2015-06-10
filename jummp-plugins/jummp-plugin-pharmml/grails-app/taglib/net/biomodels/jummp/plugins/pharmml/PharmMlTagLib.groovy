@@ -39,9 +39,6 @@ import eu.ddmore.libpharmml.dom.maths.Equation
 class PharmMlTagLib {
     static namespace = "pharmml"
 
-    // holds information about which PharmML-specific tabs should be shown
-    private Map<String, String> tabsMap
-
     def pharmMlRenderingService
 
     def decideTabs = { attrs ->
@@ -53,7 +50,8 @@ class PharmMlTagLib {
         if (!haveTabsToDisplay) {
             return
         }
-        tabsMap = new HashMap<String, String>(topics.size(), 1.0)
+        //holds information about which PharmML-specific tabs should be shown
+        Map<String, String> tabsMap = new HashMap<>(topics.size(), 1.0)
         if (attrs.iv || attrs.fd || attrs.md) {
             final String MDEF_TAB = "modelDefinition"
             tabsMap["mdef"] = MDEF_TAB
@@ -74,13 +72,14 @@ class PharmMlTagLib {
             tabsMap["sim"] = SIM_TAB
             out << "<li><a href='#${SIM_TAB}'>Simulation Steps</a></li>\n"
         }
+        pageScope.tabsMap = tabsMap
     }
 
     def handleModelDefinitionTab = { attrs ->
-        if (!tabsMap["mdef"]) {
+        if (!pageScope.tabsMap["mdef"]) {
             return
         }
-        out << "<div id='${tabsMap["mdef"]}'>"
+        out << "<div id='${pageScope.tabsMap["mdef"]}'>"
         if (attrs.iv) {
             pharmMlRenderingService.renderIndependentVariable(attrs.iv, attrs.version, out)
         }
@@ -110,13 +109,13 @@ class PharmMlTagLib {
     }
 
     def handleTrialDesignTab = { attrs ->
-        if (!tabsMap["td"]) {
+        if (!pageScope.tabsMap["td"]) {
             return
         }
        	String link=g.createLink(controller: 'model',
        							 action: 'download',
        							 id: attrs.rev.identifier()).replace("%3A",".");
-        out << "<div id='${tabsMap["td"]}'>"
+        out << "<div id='${pageScope.tabsMap["td"]}'>"
         if (attrs.ts) {
             pharmMlRenderingService.renderTrialDesignStructure(attrs.ts, attrs.version, out)
         }
@@ -130,7 +129,7 @@ class PharmMlTagLib {
     }
 
     def handleModellingStepsTabs = { attrs ->
-        if (!attrs.estimation && !attrs.simulation && !tabsMap) {
+        if (!attrs.estimation && !attrs.simulation && !pageScope.tabsMap) {
             return
         }
         if (!attrs.independentVariable) {
@@ -139,19 +138,19 @@ class PharmMlTagLib {
         }
 
         if (attrs.estimation) {
-            out << "<div id='${tabsMap["est"]}'>"
+            out << "<div id='${pageScope.tabsMap["est"]}'>"
             String link=g.createLink(controller: 'model', 
             						 action: 'download',
             						 id: attrs.rev.identifier()).replace("%3A",".");
             pharmMlRenderingService.renderEstimationSteps(attrs.estimation, attrs.version, out, attrs.rev, link)
             //only consider step dependencies here when there are no simulation steps
-            if (!tabsMap["sim"]) {
+            if (!pageScope.tabsMap["sim"]) {
                 pharmMlRenderingService.renderStepDependencies(attrs.deps, attrs.version, out)
             }
             out << "</div>"
         }
         if (attrs.simulation) {
-            out << "<div id='${tabsMap["sim"]}'>"
+            out << "<div id='${pageScope.tabsMap["sim"]}'>"
             pharmMlRenderingService.renderSimulationSteps(attrs.simulation,
                         attrs.independentVariable, attrs.version, out)
             pharmMlRenderingService.renderStepDependencies(attrs.deps, attrs.version, out)

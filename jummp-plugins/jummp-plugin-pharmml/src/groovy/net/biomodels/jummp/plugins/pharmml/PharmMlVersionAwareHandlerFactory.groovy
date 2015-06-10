@@ -44,7 +44,7 @@ import org.apache.commons.logging.LogFactory
  */
 final class PharmMlVersionAwareHandlerFactory {
     /* Class logger */
-    private static final Log log = LogFactory.getLog(this)
+    private static final Log log = LogFactory.getLog(PharmMlVersionAwareHandlerFactory.class)
     /* Semaphore for the log's verbosity threshold */
     private static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
     /*
@@ -83,10 +83,16 @@ final class PharmMlVersionAwareHandlerFactory {
                             break
                         case "0.3":
                         case "0.3.1":
-                        default:
                             handlers[version] = PharmMl0_3AwareHandler.getInstance()
                             if (IS_INFO_ENABLED) {
                                 log.info "Cached the PharmMl0_3AwareHandler instance."
+                            }
+                            break
+                        case "0.6":
+                        default:
+                            handlers[version] = PharmMl0_6AwareHandler.getInstance()
+                            if (IS_INFO_ENABLED) {
+                                log.info "Cached the PharmMl0_6AwareHandler instance."
                             }
                     }
                 }
@@ -99,6 +105,6 @@ final class PharmMlVersionAwareHandlerFactory {
      * @return the default PharmML handler that should be used.
      */
     public static IPharmMlService getDefaultHandler() {
-        return getHandler("0.3.1")
+        return getHandler("0.6")
     }
 }

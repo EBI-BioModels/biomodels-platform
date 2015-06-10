@@ -81,10 +81,16 @@ final class PharmMlVersionAwareRendererFactory {
                         case "0.3":
                             //fall through
                         case "0.3.1":
-                        default:
                             renderers[version] = PharmMl0_3AwareRenderer.getInstance()
                             if (IS_INFO_ENABLED) {
                                 log.info "Cached the PharmMl0_3AwareRenderer instance."
+                            }
+                            break
+                        case "0.6":
+                        default:
+                            renderers[version] = PharmMl0_6AwareRenderer.getInstance()
+                            if (IS_INFO_ENABLED) {
+                                log.info "Cached the PharmMl0_6AwareRenderer instance."
                             }
                             break
                     }
@@ -98,6 +104,6 @@ final class PharmMlVersionAwareRendererFactory {
      * @return the default PharmML renderer that should be used.
      */
     static IPharmMlRenderer getDefaultRenderer() {
-        return getRenderer("0.3.1")
+        return getRenderer("0.6")
     }
 }

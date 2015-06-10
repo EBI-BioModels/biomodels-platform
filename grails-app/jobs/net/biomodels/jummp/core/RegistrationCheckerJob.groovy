@@ -30,12 +30,9 @@
 
 package net.biomodels.jummp.core
 
-import org.quartz.JobExecutionException
-import org.quartz.JobExecutionContext
 /**
- * @short Job for checking the status of the modelfileformatconfig which was getting
- * lost (so long as it was in the service). While its running anyway, it updates the
- * search provider's index, ensuring we have (relatively) recent results.
+ * @short Job for checking the status of the model file format configuration
+ * which was getting lost (so long as it was in the service).
  *
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  */

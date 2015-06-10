@@ -83,16 +83,16 @@ class SubmissionServiceTests extends JummpIntegrationTest {
     @After
     void tearDown() {
         // Tear down logic here
-        //FileUtils.deleteDirectory(new File("target/vcs/git"))
-        //FileUtils.deleteDirectory(new File("target/vcs/exchange"))
+        FileUtils.deleteDirectory(new File("target/vcs/git"))
+        FileUtils.deleteDirectory(new File("target/vcs/exchange"))
         modelService.vcsService.vcsManager = null
     }
 
     // TODO: remove this copy from JmsAdapterServiceTest
     private void setupVcs() {
         File root = new File("target/vcs/git")
-        root.mkdirs()
-        new File("target/vcs/exchange/").mkdirs()
+        assertTrue root.mkdirs()
+        assertTrue new File("target/vcs/exchange/").mkdirs()
         fileSystemService.root = root
         String containerPath = root.absolutePath + "/aaa/"
         fileSystemService.currentModelContainer = containerPath

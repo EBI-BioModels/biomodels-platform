@@ -31,8 +31,8 @@
 
 package net.biomodels.jummp.plugins.pharmml.util.correlation
 
-import eu.ddmore.libpharmml.dom.commontypes.MatrixType
-import eu.ddmore.libpharmml.dom.commontypes.MatrixRowType
+import eu.ddmore.libpharmml.dom.commontypes.Matrix
+import eu.ddmore.libpharmml.dom.commontypes.MatrixRow
 import eu.ddmore.libpharmml.dom.commontypes.RealValue
 import eu.ddmore.libpharmml.dom.commontypes.ScalarRhs
 import eu.ddmore.libpharmml.dom.commontypes.StringValue
@@ -59,14 +59,13 @@ public class PharmMl0_3AwareCorrelationProcessor implements ICorrelationProcesso
     @Override
     List<CorrelationMatrix> convertToStringMatrix(List<Correlation> correlations,
                 Map<String, List<String>> randomEffectsPerLevel) {
-
         def matricesByLevel = new HashMap<String, CorrelationMatrix>()
         correlations.each { c ->
             try {
                 final String VAR = c.variabilityReference.symbRef?.symbIdRef ?:
                                 c.variabilityReference.symbRef?.blkIdRef ?: "undefined"
                 final Pairwise PAIRWISE = c.pairwise
-                final MatrixType MATRIX = c.matrix
+                final Matrix MATRIX = c.matrix
                 assert (PAIRWISE != null) || (MATRIX != null)
                 CorrelationMatrix cm
                 ScalarRhs value
@@ -122,7 +121,7 @@ Unexpected value for correlation matrix type ${MATRIX.matrixType} in $c."""
                         }
                     }
 
-                    final List<MatrixRowType> ROWS = MATRIX.matrixRow
+                    final List<MatrixRow> ROWS = MATRIX.matrixRow
                     final int M_SIZE = ROWS.size()
                     String[][] theMatrix = new String[M_SIZE][M_SIZE]
                     ROWS.eachWithIndex { r, i ->

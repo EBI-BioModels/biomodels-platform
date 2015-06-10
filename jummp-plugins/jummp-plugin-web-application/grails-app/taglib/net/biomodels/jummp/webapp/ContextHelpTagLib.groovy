@@ -67,7 +67,7 @@ class ContextHelpTagLib {
 			String url=computeLocation(attrs.location);
 			if (url) {
 				builder.append(url+"#contextSpecific/"+attrs.width);
-				builder.append("'/>");
+				builder.append("'></iframe>");
 				out<<builder.toString();
 			}
 		}

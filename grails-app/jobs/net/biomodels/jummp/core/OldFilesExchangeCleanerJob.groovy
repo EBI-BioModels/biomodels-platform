@@ -34,8 +34,6 @@
 
 package net.biomodels.jummp.core
 
-import org.quartz.JobExecutionException
-import org.quartz.JobExecutionContext
 /**
  * @short Job for cleaning the exchange directory after RTCs if they have been in the
  * exchange for a long time. This can happen if the GC based cleaner doesnt clean up

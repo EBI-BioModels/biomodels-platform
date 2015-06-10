@@ -45,14 +45,22 @@ class MiriamServiceTests {
     def grailsApplication
     def miriamService
     File wd
+    File exportFile
+    final String exportName = "export.xml"
 
     @Override
     @Before
     void setUp() {
-        wd  = new File("target/vcs/git/miriam/")
+        wd  = new File("target/miriam/")
         wd.mkdirs()
         assertTrue wd.exists()
-        grailsApplication.config.jummp.vcs.workingDirectory = wd.absolutePath
+
+        exportFile = new File(wd, exportName)
+        assertNotNull exportFile
+
+        String exportParentPath = wd.absolutePath
+        grailsApplication.config.jummp.vcs.workingDirectory = exportParentPath
+        miriamService.registryExport = exportFile
     }
 
     @Override
@@ -64,11 +72,9 @@ class MiriamServiceTests {
     @Test
     void testUpdateMiriamResourcesSecurity() {
         String url = "http://www.ebi.ac.uk/miriam/main/export/xml/"
-        def exportFile = new File(wd, miriamService.EXPORT_FILE_NAME)
-        assertNotNull exportFile
         assertFalse exportFile.exists()
         miriamService.updateMiriamResources(url)
-        exportFile = new File(wd, miriamService.EXPORT_FILE_NAME)
         assertTrue exportFile.exists()
+        assertTrue(exportFile.size() > 0)
     }
 }

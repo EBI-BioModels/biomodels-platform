@@ -117,7 +117,6 @@ class SetupFilters implements InitializingBean {
         } else {
             /*setupFilter3(controller: 'setup', invert: true) {
                 before = {
-                	System.out.println("Controller name: ${controllerName.getProperties()}.. redirecting!")
                    	redirect(controller: 'setup')
                     return true
                 }

@@ -67,7 +67,9 @@ class MathsUtil {
         "and":"&and;",
         "or":"&or;",
         "gammaln":"&Gamma;",
-        "factln": "!"
+        "factln": "!",
+        "isDefined": "&#x2061;",
+        "not": "&#xac;"
     ]
 
 	public static List<MathsSymbol> convertToSymbols(def equation) {
@@ -218,7 +220,7 @@ class MathsUtil {
     }
 
     private static MathsSymbol getSymbol(def jaxObject) {
-        if (jaxObject instanceof Binop || jaxObject instanceof LogicBinOp) {
+        if (jaxObject instanceof Binop) {
             Binoperator o = jaxObject.operator
             switch (o) {
                 case Binoperator.DIVIDE:
@@ -237,6 +239,15 @@ class MathsUtil {
                     return new OperatorSymbol(o.getOperator(), convertBinoperatorToSymbol(o),
                         OperatorSymbol.OperatorType.BINARY)
             }
+        }
+        if (jaxObject instanceof LogicBinOp) {
+            final String op = jaxObject.op
+            return new OperatorSymbol(op, convertTextToSymbol(op),
+                    OperatorSymbol.OperatorType.BINARY)
+        }
+        if (jaxObject instanceof LogicUniOp) {
+            return new OperatorSymbol(jaxObject.op, jaxObject.op,
+                    OperatorSymbol.OperatorType.UNARY)
         }
         if (jaxObject instanceof Uniop || jaxObject instanceof LogicUniOp) {
             Unioperator o = jaxObject.operator

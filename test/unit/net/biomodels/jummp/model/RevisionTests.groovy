@@ -36,6 +36,7 @@ package net.biomodels.jummp.model
 
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import net.biomodels.jummp.plugins.security.Person
 import net.biomodels.jummp.plugins.security.User
 
 @TestFor(Revision)
@@ -44,8 +45,13 @@ class RevisionTests {
     @SuppressWarnings('UnusedVariable')
     void testConstraints() {
         Model model = new Model(vcsIdentifier: "test", name: "test")
-        User owner = new User(username: "testUser", password: "secret", userRealName: "Test User", email: "test@user.org", enabled: true, accountExpired: false, accountLocked: false, passwordExpired: false)
-        mockForConstraintsTests(Revision, [new Revision(vcsId: "1", revisionNumber: 1, minorRevision: false, uploadDate: new Date(), comment: '', owner: owner, model: model)])
+        Person testUser = new Person(userRealName: 'Test User')
+        User owner = new User(username: "testUser", password: "secret", person: testUser,
+                email: "test@user.org", enabled: true, accountExpired: false,
+                accountLocked: false, passwordExpired: false)
+        mockForConstraintsTests(Revision, [new Revision(vcsId: "1", revisionNumber: 1,
+                minorRevision: false, uploadDate: new Date(), comment: '', owner: owner,
+                model: model)])
         // verify nullable
         Revision revision = new Revision()
         assertFalse(revision.validate())
@@ -104,7 +110,10 @@ class RevisionTests {
         assertNull(revision.errors["name"])
 
         // verify that a correct Revision is valid
-        revision = new Revision(model: model, vcsId: "2", revisionNumber: 2, owner: owner, minorRevision: true, uploadDate: new Date(), name:'test',description:'pointless', comment: 'fictional', format: new ModelFormat(identifier: "UNKNOWN", name: "unknown"))
+        revision = new Revision(model: model, vcsId: "2", revisionNumber: 2, owner: owner,
+                minorRevision: true, uploadDate: new Date(), name:'test',
+                description: 'pointless', comment: 'fictional',
+                format: new ModelFormat(identifier: "UNKNOWN", name: "unknown"))
         assertTrue(revision.validate())
     }
 }

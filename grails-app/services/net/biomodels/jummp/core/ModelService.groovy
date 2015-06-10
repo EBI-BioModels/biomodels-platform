@@ -924,7 +924,6 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
                 log.error(msg)
                 throw new ModelException(rev.model, "The submission appears to contain invalid file ${fileName}. Please review it and try again.")
             } else {
-                System.out.println("ADDING ${domain} ... ${domain.mimeType}")
                 domainObjects.add(domain)
             }
         }
@@ -1157,7 +1156,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         try {
             revision.vcsId = vcsService.importModel(model, modelFiles)
         } catch (VcsException e) {
-        	revision.discard()
+            revision.discard()
             domainObjects.each { it.discard() }
             model.discard()
             //TODO undo the addition of the files to the VCS.
@@ -1306,6 +1305,11 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
                 log.error("Folder detected while uploading a new revision for ${model.properties}: ${repoFiles.properties}")
                 throw new ModelException(DomainAdapter.getAdapter(model).toCommandObject(),
                     "Sorry, we currently do not accept model organised into sub-folders.")
+            }
+            if (rf.mainFile && f.length() == 0) {
+                def err = "File ${f.name} cannot be empty because it is the main file of the submission."
+                log.error err
+                throw new ModelException(DomainAdapter.getAdapter(model).toCommandObject(), err)
             }
             modelFiles.add(f)
         }

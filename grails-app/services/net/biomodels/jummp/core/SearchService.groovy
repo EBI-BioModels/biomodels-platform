@@ -177,7 +177,6 @@ class SearchService {
             'miriamExportFile': registryExport)
         File indexingData = new File(exchangeFolder, "indexData.json")
         indexingData.setText(builder.toString())
-        System.out.println(builder.toString())
         String jarPath = grailsApplication.config.jummp.search.pathToIndexerExecutable
         def argsMap = [jarPath: jarPath,
                 jsonPath: indexingData.getCanonicalPath()]

@@ -61,7 +61,7 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.junit.*
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.acls.domain.BasePermission
-import net.biomodels.jummp.core.adapters.DomainAdapter 
+import net.biomodels.jummp.core.adapters.DomainAdapter
 
 @TestMixin(IntegrationTestMixin)
 class ModelServiceTests extends JummpIntegrationTest {
@@ -74,17 +74,18 @@ class ModelServiceTests extends JummpIntegrationTest {
     @Before
     void setUp() {
         def container = new File("target/vcs/git/ggg/")
+        String rootPath = container.getParent()
         container.mkdirs()
         assertTrue container.exists()
         String currentContainer = container.getCanonicalPath()
         def exchange = new File("target/vcs/exchange/")
         exchange.mkdirs()
-        grailsApplication.config.jummp.vcs.workingDirectory = container.getParent()
+        grailsApplication.config.jummp.vcs.workingDirectory = rootPath
         grailsApplication.config.jummp.vcs.exchangeDirectory = exchange.path
         assertTrue exchange.exists()
         fileSystemService.currentModelContainer = currentContainer
         fileSystemService.root = container.getParentFile()
-        modelService.vcsService.modelContainerRoot = container.getParent()
+        modelService.vcsService.modelContainerRoot = rootPath
         def gitFactory = grailsApplication.mainContext.getBean("gitManagerFactory")
         modelService.vcsService.vcsManager = gitFactory.getInstance()
         assertTrue(modelService.vcsService.isValid())
@@ -96,8 +97,7 @@ class ModelServiceTests extends JummpIntegrationTest {
         try {
             FileUtils.deleteDirectory(new File("target/vcs/git"))
             FileUtils.deleteDirectory(new File("target/vcs/exchange"))
-        }
-        catch(Exception ignore) {
+        } catch(Exception ignore) {
         }
         modelService.vcsService.vcsManager = null
         modelService.modelFileFormatService = modelFileFormatService
@@ -629,7 +629,7 @@ class ModelServiceTests extends JummpIntegrationTest {
         final String rootPath = fileSystemService.root.getCanonicalPath()
         // the vcs identifier for a model should always be relative to the root where all models are stored
         def prefix = fileSystemService.findCurrentModelContainer() - rootPath
-        String modelIdentifier="${prefix}/test/".toString()
+        String modelIdentifier = "${prefix}/test/".toString()
         // create one model with one revision and no acl
         Model model = new Model(vcsIdentifier: modelIdentifier, submissionId: "model1")
         Revision revision = new Revision(model: model, vcsId:"1", revisionNumber: 1, owner: User.findByUsername("testuser"), minorRevision: false, name:"test", description: "", comment: "", uploadDate: new Date(), format: ModelFormat.findByIdentifierAndFormatVersion("UNKNOWN", "*"))
@@ -723,7 +723,7 @@ class ModelServiceTests extends JummpIntegrationTest {
         assertTrue(aclUtilService.hasPermission(auth, rev, BasePermission.READ))
         assertTrue(aclUtilService.hasPermission(auth, rev, BasePermission.DELETE))
 
-        File gitFile = new File("target/vcs/git/update.xml")
+        File gitFile = new File("${rootPath}/${modelIdentifier}/update.xml")
         List<String> lines = gitFile.readLines()
         assertEquals(1, lines.size())
         assertEquals("Test", lines[0])
@@ -1010,6 +1010,7 @@ class ModelServiceTests extends JummpIntegrationTest {
         File sbmlFile = new File("target/sbml/sbmlTestFile")
         FileUtils.deleteQuietly(sbmlFile)
         FileUtils.touch(sbmlFile)
+        sbmlFile.append("this is not an sbml file.")
         rf.path = sbmlFile.absolutePath
         Model theModel = modelService.uploadModelAsFile(rf, meta)
         assertNotNull(theModel)
@@ -1538,7 +1539,7 @@ class ModelServiceTests extends JummpIntegrationTest {
         assertNotNull checkout
         assertTrue checkout.model.vcsIdentifier.endsWith("$submissionId/")
         assertEquals name, checkout.name
-        File vcsFolder = new File(modelService.vcsService.modelContainerRoot).listFiles().find {
+        File vcsFolder = new File(fileSystemService.currentModelContainer).listFiles().find {
             it.isDirectory() && it.name.endsWith("$submissionId")
         }
         assertNotNull vcsFolder
@@ -1570,7 +1571,7 @@ class ModelServiceTests extends JummpIntegrationTest {
             assertNotNull checkout
             assertTrue checkout.model.vcsIdentifier.endsWith("$submissionId/")
             assertEquals name, checkout.name
-            def vcsRoot = new File(modelService.vcsService.modelContainerRoot)
+            def vcsRoot = new File(fileSystemService.currentModelContainer)
             File vcsFolder = vcsRoot.listFiles().find {
                 it.isDirectory() && it.name.endsWith("$submissionId")
             }

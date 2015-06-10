@@ -45,12 +45,12 @@ import eu.ddmore.libpharmml.dom.commontypes.Sequence
 import eu.ddmore.libpharmml.dom.commontypes.StringValue
 import eu.ddmore.libpharmml.dom.commontypes.SymbolRef
 import eu.ddmore.libpharmml.dom.commontypes.TrueBoolean
-import eu.ddmore.libpharmml.dom.commontypes.VariableAssignmentType
+import eu.ddmore.libpharmml.dom.commontypes.VariableAssignment
 import eu.ddmore.libpharmml.dom.commontypes.Vector as CTVector
 import eu.ddmore.libpharmml.dom.dataset.ColumnDefinition
 import eu.ddmore.libpharmml.dom.dataset.DataSetTableDefnType
 import eu.ddmore.libpharmml.dom.dataset.DataSetTableType
-import eu.ddmore.libpharmml.dom.dataset.DataSetType
+import eu.ddmore.libpharmml.dom.dataset.DataSet
 import eu.ddmore.libpharmml.dom.maths.Binop
 import eu.ddmore.libpharmml.dom.maths.Constant
 import eu.ddmore.libpharmml.dom.maths.Equation
@@ -63,11 +63,11 @@ import eu.ddmore.libpharmml.dom.modeldefn.GeneralObsError
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable
 import eu.ddmore.libpharmml.dom.modeldefn.SimpleParameter
-import eu.ddmore.libpharmml.dom.modellingsteps.DatasetMappingType
-import eu.ddmore.libpharmml.dom.modellingsteps.OperationPropertyType
-import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimateType
-import eu.ddmore.libpharmml.dom.modellingsteps.ToEstimateType
-import eu.ddmore.libpharmml.dom.modellingsteps.VariableMappingType
+import eu.ddmore.libpharmml.dom.modellingsteps.DatasetMapping
+import eu.ddmore.libpharmml.dom.modellingsteps.OperationProperty
+import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimate
+import eu.ddmore.libpharmml.dom.modellingsteps.ToEstimate
+import eu.ddmore.libpharmml.dom.modellingsteps.VariableMapping
 import eu.ddmore.libpharmml.dom.trialdesign.Activity
 import eu.ddmore.libpharmml.dom.trialdesign.Bolus
 import eu.ddmore.libpharmml.dom.trialdesign.Infusion
@@ -90,6 +90,7 @@ abstract class AbstractPharmMlRenderer implements IPharmMlRenderer {
     private static final Log log = LogFactory.getLog(this)
     private static final String IS_DEBUG_ENABLED = log.isDebugEnabled()
     private static final String IS_INFO_ENABLED = log.isInfoEnabled()
+
     /*
      * Parses an activity and writes it to a StringBuilder.
      * Returns whether to display a dosing footnote or not.
@@ -169,9 +170,8 @@ abstract class AbstractPharmMlRenderer implements IPharmMlRenderer {
                 }
             }
         } catch(Exception e) {
-            output = new StringBuilder()
             output.append("Cannot display random variables.")
-            log.error("Error encountered while rendering random variables ${rv.inspect()}: ${e.message}")
+            log.error("Error encountered while rendering random variables ${rv.inspect()}: ${e.message}", e)
         }
         return output
     }
@@ -312,7 +312,7 @@ abstract class AbstractPharmMlRenderer implements IPharmMlRenderer {
         } catch(Exception e) {
             output = new StringBuilder("<div class='spaced-top-bottom'>")
             output.append("Cannot display individual parameters.")
-            log.error("Error encountered while rendering individual parameters ${parameters.inspect()} using random variables ${rv.inspect()} and covariates ${covariates.inspect()}: ${e.message}")
+            log.error("Error encountered while rendering individual parameters ${parameters.inspect()} using random variables ${rv.inspect()} and covariates ${covariates.inspect()}: ${e.message}", e)
         }
         return output.append("</div>")
     }
@@ -412,7 +412,7 @@ abstract class AbstractPharmMlRenderer implements IPharmMlRenderer {
             }
         } catch(Exception e) {
             outcome.append("<p>Cannot display simple parameters.<p>")
-            log.error("Error encountered while rendering simple params ${parameters.inspect()}: ${e.message}")
+            log.error("Error encountered while rendering simple params ${parameters.inspect()}: ${e.message}", e)
         } finally {
             return outcome.append("</div>")
         }
@@ -437,7 +437,7 @@ abstract class AbstractPharmMlRenderer implements IPharmMlRenderer {
         return result
     }
 
-    protected StringBuilder variableAssignments(List<VariableAssignmentType> assignments, String heading) {
+    protected StringBuilder variableAssignments(List<VariableAssignment> assignments, String heading) {
         def result = new StringBuilder("\n${heading}\n")
         assignments.inject(result){r,v ->
             r.append("<p>").append(convertToMathML(v.symbRef.symbIdRef, v.assign)).append("</p>")
@@ -445,7 +445,7 @@ abstract class AbstractPharmMlRenderer implements IPharmMlRenderer {
         return result
     }
 
-    protected StringBuilder paramsToEstimate(ToEstimateType params) {
+    protected StringBuilder paramsToEstimate(ToEstimate params) {
         def result = new StringBuilder("<div><h5>Estimation parameters</h5>\n")
         def fixedParams = params.parameterEstimation.findAll{ it.initialEstimate?.fixed }
         if (fixedParams) {
@@ -458,7 +458,7 @@ abstract class AbstractPharmMlRenderer implements IPharmMlRenderer {
         return result.append("</div>")
     }
 
-    protected StringBuilder estimParamsWithInitialEstimate(List<ParameterEstimateType> params,
+    protected StringBuilder estimParamsWithInitialEstimate(List<ParameterEstimate> params,
                 String heading) {
         def result = new StringBuilder("<p class=\"bold\">${heading}</p>\n")
         if (params.size() > 1) {
@@ -495,7 +495,7 @@ abstract class AbstractPharmMlRenderer implements IPharmMlRenderer {
         operations.each { o ->
             result.append("<div><span class=\"bold\">")
             result.append(o.order).append(") ")
-            result.append(o.name ? o.name.value : operationMeaningMap[o.opType.value()])
+            result.append(o.name ? o.name.value : operationMeaningMap[o.opType])
             result.append("</span>\n")
             if (o.description || o.algorithm || o.property) {
                 result.append("<div>")
@@ -529,8 +529,8 @@ abstract class AbstractPharmMlRenderer implements IPharmMlRenderer {
         return result
     }
 
-    StringBuilder objectiveDataSetMapping(List<DatasetMappingType> mappings, RevisionTransportCommand rev, String downloadLink) {
-    	def result = new StringBuilder("<h5>Dataset mapping")
+    StringBuilder objectiveDataSetMapping(List<DatasetMapping> mappings, RevisionTransportCommand rev, String downloadLink) {
+        def result = new StringBuilder("<h5>Dataset mapping")
         if (mappings.size() > 1) {
             result.append("s")
         }
@@ -545,7 +545,7 @@ abstract class AbstractPharmMlRenderer implements IPharmMlRenderer {
             dsm.mapping.each {
                 //keep track of variableMappings so that we know how to name the columns
                 //deal with JAXBElement
-                if (it.value instanceof VariableMappingType) {
+                if (it.value instanceof VariableMapping) {
                     variableMap << [ (it.value.columnRef.columnIdRef) : (it.value.symbRef.symbIdRef)]
                 }
             }
@@ -556,68 +556,64 @@ abstract class AbstractPharmMlRenderer implements IPharmMlRenderer {
         return result
     }
 
-    protected StringBuilder operationProperty(OperationPropertyType prop) {
+    protected StringBuilder operationProperty(OperationProperty prop) {
         return new StringBuilder().append(convertToMathML(prop.name, prop.assign))
     }
 
-    protected StringBuilder dataSet(DataSetType dataSet, Map variableMap,
-    								StringBuilder sb, RevisionTransportCommand rev,
-    								String downloadLink) {
-        if (dataSet.table) {
-			def columnOrder = [:]
-			List tables = dataSet.definition.columnOrTable
-			tables.each {
-				if (it instanceof ColumnDefinition) {
-					columnOrder << [ (it.columnNum) : (it.columnId) ]
-				} else if (it instanceof DataSetTableDefnType) {
-					columnOrder << [ (it.columnNum) : (it.tableId) ]
-				}
-			}
-			sb.append("\n<table><thead><tr>")
+    protected StringBuilder dataSet(DataSet dataSet, Map variableMap,
+            StringBuilder sb, RevisionTransportCommand rev, String downloadLink) {
+        List tables = dataSet.getListOfColumnDefinition()
+        if (tables) {
+            tables.each {
+                def columnOrder = tables.inject([:]) { order, colDef ->
+                    order << [(colDef.columnNum) : (colDef.columnId)]
+                }
+                sb.append("\n<table><thead><tr>")
 
-			tables.inject(sb) { txt, d ->
-				def key = columnOrder[d.columnNum]
-				if (key && variableMap && variableMap[key]) {
-					txt.append(["<th>", "</th>"].join(variableMap[key]))
-				} else if (d instanceof ColumnDefinition) {
-					txt.append(["<th>", "</th>"].join(d.columnId))
-				} else if (d instanceof DataSetTableDefnType) {
-					txt.append(["<th>", "</th>"].join(d.tableId))
-				}
-			}
-			sb.append("</tr></thead><tbody>")
-        	dataSet.table.row.each { i ->
-				sb.append("\n<tr>")
-				i.scalarOrTable.each { td ->
-					if (td.value instanceof DataSetTableType) {
-						def content = new StringBuilder("<table class='default'>")
-						td.value.row.inject(content) { cont, r ->
-							cont.append("<tr class='default'>")
-							r.scalarOrTable.inject(cont) { s, val ->
-								s.append("<td class='default'>")
-								if (val instanceof DataSetTableType) {
-									s.append("*")
-								} else {
-									s.append(scalar(val.value))
-								}
-								s.append("</td>")
-							}
-							cont.append("</tr>")
-						}
-						String ready = content.append("</table>").toString()
-						sb.append(["<td class='default'>", "</td>"].join(ready))
-					} else {
-						sb.append(["<td class='default'>", "</td>"].join(scalar(td.value)))
-					}
-				}
-				sb.append("</tr>")
-				sb.append("</tbody></table>\n")
-			}
+                tables.inject(sb) { txt, d ->
+                    def key = columnOrder[d.columnNum]
+                    if (key && variableMap && variableMap[key]) {
+                        txt.append(["<th>", "</th>"].join(variableMap[key]))
+                    } else if (d instanceof ColumnDefinition) {
+                        txt.append(["<th>", "</th>"].join(d.columnId))
+                    } else if (d instanceof DataSetTableDefnType) {
+                        txt.append(["<th>", "</th>"].join(d.tableId))
+                    }
+                }
+                sb.append("</tr></thead><tbody>")
+                dataSet.getListOfRow().each { i ->
+                    sb.append("\n<tr>")
+                    i.getListOfValue().each { td ->
+                        if (td.value instanceof DataSetTableType) {
+                            def content = new StringBuilder("<table class='default'>")
+                            td.value.row.inject(content) { cont, r ->
+                                cont.append("<tr class='default'>")
+                                r.getListOfValue().inject(cont) { s, val ->
+                                    s.append("<td class='default'>")
+                                    if (val instanceof DataSetTableType) {
+                                        s.append("*")
+                                    } else {
+                                        s.append(scalar(val.value))
+                                    }
+                                    s.append("</td>")
+                                }
+                                cont.append("</tr>")
+                            }
+                            String ready = content.append("</table>").toString()
+                            sb.append(["<td class='default'>", "</td>"].join(ready))
+                        } else {
+                            sb.append(["<td class='default'>", "</td>"].join(scalar(td.value)))
+                        }
+                    }
+                    sb.append("</tr>")
+                }
+                sb.append("</tbody></table>\n")
+            }
         }
-        if (dataSet.importData) {
+        if (dataSet.externalFile) {
             def rftc = rev.files.find {
                 File file = new File(it.path)
-                return file.getName() == dataSet.importData.path
+                return file.getName() == dataSet.externalFile.path
             }
             if (rftc) {
                 sb.append("This model refers to an external data file: <a href='");
@@ -630,7 +626,7 @@ abstract class AbstractPharmMlRenderer implements IPharmMlRenderer {
             }
             else {
                 sb.append("This model refers to an external data file named '")
-                sb.append(dataSet.importData.name)
+                sb.append(dataSet.externalFile.name)
                 sb.append("', but the file is not available in the repository. ")
             }
         }
@@ -889,7 +885,7 @@ abstract class AbstractPharmMlRenderer implements IPharmMlRenderer {
                     if (value==2.0) {
                         isSquareRoot=true
                     }
-                } catch(Exception notANumber) {}
+                } catch(NumberFormatException notANumber) { }
                 if (!isSquareRoot) {
                     builder.append("<mroot><mrow>")
                     builder.append(operandBuilder)
@@ -1088,8 +1084,8 @@ abstract class AbstractPharmMlRenderer implements IPharmMlRenderer {
         }
         Binop expanded = new Binop()
         expanded.operator = binop.operator
-        expanded.operand1 = expandedTerms[0]
-        expanded.operand2 = expandedTerms[1]
+        expanded.operand1 = expandedTerms[0].value
+        expanded.operand2 = expandedTerms[1].value
         return wrapJaxb(expanded)
     }
 
