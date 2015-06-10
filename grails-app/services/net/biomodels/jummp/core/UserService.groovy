@@ -324,7 +324,9 @@ class UserService implements IUserService {
     @PostLogging(LoggingEventType.CREATION)
     @Profiled(tag = "userService.register")
     @PreAuthorize("isAnonymous() or hasRole('ROLE_ADMIN')")
-    Long register(User user) throws RegistrationException, UserInvalidException {
+    Long register(User user, boolean specifiedPassword=false) throws RegistrationException, UserInvalidException {
+        System.out.println("PASSWORD RECEIVED: "+user.password)
+        String passwordSupplied = user.password
         if (springSecurityService.authentication instanceof AnonymousAuthenticationToken &&
                 !grailsApplication.config.jummp.security.anonymousRegistration) {
             throw new AccessDeniedException("Registration disabled for anonymous users")
@@ -356,9 +358,16 @@ class UserService implements IUserService {
         String p = generator( (('A'..'Z')+('0'..'9')).join(), 6 )
         if (SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
             // admin creates with a random password that is emailed to the user.
-            newUser.password = "*"
             newUser.enabled = true
-            newUser.password = springSecurityService.encodePassword(p, null)
+            if (!specifiedPassword) {
+                newUser.password = p
+            }
+            else {
+                System.out.println("SETTING PASSWORD AS : "+passwordSupplied)
+                newUser.password = passwordSupplied
+            }
+            System.out.println("CREATING USER WITH PASSWORD: "+newUser.password)
+            newUser.password = springSecurityService.encodePassword(newUser.password, null)
             newUser.passwordExpired = false
             adminRegistration = true
         } else {
@@ -385,7 +394,8 @@ class UserService implements IUserService {
         GregorianCalendar registrationInvalidation = new GregorianCalendar()
         registrationInvalidation.add(GregorianCalendar.DAY_OF_MONTH, 1)
         newUser.registrationInvalidation = registrationInvalidation.getTime()
-        newUser.save(flush: true)
+        newUser.save(flush: true, failOnError:true)
+        System.out.println("USER CREATED: "+newUser+".."+newUser.getProperties())
         UserRole.create(newUser, Role.findByAuthority("ROLE_USER"), true)
         if (grailsApplication.config.jummp.security.curatorByDefault) {
         	UserRole.create(newUser, Role.findByAuthority("ROLE_CURATOR"), true)
