@@ -37,6 +37,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
+import net.biomodels.jummp.annotationstore.ResourceReference
 import grails.util.Holders
 import groovy.sql.Sql
 
@@ -103,6 +104,11 @@ String authDB
 String authUsername
 String authPassword
 
+/**
+* Location of simulation files
+*/
+File simulationFolder
+
 /*
 * List of users used in this import
 */
@@ -154,7 +160,30 @@ giving up. Sorry about that.""", vcsIssues)
     def domainadapter = grailsApp.classLoader.loadClass(
             "net.biomodels.jummp.core.adapters.DomainAdapter")
             
+    def Revision = grailsApp.classLoader.loadClass(
+            "net.biomodels.jummp.model.Revision")
+            
+    def Model = grailsApp.classLoader.loadClass(
+            "net.biomodels.jummp.model.Model")
+            
+    def CurationNotes = grailsApp.classLoader.loadClass(
+            "net.biomodels.jummp.deployment.biomodels.CurationNotes")
+            
+    def ModelOfTheMonth = grailsApp.classLoader.loadClass(
+            "net.biomodels.jummp.deployment.biomodels.ModelOfTheMonth")
+            
+    def ResourceReference = grailsApp.classLoader.loadClass(
+            "net.biomodels.jummp.annotationstore.ResourceReference")
     
+    def Statement = grailsApp.classLoader.loadClass(
+            "net.biomodels.jummp.annotationstore.Statement")
+            
+    def ElementAnnotation = grailsApp.classLoader.loadClass(
+            "net.biomodels.jummp.annotationstore.ElementAnnotation")
+
+    def Qualifier = grailsApp.classLoader.loadClass(
+            "net.biomodels.jummp.annotationstore.Qualifier")
+            
     decorator.context = appCtx
     rtc.context = appCtx
     def modelService = appCtx.modelService
@@ -228,7 +257,7 @@ giving up. Sorry about that.""", vcsIssues)
                         //if original file exists, only then proceed, otherwise there is an error
                         if (originalFile) {
                             //submit first revision, with original file as the main file
-                            def firstRevision = getSubmissionData(originalFile, 
+                            def initialSubmission = getSubmissionData(originalFile, 
                                                               additionalFiles - originalFile,
                                                               "Original import of ",
                                                               rftc,
@@ -236,15 +265,21 @@ giving up. Sorry about that.""", vcsIssues)
                                                               mtc,
                                                               mf,
                                                               modelFileFormatService)
-                            def firstModel = modelService.uploadValidatedModel(firstRevision[0], firstRevision[1])
-                            firstModel.firstPublished = modelDetails["publicationDate"]
-                            firstModel.revisions.first().uploadDate = modelDetails["submissionDate"]
+                            def firstModel = modelService.uploadValidatedModel(initialSubmission[0], initialSubmission[1])
                             if (!firstModel) {
                                 log("...could not import initial file: ${originalFile.absolutePath}")
                                 failures.add(it.absolutePath)
                             }
                             else {
-                                //submit current version as a new revision.
+                                processModelOfTheMonth(firstModel, biomodelsConnection, ModelOfTheMonth)
+                                saveCurationNotes(firstModel, biomodelsConnection, 
+                                                  CurationNotes, simulationFolder,
+                                                  authConnection, User, Person,
+                                                  userService)
+                                firstModel.firstPublished = modelDetails["publicationDate"]
+                                firstModel.submissionId = modelDetails["model_id"]
+                                Revision.executeUpdate("update Revision set uploadDate = :newDate where model = :modelImported", [newDate:modelDetails["submissionDate"], modelImported: firstModel])
+                                Model.executeUpdate("update Model set submissionId = :newId where id = :modelId", [newId:modelDetails["model_id"], modelId: firstModel.id])
                                 def secondRevision = getSubmissionData(it,
                                                                    additionalFiles,
                                                                    "Current version of ",
@@ -261,7 +296,29 @@ giving up. Sorry about that.""", vcsIssues)
                                     log("...could not update to latest version: ${originalFile.absolutePath}")
                                     failures.add(it.absolutePath)
                                 }
-                                firstModel.revisions.last().uploadDate = modelDetails["lastModified"]
+                                boolean curated = "publ" == modelBranch
+                                createBMAnnotation(secondResult, curated, "curated", 
+                                                   user.person.userRealName, 
+                                                   ResourceReference, Qualifier, 
+                                                   Statement, ElementAnnotation)
+                               String publicationLink = getPublicationLink(modelDetails["publication_id"],
+                                                                           modelDetails["publication_id_type"])
+                               if (publicationLink) {
+                                   createBMAnnotation(secondResult, publicationLink, "originalModel", 
+                                                   user.person.userRealName, 
+                                                   ResourceReference, Qualifier, 
+                                                   Statement, ElementAnnotation)
+                               }
+                               
+                                if (modelDetails["jwsLink"]) {
+                                   createBMAnnotation(secondResult, modelDetails["jwsLink"], 
+                                                      "onlineSimulation", user.person.userRealName, 
+                                                      ResourceReference, Qualifier, 
+                                                      Statement, ElementAnnotation)
+                                }
+                               
+                                secondResult.uploadDate = modelDetails["lastModified"]
+                                secondResult.save()
                             }
                             log("...finished importing model file ${it.absolutePath}")
                         }
@@ -323,6 +380,8 @@ batch-import --models=<model_folder_location> --credentials=<path_to_credentials
     credentials = location.getCanonicalFile()
     def c = JSON.parse(new FileInputStream(credentials.absolutePath), "UTF8")
 
+    simulationFolder = new File(c.'simulationFolder')  
+    
     (username, password) = [c.'username', c.'password']
     (bmServer, bmPort, bmDB, bmUsername, bmPassword) = [c.'biomodelsServer',
                                                         c.'biomodelsPort',
@@ -419,7 +478,7 @@ getSubmissionData = { file, additional, comment, rftc, rtc, mtc, mf, modelFileFo
     def formatCommand = modelFileFormatService.inferModelFormat([modelWrapper])
     def format = mf.findByIdentifierAndFormatVersion(formatCommand.identifier,
                                                      formatCommand.formatVersion)
-    final String MODEL_NAME = modelFileFormatService.extractName([file], format)
+    final String MODEL_NAME = modelFileFormatService.extractName([file], format)?: new File(file.absolutePath).getName()
     modelWrapper.description = "${MODEL_NAME}"
     final String DESCRIPTION = modelFileFormatService.extractDescription([file], format)
     boolean isValid = modelFileFormatService.validate([file], format.identifier, [])
@@ -510,6 +569,61 @@ authenticateAsUser = { user, springSecurityService ->
     authenticate(user.username, "autocreated")
 }
 
+processModelOfTheMonth = { model, sql, ModelOfTheMonth ->
+    def dateFormatter = new java.text.SimpleDateFormat('yyyy-MM')
+    sql.eachRow("select * from model_of_month where models_id LIKE '%{"+model.id+"}%'") { row ->
+        def datePublished = dateFormatter.parse(row.pub_month)
+        def modelMonth = ModelOfTheMonth.findByPublicationDate(datePublished)
+        if (!modelMonth) {
+            modelMonth = ModelOfTheMonth.newInstance(title: row.title,
+                                                     authors: row.authors,
+                                                     publicationDate: datePublished,
+                                                     lastUpdated: row.last_modification_date)
+        }
+        modelMonth.addToModels(model)
+        modelMonth.save()
+    }
+}
+
+saveCurationNotes = { model, sql, CurationNotes, imageFolder, authConnection, User, Person, userService ->
+    def row = sql.firstRow("select * from simulations, cura where simulations.curation_id = cura.model_id and (cura.model_id = '"+model.id+"' OR cura.biomodels_id = '"+model.id+"')")
+    if (row) {
+        def submitter = getUserFromBiomodelsId(row.submitter_id, authConnection, User, Person, userService)
+        def modifier = submitter
+        if (row.submitter_id != row.last_modifier_id) {
+            modifier = getUserFromBiomodelsId(row.last_modifier_id, authConnection, User, Person, userService)
+        }
+        def notes = CurationNotes.newInstance(model: model,
+                                              submitter: submitter,
+                                              lastModifier: modifier,
+                                              dateAdded: row.submission_date,
+                                              lastModified: row.last_modification_date,
+                                              comment: row.comments,
+                                              curationImage: new File(imageFolder, row.file_name).getBytes())
+        notes.save(failOnError: true)
+    }
+}
+
+getUserFromBiomodelsId = { bmPersonId, sql, User, Person ->
+    def personDetails = row.firstRow("select * from auth_persons where person_id = "+bmPersonId)
+    def existing = Person.findByEmail(row.email)
+    if (existing) {
+        return User.findByPerson(existing)
+    }
+    def person = Person.newInstance(userRealName: row.given_name+" "+row.family_name,
+                                    institution: row.organisation)
+    def user = User.newInstance(person: person,
+                                username: getUsername(row, sql),
+                                password: "autocreated",
+                                email: email 
+                               )
+    long userId = userService.register(user, true)
+    if (userId) {
+        return User.get(userId)
+     }
+}
+
+
 /*
 * Gets the username associated with a person in the biomodels database. Used to
 * to create JUMMP logins with the same IDs
@@ -532,17 +646,55 @@ getBranch = { modelId, sql ->
     }
 }
 
+createBMAnnotation = { revision, object, qual, creator, ResourceReference, Qualifier, Statement, ElementAnnotation ->
+    def resourceRef = ResourceReference.newInstance(uri: object)
+    resourceRef.save(failOnError: true)
+    def qualifier = Qualifier.newInstance(qualifierType: "biomodelsCustomAnnotation",
+                                          uri: qual)
+    qualifier.save(failOnError:true)
+    def statement = Statement.newInstance(subjectId: 'modelLevelAnnotation',
+                                          qualifier: qualifier,
+                                          object: resourceRef)
+    statement.save(failOnError:true)
+    def elementAnnotation = ElementAnnotation.newInstance(creatorId: creator,
+                                                          statement: statement,
+                                                          revision: revision)
+    elementAnnotation.save(failOnError:true)
+    
+}
+
+getPublicationLink = { publication_id, publication_id_type ->
+    if (!publication_id) {
+        return null
+    }
+    switch(publication_id_type) {
+        case 0: return "http://identifiers.org/pubmed/" + publication_id
+        case 1: return "http://identifiers.org/doi/"+publication_id
+    }
+    return publication_id
+}
+
 /*
 * Gets the model details from biomodelsDB 
 */
 getModelDetails = { modelId, modelBranch, sql ->
     def modelDetails = [:]
-    def row = sql.firstRow("select * from "+modelBranch+" where model_id='"+modelId+"'")
-    modelDetails['submissionDate'] = row.submission_date;
-    modelDetails['lastModified'] = row.last_modification_date;
-    modelDetails['publicationDate'] = row.publication_date;
-    modelDetails['originalModel'] = row.original_model;
-    modelDetails['jwsLink'] = row.jws_online;
+    try {
+        def row = sql.firstRow("select * from "+modelBranch+" where model_id='"+modelId+"'")
+        modelDetails['submissionDate'] = row.submission_date;
+        modelDetails['lastModified'] = row.last_modification_date;
+        modelDetails['publicationDate'] = row.publication_date;
+        modelDetails['originalModel'] = row.original_model;
+        modelDetails['jwsLink'] = row.jws_online;
+        modelDetails['model_id'] = row.model_id;
+        modelDetails['publication_id'] = row.publication_id;
+        modelDetails['publication_id_type'] = row.publication_id_type;
+    }
+    catch(Exception e) {
+        e.printStackTrace()
+        System.out.println("OFFENDING MODEL: "+modelId)
+        System.exit(0);
+    }
     return modelDetails
 }
 
