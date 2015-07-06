@@ -1183,4 +1183,7 @@ databaseChangeLog = {
     include file: '20150608_elementAnnotations.groovy'
 
     include file: '20150608_make_wcm_space_alias_uri_nullable.groovy'
+  
+    include file: '20150618_createBiomodelsDOM.groovy'
+    
 }
