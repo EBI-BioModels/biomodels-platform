@@ -325,7 +325,6 @@ class UserService implements IUserService {
     @Profiled(tag = "userService.register")
     @PreAuthorize("isAnonymous() or hasRole('ROLE_ADMIN')")
     Long register(User user, boolean specifiedPassword=false) throws RegistrationException, UserInvalidException {
-        System.out.println("PASSWORD RECEIVED: "+user.password)
         String passwordSupplied = user.password
         if (springSecurityService.authentication instanceof AnonymousAuthenticationToken &&
                 !grailsApplication.config.jummp.security.anonymousRegistration) {
@@ -363,10 +362,8 @@ class UserService implements IUserService {
                 newUser.password = p
             }
             else {
-                System.out.println("SETTING PASSWORD AS : "+passwordSupplied)
                 newUser.password = passwordSupplied
             }
-            System.out.println("CREATING USER WITH PASSWORD: "+newUser.password)
             newUser.password = springSecurityService.encodePassword(newUser.password, null)
             newUser.passwordExpired = false
             adminRegistration = true
@@ -395,7 +392,6 @@ class UserService implements IUserService {
         registrationInvalidation.add(GregorianCalendar.DAY_OF_MONTH, 1)
         newUser.registrationInvalidation = registrationInvalidation.getTime()
         newUser.save(flush: true, failOnError:true)
-        System.out.println("USER CREATED: "+newUser+".."+newUser.getProperties())
         UserRole.create(newUser, Role.findByAuthority("ROLE_USER"), true)
         if (grailsApplication.config.jummp.security.curatorByDefault) {
         	UserRole.create(newUser, Role.findByAuthority("ROLE_CURATOR"), true)
