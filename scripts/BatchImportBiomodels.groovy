@@ -128,6 +128,46 @@ def ElementAnnotation
 def Qualifier
 def userService 
 
+
+def getUserFromBiomodelsId = {bmPersonId, sql -> 
+       def personDetails = sql.firstRow("select * from auth_persons where person_id = "+bmPersonId)
+       def existing = User.findByEmail(personDetails.email)
+       if (existing) {
+            return existing
+       }
+       def person = Person.newInstance(userRealName: personDetails.given_name+" "+personDetails.family_name,
+                                       institution: personDetails.organisation)
+       def userCreated = User.newInstance(person: person,
+                                          username: getUsername(personDetails, sql),
+                                          password: "autocreated",
+                                          email: personDetails.email)
+       long userId = userService.register(userCreated, true)
+       if (userId) {
+            return User.get(userId)
+       }
+}
+
+def setCurationNotes = {modelSubmitted, biomodelsConn, authConn ->
+    def row = biomodelsConn.firstRow("select * from simulations, cura where simulations.curation_id = cura.model_id and (cura.model_id = '"+modelSubmitted.submissionId+"' OR cura.biomodels_id = '"+modelSubmitted.submissionId+"')")
+    if (row) {
+        def submitter = getUserFromBiomodelsId(row.submitter_id, authConn)
+        def modifier = submitter
+        if (row.submitter_id != row.last_modifier_id) {
+             modifier = getUserFromBiomodelsId(row.last_modifier_id, authConn)
+        }
+        def notes = CurationNotes.newInstance(model: modelSubmitted,
+                                              submitter: submitter,
+                                              lastModifier: modifier,
+                                              dateAdded: row.submission_date,
+                                              lastModified: row.last_modification_date,
+                                              comment: row.comments,
+                                              curationImage: new File(simulationFolder, row.file_name).getBytes())
+        notes.save()
+     }
+}    
+
+
+
 target(main: "Puts everything together to import models from a given folder") {
     bootstrapOnce()
     
@@ -238,9 +278,6 @@ giving up. Sorry about that.""", vcsIssues)
 
                               
                               
-    
-                          
-                              
     long duration = System.currentTimeMillis()
     try {
         modelFolder.eachFileRecurse {
@@ -255,9 +292,10 @@ giving up. Sorry about that.""", vcsIssues)
                     def user = getUser(modelId, biomodelsConnection, 
                                         authConnection,
                                         modelBranch)
-                    if (user) {
+                    def modelDetails = getModelDetails(modelId, modelBranch, biomodelsConnection)
+                    
+                    if (user && modelDetails) {
                         authenticateAsUser(user, springSecurityService)
-                        def modelDetails = getModelDetails(modelId, modelBranch, biomodelsConnection)
                         def additionalFiles = []
                         File originalFile = null
                         File parent = new File(it.getParent())
@@ -288,6 +326,7 @@ giving up. Sorry about that.""", vcsIssues)
                             }
                             else {
                                 firstModel.firstPublished = modelDetails["publicationDate"]
+                                String tmp = firstModel.submissionId
                                 firstModel.submissionId = modelDetails["model_id"]
                                 //Update model of the month
                                 processModelOfTheMonth(firstModel, biomodelsConnection)
@@ -301,8 +340,9 @@ giving up. Sorry about that.""", vcsIssues)
                                  Update revision / model details
                                 */
                                          
+                                firstModel.submissionId = tmp
                                 Revision.executeUpdate("update Revision set uploadDate = :newDate where model = :modelImported", [newDate:modelDetails["submissionDate"], modelImported: firstModel])
-                                Model.executeUpdate("update Model set submissionId = :newId where id = :modelId", [newId:modelDetails["model_id"], modelId: firstModel.id])
+                                //Model.executeUpdate("update Model set submissionId = :newId where id = :modelId", [newId:modelDetails["model_id"], modelId: firstModel.id])
                                 def secondRevision = getSubmissionData(it,
                                                                    additionalFiles,
                                                                    "Current version of ",
@@ -355,8 +395,14 @@ giving up. Sorry about that.""", vcsIssues)
                         log("...finished importing model file ${it.absolutePath}")
                     }
                     else {
-                        error("No user found for ${it.absolutePath}")
-                        failures.put(it.absolutePath, "No user found, please check details in biomodels")
+                        if (!user) {
+                            error("No user found for ${it.absolutePath}")
+                            failures.put(it.absolutePath, "No user found, please check details in biomodels")
+                        }
+                        else {
+                            error("No model details found for ${it.absolutePath}")
+                            failures.put(it.absolutePath, "Error retrieving model details from BioModels db")
+                        }
                     }
                     } catch (Throwable t) {
                         error("Something went wrong with ${it.name} - ${t.message}")
@@ -695,8 +741,7 @@ getModelDetails = { modelId, modelBranch, sql ->
     }
     catch(Exception e) {
         e.printStackTrace()
-        System.out.println("OFFENDING MODEL: "+modelId)
-       // System.exit(0);
+        return null
     }
     return modelDetails
 }
@@ -705,44 +750,7 @@ testBranch = { modelId, branch, sql ->
     return sql.firstRow("SELECT model_id FROM "+branch+" where model_id='"+modelId+"'") !=null 
 }
 
-def getUserFromBiomodelsId = {bmPersonId, sql -> 
-       def personDetails = sql.firstRow("select * from auth_persons where person_id = "+bmPersonId)
-       def existing = User.findByEmail(personDetails.email)
-       if (existing) {
-            return existing
-       }
-       def person = Person.newInstance(userRealName: personDetails.given_name+" "+personDetails.family_name,
-                                       institution: personDetails.organisation)
-       def userCreated = User.newInstance(person: person,
-                                          username: getUsername(personDetails, sql),
-                                          password: "autocreated",
-                                          email: personDetails.email)
-       long userId = userService.register(userCreated, true)
-       if (userId) {
-            return User.get(userId)
-       }
-}
 
                               
-def setCurationNotes = {modelSubmitted, biomodelsConn, authConn ->
-    def row = biomodelsConn.firstRow("select * from simulations, cura where simulations.curation_id = cura.model_id and (cura.model_id = '"+modelSubmitted.submissionId+"' OR cura.biomodels_id = '"+modelSubmitted.submissionId+"')")
-    if (row) {
-        def submitter = getUserFromBiomodelsId(row.submitter_id, authConn)
-        def modifier = submitter
-        if (row.submitter_id != row.last_modifier_id) {
-             modifier = getUserFromBiomodelsId(row.last_modifier_id, authConn)
-        }
-        def notes = CurationNotes.newInstance(model: modelSubmitted,
-                                              submitter: submitter,
-                                              lastModifier: modifier,
-                                              dateAdded: row.submission_date,
-                                              lastModified: row.last_modification_date,
-                                              comment: row.comments,
-                                              curationImage: new File(simulationFolder, row.file_name).getBytes())
-        notes.save()
-     }
-}
-
-
 
 setDefaultTarget(main)
