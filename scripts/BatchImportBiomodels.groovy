@@ -114,6 +114,11 @@ File simulationFolder
 */
 def usersUsed = [] as Set
 
+/*
+* Domain classes that will be needed in multiple closures, declared globally,
+* defined inside main
+*/
+
 def User
 def Person
 def rftc
@@ -165,8 +170,6 @@ def setCurationNotes = {modelSubmitted, biomodelsConn, authConn ->
         notes.save()
      }
 }    
-
-
 
 target(main: "Puts everything together to import models from a given folder") {
     bootstrapOnce()
@@ -286,20 +289,23 @@ giving up. Sorry about that.""", vcsIssues)
                 try {
                     ++processedCount
                     String modelId = it.getName().replace(".xml", "")
+                    String modelBranch = getBranch(modelId, biomodelsConnection)
                     // Creates/retrieves user based on the user associated with
                     // the model in the biomodels DB
-                    String modelBranch = getBranch(modelId, biomodelsConnection)
                     def user = getUser(modelId, biomodelsConnection, 
                                         authConnection,
                                         modelBranch)
-                    def modelDetails = getModelDetails(modelId, modelBranch, biomodelsConnection)
+                   // retrieves the model details stored in the biomodels DB
+                   def modelDetails = getModelDetails(modelId, modelBranch, biomodelsConnection)
                     
-                    if (user && modelDetails) {
+                   if (user && modelDetails) {
+                        //login as user submitting the model
                         authenticateAsUser(user, springSecurityService)
+                        
+                        //set additional files / original file
                         def additionalFiles = []
                         File originalFile = null
                         File parent = new File(it.getParent())
-                        //set additional files / original file
                         parent.eachFile  { additional ->
                             if (additional != it)  {
                                 additionalFiles.push(additional)
@@ -326,7 +332,6 @@ giving up. Sorry about that.""", vcsIssues)
                             }
                             else {
                                 firstModel.firstPublished = modelDetails["publicationDate"]
-                                String tmp = firstModel.submissionId
                                 firstModel.submissionId = modelDetails["model_id"]
                                 //Update model of the month
                                 processModelOfTheMonth(firstModel, biomodelsConnection)
@@ -340,9 +345,8 @@ giving up. Sorry about that.""", vcsIssues)
                                  Update revision / model details
                                 */
                                          
-                                firstModel.submissionId = tmp
                                 Revision.executeUpdate("update Revision set uploadDate = :newDate where model = :modelImported", [newDate:modelDetails["submissionDate"], modelImported: firstModel])
-                                //Model.executeUpdate("update Model set submissionId = :newId where id = :modelId", [newId:modelDetails["model_id"], modelId: firstModel.id])
+                                Model.executeUpdate("update Model set submissionId = :newId where id = :modelId", [newId:modelDetails["model_id"], modelId: firstModel.id])
                                 def secondRevision = getSubmissionData(it,
                                                                    additionalFiles,
                                                                    "Current version of ",
@@ -393,8 +397,8 @@ giving up. Sorry about that.""", vcsIssues)
                             failures.put(it.absolutePath, "No original file found")
                         }
                         log("...finished importing model file ${it.absolutePath}")
-                    }
-                    else {
+                   }
+                   else {
                         if (!user) {
                             error("No user found for ${it.absolutePath}")
                             failures.put(it.absolutePath, "No user found, please check details in biomodels")
@@ -403,13 +407,14 @@ giving up. Sorry about that.""", vcsIssues)
                             error("No model details found for ${it.absolutePath}")
                             failures.put(it.absolutePath, "Error retrieving model details from BioModels db")
                         }
-                    }
-                    } catch (Throwable t) {
+                   }
+                   } catch (Throwable t) {
                         error("Something went wrong with ${it.name} - ${t.message}")
                         failures.put(it.name, t.message)
                         t.printStackTrace()
-                    }
-                    authenticate(username, password)
+                   }
+                   //Log back in with the user supplied credentials
+                   authenticate(username, password)
             }
         }
     } finally {
@@ -419,6 +424,10 @@ giving up. Sorry about that.""", vcsIssues)
         if (failures) {
             log("Failed to import the following models:\n${failures}")
         }
+        /*
+        * Expire users so it isnt possible to log in with the newly
+        * created accounts
+        */
         usersUsed.each { userToExpire ->
             userService.expirePassword(userToExpire.id, true)
         }
@@ -548,20 +557,23 @@ log = { msg ->
 getSubmissionData = { file, additional, comment, modelFileFormatService ->
     def modelWrapper = rftc.newInstance(path: file.absolutePath, description: "",
                                     mainFile: true, userSubmitted: true, hidden: false)
-                    
+    // infer model format
     def formatCommand = modelFileFormatService.inferModelFormat([modelWrapper])
     def format = mf.findByIdentifierAndFormatVersion(formatCommand.identifier,
                                                      formatCommand.formatVersion)
+    // get name and description
     final String MODEL_NAME = modelFileFormatService.extractName([file], format)?: new File(file.absolutePath).getName()
     modelWrapper.description = "${MODEL_NAME}"
     final String DESCRIPTION = modelFileFormatService.extractDescription([file], format)
+    // validate model
     boolean isValid = modelFileFormatService.validate([file], format.identifier, [])
     model = mtc.newInstance(submitter: userAuthenticationDetails.principal,
-                            submissionDate: new Date() /*adjust from DB*/, format: formatCommand)
+                            submissionDate: new Date(), format: formatCommand)
+    // generate list of RFTCs
     def files = [modelWrapper]
     additional.each { addFile ->
            files.push(rftc.newInstance(path: addFile.absolutePath, description: "TODO",
-                      mainFile: false, userSubmitted: true /*todo*/, hidden: false))
+                      mainFile: false, userSubmitted: false /*todo*/, hidden: false))
     }
     return [files, rtc.newInstance(model: model, files: files, format: formatCommand,
                             validated: isValid, name: MODEL_NAME, description: DESCRIPTION,
@@ -602,7 +614,7 @@ prettify = { long time ->
 }
 
 /*
-* Returns a (Jummp) user, appropirate for the biomodels model send as an
+* Returns a (Jummp) user, appropriate for the biomodels model send as an
 * argument.
 */
 getUser = { modelId, biomodelsConnection, authConnection, branch ->
@@ -646,14 +658,21 @@ authenticateAsUser = { user, springSecurityService ->
     authenticate(user.username, "autocreated")
 }
 
-
+/*
+* Processes model of the month for a given model. The model of the month can
+* be comprised of several models, therefore the ModelOfTheMonth.models collection
+* is updated. The importer relies on an assumption that only one model of the month
+* can be published in a given month, which is valid given current data.
+*/
 processModelOfTheMonth = { model, sql ->
     def dateFormatter = new java.text.SimpleDateFormat('yyyy-MM')
     String query = "select * from model_of_month where models_id LIKE '%${model.submissionId}%'"
     sql.eachRow(query) { row ->
         def datePublished = dateFormatter.parse(row.pub_month)
+        // see if there is an existing model of the month in the Jummp DB for
+        // the given month
         def modelMonth = ModelOfTheMonth.findByPublicationDate(datePublished)
-        if (!modelMonth) {
+        if (!modelMonth) { //import new model of the month
             modelMonth = ModelOfTheMonth.newInstance(title: row.title,
                                                      authors: row.authors,
                                                      publicationDate: datePublished
