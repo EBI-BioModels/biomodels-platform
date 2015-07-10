@@ -40,6 +40,7 @@ import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
 import net.biomodels.jummp.annotationstore.ResourceReference
 import grails.util.Holders
 import groovy.sql.Sql
+import java.util.regex.Pattern
 
 includeTargets << grailsScript("_GrailsArgParsing")
 includeTargets << grailsScript("_GrailsBootstrap")
@@ -133,9 +134,28 @@ def ElementAnnotation
 def Qualifier
 def userService 
 
+~/[A-Z0-9]*\.xml/
+
+def expectedFiles = ["[A-Z0-9]*_urn\\.xml": "Auto-generated SBML file with URNs",
+                     "[A-Z0-9]*-biopax2\\.owl": "Auto-generated BioPAX (Level 2)",
+                     "[A-Z0-9]*-biopax3\\.owl": "Auto-generated BioPAX (Level 3)",
+                     "[A-Z0-9]*cellml": "Auto-generated CellML",
+                     "[A-Z0-9]*\\.m" : "Auto-generated Octave file",
+                     "[A-Z0-9]*\\.pdf" : "Auto-generated PDF file",
+                     "[A-Z0-9]*\\_manual.png" : "Manually generated Reaction graph (PNG)",
+                     "[A-Z0-9]*\\_manual.svg" : "Manually generated Reaction graph (SVG)",
+                     "[A-Z0-9]*\\.png" : "Auto-generated Reaction graph (PNG)",
+                     "[A-Z0-9]*\\.svg" : "Auto-generated Reaction graph (SVG)",
+                     "[A-Z0-9]*\\.sci" : "Auto-generated Scilab file",
+                     "[A-Z0-9]*\\.vcml" : "Auto-generated VCML file",
+                     "[A-Z0-9]*\\.xpp" : "Auto-generated XPP file"]
+
 
 def getUserFromBiomodelsId = {bmPersonId, sql -> 
        def personDetails = sql.firstRow("select * from auth_persons where person_id = "+bmPersonId)
+       if (!personDetails || !personDetails.email) {
+           return null
+       }
        def existing = User.findByEmail(personDetails.email)
        if (existing) {
             return existing
@@ -156,9 +176,17 @@ def setCurationNotes = {modelSubmitted, biomodelsConn, authConn ->
     def row = biomodelsConn.firstRow("select * from simulations, cura where simulations.curation_id = cura.model_id and (cura.model_id = '"+modelSubmitted.submissionId+"' OR cura.biomodels_id = '"+modelSubmitted.submissionId+"')")
     if (row) {
         def submitter = getUserFromBiomodelsId(row.submitter_id, authConn)
+        if (!submitter) {
+            error("Could not find person with id: ${row.submitter_id}, curation notes not imported for ${modelSubmitted.submissionId}")
+            return
+        }
         def modifier = submitter
         if (row.submitter_id != row.last_modifier_id) {
              modifier = getUserFromBiomodelsId(row.last_modifier_id, authConn)
+             if (!modifier) {
+                 error("Could not find person with id: ${row.last_modifier_id}, curation notes not imported for ${modelSubmitted.submissionId}")
+                 return
+             }
         }
         def notes = CurationNotes.newInstance(model: modelSubmitted,
                                               submitter: submitter,
@@ -285,11 +313,12 @@ giving up. Sorry about that.""", vcsIssues)
     try {
         modelFolder.eachFileRecurse {
             boolean modelFileDetected = it.isFile() && symlinkPattern.matcher(it.name).matches()
-            if (modelFileDetected) {
+            String modelId = it.getName().replace(".xml", "")
+            String modelBranch = getBranch(modelId, biomodelsConnection)
+            if (modelFileDetected && modelBranch) {
                 try {
                     ++processedCount
-                    String modelId = it.getName().replace(".xml", "")
-                    String modelBranch = getBranch(modelId, biomodelsConnection)
+                    
                     // Creates/retrieves user based on the user associated with
                     // the model in the biomodels DB
                     def user = getUser(modelId, biomodelsConnection, 
@@ -324,7 +353,8 @@ giving up. Sorry about that.""", vcsIssues)
                             def initialSubmission = getSubmissionData(originalFile, 
                                                               additionalFiles - originalFile,
                                                               "Original import of ",
-                                                              modelFileFormatService)
+                                                              modelFileFormatService,
+                                                              failures)
                             def firstModel = modelService.uploadValidatedModel(initialSubmission[0], initialSubmission[1])
                             if (!firstModel) {
                                 log("...could not import initial file: ${originalFile.absolutePath}")
@@ -332,6 +362,7 @@ giving up. Sorry about that.""", vcsIssues)
                             }
                             else {
                                 firstModel.firstPublished = modelDetails["publicationDate"]
+                                String tmp = firstModel.submissionId
                                 firstModel.submissionId = modelDetails["model_id"]
                                 //Update model of the month
                                 processModelOfTheMonth(firstModel, biomodelsConnection)
@@ -340,17 +371,18 @@ giving up. Sorry about that.""", vcsIssues)
                                
                                 setCurationNotes(firstModel, biomodelsConnection, 
                                         authConnection)
-                                                 
+                                firstModel.submissionId = tmp
                                 /*
                                  Update revision / model details
                                 */
                                          
                                 Revision.executeUpdate("update Revision set uploadDate = :newDate where model = :modelImported", [newDate:modelDetails["submissionDate"], modelImported: firstModel])
-                                Model.executeUpdate("update Model set submissionId = :newId where id = :modelId", [newId:modelDetails["model_id"], modelId: firstModel.id])
+                                //Model.executeUpdate("update Model set submissionId = :newId where id = :modelId", [newId:modelDetails["model_id"], modelId: firstModel.id])
                                 def secondRevision = getSubmissionData(it,
                                                                    additionalFiles,
                                                                    "Current version of ",
-                                                                   modelFileFormatService)
+                                                                   modelFileFormatService,
+                                                                   failures)
                                 //update the RTC generated by above call to the model returned 
                                 // from submitting the original file.
                                 secondRevision[1].model = domainadapter.getAdapter(firstModel).toCommandObject()
@@ -554,7 +586,7 @@ log = { msg ->
 * the first being the list of RFTCs needed to submit the model and the second
 * being the revision transport command. 
 */
-getSubmissionData = { file, additional, comment, modelFileFormatService ->
+getSubmissionData = { file, additional, comment, modelFileFormatService, failures ->
     def modelWrapper = rftc.newInstance(path: file.absolutePath, description: "",
                                     mainFile: true, userSubmitted: true, hidden: false)
     // infer model format
@@ -569,11 +601,31 @@ getSubmissionData = { file, additional, comment, modelFileFormatService ->
     boolean isValid = modelFileFormatService.validate([file], format.identifier, [])
     model = mtc.newInstance(submitter: userAuthenticationDetails.principal,
                             submissionDate: new Date(), format: formatCommand)
+                            
+    
     // generate list of RFTCs
     def files = [modelWrapper]
+    def fileTrack = []
+    fileTrack.addAll(expectedFiles.keySet())
     additional.each { addFile ->
-           files.push(rftc.newInstance(path: addFile.absolutePath, description: "TODO",
-                      mainFile: false, userSubmitted: false /*todo*/, hidden: false))
+           def pattern = expectedFiles.keySet().find {testPattern ->
+                Pattern.matches(testPattern, addFile.getName())
+           }
+           if (pattern) {
+               fileTrack.remove(pattern)
+               String path = addFile.absolutePath
+               boolean hidden = false
+               if (pattern.contains("_manual")) {
+                   hidden = true
+               }
+               files.push(rftc.newInstance(path: path, description: expectedFiles.get(pattern),
+                      mainFile: false, userSubmitted: false, hidden: hidden))
+           }
+    }
+    if (fileTrack.isEmpty()) {
+            String errorMessage = "Could not find some expected files for ${it}: ${fileTrack}"
+            System.out.println(errorMessage)
+            failures.put(file, errorMessage)
     }
     return [files, rtc.newInstance(model: model, files: files, format: formatCommand,
                             validated: isValid, name: MODEL_NAME, description: DESCRIPTION,
