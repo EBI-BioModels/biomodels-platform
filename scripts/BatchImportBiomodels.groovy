@@ -362,7 +362,6 @@ giving up. Sorry about that.""", vcsIssues)
                             }
                             else {
                                 firstModel.firstPublished = modelDetails["publicationDate"]
-                                String tmp = firstModel.submissionId
                                 firstModel.submissionId = modelDetails["model_id"]
                                 //Update model of the month
                                 processModelOfTheMonth(firstModel, biomodelsConnection)
@@ -371,13 +370,12 @@ giving up. Sorry about that.""", vcsIssues)
                                
                                 setCurationNotes(firstModel, biomodelsConnection, 
                                         authConnection)
-                                firstModel.submissionId = tmp
                                 /*
                                  Update revision / model details
                                 */
                                          
                                 Revision.executeUpdate("update Revision set uploadDate = :newDate where model = :modelImported", [newDate:modelDetails["submissionDate"], modelImported: firstModel])
-                                //Model.executeUpdate("update Model set submissionId = :newId where id = :modelId", [newId:modelDetails["model_id"], modelId: firstModel.id])
+                                Model.executeUpdate("update Model set submissionId = :newId where id = :modelId", [newId:modelDetails["model_id"], modelId: firstModel.id])
                                 def secondRevision = getSubmissionData(it,
                                                                    additionalFiles,
                                                                    "Current version of ",
