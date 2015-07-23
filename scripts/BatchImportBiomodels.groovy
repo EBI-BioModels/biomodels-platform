@@ -90,7 +90,7 @@ def userAuthenticationDetails
 /*
 * BioModels database credentials
 */
-String bmServer 
+String bmServer
 String bmPort
 String bmDB
 String bmUsername
@@ -132,9 +132,8 @@ def ResourceReference
 def Statement
 def ElementAnnotation
 def Qualifier
-def userService 
+def userService
 
-~/[A-Z0-9]*\.xml/
 
 def expectedFiles = ["[A-Z0-9]*_urn\\.xml": "Auto-generated SBML file with URNs",
                      "[A-Z0-9]*-biopax2\\.owl": "Auto-generated BioPAX (Level 2)",
@@ -151,7 +150,7 @@ def expectedFiles = ["[A-Z0-9]*_urn\\.xml": "Auto-generated SBML file with URNs"
                      "[A-Z0-9]*\\.xpp" : "Auto-generated XPP file"]
 
 
-def getUserFromBiomodelsId = {bmPersonId, sql -> 
+def getUserFromBiomodelsId = {bmPersonId, sql ->
        def personDetails = sql.firstRow("select * from auth_persons where person_id = "+bmPersonId)
        if (!personDetails || !personDetails.email) {
            return null
@@ -197,11 +196,11 @@ def setCurationNotes = {modelSubmitted, biomodelsConn, authConn ->
                                               curationImage: new File(simulationFolder, row.file_name).getBytes())
         notes.save()
      }
-}    
+}
 
 target(main: "Puts everything together to import models from a given folder") {
     bootstrapOnce()
-    
+
     User = grailsApp.classLoader.loadClass(
             "net.biomodels.jummp.plugins.security.User")
     Person = grailsApp.classLoader.loadClass(
@@ -216,8 +215,7 @@ target(main: "Puts everything together to import models from a given folder") {
             "net.biomodels.jummp.core.model.ModelTransportCommand")
     ModelOfTheMonth = grailsApp.classLoader.loadClass(
             "net.biomodels.jummp.deployment.biomodels.ModelOfTheMonth")
-    
-    
+
     int inputIssues = sanitiseInput()
     if (inputIssues) {
         error("""There was a problem parsing the input parameters so I'm giving up. \
@@ -249,47 +247,47 @@ giving up. Sorry about that.""", vcsIssues)
             "net.biomodels.jummp.core.model.ModelFormatTransportCommand")
     def domainadapter = grailsApp.classLoader.loadClass(
             "net.biomodels.jummp.core.adapters.DomainAdapter")
-            
+
     def Revision = grailsApp.classLoader.loadClass(
             "net.biomodels.jummp.model.Revision")
-            
+
     def Model = grailsApp.classLoader.loadClass(
             "net.biomodels.jummp.model.Model")
-            
+
     CurationNotes = grailsApp.classLoader.loadClass(
             "net.biomodels.jummp.deployment.biomodels.CurationNotes")
-            
+
     ResourceReference = grailsApp.classLoader.loadClass(
             "net.biomodels.jummp.annotationstore.ResourceReference")
-    
+
     Statement = grailsApp.classLoader.loadClass(
             "net.biomodels.jummp.annotationstore.Statement")
-            
+
     ElementAnnotation = grailsApp.classLoader.loadClass(
             "net.biomodels.jummp.annotationstore.ElementAnnotation")
 
     Qualifier = grailsApp.classLoader.loadClass(
             "net.biomodels.jummp.annotationstore.Qualifier")
-            
+
     decorator.context = appCtx
     rtc.context = appCtx
     def modelService = appCtx.modelService
     def modelFileFormatService = appCtx.modelFileFormatService
     userService = appCtx.userService
     def springSecurityService = appCtx.springSecurityService
-    
+
     def symlinkPattern = ~/[A-Z0-9]*\.xml/
     def targetPattern = ~/[a-zA-Z_\-\/0-9]*_url\.xml/
     // keep track of the number of models that are processed
     long processedCount = 0
     def failures = [:]
-    
+
     /*
     * Issue: Domain class constraints werent being applied, leading to the 
     * familiar issue of mime types not being set. Fixed by applying them
     * as below.
     */
-    
+
     def domainClassGrailsPlugin = grailsApp.classLoader.loadClass(
                 "org.codehaus.groovy.grails.plugins.DomainClassGrailsPlugin")
     grailsApp.domainClasses.each { gc ->
@@ -297,18 +295,16 @@ giving up. Sorry about that.""", vcsIssues)
                                                      gc,
                                                      grailsApp.mainContext)
     }
-    
+
     /*
     * Instantiate direct connections to DB
     */
     def biomodelsConnection = Sql.newInstance("jdbc:mysql://${bmServer}:${bmPort}/${bmDB}", bmUsername,
                               bmPassword, "com.mysql.jdbc.Driver")
-    
+
     def authConnection = Sql.newInstance("jdbc:mysql://${authServer}:${authPort}/${authDB}", authUsername,
                               authPassword, "com.mysql.jdbc.Driver")
 
-                              
-                              
     long duration = System.currentTimeMillis()
     try {
         modelFolder.eachFileRecurse {
@@ -318,7 +314,7 @@ giving up. Sorry about that.""", vcsIssues)
             if (modelFileDetected && modelBranch) {
                 try {
                     ++processedCount
-                    
+
                     // Creates/retrieves user based on the user associated with
                     // the model in the biomodels DB
                     def user = getUser(modelId, biomodelsConnection, 
@@ -326,11 +322,11 @@ giving up. Sorry about that.""", vcsIssues)
                                         modelBranch)
                    // retrieves the model details stored in the biomodels DB
                    def modelDetails = getModelDetails(modelId, modelBranch, biomodelsConnection)
-                    
+
                    if (user && modelDetails) {
                         //login as user submitting the model
                         authenticateAsUser(user, springSecurityService)
-                        
+
                         //set additional files / original file
                         def additionalFiles = []
                         File originalFile = null
@@ -365,15 +361,15 @@ giving up. Sorry about that.""", vcsIssues)
                                 firstModel.submissionId = modelDetails["model_id"]
                                 //Update model of the month
                                 processModelOfTheMonth(firstModel, biomodelsConnection)
-                                
-                                /* Add the curation notes */                   
-                               
-                                setCurationNotes(firstModel, biomodelsConnection, 
+
+                                /* Add the curation notes */
+
+                                setCurationNotes(firstModel, biomodelsConnection,
                                         authConnection)
                                 /*
                                  Update revision / model details
                                 */
-                                         
+
                                 Revision.executeUpdate("update Revision set uploadDate = :newDate where model = :modelImported", [newDate:modelDetails["submissionDate"], modelImported: firstModel])
                                 Model.executeUpdate("update Model set submissionId = :newId where id = :modelId", [newId:modelDetails["model_id"], modelId: firstModel.id])
                                 def secondRevision = getSubmissionData(it,
@@ -384,41 +380,39 @@ giving up. Sorry about that.""", vcsIssues)
                                 //update the RTC generated by above call to the model returned 
                                 // from submitting the original file.
                                 secondRevision[1].model = domainadapter.getAdapter(firstModel).toCommandObject()
-                                
+
                                 /*
                                     Upload second / final version of the model
                                 */
-                                
+
                                 def secondResult = modelService.addValidatedRevision(secondRevision[0], [], secondRevision[1])
                                 if (!secondResult) {
                                     log("...could not update to latest version: ${originalFile.absolutePath}")
                                     failures.add(it.absolutePath)
                                 }
                                 boolean curated = "publ" == modelBranch
-                                
+
                                 /*
                                 * Create annotations for the publication link / branch / jws etc
                                 */
-                                
-                                createBMAnnotation(secondResult, curated, "curated", 
+
+                                createBMAnnotation(secondResult, curated, "curated",
                                                    user.person.userRealName)
                                 String publicationLink = getPublicationLink(modelDetails["publication_id"],
                                                                            modelDetails["publication_id_type"])
                                 if (publicationLink) {
                                    createBMAnnotation(secondResult, publicationLink, "originalModel", 
                                                    user.person.userRealName) 
-                                                   
+
                                 }
-                               
+
                                 if (modelDetails["jwsLink"]) {
                                    createBMAnnotation(secondResult, modelDetails["jwsLink"], 
                                                       "onlineSimulation", user.person.userRealName) 
-                                                      
                                 }
-                               
+
                                 secondResult.uploadDate = modelDetails["lastModified"]
                                 secondResult.save()
-                                
                             }
                             log("...finished importing model file ${it.absolutePath}")
                         }
@@ -438,13 +432,13 @@ giving up. Sorry about that.""", vcsIssues)
                             failures.put(it.absolutePath, "Error retrieving model details from BioModels db")
                         }
                    }
-                   } catch (Throwable t) {
-                        error("Something went wrong with ${it.name} - ${t.message}")
-                        failures.put(it.name, t.message)
-                        t.printStackTrace()
-                   }
-                   //Log back in with the user supplied credentials
-                   authenticate(username, password)
+                } catch (Throwable t) {
+                    error("Something went wrong with ${it.name} - ${t.message}")
+                    failures.put(it.name, t.message)
+                    t.printStackTrace()
+                }
+                //Log back in with the user supplied credentials
+                authenticate(username, password)
             }
         }
     } finally {
@@ -455,9 +449,9 @@ giving up. Sorry about that.""", vcsIssues)
             log("Failed to import the following models:\n${failures}")
         }
         /*
-        * Expire users so it isnt possible to log in with the newly
-        * created accounts
-        */
+         * Expire users so it isnt possible to log in with the newly
+         * created accounts
+         */
         usersUsed.each { userToExpire ->
             userService.expirePassword(userToExpire.id, true)
         }
@@ -493,21 +487,14 @@ batch-import --models=<model_folder_location> --credentials=<path_to_credentials
     credentials = location.getCanonicalFile()
     def c = JSON.parse(new FileInputStream(credentials.absolutePath), "UTF8")
 
-    simulationFolder = new File(c.'simulationFolder')  
-    
+    simulationFolder = new File(c.'simulationFolder')
+
     (username, password) = [c.'username', c.'password']
-    (bmServer, bmPort, bmDB, bmUsername, bmPassword) = [c.'biomodelsServer',
-                                                        c.'biomodelsPort',
-                                                        c.'biomodelsDB',
-                                                        c.'biomodelsUsername',
-                                                        c.'biomodelsPassword']
-                                                        
-    (authServer, authPort, authDB, authUsername, authPassword) = [c.'authServer',
-                                                                  c.'authPort',
-                                                                  c.'authDB',
-                                                                  c.'authUsername',
-                                                                  c.'authPassword']
-                                                        
+    (bmServer, bmPort, bmDB, bmUsername, bmPassword) = [c.'biomodelsServer', c.'biomodelsPort',
+            c.'biomodelsDB', c.'biomodelsUsername', c.'biomodelsPassword']
+
+    (authServer, authPort, authDB, authUsername, authPassword) = [c.'authServer', c.'authPort',
+            c.'authDB', c.'authUsername', c.'authPassword']
     return 0
 }
 
@@ -599,8 +586,7 @@ getSubmissionData = { file, additional, comment, modelFileFormatService, failure
     boolean isValid = modelFileFormatService.validate([file], format.identifier, [])
     model = mtc.newInstance(submitter: userAuthenticationDetails.principal,
                             submissionDate: new Date(), format: formatCommand)
-                            
-    
+
     // generate list of RFTCs
     def files = [modelWrapper]
     def fileTrack = []
@@ -664,9 +650,9 @@ prettify = { long time ->
 }
 
 /*
-* Returns a (Jummp) user, appropriate for the biomodels model send as an
-* argument.
-*/
+ * Returns a (Jummp) user, appropriate for the biomodels model send as an
+ * argument.
+ */
 getUser = { modelId, biomodelsConnection, authConnection, branch ->
     if (branch) {
         // get user from appropriate biomodels table
@@ -729,7 +715,6 @@ processModelOfTheMonth = { model, sql ->
                                                      )
             modelMonth.save() // save once to set the last_updated, then modify it
             modelMonth.lastUpdated=row.last_modification_date
-            
         }
         modelMonth.addToModels(model)
         modelMonth.save()
@@ -738,9 +723,9 @@ processModelOfTheMonth = { model, sql ->
 
 
 /*
-* Gets the username associated with a person in the biomodels database. Used to
-* to create JUMMP logins with the same IDs
-*/
+ * Gets the username associated with a person in the biomodels database. Used to
+ * to create JUMMP logins with the same IDs
+ */
 getUsername = { personRow, sql ->
     def userInfo = sql.firstRow("select * from auth_users where person_id = "+personRow.person_id)
     if (userInfo) {
@@ -750,8 +735,8 @@ getUsername = { personRow, sql ->
 }
 
 /*
-* Searches the tables in biomodels to find the table containing given model
-*/
+ * Searches the tables in biomodels to find the table containing given model
+ */
 getBranch = { modelId, sql ->
     def branches = ["publ", "uncura_publ", "anno", "uncura_anno", "cura"]
     return branches.find {
@@ -778,7 +763,6 @@ createBMAnnotation = { revision, object, qual, creator ->
                                                           statement: statement,
                                                           revision: revision)
     elementAnnotation.save(failOnError:true)
-    
 }
 
 getPublicationLink = { publication_id, publication_id_type ->
@@ -793,33 +777,32 @@ getPublicationLink = { publication_id, publication_id_type ->
 }
 
 /*
-* Gets the model details from biomodelsDB 
-*/
+ * Gets the model details from biomodelsDB
+ */
 getModelDetails = { modelId, modelBranch, sql ->
     def modelDetails = [:]
     try {
         def row = sql.firstRow("select * from "+modelBranch+" where model_id='"+modelId+"'")
-        modelDetails['submissionDate'] = row.submission_date;
-        modelDetails['lastModified'] = row.last_modification_date;
-        modelDetails['publicationDate'] = row.publication_date;
-        modelDetails['originalModel'] = row.original_model;
-        modelDetails['jwsLink'] = row.jws_online;
-        modelDetails['model_id'] = row.model_id;
-        modelDetails['publication_id'] = row.publication_id;
-        modelDetails['publication_id_type'] = row.publication_id_type;
+        modelDetails['submissionDate'] = row.submission_date
+        modelDetails['lastModified'] = row.last_modification_date
+        modelDetails['publicationDate'] = row.publication_date
+        modelDetails['originalModel'] = row.original_model
+        modelDetails['jwsLink'] = row.jws_online
+        modelDetails['model_id'] = row.model_id
+        modelDetails['publication_id'] = row.publication_id
+        modelDetails['publication_id_type'] = row.publication_id_type
     }
     catch(Exception e) {
+        error("Problem finding model details for $modelId in branch $modelBranch. ${e.message}.")
         e.printStackTrace()
         return null
     }
     return modelDetails
 }
 
-testBranch = { modelId, branch, sql -> 
-    return sql.firstRow("SELECT model_id FROM "+branch+" where model_id='"+modelId+"'") !=null 
+testBranch = { modelId, branch, sql ->
+    return sql.firstRow("SELECT model_id FROM "+branch+" where model_id='"+modelId+"'") != null
 }
 
-
-                              
-
 setDefaultTarget(main)
+
