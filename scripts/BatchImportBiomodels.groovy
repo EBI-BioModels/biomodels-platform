@@ -115,6 +115,10 @@ File simulationFolder
  */
 def usersUsed = [] as Set
 
+/**
+ * The branches of BioModels where we look for model information.
+ */
+def bioModelsBranches = ["publ", "uncura_publ", "anno", "uncura_anno", "cura", "auto_gen_models"]
 /*
  * Domain classes that will be needed in multiple closures, declared globally,
  * defined inside main
@@ -356,8 +360,10 @@ giving up. Sorry about that.""", vcsIssues)
                             else {
                                 firstModel.firstPublished = modelDetails["publicationDate"]
                                 firstModel.submissionId = modelDetails["model_id"]
-                                //Update model of the month
-                                processModelOfTheMonth(firstModel, biomodelsConnection)
+                                if ("auto_gen_models" != modelBranch) {
+                                    //Update model of the month
+                                    processModelOfTheMonth(firstModel, biomodelsConnection)
+                                }
 
                                 /* Add the curation notes */
 
@@ -734,8 +740,7 @@ getUsername = { personRow, sql ->
  * Searches the tables in biomodels to find the table containing given model
  */
 getBranch = { modelId, sql ->
-    def branches = ["publ", "uncura_publ", "anno", "uncura_anno", "cura"]
-    return branches.find {
+    return bioModelsBranches.find {
         testBranch(modelId, it, sql)
     }
 }
@@ -783,8 +788,12 @@ getModelDetails = { modelId, modelBranch, sql ->
         modelDetails['lastModified'] = row.last_modification_date
         modelDetails['publicationDate'] = row.publication_date
         modelDetails['originalModel'] = row.original_model
-        modelDetails['jwsLink'] = row.jws_online
-        modelDetails['model_id'] = row.model_id
+        if ("auto_gen_models" == modelBranch) {
+            modelDetails['model_id'] = row.id
+        } else {
+            modelDetails['jwsLink'] = row.jws_online
+            modelDetails['model_id'] = row.model_id
+        }
         modelDetails['publication_id'] = row.publication_id
         modelDetails['publication_id_type'] = row.publication_id_type
     }
