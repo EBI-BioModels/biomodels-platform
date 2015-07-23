@@ -88,8 +88,8 @@ String exchangeDirectory
 def userAuthenticationDetails
 
 /*
-* BioModels database credentials
-*/
+ * BioModels database credentials
+ */
 String bmServer
 String bmPort
 String bmDB
@@ -97,8 +97,8 @@ String bmUsername
 String bmPassword
 
 /*
-* WebAuth database credentials
-*/
+ * WebAuth database credentials
+ */
 String authServer
 String authPort
 String authDB
@@ -106,19 +106,19 @@ String authUsername
 String authPassword
 
 /**
-* Location of simulation files
-*/
+ * Location of simulation files
+ */
 File simulationFolder
 
 /*
-* List of users used in this import
-*/
+ * List of users used in this import
+ */
 def usersUsed = [] as Set
 
 /*
-* Domain classes that will be needed in multiple closures, declared globally,
-* defined inside main
-*/
+ * Domain classes that will be needed in multiple closures, declared globally,
+ * defined inside main
+ */
 
 def User
 def Person
@@ -317,9 +317,7 @@ giving up. Sorry about that.""", vcsIssues)
 
                     // Creates/retrieves user based on the user associated with
                     // the model in the biomodels DB
-                    def user = getUser(modelId, biomodelsConnection, 
-                                        authConnection,
-                                        modelBranch)
+                    def user = getUser(modelId, biomodelsConnection, authConnection, modelBranch)
                    // retrieves the model details stored in the biomodels DB
                    def modelDetails = getModelDetails(modelId, modelBranch, biomodelsConnection)
 
@@ -346,12 +344,11 @@ giving up. Sorry about that.""", vcsIssues)
                         //if original file exists, only then proceed, otherwise there is an error
                         if (originalFile) {
                             //submit first revision, with original file as the main file
-                            def initialSubmission = getSubmissionData(originalFile, 
-                                                              additionalFiles - originalFile,
-                                                              "Original import of ",
-                                                              modelFileFormatService,
-                                                              failures)
-                            def firstModel = modelService.uploadValidatedModel(initialSubmission[0], initialSubmission[1])
+                            def initialSubmission = getSubmissionData(originalFile,
+                                    additionalFiles - originalFile, "Original import of ",
+                                    modelFileFormatService, failures)
+                            def firstModel = modelService.uploadValidatedModel(initialSubmission[0],
+                                    initialSubmission[1])
                             if (!firstModel) {
                                 log("...could not import initial file: ${originalFile.absolutePath}")
                                 failures.put(it.absolutePath, "Error importing original file")
@@ -364,8 +361,7 @@ giving up. Sorry about that.""", vcsIssues)
 
                                 /* Add the curation notes */
 
-                                setCurationNotes(firstModel, biomodelsConnection,
-                                        authConnection)
+                                setCurationNotes(firstModel, biomodelsConnection, authConnection)
                                 /*
                                  Update revision / model details
                                 */
