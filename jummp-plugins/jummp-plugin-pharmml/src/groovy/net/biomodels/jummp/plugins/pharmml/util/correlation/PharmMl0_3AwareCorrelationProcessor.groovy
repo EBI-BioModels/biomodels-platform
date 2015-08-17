@@ -39,6 +39,7 @@ import eu.ddmore.libpharmml.dom.commontypes.StringValue
 import eu.ddmore.libpharmml.dom.commontypes.SymbolRef
 import eu.ddmore.libpharmml.dom.modeldefn.Correlation
 import eu.ddmore.libpharmml.dom.modeldefn.Pairwise
+import net.biomodels.jummp.plugins.pharmml.PharmMl0_6AwareRenderer
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 
@@ -152,7 +153,7 @@ Unexpected value for correlation matrix type ${MATRIX.matrixType} in $c."""
                     final String R2 = PAIRWISE.randomVariable2.symbRef?.symbIdRef
                     final String KEY = "$VAR|$R1|$R2"
                     final String KEY_REV = "$VAR|$R2|$R1"
-                    final String VALUE_STRING = value.symbRef.symbIdRef
+                    final String VALUE_STRING = PharmMl0_6AwareRenderer.getInstance().scalarRhs(value).toString()
                     cm.put(KEY, VALUE_STRING)
                     cm.put(KEY_REV, VALUE_STRING)
                     cm.addRandomEffect(R1)

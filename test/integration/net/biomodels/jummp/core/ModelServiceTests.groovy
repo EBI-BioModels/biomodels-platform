@@ -88,6 +88,7 @@ class ModelServiceTests extends JummpIntegrationTest {
         modelService.vcsService.modelContainerRoot = rootPath
         def gitFactory = grailsApplication.mainContext.getBean("gitManagerFactory")
         modelService.vcsService.vcsManager = gitFactory.getInstance()
+        modelService.vcsService.vcsManager.exchangeDirectory = exchange
         assertTrue(modelService.vcsService.isValid())
         createUserAndRoles()
     }

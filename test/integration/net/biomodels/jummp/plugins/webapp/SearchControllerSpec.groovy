@@ -350,6 +350,7 @@ class SearchControllerSpec extends IntegrationSpec {
         exchangeDir.mkdirs()
         grailsApplication.config.jummp.vcs.exchangeDirectory = exchangeDir.path
         modelService.vcsService.vcsManager = gitService.getInstance()
+        modelService.vcsService.vcsManager.exchangeDirectory = exchangeDir
     }
 
     def createModel(String formatId, String submitter, String filePath, def auth = null) {

@@ -122,6 +122,7 @@ class OmexServiceTests extends JummpIntegrationTest {
         File exchangeDir = new File("target/omex/exchange/")
         exchangeDir.mkdirs()
         grailsApplication.config.jummp.vcs.exchangeDirectory = exchangeDir.path
+        modelService.vcsService.vcsManager.exchangeDirectory = exchangeDir
         modelService.vcsService.vcsManager = gitService.getInstance()
         assertTrue modelService.vcsService.isValid()
     }

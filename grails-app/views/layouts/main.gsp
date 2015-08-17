@@ -72,6 +72,7 @@
 			
 			
 			function hideHelp() {
+			    $( "#helpPanel" ).removeClass("helpHeightWorkaround")
 				adjustWidth(0);
 				$( "#helpPanel" ).hide();
 				helpHidden=1;
@@ -81,6 +82,7 @@
 			}
 			
 			function showHelp() {
+				$( "#helpPanel" ).addClass("helpHeightWorkaround")
 				helpWidth=-1;
 				$("html, body").animate({ scrollTop: 0 }, "medium");
 				$( "#helpPanel" ).width(${helpWidth});

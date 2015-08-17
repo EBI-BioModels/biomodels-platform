@@ -16,24 +16,30 @@
  *
  * You should have received a copy of the GNU Affero General Public License along
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
- **/
+ */
 
-import org.apache.camel.builder.RouteBuilder
-import org.apache.camel.Exchange
-import org.apache.camel.Processor
+package net.biomodels.jummp.core.annotation
 
-class IndexingRoute extends RouteBuilder {
+import groovy.transform.CompileStatic
+import groovy.transform.Immutable
 
-    @Override
-    void configure() {
-        from("seda:exec")
-        .setHeader("CamelExecCommandArgs", simple('-jar ${body[jarPath]} ${body[jsonPath]}'))
-        .to("exec:java")
-        .process(new Processor() {
-            public void process(Exchange exchange) throws Exception {
-                String indexerOutput = exchange.getIn().getBody(String.class)
-                System.out.println(indexerOutput)
-            }
-        })
-    }
+/**
+ * Lightweight representation of the ResourceReference domain class.
+ *
+ * Instances of this class are immutable.
+ *
+ * @see net.biomodels.jummp.annotationstore.ResourceReference
+ * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ */
+@Immutable
+class ResourceReferenceTransportCommand implements Serializable {
+    static final long serialVersionUID = 1L
+    String datatype
+    String collectionName
+    String name
+    String uri
+    String accession
+    String shortName
+    String description
 }
+

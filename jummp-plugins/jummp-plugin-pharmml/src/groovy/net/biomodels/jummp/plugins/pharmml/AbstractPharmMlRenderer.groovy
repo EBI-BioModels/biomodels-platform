@@ -611,6 +611,7 @@ abstract class AbstractPharmMlRenderer implements IPharmMlRenderer {
             }
         }
         if (dataSet.externalFile) {
+            sb.append("<div class='spaced-top-bottom'>")
             def rftc = rev.files.find {
                 File file = new File(it.path)
                 return file.getName() == dataSet.externalFile.path
@@ -629,6 +630,7 @@ abstract class AbstractPharmMlRenderer implements IPharmMlRenderer {
                 sb.append(dataSet.externalFile.name)
                 sb.append("', but the file is not available in the repository. ")
             }
+            sb.append("</div>")
         }
         return sb
     }

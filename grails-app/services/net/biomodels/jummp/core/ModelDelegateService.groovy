@@ -72,7 +72,7 @@ class ModelDelegateService implements IModelService {
 
     def modelService
     def modelFileFormatService
-    def grailsApplication
+    def referenceTracker
     def publicationIdGenerator
 
     String getPluginForFormat(ModelFormatTransportCommand format) {
@@ -234,8 +234,7 @@ class ModelDelegateService implements IModelService {
              * Add revision to the weak reference data structures, so its files are released
              * from disk.
              */
-            grailsApplication.mainContext.getBean("referenceTracker").addReference(revision,
-                    files.first().path)
+            referenceTracker.addReference(revision, files.first().path)
         }
         return files
     }

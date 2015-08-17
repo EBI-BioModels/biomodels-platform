@@ -63,6 +63,7 @@
         <g:javascript src="syntax/shBrushXml.js"/>
         <g:javascript src="jquery.handsontable.full.js"></g:javascript>
         <style>
+            <%-- class for buttons on sticky left-hand-side menu --%>
         	.ui-button {
         		border-left: none;
         		margin: 0;
@@ -364,6 +365,7 @@
                 resizable: false,
                 autoOpen: false,
                 height: 300,
+                width: 500,
                 modal: true,
                 buttons: {
                     Confirm: function() {
@@ -464,7 +466,7 @@
 					</li>
 				</g:if>
 				<g:if test="${canDelete}">
-					<div id="dialog-confirm" title="Confirm Delete">
+					<div id="dialog-confirm" title="Confirm Delete" style="display:none;">
 						<p>Are you sure you want to delete the model?</p>
 					</div>
 					<li>
@@ -472,7 +474,7 @@
 					</li>
 				</g:if>
 				<g:if test="${showPublishOption}">
-					<div id="confirm-model-publish" title="You are about to publish this model version">
+					<div id="confirm-model-publish" title="You are about to publish this model version" style="display:none;">
 						<p>Make this version of the model visible to anyone without logging in?</p>
 					</div>
 					<li>
@@ -487,7 +489,7 @@
 				</ul>
          </div>
         <div class="ebiLayout_reduceWidth">
-       	<g:if test="${revision.model.deleted}">
+        <g:if test="${revision.model.deleted}">
     		<div class='PermanentMessage'>
     			This is an archived model.
     		</div>
@@ -516,19 +518,19 @@
     	        <%--        <a class="submit" title="Update Model" href="${g.createLink(controller: 'model', action: 'update', id: (revision.model.publicationId) ?: (revision.model.submissionId))}">Update</a>
         	<a class="submit" title="Download Model" href="${g.createLink(controller: 'model', action: 'download', id: revision.identifier())}">Download</a>
 	 --%></div>
-    	<div id="tablewrapper">
-    	<div id="tabs">
-	  <ul class='modelTabs'>
+     <div id="tablewrapper">
+     <div id="tabs">
+     <ul class='modelTabs'>
 	    <li><a href="#Overview">Overview</a></li>
 	    <li><a href="#Files">Files</a></li>
 	    <li><a href="#History">History</a></li>
 	    <g:pageProperty name="page.modelspecifictabs" />
-	  </ul>
+    </ul>
 	  <div id="Overview">
-	  	<label>Model Description:</label>
-	  		<ul style="list-style-type: none;">
-	  			<li>${revision.description}</li>
-	  		</ul>
+          <span class="bold">Model Description:</span>
+          <div style="margin-left: 30px;">
+              ${revision.description}
+          </div>
 	    <table style="margin-top:30px">
 		<tr>
 		    <td><label><g:message code="model.model.format"/></label></td>
@@ -550,21 +552,13 @@
 		<tr>
 		    <td><label><g:message code="model.model.authors"/></label></td>
 		    <td>
-		    	<div class='spaced'>
-			    	<%
-			    		StringBuilder authorString=new StringBuilder()
-			    		authors.eachWithIndex() { author, i -> 
-			    			if (i!=0) {
-			    				authorString.append(", ")
-			    			}
-			    			authorString.append(author)
-			    		};
-			    	%>
-		    		${authorString.toString()}
-		    	</div>
-		    </td>
+                <div class='spaced'>
+                    <g:join in="${authors}"/>
+                </div>
+            </td>
 		</tr>
 	    </table>
+        <g:pageProperty name="page.genericAnnotations"/>
 	
 	  </div>
 	  <div id="Files" class="filegrid">

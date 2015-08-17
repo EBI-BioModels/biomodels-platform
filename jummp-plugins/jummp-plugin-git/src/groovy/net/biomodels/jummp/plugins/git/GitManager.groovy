@@ -240,7 +240,7 @@ class GitManager implements VcsManager {
             throw new VcsException("Local model directory " + modelDirectory.toString() + " is either not a directory or does not exist")
         }
         if (!exchangeDirectory.isDirectory() || !exchangeDirectory.exists()) {
-            throw new VcsException("Exchange directory " + exchangeDirectory.toString() + " is either not a directory or does not exist")
+            throw new VcsException("Exchange directory " + exchangeDirectory.getCanonicalPath() + " is either not a directory ${exchangeDirectory.isDirectory()} or does not exist ${!exchangeDirectory.exists()}")
         }
         FileRepositoryBuilder builder = new FileRepositoryBuilder()
         Repository repository = builder.setWorkTree(modelDirectory)
