@@ -444,6 +444,8 @@ giving up. Sorry about that.""", vcsIssues)
             }
         }
     } finally {
+        biomodelsConnection.close()
+        authConnection.close()
         duration = (System.currentTimeMillis() - duration) / 1000
         String formattedDuration = prettify(duration)
         log("Imported $processedCount models (${failures.size()} failures) in $formattedDuration")
