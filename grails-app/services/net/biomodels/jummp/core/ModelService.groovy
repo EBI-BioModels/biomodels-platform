@@ -995,22 +995,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             aclUtilService.addPermission(revision, username, BasePermission.DELETE)
             aclUtilService.addPermission(revision, username, BasePermission.READ)
             stopWatch.stop()
-            try {
-                if (!rev.model.publication) {
-                    String annotation = getPubMedAnnotation(model)
-                    String pubMed
-                    if (annotation) {
-                        if (annotation.contains(":")) {
-                            pubMed = annotation.substring(annotation.lastIndexOf(":")+1, annotation.indexOf("]")).trim()
-                            //TODO Replace CiteXplore with EuropePMC URLs
-                            //model.publication = pubMedService.getPublication(pubMed)
-                            model.publication = null
-                        }
-                    }
-                }
-            } catch (JummpException e) {
-                log.debug(e.message, e)
-            }
+
             if (IS_DEBUG_ENABLED) {
                 log.debug("Model $submissionId stored with id ${model.id}")
             }
