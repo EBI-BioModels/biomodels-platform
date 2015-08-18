@@ -785,7 +785,7 @@ getPublicationLink = { publication_id, publication_id_type ->
 getModelDetails = { modelId, modelBranch, sql ->
     def modelDetails = [:]
     try {
-        def row = sql.firstRow("select * from "+modelBranch+" where model_id='"+modelId+"'")
+        def row = sql.firstRow("select * from ${modelBranch} where model_id = '${modelId}'")
         modelDetails['submissionDate'] = row.submission_date
         modelDetails['lastModified'] = row.last_modification_date
         modelDetails['publicationDate'] = row.publication_date
