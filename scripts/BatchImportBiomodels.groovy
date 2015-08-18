@@ -808,7 +808,10 @@ getModelDetails = { modelId, modelBranch, sql ->
 }
 
 testBranch = { modelId, branch, sql ->
-    return sql.firstRow("SELECT model_id FROM "+branch+" where model_id='"+modelId+"'") != null
+    if ("auto_gen_models" == branch) {
+        return sql.firstRow("SELECT id FROM auto_gen_models WHERE id = '${modelId}'") != null
+    }
+    return sql.firstRow("SELECT model_id FROM ${branch} WHERE model_id = '${modelId}'") != null
 }
 
 setDefaultTarget(main)
