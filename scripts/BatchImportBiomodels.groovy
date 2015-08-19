@@ -155,24 +155,24 @@ def expectedFiles = ["[A-Z0-9]*_urn\\.xml": "Auto-generated SBML file with URNs"
 
 
 def getUserFromBiomodelsId = {bmPersonId, sql ->
-       def personDetails = sql.firstRow("select * from auth_persons where person_id = "+bmPersonId)
-       if (!personDetails || !personDetails.email) {
-           return null
-       }
-       def existing = User.findByEmail(personDetails.email)
-       if (existing) {
-            return existing
-       }
-       def person = Person.newInstance(userRealName: personDetails.given_name+" "+personDetails.family_name,
-                                       institution: personDetails.organisation)
-       def userCreated = User.newInstance(person: person,
-                                          username: getUsername(personDetails, sql),
-                                          password: "autocreated",
-                                          email: personDetails.email)
-       long userId = userService.register(userCreated, true)
-       if (userId) {
-            return User.get(userId)
-       }
+    def personDetails = sql.firstRow("select * from auth_persons where person_id = ?", [bmPersonId])
+    if (!personDetails || !personDetails.email) {
+        return null
+    }
+    def existing = User.findByEmail(personDetails.email)
+    if (existing) {
+        return existing
+    }
+    String personName = "${personDetails.given_name} ${personDetails.family_name}"
+    def person = Person.newInstance(userRealName: personName,
+            institution: personDetails.organisation)
+    def userCreated = User.newInstance(person: person,
+            username: getUsername(personDetails, sql), password: "autocreated",
+            email: personDetails.email)
+    long userId = userService.register(userCreated, true)
+    if (userId) {
+        return User.get(userId)
+    }
 }
 
 def setCurationNotes = {modelSubmitted, biomodelsConn, authConn ->
@@ -662,8 +662,8 @@ prettify = { long time ->
 getUser = { modelId, biomodelsConnection, authConnection, branch ->
     if (branch) {
         // get user from appropriate biomodels table
-        int submitterId = biomodelsConnection.firstRow("select submitter_id from "+branch+" where model_id='"+modelId+"'").submitter_id
-        def row = authConnection.firstRow("select * from auth_persons where person_id="+submitterId)
+        int submitterId = biomodelsConnection.firstRow("select submitter_id from $branch where model_id = ?", [modelId]).submitter_id
+        def row = authConnection.firstRow("select * from auth_persons where person_id = ?", [submitterId])
         if (!row || !row.email) {
             return null
         }
@@ -672,12 +672,10 @@ getUser = { modelId, biomodelsConnection, authConnection, branch ->
         def user = User.findByEmail(email)
         if (!user) {
             def person = Person.newInstance(userRealName: row.given_name+" "+row.family_name,
-                                            institution: row.organisation)
+                    institution: row.organisation)
             user = User.newInstance(person: person,
-                                    username: getUsername(row, authConnection),
-                                    password: "autocreated",
-                                    email: email 
-                                    )
+                    username: getUsername(row, authConnection), password: "autocreated",
+                    email: email)
             long userId = userService.register(user, true)
             if (userId) {
                 user = User.get(userId)
@@ -716,9 +714,7 @@ processModelOfTheMonth = { model, sql ->
         def modelMonth = ModelOfTheMonth.findByPublicationDate(datePublished)
         if (!modelMonth) { //import new model of the month
             modelMonth = ModelOfTheMonth.newInstance(title: row.title,
-                                                     authors: row.authors,
-                                                     publicationDate: datePublished
-                                                     )
+                    authors: row.authors, publicationDate: datePublished)
             modelMonth.save() // save once to set the last_updated, then modify it
             modelMonth.lastUpdated=row.last_modification_date
         }
@@ -733,7 +729,7 @@ processModelOfTheMonth = { model, sql ->
  * to create JUMMP logins with the same IDs
  */
 getUsername = { personRow, sql ->
-    def userInfo = sql.firstRow("select * from auth_users where person_id = "+personRow.person_id)
+    def userInfo = sql.firstRow("select * from auth_users where person_id = ?", [personRow.person_id])
     if (userInfo) {
         return userInfo.login
     }
@@ -787,7 +783,7 @@ getPublicationLink = { publication_id, publication_id_type ->
 getModelDetails = { modelId, modelBranch, sql ->
     def modelDetails = [:]
     try {
-        def row = sql.firstRow("select * from ${modelBranch} where model_id = '${modelId}'")
+        def row = sql.firstRow("select * from ${modelBranch} where model_id = ?", [modelId])
         modelDetails['submissionDate'] = row.submission_date
         modelDetails['lastModified'] = row.last_modification_date
         modelDetails['publicationDate'] = row.publication_date
@@ -811,9 +807,9 @@ getModelDetails = { modelId, modelBranch, sql ->
 
 testBranch = { modelId, branch, sql ->
     if ("auto_gen_models" == branch) {
-        return sql.firstRow("SELECT id FROM auto_gen_models WHERE id = '${modelId}'") != null
+        return sql.firstRow("SELECT id FROM auto_gen_models WHERE id = ?", [modelId]) != null
     }
-    return sql.firstRow("SELECT model_id FROM ${branch} WHERE model_id = '${modelId}'") != null
+    return sql.firstRow("SELECT model_id FROM $branch WHERE model_id = ?", [modelId]) != null
 }
 
 setDefaultTarget(main)
