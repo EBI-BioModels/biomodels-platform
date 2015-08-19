@@ -308,6 +308,8 @@ giving up. Sorry about that.""", vcsIssues)
 
     def authConnection = Sql.newInstance("jdbc:mysql://${authServer}:${authPort}/${authDB}", authUsername,
                               authPassword, "com.mysql.jdbc.Driver")
+    // don't send registration confirmation emails to model submitters
+    grailsApp.config.jummp.security.registration.email.send = false
 
     long duration = System.currentTimeMillis()
     try {
