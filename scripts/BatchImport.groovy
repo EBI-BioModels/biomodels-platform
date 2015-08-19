@@ -176,7 +176,7 @@ giving up. Sorry about that.""", vcsIssues)
             log("Failed to import the following models:\n${failures.join('\n')}")
         }
         def camelContext = appCtx.camelContext
-        duration = (System.currentTimeMillis() - duration) / 1000
+        duration = System.currentTimeMillis()
         camelContext.shutdown()
         duration = (System.currentTimeMillis() - duration) / 1000
         log("Waited ${prettify(duration)} for Camel to stop gracefully.")

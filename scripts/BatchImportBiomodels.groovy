@@ -460,7 +460,7 @@ giving up. Sorry about that.""", vcsIssues)
             userService.expirePassword(userToExpire.id, true)
         }
         def camelContext = appCtx.camelContext
-        duration = (System.currentTimeMillis() - duration) / 1000
+        duration = System.currentTimeMillis()
         camelContext.shutdown()
         duration = (System.currentTimeMillis() - duration) / 1000
         log("Waited ${prettify(duration)} for Camel to stop gracefully.")
