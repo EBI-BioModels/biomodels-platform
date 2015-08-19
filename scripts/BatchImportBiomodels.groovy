@@ -791,7 +791,9 @@ getModelDetails = { modelId, modelBranch, sql ->
         if ("auto_gen_models" == modelBranch) {
             modelDetails['model_id'] = row.id
         } else {
-            modelDetails['jwsLink'] = row.jws_online
+            if ("publ" == modelBranch || "anno" == modelBranch) {
+                modelDetails['jwsLink'] = row.jws_online
+            }
             modelDetails['model_id'] = row.model_id
         }
         modelDetails['publication_id'] = row.publication_id
