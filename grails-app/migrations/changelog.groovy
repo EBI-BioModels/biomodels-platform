@@ -1191,5 +1191,7 @@ databaseChangeLog = {
     include file: '20150618_createBiomodelsDOM.groovy'
 
     include file: '20150626_addCollectionNameToResourceReference.groovy'
+
+	include file: '20150820_widen_curation_comments.groovy'
 }
 
