@@ -168,10 +168,37 @@ def getUserFromBiomodelsId = {bmPersonId, sql ->
     def userCreated = User.newInstance(person: person,
             username: getUsername(personDetails, sql), password: "autocreated",
             email: personDetails.email)
-    long userId = userService.register(userCreated, true)
+    long userId = registerUser(userCreated)
     if (userId) {
         return User.get(userId)
     }
+}
+
+/**
+ * Very simple means of executing an action as a different user than the one
+ * that is currently authenticated.
+ *
+ * Performs the action defined by closure as the user defined by Authentication
+ * object auth, then reverts to the original authentication.
+ *
+ * Suitable for lightweight work for which we need not create a separate thread.
+ */
+def simpleRunAs = { auth, closure ->
+    def result
+    try {
+        def currentAuth = SecurityContextHolder.context.authentication
+        SecurityContextHolder.context.authentication = auth
+        result = closure.call()
+    } finally {
+        SecurityContextHolder.context.authentication = currentAuth
+        return result
+    }
+}
+
+def registerUser = { user ->
+    simpleRunAs( userAuthenticationDetails, {
+        userService.register(user, true)
+    })
 }
 
 def setCurationNotes = {modelSubmitted, biomodelsConn, authConn ->
@@ -661,7 +688,10 @@ prettify = { long time ->
 getUser = { modelId, biomodelsConnection, authConnection, branch ->
     if (branch) {
         // get user from appropriate biomodels table
-        int submitterId = biomodelsConnection.firstRow("select submitter_id from $branch where model_id = ?", [modelId]).submitter_id
+        int submitterId = getSubmitterIdForModel(modelId, branch, biomodelsConnection)
+        if (!submitterId) {
+            return null
+        }
         def row = authConnection.firstRow("select * from auth_persons where person_id = ?", [submitterId])
         if (!row || !row.email) {
             return null
@@ -691,6 +721,25 @@ getUser = { modelId, biomodelsConnection, authConnection, branch ->
         return user
     }
     return null
+}
+
+/**
+ * Finds the user_id of the person that submitted a model.
+ */
+getSubmitterIdForModel = { String modelId, String branch, Sql sql ->
+    def model = getModelById(modelId, branch, sql)
+    model?.submitter_id
+}
+
+/**
+ * Convenience method for retrieving a model based on its identifier.
+ *
+ * Helps us deal with the fact that different tables have different column
+ * names for the model identifier.
+ */
+getModelById = { modelId, branch, sql ->
+    String idColumnName = 'auto_gen_models' == branch ? 'id' : 'model_id'
+    sql.firstRow("select * from $branch where $idColumnName = ?", [modelId])
 }
 
 authenticateAsUser = { user, springSecurityService ->
@@ -740,7 +789,7 @@ getUsername = { personRow, sql ->
  */
 getBranch = { modelId, sql ->
     return bioModelsBranches.find {
-        testBranch(modelId, it, sql)
+        getModelById(modelId, it, sql)
     }
 }
 
@@ -782,7 +831,7 @@ getPublicationLink = { publication_id, publication_id_type ->
 getModelDetails = { modelId, modelBranch, sql ->
     def modelDetails = [:]
     try {
-        def row = sql.firstRow("select * from ${modelBranch} where model_id = ?", [modelId])
+        def row = getModelById(modelId, modelBranch, sql)
         modelDetails['submissionDate'] = row.submission_date
         modelDetails['lastModified'] = row.last_modification_date
         modelDetails['publicationDate'] = row.publication_date
@@ -804,13 +853,6 @@ getModelDetails = { modelId, modelBranch, sql ->
         return null
     }
     return modelDetails
-}
-
-testBranch = { modelId, branch, sql ->
-    if ("auto_gen_models" == branch) {
-        return sql.firstRow("SELECT id FROM auto_gen_models WHERE id = ?", [modelId]) != null
-    }
-    return sql.firstRow("SELECT model_id FROM $branch WHERE model_id = ?", [modelId]) != null
 }
 
 setDefaultTarget(main)
