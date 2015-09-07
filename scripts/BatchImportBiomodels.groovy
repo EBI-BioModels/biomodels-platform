@@ -307,7 +307,7 @@ giving up. Sorry about that.""", vcsIssues)
     def springSecurityService = appCtx.springSecurityService
 
     def symlinkPattern = ~/[A-Z0-9]*\.xml/
-    def targetPattern = ~/[a-zA-Z_\-\/0-9]*_url\.xml/
+    def targetPattern = ~/[a-zA-Z_\-\.\/0-9]*_url\.xml/
     // keep track of the number of models that are processed
     long processedCount = 0
     def failures = [:]
