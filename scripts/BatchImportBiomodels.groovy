@@ -640,7 +640,7 @@ getSubmissionData = { file, additional, comment, modelFileFormatService, failure
     }
     if (fileTrack.isEmpty()) {
             String errorMessage = "Could not find some expected files for ${it}: ${fileTrack}"
-            System.out.println(errorMessage)
+            System.err.println(errorMessage)
             failures.put(file, errorMessage)
     }
     return [files, rtc.newInstance(model: model, files: files, format: formatCommand,
