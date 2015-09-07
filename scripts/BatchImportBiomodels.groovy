@@ -846,8 +846,7 @@ getModelDetails = { modelId, modelBranch, sql ->
         }
         modelDetails['publication_id'] = row.publication_id
         modelDetails['publication_id_type'] = row.publication_id_type
-    }
-    catch(Exception e) {
+    } catch(Exception e) {
         error("Problem finding model details for $modelId in branch $modelBranch. ${e.message}.")
         e.printStackTrace()
         return null
