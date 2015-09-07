@@ -478,7 +478,10 @@ giving up. Sorry about that.""", vcsIssues)
         String formattedDuration = prettify(duration)
         log("Imported $processedCount models (${failures.size()} failures) in $formattedDuration")
         if (failures) {
-            log("Failed to import the following models:\n${failures}")
+            log("Failed to import the following models:")
+            failures.each { f ->
+                log f
+            }
         }
         /*
          * Expire users so it isnt possible to log in with the newly
