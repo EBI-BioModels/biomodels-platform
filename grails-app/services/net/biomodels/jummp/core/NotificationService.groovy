@@ -50,7 +50,6 @@ import org.springframework.security.access.prepost.PreAuthorize
  * @date 20141015
  */
 class NotificationService {
-    def modelDelegateService
     def grailsApplication
     def mailService
     def springSecurityService
@@ -132,7 +131,6 @@ class NotificationService {
                 body.user,
                 getNotificationRecipients(body.perms),
                 rev.model)
-            searchService.makePublic(rev)
     }
 
     void readAccessGranted(def body) {
@@ -237,7 +235,6 @@ class NotificationService {
                 body.user,
                 getNotificationRecipients(body.perms),
                 model)
-        searchService.setDeleted(model)
     }
 
     void update(def body) {

@@ -24,7 +24,7 @@ import grails.async.Promise
 import grails.plugins.springsecurity.Secured
 import groovy.json.JsonBuilder
 import java.util.concurrent.atomic.AtomicReference
-import net.biomodels.jummp.core.adapters.DomainAdapter 
+import net.biomodels.jummp.core.adapters.DomainAdapter
 import net.biomodels.jummp.core.events.LoggingEventType
 import net.biomodels.jummp.core.events.PostLogging
 import net.biomodels.jummp.core.model.ModelTransportCommand
@@ -54,7 +54,7 @@ import org.apache.solr.client.solrj.SolrServer
  *
  * @author Raza Ali, raza.ali@ebi.ac.uk
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
- * @date   20150320
+ * @date   20150611
  */
 class SearchService {
     static final String[] SOLR_SPECIAL_CHARACTERS = ["+", "-", "&", "|", "!", "(", ")",
@@ -91,18 +91,20 @@ class SearchService {
      */
     def  solrServerHolder
     /*
-    * Dependency injection of grailsApplication
-    */
+     * Dependency injection of grailsApplication
+     */
     def grailsApplication
     /*
-    * Dependency injection of the configuration service
-    */
+     * Dependency injection of the configuration service
+     */
     def configurationService
     /**
      * Dependency injection of miriamService.
      */
     def miriamService
-
+    /**
+     * Dependency injection of aclUtilService
+     */
     def aclUtilService
 
     /**
@@ -143,6 +145,11 @@ class SearchService {
         final String uniqueId = "${submissionId}.${versionNumber}"
         String exchangeFolder = new File(revision.files.first().path).getParent()
         String registryExport = miriamService.registryExport.canonicalPath
+        def dsConfig = grailsApplication.config.dataSource
+        String dbUrl = dsConfig?.url
+        String dbUsername = dsConfig?.username
+        String dbPassword = dsConfig?.password
+        def dbSettings = [ 'url': dbUrl, 'username': dbUsername, 'password': dbPassword ]
         def builder = new JsonBuilder()
         def partialData=[
                 'submissionId':submissionId,
@@ -163,6 +170,8 @@ class SearchService {
                 'publicationYear': revision.model.publication?.year ?: 0,
                 'model_id':revision.model.id,
                 'revision_id': revision.id,
+                'deleted': revision.model.deleted,
+                'public': revision.model.firstPublished ? 'true' : 'false',
                 'versionNumber':versionNumber,
                 'submissionDate':revision.model.submissionDate,
                 'lastModified': revision.model.lastModifiedDate,
@@ -174,7 +183,8 @@ class SearchService {
             'allFiles': fetchFilesFromRevision(revision, false),
             'solrServer': solrServerHolder.SOLR_CORE_URL,
             'jummpPropFile': configurationService.getConfigFilePath(),
-            'miriamExportFile': registryExport)
+            'miriamExportFile': registryExport,
+            'database': dbSettings)
         File indexingData = new File(exchangeFolder, "indexData.json")
         indexingData.setText(builder.toString())
         String jarPath = grailsApplication.config.jummp.search.pathToIndexerExecutable
@@ -234,58 +244,105 @@ class SearchService {
             log.error("Error regenerating the index: ${e.message}", e)
         }
     }
-    
+
     /**
-    * Makes a model public at the specified revision in the solr index
-    *
-    * Makes the @revision public in the solr index. @revision can be domain or transport object
-    **/
-    public void makePublic(def revision) {
+     * Makes a model public at the specified revision in the solr index
+     *
+     * Makes the @revision public in the solr index. @revision can be domain or transport object
+     **/
+    void makePublic(def revision) {
         SolrInputDocument doc = getSolrDocumentFromRevision(revision)
         updateIndexBase(doc, setPublicField)
     }
-    
+
     /**
-    * Makes a model deleted in the solr index
-    *
-    * Makes the @model deleted in the solr index. @model can be domain or transport object
-    **/
-    public void setDeleted(def model) {
-        SolrQuery query = new SolrQuery();
-        query.setQuery("submissionId:"+model.submissionId);
-        query.setFields("uniqueId");
-        query.set("defType", "edismax");
-        QueryResponse response = solrServerHolder.server.query(query)
-        SolrDocumentList docs = response.getResults()
+     * Updates the deleted field for a given model in the Solr index.
+     *
+     * @param model can be domain or transport object
+     * @param deleted the new value that should be put in the Solr index. Defaults
+     *      to true if unspecified
+     **/
+    void setDeleted(def model, boolean deleted = true) {
+        def searchService = grailsApplication.mainContext.searchService
+        SolrDocumentList docs = findSolrDocumentByModel(model, ["deleted"])
         docs.each {
             SolrInputDocument doc = getSolrDocumentWithId(it.get("uniqueId"))
-            updateIndexBase(doc, setDeletedField)
+            updateIndexBase(doc, setDeletedField.rcurry(deleted))
+        }
+        // force commit as downstream we will query the index directly.
+        solrServerHolder.server.commit()
+    }
+
+    /**
+     * Checks whether a model is marked as deleted in the Solr index.
+     *
+     * @param model An instance of Model or ModelTransportCommand for which to check.
+     * @return true if the corresponding SolrInputDocument is marked as deleted, false otherwise.
+     */
+    boolean isDeleted(def model) {
+        SolrDocumentList docs = findSolrDocumentByModel(model, ["deleted"])
+        if (0 == docs.size()) {
+            return false
+        } else if (1 == docs.size()) {
+            return docs.first().get('deleted')
+        } else {
+            return null == docs.find { it.get('deleted') }
         }
     }
-    
-    
+
+
+    /*
+     * Finds the SolrDocument associated with a given model.
+     *
+     * The lookup is done based on the model's submission identifier, which should yield
+     * a single result, but if that is not the case, this method does not truncate the
+     * response from Solr, hence the reason for returning a SolrDocumentList.
+     *
+     * @param model either a ModelTransportCommand or a Model for which to find the SolrDocument.
+     * @param fields a list of fields that should be included for each result. The 'uniqueId'
+     * field is automatically added to @p fields if not already present.
+     */
+    private SolrDocumentList findSolrDocumentByModel(def model,
+            List<String> fields = ['uniqueId']) {
+        SolrQuery query = new SolrQuery()
+        query.setQuery("submissionId:${model?.submissionId}")
+        if (!fields.contains("uniqueId")) {
+            fields.add('uniqueId')
+        }
+        query.setFields(fields.toArray(new String[0]))
+        query.set("defType", "edismax")
+        QueryResponse response = solrServerHolder.server.query(query)
+        SolrDocumentList docs = response.getResults()
+        if (0 == docs.size()) {
+            log.warn("Could not find a Solr document for model ${model?.submissionId}")
+        } else if (docs.size() > 1) {
+            log.error("Multiple Solr documents corresponding to model ${model?.submissionId}")
+        }
+        docs
+    }
+
     /**
-    * Returns search results for query restricted Models the user has access to.
-    *
-    * Executes the @p query, restricting results to Models the current user has access to.
-    * @param query free text search on models
-    * @return Collection of ModelTransportCommand of relevant models available to the user.
-    **/
+     * Returns search results for query restricted Models the user has access to.
+     *
+     * Executes the @p query, restricting results to Models the current user has access to.
+     * @param query free text search on models
+     * @return Collection of ModelTransportCommand of relevant models available to the user.
+     **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="searchService.searchModels")
-    public Collection<ModelTransportCommand> searchModels(String query) {
-        long start = System.currentTimeMillis();
+    Collection<ModelTransportCommand> searchModels(String query) {
+        long start = System.currentTimeMillis()
         SolrDocumentList results = search(query)
         if (IS_DEBUG_ENABLED) {
             log.debug("Solr returned in ${System.currentTimeMillis() - start}")
         }
-        start = System.currentTimeMillis();
+        start = System.currentTimeMillis()
         final int COUNT = results.size()
         Map<String, ModelTransportCommand> returnVals = new LinkedHashMap<>(COUNT + 1, 1.0f)
         boolean isAdmin = SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")
         Map<Long, Long> modelsAdded = new HashMap<Long, Long>()
         results.each {
-            if (!it.containsKey("deleted") || it.get("deleted")=="false") {
+            if (!it.containsKey("deleted") || !it.get("deleted")) {
                 boolean okayToProceed = true
                 boolean checkPermissions = !isAdmin
                 long model_id = it.get("model_id")
@@ -347,49 +404,47 @@ class SearchService {
         SolrDocumentList docs = response.getResults()
         return docs
     }
-    
-    
+
     /**
-    *  ///Helper functions to update solr index
-    */
-    
+     * Helper functions to update solr index
+     */
+
     private void updateIndexWithDocument(SolrInputDocument doc) {
         solrServerHolder.server.add(doc)
     }
-    
+
     private SolrInputDocument getSolrDocumentFromRevision(def revision) {
         String submissionId = revision.model.submissionId
         int versionNumber = revision.revisionNumber
         String id = "${submissionId}.${versionNumber}"
         return getSolrDocumentWithId(id)
     }
-    
+
     private SolrInputDocument getSolrDocumentWithId(String id) {
         SolrInputDocument doc = new SolrInputDocument()
         doc.addField("uniqueId", id)
         return doc
     }
-    
+
     def updateIndexBase(doc, updateToApply) {
         updateToApply(doc)
         updateIndexWithDocument(doc)
     }
 
     def setPublicField = { doc ->
-            Map<String, String> partialUpdate = new HashMap<String, String>();
-            partialUpdate.put("set", "true");
-            doc.addField("public", partialUpdate);
+        Map<String, String> partialUpdate = new HashMap<String, String>();
+        partialUpdate.put("set", "true");
+        doc.addField("public", partialUpdate);
     }
-    
-    def setDeletedField = { doc ->
-            Map<String, String> partialUpdate = new HashMap<String, String>();
-            partialUpdate.put("set", "true");
-            doc.addField("deleted", partialUpdate);
-    }
-    
-    /*
-    *  ///End of helper functions
-    **/
-    
 
+    def setDeletedField = { doc, flag = true ->
+        Map<String, String> partialUpdate = new HashMap<>()
+        partialUpdate.put("set", flag ? "true" : "false")
+        doc.addField("deleted", partialUpdate)
+    }
+
+    /*
+     *  ///End of helper functions
+     **/
 }
+

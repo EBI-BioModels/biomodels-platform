@@ -21,9 +21,12 @@
 package net.biomodels.jummp.core.adapters
 
 import grails.util.Holders
+import net.biomodels.jummp.core.annotation.ElementAnnotationCategory
+import net.biomodels.jummp.core.annotation.ElementAnnotationTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
-import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.model.Revision
+
 /**
  * @short Adapter class for the Revision domain class
  *
@@ -52,8 +55,12 @@ public class RevisionAdapter extends DomainAdapter {
         }
         return repFiles
     }
-    
+
     RevisionTransportCommand toCommandObject() {
+        List<ElementAnnotationTransportCommand> annotations
+        use(ElementAnnotationCategory) {
+            annotations = revision.annotations.collect { it.toCommandObject() }
+        }
         RevisionTransportCommand rev=new RevisionTransportCommand(
                 id: revision.id,
                 state:revision.state,
@@ -66,7 +73,8 @@ public class RevisionAdapter extends DomainAdapter {
                 comment: revision.comment,
                 uploadDate: revision.uploadDate,
                 format: getAdapter(revision.format).toCommandObject(),
-                model: getAdapter(revision.model).toCommandObject()
+                model: getAdapter(revision.model).toCommandObject(),
+                annotations: annotations
         )
         return rev
     }

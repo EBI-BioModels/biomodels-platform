@@ -78,7 +78,7 @@ grails.project.dependency.resolution = {
         compile "com.googlecode.multithreadedtc:multithreadedtc:1.01"
         runtime 'mysql:mysql-connector-java:5.1.17'
         runtime "postgresql:postgresql:9.1-901.jdbc4"
-        compile "net.biomodels.jummp:AnnotationStore:0.1.2"
+        compile "net.biomodels.jummp:AnnotationStore:0.2.1"
         compile("org.apache.solr:solr-solrj:4.10.1") {
             excludes 'wstx-asl' //a newer version of woodstox comes with jsbml
         }

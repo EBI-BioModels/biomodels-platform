@@ -512,13 +512,13 @@ class PharmMl0_6AwareRenderer extends AbstractPharmMlRenderer {
                 }
                 result.append("</h4>\n")
                 result.append("<span class=\"bold\">Parameters </span>")
-                def simpleParameters = continuousObs.commonParameterElement.value.findAll {
+                def simpleParameters = continuousObs.commonParameterElement.findAll {
                     it instanceof SimpleParameter
                 }
-                def rv = continuousObs.commonParameterElement.value.findAll {
+                def rv = continuousObs.commonParameterElement.findAll {
                     it instanceof ParameterRandomVariable
                 }
-                def individualParameters = continuousObs.commonParameterElement.value.findAll {
+                def individualParameters = continuousObs.commonParameterElement.findAll {
                        it instanceof IndividualParameter
                 }
                 result.append(simpleParams(simpleParameters))
@@ -554,7 +554,7 @@ class PharmMl0_6AwareRenderer extends AbstractPharmMlRenderer {
                 }
             }
         } catch(Exception e) {
-            log.error("Error rendering the observations ${observations.inspect()}: ${e.message}")
+            log.error("Error rendering the observations ${observations.inspect()}: ${e.message}", e)
             result.append("Sorry, something went wrong while rendering the observations.")
         } finally {
             return result.toString()
@@ -883,6 +883,7 @@ class PharmMl0_6AwareRenderer extends AbstractPharmMlRenderer {
             sb.append("</tbody></table>\n")
         }
         if (dataSet.externalFile) {
+            sb.append("<div class='spaced-top-bottom'>")
             def rftc = rev.files.find {
                 File file = new File(it.path)
                 return file.getName() == dataSet.externalFile.path
@@ -901,6 +902,7 @@ class PharmMl0_6AwareRenderer extends AbstractPharmMlRenderer {
                 sb.append(dataSet.externalFile.name)
                 sb.append("', but the file is not available in the repository. ")
             }
+            sb.append("</div>")
         }
         return sb
     }

@@ -252,6 +252,7 @@ class SbmlServiceTests extends JummpIntegrationTest {
         exchangeDir.mkdirs()
         grailsApplication.config.jummp.vcs.exchangeDirectory = exchangeDir.path
         modelService.vcsService.vcsManager = gitService.getInstance()
+        modelService.vcsService.vcsManager.exchangeDirectory = exchangeDir
     }
 
     private File smallModel(String filename) {

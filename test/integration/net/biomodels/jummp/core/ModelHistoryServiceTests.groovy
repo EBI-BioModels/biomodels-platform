@@ -226,6 +226,7 @@ class ModelHistoryServiceTests extends JummpIntegrationTest {
         gitService.grailsApplication = grailsApplication
         grailsApplication.config.jummp.plugins.git.enabled = true
         modelService.vcsService.vcsManager = gitService.getInstance()
+        modelService.vcsService.vcsManager.exchangeDirectory = exchangeDir
         assertTrue(modelService.vcsService.isValid())
     }
 

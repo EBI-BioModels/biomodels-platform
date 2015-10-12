@@ -21,6 +21,7 @@
 
 
 package net.biomodels.jummp.plugins.webapp
+
 import grails.test.*
 import grails.test.WebFlowTestCase
 import grails.util.Holders
@@ -97,6 +98,8 @@ public class SubmissionFlowTestBase extends WebFlowTestCase {
         String containerPath = parentLocation.absolutePath + File.separator + "ttt"
         fileSystemService.currentModelContainer = containerPath
         modelService.vcsService.modelContainerRoot = "target/vcs/git/"
+        assertTrue modelService.vcsService.isValid()
+        modelService.vcsService.vcsManager.exchangeDirectory = new File("target/vcs/exchange")
     }
     
     protected void testSetup(String modelID = null) {

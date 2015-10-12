@@ -70,11 +70,10 @@ class BootStrap {
         service.handleModelFormat(modelFormat, "unknownFormatService", "unknown")
 
          grailsApplication.domainClasses.each { GrailsClass gc ->
-            DomainClassGrailsPlugin.addValidationMethods(grailsApplication,
-                gc, grailsApplication.mainContext)
+             DomainClassGrailsPlugin.addValidationMethods(grailsApplication, gc,
+                    grailsApplication.mainContext)
         }
-        
-        
+
         addPublicationLinkProvider(new PubLinkProvTC(linkType:PublicationLinkProvider.LinkType.PUBMED,
                          pattern:"^\\d+",
                          identifiersPrefix:"http://identifiers.org/pubmed/"))

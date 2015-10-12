@@ -21,3 +21,6 @@ h1 {
 	float: left;
 	width: 99%;
 }
+.helpHeightWorkaround {
+    display: inline-block !important;
+}

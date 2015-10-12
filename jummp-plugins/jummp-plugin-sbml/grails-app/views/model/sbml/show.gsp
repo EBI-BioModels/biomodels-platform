@@ -28,5 +28,10 @@
 
 
 <meta name="layout" content="modelDisplay"/>
+<content tag="genericAnnotations">
+<table>
+    <g:render template="/templates/statements" collection="${genericAnnotations}" var="s"/>
+</table>
+</content>
 <content tag="modelspecifictabs"/>
 <content tag="modelspecifictabscontent"/>
