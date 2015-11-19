@@ -36,7 +36,6 @@ import org.springframework.orm.hibernate3.SessionHolder
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.transaction.support.TransactionSynchronizationManager
-import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
 import net.biomodels.jummp.annotationstore.ResourceReference
 import grails.util.Holders
 import groovy.sql.Sql
@@ -88,8 +87,8 @@ String exchangeDirectory
 def userAuthenticationDetails
 
 /*
-* BioModels database credentials
-*/
+ * BioModels database credentials
+ */
 String bmServer
 String bmPort
 String bmDB
@@ -97,8 +96,8 @@ String bmUsername
 String bmPassword
 
 /*
-* WebAuth database credentials
-*/
+ * WebAuth database credentials
+ */
 String authServer
 String authPort
 String authDB
@@ -106,19 +105,23 @@ String authUsername
 String authPassword
 
 /**
-* Location of simulation files
-*/
+ * Location of simulation files
+ */
 File simulationFolder
 
 /*
-* List of users used in this import
-*/
+ * List of users used in this import
+ */
 def usersUsed = [] as Set
 
+/**
+ * The branches of BioModels where we look for model information.
+ */
+def bioModelsBranches = ["publ", "uncura_publ", "anno", "uncura_anno", "cura", "auto_gen_models"]
 /*
-* Domain classes that will be needed in multiple closures, declared globally,
-* defined inside main
-*/
+ * Domain classes that will be needed in multiple closures, declared globally,
+ * defined inside main
+ */
 
 def User
 def Person
@@ -151,24 +154,51 @@ def expectedFiles = ["[A-Z0-9]*_urn\\.xml": "Auto-generated SBML file with URNs"
 
 
 def getUserFromBiomodelsId = {bmPersonId, sql ->
-       def personDetails = sql.firstRow("select * from auth_persons where person_id = "+bmPersonId)
-       if (!personDetails || !personDetails.email) {
-           return null
-       }
-       def existing = User.findByEmail(personDetails.email)
-       if (existing) {
-            return existing
-       }
-       def person = Person.newInstance(userRealName: personDetails.given_name+" "+personDetails.family_name,
-                                       institution: personDetails.organisation)
-       def userCreated = User.newInstance(person: person,
-                                          username: getUsername(personDetails, sql),
-                                          password: "autocreated",
-                                          email: personDetails.email)
-       long userId = userService.register(userCreated, true)
-       if (userId) {
-            return User.get(userId)
-       }
+    def personDetails = sql.firstRow("select * from auth_persons where person_id = ?", [bmPersonId])
+    if (!personDetails || !personDetails.email) {
+        return null
+    }
+    def existing = User.findByEmail(personDetails.email)
+    if (existing) {
+        return existing
+    }
+    String personName = "${personDetails.given_name} ${personDetails.family_name}"
+    def person = Person.newInstance(userRealName: personName,
+            institution: personDetails.organisation)
+    def userCreated = User.newInstance(person: person,
+            username: getUsername(personDetails, sql), password: "autocreated",
+            email: personDetails.email)
+    long userId = registerUser(userCreated)
+    if (userId) {
+        return User.get(userId)
+    }
+}
+
+/**
+ * Very simple means of executing an action as a different user than the one
+ * that is currently authenticated.
+ *
+ * Performs the action defined by closure as the user defined by Authentication
+ * object auth, then reverts to the original authentication.
+ *
+ * Suitable for lightweight work for which we need not create a separate thread.
+ */
+def simpleRunAs = { auth, closure ->
+    def result
+    try {
+        def currentAuth = SecurityContextHolder.context.authentication
+        SecurityContextHolder.context.authentication = auth
+        result = closure.call()
+    } finally {
+        SecurityContextHolder.context.authentication = currentAuth
+        return result
+    }
+}
+
+def registerUser = { user ->
+    simpleRunAs( userAuthenticationDetails, {
+        userService.register(user, true)
+    })
 }
 
 def setCurationNotes = {modelSubmitted, biomodelsConn, authConn ->
@@ -277,7 +307,7 @@ giving up. Sorry about that.""", vcsIssues)
     def springSecurityService = appCtx.springSecurityService
 
     def symlinkPattern = ~/[A-Z0-9]*\.xml/
-    def targetPattern = ~/[a-zA-Z_\-\/0-9]*_url\.xml/
+    def targetPattern = ~/[a-zA-Z_\-\.\/0-9]*_url\.xml/
     // keep track of the number of models that are processed
     long processedCount = 0
     def failures = [:]
@@ -304,6 +334,8 @@ giving up. Sorry about that.""", vcsIssues)
 
     def authConnection = Sql.newInstance("jdbc:mysql://${authServer}:${authPort}/${authDB}", authUsername,
                               authPassword, "com.mysql.jdbc.Driver")
+    // don't send registration confirmation emails to model submitters
+    grailsApp.config.jummp.security.registration.email.send = false
 
     long duration = System.currentTimeMillis()
     try {
@@ -317,9 +349,7 @@ giving up. Sorry about that.""", vcsIssues)
 
                     // Creates/retrieves user based on the user associated with
                     // the model in the biomodels DB
-                    def user = getUser(modelId, biomodelsConnection, 
-                                        authConnection,
-                                        modelBranch)
+                    def user = getUser(modelId, biomodelsConnection, authConnection, modelBranch)
                    // retrieves the model details stored in the biomodels DB
                    def modelDetails = getModelDetails(modelId, modelBranch, biomodelsConnection)
 
@@ -346,12 +376,11 @@ giving up. Sorry about that.""", vcsIssues)
                         //if original file exists, only then proceed, otherwise there is an error
                         if (originalFile) {
                             //submit first revision, with original file as the main file
-                            def initialSubmission = getSubmissionData(originalFile, 
-                                                              additionalFiles - originalFile,
-                                                              "Original import of ",
-                                                              modelFileFormatService,
-                                                              failures)
-                            def firstModel = modelService.uploadValidatedModel(initialSubmission[0], initialSubmission[1])
+                            def initialSubmission = getSubmissionData(originalFile,
+                                    additionalFiles - originalFile, "Original import of ",
+                                    modelFileFormatService, failures)
+                            def firstModel = modelService.uploadValidatedModel(initialSubmission[0],
+                                    initialSubmission[1])
                             if (!firstModel) {
                                 log("...could not import initial file: ${originalFile.absolutePath}")
                                 failures.put(it.absolutePath, "Error importing original file")
@@ -359,13 +388,14 @@ giving up. Sorry about that.""", vcsIssues)
                             else {
                                 firstModel.firstPublished = modelDetails["publicationDate"]
                                 firstModel.submissionId = modelDetails["model_id"]
-                                //Update model of the month
-                                processModelOfTheMonth(firstModel, biomodelsConnection)
+                                if ("auto_gen_models" != modelBranch) {
+                                    //Update model of the month
+                                    processModelOfTheMonth(firstModel, biomodelsConnection)
+                                }
 
                                 /* Add the curation notes */
 
-                                setCurationNotes(firstModel, biomodelsConnection,
-                                        authConnection)
+                                setCurationNotes(firstModel, biomodelsConnection, authConnection)
                                 /*
                                  Update revision / model details
                                 */
@@ -442,11 +472,16 @@ giving up. Sorry about that.""", vcsIssues)
             }
         }
     } finally {
+        biomodelsConnection.close()
+        authConnection.close()
         duration = (System.currentTimeMillis() - duration) / 1000
         String formattedDuration = prettify(duration)
         log("Imported $processedCount models (${failures.size()} failures) in $formattedDuration")
         if (failures) {
-            log("Failed to import the following models:\n${failures}")
+            log("Failed to import the following models:")
+            failures.each { f ->
+                log f
+            }
         }
         /*
          * Expire users so it isnt possible to log in with the newly
@@ -456,7 +491,7 @@ giving up. Sorry about that.""", vcsIssues)
             userService.expirePassword(userToExpire.id, true)
         }
         def camelContext = appCtx.camelContext
-        duration = (System.currentTimeMillis() - duration) / 1000
+        duration = System.currentTimeMillis()
         camelContext.shutdown()
         duration = (System.currentTimeMillis() - duration) / 1000
         log("Waited ${prettify(duration)} for Camel to stop gracefully.")
@@ -608,7 +643,7 @@ getSubmissionData = { file, additional, comment, modelFileFormatService, failure
     }
     if (fileTrack.isEmpty()) {
             String errorMessage = "Could not find some expected files for ${it}: ${fileTrack}"
-            System.out.println(errorMessage)
+            System.err.println(errorMessage)
             failures.put(file, errorMessage)
     }
     return [files, rtc.newInstance(model: model, files: files, format: formatCommand,
@@ -656,8 +691,11 @@ prettify = { long time ->
 getUser = { modelId, biomodelsConnection, authConnection, branch ->
     if (branch) {
         // get user from appropriate biomodels table
-        int submitterId = biomodelsConnection.firstRow("select submitter_id from "+branch+" where model_id='"+modelId+"'").submitter_id
-        def row = authConnection.firstRow("select * from auth_persons where person_id="+submitterId)
+        int submitterId = getSubmitterIdForModel(modelId, branch, biomodelsConnection)
+        if (!submitterId) {
+            return null
+        }
+        def row = authConnection.firstRow("select * from auth_persons where person_id = ?", [submitterId])
         if (!row || !row.email) {
             return null
         }
@@ -666,12 +704,10 @@ getUser = { modelId, biomodelsConnection, authConnection, branch ->
         def user = User.findByEmail(email)
         if (!user) {
             def person = Person.newInstance(userRealName: row.given_name+" "+row.family_name,
-                                            institution: row.organisation)
+                    institution: row.organisation)
             user = User.newInstance(person: person,
-                                    username: getUsername(row, authConnection),
-                                    password: "autocreated",
-                                    email: email 
-                                    )
+                    username: getUsername(row, authConnection), password: "autocreated",
+                    email: email)
             long userId = userService.register(user, true)
             if (userId) {
                 user = User.get(userId)
@@ -688,6 +724,25 @@ getUser = { modelId, biomodelsConnection, authConnection, branch ->
         return user
     }
     return null
+}
+
+/**
+ * Finds the user_id of the person that submitted a model.
+ */
+getSubmitterIdForModel = { String modelId, String branch, Sql sql ->
+    def model = getModelById(modelId, branch, sql)
+    model?.submitter_id
+}
+
+/**
+ * Convenience method for retrieving a model based on its identifier.
+ *
+ * Helps us deal with the fact that different tables have different column
+ * names for the model identifier.
+ */
+getModelById = { modelId, branch, sql ->
+    String idColumnName = 'auto_gen_models' == branch ? 'id' : 'model_id'
+    sql.firstRow("select * from $branch where $idColumnName = ?", [modelId])
 }
 
 authenticateAsUser = { user, springSecurityService ->
@@ -710,9 +765,7 @@ processModelOfTheMonth = { model, sql ->
         def modelMonth = ModelOfTheMonth.findByPublicationDate(datePublished)
         if (!modelMonth) { //import new model of the month
             modelMonth = ModelOfTheMonth.newInstance(title: row.title,
-                                                     authors: row.authors,
-                                                     publicationDate: datePublished
-                                                     )
+                    authors: row.authors, publicationDate: datePublished)
             modelMonth.save() // save once to set the last_updated, then modify it
             modelMonth.lastUpdated=row.last_modification_date
         }
@@ -727,7 +780,7 @@ processModelOfTheMonth = { model, sql ->
  * to create JUMMP logins with the same IDs
  */
 getUsername = { personRow, sql ->
-    def userInfo = sql.firstRow("select * from auth_users where person_id = "+personRow.person_id)
+    def userInfo = sql.firstRow("select * from auth_users where person_id = ?", [personRow.person_id])
     if (userInfo) {
         return userInfo.login
     }
@@ -738,9 +791,8 @@ getUsername = { personRow, sql ->
  * Searches the tables in biomodels to find the table containing given model
  */
 getBranch = { modelId, sql ->
-    def branches = ["publ", "uncura_publ", "anno", "uncura_anno", "cura"]
-    return branches.find {
-        testBranch(modelId, it, sql)
+    return bioModelsBranches.find {
+        getModelById(modelId, it, sql)
     }
 }
 
@@ -782,26 +834,27 @@ getPublicationLink = { publication_id, publication_id_type ->
 getModelDetails = { modelId, modelBranch, sql ->
     def modelDetails = [:]
     try {
-        def row = sql.firstRow("select * from "+modelBranch+" where model_id='"+modelId+"'")
+        def row = getModelById(modelId, modelBranch, sql)
         modelDetails['submissionDate'] = row.submission_date
         modelDetails['lastModified'] = row.last_modification_date
         modelDetails['publicationDate'] = row.publication_date
         modelDetails['originalModel'] = row.original_model
-        modelDetails['jwsLink'] = row.jws_online
-        modelDetails['model_id'] = row.model_id
+        if ("auto_gen_models" == modelBranch) {
+            modelDetails['model_id'] = row.id
+        } else {
+            if ("publ" == modelBranch || "anno" == modelBranch) {
+                modelDetails['jwsLink'] = row.jws_online
+            }
+            modelDetails['model_id'] = row.model_id
+        }
         modelDetails['publication_id'] = row.publication_id
         modelDetails['publication_id_type'] = row.publication_id_type
-    }
-    catch(Exception e) {
+    } catch(Exception e) {
         error("Problem finding model details for $modelId in branch $modelBranch. ${e.message}.")
         e.printStackTrace()
         return null
     }
     return modelDetails
-}
-
-testBranch = { modelId, branch, sql ->
-    return sql.firstRow("SELECT model_id FROM "+branch+" where model_id='"+modelId+"'") != null
 }
 
 setDefaultTarget(main)
