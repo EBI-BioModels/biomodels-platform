@@ -158,15 +158,15 @@ class ZiphandlerTagLib {
 				addFileAttributesJS(builder,file.name,"isInternal","false", false) 
 				
 				if (it.mimeType.contains('zip')) {
-						 handleZip(builder, true, it.path, loadedZips, zipSupported)
+                    handleZip(builder, true, it.path, loadedZips, zipSupported)
 				}
      		}
-     		builder.append("</script>")
         }
         catch(Exception e) {
-        	e.printStackTrace()
+            log.error e.message, e
+        } finally {
+            builder.append("</script>")
         }
-	
 	}
 	
 	def outputFileInfoAsJS = { attrs ->
