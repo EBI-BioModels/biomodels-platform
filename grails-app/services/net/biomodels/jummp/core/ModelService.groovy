@@ -2175,11 +2175,15 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         Qualifier qualifier = Qualifier.findByUri("http://www.ddmore.org/ontologies/webannotationtool#model-implementation-conforms-to-literature-controlled")
         def stmtsWithQualifier = revision.annotations*.statement.findAll { it.qualifier == qualifier }
         def qualifierXrefs = stmtsWithQualifier.collect { Statement s -> s.object }
-        ResourceReference resourceReference = qualifierXrefs.first()
+
         boolean originalModel = true
-        if(resourceReference.name.toLowerCase().equals("no")){
-            originalModel = false
+        if(qualifierXrefs) {
+            ResourceReference resourceReference = qualifierXrefs.first()
+            if (resourceReference.name.toLowerCase().equals("no")) {
+                originalModel = false
+            }
         }
+
         PublishInfo pubInfo = new PublishInfo(originalModel)
         revision.repoFiles.each {
             String description = null;

@@ -552,69 +552,97 @@ class ModelController {
         }
         uploadFiles {
             on("Upload") {
-            	try {
-                def mainMultipartList = request.getMultiFileMap().mainFile
-                def extraFileField = request.getMultiFileMap().extraFiles
-                List<MultipartFile> extraMultipartList = []
-                if (extraFileField instanceof MultipartFile) {
-                    extraMultipartList = [extraFileField]
-                }
-                else {
-                    extraMultipartList = extraFileField
-                }
-                def descriptionFields = params?.description ?: [""]
-                if (descriptionFields instanceof String) {
-                    descriptionFields = [descriptionFields]
-                }
-                def noMains = params.deletedMain
-                List<String> mainsToBeDeleted = []
-                if (noMains) {
-                    if (!(noMains instanceof CharSequence)) {
-                        mainsToBeDeleted.addAll(Arrays.asList(noMains))
-                    } else {
-                        mainsToBeDeleted.add(noMains)
+                // get the main and the additional files just added and their descriptions
+                // these operations are based on params
+                // the principal purpose of this step is to store an UploadCommand object to workingMemory
+                // this object persists the latest changes on the upload file page
+                try {
+                    def mainMultipartList = request.getMultiFileMap().mainFile
+                    def extraFileField = request.getMultiFileMap().extraFiles
+                    List<MultipartFile> extraMultipartList = []
+                    if (extraFileField instanceof MultipartFile) {
+                        extraMultipartList = [extraFileField]
                     }
-                }
-                def noAdditionals = params.deletedAdditional
-                List<String> additionalsToBeDeleted = []
-                if (noAdditionals) {
-                    if (noAdditionals.getClass().isArray()) {
-                        additionalsToBeDeleted.addAll(Arrays.asList(noAdditionals))
-                    } else {
-                        additionalsToBeDeleted.add(noAdditionals)
+                    else {
+                        extraMultipartList = extraFileField
                     }
-                }
-                if (IS_DEBUG_ENABLED) {
-                    if (mainMultipartList?.size() == 1) {
-                        log.debug("""\
-New submission started.The main file supplied is ${mainMultipartList.properties}.""")
-                    } else {
-                        log.debug("""\
-New submission started. Main files: ${mainMultipartList.inspect()}.""")
+                    def descriptionFields = params?.description ?: [""]
+                    if (descriptionFields instanceof String) {
+                        descriptionFields = [descriptionFields]
                     }
-                    log.debug("Additional files supplied: ${extraMultipartList.inspect()}.\n")
-                }
+                    def noMains = params.deletedMain
+                    List<String> mainsToBeDeleted = []
+                    if (noMains) {
+                        if (!(noMains instanceof CharSequence)) {
+                            mainsToBeDeleted.addAll(Arrays.asList(noMains))
+                        } else {
+                            mainsToBeDeleted.add(noMains)
+                        }
+                    }
+                    def noAdditionals = params.deletedAdditional
+                    List<String> additionalsToBeDeleted = []
+                    if (noAdditionals) {
+                        if (noAdditionals.getClass().isArray()) {
+                            additionalsToBeDeleted.addAll(Arrays.asList(noAdditionals))
+                        } else {
+                            additionalsToBeDeleted.add(noAdditionals)
+                        }
+                    }
+                    // Because of using an input element to store deleted files,
+                    // we need to reprocess the list of them for getting the list of file name
+                    // before sending the result to Submission Service
+                    List<String> additionalFilesToBeDeleted = new LinkedList<String>()
+                    additionalsToBeDeleted.each {String filename ->
+                        int posLessThan = filename.indexOf("<")
+                        if (posLessThan > 0) {
+                            additionalFilesToBeDeleted.add(filename.substring(0, posLessThan))
+                        }
+                    }
+                    if (IS_DEBUG_ENABLED) {
+                        if (mainMultipartList?.size() == 1) {
+                            log.debug("""\
+    New submission started. The main file supplied is ${mainMultipartList.properties}.""")
+                        } else {
+                            log.debug("""\
+    New submission started. Main files: ${mainMultipartList.inspect()}.""")
+                        }
+                        log.debug("Additional files supplied: ${extraMultipartList.inspect()}.\n")
+                    }
 
-                def cmd = new UploadFilesCommand()
-                cmd.mainFile = mainMultipartList
-                cmd.extraFiles = extraMultipartList
-                cmd.mainDeletes = mainsToBeDeleted
-                cmd.extraDeletes = additionalsToBeDeleted
-                cmd.description = descriptionFields
-                if (IS_DEBUG_ENABLED) {
-                    log.debug "Data binding done :${cmd.properties}"
-                }
-                flow.workingMemory.put("UploadCommand", cmd)
+                    def cmd = new UploadFilesCommand()
+                    cmd.mainFile = mainMultipartList
+                    cmd.extraFiles = extraMultipartList
+                    cmd.mainDeletes = mainsToBeDeleted
+                    cmd.extraDeletes = additionalFilesToBeDeleted
+                    cmd.description = descriptionFields
+                    if (IS_DEBUG_ENABLED) {
+                        log.debug "Data binding done :${cmd.properties}"
+                    }
+                    flow.workingMemory.put("UploadCommand", cmd)
+
+                    // store additional files existing on UI, i.e. the files are in updated process
+                    // data stored are a map of file names and corresponding descriptions.
+                    // For instance, manual.pdf: guidelines and help, readme.txt: introduction and preface, ...
+                    Map<String, String> additionalFiles = new HashMap<String, String>()
+                    String additionalFilesInWorking = params.additionalFilesInWorking
+                    if (additionalFilesInWorking != null) {
+                        String[] workingFiles = additionalFilesInWorking.split(', ')
+                        workingFiles.each {
+                            def (fileName, fileDescription) = it.split(':')
+                            additionalFiles.put(fileName.trim(), fileDescription.trim())
+                        }
+                        flow.workingMemory.put("additionals_in_working", additionalFiles)
+                    }
                 }
                 catch(Exception e) {
-                	e.printStackTrace();
+                    e.printStackTrace();
                 }
             }.to "transferFilesToService"
             on("ProceedWithoutValidation"){
 
             }.to "inferModelInfo"
             on("ProceedAsUnknown"){
-            	flow.workingMemory.get("model_type").identifier = "UNKNOWN"
+                flow.workingMemory.get("model_type").identifier = "UNKNOWN"
             }.to "inferModelInfo"
             on("Cancel").to "cleanUpAndTerminate"
             on("Back"){}.to "displayDisclaimer"
@@ -680,6 +708,8 @@ Error in uploading files. Cmd did not validate: ${cmd.getProperties()}""")
                         submission_folder = (new File(existing.path)).getParentFile()
                     }
                     def parent = submission_folder.canonicalPath + sep
+                    // transfer uploaded files to File objects:
+                    // For Main file
                     List<File> mainFileList
                     if (cmd.mainFile) {
                         mainFileList = transferFiles(parent, cmd.mainFile)
@@ -687,6 +717,9 @@ Error in uploading files. Cmd did not validate: ${cmd.getProperties()}""")
                     else {
                         mainFileList = new LinkedList<File>()
                     }
+                    // For the extra files, i.e. the files have just added, not the existing
+                    // additional files. This does not allow us modifying the descriptions of
+                    // the existing ones.
                     List<File> extraFileList = transferFiles(parent, cmd.extraFiles)
                     List<String> descriptionList = cmd.description
                     def additionalsMap = [:]
@@ -699,11 +732,26 @@ About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
                     }
                     flow.workingMemory["submitted_mains"] = mainFileList
                     flow.workingMemory["submitted_additionals"] = additionalsMap
+
+                    // store the deleted file names into working memory
                     List<String> deletedFileNames = []
                     deletedFileNames.addAll(deletedMains)
                     deletedFileNames.addAll(cmd.extraDeletes)
                     // ensure there are no lists within this list
                     flow.workingMemory["deleted_filenames"] = deletedFileNames.flatten()
+
+                    // transfer HashMap<String, String> to HashMap<File, String>
+                    // Why? we can get the submission folder at this step and this operation
+                    // repairs the data for handling file upload afterward.
+                    if (flow.workingMemory.containsKey("additionals_in_working")) {
+                        Map<File, String> additionalFiles = new HashMap<File, String>()
+                        def additionals_in_working =
+                            flow.workingMemory.get("additionals_in_working") as HashMap<String, String>
+                        additionals_in_working.each {String keyAsFilename, String valueAsDescription ->
+                            additionalFiles.put(new File(parent+keyAsFilename), valueAsDescription)
+                        }
+                        flow.workingMemory.put("additional_files_in_working", additionalFiles)
+                    }
                     submissionService.handleFileUpload(flow.workingMemory)
                 }
 

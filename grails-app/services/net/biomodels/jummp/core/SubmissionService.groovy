@@ -39,6 +39,7 @@ import net.biomodels.jummp.core.adapters.DomainAdapter
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC //rude?
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import net.biomodels.jummp.core.model.PublicationTransportCommand
@@ -114,8 +115,20 @@ class SubmissionService {
                 mainFiles = workingMemory.remove("submitted_mains") as List<File>
                 workingMemory.put("reprocess_files", true)
             }
-            if (workingMemory.containsKey("submitted_additionals")) {
-                additionals = workingMemory.remove("submitted_additionals") as Map<File, String>
+//            if (workingMemory.containsKey("submitted_additionals")) {
+//                additionals = workingMemory.remove("submitted_additionals") as Map<File, String>
+//            } else {
+//                additionals = new HashMap<File, String>()
+//            }
+            if (workingMemory.containsKey("additional_files_in_working")) {
+                def additionalFilesInWorking = workingMemory.remove("additional_files_in_working") as HashMap<File, String>
+                List<RFTC> allExtraFilesWorking = new LinkedList<RFTC>()
+                additionalFilesInWorking.each { File key, String value ->
+                    allExtraFilesWorking.add(createRFTC(key, false, value))
+                }
+                workingMemory.put("additional_repository_files_in_working", allExtraFilesWorking)
+                workingMemory.put("additional_files", allExtraFilesWorking)
+                additionals = additionalFilesInWorking
             } else {
                 additionals = new HashMap<File, String>()
             }
@@ -135,6 +148,8 @@ class SubmissionService {
                     filesToDelete = filesToDelete - overlapping
                 }
             }
+            // update the list of RFTC and the list of files that would be deleted
+            // this update is really done on workingMemory
             storeRFTC(workingMemory, tobeAdded, filesToDelete)
         }
 
@@ -207,7 +222,8 @@ class SubmissionService {
                 } else {
                     workingMemory.put("changedMainFiles", false)
                 }
-                additionals = existing - main
+                //additionals = existing - main
+                additionals = workingMemory.remove("additional_repository_files_in_working") as List<RFTC>
             } else {
                 workingMemory.put("repository_files", tobeAdded)
                 // DON'T CHANGE IF IS UPDATE ON EXISTING MODEL
