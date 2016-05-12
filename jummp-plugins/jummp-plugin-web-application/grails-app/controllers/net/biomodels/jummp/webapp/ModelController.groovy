@@ -625,7 +625,7 @@ class ModelController {
                     // For instance, manual.pdf: guidelines and help, readme.txt: introduction and preface, ...
                     Map<String, String> additionalFiles = new HashMap<String, String>()
                     String additionalFilesInWorking = params.additionalFilesInWorking
-                    if (additionalFilesInWorking != null) {
+                    if (additionalFilesInWorking.trim() != "empty") {
                         String[] workingFiles = additionalFilesInWorking.split(', ')
                         workingFiles.each {
                             def (fileName, fileDescription) = it.split(':')
