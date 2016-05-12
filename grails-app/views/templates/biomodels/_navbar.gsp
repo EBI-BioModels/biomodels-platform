@@ -42,7 +42,7 @@
        For example: -->
     <sec:ifLoggedIn>
         <li class="functional last">
-            <a href="/jummp/logout" class="icon icon-functional" data-icon="l">
+            <a href="${grailsApplication.config.grails.serverURL}/logout" class="icon icon-functional" data-icon="l">
                 <g:message code="jummp.main.logout"/>
             </a>
         </li>
