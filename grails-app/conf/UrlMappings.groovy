@@ -18,7 +18,7 @@
 * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 **/
 
-
+import grails.util.Holders
 
 
 
@@ -65,7 +65,9 @@ class UrlMappings {
         "/archive"(controller: "search", action: "archive")
         "/feedback"(controller:"jummp", action:"feedback")
         "/lookupUser"(controller:"jummp", action:"lookupUser")
-        "/registration"(controller:"usermanagement", action:"create")
+        if (Holders.config.jummp.security.anonymousRegistration) {
+            "/registration"(controller:"usermanagement", action:"create")
+        }
         "/forgotpassword"(controller:"usermanagement", action:"forgot")
         "/user/editUser"(controller:"usermanagement", action:"edit")
         "/user/editPassword"(controller:"usermanagement", action:"editPassword")

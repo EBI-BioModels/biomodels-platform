@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -36,6 +36,7 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="layout" content="main"/>
         <title><g:message code="submission.publicationLink.header"/></title>
+        <g:javascript contextPath="" src="enterPublicationLink.js"/>
     </head>
     <body>
         <h2><g:message code="submission.publicationLink.header"/></h2>
@@ -47,29 +48,33 @@
                 publication = revision?.model?.publication
             %>
             <g:if test="${publication}">
-                Currently, the model is associated with: 
-                <g:render  model="[model:model]" template="/templates/showPublication" />
+                <g:if test="${publication.title && (publication.affiliation || publication.synopsis)}">
+                    Currently, the model is associated with:
+                    <g:render  model="[model:model]" template="/templates/showPublication" />
+                </g:if>
             </g:if>
             <div class="dialog">
                 <table class="formtable">
                     <tbody>
                          <tr class="prop">
+                            <%
+                                linkSourceTypes = PublicationLinkProvider.LinkType.
+                                    values().collect { it.label }
+                            %>
                             <td class="value" style="vertical-align:top;">
                                 <g:if test="${publication}">
-                                            <g:select name="PubLinkProvider"
-                                            from="${PublicationLinkProvider.LinkType.
-                                                    values().collect(new LinkedList()) { it.toString() }}"
-                                                    value="${publication.linkProvider.linkType.toString()}"
-                                                    noSelection="['':'-Please select publication link type-']"/>
-                                            <g:textField name="PublicationLink"
-                                                         value="${publication.link}"/>
+                                    <g:select name="PubLinkProvider" id="pubLinkProvider"
+                                    from="${linkSourceTypes}"
+                                            value="${publication.linkProvider.linkType}"
+                                            noSelection="['':'- No publication available -']"/>
+                                    <g:textField name="PublicationLink" id="publicationLink" size="100"
+                                                 value="${publication.link}"/>
                                 </g:if>
                                 <g:else>
-                                            <g:select name="PubLinkProvider"
-                                            from="${PublicationLinkProvider.LinkType.
-                                                    values().collect(new LinkedList()) { it.toString() }}"
-                                            noSelection="['':'-Please select publication link type-']"/>
-                                            <g:textField name="PublicationLink"/>
+                                    <g:select name="PubLinkProvider" id="pubLinkProvider"
+                                    from="${linkSourceTypes}"
+                                    noSelection="['':'- No publication available -']"/>
+                                    <g:textField name="PublicationLink" id="publicationLink" size="100"/>
                                 </g:else>
                             </td>
                         </tr>

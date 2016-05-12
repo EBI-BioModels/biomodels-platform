@@ -23,12 +23,21 @@
 
 
 package net.biomodels.jummp.core.model
+
+import net.biomodels.jummp.core.annotation.ElementAnnotationTransportCommand
+import org.apache.commons.logging.Log
+import org.apache.commons.logging.LogFactory
+import org.perf4j.aop.Profiled
+
 /**
  * Possibly the most permissive implementation possible of the file format service
  * interface. Everything is a valid unknown format.
  * @author raza
  */
 class UnknownFormatService implements FileFormatService {
+    private static final Log log = LogFactory.getLog(this)
+    private static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
+    private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
     /**
      * Validate the @p model.
      * @param model File handle containing the Model to be validated.
@@ -70,10 +79,20 @@ class UnknownFormatService implements FileFormatService {
     }
 
     /**
-     * Extracts the descrition from the @p model.
+     * Extracts the description from the @p model.
      */
     public final String extractDescription(final List<File> model) {
         return ""
+    }
+
+    boolean doBeforeSavingAnnotations(File annoFile, RevisionTransportCommand rev) {
+        return true
+    }
+
+    @Profiled(tag="unknownFormatService.getModelOntologyTerm")
+    String getModelOntologyTerm(RevisionTransportCommand revisionTC) {
+        // TODO: replace it by a correct url. Here we keep it similar to PharmML's one
+        return "http://www.pharmml.org/ontology/PHARMMLO_0000001"
     }
 
     /**
@@ -111,8 +130,14 @@ class UnknownFormatService implements FileFormatService {
     public final boolean areFilesThisFormat(final List<File> files) {
         if (files && !files.isEmpty()) {
             return true
-        } 
+        }
         return false
+    }
+
+
+    List<ElementAnnotationTransportCommand> fetchGenericAnnotations(RevisionTransportCommand rev) {
+        // There can only be model-level annotations for this model format.
+        rev.annotations
     }
 }
 

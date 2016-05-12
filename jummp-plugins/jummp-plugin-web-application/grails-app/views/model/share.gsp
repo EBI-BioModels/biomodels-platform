@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -34,11 +34,11 @@
         <g:javascript src="handlebars.min.js"/>
         <g:javascript src="backbone-min.js"/>
         <script id="collaborator-list-template" type="text/x-handlebars-template">
-    			
+
         		<div id="currentCollabs">
 				<h2>Collaborators</h2>
     			{{#if hasCollabs}}
-				<table class='table'> 
+				<table class='table'>
     			<thead>
     				<tr>
     					<td class="tableEL bold">Name</td>
@@ -49,8 +49,8 @@
     		 			{{#if this.show}}
 							<tr class='collaborator'>
 								<td class="tableEL">{{this.name}}</td>
-								<td class="tableEL"><input id=checkRead-{{this.id}} data-field="read" data-person={{this.id}} class="updateCollab" type="radio" name="accesstype-{{this.id}}" {{setChecked "read"}} {{#if this.disabledEdit}}disabled=true title="This user cannot be modified"{{/if}}></input></td>
-								<td class="tableEL"><input id=checkWrite-{{this.id}} data-field="write" data-person={{this.id}} class="updateCollab" type="radio" name="accesstype-{{this.id}}" {{setChecked "write"}} {{#if this.disabledEdit}}disabled=true title="This user cannot be modified"{{/if}}></input></td>
+								<td class="tableEL"><input id=checkRead-{{this.id}} data-field="read" data-person={{this.id}} class="updateCollab" type="radio" name="accesstype-{{this.id}}" {{setChecked "read"}} {{#if this.disabledEdit}}disabled=true title="This user cannot be modified"{{/if}}></td>
+								<td class="tableEL"><input id=checkWrite-{{this.id}} data-field="write" data-person={{this.id}} class="updateCollab" type="radio" name="accesstype-{{this.id}}" {{setChecked "write"}} {{#if this.disabledEdit}}disabled=true title="This user cannot be modified"{{/if}}></td>
 								<td class="tableEL"><button id=removebutton-{{this.id}} data-name={{this.name}} data-person={{this.id}} {{#if this.disabledEdit}}disabled=true title="This user cannot be modified"{{/if}} class="remove">Remove</button></td>
 							</tr>
 						{{/if}}
@@ -63,7 +63,7 @@
     		 	</div>
     		 </script>
     		 <link rel="stylesheet" href="${resource(contextPath: "${grailsApplication.config.grails.serverURL}", dir: '/css', file: 'share.css')}" />
-            		 
+
     </head>
     <body>
     		<div id="ui">
@@ -74,20 +74,23 @@
     						<div id="formElements" class="formElements">
     							<div class="formElement">
     								<label for="nameSearch">User</label>
-    								<input placeholder="Name, username or email" id="nameSearch" name="name" type="text"/>
+    								<input placeholder="Name, username or email" id="nameSearch" name="name" type="text">
     							</div>
     							<div class="formElement">
-									<label for="read">Read</label>
+									<label for="radioReader">Read</label>
 									<input id="radioReader" type="radio" name="read"
-                                           checked></input>
+                                           checked>
 								</div>
 								<div class="formElement">
-									<label for="write">Write</label>
+									<label for="radioWriter">Write</label>
 									<input id="radioWriter" type="radio"
-                                           name="write"></input>
+                                           name="write">
 								</div>
+                                <div class="formElement">
+                                    <button id="AddButton">Add</button>
+                                </div>
 							</div>
-						<button id="AddButton">Add</button>
+
 						<g:if test="${teams.size() > 0}">
 							<div id="teamFormElements" class="formElements">
 									<div class="formElement">
@@ -99,17 +102,19 @@
 										</select>
 									</div>
 									<div class="formElement">
-										<label for="teamRead">Read</label>
-										<input id="teamRadioReader" type="radio" name="teamRead" checked></input>
+										<label for="teamRadioReader">Read</label>
+										<input id="teamRadioReader" type="radio" name="teamRead" checked>
 									</div>
 									<div class="formElement">
-										<label for="teamWrite">Write</label>
+										<label for="teamRadioWriter">Write</label>
 										<input id="teamRadioWriter" type="radio"
-											   name="teamWrite"></input>
+											   name="teamWrite">
 									</div>
-								</div>
-							<br/>
-							<button id="TeamAddButton" style='margin-left:10px;'>Add</button>
+                                <div class="formElement">
+                                    <button id="TeamAddButton">Add</button>
+                                </div>
+                            </div>
+
 						</g:if>
 					   </form>
 					</div>
@@ -137,4 +142,4 @@
 	<content tag="contexthelp">
 		sharing
 	</content>
-    
+

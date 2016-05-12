@@ -61,7 +61,7 @@ class BootStrap {
     def init = { servletContext ->
         ModelFormat format = ModelFormat.findByIdentifierAndFormatVersion("UNKNOWN", "*")
         if (!format) {
-            format = new ModelFormat(identifier: "UNKNOWN", name: "Unknown format", formatVersion: "*")
+            format = new ModelFormat(identifier: "UNKNOWN", name: "Original code", formatVersion: "*")
             format.save(flush: true)
         }
         def ctx = servletContext.getAttribute(ApplicationAttributes.APPLICATION_CONTEXT)
@@ -82,6 +82,7 @@ class BootStrap {
                          pattern:"^(doi\\:)?\\d{2}\\.\\d{4}.*",
                          identifiersPrefix:"http://identifiers.org/doi/"))
 
+        /* ignore until we fix the integration with the annotation UI.
         addPublicationLinkProvider(new PubLinkProvTC(linkType:PublicationLinkProvider.LinkType.ARXIV,
                          pattern:"^(\\w+(\\-\\w+)?(\\.\\w+)?/)?\\d{4,7}(\\.\\d{4}(v\\d+)?)?",
                          identifiersPrefix:"http://identifiers.org/arxiv/"))
@@ -109,9 +110,12 @@ class BootStrap {
         addPublicationLinkProvider(new PubLinkProvTC(linkType:PublicationLinkProvider.LinkType.PMC,
                          pattern:"PMC\\d+",
                          identifiersPrefix:"http://identifiers.org/pmc/"))
+        */
+        addPublicationLinkProvider(new PubLinkProvTC(linkType: PublicationLinkProvider.LinkType.CUSTOM,
+                pattern: "^(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]"))
+        addPublicationLinkProvider(new PubLinkProvTC(linkType: PublicationLinkProvider.LinkType.MANUAL_ENTRY,
+                pattern: "\\A\\z" /* i.e. start of input then end of input -- ignored */))
 
-        addPublicationLinkProvider(new PubLinkProvTC(linkType:PublicationLinkProvider.LinkType.CUSTOM,
-                         pattern:"^(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]",))
         if (Environment.getCurrent() != Environment.TEST) {
              if (!Role.findByAuthority("ROLE_USER")) {
                 new Role(authority: "ROLE_USER").save(flush: true)
@@ -137,9 +141,6 @@ class BootStrap {
                 new AclSid(sid: user.username, principal: true).save(flush: true)
                 Role userRole = Role.findByAuthority("ROLE_USER")
                 UserRole.create(user, userRole, true)
-                if (!Role.findByAuthority("ROLE_ADMIN")) {
-                    new Role(authority: "ROLE_ADMIN").save(flush: true)
-                }
                 userRole = Role.findByAuthority("ROLE_ADMIN")
                 UserRole.create(user, userRole, true)
             }

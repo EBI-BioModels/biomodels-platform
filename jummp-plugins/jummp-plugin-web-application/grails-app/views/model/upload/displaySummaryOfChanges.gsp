@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -78,7 +78,7 @@
                                 </div>
                             </td>
                         </tr>
-                        <g:if test="${revision.model.publication}">
+                        <g:if test="${revision.model.publication?.validate()}">
                             <tr class="prop">
                                 <td class="name" style="vertical-align:top;">
                                     <label for="${g.message(code: 'submission.summary.publication')}">
@@ -92,6 +92,20 @@
                                 </td>
                             </tr>
                         </g:if>
+                        <g:else>
+                            <tr class="prop">
+                                <td class="name" style="vertical-align:top;">
+                                    <label for="${g.message(code: 'submission.summary.publication')}">
+                                        <g:message code="submission.summary.publication"/>
+                                    </label>
+                                </td>
+                                <td class="value" style="vertical-align:top;">
+                                    <div class="displayDescription">
+                                        No publication provided
+                                    </div>
+                                </td>
+                            </tr>
+                        </g:else>
                         <g:if test="${workingMemory.get("isUpdateOnExistingModel") as Boolean}">
                             <tr class="prop">
                                 <td class="name">

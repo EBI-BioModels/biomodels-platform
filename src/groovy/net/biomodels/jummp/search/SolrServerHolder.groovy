@@ -303,13 +303,18 @@ variable. If the former setting is specified,the environment variable is ignored
     private File getSolrConfigFolder() {
         File result
         if (Environment.isWarDeployed()) {
-            Resource resource = grailsApplication.mainContext.getResource(SOLR_CONFIG_LOCATION)
+            final String SOLR_CONFIG_CLASSPATH_LOCATION =
+                    "WEB-INF/classes/$SOLR_CONFIG_LOCATION"
+            Resource resource = grailsApplication.mainContext.getResource(
+                    SOLR_CONFIG_CLASSPATH_LOCATION)
             result = resource.getFile()
         } else {
             result = new File("$GRAILS_CONF_LOCATION/$SOLR_CONFIG_LOCATION")
         }
         if (!result.exists()) {
-            throw new IllegalArgumentException("Missing schema and configuration file for Solr core.")
+            def msg = """\
+Missing schema and configuration file for Solr core in ${result.absolutePath}.""".toString()
+            throw new IllegalArgumentException(msg)
         }
         if (IS_DEBUG_ENABLED) {
             log.debug "Solr core configuration templates are located in $result"

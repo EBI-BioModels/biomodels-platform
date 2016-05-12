@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -31,11 +31,22 @@ import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
 class JummpTagLib {
     static namespace = "jummp"
 
+    def grailsApplication
+
+    private boolean isDDMoReDeployment() {
+        String deploymentEnvironment = grailsApplication.config.jummp.branding.deployment
+        return deploymentEnvironment.equalsIgnoreCase("ddmore")
+    }
+
     def displayExistingMainFile = { attrs ->
         def result = new StringBuilder()
+        String mainFileLabel = "submission.upload.mainFile.label"
+        if (isDDMoReDeployment()) {
+            mainFileLabel = "submission.upload.mainFile.ddmore.label"
+        }
         if (!attrs.main) {
             result.append("<tr class='prop'>\n\t<td class='name'>\n\t\t<label for='mainFile'>\n\t\t\t")
-            result.append(message(code: "submission.upload.mainFile.label"))
+            result.append(message(code: mainFileLabel))
             result.append("\n\t\t</label>\n\t</td>\n\t<td class='value'>\n\t\t")
             result.append("<input type='file' id='mainFile' name='mainFile'/>\n\t</td>\n</tr>")
             out << result.toString()
@@ -46,7 +57,7 @@ class JummpTagLib {
             String name = new File(command.path).name
 
             result.append("<tr class='prop'>\n\t<td class='name'>\n\t\t<label for='mainFile'>\n\t\t\t")
-            result.append(message(code: "submission.upload.mainFile.label"))
+            result.append(message(code: mainFileLabel))
             result.append("\n\t\t</label>\n\t</td>\n\t<td class='value'>\n\t\t")
             result.append("<span id='mainName_").append(name).append("'>").append(name).append("</span>\n\t\t")
             result.append("<input style='display:none;' type='file' id='mainFile' data-labelname='${name}' name='mainFile' class='mainFile'/>\n\t")
@@ -67,6 +78,39 @@ class JummpTagLib {
             out << "</td>\n\t<td></td>\n\t<td>"
             out << "<a href='#' class='killer' title='Discard file'>Discard</a></td>\n</tr>\n"
         }
+    }
+
+    def renderAdditionalFilesLegend = {
+        String additionalFilesLegend = "submission.upload.additionalFiles.legend"
+        if (isDDMoReDeployment()) {
+            additionalFilesLegend = "submission.upload.additionalFiles.ddmore.legend"
+        }
+        out << message(code: additionalFilesLegend)
+    }
+
+    def renderAdditionalFilesAddButton = {
+        String deploymentEnvironment = grailsApplication.config.jummp.branding.deployment
+        String additionalFilesAddButton = "submission.upload.additionalFiles.addButton"
+        if (deploymentEnvironment.equalsIgnoreCase("ddmore")) {
+            additionalFilesAddButton = "submission.upload.additionalFiles.ddmore.addButton"
+        }
+        out << message(code: additionalFilesAddButton)
+    }
+
+    def renderSubmitForPublicationConfirmDialogMessage = {
+        String submitForPublicationConfirmDialogMessage = "model.toolbar.submit-for-publication.message"
+        if (isDDMoReDeployment()) {
+            submitForPublicationConfirmDialogMessage = "model.toolbar.submit-for-publication.ddmore.message"
+        }
+        out << message(code: submitForPublicationConfirmDialogMessage)
+    }
+
+    def renderSubmitForPublicationConfirmDialogTitle = {
+        String submitForPublicationConfirmDialogMessage = "model.toolbar.submit-for-publication.title"
+        if (isDDMoReDeployment()) {
+            submitForPublicationConfirmDialogMessage = "model.toolbar.submit-for-publication.ddmore.title"
+        }
+        out << message(code: submitForPublicationConfirmDialogMessage)
     }
 
     /**

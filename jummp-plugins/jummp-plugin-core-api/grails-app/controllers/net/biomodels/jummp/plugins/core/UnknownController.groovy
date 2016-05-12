@@ -23,17 +23,28 @@
 
 
 package net.biomodels.jummp.plugins.core
+
+import net.biomodels.jummp.core.annotation.QualifierTransportCommand
+import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 
 /**
  * Controller for handling Model files in the unknown model format.
  * @author  Raza Ali <raza.ali@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
+ * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
 class UnknownController {
-	
-	def modelDelegateService
-	
-	def show={
-		render(view:"/model/unknown/show", model: flash.genericModel)
-	}
+    def metadataDelegateService
+
+    def show = {
+        def model = flash.genericModel
+        RevisionTransportCommand r = model.revision
+        Map<QualifierTransportCommand, List<ResourceReferenceTransportCommand>> genericAnno =
+            metadataDelegateService.fetchGenericAnnotations r
+        if (genericAnno) {
+            model["genericAnnotations"] = genericAnno
+        }
+        render(view: "/model/unknown/show", model: model)
+    }
 }

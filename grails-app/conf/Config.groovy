@@ -18,8 +18,10 @@
 * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 **/
 
-import java.util.regex.Pattern
+
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
+
+import java.util.regex.Pattern
 
 // locations to search for config files that get merged into the main config
 // config files can either be Java properties files or ConfigSlurper scripts
@@ -117,10 +119,13 @@ environments {
     }
 
 }
+jummp.metadata.strategy = "ddmore" // "ddmore", "biomodels" or "default"
 jummp.app.name=appName
 //branding
-jummp.branding.deployment="biomodels" //used to select messages,and style if jummp.branding.style is not specified 
-jummp.branding.style="ddmore" //used to specify any other name for the css file
+// This property is used to select messages,
+// and style if jummp.branding.style is not specified
+jummp.branding.deployment = "ddmore" // "ddmore", "biomodels" or "default"
+jummp.branding.style = "ddmore" // used to specify any other name for the css file
 // log4j configuration
 log4j = {
     // Example of changing the log pattern for the default console
@@ -193,6 +198,8 @@ log4j = {
     info   eventsAppender: 'net.biomodels.jummp.plugins.simplelogging'
 
     rollingFile name: "debugAppender", file: "logs/jummp-debug.log", threshold: org.apache.log4j.Level.DEBUG
+    rollingFile name: "hibernateAppender", file: "logs/jummp-hibernate.log", threshold: org.apache.log4j.Level.DEBUG
+
     debug debugAppender: [
         'net.biomodels.jummp',
         'net.biomodels.jummp.core',
@@ -204,6 +211,14 @@ log4j = {
         'net.biomodels.jummp.core.model.identifier.support',
         'net.biomodels.jummp.plugins.pharmml'
     ]
+    debug hibernateAppender: [
+        'org.codehaus.groovy.grails.orm.hibernate',
+        'org.codehaus.groovy.grails.orm.support',
+        'org.hibernate.SQL',
+        'org.springframework.orm.hibernate3.support'
+
+    ]
+    trace hibernateAppender: 'org.hibernate.type.descriptor.sql.BasicBinder'
 }
 
 // Added by the Spring Security Core plugin:
@@ -306,7 +321,7 @@ if (!(jummpConfig.jummp.search.pathToIndexerExecutable instanceof ConfigObject))
 }
 else {
 	println "WARN\tSetting jummp.search.pathToIndexerExecutable is undefined. Models will not be indexed correctly in the search engine."
-}	
+}
 // registration settings
 if (!(jummpConfig.jummp.security.registration.email.send instanceof ConfigObject) && Boolean.parseBoolean(jummpConfig.jummp.security.registration.email.send)) {
     jummp.security.registration.email.send         = Boolean.parseBoolean(jummpConfig.jummp.security.registration.email.send)
@@ -562,6 +577,7 @@ of the form MODEL0001, MODEL0002, MODEL0003 please use the following settings:
 \tjummp.model.id.submission.part2.width=4
 """)
 }
+jummp.ddmore.rdfstore.url = jummpConfig.jummp?.ddmore?.rdfstore?.url
 jummp.model.id = [:]
 modelIdentifierSettings?.entrySet().each {
     jummp.model.id."${it.key}" = it.value
@@ -569,7 +585,7 @@ modelIdentifierSettings?.entrySet().each {
 
 // Uncomment and edit the following lines to start using Grails encoding & escaping improvements
 
-/* remove this line 
+/* remove this line
 // GSP settings
 grails {
     views {
@@ -591,7 +607,7 @@ grails {
 }
 remove this line */
 if (!(jummpConfig.jummp.context.help.root instanceof ConfigObject)) {
-    def pages=["root", "browse", "search", "login", "display", "archives", "submission", "update", "profile", "sharing", "teams", "notifications"]
+    def pages=["root", "browse", "search", "login", "display", "archives", "submission", "update", "profile", "sharing", "teams", "notifications","annotate"]
     pages.each {
         if (!(jummpConfig.jummp.context.help."${it}" instanceof ConfigObject)) {
             jummp.context.help."${it}" = jummpConfig.jummp.context.help."${it}"

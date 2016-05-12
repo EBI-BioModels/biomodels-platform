@@ -70,6 +70,7 @@ grails.project.dependency.resolution = {
         mavenRepo "http://www.ebi.ac.uk/~maven/m2repo_snapshots/"
         mavenRepo "http://download.eclipse.org/jgit/maven"
         mavenRepo "http://www.biojava.org/download/maven/"
+        mavenRepo "http://maven.mango-solutions.com/ddmore/"
     }
     dependencies {
         // required by OntologyLookupResolver
@@ -78,12 +79,21 @@ grails.project.dependency.resolution = {
         compile "com.googlecode.multithreadedtc:multithreadedtc:1.01"
         runtime 'mysql:mysql-connector-java:5.1.17'
         runtime "postgresql:postgresql:9.1-901.jdbc4"
-        compile "net.biomodels.jummp:AnnotationStore:0.1.2"
+
+        //using the latest groovy eclipse compiler 2.9.2-01
+        compile "net.biomodels.jummp:AnnotationStore:0.2.8-SNAPSHOT"
         compile("org.apache.solr:solr-solrj:4.10.1") {
-            excludes 'wstx-asl' //a newer version of woodstox comes with jsbml
+            excludes 'wstx-asl', //a newer version of woodstox comes with jsbml
+                // httpcomponents 4.3.1 is incompatible with 4.2, which breaks jena-arq
+                'httpclient', 'httpcore', 'httpmime'
         }
         //required by both JSBML and SolrJ
         compile "org.codehaus.woodstox:woodstox-core-lgpl:4.4.1"
+        // fixes https://issues.apache.org/jira/browse/HTTPCLIENT-1418
+        def httpComponentsVersion = '4.3.2'
+        compile "org.apache.httpcomponents:httpclient:$httpComponentsVersion"
+        compile "org.apache.httpcomponents:httpcore:$httpComponentsVersion"
+        compile "org.apache.httpcomponents:httpmime:$httpComponentsVersion"
 
         /* jms
         runtime('org.apache.activemq:activeio-core:3.1.2',
@@ -117,6 +127,21 @@ grails.project.dependency.resolution = {
         test "org.grails:grails-datastore-test-support:1.0-grails-2.3"
         runtime 'org.javassist:javassist:3.17.1-GA'
         runtime "org.apache.camel:camel-exec:2.13.0"
+
+        // DDMoRe Metadata Information Service uses jena 2.13
+        compile("org.mbine.co:libCombineArchive:0.1-SNAPSHOT") {
+            excludes 'junit', 'slf4j-api', 'slf4j-log4j12', 'jmock-junit4', 'jena-core'
+        }
+        // need to add this as an explicit dependency to configure exclusions
+        // can't use apache-jena-libs due to pom packaging, rely on jena-tdb instead
+        compile("eu.ddmore:lib-metadata:0.1.3-SNAPSHOT") {
+            excludes 'apache-jena-libs'
+        }
+        compile "org.apache.jena:jena-tdb:1.1.2"
+
+        compile ("eu.ddmore.metadata:lib-metadata:1.5.1-SNAPSHOT") {
+            excludes 'spring-context','spring-core','spring-test'
+        }
     }
 
     plugins {
@@ -166,6 +191,8 @@ grails.plugin.location.'jummp-plugin-mdl' = "jummp-plugins/jummp-plugin-mdl"
 grails.plugin.location.'jummp-plugin-bives' = "jummp-plugins/jummp-plugin-bives"
 grails.plugin.location.'jummp-plugin-simple-logging' = "jummp-plugins/jummp-plugin-simple-logging"
 grails.plugin.location.'jummp-plugin-web-application' = "jummp-plugins/jummp-plugin-web-application"
+grails.plugin.location.'jummp-plugin-annotation-source-ddmore' = "jummp-plugins/jummp-plugin-annotation-source-ddmore"
+grails.plugin.location.'jummp-plugin-annotation-core' = "jummp-plugins/jummp-plugin-annotation-core"
 //grails.plugin.location.'jummp-plugin-jms-remote' = "jummp-plugins/jummp-plugin-jms-remote"
 if ("jms".equalsIgnoreCase(System.getenv("JUMMP_EXPORT"))) {
     println "Enabling JMS remoting..."

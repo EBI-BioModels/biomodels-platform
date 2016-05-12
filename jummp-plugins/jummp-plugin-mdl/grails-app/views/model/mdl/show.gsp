@@ -48,3 +48,6 @@
         SyntaxHighlighter.all();
     </script>
 </content>
+<content tag="genericAnnotations">
+    <anno:renderGenericAnnotations annotations="${genericAnnotations}"/>
+</content>

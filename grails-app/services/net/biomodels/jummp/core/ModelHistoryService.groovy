@@ -34,29 +34,33 @@
 
 package net.biomodels.jummp.core
 
+import grails.transaction.Transactional
+import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelHistoryItem
 import net.biomodels.jummp.plugins.security.User
-import net.biomodels.jummp.core.adapters.DomainAdapter
 import org.perf4j.aop.Profiled
+import org.springframework.transaction.annotation.Propagation
 
 /**
  * @short This class provides the service for the per user Model History.
- * 
+ *
  * Whenever a user accesses a Model other services can use this service to
  * track that the user accessed the Model. The Model History itself is a
  * queue of the most recently used Models. The service provides methods to
  * retrieve the list of most recently accessed Models.
- * 
+ *
  * The Model History functionality can be disabled through the config option
  * jummp.model.history.maxElements and is implicitly disabled for not logged in
  * users.
  *
  * @author Martin Graesslin <m.graesslin@dkfz.de>
  * @author Raza Ali <raza.ali@ebi.ac.uk>
+ * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  * @see ModelHistoryItem
  */
+@Transactional
 class ModelHistoryService {
     /**
      * Dependency Injection of Spring Security Service
@@ -75,18 +79,20 @@ class ModelHistoryService {
      *
      * If the history contains already the maximum number of elements, the oldest Model
      * is removed from the history.
-     * 
+     *
      * If the user is not logged in or if the feature is disabled completely this method
      * does nothing.
      * @param model The Model to add to the current user's history
      */
     @Profiled(tag="modelHistoryService.addModelToHistory")
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     void addModelToHistory(Model model) {
         // don't do anything for anonymous Users
         if (!springSecurityService.isLoggedIn()) {
             return
         }
-        final int maxNumber = grailsApplication.config.jummp.model.history.maxElements
+        final int maxNumber = grailsApplication.config.get(
+                "jummp.model.history.maxElements", 10)
         if (maxNumber == 0) {
             // Model History is disabled - do not return list
             return
@@ -101,58 +107,68 @@ class ModelHistoryService {
         // test the number of items in the users history
         while (ModelHistoryItem.countByUser(user) >= maxNumber) {
             // exceeded the maximum number - drop oldest item
-            // TODO: write a proper query to faster delete the item
-            ModelHistoryItem.findAllByUser(user).sort { it.lastAccessedDate }.first().delete(flush:true)
+            ModelHistoryItem.findByUser(user, [sort: 'lastAccessedDate' ]).delete(flush: true)
         }
         ModelHistoryItem newItem = ModelHistoryItem.create(model, user)
-        newItem.save(flush: true)
+        newItem.save()
     }
 
     /**
-     * 
+     *
      * @return Latest accessed Model for current user
      */
     @Profiled(tag="modelHistoryService.lastAccessedModel")
+    @Transactional(readOnly = true)
     ModelTransportCommand lastAccessedModel() {
         // don't do anything for anonymous Users
         if (!springSecurityService.isLoggedIn()) {
             return new ModelTransportCommand()
         }
-        if (grailsApplication.config.jummp.model.history.maxElements == 0) {
+        if (grailsApplication.config.get("jummp.model.history.maxElements") == 0) {
             // if feature disabled, return empty ModelTransportCommand
             return new ModelTransportCommand()
         }
         User user = User.findByUsername(springSecurityService.authentication.name)
-        List<ModelHistoryItem> history = ModelHistoryItem.findAllByUser(user) as List<ModelHistoryItem>
-        if (history.isEmpty()) {
+        ModelHistoryItem item = ModelHistoryItem.findByUser(user,
+                [sort: "lastAccessedDate", order: "desc"])
+        if (!item) {
             // history is empty
             return new ModelTransportCommand()
         }
-        return DomainAdapter.getAdapter(history.sort { it.lastAccessedDate }.last().model).toCommandObject(false)
+        ModelTransportCommand cmd = turnModelToCommandObject(item.model, false)
+        return cmd
     }
 
     /**
-     * 
+     *
      * @return The current user's Model history
      */
     @Profiled(tag="modelHistoryService.history")
+    @Transactional(readOnly = true)
     List<ModelTransportCommand> history() {
         // don't do anything for anonymous Users
         if (!springSecurityService.isLoggedIn()) {
             return []
         }
-        if (grailsApplication.config.jummp.model.history.maxElements == 0) {
+        final int LIMIT = grailsApplication.config.get("jummp.model.history.maxElements", 10)
+        if ( LIMIT == 0) {
             // if feature disabled, return empty list
             return []
         }
         User user = User.findByUsername(springSecurityService.authentication.name)
-        List<ModelHistoryItem> history = ModelHistoryItem.findAllByUser(user).sort { it.lastAccessedDate }
+        List<ModelHistoryItem> history = ModelHistoryItem.findAllByUser(user,
+                [sort: "lastAccessedDate", order: "desc", max: LIMIT])
         List<ModelTransportCommand> retList = []
-        history.reverseEach {
+        history.each { ModelHistoryItem it ->
             if (!it.model.deleted) {
-            	retList << DomainAdapter.getAdapter(it.model).toCommandObject(false)
+                ModelTransportCommand cmd = turnModelToCommandObject(it.model, false)
+                retList.add cmd
             }
         }
         return retList
+    }
+
+    private ModelTransportCommand turnModelToCommandObject(Model m, boolean toHistory = true) {
+        new ModelAdapter(model: m).toCommandObject(toHistory)
     }
 }

@@ -1185,4 +1185,18 @@ databaseChangeLog = {
     include file: '20150608_make_wcm_space_alias_uri_nullable.groovy'
 
     include file: '20150610-DropResourceReferenceConstraints.groovy'
+
+    include file: '20150611-widenResourceReferenceName.groovy'
+
+	include file: '20150626_addCollectionNameToResourceReference.groovy'
+
+	include file: '20151012_addMetadataValidationToRevision.groovy'
+
+    include file: '20151105_populate_revision_validation_level.groovy'
+
+	include file: '20151207_nullable_xref_uri.groovy'
+
+    include file: '20160114-makeResourceReferenceNameText.groovy'
+
+    include file: '20160229-updateModelFormatName-Unknown2Original.groovy'
 }

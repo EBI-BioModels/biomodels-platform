@@ -35,8 +35,12 @@
 package net.biomodels.jummp.webapp
 
 import com.wordnik.swagger.annotations.*
+import eu.ddmore.publish.service.PublishContext
+import eu.ddmore.publish.service.PublishException
 import grails.converters.JSON
 import grails.plugins.springsecurity.Secured
+import net.biomodels.jummp.model.PublicationLinkProvider
+import org.apache.commons.lang3.exception.ExceptionUtils
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import net.biomodels.jummp.core.model.ModelAuditTransportCommand
@@ -49,13 +53,10 @@ import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.core.model.audit.*
 import net.biomodels.jummp.plugins.security.PersonTransportCommand
 import org.apache.commons.io.FileUtils
-import org.apache.commons.lang.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONObject
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.multipart.MultipartFile
-import java.util.Arrays
 import net.biomodels.jummp.plugins.security.Team
-import net.biomodels.jummp.annotationstorage.*
 
 @Api(value = "/model", description = "Operations related to models")
 class ModelController {
@@ -99,11 +100,12 @@ class ModelController {
     * Dependency injection of mailService
     */
     def mailService
+
     /**
      * The list of actions for which we should not automatically create an audit item.
      */
     final List<String> AUDIT_EXCEPTIONS = ['updateFlow', 'createFlow', 'uploadFlow',
-                'showWithMessage', 'share', 'getFileDetails']
+                'showWithMessage', 'share', 'getFileDetails','submitForPublication']
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
 
@@ -221,15 +223,20 @@ class ModelController {
             }
             final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
             boolean showPublishOption = modelDelegateService.canPublish(PERENNIAL_ID)
+            boolean canSubmitForPublication = modelDelegateService.canSubmitForPublication(PERENNIAL_ID)
+            boolean show = modelDelegateService.canPublish(PERENNIAL_ID)
             boolean canUpdate = modelDelegateService.canAddRevision(PERENNIAL_ID)
             boolean canDelete = modelDelegateService.canDelete(PERENNIAL_ID)
             boolean canShare = modelDelegateService.canShare(PERENNIAL_ID)
+
             String flashMessage = ""
             if (flash.now["giveMessage"]) {
                 flashMessage = flash.now["giveMessage"]
             }
             List<RevisionTransportCommand> revs =
                         modelDelegateService.getAllRevisions(PERENNIAL_ID)
+
+
             def model = [revision: rev,
                         authors: rev.model.creators,
                         allRevs: revs,
@@ -237,7 +244,9 @@ class ModelController {
                         canUpdate: canUpdate,
                         canDelete: canDelete,
                         canShare: canShare,
-                        showPublishOption: showPublishOption
+                        showPublishOption: showPublishOption,
+                        canSubmitForPublication: canSubmitForPublication,
+                        validationLevel: rev.getValidationLevelMessage()
             ]
             if (rev.id == modelDelegateService.getLatestRevision(PERENNIAL_ID).id) {
                 flash.genericModel = model
@@ -263,8 +272,7 @@ class ModelController {
 
     def files = {
         try {
-            def revisionFiles = modelDelegateService.getRevisionFromParams(params.id,
-                        params.revisionId).files
+            def revisionFiles = modelDelegateService.getRevisionFromParams(params.id, params.revisionId).files
             def responseFiles = revisionFiles.findAll { !it.hidden }
             respond new net.biomodels.jummp.webapp.rest.model.show.ModelFiles(responseFiles)
         } catch(Exception err) {
@@ -274,17 +282,24 @@ class ModelController {
         }
     }
 
+    @Secured(["isAuthenticated()"])
     def publish = {
         RevisionTransportCommand rev
         try {
             rev = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
-            modelDelegateService.publishModelRevision(rev)
-            def notification = [revision:rev, user:getUsername(), perms: modelDelegateService.getPermissionsMap(rev.model.submissionId)]
-            sendMessage("seda:model.publish", notification)
+            PublishContext publishContext = modelDelegateService.publishModelRevision(rev)
+            def currentUser = springSecurityService.currentUser
+            if (currentUser) {
+                def notification = [
+                    revision: rev,
+                    user: currentUser,
+                    perms: modelDelegateService.getPermissionsMap(rev.model.submissionId)]
+                sendMessage("seda:model.publish", notification)
+            }
 
             redirect(action: "showWithMessage",
                         id: rev.identifier(),
-                        params: [flashMessage: "Model has been published."])
+                        params: [flashMessage: "Model has been published." + publishContext.getMessage()])
         } catch(AccessDeniedException e) {
             log.error(e.message, e)
             forward(controller: "errors", action: "error403")
@@ -294,16 +309,47 @@ class ModelController {
                     id: rev.identifier(),
                     params: [flashMessage: "Model has not been published because there is a " +
                             "problem with this version of the model. Sorry!"])
+        } catch(PublishException e) {
+            log.error(e.message)
+            redirect(action: "showWithMessage",
+                id: rev.identifier(),
+                params: [flashMessage: e.message])
         }
     }
 
+    @Secured(["isAuthenticated()"])
+    def submitForPublication = {
+        try {
+            def rev = modelDelegateService.getRevisionFromParams(params.id)
+            modelDelegateService.submitModelRevisionForPublication(rev)
+
+            def notification = [revision:rev, user:getUsername(), perms: modelDelegateService.getPermissionsMap(rev.model.submissionId)]
+            sendMessage("seda:model.submitForPublication", notification)
+
+            redirect(action: "showWithMessage",
+                id: rev.identifier(),
+                params: [flashMessage: "Model has been submitted to the curators for publication."])
+        } catch (Exception e) {
+            log.error(e.message, e)
+            String message = "Sorry, there was a problem. Please try again later."
+            redirect(action: "showWithMessage",
+                id: modelDelegateService.getRevisionFromParams(params.id).identifier(),
+                params: [flashMessage: message])
+        }
+    }
+
+    @Secured(["isAuthenticated()"])
     def delete = {
         try {
             boolean deleted = modelDelegateService.deleteModel(params.id)
-            def notification = [model:modelDelegateService.getModel(params.id),
-            					user:getUsername(),
-            					perms: modelDelegateService.getPermissionsMap(params.id)]
-            sendMessage("seda:model.delete", notification)
+            def currentUser = springSecurityService.currentUser
+            if (currentUser) {
+                def notification = [
+                    model: modelDelegateService.getModel(params.id),
+                    user: currentUser,
+                    perms: modelDelegateService.getPermissionsMap(params.id)]
+                sendMessage("seda:model.delete", notification)
+            }
             redirect(action: "showWithMessage", id: params.id,
                         params: [ flashMessage: deleted ?
                                     "Model has been deleted, and moved into archives." :
@@ -330,6 +376,7 @@ class ModelController {
         }
     }
 
+    @Secured(["isAuthenticated()"])
     def share = {
         try {
             def rev = modelDelegateService.getRevisionFromParams(params.id)
@@ -350,6 +397,7 @@ class ModelController {
         return []
     }
 
+    @Secured(["isAuthenticated()"])
     def shareUpdate = {
         boolean valid = params.collabMap
         if (valid) {
@@ -359,7 +407,8 @@ class ModelController {
                 for (int i = 0; i < map.length(); i++) {
                     JSONObject perm = map.getJSONObject(i)
                     PermissionTransportCommand ptc = new PermissionTransportCommand(
-                                id: perm.getString("id"),
+                                id: perm.getInt("id"),
+                                username: perm.getString("username"),
                                 name: perm.getString("name"),
                                 read: perm.getBoolean("read"),
                                 write: perm.getBoolean("write"))
@@ -411,13 +460,17 @@ class ModelController {
             on("displayConfirmationPage"){
                 String update = conversation.changesMade.join(". ")
                 String model = conversation.model_id
-                String user = getUsername()
-                updateHistory(session.result_submission, user, "update", "html", update, true)
-                def notification = [model:modelDelegateService.getModel(conversation.model_id),
-                        user:user,
-                        update: conversation.changesMade,
-                        perms: modelDelegateService.getPermissionsMap(conversation.model_id, false)]
-                sendMessage("seda:model.update", notification)
+                def currentUser = springSecurityService.currentUser
+                String username = currentUser?.username ?: 'anonymous'
+                updateHistory(session.result_submission, username, "update", "html", update, true)
+                if (!currentUser) {
+                    def notification = [
+                            model: modelDelegateService.getModel(model),
+                            user: currentUser,
+                            update: conversation.changesMade,
+                            perms : modelDelegateService.getPermissionsMap(model, false)]
+                    sendMessage("seda:model.update", notification)
+                }
             }.to "displayConfirmationPage"
             on("displayErrorPage").to "displayErrorPage"
         }
@@ -667,9 +720,13 @@ About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
 
         performValidation {
             action {
-                if (!flow.workingMemory.containsKey("model_type")) {
+                final boolean SHOULD_DETECT_FORMAT = flow.workingMemory["changedMainFiles"] ||
+                    !flow.workingMemory.containsKey("model_type")
+                if (SHOULD_DETECT_FORMAT) {
                     submissionService.inferModelFormatType(flow.workingMemory)
                 }
+                // clear changedMainFiles in case the user clicks back from displayModelInfo
+                flow.workingMemory.remove("changedMainFiles")
                 submissionService.performValidation(flow.workingMemory)
                 MFTC format = flow.workingMemory.get("model_type")
                 if (format && format.identifier !="UNKNOWN" && format.formatVersion == "*") {
@@ -732,6 +789,8 @@ About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
                 }
                 modifications.put("changeStatus", changeStatus);
                 submissionService.refineModelInfo(flow.workingMemory, modifications)
+                ModelTransportCommand model = flow.workingMemory.get('ModelTC') as ModelTransportCommand
+                RevisionTransportCommand revision = flow.workingMemory.get("RevisionTC") as RevisionTransportCommand
             }.to "enterPublicationLink"
             on("Cancel").to "cleanUpAndTerminate"
             on("Back"){}.to "uploadFiles"
@@ -743,14 +802,16 @@ About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
                     return error()
                 }
                 Map<String,String> modifications = new HashMap<String,String>()
-                    if (params.PubLinkProvider && params.PublicationLink) {
-                        if (!pubMedService.verifyLink(params.PubLinkProvider,params.PublicationLink)) {
+                    if (params.PubLinkProvider) {
+                        if (!pubMedService.verifyLink(params.PubLinkProvider, params.PublicationLink)) {
                             flash.flashMessage = "The link is not a valid ${params.PubLinkProvider}"
                             return error()
                         }
                         ModelTransportCommand model = flow.workingMemory.get("ModelTC") as ModelTransportCommand
-                        if (params.PubLinkProvider !=model.publication?.linkProvider ||
-                                        params.PublicationLink != model.publication?.link) {
+                        boolean providerHasChanged = params.PubLinkProvider !=
+                                model.publication?.linkProvider?.linkType
+                        boolean linkHasChanged = params.PublicationLink != model.publication?.link
+                        if (providerHasChanged || linkHasChanged) {
                             modifications.put("PubLinkProvider", params.PubLinkProvider)
                             modifications.put("PubLink", params.PublicationLink)
                             submissionService.updatePublicationLink(flow.workingMemory,
@@ -759,6 +820,15 @@ About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
                             flow.workingMemory.put("RetrievePubDetails", false)
                         }
                     } else {
+                        ModelTransportCommand model = flow.workingMemory.get('ModelTC') as ModelTransportCommand
+                        RevisionTransportCommand revision = flow.workingMemory.get("RevisionTC") as RevisionTransportCommand
+                        def publication = revision.model.publication
+                        if (publication) {
+                            revision.model.publication = null
+                            if (flow.workingMemory.containsKey("Authors")) {
+                                flow.workingMemory.remove("Authors")
+                            }
+                        }
                         flow.workingMemory.put("RetrievePubDetails", false)
                     }
             }.to "getPublicationDataIfPossible"
@@ -768,13 +838,11 @@ About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
         getPublicationDataIfPossible {
             action {
                 if (flow.workingMemory.remove("RetrievePubDetails") as Boolean) {
-                    ModelTransportCommand model =
-                                flow.workingMemory.get("ModelTC") as ModelTransportCommand
+                    ModelTransportCommand model = flow.workingMemory.get("ModelTC") as ModelTransportCommand
                     if (model.publication.link && model.publication.linkProvider) {
                         def retrieved
                         try {
-                            retrieved = pubMedService.
-                            getPublication(model.publication)
+                            retrieved = pubMedService.getPublication(model.publication)
                         }
                         catch(Exception e) {
                             log.error(e.message, e)
@@ -784,6 +852,11 @@ About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
                             flow.workingMemory.put("Authors", model.publication.authors)
                         }
                     }
+                    // use authors of the existing publication if available
+                    if (model.publication) {
+                        flow.workingMemory.put("Authors", model.publication.authors)
+                    }
+                    flow.workingMemory.put("Authors", model.publication.authors)
                     conversation.changesMade.add("Amended publication details")
                     publicationInfoPage()
                 }
@@ -800,7 +873,7 @@ About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
                 ModelTransportCommand model =
                             flow.workingMemory.get("ModelTC") as ModelTransportCommand
                 bindData(model.publication, params, [exclude: ['authors']])
-                String[] authorList = params.authorFieldTotal.split("!!author!!")
+                String[] authorList = params.authorFieldTotal.split(",")
                 List<PersonTransportCommand> validatedAuthors = new LinkedList<PersonTransportCommand>()
                 authorList.each {
                     if (it) {
@@ -823,8 +896,7 @@ About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
                         if (!author) {
                             author = new PersonTransportCommand(userRealName: parts[0],
                                         orcid: orcid != "no_orcid" ? orcid : null,
-                                        institution: institution != "no_institution_provided" ?
-                                                    institution : null)
+                                        institution: institution != "no_institution_provided" ? institution : null)
                             if (!model.publication.authors) {
                                 model.publication.authors=new LinkedList<PersonTransportCommand>()
                             }
@@ -928,7 +1000,7 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
                     to grailsApplication.config.jummp.security.registration.email.adminAddress
                     from grailsApplication.config.jummp.security.registration.email.sender
                     subject "Bug in submission: ${ticket}"
-                    body stackTrace
+                    body "MESSAGE: ${ExceptionUtils.getStackTrace(t)}"
                 }
                 session.messageForError = ticket
             }

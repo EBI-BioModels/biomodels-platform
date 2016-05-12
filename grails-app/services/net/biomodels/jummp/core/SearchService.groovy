@@ -29,7 +29,6 @@ import net.biomodels.jummp.core.events.LoggingEventType
 import net.biomodels.jummp.core.events.PostLogging
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.model.Revision
 import org.apache.commons.lang.StringUtils
@@ -44,7 +43,6 @@ import org.perf4j.aop.Profiled
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.acls.domain.BasePermission
-import org.apache.solr.client.solrj.SolrServer
 
 /**
  * @short Singleton-scoped facade for interacting with a Solr instance.
@@ -106,10 +104,6 @@ class SearchService {
      * Dependency injection of aclUtilService
      */
     def aclUtilService
-    /**
-     * Dependency injection of unproxied dataSource.
-     */
-    def dataSourceUnproxied
 
     /**
      * Clears the index. Handle with care.
@@ -141,71 +135,84 @@ class SearchService {
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="searchService.updateIndex")
     void updateIndex(RevisionTransportCommand revision) {
-        String name = revision.name ?: ""
-        String description = revision.description ?: ""
-        String submissionId = revision.model.submissionId
-        String publicationId = revision.model.publicationId ?: ""
-        int versionNumber = revision.revisionNumber
-        final String uniqueId = "${submissionId}.${versionNumber}"
-        String exchangeFolder = new File(revision.files.first().path).getParent()
-        String registryExport = miriamService.registryExport.canonicalPath
-        String dbUrl = dataSourceUnproxied.url
-        String dbUsername = dataSourceUnproxied.username
-        String dbPassword = dataSourceUnproxied.password
-        def dbSettings = [ 'url': dbUrl, 'username': dbUsername, 'password': dbPassword ]
-        println "dbSettings is $dbSettings"
-        def builder = new JsonBuilder()
-        def partialData=[
-                'submissionId':submissionId,
-                'publicationId':publicationId,
-                'name':name,
-                'description':description,
-                'modelFormat':revision.format.name,
-                'levelVersion':revision.format.formatVersion,
-                'submitter':revision.owner,
-                'submitterUsername': revision.model.submitterUsername,
-                'publicationTitle':revision.model.publication ?
-                        revision.model.publication.title : "",
-                'publicationAbstract':revision.model.publication ?
-                        revision.model.publication.synopsis : "",
+        Revision.withSession {
+            String name = revision.name ?: ""
+            String description = revision.description ?: ""
+            String submissionId = revision.model.submissionId
+            String publicationId = revision.model.publicationId ?: ""
+            int versionNumber = revision.revisionNumber
+            final String uniqueId = "${submissionId}.${versionNumber}"
+            String exchangeFolder = new File(revision.files.first().path).getParent()
+            String registryExport = miriamService.registryExport.canonicalPath
+            def dsConfig = grailsApplication.config.dataSource
+            String dbUrl = dsConfig?.url
+            String dbUsername = dsConfig?.username
+            String dbPassword = dsConfig?.password
+            def dbSettings = [ 'url': dbUrl, 'username': dbUsername, 'password': dbPassword ]
+            def builder = new JsonBuilder()
+            def partialData = [
+                'submissionId': submissionId,
+                'publicationId' :publicationId,
+                'name': name,
+                'description' : description,
+                'modelFormat' : revision.format.name,
+                'levelVersion' : revision.format.formatVersion,
+                'submitter' : revision.owner,
+                'submitterUsername' :  revision.model.submitterUsername,
+                'publicationTitle' : revision.model.publication ?
+                    revision.model.publication.title  :  "",
+                'publicationAbstract' : revision.model.publication ?
+                    revision.model.publication.synopsis : "",
                 'publicationAuthor': revision.model.publication?.authors ?
-                        revision.model.publication.authors.collect {
-                            it.userRealName }.join(', ') : "",
+                    revision.model.publication.authors.collect {
+                        it.userRealName }.join(', ') : "",
                 'publicationYear': revision.model.publication?.year ?: 0,
-                'model_id':revision.model.id,
-                'revision_id': revision.id,
-                'versionNumber':versionNumber,
-                'submissionDate':revision.model.submissionDate,
-                'lastModified': revision.model.lastModifiedDate,
-                'uniqueId':uniqueId
-        ]
-        builder(partialData: partialData,
-            'folder':exchangeFolder,
-            'mainFiles': fetchFilesFromRevision(revision, true),
-            'allFiles': fetchFilesFromRevision(revision, false),
-            'solrServer': solrServerHolder.SOLR_CORE_URL,
-            'jummpPropFile': configurationService.getConfigFilePath(),
-            'miriamExportFile': registryExport,
-            'database': dbSettings)
-        File indexingData = new File(exchangeFolder, "indexData.json")
-        indexingData.setText(builder.toString())
-        String jarPath = grailsApplication.config.jummp.search.pathToIndexerExecutable
-        def argsMap = [jarPath: jarPath,
-                jsonPath: indexingData.getCanonicalPath()]
+                'model_id' : revision.model.id,
+                'revision_id' :  revision.id,
+                'deleted' :  revision.model.deleted,
+                'public' :  revision.model.firstPublished ? 'true'  :  'false',
+                'versionNumber' : versionNumber,
+                'submissionDate' : revision.model.submissionDate,
+                'lastModified' :  revision.model.lastModifiedDate,
+                'uniqueId' : uniqueId
+            ]
+            builder(partialData: partialData,
+                'folder': exchangeFolder,
+                'mainFiles': fetchFilesFromRevision(revision, true),
+                'allFiles': fetchFilesFromRevision(revision, false),
+                'solrServer': solrServerHolder.SOLR_CORE_URL,
+                'jummpPropFile': configurationService.getConfigFilePath(),
+                'miriamExportFile': registryExport,
+                'database': dbSettings)
+            File indexingData = new File(exchangeFolder, "indexData.json")
+            indexingData.setText(builder.toPrettyString())
 
-        String httpProxy = System.getProperty("http.proxyHost")
-        if (httpProxy) {
-            String proxyPort = System.getProperty("http.proxyPort") ?: '80'
-            String nonProxyHosts = "'${System.getProperty("http.nonProxyHosts")}'"
-            StringBuilder proxySettings = new StringBuilder()
-            proxySettings.append(" -Dhttp.proxyHost=").append(httpProxy).append(
-                " -Dhttp.proxyPort=").append(proxyPort).append(" -Dhttp.nonProxyHosts=").append(
+            String jarPath = grailsApplication.config.jummp.search.pathToIndexerExecutable
+            def argsMap = [jarPath: jarPath, jsonPath: indexingData.getCanonicalPath()]
+
+            String httpProxy = System.getProperty("http.proxyHost")
+            if (httpProxy) {
+                String proxyPort = System.getProperty("http.proxyPort") ?: '80'
+                String nonProxyHosts = "'${System.getProperty("http.nonProxyHosts")}'"
+                StringBuilder proxySettings = new StringBuilder()
+                proxySettings.append(" -Dhttp.proxyHost=").append(httpProxy).append(
+                    " -Dhttp.proxyPort=").append(proxyPort).append(" -Dhttp.nonProxyHosts=").append(
                     nonProxyHosts)
-            argsMap['proxySettings'] = proxySettings.toString()
-        } else {
-            argsMap['proxySettings'] = ""
+                argsMap['proxySettings'] = proxySettings.toString()
+                if (IS_INFO_ENABLED) {
+                    log.info("Proxy settings for the indexer are $proxySettings")
+                }
+            } else {
+                argsMap['proxySettings'] = ""
+            }
+            try {
+                //sendMessage("seda:exec", argsMap)
+                sendMessage("direct:exec", argsMap)
+            } catch (Exception e) {
+                log.error("Failed to index revision $revision.properties - ${e.message}", e)
+                //TODO RETRY
+            }
         }
-        sendMessage("seda:exec", argsMap)
     }
 
     /**
@@ -218,6 +225,7 @@ class SearchService {
     @Profiled(tag="searchService.regenerateIndices")
     void regenerateIndices() {
         clearIndex()
+        clearAnnotationStatementsFromDatabase()
         List<RevisionTransportCommand> revisions = Revision.list(fetch: [model: "eager"]).collect { r ->
             DomainAdapter.getAdapter(r).toCommandObject()
         }
@@ -233,7 +241,7 @@ class SearchService {
                     updateIndex(it)
                 }
                 catch(Exception e) {
-                    log.error("Exception thrown while indexing ${it} ${e.getMessage()}", e)
+                    log.error("Exception thrown while indexing ${it.properties} ${e.getMessage()}", e)
                 }
             }
         }
@@ -258,21 +266,65 @@ class SearchService {
     }
 
     /**
-     * Makes a model deleted in the solr index
+     * Updates the deleted field for a given model in the Solr index.
      *
-     * Makes the @model deleted in the solr index. @model can be domain or transport object
+     * @param model can be domain or transport object
+     * @param deleted the new value that should be put in the Solr index. Defaults
+     *      to true if unspecified
      **/
-    void setDeleted(def model) {
-        SolrQuery query = new SolrQuery();
-        query.setQuery("submissionId:"+model.submissionId);
-        query.setFields("uniqueId");
-        query.set("defType", "edismax");
-        QueryResponse response = solrServerHolder.server.query(query)
-        SolrDocumentList docs = response.getResults()
+    void setDeleted(def model, boolean deleted = true) {
+        SolrDocumentList docs = findSolrDocumentByModel(model, ["deleted"])
         docs.each {
             SolrInputDocument doc = getSolrDocumentWithId(it.get("uniqueId"))
-            updateIndexBase(doc, setDeletedField)
+            updateIndexBase(doc, setDeletedField.rcurry(deleted))
         }
+        // force commit as downstream we will query the index directly.
+        solrServerHolder.server.commit()
+    }
+
+    /**
+     * Checks whether a model is marked as deleted in the Solr index.
+     *
+     * @param model An instance of Model or ModelTransportCommand for which to check.
+     * @return true if the corresponding SolrInputDocuments are marked as deleted, false otherwise.
+     */
+    boolean isDeleted(def model) {
+        SolrDocumentList docs = findSolrDocumentByModel(model, ["deleted"])
+        if (0 == docs.size()) {
+            return false
+        } else if (1 == docs.size()) {
+            return docs.first().get('deleted')
+        } else {
+            return null == docs.find { !(it.get('deleted')) }
+        }
+    }
+
+    /*
+     * Finds the SolrDocuments associated with a given model.
+     *
+     * The lookup is done based on the model's submission identifier. This method returns
+     * the SolrInputDocuments for all revisions of the given model, hence the reason for
+     * returning a SolrDocumentList.
+     *
+     * @param model either a ModelTransportCommand or a Model for which to find the SolrDocument.
+     * @param fields a list of fields that should be included for each result. The 'uniqueId'
+     * field is automatically added to @p fields if not already present.
+     */
+    private SolrDocumentList findSolrDocumentByModel(def model,
+            List<String> fields = ['uniqueId']) {
+        SolrQuery query = new SolrQuery()
+        query.setQuery("submissionId:${model?.submissionId}")
+        if (!fields.contains("uniqueId")) {
+            fields.add('uniqueId')
+        }
+        query.setFields(fields.toArray(new String[0]))
+        query.set("defType", "edismax")
+        QueryResponse response = solrServerHolder.server.query(query)
+        SolrDocumentList docs = response.getResults()
+        if (0 == docs.size()) {
+            log.warn("Could not find a Solr document for model ${model?.submissionId}")
+        }
+        docs
     }
 
     /**
@@ -285,18 +337,18 @@ class SearchService {
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="searchService.searchModels")
     Collection<ModelTransportCommand> searchModels(String query) {
-        long start = System.currentTimeMillis();
+        long start = System.currentTimeMillis()
         SolrDocumentList results = search(query)
         if (IS_DEBUG_ENABLED) {
             log.debug("Solr returned in ${System.currentTimeMillis() - start}")
         }
-        start = System.currentTimeMillis();
+        start = System.currentTimeMillis()
         final int COUNT = results.size()
         Map<String, ModelTransportCommand> returnVals = new LinkedHashMap<>(COUNT + 1, 1.0f)
         boolean isAdmin = SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")
         Map<Long, Long> modelsAdded = new HashMap<Long, Long>()
         results.each {
-            if (!it.containsKey("deleted") || it.get("deleted")=="false") {
+            if (!it.containsKey("deleted") || !it.get("deleted")) {
                 boolean okayToProceed = true
                 boolean checkPermissions = !isAdmin
                 long model_id = it.get("model_id")
@@ -359,6 +411,20 @@ class SearchService {
         return docs
     }
 
+    /*
+     * Removes revision annotations from the database.
+     *
+     * This is necessary to ensure that we keep in sync Solr with the database
+     * at the start of the reindexing process.
+     */
+    @Profiled(tag = "searchService.clearAnnotationStatementsFromDatabase")
+    private void clearAnnotationStatementsFromDatabase() {
+        log.debug("Begin prunning annotation statements from database")
+        Revision.executeUpdate("delete ElementAnnotation")
+        Revision.executeUpdate("delete Statement")
+        log.debug("Finished prunning annotation statements from database")
+    }
+
     /**
      * Helper functions to update solr index
      */
@@ -386,15 +452,15 @@ class SearchService {
     }
 
     def setPublicField = { doc ->
-            Map<String, String> partialUpdate = new HashMap<String, String>();
-            partialUpdate.put("set", "true");
-            doc.addField("public", partialUpdate);
+        Map<String, String> partialUpdate = new HashMap<String, String>();
+        partialUpdate.put("set", "true");
+        doc.addField("public", partialUpdate);
     }
 
-    def setDeletedField = { doc ->
-            Map<String, String> partialUpdate = new HashMap<String, String>();
-            partialUpdate.put("set", "true");
-            doc.addField("deleted", partialUpdate);
+    def setDeletedField = { doc, flag = true ->
+        Map<String, String> partialUpdate = new HashMap<>()
+        partialUpdate.put("set", flag ? "true" : "false")
+        doc.addField("deleted", partialUpdate)
     }
 
     /*

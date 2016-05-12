@@ -29,10 +29,16 @@ import grails.converters.JSON
 class JummpController {
 
     def userService
-    
+    def grailsApplication
     def teamService
 
-    def feedback = { }
+    def feedback = {
+        String theme = grailsApplication.config.jummp.branding.style
+        if ('ddmore' != theme && 'biomodels' != theme) {
+            theme = 'default'
+        }
+        [messageCode: "jummp.feedback.${theme}.message"]
+    }
 
     def lookupUser = {
         if (params.name) {

@@ -45,7 +45,12 @@
         	<g:message code="submission.disclaimer.updateMessage" args="${ [params.id] }" />
         </g:if>
         <g:else>
-        	<g:message code="submission.disclaimer.createMessage"/>
+            <g:if test="${'ddmore' == grailsApplication.config.jummp.branding.style}">
+                <g:message code="submission.disclaimer.ddmore.createMessage" args="${ [g.createLink(uri: '/', absolute: true)] }"/>
+            </g:if>
+            <g:else>
+                <g:message code="submission.disclaimer.default.createMessage"/>
+            </g:else>
         </g:else>
         <g:form>
             <div class="dialog">

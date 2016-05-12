@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -103,4 +103,6 @@ public interface FileFormatService {
      * @return the textual representation of the format's version - e.g. L3V2 for SBML.
      */
     public String getFormatVersion(RevisionTransportCommand revision);
+
+    public boolean doBeforeSavingAnnotations(File annoFile, RevisionTransportCommand newRevision);
 }

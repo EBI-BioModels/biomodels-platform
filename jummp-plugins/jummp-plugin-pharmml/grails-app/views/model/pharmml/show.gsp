@@ -38,6 +38,9 @@
         }
     </style>
 </head>
+<content tag="genericAnnotations">
+    <anno:renderGenericAnnotations annotations="${genericAnnotations}"/>
+</content>
 <content tag="modelspecifictabs">
     <pharmml:decideTabs iv="${independentVar}" fd="${functionDefs}" md="${modelDefinition}"
             td="${trialDesign}" est="${estSteps}" sim="${simSteps}" />

@@ -93,7 +93,7 @@ public class JummpXmlUtils {
     public static String findModelAttribute(final File model, String elementName, String attributeName) {
         if (!model || !model.canRead()) {
             def errMsg = new StringBuilder("Cannot find ").append(elementName).append(".").append(attributeName)
-            errMsg.append(" in file ").append(model.properties)
+            errMsg.append(" in file ").append(model?.properties)
             log.error errMsg.toString()
             return ""
         }

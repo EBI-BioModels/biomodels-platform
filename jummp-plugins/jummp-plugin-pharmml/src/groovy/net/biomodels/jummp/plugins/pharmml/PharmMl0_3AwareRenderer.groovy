@@ -33,6 +33,7 @@ package net.biomodels.jummp.plugins.pharmml
 
 import eu.ddmore.libpharmml.dom.maths.Binoperator
 import eu.ddmore.libpharmml.dom.maths.Unioperator
+import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.PKMacroList
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable
 import eu.ddmore.libpharmml.dom.commontypes.FunctionParameter
@@ -67,7 +68,6 @@ import eu.ddmore.libpharmml.dom.modeldefn.Pairwise
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable
 import eu.ddmore.libpharmml.dom.modeldefn.SimpleParameter
 import eu.ddmore.libpharmml.dom.modeldefn.StructuralModel
-import eu.ddmore.libpharmml.dom.modeldefn.VariabilityDefnBlock
 import eu.ddmore.libpharmml.dom.modellingsteps.CommonModellingStep
 import eu.ddmore.libpharmml.dom.modellingsteps.Estimation
 import eu.ddmore.libpharmml.dom.modellingsteps.ModellingSteps
@@ -87,7 +87,7 @@ import org.perf4j.aop.Profiled
 
 class PharmMl0_3AwareRenderer extends AbstractPharmMlRenderer {
     /* the class logger */
-    private static final Log log = LogFactory.getLog(this.getClass())
+    private static final Log log = LogFactory.getLog(this)
     private static final String IS_DEBUG_ENABLED = log.isDebugEnabled()
     private static final String IS_INFO_ENABLED = log.isInfoEnabled()
     /* Dependency injection for groovyPageRenderer */
@@ -257,38 +257,6 @@ class PharmMl0_3AwareRenderer extends AbstractPharmMlRenderer {
             model["transfMap"] = transfMap
             return groovyPageRenderer.render(template: "/templates/0.2/covariates", model: model)
         }
-    }
-
-    /**
-     * @param variabilityModels a list of
-     * {@link eu.ddmore.libpharmml.dom.modeldefn.VariabilityDefnBlock}s.
-     */
-    @Profiled(tag = "pharmMl0_3AwareRenderer.renderIndependentVariable")
-    String renderVariabilityModel(List<VariabilityDefnBlock> variabilityModels) {
-        def models = []
-        variabilityModels.each { m ->
-            def thisModel = [:]
-            thisModel["blkId"] = m.blkId
-            thisModel["name"] = m.name ?: "&nbsp;"
-            thisModel["levels"] = formatVariabilityLevels(m.level)
-            thisModel["type"] = m.type.value()
-            models.add thisModel
-        }
-        return groovyPageRenderer.render(template: "/templates/0.2/variabilityModel",
-                    model: [variabilityModels: models])
-    }
-
-    List<String> formatVariabilityLevels(List variabilityLevels) {
-        def result = []
-        variabilityLevels.inject(result){ r, l ->
-            StringBuilder sb = new StringBuilder()
-            sb.append((l.name) ? l.name.value : l.symbId)
-            if (l.parentLevel) {
-                sb.append(", parent level: ").append(l.parentLevel.symbRef.symbIdRef)
-            }
-            result.add sb.toString()
-        }
-        return result
     }
 
     protected StringBuilder rhs(Rhs r, StringBuilder text) {
@@ -1110,7 +1078,7 @@ Could not extract the population parameter of individual parameter ${p.symbId}."
         } catch(Exception e) {
             output = new StringBuilder("<div class='spaced-top-bottom'>")
             output.append("Cannot display individual parameters.")
-            log.error("Error encountered while rendering individual parameters ${parameters.inspect()} using random variables ${rv.inspect()} and covariates ${covariates.inspect()}: ${e.message}")
+            log.error("Error encountered while rendering individual parameters ${parameters.inspect()} using random variables ${rv.inspect()} and covariates ${covariates.inspect()}: ${e.message}", e)
         }
         return output.append("</div>")
     }
@@ -1291,4 +1259,7 @@ Could not extract the population parameter of individual parameter ${p.symbId}."
         builder.append("</mstyle></math>")
         return builder.toString()
     }
+
+    @Profiled(tag = "pharmMl0_3AwareRenderer.renderPKMacros")
+    String renderPKMacros(PKMacroList pkMacroList) {}
 }

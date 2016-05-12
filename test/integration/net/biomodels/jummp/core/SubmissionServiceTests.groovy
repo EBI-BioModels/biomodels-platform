@@ -103,6 +103,7 @@ class SubmissionServiceTests extends JummpIntegrationTest {
         grailsApplication.config.jummp.vcs.exchangeDirectory = "target/vcs/exchange"
         modelService.vcsService.vcsManager = gitService.getInstance()
         modelService.vcsService.modelContainerRoot = root.absolutePath
+        modelService.vcsService.vcsManager.exchangeDirectory = new File("target/vcs/exchange")
         assertTrue(modelService.vcsService.isValid())
     }
 

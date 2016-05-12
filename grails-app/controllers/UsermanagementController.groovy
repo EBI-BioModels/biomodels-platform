@@ -47,7 +47,7 @@ class UsermanagementController {
     def springSecurityService
     def messageSource
     def notificationService
-    			
+
     private String checkForMessage() {
         String flashMessage=""
         if (flash.message) {
@@ -55,51 +55,51 @@ class UsermanagementController {
         }
         return flashMessage
     }
-    
+
     private Object checkForErrorBean() {
     	if (flash.validationError) {
     		return flash.validationError
     	}
     	return null
     }
-    
+
      /**
      * Passes on any info messages needed to be displayed and renders the register gsp
      */
     @Secured(["isAnonymous()"])
     def create = {
-    	render view: "register", model: [postUrl: "", flashMessage:checkForMessage(), 
+        render view: "register", model: [postUrl: "", flashMessage: checkForMessage(),
     									validationErrorOn: checkForErrorBean()]
     }
-    
+
     @Secured(["isAuthenticated()"])
     def edit = {
     	String user = springSecurityService.principal.username
-    	render view: "edit", model: [postUrl: "", flashMessage:checkForMessage(), 
-    								validationErrorOn: checkForErrorBean(), 
+        render view: "edit", model: [postUrl          : "", flashMessage: checkForMessage(),
+                                     validationErrorOn: checkForErrorBean(),
     								user: userService.getUser(user),
     								notificationPermissions: notificationService.getNotificationPermissions(user)]
     }
-    
+
     @Secured(["isAuthenticated()"])
     def editPassword = {
-    	render view: "editPassword", model: [postUrl: "", flashMessage:checkForMessage(), 
-    										validationErrorOn: checkForErrorBean(), 
+        render view: "editPassword", model: [postUrl          : "", flashMessage: checkForMessage(),
+                                             validationErrorOn: checkForErrorBean(),
     										user: userService.getUser(springSecurityService.principal.username)]
     }
-    
+
     @Secured(["isAuthenticated()"])
     def show = {
     	String user = springSecurityService.principal.username
-    	render view: "show", model: [postUrl: "", flashMessage:checkForMessage(), 
-    								validationErrorOn: checkForErrorBean(), 
+        render view: "show", model: [postUrl          : "", flashMessage: checkForMessage(),
+                                     validationErrorOn: checkForErrorBean(),
     								user: userService.getUser(user),
     								notificationPermissions: notificationService.getNotificationPermissions(user)]
     }
-    
+
     @Secured(["isAnonymous()"])
     def forgot = {
-    	render view: "forgot", model: [postUrl: "", flashMessage:checkForMessage(), 
+        render view: "forgot", model: [postUrl: "", flashMessage: checkForMessage(),
     								validationErrorOn: checkForErrorBean()]
     }
 
@@ -113,7 +113,7 @@ class UsermanagementController {
     		redirect action: forgot;
     	}
     }
-    
+
     /**
     * Password reset based on the unique code sent to the user
     **/
@@ -139,7 +139,7 @@ class UsermanagementController {
 
 
     /**
-     * Validates the command object and then uses the user service to 
+     * Validates the command object and then uses the user service to
      * edit a user. If an error occurs at any point, the method redirects
      * to edit action and sends the user a helpful message.
      */
@@ -163,7 +163,7 @@ class UsermanagementController {
     }
 
     /**
-     * Validates the command object and then uses the user service to 
+     * Validates the command object and then uses the user service to
      * edit a user. If an error occurs at any point, the method redirects
      * to edit action and sends the user a helpful message.
      */
@@ -173,7 +173,7 @@ class UsermanagementController {
     		flash.hashCode=params.hashCode
     		return redirect(action:"reset")
     	}
-    	try 
+        try
     	{
     		userService.resetPassword(cmd.hashCode, cmd.username, cmd.newPassword)
     	}
@@ -185,10 +185,8 @@ class UsermanagementController {
     	redirect(controller: "login", action:"auth")
     }
 
-    
-    
     /**
-     * Validates the command object and then uses the user service to 
+     * Validates the command object and then uses the user service to
      * edit a user. If an error occurs at any point, the method redirects
      * to edit action and sends the user a helpful message.
      */
@@ -197,7 +195,7 @@ class UsermanagementController {
     	if (!validateUserData(cmd, params)) {
     		return redirect(action:"editPassword")
     	}
-    	try 
+        try
     	{
     		userService.changePassword(cmd.oldPassword, cmd.newPassword)
     	}
@@ -208,7 +206,7 @@ class UsermanagementController {
     	flash.message="Password was updated successfully"
     	redirect(action:"show")
     }
-    
+
     /**
     * Requests a password link from the user service, hiding the exception thrown
     * if the username provided does not exist.
@@ -256,12 +254,13 @@ class UsermanagementController {
     	if (!validateUserData(cmd, params)) {
     		return redirect(action:"create")
     	}
-    	try 
+        try
     	{
     		userService.register(cmd.toUser())
     	}
     	catch(Exception e) {
     		flash.message=e.getMessage()
+            log.error e.message, e
    			return redirect(action:"create")
     	}
     	render view: "successfulregistration"

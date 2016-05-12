@@ -25,18 +25,20 @@
 package net.biomodels.jummp.core.model
 
 /**
- * @short Wrapper for a Permission
+ * @short Simple representation of a model permission.
  *
- *
- * The object can also be used as a command object for the web interface.
+ * Captures information required on the model share page --  who has access to a model,
+ * the access type and whether this permission can be revoked.
  *
  * @author raza ali <raza.ali@ebi.ac.uk>
+ * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
 class PermissionTransportCommand {
-	String name;
-	String id;
-	boolean read=false;
-	boolean write=false;
-	boolean disabledEdit=false;
-	boolean show=true;
+    String name
+    String username
+    int id
+    boolean read = false
+    boolean write = false
+    boolean disabledEdit = false
+    boolean show = true
 }
