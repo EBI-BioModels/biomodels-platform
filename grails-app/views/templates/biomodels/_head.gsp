@@ -61,7 +61,7 @@
   <style type="text/css">
       body {
           margin: 0 auto;
-          overflow-x: hidden;
+          /*overflow-x: hidden;*/
           overflow-y: auto;
       }
   </style>
