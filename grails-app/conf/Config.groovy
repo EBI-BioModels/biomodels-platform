@@ -119,13 +119,13 @@ environments {
     }
 
 }
-jummp.metadata.strategy = "ddmore" // "ddmore", "biomodels" or "default"
+jummp.metadata.strategy = "biomodels" // "ddmore", "biomodels" or "default"
 jummp.app.name=appName
 //branding
 // This property is used to select messages,
 // and style if jummp.branding.style is not specified
-jummp.branding.deployment = "ddmore" // "ddmore", "biomodels" or "default"
-jummp.branding.style = "ddmore" // used to specify any other name for the css file
+jummp.branding.deployment = "biomodels" // "ddmore", "biomodels" or "default"
+jummp.branding.style = "biomodels" // used to specify any other name for the css file
 // log4j configuration
 log4j = {
     // Example of changing the log pattern for the default console
