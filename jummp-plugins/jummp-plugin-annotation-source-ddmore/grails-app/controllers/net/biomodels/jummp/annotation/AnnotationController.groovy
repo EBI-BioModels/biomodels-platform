@@ -21,7 +21,7 @@
 package net.biomodels.jummp.annotation
 
 import grails.converters.JSON
-import grails.plugins.springsecurity.Secured
+import grails.plugin.springsecurity.annotation.Secured
 import groovy.json.JsonSlurper
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.core.annotation.*

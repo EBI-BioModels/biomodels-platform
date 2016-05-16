@@ -831,7 +831,6 @@ class PharmMl0_3AwareRenderer extends AbstractPharmMlRenderer {
      * Override the default implementation because Correlation contains a pairwise element
      * where randomVariable1 and randomVariable2 are defined.
      */
-    @Override
     protected void buildCorrelationMap(Correlation c, Map correlationsMap) {
         try {
             Pairwise p = c.pairwise

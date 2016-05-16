@@ -20,7 +20,7 @@
 
 package net.biomodels.jummp.plugins.security
 import grails.converters.JSON
-import grails.plugins.springsecurity.Secured
+import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.adapters.DomainAdapter
 
 /**
@@ -88,7 +88,7 @@ class TeamController {
     	flash.message = "Could not find that team. Please select one from the list below."
         redirect(action: 'index')
     }
-    
+
     /**
      * Lists the teams belonging to the current user.
      */

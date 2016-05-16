@@ -38,7 +38,7 @@ import com.wordnik.swagger.annotations.*
 import eu.ddmore.publish.service.PublishContext
 import eu.ddmore.publish.service.PublishException
 import grails.converters.JSON
-import grails.plugins.springsecurity.Secured
+import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.model.PublicationLinkProvider
 import org.apache.commons.lang3.exception.ExceptionUtils
 import java.util.zip.ZipEntry
@@ -283,7 +283,7 @@ class ModelController {
     }
 
     @Secured(["isAuthenticated()"])
-    def publish = {
+    def publish() {
         RevisionTransportCommand rev
         try {
             rev = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
@@ -318,7 +318,7 @@ class ModelController {
     }
 
     @Secured(["isAuthenticated()"])
-    def submitForPublication = {
+    def submitForPublication() {
         try {
             def rev = modelDelegateService.getRevisionFromParams(params.id)
             modelDelegateService.submitModelRevisionForPublication(rev)
@@ -339,7 +339,7 @@ class ModelController {
     }
 
     @Secured(["isAuthenticated()"])
-    def delete = {
+    def delete() {
         try {
             boolean deleted = modelDelegateService.deleteModel(params.id)
             def currentUser = springSecurityService.currentUser
@@ -377,7 +377,7 @@ class ModelController {
     }
 
     @Secured(["isAuthenticated()"])
-    def share = {
+    def share() {
         try {
             def rev = modelDelegateService.getRevisionFromParams(params.id)
             def perms = modelDelegateService.getPermissionsMap(rev.model.submissionId)
@@ -398,7 +398,7 @@ class ModelController {
     }
 
     @Secured(["isAuthenticated()"])
-    def shareUpdate = {
+    def shareUpdate() {
         boolean valid = params.collabMap
         if (valid) {
             try {
@@ -429,7 +429,7 @@ class ModelController {
     }
 
     @Secured(["isAuthenticated()"])
-    def updateFlow = {
+    def updateFlow() {
         start {
             action {
                 try {
@@ -481,7 +481,7 @@ class ModelController {
    }
 
     @Secured(["isAuthenticated()"])
-    def createFlow = {
+    def createFlow() {
         uploadPipeline {
             subflow(controller: "model", action: "upload", input: [isUpdate:false])
             on("abort").to "abort"
@@ -507,7 +507,7 @@ class ModelController {
      * See http://grails.org/grails/latest/doc/guide/theWebLayer.html#flowScopes
      */
     @Secured(["isAuthenticated()"])
-    def uploadFlow = {
+    def uploadFlow() {
         input {
             isUpdate(required: true)
         }

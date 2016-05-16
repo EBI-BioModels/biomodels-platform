@@ -34,7 +34,7 @@
 
 package net.biomodels.jummp.plugins.configuration
 
-import grails.plugins.springsecurity.Secured
+import grails.plugin.springsecurity.annotation.Secured
 
 /**
  * Controller for configuring the application after the first setup.
@@ -189,7 +189,7 @@ class ConfigurationController {
         BivesCommand cmd = configurationService.loadBivesConfiguration()
         render(view: 'configuration', model: [bives: cmd, title: "Model Versioning System - BiVeS", action: "saveBives", template: "bives"])
     }
-    
+
     def saveBives = { BivesCommand cmd ->
         if (cmd.hasErrors()) {
             render(view: 'configuration', model: [bives: cmd, title: "Model Versioning System - BiVeS", action: "saveBives", template: "bives"])

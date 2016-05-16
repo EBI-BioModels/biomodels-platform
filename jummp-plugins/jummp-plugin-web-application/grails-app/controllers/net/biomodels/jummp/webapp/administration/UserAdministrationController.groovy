@@ -34,7 +34,7 @@
 
 package net.biomodels.jummp.webapp.administration
 
-import grails.plugins.springsecurity.Secured
+import grails.plugin.springsecurity.annotation.Secured
 import grails.converters.JSON
 import net.biomodels.jummp.core.JummpException
 import net.biomodels.jummp.core.user.UserNotFoundException
@@ -135,7 +135,7 @@ class UserAdministrationController {
     }
 
     /**
-     * Action to (un)expire the password of a given user 
+     * Action to (un)expire the password of a given user
      */
     def expirePassword = {
         try {

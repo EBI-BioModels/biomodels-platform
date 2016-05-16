@@ -71,11 +71,13 @@ grails.project.dependency.resolution = {
         mavenRepo "http://download.eclipse.org/jgit/maven"
         mavenRepo "http://www.biojava.org/download/maven/"
         mavenRepo "http://maven.mango-solutions.com/ddmore/"
+        mavenRepo "http://repo.spring.io/milestone"
+        mavenRepo "http://repo.grails.org/grails/core"
     }
     dependencies {
         // required by OntologyLookupResolver
         compile "org.ccil.cowan.tagsoup:tagsoup:1.2"
-        compile 'org.codehaus.groovy:groovy-backports-compat23:2.3.5'
+        compile 'org.codehaus.groovy:groovy-backports-compat23:2.3.11'
         compile "com.googlecode.multithreadedtc:multithreadedtc:1.01"
         runtime 'mysql:mysql-connector-java:5.1.17'
         runtime "postgresql:postgresql:9.1-901.jdbc4"
@@ -147,7 +149,13 @@ grails.project.dependency.resolution = {
     plugins {
         build ":tomcat:7.0.54"
 
-        runtime(":codenarc:0.21")
+        // plugins for the compile step
+        compile ":scaffolding:2.1.0"
+        compile ":fields:1.5.1"
+        compile ":cache:1.1.8"
+        compile ":asset-pipeline:2.8.0"
+        compile ":codenarc:0.25.2"
+//        runtime(":codenarc:0.21")
         compile ":webxml:1.4.1"
         compile ":perf4j:0.1.1"
         compile ":routing:1.3.2"
@@ -156,19 +164,22 @@ grails.project.dependency.resolution = {
         compile(":mail:1.0.7")
         compile ":simple-captcha:1.0.0"
         compile(":quartz:1.0.2")
-        compile ":spring-security-acl:1.1.1"
-        compile ":spring-security-core:1.2.7.3"
-        compile ":spring-security-ldap:1.0.6"
+        compile ":scaffold-core:1.3.2"
+        compile ":spring-security-acl:2.0.1"
+        compile ":spring-security-core:2.0.0"
+        compile ":spring-security-ldap:2.0.1"
         //compile ":svn:1.0.2"
         compile ":locale-variant:0.1"
-        compile ":webflow:2.0.8.1"
+        compile ":webflow:2.1.0"
+        compile ":searchable:0.6.9"
 
-        runtime(":weceem:1.2") {
-            excludes 'ckeditor', 'xstream'
+        runtime(":weceem:1.4") {
+            excludes 'ckeditor', 'xstream', 'elasticsearch'
         }
-        runtime ":ckeditor:3.6.6.1.1"
-        runtime ":database-migration:1.4.0"
-        runtime ":hibernate:3.6.10.16"
+        runtime ":ckeditor:4.5.4.0"
+        runtime ":database-migration:1.4.1"
+        runtime ":hibernate:3.6.10.18"
+//        runtime ":resources:1.2.14"
         runtime ":jquery:1.11.1"
         runtime ":jquery-datatables:1.7.5"
         runtime ":jquery-ui:1.10.4"

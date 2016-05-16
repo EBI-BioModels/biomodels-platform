@@ -1165,7 +1165,6 @@ class PharmMl0_6AwareRenderer extends AbstractPharmMlRenderer {
      * where randomVariable1 and randomVariable2 are defined.
      */
 
-    @Override
     protected void buildCorrelationMap(Correlation c, Map correlationsMap) {
         try {
             Pairwise p = c.pairwise

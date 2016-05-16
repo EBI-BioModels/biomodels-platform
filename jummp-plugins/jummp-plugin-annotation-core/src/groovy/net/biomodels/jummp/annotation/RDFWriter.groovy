@@ -45,7 +45,6 @@ class RDFWriter implements MetadataSavingStrategy {
      */
     def modelFileFormatService
 
-    @Override
     List<RepositoryFileTransportCommand> marshallAnnotations(RevisionTransportCommand revisionTC,
                                 List<StatementTransportCommand> statementTransportCommands,
                                 boolean isUpdate = false) {

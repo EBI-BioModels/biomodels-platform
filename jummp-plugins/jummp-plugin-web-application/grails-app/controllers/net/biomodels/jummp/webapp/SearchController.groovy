@@ -34,7 +34,7 @@ import grails.converters.JSON
 import net.biomodels.jummp.core.adapters.DomainAdapter
 import net.biomodels.jummp.core.model.ModelListSorting
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
-import grails.plugins.springsecurity.Secured
+import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.webapp.rest.search.SearchResults
 import net.biomodels.jummp.webapp.rest.search.BrowseResults
 import net.biomodels.jummp.plugins.security.User
@@ -182,7 +182,7 @@ class SearchController {
     }
 
     @Secured(['ROLE_ADMIN'])
-    def regen = {
+    def regen() {
         long start = System.currentTimeMillis()
         searchService.regenerateIndices()
         [regenTime: System.currentTimeMillis() - start]
