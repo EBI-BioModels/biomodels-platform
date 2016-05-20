@@ -67,13 +67,13 @@ class UsermanagementController {
      * Passes on any info messages needed to be displayed and renders the register gsp
      */
     @Secured(["isAnonymous()"])
-    def create = {
+    def create() {
         render view: "register", model: [postUrl: "", flashMessage: checkForMessage(),
     									validationErrorOn: checkForErrorBean()]
     }
 
     @Secured(["isAuthenticated()"])
-    def edit = {
+    def edit() {
     	String user = springSecurityService.principal.username
         render view: "edit", model: [postUrl          : "", flashMessage: checkForMessage(),
                                      validationErrorOn: checkForErrorBean(),
@@ -82,14 +82,14 @@ class UsermanagementController {
     }
 
     @Secured(["isAuthenticated()"])
-    def editPassword = {
+    def editPassword() {
         render view: "editPassword", model: [postUrl          : "", flashMessage: checkForMessage(),
                                              validationErrorOn: checkForErrorBean(),
     										user: userService.getUser(springSecurityService.principal.username)]
     }
 
     @Secured(["isAuthenticated()"])
-    def show = {
+    def show() {
     	String user = springSecurityService.principal.username
         render view: "show", model: [postUrl          : "", flashMessage: checkForMessage(),
                                      validationErrorOn: checkForErrorBean(),
@@ -98,13 +98,13 @@ class UsermanagementController {
     }
 
     @Secured(["isAnonymous()"])
-    def forgot = {
+    def forgot() {
         render view: "forgot", model: [postUrl: "", flashMessage: checkForMessage(),
     								validationErrorOn: checkForErrorBean()]
     }
 
     @Secured(["isAnonymous()"])
-    def passwordreset = {
+    def passwordreset() {
     	if (params.id) {
     		flash.hashCode=params.id
     		redirect action: reset
@@ -118,7 +118,7 @@ class UsermanagementController {
     * Password reset based on the unique code sent to the user
     **/
     @Secured(["isAnonymous()"])
-    def reset = {
+    def reset() {
     	render view: "reset", model: [postUrl: "", flashMessage:checkForMessage(),
     								validationErrorOn: checkForErrorBean(),
     								hashCode: flash.hashCode]
