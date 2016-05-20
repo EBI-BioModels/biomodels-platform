@@ -37,12 +37,12 @@ package net.biomodels.jummp.core
 import static org.junit.Assert.*
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.plugins.security.Person
-import org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid
+import grails.plugin.springsecurity.acl.AclSid
 import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.UserRole
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
-import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
+import grails.plugin.springsecurity.SpringSecurityUtils
 import org.springframework.security.authentication.AnonymousAuthenticationToken
 import org.springframework.security.core.authority.GrantedAuthorityImpl
 import grails.util.Holders

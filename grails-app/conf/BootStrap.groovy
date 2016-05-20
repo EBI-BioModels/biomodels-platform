@@ -39,7 +39,7 @@ import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.plugins.security.UserRole
 import org.codehaus.groovy.grails.commons.ApplicationAttributes
-import org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid
+import grails.plugin.springsecurity.acl.AclSid
 import org.codehaus.groovy.grails.commons.GrailsClass
 import org.codehaus.groovy.grails.plugins.DomainClassGrailsPlugin
 

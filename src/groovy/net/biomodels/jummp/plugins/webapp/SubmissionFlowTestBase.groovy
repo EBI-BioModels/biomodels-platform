@@ -41,8 +41,8 @@ import net.biomodels.jummp.plugins.webapp.SubmissionFlowTestBase
 import net.biomodels.jummp.webapp.ModelController
 import org.apache.commons.io.FileUtils
 import org.codehaus.groovy.grails.commons.spring.GrailsWebApplicationContext
-import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
-import org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid
+import grails.plugin.springsecurity.SpringSecurityUtils
+import grails.plugin.springsecurity.acl.AclSid
 import org.codehaus.groovy.grails.web.context.ServletContextHolder
 import org.codehaus.groovy.grails.web.servlet.GrailsApplicationAttributes
 import org.codehaus.groovy.grails.web.servlet.mvc.GrailsWebRequest

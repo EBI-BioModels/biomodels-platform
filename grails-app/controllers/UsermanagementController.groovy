@@ -26,7 +26,7 @@ import net.biomodels.jummp.webapp.RegistrationCommand
 import net.biomodels.jummp.webapp.EditUserCommand
 import net.biomodels.jummp.webapp.UpdatePasswordCommand
 import net.biomodels.jummp.webapp.ResetPasswordCommand
-import grails.plugins.springsecurity.Secured
+import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.plugins.security.Person
 
 /*

@@ -21,7 +21,7 @@
 package net.biomodels.jummp.core
 
 import grails.async.Promise
-import grails.plugins.springsecurity.Secured
+import grails.plugin.springsecurity.annotation.Secured
 import groovy.json.JsonBuilder
 import java.util.concurrent.atomic.AtomicReference
 import net.biomodels.jummp.core.adapters.DomainAdapter
@@ -38,7 +38,7 @@ import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.response.QueryResponse
 import org.apache.solr.common.SolrDocumentList
 import org.apache.solr.common.SolrInputDocument
-import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
+import grails.plugin.springsecurity.SpringSecurityUtils
 import org.perf4j.aop.Profiled
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
