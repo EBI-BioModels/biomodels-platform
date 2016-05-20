@@ -36,10 +36,8 @@ import groovy.transform.CompileStatic
 import groovy.transform.TypeChecked
 import groovy.transform.TypeCheckingMode
 import net.biomodels.jummp.core.adapters.DomainAdapter
-import net.biomodels.jummp.core.model.ModelFormatTransportCommand
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC //rude?
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
-import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import net.biomodels.jummp.core.model.PublicationTransportCommand
@@ -354,7 +352,7 @@ class SubmissionService {
         @TypeChecked(TypeCheckingMode.SKIP)
         protected void updateRevisionFromFiles(Map<String, Object> workingMemory) {
             RTC revision = workingMemory.get("RevisionTC") as RTC
-            MFTC fmt = workingMemory["model_type"] as ModelFormatTransportCommand
+            MFTC fmt = workingMemory["model_type"] as MFTC
             if (revision.format != fmt) {
                 revision.format = fmt
             }
@@ -916,7 +914,7 @@ class SubmissionService {
      * @param workingMemory a Map containing all objects exchanged throughout the flow.
      */
     /* generics + @CompileStatic ==> https://issues.apache.org/jira/browse/GROOVY-7477 */
-    protected List getFilesFromRepFiles(List repFiles) {
+    protected List getFilesFromRepFiles(List<RFTC> repFiles) {
         return repFiles?.collect { RFTC it -> new File(it.path) }
     }
 
