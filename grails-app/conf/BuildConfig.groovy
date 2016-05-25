@@ -171,12 +171,7 @@ grails.project.dependency.resolution = {
         //compile ":svn:1.0.2"
         compile ":locale-variant:0.1"
         compile ":webflow:2.1.0"
-        compile ":searchable:0.6.9"
-
-        runtime(":weceem:1.4") {
-            excludes 'ckeditor', 'xstream', 'elasticsearch'
-        }
-        runtime ":ckeditor:4.5.4.0"
+        runtime ":weceem:1.4"
         runtime ":database-migration:1.4.1"
         runtime ":hibernate:3.6.10.18"
 //        runtime ":resources:1.2.14"
