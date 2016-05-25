@@ -268,17 +268,17 @@ if ((jummpConfig.jummp.security.ldap.enabled instanceof ConfigObject) || !Boolea
 } else {
     println("using ldap")
     jummp.security.ldap.enabled = true
-    grails.plugins.springsecurity.ldap.context.managerDn         = jummpConfig.jummp.security.ldap.managerDn
-    grails.plugins.springsecurity.ldap.context.managerPassword   = jummpConfig.jummp.security.ldap.managerPw
-    grails.plugins.springsecurity.ldap.context.server            = jummpConfig.jummp.security.ldap.server
-    grails.plugins.springsecurity.ldap.search.base               = jummpConfig.jummp.security.ldap.search.base
-    grails.plugins.springsecurity.ldap.authorities.searchSubtree = jummpConfig.jummp.security.ldap.search.subTree
-    grails.plugins.springsecurity.ldap.search.filter             = jummpConfig.jummp.security.ldap.search.filter
+    grails.plugin.springsecurity.ldap.context.managerDn         = jummpConfig.jummp.security.ldap.managerDn
+    grails.plugin.springsecurity.ldap.context.managerPassword   = jummpConfig.jummp.security.ldap.managerPw
+    grails.plugin.springsecurity.ldap.context.server            = jummpConfig.jummp.security.ldap.server
+    grails.plugin.springsecurity.ldap.search.base               = jummpConfig.jummp.security.ldap.search.base
+    grails.plugin.springsecurity.ldap.authorities.searchSubtree = jummpConfig.jummp.security.ldap.search.subTree
+    grails.plugin.springsecurity.ldap.search.filter             = jummpConfig.jummp.security.ldap.search.filter
 
     // static options
-    grails.plugins.springsecurity.ldap.authorities.ignorePartialResultException = true
-    grails.plugins.springsecurity.ldap.authorities.retrieveGroupRoles = true
-    grails.plugins.springsecurity.ldap.authorities.retrieveDatabaseRoles = true
+    grails.plugin.springsecurity.ldap.authorities.ignorePartialResultException = true
+    grails.plugin.springsecurity.ldap.authorities.retrieveGroupRoles = true
+    grails.plugin.springsecurity.ldap.authorities.retrieveDatabaseRoles = true
 }
 
 // version control backend
