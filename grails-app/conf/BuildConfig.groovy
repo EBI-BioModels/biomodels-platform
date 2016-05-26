@@ -84,18 +84,10 @@ grails.project.dependency.resolution = {
 
         //using the latest groovy eclipse compiler 2.9.2-01
         compile "net.biomodels.jummp:AnnotationStore:0.2.8-SNAPSHOT"
-        compile("org.apache.solr:solr-solrj:4.10.1") {
-            excludes 'wstx-asl', //a newer version of woodstox comes with jsbml
-                // httpcomponents 4.3.1 is incompatible with 4.2, which breaks jena-arq
-                'httpclient', 'httpcore', 'httpmime'
-        }
+        compile "org.apache.solr:solr-solrj:5.3.1"
         //required by both JSBML and SolrJ
         compile "org.codehaus.woodstox:woodstox-core-lgpl:4.4.1"
         // fixes https://issues.apache.org/jira/browse/HTTPCLIENT-1418
-        def httpComponentsVersion = '4.3.2'
-        compile "org.apache.httpcomponents:httpclient:$httpComponentsVersion"
-        compile "org.apache.httpcomponents:httpcore:$httpComponentsVersion"
-        compile "org.apache.httpcomponents:httpmime:$httpComponentsVersion"
 
         /* jms
         runtime('org.apache.activemq:activeio-core:3.1.2',
@@ -125,7 +117,9 @@ grails.project.dependency.resolution = {
          */
         compile "com.thoughtworks.xstream:xstream:1.4.7"
 
-        runtime("commons-jexl:commons-jexl:1.1") { excludes 'junit', 'commons-logging' }
+        runtime("commons-jexl:commons-jexl:1.1") {
+            excludes 'junit', 'commons-logging'
+        }
         test "org.grails:grails-datastore-test-support:1.0-grails-2.3"
         runtime 'org.javassist:javassist:3.17.1-GA'
         runtime "org.apache.camel:camel-exec:2.13.0"
@@ -140,9 +134,10 @@ grails.project.dependency.resolution = {
             excludes 'apache-jena-libs'
         }
         compile "org.apache.jena:jena-tdb:1.1.2"
+        compile "org.apache.jena:jena-core:2.13.0"
 
         compile ("eu.ddmore.metadata:lib-metadata:1.5.1-SNAPSHOT") {
-            excludes 'spring-context','spring-core','spring-test'
+            excludes 'spring-context','spring-core','spring-test', 'jena'
         }
     }
 
@@ -150,14 +145,11 @@ grails.project.dependency.resolution = {
         build ":tomcat:7.0.54"
 
         // plugins for the compile step
-        compile ":scaffolding:2.1.0"
-        compile ":fields:1.5.1"
         compile ":cache:1.1.8"
         compile ":asset-pipeline:2.8.0"
         compile ":codenarc:0.25.2"
-//        runtime(":codenarc:0.21")
         compile ":webxml:1.4.1"
-        compile ":perf4j:0.1.1"
+        compile ":perf4j:0.2"
         compile ":routing:1.3.2"
         //compile ":jms:1.2"
         compile ":executor:0.3"
@@ -173,8 +165,7 @@ grails.project.dependency.resolution = {
         compile ":webflow:2.1.0"
         runtime ":weceem:1.4"
         runtime ":database-migration:1.4.1"
-        runtime ":hibernate:3.6.10.18"
-//        runtime ":resources:1.2.14"
+        runtime ":hibernate4:4.3.8.1"
         runtime ":jquery:1.11.1"
         runtime ":jquery-datatables:1.7.5"
         runtime ":jquery-ui:1.10.4"
