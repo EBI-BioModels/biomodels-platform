@@ -79,7 +79,7 @@ grails.project.dependency.resolution = {
         compile "org.ccil.cowan.tagsoup:tagsoup:1.2"
         compile 'org.codehaus.groovy:groovy-backports-compat23:2.3.11'
         compile "com.googlecode.multithreadedtc:multithreadedtc:1.01"
-        runtime 'mysql:mysql-connector-java:5.1.17'
+        runtime 'mysql:mysql-connector-java:5.1.34'
         runtime "postgresql:postgresql:9.1-901.jdbc4"
 
         //using the latest groovy eclipse compiler 2.9.2-01
