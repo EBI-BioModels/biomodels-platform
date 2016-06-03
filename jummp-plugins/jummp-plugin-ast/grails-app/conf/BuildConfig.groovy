@@ -69,6 +69,6 @@ grails.project.dependency.resolution = {
         // runtime 'mysql:mysql-connector-java:5.1.13'
     }
     plugins {
-        build ":tomcat:7.0.54"
+        build ":tomcat:7.0.55.3"
     }
 }

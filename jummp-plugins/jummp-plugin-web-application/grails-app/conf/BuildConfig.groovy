@@ -76,7 +76,7 @@ grails.project.dependency.resolution = {
     }
 
     plugins {
-        build ":tomcat:7.0.54"
+        build ":tomcat:7.0.55.3"
 
         runtime ":weceem:1.4"
         runtime ":jquery:1.11.1"

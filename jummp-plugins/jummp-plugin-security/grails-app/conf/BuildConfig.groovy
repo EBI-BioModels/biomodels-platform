@@ -74,11 +74,11 @@ grails.project.dependency.resolution = {
         compile 'org.perf4j:perf4j:0.9.12'
     }
     plugins {
-        build ":tomcat:7.0.54"
+        build ":tomcat:7.0.55.3"
 
-        compile ":spring-security-core:1.2.7.3"
-        compile ":perf4j:0.1.1"
+        compile ":spring-security-core:2.0.0"
+        compile ":perf4j:0.2"
 
-        runtime ":hibernate:3.6.10.16"
+        runtime ":hibernate4:4.3.10"
     }
 }
