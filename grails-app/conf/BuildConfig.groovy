@@ -165,7 +165,7 @@ grails.project.dependency.resolution = {
         compile ":webflow:2.1.0"
         runtime ":weceem:1.4"
         runtime ":database-migration:1.4.1"
-        runtime ":hibernate4:4.3.8.1"
+        runtime ":hibernate4:4.3.10"
         runtime ":jquery:1.11.1"
         runtime ":jquery-datatables:1.7.5"
         runtime ":jquery-ui:1.10.4"
