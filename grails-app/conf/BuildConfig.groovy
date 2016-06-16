@@ -146,7 +146,8 @@ grails.project.dependency.resolution = {
 
         // plugins for the compile step
         compile ":cache:1.1.8"
-        compile ":asset-pipeline:2.8.0"
+	 compile ":asset-pipeline:2.8.0"
+        compile ":cache-ehcache:1.0.5"
         compile ":codenarc:0.25.2"
         compile ":webxml:1.4.1"
         compile ":perf4j:0.2"

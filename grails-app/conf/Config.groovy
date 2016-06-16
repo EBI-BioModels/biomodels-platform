@@ -106,6 +106,16 @@ grails.hibernate.osiv.readonly = false
 
 grails.views.javascript.library="jquery"
 
+// avoid ehcache duplicate CacheManager exception mess
+beans {
+    cacheManager {
+        shared = true
+    }
+}
+
+grails.cache.config.provider.name = "tungCacheManager"
+grails.cache.ehcache.cacheManagerName = "tungCacheManager"
+
 // set per-environment serverURL stem for creating absolute links
 environments {
     production {
