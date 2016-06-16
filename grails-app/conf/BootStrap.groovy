@@ -46,7 +46,6 @@ import org.codehaus.groovy.grails.plugins.DomainClassGrailsPlugin
 class BootStrap {
     def springSecurityService
     def wcmSecurityService
-    def searchableService
     def grailsApplication
 
     void addPublicationLinkProvider(PubLinkProvTC cmd) {
@@ -144,9 +143,6 @@ class BootStrap {
                 userRole = Role.findByAuthority("ROLE_ADMIN")
                 UserRole.create(user, userRole, true)
             }
-            // Manually start Searchable's mirroring process to ensure that it comes after the automated migrations.
-            //searchableService.reindex()
-            searchableService.startMirroring()
         }
 
         // custom mapping for weceem as it fails to work with an LDAPUserDetailsImpl
