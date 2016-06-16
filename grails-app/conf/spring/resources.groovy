@@ -34,7 +34,6 @@
 
 import grails.util.Environment
 import grails.util.Holders
-import java.util.concurrent.Executors
 import net.biomodels.jummp.core.model.identifier.generator.AbstractModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.generator.DefaultModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGeneratorRegistryService
@@ -79,12 +78,6 @@ beans = {
 
     if (Environment.getCurrent() == Environment.DEVELOPMENT) {
         timingAspect(org.perf4j.log4j.aop.TimingAspect)
-    }
-
-    executorService(grails.plugin.executor.PersistenceContextExecutorWrapper) { bean ->
-        bean.destroyMethod = 'destroy' //keep this destroy method so it can try and clean up nicely
-        persistenceInterceptor = ref("persistenceInterceptor")
-        executor = Executors.newFixedThreadPool(grailsApplication.config.jummp.threadPool.size)
     }
 
     solrServerHolder(net.biomodels.jummp.search.SolrServerHolder) { bean ->

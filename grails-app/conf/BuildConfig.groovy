@@ -153,7 +153,6 @@ grails.project.dependency.resolution = {
         compile ":perf4j:0.2"
         compile ":routing:1.3.2"
         //compile ":jms:1.2"
-        compile ":executor:0.3"
         compile(":mail:1.0.7")
         compile ":simple-captcha:1.0.0"
         compile(":quartz:1.0.2")
