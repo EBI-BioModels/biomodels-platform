@@ -150,7 +150,7 @@ grails.project.dependency.resolution = {
         compile ":cache-ehcache:1.0.5"
         compile ":codenarc:0.25.2"
         compile ":webxml:1.4.1"
-        compile ":perf4j:0.2"
+        compile ":perf4j:0.2.1"
         compile ":routing:1.3.2"
         //compile ":jms:1.2"
         compile(":mail:1.0.7")

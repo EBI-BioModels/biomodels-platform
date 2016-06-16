@@ -71,13 +71,13 @@ grails.project.dependency.resolution = {
     }
     dependencies {
         // maven does not pick up the jar from target/work/plugins/perf4j-*/lib
-        compile 'org.perf4j:perf4j:0.9.12'
+        compile 'org.perf4j:perf4j:0.9.16'
     }
     plugins {
         build ":tomcat:7.0.55.3"
 
         compile ":spring-security-core:2.0.0"
-        compile ":perf4j:0.2"
+        compile ":perf4j:0.2.1"
 
         runtime ":hibernate4:4.3.10"
     }
