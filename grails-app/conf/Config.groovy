@@ -34,6 +34,14 @@ import java.util.regex.Pattern
 // if(System.properties["${appName}.config.location"]) {
 //    grails.config.locations << "file:" + System.properties["${appName}.config.location"]
 // }
+
+grails.plugin.springsecurity.logout.postOnly = false
+grails.plugin.springsecurity.password.algorithm = 'SHA-256'
+grails.plugin.springsecurity.password.hash.iterations = 1
+grails.plugin.springsecurity.useSessionFixationPrevention = false
+grails.plugin.springsecurity.rejectIfNoRule = true
+grails.plugin.springsecurity.fii.rejectPublicInvocations = false
+
 Properties jummpProperties = new Properties()
 try {
 	def service = new net.biomodels.jummp.plugins.configuration.ConfigurationService()
@@ -127,8 +135,21 @@ environments {
     test {
         grails.serverURL = "http://localhost:8080/${appName}"
     }
-
 }
+
+// set spring security
+environments {
+   development {
+      grails.logging.jul.usebridge = true
+      grails.plugin.springsecurity.debug.useFilter = true
+
+      grails.plugin.console.enabled = true
+   }
+   production {
+      grails.logging.jul.usebridge = false
+   }
+}
+
 jummp.metadata.strategy = "biomodels" // "ddmore", "biomodels" or "default"
 jummp.app.name=appName
 //branding
@@ -229,45 +250,53 @@ log4j = {
 
     ]
     trace hibernateAppender: 'org.hibernate.type.descriptor.sql.BasicBinder'
+    info console: ["net.biomodels.jummp.core",
+                   "grails.plugin.cache",
+                   "grails.plugin.cache.ehcache.hibernate",
+                   "grails.plugin.springsecurity.web.filter.DebugFilter"]
 }
 
 // Added by the Spring Security Core plugin:
-grails.plugins.springsecurity.userLookup.userDomainClassName = 'net.biomodels.jummp.plugins.security.User'
-grails.plugins.springsecurity.userLookup.authorityJoinClassName = 'net.biomodels.jummp.plugins.security.UserRole'
-grails.plugins.springsecurity.authority.className = 'net.biomodels.jummp.plugins.security.Role'
+grails.plugin.springsecurity.userLookup.userDomainClassName = 'net.biomodels.jummp.plugins.security.User'
+grails.plugin.springsecurity.userLookup.authorityJoinClassName = 'net.biomodels.jummp.plugins.security.UserRole'
+grails.plugin.springsecurity.authority.className = 'net.biomodels.jummp.plugins.security.Role'
 
 jummp.controllerAnnotations = [
-        // protect the springsecurity ui plugin controllers
-        '/aclclass/**':          ['ROLE_ADMIN'],
-        '/aclentry/**':          ['ROLE_ADMIN'],
-        '/aclobjectidentity/**': ['ROLE_ADMIN'],
-        '/aclsid/**':            ['ROLE_ADMIN'],
-        '/persistentlogin/**':   ['ROLE_ADMIN'],
-        '/register/**':          ['ROLE_ADMIN'],
-        '/registrationcode/**':  ['ROLE_ADMIN'],
-        '/requestmap/**':        ['ROLE_ADMIN'],
-        '/role/**':              ['ROLE_ADMIN'],
-        '/securityinfo/**':      ['ROLE_ADMIN'],
-        '/user/**':              ['ROLE_ADMIN'],
-        '/wcm-tools/**':         ['ROLE_ADMIN'],
-        '/searchable/**':        ['ROLE_ADMIN'],
-        '/ck/**':                ['ROLE_ADMIN'],
-        "/wcmEditor/**":         ["hasRole('ROLE_ADMIN')"],
-        "/wcmPortal/**":         ["hasRole('ROLE_ADMIN')"],
-        "/wcmRepository/**":     ["hasRole('ROLE_ADMIN')"],
-        "/wcmSpace/**":          ["hasRole('ROLE_ADMIN')"],
-        "/wcmSynchronization/**": ["hasRole('ROLE_ADMIN')"],
-        "/wcmVersion/**":        ["hasRole('ROLE_ADMIN')"],
-        "/wcm*/**":              ["permitAll"],
-        "/WeceemFiles/**":       ["permitAll"],
-        "/css/**":               ["permitAll"],
-        "/images/**":            ["permitAll"],
-        "/js/**":                ["permitAll"],
-        "/plugins/jquery*/**":   ["permitAll"],
-        "/plugins/navigation*/**": ["permitAll"],
-        "/plugins/blueprint*/**": ["permitAll"],
-        "/plugins/ckeditor*/**":  ["permitAll"],
-        "/plugins/weceem*/**":    ["permitAll"]
+    "/":    ["permitAll"],
+    "/index":           ["permitAll"],
+    "/index.gsp":       ["permitAll"],
+    // protect the spring security ui plugin controllers
+    '/aclclass/**':             ['ROLE_ADMIN'],
+    '/aclentry/**':             ['ROLE_ADMIN'],
+    '/aclobjectidentity/**':    ['ROLE_ADMIN'],
+    '/aclsid/**':               ['ROLE_ADMIN'],
+    '/persistentlogin/**':      ['ROLE_ADMIN'],
+    '/register/**':             ['ROLE_ADMIN'],
+    '/registrationcode/**':     ['ROLE_ADMIN'],
+    '/requestmap/**':           ['ROLE_ADMIN'],
+    '/role/**':                 ['ROLE_ADMIN'],
+    '/securityinfo/**':         ['ROLE_ADMIN'],
+    '/user/**':                 ['ROLE_ADMIN'],
+    '/wcm-tools/**':            ['ROLE_ADMIN'],
+    '/searchable/**':           ['ROLE_ADMIN'],
+    '/ck/**':                   ['ROLE_ADMIN'],
+    "/wcmEditor/**":            ["hasRole('ROLE_ADMIN')"],
+    "/wcmPortal/**":            ["hasRole('ROLE_ADMIN')"],
+    "/wcmRepository/**":        ["hasRole('ROLE_ADMIN')"],
+    "/wcmSpace/**":             ["hasRole('ROLE_ADMIN')"],
+    "/wcmSynchronization/**":   ["hasRole('ROLE_ADMIN')"],
+    "/wcmVersion/**":           ["hasRole('ROLE_ADMIN')"],
+    "/wcm*/**":                 ["permitAll"],
+    "/WeceemFiles/**":          ["permitAll"],
+    "/css/**":                  ["permitAll"],
+    "/images/**":               ["permitAll"],
+    "/js/**":                   ["permitAll"],
+    "/plugins/jquery*/**":      ["permitAll"],
+    "/plugins/navigation*/**":  ["permitAll"],
+    "/plugins/blueprint*/**":   ["permitAll"],
+    "/plugins/ckeditor*/**":    ["permitAll"],
+    "/plugins/weceem*/**":      ["permitAll"],
+    "/console/**":              ["permitAll"]
 ]
 
 // ldap
@@ -485,7 +514,7 @@ if (jummp.security.cms.policy != null) {
     println "Using Weceem's default permissions."
 }
 
-grails.plugins.springsecurity.controllerAnnotations.staticRules = jummp.controllerAnnotations
+grails.plugin.springsecurity.controllerAnnotations.staticRules = jummp.controllerAnnotations
 if (!"jms".equalsIgnoreCase(System.getenv("JUMMP_EXPORT"))) {
     jms.disabled = true
 }
