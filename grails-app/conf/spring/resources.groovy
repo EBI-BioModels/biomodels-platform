@@ -38,6 +38,7 @@ import net.biomodels.jummp.core.model.identifier.generator.AbstractModelIdentifi
 import net.biomodels.jummp.core.model.identifier.generator.DefaultModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGeneratorRegistryService
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
+import net.biomodels.jummp.core.WebflowAclBeanDefinitionProcessor
 import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
 import org.springframework.beans.factory.support.BeanDefinitionRegistry
 import org.springframework.beans.factory.config.BeanDefinition
@@ -83,6 +84,12 @@ beans = {
         bean.initMethod = "init"
         bean.destroyMethod = "destroy"
     }
+
+    webflowAclBeanDefinitionProcessor(WebflowAclBeanDefinitionProcessor) {
+        it.initMethod = "init"
+    }
+
+    //myBeanPostProcessor(net.biomodels.jummp.core.NosyBeanPostProcessor)
 
     Map R = grailsApplication.config.jummp.id.generators
     identifierGeneratorRegistry(ModelIdentifierGeneratorRegistryService) {
