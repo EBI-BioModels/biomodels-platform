@@ -45,9 +45,6 @@ import org.springframework.beans.factory.support.SimpleBeanDefinitionRegistry
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner
 import org.springframework.core.type.filter.AnnotationTypeFilter
 import grails.persistence.Entity
-import org.codehaus.groovy.grails.commons.GrailsApplication
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 
 // Place your Spring DSL code here
