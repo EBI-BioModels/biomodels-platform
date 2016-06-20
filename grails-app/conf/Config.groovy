@@ -262,11 +262,13 @@ log4j = {
 grails.plugin.springsecurity.userLookup.userDomainClassName = 'net.biomodels.jummp.plugins.security.User'
 grails.plugin.springsecurity.userLookup.authorityJoinClassName = 'net.biomodels.jummp.plugins.security.UserRole'
 grails.plugin.springsecurity.authority.className = 'net.biomodels.jummp.plugins.security.Role'
+grails.plugin.springsecurity.securityConfigType = "Annotation" // "Annotation", "InterceptUrlMap", "Requestmap"
 
 jummp.controllerAnnotations = [
-    "/":    ["permitAll"],
-    "/index":           ["permitAll"],
-    "/index.gsp":       ["permitAll"],
+    "/":                        ["permitAll"],
+    "/index":                   ["permitAll"],
+    '/index.gsp':               ['permitAll'],
+    "/test":                    ["permitAll"],
     // protect the spring security ui plugin controllers
     '/aclclass/**':             ['ROLE_ADMIN'],
     '/aclentry/**':             ['ROLE_ADMIN'],
@@ -298,7 +300,8 @@ jummp.controllerAnnotations = [
     "/plugins/blueprint*/**":   ["permitAll"],
     "/plugins/ckeditor*/**":    ["permitAll"],
     "/plugins/weceem*/**":      ["permitAll"],
-    "/console/**":              ["permitAll"]
+    "/console/**":              ["permitAll"],
+    "/plugins/console*/**":     ['permitAll']
 ]
 
 // ldap

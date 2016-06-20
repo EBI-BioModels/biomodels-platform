@@ -52,25 +52,26 @@ class UrlMappings {
             }
         }
 
-        "/"(view:"/index")
-//        "/maintenance"(controller: 'maintenance')
-//        "/maintenance/turnOn"(controller: 'maintenance', action: 'turnOn')
-//        "403"(controller: "errors", action: "error403")
-//        "404"(controller: "errors", action: "error404")
-//        "500"(controller: "errors", action: "error500")
-//        "500"(controller: "errors", action: "error403", exception:
-//                    org.springframework.security.access.AccessDeniedException)
-//        "/models"(controller: "search", action: "list")
-//        "/search"(controller: "search", action: "search")
-//        "/archive"(controller: "search", action: "archive")
-//        "/feedback"(controller:"jummp", action:"feedback")
-//        "/lookupUser"(controller:"jummp", action:"lookupUser")
-//        if (Holders.config.jummp.security.anonymousRegistration) {
-//            "/registration"(controller:"usermanagement", action:"create")
-//        }
-//        "/forgotpassword"(controller:"usermanagement", action:"forgot")
-//        "/user/editUser"(controller:"usermanagement", action:"edit")
-//        "/user/editPassword"(controller:"usermanagement", action:"editPassword")
-//        "/user"(controller:"usermanagement", action:"show")
+        "/"(view: "/index")
+//        "/test"(view: "/test")
+        "/maintenance"(controller: 'maintenance')
+        "/maintenance/turnOn"(controller: 'maintenance', action: 'turnOn')
+        "403"(controller: "errors", action: "error403")
+        "404"(controller: "errors", action: "error404")
+        "500"(controller: "errors", action: "error500")
+        "500"(controller: "errors", action: "error403", exception:
+                    org.springframework.security.access.AccessDeniedException)
+        "/models"(controller: "search", action: "list")
+        "/search"(controller: "search", action: "search")
+        "/archive"(controller: "search", action: "archive")
+        "/feedback"(controller:"jummp", action:"feedback")
+        "/lookupUser"(controller:"jummp", action:"lookupUser")
+        if (Holders.config.jummp.security.anonymousRegistration) {
+            "/registration"(controller:"usermanagement", action:"create")
+        }
+        "/forgotpassword"(controller:"usermanagement", action:"forgot")
+        "/user/editUser"(controller:"usermanagement", action:"edit")
+        "/user/editPassword"(controller:"usermanagement", action:"editPassword")
+        "/user"(controller:"usermanagement", action:"show")
     }
 }
