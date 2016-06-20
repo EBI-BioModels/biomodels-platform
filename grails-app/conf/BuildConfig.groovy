@@ -165,6 +165,7 @@ grails.project.dependency.resolution = {
         compile ":webflow:2.1.0"
 
         runtime ":weceem:1.4"
+        compile ":weceem-spring-security:1.4"
         runtime ":database-migration:1.4.1"
         runtime ":hibernate4:4.3.10"
         runtime ":jquery:1.11.1"

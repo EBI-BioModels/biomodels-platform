@@ -19,6 +19,8 @@
 **/
 
 
+import grails.plugin.springsecurity.authentication.GrailsAnonymousAuthenticationToken
+import grails.util.Holders
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 
 import java.util.regex.Pattern
@@ -546,6 +548,19 @@ weceem.create.default.space = true
 weceem.default.space.template = "classpath:/weceem-jummp-default-space.zip"
 weceem.security.policy.path = jummp.security.cms.policy
 grails.resources.adhoc.excludes=["/content/*"]
+
+weceem.springsecurity.details.mapper = { ->
+    [ // Stuff required by weceem spring security
+      username: username,
+      password: password,
+      enabled: enabled,
+      authorities: Holders.applicationContext.getBean("springSecurityService").authentication?.authorities ?: GrailsAnonymousAuthenticationToken.ROLES,
+      // optional stuff we add
+      email: email,
+      firstName: person.userRealName,
+      id: id
+    ]
+}
 
 // database migrations
 environments {
