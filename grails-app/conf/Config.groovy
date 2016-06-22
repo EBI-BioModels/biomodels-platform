@@ -152,6 +152,43 @@ environments {
    }
 }
 
+// database migrations
+environments {
+    development {
+        grails.plugin.databasemigration.updateOnStart = false
+        grails.plugin.databasemigration.updateOnStartFileNames = ['changelog.groovy']
+        grails.plugin.databasemigration.changelogFileName = 'changelog.groovy'
+    }
+    production {
+        grails.plugin.databasemigration.updateOnStart = false
+        grails.plugin.databasemigration.updateOnStartFileNames = ['changelog.groovy']
+        grails.plugin.databasemigration.changelogFileName = 'changelog.groovy'
+    }
+    test {
+        /*
+         * Due to GPDATABASEMIGRATION-160, migrations cannot be applied before
+         * integration tests. The suggested workaround was to use
+         *      grails.plugin.databasemigration.forceAutoMigrate = true
+         * but that does not work in Grails 2.3.4. Hence, we set dbCreate to
+         * create-drop in the test environment.
+         */
+        grails.plugin.databasemigration.updateOnStart = false
+        grails.plugin.databasemigration.autoMigrateScripts = []
+    }
+}
+
+environments {
+    test {
+        // need to disable the plugins or tests may fail
+        // if needed in the tests, mockConfig should be used
+        jummp.plugins.subversion.enabled = false
+        jummp.plugins.git.enabled = false
+        // disable registration mail sending
+        jummp.security.registration.email.send = false
+        jummp.security.resetPassword.email.send = false
+    }
+}
+
 jummp.metadata.strategy = "biomodels" // "ddmore", "biomodels" or "default"
 jummp.app.name=appName
 //branding
@@ -524,18 +561,6 @@ if (!"jms".equalsIgnoreCase(System.getenv("JUMMP_EXPORT"))) {
     jms.disabled = true
 }
 
-environments {
-    test {
-        // need to disable the plugins or tests may fail
-        // if needed in the tests, mockConfig should be used
-        jummp.plugins.subversion.enabled = false
-        jummp.plugins.git.enabled = false
-        // disable registration mail sending
-        jummp.security.registration.email.send = false
-        jummp.security.resetPassword.email.send = false
-    }
-}
-
 if (pluginsToExclude) {
     grails.plugin.excludes = pluginsToExclude
 }
@@ -564,31 +589,6 @@ grails.resources.adhoc.excludes=["/content/*"]
 //      id: id
 //    ]
 //}
-
-// database migrations
-environments {
-    development {
-        grails.plugin.databasemigration.updateOnStart = false
-        grails.plugin.databasemigration.updateOnStartFileNames = ['changelog.groovy']
-        grails.plugin.databasemigration.changelogFileName = 'changelog.groovy'
-    }
-    production {
-        grails.plugin.databasemigration.updateOnStart = false
-        grails.plugin.databasemigration.updateOnStartFileNames = ['changelog.groovy']
-        grails.plugin.databasemigration.changelogFileName = 'changelog.groovy'
-    }
-    test {
-        /*
-         * Due to GPDATABASEMIGRATION-160, migrations cannot be applied before
-         * integration tests. The suggested workaround was to use
-         *      grails.plugin.databasemigration.forceAutoMigrate = true
-         * but that does not work in Grails 2.3.4. Hence, we set dbCreate to
-         * create-drop in the test environment.
-         */
-        grails.plugin.databasemigration.updateOnStart = false
-        grails.plugin.databasemigration.autoMigrateScripts = []
-    }
-}
 
 grails.mails.props=[:]
 if (!(jummpConfig.jummp.security.mailer.host instanceof ConfigObject)) {
