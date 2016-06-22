@@ -146,30 +146,30 @@ class BootStrap {
         }
 
         // custom mapping for weceem as it fails to work with an LDAPUserDetailsImpl
-//        wcmSecurityService.securityDelegate = [
-//            getUserName : { ->
-//                def principal = springSecurityService.getPrincipal()
-//                if (principal instanceof String) {
-//                    return null
-//                } else {
-//                    return springSecurityService.getPrincipal()?.username
-//                }
-//            },
-//            getUserEmail : { ->
-//                def principal = springSecurityService.getPrincipal()
-//                if (principal instanceof String) {
-//                    return null
-//                } else {
-//                    return springSecurityService.getPrincipal()?.email
-//                }
-//            },
-//            getUserRoles : { ->
-//                springSecurityService.authentication.authorities ?: ['ROLE_ANONYMOUS']
-//            },
-//            getUserPrincipal : { ->
-//                springSecurityService.principal
-//	        }
-//        ]
+        wcmSecurityService.securityDelegate = [
+            getUserName : { ->
+                def principal = springSecurityService.getPrincipal()
+                if (principal instanceof String) {
+                    return null
+                } else {
+                    return springSecurityService.getPrincipal()?.username
+                }
+            },
+            getUserEmail : { ->
+                def principal = springSecurityService.getPrincipal()
+                if (principal instanceof String) {
+                    return null
+                } else {
+                    return springSecurityService.getPrincipal()?.email
+                }
+            },
+            getUserRoles : { ->
+                springSecurityService.authentication.authorities ?: ['ROLE_ANONYMOUS']
+            },
+            getUserPrincipal : { ->
+                springSecurityService.principal
+	        }
+        ]
         AbstractAppendingDecorator.context = ctx
         RevisionTransportCommand.context = ctx
     }
