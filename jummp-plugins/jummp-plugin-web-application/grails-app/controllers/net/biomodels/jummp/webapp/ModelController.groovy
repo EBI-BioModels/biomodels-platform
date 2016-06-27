@@ -59,6 +59,7 @@ import org.springframework.web.multipart.MultipartFile
 import net.biomodels.jummp.plugins.security.Team
 
 @Api(value = "/model", description = "Operations related to models")
+@Secured(['IS_AUTHENTICATED_FULLY'])
 class ModelController {
     /**
      * Flag that checks whether the dynamically-inserted logger is set to DEBUG or higher.
@@ -270,7 +271,8 @@ class ModelController {
         }
     }
 
-    def files = {
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def files() {
         try {
             def revisionFiles = modelDelegateService.getRevisionFromParams(params.id, params.revisionId).files
             def responseFiles = revisionFiles.findAll { !it.hidden }
@@ -282,7 +284,6 @@ class ModelController {
         }
     }
 
-    @Secured(["isAuthenticated()"])
     def publish() {
         RevisionTransportCommand rev
         try {
@@ -317,7 +318,6 @@ class ModelController {
         }
     }
 
-    @Secured(["isAuthenticated()"])
     def submitForPublication() {
         try {
             def rev = modelDelegateService.getRevisionFromParams(params.id)
@@ -338,7 +338,6 @@ class ModelController {
         }
     }
 
-    @Secured(["isAuthenticated()"])
     def delete() {
         try {
             boolean deleted = modelDelegateService.deleteModel(params.id)
@@ -376,7 +375,6 @@ class ModelController {
         }
     }
 
-    @Secured(["isAuthenticated()"])
     def share() {
         try {
             def rev = modelDelegateService.getRevisionFromParams(params.id)
@@ -397,7 +395,6 @@ class ModelController {
         return []
     }
 
-    @Secured(["isAuthenticated()"])
     def shareUpdate() {
         boolean valid = params.collabMap
         if (valid) {
@@ -428,8 +425,7 @@ class ModelController {
         }
     }
 
-    @Secured(["isAuthenticated()"])
-    def updateFlow() {
+    def updateFlow = {
         start {
             action {
                 try {
@@ -480,8 +476,7 @@ class ModelController {
         displayAccessDenied()
    }
 
-    @Secured(["isAuthenticated()"])
-    def createFlow() {
+    def createFlow = {
         uploadPipeline {
             subflow(controller: "model", action: "upload", input: [isUpdate:false])
             on("abort").to "abort"
@@ -506,8 +501,7 @@ class ModelController {
      * end of the session using <tt>flow.persistenceContext.evict(it)</tt>.
      * See http://grails.org/grails/latest/doc/guide/theWebLayer.html#flowScopes
      */
-    @Secured(["isAuthenticated()"])
-    def uploadFlow() {
+    def uploadFlow = {
         input {
             isUpdate(required: true)
         }
@@ -1095,7 +1089,8 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
     /**
      * File download of the model file for a model by id
      */
-    def download = {
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def download() {
         if (!params.filename) {
             final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(
                             modelDelegateService.getRevisionFromParams(params.id, params.revisionId))
