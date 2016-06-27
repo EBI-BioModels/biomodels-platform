@@ -39,7 +39,7 @@ import eu.ddmore.publish.service.PublishContext
 import eu.ddmore.publish.service.PublishException
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
-import net.biomodels.jummp.model.PublicationLinkProvider
+import net.biomodels.jummp.model.Model
 import org.apache.commons.lang3.exception.ExceptionUtils
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -106,11 +106,11 @@ class ModelController {
      * The list of actions for which we should not automatically create an audit item.
      */
     final List<String> AUDIT_EXCEPTIONS = ['updateFlow', 'createFlow', 'uploadFlow',
-                'showWithMessage', 'share', 'getFileDetails','submitForPublication']
+                'showWithMessage', 'share', 'getFileDetails', 'submitForPublication']
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
 
-    def afterInterceptor = [ action: this.&auditAfter, except: AUDIT_EXCEPTIONS]
+    def afterInterceptor = [action: this.&auditAfter, except: AUDIT_EXCEPTIONS]
 
     private String getUsername() {
         String username="anonymous"
@@ -156,6 +156,7 @@ class ModelController {
                 modelId = (model.publicationId) ?: model.submissionId
                 int historyItem = updateHistory(modelId, username, accessType, formatType, changesMade)
                 session.lastHistory = historyItem
+                return true
             } else {
                 log.error "Ignoring invalid request for $actionUri with params $params."
                 forward(controller: "errors", action: "error403")
@@ -166,7 +167,6 @@ class ModelController {
             forward(controller: "errors", action: "error403")
             return false
         }
-        return true
     }
 
     private void auditAfter(def model) {
