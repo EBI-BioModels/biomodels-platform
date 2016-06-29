@@ -62,7 +62,7 @@ try {
 def jummpConfig = new ConfigSlurper().parse(jummpProperties)
 List pluginsToExclude = []
 
-grails.mime.file.extensions = true // enables the parsing of file extensions from URLs into the request format
+grails.mime.file.extensions = false // enables the parsing of file extensions from URLs into the request format
 grails.mime.use.accept.header = true
 grails.mime.types = [ html: ['text/html','application/xhtml+xml'],
                       xml: ['text/xml', 'application/xml'],
