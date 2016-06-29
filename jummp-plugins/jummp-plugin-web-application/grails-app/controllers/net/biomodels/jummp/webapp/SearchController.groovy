@@ -40,6 +40,7 @@ import net.biomodels.jummp.webapp.rest.search.SearchResults
 import net.biomodels.jummp.webapp.rest.search.BrowseResults
 import net.biomodels.jummp.plugins.security.User
 
+@Secured(['IS_AUTHENTICATED_FULLY'])
 class SearchController {
     /**
      * Dependency Injection of Spring Security Service
@@ -142,7 +143,8 @@ class SearchController {
     /**
      * Default action showing a list view
      */
-    def list = {
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def list() {
         sanitiseParams()
         def results = browseCore(params.sortBy, params.sortDir, params.offset, params.numResults)
 
@@ -156,7 +158,7 @@ class SearchController {
     /**
      * Default action showing a list view
      */
-    def archive = {
+    def archive() {
         sanitiseParams()
         def results = archiveCore(params.sortBy, params.sortDir, params.offset, params.numResults)
         return results

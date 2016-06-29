@@ -27,6 +27,7 @@ package net.biomodels.jummp.webapp
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 
+@Secured(["IS_AUTHENTICATED_FULLY"])
 class JummpController {
 
     def userService
@@ -42,6 +43,7 @@ class JummpController {
         [messageCode: "jummp.feedback.${theme}.message"]
     }
 
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def help() {
         [messageCode: "under construction"]
     }

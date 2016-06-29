@@ -96,13 +96,13 @@ class UsermanagementController {
     								notificationPermissions: notificationService.getNotificationPermissions(user)]
     }
 
-    @Secured(["isAnonymous()"])
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def forgot() {
         render view: "forgot", model: [postUrl: "", flashMessage: checkForMessage(),
     								validationErrorOn: checkForErrorBean()]
     }
 
-    @Secured(["isAnonymous()"])
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def passwordreset() {
     	if (params.id) {
     		flash.hashCode=params.id
@@ -142,7 +142,8 @@ class UsermanagementController {
      * edit a user. If an error occurs at any point, the method redirects
      * to edit action and sends the user a helpful message.
      */
-    def editUser = {
+    @Secured(["IS_AUTHENTICATED_FULLY"])
+    def editUser() {
         EditUserCommand cmd = new EditUserCommand()
         if (!validateUserData(cmd, params)) {
             return redirect(action:"edit")
@@ -166,7 +167,8 @@ class UsermanagementController {
      * edit a user. If an error occurs at any point, the method redirects
      * to edit action and sends the user a helpful message.
      */
-    def newPassword = {
+    @Secured(["IS_AUTHENTICATED_FULLY"])
+    def newPassword() {
     	ResetPasswordCommand cmd=new ResetPasswordCommand()
     	if (!validateUserData(cmd, params)) {
     		flash.hashCode=params.hashCode
@@ -189,7 +191,8 @@ class UsermanagementController {
      * edit a user. If an error occurs at any point, the method redirects
      * to edit action and sends the user a helpful message.
      */
-    def updatePassword = {
+    @Secured(["IS_AUTHENTICATED_FULLY"])
+    def updatePassword() {
     	UpdatePasswordCommand cmd=new UpdatePasswordCommand()
     	if (!validateUserData(cmd, params)) {
     		return redirect(action:"editPassword")
@@ -210,7 +213,8 @@ class UsermanagementController {
     * Requests a password link from the user service, hiding the exception thrown
     * if the username provided does not exist.
     **/
-    def requestPassword = {
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def requestPassword() {
         String username = params.username
         boolean usernameExists = true
         if (username) {
@@ -239,7 +243,8 @@ class UsermanagementController {
      * the user service to create a user. If an error occurs at any point, the method redirects
      * to create action and sends the user a helpful message.
      */
-    def signUp = {
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def signUp() {
     	boolean captchaValid = simpleCaptchaService.validateCaptcha(params.captcha)
     	if (!captchaValid) {
     		flash.message="The text entered did not match the image. Please try again"
