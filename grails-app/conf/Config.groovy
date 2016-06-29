@@ -19,10 +19,10 @@
 **/
 
 
-import grails.plugin.springsecurity.authentication.GrailsAnonymousAuthenticationToken
-import grails.util.Holders
-import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 
+
+
+import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 import java.util.regex.Pattern
 
 // locations to search for config files that get merged into the main config
