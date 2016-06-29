@@ -884,7 +884,7 @@ class SubmissionService {
     private StateMachineStrategy getStrategyFromContext(Map<String, Object> workingMemory) {
         Boolean isUpdateOnExistingModel = (Boolean) workingMemory.get("isUpdateOnExistingModel");
         if (isUpdateOnExistingModel) {
-            return newrevision
+            return newRevision
         }
         return newModel
     }
