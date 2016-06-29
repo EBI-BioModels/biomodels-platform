@@ -108,10 +108,10 @@ class UsermanagementController {
     def passwordreset() {
     	if (params.id) {
     		flash.hashCode=params.id
-    		redirect action: reset
+    		redirect action: 'reset'
     	}
     	else {
-    		redirect action: forgot;
+    		redirect action: 'forgot'
     	}
     }
 
