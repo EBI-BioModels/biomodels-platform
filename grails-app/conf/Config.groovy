@@ -319,7 +319,6 @@ jummp.controllerAnnotations = [
     '/securityinfo/**':         ['ROLE_ADMIN'],
     '/user/**':                 ['ROLE_ADMIN'],
     '/wcm-tools/**':            ['ROLE_ADMIN'],
-    '/searchable/**':           ['ROLE_ADMIN'],
     '/ck/**':                   ['ROLE_ADMIN'],
     "/wcmEditor/**":            ["hasRole('ROLE_ADMIN')"],
     "/wcmPortal/**":            ["hasRole('ROLE_ADMIN')"],
@@ -575,7 +574,7 @@ weceem.admin.prefix = 'wcm-admin'
 weceem.create.default.space = true
 weceem.default.space.template = "classpath:/weceem-jummp-default-space.zip"
 weceem.security.policy.path = jummp.security.cms.policy
-grails.resources.adhoc.excludes=["/content/*"]
+//grails.resources.adhoc.excludes=["/content/*"]
 
 //weceem.springsecurity.details.mapper = { ->
 //    [ // Stuff required by weceem spring security
