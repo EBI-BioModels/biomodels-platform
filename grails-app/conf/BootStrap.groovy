@@ -164,7 +164,7 @@ class BootStrap {
                 }
             },
             getUserRoles : { ->
-                springSecurityService.authentication.authorities ?: ['ROLE_ANONYMOUS']
+                springSecurityService.authentication.authorities*.authority ?: ['ROLE_ANONYMOUS']
             },
             getUserPrincipal : { ->
                 springSecurityService.principal
