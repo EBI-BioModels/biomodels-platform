@@ -74,17 +74,19 @@ class UsermanagementController {
     @Secured(["isAuthenticated()"])
     def edit() {
     	String user = springSecurityService.principal.username
-        render view: "edit", model: [postUrl          : "", flashMessage: checkForMessage(),
-                                     validationErrorOn: checkForErrorBean(),
-    								user: userService.getUser(user),
-    								notificationPermissions: notificationService.getNotificationPermissions(user)]
+        render  view: "edit",
+                model: [postUrl: "", flashMessage: checkForMessage(),
+                        validationErrorOn: checkForErrorBean(),
+                        user: userService.getUser(user),
+                        notificationPermissions: notificationService.getNotificationPermissions(user)]
     }
 
     @Secured(["isAuthenticated()"])
     def editPassword() {
-        render view: "editPassword", model: [postUrl          : "", flashMessage: checkForMessage(),
-                                             validationErrorOn: checkForErrorBean(),
-    										user: userService.getUser(springSecurityService.principal.username)]
+        render  view: "editPassword",
+                model: [postUrl: "", flashMessage: checkForMessage(),
+                        validationErrorOn: checkForErrorBean(),
+                        user: userService.getUser(springSecurityService.principal.username)]
     }
 
     @Secured(["isAuthenticated()"])
