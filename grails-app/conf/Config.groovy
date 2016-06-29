@@ -139,12 +139,13 @@ environments {
     }
 }
 
-// set spring security
+// enable/disable log security information based on DebugFilter class at the info level
+// and add the implementation class name in Log4j configuration
 environments {
    development {
-      grails.logging.jul.usebridge = true
-      grails.plugin.springsecurity.debug.useFilter = true
-
+      grails.logging.jul.usebridge = false
+      grails.plugin.springsecurity.debug.useFilter = false
+      // enable/disable console plugin
       grails.plugin.console.enabled = true
    }
    production {
@@ -197,7 +198,7 @@ jummp.app.name=appName
 jummp.branding.deployment = "biomodels" // "ddmore", "biomodels" or "default"
 jummp.branding.style = "biomodels" // used to specify any other name for the css file
 // log4j configuration
-log4j = {
+log4j.main = {
     // Example of changing the log pattern for the default console
     // appender:
     //
@@ -263,6 +264,11 @@ log4j = {
         'org.weceem'
     ]
 
+    debug console: [
+        'org.codehaus.groovy.grails.web.mapping.filter', // URL mapping
+        'org.codehaus.groovy.grails.web.mapping', // URL mapping
+    ]
+
     warn   jummpAppender: 'org.mortbay.log'
     // Simple Logging goes to its own file
     info   eventsAppender: 'net.biomodels.jummp.plugins.simplelogging'
@@ -291,8 +297,8 @@ log4j = {
     trace hibernateAppender: 'org.hibernate.type.descriptor.sql.BasicBinder'
     info console: ["net.biomodels.jummp.core",
                    "grails.plugin.cache",
-                   "grails.plugin.cache.ehcache.hibernate",
-                   "grails.plugin.springsecurity.web.filter.DebugFilter"]
+                   "grails.plugin.cache.ehcache.hibernate"]
+                   //"grails.plugin.springsecurity.web.filter.DebugFilter"]
 }
 
 // Added by the Spring Security Core plugin:
@@ -635,7 +641,7 @@ modelIdentifierSettings?.entrySet().each {
 
 // Uncomment and edit the following lines to start using Grails encoding & escaping improvements
 
-/* remove this line
+
 // GSP settings
 grails {
     views {
