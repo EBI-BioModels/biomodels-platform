@@ -63,7 +63,7 @@ import org.apache.commons.io.FilenameUtils
 class SubmissionService {
     // concrete strategies for the submission state machine
     private final NewModelStateMachine newModel = new NewModelStateMachine()
-    private final NewRevisionStateMachine newrevision = new NewRevisionStateMachine()
+    private final NewRevisionStateMachine newRevision = new NewRevisionStateMachine()
     /**
      * Disable transactional behaviour for this service.
      */
