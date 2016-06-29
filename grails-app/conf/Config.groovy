@@ -650,18 +650,16 @@ grails {
             htmlcodec = 'xml' // use xml escaping instead of HTML4 escaping
             codecs {
                 expression = 'html' // escapes values inside null
-                scriptlet = 'none' // escapes output from scriptlets in GSPs
+                scriptlet = 'html' // escapes output from scriptlets in GSPs
                 taglib = 'none' // escapes output from taglibs
-                staticparts = 'none' // escapes output from static template parts
+                staticparts = 'raw' // escapes output from static template parts
             }
         }
         // escapes all not-encoded output at final stage of outputting
-        filteringCodecForContentType {
-            //'text/html' = 'html'
-        }
+        // filteringCodecForContentType.'text/html' = 'html'
     }
 }
-remove this line */
+
 if (!(jummpConfig.jummp.context.help.root instanceof ConfigObject)) {
     def pages=["root", "browse", "search", "login", "display", "archives", "submission", "update", "profile", "sharing", "teams", "notifications","annotate"]
     pages.each {
