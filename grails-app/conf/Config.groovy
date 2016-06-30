@@ -123,8 +123,8 @@ beans {
     }
 }
 
-grails.cache.config.provider.name = "tungCacheManager"
-grails.cache.ehcache.cacheManagerName = "tungCacheManager"
+grails.cache.config.provider.name = "jummpCacheManager"
+grails.cache.ehcache.cacheManagerName = "jummpCacheManager"
 
 // set per-environment serverURL stem for creating absolute links
 environments {
