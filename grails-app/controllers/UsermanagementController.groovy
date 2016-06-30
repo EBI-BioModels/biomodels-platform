@@ -169,7 +169,7 @@ class UsermanagementController {
      * edit a user. If an error occurs at any point, the method redirects
      * to edit action and sends the user a helpful message.
      */
-    @Secured(["IS_AUTHENTICATED_FULLY"])
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def newPassword() {
     	ResetPasswordCommand cmd=new ResetPasswordCommand()
     	if (!validateUserData(cmd, params)) {
