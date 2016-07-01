@@ -124,4 +124,6 @@ beans = {
     }
 
     importBeans('classpath:/metadatalib-spring-config.xml')
+    // override definition to use the one from the annotation-source-ddmore plugin
+    springConfig.addAlias("metadataInfoService", "metadataInformationService")
 }

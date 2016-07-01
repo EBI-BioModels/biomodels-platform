@@ -38,12 +38,20 @@ class JummpTagLib {
         return deploymentEnvironment.equalsIgnoreCase("ddmore")
     }
 
+    def selectDDMoReAwareMessageCode(String ddmoreCode, String defaultCode) {
+        isDDMoReDeployment() ? ddmoreCode : defaultCode
+    }
+
+    def findMainFileLabel = { attrs, body ->
+        String msg = selectDDMoReAwareMessageCode("submission.upload.mainFile.ddmore.label",
+                "submission.upload.mainFile.label")
+        out << body(mainFile: g.message(code: msg))
+    }
+
     def displayExistingMainFile = { attrs ->
         def result = new StringBuilder()
-        String mainFileLabel = "submission.upload.mainFile.label"
-        if (isDDMoReDeployment()) {
-            mainFileLabel = "submission.upload.mainFile.ddmore.label"
-        }
+        String mainFileLabel = selectDDMoReAwareMessageCode(
+                "submission.upload.mainFile.ddmore.label", "submission.upload.mainFile.label")
         if (!attrs.main) {
             result.append("<tr class='prop'>\n\t<td class='name'>\n\t\t<label for='mainFile'>\n\t\t\t")
             result.append(message(code: mainFileLabel))
@@ -85,22 +93,6 @@ class JummpTagLib {
             out << "</tr>\n"
             counter++;
         }
-    }
-
-    def populateExistingAdditionalFilesOnUI = { attrs ->
-        if (!attrs.additionalsOnUI) {
-            return
-        }
-        StringBuilder result = new StringBuilder()
-        attrs.additionalsOnUI.each { f ->
-            RepositoryFileTransportCommand command = f as RepositoryFileTransportCommand
-            String name = new File(command.path).name
-            result.append(name).append(" : ").append(command.description ?: "").append(", ")
-        }
-        if (result.length() > 0) {
-            result.setLength(result.length() - 2)
-        }
-        out << result.toString()
     }
 
     def renderAdditionalFilesLegend = {

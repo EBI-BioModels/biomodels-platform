@@ -31,11 +31,11 @@ import grails.util.Holders
  */
 public class PublicationAdapter extends DomainAdapter {
     Publication publication
-    
-    def publicationService = Holders.getGrailsApplication().mainContext.pubMedService
-    
+
+    def publicationService = Holders.getGrailsApplication().mainContext.publicationService
+
     PublicationTransportCommand toCommandObject() {
-       PublicationTransportCommand pubTC = new PublicationTransportCommand(journal: publication.journal,
+        PublicationTransportCommand pubTC = new PublicationTransportCommand(journal: publication.journal,
                 title: publication.title,
                 affiliation: publication.affiliation,
                 synopsis: publication.synopsis,

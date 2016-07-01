@@ -25,11 +25,14 @@ import grails.plugin.springsecurity.annotation.Secured
 import groovy.json.JsonBuilder
 import java.util.concurrent.atomic.AtomicReference
 import net.biomodels.jummp.core.adapters.DomainAdapter
+import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.events.LoggingEventType
 import net.biomodels.jummp.core.events.PostLogging
+import net.biomodels.jummp.core.model.ModelState
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.model.ModelFormat
+import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Revision
 import org.apache.commons.lang.StringUtils
 import org.apache.commons.logging.Log
@@ -346,38 +349,39 @@ class SearchService {
         final int COUNT = results.size()
         Map<String, ModelTransportCommand> returnVals = new LinkedHashMap<>(COUNT + 1, 1.0f)
         boolean isAdmin = SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")
-        Map<Long, Long> modelsAdded = new HashMap<Long, Long>()
         results.each {
             if (!it.containsKey("deleted") || !it.get("deleted")) {
                 boolean okayToProceed = true
                 boolean checkPermissions = !isAdmin
-                long model_id = it.get("model_id")
-                long revision_id = it.get("revision_id")
-                if (!modelsAdded.containsKey(model_id) || modelsAdded.get(model_id) < revision_id) {
+                long modelId = it.get("model_id")
+                String submissionId = it.get("submission_id")
+                long revisionId = it.get("revision_id")
+                if (!returnVals.containsKey(submissionId)) {
                     if (it.containsKey("public") && it.get("public")) {
                         checkPermissions = false
                     }
                     if (checkPermissions) {
-                        Revision rev = Revision.get(revision_id)
+                        Revision rev = Revision.get(revisionId)
                         okayToProceed = aclUtilService.hasPermission(
                             springSecurityService.authentication, rev, BasePermission.READ)
                     }
                     if (okayToProceed) {
+                        Model model = Model.get(modelId)
+                        Revision latestRevision = modelService.getLatestRevision(model, false)
+                        Revision firstRevision = model.revisions.first()
                         ModelTransportCommand mtc = new ModelTransportCommand(
-                            submitter: it.get("submitter"),
-                            submitterUsername: it.get("submitterUsername"),
-                            name: it.get("name"),
-                            submissionId: it.get("submissionId"),
-                            publicationId: it.get("publicationId"),
-                            submissionDate: it.get("submissionDate"),
-                            lastModifiedDate: it.get("lastModified"),
-                            id: it.get("model_id"),
-                            format: DomainAdapter.getAdapter(
-                                        ModelFormat.findByName(it.get("modelFormat")))
-                                        .toCommandObject()
-                            )
-                        returnVals.put(it.get("submissionId"), mtc)
-                        modelsAdded.put(model_id, revision_id)
+                            submitter: firstRevision.owner.person.userRealName,
+                            submitterUsername: firstRevision.owner.username,
+                            name: latestRevision.name,
+                            submissionId: model.submissionId,
+                            publicationId: model.publicationId,
+                            submissionDate: firstRevision.uploadDate,
+                            lastModifiedDate: latestRevision.uploadDate,
+                            id: model.id,
+                            state: latestRevision.state,
+                            format: new ModelFormatAdapter(format: latestRevision.format).toCommandObject()
+                        )
+                        returnVals.put(model.submissionId, mtc)
                     }
                 }
             }
@@ -452,9 +456,8 @@ class SearchService {
     }
 
     def setPublicField = { doc ->
-        Map<String, String> partialUpdate = new HashMap<String, String>();
-        partialUpdate.put("set", "true");
-        doc.addField("public", partialUpdate);
+        Map<String, String> partialUpdate = new HashMap<String, String>()
+        partialUpdate.put("set", "true")
     }
 
     def setDeletedField = { doc, flag = true ->

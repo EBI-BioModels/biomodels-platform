@@ -37,5 +37,5 @@
     	selected
 </content>
 <content tag="title">
-	Feedback
+	<g:message code="${titleCode}" default="Feedback" />
 </content>

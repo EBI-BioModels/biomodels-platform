@@ -625,7 +625,10 @@
         <div class="filecol-1-3">
             <div id="treeView">
                 <ul>
-                    <li rel="folder"><a>Main Files</a>
+                    <li rel="folder">
+                    <jummp:findMainFileLabel>
+                        <a>${mainFile}</a>
+                    </jummp:findMainFileLabel>
                     <ul>
                         <Ziphandler:outputFileInfoAsHtml repFiles="${revision.files}" loadedZips="${loadedZips}"
                                                          zipSupported="${zipSupported}" mainFile="${true}"/>

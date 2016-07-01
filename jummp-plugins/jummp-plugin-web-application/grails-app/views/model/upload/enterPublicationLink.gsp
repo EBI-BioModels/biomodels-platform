@@ -28,6 +28,8 @@
 
 
 <%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page import="net.biomodels.jummp.core.model.PublicationTransportCommand" %>
+<%@ page import="net.biomodels.jummp.core.model.PublicationDetailExtractionContext" %>
 <%@ page import="net.biomodels.jummp.core.model.RevisionTransportCommand" %>
 <%@ page import="net.biomodels.jummp.core.model.ModelTransportCommand" %>
 <%@ page import=" net.biomodels.jummp.model.PublicationLinkProvider" %>
@@ -39,14 +41,22 @@
         <g:javascript contextPath="" src="enterPublicationLink.js"/>
     </head>
     <body>
+        <%
+            model = workingMemory.get('ModelTC') as ModelTransportCommand
+            revision = workingMemory.get("RevisionTC") as RevisionTransportCommand
+            publication = revision?.model?.publication
+            def publicationMap = workingMemory.get('publication_objects_in_working') as HashMap<Object, PublicationDetailExtractionContext>
+            if (workingMemory.containsKey('SelectedPubLinkProvider')) {
+                PublicationDetailExtractionContext pubContext = publicationMap.get(workingMemory.get('SelectedPubLinkProvider'))
+                PublicationTransportCommand pubTC = pubContext.publication
+                if (pubTC) {
+                    publication = pubTC
+                }
+            }
+        %>
         <h2><g:message code="submission.publicationLink.header"/></h2>
         <g:form>
             <g:message code="submission.publink.publication"/>
-            <%
-                model = workingMemory.get('ModelTC') as ModelTransportCommand
-                revision = workingMemory.get("RevisionTC") as RevisionTransportCommand
-                publication = revision?.model?.publication
-            %>
             <g:if test="${publication}">
                 <g:if test="${publication.title && (publication.affiliation || publication.synopsis)}">
                     Currently, the model is associated with:

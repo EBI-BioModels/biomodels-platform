@@ -40,7 +40,9 @@ class JummpController {
         if ('ddmore' != theme && 'biomodels' != theme) {
             theme = 'default'
         }
-        [messageCode: "jummp.feedback.${theme}.message"]
+        [messageCode: "jummp.feedback.${theme}.message",
+            titleCode: "jummp.feedback.${theme}.title"
+        ]
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])

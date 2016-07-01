@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -38,6 +38,7 @@ import groovy.transform.TypeCheckingMode
 import net.biomodels.jummp.core.adapters.DomainAdapter
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC //rude?
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
+import net.biomodels.jummp.core.model.PublicationDetailExtractionContext
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import net.biomodels.jummp.core.model.PublicationTransportCommand
@@ -535,6 +536,27 @@ class SubmissionService {
             new RFTC(path: file.getCanonicalPath(), mainFile: isMain, userSubmitted: true,
                     hidden: false, description: description)
         }
+
+
+        /**
+         * Purpose: Utility method to generate the publication map of
+         * publication link providers could be used during submission process. It enables to keep
+         * track of information submitter has entered in publication editor form so avoid losing it.
+         */
+        protected Map<Object, PublicationDetailExtractionContext> initialisePublicationMap() {
+            String[] linkSourceTypes = PublicationLinkProvider.LinkType.values().collect {
+                PublicationLinkProvider.LinkType it -> it.label
+            }
+            Map<Object, PublicationDetailExtractionContext> publication_objects_in_working =
+                new HashMap<Object,PublicationDetailExtractionContext>()
+            linkSourceTypes.each {
+                PublicationDetailExtractionContext context = new PublicationDetailExtractionContext()
+                context.comesFromDatabase = false
+                context.publication = null
+                publication_objects_in_working.put(it, context)
+            }
+            publication_objects_in_working
+        }
     }
 
     /**
@@ -545,12 +567,14 @@ class SubmissionService {
     class NewModelStateMachine extends StateMachineStrategy {
 
         /**
-         * Purpose Dont need to do anything to initialise
+         * Initialises the publication objects of publication link provider that could be used
+         * during submission process currently.
          *
          * @param workingMemory a Map containing all objects exchanged throughout the flow.
          */
         void initialise(Map<String, Object> workingMemory) {
-            //need to do nothing
+            def publication_objects_in_working = initialisePublicationMap()
+            workingMemory.put("publication_objects_in_working", publication_objects_in_working)
         }
 
         void removeFromVCS(Map<String, Object> workingMemory, List<RFTC> filesToDelete) {
@@ -608,9 +632,11 @@ class SubmissionService {
             final String NEW_DESCRIPTION = workingMemory["new_description"]
             final boolean SHOULD_UPDATE = NEW_NAME || NEW_DESCRIPTION
             if (NEW_NAME) {
+                latestRTC.name = NEW_NAME
                 modelFileFormatService.updateName(latestRTC, NEW_NAME)
             }
             if (NEW_DESCRIPTION) {
+                latestRTC.description = NEW_DESCRIPTION
                 modelFileFormatService.updateDescription(latestRTC, NEW_DESCRIPTION)
             }
             if (SHOULD_UPDATE) {
@@ -631,18 +657,28 @@ class SubmissionService {
     class NewRevisionStateMachine extends StateMachineStrategy {
 
         /**
-         * Initialises the revision transport command object and the currently
-         * existing files associated with the revision in working memory.
+         * Initialises the revision transport command object, the currently
+         * existing files associated with the revision in working memory, and the publication
+         * objects that could be used during submission process.
          *
          * @param workingMemory a Map containing all objects exchanged throughout the flow.
          */
         @Profiled(tag = "submissionService.NewRevisionStateMachine.initialise")
         void initialise(Map<String, Object> workingMemory) {
-            //fetch files from repository, make RFTCs out of them
+            // fetch files from repository, make RFTCs out of them
             RTC rev = workingMemory.get("LastRevision") as RTC
             List<RFTC> repFiles = rev.getFiles()
             storeRFTC(workingMemory, repFiles, null)
             workingMemory.put("existing_files", new ArrayList<RFTC>(repFiles))
+            // initialise the map of publication type objects would be added to the model
+            def publication_objects_in_working = initialisePublicationMap()
+            if (rev.model.publication) {
+                PublicationDetailExtractionContext context = new PublicationDetailExtractionContext()
+                context.comesFromDatabase = true
+                context.publication = rev.model.publication
+                publication_objects_in_working.put(rev.model.publication.linkProvider.linkType, context)
+            }
+            workingMemory.put("publication_objects_in_working", publication_objects_in_working)
             sessionFactory.currentSession.clear()
         }
 
@@ -928,4 +964,6 @@ class SubmissionService {
             String mapName = "repository_files") {
         return (List) workingMemory.get(mapName)
     }
+
+
 }

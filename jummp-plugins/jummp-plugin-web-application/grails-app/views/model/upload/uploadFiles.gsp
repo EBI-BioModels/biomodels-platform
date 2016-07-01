@@ -27,7 +27,7 @@
 
 
 
-<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page import="net.biomodels.jummp.core.model.RepositoryFileTransportCommand; grails.converters.JSON" contentType="text/html;charset=UTF-8" %>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="layout" content="main"/>
@@ -36,6 +36,16 @@
         <g:if test ="${showProceedWithoutValidationDialog || showProceedAsUnknownFormat}">
             <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
         </g:if>
+        <script type="text/javascript">
+            var descriptionMap = { "files": ${workingMemory['additional_files'].collect {
+                            RepositoryFileTransportCommand rf ->
+                                String key = new File(rf.path).name
+                                String value = rf.description
+                                [ filename: key, description: value ]
+                        } as JSON}
+            };
+            var existingAdditionalFiles = descriptionMap["files"];
+        </script>
     </head>
     <body>
         <g:if test="${showProceedAsUnknownFormat}">
@@ -75,30 +85,20 @@
                     <table class='formtable' id="additionalFiles">
                         <tbody>
                             <g:if test="${workingMemory['additional_repository_files_in_working']}">
-                                <jummp:displayExistingAdditionalFiles
-                                    additionals = "${workingMemory['additional_repository_files_in_working']}"/>
+                                <g:set var="resource" value="${workingMemory['additional_repository_files_in_working']}" />
                             </g:if>
+                            <g:elseif test="${workingMemory['additional_files']}">
+                                <g:set var="resource" value="${workingMemory['additional_files']}" />
+                            </g:elseif>
                             <g:else>
-                                <jummp:displayExistingAdditionalFiles
-                                    additionals = "${workingMemory['additional_files']}"/>
+                                <g:set var="resource" value="${[]}" />
                             </g:else>
+                            <jummp:displayExistingAdditionalFiles additionals = "${resource}"/>
                         </tbody>
                     </table>
-                    <div id="additionalFilesOnUI" name="additionalFilesOnUI" style="display: none">
-                        <g:if test="${workingMemory['additional_repository_files_in_working']}">
-                            <jummp:populateExistingAdditionalFilesOnUI
-                                additionalsOnUI = "${workingMemory['additional_repository_files_in_working']}"/>
-                        </g:if>
-                        <g:elseif test="${workingMemory['additional_files']}">
-                            <jummp:populateExistingAdditionalFilesOnUI
-                                additionalsOnUI = "${workingMemory['additional_files']}"/>
-                        </g:elseif>
-                        <g:else>
-                            empty
-                        </g:else>
-                    </div>
                     <div id="noAdditionals"></div>
-                    <div id="additionalsOnUI"></div>
+                    <!-- This div stores input element which value is assigned to JSON string -->
+                    <div id="additionalsOnUI" style="display: none;"></div>
                 </fieldset>
                 <div class="buttons">
                     <g:submitButton name="Cancel" value="${g.message(code: 'submission.common.cancelButton')}" />
@@ -118,36 +118,23 @@
         <g:javascript>
             var nbExtraFiles = 0;
             var numberOfAdditionalsAtLoadingPage = $('input[id^=description]').size();
-            // create a map to store additional files existing on user interface
-            var additionalFilesExitingOnUI = new Object();
             function populateDiv() {
-                document.getElementById("additionalFilesOnUI").innerHTML = "";
-                var str = "";
-                $.each(additionalFilesExitingOnUI, function(key, value) {
-                    str += key.replace(":","").trim() + " : " + value.trim() + ", ";
+                descriptionMap.files = []
+                $.each(existingAdditionalFiles, function(index, fileEntry) {
+                    // key here is the index, value is the actual value we are interested in
+                    var fileName = fileEntry["filename"];
+                    var fileDescription  = fileEntry["description"];
+                    descriptionMap.files.push({'filename': fileName, 'description': fileDescription});
                 });
-                var str = str.substring(0,str.length - 2);
-                document.getElementById("additionalFilesOnUI").innerHTML += str;
-                document.getElementById("additionalsOnUI").innerHTML = "<input value='" +
-                document.getElementById("additionalFilesOnUI").innerHTML + "' name='additionalFilesInWorking' hidden/>";
-            }
-
-            function get(k) {
-                return additionalFilesExitingOnUI[k];
+                // update the hidden input element containing the latest additional files
+                // the map should be converted to json string that will be transfered to controller
+                var input = "<input name='additionalFilesInWorking' size='220' value='";
+                    input += JSON.stringify(descriptionMap) + "'/>";
+                document.getElementById("additionalsOnUI").innerHTML = input;
             }
 
             $(document).ready(function () {
-                var additionals = document.getElementById("additionalFilesOnUI").innerHTML;
-                additionals = additionals.trim();
-                if (additionals != 'empty') {
-                    additionals.slice(0,-1);
-                    var arr = additionals.split(", ");
-                    $.each(arr, function(k,v) {
-                        var row = $.trim(v).split(":");
-                        additionalFilesExitingOnUI[row[0].replace(":","").trim()] = row[1].trim();
-                    });
-                }
-
+                populateDiv();
                 $('.removeMain').click(function(e) {
                     e.preventDefault();
                     var parent = $(this).parent().get(0).innerHTML;
@@ -192,7 +179,7 @@
                             $('<input/>', {
                                 type: 'text',
                                 id: 'description' + ++numberOfAdditionalsAtLoadingPage,
-                                name: 'description' + numberOfAdditionalsAtLoadingPage,
+                                name: 'description',
                                 style: "width: 100%; box-sizing: border-box; -webkit-box-sizing: border-box; -moz-box-sizing: border-box;",
                                 placeholder: 'Please enter a description'
                             })
@@ -209,8 +196,9 @@
                 });
 
                 $("#_eventId_Upload").click(function() {
-                    document.getElementById("additionalsOnUI").innerHTML = "<input value='" +
-                    document.getElementById("additionalFilesOnUI").innerHTML + "' name='additionalFilesInWorking' hidden/>";
+                    var input = "<input name='additionalFilesInWorking' value='";
+                    input += JSON.stringify(descriptionMap) + "'/>";
+                    document.getElementById("additionalsOnUI").innerHTML = input;
                 });
 
                 $("#uploadButton").click( function() {
@@ -240,7 +228,11 @@
                         // 12 = ('C:\fakepath\').length
                         fileName = fileNameAbsolutePath.substr(12);
                     }
-                    delete additionalFilesExitingOnUI[fileName];
+                    // find and delete the object having the filename property equals to fileName
+                    for (index in existingAdditionalFiles)
+                        if (existingAdditionalFiles[index].filename == fileName) {
+                            existingAdditionalFiles.splice(index, 1);
+                        }
                     populateDiv();
                 }
                 $(tr).empty();
@@ -250,10 +242,15 @@
                 var id = $(this).attr('id');
                 if (id != 'mainFile') {
                     var fileName = $(this)[0].files[0].name;
-                    if (additionalFilesExitingOnUI[fileName]) {
+                    if (existingAdditionalFiles.filter(function(v) {
+                        return v.filename === fileName;
+                    })[0]) {
                         alert("The file named " + fileName + " already exists. Please rename it or select another file.");
                     } else {
-                        additionalFilesExitingOnUI[fileName] = "";
+                        // add the new file to existingAdditionalFiles
+                        var newFile = {filename: fileName, description: ""}
+                        existingAdditionalFiles.push(newFile);
+                        // display it on the page
                         $(this).attr('value', fileName);
                         var discardID = "discard" + $(this).attr('id');
                         $("#"+discardID).attr('download', fileName);
@@ -283,7 +280,9 @@
                         var elements = tempDiv.childNodes;
                         fileName = elements[0].getAttribute("value");
                     }
-                    additionalFilesExitingOnUI[fileName] = $(this).val();
+                    existingAdditionalFiles.filter(function(v) {
+                        return v.filename === fileName;
+                    })[0].description = $(this).val();
                 }
                 populateDiv();
             });
@@ -331,4 +330,3 @@
     </body>
    <g:render template="/templates/decorateSubmission" />
    <g:render template="/templates/subFlowContextHelp" />
-

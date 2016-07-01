@@ -38,6 +38,7 @@ import eu.ddmore.libpharmml.IPharmMLResource
 import eu.ddmore.libpharmml.IValidationError
 import eu.ddmore.libpharmml.IValidationReport
 import eu.ddmore.libpharmml.dom.PharmML
+import eu.ddmore.libpharmml.dom.commontypes.AnnotationType
 import eu.ddmore.libpharmml.dom.modeldefn.ModelDefinition
 import eu.ddmore.libpharmml.dom.modellingsteps.ModellingSteps
 import eu.ddmore.libpharmml.dom.modellingsteps.StepDependency
@@ -231,8 +232,20 @@ class PharmMlService implements FileFormatService {
     @Override
     @Profiled(tag = "pharmMlService.updateDescription")
     public boolean updateDescription(RevisionTransportCommand revision, final String DESCRIPTION) {
-        return updatePharmMlElement(revision, "Description",
-            PHARMML_COMMON_TYPES_NAMESPACES[revision.format.formatVersion], DESCRIPTION)
+        List<File> revisionFiles = AbstractPharmMlHandler.fetchMainFilesFromRevision(revision)
+        final File pharmML = AbstractPharmMlHandler.findPharmML(revisionFiles)
+        def res = AbstractPharmMlHandler.getResourceFromPharmML(pharmML)
+        def dom = res.dom
+        AnnotationType current = dom.description
+        if (current) {
+            current.value = DESCRIPTION
+            println "dom ${dom.description?.value} vs variable ${current.value}"
+        } else {
+            def newDesc = new AnnotationType()
+            newDesc.value = DESCRIPTION
+            dom.description = newDesc
+        }
+        AbstractPharmMlHandler.savePharmML(pharmML, res)
     }
 
     @Profiled(tag = "pharmMlService.getAllAnnotationURNs")
@@ -417,7 +430,8 @@ class PharmMlService implements FileFormatService {
      * the {@link net.biomodels.jummp.core.model.RevisionTransportCommand}.
      *
      * @param rev The revision which is being updated. A PharmML file must be present.
-     * @param elem The element which is being updated.
+     * @param elem The element which is being updated. If the element does not exist,
+     *      it will be added as the first child of its immediate parent node.
      * @param elemNs The namespace of the element being updated.
      * @param value The new value of the element in question
      * @return true if the update was successful, false if gibberish was provided.

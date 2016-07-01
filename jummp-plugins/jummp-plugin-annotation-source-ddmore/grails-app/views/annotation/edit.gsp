@@ -20,11 +20,12 @@
         <div>your multiple input fields go here</div>
     </script>
     <script id="single-constrained-value-template" type="text/x-handlebars-template">
-        <form>
+        <span>
         {{#each this.items}}
             <input type="radio" value="{{value}}" name="{{getNameForRadioButton this}}" id="{{getRadioButtonId this @index}}" {{#isSelected}}checked='checked'{{/isSelected}}/><label class="inlineLabel" for="{{getRadioButtonId this @index}}">{{value}}</label>
         {{/each}}
-        </form>
+        <a class="clearRadioGroup" title="Resets the value for this field">Clear</a>
+        </span>
     </script>
     <script id="multiple-constrained-value-template" type="text/x-handlebars-template">
         {{renderMultipleConstrainedValues}}
@@ -67,6 +68,9 @@
     <div id="message"></div>
     <div id="report"></div>
     <h1>Annotate Model ${revision.name} (${revision.model.publicationId ?: revision.model.submissionId})</h1>
+    <div>
+        <g:message code="annotationEditor.info.ddmore" args="${[revision.model.submissionId]}"/>
+    </div>
     <div id="toolbar" class="ui-corner-all">
         <button id="saveButton" title="Save model properties" class="action">Save</button>
         <button id="validateButton" title="Validate model properties" class="action">Validate</button>
@@ -211,7 +215,7 @@
                 $("#message").removeClass("success");
                 $("#message").removeClass("failure");
                 $("#message").addClass("jummpWarning");
-                $('#message').html('Annotations are being saved into database. Please wait...');
+                $('#message').html('Annotations are being saved. Please wait...');
                 $('#saveButton').attr('disabled',true);
                 $('#validateButton').attr('disabled',true);
                 $('#backButton').attr('disabled',true);

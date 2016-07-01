@@ -122,14 +122,18 @@ class RevisionTransportCommand implements Serializable {
          return new StringBuffer(PERENNIAL_ID).append(".").append(revisionNumber).toString()
      }
 
-    String [] getValidationStatementList(){
+/*    String [] getValidationStatementList(){
         if(validationReport == null){
             return null;
         }
         return validationReport.split("     ");
-    }
+    }*/
 
     String getValidationLevelMessage(){
+        getValidationLevelMessage(validationLevel)
+    }
+
+    String getValidationLevelMessage(ValidationState validationLevel){
         switch (validationLevel) {
             case ValidationState.APPROVE:
                 return "Annotations have not been checked."

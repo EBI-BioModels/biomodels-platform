@@ -132,9 +132,9 @@ class ModelService {
     @SuppressWarnings("GrailsStatelessService")
     def grailsApplication
     /**
-     * Dependency Injection for PubMedService
+     * Dependency Injection for PublicationService
      */
-    def pubMedService
+    def publicationService
     /**
      * Dependency injection of ModelHistoryService
      */
@@ -804,7 +804,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             } else if (publicationTC) {
                 // update db association with the value from the UI
                 try {
-                    model.publication = pubMedService.fromCommandObject(publicationTC)
+                    model.publication = publicationService.fromCommandObject(publicationTC)
                 } catch(Exception e) {
                     log.error("Unable to record publication for ${rev.model}: ${e.message}", e)
                 }
@@ -1083,7 +1083,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         if (revision.validate()) {
             model.addToRevisions(revision)
             if (rev.model.publication) {
-                model.publication = pubMedService.fromCommandObject(rev.model.publication)
+                model.publication = publicationService.fromCommandObject(rev.model.publication)
             }
             if (!model.validate()) {
                 // TODO: this means we have imported the file into the VCS, but it failed to be saved in the database, which is pretty bad
@@ -1260,7 +1260,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         if (revision.validate()) {
             model.addToRevisions(revision)
             if (meta.publication) {
-                model.publication = pubMedService.fromCommandObject(meta.publication)
+                model.publication = publicationService.fromCommandObject(meta.publication)
             }
             if (!model.validate()) {
                 // TODO: this means we have imported the file into the VCS, but it failed to be saved in the database, which is pretty bad
@@ -1981,7 +1981,10 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         def publicRevisionCriteriaResults = publicRevisionCriteria.list(max: 1) {
             and {
                 eq("model", model)
-                ne("state", ModelState.UNPUBLISHED)
+                or {
+                    eq("state", ModelState.PUBLISHED)
+                    eq("state", ModelState.RELEASED)
+                }
             }
         }
         [] != publicRevisionCriteriaResults
@@ -2200,7 +2203,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         }
 
         if(!pubInfo.validModelAccomodation()){
-            throw new PublishException("Model is not compliance with original publication. Please provide a Model_Accommodations.txt file.")
+            throw new PublishException("Model is not compliant with original publication. Please provide a Model_Accommodations.txt file.")
         }
 
         def scenario = publishValidator.validatePublish(pubInfo)
