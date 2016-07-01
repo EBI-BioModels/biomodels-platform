@@ -98,7 +98,7 @@ class SolrServerHolder {
      */
     GrailsApplication grailsApplication
     /**
-     * Singleton instance of SolrServer.
+     * Singleton instance of SolrClient.
      */
     SolrClient solrClient
     /**
