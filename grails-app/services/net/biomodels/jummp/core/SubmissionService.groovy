@@ -532,7 +532,7 @@ class SubmissionService {
          * Convenience method for creating
          * @link{net.biomodels.jummp.core.model.RepositoryFileTransportCommand} objects
          */
-        private RFTC createRFTC(File file, boolean isMain, String description) {
+        public RFTC createRFTC(File file, boolean isMain, String description) {
             new RFTC(path: file.getCanonicalPath(), mainFile: isMain, userSubmitted: true,
                     hidden: false, description: description)
         }
