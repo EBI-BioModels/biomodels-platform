@@ -62,7 +62,7 @@ class TeamController {
     		}
     	}
     	catch(Exception e) {
-    		render "Error processing parameters: "+e.getMessage();
+    		render "Error processing parameters: ${e.getMessage()}"
     		return;
     	}
     	def team = new Team(name: name, description: description)
