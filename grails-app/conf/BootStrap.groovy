@@ -152,7 +152,7 @@ class BootStrap {
                 if (principal instanceof String) {
                     return null
                 } else {
-                    return springSecurityService.getPrincipal()?.username
+                    return principal?.username
                 }
             },
             getUserEmail : { ->
@@ -160,7 +160,7 @@ class BootStrap {
                 if (principal instanceof String) {
                     return null
                 } else {
-                    return springSecurityService.getPrincipal()?.email
+                    return principal?.username
                 }
             },
             getUserRoles : { ->
