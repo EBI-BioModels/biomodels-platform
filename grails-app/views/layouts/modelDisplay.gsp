@@ -586,7 +586,7 @@
       <div id="Overview">
           <span class="bold">Model Description:</span>
           <div style="margin-left: 30px;">
-              ${revision.description}
+              ${raw(revision.description)}
           </div>
         <table style="margin-top:30px">
         <tr>

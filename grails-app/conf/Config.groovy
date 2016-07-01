@@ -649,14 +649,14 @@ grails {
             encoding = 'UTF-8'
             htmlcodec = 'xml' // use xml escaping instead of HTML4 escaping
             codecs {
-                expression = 'html' // escapes values inside null
+                expression = 'none' // escapes values inside null
                 scriptlet = 'html' // escapes output from scriptlets in GSPs
                 taglib = 'none' // escapes output from taglibs
                 staticparts = 'raw' // escapes output from static template parts
             }
         }
         // escapes all not-encoded output at final stage of outputting
-        // filteringCodecForContentType.'text/html' = 'html'
+        filteringCodecForContentType.'text/html' = 'html'
     }
 }
 
