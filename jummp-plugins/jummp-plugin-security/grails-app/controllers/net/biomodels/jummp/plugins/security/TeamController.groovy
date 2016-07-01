@@ -49,24 +49,24 @@ class TeamController {
     }
 
     def save() {
-    	String name="";
-    	String description="";
-    	Set<User> users=new HashSet<User>();
+    	String name=""
+    	String description=""
+    	Set<User> users=new HashSet<User>()
     	try {
-    		def map = JSON.parse(params.teamData);
-    		name = map.getString("name");
-    		description = map.getString("description");
-    		def collabs = map.getJSONArray("members");
+    		def map = JSON.parse(params.teamData)
+    		name = map.getString("name")
+    		description = map.getString("description")
+    		def collabs = map.getJSONArray("members")
     		for (int i = 0; i < collabs.length(); i++) {
-    			users.add(User.findByUsername(collabs.getJSONObject(i).getString("userId")));
+    			users.add(User.findByUsername(collabs.getJSONObject(i).getString("userId")))
     		}
     	}
     	catch(Exception e) {
     		render "Error processing parameters: ${e.getMessage()}"
-    		return;
+    		return
     	}
     	def team = new Team(name: name, description: description)
-    	team.owner=springSecurityService.getCurrentUser();
+    	team.owner=springSecurityService.getCurrentUser()
         User currentUser = users.find { it.getId() == team.owner.id }
         if (!currentUser) {
             // By default, the owner/creator/current user should be added to the team automatically
@@ -108,7 +108,7 @@ class TeamController {
     			showStandardErrorMessage()
     		}
     		else {
-    			def usersInTeam = UserTeam.findAllByTeam(team);
+    			def usersInTeam = UserTeam.findAllByTeam(team)
     			[team: team, users: usersInTeam.collect { [name: it.user.person.userRealName, userId: it.user.username, id: it.user.id] } as JSON]
     		}
     	}
@@ -141,20 +141,20 @@ class TeamController {
     		Team team = Team.get(id)
     		def user = springSecurityService.getCurrentUser()
     		if (team && user == team.owner) {
-    			String name="";
-    			String description="";
-    			Set<User> users=new HashSet<User>();
+    			String name=""
+    			String description=""
+    			Set<User> users=new HashSet<User>()
     			try {
-    				def map = JSON.parse(params.teamData);
-    				team.name = map.getString("name");
-    				team.description = map.getString("description");
-    				def collabs = map.getJSONArray("members");
+    				def map = JSON.parse(params.teamData)
+    				team.name = map.getString("name")
+    				team.description = map.getString("description")
+    				def collabs = map.getJSONArray("members")
     				for (int i = 0; i < collabs.length(); i++) {
-    					users.add(User.findByUsername(collabs.getJSONObject(i).getString("userId")));
+    					users.add(User.findByUsername(collabs.getJSONObject(i).getString("userId")))
     				}
     			}
     			catch(Exception e) {
-    				render "Error processing parameters: "+e.getMessage();
+    				render "Error processing parameters: ${e.getMessage()}"
     				return;
     			}
     			if (!team.validate()) {
@@ -162,15 +162,15 @@ class TeamController {
     			}
     			else {
     				team.save(flush: true)
-    				Set<User> existingUsers = UserTeam.findAllByTeam(team).collect{ it.user };
-    				Set<User> newUsers = users - existingUsers;
+    				Set<User> existingUsers = UserTeam.findAllByTeam(team).collect{ it.user }
+    				Set<User> newUsers = users - existingUsers
     				newUsers.each {
     					UserTeam.create(it, team)
     				}
-    				Set<User> removeThese = existingUsers - users;
+    				Set<User> removeThese = existingUsers - users
     				removeThese.each {
     					UserTeam userTeam = UserTeam.findByUserAndTeam(it, team)
-    					userTeam.delete();
+    					userTeam.delete()
     				}
     				render team.id
     			}
@@ -185,10 +185,10 @@ class TeamController {
     def show(Long id) {
         Team team = Team.get(id)
         if (!team) {
-            showStandardErrorMessage();
+            showStandardErrorMessage()
         }
         else {
-        	def usersInTeam = UserTeam.findAllByTeam(team);
+        	def usersInTeam = UserTeam.findAllByTeam(team)
         	[team: team, users: usersInTeam.collect { DomainAdapter.getAdapter(it.user.person).toCommandObject()}]
         }
     }
