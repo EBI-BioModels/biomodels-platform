@@ -30,6 +30,7 @@ class NotificationController {
 	def notificationService
 	def userService
 
+    @Secured(["isAuthenticated()"])
 	def unreadNotificationCount() {
 		render notificationService.unreadNotificationCount();
 	}
