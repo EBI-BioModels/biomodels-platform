@@ -34,7 +34,7 @@
             <h2>Members</h2>
             	<ul>
             		<g:each in="${users}">
-            			<li>${it.userRealName}</it>
+            			<li>${it.userRealName}</li>
             		</g:each>
             	</ul>
         </div>
