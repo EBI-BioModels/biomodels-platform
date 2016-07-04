@@ -67,10 +67,9 @@
                     <tr>
                         <td class='tableLabels'><label class="required" for="register-form-captcha"><g:message code="user.signup.ui.captcha"/>:</label></td>
                         <td>
-                        	<ul style="list-style-type: none;">
-                        		<li><img style="margin-top:0;float:none" src="${createLink(controller: 'simpleCaptcha', action: 'captcha')}"/></li>
-                        		<li><g:textField name="captcha"/></li>
-                        	</ul>
+                            <img style="margin-top:0;float:none" src="${createLink(controller: 'simpleCaptcha', action: 'captcha')}"/>
+                            <br/>
+                            <g:textField name="captcha"/>
                         </td>
                     </tr>
                     </tbody>
