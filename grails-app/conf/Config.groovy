@@ -344,7 +344,10 @@ jummp.controllerAnnotations = [
     "/plugins/weceem*/**":      ["permitAll"],
     "/console/**":              ["permitAll"],
     "/plugins/console*/**":     ['permitAll'],
-    "/plugins/*/js/*":          ['permitAll']
+    "/plugins/*/js/*":          ['permitAll'],
+    "/plugins/*/css/*":         ['permitAll'],
+    "/plugins/*/images/*":      ['permitAll'],
+    "/simpleCaptcha/captcha":   ['permitAll']
 ]
 
 // ldap
