@@ -343,7 +343,8 @@ jummp.controllerAnnotations = [
     "/plugins/ckeditor*/**":    ["permitAll"],
     "/plugins/weceem*/**":      ["permitAll"],
     "/console/**":              ["permitAll"],
-    "/plugins/console*/**":     ['permitAll']
+    "/plugins/console*/**":     ['permitAll'],
+    "/plugins/*/js/*":          ['permitAll']
 ]
 
 // ldap
