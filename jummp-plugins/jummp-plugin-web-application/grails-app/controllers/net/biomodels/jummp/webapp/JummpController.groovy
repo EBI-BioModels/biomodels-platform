@@ -45,11 +45,6 @@ class JummpController {
         ]
     }
 
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
-    def help() {
-        [messageCode: "under construction"]
-    }
-
     def lookupUser = {
         if (params.name) {
             String user = userService.getUsername(params.name)
