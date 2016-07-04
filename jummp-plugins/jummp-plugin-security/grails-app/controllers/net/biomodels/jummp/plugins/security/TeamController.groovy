@@ -78,7 +78,7 @@ class TeamController {
         else {
         	team.save(flush: true)
         	users.each {
-        		UserTeam.create(it, team)
+        		UserTeam.create(it, team, true)
         	}
         	render team.id
         }
@@ -165,7 +165,7 @@ class TeamController {
     				Set<User> existingUsers = UserTeam.findAllByTeam(team).collect{ it.user }
     				Set<User> newUsers = users - existingUsers
     				newUsers.each {
-    					UserTeam.create(it, team)
+    					UserTeam.create(it, team, true)
     				}
     				Set<User> removeThese = existingUsers - users
     				removeThese.each {
