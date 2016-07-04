@@ -49,8 +49,8 @@ class TeamController {
     }
 
     def save() {
-    	String name=""
-    	String description=""
+    	String name = ""
+    	String description = ""
     	Set<User> users=new HashSet<User>()
     	try {
     		def map = JSON.parse(params.teamData)
@@ -141,8 +141,6 @@ class TeamController {
     		Team team = Team.get(id)
     		def user = springSecurityService.getCurrentUser()
     		if (team && user == team.owner) {
-    			String name=""
-    			String description=""
     			Set<User> users=new HashSet<User>()
     			try {
     				def map = JSON.parse(params.teamData)
@@ -155,7 +153,7 @@ class TeamController {
     			}
     			catch(Exception e) {
     				render "Error processing parameters: ${e.getMessage()}"
-    				return;
+    				return
     			}
     			if (!team.validate()) {
     				render "Error updating team. Team could not be validated."
