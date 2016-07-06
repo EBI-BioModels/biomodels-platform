@@ -57,25 +57,25 @@
   <!--
   <link rel="stylesheet" href="//www.ebi.ac.uk/web_guidelines/css/compliance/mini/ebi-fluid-embl.css">
   -->
-  
+
   <style type="text/css">
     /* You have the option of setting a maximum width for your page, and making sure everything is centered */
       body {
-      	  max-width: 1600px
+      	  max-width: 1600px;
           margin: 0 auto;
       }
   </style>
-  
+
   <!-- end CSS-->
 
 
   <!-- All JavaScript at the bottom, except for Modernizr / Respond.
        Modernizr enables HTML5 elements & feature detects; Respond is a polyfill for min/max-width CSS3 Media Queries
        For optimal performance, use a custom Modernizr build: www.modernizr.com/download/ -->
-  
+
   <!-- Full build -->
   <!-- <script src="//www.ebi.ac.uk/web_guidelines/js/libs/modernizr.minified.2.1.6.js"></script> -->
-  
-  <!-- custom build (lacks most of the "advanced" HTML5 support -->
-  <script src="//www.ebi.ac.uk/web_guidelines/js/libs/modernizr.custom.49274.js"></script>    
 
+  <!-- custom build (lacks most of the "advanced" HTML5 support -->
+  <script src="//www.ebi.ac.uk/web_guidelines/js/libs/modernizr.custom.49274.js"></script>
+<title><g:layoutTitle default="Jummp for Biomodels"/></title>
