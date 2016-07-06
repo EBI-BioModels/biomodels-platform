@@ -311,7 +311,6 @@ jummp.controllerAnnotations = [
     "/":                        ["permitAll"],
     "/index":                   ["permitAll"],
     '/index.gsp':               ['permitAll'],
-    "/test":                    ["permitAll"],
     // protect the spring security ui plugin controllers
     '/aclclass/**':             ['ROLE_ADMIN'],
     '/aclentry/**':             ['ROLE_ADMIN'],
