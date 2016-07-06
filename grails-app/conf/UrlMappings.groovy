@@ -59,7 +59,6 @@ class UrlMappings {
         }
 
         "/"(view: "/index")
-//        "/test"(view: "/test")
         "/maintenance"(controller: 'maintenance')
         "/maintenance/turnOn"(controller: 'maintenance', action: 'turnOn')
         "403"(controller: "errors", action: "error403")
