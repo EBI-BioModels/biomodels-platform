@@ -13,33 +13,33 @@
 %>
 <div class="content">
 	<div class="view view-dom-id-9c00a92f557689f996511ded36a88594">
-		<div class="view-content">
-    		<g:if test="${models}">
-    			  	<div id="inline-list">
-    					<g:if test="${action=="list"}">
-    						<sec:ifLoggedIn>
-    							<a href="${createLink(controller: "search", action: "archive")}">Browse Archived Models</a>
-    						</sec:ifLoggedIn>
-    					</g:if>
-    					<ul>
-    						<g:each in="${resultOptions}">
-    							<li>
-    								<g:if test="${it==length}">
-    									${it}
-    								</g:if>
-    								<g:else>
-    									<a href="${createLink(controller: 'search', 
-    														  action: action, 
-    														  params: [query: query,  sortDir: sortDirection, 
-    														  		   sortBy: sortBy, offset: 0, 
-    														  		   numResults:it])}">
-    														  		   ${it}
-    									</a>
-    								</g:else>
-    							</li>
-    						</g:each>
-						</ul>
-					</div>
+        <div class="view-content">
+            <div id="inline-list">
+                <g:if test="${action=="list"}">
+                    <sec:ifLoggedIn>
+                        <a href="${createLink(controller: "search", action: "archive")}">Browse Archived Models</a>
+                    </sec:ifLoggedIn>
+                </g:if>
+                <ul>
+                    <g:each in="${resultOptions}">
+                        <li>
+                            <g:if test="${it==length}">
+                                ${it}
+                            </g:if>
+                            <g:else>
+                                <a href="${createLink(controller: 'search',
+                                    action: action,
+                                    params: [query: query,  sortDir: sortDirection,
+                                             sortBy: sortBy, offset: 0,
+                                             numResults:it])}">
+                                    ${it}
+                                </a>
+                            </g:else>
+                        </li>
+                    </g:each>
+                </ul>
+            </div>
+            <g:if test="${models}">
 	 			<table id="modelTable">
     	    	<thead>
                 <tr>
@@ -134,11 +134,6 @@
                 </div>
             </g:if>
             <g:else>
-            	<g:if test="${action=="list"}">
-    						<sec:ifLoggedIn>
-    							<p><a href="${createLink(controller: "search", action: "archive")}">Browse Archived Models</a></p>
-    						</sec:ifLoggedIn>
-    			</g:if>
     			<g:if test="${matches!=null}">
             		No available models matched your query. Please try logging in to access more models, or another search query.
             	</g:if>
