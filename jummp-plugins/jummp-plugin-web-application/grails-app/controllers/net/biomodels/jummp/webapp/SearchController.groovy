@@ -115,7 +115,7 @@ class SearchController {
         final int MINRESULTS = 10
         User user
         if (!(springSecurityService.principal.username == GrailsAnonymousAuthenticationToken.USERNAME)) {
-            user=User.findById(springSecurityService.principal.id)
+            user = User.findByUsername(springSecurityService.principal.username)
         }
         Preferences prefs
         if (user) {
