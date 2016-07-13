@@ -89,16 +89,16 @@
                 	</tr>
                 </tfoot>
                 </table>
-                	<%
-						int currentPage=1
-						if (offset!=0) {
-							currentPage = Math.ceil((double) (offset+1) / (double) length)
-						}
-						int modelStart=1 + (currentPage - 1)*length
-						int modelEnd= length < models.size() ? length : models.size()
-						modelEnd+=modelStart -1
-						int numPages= Math.ceil((double) totalCount / (double) length)
-                	%>
+                <%
+                    int currentPage = 1
+                    if (offset != 0) {
+                        currentPage = Math.ceil((double) (offset+1) / (double) length)
+                    }
+                    int modelStart = 1 + (currentPage - 1)*length
+                    int modelEnd = length < models.size() ? length : models.size()
+                    modelEnd += modelStart -1
+                    int numPages = Math.ceil((double) totalCount / (double) length)
+                %>
                 <div class="dataTables_info">
                 	Showing ${modelStart} to ${modelEnd} of ${totalCount} models
                 </div>
