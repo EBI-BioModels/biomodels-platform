@@ -20,13 +20,13 @@
             <tbody>
             <jummp:renderCertificationForm />
             <tr>
-                <td class='tableLabels'><label><g:message code="certify.comment"/>:</label></td>
+                <td class='tableLabels'><label><g:message code="jummp.certify.comment.label"/>:</label></td>
                 <td><g:textArea id="comment" name="comment"/></td>
             </tr>
             </tbody>
         </table>
         <div class="buttons">
-            <button id="certifyButton" title="Certifing model" class="action">Certify</button>
+            <button id="certifyButton" title="Certifying model" class="action">Certify</button>
             <button id="cancelButton" title="Cancel" class="action"
                     onclick="return $.jummp.openPage('${g.createLink(controller: 'model', action: 'show', id: modelId)}')">Cancel</button>
         </div>

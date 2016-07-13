@@ -113,14 +113,14 @@
                 	Showing ${modelStart} to ${modelEnd} of ${totalCount} models
                 </div>
                 <div class="dataTables_paginate">
-                    <g:if test="${currentPage != 1}">
+                    <g:if test="${currentPage != 1 && numPages > stepPagination}">
                         <a href="${createLink(controller: 'search', action: action,
                             params: [query: query, sortDir: sortDirection, sortBy: sortBy, offset: 0])}">First</a>
                     </g:if>
                     <g:else>
                         First
                     </g:else>
-                	<g:if test="${currentPage == 1}">
+                	<g:if test="${currentPage == 1 || numPages <= stepPagination}">
                 		<g:img dir="${imagePath}/pagination" absolute="true" contextPath="" file="arrow-previous-disable.gif" alt="Previous"/>
                 	</g:if>
                 	<g:else>
@@ -149,7 +149,7 @@
                 			</g:else>
                 		</span>
                 	</g:each>
-                	<g:if test="${modelEnd == totalCount}">
+                	<g:if test="${modelEnd == totalCount || numPages <= stepPagination}">
                 		<g:img dir="${imagePath}/pagination" absolute="true"  contextPath="" file="arrow-next-disable.gif" alt="Next"/>
                 	</g:if>
                 	<g:else>
@@ -158,7 +158,7 @@
                 			<g:img dir="${imagePath}/pagination" absolute="true"  contextPath="" file="arrow-next.gif" alt="Next"/>
                 		</a>
                 	</g:else>
-                    <g:if test="${currentPage != numPages}">
+                    <g:if test="${currentPage != numPages && numPages > stepPagination}">
                         <a href="${createLink(controller: 'search', action: action,
                             params: [query: query, sortDir: sortDirection, sortBy: sortBy, offset: length*(numPages-1)])}">Last</a>
                     </g:if>
