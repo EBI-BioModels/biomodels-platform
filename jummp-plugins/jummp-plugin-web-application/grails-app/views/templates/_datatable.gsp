@@ -96,12 +96,28 @@
                     int modelEnd = length < models.size() ? length : models.size()
                     modelEnd += modelStart - 1
                     int numPages = Math.ceil((double) totalCount / (double) length)
+                    int stepPagination = 5 // the number of pages would be displayed
+                    if (numPages < stepPagination) {
+                        stepPagination = numPages
+                    }
+                    int rightPage = currentPage + stepPagination
+                    if (currentPage + stepPagination > numPages) {
+                        rightPage = numPages + 1
+                    }
+                    int leftPage = currentPage
                 %>
                 <div class="dataTables_info">
                 	Showing ${modelStart} to ${modelEnd} of ${totalCount} models
                 </div>
                 <div class="dataTables_paginate">
-                	<g:if test="${currentPage==1}">
+                    <g:if test="${currentPage != 1}">
+                        <a href="${createLink(controller: 'search', action: action,
+                            params: [query: query, sortDir: sortDirection, sortBy: sortBy, offset: 0])}">First</a>
+                    </g:if>
+                    <g:else>
+                        First
+                    </g:else>
+                	<g:if test="${currentPage == 1}">
                 		<g:img dir="${imagePath}/pagination" absolute="true" contextPath="" file="arrow-previous-disable.gif" alt="Previous"/>
                 	</g:if>
                 	<g:else>
@@ -110,7 +126,14 @@
                 			<g:img dir="${imagePath}/pagination" absolute="true"  contextPath="" file="arrow-previous.gif" alt="Previous"/>
                 		</a>
                 	</g:else>
-                	<g:each var="i" in="${ (1..<numPages+1) }">
+                    <g:if test="${currentPage + stepPagination >= numPages}">
+                        <%
+                            // regulate the leftPage when jumping to the last page
+                            rightPage = numPages + 1
+                            leftPage = rightPage - stepPagination
+                        %>
+                    </g:if>
+                	<g:each var="i" in="${ (leftPage..<rightPage) }">
                 		<span class="pageNumbers">
                 			<g:if test="${currentPage == i}">
                 				${i}
@@ -132,6 +155,13 @@
                 			<g:img dir="${imagePath}/pagination" absolute="true"  contextPath="" file="arrow-next.gif" alt="Next"/>
                 		</a>
                 	</g:else>
+                    <g:if test="${currentPage != numPages}">
+                        <a href="${createLink(controller: 'search', action: action,
+                            params: [query: query, sortDir: sortDirection, sortBy: sortBy, offset: length*(numPages-1)])}">Last</a>
+                    </g:if>
+                    <g:else>
+                        Last
+                    </g:else>
                 </div>
             </g:if>
             <g:else>
