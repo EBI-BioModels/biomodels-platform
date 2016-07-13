@@ -83,7 +83,7 @@ grails.project.dependency.resolution = {
         runtime "postgresql:postgresql:9.1-901.jdbc4"
 
         //using the latest groovy eclipse compiler 2.9.2-01
-        compile "net.biomodels.jummp:AnnotationStore:0.3-SNAPSHOT"
+        compile "net.biomodels.jummp:AnnotationStore:0.3"
         compile "org.apache.solr:solr-solrj:5.3.1"
         //required by both JSBML and SolrJ
         compile "org.codehaus.woodstox:woodstox-core-lgpl:4.4.1"
@@ -190,6 +190,7 @@ grails.plugin.location.'jummp-plugin-simple-logging' = "jummp-plugins/jummp-plug
 grails.plugin.location.'jummp-plugin-web-application' = "jummp-plugins/jummp-plugin-web-application"
 grails.plugin.location.'jummp-plugin-annotation-source-ddmore' = "jummp-plugins/jummp-plugin-annotation-source-ddmore"
 grails.plugin.location.'jummp-plugin-annotation-core' = "jummp-plugins/jummp-plugin-annotation-core"
+grails.plugin.location.'jummp-plugin-qc-info' = "jummp-plugins/jummp-plugin-qc-info"
 //grails.plugin.location.'jummp-plugin-jms-remote' = "jummp-plugins/jummp-plugin-jms-remote"
 if ("jms".equalsIgnoreCase(System.getenv("JUMMP_EXPORT"))) {
     println "Enabling JMS remoting..."

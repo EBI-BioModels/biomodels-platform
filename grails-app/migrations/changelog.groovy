@@ -1201,4 +1201,6 @@ databaseChangeLog = {
     include file: '20160229-updateModelFormatName-Unknown2Original.groovy'
 
     include file: "20160511_updateRDFdescription.groovy"
+
+	include file: '20160713_certification.groovy'
 }

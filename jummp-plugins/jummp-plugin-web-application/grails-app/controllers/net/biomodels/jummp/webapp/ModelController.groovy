@@ -230,6 +230,7 @@ class ModelController {
             boolean canUpdate = modelDelegateService.canAddRevision(PERENNIAL_ID)
             boolean canDelete = modelDelegateService.canDelete(PERENNIAL_ID)
             boolean canShare = modelDelegateService.canShare(PERENNIAL_ID)
+            boolean canCertify = modelDelegateService.canCertify(PERENNIAL_ID)
 
             String flashMessage = ""
             if (flash.now["giveMessage"]) {
@@ -247,7 +248,9 @@ class ModelController {
                         canShare: canShare,
                         showPublishOption: showPublishOption,
                         canSubmitForPublication: canSubmitForPublication,
-                        validationLevel: rev.getValidationLevelMessage()
+                        canCertify: canCertify,
+                        validationLevel: rev.getValidationLevelMessage(),
+                        certComment:rev.getCertificationMessage()
             ]
             if (rev.id == modelDelegateService.getLatestRevision(PERENNIAL_ID).id) {
                 flash.genericModel = model
@@ -259,6 +262,7 @@ class ModelController {
                 model["oldVersion"] = true
                 model["canDelete"] = false
                 model["canShare"] = false
+                model["canCertify"] = false
                 return model
             }
         } else {

@@ -843,10 +843,10 @@
             name^10 description^5.0 publicationTitle^2.0 publicationAbstract^1.5 submitter^2.1
             text_rev content submissionId publicationId modelFormat levelVersion
             elementID externalReferenceName elementDescription externalReferenceID
-            pharmmlPublicationSourceText pharmmlModelIndication pharmmlModelRationale
-            pharmmlLimitations pharmmlPopulation pharmmlModelDrug pharmmlTherapeuticArea
-            pharmmlGenericType publicationAuthor pharmmlElementInterpretation pharmmlElementUnit
-            pharmmlModelFieldPurpose
+            pharmmlTherapeuticArea, pharmmlModellingContextDescription, pharmmlLongTechnicalDescription,
+            pharmmlShortDescription, pharmmlPublicationSource, pharmmlImplementationConformsToLiterature,
+            pharmmlImplementationDiscrepancies, pharmmlModelDevelopmentContext, pharmmlCodeFromLiterature,
+            pharmmlResearchStage, pharmmlTasks, pharmmlTypeOfData
        </str>
        <str name="mm">100%</str>
        <str name="q.alt">*:*</str>
@@ -983,11 +983,10 @@
             name^10 description^5.0 publicationTitle^2.0 publicationAbstract^1.5 submitter^2.1
             text_rev content submissionId publicationId modelFormat levelVersion
             elementID externalReferenceName elementDescription externalReferenceID
-            pharmmlPublicationSourceText pharmmlModelIndication pharmmlModelRationale
-            pharmmlLimitations pharmmlPopulation pharmmlModelDrug pharmmlTherapeuticArea
-            pharmmlGenericType publicationAuthor pharmmlElementInterpretation pharmmlElementUnit
-            pharmmlModelFieldPurpose
-
+            pharmmlTherapeuticArea, pharmmlModellingContextDescription, pharmmlLongTechnicalDescription,
+            pharmmlShortDescription, pharmmlPublicationSource, pharmmlImplementationConformsToLiterature,
+            pharmmlImplementationDiscrepancies, pharmmlModelDevelopmentContext, pharmmlCodeFromLiterature,
+            pharmmlResearchStage, pharmmlTasks, pharmmlTypeOfData
        </str>
        <str name="df">text_rev</str>
        <str name="mm">100%</str>
@@ -1589,7 +1588,7 @@
       </str>
       <str name="q.alt">*:*</str>
       <str name="rows">10</str>
-      <str name="fl">*,score</str>
+      <str name="fl">*</str>
     </lst>
     <arr name="last-components">
       <str>clustering</str>

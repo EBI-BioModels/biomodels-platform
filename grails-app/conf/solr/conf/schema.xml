@@ -107,7 +107,7 @@
    <field name="elementDescription" type="text_general" indexed="true" stored="false" multiValued="true"/>
    <field name="elementID" type="string" indexed="true" stored="false" multiValued="true"/>
    <field name="externalReferenceID" type="string" indexed="true" stored="false" multiValued="true"/>
-   <field name="externalReferenceName" type="string" indexed="true" stored="false" multiValued="true"/>
+   <field name="externalReferenceName" type="text_general" indexed="true" stored="false" multiValued="true"/>
    <field name="public" type="boolean" indexed="true" stored="true"/>
    <field name="deleted" type="boolean" indexed="true" stored="true"/>
    <field name="uniqueId" type="string" indexed="true" stored="true"/>
@@ -115,18 +115,18 @@
    <field name="sbmlSBOTerm" type="string" indexed="true" stored="false" multiValued="true"/>
 
    <!-- PharmML-specific fields -->
-   <field name="pharmmlTherapeuticArea" type="text_general" indexed="true" stored="true" multiValued="true"/>
-   <field name="pharmmlModellingContextDescription" type="text_general" indexed="true" stored="true" multiValued="false"/>
+   <field name="pharmmlTherapeuticArea" type="lowercase" indexed="true" stored="true" multiValued="true"/>
+   <field name="pharmmlModellingContextDescription" type="lowercase" indexed="true" stored="true" multiValued="false"/>
    <field name="pharmmlLongTechnicalDescription" type="string" indexed="false" stored="true" multiValued="false"/>
    <field name="pharmmlShortDescription" type="text_general" indexed="true" stored="true" multiValued="false"/>
-   <field name="pharmmlPublicationSource" type="text_general" indexed="true" stored="true"/>
-   <field name="pharmmlImplementationConformsToLiterature" type="string" indexed="true" stored="false" multiValued="false"/>
+   <field name="pharmmlPublicationSource" type="lowercase" indexed="true" stored="true"/>
+   <field name="pharmmlImplementationConformsToLiterature" type="lowercase" indexed="true" stored="false" multiValued="false"/>
    <field name="pharmmlImplementationDiscrepancies" type="text_general" indexed="true" stored="true" multiValued="false"/>
-   <field name="pharmmlModelDevelopmentContext" type="text_general" indexed="true" stored="true" multiValued="true"/>
-   <field name="pharmmlCodeFromLiterature" type="text_general" indexed="true" stored="true" multiValued="false"/>
-   <field name="pharmmlResearchStage" type="text_general" indexed="true" stored="true" multiValued="true"/>
-   <field name="pharmmlTasks" type="text_general" indexed="true" stored="true" multiValued="true"/>
-   <field name="pharmmlTypeOfData" type="text_general" indexed="true" stored="true" multiValued="true"/>
+   <field name="pharmmlModelDevelopmentContext" type="lowercase" indexed="true" stored="true" multiValued="true"/>
+   <field name="pharmmlCodeFromLiterature" type="lowercase" indexed="true" stored="true" multiValued="false"/>
+   <field name="pharmmlResearchStage" type="lowercase" indexed="true" stored="true" multiValued="true"/>
+   <field name="pharmmlTasks" type="lowercase" indexed="true" stored="true" multiValued="true"/>
+   <field name="pharmmlTypeOfData" type="lowercase" indexed="true" stored="true" multiValued="true"/>
 
    <!-- catch-all field -->
    <dynamicField name="pharmml*" type="text_general" indexed="true"  stored="true" multiValued="true"/>

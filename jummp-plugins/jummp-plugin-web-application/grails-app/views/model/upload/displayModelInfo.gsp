@@ -57,7 +57,9 @@
                         </tr>
                         <tr class="prop">
                             <td class="name">
-                                <label for="description">Description:</label>
+                                <jummp:displayModelDescriptionLabel>
+                                    <label for="description">${description}:</label>
+                                </jummp:displayModelDescriptionLabel>
                             </td>
                             <td class="value">
                                 <g:if test="${workingMemory['new_description']}">

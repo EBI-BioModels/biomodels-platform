@@ -79,7 +79,8 @@ public class ModelAdapter extends DomainAdapter {
             submitterUsername: firstRev?.owner.username,
             submissionDate: firstRev?.uploadDate,
             creators: creators,
-            creatorUsernames: creatorUsernames
+            creatorUsernames: creatorUsernames,
+            flagLevel: latestRev ? (latestRev.qcInfo ? latestRev.qcInfo.flag : null) : null
         )
     }
 

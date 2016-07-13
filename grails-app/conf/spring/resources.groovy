@@ -108,7 +108,7 @@ beans = {
 
     //Add annotation store domain classes (defined externally) to the domain model
     //following: https://github.com/pongasoft/external-domain-classes-grails-plugin/blob/master/ExternalDomainClassesGrailsPlugin.groovy#L84
-    def packages = ["net.biomodels.jummp.annotationstore", "net.biomodels.jummp.core.model", "net.biomodels.jummp.model", "net.biomodels.jummp.plugins.security"] as String[]
+    def packages = ["net.biomodels.jummp.annotationstore", "net.biomodels.jummp.core.model", "net.biomodels.jummp.model", "net.biomodels.jummp.qcinfo", "net.biomodels.jummp.plugins.security"] as String[]
     BeanDefinitionRegistry simpleRegistry = new SimpleBeanDefinitionRegistry()
     ClassPathBeanDefinitionScanner scanner = new ClassPathBeanDefinitionScanner(simpleRegistry, false)
     scanner.includeAnnotationConfig = false

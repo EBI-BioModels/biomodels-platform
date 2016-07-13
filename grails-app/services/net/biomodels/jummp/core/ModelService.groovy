@@ -62,6 +62,7 @@ import net.biomodels.jummp.model.Publication
 import net.biomodels.jummp.model.RepositoryFile
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.User
+import net.biomodels.jummp.qcinfo.QcInfo
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.apache.tika.detect.DefaultDetector
@@ -2141,6 +2142,55 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             return canAddRevision(revision.model)
         }
         return false
+    }
+
+    @PostLogging(LoggingEventType.UPDATE)
+    @Profiled(tag="modelService.canCertify")
+    public boolean canCertify(Model model) {
+        if (!model) {
+            throw new IllegalArgumentException("Model may not be null")
+        }
+        if (model.deleted) {
+            return false
+        }
+
+        return (SpringSecurityUtils.ifAnyGranted("ROLE_CURATOR") || aclUtilService.hasPermission(
+            springSecurityService.authentication, model, BasePermission.ADMINISTRATION))
+    }
+
+    @PreAuthorize("hasRole('ROLE_CURATOR') or hasRole('ROLE_ADMIN')") //used to be: (hasRole('ROLE_CURATOR') and hasPermission(#revision, admin))
+    @PostLogging(LoggingEventType.UPDATE)
+    @Profiled(tag="modelService.publishModelRevision")
+    public boolean addQcInfo(Revision revision, QcInfo qcInfo) {
+        if (!SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
+            if (!aclUtilService.hasPermission(springSecurityService.authentication, revision,
+                BasePermission.ADMINISTRATION)) {
+                throw new AccessDeniedException("You cannot certify this model.")
+            }
+        }
+        if (!revision) {
+            throw new IllegalArgumentException("Revision may not be null")
+        }
+        if (revision.deleted) {
+            throw new IllegalArgumentException("Revision may not be deleted")
+        }
+
+        Revision.withTransaction {status ->
+            try {
+                revision.qcInfo = qcInfo
+                qcInfo.save()
+                revision.save()
+                return true
+            } catch (Exception ex) {
+                ex.printStackTrace()
+                try {
+                    status.setRollbackOnly()
+                } catch (Exception ex2) {
+                    ex2.printStackTrace()
+                }
+                return false
+            }
+        }
     }
 
     /**

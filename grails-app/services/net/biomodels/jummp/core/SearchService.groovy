@@ -55,14 +55,9 @@ import org.springframework.security.acls.domain.BasePermission
  *
  * @author Raza Ali, raza.ali@ebi.ac.uk
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
- * @date   20150611
+ * @date   20160710
  */
 class SearchService {
-    static final String[] SOLR_SPECIAL_CHARACTERS = ["+", "-", "&", "|", "!", "(", ")",
-            "{", "}", "[", "]", "^", "\"", "~", "*", "?", ":", "\\"] as String[]
-    static final String[] SOLR_REPLACEMENT_CHARACTERS = ["\\+", "\\-", "\\&", "\\|",
-            "\\!", "\\(", "\\)", "\\{", "\\}", "\\[", "\\]", "\\^", "\\\"", "\\~", "\\*",
-            "\\?", "\\:", "\\\\"] as String[]
     /**
      * The class logger.
      */
@@ -75,6 +70,10 @@ class SearchService {
      * Flag indicating the logger's verbosity threshold.
      */
     static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
+    /**
+     * The Solr Request Handler to use for handling searches.
+     */
+    final String SEARCH_HANDLER = "/select"
     /**
      * Disable default transactional behaviour.
      */
@@ -404,12 +403,8 @@ class SearchService {
     @Profiled(tag="searchService.search")
     private SolrDocumentList search(String q) {
         SolrQuery query = new SolrQuery()
-        String newQuery = StringUtils.replaceEach(q, SOLR_SPECIAL_CHARACTERS,
-                SOLR_REPLACEMENT_CHARACTERS)
         query.setQuery(q)
-        query.setParam("defType", "edismax")
-        query.setParam("tie", "0.8")
-        query.setParam("q.alt", "*:*")
+        query.setRequestHandler(SEARCH_HANDLER)
         QueryResponse response = solrServerHolder.server.query(query)
         SolrDocumentList docs = response.getResults()
         return docs
