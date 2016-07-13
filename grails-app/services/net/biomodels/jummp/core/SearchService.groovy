@@ -405,7 +405,7 @@ class SearchService {
         SolrQuery query = new SolrQuery()
         query.setQuery(q)
         query.setRequestHandler(SEARCH_HANDLER)
-        QueryResponse response = solrServerHolder.server.query(query)
+        QueryResponse response = solrServerHolder.solrClient.query(query)
         SolrDocumentList docs = response.getResults()
         return docs
     }
