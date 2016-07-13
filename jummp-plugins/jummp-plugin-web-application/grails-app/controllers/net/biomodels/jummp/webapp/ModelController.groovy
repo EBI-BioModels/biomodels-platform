@@ -230,7 +230,7 @@ class ModelController {
             boolean canUpdate = modelDelegateService.canAddRevision(PERENNIAL_ID)
             boolean canDelete = modelDelegateService.canDelete(PERENNIAL_ID)
             boolean canShare = modelDelegateService.canShare(PERENNIAL_ID)
-            boolean canCertify = modelDelegateService.canCertify(PERENNIAL_ID)
+            boolean canCertify = canUpdate && modelDelegateService.canCertify(PERENNIAL_ID)
 
             String flashMessage = ""
             if (flash.now["giveMessage"]) {

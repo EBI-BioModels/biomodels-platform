@@ -2154,7 +2154,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             return false
         }
 
-        return (SpringSecurityUtils.ifAnyGranted("ROLE_CURATOR") || aclUtilService.hasPermission(
+        return (SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN") || aclUtilService.hasPermission(
             springSecurityService.authentication, model, BasePermission.ADMINISTRATION))
     }
 
