@@ -2,20 +2,20 @@
 <%
 	def totalCount
 	if (matches) {
-		totalCount=matches
+		totalCount = matches
 	}
 	else {
-		totalCount=modelsAvailable
+		totalCount = modelsAvailable
 	}
-	def imagePath="/images"
-	def resultOptions=net.biomodels.jummp.webapp.Preferences.getOptions("numResults")
-	resultOptions=resultOptions.reverse()
+	def imagePath = "/images"
+	def resultOptions = net.biomodels.jummp.webapp.Preferences.getOptions("numResults")
+	resultOptions = resultOptions.reverse()
 %>
 <div class="content">
 	<div class="view view-dom-id-9c00a92f557689f996511ded36a88594">
         <div class="view-content">
             <div id="inline-list">
-                <g:if test="${action=="list"}">
+                <g:if test="${action == "list"}">
                     <sec:ifLoggedIn>
                         <a href="${createLink(controller: "search", action: "archive")}">Browse Archived Models</a>
                     </sec:ifLoggedIn>
@@ -23,15 +23,13 @@
                 <ul>
                     <g:each in="${resultOptions}">
                         <li>
-                            <g:if test="${it==length}">
+                            <g:if test="${it == length}">
                                 ${it}
                             </g:if>
                             <g:else>
-                                <a href="${createLink(controller: 'search',
-                                    action: action,
+                                <a href="${createLink(controller: 'search', action: action,
                                     params: [query: query,  sortDir: sortDirection,
-                                             sortBy: sortBy, offset: 0,
-                                             numResults:it])}">
+                                             sortBy: sortBy, offset: 0, numResults: it])}">
                                     ${it}
                                 </a>
                             </g:else>
@@ -67,7 +65,7 @@
                 			<td>${model.lastModifiedDate.format('yyyy/MM/dd')}</td>
                 			<sec:ifLoggedIn>
 								<td style="text-align: center;">
-									<g:if test="${model.state==ModelState.PUBLISHED}">
+									<g:if test="${model.state == ModelState.PUBLISHED}">
 										<img style="width:14px" title="Published" alt="public model" src="http://www.ebi.ac.uk/web_guidelines/images/icons/EBI-Functional/Functional%20icons/unlock.png"/>
 									</g:if>
 									<g:else>
@@ -92,11 +90,11 @@
                 <%
                     int currentPage = 1
                     if (offset != 0) {
-                        currentPage = Math.ceil((double) (offset+1) / (double) length)
+                        currentPage = Math.ceil((double) (offset + 1) / (double) length)
                     }
                     int modelStart = 1 + (currentPage - 1)*length
                     int modelEnd = length < models.size() ? length : models.size()
-                    modelEnd += modelStart -1
+                    modelEnd += modelStart - 1
                     int numPages = Math.ceil((double) totalCount / (double) length)
                 %>
                 <div class="dataTables_info">
@@ -107,35 +105,38 @@
                 		<g:img dir="${imagePath}/pagination" absolute="true" contextPath="" file="arrow-previous-disable.gif" alt="Previous"/>
                 	</g:if>
                 	<g:else>
-                		<a href="${createLink(controller: 'search', action: action, params: [query: query, sortDir: sortDirection, sortBy: sortBy, offset: modelStart-length-1])}">
+                		<a href="${createLink(controller: 'search', action: action,
+                            params: [query: query, sortDir: sortDirection, sortBy: sortBy, offset: modelStart-length-1])}">
                 			<g:img dir="${imagePath}/pagination" absolute="true"  contextPath="" file="arrow-previous.gif" alt="Previous"/>
                 		</a>
                 	</g:else>
                 	<g:each var="i" in="${ (1..<numPages+1) }">
                 		<span class="pageNumbers">
-                			<g:if test="${currentPage==i}">
+                			<g:if test="${currentPage == i}">
                 				${i}
                 			</g:if>
                 			<g:else>
-                				<a href="${createLink(controller: 'search', action: action, params: [query: query,  sortDir: sortDirection, sortBy: sortBy, offset: (i - 1)*length ])}">
+                				<a href="${createLink(controller: 'search', action: action,
+                                    params: [query: query,  sortDir: sortDirection, sortBy: sortBy, offset: (i - 1)*length ])}">
                 					${i}
                 				</a>
                 			</g:else>
                 		</span>
                 	</g:each>
-                	<g:if test="${modelEnd==totalCount}">
+                	<g:if test="${modelEnd == totalCount}">
                 		<g:img dir="${imagePath}/pagination" absolute="true"  contextPath="" file="arrow-next-disable.gif" alt="Next"/>
                 	</g:if>
                 	<g:else>
-                		<a href="${createLink(controller: 'search', action: action, params: [query: query,  sortDir: sortDirection, sortBy: sortBy, offset: modelStart+length-1])}">
+                		<a href="${createLink(controller: 'search', action: action,
+                            params: [query: query,  sortDir: sortDirection, sortBy: sortBy, offset: modelStart+length-1])}">
                 			<g:img dir="${imagePath}/pagination" absolute="true"  contextPath="" file="arrow-next.gif" alt="Next"/>
                 		</a>
                 	</g:else>
                 </div>
             </g:if>
             <g:else>
-    			<g:if test="${matches!=null}">
-            		No available models matched your query. Please try logging in to access more models, or another search query.
+    			<g:if test="${matches != null}">
+            		<p>No available models matched your query. Please try logging in to access more models, or another search query.</p>
             	</g:if>
             	<g:else>
             		<p>No available models matched your query. Please try logging in to access more models, or another search query.</p>
