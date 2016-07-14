@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -41,6 +41,26 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
 
   <!-- Place favicon.ico and apple-touch-icon.png in the root directory: mathiasbynens.be/notes/touch-icons -->
+  <%
+    bmUrlPrefix = "${grailsApplication.config.grails.serverURL}/images/biomodels"
+  %>
+  <link rel="apple-touch-icon" sizes="57x57" href="${bmUrlPrefix}/apple-icon-57x57.png">
+  <link rel="apple-touch-icon" sizes="60x60" href="${bmUrlPrefix}/apple-icon-60x60.png">
+  <link rel="apple-touch-icon" sizes="72x72" href="${bmUrlPrefix}/apple-icon-72x72.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="${bmUrlPrefix}/apple-icon-76x76.png">
+  <link rel="apple-touch-icon" sizes="114x114" href="${bmUrlPrefix}/apple-icon-114x114.png">
+  <link rel="apple-touch-icon" sizes="120x120" href="${bmUrlPrefix}/apple-icon-120x120.png">
+  <link rel="apple-touch-icon" sizes="144x144" href="${bmUrlPrefix}/apple-icon-144x144.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="${bmUrlPrefix}/apple-icon-152x152.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="${bmUrlPrefix}/apple-icon-180x180.png">
+  <link rel="icon" type="image/png" sizes="192x192"  href="${bmUrlPrefix}/android-icon-192x192.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="${bmUrlPrefix}/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="96x96" href="${bmUrlPrefix}/favicon-96x96.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="${bmUrlPrefix}/favicon-16x16.png">
+  <link rel="manifest" href="${bmUrlPrefix}/manifest.json">
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="msapplication-TileImage" content="${bmUrlPrefix}/ms-icon-144x144.png">
+  <meta name="theme-color" content="#ffffff">
 
   <!-- CSS: implied media=all -->
   <!-- CSS concatenated and minified via ant build script-->
@@ -49,7 +69,7 @@
   <link rel="stylesheet" href="//www.ebi.ac.uk/web_guidelines/css/compliance/develop/ebi-visual.css" type="text/css" media="screen">
   <link rel="stylesheet" href="//www.ebi.ac.uk/web_guidelines/css/compliance/develop/984-24-col-fluid.css" type="text/css" media="screen">
   <link rel="stylesheet" href="<g:resource dir="css" file="ebilayout.css"/>" />
-    
+
   <!-- you can replace this with [projectname]-colours.css. See http://frontier.ebi.ac.uk/web/style/colour for details of how to do this -->
   <!-- also inform ES so we can host your colour palette file -->
   <link rel="stylesheet" href="//www.ebi.ac.uk/web_guidelines/css/compliance/develop/embl-petrol-colours.css" type="text/css" media="screen">
