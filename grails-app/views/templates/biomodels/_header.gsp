@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -56,16 +56,14 @@
 
 <!-- local-title -->
 <!-- NB: for additional title style patterns, see http://frontier.ebi.ac.uk/web/style/patterns -->
-<div id="local-title" class="grid_12 alpha logo-title"> 
-	<span>
-	<a href="${createLink(uri: '/', absolute: true)}" title="Back to BioModels homepage">
-		<h1>BioModels</h1>
-		<%-- <r:img uri="/images/biomodels/logo_small.png"/>
-		<img src="[service-logo]" alt="[service-name] logo" width="x" height="y"> --%>
-	</a> 
-	</span> 
+<div id="local-title" class="grid_12 alpha">
+    <h1 style="margin: 5px 0;">
+        <a href="${createLink(uri: '/', absolute: true)}" title="Back to BioModels homepage">
+            <img src="${grailsApplication.config.grails.serverURL}/images/biomodels/logo_small.png"
+                 height="100" width="100" style="padding-right: 12px;"
+                 title="Biomodels Database Homepage"/>BioModels Database</a>
+    </h1>
 </div>
-
 <!-- /local-title -->
 
 <!-- local-search -->
