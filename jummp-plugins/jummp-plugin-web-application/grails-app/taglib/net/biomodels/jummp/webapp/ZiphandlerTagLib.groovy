@@ -72,9 +72,8 @@ class ZiphandlerTagLib {
 				e.printStackTrace()
 			}
 		}
-	
 	}
-	
+
 	private void visitFileJS(StringBuilder builder, Path zipfile, Path visiting, BasicFileAttributes attrs) {
 			builder.append("fileData[\"")
 			builder.append(zipfile.getFileName().toString())
@@ -91,7 +90,7 @@ class ZiphandlerTagLib {
                     "Last_Modified", "${new Date(attrs.lastModifiedTime().toMillis())}".toString(), true)
 			}
 	}
-	
+
 	private void addFileAttributesJS(StringBuilder builder, String filename,String prop, String value, boolean quotes) {
 		builder.append("fileData[\"").append(filename).
 				append("\"].").append(prop).append("=")
@@ -104,7 +103,7 @@ class ZiphandlerTagLib {
 		}
 		builder.append(";")
 	}
-	
+
 	private void handleZip(StringBuilder builder, boolean JS, String filePath, def loadedZips, def zipSupported) {
 		 try {
   				Path zipfile = Paths.get(filePath)
