@@ -43,7 +43,6 @@ import java.nio.file.Paths
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.FileVisitResult
 import org.apache.commons.io.FilenameUtils
-import java.text.DateFormat
 
 class ZiphandlerTagLib {
 	static namespace="Ziphandler"
