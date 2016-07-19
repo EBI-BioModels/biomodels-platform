@@ -22,6 +22,7 @@
 			<span class='tipNote'>Tip:</span>
 			Choose the collaborator, then press enter to add them to this team.
 		</span>
+        <h3 id="flashMessage" hidden>Warning Message</h3>
 		<div class="spaced" id="members">
 			<table id="membersTable">
 				<thead id='nameLabel'>

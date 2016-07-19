@@ -94,9 +94,12 @@ Team = Backbone.View.extend({
 
 // create a view.
 teamMembers = new Team({collection: collaborators});
-// add a new collaborator by pressing the return key (magic code 13) or by the add button
 function startTeams(teamsUrl, successUrl, existing) {
-	$('#nameSearch').keypress(function(e) {
+    $('#nameSearch').focus(function () {
+        $('#flashMessage').hide();
+    });
+    // add a new collaborator by pressing the return key (magic code 13) or by the add button
+    $('#nameSearch').keypress(function(e) {
         if (e.which == RETURN_KEY && $('#nameSearch').val().trim()) {
         	addCollab(e);
         }
@@ -132,11 +135,18 @@ function startTeams(teamsUrl, successUrl, existing) {
 
 function addCollab(e) {
     e.preventDefault();
-    var thisCollaborator = {};
-    thisCollaborator.email = selectedItem[0];
-    thisCollaborator.userId = selectedItem[1];
-    thisCollaborator.name = selectedItem[2];
-    thisCollaborator.id = selectedItem[3];
-    // triggers Team.addMember()
-    collaborators.add(thisCollaborator);
+    if (selectedItem) {
+        var thisCollaborator = {};
+        thisCollaborator.email = selectedItem[0];
+        thisCollaborator.userId = selectedItem[1];
+        thisCollaborator.name = selectedItem[2];
+        thisCollaborator.id = selectedItem[3];
+        // triggers Team.addMember()
+        collaborators.add(thisCollaborator);
+    } else {
+        //alert("User not existing");
+        var newUser = $('#nameSearch').val().trim();
+        $('#flashMessage').show();
+        $('#flashMessage').text("The user " + newUser + " does not exist.")
+    }
 }
