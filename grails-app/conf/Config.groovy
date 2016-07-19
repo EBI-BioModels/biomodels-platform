@@ -674,3 +674,10 @@ if (!(jummpConfig.jummp.context.help.root instanceof ConfigObject)) {
 jummp.config.maintenance = false
 
 jummp.id.generators = ModelIdentifierUtils.processGeneratorSettings(jummp)
+
+// elasticsearch settings for weceem
+elasticSearch.datastoreImpl = 'hibernateDatastore'
+elasticSearch.bulkIndexOnStartup = true
+elasticSearch.disableAutoIndex = false
+elasticSearch.client.mode = 'local'
+elasticSearch.index.store.type = 'memory' // store local node in memory and not on disk
