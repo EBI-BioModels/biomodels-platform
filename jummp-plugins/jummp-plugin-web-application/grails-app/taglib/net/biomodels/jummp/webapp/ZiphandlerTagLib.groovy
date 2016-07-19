@@ -154,12 +154,14 @@ class ZiphandlerTagLib {
 					addFileAttributesJS(builder, file.name, "Description",
                             it.description.encodeAsJavaScript(), true)
 				}
-				addFileAttributesJS(builder, file.name, "mime", it.mimeType, true); 
-				addFileAttributesJS(builder,file.name,"isInternal","false", false) 
-				
-				if (it.mimeType.contains('zip')) {
-						 handleZip(builder, true, it.path, loadedZips, zipSupported)
-				}
+				addFileAttributesJS(builder, file.name, "mime", it.mimeType, true);
+				addFileAttributesJS(builder,file.name,"isInternal","false", false)
+
+				if (it.mimeType != null ){
+                    if (it.mimeType.contains('zip')) {
+                        handleZip(builder, true, it.path, loadedZips, zipSupported)
+                    }
+                }
      		}
      		builder.append("</script>")
         }
@@ -204,11 +206,13 @@ class ZiphandlerTagLib {
         				filename=filename.substring(0,20)+"..."
         			}
         			builder.append(filename).append("</span></a>")
-        			if (it.mimeType.contains('zip')) {
-        				builder.append("<ul>")
-        				handleZip(builder, false, it.path, loadedZips, zipSupported)
-        				builder.append("</ul>")
-	 			    }
+                    if (it.mimeType != null) {
+                        if (it.mimeType.contains('zip')) {
+                            builder.append("<ul>")
+                            handleZip(builder, false, it.path, loadedZips, zipSupported)
+                            builder.append("</ul>")
+                        }
+                    }
 	 			    builder.append("</li>")
         		}
         	}
