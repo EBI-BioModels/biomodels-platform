@@ -107,6 +107,9 @@ function startTeams(teamsUrl, successUrl, existing) {
     $('#add').click(function(e) {
     	if ($('#nameSearch').val().trim()) {
         	addCollab(e);
+        } else {
+            $('#flashMessage').show();
+            $('#flashMessage').text('The added user information cannot be empty.');
         }
     });
     $('.submitButton').click(function(e) {
