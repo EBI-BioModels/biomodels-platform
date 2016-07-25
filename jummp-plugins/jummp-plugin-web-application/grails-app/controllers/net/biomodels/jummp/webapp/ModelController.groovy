@@ -215,6 +215,7 @@ class ModelController {
                 response = net.biomodels.jummp.webapp.rest.model.show.Model.class,
                 notes = "Pass the expected media type of the request as a parameter e.g. /model/id?format=json")
     @ApiImplicitParam(name = "modelId", value = "The model identifier", required = true, allowMultiple = false)
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def show() {
         RevisionTransportCommand rev = modelDelegateService.getRevisionFromParams(params.id,
                     params.revisionId)
