@@ -76,6 +76,7 @@ class ModelDelegateService implements IModelService {
 
     def modelService
     def modelFileFormatService
+    def qcInfoDelegateService
     def referenceTracker
     def publicationIdGenerator
 
@@ -230,8 +231,8 @@ class ModelDelegateService implements IModelService {
 
     Boolean canCertify(String modelId) {
         def revision = getLatestRevision(modelId)
-        if(revision.qcInfo == null)
-            return modelService.canCertify(ModelAdapter.findByPerennialIdentifier(modelId))
+        if(!revision.qcInfo)
+            return qcInfoDelegateService.canCertify(ModelAdapter.findByPerennialIdentifier(modelId))
         else
             return false
     }
