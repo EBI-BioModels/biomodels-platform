@@ -237,10 +237,6 @@ class ModelDelegateService implements IModelService {
             return false
     }
 
-    Boolean addQcInfo(String revisionId, QcInfo qcInfo) {
-        return modelService.addQcInfo(Revision.get(revisionId), qcInfo)
-    }
-
     Boolean canSubmitForPublication(String modelId) {
         def revision = getLatestRevision(modelId)
         if ((revision.state == ModelState.UNPUBLISHED) && (revision.state != ModelState.UNDER_CURATION)) {
