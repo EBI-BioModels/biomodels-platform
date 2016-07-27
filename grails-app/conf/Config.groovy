@@ -264,11 +264,6 @@ log4j.main = {
         'org.weceem'
     ]
 
-    debug console: [
-        'org.codehaus.groovy.grails.web.mapping.filter', // URL mapping
-        'org.codehaus.groovy.grails.web.mapping', // URL mapping
-    ]
-
     warn   jummpAppender: 'org.mortbay.log'
     // Simple Logging goes to its own file
     info   eventsAppender: 'net.biomodels.jummp.plugins.simplelogging'
