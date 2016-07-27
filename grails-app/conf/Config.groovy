@@ -357,17 +357,30 @@ if ((jummpConfig.jummp.security.ldap.enabled instanceof ConfigObject) || !Boolea
 } else {
     println("using ldap")
     jummp.security.ldap.enabled = true
-    grails.plugin.springsecurity.ldap.context.managerDn         = jummpConfig.jummp.security.ldap.managerDn
+    /*grails.plugin.springsecurity.ldap.context.managerDn       = jummpConfig.jummp.security.ldap.managerDn
     grails.plugin.springsecurity.ldap.context.managerPassword   = jummpConfig.jummp.security.ldap.managerPw
     grails.plugin.springsecurity.ldap.context.server            = jummpConfig.jummp.security.ldap.server
     grails.plugin.springsecurity.ldap.search.base               = jummpConfig.jummp.security.ldap.search.base
     grails.plugin.springsecurity.ldap.authorities.searchSubtree = jummpConfig.jummp.security.ldap.search.subTree
-    grails.plugin.springsecurity.ldap.search.filter             = jummpConfig.jummp.security.ldap.search.filter
+    grails.plugin.springsecurity.ldap.search.filter             = jummpConfig.jummp.security.ldap.search.filter*/
 
+    grails.plugin.springsecurity.ldap.context.managerDn         = ''
+    grails.plugin.springsecurity.ldap.context.managerPassword   = ''
+    grails.plugin.springsecurity.ldap.context.server              = 'ldaps://ldap.ebi.ac.uk'
+    grails.plugin.springsecurity.ldap.search.base                 = 'ou=people,dc=ebi,dc=ac,dc=uk'
+    grails.plugin.springsecurity.ldap.authorities.searchSubtree   = true
+    grails.plugin.springsecurity.ldap.authorities.groupSearchBase = 'ou=groups,dc=ebi,dc=ac,dc=uk'
+    grails.plugin.springsecurity.ldap.search.filter               = '(uid={0})'
+    grails.plugin.springsecurity.ldap.context.anonymousReadOnly   = true
     // static options
     grails.plugin.springsecurity.ldap.authorities.ignorePartialResultException = true
     grails.plugin.springsecurity.ldap.authorities.retrieveGroupRoles = true
     grails.plugin.springsecurity.ldap.authorities.retrieveDatabaseRoles = true
+    grails.plugin.springsecurity.providerNames = [
+        'ldapAuthProvider',
+        'anonymousAuthenticationProvider',
+        'rememberMeAuthenticationProvider'
+    ]
 }
 
 // version control backend
