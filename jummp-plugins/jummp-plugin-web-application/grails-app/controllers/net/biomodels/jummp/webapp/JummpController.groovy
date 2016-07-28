@@ -25,14 +25,17 @@
 package net.biomodels.jummp.webapp
 
 import grails.converters.JSON
+import grails.plugin.springsecurity.annotation.Secured
 
+@Secured(["IS_AUTHENTICATED_FULLY"])
 class JummpController {
 
     def userService
     def grailsApplication
     def teamService
 
-    def feedback = {
+    @Secured(["isAuthenticated()"])
+    def feedback() {
         String theme = grailsApplication.config.jummp.branding.style
         if ('ddmore' != theme && 'biomodels' != theme) {
             theme = 'default'
@@ -56,7 +59,7 @@ class JummpController {
         def usersFound = userService.searchUsers(params.term)
         render (usersFound as JSON)
     }
-    
+
     def teamLookup = {
 		if (params.teamID) {
 			long teamID;

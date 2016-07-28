@@ -48,7 +48,6 @@ This file contains annotations which make this model more easily findable."""
      */
     def modelFileFormatService
 
-    @Override
     List<RepositoryFileTransportCommand> marshallAnnotations(RevisionTransportCommand revisionTC,
                                 List<StatementTransportCommand> statementTransportCommands,
                                 boolean isUpdate = false) {

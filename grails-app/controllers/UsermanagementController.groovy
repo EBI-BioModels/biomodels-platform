@@ -26,8 +26,7 @@ import net.biomodels.jummp.webapp.RegistrationCommand
 import net.biomodels.jummp.webapp.EditUserCommand
 import net.biomodels.jummp.webapp.UpdatePasswordCommand
 import net.biomodels.jummp.webapp.ResetPasswordCommand
-import grails.plugins.springsecurity.Secured
-import net.biomodels.jummp.plugins.security.Person
+import grails.plugin.springsecurity.annotation.Secured
 
 /*
 * @short Controller for managing user registrations
@@ -67,29 +66,31 @@ class UsermanagementController {
      * Passes on any info messages needed to be displayed and renders the register gsp
      */
     @Secured(["isAnonymous()"])
-    def create = {
+    def create() {
         render view: "register", model: [postUrl: "", flashMessage: checkForMessage(),
     									validationErrorOn: checkForErrorBean()]
     }
 
     @Secured(["isAuthenticated()"])
-    def edit = {
+    def edit() {
     	String user = springSecurityService.principal.username
-        render view: "edit", model: [postUrl          : "", flashMessage: checkForMessage(),
-                                     validationErrorOn: checkForErrorBean(),
-    								user: userService.getUser(user),
-    								notificationPermissions: notificationService.getNotificationPermissions(user)]
+        render  view: "edit",
+                model: [postUrl: "", flashMessage: checkForMessage(),
+                        validationErrorOn: checkForErrorBean(),
+                        user: userService.getUser(user),
+                        notificationPermissions: notificationService.getNotificationPermissions(user)]
     }
 
     @Secured(["isAuthenticated()"])
-    def editPassword = {
-        render view: "editPassword", model: [postUrl          : "", flashMessage: checkForMessage(),
-                                             validationErrorOn: checkForErrorBean(),
-    										user: userService.getUser(springSecurityService.principal.username)]
+    def editPassword() {
+        render  view: "editPassword",
+                model: [postUrl: "", flashMessage: checkForMessage(),
+                        validationErrorOn: checkForErrorBean(),
+                        user: userService.getUser(springSecurityService.principal.username)]
     }
 
     @Secured(["isAuthenticated()"])
-    def show = {
+    def show() {
     	String user = springSecurityService.principal.username
         render view: "show", model: [postUrl          : "", flashMessage: checkForMessage(),
                                      validationErrorOn: checkForErrorBean(),
@@ -97,20 +98,20 @@ class UsermanagementController {
     								notificationPermissions: notificationService.getNotificationPermissions(user)]
     }
 
-    @Secured(["isAnonymous()"])
-    def forgot = {
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def forgot() {
         render view: "forgot", model: [postUrl: "", flashMessage: checkForMessage(),
     								validationErrorOn: checkForErrorBean()]
     }
 
-    @Secured(["isAnonymous()"])
-    def passwordreset = {
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def passwordreset() {
     	if (params.id) {
     		flash.hashCode=params.id
-    		redirect action: reset
+    		redirect action: 'reset'
     	}
     	else {
-    		redirect action: forgot;
+    		redirect action: 'forgot'
     	}
     }
 
@@ -118,7 +119,7 @@ class UsermanagementController {
     * Password reset based on the unique code sent to the user
     **/
     @Secured(["isAnonymous()"])
-    def reset = {
+    def reset() {
     	render view: "reset", model: [postUrl: "", flashMessage:checkForMessage(),
     								validationErrorOn: checkForErrorBean(),
     								hashCode: flash.hashCode]
@@ -143,7 +144,8 @@ class UsermanagementController {
      * edit a user. If an error occurs at any point, the method redirects
      * to edit action and sends the user a helpful message.
      */
-    def editUser = {
+    @Secured(["IS_AUTHENTICATED_FULLY"])
+    def editUser() {
         EditUserCommand cmd = new EditUserCommand()
         if (!validateUserData(cmd, params)) {
             return redirect(action:"edit")
@@ -167,7 +169,8 @@ class UsermanagementController {
      * edit a user. If an error occurs at any point, the method redirects
      * to edit action and sends the user a helpful message.
      */
-    def newPassword = {
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def newPassword() {
     	ResetPasswordCommand cmd=new ResetPasswordCommand()
     	if (!validateUserData(cmd, params)) {
     		flash.hashCode=params.hashCode
@@ -190,7 +193,8 @@ class UsermanagementController {
      * edit a user. If an error occurs at any point, the method redirects
      * to edit action and sends the user a helpful message.
      */
-    def updatePassword = {
+    @Secured(["IS_AUTHENTICATED_FULLY"])
+    def updatePassword() {
     	UpdatePasswordCommand cmd=new UpdatePasswordCommand()
     	if (!validateUserData(cmd, params)) {
     		return redirect(action:"editPassword")
@@ -211,7 +215,8 @@ class UsermanagementController {
     * Requests a password link from the user service, hiding the exception thrown
     * if the username provided does not exist.
     **/
-    def requestPassword = {
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def requestPassword() {
         String username = params.username
         boolean usernameExists = true
         if (username) {
@@ -240,7 +245,8 @@ class UsermanagementController {
      * the user service to create a user. If an error occurs at any point, the method redirects
      * to create action and sends the user a helpful message.
      */
-    def signUp = {
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def signUp() {
     	boolean captchaValid = simpleCaptchaService.validateCaptcha(params.captcha)
     	if (!captchaValid) {
     		flash.message="The text entered did not match the image. Please try again"

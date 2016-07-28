@@ -35,8 +35,8 @@
 package net.biomodels.jummp.core.model
 
 import net.biomodels.jummp.core.annotation.ElementAnnotationTransportCommand
+import net.biomodels.jummp.core.certification.QcInfoTransportCommand
 import org.springframework.context.ApplicationContext
-import net.biomodels.jummp.qcinfo.QcInfo
 
 /**
  * @short Wrapper for a Revision to be transported through JMS.
@@ -111,7 +111,7 @@ class RevisionTransportCommand implements Serializable {
 
     String validationReport
 
-    QcInfo qcInfo
+    QcInfoTransportCommand qcInfo
 
      List<RepositoryFileTransportCommand> getFiles() {
          if (!files) {

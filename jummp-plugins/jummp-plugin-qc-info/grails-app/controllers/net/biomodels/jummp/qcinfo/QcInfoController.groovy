@@ -1,13 +1,12 @@
 package net.biomodels.jummp.qcinfo
 
 import grails.converters.JSON
-import grails.plugins.springsecurity.Secured
+import grails.plugin.springsecurity.annotation.Secured
 
 @Secured(["isAuthenticated()"])
 class QcInfoController {
-
     def modelDelegateService
-    def qcInfoService
+    def qcInfoDelegateService
 
     def edit() {
         if (!params.id) {
@@ -42,8 +41,7 @@ class QcInfoController {
             return
         }
 
-        boolean certified = false
-        FlagLevel flag;
+        FlagLevel flag
         if (params.flag == "1") {
             flag = FlagLevel.FLAG_1
         }
@@ -57,10 +55,8 @@ class QcInfoController {
             return
         }
 
-        def qcInfo = qcInfoService.createQcInfo(flag, params.comment)
-        if (qcInfo != null) {
-            certified = modelDelegateService.addQcInfo(params.revision, qcInfo)
-        }
+        def qcInfo = qcInfoDelegateService.createQcInfo(flag, params.comment)
+        boolean certified = qcInfoDelegateService.addQcInfo(params.revision, qcInfo)
         if (certified) {
             render([status: '200', message: "The model is successfully certified."] as JSON)
         } else {

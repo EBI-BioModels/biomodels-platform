@@ -21,7 +21,7 @@
 package net.biomodels.jummp.core
 
 import grails.async.Promise
-import grails.plugins.springsecurity.Secured
+import grails.plugin.springsecurity.annotation.Secured
 import groovy.json.JsonBuilder
 import java.util.concurrent.atomic.AtomicReference
 import net.biomodels.jummp.core.adapters.DomainAdapter
@@ -41,7 +41,7 @@ import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.response.QueryResponse
 import org.apache.solr.common.SolrDocumentList
 import org.apache.solr.common.SolrInputDocument
-import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
+import grails.plugin.springsecurity.SpringSecurityUtils
 import org.perf4j.aop.Profiled
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
@@ -117,7 +117,7 @@ class SearchService {
         if (IS_DEBUG_ENABLED) {
             log.debug "Clearing the search index."
         }
-        solrServerHolder.server.deleteByQuery("*:*")
+        solrServerHolder.solrClient.deleteByQuery("*:*")
         log.info "Cleared the search index."
     }
 
@@ -281,7 +281,7 @@ class SearchService {
             updateIndexBase(doc, setDeletedField.rcurry(deleted))
         }
         // force commit as downstream we will query the index directly.
-        solrServerHolder.server.commit()
+        solrServerHolder.solrClient.commit()
     }
 
     /**
@@ -321,7 +321,7 @@ class SearchService {
         }
         query.setFields(fields.toArray(new String[0]))
         query.set("defType", "edismax")
-        QueryResponse response = solrServerHolder.server.query(query)
+        QueryResponse response = solrServerHolder.solrClient.query(query)
         SolrDocumentList docs = response.getResults()
         if (0 == docs.size()) {
             log.warn("Could not find a Solr document for model ${model?.submissionId}")
@@ -405,7 +405,7 @@ class SearchService {
         SolrQuery query = new SolrQuery()
         query.setQuery(q)
         query.setRequestHandler(SEARCH_HANDLER)
-        QueryResponse response = solrServerHolder.server.query(query)
+        QueryResponse response = solrServerHolder.solrClient.query(query)
         SolrDocumentList docs = response.getResults()
         return docs
     }
@@ -429,7 +429,7 @@ class SearchService {
      */
 
     private void updateIndexWithDocument(SolrInputDocument doc) {
-        solrServerHolder.server.add(doc)
+        solrServerHolder.solrClient.add(doc)
     }
 
     private SolrInputDocument getSolrDocumentFromRevision(def revision) {

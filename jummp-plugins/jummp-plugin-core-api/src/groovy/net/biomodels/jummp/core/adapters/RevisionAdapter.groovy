@@ -23,6 +23,8 @@ package net.biomodels.jummp.core.adapters
 import grails.util.Holders
 import net.biomodels.jummp.core.annotation.ElementAnnotationCategory
 import net.biomodels.jummp.core.annotation.ElementAnnotationTransportCommand
+import net.biomodels.jummp.core.certification.QcInfoCategory
+import net.biomodels.jummp.core.certification.QcInfoTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.model.Revision
@@ -67,6 +69,10 @@ public class RevisionAdapter extends DomainAdapter {
         String submitterName = revision.owner.person.userRealName
         def modelAdapter = new ModelAdapter(model: revision.model)
         def modelCmd = modelAdapter.toCommandObject()
+        QcInfoTransportCommand qcInfoCmd
+        use(QcInfoCategory) {
+            qcInfoCmd = revision.qcInfo?.toCommandObject()
+        }
         RevisionTransportCommand rev = new RevisionTransportCommand(
                 id: revision.id,
                 state: revision.state,
@@ -83,7 +89,7 @@ public class RevisionAdapter extends DomainAdapter {
                 annotations: annotations,
                 validationLevel: revision.validationLevel,
                 validationReport: revision.validationReport,
-                qcInfo: revision.qcInfo
+                qcInfo: qcInfoCmd
         )
         return rev
     }

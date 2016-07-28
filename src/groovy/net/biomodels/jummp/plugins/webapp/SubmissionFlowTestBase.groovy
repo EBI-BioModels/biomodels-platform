@@ -22,13 +22,11 @@
 
 package net.biomodels.jummp.plugins.webapp
 
-import grails.test.*
+import grails.plugin.springsecurity.SpringSecurityUtils
+import grails.plugin.springsecurity.acl.AclSid
 import grails.test.WebFlowTestCase
 import grails.util.Holders
 import net.biomodels.jummp.core.adapters.ModelAdapter
-import net.biomodels.jummp.core.FileSystemService
-import net.biomodels.jummp.core.model.ModelFormatTransportCommand
-import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import net.biomodels.jummp.model.Model
@@ -37,36 +35,17 @@ import net.biomodels.jummp.plugins.security.Person
 import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.plugins.security.UserRole
-import net.biomodels.jummp.plugins.webapp.SubmissionFlowTestBase
 import net.biomodels.jummp.webapp.ModelController
 import org.apache.commons.io.FileUtils
-import org.codehaus.groovy.grails.commons.spring.GrailsWebApplicationContext
-import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
-import org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid
-import org.codehaus.groovy.grails.web.context.ServletContextHolder
 import org.codehaus.groovy.grails.web.servlet.GrailsApplicationAttributes
 import org.codehaus.groovy.grails.web.servlet.mvc.GrailsWebRequest
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
-import org.springframework.binding.convert.service.DefaultConversionService
-import org.springframework.mock.web.MockHttpServletRequest
-import org.springframework.mock.web.MockHttpServletResponse
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.mock.web.MockMultipartHttpServletRequest
-import org.springframework.mock.web.MockServletContext
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.web.context.request.RequestAttributes
 import org.springframework.web.context.request.RequestContextHolder
-import org.springframework.web.servlet.ViewResolver
-import org.springframework.web.servlet.ViewResolver
-import org.springframework.webflow.definition.registry.FlowDefinitionRegistry
-import org.springframework.webflow.definition.registry.FlowDefinitionRegistryImpl
-import org.springframework.webflow.engine.builder.support.FlowBuilderServices
-import org.springframework.webflow.mvc.builder.MvcViewFactoryCreator
-import static org.junit.Assert.*
 
+import static org.junit.Assert.*
 
 public class SubmissionFlowTestBase extends WebFlowTestCase {
 	

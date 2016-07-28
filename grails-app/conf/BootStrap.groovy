@@ -39,14 +39,13 @@ import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.plugins.security.UserRole
 import org.codehaus.groovy.grails.commons.ApplicationAttributes
-import org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid
+import grails.plugin.springsecurity.acl.AclSid
 import org.codehaus.groovy.grails.commons.GrailsClass
 import org.codehaus.groovy.grails.plugins.DomainClassGrailsPlugin
 
 class BootStrap {
     def springSecurityService
     def wcmSecurityService
-    def searchableService
     def grailsApplication
 
     void addPublicationLinkProvider(PubLinkProvTC cmd) {
@@ -144,69 +143,32 @@ class BootStrap {
                 userRole = Role.findByAuthority("ROLE_ADMIN")
                 UserRole.create(user, userRole, true)
             }
-            // Manually start Searchable's mirroring process to ensure that it comes after the automated migrations.
-            //searchableService.reindex()
-            searchableService.startMirroring()
         }
 
         // custom mapping for weceem as it fails to work with an LDAPUserDetailsImpl
         wcmSecurityService.securityDelegate = [
             getUserName : { ->
-                if (springSecurityService.isLoggedIn()) {
-                    return springSecurityService.principal.username
-                } else {
+                def principal = springSecurityService.getPrincipal()
+                if (principal instanceof String) {
                     return null
+                } else {
+                    return principal?.username
                 }
             },
             getUserEmail : { ->
-                return null
+                def principal = springSecurityService.getPrincipal()
+                if (principal instanceof String) {
+                    return null
+                } else {
+                    return principal?.username
+                }
             },
             getUserRoles : { ->
-                if (springSecurityService.isLoggedIn()) {
-                    return springSecurityService.principal.authorities
-                } else {
-                    return ['ROLE_GUEST']
-                }
+                springSecurityService.authentication.authorities*.authority ?: ['ROLE_ANONYMOUS']
             },
             getUserPrincipal : { ->
-                def principal = springSecurityService.getPrincipal()
-                if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
-                    return new org.springframework.security.core.userdetails.UserDetails() {
-                        Collection<org.springframework.security.core.GrantedAuthority> getAuthorities() {
-                            return principal.authorities
-                        }
-                        String getPassword() {
-                            return principal.password
-                        }
-                        String getUsername() {
-                            return principal.username
-                        }
-                        boolean isAccountNonExpired() {
-                            return principal.isAccountNonExpired()
-                        }
-                        boolean isAccountNonLocked() {
-                            return principal.isAccountNonLocked()
-                        }
-                        boolean isCredentialsNonExpired() {
-                            return principal.isCredentialsNonExpired()
-                        }
-                        boolean isEnabled() {
-                            return principal.isEnabled()
-                        }
-                        String getEmail() {
-                            return null
-                        }
-                        String getFirstName() {
-                            return null
-                        }
-                        String getLastName() {
-                            return null
-                        }
-                    }
-                } else {
-                    return principal
-                }
-            }
+                springSecurityService.principal
+	        }
         ]
         AbstractAppendingDecorator.context = ctx
         RevisionTransportCommand.context = ctx

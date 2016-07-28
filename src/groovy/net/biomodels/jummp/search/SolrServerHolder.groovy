@@ -28,8 +28,8 @@ import java.util.concurrent.atomic.AtomicReference
 import org.apache.commons.io.FileUtils
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
-import org.apache.solr.client.solrj.SolrServer
-import org.apache.solr.client.solrj.impl.HttpSolrServer
+import org.apache.solr.client.solrj.SolrClient
+import org.apache.solr.client.solrj.impl.HttpSolrClient
 import org.apache.solr.client.solrj.response.SolrPingResponse
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.perf4j.aop.Profiled
@@ -98,9 +98,9 @@ class SolrServerHolder {
      */
     GrailsApplication grailsApplication
     /**
-     * Singleton instance of SolrServer.
+     * Singleton instance of SolrClient.
      */
-    SolrServer server
+    SolrClient solrClient
     /**
      * The base URL for all requests to the SOLR core.
      */
@@ -128,15 +128,15 @@ URL of Solr server not found. Please check the setting jummp.search.url in the c
         prepareSolrCoreSetup(coreName, grailsConfig)
 
         SOLR_CORE_URL = getSolrCoreUrl(SOLR_URL)
-        server = new HttpSolrServer(SOLR_CORE_URL)
+        solrClient = new HttpSolrClient(SOLR_CORE_URL)
         if (IS_INFO_ENABLED) {
             log.info "Connected to Solr instance $SOLR_CORE_URL."
         }
-        SolrPingResponse response = server.ping()
+        SolrPingResponse response = solrClient.ping()
         if (IS_DEBUG_ENABLED) {
             log.debug "Solr instance response time: ${response.getQTime()}ms."
         }
-        log.info "Solr server is $server"
+        log.info "Solr server is $solrClient"
         if (IS_DEBUG_ENABLED) {
             log.debug "... finished initialising solrServerHolder."
         }
@@ -153,7 +153,7 @@ URL of Solr server not found. Please check the setting jummp.search.url in the c
             File testCoreFolder = solrCoreRef.get()
             forceDeleteTestSolrCore testCoreFolder
         }
-        server = null
+        solrClient = null
         solrCoreRef = null
         solrUrlRef = null
         solrHomeRef = null

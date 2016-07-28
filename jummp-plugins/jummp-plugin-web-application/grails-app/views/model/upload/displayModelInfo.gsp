@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -81,11 +81,11 @@
             </div>
         </g:form>
         <script>
-        
+
         function associateEventHandlers(id) {
         	var descBox = document.getElementById(id);
-        	
-        	
+
+
         	if ("onpropertychange" in descBox)
         	{
         		descBox.attachEvent("onpropertychange", $.proxy(function () {
@@ -95,7 +95,7 @@
         	}
         	else
         	{
-        		descBox.addEventListener("input", function () { 
+        		descBox.addEventListener("input", function () {
         			$("#changeStatus").val(true);
         		});
         	}
@@ -105,7 +105,7 @@
     		associateEventHandlers("name");
     	});
     	</script>
-    
+
      </body>
     <g:render template="/templates/decorateSubmission" />
     <g:render template="/templates/subFlowContextHelp" />

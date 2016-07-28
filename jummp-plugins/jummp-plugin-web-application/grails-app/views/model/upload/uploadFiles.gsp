@@ -26,7 +26,7 @@
 
 
 
-
+<%@page expressionCodec="none" %>
 <%@ page import="net.biomodels.jummp.core.model.RepositoryFileTransportCommand; grails.converters.JSON" contentType="text/html;charset=UTF-8" %>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">

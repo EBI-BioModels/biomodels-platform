@@ -1202,5 +1202,9 @@ databaseChangeLog = {
 
     include file: "20160511_updateRDFdescription.groovy"
 
-	include file: '20160713_certification.groovy'
+	include file: '20160713_createTableQcInfo.groovy'
+
+    include file: '20160718_addQcInfoToRevision.groovy'
+
+    include file: '20160718_addCertificationConstraints.groovy'
 }

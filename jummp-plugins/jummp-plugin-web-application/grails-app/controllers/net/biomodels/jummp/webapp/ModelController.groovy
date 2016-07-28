@@ -38,18 +38,15 @@ import com.wordnik.swagger.annotations.*
 import eu.ddmore.publish.service.PublishContext
 import eu.ddmore.publish.service.PublishException
 import grails.converters.JSON
-import grails.plugins.springsecurity.Secured
+import grails.plugin.springsecurity.annotation.Secured
 import groovy.json.JsonSlurper
-import net.biomodels.jummp.core.adapters.DomainAdapter
 import net.biomodels.jummp.core.model.PublicationDetailExtractionContext
-import net.biomodels.jummp.model.PublicationLinkProvider
 import org.apache.commons.lang3.exception.ExceptionUtils
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 import net.biomodels.jummp.core.model.ModelAuditTransportCommand
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.PermissionTransportCommand
-import net.biomodels.jummp.model.Publication
 import net.biomodels.jummp.core.model.PublicationTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
@@ -63,6 +60,7 @@ import org.springframework.web.multipart.MultipartFile
 import net.biomodels.jummp.plugins.security.Team
 
 @Api(value = "/model", description = "Operations related to models")
+@Secured(['IS_AUTHENTICATED_FULLY'])
 class ModelController {
     /**
      * Flag that checks whether the dynamically-inserted logger is set to DEBUG or higher.
@@ -109,11 +107,11 @@ class ModelController {
      * The list of actions for which we should not automatically create an audit item.
      */
     final List<String> AUDIT_EXCEPTIONS = ['updateFlow', 'createFlow', 'uploadFlow',
-                'showWithMessage', 'share', 'getFileDetails','submitForPublication']
+                'showWithMessage', 'share', 'getFileDetails', 'submitForPublication']
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
 
-    def afterInterceptor = [ action: this.&auditAfter, except: AUDIT_EXCEPTIONS]
+    def afterInterceptor = [action: this.&auditAfter, except: AUDIT_EXCEPTIONS]
 
     private String getUsername() {
         String username="anonymous"
@@ -159,6 +157,7 @@ class ModelController {
                 modelId = (model.publicationId) ?: model.submissionId
                 int historyItem = updateHistory(modelId, username, accessType, formatType, changesMade)
                 session.lastHistory = historyItem
+                return true
             } else {
                 log.error "Ignoring invalid request for $actionUri with params $params."
                 forward(controller: "errors", action: "error403")
@@ -169,7 +168,6 @@ class ModelController {
             forward(controller: "errors", action: "error403")
             return false
         }
-        return true
     }
 
     private void auditAfter(def model) {
@@ -217,6 +215,7 @@ class ModelController {
                 response = net.biomodels.jummp.webapp.rest.model.show.Model.class,
                 notes = "Pass the expected media type of the request as a parameter e.g. /model/id?format=json")
     @ApiImplicitParam(name = "modelId", value = "The model identifier", required = true, allowMultiple = false)
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def show() {
         RevisionTransportCommand rev = modelDelegateService.getRevisionFromParams(params.id,
                     params.revisionId)
@@ -277,7 +276,8 @@ class ModelController {
         }
     }
 
-    def files = {
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def files() {
         try {
             def revisionFiles = modelDelegateService.getRevisionFromParams(params.id, params.revisionId).files
             def responseFiles = revisionFiles.findAll { !it.hidden }
@@ -289,8 +289,7 @@ class ModelController {
         }
     }
 
-    @Secured(["isAuthenticated()"])
-    def publish = {
+    def publish() {
         RevisionTransportCommand rev
         try {
             rev = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
@@ -324,8 +323,7 @@ class ModelController {
         }
     }
 
-    @Secured(["isAuthenticated()"])
-    def submitForPublication = {
+    def submitForPublication() {
         try {
             def rev = modelDelegateService.getRevisionFromParams(params.id)
             modelDelegateService.submitModelRevisionForPublication(rev)
@@ -345,8 +343,7 @@ class ModelController {
         }
     }
 
-    @Secured(["isAuthenticated()"])
-    def delete = {
+    def delete() {
         try {
             boolean deleted = modelDelegateService.deleteModel(params.id)
             def currentUser = springSecurityService.currentUser
@@ -383,8 +380,7 @@ class ModelController {
         }
     }
 
-    @Secured(["isAuthenticated()"])
-    def share = {
+    def share() {
         try {
             def rev = modelDelegateService.getRevisionFromParams(params.id)
             def perms = modelDelegateService.getPermissionsMap(rev.model.submissionId)
@@ -404,8 +400,7 @@ class ModelController {
         return []
     }
 
-    @Secured(["isAuthenticated()"])
-    def shareUpdate = {
+    def shareUpdate() {
         boolean valid = params.collabMap
         if (valid) {
             try {
@@ -435,7 +430,6 @@ class ModelController {
         }
     }
 
-    @Secured(["isAuthenticated()"])
     def updateFlow = {
         start {
             action {
@@ -487,7 +481,6 @@ class ModelController {
         displayAccessDenied()
    }
 
-    @Secured(["isAuthenticated()"])
     def createFlow = {
         uploadPipeline {
             subflow(controller: "model", action: "upload", input: [isUpdate:false])
@@ -513,7 +506,6 @@ class ModelController {
      * end of the session using <tt>flow.persistenceContext.evict(it)</tt>.
      * See http://grails.org/grails/latest/doc/guide/theWebLayer.html#flowScopes
      */
-    @Secured(["isAuthenticated()"])
     def uploadFlow = {
         input {
             isUpdate(required: true)
@@ -1141,7 +1133,8 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
     /**
      * File download of the model file for a model by id
      */
-    def download = {
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def download() {
         if (!params.filename) {
             final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(
                             modelDelegateService.getRevisionFromParams(params.id, params.revisionId))

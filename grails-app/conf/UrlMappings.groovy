@@ -51,8 +51,14 @@ class UrlMappings {
                 controller(notEqual: 'model')
             }
         }
+        // used for web services
+        "/$controller/$action?/$id?(.$format)?"{
+            constraints {
+                // apply constraints here
+            }
+        }
 
-        "/"(view:"/index")
+        "/"(view: "/index")
         "/maintenance"(controller: 'maintenance')
         "/maintenance/turnOn"(controller: 'maintenance', action: 'turnOn')
         "403"(controller: "errors", action: "error403")

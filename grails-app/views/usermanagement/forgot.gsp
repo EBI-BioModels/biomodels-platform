@@ -32,8 +32,7 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="layout" content="main"/>
         <title>Forgot Password</title>
-        </style>
-        <link rel="stylesheet" href="${resource(dir: 'css', file: 'jstree.css')}" /> 
+        <link rel="stylesheet" href="${resource(dir: 'css', file: 'jstree.css')}" />
     </head>
      <body>
         <p><g:message code="user.forgot.ui.explanation"/></p>
@@ -52,7 +51,7 @@
                 </div>
             </g:form>
         </div>
-        </body>
+    </body>
 </html>
 <content tag="title">
 	<g:message code="user.forgot.ui.heading"/>

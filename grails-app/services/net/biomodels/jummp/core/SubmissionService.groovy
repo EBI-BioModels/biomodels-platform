@@ -64,7 +64,7 @@ import org.apache.commons.io.FilenameUtils
 class SubmissionService {
     // concrete strategies for the submission state machine
     private final NewModelStateMachine newModel = new NewModelStateMachine()
-    private final NewRevisionStateMachine newrevision = new NewRevisionStateMachine()
+    private final NewRevisionStateMachine newRevision = new NewRevisionStateMachine()
     /**
      * Disable transactional behaviour for this service.
      */
@@ -532,7 +532,7 @@ class SubmissionService {
          * Convenience method for creating
          * @link{net.biomodels.jummp.core.model.RepositoryFileTransportCommand} objects
          */
-        private RFTC createRFTC(File file, boolean isMain, String description) {
+        public RFTC createRFTC(File file, boolean isMain, String description) {
             new RFTC(path: file.getCanonicalPath(), mainFile: isMain, userSubmitted: true,
                     hidden: false, description: description)
         }
@@ -920,7 +920,7 @@ class SubmissionService {
     private StateMachineStrategy getStrategyFromContext(Map<String, Object> workingMemory) {
         Boolean isUpdateOnExistingModel = (Boolean) workingMemory.get("isUpdateOnExistingModel");
         if (isUpdateOnExistingModel) {
-            return newrevision
+            return newRevision
         }
         return newModel
     }
@@ -950,7 +950,7 @@ class SubmissionService {
      * @param workingMemory a Map containing all objects exchanged throughout the flow.
      */
     /* generics + @CompileStatic ==> https://issues.apache.org/jira/browse/GROOVY-7477 */
-    protected List getFilesFromRepFiles(List repFiles) {
+    protected List getFilesFromRepFiles(List<RFTC> repFiles) {
         return repFiles?.collect { RFTC it -> new File(it.path) }
     }
 

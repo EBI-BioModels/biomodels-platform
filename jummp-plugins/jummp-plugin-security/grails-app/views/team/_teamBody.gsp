@@ -16,12 +16,13 @@
 		<div>
 			<label for="nameSearch">User</label>
 			<input placeholder="Name, username or email" id="nameSearch" name="nameSearch" type="text"/>
-			<g:submitButton name="add" value="Add"/>
+			<g:field type="button" name="add" value="Add"/>
 		</div>
 		<span class="tip">
 			<span class='tipNote'>Tip:</span>
 			Choose the collaborator, then press enter to add them to this team.
 		</span>
+        <h3 id="flashMessage" hidden>Warning Message</h3>
 		<div class="spaced" id="members">
 			<table id="membersTable">
 				<thead id='nameLabel'>

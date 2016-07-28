@@ -52,8 +52,8 @@ final class JummpAuthenticationImpl extends AbstractAuthenticationToken implemen
     def principal
     private String authenticationHash
 
-    private JummpAuthenticationImpl() {}
-    private JummpAuthenticationImpl(Map map) {}
+//    private JummpAuthenticationImpl() {}
+//    private JummpAuthenticationImpl(Map map) {}
 
     private JummpAuthenticationImpl(Collection<GrantedAuthority> authorities) {
         super(authorities)

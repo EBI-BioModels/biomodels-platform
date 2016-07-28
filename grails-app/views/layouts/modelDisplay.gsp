@@ -624,7 +624,7 @@
               <span class="bold">${description}:</span>
           </jummp:displayModelDescriptionLabel>
           <div style="margin-left: 30px;">
-              ${revision.description}
+              ${raw(revision.description)}
           </div>
         <table style="margin-top:30px">
         <tr>

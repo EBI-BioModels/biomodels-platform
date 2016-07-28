@@ -30,9 +30,6 @@
             <a href="${g.createLink(controller: 'team', action: 'index')}">My Teams</a>
         </li>
     </sec:ifLoggedIn>
-    <li <g:if test="${g.pageProperty(name:'page.help')?.length()}"> class="active" </g:if>>
-        <a href="${g.createLink(controller: 'jummp', action: 'help')}">Help</a>
-    </li>
     <li <g:if test="${g.pageProperty(name:'page.feedback')?.length()}"> class="active" </g:if>>
         <a href="${g.createLink(controller: 'jummp', action: 'feedback')}">
             <g:message code="jummp.feedback.biomodels.title"/>

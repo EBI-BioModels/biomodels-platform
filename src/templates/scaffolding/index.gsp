@@ -1,30 +1,3 @@
-<%--
- Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI), 
- Deutsches Krebsforschungszentrum (DKFZ)
-
- This file is part of Jummp.
-
- Jummp is free software; you can redistribute it and/or modify it under the 
- terms of the GNU Affero General Public License as published by the Free 
- Software Foundation; either version 3 of the License, or (at your option) any 
- later version.
-
- Jummp is distributed in the hope that it will be useful, but WITHOUT ANY 
- WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
- FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more 
- details.
-
- You should have received a copy of the GNU Affero General Public License along 
- with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
---%>
-
-
-
-
-
-
-
-
 <% import grails.persistence.Event %>
 <%=packageName%>
 <!DOCTYPE html>
@@ -45,14 +18,14 @@
 		<div id="list-${domainClass.propertyName}" class="content scaffold-list" role="main">
 			<h1><g:message code="default.list.label" args="[entityName]" /></h1>
 			<g:if test="\${flash.message}">
-			<div class="message" role="status">\${flash.message}</div>
+				<div class="message" role="status">\${flash.message}</div>
 			</g:if>
 			<table>
-				<thead>
+			<thead>
 					<tr>
 					<%  excludedProps = Event.allEvents.toList() << 'id' << 'version'
 						allowedNames = domainClass.persistentProperties*.name << 'dateCreated' << 'lastUpdated'
-						props = domainClass.properties.findAll { allowedNames.contains(it.name) && !excludedProps.contains(it.name) && it.type != null && !Collection.isAssignableFrom(it.type) }
+						props = domainClass.properties.findAll { allowedNames.contains(it.name) && !excludedProps.contains(it.name) && it.type != null && !Collection.isAssignableFrom(it.type) && (domainClass.constrainedProperties[it.name] ? domainClass.constrainedProperties[it.name].display : true) }
 						Collections.sort(props, comparator.constructors[0].newInstance([domainClass] as Object[]))
 						props.eachWithIndex { p, i ->
 							if (i < 6) {
@@ -82,7 +55,7 @@
 				</tbody>
 			</table>
 			<div class="pagination">
-				<g:paginate total="\${${propertyName}Total}" />
+				<g:paginate total="\${${propertyName}Count ?: 0}" />
 			</div>
 		</div>
 	</body>

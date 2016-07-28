@@ -31,7 +31,6 @@ import net.biomodels.jummp.core.model.RevisionTransportCommand
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk> on 12/04/2016.
  */
 class SBMLWriter implements  MetadataSavingStrategy {
-    @Override
     List<RepositoryFileTransportCommand> marshallAnnotations(RevisionTransportCommand revisionTC,
                                                              List<StatementTransportCommand> statementTransportCommands,
                                                              boolean isUpdate = false)

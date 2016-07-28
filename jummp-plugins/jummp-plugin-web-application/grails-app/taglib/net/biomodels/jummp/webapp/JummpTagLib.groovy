@@ -376,8 +376,15 @@ class JummpTagLib {
         else {
             result.append('''
             <tr>
-            <td class='tableLabels'><label>Certification level:</label></td>
-            <td><input id="certifyLevel" name="certifyLevel" /></td>
+            <td style="width: 25%; text-align: right; vertical-align: middle"><label>''')
+            result.append(g.message(code: "jummp.certification.biomodels.flagLevel.label"))
+            result.append(''':</label></td>
+            <td><div class="rating">
+                        <span id="star1" class="star-icon">&#9734;</span>
+                        <span id="star2" class="star-icon">&#9734;</span>
+                        <span id="star3" class="star-icon">&#9734;</span>
+                    </div>
+                <input id="certifyLevel" name="certifyLevel" hidden/></td>
             </tr>
             ''')
         }
@@ -385,93 +392,62 @@ class JummpTagLib {
     }
 
     def renderStarLevels = { attrs ->
-            def result = new StringBuilder()
+        def result = new StringBuilder()
+        def yellowStar = "${grailsApplication.config.grails.serverURL}/images/star.svg"
+        def emptyStar = "${grailsApplication.config.grails.serverURL}/images/star_empty.svg"
+        def certifiedTitle = "This version of the model is certified"
+        def unCertifiedTitle = "This version of the model is not certified"
+        def certifiedStar = """
+                         <img style="margin-top:0;" title="${certifiedTitle}"
+                         alt="certified model"
+                         src="${yellowStar}"/>
+                        """
+        def unCertifiedStar = """
+                         <img style="margin-top:0;" title="${unCertifiedTitle}"
+                         alt="uncertified model"
+                         src="${emptyStar}"/>
+                        """
         if (isDDMoReDeployment()) {
             if (attrs.flag == null){
-                result.append("""
-                         <img style="margin-top:0;" title="This version of the model is certified"
-                         alt="certified model"
-                         src="${grailsApplication.config.grails.serverURL}/images/star_empty.svg"/>
-                        """)
+                result.append(unCertifiedStar)
             }
             else {
-                result.append("""
-                         <img style="margin-top:0;" title="This version of the model is not certified"
-                         alt="certified model"
-                         src="${grailsApplication.config.grails.serverURL}/images/star.svg"/>
-                        """)
+                result.append(certifiedStar)
             }
         } else {
             if (attrs.flag == FlagLevel.FLAG_1){
+                result.append(certifiedStar)
                 result.append("""
-                         <img style="margin-top:0;" title="This version of the model is certified"
+                         <img style="margin-top:0;" title="${certifiedTitle}"
                          alt="certified model"
-                         src="${grailsApplication.config.grails.serverURL}/images/star.svg"/>
+                         src="${emptyStar}"/>
                         """)
                 result.append("""
-                         <img style="margin-top:0;" title="This version of the model is certified"
+                         <img style="margin-top:0;" title="${certifiedTitle}"
                          alt="certified model"
-                         src="${grailsApplication.config.grails.serverURL}/images/star_empty.svg"/>
-                        """)
-                result.append("""
-                         <img style="margin-top:0;" title="This version of the model is certified"
-                         alt="certified model"
-                         src="${grailsApplication.config.grails.serverURL}/images/star_empty.svg"/>
+                         src="${emptyStar}"/>
                         """)
             }
             else if (attrs.flag == FlagLevel.FLAG_2){
+                result.append(certifiedStar)
+                result.append(certifiedStar)
                 result.append("""
-                         <img style="margin-top:0;" title="This version of the model is certified"
+                         <img style="margin-top:0;" title="${certifiedTitle}"
                          alt="certified model"
-                         src="${grailsApplication.config.grails.serverURL}/images/star.svg"/>
-                        """)
-                result.append("""
-                         <img style="margin-top:0;" title="This version of the model is certified"
-                         alt="certified model"
-                         src="${grailsApplication.config.grails.serverURL}/images/star.svg"/>
-                        """)
-                result.append("""
-                         <img style="margin-top:0;" title="This version of the model is certified"
-                         alt="certified model"
-                         src="${grailsApplication.config.grails.serverURL}/images/star_empty.svg"/>
+                         src="${emptyStar}"/>
                         """)
             }
             else if (attrs.flag == FlagLevel.FLAG_3){
-                result.append("""
-                         <img style="margin-top:0;" title="This version of the model is certified"
-                         alt="certified model"
-                         src="${grailsApplication.config.grails.serverURL}/images/star.svg"/>
-                        """)
-                result.append("""
-                         <img style="margin-top:0;" title="This version of the model is certified"
-                         alt="certified model"
-                         src="${grailsApplication.config.grails.serverURL}/images/star.svg"/>
-                        """)
-                result.append("""
-                         <img style="margin-top:0;" title="This version of the model is certified"
-                         alt="certified model"
-                         src="${grailsApplication.config.grails.serverURL}/images/star.svg"/>
-                        """)
+                result.append(certifiedStar)
+                result.append(certifiedStar)
+                result.append(certifiedStar)
             }
             else if (attrs.flag == null){
-                result.append("""
-                         <img style="margin-top:0;" title="This version of the model is certified"
-                         alt="certified model"
-                         src="${grailsApplication.config.grails.serverURL}/images/star_empty.svg"/>
-                        """)
-                result.append("""
-                         <img style="margin-top:0;" title="This version of the model is certified"
-                         alt="certified model"
-                         src="${grailsApplication.config.grails.serverURL}/images/star_empty.svg"/>
-                        """)
-                result.append("""
-                         <img style="margin-top:0;" title="This version of the model is certified"
-                         alt="certified model"
-                         src="${grailsApplication.config.grails.serverURL}/images/star_empty.svg"/>
-                        """)
+                result.append(unCertifiedStar)
+                result.append(unCertifiedStar)
+                result.append(unCertifiedStar)
             }
         }
-
         out << result.toString()
     }
 }

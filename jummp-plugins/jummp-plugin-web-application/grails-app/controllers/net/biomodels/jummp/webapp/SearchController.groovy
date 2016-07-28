@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -31,24 +31,26 @@
 package net.biomodels.jummp.webapp
 
 import grails.converters.JSON
+import grails.plugin.springsecurity.authentication.GrailsAnonymousAuthenticationToken
 import net.biomodels.jummp.core.adapters.DomainAdapter
 import net.biomodels.jummp.core.model.ModelListSorting
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
-import grails.plugins.springsecurity.Secured
+import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.webapp.rest.search.SearchResults
 import net.biomodels.jummp.webapp.rest.search.BrowseResults
 import net.biomodels.jummp.plugins.security.User
 
+@Secured(['IS_AUTHENTICATED_FULLY'])
 class SearchController {
     /**
      * Dependency Injection of Spring Security Service
      */
-     def springSecurityService
-     /**
-      * Dependency injection of searchService.
-      */
-     def searchService
-     /**
+    def springSecurityService
+    /**
+     * Dependency injection of searchService.
+     */
+    def searchService
+    /**
      * Dependency injection of modelService.
      **/
     def modelService
@@ -112,8 +114,8 @@ class SearchController {
         final int MAXRESULTS = 50
         final int MINRESULTS = 10
         User user
-        if (!(springSecurityService.principal instanceof String)) {
-            user=User.findById(springSecurityService.principal.id)
+        if (!(springSecurityService.principal.username == GrailsAnonymousAuthenticationToken.USERNAME)) {
+            user = User.findByUsername(springSecurityService.principal.username)
         }
         Preferences prefs
         if (user) {
@@ -141,7 +143,8 @@ class SearchController {
     /**
      * Default action showing a list view
      */
-    def list = {
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def list() {
         sanitiseParams()
         def results = browseCore(params.sortBy, params.sortDir, params.offset, params.numResults)
 
@@ -155,7 +158,7 @@ class SearchController {
     /**
      * Default action showing a list view
      */
-    def archive = {
+    def archive() {
         sanitiseParams()
         def results = archiveCore(params.sortBy, params.sortDir, params.offset, params.numResults)
         return results
@@ -182,7 +185,7 @@ class SearchController {
     }
 
     @Secured(['ROLE_ADMIN'])
-    def regen = {
+    def regen() {
         long start = System.currentTimeMillis()
         searchService.regenerateIndices()
         [regenTime: System.currentTimeMillis() - start]
