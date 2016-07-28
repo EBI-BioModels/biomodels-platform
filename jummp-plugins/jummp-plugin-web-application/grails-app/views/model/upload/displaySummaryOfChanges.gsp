@@ -63,9 +63,11 @@
                         </tr>
                         <tr class="prop">
                             <td class="name" style="vertical-align:top;">
-                                <label for="${g.message(code: 'submission.summary.descriptionLabel')}">
-                                    <g:message code="submission.summary.descriptionLabel"/>
+                                <jummp:displayModelDescriptionLabel>
+                                <label for="${description}">
+                                    ${description}
                                 </label>
+                                </jummp:displayModelDescriptionLabel>
                             </td>
                             <td class="value" style="vertical-align:top;">
                                 <div class="displayDescription">

@@ -79,9 +79,12 @@ statements that can be expressed about a model in PharmML.
             url = cfg
         }
         println "INFO\tUsing DDMoRe RDF Store at $url to retrieve annotation schema."
+
+        metadataInformationService(MetadataInformationServiceImpl,
+                new SparqlQueryExecutor(new SparqlQueryService(url)))
+
         metadataInputSource(DDMoReMetadataInputSource) {
-            service = new MetadataInformationServiceImpl(new SparqlQueryExecutor(
-                    new SparqlQueryService(url)))
+            service = ref("metadataInformationService")
         }
     }
 

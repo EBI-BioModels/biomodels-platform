@@ -61,6 +61,11 @@
   <style type="text/css">
     /* You have the option of setting a maximum width for your page, and making sure everything is centered */
     /* body { max-width: 1600px; margin: 0 auto; } */
+      body {
+          margin: 0 auto;
+          /*overflow-x: hidden;*/
+          /*overflow-y: auto;*/
+      }
   </style>
   
   <!-- end CSS-->

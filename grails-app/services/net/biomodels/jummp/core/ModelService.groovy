@@ -62,6 +62,7 @@ import net.biomodels.jummp.model.Publication
 import net.biomodels.jummp.model.RepositoryFile
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.User
+import net.biomodels.jummp.qcinfo.QcInfo
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.apache.tika.detect.DefaultDetector
@@ -132,9 +133,9 @@ class ModelService {
     @SuppressWarnings("GrailsStatelessService")
     def grailsApplication
     /**
-     * Dependency Injection for PubMedService
+     * Dependency Injection for PublicationService
      */
-    def pubMedService
+    def publicationService
     /**
      * Dependency injection of ModelHistoryService
      */
@@ -804,7 +805,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             } else if (publicationTC) {
                 // update db association with the value from the UI
                 try {
-                    model.publication = pubMedService.fromCommandObject(publicationTC)
+                    model.publication = publicationService.fromCommandObject(publicationTC)
                 } catch(Exception e) {
                     log.error("Unable to record publication for ${rev.model}: ${e.message}", e)
                 }
@@ -1083,7 +1084,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         if (revision.validate()) {
             model.addToRevisions(revision)
             if (rev.model.publication) {
-                model.publication = pubMedService.fromCommandObject(rev.model.publication)
+                model.publication = publicationService.fromCommandObject(rev.model.publication)
             }
             if (!model.validate()) {
                 // TODO: this means we have imported the file into the VCS, but it failed to be saved in the database, which is pretty bad
@@ -1260,7 +1261,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         if (revision.validate()) {
             model.addToRevisions(revision)
             if (meta.publication) {
-                model.publication = pubMedService.fromCommandObject(meta.publication)
+                model.publication = publicationService.fromCommandObject(meta.publication)
             }
             if (!model.validate()) {
                 // TODO: this means we have imported the file into the VCS, but it failed to be saved in the database, which is pretty bad
@@ -1981,7 +1982,10 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         def publicRevisionCriteriaResults = publicRevisionCriteria.list(max: 1) {
             and {
                 eq("model", model)
-                ne("state", ModelState.UNPUBLISHED)
+                or {
+                    eq("state", ModelState.PUBLISHED)
+                    eq("state", ModelState.RELEASED)
+                }
             }
         }
         [] != publicRevisionCriteriaResults
@@ -2140,6 +2144,56 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         return false
     }
 
+    @PostLogging(LoggingEventType.UPDATE)
+    @Profiled(tag="modelService.canCertify")
+    public boolean canCertify(Model model) {
+        if (!model) {
+            throw new IllegalArgumentException("Model may not be null")
+        }
+        if (model.deleted) {
+            return false
+        }
+
+
+        return (SpringSecurityUtils.ifAnyGranted("ROLE_CURATOR") || aclUtilService.hasPermission(
+            springSecurityService.authentication, model, BasePermission.ADMINISTRATION))
+    }
+
+    @PreAuthorize("hasRole('ROLE_CURATOR') or hasRole('ROLE_ADMIN')") //used to be: (hasRole('ROLE_CURATOR') and hasPermission(#revision, admin))
+    @PostLogging(LoggingEventType.UPDATE)
+    @Profiled(tag="modelService.publishModelRevision")
+    public boolean addQcInfo(Revision revision, QcInfo qcInfo) {
+        if (!SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
+            if (!aclUtilService.hasPermission(springSecurityService.authentication, revision,
+                BasePermission.ADMINISTRATION)) {
+                throw new AccessDeniedException("You cannot certify this model.")
+            }
+        }
+        if (!revision) {
+            throw new IllegalArgumentException("Revision may not be null")
+        }
+        if (revision.deleted) {
+            throw new IllegalArgumentException("Revision may not be deleted")
+        }
+
+        Revision.withTransaction {status ->
+            try {
+                revision.qcInfo = qcInfo
+                qcInfo.save()
+                revision.save()
+                return true
+            } catch (Exception ex) {
+                ex.printStackTrace()
+                try {
+                    status.setRollbackOnly()
+                } catch (Exception ex2) {
+                    ex2.printStackTrace()
+                }
+                return false
+            }
+        }
+    }
+
     /**
      * Makes a Model Revision publicly available.
      * This means that ROLE_USER and ROLE_ANONYMOUS gain read access to the Revision and by that also to
@@ -2200,7 +2254,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         }
 
         if(!pubInfo.validModelAccomodation()){
-            throw new PublishException("Model is not compliance with original publication. Please provide a Model_Accommodations.txt file.")
+            throw new PublishException("Model is not compliant with original publication. Please provide a Model_Accommodations.txt file.")
         }
 
         def scenario = publishValidator.validatePublish(pubInfo)

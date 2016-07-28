@@ -118,20 +118,20 @@
                 title="view my teams">My Teams</a>
             </li>
         </sec:ifLoggedIn>
-    	<li class="expanded">
-    		<a href="${g.createLink(controller: 'jummp', action: 'feedback')}" 
-    		<g:if test="${g.pageProperty(name:'page.feedback')?.length()}">
-	    		class="active-trail active"
-	    	</g:if>
-    		title="give feedback">Feedback</a>
-    	</li>
-    </ul>  
+        <li class="expanded">
+          <a href="${g.createLink(controller: 'jummp', action: 'feedback')}"
+            <g:if test="${g.pageProperty(name:'page.feedback')?.length()}">
+            class="active-trail active"
+            </g:if>>
+            <g:message code="jummp.feedback.ddmore.title"/></a>
+        </li>
+    </ul>
 </div>
 <p>${g.pageProperty(name:'page.selectedtab')}</p>
 </div><!-- /.block -->
   </div><!-- /.region -->
 
   </div></div><!-- /.section, /#header -->
-  
+
 </div>
 

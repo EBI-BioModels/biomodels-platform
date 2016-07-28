@@ -63,7 +63,7 @@ class UrlMappings {
         "/models"(controller: "search", action: "list")
         "/search"(controller: "search", action: "search")
         "/archive"(controller: "search", action: "archive")
-        "/feedback"(controller:"jummp", action:"feedback")
+        "/support"(controller:"jummp", action:"feedback")
         "/lookupUser"(controller:"jummp", action:"lookupUser")
         if (Holders.config.jummp.security.anonymousRegistration) {
             "/registration"(controller:"usermanagement", action:"create")

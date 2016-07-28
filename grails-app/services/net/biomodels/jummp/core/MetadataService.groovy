@@ -32,6 +32,7 @@ import net.biomodels.jummp.annotationstore.ResourceReference
 import net.biomodels.jummp.annotationstore.Statement
 import net.biomodels.jummp.core.adapters.DomainAdapter
 import net.biomodels.jummp.core.annotation.StatementTransportCommand
+import net.biomodels.jummp.core.model.AnnotationValidationContext
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.model.Model
@@ -203,6 +204,9 @@ class MetadataService {
         boolean isUpdate = baseRevision.annotations?.size() > 0
         RevisionTransportCommand newRevision = DomainAdapter.getAdapter(baseRevision).toCommandObject()
         newRevision.comment = "Updated model annotations."
+        AnnotationValidationContext avc = validateModelRevision(baseRevision,statements)
+        newRevision.validationLevel = avc.validationLevel
+        newRevision.validationReport = avc.validationReport
 
         List<RepositoryFileTransportCommand> files = newRevision.files
         try {
@@ -220,7 +224,7 @@ class MetadataService {
         }
     }
 
-    List<RevisionTransportCommand> executeMetadataSavingStrategy(
+    List<RepositoryFileTransportCommand> executeMetadataSavingStrategy(
                     RevisionTransportCommand revisionTransportCommand,
                     List<StatementTransportCommand> statementTransportCommands,
                     boolean isUpdate) {
@@ -245,7 +249,7 @@ class MetadataService {
 
     @Profiled(tag="metadataService.validateModelRevision")
     @Transactional
-    public void validateModelRevision(Revision revision, String model, List<StatementTransportCommand> statements){
+    public AnnotationValidationContext validateModelRevision(Revision revision, List<StatementTransportCommand> statements){
 
         if (!revision) {
             throw new IllegalArgumentException("Revision may not be null")
@@ -280,8 +284,11 @@ class MetadataService {
 
         }
 
-        revision.validationReport = validationReport.toString();
-        revision.validationLevel = metadataValidator.getValidationErrorStatus();
+        AnnotationValidationContext anc = new AnnotationValidationContext();
+        anc.validationReport = validationReport.toString();
+        anc.validationLevel = metadataValidator.getValidationErrorStatus();
+
+        return anc;
 
     }
 

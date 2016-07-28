@@ -54,6 +54,7 @@ import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.core.model.identifier.generator.AbstractModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
+import net.biomodels.jummp.qcinfo.QcInfo
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.springframework.security.access.AccessDeniedException
@@ -226,6 +227,20 @@ class ModelDelegateService implements IModelService {
         }
         return false
     }
+
+    Boolean canCertify(String modelId) {
+        def revision = getLatestRevision(modelId)
+        if(revision.qcInfo == null)
+            return modelService.canCertify(ModelAdapter.findByPerennialIdentifier(modelId))
+        else
+            return false
+    }
+
+    Boolean addQcInfo(String revisionId, QcInfo qcInfo) {
+        return modelService.addQcInfo(Revision.get(revisionId), qcInfo)
+    }
+
+
 
     Boolean canSubmitForPublication(String modelId) {
         def revision = getLatestRevision(modelId)

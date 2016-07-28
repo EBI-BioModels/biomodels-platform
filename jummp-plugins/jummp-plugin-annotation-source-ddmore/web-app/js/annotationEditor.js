@@ -151,13 +151,15 @@ var ValueContainerView = Mn.ItemView.extend({
     ui: {
         multipleConstrainedValueOption: "select",
         singleUnconstrainedValueOption: "input[type=text]",
-        singleConstrainedValueOption:   "input[type=radio]"
+        singleConstrainedValueOption:   "input[type=radio]",
+        clearSingleConstrainedChoice:   ".clearRadioGroup"
     },
 
     events: {
         "change @ui.multipleConstrainedValueOption": "multipleConstrainedValueChanged",
         "focusout @ui.singleUnconstrainedValueOption": "singleUnconstrainedValueChanged",
         "change @ui.singleConstrainedValueOption": "singleConstrainedValueChanged",
+        "click @ui.clearSingleConstrainedChoice": "clearRadioGroup"
     },
 
     singleUnconstrainedValueChanged: function() {
@@ -187,6 +189,25 @@ var ValueContainerView = Mn.ItemView.extend({
         var p = this.options.property.get("uri");
         var v = this.$el.find('input[type=radio]:checked')[0].value;
         Jummp.addRdfStatement("theSubject", p, [Jummp.convertToRdfObject(v)]);
+        // re-enable the button to clear selection
+        this.options.disabled = false;
+    },
+
+    clearRadioGroup: function() {
+        if (true === this.options.disabled) {
+            return;
+        }
+        var uri = this.options.property.get("uri");
+        Jummp.removeRdfStatement({ subject: "theSubject", predicate: uri});
+        this.collection.each(function(o) {
+            var shouldToggle = o.get("isSelected");
+            if (shouldToggle) {
+                o.set("isSelected", false);
+            }
+        });
+        // ensure subsequent calls don't try to unset something that isn't there.
+        this.options.disabled = true;
+        this.render();
     }
 });
 

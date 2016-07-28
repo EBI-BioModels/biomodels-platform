@@ -4,7 +4,7 @@
 }
 .tip {
     padding-top: 0;
-    margin-top: 0
+    margin-top: 0;
     padding-bottom: 0.25em;
     font-size: 0.9em;
 }
@@ -876,6 +876,7 @@ div.ctools-ajaxing {
 body {
     font-size: 100%;
     min-width: 1100px;
+    /*overflow-x: hidden;*/
 }
 #skip-to-nav, #page {
     font-size: 0.75em;

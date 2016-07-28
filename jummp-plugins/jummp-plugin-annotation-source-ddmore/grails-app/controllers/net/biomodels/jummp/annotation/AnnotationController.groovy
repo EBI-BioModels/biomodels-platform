@@ -23,6 +23,7 @@ package net.biomodels.jummp.annotation
 import grails.converters.JSON
 import grails.plugins.springsecurity.Secured
 import groovy.json.JsonSlurper
+import net.biomodels.jummp.core.model.AnnotationValidationContext
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.core.annotation.*
 import net.biomodels.jummp.core.model.ValidationState
@@ -135,17 +136,18 @@ class AnnotationController {
             render([status: '400', message: 'Annotation fields are empty. Please annotate the model before validating.'] as JSON)
 
         RevisionTransportCommand rev = null
+        AnnotationValidationContext avc = null
         try {
             rev = modelDelegateService.getRevision(params.revision)
-            metadataDelegateService.validateModelRevision(rev, params.revision, stmts)
+            avc = metadataDelegateService.validateModelRevision(rev, stmts)
         }catch(ValidationException e){
             render([status: '400', message: 'Annotations could not be checked.' , errorReport:e.getMessage()] as JSON)
         }
-        rev = modelDelegateService.getRevision(params.revision) // force refresh from db
-        if(rev.validationLevel.equals(ValidationState.APPROVED))
-            render([status: '200', message: rev.getValidationLevelMessage()] as JSON)
-        else if(rev.validationLevel.equals(ValidationState.CONDITIONALLY_APPROVED))
-            render([status: '400', message: rev.getValidationLevelMessage(), errorReport:rev.validationReport] as JSON)
+        //rev = modelDelegateService.getRevision(params.revision) // force refresh from db
+        if(avc.validationLevel.equals(ValidationState.APPROVED))
+            render([status: '200', message: rev.getValidationLevelMessage(avc.validationLevel)] as JSON)
+        else if(avc.validationLevel.equals(ValidationState.CONDITIONALLY_APPROVED))
+            render([status: '400', message: rev.getValidationLevelMessage(avc.validationLevel), errorReport:avc.validationReport] as JSON)
         else
             render ([status: '500', message: "Unable to validate the annotations you provided."] as JSON)
 

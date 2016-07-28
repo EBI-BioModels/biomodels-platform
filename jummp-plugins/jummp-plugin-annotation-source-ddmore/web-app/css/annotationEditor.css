@@ -51,8 +51,6 @@
     color: blue;
 }
 .info {
-    padding: 0.2em;
-    margin-top: 0.4em;
 }
 
 .infoLabel {
@@ -65,10 +63,28 @@
     padding:0.75em 0;
 }
 
+.info {
+    margin-top: 0.5em;
+}
+
 .info p {
     margin: 0px;
+}
+
+.info div.indented {
+    margin-left: 1.8em;
 }
 
 .inlineLabel {
     display: inline;
 }
+
+.clearRadioGroup {
+    background: white;
+    color: rgb(22, 151, 200);
+    border: 1px solid blue;
+    padding: 0.1em 0.8em;
+    cursor: pointer;
+    margin-left: 8em;
+}
+

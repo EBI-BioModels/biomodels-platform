@@ -82,7 +82,8 @@ public class RevisionAdapter extends DomainAdapter {
                 model: modelCmd,
                 annotations: annotations,
                 validationLevel: revision.validationLevel,
-                validationReport: revision.validationReport
+                validationReport: revision.validationReport,
+                qcInfo: revision.qcInfo
         )
         return rev
     }

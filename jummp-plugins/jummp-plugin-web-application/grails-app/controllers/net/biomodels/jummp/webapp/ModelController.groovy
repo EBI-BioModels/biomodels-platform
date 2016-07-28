@@ -39,6 +39,9 @@ import eu.ddmore.publish.service.PublishContext
 import eu.ddmore.publish.service.PublishException
 import grails.converters.JSON
 import grails.plugins.springsecurity.Secured
+import groovy.json.JsonSlurper
+import net.biomodels.jummp.core.adapters.DomainAdapter
+import net.biomodels.jummp.core.model.PublicationDetailExtractionContext
 import net.biomodels.jummp.model.PublicationLinkProvider
 import org.apache.commons.lang3.exception.ExceptionUtils
 import java.util.zip.ZipEntry
@@ -46,6 +49,7 @@ import java.util.zip.ZipOutputStream
 import net.biomodels.jummp.core.model.ModelAuditTransportCommand
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.PermissionTransportCommand
+import net.biomodels.jummp.model.Publication
 import net.biomodels.jummp.core.model.PublicationTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
@@ -93,9 +97,9 @@ class ModelController {
      */
     def grailsApplication
     /**
-    * Dependency injection of pubMedService
-    */
-    def pubMedService
+     * Dependency injection of PublicationService
+     */
+    def publicationService
     /*
     * Dependency injection of mailService
     */
@@ -228,6 +232,7 @@ class ModelController {
             boolean canUpdate = modelDelegateService.canAddRevision(PERENNIAL_ID)
             boolean canDelete = modelDelegateService.canDelete(PERENNIAL_ID)
             boolean canShare = modelDelegateService.canShare(PERENNIAL_ID)
+            boolean canCertify = modelDelegateService.canCertify(PERENNIAL_ID)
 
             String flashMessage = ""
             if (flash.now["giveMessage"]) {
@@ -235,7 +240,6 @@ class ModelController {
             }
             List<RevisionTransportCommand> revs =
                         modelDelegateService.getAllRevisions(PERENNIAL_ID)
-
 
             def model = [revision: rev,
                         authors: rev.model.creators,
@@ -246,7 +250,9 @@ class ModelController {
                         canShare: canShare,
                         showPublishOption: showPublishOption,
                         canSubmitForPublication: canSubmitForPublication,
-                        validationLevel: rev.getValidationLevelMessage()
+                        canCertify: canCertify,
+                        validationLevel: rev.getValidationLevelMessage(),
+                        certComment:rev.getCertificationMessage()
             ]
             if (rev.id == modelDelegateService.getLatestRevision(PERENNIAL_ID).id) {
                 flash.genericModel = model
@@ -258,6 +264,7 @@ class ModelController {
                 model["oldVersion"] = true
                 model["canDelete"] = false
                 model["canShare"] = false
+                model["canCertify"] = false
                 return model
             }
         } else {
@@ -624,12 +631,12 @@ class ModelController {
                     // data stored are a map of file names and corresponding descriptions.
                     // For instance, manual.pdf: guidelines and help, readme.txt: introduction and preface, ...
                     Map<String, String> additionalFiles = new HashMap<String, String>()
-                    String additionalFilesInWorking = params.additionalFilesInWorking
-                    if (additionalFilesInWorking != null) {
-                        String[] workingFiles = additionalFilesInWorking.split(', ')
-                        workingFiles.each {
-                            def (fileName, fileDescription) = it.split(':')
-                            additionalFiles.put(fileName.trim(), fileDescription.trim())
+                    def slurper = new JsonSlurper()
+                    def result = slurper.parseText(params.additionalFilesInWorking)
+                    if (result["files"]) {
+                        def workingFiles = result["files"]
+                        workingFiles.each { f ->
+                            additionalFiles.put(f["filename"], f["description"])
                         }
                         flow.workingMemory.put("additionals_in_working", additionalFiles)
                     }
@@ -850,8 +857,8 @@ About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
                     return error()
                 }
                 Map<String,String> modifications = new HashMap<String,String>()
-                    if (params.PubLinkProvider) {
-                        if (!pubMedService.verifyLink(params.PubLinkProvider, params.PublicationLink)) {
+                    if (params.PubLinkProvider) {// one of the publication link providers has been selected
+                        if (!publicationService.verifyLink(params.PubLinkProvider, params.PublicationLink)) {
                             flash.flashMessage = "The link is not a valid ${params.PubLinkProvider}"
                             return error()
                         }
@@ -862,12 +869,13 @@ About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
                         if (providerHasChanged || linkHasChanged) {
                             modifications.put("PubLinkProvider", params.PubLinkProvider)
                             modifications.put("PubLink", params.PublicationLink)
-                            submissionService.updatePublicationLink(flow.workingMemory,
-                                        modifications)
+                            submissionService.updatePublicationLink(flow.workingMemory, modifications)
                         } else {
-                            flow.workingMemory.put("RetrievePubDetails", false)
+                            // go through publication editor in any case
+                            flow.workingMemory.put("RetrievePubDetails", true)
                         }
-                    } else {
+                        flow.workingMemory.put("SelectedPubLinkProvider", params.PubLinkProvider)
+                    } else { // 'No publication available' has been chosen
                         ModelTransportCommand model = flow.workingMemory.get('ModelTC') as ModelTransportCommand
                         RevisionTransportCommand revision = flow.workingMemory.get("RevisionTC") as RevisionTransportCommand
                         def publication = revision.model.publication
@@ -887,24 +895,54 @@ About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
             action {
                 if (flow.workingMemory.remove("RetrievePubDetails") as Boolean) {
                     ModelTransportCommand model = flow.workingMemory.get("ModelTC") as ModelTransportCommand
-                    if (model.publication.link && model.publication.linkProvider) {
-                        def retrieved
-                        try {
-                            retrieved = pubMedService.getPublication(model.publication)
+                    if (model.publication.linkProvider) {
+                        PublicationTransportCommand retrieved
+                        PublicationDetailExtractionContext publicationContext
+                        // Case: PUBMED, DOI, CUSTOM, MANUAL_ENTRY
+                        if (flow.workingMemory.containsKey("publication_objects_in_working")) {
+                            def publicationMap = flow.workingMemory.get("publication_objects_in_working") as Map<Object, PublicationDetailExtractionContext>
+                            publicationContext = publicationMap.get(params.PubLinkProvider)
+                            if (publicationContext.publication) {
+                                // reload the publication from cache
+                                retrieved = publicationContext.publication
+                                if (publicationContext.comesFromDatabase) {
+                                    flash.flashMessage = g.message(code: "publication.editor.duplicateEntry.message")
+                                }
+                            } else { // load from database, external call or create a default PTC
+                                try {
+                                    publicationContext = publicationService.getPublicationExtractionContext(model.publication)
+                                    if (publicationContext.publication) {
+                                        retrieved = publicationContext.publication
+                                        if (publicationContext.comesFromDatabase) {
+                                            flash.flashMessage = g.message(code: "publication.editor.duplicateEntry.message")
+                                        }
+                                    } else {
+                                        retrieved = publicationService.createPTCWithMinimalInformation(params.PubLinkProvider, params.PublicationLink, [])
+                                        publicationContext.comesFromDatabase = false
+                                    }
+                                }
+                                catch (Exception e) {
+                                    log.error(e.message, e)
+                                }
+                            }
+                        } else {
+                            log.error("Expected publication objects initialised in workingMemory.")
                         }
-                        catch(Exception e) {
-                            log.error(e.message, e)
-                        }
+
                         if (retrieved) {
                             model.publication = retrieved
                             flow.workingMemory.put("Authors", model.publication.authors)
+
+                            // Update the publication objects in working
+                            def publicationMap = flow.workingMemory.get("publication_objects_in_working") as Map<Object, PublicationDetailExtractionContext>
+                            publicationContext.publication = retrieved
+                            publicationMap.put(params.PubLinkProvider, publicationContext)
                         }
                     }
                     // use authors of the existing publication if available
                     if (model.publication) {
                         flow.workingMemory.put("Authors", model.publication.authors)
                     }
-                    flow.workingMemory.put("Authors", model.publication.authors)
                     conversation.changesMade.add("Amended publication details")
                     publicationInfoPage()
                 }
@@ -920,6 +958,10 @@ About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
             on("Continue"){
                 ModelTransportCommand model =
                             flow.workingMemory.get("ModelTC") as ModelTransportCommand
+                def publicationMap = flow.workingMemory.get("publication_objects_in_working") as Map<Object, PublicationDetailExtractionContext>
+                PublicationDetailExtractionContext pubContext = publicationMap.get(flow.workingMemory.get("SelectedPubLinkProvider"))
+                PublicationTransportCommand tempPTC = pubContext.publication
+                bindData(tempPTC, params, [exclude: ['authors']])
                 bindData(model.publication, params, [exclude: ['authors']])
                 String[] authorList = params.authorFieldTotal.split(",")
                 List<PersonTransportCommand> validatedAuthors = new LinkedList<PersonTransportCommand>()
@@ -969,6 +1011,10 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
                     flash.validationErrorOn = model.publication
                     return error()
                 }
+                // Update the publication objects in working
+                tempPTC.authors = validatedAuthors
+                pubContext.publication = tempPTC
+                publicationMap.put(flow.workingMemory.get("SelectedPubLinkProvider"), pubContext)
             }.to "displaySummaryOfChanges"
             on("Cancel").to "cleanUpAndTerminate"
             on("Back").to "enterPublicationLink"

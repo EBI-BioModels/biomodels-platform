@@ -36,6 +36,9 @@ import org.apache.jena.riot.RDFFormat
  */
 class RDFWriter implements MetadataSavingStrategy {
     private static final Log log = LogFactory.getLog(this)
+    private final String defaultRdfFileDescription = """\
+This file contains annotations which make this model more easily findable."""
+
     /**
      * Dependency injection for Grails Application.
      */
@@ -59,7 +62,7 @@ class RDFWriter implements MetadataSavingStrategy {
             String fileName = "${revisionTC.model.submissionId}.rdf"
             annoFile = new File(fileBase, fileName)
             annoFilePath = annoFile.absolutePath
-            rf = new RepositoryFileTransportCommand(path: annoFilePath, description: "annotation file")
+            rf = new RepositoryFileTransportCommand(path: annoFilePath, description: defaultRdfFileDescription)
             files.add rf
         } else {
             rf = files.find {

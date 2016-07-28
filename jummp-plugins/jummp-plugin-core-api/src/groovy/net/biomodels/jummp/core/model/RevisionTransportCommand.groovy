@@ -36,6 +36,7 @@ package net.biomodels.jummp.core.model
 
 import net.biomodels.jummp.core.annotation.ElementAnnotationTransportCommand
 import org.springframework.context.ApplicationContext
+import net.biomodels.jummp.qcinfo.QcInfo
 
 /**
  * @short Wrapper for a Revision to be transported through JMS.
@@ -110,6 +111,8 @@ class RevisionTransportCommand implements Serializable {
 
     String validationReport
 
+    QcInfo qcInfo
+
      List<RepositoryFileTransportCommand> getFiles() {
          if (!files) {
              files = context.modelDelegateService.retrieveModelFiles(this)
@@ -122,14 +125,25 @@ class RevisionTransportCommand implements Serializable {
          return new StringBuffer(PERENNIAL_ID).append(".").append(revisionNumber).toString()
      }
 
-    String [] getValidationStatementList(){
+/*    String [] getValidationStatementList(){
         if(validationReport == null){
             return null;
         }
         return validationReport.split("     ");
+    }*/
+
+    String getCertificationMessage(){
+        if(qcInfo){
+            return qcInfo.comment
+        }else
+            return "This model is not certified."
     }
 
     String getValidationLevelMessage(){
+        getValidationLevelMessage(validationLevel)
+    }
+
+    String getValidationLevelMessage(ValidationState validationLevel){
         switch (validationLevel) {
             case ValidationState.APPROVE:
                 return "Annotations have not been checked."

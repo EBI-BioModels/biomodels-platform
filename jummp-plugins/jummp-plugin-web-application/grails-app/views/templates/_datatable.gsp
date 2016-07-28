@@ -28,10 +28,10 @@
     									${it}
     								</g:if>
     								<g:else>
-    									<a href="${createLink(controller: 'search', 
-    														  action: action, 
-    														  params: [query: query,  sortDir: sortDirection, 
-    														  		   sortBy: sortBy, offset: 0, 
+    									<a href="${createLink(controller: 'search',
+    														  action: action,
+    														  params: [query: query,  sortDir: sortDirection,
+    														  		   sortBy: sortBy, offset: 0,
     														  		   numResults:it])}">
     														  		   ${it}
     									</a>
@@ -49,7 +49,8 @@
                 	<g:render template="/templates/tableheader" model="[action: action, 'sortColumn': 'submitted','msgCode':'model.list.submissionDate']"/>
                 	<g:render template="/templates/tableheader" model="[action: action, 'sortColumn': 'modified','msgCode':'model.list.modifiedDate']"/>
                 	<sec:ifLoggedIn>
-    				 	<th>Status</th>
+    				 	<th>Certification</th>
+                        <th>Status</th>
     				</sec:ifLoggedIn>
                 </tr>
                 </thead>
@@ -66,6 +67,8 @@
                 			<td>${model.submissionDate.format('yyyy/MM/dd')}</td>
                 			<td>${model.lastModifiedDate.format('yyyy/MM/dd')}</td>
                 			<sec:ifLoggedIn>
+                                <td style="text-align: center;">
+                                        <jummp:renderStarLevels flag="${model.flagLevel}"/></td>
 								<td style="text-align: center;">
 									<g:if test="${model.state==ModelState.PUBLISHED}">
 										<img style="width:14px" title="Published" alt="public model" src="http://www.ebi.ac.uk/web_guidelines/images/icons/EBI-Functional/Functional%20icons/unlock.png"/>

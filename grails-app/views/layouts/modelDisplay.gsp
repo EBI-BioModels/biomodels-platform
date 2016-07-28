@@ -31,6 +31,8 @@
 <g:applyLayout name="main">
 <%@ page import="java.text.DateFormat"%>
 <%@ page import="net.biomodels.jummp.core.model.ModelState"%>
+<%@ page import="net.biomodels.jummp.qcinfo.*"%>
+
 <%
     def loadedZips=new HashMap();
     def zipSupported=[:]
@@ -442,6 +444,12 @@
                     primary: "ui-icon-tag"
                 }
             }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
+            $("#certify").button({
+                text: false,
+                icons: {
+                    primary: "ui-icon-star"
+                }
+            }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
             $("#panelToggle").button({
                     text:false,
                     icons: {
@@ -479,6 +487,22 @@
                     $( ".toolbutton" ).css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
             }
         }
+/*        function displayStar(nbStar) {
+            if (nbStar == 1) {
+                <img style="float:right;margin-top:0;" title="This version of the model is certified"
+                     alt="certified model"
+                     src="${grailsApplication.config.grails.serverURL}/images/icons/yellowfilledinstar.png"/>
+                <img style="float:right;margin-top:0;" title="This version of the model is certified"
+                alt="certified model"
+                src="${grailsApplication.config.grails.serverURL}/images/icons/star.png"/>
+
+            } else {
+
+            }
+            <img style="float:right;margin-top:0;" title="This version of the model is certified"
+                 alt="certified model"
+                 src="${grailsApplication.config.grails.serverURL}/images/icons/star.png"/>
+        }*/
     </script>
     <g:layoutHead/>
     </head>
@@ -542,6 +566,14 @@
                                 id: (revision.model.publicationId) ?: (revision.model.submissionId))}')">Annotate</button>
                     </li>
                 </g:if>
+                    <g:if test="${canCertify}">
+                        <li>
+                            <button class='toolbutton' id="certify"
+                                    onclick="return $.jummp.openPage('${g.createLink(controller: 'qcInfo',
+                                    action: 'edit',
+                            id: (revision.model.publicationId) ?: (revision.model.submissionId))}')">Certify</button>
+                        </li>
+                    </g:if>
                 </ul>
          </div>
         <div class="ebiLayout_reduceWidth">
@@ -563,6 +595,10 @@
                 <h1>${revision.name}</h1>
             </div>
             <div style="float:right;margin-top:10px;">
+                <g:if test="${revision.qcInfo != null}">
+                    <jummp:renderStarLevels flag="${revision.qcInfo.flag}" />
+                </g:if>
+                <span>&nbsp;</span>
                 <g:if test="${revision.state==ModelState.PUBLISHED}">
                     <img style="float:right;margin-top:0;" title="This version of the model is public"
                          alt="public model"
@@ -584,7 +620,9 @@
         <g:pageProperty name="page.modelspecifictabs" />
     </ul>
       <div id="Overview">
-          <span class="bold">Model Description:</span>
+          <jummp:displayModelDescriptionLabel>
+              <span class="bold">${description}:</span>
+          </jummp:displayModelDescriptionLabel>
           <div style="margin-left: 30px;">
               ${revision.description}
           </div>
@@ -617,15 +655,26 @@
         </table>
         <g:pageProperty name="page.genericAnnotations"/>
 
-        <span class="bold">Validation Status:</span>
-          ${validationLevel}
+          <table style="margin-top:30px">
+              <tr>
+                  <td><label>Validation Status:</label></td>
+                  <td><div class='spaced'>${validationLevel}</div></td>
+              </tr>
+              <tr>
+                  <td><label>Certification Comment:</label></td>
+                  <td><div class='spaced'>${certComment}</div></td>
+              </tr>
+          </table>
 
       </div>
       <div id="Files" class="filegrid">
         <div class="filecol-1-3">
             <div id="treeView">
                 <ul>
-                    <li rel="folder"><a>Main Files</a>
+                    <li rel="folder">
+                    <jummp:findMainFileLabel>
+                        <a>${mainFile}</a>
+                    </jummp:findMainFileLabel>
                     <ul>
                         <Ziphandler:outputFileInfoAsHtml repFiles="${revision.files}" loadedZips="${loadedZips}"
                                                          zipSupported="${zipSupported}" mainFile="${true}"/>

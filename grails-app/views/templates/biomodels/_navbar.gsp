@@ -34,7 +34,9 @@
         <a href="${g.createLink(controller: 'jummp', action: 'help')}">Help</a>
     </li>
     <li <g:if test="${g.pageProperty(name:'page.feedback')?.length()}"> class="active" </g:if>>
-        <a href="${g.createLink(controller: 'jummp', action: 'feedback')}">Feedback</a>
+        <a href="${g.createLink(controller: 'jummp', action: 'feedback')}">
+            <g:message code="jummp.feedback.biomodels.title"/>
+        </a>
     </li>
     <!-- If you need to include functional (as opposed to purely navigational) links in your local menu,
        add them here, and give them a class of "functional". Remember: you'll need a class of "last" for

@@ -29,6 +29,7 @@ import net.biomodels.jummp.core.annotation.ResourceReferenceCategory
 import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand
 import net.biomodels.jummp.core.annotation.StatementCategory
 import net.biomodels.jummp.core.annotation.StatementTransportCommand
+import net.biomodels.jummp.core.model.AnnotationValidationContext
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.annotation.SectionContainer
 import net.biomodels.jummp.model.Revision
@@ -140,9 +141,9 @@ class MetadataDelegateService implements IMetadataService {
     }
 
     @Profiled(tag = "metadataDelegateService.validateModelRevision")
-    void validateModelRevision(RevisionTransportCommand revision, String model,List<StatementTransportCommand> statements) {
+    AnnotationValidationContext validateModelRevision(RevisionTransportCommand revision, List<StatementTransportCommand> statements) {
         try {
-            metadataService.validateModelRevision(Revision.get(revision.id), model, statements)
+            return metadataService.validateModelRevision(Revision.get(revision.id), statements)
         }catch(ValidationException e){
             throw e
         }

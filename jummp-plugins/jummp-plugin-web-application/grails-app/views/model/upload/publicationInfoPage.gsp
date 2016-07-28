@@ -17,7 +17,10 @@
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 <%@ page contentType="text/html;charset=UTF-8" %>
-<%@ page import="net.biomodels.jummp.core.model.ModelTransportCommand"%>
+<%@ page import="net.biomodels.jummp.core.model.ModelTransportCommand" %>
+<%@ page import="net.biomodels.jummp.core.model.PublicationDetailExtractionContext" %>
+<%@ page import="net.biomodels.jummp.core.model.RevisionTransportCommand" %>
+<%@ page import="net.biomodels.jummp.core.model.PublicationTransportCommand" %>
     <head>
         <meta name="layout" content="main"/>
         <title>
@@ -33,6 +36,15 @@
         <g:javascript contextPath="" src="publicationSubmission.js"/>
     </head>
     <body>
+        <%
+            RevisionTransportCommand revision = workingMemory.get("RevisionTC") as RevisionTransportCommand
+            PublicationTransportCommand publication  = revision?.model?.publication as PublicationTransportCommand
+            def publicationMap = workingMemory.get('publication_objects_in_working') as HashMap<Object, PublicationDetailExtractionContext>
+            PublicationDetailExtractionContext pubContext = publicationMap.get(workingMemory.get('SelectedPubLinkProvider'))
+            if (pubContext && pubContext.publication) {
+                publication = pubContext.publication
+            }
+        %>
         <h2>Update Publication Information</h2>
         <g:form>
             <div class="dialog">
@@ -46,7 +58,7 @@
                             </td>
                             <td>
                                 <g:textField class="input50" name="title" size="50"
-                                             value="${(workingMemory.get("ModelTC") as ModelTransportCommand).publication.title}"/>
+                                             value="${publication.title}"/>
                             </td>
                             <td>
                                 <label for="journal">
@@ -55,7 +67,7 @@
                             </td>
                             <td>
                                 <g:textField class="input50" name="journal" size="50"
-                                             value="${(workingMemory.get("ModelTC") as ModelTransportCommand).publication.journal}"/>
+                                             value="${publication.journal}"/>
                             </td>
                         </tr>
                         <tr>
@@ -66,7 +78,7 @@
                             </td>
                             <td>
                             <select class="input50" id="authorList" name="authorList" size="${workingMemory.get("Authors")?.size() ?: 5}">
-                                <g:each in="${workingMemory.get("Authors")}">
+                                <g:each in="${publication.authors}">
                                     <option value="${it.userRealName}<init>${it.orcid ?: "no_orcid"}<init>${it.institution ?: "no_institution_provided"}">${it.userRealName}</option>
                                 </g:each>
                             </select>
@@ -102,7 +114,8 @@
                                 </label>
                             </td>
                             <td>
-                                <g:textArea name="synopsis" id="synopsis" rows="13" cols="32" value="${(workingMemory.get("ModelTC") as ModelTransportCommand).publication.synopsis}"/>
+                                <g:textArea name="synopsis" id="synopsis" rows="13" cols="32"
+                                            value="${publication.synopsis}"/>
                             </td>
                         </tr>
                         <tr>
@@ -112,7 +125,8 @@
                                 </label>
                             </td>
                             <td>
-                                <g:textArea name="affiliation" id="affiliation" rows="5" cols="32" value="${(workingMemory.get("ModelTC") as ModelTransportCommand).publication.affiliation}"/>
+                                <g:textArea name="affiliation" id="affiliation" rows="5" cols="32"
+                                            value="${publication.affiliation}"/>
                             </td>
                             <td>
                                 <label>
@@ -123,28 +137,37 @@
                                 <div>
                                     <ul class="subListForm">
                                         <li>
-                                            <label style="display:block;margin-left:0px"><g:message code="submission.publication.date"/></label>
+                                            <label style="display:block;margin-left:0px">
+                                                <g:message code="submission.publication.date"/></label>
                                             <span>
-                                                <g:select name="month" from="${1..12}" value="${(workingMemory.get("ModelTC") as ModelTransportCommand).publication.month?:Calendar.instance.get(Calendar.MONTH)}"/>
-                                                <g:select name="year" from="${1800..Calendar.instance.get(Calendar.YEAR)}" value="${(workingMemory.get("ModelTC") as ModelTransportCommand).publication.year?:Calendar.instance.get(Calendar.YEAR)}"/>
+                                                <g:select name="month" from="${1..12}"
+                                                          value="${publication.month?:Calendar.instance.get(Calendar.MONTH)}"/>
+                                                <g:select name="year" from="${1800..Calendar.instance.get(Calendar.YEAR)}"
+                                                          value="${publication.year?:Calendar.instance.get(Calendar.YEAR)}"/>
                                             </span>
                                         </li>
                                         <li>
-                                            <label style="display:block;margin-left:0px"><g:message code="submission.publication.volume"/></label>
+                                            <label style="display:block;margin-left:0px">
+                                                <g:message code="submission.publication.volume"/></label>
                                             <span>
-                                                <g:textField class="input20" name="volume" size="20" value="${(workingMemory.get("ModelTC") as ModelTransportCommand).publication.volume}"/>
+                                                <g:textField class="input20" name="volume" size="20"
+                                                             value="${publication.volume}"/>
                                             </span>
                                         </li>
                                         <li>
-                                            <label style="display:block;margin-left:0px"><g:message code="submission.publication.issue"/></label>
+                                            <label style="display:block;margin-left:0px">
+                                                <g:message code="submission.publication.issue"/></label>
                                             <span>
-                                                <g:textField class="input20" name="issue" size="20" value="${(workingMemory.get("ModelTC") as ModelTransportCommand).publication.issue}"/>
+                                                <g:textField class="input20" name="issue" size="20"
+                                                             value="${publication.issue}"/>
                                             </span>
                                         </li>
                                         <li>
-                                            <label style="display:block;margin-left:0px"><g:message code="submission.publication.pages"/></label>
+                                            <label style="display:block;margin-left:0px">
+                                                <g:message code="submission.publication.pages"/></label>
                                             <span>
-                                                <g:textField class="input20" name="pages" size="20" value="${(workingMemory.get("ModelTC") as ModelTransportCommand).publication.pages}"/>
+                                                <g:textField class="input20" name="pages" size="20"
+                                                             value="${publication.pages}"/>
                                             </span>
                                         </li>
                                     </ul>
