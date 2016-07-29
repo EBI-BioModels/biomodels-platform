@@ -30,7 +30,7 @@ TeamMember = Backbone.View.extend({
         // be nice and allow chaining.
         return this;
     }
-    
+
 });
 
 /**
@@ -78,9 +78,8 @@ Team = Backbone.View.extend({
 					that.remove(e);
         		});
 			});
-			
 		}
-    }, 
+    },
     remove: function(event) {
     	var buttonId = event.currentTarget.id;
         var collaboratorId = buttonId.substring("remove-".length);
@@ -102,6 +101,9 @@ function startTeams(teamsUrl, successUrl, existing) {
     $('#nameSearch').keypress(function(e) {
         if (e.which == RETURN_KEY && $('#nameSearch').val().trim()) {
         	addCollab(e);
+        } else if (e.which == RETURN_KEY) {
+            $('#flashMessage').show();
+            $('#flashMessage').text('Please enter the name, username or email of the collaborator you would like to add to the team.');
         }
     });
     $('#add').click(function(e) {
@@ -109,7 +111,7 @@ function startTeams(teamsUrl, successUrl, existing) {
         	addCollab(e);
         } else {
             $('#flashMessage').show();
-            $('#flashMessage').text('The added user information cannot be empty.');
+            $('#flashMessage').text('Please enter the name, username or email of the collaborator you would like to add to the team.');
         }
     });
     $('.submitButton').click(function(e) {
@@ -138,18 +140,30 @@ function startTeams(teamsUrl, successUrl, existing) {
 
 function addCollab(e) {
     e.preventDefault();
+    var newUserRealName = $('#nameSearch').val().trim();
     if (selectedItem) {
-        var thisCollaborator = {};
-        thisCollaborator.email = selectedItem[0];
-        thisCollaborator.userId = selectedItem[1];
-        thisCollaborator.name = selectedItem[2];
-        thisCollaborator.id = selectedItem[3];
-        // triggers Team.addMember()
-        collaborators.add(thisCollaborator);
+        var isExist = false;
+        collaborators.each(function(c) {
+            if (c.id == selectedItem[3])
+                isExist = true;
+            return;
+        });
+        if (!isExist) {
+            var thisCollaborator = {};
+            thisCollaborator.email = selectedItem[0];
+            thisCollaborator.userId = selectedItem[1];
+            thisCollaborator.name = selectedItem[2];
+            thisCollaborator.id = selectedItem[3];
+            // triggers Team.addMember()
+            collaborators.add(thisCollaborator);
+        } else {
+            $('#flashMessage').show();
+            $('#flashMessage').text("The member " + newUserRealName + " has already been added to the team.")
+        }
+        selectedItem = null
     } else {
-        //alert("User not existing");
-        var newUser = $('#nameSearch').val().trim();
         $('#flashMessage').show();
-        $('#flashMessage').text("The user " + newUser + " does not exist.")
+        $('#flashMessage').text("The member " + newUserRealName + " does not exist.")
     }
+    $('#nameSearch').val('');
 }

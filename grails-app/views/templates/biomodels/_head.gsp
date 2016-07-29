@@ -98,4 +98,4 @@
 
   <!-- custom build (lacks most of the "advanced" HTML5 support -->
   <script src="//www.ebi.ac.uk/web_guidelines/js/libs/modernizr.custom.49274.js"></script>
-<title><g:layoutTitle default="Jummp for Biomodels"/></title>
+<title><g:layoutTitle default="New Biomodels Database"/></title>
