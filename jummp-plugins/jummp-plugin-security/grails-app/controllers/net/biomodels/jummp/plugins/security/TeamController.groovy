@@ -168,7 +168,7 @@ class TeamController {
     				Set<User> removeThese = existingUsers - users
     				removeThese.each {
     					UserTeam userTeam = UserTeam.findByUserAndTeam(it, team)
-    					userTeam.delete()
+    					userTeam.remove(it, team, true)
     				}
     				render team.id
     			}
