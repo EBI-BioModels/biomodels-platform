@@ -30,7 +30,7 @@ TeamMember = Backbone.View.extend({
         // be nice and allow chaining.
         return this;
     }
-    
+
 });
 
 /**
@@ -78,9 +78,8 @@ Team = Backbone.View.extend({
 					that.remove(e);
         		});
 			});
-			
 		}
-    }, 
+    },
     remove: function(event) {
     	var buttonId = event.currentTarget.id;
         var collaboratorId = buttonId.substring("remove-".length);
@@ -112,7 +111,7 @@ function startTeams(teamsUrl, successUrl, existing) {
         	addCollab(e);
         } else {
             $('#flashMessage').show();
-            $('#flashMessage').text('The added user information cannot be empty.');
+            $('#flashMessage').text('The added member information cannot be empty.');
         }
     });
     $('.submitButton').click(function(e) {
@@ -141,18 +140,30 @@ function startTeams(teamsUrl, successUrl, existing) {
 
 function addCollab(e) {
     e.preventDefault();
+    var newUserRealName = $('#nameSearch').val().trim();
     if (selectedItem) {
-        var thisCollaborator = {};
-        thisCollaborator.email = selectedItem[0];
-        thisCollaborator.userId = selectedItem[1];
-        thisCollaborator.name = selectedItem[2];
-        thisCollaborator.id = selectedItem[3];
-        // triggers Team.addMember()
-        collaborators.add(thisCollaborator);
+        var isExist = false;
+        collaborators.each(function(c) {
+            if (c.id == selectedItem[3])
+                isExist = true;
+            return;
+        });
+        if (!isExist) {
+            var thisCollaborator = {};
+            thisCollaborator.email = selectedItem[0];
+            thisCollaborator.userId = selectedItem[1];
+            thisCollaborator.name = selectedItem[2];
+            thisCollaborator.id = selectedItem[3];
+            // triggers Team.addMember()
+            collaborators.add(thisCollaborator);
+        } else {
+            $('#flashMessage').show();
+            $('#flashMessage').text("The member " + newUserRealName + " is existing.")
+        }
+        selectedItem = null
     } else {
-        //alert("User not existing");
-        var newUser = $('#nameSearch').val().trim();
         $('#flashMessage').show();
-        $('#flashMessage').text("The user " + newUser + " does not exist.")
+        $('#flashMessage').text("The member " + newUserRealName + " does not exist.")
     }
+    $('#nameSearch').val('');
 }
