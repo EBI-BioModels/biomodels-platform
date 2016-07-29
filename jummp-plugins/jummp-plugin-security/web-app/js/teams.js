@@ -103,7 +103,7 @@ function startTeams(teamsUrl, successUrl, existing) {
         	addCollab(e);
         } else if (e.which == RETURN_KEY) {
             $('#flashMessage').show();
-            $('#flashMessage').text('The added member information cannot be empty.');
+            $('#flashMessage').text('Please enter the name, username or email of the collaborator you would like to add to the team.');
         }
     });
     $('#add').click(function(e) {
@@ -111,7 +111,7 @@ function startTeams(teamsUrl, successUrl, existing) {
         	addCollab(e);
         } else {
             $('#flashMessage').show();
-            $('#flashMessage').text('The added member information cannot be empty.');
+            $('#flashMessage').text('Please enter the name, username or email of the collaborator you would like to add to the team.');
         }
     });
     $('.submitButton').click(function(e) {
@@ -158,7 +158,7 @@ function addCollab(e) {
             collaborators.add(thisCollaborator);
         } else {
             $('#flashMessage').show();
-            $('#flashMessage').text("The member " + newUserRealName + " is existing.")
+            $('#flashMessage').text("The member " + newUserRealName + " has already been added to the team.")
         }
         selectedItem = null
     } else {
