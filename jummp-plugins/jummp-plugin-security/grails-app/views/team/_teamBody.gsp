@@ -49,5 +49,5 @@
 		</div>
 	</div>
 
-	<g:submitButton class='submitButton' name="${buttonLabel}" value="${buttonLabel}"/>
+	<g:field type="button" class='submitButton' name="${buttonLabel}" value="${buttonLabel}"/>
 </g:form>

@@ -102,6 +102,9 @@ function startTeams(teamsUrl, successUrl, existing) {
     $('#nameSearch').keypress(function(e) {
         if (e.which == RETURN_KEY && $('#nameSearch').val().trim()) {
         	addCollab(e);
+        } else if (e.which == RETURN_KEY) {
+            $('#flashMessage').show();
+            $('#flashMessage').text('The added member information cannot be empty.');
         }
     });
     $('#add').click(function(e) {
