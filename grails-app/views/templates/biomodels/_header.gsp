@@ -61,7 +61,7 @@
         <a href="${createLink(uri: '/', absolute: true)}" title="Back to BioModels homepage">
             <img src="${grailsApplication.config.grails.serverURL}/images/biomodels/logo_small.png"
                  height="100" width="100" style="padding-right: 12px;"
-                 title="Biomodels Database Homepage"/>BioModels Database</a>
+                 title="New Biomodels Database Homepage"/>BioModels Database</a>
     </h1>
 </div>
 <!-- /local-title -->
@@ -71,24 +71,24 @@
 
 <div class="grid_12 omega">
         <form id="local-search" name="local-search" action="${createLink(controller: 'search', action: 'searchRedir')}" method="post">
-                
+
           <fieldset>
-          
+
           <div class="left">
             <label>
             <input type="text" name="search_block_form" id="local-searchbox">
             </label>
           </div>
-          
+
           <div class="right">
-            <input type="submit" name="submit" value="Search" class="submit">          
+            <input type="submit" name="submit" value="Search" class="submit">
             <!-- If your search is more complex than just a keyword search, you can link to an Advanced Search,
-                 with whatever features you want available 
-            <span class="adv"><a href="../search" id="adv-search" title="Advanced">Advanced</a></span>-->
-          </div>                  
-          
+                 with whatever features you want available -->
+            %{--<span class="adv"><a href="../search" id="adv-search" title="Advanced">Advanced</a></span>--}%
+          </div>
+
           </fieldset>
-          
+
         </form>
       </div>
 
