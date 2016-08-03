@@ -950,7 +950,8 @@ About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
             on("Continue"){
                 ModelTransportCommand model =
                             flow.workingMemory.get("ModelTC") as ModelTransportCommand
-                def publicationMap = flow.workingMemory.get("publication_objects_in_working") as Map<Object, PublicationDetailExtractionContext>
+                def publicationMap = flow.workingMemory.get("publication_objects_in_working") as
+                    Map<Object, PublicationDetailExtractionContext>
                 PublicationDetailExtractionContext pubContext = publicationMap.get(flow.workingMemory.get("SelectedPubLinkProvider"))
                 PublicationTransportCommand tempPTC = pubContext.publication
                 bindData(tempPTC, params, [exclude: ['authors']])
