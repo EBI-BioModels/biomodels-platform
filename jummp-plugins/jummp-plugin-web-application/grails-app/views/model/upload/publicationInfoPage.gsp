@@ -17,7 +17,9 @@
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 <%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page import="grails.converters.JSON;" %>
 <%@ page import="net.biomodels.jummp.core.model.ModelTransportCommand" %>
+<%@ page import="net.biomodels.jummp.plugins.security.PersonTransportCommand;" %>
 <%@ page import="net.biomodels.jummp.core.model.PublicationDetailExtractionContext" %>
 <%@ page import="net.biomodels.jummp.core.model.RevisionTransportCommand" %>
 <%@ page import="net.biomodels.jummp.core.model.PublicationTransportCommand" %>
@@ -33,6 +35,21 @@
         </title>
         <link rel="stylesheet"
               href="${resource(contextPath: "${grailsApplication.config.grails.serverURL}", dir: '/css', file: 'publicationPageStyle.css')}" />
+        <g:javascript>
+            // Indeed, we don't need to check whether the authors is null or not because if case of the model has
+            // no publication yet, we always create an empty PersonTransportCommand to maintain authors
+            // during the submission flow.
+            if (${workingMemory['Authors'] != null}) {
+                var authorMap = {"authors": ${workingMemory['Authors'].collect {
+                    String userRealName = it.userRealName ?: ""
+                    String institution = it.institution ?: ""
+                    String orcid = it.orcid ?: ""
+                    [userRealName: userRealName, institution: institution, orcid: orcid]
+                    } as JSON}
+                };
+                var authorList = authorMap["authors"];
+            }
+        </g:javascript>
         <g:javascript contextPath="" src="publicationSubmission.js"/>
     </head>
     <body>
@@ -57,7 +74,7 @@
                                 </label>
                             </td>
                             <td>
-                                <g:textField class="input50" name="title" size="50"
+                                <g:textField class="input50" name="title" size="255" style="width: 98%"
                                              value="${publication.title}"/>
                             </td>
                             <td>
@@ -66,7 +83,7 @@
                                 </label>
                             </td>
                             <td>
-                                <g:textField class="input50" name="journal" size="50"
+                                <g:textField class="input50" name="journal" size="255" style="width: 98%"
                                              value="${publication.journal}"/>
                             </td>
                         </tr>
@@ -79,13 +96,13 @@
                             <td>
                             <select class="input50" id="authorList" name="authorList" size="${workingMemory.get("Authors")?.size() ?: 5}">
                                 <g:each in="${publication.authors}">
-                                    <option value="${it.userRealName}<init>${it.orcid ?: "no_orcid"}<init>${it.institution ?: "no_institution_provided"}">${it.userRealName}</option>
+                                    <option value="${it.userRealName}|${it.orcid ?: ""}|${it.institution ?: ""}">${it.userRealName}</option>
                                 </g:each>
                             </select>
                             <div>
                                 <ul class="subListForm">
                                     <li>
-                                        <label style="display:block;margin-left:0px">Name</label>
+                                        <label style="display:block; margin-left:0px">Name <span style="color: red">(*)</span></label>
                                         <span><input class="input40" size="40" type="text" id="newAuthorName"/></span>
                                     </li>
                                     <li>
@@ -101,7 +118,7 @@
                                     </li>
                                     <li>
                                         <a href="#" id="addButton" class="button">Add</a>
-                                        %{--<a href="#" id="updateButton" class="button">Update</a>--}%
+                                        <a href="#" id="updateButton" class="button">Update</a>
                                         <a href="#" id="deleteButton" class="button">Delete</a>
                                     </li>
                                 </ul>
@@ -137,7 +154,7 @@
                                 <div>
                                     <ul class="subListForm">
                                         <li>
-                                            <label style="display:block;margin-left:0px">
+                                            <label style="display:block; margin-left:0px">
                                                 <g:message code="submission.publication.date"/></label>
                                             <span>
                                                 <g:select name="month" from="${1..12}"
@@ -178,8 +195,9 @@
                   <div class="buttons">
                     <g:submitButton name="Cancel" value="${g.message(code: 'submission.common.cancelButton')}" />
                     <g:submitButton name="Back" value="${g.message(code: 'submission.common.backButton')}" />
-                    <g:submitButton name="Continue" value="${g.message(code: 'submission.publication.continueButton')}" />
-                    <g:hiddenField name="authorFieldTotal" value="" />
+                    <g:submitButton id="continueButton" name="Continue" value="${g.message(code: 'submission.publication.continueButton')}" />
+                    <div name="authorListTemp" id="authorListTemp"
+                         style="width: 800px; height: 50px; margin: auto; border: 3px solid #73AD21; display: none"></div>
                 </div>
             </div>
         </g:form>

@@ -955,47 +955,59 @@ About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
                 PublicationTransportCommand tempPTC = pubContext.publication
                 bindData(tempPTC, params, [exclude: ['authors']])
                 bindData(model.publication, params, [exclude: ['authors']])
-                String[] authorList = params.authorFieldTotal.split(",")
                 List<PersonTransportCommand> validatedAuthors = new LinkedList<PersonTransportCommand>()
-                authorList.each {
-                    if (it) {
-                        String[] parts = it.split("<init>")
-                        String name = parts[0]
-                        String orcid = parts[1]
-                        String institution = parts[2]
-                        def authorListSrc = model.publication.authors
-                        if (!authorListSrc) {
-                            authorListSrc = new LinkedList<PersonTransportCommand>()
-                        }
-                        def author = authorListSrc.find { auth ->
-                            if (orcid != "no_orcid") {
-                                return orcid == auth.orcid
+                def slurper = new JsonSlurper()
+                def result = slurper.parseText(params.authorListContainer)
+                if (result['authors']) {
+                    def authorList = result['authors']
+                    authorList.each {
+                        if (it) {
+                            String name = it["userRealName"]
+                            String institution = it["institution"]
+                            String orcid = it["orcid"]
+                            def authorListSrc = model.publication.authors
+                            if (!authorListSrc) {
+                                authorListSrc = new LinkedList<PersonTransportCommand>()
+                            }
+                            def author = authorListSrc.find { auth ->
+                                if (orcid != "") {
+                                    return orcid == auth.orcid
+                                } else {
+                                    return name == auth.userRealName
+                                }
+                                return false
+                            }
+                            if (!author) {
+                                author = new PersonTransportCommand(userRealName: name,
+                                    orcid: orcid, institution: institution)
+                                if (!model.publication.authors) {
+                                    model.publication.authors = new LinkedList<PersonTransportCommand>()
+                                }
+                                model.publication.authors.add(author)
                             } else {
-                                return name == auth.userRealName
+                                if (author.userRealName != name) {
+                                    author.userRealName = name
+                                }
+                                if (author.orcid != orcid) {
+                                    author.orcid = orcid
+                                }
+                                if (author.institution != institution) {
+                                    author.institution = institution
+                                }
                             }
-                            return false
-                        }
-                        if (!author) {
-                            author = new PersonTransportCommand(userRealName: parts[0],
-                                        orcid: orcid != "no_orcid" ? orcid : null,
-                                        institution: institution != "no_institution_provided" ? institution : null)
-                            if (!model.publication.authors) {
-                                model.publication.authors=new LinkedList<PersonTransportCommand>()
+                            if (author.validate()) {
+                                validatedAuthors.add(author)
+                            } else {
+                                log.error """\
+                            Submission did not validate: ${author.properties}.
+                            Errors: ${author.errors.allErrors.inspect()}."""
+                                flash.validationErrorOn = author
+                                return error()
                             }
-                            model.publication.authors.add(author)
-                        }
-                        if (author.validate()) {
-                            validatedAuthors.add(author)
-                        } else {
-                            log.error """\
-Submission did not validate: ${author.properties}.
-Errors: ${author.errors.allErrors.inspect()}."""
-                            flash.validationErrorOn = author
-                            return error()
                         }
                     }
                 }
-                model.publication.authors = validatedAuthors
+                    model.publication.authors = validatedAuthors
                 if (!model.publication.validate()) {
                     log.error """\
 Submission did not validate: ${model.publication.properties}.
