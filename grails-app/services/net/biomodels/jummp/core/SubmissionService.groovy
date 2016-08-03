@@ -777,10 +777,12 @@ class SubmissionService {
             final String NEW_DESCRIPTION = workingMemory["new_description"]
             final boolean SHOULD_UPDATE = NEW_NAME || NEW_DESCRIPTION
             if (NEW_NAME) {
+                newlyCreatedRTC.name = NEW_NAME
                 modelFileFormatService.updateName(newlyCreatedRTC, NEW_NAME)
                 changes.add("Edited model name")
             }
             if (NEW_DESCRIPTION) {
+                newlyCreatedRTC.description = NEW_DESCRIPTION
                 modelFileFormatService.updateDescription(newlyCreatedRTC, NEW_DESCRIPTION)
                 changes.add("Edited model description")
             }
