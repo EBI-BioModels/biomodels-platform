@@ -173,7 +173,7 @@
                 content.push("<a title='Download ",fileProps.Name, "'","href='",fileLink);
                 fileLink=fileLink+"&inline=true";
                 content.push("'><img style='width:20px;margin-left:10px;float:none' alt='Download' " +
-                    "src='http://www.ebi.ac.uk/web_guidelines/images/icons/EBI-Functional/Functional%20icons/download.png'/></a></h3></div>");
+                    "src='${grailsApplication.config.grails.serverURL}/images/download.png'/></a></h3></div>");
                 if (mimeType!=null) {
                     for (var format in formats) {
                         var matching=formats[format];
@@ -602,12 +602,12 @@
                 <g:if test="${revision.state==ModelState.PUBLISHED}">
                     <img style="float:right;margin-top:0;" title="This version of the model is public"
                          alt="public model"
-                         src="http://www.ebi.ac.uk/web_guidelines/images/icons/EBI-Functional/Functional%20icons/unlock.png"/>
+                         src="${grailsApplication.config.grails.serverURL}/images/unlock.png"/>
                 </g:if>
                 <g:else>
                     <img style="float:right;margin-top:0;" title="This version of the model is unpublished"
                          alt="unpublished model"
-                         src="http://www.ebi.ac.uk/web_guidelines/images/icons/EBI-Functional/Functional%20icons/lock.png"/>
+                         src="${grailsApplication.config.grails.serverURL}/images/lock.png"/>
                 </g:else>
             </div>
         </div>
@@ -713,24 +713,24 @@
                     <g:if test="${rv.state==ModelState.PUBLISHED}">
                             <img style="width:12px;margin:2px;float:none;"
                                  title="This version of the model is public" alt="public model"
-                                 src="http://www.ebi.ac.uk/web_guidelines/images/icons/EBI-Functional/Functional%20icons/unlock.png"/>
+                                 src="${grailsApplication.config.grails.serverURL}/images/unlock.png"/>
                     </g:if>
                     <g:else>
                             <img style="width:12px;margin:2px;float:none;"
                                  title="This version of the model is unpublished" alt="unpublished model"
-                                 src="http://www.ebi.ac.uk/web_guidelines/images/icons/EBI-Functional/Functional%20icons/lock.png"/>
+                                 src="${grailsApplication.config.grails.serverURL}/images/lock.png"/>
                     </g:else>
                     <g:if test="${revision.id!=rv.id}">
                         <a class="versionDownload" title="go to version ${rv.revisionNumber}"
                            href="${g.createLink(controller: 'model', action: 'show', id: rv.identifier())}">
                             <img style="width:12px;margin:2px;float:none"
-                                 src="http://www.ebi.ac.uk/web_guidelines/images/icons/EBI-Generic/Generic%20icons/external_link.png"/>
+                                 src="${grailsApplication.config.grails.serverURL}/images/external_link.png"/>
                         </a>
                     </g:if>
                             <a class="versionDownload" title="download"
                                href="${g.createLink(controller: 'model', action: 'download', id: rv.identifier())}">
                                 <img alt="Download this version" style="width:15px;float:none"
-                                     src="http://www.ebi.ac.uk/web_guidelines/images/icons/EBI-Functional/Functional%20icons/download.png"/>
+                                     src="${grailsApplication.config.grails.serverURL}/images/download.png"/>
                             </a>
                         <ul>
                             <li>Submitted on: ${dateFormat.format(rv.uploadDate)}</li>

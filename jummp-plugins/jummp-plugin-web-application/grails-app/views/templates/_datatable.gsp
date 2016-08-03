@@ -69,15 +69,15 @@
                                         <jummp:renderStarLevels flag="${model.flagLevel}"/></td>
 								<td style="text-align: center;">
 									<g:if test="${model.state == ModelState.PUBLISHED}">
-										<img style="width:14px" title="Published" alt="public model" src="http://www.ebi.ac.uk/web_guidelines/images/icons/EBI-Functional/Functional%20icons/unlock.png"/>
+										<img style="width:14px" title="Published" alt="public model" src="${grailsApplication.config.grails.serverURL}/images/unlock.png"/>
 									</g:if>
 									<g:else>
-										<img style="width:12px" title="Unpublished" alt="unpublished model" src="http://www.ebi.ac.uk/web_guidelines/images/icons/EBI-Functional/Functional%20icons/lock.png"/>
+										<img style="width:12px" title="Unpublished" alt="unpublished model" src="${grailsApplication.config.grails.serverURL}/images/lock.png"/>
 										<g:if test="${model.submitterUsername.toString() == sec.username().toString() }">
-											<img style="width:14px" title="You own this model" alt="own model" src="http://www.ebi.ac.uk/web_guidelines/images/icons/EBI-Generic/Generic%20icons/meetus.png"/>
+											<img style="width:14px" title="You own this model" alt="own model" src="${grailsApplication.config.grails.serverURL}/images/meetus.png"/>
 										</g:if>
 										<g:else>
-											<img style="width:14px" title="This model is shared with you" alt="shared model" src="http://www.ebi.ac.uk/web_guidelines/images/icons/EBI-Generic/Generic%20icons/Face_to_Face.png"/>
+											<img style="width:14px" title="This model is shared with you" alt="shared model" src="${grailsApplication.config.grails.serverURL}/images/Face_to_Face.png"/>
 										</g:else>
 									</g:else>
 								</td>
