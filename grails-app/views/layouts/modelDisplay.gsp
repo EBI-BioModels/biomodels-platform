@@ -40,7 +40,7 @@
 <head>
         <title>${revision.name}</title>
         <link rel="stylesheet" href="<g:resource dir="css/jqueryui/smoothness"
-                                                 file="jquery-ui-1.10.3.custom.css"/>" />
+                                                 file="jquery-ui-1.10.3.custom.min.css"/>" />
 
     <script type="text/x-mathjax-config">
         MathJax.Hub.Config({

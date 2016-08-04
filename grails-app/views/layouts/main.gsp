@@ -258,7 +258,7 @@
     <g:render template="/templates/${grailsApplication.config.jummp.branding.style}/head" />
     <link rel="stylesheet" href="<g:resource dir="css" file="notification.css"/>" />
     <link rel="stylesheet" href="<g:resource dir="css" file="layout.css"/>" />
-    <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+    <link rel="stylesheet" href="<g:resource dir="css/jqueryui/smoothness" file="jquery-ui-1.10.3.custom.min.css"/>" />
     <link rel="stylesheet" href="<g:resource dir="css" file="jquery.cookiebar.css"/>" />
     <g:layoutHead/>
 </head>

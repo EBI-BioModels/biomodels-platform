@@ -34,7 +34,8 @@
         <title><g:message code="submission.upload.header"/></title>
         <g:javascript contextPath="" src="jquery/jquery-ui-v1.10.3.js"/>
         <g:if test ="${showProceedWithoutValidationDialog || showProceedAsUnknownFormat}">
-            <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
+            <link rel="stylesheet" href="${resource(contextPath: "${grailsApplication.config.grails.serverURL}",
+                dir: '/css/jqueryui/smoothness', file: 'jquery-ui-1.10.3.custom.min.css')}" />
         </g:if>
         <script type="text/javascript">
             var descriptionMap = { "files": ${workingMemory['additional_files'].collect {
