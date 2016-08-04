@@ -48,7 +48,7 @@
         });
     </script>
     <script type='text/javascript'
-            src='http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML'>
+            src="${grailsApplication.config.grails.serverURL}/js/MathJax-2.6.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
     </script>
         <g:javascript src="jstree/jquery.jstree.js"/>
         <g:javascript src="equalize.js"/>
