@@ -456,6 +456,13 @@ if (!(jummpConfig.jummp.security.certificationRole instanceof ConfigObject)) {
     jummp.security.certificationRole = ['ROLE_ADMIN']
 }
 
+if (!(jummpConfig.jummp.security.certificationAllowed instanceof ConfigObject)) {
+    jummp.security.certificationAllowed = Boolean.parseBoolean(jummpConfig.jummp.security.certificationAllowed)
+} else {
+    // default to false
+    jummp.security.certificationAllowed = false
+}
+
 // whether sbml validation is turned on
 if (!(jummpConfig.jummp.plugins.sbml.validation instanceof ConfigObject)) {
 	jummp.plugins.sbml.validation = Boolean.parseBoolean(jummpConfig.jummp.plugins.sbml.validation)

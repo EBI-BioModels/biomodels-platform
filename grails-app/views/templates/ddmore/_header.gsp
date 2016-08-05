@@ -125,6 +125,11 @@
             </g:if>>
             <g:message code="jummp.feedback.ddmore.title"/></a>
         </li>
+        <li class="expanded">
+            <g:if test="${grailsApplication.config.jummp.security.certificationAllowed}">
+                <a href="http://www.ddmore.eu/projects/request-model-certification" target="_blank" title="Request DDMoRe certification of your model -- link opens in a new window">Request Certification</a>
+            </g:if>
+        </li>
     </ul>
 </div>
 <p>${g.pageProperty(name:'page.selectedtab')}</p>
