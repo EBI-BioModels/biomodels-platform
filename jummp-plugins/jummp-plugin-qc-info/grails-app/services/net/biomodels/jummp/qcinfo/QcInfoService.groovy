@@ -42,11 +42,12 @@ class QcInfoService {
                 revision.save()
                 return true
             } catch (Exception ex) {
-                ex.printStackTrace()
+                final long id = revision.id
+                log.error("Failed to save ${qcInfo.properties} for revision $id: ${ex.message}", ex)
                 try {
                     status.setRollbackOnly()
                 } catch (Exception ex2) {
-                    ex2.printStackTrace()
+                    log.error("Could not roll back adding QCinfo to revision $id: ${ex2.message}", ex2)
                 }
                 return false
             }
