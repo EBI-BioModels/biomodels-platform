@@ -12,10 +12,8 @@ class QcInfoService {
     */
     def springSecurityService
     /**
-     * Dependency Injection of AclUtilService
+     * Dependency Injection of certificationAuthorisationService
      */
-    def aclUtilService
-
     def certificationAuthorisationService
 
     public QcInfo createQcInfo(FlagLevel flagLevel, String comment) {
