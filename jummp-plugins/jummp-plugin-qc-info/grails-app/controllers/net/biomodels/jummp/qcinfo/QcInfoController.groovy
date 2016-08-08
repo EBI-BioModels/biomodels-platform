@@ -55,7 +55,8 @@ class QcInfoController {
             return
         }
 
-        def qcInfo = qcInfoDelegateService.createQcInfo(flag, params.comment)
+        String comment = params.comment?.encodeAsHTML()
+        def qcInfo = qcInfoDelegateService.createQcInfo(flag, comment)
         boolean certified = qcInfoDelegateService.addQcInfo(params.revision, qcInfo)
         if (certified) {
             render([status: '200', message: "The model is successfully certified."] as JSON)
