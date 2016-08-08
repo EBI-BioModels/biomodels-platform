@@ -41,13 +41,13 @@
 	 			<table id="modelTable">
     	    	<thead>
                 <tr>
-                	<g:render template="/templates/tableheader" model="[action: action, 'sortColumn': 'name','msgCode':'model.list.name']"/>
-                	<g:render template="/templates/tableheader" model="[action: action, 'sortColumn': 'format','msgCode':'model.list.format']"/>
-                	<g:render template="/templates/tableheader" model="[action: action, 'sortColumn': 'submitter','msgCode':'model.list.submitter']"/>
-                	<g:render template="/templates/tableheader" model="[action: action, 'sortColumn': 'submitted','msgCode':'model.list.submissionDate']"/>
-                	<g:render template="/templates/tableheader" model="[action: action, 'sortColumn': 'modified','msgCode':'model.list.modifiedDate']"/>
-                	<sec:ifLoggedIn>
-    				 	<th>Certification</th>
+                    <g:render template="/templates/tableheader" model="[action: action, 'sortColumn': 'name','msgCode':'model.list.name']"/>
+                    <g:render template="/templates/tableheader" model="[action: action, 'sortColumn': 'format','msgCode':'model.list.format']"/>
+                    <g:render template="/templates/tableheader" model="[action: action, 'sortColumn': 'submitter','msgCode':'model.list.submitter']"/>
+                    <g:render template="/templates/tableheader" model="[action: action, 'sortColumn': 'submitted','msgCode':'model.list.submissionDate']"/>
+                    <g:render template="/templates/tableheader" model="[action: action, 'sortColumn': 'modified','msgCode':'model.list.modifiedDate']"/>
+                    <th>Certification</th>
+                    <sec:ifLoggedIn>
                         <th>Status</th>
     				</sec:ifLoggedIn>
                 </tr>
@@ -64,9 +64,9 @@
                 			<td>${model.submitter}</td>
                 			<td>${model.submissionDate.format('yyyy/MM/dd')}</td>
                 			<td>${model.lastModifiedDate.format('yyyy/MM/dd')}</td>
-                			<sec:ifLoggedIn>
-                                <td style="text-align: center;">
-                                        <jummp:renderStarLevels flag="${model.flagLevel}"/></td>
+                            <td style="text-align: center;">
+                                    <jummp:renderStarLevels flag="${model.flagLevel}"/></td>
+                            <sec:ifLoggedIn>
 								<td style="text-align: center;">
 									<g:if test="${model.state == ModelState.PUBLISHED}">
 										<img style="width:14px" title="Published" alt="public model" src="${grailsApplication.config.grails.serverURL}/images/unlock.png"/>
