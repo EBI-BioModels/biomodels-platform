@@ -143,6 +143,7 @@ class SearchService {
             String submissionId = revision.model.submissionId
             String publicationId = revision.model.publicationId ?: ""
             int versionNumber = revision.revisionNumber
+            boolean isCertified = null != revision.qcInfo
             final String uniqueId = "${submissionId}.${versionNumber}"
             String exchangeFolder = new File(revision.files.first().path).getParent()
             String registryExport = miriamService.registryExport.canonicalPath
@@ -173,6 +174,7 @@ class SearchService {
                 'revision_id' :  revision.id,
                 'deleted' :  revision.model.deleted,
                 'public' :  revision.model.firstPublished ? 'true'  :  'false',
+                'certified' : isCertified ? 'true' : 'false',
                 'versionNumber' : versionNumber,
                 'submissionDate' : revision.model.submissionDate,
                 'lastModified' :  revision.model.lastModifiedDate,
@@ -267,6 +269,18 @@ class SearchService {
         updateIndexBase(doc, setPublicField)
     }
 
+    void setCertified(def rev, boolean value = true) {
+        SolrInputDocument doc = getSolrDocumentFromRevision rev
+        setBooleanFieldForDocument(doc, "certified", value)
+        updateIndexWithDocument(doc)
+    }
+
+    private void setBooleanFieldForDocument(SolrInputDocument d, String f, boolean v) {
+        Map<String, String> cmd = [:]
+        cmd.put("set", v ? 'true' : 'false')
+        d.addField(f, cmd)
+    }
+
     /**
      * Updates the deleted field for a given model in the Solr index.
      *
@@ -299,6 +313,14 @@ class SearchService {
         } else {
             return null == docs.find { !(it.get('deleted')) }
         }
+    }
+
+    boolean isCertified(def rev) {
+        SolrInputDocument doc = getSolrDocumentFromRevision(rev)
+        if (!doc) {
+            return false
+        }
+        return null != doc.get('certified')
     }
 
     /*
@@ -378,7 +400,8 @@ class SearchService {
                             lastModifiedDate: latestRevision.uploadDate,
                             id: model.id,
                             state: latestRevision.state,
-                            format: new ModelFormatAdapter(format: latestRevision.format).toCommandObject()
+                            format: new ModelFormatAdapter(format: latestRevision.format).toCommandObject(),
+                            flagLevel: latestRevision.qcInfo?.flag
                         )
                         returnVals.put(model.submissionId, mtc)
                     }

@@ -15,6 +15,10 @@ class QcInfoService {
      * Dependency Injection of certificationAuthorisationService
      */
     def certificationAuthorisationService
+    /**
+     * Dependency Injection of SearchService
+     */
+    def searchService
 
     public QcInfo createQcInfo(FlagLevel flagLevel, String comment) {
         QcInfo qcInfo = new QcInfo()
@@ -40,12 +44,14 @@ class QcInfoService {
                 revision.qcInfo = qcInfo
                 qcInfo.save()
                 revision.save()
+                searchService.setCertified revision
                 return true
             } catch (Exception ex) {
                 final long id = revision.id
                 log.error("Failed to save ${qcInfo.properties} for revision $id: ${ex.message}", ex)
                 try {
                     status.setRollbackOnly()
+                    searchService.setCertified(revision, false)
                 } catch (Exception ex2) {
                     log.error("Could not roll back adding QCinfo to revision $id: ${ex2.message}", ex2)
                 }
