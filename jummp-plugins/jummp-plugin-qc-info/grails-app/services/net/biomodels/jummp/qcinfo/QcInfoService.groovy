@@ -32,7 +32,7 @@ class QcInfoService {
             throw new IllegalArgumentException("Cannot add QC information about a null revision")
         }
         if (revision.deleted) {
-            throw new IllegalArgumentException("Revision may not be deleted")
+            throw new IllegalArgumentException("Cannot add QC information to deleted revision ${revision.id}.")
         }
 
         Revision.withTransaction {status ->
