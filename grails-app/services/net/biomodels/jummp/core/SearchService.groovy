@@ -453,6 +453,7 @@ class SearchService {
     def setPublicField = { doc ->
         Map<String, String> partialUpdate = new HashMap<String, String>()
         partialUpdate.put("set", "true")
+        doc.addField("public", partialUpdate)
     }
 
     def setDeletedField = { doc, flag = true ->
