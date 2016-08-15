@@ -938,6 +938,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
     * @param filename The file to be queried
     * @return A list of VcsFileDetails objects
     **/
+    @PreAuthorize("permitAll()")
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getFileDetails")
     List<VcsFileDetails> getFileDetails(Revision rev, String filename) {
