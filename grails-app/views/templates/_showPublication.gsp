@@ -37,7 +37,7 @@
 			<b>${model.publication.title}</b></a>
 		<a class="expander" title="Click to see more" href="#">
 			<span>
-				<img style="width:12px;margin:2px;float:none" src="http://www.ebi.ac.uk/web_guidelines/images/icons/EBI-Functional/Functional%20icons/expand.png"/>
+				<img style="width:12px;margin:2px;float:none" src="${grailsApplication.config.grails.serverURL}/images/expand.png"/>
 			</span>
 		</a>
 		

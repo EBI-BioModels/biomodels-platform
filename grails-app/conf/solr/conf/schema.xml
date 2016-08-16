@@ -110,6 +110,7 @@
    <field name="externalReferenceName" type="text_general" indexed="true" stored="false" multiValued="true"/>
    <field name="public" type="boolean" indexed="true" stored="true"/>
    <field name="deleted" type="boolean" indexed="true" stored="true"/>
+   <field name="certified" type="boolean" indexed="true" stored="true"/>
    <field name="uniqueId" type="string" indexed="true" stored="true"/>
    <!-- SBML-specific fields -->
    <field name="sbmlSBOTerm" type="string" indexed="true" stored="false" multiValued="true"/>

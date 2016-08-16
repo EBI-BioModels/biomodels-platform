@@ -365,7 +365,8 @@ class ModelController {
     }
 
     // uses revision id and filename
-    def getFileDetails = {
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def getFileDetails() {
         try {
             final RevisionTransportCommand REVISION =
                         modelDelegateService.getRevisionFromParams(params.id, params.revisionId)

@@ -12,11 +12,13 @@ class QcInfoService {
     */
     def springSecurityService
     /**
-     * Dependency Injection of AclUtilService
+     * Dependency Injection of certificationAuthorisationService
      */
-    def aclUtilService
-
     def certificationAuthorisationService
+    /**
+     * Dependency Injection of SearchService
+     */
+    def searchService
 
     public QcInfo createQcInfo(FlagLevel flagLevel, String comment) {
         QcInfo qcInfo = new QcInfo()
@@ -34,7 +36,7 @@ class QcInfoService {
             throw new IllegalArgumentException("Cannot add QC information about a null revision")
         }
         if (revision.deleted) {
-            throw new IllegalArgumentException("Revision may not be deleted")
+            throw new IllegalArgumentException("Cannot add QC information to deleted revision ${revision.id}.")
         }
 
         Revision.withTransaction {status ->
@@ -42,13 +44,16 @@ class QcInfoService {
                 revision.qcInfo = qcInfo
                 qcInfo.save()
                 revision.save()
+                searchService.setCertified revision
                 return true
             } catch (Exception ex) {
-                ex.printStackTrace()
+                final long id = revision.id
+                log.error("Failed to save ${qcInfo.properties} for revision $id: ${ex.message}", ex)
                 try {
                     status.setRollbackOnly()
+                    searchService.setCertified(revision, false)
                 } catch (Exception ex2) {
-                    ex2.printStackTrace()
+                    log.error("Could not roll back adding QCinfo to revision $id: ${ex2.message}", ex2)
                 }
                 return false
             }

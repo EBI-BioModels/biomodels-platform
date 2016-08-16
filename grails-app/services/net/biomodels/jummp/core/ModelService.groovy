@@ -33,6 +33,7 @@ package net.biomodels.jummp.core
 import eu.ddmore.publish.service.PublishContext
 import eu.ddmore.publish.service.PublishException
 import eu.ddmore.publish.service.PublishInfo
+import grails.plugin.springsecurity.SpringSecurityService
 import grails.transaction.Transactional
 import net.biomodels.jummp.annotationstore.Qualifier
 import net.biomodels.jummp.annotationstore.ResourceReference
@@ -938,20 +939,25 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
     * @param filename The file to be queried
     * @return A list of VcsFileDetails objects
     **/
+    @PreAuthorize("permitAll()")
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getFileDetails")
     List<VcsFileDetails> getFileDetails(Revision rev, String filename) {
         def details = vcsService.getFileDetails(rev, filename)
         def accessibleRevs = getAllRevisions(rev.model)
+        final boolean IS_ANON = !springSecurityService.isLoggedIn() &&
+            SpringSecurityUtils.ifAllGranted('ROLE_ANONYMOUS')
+        final boolean IS_ADMIN = !IS_ANON && SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")
         return details.findAll { detail ->
             boolean retval = false
             accessibleRevs.each { revision ->
-                if (SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN") || aclUtilService.hasPermission(
-                    springSecurityService.authentication, revision, BasePermission.READ)) {
-                        if (revision.vcsId == detail.revisionId) {
-                            retval = true
-                        }
+                final boolean CAN_READ = IS_ADMIN || aclUtilService.hasPermission(
+                    springSecurityService.authentication, revision, BasePermission.READ)
+                if (IS_ANON || CAN_READ) {
+                    if (revision.vcsId == detail.revisionId) {
+                        retval = true
                     }
+                }
             }
             return retval
         }

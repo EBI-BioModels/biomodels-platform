@@ -42,8 +42,8 @@
     		  <div class="view view-dom-id-9c00a92f557689f996511ded36a88594">
     		  <a style="float:right;margin-top:5px" title="Add new user" href="${g.createLink(action: "register")}">
 	  	     		<span>
-	  	     			Add new user
-    		  		<img style="width:20px;float:none;margin-left:5px" src="http://www.ebi.ac.uk/web_guidelines/images/icons/EBI-Functional/Functional%20icons/user_add.png"/>
+                        Add new user
+                        <img style="width:20px;float:none;margin-left:5px" src="${grailsApplication.config.grails.serverURL}/images/user_add.png"/>
     		  		</span>
 	  	      </a>
         <div class="view-content">

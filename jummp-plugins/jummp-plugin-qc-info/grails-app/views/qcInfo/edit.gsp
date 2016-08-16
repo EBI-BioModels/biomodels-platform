@@ -135,7 +135,6 @@
         }
     });
         $('span[id^=star]').on('click', function() {
-            console.log(this.id);
             if (this.id == 'star3') {
                 var currentClass = $('#star3').attr('class');
                 if (currentClass == 'star-icon') {

@@ -69,18 +69,18 @@
 						<tr><td class='tableLabels'><label>${perm.notificationType.toString()}</label></td>
 						<td>
 							<g:if test="${perm.sendNotification}">
-								<img width="20px" height="auto" title="Receiving notifications on the website" src="http://www.ebi.ac.uk/web_guidelines/images/icons/EBI-Functional/Functional%20icons/Accept.png"/>
+								<img width="20px" height="auto" title="Receiving notifications on the website" src="${grailsApplication.config.grails.serverURL}/images/Accept.png"/>
 							</g:if>
 							<g:else>
-								<img width="20px" height="auto" title="Not receiving notifications on the website" src="http://www.ebi.ac.uk/web_guidelines/images/icons/EBI-Functional/Functional%20icons/close.png"/>
+								<img width="20px" height="auto" title="Not receiving notifications on the website" src="${grailsApplication.config.grails.serverURL}/images/close.png"/>
 							</g:else>
 						</td>
 						<td>
 							<g:if test="${perm.sendMail}">
-								<img width="20px" height="auto" title="Receiving notifications by email" src="http://www.ebi.ac.uk/web_guidelines/images/icons/EBI-Functional/Functional%20icons/Accept.png"/>
+								<img width="20px" height="auto" title="Receiving notifications by email" src="${grailsApplication.config.grails.serverURL}/images/Accept.png"/>
 							</g:if>
 							<g:else>
-								<img width="20px" height="auto" title="Not receiving notifications by email" src="http://www.ebi.ac.uk/web_guidelines/images/icons/EBI-Functional/Functional%20icons/close.png"/>
+								<img width="20px" height="auto" title="Not receiving notifications by email" src="${grailsApplication.config.grails.serverURL}/images/close.png"/>
 							</g:else>
 						</td></tr>
 					</g:each>

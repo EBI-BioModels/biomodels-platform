@@ -125,6 +125,9 @@ class BootStrap {
             if (!Role.findByAuthority("ROLE_ADMIN")) {
                 new Role(authority: "ROLE_ADMIN").save(flush: true)
             }
+            if (!Role.findByAuthority("ROLE_QC_PROVIDER")) {
+                new Role(authority: "ROLE_QC_PROVIDER").save(flush: true)
+            }
             if (!User.findByUsername("administrator")) {
                 def person = new Person(userRealName: "administrator")
                 person.save(flush: true)

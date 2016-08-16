@@ -41,13 +41,13 @@
 	 			<table id="modelTable">
     	    	<thead>
                 <tr>
-                	<g:render template="/templates/tableheader" model="[action: action, 'sortColumn': 'name','msgCode':'model.list.name']"/>
-                	<g:render template="/templates/tableheader" model="[action: action, 'sortColumn': 'format','msgCode':'model.list.format']"/>
-                	<g:render template="/templates/tableheader" model="[action: action, 'sortColumn': 'submitter','msgCode':'model.list.submitter']"/>
-                	<g:render template="/templates/tableheader" model="[action: action, 'sortColumn': 'submitted','msgCode':'model.list.submissionDate']"/>
-                	<g:render template="/templates/tableheader" model="[action: action, 'sortColumn': 'modified','msgCode':'model.list.modifiedDate']"/>
-                	<sec:ifLoggedIn>
-    				 	<th>Certification</th>
+                    <g:render template="/templates/tableheader" model="[action: action, 'sortColumn': 'name','msgCode':'model.list.name']"/>
+                    <g:render template="/templates/tableheader" model="[action: action, 'sortColumn': 'format','msgCode':'model.list.format']"/>
+                    <g:render template="/templates/tableheader" model="[action: action, 'sortColumn': 'submitter','msgCode':'model.list.submitter']"/>
+                    <g:render template="/templates/tableheader" model="[action: action, 'sortColumn': 'submitted','msgCode':'model.list.submissionDate']"/>
+                    <g:render template="/templates/tableheader" model="[action: action, 'sortColumn': 'modified','msgCode':'model.list.modifiedDate']"/>
+                    <th>Certification</th>
+                    <sec:ifLoggedIn>
                         <th>Status</th>
     				</sec:ifLoggedIn>
                 </tr>
@@ -64,20 +64,20 @@
                 			<td>${model.submitter}</td>
                 			<td>${model.submissionDate.format('yyyy/MM/dd')}</td>
                 			<td>${model.lastModifiedDate.format('yyyy/MM/dd')}</td>
-                			<sec:ifLoggedIn>
-                                <td style="text-align: center;">
-                                        <jummp:renderStarLevels flag="${model.flagLevel}"/></td>
+                            <td style="text-align: center;">
+                                    <jummp:renderStarLevels flag="${model.flagLevel}"/></td>
+                            <sec:ifLoggedIn>
 								<td style="text-align: center;">
 									<g:if test="${model.state == ModelState.PUBLISHED}">
-										<img style="width:14px" title="Published" alt="public model" src="http://www.ebi.ac.uk/web_guidelines/images/icons/EBI-Functional/Functional%20icons/unlock.png"/>
+										<img style="width:14px" title="Published" alt="public model" src="${grailsApplication.config.grails.serverURL}/images/unlock.png"/>
 									</g:if>
 									<g:else>
-										<img style="width:12px" title="Unpublished" alt="unpublished model" src="http://www.ebi.ac.uk/web_guidelines/images/icons/EBI-Functional/Functional%20icons/lock.png"/>
+										<img style="width:12px" title="Unpublished" alt="unpublished model" src="${grailsApplication.config.grails.serverURL}/images/lock.png"/>
 										<g:if test="${model.submitterUsername.toString() == sec.username().toString() }">
-											<img style="width:14px" title="You own this model" alt="own model" src="http://www.ebi.ac.uk/web_guidelines/images/icons/EBI-Generic/Generic%20icons/meetus.png"/>
+											<img style="width:14px" title="You own this model" alt="own model" src="${grailsApplication.config.grails.serverURL}/images/meetus.png"/>
 										</g:if>
 										<g:else>
-											<img style="width:14px" title="This model is shared with you" alt="shared model" src="http://www.ebi.ac.uk/web_guidelines/images/icons/EBI-Generic/Generic%20icons/Face_to_Face.png"/>
+											<img style="width:14px" title="This model is shared with you" alt="shared model" src="${grailsApplication.config.grails.serverURL}/images/Face_to_Face.png"/>
 										</g:else>
 									</g:else>
 								</td>

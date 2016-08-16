@@ -2,6 +2,7 @@ package net.biomodels.jummp.qcinfo
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
+import net.biomodels.jummp.core.adapters.ModelAdapter
 
 @Secured(["isAuthenticated()"])
 class QcInfoController {
@@ -17,8 +18,8 @@ class QcInfoController {
         def revision = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
         def modelId = (revision.model.publicationId) ?: (revision.model.submissionId)
 
-        boolean canUpdate = modelDelegateService.canAddRevision modelId
-        if (!canUpdate) {
+        boolean canCertify = qcInfoDelegateService.canCertify(ModelAdapter.findByPerennialIdentifier(modelId))
+        if (!canCertify) {
             forward controller: 'errors', action: 'error403'
             return
         }
@@ -55,7 +56,8 @@ class QcInfoController {
             return
         }
 
-        def qcInfo = qcInfoDelegateService.createQcInfo(flag, params.comment)
+        String comment = params.comment?.encodeAsHTML()
+        def qcInfo = qcInfoDelegateService.createQcInfo(flag, comment)
         boolean certified = qcInfoDelegateService.addQcInfo(params.revision, qcInfo)
         if (certified) {
             render([status: '200', message: "The model is successfully certified."] as JSON)

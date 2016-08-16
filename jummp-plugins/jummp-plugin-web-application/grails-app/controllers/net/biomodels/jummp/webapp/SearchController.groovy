@@ -164,14 +164,16 @@ class SearchController {
         return results
     }
 
-    def searchRedir = {
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def searchRedir() {
         redirect action: 'search', params: [query:params.search_block_form]
     }
 
     /**
      * Default action showing a list view
      */
-    def search = {
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def search() {
         sanitiseParams();
         if (!params.query) {
             params.query = ""

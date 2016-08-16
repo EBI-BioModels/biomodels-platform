@@ -47,7 +47,7 @@
       				</li>
       				<li class="leaf" id="notificationCount">
       					<a title="View ${sec.username()}'s Notifications" href='<g:createLink controller="notification" action="list"/>'>
-                            <img width="20" height="auto" title="notifications" src="http://www.ebi.ac.uk/web_guidelines/images/icons/EBI-Generic/Generic%20icons/email.png"/>
+                            <img width="20" height="auto" title="notifications" src="${grailsApplication.config.grails.serverURL}/images/email.png"/>
       						<span id="notificationLink" style="display: none;"></span>
       					</a>
       				</li>
@@ -124,6 +124,11 @@
             class="active-trail active"
             </g:if>>
             <g:message code="jummp.feedback.ddmore.title"/></a>
+        </li>
+        <li class="expanded">
+            <g:if test="${grailsApplication.config.jummp.security.certificationAllowed}">
+                <a href="http://www.ddmore.eu/projects/request-model-certification" target="_blank" title="Request DDMoRe certification of your model -- link opens in a new window">Request Certification</a>
+            </g:if>
         </li>
     </ul>
 </div>
