@@ -90,7 +90,7 @@
         </form>
     </div>
     <script type='text/javascript'>
-    <!-- TODO: move out of HTML page //-->
+        // TODO: move out of HTML page
     	$("#loginForm input").focus(function() {
     		if ($(this).data("reset") === undefined) {
     		$(this).val("");

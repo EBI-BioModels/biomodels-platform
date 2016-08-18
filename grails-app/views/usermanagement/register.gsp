@@ -39,7 +39,7 @@
         </style>
         <link rel="stylesheet" href="${resource(dir: 'css', file: 'jstree.css')}" /> 
     </head>
-     <body>
+ <body>
         <div>
             <g:form name="registerForm" action="signUp">
                 <table>
@@ -80,12 +80,8 @@
                     </tr>
                     </tbody>
                 </table>
-                <div class="buttons">
-                    <input type="submit" value="${g.message(code: 'user.signup.register')}"/>
-                </div>
-                <label class="verysecure">You shouldnt see me</label>
+                <label class="verysecure">You shouldn't see me.</label>
                 <input class="verysecure" name="securityfeature" value=""/>
-                 
             </g:form>
         </div>
     <script type="text/javascript">

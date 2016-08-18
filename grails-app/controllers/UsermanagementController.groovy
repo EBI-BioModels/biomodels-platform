@@ -234,7 +234,7 @@ class UsermanagementController {
             }
         }
         else {
-            flash.message = "Please provide a username.";
+            flash.message = "Please provide a username."
         }
         redirect(action:"forgot")
     }
