@@ -41,9 +41,9 @@
                 <tr><p>${flash.message}</p></tr>
                 <tbody>
                     <tr>
-                    	<td class="name">
+                    	<td class="name" style="text-align: right">
                                 <label for="username">
-                                    <g:message code="login.form.label"/>
+                                    <g:message code="login.form.label"/>:
                                 </label>
                         </td>
                         <td>
@@ -51,9 +51,9 @@
                         </td>
                     </tr>
                     <tr>
-  	                <td class="name">
+  	                <td class="name" style="text-align: right">
                                <label for="password">
-                                    <g:message code="login.form.password"/>
+                                    <g:message code="login.form.password"/>:
                                 </label>
                         </td>
                     	<td>
