@@ -247,19 +247,19 @@ class UsermanagementController {
      */
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def signUp() {
-    	boolean captchaValid = simpleCaptchaService.validateCaptcha(params.captcha)
-    	if (!captchaValid) {
-    		flash.message="The text entered did not match the image. Please try again"
-    		return redirect(action:"create")
-    	}
-    	if (params.verysecure) {
-    		flash.message="I hope you are a robot. Otherwise something has gone wrong."
-    		return redirect(action:"create")
-    	}
-    	RegistrationCommand cmd=new RegistrationCommand()
-    	if (!validateUserData(cmd, params)) {
-    		return redirect(action:"create")
-    	}
+        RegistrationCommand cmd = new RegistrationCommand()
+        if (!validateUserData(cmd, params)) {
+            return redirect(action:"create")
+        }
+        boolean captchaValid = simpleCaptchaService.validateCaptcha(params.captcha)
+        if (!captchaValid) {
+            flash.message="The text entered did not match the image. Please try again"
+            return redirect(action:"create")
+        }
+        if (params.verysecure) {
+            flash.message="I hope you are a robot. Otherwise something has gone wrong."
+            return redirect(action:"create")
+        }
         try
     	{
     		userService.register(cmd.toUser())
