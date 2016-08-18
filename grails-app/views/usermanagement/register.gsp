@@ -49,12 +49,12 @@
                         <td><span><g:textField name="username"/></span></td>
                     </tr>
                     <tr>
-                        <td class='tableLabels'><label class="required" for="register-form-name"><g:message code="user.signup.ui.realname"/>:</label></td>
-                        <td><span><g:textField name="userRealName"/></span></td>
-                    </tr>
-                    <tr>
                         <td class='tableLabels'><label class="required" for="register-form-email"><g:message code="user.signup.ui.email"/>:</label></td>
                         <td><span><g:textField name="email"/></span></td>
+                    </tr>
+                    <tr>
+                        <td class='tableLabels'><label class="required" for="register-form-name"><g:message code="user.signup.ui.realname"/>:</label></td>
+                        <td><span><g:textField name="userRealName"/></span></td>
                     </tr>
                     <tr>
                         <td class='tableLabels'><label for="register-form-institution"><g:message code="user.signup.ui.institution"/>:</label></td>
