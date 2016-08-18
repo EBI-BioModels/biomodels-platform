@@ -72,6 +72,12 @@
                             <g:textField name="captcha"/>
                         </td>
                     </tr>
+                    <tr>
+                        <td colspan="2" style="text-align: center">
+                            <input type="submit" value="${g.message(code: 'user.signup.register')}"/>
+                            <input type="reset" id="resetFormButton" value="${g.message(code: 'user.signup.reset')}"/>
+                        </td>
+                    </tr>
                     </tbody>
                 </table>
                 <div class="buttons">
@@ -82,7 +88,12 @@
                  
             </g:form>
         </div>
-        </body>
+    <script type="text/javascript">
+        $("#registerForm #resetFormButton").click(function() {
+            $('#registerForm')[0].reset();
+        });
+    </script>
+</body>
 </html>
 <content tag="title">
 	<g:message code="user.signup.ui.heading.register"/>
