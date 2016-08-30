@@ -341,7 +341,8 @@ jummp.controllerAnnotations = [
     "/plugins/*/js/*":          ['permitAll'],
     "/plugins/*/css/*":         ['permitAll'],
     "/plugins/*/images/*":      ['permitAll'],
-    "/simpleCaptcha/captcha":   ['permitAll']
+    "/simpleCaptcha/captcha":   ['permitAll'],
+    "/omicsdi/**":              ["hasRole('ROLE_ADMIN')"]
 ]
 
 // ldap

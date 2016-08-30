@@ -68,6 +68,7 @@ class UrlMappings {
                     org.springframework.security.access.AccessDeniedException)
         "/models"(controller: "search", action: "list")
         "/search"(controller: "search", action: "search")
+        "/omicsdi"(controller: "omicsdi", action: "index")
         "/archive"(controller: "search", action: "archive")
         "/support"(controller:"jummp", action:"feedback")
         "/lookupUser"(controller:"jummp", action:"lookupUser")
