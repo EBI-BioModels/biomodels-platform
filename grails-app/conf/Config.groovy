@@ -449,6 +449,13 @@ if (!(jummpConfig.jummp.security.curatorByDefault instanceof ConfigObject)) {
     // default to true
     jummp.security.curatorByDefault = true
 }
+// model search strategy setting: "omicsdi" or "solr"
+if (!(jummpConfig.jummp.search.strategy instanceof ConfigObject)) {
+    jummp.search.strategy = jummpConfig.jummp.search.strategy
+} else {
+    // default to solr
+    jummp.search.strategy = "solr"
+}
 
 if (!(jummpConfig.jummp.security.certificationRole instanceof ConfigObject)) {
     jummp.security.certificationRole = jummpConfig.jummp.security.certificationRole

@@ -1,32 +1,13 @@
-/**
- * Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
- * Deutsches Krebsforschungszentrum (DKFZ)
- *
- * This file is part of Jummp.
- *
- * Jummp is free software; you can redistribute it and/or modify it under the
- * terms of the GNU Affero General Public License as published by the Free
- * Software Foundation; either version 3 of the License, or (at your option) any
- * later version.
- *
- * Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
- * A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
- * details.
- *
- * You should have received a copy of the GNU Affero General Public License along
- * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
- **/
-
-package net.biomodels.jummp.core
+package net.biomodels.jummp.search
 
 import grails.async.Promise
+import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.annotation.Secured
 import groovy.json.JsonBuilder
-import net.biomodels.jummp.search.ModelSearchContext
-import net.biomodels.jummp.search.OmicsDiHandler
-import net.biomodels.jummp.search.SolrServerHolder
+import org.springframework.security.acls.domain.BasePermission
+
 import java.util.concurrent.atomic.AtomicReference
+import net.biomodels.jummp.core.ModelSearchStrategy
 import net.biomodels.jummp.core.adapters.DomainAdapter
 import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.events.LoggingEventType
@@ -41,27 +22,17 @@ import org.apache.solr.client.solrj.SolrQuery
 import org.apache.solr.client.solrj.response.QueryResponse
 import org.apache.solr.common.SolrDocumentList
 import org.apache.solr.common.SolrInputDocument
-import grails.plugin.springsecurity.SpringSecurityUtils
 import org.perf4j.aop.Profiled
 import org.springframework.security.core.Authentication
-import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.security.acls.domain.BasePermission
 
 /**
- * @short Singleton-scoped facade for interacting with a Solr instance.
- *
- * This service provides means of indexing and querying generic information about
- * models.
- *
- * @author Raza Ali, raza.ali@ebi.ac.uk
- * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
- * @date   20160710
+ * Created by Tung on 30/08/2016.
  */
-class SearchService {
+class SolrBasedSearch implements ModelSearchStrategy {
     /**
      * The class logger.
      */
-    static final Log log = LogFactory.getLog(SearchService)
+    static final Log log = LogFactory.getLog(SolrBasedSearch)
     /**
      * Flag indicating the logger's verbosity threshold.
      */
@@ -90,6 +61,7 @@ class SearchService {
      * Dependency injection of SolrServerHolder
      */
     def  solrServerHolder
+
     /*
      * Dependency injection of grailsApplication
      */
@@ -107,37 +79,6 @@ class SearchService {
      */
     def aclUtilService
 
-    ModelSearchStrategy strategy
-
-    ModelSearchContext searchContext = new ModelSearchContext(strategy)
-
-    SearchService() {
-        loadSearchStrategy()
-    }
-
-    private void loadSearchStrategy() {
-        String strategySetting = grails.util.Holders.grailsApplication.config.jummp.search.strategy
-        if (strategySetting)
-            log.info "Search strategy involking: ${strategySetting}"
-        else {
-            log.error "Cannot load the value of search strategy property."
-            strategySetting = "solr"
-            log.error "using the default value: ${strategySetting}"
-        }
-        strategy = strategySetting.equalsIgnoreCase("omicsdi") ? new OmicsDiHandler() : new SolrServerHolder()
-    }
-
-    private void setSearchStrategy(String strategy) {
-        this.strategy = strategy.equalsIgnoreCase("omicsdi") ? new OmicsDiHandler() : new SolrServerHolder()
-    }
-
-    String test() {
-        searchContext.searchModels()
-        def s = "Loaded strategy: ${strategy.properties}"
-        setSearchStrategy("solr")
-        s += "\n\nSearch Strategy: ${strategy.properties}"
-        return s
-    }
     /**
      * Clears the index. Handle with care.
      */
@@ -366,7 +307,7 @@ class SearchService {
      * field is automatically added to @p fields if not already present.
      */
     private SolrDocumentList findSolrDocumentByModel(def model,
-            List<String> fields = ['uniqueId']) {
+                                                     List<String> fields = ['uniqueId']) {
         SolrQuery query = new SolrQuery()
         query.setQuery("submissionId:${model?.submissionId}")
         if (!fields.contains("uniqueId")) {
@@ -520,4 +461,3 @@ class SearchService {
      *  ///End of helper functions
      **/
 }
-
