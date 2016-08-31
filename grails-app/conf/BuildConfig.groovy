@@ -190,6 +190,7 @@ grails.plugin.location.'jummp-plugin-simple-logging' = "jummp-plugins/jummp-plug
 grails.plugin.location.'jummp-plugin-web-application' = "jummp-plugins/jummp-plugin-web-application"
 grails.plugin.location.'jummp-plugin-annotation-source-ddmore' = "jummp-plugins/jummp-plugin-annotation-source-ddmore"
 grails.plugin.location.'jummp-plugin-annotation-core' = "jummp-plugins/jummp-plugin-annotation-core"
+grails.plugin.location.'jummp-plugin-omicsdi' = "jummp-plugins/jummp-plugin-omicsdi"
 grails.plugin.location.'jummp-plugin-qc-info' = "jummp-plugins/jummp-plugin-qc-info"
 //grails.plugin.location.'jummp-plugin-jms-remote' = "jummp-plugins/jummp-plugin-jms-remote"
 if ("jms".equalsIgnoreCase(System.getenv("JUMMP_EXPORT"))) {
