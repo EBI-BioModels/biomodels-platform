@@ -25,6 +25,8 @@
 package net.biomodels.jummp.core
 
 import groovy.transform.CompileStatic
+import net.biomodels.jummp.core.model.ModelTransportCommand
+import net.biomodels.jummp.core.model.RevisionTransportCommand
 
 /**
  * Allow dynamically changing suitable search strategy based on configuration setting.
@@ -35,5 +37,15 @@ import groovy.transform.CompileStatic
 
 @CompileStatic
 interface ModelSearchStrategy {
-
+    String name()
+    void clearIndex()
+    void clearAnnotationStatementsFromDatabase()
+    boolean isCertified(def rev)
+    boolean isDeleted(def model)
+    void makePublic(def revision)
+    void regenerateIndices()
+    void setDeleted(def model, boolean deleted)
+    void setCertified(def rev, boolean value)
+    Collection<ModelTransportCommand> searchModels(String query)
+    void updateIndex(RevisionTransportCommand revision)
 }

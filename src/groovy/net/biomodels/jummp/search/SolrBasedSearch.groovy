@@ -3,8 +3,12 @@ package net.biomodels.jummp.search
 import grails.async.Promise
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.annotation.Secured
+import grails.util.Holders
 import groovy.json.JsonBuilder
+import org.jmock.auto.Auto
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.acls.domain.BasePermission
+import org.springframework.security.core.context.SecurityContextHolder
 
 import java.util.concurrent.atomic.AtomicReference
 import net.biomodels.jummp.core.ModelSearchStrategy
@@ -48,36 +52,43 @@ class SolrBasedSearch implements ModelSearchStrategy {
     /**
      * Disable default transactional behaviour.
      */
-    static transactional = false
+    //static transactional = false
     /**
      * Dependency injection of ModelService.
      */
-    def modelService
+    @Autowired
+    def modelService = Holders.grailsApplication.mainContext.getBean('modelService')
     /**
      * Dependency injection of SpringSecurityService.
      */
-    def springSecurityService
+    @Autowired
+    def springSecurityService = Holders.grailsApplication.mainContext.getBean('springSecurityService')
     /**
      * Dependency injection of SolrServerHolder
      */
-    def  solrServerHolder
+    @Autowired
+    def solrServerHolder = Holders.grailsApplication.mainContext.getBean('solrServerHolder')
 
     /*
      * Dependency injection of grailsApplication
      */
-    def grailsApplication
+    @Autowired
+    def grailsApplication = Holders.grailsApplication.mainContext.getBean('grailsApplication')
     /*
      * Dependency injection of the configuration service
      */
-    def configurationService
+    @Autowired
+    def configurationService = Holders.grailsApplication.mainContext.getBean('configurationService')
     /**
      * Dependency injection of miriamService.
      */
-    def miriamService
+    @Autowired
+    def miriamService = Holders.grailsApplication.mainContext.getBean('miriamService')
     /**
      * Dependency injection of aclUtilService
      */
-    def aclUtilService
+    @Autowired
+    def aclUtilService = Holders.grailsApplication.mainContext.getBean('aclUtilService')
 
     /**
      * Clears the index. Handle with care.
@@ -93,11 +104,29 @@ class SolrBasedSearch implements ModelSearchStrategy {
         log.info "Cleared the search index."
     }
 
-    List<String> fetchFilesFromRevision(RevisionTransportCommand rev, boolean filterMains) {
+    /*
+     * Removes revision annotations from the database.
+     *
+     * This is necessary to ensure that we keep in sync Solr with the database
+     * at the start of the reindexing process.
+     */
+    @Profiled(tag = "searchService.clearAnnotationStatementsFromDatabase")
+    void clearAnnotationStatementsFromDatabase() {
+        log.debug("Begin prunning annotation statements from database")
+        Revision.executeUpdate("delete ElementAnnotation")
+        Revision.executeUpdate("delete Statement")
+        log.debug("Finished prunning annotation statements from database")
+    }
+
+    private List<String> fetchFilesFromRevision(RevisionTransportCommand rev, boolean filterMains) {
         if (filterMains) {
             return rev?.files?.findAll{it.mainFile}.collect{it.path}
         }
         return rev?.files?.collect{it.path}
+    }
+
+    String name() {
+        return "solr"
     }
 
     /**
@@ -333,6 +362,7 @@ class SolrBasedSearch implements ModelSearchStrategy {
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="searchService.searchModels")
     Collection<ModelTransportCommand> searchModels(String query) {
+        //solrServerHolder.init()
         long start = System.currentTimeMillis()
         SolrDocumentList results = search(query)
         if (IS_DEBUG_ENABLED) {
@@ -405,20 +435,6 @@ class SolrBasedSearch implements ModelSearchStrategy {
         return docs
     }
 
-    /*
-     * Removes revision annotations from the database.
-     *
-     * This is necessary to ensure that we keep in sync Solr with the database
-     * at the start of the reindexing process.
-     */
-    @Profiled(tag = "searchService.clearAnnotationStatementsFromDatabase")
-    private void clearAnnotationStatementsFromDatabase() {
-        log.debug("Begin prunning annotation statements from database")
-        Revision.executeUpdate("delete ElementAnnotation")
-        Revision.executeUpdate("delete Statement")
-        log.debug("Finished prunning annotation statements from database")
-    }
-
     /**
      * Helper functions to update solr index
      */
@@ -440,7 +456,7 @@ class SolrBasedSearch implements ModelSearchStrategy {
         return doc
     }
 
-    def updateIndexBase(doc, updateToApply) {
+    private updateIndexBase(doc, updateToApply) {
         updateToApply(doc)
         updateIndexWithDocument(doc)
     }
@@ -457,7 +473,7 @@ class SolrBasedSearch implements ModelSearchStrategy {
         doc.addField("deleted", partialUpdate)
     }
 
-    /*
-     *  ///End of helper functions
-     **/
+    /**
+     * End of helper functions
+     */
 }

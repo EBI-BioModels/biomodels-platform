@@ -8,6 +8,6 @@ class OmicsdiDataSet {
     String description
     Byte releaseVersion
     Date dateReleased
-    /* The numbe of datasets exsiting into the database */
+    /* The number of data sets existing into the database */
     int entryCount
 }
