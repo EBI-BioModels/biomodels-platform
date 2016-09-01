@@ -29,24 +29,18 @@
 **/
 
 
-
-
-
+import grails.persistence.Entity
 import grails.util.Environment
 import grails.util.Holders
-import net.biomodels.jummp.core.model.identifier.generator.AbstractModelIdentifierGenerator
-import net.biomodels.jummp.core.model.identifier.generator.DefaultModelIdentifierGenerator
-import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGeneratorRegistryService
-import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import net.biomodels.jummp.core.WebflowAclBeanDefinitionProcessor
+import net.biomodels.jummp.core.model.identifier.generator.AbstractModelIdentifierGenerator
+import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGeneratorRegistryService
 import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
-import org.springframework.beans.factory.support.BeanDefinitionRegistry
 import org.springframework.beans.factory.config.BeanDefinition
+import org.springframework.beans.factory.support.BeanDefinitionRegistry
 import org.springframework.beans.factory.support.SimpleBeanDefinitionRegistry
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner
 import org.springframework.core.type.filter.AnnotationTypeFilter
-import grails.persistence.Entity
-
 
 // Place your Spring DSL code here
 beans = {
