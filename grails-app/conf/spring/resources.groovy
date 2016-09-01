@@ -74,6 +74,11 @@ beans = {
         bean.singleton = true
     }
 
+    solrBasedSearch(net.biomodels.jummp.search.SolrBasedSearch) { bean ->
+        bean.autowire = "byName"
+        bean.singleton = true
+    }
+
     if (Environment.getCurrent() == Environment.DEVELOPMENT) {
         timingAspect(org.perf4j.log4j.aop.TimingAspect)
     }
