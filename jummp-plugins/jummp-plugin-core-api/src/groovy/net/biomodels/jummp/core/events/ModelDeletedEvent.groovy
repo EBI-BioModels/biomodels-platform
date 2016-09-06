@@ -10,14 +10,13 @@ class ModelDeletedEvent extends JummpEvent {
      * The newly deleted model.
      */
     final ModelTransportCommand model
-    /**
-     * The actual files which were uploaded.
-     */
-    final List<File> files
 
-    ModelDeletedEvent(Object source, final ModelTransportCommand model, final List<File> files) {
+    ModelDeletedEvent() {
+        super([])
+    }
+
+    ModelDeletedEvent(Object source, final ModelTransportCommand model) {
         super(source)
         this.model = model
-        this.files = files
     }
 }
