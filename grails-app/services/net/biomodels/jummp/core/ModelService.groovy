@@ -42,6 +42,7 @@ import net.biomodels.jummp.core.adapters.DomainAdapter
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.events.LoggingEventType
 import net.biomodels.jummp.core.events.ModelCreatedEvent
+import net.biomodels.jummp.core.events.ModelDeletedEvent
 import net.biomodels.jummp.core.events.PostLogging
 import net.biomodels.jummp.core.events.RevisionCreatedEvent
 import net.biomodels.jummp.core.model.ModelAuditTransportCommand
@@ -1956,6 +1957,9 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             log.debug("Attempting to delete model ${model.submissionId}")
         }
         // can't inject searchService - cyclic dependency
+        grailsApplication.mainContext.publishEvent(new ModelDeletedEvent(this, DomainAdapter.getAdapter(model).toCommandObject()))
+
+
         def searchService = grailsApplication.mainContext.searchService
         searchService.setDeleted(model)
         if (!searchService.isDeleted(model)) {

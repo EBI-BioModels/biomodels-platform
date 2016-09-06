@@ -266,7 +266,9 @@ log4j.main = {
 
     warn   jummpAppender: 'org.mortbay.log'
     // Simple Logging goes to its own file
-    info   eventsAppender: 'net.biomodels.jummp.plugins.simplelogging'
+    info   eventsAppender: [
+        'net.biomodels.jummp.plugins.simplelogging',
+        'net.biomodels.jummp.core.events']
 
     rollingFile name: "debugAppender", file: "logs/jummp-debug.log", threshold: org.apache.log4j.Level.DEBUG
     rollingFile name: "hibernateAppender", file: "logs/jummp-hibernate.log", threshold: org.apache.log4j.Level.DEBUG
