@@ -38,6 +38,9 @@
             margin-left: 10px;
             width: 900px;
         }
+        #schemaXmlContent {
+            resize: both;
+        }
     </style>
 </head>
 
@@ -45,11 +48,8 @@
     <h1>OmicsDI Settings</h1>
     <p>Below is the content of OmicsDI Schema XML file. You can change and update it.</p>
     <div id="OmicsDISchemaXMLeditor" class="editor">
-        <g:textArea name="omicsdiSchemaXML" cols="100" rows="15" value="${nbmodels}">
+        <g:textArea id="schemaXmlContent" name="omicsdiSchemaXML" cols="100" rows="15" value="${nbmodels}">
         </g:textArea>
-        %{--<div>--}%
-            %{--${nbmodels}--}%
-        %{--</div>--}%
         <br/>
         <g:field type="button" name="saveButton" value="Save"></g:field>
         <g:field type="button" name="resetButton" value="Reset"></g:field>
