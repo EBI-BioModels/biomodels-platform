@@ -5,7 +5,6 @@ import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.annotation.Secured
 import grails.util.Holders
 import groovy.json.JsonBuilder
-import org.jmock.auto.Auto
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.core.context.SecurityContextHolder
@@ -50,10 +49,6 @@ class SolrBasedSearch implements ModelSearchStrategy {
      */
     final String SEARCH_HANDLER = "/select"
     /**
-     * Disable default transactional behaviour.
-     */
-    //static transactional = false
-    /**
      * Dependency injection of ModelService.
      */
     @Autowired
@@ -90,6 +85,7 @@ class SolrBasedSearch implements ModelSearchStrategy {
     @Autowired
     def aclUtilService = Holders.grailsApplication.mainContext.getBean('aclUtilService')
 
+    def producerTemplate = Holders.grailsApplication.mainContext.getBean('producerTemplate')
     /**
      * Clears the index. Handle with care.
      */
@@ -212,7 +208,8 @@ class SolrBasedSearch implements ModelSearchStrategy {
             }
             try {
                 //sendMessage("seda:exec", argsMap)
-                sendMessage("direct:exec", argsMap)
+                //sendMessage("direct:exec", argsMap)
+                producerTemplate.sendBody("direct:exec", argsMap)
             } catch (Exception e) {
                 log.error("Failed to index revision $revision.properties - ${e.message}", e)
                 //TODO RETRY

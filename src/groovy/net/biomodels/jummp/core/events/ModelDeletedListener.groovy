@@ -1,5 +1,6 @@
 package net.biomodels.jummp.core.events
 
+import net.biomodels.jummp.model.Model
 import org.springframework.context.ApplicationEvent
 import org.springframework.context.ApplicationListener
 
@@ -8,7 +9,7 @@ import org.apache.log4j.Logger
 /**
  * Created by tnguyen on 05/09/16.
  */
-class ModelDeletedListener implements ApplicationListener {
+class ModelDeletedListener implements ApplicationListener<ModelDeletedEvent> {
      /**
      * The logger for this class
      */
@@ -16,9 +17,11 @@ class ModelDeletedListener implements ApplicationListener {
 
     def modelDelegateService
 
-    public void onApplicationEvent(ApplicationEvent event) {
+    public void onApplicationEvent(ModelDeletedEvent event) {
         if (event instanceof ModelDeletedEvent) {
-            log.info("$event deleted $event.source")
+            log.info("$event called for deleting the resource: $event.source")
+            println("$event called for deleting the resource: $event.source")
+            //Model.deleteAll(event.model.id)
         }
     }
 }

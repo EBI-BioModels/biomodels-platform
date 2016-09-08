@@ -15,7 +15,7 @@ class ModelCreatedListener implements ApplicationListener {
 
     void onApplicationEvent(ApplicationEvent event) {
         if (event instanceof ModelCreatedEvent) {
-            log.info("$event did $event.source")
+            log.info("Tung Nguyen: $event created the model $event.source")
         }
     }
 }
