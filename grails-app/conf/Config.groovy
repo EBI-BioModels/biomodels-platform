@@ -269,7 +269,8 @@ log4j.main = {
     info   eventsAppender: [
         'net.biomodels.jummp.plugins.simplelogging',
         'net.biomodels.jummp.core.events',
-        'net.biomodels.jummp.plugins.bives'
+        'net.biomodels.jummp.plugins.bives',
+        'net.biomodels.jummp.search'
     ]
 
     rollingFile name: "debugAppender", file: "logs/jummp-debug.log", threshold: org.apache.log4j.Level.DEBUG
@@ -284,7 +285,8 @@ log4j.main = {
         'net.biomodels.jummp.core.model.identifier.decorator',
         'net.biomodels.jummp.core.model.identifier.generator',
         'net.biomodels.jummp.core.model.identifier.support',
-        'net.biomodels.jummp.plugins.pharmml'
+        'net.biomodels.jummp.plugins.pharmml',
+        'net.biomodels.jummp.search'
     ]
     debug hibernateAppender: [
         'org.codehaus.groovy.grails.orm.hibernate',
