@@ -90,10 +90,6 @@ class SearchService {
         this.strategy = strategy.equalsIgnoreCase("omicsdi") ? new OmicsDIBasedSearch() : new SolrBasedSearch()
     }
 
-    String test() {
-        def s = "Loaded strategy: ${strategy.name()}"
-        return s
-    }
     /**
      * Clears the index. Handle with care.
      */

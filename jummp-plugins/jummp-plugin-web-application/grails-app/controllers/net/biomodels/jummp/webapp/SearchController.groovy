@@ -195,10 +195,6 @@ class SearchController {
         [regenTime: System.currentTimeMillis() - start]
     }
 
-    @Secured(['isAuthenticated()'])
-    def test() {
-        [message: searchService.test()]
-    }
     private def searchCore(String query, String sortBy, String sortDirection, int offset, int length) {
         println "Search strategy: ${searchService.getStrategy().dump()}"
         List<MTC> models = []
