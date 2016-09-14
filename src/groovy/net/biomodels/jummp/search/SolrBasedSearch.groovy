@@ -1,3 +1,27 @@
+/**
+ * Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Deutsches Krebsforschungszentrum (DKFZ)
+ *
+ * This file is part of Jummp.
+ *
+ * Jummp is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation; either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along
+ * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
+ **/
+
+
+
+
+
 package net.biomodels.jummp.search
 
 import grails.async.Promise
@@ -5,10 +29,16 @@ import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.annotation.Secured
 import grails.util.Holders
 import groovy.json.JsonBuilder
-import org.springframework.beans.factory.annotation.Autowired
+import net.biomodels.jummp.core.events.JummpEvent
+import net.biomodels.jummp.core.events.ModelCertifiedEvent
+import net.biomodels.jummp.core.events.ModelDeletedEvent
+import net.biomodels.jummp.core.events.ModelOperationEvent
+import net.biomodels.jummp.core.events.ModelPublishedEvent
+import net.biomodels.jummp.core.events.ModelRestoredEvent
+import net.biomodels.jummp.core.events.RevisionCreatedEvent
+import org.springframework.context.ApplicationListener
 import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.core.context.SecurityContextHolder
-
 import java.util.concurrent.atomic.AtomicReference
 import net.biomodels.jummp.core.ModelSearchStrategy
 import net.biomodels.jummp.core.adapters.DomainAdapter
@@ -29,9 +59,17 @@ import org.perf4j.aop.Profiled
 import org.springframework.security.core.Authentication
 
 /**
- * Created by Tung on 30/08/2016.
+ * @short Singleton-scoped facade for interacting with a SolrServerHolder's instance.
+ *
+ * This class provides means of indexing and querying generic information about
+ * models.
+ *
+ * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
+ * @date   12/09/2016
  */
-class SolrBasedSearch implements ModelSearchStrategy {
+
+class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelOperationEvent> {
     /**
      * The class logger.
      */
@@ -51,41 +89,79 @@ class SolrBasedSearch implements ModelSearchStrategy {
     /**
      * Dependency injection of ModelService.
      */
-    @Autowired
     def modelService = Holders.grailsApplication.mainContext.getBean('modelService')
     /**
      * Dependency injection of SpringSecurityService.
      */
-    @Autowired
     def springSecurityService = Holders.grailsApplication.mainContext.getBean('springSecurityService')
     /**
      * Dependency injection of SolrServerHolder
      */
-    @Autowired
     def solrServerHolder = Holders.grailsApplication.mainContext.getBean('solrServerHolder')
-
     /*
      * Dependency injection of grailsApplication
      */
-    @Autowired
     def grailsApplication = Holders.grailsApplication.mainContext.getBean('grailsApplication')
     /*
      * Dependency injection of the configuration service
      */
-    @Autowired
     def configurationService = Holders.grailsApplication.mainContext.getBean('configurationService')
     /**
      * Dependency injection of miriamService.
      */
-    @Autowired
     def miriamService = Holders.grailsApplication.mainContext.getBean('miriamService')
     /**
      * Dependency injection of aclUtilService
      */
-    @Autowired
     def aclUtilService = Holders.grailsApplication.mainContext.getBean('aclUtilService')
 
     def producerTemplate = Holders.grailsApplication.mainContext.getBean('producerTemplate')
+
+    void onApplicationEvent(ModelOperationEvent event) {
+        // TODO: optimise this method to benefit the robustness of polymorphism
+        // move each of if statement to associated event class
+        // thinking about how to use the methods: setDeleted, isDeleted, makePublic, etc.
+        if (event instanceof ModelDeletedEvent) {
+            def model = event.model
+            if (IS_INFO_ENABLED) {
+                log.info("$event called for deleting the resource: $event.source")
+            }
+            setDeleted(event.model)
+            if (!isDeleted(event.model)) {
+                // leave the model as not deleted and log the error
+                log.error("Could not set model ${event.model.submissionId} as deleted in solr.")
+            } else {
+                // quick test to make sure Solr is in sync with the database
+                boolean db = event.model.deleted
+                boolean solr = isDeleted(event.model)
+                if (IS_DEBUG_ENABLED) {
+                    def m = new StringBuilder("Deletion status for ").append(event.model.submissionId
+                    ).append(" - db: ").append(db).append(" solr: ").append(solr)
+                    log.debug(m.toString())
+                }
+            }
+        } else if (event instanceof ModelRestoredEvent) {
+            def model = event.model
+            setDeleted(model, false)
+            if (isDeleted(model)) {
+                log.error("Could not restore model ${model.submissionId} in Solr")
+            } else {
+                log.info("The model associated with the submission id $model.submissionId has been restored in Solr")
+            }
+        } else if (event instanceof ModelCertifiedEvent) {
+            if (event.status) {
+                log.info("$event.revision has been certified.")
+            } else {
+                log.info("$event.revision has been uncertified due to errors.")
+            }
+            setCertified(event.revision, event.status)
+        } else if (event instanceof ModelPublishedEvent) {
+
+        } else if (event instanceof RevisionCreatedEvent) {
+            log.info("$event.revision has been created.")
+        }
+    }
+
     /**
      * Clears the index. Handle with care.
      */
@@ -119,10 +195,6 @@ class SolrBasedSearch implements ModelSearchStrategy {
             return rev?.files?.findAll{it.mainFile}.collect{it.path}
         }
         return rev?.files?.collect{it.path}
-    }
-
-    String name() {
-        return "solr"
     }
 
     /**
@@ -267,7 +339,7 @@ class SolrBasedSearch implements ModelSearchStrategy {
         updateIndexBase(doc, setPublicField)
     }
 
-    void setCertified(def rev, boolean value = true) {
+    private void setCertified(def rev, boolean value = true) {
         SolrInputDocument doc = getSolrDocumentFromRevision rev
         setBooleanFieldForDocument(doc, "certified", value)
         updateIndexWithDocument(doc)
@@ -286,7 +358,7 @@ class SolrBasedSearch implements ModelSearchStrategy {
      * @param deleted the new value that should be put in the Solr index. Defaults
      *      to true if unspecified
      **/
-    void setDeleted(def model, boolean deleted = true) {
+    private void setDeleted(def model, boolean deleted = true) {
         SolrDocumentList docs = findSolrDocumentByModel(model, ["deleted"])
         docs.each {
             SolrInputDocument doc = getSolrDocumentWithId(it.get("uniqueId"))
@@ -302,7 +374,7 @@ class SolrBasedSearch implements ModelSearchStrategy {
      * @param model An instance of Model or ModelTransportCommand for which to check.
      * @return true if the corresponding SolrInputDocuments are marked as deleted, false otherwise.
      */
-    boolean isDeleted(def model) {
+    private boolean isDeleted(def model) {
         SolrDocumentList docs = findSolrDocumentByModel(model, ["deleted"])
         if (0 == docs.size()) {
             return false

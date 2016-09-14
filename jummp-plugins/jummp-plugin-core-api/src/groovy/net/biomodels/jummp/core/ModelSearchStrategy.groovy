@@ -37,15 +37,9 @@ import net.biomodels.jummp.core.model.RevisionTransportCommand
 
 @CompileStatic
 interface ModelSearchStrategy {
-    String name()
     void clearIndex()
     void clearAnnotationStatementsFromDatabase()
-    boolean isCertified(def rev)
-    boolean isDeleted(def model)
-    void makePublic(def revision)
     void regenerateIndices()
-    void setDeleted(def model, boolean deleted)
-    void setCertified(def rev, boolean value)
     Collection<ModelTransportCommand> searchModels(String query)
     void updateIndex(RevisionTransportCommand revision)
 }

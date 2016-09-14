@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -36,13 +36,13 @@ import org.apache.commons.logging.LogFactory
 import org.perf4j.aop.Profiled
 
 /**
- * @short Singleton-scoped facade for interacting with a Solr instance.
+ * @short Singleton-scoped facade for interacting with a searching service's instance.
  *
- * This service provides means of indexing and querying generic information about
- * models.
+ * This service provides means of indexing and querying generic information about models.
  *
  * @author Raza Ali, raza.ali@ebi.ac.uk
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  * @date   20160710
  */
 class SearchService {
@@ -122,44 +122,6 @@ class SearchService {
     @Profiled(tag="searchService.regenerateIndices")
     void regenerateIndices() {
         strategy.regenerateIndices()
-    }
-
-    /**
-     * Makes a model public at the specified revision in the solr index
-     *
-     * Makes the @revision public in the solr index. @revision can be domain or transport object
-     **/
-    void makePublic(def revision) {
-        strategy.makePublic(revision)
-    }
-
-    void setCertified(def rev, boolean value = true) {
-        strategy.setCertified(rev, value)
-    }
-
-    /**
-     * Updates the deleted field for a given model in the Solr index.
-     *
-     * @param model can be domain or transport object
-     * @param deleted the new value that should be put in the Solr index. Defaults
-     *      to true if unspecified
-     **/
-    void setDeleted(def model, boolean deleted = true) {
-        strategy.setDeleted(model, deleted)
-    }
-
-    /**
-     * Checks whether a model is marked as deleted in the Solr index.
-     *
-     * @param model An instance of Model or ModelTransportCommand for which to check.
-     * @return true if the corresponding SolrInputDocuments are marked as deleted, false otherwise.
-     */
-    boolean isDeleted(def model) {
-        strategy.isDeleted(model)
-    }
-
-    boolean isCertified(def rev) {
-        strategy.isCertified(rev)
     }
 
     /**
