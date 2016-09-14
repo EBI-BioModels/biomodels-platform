@@ -33,7 +33,7 @@ import org.apache.commons.logging.LogFactory
 import org.springframework.context.ApplicationListener
 
 /**
- * @short Singleton-scoped facade for interacting with a OmicsDiHolder's instance.
+ * @short Singleton-scoped facade for interacting with a OmicsdiHolder's instance.
  *
  * This class provides means of indexing and querying generic information about
  * models.
@@ -43,7 +43,7 @@ import org.springframework.context.ApplicationListener
  * @date   12/09/2016
  */
 
-class OmicsDIBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelOperationEvent> {
+class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelOperationEvent> {
     /**
      * The class logger.
      */

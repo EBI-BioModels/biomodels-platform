@@ -29,7 +29,7 @@ import net.biomodels.jummp.core.events.LoggingEventType
 import net.biomodels.jummp.core.events.PostLogging
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.search.OmicsDIBasedSearch
+import net.biomodels.jummp.search.OmicsdiBasedSearch
 import net.biomodels.jummp.search.SolrBasedSearch
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
@@ -82,12 +82,12 @@ class SearchService {
             strategySetting = "solr"
             log.error "... using the default value: ${strategySetting}"
         }
-        strategy = strategySetting.equalsIgnoreCase("omicsdi") ? new OmicsDIBasedSearch() : new SolrBasedSearch()
+        strategy = strategySetting.equalsIgnoreCase("omicsdi") ? new OmicsdiBasedSearch() : new SolrBasedSearch()
         //setSearchStrategy("omicsdi") // For testing immediately without changing .jummp.properties
     }
 
     private void setSearchStrategy(String strategy) {
-        this.strategy = strategy.equalsIgnoreCase("omicsdi") ? new OmicsDIBasedSearch() : new SolrBasedSearch()
+        this.strategy = strategy.equalsIgnoreCase("omicsdi") ? new OmicsdiBasedSearch() : new SolrBasedSearch()
     }
 
     /**

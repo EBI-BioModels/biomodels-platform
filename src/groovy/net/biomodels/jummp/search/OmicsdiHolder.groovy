@@ -7,7 +7,7 @@ import groovy.transform.CompileStatic
  */
 
 @CompileStatic
-class OmicsDiHolder {
+class OmicsdiHolder {
     void doSomeStuff() {
 
     }
