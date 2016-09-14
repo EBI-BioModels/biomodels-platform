@@ -30,13 +30,12 @@ import net.biomodels.jummp.core.model.ModelTransportCommand
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-class ModelDeletedEvent extends ModelOperationEvent {
+class ModelRestoredEvent extends ModelOperationEvent {
     /**
-     * The deleted model.
+     * The restored model.
      */
     final ModelTransportCommand model
-
-    ModelDeletedEvent(Object source, final ModelTransportCommand model) {
+    ModelRestoredEvent(Object source, final ModelTransportCommand model) {
         super(source)
         this.model = model
     }

@@ -24,20 +24,23 @@
 
 package net.biomodels.jummp.core.events
 
-import net.biomodels.jummp.core.model.ModelTransportCommand
+import net.biomodels.jummp.core.model.RevisionTransportCommand
 
 /**
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-class ModelDeletedEvent extends ModelOperationEvent {
+class ModelCertifiedEvent extends ModelOperationEvent {
     /**
-     * The deleted model.
+     * The certified model.
      */
-    final ModelTransportCommand model
+    final RevisionTransportCommand revision
 
-    ModelDeletedEvent(Object source, final ModelTransportCommand model) {
+    boolean status
+
+    ModelCertifiedEvent(Object source, final RevisionTransportCommand revision, boolean status = false) {
         super(source)
-        this.model = model
+        this.revision = revision
+        this.status = status
     }
 }
