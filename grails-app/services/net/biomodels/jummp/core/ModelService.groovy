@@ -2001,7 +2001,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         if (!Model.exists(model.id)) {
             throw new IllegalArgumentException("Model ${model.properties} absent from database")
         }
-        if (model.deleted) {
+        if (!model.deleted) {
             return false
         }
 
