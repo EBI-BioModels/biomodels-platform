@@ -100,16 +100,6 @@ beans = {
         bean.singleton = true
     }
 
-    modelCreatedListener(net.biomodels.jummp.core.events.ModelCreatedListener) { bean ->
-        bean.autowire = "byName"
-        bean.singleton = true
-    }
-
-    modelDeletedListener(net.biomodels.jummp.core.events.ModelDeletedListener) { bean ->
-        bean.autowire = "byName"
-        bean.singleton = true
-    }
-
     webflowAclBeanDefinitionProcessor(WebflowAclBeanDefinitionProcessor) {
         it.initMethod = "init"
     }
