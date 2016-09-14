@@ -124,18 +124,18 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
         if (event instanceof ModelDeletedEvent) {
             def model = event.model
             if (IS_INFO_ENABLED) {
-                log.info("$event called for deleting the resource: $event.source")
+                log.info("The model associated with the submission id $model.submissionId has been deleted.")
             }
-            setDeleted(event.model)
-            if (!isDeleted(event.model)) {
+            setDeleted(model)
+            if (!isDeleted(model)) {
                 // leave the model as not deleted and log the error
-                log.error("Could not set model ${event.model.submissionId} as deleted in solr.")
+                log.error("Could not set model ${model.submissionId} as deleted in Solr.")
             } else {
                 // quick test to make sure Solr is in sync with the database
-                boolean db = event.model.deleted
-                boolean solr = isDeleted(event.model)
+                boolean db = model.deleted
+                boolean solr = isDeleted(model)
                 if (IS_DEBUG_ENABLED) {
-                    def m = new StringBuilder("Deletion status for ").append(event.model.submissionId
+                    def m = new StringBuilder("Deletion status for ").append(model.submissionId
                     ).append(" - db: ").append(db).append(" solr: ").append(solr)
                     log.debug(m.toString())
                 }
@@ -144,21 +144,21 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
             def model = event.model
             setDeleted(model, false)
             if (isDeleted(model)) {
-                log.error("Could not restore model ${model.submissionId} in Solr")
+                log.error("Could not restore model associated with the submission id ${model.submissionId} in Solr.")
             } else {
-                log.info("The model associated with the submission id $model.submissionId has been restored in Solr")
+                log.info("The model associated with the submission id $model.submissionId has been restored in Solr.")
             }
         } else if (event instanceof ModelCertifiedEvent) {
             if (event.status) {
-                log.info("$event.revision has been certified.")
+                log.info("The model associated with the submission id $event.revision.model.submissionId has been certified.")
             } else {
-                log.info("$event.revision has been uncertified due to errors.")
+                log.info("The model associated with the submission id $event.revision.model.submissionId has been uncertified due to errors.")
             }
             setCertified(event.revision, event.status)
         } else if (event instanceof ModelPublishedEvent) {
 
         } else if (event instanceof RevisionCreatedEvent) {
-            log.info("$event.revision has been created.")
+            log.info("A revision of the model associated with the submission id $event.revision.model.submissionId has been created.")
         }
     }
 
