@@ -189,6 +189,8 @@ BioModels Database is a repository of computational models of biological process
         String fileName = "OmicsDISchematest.xml"
         def fileWriter = new FileWriter("${folder}${fileName}")
         def markupBuilder = new MarkupBuilder(fileWriter)
+        markupBuilder.mkp.xmlDeclaration(version: "1.0", encoding: "utf-8")
+
         List<OmicsdiDataSetEntry> modelEntries = generateOmicsdiDataSetEntry()
         String _name = grailsApplication.config.jummp.metadata.officialDatabaseName
         String _description  = grailsApplication.config.jummp.metadata.officialDatabaseDescription
