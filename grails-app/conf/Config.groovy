@@ -711,6 +711,11 @@ jummp.config.maintenance = false
 
 jummp.id.generators = ModelIdentifierUtils.processGeneratorSettings(jummp)
 
+jummp.metadata.officialDatabaseName = 'New BioModels Database'
+jummp.metadata.officialDatabaseDescription = """
+BioModels Database is a repository of computational models of biological processes. Models described
+        from literature are manually curated and enriched with cross-references.
+"""
 // elasticsearch settings for weceem
 elasticSearch.datastoreImpl = 'hibernateDatastore'
 elasticSearch.bulkIndexOnStartup = true
