@@ -43,14 +43,11 @@ class OmicsdiService {
         List<Model> models = Model.getAll()
         List<OmicsdiDataSetEntry> entries = new ArrayList<OmicsdiDataSetEntry>()
 
-        //DateFormat dateFormat = DateFormat.getDateTimeInstance()
-        //dateFormat.format(a day)
-
         models.each {Model m ->
             // get the latest revision
             Revision r = m.revisions.getAt(m.revisions.size()-1)
             OmicsdiDataSetEntry e = new OmicsdiDataSetEntry()
-            e.id = "${m.submissionId}.${r.revisionNumber}"
+            e.id = m.submissionId
             e.name = r.name
             e.description = "" //r.description // deal with it later because of html tags
             e.dateSubmitted = m.revisions.first().uploadDate
