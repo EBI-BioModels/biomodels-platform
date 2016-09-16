@@ -57,7 +57,7 @@ class OmicsdiService {
             e.submitterName = Person.findById(r.owner.id).userRealName
             e.submitterMail = r.owner.email
             e.submitterAffiliation = Person.findById(r.owner.id).institution
-            e.repositoryName = Metadata.current.'app.name'
+            e.repositoryName = grailsApplication.config.jummp.metadata.officialDatabaseName //Metadata.current.'app.name'
             e.fullDataSetLink = "${Holders.grailsApplication.config.grails.serverURL}/model/${e.id}"
             Publication publication = Publication.findById(m.publicationId)
             String pub = ""
