@@ -22,32 +22,11 @@
 
 
 
-
-
-
-
-
-<%@ page contentType="text/html;charset=UTF-8" %>
-<html>
-<head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <meta name="layout" content="main" />
-    <title>OmicsDI Settings</title>
-    <style>
-        .editor {
-            margin-left: 10px;
-            width: 900px;
-        }
-        #schemaXmlContent {
-            resize: both;
-        }
-    </style>
-</head>
-
-<body>
-    <div>
-    <h1>OmicsDI Settings</h1>
-    <g:render template="/templates/settings" />
-    </div>
-</body>
-</html>
+<div id="OmicsDISchemaXMLeditor" class="editor">
+    <button onclick="<g:remoteFunction controller="Omicsdi"
+                                       action="generateOmicsdiEntries"
+                                       name="generateButton" update="schemaXmlContent" asynchronous="false"/>">Generate OmicsDI's entries</button>
+    <p>Below is the content of OmicsDI Schema XML file. You can change and update it.</p>
+    <g:textArea id="schemaXmlContent" name="omicsdiSchemaXML" cols="100" rows="15">
+    </g:textArea>
+</div>

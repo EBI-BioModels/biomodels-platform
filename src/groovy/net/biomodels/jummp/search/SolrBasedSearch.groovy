@@ -217,6 +217,7 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
             String exchangeFolder = new File(revision.files.first().path).getParent()
             String registryExport = miriamService.registryExport.canonicalPath
             def dsConfig = grailsApplication.config.dataSource
+            def searchStrategy = grailsApplication.config.jummp.search.strategy
             String dbUrl = dsConfig?.url
             String dbUsername = dsConfig?.username
             String dbPassword = dsConfig?.password
@@ -256,6 +257,7 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
                 'solrServer': solrServerHolder.SOLR_CORE_URL,
                 'jummpPropFile': configurationService.getConfigFilePath(),
                 'miriamExportFile': registryExport,
+                'searchStrategy': searchStrategy,
                 'database': dbSettings)
             File indexingData = new File(exchangeFolder, "indexData.json")
             indexingData.setText(builder.toPrettyString())

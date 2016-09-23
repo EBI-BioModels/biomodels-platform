@@ -1,9 +1,36 @@
+/**
+ * Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Deutsches Krebsforschungszentrum (DKFZ)
+ *
+ * This file is part of Jummp.
+ *
+ * Jummp is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation; either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along
+ * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
+ **/
+
+
+
+
+
 package net.biomodels.jummp.plugins.omicsdi
 
 import grails.util.Holders
 import grails.util.Metadata
 import groovy.xml.MarkupBuilder
 import groovy.xml.XmlUtil
+import net.biomodels.jummp.core.adapters.DomainAdapter
+import net.biomodels.jummp.core.annotation.QualifierTransportCommand
+import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.model.Publication
@@ -13,27 +40,36 @@ import net.biomodels.jummp.qcinfo.QcInfo
 import org.perf4j.aop.Profiled
 
 import javax.xml.ws.Holder
-import java.text.DateFormat
+
+/**
+ * @short Omicsdi class for managing OmicsDI's settings
+ *
+ * This class provides means of handling functionalities for searching models based on OmicsDI's API.
+ * It accesses the database and get essential data that are included into XML files.
+ * Otherwise, we implement the methods configuring OmicsDI API.
+ *
+ * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
+ */
 
 class OmicsdiService {
     private final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
     /**
-    * Dependency Injection of Spring Security Service
-    */
+     * Dependency Injection of Metadata Delegate Service
+     **/
+    def metadataDelegateService
+    /**
+     * Dependency Injection of Spring Security Service
+     **/
     def springSecurityService
     /**
-     * Dependency Injection of SearchService
-     */
-    def searchService
-
+     * Dependency Injection of Grails Application
+     **/
     def grailsApplication
 
     static final String GRAILS_CONF_LOCATION = "grails-app/conf"
     static final String OMICSDI_CONFIG_LOCATION = "omicsdi"
 
-    void init() {
-
-    }
     @Profiled(tag="omicsdiService.loadSchemaXml")
     String loadSchemaXml() {
         return GRAILS_CONF_LOCATION.concat("/").concat(OMICSDI_CONFIG_LOCATION)
@@ -47,6 +83,7 @@ class OmicsdiService {
             // get the latest revision
             Revision r = m.revisions.getAt(m.revisions.size()-1)
             OmicsdiDataSetEntry e = new OmicsdiDataSetEntry()
+            // compulsory fields
             e.id = m.submissionId
             e.name = r.name
             e.description = "" //r.description // deal with it later because of html tags
@@ -92,119 +129,62 @@ class OmicsdiService {
             e.deleted = m.deleted
             e.certified = qcInfo  != null
 
+            // cross references fields
+            def revTC = DomainAdapter.getAdapter(r).toCommandObject()
+            Map<QualifierTransportCommand, List<ResourceReferenceTransportCommand>> genericAnno =
+                metadataDelegateService.fetchGenericAnnotations revTC
+            if (genericAnno.size() > 0) {
+                println("Annotations of the revision $revTC.model.submissionId: ${genericAnno.size()}")
+                genericAnno.each {anno ->
+                    QualifierTransportCommand qualifier = anno.key
+                    List<ResourceReferenceTransportCommand> references = anno.value
+                    //println "$anno.key, has value: $anno.value"
+                    //println "$qualifier.type and $qualifier.namespace and ${references.size()}"
+                    references.each { ref ->
+                        String dbkey = "Unknown"
+                        String dbname = "Somewhere"
+                        println ref.uri
+                        if (ref.uri != null) {
+                            int accessionDelim = ref.uri?.lastIndexOf("/")
+                            String accession =  ref.uri?.substring(accessionDelim + 1)
+                            dbkey = accession
+                            dbname = ref.datatype
+                        }
+                        println "dbkey: $dbkey and dbname: $dbname" // and ${ref.name ?: ref.accession ?: ref.uri ?: ref.collectionName}"
+                    }
+
+                }
+            }
 
             entries.add(e)
         }
         return entries
     }
 
-    String buildOmicsdiSchemaXml() {
-        List<OmicsdiDataSetEntry> entries = generateOmicsdiDataSetEntry()
-        String name = "BioModels Database"
-        String description  = """
-BioModels Database is a repository of computational models of biological processes. Models described
-        from literature are manually curated and enriched with cross-references.
-"""
-        int entryCount = entries.size() ?: 0
-        OmicsdiDataSet bmDb = new OmicsdiDataSet(name: name, description: description,
-            releaseVersion: 1, dateReleased: new Date(), entryCount: entryCount)
-
-        StringBuilder content = new StringBuilder()
-        content.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
-        content.append("<database>")
-        content.append("<name>${bmDb.name}</name>")
-        content.append("<description>${bmDb.description}</description>")
-        content.append("<release>${bmDb.releaseVersion}</release>")
-        content.append("<release_date>${bmDb.dateReleased}</release_date>")
-        content.append("<entry_count>${bmDb.entryCount}</entry_count>")
-
-        content.append("<entries>")
-        entries.each {e ->
-            content.append("<entry id='${e.id}'>")
-            content.append("<name>${e.name}</name>")
-            content.append("<description>${e.description}</description>")
-
-            content.append("<dates>")
-            content.append("<date type=\"submission\" value=\"${e.dateSubmitted}\"/>")
-            content.append("<date type=\"publication\" value=\"${e.datePublished}\"/>")
-            content.append("<date type=\"last_modification\" value=\"${e.dateLastModified}\"/>")
-            content.append("</dates>")
-
-            content.append("<additional_fields>")
-            content.append("<field name=\"submitter\">${e.submitterName}</field>")
-            content.append("<field name=\"submitter_mail\">${e.submitterMail}</field>")
-            content.append("<field name=\"submitter_affiliation\">${e.submitterAffiliation}</field>")
-            content.append("<field name=\"repository\">${e.repositoryName}</field>")
-            content.append("<field name=\"full_dataset_link\">${e.fullDataSetLink}</field>")
-            content.append("<field name=\"publication\">${e.publication}</field>")
-            content.append("<field name=\"disease\">${e.diseaseName}</field>")
-            content.append("<field name=\"omics_type\">${e.omicsType}</field>")
-            content.append("<field name=\"data_protocol\">${e.dataProtocol}</field>")
-            content.append("<field name=\"sample_protocol\">${e.sampleProtocol}</field>")
-            content.append("<field name=\"technology_type\">${e.technologyType}</field>")
-
-            content.append("<field name=\"modelFormat\">${e.modelFormat}</field>")
-            content.append("<field name=\"submissionId\">${e.submissionId}</field>")
-            content.append("<field name=\"publicationId\">${e.publicationId}</field>")
-            content.append("<field name=\"levelVersion\">${e.levelVersion}</field>")
-            content.append("<field name=\"validationStatus\">${e.validationStatus}</field>")
-            content.append("<field name=\"certificationComment\">${e.certificationComment}</field>")
-            content.append("<field name=\"elementName\">${e.elementName}</field>")
-            content.append("<field name=\"elementId\">${e.elementId}</field>")
-            content.append("<field name=\"elementDescription\">${e.elementDescription}</field>")
-            content.append("<field name=\"public\">${e.isPublic}</field>")
-            content.append("<field name=\"deleted\">${e.deleted}</field>")
-            content.append("<field name=\"certified\">${e.certified}</field>")
-            content.append("<field name=\"sbmlSBOTerm\">${e.sbmlSBOTerm}</field>")
-            content.append("<field name=\"curators\">${e.curators}</field>")
-            content.append("<field name=\"authors\">${e.authors}</field>")
-            content.append("<field name=\"derivations\">${e.derivations}</field>")
-            /*  PharmML-specific fields */
-            content.append("<field name=\"pharmmlTherapeuticArea\">${e.pharmmlTherapeuticArea}</field>")
-            content.append("<field name=\"pharmmlModellingContextDescription\">${e.pharmmlModellingContextDescription}</field>")
-            content.append("<field name=\"pharmmlLongTechnicalDescription\">${e.pharmmlLongTechnicalDescription}</field>")
-            content.append("<field name=\"pharmmlShortDescription\">${e.pharmmlShortDescription}</field>")
-            content.append("<field name=\"pharmmlPublicationSource\">${e.pharmmlPublicationSource}</field>")
-            content.append("<field name=\"pharmmlImplementationConformsToLiterature\">${e.pharmmlImplementationConformsToLiterature}</field>")
-            content.append("<field name=\"pharmmlImplementationDiscrepancies\">${e.pharmmlImplementationDiscrepancies}</field>")
-            content.append("<field name=\"pharmmlModelDevelopmentContext\">${e.pharmmlModelDevelopmentContext}</field>")
-            content.append("<field name=\"pharmmlCodeFromLiterature\">${e.pharmmlCodeFromLiterature}</field>")
-            content.append("<field name=\"pharmmlResearchStage\">${e.pharmmlResearchStage}</field>")
-            content.append("<field name=\"pharmmlTasks\">${e.pharmmlTasks}</field>")
-            content.append("<field name=\"pharmmlTypeOfData\">${e.pharmmlTypeOfData}</field>")
-
-            content.append("</additional_fields>")
-
-            content.append("</entry>")
-        }
-        content.append("</entries>")
-        content.append("</database>")
-        return content.toString()
-    }
-    void saveAsOmicsdiSchemaXML() {
-        String folder = "/automount/vnas-homes_vol-vol_homes-homes/tnguyen/Documents/Synchronisation/"
-        String fileName = "OmicsDISchematest.xml"
-        def fileWriter = new FileWriter("${folder}${fileName}")
-        def markupBuilder = new MarkupBuilder(fileWriter)
+    @Profiled(tag="omicsdiService.buildStringOmicsdiSchemaXml")
+    String buildStringOmicsdiSchemaXml() {
+        def stringWriter = new StringWriter()
+        def markupBuilder = new MarkupBuilder(stringWriter)
+        markupBuilder.setDoubleQuotes(true)
         markupBuilder.mkp.xmlDeclaration(version: "1.0", encoding: "utf-8")
 
         List<OmicsdiDataSetEntry> modelEntries = generateOmicsdiDataSetEntry()
         String _name = grailsApplication.config.jummp.metadata.officialDatabaseName
-        String _description  = grailsApplication.config.jummp.metadata.officialDatabaseDescription
+        String _description = grailsApplication.config.jummp.metadata.officialDatabaseDescription
         byte _releaseVersion = 1
         Date _releaseDate = new Date()
         int _entryCount = modelEntries.size() ?: 0
-//        OmicsdiDataSet bmDb = new OmicsdiDataSet(name: name, description: description,
-//            releaseVersion: 1, dateReleased: new Date(), entryCount: entryCount)
         markupBuilder.database {
-            // add the principal information of database
+            // add the principal information of database into MarkupBuilder object
             name(_name)
             description(_description)
             release(_releaseVersion)
             release_date(_releaseDate)
             entry_count(_entryCount)
-            // add the models
+            // add each model into MarkupBuilder object
             entries {
+                setOmitEmptyAttributes(true)
+                setOmitNullAttributes(true)
                 modelEntries.each { e ->
                     entry(id: "$e.id") {
                         name("$e.name")
@@ -339,11 +319,31 @@ BioModels Database is a repository of computational models of biological process
                 }
             }
         }
-        fileWriter.close()
-
-        def writer = new FileWriter('/homes/tnguyen/tmp/file.xml')
-        def text = buildOmicsdiSchemaXml()
-        def xml = new XmlSlurper().parseText(text)
-        XmlUtil.serialize(xml, writer)
+        def content = stringWriter.toString()
+        return content
     }
+
+    @Profiled(tag="omicsdiService.buildFileOmicsdiSchemaXml")
+    void buildFileOmicsdiSchemaXml(String filePath, String fileName) {
+        if (filePath.charAt(filePath.length() - 1) != File.separatorChar) {
+            filePath += File.separatorChar
+        }
+        def fileWriter = new FileWriter("${filePath}${fileName}")
+        def content = buildStringOmicsdiSchemaXml()
+        fileWriter.write(content)
+        fileWriter.close()
+    }
+
+    boolean saveAsOmicsdiSchemaXML() {
+        String folderPath = "/homes/tnguyen/Documents/Synchronisation/"
+        String fileName = "OmicsDISchemaDemo.xml"
+        def file = buildFileOmicsdiSchemaXml(folderPath, fileName)
+        return file != null
+        /*def writer = new FileWriter("${folderPath}OmicsdiTest.xml")
+        def text = buildStringOmicsdiSchemaXml()
+        def xml = new XmlSlurper().parseText(text)
+        XmlUtil.serialize(xml, writer)*/
+    }
+
+
 }
