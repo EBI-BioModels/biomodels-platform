@@ -95,6 +95,20 @@ beans = {
         aclUtilService = ref("aclUtilService")
     }
 
+    omicsdiBasedSearch(net.biomodels.jummp.search.OmicsdiBasedSearch) { bean ->
+        bean.scope = "singleton"
+        bean.autowire = "byName"
+        bean.singleton = true
+        producerTemplate = ref("producerTemplate")
+        solrSvrHolder = ref("solrServerHolder")
+        modelService = ref("modelService")
+        springSecurityService = ref("springSecurityService")
+        grailsApplication = ref("grailsApplication")
+        configurationService = ref("configurationService")
+        miriamService = ref("miriamService")
+        aclUtilService = ref("aclUtilService")
+    }
+
     revisionCreatedListener(net.biomodels.jummp.plugins.bives.RevisionCreatedListener) { bean ->
         bean.autowire = "byName"
         bean.singleton = true
