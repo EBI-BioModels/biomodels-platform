@@ -40,6 +40,8 @@ import org.perf4j.aop.Profiled
 
 class OmicsdiService {
     private final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
+    private final boolean IS_ERROR_ENABLED = log.isErrorEnabled()
+    private final boolean IS_INFO_ENABLED = log.isInfoEnabled()
     /**
      * Dependency Injection of Metadata Delegate Service
      **/

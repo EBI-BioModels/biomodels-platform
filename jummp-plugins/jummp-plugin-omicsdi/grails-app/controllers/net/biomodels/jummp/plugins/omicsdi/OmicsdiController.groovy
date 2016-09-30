@@ -28,6 +28,10 @@ import grails.plugin.springsecurity.annotation.Secured
 
 @Secured(["hasRole('ROLE_ADMIN')"])
 class OmicsdiController {
+    /**
+     * Flag that checks whether the dynamically-inserted logger is set to DEBUG or higher.
+     */
+    private final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
 
     def omicsdiService
 
