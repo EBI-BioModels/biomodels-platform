@@ -23,10 +23,23 @@
 
 
 <div id="OmicsDISchemaXMLeditor" class="editor">
+    <h2>Options</h2>
+    <h3>How to save information</h3>
+    <g:radioGroup name="howToSaveFile"
+                  labels="['The whole database will be exported in a file.',
+                           'Each model will be accommodated in a file.']"
+                  values="[1,2]">
+        <span>${it.radio} ${it.label}<br/></span>
+    </g:radioGroup>
+    <h3>How to generate</h3>
     <button onclick="<g:remoteFunction controller="Omicsdi"
-                                       action="generateOmicsdiEntries"
-                                       name="generateButton" update="schemaXmlContent" asynchronous="false"/>">Generate OmicsDI's entries</button>
-    <p>Below is the content of OmicsDI Schema XML file. You can change and update it.</p>
+                                       action="exportOmicsdiEntriesWithIndexer"
+                                       name="exportButton" update="schemaXmlContent" asynchronous="false"/>">Export OmicsDI entries via JummpIndexer right now</button>
+    <br/>
+    <button onclick="<g:remoteFunction controller="Omicsdi"
+                                       action="exportOmicsdiEntriesWithIndexer"
+                                       name="delegateButton" update="schemaXmlContent" asynchronous="false"/>">Schedule the indexing process via JummpIndexer and QuartzScheduler</button>
+    <h2>Content of OmicsDI Schema XML file(s)</h2>
     <g:textArea id="schemaXmlContent" name="omicsdiSchemaXML" cols="100" rows="15">
     </g:textArea>
 </div>

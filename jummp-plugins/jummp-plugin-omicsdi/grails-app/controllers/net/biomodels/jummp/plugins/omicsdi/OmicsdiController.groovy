@@ -35,8 +35,13 @@ class OmicsdiController {
         render(view: "index")
     }
 
-    def generateOmicsdiEntries() {
-        def entries = omicsdiService.buildStringOmicsdiSchemaXml()
-        render entries
+    def exportOmicsdiEntriesWithIndexer() {
+        if (IS_DEBUG_ENABLED) {
+            log.debug "Delegating this work to JummpIndexer."
+        } else {
+            println "Delegating this work to JummpIndexer."
+        }
+        omicsdiService.exportOmicsdiEntries()
+        render "Sent the request to JummpIndexer"
     }
 }

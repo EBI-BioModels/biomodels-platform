@@ -463,7 +463,10 @@ if (!(jummpConfig.jummp.search.strategy instanceof ConfigObject)) {
     // default to solr
     jummp.search.strategy = "solr"
 }
-
+// folder containing the exported OmicsDI entries
+if (!(jummpConfig.jummp.search.exportFolder instanceof ConfigObject)) {
+    jummp.search.exportFolder = jummpConfig.jummp.search.exportFolder
+}
 if (!(jummpConfig.jummp.security.certificationRole instanceof ConfigObject)) {
     jummp.security.certificationRole = jummpConfig.jummp.security.certificationRole
 } else {
