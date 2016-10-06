@@ -18,11 +18,9 @@
 --%>
 <h3>Variability Model</h3>
 
-<table class="views-table cols-4">
+<table class="views-table cols-2">
     <thead>
         <tr>
-            <th>Identifier</th>
-            <th>Name</th>
             <th>Level</th>
             <th>Type</th>
         </tr>
@@ -30,8 +28,6 @@
     <tbody>
         <g:each var="m" in="${variabilityModels}">
             <tr>
-                <td>${m.blkId}</td>
-                <td>${m.name}</td>
                 <td>
                     <g:render template="/templates/0.2/variabilityLevels" collection="${m.levels}"/>
                 </td>

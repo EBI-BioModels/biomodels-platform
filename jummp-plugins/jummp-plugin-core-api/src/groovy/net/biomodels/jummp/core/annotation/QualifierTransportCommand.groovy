@@ -30,7 +30,7 @@ import groovy.transform.Immutable
  *
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
-@Immutable
+//@Immutable
 class QualifierTransportCommand implements Serializable {
     private static final long serialVersionUID = 1L
     String namespace

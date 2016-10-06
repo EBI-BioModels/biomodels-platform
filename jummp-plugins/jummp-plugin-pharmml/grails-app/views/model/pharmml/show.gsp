@@ -39,7 +39,7 @@
     </style>
 </head>
 <content tag="genericAnnotations">
-    <pharmml:renderGenericAnnotations revision="${revision}"/>
+    <anno:renderGenericAnnotations annotations="${genericAnnotations}"/>
 </content>
 <content tag="modelspecifictabs">
     <pharmml:decideTabs iv="${independentVar}" fd="${functionDefs}" md="${modelDefinition}"

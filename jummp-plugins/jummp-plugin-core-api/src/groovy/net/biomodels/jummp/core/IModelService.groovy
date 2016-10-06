@@ -34,6 +34,7 @@
 
 package net.biomodels.jummp.core
 
+import eu.ddmore.publish.service.PublishContext
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand
 import net.biomodels.jummp.core.model.ModelListSorting
 import net.biomodels.jummp.core.model.ModelTransportCommand
@@ -286,7 +287,9 @@ public interface IModelService {
     **/
     public boolean restoreModel(String modelId)
     public boolean deleteRevision(RevisionTransportCommand revision)
-    public void publishModelRevision(RevisionTransportCommand revision)
+    public PublishContext publishModelRevision(RevisionTransportCommand revision)
+
+//    public void validateModelRevision(RevisionTransportCommand revision)
     /**
      * Finds the model with the specified perennial identifier.
      *

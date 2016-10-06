@@ -20,24 +20,32 @@
 
 package net.biomodels.jummp.plugins.mdl
 
-import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.core.annotation.QualifierTransportCommand
+import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand
 
 /**
  * Controller for rendering models encoded in the Model Description Language.
  *
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 class MdlController {
     /**
      * Dependency injection of mdlService
      */
     def mdlService
+    def metadataDelegateService
 
     /**
      * Render the MDL-specific tabs.
      */
     def show() {
         def model = flash.genericModel
+        Map<QualifierTransportCommand, List<ResourceReferenceTransportCommand>> genericAnno =
+                metadataDelegateService.fetchGenericAnnotations(model.revision)
+        if (genericAnno) {
+            model["genericAnnotations"] = genericAnno
+        }
         model["mdlFiles"] = mdlService.getMdlFilesFromRevision(model.revision)
         model["dataFiles"] = mdlService.getDataFilesFromRevision(model.revision)
 

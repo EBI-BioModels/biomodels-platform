@@ -37,5 +37,6 @@ public enum LoggingEventType {
     RETRIEVAL, ///< Data is retrieved either from database or VCS
     CREATION, ///< New Data is created (e.g. new Model uploaded)
     DELETION, ///< Existing Data is deleted or marked as deleted
-    UPDATE ///< Existing Data is changed/updated
+    UPDATE, ///< Existing Data is changed/updated
+    SUBMIT_FOR_PUBLICATION ///< Existing Data is submitted for publication
 }

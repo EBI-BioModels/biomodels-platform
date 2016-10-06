@@ -30,11 +30,10 @@
             <a href="${g.createLink(controller: 'team', action: 'index')}">My Teams</a>
         </li>
     </sec:ifLoggedIn>
-    <li <g:if test="${g.pageProperty(name:'page.help')?.length()}"> class="active" </g:if>>
-        <a href="${g.createLink(controller: 'jummp', action: 'help')}">Help</a>
-    </li>
     <li <g:if test="${g.pageProperty(name:'page.feedback')?.length()}"> class="active" </g:if>>
-        <a href="${g.createLink(controller: 'jummp', action: 'feedback')}">Feedback</a>
+        <a href="${g.createLink(controller: 'jummp', action: 'feedback')}">
+            <g:message code="jummp.feedback.biomodels.title"/>
+        </a>
     </li>
     <!-- If you need to include functional (as opposed to purely navigational) links in your local menu,
        add them here, and give them a class of "functional". Remember: you'll need a class of "last" for
@@ -42,7 +41,7 @@
        For example: -->
     <sec:ifLoggedIn>
         <li class="functional last">
-            <a href="/jummp/logout" class="icon icon-functional" data-icon="l">
+            <a href="${grailsApplication.config.grails.serverURL}/logout" class="icon icon-functional" data-icon="l">
                 <g:message code="jummp.main.logout"/>
             </a>
         </li>
@@ -53,7 +52,7 @@
         </li>
         <li class="functional" id="notificationCount">
       		<a title="View ${sec.username()}'s Notifications" href='<g:createLink controller="notification" action="list"/>'>
-                <img width="20" height="auto" title="notifications" src="http://www.ebi.ac.uk/web_guidelines/images/icons/EBI-Generic/Generic%20icons/email.png"/>
+                <img width="20" height="auto" title="notifications" src="${grailsApplication.config.grails.serverURL}/images/email.png"/>
       			<span id="notificationLink" style="display: none;"></span>
       		</a>
       	</li>

@@ -28,5 +28,8 @@
 
 
 <meta name="layout" content="modelDisplay"/>
+<content tag="genericAnnotations">
+    <anno:renderGenericAnnotations annotations="${genericAnnotations}"/>
+</content>
 <content tag="modelspecifictabs"/>
 <content tag="modelspecifictabscontent"/>

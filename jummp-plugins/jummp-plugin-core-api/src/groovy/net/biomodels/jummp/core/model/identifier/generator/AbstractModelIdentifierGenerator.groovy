@@ -50,7 +50,6 @@ abstract class AbstractModelIdentifierGenerator implements ModelIdentifierGenera
 
     abstract void update()
 
-    @Override
     void onApplicationEvent(ApplicationEvent decoratorUpdatedEvent) {
         if (!(decoratorUpdatedEvent instanceof ModelIdentifierDecoratorUpdatedEvent)) {
             return

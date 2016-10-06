@@ -189,4 +189,8 @@ class OmexService implements FileFormatService {
             }
         return containsManifest
     }
+
+    boolean doBeforeSavingAnnotations(File annoFile, RevisionTransportCommand rev) {
+        return true
+    }
 }

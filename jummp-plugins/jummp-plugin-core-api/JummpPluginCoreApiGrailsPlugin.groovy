@@ -18,9 +18,7 @@
 * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 **/
 
-
-
-
+import net.biomodels.jummp.core.annotation.EnvironmentAwareAnnotationRender
 
 class JummpPluginCoreApiGrailsPlugin {
     // the plugin version
@@ -43,17 +41,20 @@ class JummpPluginCoreApiGrailsPlugin {
     def title = "JUMMP Plugin Core API"
     def description = '''\\
 This plugin provides the API for the JUMMP core plugins.
-All other plugins providing core functionality depend on this plugin and the core itself depnds on it. 
+All other plugins providing core functionality depend on this plugin and the core itself depnds on it.
 '''
 
     // URL to the plugin's documentation
     def documentation = "https://bitbucket.org/jummp/jummp/wiki"
 
     def doWithWebDescriptor = { xml ->
-        // TODO Implement additions to web.xml (optional), this event occurs before 
+        // TODO Implement additions to web.xml (optional), this event occurs before
     }
 
     def doWithSpring = {
+        annotationRenderingTemplateProvider(EnvironmentAwareAnnotationRender) {
+            grailsApplication = ref("grailsApplication")
+        }
     }
 
     def doWithDynamicMethods = { ctx ->

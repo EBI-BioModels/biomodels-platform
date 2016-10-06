@@ -34,11 +34,11 @@
 
 import grails.util.Environment
 import grails.util.Holders
-import java.util.concurrent.Executors
 import net.biomodels.jummp.core.model.identifier.generator.AbstractModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.generator.DefaultModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGeneratorRegistryService
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
+import net.biomodels.jummp.core.WebflowAclBeanDefinitionProcessor
 import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
 import org.springframework.beans.factory.support.BeanDefinitionRegistry
 import org.springframework.beans.factory.config.BeanDefinition
@@ -46,9 +46,6 @@ import org.springframework.beans.factory.support.SimpleBeanDefinitionRegistry
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner
 import org.springframework.core.type.filter.AnnotationTypeFilter
 import grails.persistence.Entity
-import org.codehaus.groovy.grails.commons.GrailsApplication
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 
 
 // Place your Spring DSL code here
@@ -64,10 +61,6 @@ beans = {
     }
     postLogging(net.biomodels.jummp.core.events.PostLoggingAdvice)
 
-    indexingEventListener(net.biomodels.jummp.search.UpdatedRepositoryListener) { bean ->
-        bean.autowire = "byName"
-        bean.singleton = true
-    }
     referenceTracker(net.biomodels.jummp.core.ReferenceTracker) { bean ->
         bean.autowire = "byName"
         bean.singleton = true
@@ -85,18 +78,18 @@ beans = {
         timingAspect(org.perf4j.log4j.aop.TimingAspect)
     }
 
-    executorService(grails.plugin.executor.PersistenceContextExecutorWrapper) { bean ->
-        bean.destroyMethod = 'destroy' //keep this destroy method so it can try and clean up nicely
-        persistenceInterceptor = ref("persistenceInterceptor")
-        executor = Executors.newFixedThreadPool(grailsApplication.config.jummp.threadPool.size)
-    }
-
     solrServerHolder(net.biomodels.jummp.search.SolrServerHolder) { bean ->
         bean.scope = "singleton"
         bean.autowire = "byName"
         bean.initMethod = "init"
         bean.destroyMethod = "destroy"
     }
+
+    webflowAclBeanDefinitionProcessor(WebflowAclBeanDefinitionProcessor) {
+        it.initMethod = "init"
+    }
+
+    //myBeanPostProcessor(net.biomodels.jummp.core.NosyBeanPostProcessor)
 
     Map R = grailsApplication.config.jummp.id.generators
     identifierGeneratorRegistry(ModelIdentifierGeneratorRegistryService) {
@@ -115,7 +108,7 @@ beans = {
 
     //Add annotation store domain classes (defined externally) to the domain model
     //following: https://github.com/pongasoft/external-domain-classes-grails-plugin/blob/master/ExternalDomainClassesGrailsPlugin.groovy#L84
-    def packages = ["net.biomodels.jummp.annotationstore", "net.biomodels.jummp.core.model", "net.biomodels.jummp.model", "net.biomodels.jummp.plugins.security"] as String[]
+    def packages = ["net.biomodels.jummp.annotationstore", "net.biomodels.jummp.core.model", "net.biomodels.jummp.model", "net.biomodels.jummp.qcinfo", "net.biomodels.jummp.plugins.security"] as String[]
     BeanDefinitionRegistry simpleRegistry = new SimpleBeanDefinitionRegistry()
     ClassPathBeanDefinitionScanner scanner = new ClassPathBeanDefinitionScanner(simpleRegistry, false)
     scanner.includeAnnotationConfig = false
@@ -129,4 +122,8 @@ beans = {
                                       true,
                                       Thread.currentThread().contextClassLoader))
     }
+
+    importBeans('classpath:/metadatalib-spring-config.xml')
+    // override definition to use the one from the annotation-source-ddmore plugin
+    springConfig.addAlias("metadataInfoService", "metadataInformationService")
 }

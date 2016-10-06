@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -31,9 +31,15 @@
 package net.biomodels.jummp.plugins.security
 
 import grails.transaction.Transactional
-import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
+import grails.plugin.springsecurity.SpringSecurityUtils
 import org.perf4j.aop.Profiled
 import org.springframework.security.access.prepost.PreAuthorize
+
+/**
+ *
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
+ * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ */
 
 @Transactional
 class TeamService {
@@ -41,25 +47,42 @@ class TeamService {
     def create() {
 
     }
-    
+
     @Profiled(tag="teamService.getUsersFromTeam")
-    @PreAuthorize("isAuthenticated()") //used to be: authentication.name==#username
+    @PreAuthorize("isAuthenticated()")
     List<String> getUsersFromTeam(Long teamID) {
-    	Team team = Team.get(teamID)
-    	def usersInTeam = UserTeam.findAllByTeam(team)
-    	return usersInTeam.collect {[
-    			"email": it.user.email,
-    			"username": it.user.username,
-    			"userRealName": it.user.person.userRealName
-    	]};
+        Team team = Team.get(teamID)
+        def usersInTeam = UserTeam.findAllByTeam(team)
+        return usersInTeam.collect {[
+            "id": it.user.id,
+            "email": it.user.email,
+            "username": it.user.username,
+            "userRealName": it.user.person.userRealName
+        ]};
     }
-    
+
     @Profiled(tag="teamService.getTeamsForUser")
-    @PreAuthorize("isAuthenticated()") //used to be: authentication.name==#username
+    @PreAuthorize("isAuthenticated()")
     List<Team> getTeamsForUser(User user) {
     	def teamsIveCreated = Team.findAllByOwner(user)
 		def teamsImAMemberOf = UserTeam.findAllByUser(user).collect { it.team }
-		return teamsIveCreated.plus(teamsImAMemberOf)
+        def teamsForThisUser = teamsIveCreated.plus(teamsImAMemberOf).unique()
+		return teamsForThisUser
     }
-  
+
+    @Profiled(tag="teamService.delete")
+    @PreAuthorize("isAuthenticated()")
+    boolean deleteTeam(Long id) {
+        Team t = Team.get(id)
+        UserTeam.removeAll(t)
+        List<UserTeam> userTeamList = UserTeam.findAllByTeam(t);
+        if (userTeamList.size() == 0) {
+            t.delete()
+            t = Team.get(id)
+            return t == null
+        } else {
+            return false
+        }
+    }
+
 }

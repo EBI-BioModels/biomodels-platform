@@ -1,0 +1,90 @@
+#leftContainer {
+    float: left;
+    margin-right: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+#rightContainer {
+    float: right;
+    width: 28%;
+    margin-left: 0.5em;
+    margin-top: 0.5em;
+}
+
+.resetFloat {
+    clear: both;
+}
+
+#toolbar {
+    margin: 1em 0em;
+    display: inline-block;
+}
+
+/* IE7 support */
+*+html #toolbar {
+    display: inline;
+}
+
+#leftContainer, #toolbar {
+    width: 75%;
+}
+
+.action {
+    color: rgb(22, 151, 200);
+    background-color: rgb(237, 237, 237);
+}
+
+.success, .failure, .jummpWarning {
+    padding: 1em;
+    font-size: 2em;
+}
+
+.success {
+    color: green;
+}
+
+.failure {
+    color: red;
+}
+
+.jummpWarning {
+    color: blue;
+}
+.info {
+}
+
+.infoLabel {
+    float: left;
+    margin-right: 0.3em;
+    margin-left: 0.3em;
+}
+
+.spacedTopBottom {
+    padding:0.75em 0;
+}
+
+.info {
+    margin-top: 0.5em;
+}
+
+.info p {
+    margin: 0px;
+}
+
+.info div.indented {
+    margin-left: 1.8em;
+}
+
+.inlineLabel {
+    display: inline;
+}
+
+.clearRadioGroup {
+    background: white;
+    color: rgb(22, 151, 200);
+    border: 1px solid blue;
+    padding: 0.1em 0.8em;
+    cursor: pointer;
+    margin-left: 8em;
+}
+

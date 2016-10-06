@@ -21,7 +21,7 @@
 					{{#each}}
 						<tr>
 							<td>{{this.name}}</td>
-							<td><button id='remove-{{this.id}}' class='.remove'></button></td>
+							<td><button id='remove-{{this.id}}' data-id= "{{this.id}}" class='.remove'></button></td>
 						</tr>
 					{{/each}}
 				</tbody>

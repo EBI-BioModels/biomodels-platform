@@ -30,33 +30,24 @@
 
 package net.biomodels.jummp.core
 
-import net.biomodels.jummp.plugins.security.Role
-import net.biomodels.jummp.plugins.security.User
-import net.biomodels.jummp.plugins.security.Person
-import net.biomodels.jummp.plugins.security.UserRole
-import net.biomodels.jummp.plugins.security.Team
-import net.biomodels.jummp.plugins.security.UserTeam
-import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
-import org.perf4j.aop.Profiled
-import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.security.access.AccessDeniedException
-import org.springframework.security.authentication.AnonymousAuthenticationToken
-import org.springframework.security.authentication.BadCredentialsException
-import net.biomodels.jummp.model.PublicationPerson
 import net.biomodels.jummp.core.events.LoggingEventType
 import net.biomodels.jummp.core.events.PostLogging
-import net.biomodels.jummp.core.user.UserNotFoundException
-import net.biomodels.jummp.core.user.UserInvalidException
-import net.biomodels.jummp.core.user.UserCodeInvalidException
-import net.biomodels.jummp.core.user.UserCodeExpiredException
-import net.biomodels.jummp.core.user.RegistrationException
-import net.biomodels.jummp.core.user.RoleNotFoundException
-import net.biomodels.jummp.core.user.UserManagementException
-import org.springframework.transaction.TransactionStatus
+import net.biomodels.jummp.core.user.*
+import net.biomodels.jummp.model.PublicationPerson
+import net.biomodels.jummp.plugins.security.Person
+import net.biomodels.jummp.plugins.security.Role
+import net.biomodels.jummp.plugins.security.User
+import net.biomodels.jummp.plugins.security.UserRole
+import grails.plugin.springsecurity.SpringSecurityUtils
+import org.perf4j.aop.Profiled
+import org.springframework.security.access.AccessDeniedException
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.authentication.AnonymousAuthenticationToken
+import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.security.access.AccessDeniedException
-import org.codehaus.groovy.grails.web.mapping.LinkGenerator
+import org.springframework.transaction.TransactionStatus
+
 /**
  * @short Service for User administration.
  *
@@ -112,6 +103,17 @@ class UserService implements IUserService {
             return usernames.get(0)
         }
         return null
+    }
+
+    Integer getTotalUserCount() {
+        User.count()
+    }
+
+    List<User> getUsersByRole(String role) {
+        def users =
+            UserRole.findAllByRole(Role.findByAuthority(role)).collect {
+                it.user }
+        return users
     }
 
     @PostLogging(LoggingEventType.UPDATE)
@@ -192,19 +194,20 @@ class UserService implements IUserService {
         return user.sanitizedUser()
     }
 
-    @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="userService.hasRole")
-    @PreAuthorize("hasRole('ROLE_ADMIN') or isAuthenticated()") //used to be: authentication.name==#username
-    boolean hasRole(String username, String role) throws UserNotFoundException {
-        User potentialCurator = User.findByUsername(username)
-        if (!potentialCurator) {
-            throw new UserNotFoundException(username)
+    @PreAuthorize("isAuthenticated()")
+    boolean hasRole(User user, Role role) {
+        UserRole.get(user.id, role.id)
+    }
+
+    @Profiled(tag="userService.isCurator")
+    @PreAuthorize("isAuthenticated()")
+    boolean isCurator(User u) throws RoleNotFoundException {
+        Role curator = Role.findByAuthority('ROLE_CURATOR')
+        if (!curator) {
+            throw new RoleNotFoundException("Authority ROLE_CURATOR is not defined.")
         }
-        Set<Role> roles = potentialCurator.getAuthorities()
-        def isCurator = roles.find {
-            it.authority == role
-        }
-        return isCurator
+        hasRole(u, curator)
     }
 
     @PostLogging(LoggingEventType.RETRIEVAL)
@@ -229,6 +232,7 @@ class UserService implements IUserService {
                 person {
                     property('userRealName')
                 }
+                property('id')
             }
             or {
                 ilike 'email', "%"+term + '%'
@@ -334,6 +338,7 @@ class UserService implements IUserService {
             throw new RegistrationException("User with same name already exists", user.username)
         }
         User newUser = user.sanitizedUser()
+
         if (newUser.person.orcid) {
             def existing = Person.findByOrcid(newUser.person.orcid)
             if (existing) {
@@ -347,7 +352,11 @@ class UserService implements IUserService {
                     newUser.person = existing
                 }
             } else {
-                newUser.person.save(flush:true, failOnError:true)
+                if (!newUser.person.save(flush: true)) {
+                    log.error("cannot save user ${newUser.properties} - ${newUser.errors.allErrors.inspect()}. oops")
+                } else {
+                    log.debug(newUser)
+                }
             }
         }
         else {

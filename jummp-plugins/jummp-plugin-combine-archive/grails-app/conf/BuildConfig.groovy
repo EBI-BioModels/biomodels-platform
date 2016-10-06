@@ -71,7 +71,7 @@ grails.project.dependency.resolution = {
     }
 
     plugins {
-        build ":tomcat:7.0.54"
+        build ":tomcat:7.0.55.3"
         provided(":codenarc:0.21")
         test ":gmetrics:0.3.1"
     }

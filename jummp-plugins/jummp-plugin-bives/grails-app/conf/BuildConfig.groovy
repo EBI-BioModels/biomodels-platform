@@ -76,9 +76,9 @@ grails.project.dependency.resolution = {
         compile "de.unirostock.sems:BiVeS:1.1-SNAPSHOT"
     }
     plugins {
-        build ":tomcat:7.0.54"
+        build ":tomcat:7.0.55.3"
 
-        compile ":perf4j:0.1.1"
+        compile ":perf4j:0.2"
     }
 }
 grails.plugin.location.'jummp-plugin-security'="../jummp-plugin-security"

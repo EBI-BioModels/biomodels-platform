@@ -95,7 +95,11 @@ try {
     hibernate {
         cache.use_second_level_cache = true
         cache.use_query_cache = true
-        cache.region.factory_class = 'net.sf.ehcache.hibernate.EhCacheRegionFactory'
+	cache.region.factory_class = 'grails.plugin.cache.ehcache.hibernate.BeanEhcacheRegionFactory4' // needed to runApp
+        format_sql = true
+        use_sql_comments = true
+	singleSession = true // configure OSIV singleSession mode
+	flush.mode = 'manual' // OSIV session flush mode outside of transactional context
     }
     // environment specific settings
     environments {
@@ -106,6 +110,8 @@ try {
                 password = databaseConfig.jummp.database.password
                 dialect  = databaseConfig.jummp.database.dialect
                 url = databaseConfig.jummp.database.url
+//                logSql = true
+//                dbCreate = "create"
             }
         }
         test {
@@ -158,7 +164,6 @@ try {
                 password = databaseConfig.jummp.database.password
                 dialect  = databaseConfig.jummp.database.dialect
                 url = databaseConfig.jummp.database.url
-                dbCreate = 'update'
             }
         }
     }

@@ -28,6 +28,6 @@
 
 
 <button type="button" ${attrs.class ? 'class="' + attrs.class + '"' : ''} ${attrs.id ? 'id="' + attrs.id + '"' : ''}>
-    <p>${body}</p>
+    <span>${body}</span>
     <div class="glow"></div>
 </button>

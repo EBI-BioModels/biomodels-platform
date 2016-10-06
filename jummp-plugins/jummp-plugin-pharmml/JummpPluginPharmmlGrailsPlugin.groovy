@@ -89,7 +89,7 @@ Provides functionality to support models encoded in PharmML.
     def doWithApplicationContext = { applicationContext ->
           try {
             def service = applicationContext.getBean("modelFileFormatService")
-            ["*", "0.1", "0.2.1", "0.3", "0.3.1", "0.6"].each {
+            ["*", "0.1", "0.2.1", "0.3", "0.3.1", "0.6","0.6.1"].each {
                 def modelFormat = service.registerModelFormat("PharmML",
                         "PharmML", it)
                 service.handleModelFormat(modelFormat, "pharmMlService", "pharmMl")

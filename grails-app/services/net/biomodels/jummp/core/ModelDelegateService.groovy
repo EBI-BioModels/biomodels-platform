@@ -34,6 +34,7 @@
 
 package net.biomodels.jummp.core
 
+import eu.ddmore.publish.service.PublishContext
 import net.biomodels.jummp.core.adapters.DomainAdapter
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.model.ModelAuditTransportCommand
@@ -45,6 +46,7 @@ import net.biomodels.jummp.core.model.PermissionTransportCommand
 import net.biomodels.jummp.core.model.PublicationTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.core.model.ValidationState
 import net.biomodels.jummp.core.vcs.VcsFileDetails
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelFormat
@@ -52,6 +54,7 @@ import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.core.model.identifier.generator.AbstractModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
+import net.biomodels.jummp.qcinfo.QcInfo
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.springframework.security.access.AccessDeniedException
@@ -65,6 +68,7 @@ import org.springframework.security.access.AccessDeniedException
  * ModelService should be used directly.
  * @author Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
  * @author Raza Ali <raza.ali@ebi.ac.uk>
+ * @author Sarala Wimalaratne <sarala@ebi.ac.uk>
  */
 class ModelDelegateService implements IModelService {
     static transactional = false
@@ -72,13 +76,14 @@ class ModelDelegateService implements IModelService {
 
     def modelService
     def modelFileFormatService
+    def qcInfoDelegateService
     def referenceTracker
     def publicationIdGenerator
 
     String getPluginForFormat(ModelFormatTransportCommand format) {
         return modelFileFormatService.getPluginForFormat(format)
     }
-    
+
     List<ModelTransportCommand> getAllModels(int offset, int count, boolean sortOrder, ModelListSorting sortColumn) {
         List<ModelTransportCommand> models = []
         modelService.getAllModels(offset, count, sortOrder, sortColumn).each {
@@ -224,6 +229,26 @@ class ModelDelegateService implements IModelService {
         return false
     }
 
+    Boolean canCertify(String modelId) {
+        def revision = getLatestRevision(modelId)
+        if(!revision.qcInfo)
+            return qcInfoDelegateService.canCertify(ModelAdapter.findByPerennialIdentifier(modelId))
+        else
+            return false
+    }
+
+    Boolean canSubmitForPublication(String modelId) {
+        def revision = getLatestRevision(modelId)
+        if ((revision.state == ModelState.UNPUBLISHED) && (revision.state != ModelState.UNDER_CURATION)) {
+            try {
+                return modelService.canSubmitForPublication(Revision.get(revision.id))
+            } catch (Exception e) {
+                return false
+            }
+        }
+        return false
+    }
+
     List<RepositoryFileTransportCommand> retrieveModelFiles(RevisionTransportCommand revision)
             throws ModelException {
         Revision theRevision = Revision.get(revision.id)
@@ -248,10 +273,6 @@ class ModelDelegateService implements IModelService {
                     User.get(collaborator.id))
     }
 
-    Map<String, List<String>> getSearchIndexingContent(RevisionTransportCommand revision) {
-        modelService.getSearchIndexingContent(revision)
-    }
-
     void grantWriteAccess(String modelId, User collaborator) {
         modelService.grantWriteAccess(ModelAdapter.findByPerennialIdentifier(modelId),
                     User.get(collaborator.id))
@@ -273,7 +294,8 @@ class ModelDelegateService implements IModelService {
     }
 
     boolean deleteModel(String modelId) {
-        return modelService.deleteModel(ModelAdapter.findByPerennialIdentifier(modelId))
+        def model = ModelAdapter.findByPerennialIdentifier(modelId)
+        modelService.deleteModel(model)
     }
 
     boolean restoreModel(String modelId) {
@@ -302,12 +324,16 @@ class ModelDelegateService implements IModelService {
         return DomainAdapter.getAdapter(REV).toCommandObject()
     }
 
-    void publishModelRevision(RevisionTransportCommand revision) {
-        modelService.publishModelRevision(Revision.get(revision.id))
+    PublishContext publishModelRevision(RevisionTransportCommand revision) {
+        return modelService.publishModelRevision(Revision.get(revision.id))
     }
 
     void unpublishModelRevision(RevisionTransportCommand revision) {
         modelService.unpublishModelRevision(Revision.get(revision.id))
+    }
+
+    void submitModelRevisionForPublication(RevisionTransportCommand revision) {
+        modelService.submitModelRevisionForPublication(Revision.get(revision.id))
     }
 
     ModelTransportCommand findByPerennialIdentifier(String perennialId) {

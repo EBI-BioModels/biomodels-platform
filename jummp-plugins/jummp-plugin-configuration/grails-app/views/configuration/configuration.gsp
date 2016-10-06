@@ -41,7 +41,7 @@
         </g:hasErrors>
         <div id="remote" class="body">
             <h1>Configuration - ${title}</h1>
-            <g:form action="${action}">
+            <g:form name="configurationForm" action="${action}">
                 <g:render template="/templates/configuration/${template}"/>
                 <div class="buttons">
                     <jummp:button id="cancelButton">Cancel</jummp:button>
@@ -50,12 +50,12 @@
             </g:form>
         </div>
         <g:javascript>
-$("#cancelButton").click(function() {
-    $("form")[0].reset();
-});
-$("#submitButton").click(function() {
-    $("form")[0].submit();
-});
+            $("#configurationForm #cancelButton").click(function() {
+                $("#configurationForm")[0].reset();
+            });
+            $("#configurationForm #submitButton").click(function() {
+                $("#configurationForm")[0].submit();
+            });
         </g:javascript>
     </body>
     <g:render template="/templates/configuration/configurationSidebar"/>

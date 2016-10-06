@@ -1193,5 +1193,23 @@ databaseChangeLog = {
     include file: '20150626_addCollectionNameToResourceReference.groovy'
 
     include file: '20150820_widen_curation_comments.groovy'
+
+	include file: '20151012_addMetadataValidationToRevision.groovy'
+
+    include file: '20151105_populate_revision_validation_level.groovy'
+
+	include file: '20151207_nullable_xref_uri.groovy'
+
+    include file: '20160114-makeResourceReferenceNameText.groovy'
+
+    include file: '20160229-updateModelFormatName-Unknown2Original.groovy'
+
+    include file: "20160511_updateRDFdescription.groovy"
+
+	include file: '20160713_createTableQcInfo.groovy'
+
+    include file: '20160718_addQcInfoToRevision.groovy'
+
+    include file: '20160718_addCertificationConstraints.groovy'
 }
 

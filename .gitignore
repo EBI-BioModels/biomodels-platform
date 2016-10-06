@@ -43,3 +43,5 @@ target-eclipse/*
 target/*
 web-app/js/i18n/messages.properties
 web-app/WEB-INF/classes/ 
+## elastic search data folder -- used by weceem, not by us directly.
+data

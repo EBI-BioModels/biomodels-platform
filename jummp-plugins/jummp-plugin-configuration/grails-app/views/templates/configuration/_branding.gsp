@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -31,13 +31,13 @@
     <table class="formtable">
         <tbody>
             <tr class="prop">
-                <td class="name"><label for="brandingInternalColor">Internal
+                <td class="name" style="width: 25%"><label for="brandingInternalColor">Internal
                         Color:</label></td>
                 <td
                     class="value ${hasErrors(bean: branding, field: 'internalColor', 'errors')}">
                     <input type="text" name="internalColor"
                     id="brandingInternalColor"
-                    value="${branding ? branding?.internalColor : ''}" />
+                    value="${branding ? branding?.internalColor : ''}" style="width: 350px;"/>
                 </td>
             </tr>
             <tr class="prop">
@@ -47,7 +47,7 @@
                     class="value ${hasErrors(bean: branding, field: 'externalColor', 'errors')}">
                     <input type="text" name="externalColor"
                     id="brandingExternalColor"
-                    value="${branding ? branding?.externalColor : ''}" />
+                    value="${branding ? branding?.externalColor : ''}" style="width: 350px;"/>
                 </td>
             </tr>
         </tbody>

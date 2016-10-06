@@ -153,7 +153,8 @@ Unexpected value for correlation matrix type ${MATRIX.matrixType} in $c."""
                     final String R2 = PAIRWISE.randomVariable2.symbRef?.symbIdRef
                     final String KEY = "$VAR|$R1|$R2"
                     final String KEY_REV = "$VAR|$R2|$R1"
-                    final String VALUE_STRING = PharmMl0_6AwareRenderer.getInstance().scalarRhs(value).toString()
+                    final String VALUE_STRING =
+                            PharmMl0_6AwareRenderer.getInstance().scalarRhsInline(value)
                     cm.put(KEY, VALUE_STRING)
                     cm.put(KEY_REV, VALUE_STRING)
                     cm.addRandomEffect(R1)

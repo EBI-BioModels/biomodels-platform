@@ -73,9 +73,9 @@ grails.project.dependency.resolution = {
         compile("eu.ddmore.pharmml:libPharmML:0.4-beta-b3")
     }
     plugins {
-        build ":tomcat:7.0.54"
-        compile ":perf4j:0.1.1"
-        runtime ":hibernate:3.6.10.16"
+        build ":tomcat:7.0.55.3"
+        compile ":perf4j:0.2"
+        runtime ":hibernate4:4.3.10"
     }
 }
 grails.plugin.location.'jummp-plugin-security'="../jummp-plugin-security"

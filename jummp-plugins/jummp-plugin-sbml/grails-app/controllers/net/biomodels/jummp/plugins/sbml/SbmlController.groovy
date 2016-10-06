@@ -24,22 +24,27 @@
 
 package net.biomodels.jummp.plugins.sbml
 
-import net.biomodels.jummp.core.annotation.StatementTransportCommand
+import net.biomodels.jummp.core.annotation.QualifierTransportCommand
+import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 
 /**
  * Controller for handling Model files in the SBML format.
  * @author  Raza Ali <raza.ali@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
+ * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
 class SbmlController {
-    def sbmlService
+    def metadataDelegateService
 
     def show = {
-        RevisionTransportCommand r = flash.genericModel.revision
-        List<StatementTransportCommand> genericAnno = sbmlService.fetchGenericAnnotations(r)
+        Map model = flash.genericModel
+        RevisionTransportCommand r = model.revision
+        Map<QualifierTransportCommand, List<ResourceReferenceTransportCommand>> genericAnno =
+                metadataDelegateService.fetchGenericAnnotations r
         if (genericAnno) {
-            flash.genericModel["genericAnnotations"] = genericAnno
+            model["genericAnnotations"] = genericAnno
         }
-        render(view: "/model/sbml/show", model: flash.genericModel)
+        render(view: "/model/sbml/show", model: model)
     }
 }

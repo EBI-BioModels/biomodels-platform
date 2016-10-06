@@ -18,14 +18,10 @@
 * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 **/
 
-
-
-
-
 package net.biomodels.jummp.core.model
 
 class PublicationLinkProviderTransportCommand implements Serializable {
-	String linkType
-	String pattern
-	String identifiersPrefix
+    String linkType
+    String pattern
+    String identifiersPrefix
 }

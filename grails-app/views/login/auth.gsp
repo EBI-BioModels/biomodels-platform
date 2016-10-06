@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -34,16 +34,16 @@
         <title>Login</title>
     </head>
     <body>
-        
+
     <div id='login'>
         <form action='${postUrl}' method='POST' id='loginForm' class='cssform' autocomplete='on'>
             <table>
                 <tr><p>${flash.message}</p></tr>
                 <tbody>
                     <tr>
-                    	<td class="name">
+                    	<td class="name" style="text-align: right">
                                 <label for="username">
-                                    <g:message code="login.form.label"/>
+                                    <g:message code="login.form.label"/>:
                                 </label>
                         </td>
                         <td>
@@ -51,9 +51,9 @@
                         </td>
                     </tr>
                     <tr>
-  	                <td class="name">
+  	                <td class="name" style="text-align: right">
                                <label for="password">
-                                    <g:message code="login.form.password"/>
+                                    <g:message code="login.form.password"/>:
                                 </label>
                         </td>
                     	<td>
@@ -61,32 +61,36 @@
                     	</td>
                    </tr>
                     <tr>
-  	                <td/>
+                        <td>&nbsp;</td>
                     	<td>
                     		<button>LOGIN</button>
                     	</td>
                    </tr>
                    <tr>
-  	                <td/>
+                       <td>&nbsp;</td>
                     	<td>
                     		<a href="${grailsApplication.config.grails.serverURL}/forgotpassword">
 	  	     					Forgot password?
 	  	     				</a>
                     	</td>
                    </tr>
-                   <td/>
-                    	<td>
-                    		<a href="${grailsApplication.config.grails.serverURL}/registration">
-	  	     					Register
-	  	     				</a>
-                    	</td>
-                   </tr>
+                    <g:if test="${grailsApplication.config.jummp.security.anonymousRegistration}">
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td>
+                        <a href="${grailsApplication.config.grails.serverURL}/registration">
+                            Register
+                        </a>
+                        </td>
+                    </tr>
+                    </g:if>
+
                 </tbody>
             </table>
         </form>
     </div>
     <script type='text/javascript'>
-    <!-- TODO: move out of HTML page //-->
+        // TODO: move out of HTML page
     	$("#loginForm input").focus(function() {
     		if ($(this).data("reset") === undefined) {
     		$(this).val("");

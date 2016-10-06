@@ -20,16 +20,23 @@
 
 package net.biomodels.jummp.search
 
+import grails.util.Environment
 import org.apache.camel.builder.RouteBuilder
-import org.apache.camel.Exchange
-import org.apache.camel.Processor
 
 class IndexingRoute extends RouteBuilder {
+    final String DEBUG_CFG =
+            "-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=6005"
+    final boolean inDevelopment = Environment.isDevelopmentMode()
+    final String JAR_ARGS = '-jar ${body[jarPath]} ${body[jsonPath]}'
+    final String CLI_ARGS = inDevelopment ?
+            new StringBuilder(DEBUG_CFG).append(' ').append(JAR_ARGS).toString() :
+            JAR_ARGS
 
     @Override
     void configure() {
-        from("seda:exec")
-        .setHeader("CamelExecCommandArgs", simple('-jar ${body[jarPath]} ${body[jsonPath]} -Xmx1G'))
+        //from("seda:exec")
+        from("direct:exec")
+        .setHeader("CamelExecCommandArgs", simple(CLI_ARGS))
         .to("exec:java")
     }
 }

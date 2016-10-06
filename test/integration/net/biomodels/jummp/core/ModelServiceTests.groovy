@@ -70,6 +70,7 @@ class ModelServiceTests extends JummpIntegrationTest {
     def modelFileFormatService
     def fileSystemService
     def grailsApplication
+    def searchService
 
     @Before
     void setUp() {
@@ -1348,40 +1349,80 @@ class ModelServiceTests extends JummpIntegrationTest {
 
     @Test
     void testDeleteModel() {
-        Model model = new Model(vcsIdentifier: "test.xml", submissionId: "m1234")
-        Revision revision = new Revision(model: model, vcsId: "1", revisionNumber: 1, owner: User.findByUsername("username"), minorRevision: false, name:"", description: "", comment: "", uploadDate: new Date(), format: ModelFormat.findByIdentifierAndFormatVersion("UNKNOWN", "*"))
-        assertTrue(revision.validate())
-        model.addToRevisions(revision)
-        assertTrue(model.validate())
-        model.save()
-        // testUser should not get access to the method
-        authenticateAsTestUser()
-        shouldFail(AccessDeniedException) {
-            modelService.deleteModel(model)
+        Model upped = null
+        shouldFail(IllegalArgumentException) {
+            modelService.deleteModel(upped)
         }
+        upped = new Model(deleted: true)
+        shouldFail(AccessDeniedException) {
+            modelService.deleteModel(upped)
+        }
+
+        def exchg = "target/vcs/exchange"
+        def wd ="target/vcs/git"
+        GitManagerFactory gitService = new GitManagerFactory()
+        gitService.grailsApplication = grailsApplication
+        grailsApplication.config.jummp.plugins.git.enabled = true
+        grailsApplication.config.jummp.vcs.exchangeDirectory = exchg
+        grailsApplication.config.jummp.vcs.workingDirectory = wd
+        modelService.vcsService.vcsManager = gitService.getInstance()
+        modelService.vcsService.vcsManager.exchangeDirectory = new File(exchg)
+        def modelPath = "test/files/JUM-84/pharmml/testPharmML.xml"
+        def modelFile = new File(modelPath)
+        assertTrue modelFile.exists()
+        // upload the model
+        def model = new RepositoryFileTransportCommand(path: modelFile.absolutePath,
+                mainFile: true, description: "")
+        authenticateAsTestUser()
+        def fmt = new ModelFormatTransportCommand(identifier: "PharmML", formatVersion: "0.3.1")
+        def rtc = new RevisionTransportCommand(format: fmt, name: "Test model", validated: true,
+                comment: "initial commit", description: "Test model description",
+                model: new ModelTransportCommand())
+        def count = Revision.count()
+        upped = modelService.uploadValidatedModel([model], rtc)
+        assertNotNull upped
+        assertFalse upped.hasErrors()
+        assertEquals count + 1, Revision.count()
+        def firstRevision = Revision.last()
+        assertEquals "Test model", firstRevision.name
+        println "first revision: ${firstRevision.dump()}"
+        def secondRevision = DomainAdapter.getAdapter(firstRevision).toCommandObject()
+        secondRevision.name = "Some other name"
+        secondRevision.description = "Some other description"
+        secondRevision.comment = "Some important change"
+        def r2 = modelService.addValidatedRevision([model], [], secondRevision)
+        assertNotNull r2
+        assertFalse r2.hasErrors()
+
+        //wait a bit for the model to be indexed
+        Thread.sleep(30000)
+
+        assertTrue modelService.deleteModel(upped)
+        assertTrue upped.deleted
+        upped = Model.read(upped.id)
+        assertTrue upped.deleted
+        assertTrue searchService.isDeleted(upped)
+
+        // set model state back to initial state
+        upped.deleted = false
+        upped.save(flush: true)
+        searchService.setDeleted(upped, false)
+        assertFalse searchService.isDeleted(upped)
+
+        firstRevision.state = ModelState.PUBLISHED
+        firstRevision.save(flush: true)
+        // can't delete once a revision is public
+        assertFalse modelService.canDelete(upped)
+        firstRevision.state = ModelState.UNPUBLISHED
+        firstRevision.save(flush: true)
+
         // user should not get access to the method
         authenticateAsUser()
-        shouldFail(AccessDeniedException) {
-            modelService.deleteModel(model)
-        }
-        // now user should get access to the method
-        final String username = revision.owner.username
-        aclUtilService.addPermission(model, username, BasePermission.DELETE)
-        assertTrue(modelService.deleteModel(model))
-        // set model state back to initial tate
-        model.deleted = false
+        assertFalse modelService.canDelete(upped)
+
         // admin should get access to the method
         authenticateAsAdmin()
-        assertTrue(modelService.deleteModel(model))
-        revision.state=ModelState.PUBLISHED
-        revision.save(flush:true)
-        shouldFail(AccessDeniedException) {
-        	modelService.deleteModel(model)
-        }
-        model = null
-        shouldFail(IllegalArgumentException) {
-            modelService.deleteModel(model)
-        }
+        assertTrue modelService.deleteModel(upped)
     }
 
     @Test

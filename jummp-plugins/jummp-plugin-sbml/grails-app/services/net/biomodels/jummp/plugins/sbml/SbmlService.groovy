@@ -20,13 +20,13 @@
 * Additional permission under GNU Affero GPL version 3 section 7
 *
 * If you modify Jummp, or any covered work, by linking or combining it with
-* JSBML, groovy, Apache Commons, JDOM, XStream, Spring Framework, Perf4j, Grails, 
+* JSBML, groovy, Apache Commons, JDOM, XStream, Spring Framework, Perf4j, Grails,
 * SBFC Converter (or a modified version of that library), containing parts
-* covered by the terms of GNU GPL v2.0, BSD license, Apache License v2.0, 
+* covered by the terms of GNU GPL v2.0, BSD license, Apache License v2.0,
 * JDOM license, GNU LGPL v2.1, the licensors of this
 * Program grant you additional permission to convey the resulting work.
 * {Corresponding Source for a non-source form of such a combination shall
-* include the source code for the parts of JSBML, groovy, Apache Commons, 
+* include the source code for the parts of JSBML, groovy, Apache Commons,
 * JDOM, XStream, Spring Framework, Perf4j, Grails, SBFC Converter used as well as
 * that of the covered work.}
 **/
@@ -62,12 +62,12 @@ import org.jdom.input.SAXBuilder
 import org.jdom.output.XMLOutputter
 import org.jdom.xpath.XPath
 import org.perf4j.aop.Profiled
-import org.sbfc.converter.models.BioPaxModel
-import org.sbfc.converter.models.OctaveModel
-import org.sbfc.converter.models.SBMLModel
-import org.sbfc.converter.sbml2biopax.SBML2BioPAX_l3
-import org.sbfc.converter.sbml2dot.SBML2Dot
-import org.sbfc.converter.sbml2octave.SBML2Octave
+//import org.sbfc.converter.models.BioPaxModel
+//import org.sbfc.converter.models.OctaveModel
+//import org.sbfc.converter.models.SBMLModel
+//import org.sbfc.converter.sbml2biopax.SBML2BioPAX_l3
+//import org.sbfc.converter.sbml2dot.SBML2Dot
+//import org.sbfc.converter.sbml2octave.SBML2Octave
 import org.sbml.jsbml.AlgebraicRule
 import org.sbml.jsbml.Annotation
 import org.sbml.jsbml.AssignmentRule
@@ -141,7 +141,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
             // only initialize the SBML2* Converters during startup in production mode
             // FIXME: fails the startup of Tomcat server
 //             sbml2dotConverter()
-            sbml2OctaveConverter()
+            //sbml2OctaveConverter()
             // FIXME: fails the startup of Tomcat server
             //sbml2BioPaxConverter()
         }
@@ -620,16 +620,18 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
 
     @Profiled(tag="SbmlService.generateOctave")
     public String generateOctave(RevisionTransportCommand revision) {
-        SBMLModel sbmlModel = resolveSbmlModel(revision)
-        OctaveModel octaveModel = sbml2OctaveConverter().octaveExport(sbmlModel)
-        return octaveModel.modelToString()
+//        SBMLModel sbmlModel = resolveSbmlModel(revision)
+//        OctaveModel octaveModel = sbml2OctaveConverter().octaveExport(sbmlModel)
+//        return octaveModel.modelToString()
+        return ""
     }
 
     @Profiled(tag="SbmlService.generateBioPax")
     public String generateBioPax(RevisionTransportCommand revision) {
-        SBMLModel sbmlModel = resolveSbmlModel(revision)
-        BioPaxModel bioPaxModel = sbml2BioPaxConverter().biopaxexport(sbmlModel)
-        return bioPaxModel.modelToString()
+//        SBMLModel sbmlModel = resolveSbmlModel(revision)
+//        BioPaxModel bioPaxModel = sbml2BioPaxConverter().biopaxexport(sbmlModel)
+//        return bioPaxModel.modelToString()
+        return ""
     }
 
     @Profiled(tag="SbmlService.getAllAnnotationURNs")
@@ -672,26 +674,6 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
             pubMedAnnotation.add(cvTerm.filterResources("pubmed"))
         }
         return pubMedAnnotation
-    }
-
-    /**
-     * Retrieves model-level annotations for a given revision.
-     *
-     * @param revision the TransportCommand wrapper for the revision for which
-     *      to find annotations.
-     * @return a list of TransportCommand wrappers of Statements associated with
-     *      the model element.
-     */
-    @Profiled(tag = "SbmlService.fetchGenericAnnotations")
-    List<StatementTransportCommand> fetchGenericAnnotations(
-            RevisionTransportCommand revision) {
-        String subject = getMetaId(revision)
-        if (!subject) {
-            return []
-        }
-        List<StatementTransportCommand> statements = metadataDelegateService.
-                findAllStatementsForSubject(revision, subject)
-        return statements
     }
 
     /**
@@ -907,26 +889,26 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
         }
     }
 
-    private SBML2Dot sbml2dotConverter() {
-        if (!dotConverter) {
-            dotConverter = new SBML2Dot()
-        }
-        return dotConverter
-    }
-
-    private SBML2Octave sbml2OctaveConverter() {
-        if (!octaveConverter) {
-            octaveConverter = new SBML2Octave()
-        }
-        return octaveConverter
-    }
-
-    private SBML2BioPAX_l3 sbml2BioPaxConverter() {
-        if (!biopaxConverter) {
-            biopaxConverter = new SBML2BioPAX_l3()
-        }
-        return biopaxConverter
-    }
+//    private SBML2Dot sbml2dotConverter() {
+//        if (!dotConverter) {
+//            dotConverter = new SBML2Dot()
+//        }
+//        return dotConverter
+//    }
+//
+//    private SBML2Octave sbml2OctaveConverter() {
+//        if (!octaveConverter) {
+//            octaveConverter = new SBML2Octave()
+//        }
+//        return octaveConverter
+//    }
+//
+//    private SBML2BioPAX_l3 sbml2BioPaxConverter() {
+//        if (!biopaxConverter) {
+//            biopaxConverter = new SBML2BioPAX_l3()
+//        }
+//        return biopaxConverter
+//    }
 
     private long fetchModelAttributeFromRevision(RevisionTransportCommand revision, String attributeName) {
         File mainFile = fetchMainFileFromRevision(revision)
@@ -1030,19 +1012,19 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
      * @param revision The RevisionTransportCommand from which to extract the SBMLModel.
      * @return The SBMLModel to be found or an empty array if the model could not be found.
      */
-    private SBMLModel resolveSbmlModel(RevisionTransportCommand revision) {
-        try {
-        Model model = getFromCache(revision).model
-        SBMLWriter sbmlWriter = new SBMLWriter()
-        String sbmlString = sbmlWriter.writeSBMLToString(model.getSBMLDocument())
-        SBMLModel sbmlModel = new SBMLModel()
-        sbmlModel.setModelFromString(sbmlString)
-        return sbmlModel
-        } catch (Exception e) {
-            e.printStackTrace()
-            return [:]
-        }
-    }
+//    private SBMLModel resolveSbmlModel(RevisionTransportCommand revision) {
+//        try {
+//        Model model = getFromCache(revision).model
+//        SBMLWriter sbmlWriter = new SBMLWriter()
+//        String sbmlString = sbmlWriter.writeSBMLToString(model.getSBMLDocument())
+//        SBMLModel sbmlModel = new SBMLModel()
+//        sbmlModel.setModelFromString(sbmlString)
+//        return sbmlModel
+//        } catch (Exception e) {
+//            e.printStackTrace()
+//            return [:]
+//        }
+//    }
 
     /**
      * Triggers the generation of a sub model for an existing model encoded in SBML.
@@ -1050,11 +1032,15 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
      * @return A String representation of the new model encoded in SBML.
      */
     public String triggerSubmodelGeneration(
-            RevisionTransportCommand revision, String subModelId, String metaId, 
+            RevisionTransportCommand revision, String subModelId, String metaId,
             List<String> compartmentIds, List<String> speciesIds, List<String> reactionIds,
             List<String> ruleIds, List<String> eventIds) {
         Model model = getFromCache(revision).model
         return new SubmodelGenerator().generateSubModel(
                 model, subModelId, metaId, compartmentIds, speciesIds, reactionIds, ruleIds, eventIds)
+    }
+
+    boolean doBeforeSavingAnnotations(File annoFile, RevisionTransportCommand rev) {
+        return true
     }
 }

@@ -43,7 +43,7 @@
 	        </section>  
     
 	        <section class="grid_6 omega">
-				${sidebarContent}
+				${raw(sidebarContent)}
 			</section>
 	</g:if>
 	<g:else>

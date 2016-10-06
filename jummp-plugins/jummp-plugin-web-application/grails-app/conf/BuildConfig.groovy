@@ -76,12 +76,9 @@ grails.project.dependency.resolution = {
     }
 
     plugins {
-        build ":tomcat:7.0.54"
+        build ":tomcat:7.0.55.3"
 
-        runtime(":weceem:1.2") {
-            excludes 'ckeditor'
-        }
-        runtime ":ckeditor:3.6.6.1.1"
+        runtime ":weceem:1.4"
         runtime ":jquery:1.11.1"
         runtime ":jquery-datatables:1.7.5"
     }

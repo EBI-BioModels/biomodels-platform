@@ -28,8 +28,8 @@ import java.util.concurrent.atomic.AtomicReference
 import org.apache.commons.io.FileUtils
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
-import org.apache.solr.client.solrj.SolrServer
-import org.apache.solr.client.solrj.impl.HttpSolrServer
+import org.apache.solr.client.solrj.SolrClient
+import org.apache.solr.client.solrj.impl.HttpSolrClient
 import org.apache.solr.client.solrj.response.SolrPingResponse
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.perf4j.aop.Profiled
@@ -98,9 +98,9 @@ class SolrServerHolder {
      */
     GrailsApplication grailsApplication
     /**
-     * Singleton instance of SolrServer.
+     * Singleton instance of SolrClient.
      */
-    SolrServer server
+    SolrClient solrClient
     /**
      * The base URL for all requests to the SOLR core.
      */
@@ -128,15 +128,15 @@ URL of Solr server not found. Please check the setting jummp.search.url in the c
         prepareSolrCoreSetup(coreName, grailsConfig)
 
         SOLR_CORE_URL = getSolrCoreUrl(SOLR_URL)
-        server = new HttpSolrServer(SOLR_CORE_URL)
+        solrClient = new HttpSolrClient(SOLR_CORE_URL)
         if (IS_INFO_ENABLED) {
             log.info "Connected to Solr instance $SOLR_CORE_URL."
         }
-        SolrPingResponse response = server.ping()
+        SolrPingResponse response = solrClient.ping()
         if (IS_DEBUG_ENABLED) {
             log.debug "Solr instance response time: ${response.getQTime()}ms."
         }
-        log.info "Solr server is $server"
+        log.info "Solr server is $solrClient"
         if (IS_DEBUG_ENABLED) {
             log.debug "... finished initialising solrServerHolder."
         }
@@ -153,7 +153,7 @@ URL of Solr server not found. Please check the setting jummp.search.url in the c
             File testCoreFolder = solrCoreRef.get()
             forceDeleteTestSolrCore testCoreFolder
         }
-        server = null
+        solrClient = null
         solrCoreRef = null
         solrUrlRef = null
         solrHomeRef = null
@@ -303,13 +303,18 @@ variable. If the former setting is specified,the environment variable is ignored
     private File getSolrConfigFolder() {
         File result
         if (Environment.isWarDeployed()) {
-            Resource resource = grailsApplication.mainContext.getResource(SOLR_CONFIG_LOCATION)
+            final String SOLR_CONFIG_CLASSPATH_LOCATION =
+                    "WEB-INF/classes/$SOLR_CONFIG_LOCATION"
+            Resource resource = grailsApplication.mainContext.getResource(
+                    SOLR_CONFIG_CLASSPATH_LOCATION)
             result = resource.getFile()
         } else {
             result = new File("$GRAILS_CONF_LOCATION/$SOLR_CONFIG_LOCATION")
         }
         if (!result.exists()) {
-            throw new IllegalArgumentException("Missing schema and configuration file for Solr core.")
+            def msg = """\
+Missing schema and configuration file for Solr core in ${result.absolutePath}.""".toString()
+            throw new IllegalArgumentException(msg)
         }
         if (IS_DEBUG_ENABLED) {
             log.debug "Solr core configuration templates are located in $result"

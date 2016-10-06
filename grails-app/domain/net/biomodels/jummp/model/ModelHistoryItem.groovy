@@ -28,10 +28,10 @@ import net.biomodels.jummp.plugins.security.User
 
 /**
  * @short Domain class for storing when a user accessed a Model.
- * 
+ *
  * A history item consists of a Model, the user who accessed it and
  * when it was last accessed.
- * 
+ *
  * Do not use this domain class directly, but the ModelHistoryService.
  * This service ensures that the History is correct.
  *
@@ -63,7 +63,7 @@ class ModelHistoryItem implements Serializable {
      */
     public void touch() {
         this.lastAccessedDate = System.currentTimeMillis()
-        save(flush: true)
+        save()
     }
 
     /**

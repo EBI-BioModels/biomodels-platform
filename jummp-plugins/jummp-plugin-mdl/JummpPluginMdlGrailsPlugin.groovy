@@ -80,7 +80,7 @@ Provides functionality to support models encoded in MDL.
     def doWithApplicationContext = { applicationContext ->
           try {
             def service = applicationContext.getBean("modelFileFormatService")
-            ["*", "5.0.8"].each {
+            ["*", "5.0.8", "7.0"].each {
                 def modelFormat = service.registerModelFormat("MDL",
                         "MDL", it)
                 service.handleModelFormat(modelFormat, "mdlService", "mdl")

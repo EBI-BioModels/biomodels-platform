@@ -1,3 +1,23 @@
+#nameSearch {
+    width:150px;
+    border:1px solid #ccc;
+    min-width: 0px;
+    -ms-box-sizing:content-box;
+    -moz-box-sizing:content-box;
+    box-sizing:content-box;
+    -webkit-box-sizing:content-box;
+}
+
+#teamSearch {
+    width:163px;
+    border:1px solid #ccc;
+    min-width: 0px;
+    -ms-box-sizing:content-box;
+    -moz-box-sizing:content-box;
+    box-sizing:content-box;
+    -webkit-box-sizing:content-box;
+}
+
 .formElement {
 	float: left;
 	padding: 10px;
@@ -11,8 +31,11 @@
 	position:static;
 	width:100%
 }
-#AddButton {
-	margin-left: 12px;
+#AddButton, #TeamAddButton {
+    /*-webkit-appearance: none; // to set the height */
+    margin-top: 17px;
+    margin-left: 12px;
+    /*height: 29px;*/
 }
 #collabCreate {
 	float: left;

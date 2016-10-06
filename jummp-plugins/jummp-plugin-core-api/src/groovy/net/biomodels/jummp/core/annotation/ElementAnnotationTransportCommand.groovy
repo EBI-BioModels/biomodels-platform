@@ -37,8 +37,8 @@ import net.biomodels.jummp.core.model.RevisionTransportCommand
  * @see net.biomodels.jummp.core.model.RevisionTransportCommand
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
-@CompileStatic
-@Immutable
+//@CompileStatic
+//@Immutable
 class ElementAnnotationTransportCommand implements Serializable {
     String creator
     StatementTransportCommand statement

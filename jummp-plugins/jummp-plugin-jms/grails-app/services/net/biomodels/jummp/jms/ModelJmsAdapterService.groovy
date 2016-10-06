@@ -337,4 +337,11 @@ class ModelJmsAdapterService extends AbstractJmsAdapter {
         return true
     }
 
+    @Queue
+    @JmsQueueMethod(isAuthenticate=true, arguments=[Long, Integer])
+    def validateModelRevision(def message) {
+        modelDelegateService.validateModelRevision(modelDelegateService.getRevision(message[1], message[2]))
+        return true
+    }
+
 }
