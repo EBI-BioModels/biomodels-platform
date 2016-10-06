@@ -79,7 +79,7 @@ class OmicsdiService {
         def builder = new JsonBuilder()
         def partialData = [
             'repositoryName' : grailsApplication.config.jummp.metadata.officialDatabaseName,
-            'serverUrl' : grailsApplication.config.grails.serverURL,
+            'serverUrl' : "http://www.ebi.ac.uk/biomodels-main" //grailsApplication.config.grails.serverURL,
         ]
         builder(partialData: partialData,
             'folder': exportFolder,
