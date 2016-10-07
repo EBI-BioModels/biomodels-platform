@@ -23,6 +23,7 @@
 
 
 grails.servlet.version = "2.5"
+grails.reload.enable = true
 grails.project.class.dir = "target/classes"
 grails.project.test.class.dir = "target/test-classes"
 grails.project.test.reports.dir = "target/test-reports"
@@ -82,8 +83,7 @@ grails.project.dependency.resolution = {
         runtime 'mysql:mysql-connector-java:5.1.34'
         runtime "postgresql:postgresql:9.1-901.jdbc4"
 
-        //using the latest groovy eclipse compiler 2.9.2-01
-        compile "net.biomodels.jummp:AnnotationStore:0.3"
+        compile "net.biomodels.jummp:AnnotationStore:0.3.1-SNAPSHOT"
         compile "org.apache.solr:solr-solrj:5.3.1"
         //required by both JSBML and SolrJ
         compile "org.codehaus.woodstox:woodstox-core-lgpl:4.4.1"
@@ -149,7 +149,7 @@ grails.project.dependency.resolution = {
         compile ":codenarc:0.25.2"
         compile ":webxml:1.4.1"
         compile ":perf4j:0.2.1"
-        compile ":routing:1.3.2"
+        compile ":routing:1.3.2" //1.4.0
         //compile ":jms:1.2"
         compile(":mail:1.0.7")
         compile ":simple-captcha:1.0.0"
@@ -191,6 +191,7 @@ grails.plugin.location.'jummp-plugin-web-application' = "jummp-plugins/jummp-plu
 grails.plugin.location.'jummp-plugin-biomodels-dom' = "jummp-plugins/jummp-plugin-biomodels-dom"
 grails.plugin.location.'jummp-plugin-annotation-source-ddmore' = "jummp-plugins/jummp-plugin-annotation-source-ddmore"
 grails.plugin.location.'jummp-plugin-annotation-core' = "jummp-plugins/jummp-plugin-annotation-core"
+grails.plugin.location.'jummp-plugin-omicsdi' = "jummp-plugins/jummp-plugin-omicsdi"
 grails.plugin.location.'jummp-plugin-qc-info' = "jummp-plugins/jummp-plugin-qc-info"
 //grails.plugin.location.'jummp-plugin-jms-remote' = "jummp-plugins/jummp-plugin-jms-remote"
 if ("jms".equalsIgnoreCase(System.getenv("JUMMP_EXPORT"))) {

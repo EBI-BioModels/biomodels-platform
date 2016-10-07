@@ -32,8 +32,10 @@ package net.biomodels.jummp.webapp
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.authentication.GrailsAnonymousAuthenticationToken
+import net.biomodels.jummp.core.ModelSearchStrategy
 import net.biomodels.jummp.core.adapters.DomainAdapter
 import net.biomodels.jummp.core.model.ModelListSorting
+import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.webapp.rest.search.SearchResults
@@ -174,7 +176,7 @@ class SearchController {
      */
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def search() {
-        sanitiseParams();
+        sanitiseParams()
         if (!params.query) {
             params.query = ""
         }
@@ -194,9 +196,14 @@ class SearchController {
     }
 
     private def searchCore(String query, String sortBy, String sortDirection, int offset, int length) {
+        println "Search strategy: ${searchService.getStrategy().dump()}"
         List<MTC> models = []
         if (query?.trim()) {
-            models.addAll(searchService.searchModels(query))
+            ArrayList<ModelTransportCommand> res = searchService.searchModels(query)
+            if (res != null) {
+                println "Found(s): ${res.size()} records."
+                models.addAll(res)
+            }
         }
         int sortDir = 1
         if (sortDirection && sortDirection == "asc") {

@@ -42,6 +42,8 @@ import net.biomodels.jummp.core.adapters.DomainAdapter
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.events.LoggingEventType
 import net.biomodels.jummp.core.events.ModelCreatedEvent
+import net.biomodels.jummp.core.events.ModelDeletedEvent
+import net.biomodels.jummp.core.events.ModelRestoredEvent
 import net.biomodels.jummp.core.events.PostLogging
 import net.biomodels.jummp.core.events.RevisionCreatedEvent
 import net.biomodels.jummp.core.model.ModelAuditTransportCommand
@@ -837,8 +839,8 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             }
             stopWatch.stop()
             // !! THIS HAS TO BE IN A SEPARATE METHOD WITH A DEDICATED TRANSACTION CONTEXT !!
-            //grailsApplication.mainContext.publishEvent(new RevisionCreatedEvent(this,
-            //        DomainAdapter.getAdapter(revision).toCommandObject(), vcsService.retrieveFiles(revision)))
+            grailsApplication.mainContext.publishEvent(new RevisionCreatedEvent(this,
+                    DomainAdapter.getAdapter(revision).toCommandObject(), vcsService.retrieveFiles(revision)))
         } else {
             // TODO: this means we have imported the revision into the VCS, but it failed to be saved in the database, which is pretty bad
             revision.errors.allErrors.each {
@@ -1134,7 +1136,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             }
 
             // don't broadcast event yet,wait for the current tx to commit
-            //grailsApplication.mainContext.publishEvent(new ModelCreatedEvent(this, DomainAdapter.getAdapter(model).toCommandObject(), modelFiles))
+            grailsApplication.mainContext.publishEvent(new ModelCreatedEvent(this, DomainAdapter.getAdapter(model).toCommandObject(), modelFiles))
         } else {
             // TODO: this means we have imported the file into the VCS, but it failed to be saved in the database, which is pretty bad
             revision.discard()
@@ -1956,27 +1958,11 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         if (IS_DEBUG_ENABLED) {
             log.debug("Attempting to delete model ${model.submissionId}")
         }
-        // can't inject searchService - cyclic dependency
-        def searchService = grailsApplication.mainContext.searchService
-        searchService.setDeleted(model)
-        if (!searchService.isDeleted(model)) {
-            // leave the model as not deleted and log the error
-            log.error("Could not set model ${model.submissionId} as deleted in solr.")
-            return false
-        } else {
-            model.deleted = true
-            model.save(flush: true)
-            //quick test to make sure Solr is in sync with the database
-            model.refresh()
-            boolean db = model.deleted
-            boolean solr = searchService.isDeleted(model)
-            if (IS_DEBUG_ENABLED) {
-                def m = new StringBuilder("Deletion status for ").append(model.submissionId
-                ).append(" - db: ").append(db).append(" solr: ").append(solr)
-                log.debug(m.toString())
-            }
-            return db && solr
-        }
+
+        model.deleted = true
+        model.save(flush: true)
+        grailsApplication.mainContext.publishEvent(new ModelDeletedEvent(this, DomainAdapter.getAdapter(model).toCommandObject()))
+        return true
     }
 
     /*
@@ -2016,23 +2002,15 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         if (!Model.exists(model.id)) {
             throw new IllegalArgumentException("Model ${model.properties} absent from database")
         }
-        def searchService = grailsApplication.mainContext.searchService
-        boolean dbStatus = model.deleted
-        boolean solrStatus = searchService.isDeleted model
-        boolean modelIsDeleted = dbStatus && solrStatus
-        if (!modelIsDeleted) {
+        if (!model.deleted) {
             return false
         }
-        searchService.setDeleted(model, false)
-        if (searchService.isDeleted(model)) {
-            log.error "Could not restore model ${model.submissionId} in Solr"
-            return false
-        } else {
-            model.deleted = false
-            model.save(flush: true)
-            model.refresh()
-            return !(model.deleted || searchService.isDeleted(model))
-        }
+
+        model.deleted = false
+        model.save(flush: true)
+        model.refresh()
+        grailsApplication.mainContext.publishEvent(new ModelRestoredEvent(this, DomainAdapter.getAdapter(model).toCommandObject()))
+        return !model.deleted
     }
 
     /**

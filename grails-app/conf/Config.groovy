@@ -266,7 +266,12 @@ log4j.main = {
 
     warn   jummpAppender: 'org.mortbay.log'
     // Simple Logging goes to its own file
-    info   eventsAppender: 'net.biomodels.jummp.plugins.simplelogging'
+    info   eventsAppender: [
+        'net.biomodels.jummp.plugins.simplelogging',
+        'net.biomodels.jummp.core.events',
+        'net.biomodels.jummp.plugins.bives',
+        'net.biomodels.jummp.search'
+    ]
 
     rollingFile name: "debugAppender", file: "logs/jummp-debug.log", threshold: org.apache.log4j.Level.DEBUG
     rollingFile name: "hibernateAppender", file: "logs/jummp-hibernate.log", threshold: org.apache.log4j.Level.DEBUG
@@ -280,7 +285,8 @@ log4j.main = {
         'net.biomodels.jummp.core.model.identifier.decorator',
         'net.biomodels.jummp.core.model.identifier.generator',
         'net.biomodels.jummp.core.model.identifier.support',
-        'net.biomodels.jummp.plugins.pharmml'
+        'net.biomodels.jummp.plugins.pharmml',
+        'net.biomodels.jummp.search'
     ]
     debug hibernateAppender: [
         'org.codehaus.groovy.grails.orm.hibernate',
@@ -341,7 +347,8 @@ jummp.controllerAnnotations = [
     "/plugins/*/js/*":          ['permitAll'],
     "/plugins/*/css/*":         ['permitAll'],
     "/plugins/*/images/*":      ['permitAll'],
-    "/simpleCaptcha/captcha":   ['permitAll']
+    "/simpleCaptcha/captcha":   ['permitAll'],
+    "/omicsdi/**":              ["hasRole('ROLE_ADMIN')"]
 ]
 
 // ldap
@@ -449,7 +456,17 @@ if (!(jummpConfig.jummp.security.curatorByDefault instanceof ConfigObject)) {
     // default to true
     jummp.security.curatorByDefault = true
 }
-
+// model search strategy setting: "omicsdi" or "solr"
+if (!(jummpConfig.jummp.search.strategy instanceof ConfigObject)) {
+    jummp.search.strategy = jummpConfig.jummp.search.strategy
+} else {
+    // default to solr
+    jummp.search.strategy = "solr"
+}
+// folder containing the exported OmicsDI entries
+if (!(jummpConfig.jummp.search.exportFolder instanceof ConfigObject)) {
+    jummp.search.exportFolder = jummpConfig.jummp.search.exportFolder
+}
 if (!(jummpConfig.jummp.security.certificationRole instanceof ConfigObject)) {
     jummp.security.certificationRole = jummpConfig.jummp.security.certificationRole
 } else {
@@ -697,6 +714,20 @@ jummp.config.maintenance = false
 
 jummp.id.generators = ModelIdentifierUtils.processGeneratorSettings(jummp)
 
+if (!(jummpConfig.jummp.metadata.officialDatabaseName instanceof ConfigObject)) {
+    jummp.metadata.officialDatabaseName = jummpConfig.jummp.metadata.officialDatabaseName
+} else {
+    jummp.metadata.officialDatabaseName = 'BioModels Database'
+}
+
+if (!(jummpConfig.jummp.metadata.officialDatabaseDescription instanceof ConfigObject)) {
+    jummp.metadata.officialDatabaseDescription = jummpConfig.jummp.metadata.officialDatabaseDescription
+} else {
+    jummp.metadata.officialDatabaseDescription = """\
+        BioModels Database is a repository of computational models of biological processes.
+        Models described from literature are manually curated and enriched with cross-references.
+        """
+}
 // elasticsearch settings for weceem
 elasticSearch.datastoreImpl = 'hibernateDatastore'
 elasticSearch.bulkIndexOnStartup = true

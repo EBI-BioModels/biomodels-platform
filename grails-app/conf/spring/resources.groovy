@@ -29,29 +29,25 @@
 **/
 
 
-
-
-
+import grails.persistence.Entity
 import grails.util.Environment
 import grails.util.Holders
-import net.biomodels.jummp.core.model.identifier.generator.AbstractModelIdentifierGenerator
-import net.biomodels.jummp.core.model.identifier.generator.DefaultModelIdentifierGenerator
-import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGeneratorRegistryService
-import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import net.biomodels.jummp.core.WebflowAclBeanDefinitionProcessor
+import net.biomodels.jummp.core.model.identifier.generator.AbstractModelIdentifierGenerator
+import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGeneratorRegistryService
+import net.biomodels.jummp.search.SolrBasedSearch
+import org.apache.log4j.Logger
 import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
-import org.springframework.beans.factory.support.BeanDefinitionRegistry
 import org.springframework.beans.factory.config.BeanDefinition
+import org.springframework.beans.factory.support.BeanDefinitionRegistry
 import org.springframework.beans.factory.support.SimpleBeanDefinitionRegistry
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner
 import org.springframework.core.type.filter.AnnotationTypeFilter
-import grails.persistence.Entity
-
 
 // Place your Spring DSL code here
 beans = {
     xmlns aop: "http://www.springframework.org/schema/aop"
-    def grailsApplication = Holders.grailsApplication
+    def grailsApp = Holders.grailsApplication
 
     aop.config {
         // intercept all methods annotated with PostLogging annotation
@@ -85,13 +81,46 @@ beans = {
         bean.destroyMethod = "destroy"
     }
 
+    solrBasedSearch(net.biomodels.jummp.search.SolrBasedSearch) { bean ->
+        bean.scope = "singleton"
+        bean.autowire = "byName"
+        bean.singleton = true
+        producerTemplate = ref("producerTemplate")
+        solrServerHolder = ref("solrServerHolder")
+        modelService = ref("modelService")
+        springSecurityService = ref("springSecurityService")
+        grailsApplication = ref("grailsApplication")
+        configurationService = ref("configurationService")
+        miriamService = ref("miriamService")
+        aclUtilService = ref("aclUtilService")
+    }
+
+    omicsdiBasedSearch(net.biomodels.jummp.search.OmicsdiBasedSearch) { bean ->
+        bean.scope = "singleton"
+        bean.autowire = "byName"
+        bean.singleton = true
+        producerTemplate = ref("producerTemplate")
+        solrSvrHolder = ref("solrServerHolder")
+        modelService = ref("modelService")
+        springSecurityService = ref("springSecurityService")
+        grailsApplication = ref("grailsApplication")
+        configurationService = ref("configurationService")
+        miriamService = ref("miriamService")
+        aclUtilService = ref("aclUtilService")
+    }
+
+    revisionCreatedListener(net.biomodels.jummp.plugins.bives.RevisionCreatedListener) { bean ->
+        bean.autowire = "byName"
+        bean.singleton = true
+    }
+
     webflowAclBeanDefinitionProcessor(WebflowAclBeanDefinitionProcessor) {
         it.initMethod = "init"
     }
 
     //myBeanPostProcessor(net.biomodels.jummp.core.NosyBeanPostProcessor)
 
-    Map R = grailsApplication.config.jummp.id.generators
+    Map R = grailsApp.config.jummp.id.generators
     identifierGeneratorRegistry(ModelIdentifierGeneratorRegistryService) {
         registry = R
     }
@@ -104,11 +133,16 @@ beans = {
             "$name"(clazz)
         }
     }
-    grailsApplication.config.jummp.id.clear()
+    grailsApp.config.jummp.id.clear()
 
     //Add annotation store domain classes (defined externally) to the domain model
     //following: https://github.com/pongasoft/external-domain-classes-grails-plugin/blob/master/ExternalDomainClassesGrailsPlugin.groovy#L84
-    def packages = ["net.biomodels.jummp.annotationstore", "net.biomodels.jummp.core.model", "net.biomodels.jummp.model", "net.biomodels.jummp.qcinfo", "net.biomodels.jummp.plugins.security"] as String[]
+    def packages = ["net.biomodels.jummp.annotationstore",
+                    "net.biomodels.jummp.core.model",
+                    "net.biomodels.jummp.model",
+                    "net.biomodels.jummp.qcinfo",
+                    "net.biomodels.jummp.plugins.omicsdi",
+                    "net.biomodels.jummp.plugins.security"] as String[]
     BeanDefinitionRegistry simpleRegistry = new SimpleBeanDefinitionRegistry()
     ClassPathBeanDefinitionScanner scanner = new ClassPathBeanDefinitionScanner(simpleRegistry, false)
     scanner.includeAnnotationConfig = false
@@ -117,7 +151,7 @@ beans = {
     simpleRegistry?.beanDefinitionNames?.each { String beanName ->
         BeanDefinition bean = simpleRegistry.getBeanDefinition(beanName)
         String beanClassName = bean.beanClassName
-        grailsApplication.addArtefact(DomainClassArtefactHandler.TYPE,
+        grailsApp.addArtefact(DomainClassArtefactHandler.TYPE,
                                       Class.forName(beanClassName,
                                       true,
                                       Thread.currentThread().contextClassLoader))

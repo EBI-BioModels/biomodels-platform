@@ -1,0 +1,45 @@
+<%--
+ Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ Deutsches Krebsforschungszentrum (DKFZ)
+
+ This file is part of Jummp.
+
+ Jummp is free software; you can redistribute it and/or modify it under the
+ terms of the GNU Affero General Public License as published by the Free
+ Software Foundation; either version 3 of the License, or (at your option) any
+ later version.
+
+ Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
+ WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public License along
+ with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
+--%>
+
+
+
+
+
+
+<div id="OmicsDISchemaXMLeditor" class="editor">
+    <h2>Options</h2>
+    <h3>How to save information</h3>
+    <g:radioGroup name="howToSaveFile"
+                  labels="['The whole database will be exported in a file.',
+                           'Each model will be accommodated in a file.']"
+                  values="[1,2]">
+        <span>${it.radio} ${it.label}<br/></span>
+    </g:radioGroup>
+    <h3>How to generate</h3>
+    <button onclick="<g:remoteFunction controller="Omicsdi"
+                                       action="exportOmicsdiEntriesWithIndexer"
+                                       name="exportButton" update="schemaXmlContent" asynchronous="false"/>">Export OmicsDI entries via JummpIndexer right now</button>
+    <br/>
+    <button onclick="<g:remoteFunction controller="Omicsdi"
+                                       action="exportOmicsdiEntriesWithIndexer"
+                                       name="delegateButton" update="schemaXmlContent" asynchronous="false"/>">Schedule the indexing process via JummpIndexer and QuartzScheduler</button>
+    <h2>Content of OmicsDI Schema XML file(s)</h2>
+    <g:textArea id="schemaXmlContent" name="omicsdiSchemaXML" cols="100" rows="15">
+    </g:textArea>
+</div>

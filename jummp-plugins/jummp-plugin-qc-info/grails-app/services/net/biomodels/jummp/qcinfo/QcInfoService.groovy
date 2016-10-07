@@ -1,5 +1,9 @@
 package net.biomodels.jummp.qcinfo
 
+import grails.util.Holders
+import net.biomodels.jummp.core.adapters.DomainAdapter
+import net.biomodels.jummp.core.events.ModelCertifiedEvent
+import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Revision
 import org.perf4j.aop.Profiled
@@ -20,6 +24,8 @@ class QcInfoService {
      */
     def searchService
 
+    def grailsApplication = Holders.grailsApplication.mainContext.getBean('grailsApplication')
+
     public QcInfo createQcInfo(FlagLevel flagLevel, String comment) {
         QcInfo qcInfo = new QcInfo()
         qcInfo.flag = flagLevel
@@ -39,19 +45,23 @@ class QcInfoService {
             throw new IllegalArgumentException("Cannot add QC information to deleted revision ${revision.id}.")
         }
 
+        RevisionTransportCommand revTC = DomainAdapter.getAdapter(revision).toCommandObject()
+        ModelCertifiedEvent event = new ModelCertifiedEvent(this, revTC, false)
         Revision.withTransaction {status ->
             try {
                 revision.qcInfo = qcInfo
                 qcInfo.save()
                 revision.save()
-                searchService.setCertified revision
+                event.status = true
+                grailsApplication.mainContext.publishEvent(event)
                 return true
             } catch (Exception ex) {
                 final long id = revision.id
                 log.error("Failed to save ${qcInfo.properties} for revision $id: ${ex.message}", ex)
                 try {
                     status.setRollbackOnly()
-                    searchService.setCertified(revision, false)
+                    event.status = false
+                    grailsApplication.mainContext.publishEvent(event)
                 } catch (Exception ex2) {
                     log.error("Could not roll back adding QCinfo to revision $id: ${ex2.message}", ex2)
                 }
