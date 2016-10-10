@@ -1,5 +1,5 @@
 # New Infrastructure of BioModels Database #
-BioModels Database is being upgraded to a new infrastructure based on [Jummp] (https://bitbucket.org/jummp/jummp/wiki/). 
+BioModels Database is being upgraded to a new infrastructure based on [Jummp](https://bitbucket.org/jummp/jummp/wiki/). 
 It's been reused advanced features developed in Jummp like fully versioned storage engine with fine grained access right 
 settings and supports multiple modelling formats.
 
