@@ -1,6 +1,4 @@
-# README #
-
-This README would normally document whatever steps are necessary to get your application up and running.
+# New Infrastructure of BioModels Database #
 
 ### What is this repository for? ###
 
