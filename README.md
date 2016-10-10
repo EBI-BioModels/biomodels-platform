@@ -28,4 +28,4 @@ BioModels Database is being upgraded to a new infrastructure based on [Jumm] (ht
 * Other community or team contact
 
 ## Licensing ##
-Please see the file called [LICENSE](license).
+Please see the file called [LICENSE](license.txt).
