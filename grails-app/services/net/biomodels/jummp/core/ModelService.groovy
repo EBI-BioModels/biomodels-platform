@@ -839,8 +839,8 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             }
             stopWatch.stop()
             // !! THIS HAS TO BE IN A SEPARATE METHOD WITH A DEDICATED TRANSACTION CONTEXT !!
-            grailsApplication.mainContext.publishEvent(new RevisionCreatedEvent(this,
-                    DomainAdapter.getAdapter(revision).toCommandObject(), vcsService.retrieveFiles(revision)))
+            /*grailsApplication.mainContext.publishEvent(new RevisionCreatedEvent(this,
+                    DomainAdapter.getAdapter(revision).toCommandObject(), vcsService.retrieveFiles(revision)))*/
         } else {
             // TODO: this means we have imported the revision into the VCS, but it failed to be saved in the database, which is pretty bad
             revision.errors.allErrors.each {
@@ -1135,7 +1135,8 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             }
 
             // don't broadcast event yet,wait for the current tx to commit
-            grailsApplication.mainContext.publishEvent(new ModelCreatedEvent(this, DomainAdapter.getAdapter(model).toCommandObject(), modelFiles))
+            /*grailsApplication.mainContext.publishEvent(new ModelCreatedEvent(this,
+                                  DomainAdapter.getAdapter(model).toCommandObject(), modelFiles))*/
         } else {
             // TODO: this means we have imported the file into the VCS, but it failed to be saved in the database, which is pretty bad
             revision.discard()
