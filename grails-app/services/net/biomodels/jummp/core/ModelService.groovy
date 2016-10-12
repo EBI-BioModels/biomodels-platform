@@ -815,7 +815,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             }
             //save repoFiles, revision and model in one go
             revision.save()
-            model.save()
+            model.save(flush: true)
             stopWatch.lap("Model persisted to the database.")
             stopWatch.setTag("modelService.addValidatedRevision.grantPermissions")
             aclUtilService.addPermission(revision, currentUser.username, BasePermission.ADMINISTRATION)
@@ -1105,7 +1105,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
                 stopWatch.stop()
                 throw new ModelException(DomainAdapter.getAdapter(model).toCommandObject(), "New model does not validate")
             }
-            model.save()
+            model.save(flush: true)
             domainObjects.each { rf ->
                 if (!rf.isAttached()) {
                     rf.attach()
