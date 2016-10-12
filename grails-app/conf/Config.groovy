@@ -726,7 +726,8 @@ if (!(jummpConfig.jummp.metadata.officialDatabaseDescription instanceof ConfigOb
 }
 // elasticsearch settings for weceem
 elasticSearch.datastoreImpl = 'hibernateDatastore'
-elasticSearch.bulkIndexOnStartup = true
-elasticSearch.disableAutoIndex = false
+elasticSearch.bulkIndexOnStartup = false
+elasticSearch.disableAutoIndex = true
 elasticSearch.client.mode = 'local'
-elasticSearch.index.store.type = 'memory' // store local node in memory and not on disk
+elasticSearch.index.store.type = 'simplefs' // store local node in memory and not on disk
+elasticSearch.maxBulkRequest = 10
