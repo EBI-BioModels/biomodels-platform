@@ -110,7 +110,7 @@ class ModelHistoryService {
             ModelHistoryItem.findByUser(user, [sort: 'lastAccessedDate' ]).delete(flush: true)
         }
         ModelHistoryItem newItem = ModelHistoryItem.create(model, user)
-        newItem.save()
+        newItem.save(flush: true)
     }
 
     /**
