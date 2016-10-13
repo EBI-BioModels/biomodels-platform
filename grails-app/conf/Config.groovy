@@ -292,14 +292,10 @@ log4j.main = {
         'org.codehaus.groovy.grails.orm.hibernate',
         'org.codehaus.groovy.grails.orm.support',
         'org.hibernate.SQL',
-        'org.springframework.orm.hibernate3.support'
+        'org.springframework.orm.hibernate4.support'
 
     ]
-    trace hibernateAppender: 'org.hibernate.type.descriptor.sql.BasicBinder'
-    info console: ["net.biomodels.jummp.core",
-                   "grails.plugin.cache",
-                   "grails.plugin.cache.ehcache.hibernate"]
-                   //"grails.plugin.springsecurity.web.filter.DebugFilter"]
+    info console: "net.biomodels.jummp.core"
 }
 
 // Added by the Spring Security Core plugin:
@@ -730,7 +726,8 @@ if (!(jummpConfig.jummp.metadata.officialDatabaseDescription instanceof ConfigOb
 }
 // elasticsearch settings for weceem
 elasticSearch.datastoreImpl = 'hibernateDatastore'
-elasticSearch.bulkIndexOnStartup = true
-elasticSearch.disableAutoIndex = false
+elasticSearch.bulkIndexOnStartup = false
+elasticSearch.disableAutoIndex = true
 elasticSearch.client.mode = 'local'
-elasticSearch.index.store.type = 'memory' // store local node in memory and not on disk
+elasticSearch.index.store.type = 'simplefs' // store local node in memory and not on disk
+elasticSearch.maxBulkRequest = 10
