@@ -27,13 +27,23 @@ package net.biomodels.jummp.search
 import grails.util.Holders
 import groovy.json.JsonBuilder
 import net.biomodels.jummp.core.ModelSearchStrategy
+import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.events.ModelOperationEvent
+import net.biomodels.jummp.core.model.ModelState
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.model.Revision
+import net.biomodels.jummp.qcinfo.FlagLevel
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.springframework.context.ApplicationListener
+import uk.ac.ebi.ddi.ebe.ws.dao.client.dataset.DatasetWsClient
+import uk.ac.ebi.ddi.ebe.ws.dao.config.AbstractEbeyeWsConfig
+import uk.ac.ebi.ddi.ebe.ws.dao.config.EbeyeWsConfigDev
+import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Entry
+import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Facet
+import uk.ac.ebi.ddi.ebe.ws.dao.model.common.QueryResult
 
 /**
  * @short Singleton-scoped facade for interacting with a OmicsdiHolder's instance.
@@ -108,8 +118,72 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
         // involking the method generating OmicsDI schema xml
     }
 
-    Collection<ModelTransportCommand> searchModels(String query) {
-        return new ArrayList<ModelTransportCommand>()
+    Collection<ModelTransportCommand> searchModels(String query, Map<String, Integer> paginationCriteria = ["start": 0, "end": 100, "facetCount": 10] ) {
+        long start = System.currentTimeMillis()
+        AbstractEbeyeWsConfig ebeyeWsConfig = new EbeyeWsConfigDev()
+        DatasetWsClient datasetWsClient = new DatasetWsClient(ebeyeWsConfig)
+        String[] fields = {"name,description"}
+        //paginationCriteria['end'] = 100
+        //println paginationCriteria
+        // make the first request for verification of return entries
+        QueryResult result = datasetWsClient.getDatasets("pride", query, fields, null, null,
+            paginationCriteria['start'], paginationCriteria['end'], paginationCriteria['facetCount'])
+
+        List<Entry> entries = []
+        List<Facet> facets = []
+        final int COUNT = result.count
+        if (COUNT > 0 && COUNT < paginationCriteria['end']) {
+            // mean that the number of entries found is less than the number of entries we want to request
+            // we need just one request
+            entries = result.entries
+            facets = result.facets
+        } else if (COUNT > 0 && COUNT > paginationCriteria['end']) {
+            // otherwise we need to make more than one request to get all satisfied entries
+            entries = []
+            facets = []
+            // Get all entries
+            int nbRemainingEntries = COUNT
+            int nbStart = 0
+            int nbRequestedEntries = nbRemainingEntries >= paginationCriteria['end'] ? paginationCriteria['end'] : nbRemainingEntries
+            while (nbRemainingEntries > 0) {
+                //println "NB Remaining Entries: $nbRemainingEntries"
+                //println "NB Requested Entries: $nbRequestedEntries"
+                result = datasetWsClient.getDatasets("pride", query, fields, null, null,
+                    nbStart, nbRequestedEntries, paginationCriteria['facetCount'])
+                entries.addAll(result.entries)
+                facets.addAll(result.facets)
+                nbRemainingEntries -= nbRequestedEntries
+                nbRequestedEntries = nbRemainingEntries >= paginationCriteria['end'] ? paginationCriteria['end'] : nbRemainingEntries
+                nbStart += nbRequestedEntries
+            }
+        }
+        // convert all entries to ModelTransportCommand
+        int i = 0
+        Map<String, ModelTransportCommand> returnValues = new LinkedHashMap<>(COUNT + 1, 1.0f)
+        // create fake ModelTransportCommand for testing
+        // TODO: replace with actual models
+        entries.each {Entry entry ->
+            //println "${entry.getId()} - ${entry.getScore()} - ${entry.getSource()}}"
+            i++
+            ModelTransportCommand mtc = new ModelTransportCommand(
+                submitter: "Tung Nguyen", //firstRevision.owner.person.userRealName,
+                submitterUsername: "tung", //firstRevision.owner.username,
+                name: "Simple Model", //latestRevision.name,
+                submissionId: "MODEL000000000${i}", //model.submissionId,
+                publicationId: "", //model.publicationId,
+                submissionDate: new Date(), //firstRevision.uploadDate,
+                lastModifiedDate: new Date(), //latestRevision.uploadDate,
+                id: i, //model.id,
+                state: ModelState.PUBLISHED, //latestRevision.state,
+                format: new ModelFormatAdapter(format: ModelFormat.findById(8)).toCommandObject(),
+                flagLevel: FlagLevel.FLAG_1 //latestRevision.qcInfo?.flag
+            )
+            returnValues.put("MODEL000000000${i}", mtc)
+        }
+        if (IS_DEBUG_ENABLED) {
+            log.debug("Results processed in ${System.currentTimeMillis() - start}")
+        }
+        return returnValues.values()
     }
 
     void updateIndex(RevisionTransportCommand revision) {

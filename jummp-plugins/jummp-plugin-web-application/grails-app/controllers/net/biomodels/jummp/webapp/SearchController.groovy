@@ -196,11 +196,12 @@ class SearchController {
     }
 
     private def searchCore(String query, String sortBy, String sortDirection, int offset, int length) {
-        println "Search strategy: ${searchService.getStrategy().dump()}"
+        Map<String, Integer> paginationCriteria = ["start": offset, "end": length, "facetCount": 10]
         List<MTC> models = []
         if (query?.trim()) {
-            ArrayList<ModelTransportCommand> res = searchService.searchModels(query)
-            if (res != null) {
+            ArrayList<ModelTransportCommand> res = searchService.searchModels(query, paginationCriteria)
+            println paginationCriteria
+            if (res.size() > 0) {
                 println "Found(s): ${res.size()} records."
                 models.addAll(res)
             }

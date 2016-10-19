@@ -133,8 +133,8 @@ class SearchService {
      **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="searchService.searchModels")
-    Collection<ModelTransportCommand> searchModels(String query) {
-        return strategy.searchModels(query)
+    Collection<ModelTransportCommand> searchModels(String query, Map<String, Integer> paginationCriteria) {
+        return strategy.searchModels(query, paginationCriteria)
     }
 
     /*

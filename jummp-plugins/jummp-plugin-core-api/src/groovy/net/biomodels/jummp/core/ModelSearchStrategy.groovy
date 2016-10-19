@@ -40,6 +40,6 @@ interface ModelSearchStrategy {
     void clearIndex()
     void clearAnnotationStatementsFromDatabase()
     void regenerateIndices()
-    Collection<ModelTransportCommand> searchModels(String query)
+    Collection<ModelTransportCommand> searchModels(String query, Map<String, Integer> paginationCriteria)
     void updateIndex(RevisionTransportCommand revision)
 }
