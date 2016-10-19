@@ -461,22 +461,24 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
                     }
                     if (okayToProceed) {
                         Model model = Model.get(modelId)
-                        Revision latestRevision = modelService.getLatestRevision(model, false)
-                        Revision firstRevision = model.revisions.first()
-                        ModelTransportCommand mtc = new ModelTransportCommand(
-                            submitter: firstRevision.owner.person.userRealName,
-                            submitterUsername: firstRevision.owner.username,
-                            name: latestRevision.name,
-                            submissionId: model.submissionId,
-                            publicationId: model.publicationId,
-                            submissionDate: firstRevision.uploadDate,
-                            lastModifiedDate: latestRevision.uploadDate,
-                            id: model.id,
-                            state: latestRevision.state,
-                            format: new ModelFormatAdapter(format: latestRevision.format).toCommandObject(),
-                            flagLevel: latestRevision.qcInfo?.flag
-                        )
-                        returnVals.put(model.submissionId, mtc)
+                        if (model) {
+                            Revision latestRevision = modelService.getLatestRevision(model, false)
+                            Revision firstRevision = model.revisions.first()
+                            ModelTransportCommand mtc = new ModelTransportCommand(
+                                submitter: firstRevision.owner.person.userRealName,
+                                submitterUsername: firstRevision.owner.username,
+                                name: latestRevision.name,
+                                submissionId: model.submissionId,
+                                publicationId: model.publicationId,
+                                submissionDate: firstRevision.uploadDate,
+                                lastModifiedDate: latestRevision.uploadDate,
+                                id: model.id,
+                                state: latestRevision.state,
+                                format: new ModelFormatAdapter(format: latestRevision.format).toCommandObject(),
+                                flagLevel: latestRevision.qcInfo?.flag
+                            )
+                            returnVals.put(model.submissionId, mtc)
+                        }
                     }
                 }
             }
