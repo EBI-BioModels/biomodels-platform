@@ -116,39 +116,36 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
     }
 
     void regenerateIndices() {
-        // involking the method generating OmicsDI schema xml
+        // invoking the method generating OmicsDI schema xml
     }
 
-    Collection<ModelTransportCommand> searchModels(String query, Map<String, Integer> paginationCriteria = ["start": 0, "end": 100, "facetCount": 10] ) {
+    Collection<ModelTransportCommand> searchModels(String query,
+               Map<String, Integer> paginationCriteria = ["start": 0, "end": 100, "facetCount": 10] ) {
         long start = System.currentTimeMillis()
         AbstractEbeyeWsConfig ebeyeWsConfig = new EbeyeWsConfigDev()
         DatasetWsClient datasetWsClient = new DatasetWsClient(ebeyeWsConfig)
+        // TODO: should allow searching information of other fields
         String[] fields = {"name,description"}
-        //paginationCriteria['end'] = 100
-        //println paginationCriteria
-        // make the first request for verification of return entries
+        // make the first request for verification of returned entries
         QueryResult result = datasetWsClient.getDatasets("pride", query, fields, null, null,
             paginationCriteria['start'], paginationCriteria['end'], paginationCriteria['facetCount'])
-
         List<Entry> entries = []
         List<Facet> facets = []
-        final int COUNT = result.count
+        final int COUNT = result.count // to be used for displaying facet search later on
         if (COUNT > 0 && COUNT < paginationCriteria['end']) {
-            // mean that the number of entries found is less than the number of entries we want to request
-            // we need just one request
+            // mean that the number of entries found is less than the number of entries
+            // we want to request. In that case, we need just one request
             entries = result.entries
             facets = result.facets
         } else if (COUNT > 0 && COUNT > paginationCriteria['end']) {
             // otherwise we need to make more than one request to get all satisfied entries
             entries = []
             facets = []
-            // Get all entries
+            // get all entries
             int nbRemainingEntries = COUNT
             int nbStart = 0
             int nbRequestedEntries = nbRemainingEntries >= paginationCriteria['end'] ? paginationCriteria['end'] : nbRemainingEntries
             while (nbRemainingEntries > 0) {
-                //println "NB Remaining Entries: $nbRemainingEntries"
-                //println "NB Requested Entries: $nbRequestedEntries"
                 result = datasetWsClient.getDatasets("pride", query, fields, null, null,
                     nbStart, nbRequestedEntries, paginationCriteria['facetCount'])
                 entries.addAll(result.entries)
@@ -158,11 +155,11 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
                 nbStart += nbRequestedEntries
             }
         }
-        // convert all entries to ModelTransportCommand
+        // convert all the returned entries to ModelTransportCommand objects
         int i = 0
         Map<String, ModelTransportCommand> returnValues = new LinkedHashMap<>(COUNT + 1, 1.0f)
         // create fake ModelTransportCommand for testing
-        // TODO: replace with actual models
+        // TODO: replace them with the actual models when biomodels importer finishes
         entries.each {Entry entry ->
             //println "${entry.getId()} - ${entry.getScore()} - ${entry.getSource()}}"
             i++
