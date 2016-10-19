@@ -32,7 +32,6 @@ package net.biomodels.jummp.webapp
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.authentication.GrailsAnonymousAuthenticationToken
-import net.biomodels.jummp.core.ModelSearchStrategy
 import net.biomodels.jummp.core.adapters.DomainAdapter
 import net.biomodels.jummp.core.model.ModelListSorting
 import net.biomodels.jummp.core.model.ModelTransportCommand
