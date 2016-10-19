@@ -60,7 +60,7 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
     /**
      * The class logger.
      */
-    static final Log log = LogFactory.getLog(SolrBasedSearch)
+    static final Log log = LogFactory.getLog(OmicsdiBasedSearch.class)
     /**
      * Flag indicating the logger's verbosity threshold.
      */
@@ -101,6 +101,7 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
     def producerTemplate = Holders.grailsApplication.mainContext.getBean('producerTemplate')
 
     def solrSvrHolder = Holders.grailsApplication.mainContext.getBean('solrServerHolder')
+
     void onApplicationEvent(ModelOperationEvent event) {
         // look at solrbasedsearch
     }

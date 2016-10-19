@@ -236,8 +236,7 @@ class SearchController {
         int retval = models.size()
         if (offset > 0 && offset < models.size()) {
             models = models[offset..-1]
-        }
-        else {
+        } else {
             offset = 0
         }
         if (models.size() > length) {
