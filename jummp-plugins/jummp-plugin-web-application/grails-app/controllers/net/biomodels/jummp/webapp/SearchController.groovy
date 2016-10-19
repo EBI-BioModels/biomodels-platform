@@ -85,7 +85,7 @@ class SearchController {
             params.sortBy="modified"
         }
         if (!params.sortDir || params.sortDir!="asc") {
-            params.sortDir="desc";
+            params.sortDir="desc"
         }
         if (params.sortBy) {
             switch (params.sortBy) {
@@ -96,13 +96,13 @@ class SearchController {
                 case "modified":
                     break
                 default:
-                    params.sortBy = "modified";
+                    params.sortBy = "modified"
             }
         }
         else {
-            params.sortBy = "modified";
+            params.sortBy = "modified"
         }
-        params.numResults=numResults();
+        params.numResults = numResults()
         if (integerCheck(params.offset, true, -1)) {
             params.offset = params.offset ? Integer.parseInt(params.offset) : 0
         }
@@ -128,10 +128,10 @@ class SearchController {
         if (integerCheck(params.numResults, true, -1)) {
             prefs.numResults = params.numResults as Integer
             if (prefs.numResults > MAXRESULTS ) {
-                prefs.numResults = MAXRESULTS;
+                prefs.numResults = MAXRESULTS
             }
             else if (prefs.numResults < MINRESULTS ) {
-                prefs.numResults = MINRESULTS;
+                prefs.numResults = MINRESULTS
             }
             if (user) {
                 prefs.setUser(user)
