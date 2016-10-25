@@ -20,22 +20,24 @@
                         <a href="${createLink(controller: "search", action: "archive")}">Browse Archived Models</a>
                     </sec:ifLoggedIn>
                 </g:if>
-                <ul>
-                    <g:each in="${resultOptions}">
-                        <li>
-                            <g:if test="${it == length}">
-                                ${it}
-                            </g:if>
-                            <g:else>
-                                <a href="${createLink(controller: 'search', action: action,
-                                    params: [query: query,  sortDir: sortDirection,
-                                             sortBy: sortBy, offset: 0, numResults: it])}">
+                <g:if test="${models}">
+                    <ul>
+                        <g:each in="${resultOptions}">
+                            <li>
+                                <g:if test="${it == length}">
                                     ${it}
-                                </a>
-                            </g:else>
-                        </li>
-                    </g:each>
-                </ul>
+                                </g:if>
+                                <g:else>
+                                    <a href="${createLink(controller: 'search', action: action,
+                                        params: [query: query,  sortDir: sortDirection,
+                                                 sortBy: sortBy, offset: 0, numResults: it])}">
+                                        ${it}
+                                    </a>
+                                </g:else>
+                            </li>
+                        </g:each>
+                    </ul>
+                </g:if>
             </div>
             <g:if test="${models}">
 	 			<table id="modelTable">
