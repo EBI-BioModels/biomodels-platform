@@ -18,6 +18,7 @@ build/*
 cobertura.ser
 grails-app/views/templates/_version.gsp
 grailswork/*
+jummp-plugins/*/*.iml
 jummp-plugins/*/build.number
 jummp-plugins/*/ast-build
 jummp-plugins/*/grails-app/i18n
