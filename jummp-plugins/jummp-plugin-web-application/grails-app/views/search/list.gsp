@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -40,10 +40,11 @@
     <content tag="sidebar">
         <g:if test="${history}">
             <div class="element" id="sidebar-element-last-accessed-models">
-                <h2><g:message code="model.history.title"/></h2>
+                <h3><g:message code="model.history.title"/></h3>
                 <ul>
                 <g:each in="${history}">
-                    <li><a href="${createLink(controller: "model", action: "show", id: it.publicationId ?: it.submissionId)}">${it.name}</a><br/><g:message code="model.history.submitter"/>${it.submitter}</li>
+                    <li><a href="${createLink(controller: "model", action: "show", id: it.publicationId ?: it.submissionId)}">${it.name}</a><br/>
+                        <g:message code="model.history.submitter"/>${it.submitter}</li>
                 </g:each>
                 </ul>
             </div>

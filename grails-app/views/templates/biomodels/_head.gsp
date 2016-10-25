@@ -22,19 +22,15 @@
 
 
 
-
-
-
-
-
-<meta charset="utf-8">
-
+  <meta charset="utf-8">
   <!-- Use the .htaccess and remove these lines to avoid edge case issues.
        More info: h5bp.com/b/378 -->
-  <!-- <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"> --> <!-- Not yet implemented -->
-
-  <meta name="description" content="EMBL-EBI"/><!-- Describe what this page is about -->
-  <meta name="keywords" content="bioinformatics, europe, institute"><!-- A few keywords that relate to the content of THIS PAGE (not the whol project) -->
+  <!-- Not yet implemented -->
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <!-- Describe what this page is about -->
+  <meta name="description" content="EMBL-EBI"/>
+  <!-- A few keywords that relate to the content of THIS PAGE (not the whol project) -->
+  <meta name="keywords" content="bioinformatics, europe, institute">
   <meta name="jummp" content="EMBL-EBI"/><!-- Your [project-name] here -->
 
   <!-- Mobile viewport optimized: j.mp/bplateviewport -->
@@ -62,40 +58,33 @@
   <meta name="msapplication-TileImage" content="${bmUrlPrefix}/ms-icon-144x144.png">
   <meta name="theme-color" content="#ffffff">
 
+  <!-- If you link to any other sites frequently, consider optimising performance with a DNS prefetch -->
+  <link rel="dns-prefetch" href="//embl.de" />
   <!-- CSS: implied media=all -->
-  <!-- CSS concatenated and minified via ant build script-->
-  <link rel="stylesheet" href="//www.ebi.ac.uk/web_guidelines/css/compliance/develop/boilerplate-style.css">
-  <link rel="stylesheet" href="//www.ebi.ac.uk/web_guidelines/css/compliance/develop/ebi-global.css" type="text/css" media="screen">
-  <link rel="stylesheet" href="//www.ebi.ac.uk/web_guidelines/css/compliance/develop/ebi-visual.css" type="text/css" media="screen">
-  <link rel="stylesheet" href="//www.ebi.ac.uk/web_guidelines/css/compliance/develop/984-24-col-fluid.css" type="text/css" media="screen">
-  <link rel="stylesheet" href="<g:resource dir="css" file="ebilayout.css"/>" />
+  <!-- CSS concatenated and minified via ant build script -->
+  <link rel="stylesheet" href="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/libraries/foundation-6/css/foundation.css" type="text/css">
+  <link rel="stylesheet" href="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/css/ebi-global.css" type="text/css">
+  <link rel="stylesheet" href="//www.ebi.ac.uk/web_guidelines/EBI-Icon-fonts/v1.1/fonts.css" type="text/css">
+  <link rel="stylesheet" href="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/css/theme-embl-petrol.css" type="text/css">
 
   <!-- you can replace this with [projectname]-colours.css. See http://frontier.ebi.ac.uk/web/style/colour for details of how to do this -->
   <!-- also inform ES so we can host your colour palette file -->
-  <link rel="stylesheet" href="//www.ebi.ac.uk/web_guidelines/css/compliance/develop/embl-petrol-colours.css" type="text/css" media="screen">
+  <link rel="stylesheet" href="https://www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/css/theme-embl-petrol.css" type="text/css" media="all">
   <!-- for production the above can be replaced with -->
   <!--
   <link rel="stylesheet" href="//www.ebi.ac.uk/web_guidelines/css/compliance/mini/ebi-fluid-embl.css">
   -->
-
   <style type="text/css">
     /* You have the option of setting a maximum width for your page, and making sure everything is centered */
       body {
-      	  max-width: 1600px;
-          margin: 0 auto;
+      	  /*max-width: 1600px;*/
+          margin: 2px 5px auto;
       }
   </style>
-
   <!-- end CSS-->
-
 
   <!-- All JavaScript at the bottom, except for Modernizr / Respond.
        Modernizr enables HTML5 elements & feature detects; Respond is a polyfill for min/max-width CSS3 Media Queries
        For optimal performance, use a custom Modernizr build: www.modernizr.com/download/ -->
-
-  <!-- Full build -->
-  <!-- <script src="//www.ebi.ac.uk/web_guidelines/js/libs/modernizr.minified.2.1.6.js"></script> -->
-
-  <!-- custom build (lacks most of the "advanced" HTML5 support -->
-  <script src="//www.ebi.ac.uk/web_guidelines/js/libs/modernizr.custom.49274.js"></script>
-<title><g:layoutTitle default="New Biomodels Database"/></title>
+  <script src="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/libraries/modernizr/modernizr.custom.49274.js"></script>
+  <title><g:layoutTitle default="BioModels Database"/></title>

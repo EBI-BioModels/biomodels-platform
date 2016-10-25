@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -37,7 +37,7 @@
         		visibility:hidden;
         	}
         </style>
-        <link rel="stylesheet" href="${resource(dir: 'css', file: 'jstree.css')}" /> 
+        <link rel="stylesheet" href="${resource(dir: 'css', file: 'jstree.css')}" />
     </head>
  <body>
         <div>
