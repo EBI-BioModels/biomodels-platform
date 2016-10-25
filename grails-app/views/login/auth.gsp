@@ -37,7 +37,7 @@
 
     <div id='login'>
         <form action='${postUrl}' method='POST' id='loginForm' class='cssform' autocomplete='on'>
-            <table>
+            <table class="center">
                 <tr><p>${flash.message}</p></tr>
                 <tbody>
                     <tr>

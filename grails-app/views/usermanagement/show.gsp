@@ -32,7 +32,7 @@
     		<div class="view view-dom-id-9c00a92f557689f996511ded36a88594">
     		<div class="view-content">
         <div>
-			<table>
+			<table class="center">
 				<thead></thead>
 				<tbody>
 				<tr>
@@ -58,7 +58,7 @@
 				</tbody>
 			</table>
 			<h2>Notifications</h2>
-			<table>
+			<table class="center">
 				<thead>
 					<th>Notification Type</th>
 					<th>Web Notification</th>

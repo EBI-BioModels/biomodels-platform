@@ -42,7 +42,7 @@
  <body>
         <div>
             <g:form name="registerForm" action="signUp">
-                <table>
+                <table class="center">
                     <tbody>
                     <tr>
                         <td class='tableLabels'><label class="required" for="register-form-username"><g:message code="user.signup.ui.username"/>:</label></td>

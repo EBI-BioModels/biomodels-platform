@@ -33,12 +33,12 @@
         <title><g:message code="user.administration.ui.heading.register"/></title>
         <meta name="layout" content="main" />
         <g:javascript contextPath="" src="useradministration.js"/>
-        
+
     </head>
     <body>
         <div>
             <form id="registerForm">
-                <table>
+                <table class="center">
                     <tbody>
                     <tr>
                         <td><label for="register-form-username"><g:message code="user.administration.ui.username"/>:</label></td>
