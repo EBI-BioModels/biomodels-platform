@@ -35,7 +35,8 @@
         <g:javascript contextPath="" src="jquery/jquery-ui-v1.10.3.js"/>
     </head>
     <body activetab="search">
-        <g:render template="/templates/datatable" model="['action': 'list']"/>
+        <g:render template="/templates/mainContent" model="['action': 'list']"/>
+        %{--<g:render template="/templates/datatable" model="['action': 'list']"/>--}%
     </body>
     <content tag="sidebar">
         <g:if test="${history}">
@@ -56,6 +57,10 @@
             <p>This is a tree view of the models in this Database based on <a href="http://www.geneontology.org/">Gene Ontology</a>.</p>
             <p><g:link controller="gotree">link</g:link></p>
         </div> --%>
+
+    </content>
+    <content tag="facetsearch">
+        <h3>Facets Search in List Method</h3>
     </content>
     <content tag="browse">
         selected

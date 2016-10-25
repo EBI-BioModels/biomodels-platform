@@ -40,6 +40,9 @@
 	<div id="sideBar">
 	    <g:pageProperty name="page.sidebar"/>
 	</div>
+        <div id="facetSearch">
+            <g:pageProperty name="page.facetsearch"/>
+        </div>
     </div>
     <wcm:render path="links"/>
 </div>

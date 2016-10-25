@@ -34,9 +34,17 @@
          <link rel="stylesheet" href="${resource(contextPath: "${grailsApplication.config.grails.serverURL}", dir: '/css', file: 'datatablestyle.css')}" />
          <g:javascript contextPath="" src="jquery/jquery-ui-v1.10.3.js"/>
     </head>
+    <content tag="sidebar">
+        <div class="element">
+            <h3>Do something in search page</h3>
+        </div>
+    </content>
+    <content tag="facetsearch">
+        <h3>Tung FacetSearch in Search Method</h3>
+    </content>
     <body activetab="search">
-        <g:render template="/templates/${grailsApplication.config.jummp.branding.style}/searchBox"/>
-        <g:render template="/templates/datatable" model="['action': 'search']"/>
+        <g:render template="/templates/mainContent" model="['action': 'search']"/>
+        %{--<g:render template="/templates/datatable" model="['action': 'search']"/>--}%
     </body>
     <content tag="searchQuery">
         ${query}
