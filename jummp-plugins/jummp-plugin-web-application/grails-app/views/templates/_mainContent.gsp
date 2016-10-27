@@ -42,19 +42,46 @@
                 </div>
             </div>
         </div>
-        <g:each status="i" in="${models}" var="model">
-            <div class="column row">
-                <span>
-                    <a href="${createLink(controller: 'model', id: model.publicationId ?: model.submissionId, action: 'show')}">
-                        ${model.name}
-                    </a>
-                </span>
-                <span>${model.format.name}</span>
-                <span>${model.submitter}</span>
-                <span>${model.submissionDate.format('yyyy/MM/dd')}</span>
-                <span>${model.lastModifiedDate.format('yyyy/MM/dd')}</span>
-            </div>
-        </g:each>
+        <div class="grid_18 omega" id="search-results">
+            <section>
+                <div class="result-category">
+                    <h3>
+                        <input type="checkbox" class="checkall" />
+                        <a href="#">BioModels</a></h3>
+
+                    <div class="column row result">
+                    <g:each status="i" in="${models}" var="model">
+                        <div class="result-detail">
+                            <h4>
+                                <input class="export-selection" type="checkbox" value="${model.submissionId}">
+                                <a href="${createLink(controller: 'model', id: model.publicationId ?: model.submissionId, action: 'show')}">
+                                ${model.name}
+                            </a></h4>
+                            <span class="fieldName"></span>
+                            <p>${model.description}</p>
+                        </div>
+                        <div class="result-meta">
+                            <div class="entry_actions_panel">
+                                <div class="entry_actions">
+                                    <p class="entry_actions_menu">dsdsadasdasd</p>
+                                    <p class="entry-source">dsdsadasdasd</p>
+                                </div>
+                            </div>
+                        </div>
+                    %{--<span>${model.format.name}</span>
+                    <span>${model.submitter}</span>
+                    <span>${model.submissionDate.format('yyyy/MM/dd')}</span>
+                    <span>${model.lastModifiedDate.format('yyyy/MM/dd')}</span>--}%
+                    </g:each>
+                    </div>
+
+                </div>
+            </section>
+        </div>
+
+        <div class="column row">
+            <hr style="border-color: #00aaaa; border-width: 5px;"/>
+        </div>
         <%
             int currentPage = 1
             if (offset != 0) {

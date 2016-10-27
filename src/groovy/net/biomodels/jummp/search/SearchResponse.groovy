@@ -16,30 +16,28 @@
  *
  * You should have received a copy of the GNU Affero General Public License along
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
- */
+ **/
 
 
 
 
 
-package net.biomodels.jummp.core
+package net.biomodels.jummp.search
 
-import groovy.transform.CompileStatic
-import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.search.SearchResponse
-
+import net.biomodels.jummp.core.model.ModelTransportCommand
+import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Facet
 /**
- * Allow dynamically changing suitable search strategy based on configuration setting.
+ * This class provides means of dealing with searching related results.
  *
- * Mihai Glonț <mihai.glont@ebi.ac.uk> on 30/08/2016.
- * Tung Nguyen <tung.nguyen@ebi.ac.uk> on 30/08/2016.
+ * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
+ * @date   27/10/2016
  */
-
-@CompileStatic
-interface ModelSearchStrategy {
-    void clearIndex()
-    void clearAnnotationStatementsFromDatabase()
-    void regenerateIndices()
-    SearchResponse searchModels(String query, Map<String, Integer> paginationCriteria)
-    void updateIndex(RevisionTransportCommand revision)
+class SearchResponse {
+    // the set of models/entries matching what are looking for
+    HashSet<ModelTransportCommand> results = new HashSet<ModelTransportCommand>()
+    // the set of facets what the models/entries should belong in
+    HashSet<Facet> facets = new HashSet<Facet>()
+    // the number of total results
+    long totalCount = 0
 }

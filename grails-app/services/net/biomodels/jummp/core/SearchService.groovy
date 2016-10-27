@@ -30,6 +30,7 @@ import net.biomodels.jummp.core.events.PostLogging
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.search.OmicsdiBasedSearch
+import net.biomodels.jummp.search.SearchResponse
 import net.biomodels.jummp.search.SolrBasedSearch
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
@@ -133,7 +134,7 @@ class SearchService {
      **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="searchService.searchModels")
-    Collection<ModelTransportCommand> searchModels(String query, Map<String, Integer> paginationCriteria) {
+    SearchResponse searchModels(String query, Map<String, Integer> paginationCriteria) {
         return strategy.searchModels(query, paginationCriteria)
     }
 

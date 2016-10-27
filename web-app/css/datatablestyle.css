@@ -5,6 +5,7 @@
 .dataTables_paginate {
 	float: right;
 	text-align: right;
+    margin-right: 14px;
 }
 .pageNumbers {
 	padding: 2px;

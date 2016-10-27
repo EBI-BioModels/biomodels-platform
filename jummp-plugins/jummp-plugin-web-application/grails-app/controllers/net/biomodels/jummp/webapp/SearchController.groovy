@@ -40,6 +40,8 @@ import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.webapp.rest.search.SearchResults
 import net.biomodels.jummp.webapp.rest.search.BrowseResults
 import net.biomodels.jummp.plugins.security.User
+import net.biomodels.jummp.search.SearchResponse
+import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Facet
 
 @Secured(['IS_AUTHENTICATED_FULLY'])
 class SearchController {
@@ -195,15 +197,29 @@ class SearchController {
     }
 
     private def searchCore(String query, String sortBy, String sortDirection, int offset, int length) {
-        Map<String, Integer> paginationCriteria = ["start": offset, "end": length, "facetCount": 10]
+        Map<String, Integer> paginationCriteria = ["start": offset, "length": length, "facetCount": 10]
         List<MTC> models = []
+        List<Facet> facets = []
+        int totalCount
         if (query?.trim()) {
-            ArrayList<ModelTransportCommand> res = searchService.searchModels(query, paginationCriteria)
+            SearchResponse response = searchService.searchModels(query, paginationCriteria)
+            HashSet<ModelTransportCommand> res = response.results
+            totalCount = response.totalCount
             println paginationCriteria
             if (res.size() > 0) {
                 println "Found(s): ${res.size()} records."
-                models.addAll(res)
+                res.each {
+                    models.add(it)
+                }
             }
+            HashSet<Facet> facets1 = response.facets
+            if (facets1.size() > 0) {
+                println "Found(s): ${facets1.size()} facets."
+                facets1.each {
+                    facets.add(it)
+                }
+            }
+
         }
         int sortDir = 1
         if (sortDirection && sortDirection == "asc") {
@@ -233,7 +249,7 @@ class SearchController {
                 models = models.sort{ m1, m2 -> sortDir * m2.name.compareTo(m1.name) }
                 break
         }
-        int retval = models.size()
+
         if (offset > 0 && offset < models.size()) {
             models = models[offset..-1]
         } else {
@@ -242,7 +258,9 @@ class SearchController {
         if (models.size() > length) {
             models = models[0..length-1]
         }
-        return [models: models, matches: retval, sortBy: sortBy, sortDirection: sortDirection,
+
+
+        return [models: models, facets: facets, matches: totalCount, sortBy: sortBy, sortDirection: sortDirection,
                     offset: offset, length: length, query: query]
     }
 
