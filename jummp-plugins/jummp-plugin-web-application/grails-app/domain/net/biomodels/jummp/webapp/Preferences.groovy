@@ -42,7 +42,7 @@ class Preferences implements Serializable {
 
 	public static List getOptions(String preference) {
 		if (preference == "numResults") {
-			return [10, 20, 50]
+			return [10, 20, 50, 75, 100]
 		}
 		return null
 	}
