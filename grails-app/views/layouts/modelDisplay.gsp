@@ -38,12 +38,18 @@
     def zipSupported=[:]
 %>
 <head>
-        <title>${revision.name}</title>
-        <link rel="stylesheet" href="<g:resource dir="css/jqueryui/smoothness"
-                                                 file="jquery-ui-1.10.3.custom.min.css"/>" />
+    <title>${revision.name}</title>
+    <link rel="stylesheet" href="<g:resource dir="css/jqueryui/smoothness"
+                                             file="jquery-ui-1.10.3.custom.min.css"/>" />
     <link rel="stylesheet" href="<g:resource dir="css"
-                                                 file="biomodels.css"/>" />
+                                             file="biomodels.css"/>" />
 
+    <script type="text/javascript">
+        $(document).ready(function() {
+            var mainContainer = $("#content");
+            mainContainer.css('margin-left', 50+'px');
+        });
+    </script>
     <script type="text/x-mathjax-config">
         MathJax.Hub.Config({
             tex2jax: { inlineMath: [['$','$'],['\\(','\\)']] }
