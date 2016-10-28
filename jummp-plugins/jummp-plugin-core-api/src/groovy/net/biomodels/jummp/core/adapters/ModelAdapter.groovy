@@ -70,6 +70,7 @@ public class ModelAdapter extends DomainAdapter {
             publicationId: model.publicationId,
             firstPublished: model.firstPublished,
             name: latestRev ? latestRev.name : null,
+            description: latestRev ? latestRev.description : null,
             state: latestRev ? latestRev.state : null,
             lastModifiedDate: latestRev ? latestRev.uploadDate : null,
             format: latestRev ? getAdapter(latestRev.format).toCommandObject() : null,

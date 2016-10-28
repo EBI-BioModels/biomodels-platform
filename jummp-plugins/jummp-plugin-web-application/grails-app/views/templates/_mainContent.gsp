@@ -53,12 +53,26 @@
                     <g:each status="i" in="${models}" var="model">
                         <div class="result-detail">
                             <h4>
+                                <%
+                                    def modelUrl = createLink(controller: 'model', id: model.publicationId ?: model.submissionId, action: 'show')
+                                    def description = model.description
+                                    int maxNumChar = 255
+                                    boolean haveMoreDetails = description.length() > maxNumChar
+                                    def descriptionShown = description
+                                    def moreDetails = ""
+                                    if (haveMoreDetails) {
+                                        moreDetails = "<a href=${modelUrl}>... See more</a>"
+                                        descriptionShown = description.substring(1,maxNumChar) + moreDetails
+                                    }
+                                    // TODO: deal with HTML elements
+                                    descriptionShown = description
+                                %>
                                 <input class="export-selection" type="checkbox" value="${model.submissionId}">
                                 <a href="${createLink(controller: 'model', id: model.publicationId ?: model.submissionId, action: 'show')}">
                                 ${model.name}
                             </a></h4>
                             <span class="fieldName"></span>
-                            <p>${model.description}</p>
+                            <p>${descriptionShown}</p>
                         </div>
                         <div class="result-meta">
                             <div class="entry_actions_panel">

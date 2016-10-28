@@ -220,7 +220,7 @@ class ModelService {
 
     private String getQueryForUser(ModelListSorting sortColumn, boolean deletedOnly, boolean filterIsValid, String sortingDirection) {
         String query = '''
-SELECT DISTINCT m, r.name, r.uploadDate, r.format.name, m.id, u.person.userRealName
+SELECT DISTINCT m, r.name, r.description, r.uploadDate, r.format.name, m.id, u.person.userRealName
 FROM Revision AS r
 JOIN r.model AS m
 JOIN r.owner as u
@@ -263,7 +263,7 @@ ORDER BY
 
     private String getQueryForAdmin(ModelListSorting sortColumn, boolean deletedOnly, boolean filterIsValid, String sortingDirection) {
         String query = '''
-SELECT DISTINCT m, r.name, r.uploadDate, r.format.name, m.id, u.person.userRealName
+SELECT DISTINCT m, r.name, r.description, r.uploadDate, r.format.name, m.id, u.person.userRealName
 FROM Revision AS r
 JOIN r.model AS m JOIN r.owner as u
 WHERE
