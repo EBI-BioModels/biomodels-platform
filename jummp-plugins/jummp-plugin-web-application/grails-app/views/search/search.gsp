@@ -34,28 +34,18 @@
          <link rel="stylesheet" href="${resource(contextPath: "${grailsApplication.config.grails.serverURL}", dir: '/css', file: 'datatablestyle.css')}" />
          <g:javascript contextPath="" src="jquery/jquery-ui-v1.10.3.js"/>
     </head>
-    <content tag="sidebar">
-        <div class="element">
-            <h3>Do something in search page</h3>
-        </div>
-    </content>
     <content tag="facetsearch">
-        <h3>Filter your results</h3>
-        <g:each in="${facets}" var="facet">
-            <h4>${facet.label}</h4>
-            <p>
-            <g:each in="${facet.facetValues}" var="fv">
-                <input type="checkbox" value="${fv.value}">
-                <a href="${request.forwardURI}?query=${query}+${fv.label}"><span>${fv.label} - ${fv.value} - ${fv.count}</span></a>
-                <br/>
-            </g:each>
-            </p>
-        </g:each>
+        <!-- show facets search on the left side bar -->
+        <g:render template="/templates/leftSidebar" />
     </content>
     <body activetab="search">
         <g:render template="/templates/mainContent" model="['action': 'search']"/>
-        %{--<g:render template="/templates/datatable" model="['action': 'search']"/>--}%
     </body>
+    <content tag="sidebar">
+        <div class="element">
+            <h3>Make descriptive statistics</h3>
+        </div>
+    </content>
     <content tag="searchQuery">
         ${query}
     </content>

@@ -47,10 +47,11 @@
                 <div class="result-category">
                     <h3>
                         <input type="checkbox" class="checkall" />
-                        <a href="#">BioModels</a></h3>
+                        <a href="#">BioModels</a> <span style="font-size: large;">(${totalCount} results found)</span></h3>
 
-                    <div class="column row result">
+                    <div class="column row">
                     <g:each status="i" in="${models}" var="model">
+                    <div class="result">
                         <div class="result-detail">
                             <h4>
                                 <%
@@ -68,24 +69,31 @@
                                     descriptionShown = description
                                 %>
                                 <input class="export-selection" type="checkbox" value="${model.submissionId}">
-                                <a href="${createLink(controller: 'model', id: model.publicationId ?: model.submissionId, action: 'show')}">
-                                ${model.name}
-                            </a></h4>
+                                <a href="${modelUrl}">${model.name}</a><br/>
+                                <span style="font-size: small; margin: -25px 33px 0;">
+                                Format: ${model.format.name} |
+                                Submitter: ${model.submitter} |
+                                Uploaded date: ${model.submissionDate.format('yyyy/MM/dd')} |
+                                Last modified date: ${model.lastModifiedDate.format('yyyy/MM/dd')}</span>
+                            </h4>
                             <span class="fieldName"></span>
                             <p>${descriptionShown}</p>
                         </div>
                         <div class="result-meta">
                             <div class="entry_actions_panel">
                                 <div class="entry_actions">
-                                    <p class="entry_actions_menu">dsdsadasdasd</p>
-                                    <p class="entry-source">dsdsadasdasd</p>
+                                    <p class="entry_actions_menu">
+                                        <a href="">Related data</a>
+                                        <a href="">Views</a>
+                                    </p>
+                                    <p class="entry-source">
+                                        <span class="source">Source: BioModels</span>
+                                        <span class="source-id">ID: ${model.submissionId}</span>
+                                    </p>
                                 </div>
                             </div>
                         </div>
-                    %{--<span>${model.format.name}</span>
-                    <span>${model.submitter}</span>
-                    <span>${model.submissionDate.format('yyyy/MM/dd')}</span>
-                    <span>${model.lastModifiedDate.format('yyyy/MM/dd')}</span>--}%
+                    </div>
                     </g:each>
                     </div>
 
