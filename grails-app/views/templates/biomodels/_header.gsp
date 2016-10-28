@@ -95,9 +95,9 @@
         <div class="masthead row" style="max-width: inherit">
             <!-- local-title -->
             <div id="local-title" class="columns medium-12">
-                <div class="row" style="margin: -35px 0;">
+                <div class="row" style="margin: -25px 0;">
                     <div class="columns large-7 show-for-medium">
-                        <h1 style="margin: -10px -25px 0;">
+                        <h1 style="margin: -5px -25px 0;">
                             <a href="${createLink(uri: '/', absolute: true)}" title="Back to BioModels homepage"
                             style="text-decoration: none; border-bottom-style: none">
                                 <img src="${grailsApplication.config.grails.serverURL}/images/biomodels/logo_small.png"
@@ -127,7 +127,6 @@
                         </form>
                     </div>
                 </div>
-
             </div>
             <!-- /local-title -->
             <!-- local navigation bar -->

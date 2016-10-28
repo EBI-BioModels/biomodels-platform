@@ -60,7 +60,7 @@
 
     </content>
     <content tag="facetsearch">
-        <h3>Facets Search in List Method</h3>
+        <h3>Filter your models</h3>
     </content>
     <content tag="browse">
         selected
