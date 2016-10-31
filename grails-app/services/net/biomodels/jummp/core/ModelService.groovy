@@ -734,6 +734,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             // can't inject searchService -- cyclic dependency
             def searchService = grailsApplication.mainContext.searchService
             searchService.updateIndex(cmd)
+            return attachedRevision
         }
         revision
     }
@@ -1002,6 +1003,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             // can't inject searchService -- cyclic dependency
             def searchService = grailsApplication.mainContext.searchService
             searchService.updateIndex(cmd)
+            return attachedModel
         }
         model
     }
