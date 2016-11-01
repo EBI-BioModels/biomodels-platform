@@ -48,7 +48,7 @@
     <g:else>
     <div id="content" role="main" class="row">
     </g:else>--}%
-    <div id="content" role="main" class="row" style="max-width: inherit">
+    <div id="content" role="main" class="row">
         <div data-sticky-container class="sticky-container">
             <section>
                 <div id="main-content-area" class="row">

@@ -35,7 +35,7 @@
          class="sticky meta-background-color meta-background-image" data-resize="local-masthead" data-events="resize">
          %{--style="background-image: url('//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/images/backgrounds/embl-ebi-background.jpg'); max-width: 1905px;">--}%
         <header>
-        <div id="global-masthead" class="clearfix" style="max-width: inherit">
+        <div id="global-masthead" class="clearfix">
 	      <!--This has to be one line and no newline characters-->
 	      <a href="//www.ebi.ac.uk/" title="Go to the EMBL-EBI homepage"><span class="ebi-logo"></span></a>
             <nav>
@@ -85,7 +85,7 @@
                             <button class="button" type="button" data-toggle="embl-dropdown"
                                     aria-controls="embl-dropdown" data-is-focus="false" data-yeti-box="embl-dropdown"
                                     aria-haspopup="true" aria-expanded="false">Hinxton</button>
-                            <!-- The dropdown menu will be programatically added by script.js -->
+                            <!-- The dropdown menu will be programmatically added by script.js -->
 
                         </li>
                     </ul>

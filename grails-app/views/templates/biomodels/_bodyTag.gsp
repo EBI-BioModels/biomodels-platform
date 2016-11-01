@@ -23,4 +23,4 @@
         sidebarContent = sidebarContent.trim()
     }
 %>
-<body class="level2">
+<body class="level2 full-width">
