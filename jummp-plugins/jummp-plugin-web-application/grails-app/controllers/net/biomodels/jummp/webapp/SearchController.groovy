@@ -114,7 +114,7 @@ class SearchController {
     }
 
     private int numResults() {
-        final int MAXRESULTS = 50
+        final int MAXRESULTS = 100
         final int MINRESULTS = 10
         User user
         if (!(springSecurityService.principal.username == GrailsAnonymousAuthenticationToken.USERNAME)) {
