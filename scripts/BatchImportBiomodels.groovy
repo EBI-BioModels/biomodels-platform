@@ -198,6 +198,9 @@ getUserFromBiomodelsId = { bmPersonId ->
     def userCreated = User.newInstance(person: person,
             username: getUsername(personDetails), password: "autocreated",
             email: personDetails.email)
+    if (!userCreated.validate()) {
+        error("Cannot create account for submitter $bmPersonId: ${userCreated.errors.allErrors}")
+    }
     long userId = registerUser(userCreated)
     if (userId) {
         return User.get(userId)
@@ -245,7 +248,7 @@ FROM
 WHERE
 cura.model_id = :mid
 OR cura.biomodels_id = :mid""", [mid: modelSubmitted.submissionId])
-    log("curation notes for ${modelSubmitted} => ${row?.entrySet()?.toString()}")
+    log("curation notes for ${modelSubmitted.submissionId} => ${row?.entrySet()?.toString()}")
     if (row) {
         def submitter = getUserFromBiomodelsId(row.submitter_id)
         if (!submitter) {
@@ -455,7 +458,7 @@ target(main: "Puts everything together to import models from a given folder") {
                             def firstModel = modelService.uploadValidatedModel(files, revisionCmd)
                             if (!firstModel) {
                                 log("...could not import initial file: ${originalFile.absolutePath}")
-                                failures.put(it.absolutePath, "Error importing original file")
+                                failures.put(it.name, "Error importing original file")
                             }
                             else {
                                 if ("auto_gen_models" != modelBranch) {
@@ -524,18 +527,16 @@ target(main: "Puts everything together to import models from a given folder") {
                         }
                         else {
                             error "No original file for ${it.absolutePath}"
-                            failures.put(it.absolutePath, "No original file found")
+                            failures.put(it.name, "No original file found")
                         }
                         log("...finished importing model file ${it.absolutePath}")
-                   }
-                   else {
+                   } else {
                         if (!user) {
                             error("No user found for ${it.absolutePath}")
-                            failures.put(it.absolutePath, "No user found, please check details in BioModels db")
-                        }
-                        else {
+                            failures.put(it.name, "No user found, please check details in BioModels db")
+                        } else {
                             error("No model details found for ${it.absolutePath}")
-                            failures.put(it.absolutePath, "Error retrieving model details from BioModels db")
+                            failures.put(it.name, "Error retrieving model details from BioModels db")
                         }
                    }
                 // See http://docs.jboss.org/hibernate/orm/4.1/devguide/en-US/html/ch04.html#d5e971
@@ -772,8 +773,8 @@ getSubmissionData = { file, additional, comment ->
     }
     if (fileTrack.isEmpty()) {
         String errorMessage = "Could not find some expected files for ${it}: ${fileTrack}"
-        System.err.println(errorMessage)
-        failures.put(file, errorMessage)
+        error(errorMessage)
+        failures.put(file.name, errorMessage)
     }
 
     def revision = rtc.newInstance(model: model, files: files, format: formatCommand,
@@ -826,11 +827,13 @@ getUser = { modelId, branch ->
         // get user from appropriate biomodels table
         int submitterId = getSubmitterIdForModel(modelId, branch)
         if (!submitterId) {
+            error "No submitter was found for model $modelId in the $branch branch."
             return null
         }
         def row = authConnection.firstRow("select * from auth_persons where person_id = ?",
                 [submitterId])
-        if (!row || !row.email) {
+        if (!row || !row?.email) {
+            error("Could not find user information for submitter #$submitterId ($modelId): $row")
             return null
         }
         String email = row.email
@@ -844,15 +847,18 @@ getUser = { modelId, branch ->
                     username: getUsername(row), password: "autocreated",
                     email: email, accountExpired: false, accountLocked: false,
                     passwordExpired: false, enabled: true)
+            if (!user.validate()) {
+                def e = user.errors.allErrors.inspect()
+                error "Cannot create valid account for submitter #$submitterId of model $modelId: $e"
+                return null
+            }
             long userId = userService.register(user, true)
             if (userId) {
                 user = User.get(userId)
-            }
-            else {
+            } else {
                 user = null
             }
-        }
-        else {
+        } else {
             // otherwise use existing user, after un-expiring their password
             userService.expirePassword(user.id, false)
         }
