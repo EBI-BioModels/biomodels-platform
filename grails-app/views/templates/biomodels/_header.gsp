@@ -116,7 +116,7 @@
                                         <input id="search_submit" class="button icon icon-functional" tabindex="2" type="submit" name="submit1" value="1" />
                                     </div>
                                 </div>
-                                <p id="example" style="margin-top: -2%; margin-bottom: 4%">
+                                <p id="example">
                                     Examples:
                                     <a class="secondary label" href="${grailsApplication.config.grails.serverURL}/search?query=health">health</a>
                                     <a class="secondary label" href="${grailsApplication.config.grails.serverURL}/search?query=homo+sapiens">homo sapiens</a>

@@ -181,8 +181,7 @@ class SearchController {
         if (!params.query) {
             params.query = ""
         }
-        def results = searchCore(params.query, params.sortBy, params.sortDir, params.offset,
-                        params.numResults)
+        def results = searchCore(params.query, params.sortBy, params.sortDir, params.offset, params.numResults)
         if (!params.format || params.format=="html") {
             return results
         }
@@ -219,7 +218,6 @@ class SearchController {
                     facets.add(it)
                 }
             }
-
         }
         int sortDir = 1
         if (sortDirection && sortDirection == "asc") {
@@ -258,7 +256,6 @@ class SearchController {
         if (models.size() > length) {
             models = models[0..length-1]
         }
-
 
         return [models: models, facets: facets, matches: totalCount, sortBy: sortBy, sortDirection: sortDirection,
                     offset: offset, length: length, query: query]
