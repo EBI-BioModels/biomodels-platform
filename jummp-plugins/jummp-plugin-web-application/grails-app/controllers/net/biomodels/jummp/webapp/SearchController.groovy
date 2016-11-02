@@ -328,7 +328,9 @@ class SearchController {
         modelsDomain.each {
             models.add(DomainAdapter.getAdapter(it).toCommandObject())
         }
-        return [models: models, modelsAvailable: modelService.getModelCount(), sortBy: sortBy,
+        //List<String> facets = ["My models", "Format", "Status"]
+        List<String> facets = []
+        return [models: models, facets: facets, modelsAvailable: modelService.getModelCount(), sortBy: sortBy,
                 sortDirection: sortDirection, offset: offset, length: length]
     }
 

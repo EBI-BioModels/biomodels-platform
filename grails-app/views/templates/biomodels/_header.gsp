@@ -119,8 +119,8 @@
                                 <p id="example">
                                     Examples:
                                     <a class="secondary label" href="${grailsApplication.config.grails.serverURL}/search?query=health">health</a>
-                                    <a class="secondary label" href="${grailsApplication.config.grails.serverURL}/search?query=homo+sapiens">homo sapiens</a>
-                                    <a class="secondary label" href="${grailsApplication.config.grails.serverURL}/search?query=lung+cancer">lung cancer</a>
+                                    <a class="secondary label" href="${grailsApplication.config.grails.serverURL}/search?query=homo sapiens">homo sapiens</a>
+                                    <a class="secondary label" href="${grailsApplication.config.grails.serverURL}/search?query=lung cancer">lung cancer</a>
                                     <span>...</span>
                                 </p>
                             </fieldset>

@@ -26,6 +26,7 @@ package net.biomodels.jummp.search
 
 import grails.util.Holders
 import groovy.json.JsonBuilder
+import net.biomodels.jummp.core.ModelException
 import net.biomodels.jummp.core.ModelSearchStrategy
 import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.events.ModelOperationEvent
@@ -40,6 +41,7 @@ import net.biomodels.jummp.qcinfo.FlagLevel
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.springframework.context.ApplicationListener
+import org.springframework.security.acls.domain.BasePermission
 import uk.ac.ebi.ddi.ebe.ws.dao.client.dataset.DatasetWsClient
 import uk.ac.ebi.ddi.ebe.ws.dao.config.AbstractEbeyeWsConfig
 import uk.ac.ebi.ddi.ebe.ws.dao.config.EbeyeWsConfigDev
@@ -132,69 +134,91 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
         String[] fields = ["name", "description"]
         QueryResult result = datasetWsClient.getDatasets("biomodels", query, fields, null, null,
             paginationCriteria['start'], paginationCriteria['length'], paginationCriteria['facetCount'])
-        List<Entry> entries = []
+        List<Entry> entries = result.getEntries()
         List<Facet> facets = []
-        final int COUNT = result.count // to be used for displaying facet search later on
-        entries = result.getEntries()
-        facets = result.getFacets()
-        // todo: remove
-        facets?.each { Facet facet ->
-            searchResponse.facets.add(facet)
-            facet?.facetValues?.each {
-                println it.dump()
-            }
-        }
+        int totalCount = result.count
         // convert all the returned entries to ModelTransportCommand objects
-        // TODO: replace them with the actual models when biomodels importer finishes
         HashSet<ModelTransportCommand> results = new HashSet<ModelTransportCommand>()
-        entries.eachWithIndex { Entry entry, int i ->
-            String submissionId = entry.id
-            Model thisModel = Model.findBySubmissionId(submissionId) ?: Model.get(1) //TODO fixme
-            submissionId = thisModel.submissionId
-            Revision first = Revision.findByModelAndRevisionNumber(thisModel, 1)
-            Revision latest = modelService.getLatestRevision(thisModel, false)
-            boolean haveName = entry.getFields().get('name')?.length > 0
-            String name
-            if (haveName) {
-                name = entry.getFields().get('name')[0]
-            } else {
-                log.warn("The search index entry for Model ${submissionId} did not contain the model name")
-                name = latest.name
-            }
-            String description = latest.description
-            User submitter = first.owner
-            String submitterName = submitter.person.userRealName
-            String submitterUsername = submitter.username
-            String publicationId = thisModel.publicationId
-            Date uploadDate = first.uploadDate
-            Date modifiedDate = latest.uploadDate
-            Long id = thisModel.id
-            ModelState state = latest.state
-            ModelFormatTransportCommand format =
-                    new ModelFormatAdapter(format: latest.format).toCommandObject()
-            FlagLevel qcFlag = latest.qcInfo?.flag
+        // TODO: replace them with the actual models when biomodels importer finishes,
+        // the following aims to create fake data
+        List<Revision> publicRevisions = Revision.findAllByState(ModelState.PUBLISHED)
+        // or get the list revisions can be retrieved by the current logged in user
 
-            ModelTransportCommand mtc = new ModelTransportCommand(
-                submitter: submitterName,
-                submitterUsername: submitterUsername,
-                name: name,
-                description: description,
-                submissionId: submissionId,
-                publicationId: publicationId,
-                submissionDate: uploadDate,
-                lastModifiedDate: modifiedDate,
-                id: id,
-                state: state,
-                format: format,
-                flagLevel: qcFlag
-            )
-            results.add(mtc)
+        Model firstPublicModel
+        Revision first
+        Revision latest
+        if (publicRevisions) {
+            // get the first public revision among these public ones
+            latest = publicRevisions.first()
+            firstPublicModel = latest.getModel()
+            // retrieve the first revision of the model containing it and the above latest
+            first = firstPublicModel.revisions.first()
+            // entries/models
+            entries.eachWithIndex { Entry entry, int i ->
+                String submissionId = entry.id
+                Model thisModel = Model.findBySubmissionId(submissionId) ?: firstPublicModel //TODO fixme
+                submissionId = thisModel.submissionId
+                boolean isAccessible =
+                    aclUtilService.hasPermission(springSecurityService.authentication, thisModel, BasePermission.READ)
+                if (submissionId != firstPublicModel.submissionId && isAccessible) {
+                    first = Revision.findByModelAndRevisionNumber(thisModel, 1)
+                    latest = modelService.getLatestRevision(thisModel, false)
+                }
+                boolean haveName = entry.getFields().get('name')?.length > 0
+                String name
+                if (haveName) {
+                    name = entry.getFields().get('name')[0]
+                } else {
+                    log.warn("The search index entry for Model ${submissionId} did not contain the model name")
+                    name = latest.name
+                }
+                String description = latest?.description ?: ""
+                User submitter = first.owner
+                String submitterName = submitter.person.userRealName
+                String submitterUsername = submitter.username
+                String publicationId = thisModel.publicationId
+                Date uploadDate = first.uploadDate
+                Date modifiedDate = latest.uploadDate
+                Long id = thisModel.id
+                ModelState state = latest.state
+                ModelFormatTransportCommand format =
+                    new ModelFormatAdapter(format: latest.format).toCommandObject()
+                FlagLevel qcFlag = latest.qcInfo?.flag
+
+                ModelTransportCommand mtc = new ModelTransportCommand(
+                    submitter: submitterName,
+                    submitterUsername: submitterUsername,
+                    name: name,
+                    description: description,
+                    submissionId: submissionId,
+                    publicationId: publicationId,
+                    submissionDate: uploadDate,
+                    lastModifiedDate: modifiedDate,
+                    id: id,
+                    state: state,
+                    format: format,
+                    flagLevel: qcFlag
+                )
+                results.add(mtc)
+            }
+            // facets
+            result.facets?.each { Facet facet ->
+                if (!facet.label.equalsIgnoreCase("source")) {
+                    facets.add(facet)
+                }
+            }
+        } else {
+            totalCount = 0
+            results = []
+            facets = []
         }
+
         if (IS_DEBUG_ENABLED) {
             log.debug("Results processed in ${System.currentTimeMillis() - start}")
         }
         searchResponse.results = results
-        searchResponse.totalCount = COUNT
+        searchResponse.facets = facets
+        searchResponse.totalCount = totalCount
         return searchResponse
     }
 
