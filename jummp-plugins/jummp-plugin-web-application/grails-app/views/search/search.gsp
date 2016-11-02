@@ -42,9 +42,8 @@
         <g:render template="/templates/mainContent" model="['action': 'search']"/>
     </body>
     <content tag="sidebar">
-        <div class="element">
-            <h3>Make descriptive statistics</h3>
-        </div>
+        <!-- show descriptive statistics, GO chart, etc. -->
+        <g:render template="/templates/rightSidebar" model="['action': 'search']"/>
     </content>
     <content tag="searchQuery">
         ${query}

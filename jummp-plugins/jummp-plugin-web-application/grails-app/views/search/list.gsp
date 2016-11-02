@@ -36,31 +36,15 @@
     </head>
     <body activetab="search">
         <g:render template="/templates/mainContent" model="['action': 'list']"/>
-        %{--<g:render template="/templates/datatable" model="['action': 'list']"/>--}%
+        <!-- TODO: could use other view for list action -->
     </body>
     <content tag="sidebar">
-        <g:if test="${history}">
-            <div class="element" id="sidebar-element-last-accessed-models">
-                <h3><g:message code="model.history.title"/></h3>
-                <ul>
-                <g:each in="${history}">
-                    <li><a href="${createLink(controller: "model", action: "show", id: it.publicationId ?: it.submissionId)}">${it.name}</a><br/>
-                        <g:message code="model.history.submitter"/>${it.submitter}</li>
-                </g:each>
-                </ul>
-            </div>
-        </g:if>
-        <%--  GoTree code, disabled until it is useful again.
-        <div class="element">
-            <h2>Gene Ontology Tree</h2>
-            <h3>Browse models using GO Tree</h3>
-            <p>This is a tree view of the models in this Database based on <a href="http://www.geneontology.org/">Gene Ontology</a>.</p>
-            <p><g:link controller="gotree">link</g:link></p>
-        </div> --%>
-
+        <!-- show the recently accessed models, the most accessed models, etc. -->
+        <g:render template="/templates/rightSidebar" model="['action': 'list']"/>
     </content>
     <content tag="facetsearch">
-        <h3>Filter your models</h3>
+        <!-- show facets search on the left side bar -->
+        <g:render template="/templates/leftSidebar" />
     </content>
     <content tag="browse">
         selected
