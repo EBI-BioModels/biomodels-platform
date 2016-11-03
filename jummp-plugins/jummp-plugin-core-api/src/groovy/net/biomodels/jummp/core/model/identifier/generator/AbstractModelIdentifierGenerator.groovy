@@ -41,7 +41,7 @@ abstract class AbstractModelIdentifierGenerator implements ModelIdentifierGenera
             ApplicationListener {
     /** the class logger. */
     private static final Log log = LogFactory.getLog(this)
-    private static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
+    private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
     /**
      * The registry of decorators which an implementation may use to generate model identifiers.
      */
@@ -55,8 +55,8 @@ abstract class AbstractModelIdentifierGenerator implements ModelIdentifierGenera
         if (!(decoratorUpdatedEvent instanceof ModelIdentifierDecoratorUpdatedEvent)) {
             return
         }
-        if (IS_INFO_ENABLED) {
-            log.info "Processing event ${decoratorUpdatedEvent.inspect()}"
+        if (IS_DEBUG_ENABLED) {
+            log.debug "Processing event ${decoratorUpdatedEvent.inspect()}"
         }
         synchronized(ModelIdentifier.class) {
             if (decoratorUpdatedEvent instanceof DateModelIdentifierDecoratorUpdatedEvent) {
@@ -69,8 +69,8 @@ abstract class AbstractModelIdentifierGenerator implements ModelIdentifierGenera
                     d.nextValue.set(NEW_VALUE)
                     d.nextSuffix.set(1)
                     d.lastUsedSuffix.set(-1)
-                    if (IS_INFO_ENABLED) {
-                        log.info "Attribute 'nextValue' of $d has been reset to $NEW_VALUE."
+                    if (IS_DEBUG_ENABLED) {
+                        log.debug "Attribute 'nextValue' of $d has been reset to $NEW_VALUE."
                     }
                 }
             }

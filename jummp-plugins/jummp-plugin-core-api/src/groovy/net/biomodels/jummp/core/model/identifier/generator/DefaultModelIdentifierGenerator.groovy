@@ -34,7 +34,7 @@ class DefaultModelIdentifierGenerator extends AbstractModelIdentifierGenerator {
     /* the class logger */
     private static final Log log = LogFactory.getLog(this)
     /* semaphore for the log threshold */
-    private static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
+    private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
 
     protected DefaultModelIdentifierGenerator() {
     }
@@ -65,8 +65,8 @@ class DefaultModelIdentifierGenerator extends AbstractModelIdentifierGenerator {
             }
             MODEL_ID = identifier.getCurrentId()
         }
-        if (IS_INFO_ENABLED) {
-            log.info "Produced a new model identifier $MODEL_ID."
+        if (IS_DEBUG_ENABLED) {
+            log.debug "Produced a new model identifier $MODEL_ID."
         }
         return MODEL_ID
     }

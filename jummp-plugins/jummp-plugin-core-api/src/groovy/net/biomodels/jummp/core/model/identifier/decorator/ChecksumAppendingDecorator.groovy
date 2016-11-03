@@ -46,7 +46,7 @@ final class ChecksumAppendingDecorator extends FixedLiteralAppendingDecorator {
     /** the class logger */
     private static final Log log = LogFactory.getLog(this)
     /** semaphore for the log threshold */
-    private static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
+    private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
 
     private ChecksumAppendingDecorator() {
         super(Integer.MAX_VALUE)
@@ -64,8 +64,8 @@ final class ChecksumAppendingDecorator extends FixedLiteralAppendingDecorator {
             sep = DEFAULT_SEPARATOR
         }
         SEPARATOR = sep
-        if (IS_INFO_ENABLED) {
-            log.info "Created $this"
+        if (IS_DEBUG_ENABLED) {
+            log.debug "Created $this"
         }
     }
 
@@ -90,8 +90,8 @@ final class ChecksumAppendingDecorator extends FixedLiteralAppendingDecorator {
         if (IS_DEBUG_ENABLED) {
             log.debug "Checksum changed from $oldValue to $newValue"
         }
-        if (IS_INFO_ENABLED) {
-            log.info "Decorating $currentId with $newValue."
+        if (IS_DEBUG_ENABLED) {
+            log.debug "Decorating $currentId with $newValue."
         }
         modelIdentifier.append(SEPARATOR).append(newValue)
         return modelIdentifier

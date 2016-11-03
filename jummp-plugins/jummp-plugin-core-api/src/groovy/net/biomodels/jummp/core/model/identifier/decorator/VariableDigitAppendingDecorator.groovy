@@ -40,7 +40,7 @@ public class VariableDigitAppendingDecorator extends AbstractAppendingDecorator 
     /* the class logger */
     private static final Log log = LogFactory.getLog(this)
     /* semaphore for the log threshold */
-    private static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
+    private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
 
     /**
      * Throws an IllegalArgumentException if @p seed is below 1 or @p width is narrower than
@@ -67,8 +67,8 @@ public class VariableDigitAppendingDecorator extends AbstractAppendingDecorator 
         nextSuffix.compareAndSet(0, seed)
         nextValue.compareAndSet(null, "$seed".padLeft(width, '0'))
         WIDTH = width
-        if (IS_INFO_ENABLED) {
-            log.info "Creating ${WIDTH}-digit $this"
+        if (IS_DEBUG_ENABLED) {
+            log.debug "Creating ${WIDTH}-digit $this"
         }
     }
 
@@ -79,9 +79,9 @@ public class VariableDigitAppendingDecorator extends AbstractAppendingDecorator 
         updateNextValueIfNeeded()
         if (modelIdentifier) {
             String currentId = modelIdentifier.getCurrentId()
-            if (IS_INFO_ENABLED) {
-                final String next = nextValue.get()
-                log.info "Decorating $currentId with $next."
+            final String next = nextValue.get()
+            if (IS_DEBUG_ENABLED) {
+                log.debug "Decorating $currentId with $next."
             }
             modelIdentifier.append(next)
             lastUsedSuffix.set(nextSuffix.get())
@@ -115,8 +115,8 @@ public class VariableDigitAppendingDecorator extends AbstractAppendingDecorator 
             long newSuffix = nextSuffix.incrementAndGet()
             String newValue = "${newSuffix}".padLeft(WIDTH, '0')
             nextValue.set(newValue)
-            if (IS_INFO_ENABLED) {
-                log.info "Incremented nextValue to ${newValue}"
+            if (IS_DEBUG_ENABLED) {
+                log.debug "Incremented nextValue to ${newValue}"
             }
             super.publishEvent(new ModelIdentifierDecoratorUpdatedEvent(this, newValue))
         }

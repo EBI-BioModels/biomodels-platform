@@ -67,8 +67,8 @@ abstract class AbstractAppendingDecorator implements OrderedModelIdentifierDecor
             log.warn "Banned ${this.properties} from publishing ${evt.properties}."
             return
         }
-        if (log.isInfoEnabled()) {
-            log.info("Publishing event ${evt.properties}")
+        if (log.isDebugEnabled()) {
+            log.debug("Publishing event ${evt.properties}")
         }
         context.publishEvent(evt)
     }

@@ -35,7 +35,7 @@ public class DateAppendingDecorator extends AbstractAppendingDecorator {
     /* the class logger */
     private static final Log log = LogFactory.getLog(this)
     /* semaphore for the log threshold */
-    private static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
+    private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
 
     /**
      * An IllegalArgumentException will be thrown if @p order is negative or
@@ -62,8 +62,8 @@ public class DateAppendingDecorator extends AbstractAppendingDecorator {
         }
         // The format has already been sanitised by DateModelIdentifierPartition
         String sampleDate = new Date().format(format)
-        if (IS_INFO_ENABLED) {
-            log.info "Creating $this that formats ${new Date()} as $sampleDate"
+        if (IS_DEBUG_ENABLED) {
+            log.debug "Creating $this that formats ${new Date()} as $sampleDate"
         }
         nextValue.compareAndSet(null, sampleDate)
         FORMAT = format
@@ -76,9 +76,9 @@ public class DateAppendingDecorator extends AbstractAppendingDecorator {
         updateNextValueIfNeeded()
         if (modelIdentifier) {
             String currentId = modelIdentifier.getCurrentId()
-            if (IS_INFO_ENABLED) {
-                final String next = nextValue.get()
-                log.info "Decorating $currentId with $next."
+            final String next = nextValue.get()
+            if (IS_DEBUG_ENABLED) {
+                log.debug "Decorating $currentId with $next."
             }
             modelIdentifier.append(next)
             return modelIdentifier
@@ -110,8 +110,8 @@ public class DateAppendingDecorator extends AbstractAppendingDecorator {
         String currentDate = nextValue.get()
         boolean needsUpdating = expectedDate != currentDate
         if (needsUpdating) {
-            if (IS_INFO_ENABLED) {
-                log.info "Updating nextValue from $currentDate to $expectedDate."
+            if (IS_DEBUG_ENABLED) {
+                log.debug "Updating nextValue from $currentDate to $expectedDate."
             }
             nextValue.compareAndSet(currentDate, expectedDate)
             super.publishEvent(new DateModelIdentifierDecoratorUpdatedEvent(this, currentDate))

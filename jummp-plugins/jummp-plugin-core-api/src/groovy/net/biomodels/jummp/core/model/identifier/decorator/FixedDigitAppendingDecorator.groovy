@@ -34,7 +34,7 @@ class FixedDigitAppendingDecorator extends AbstractAppendingDecorator {
     /* the class logger */
     private static final Log log = LogFactory.getLog(this)
     /* semaphore for the log threshold */
-    private static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
+    private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
 
     protected FixedDigitAppendingDecorator() {
     }
@@ -62,8 +62,8 @@ class FixedDigitAppendingDecorator extends AbstractAppendingDecorator {
         }
         nextValue.compareAndSet(null, "$suffix".padLeft(width, '0'))
         WIDTH = width
-        if (IS_INFO_ENABLED) {
-            log.info "Creating ${WIDTH}-digit $this"
+        if (IS_DEBUG_ENABLED) {
+            log.debug "Creating ${WIDTH}-digit $this"
         }
     }
 
@@ -74,8 +74,8 @@ class FixedDigitAppendingDecorator extends AbstractAppendingDecorator {
         if (modelIdentifier) {
             String currentId = modelIdentifier.getCurrentId()
             final String next = nextValue.get()
-            if (IS_INFO_ENABLED) {
-                log.info "Decorating $currentId with $nextValue "
+            if (IS_DEBUG_ENABLED) {
+                log.debug "Decorating $currentId with $nextValue "
             }
             modelIdentifier.append(nextValue)
             return modelIdentifier

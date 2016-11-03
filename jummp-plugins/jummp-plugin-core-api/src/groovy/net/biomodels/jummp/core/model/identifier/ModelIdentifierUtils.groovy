@@ -51,7 +51,6 @@ class ModelIdentifierUtils {
     /* the class logger */
     private static final Log log = LogFactory.getLog(this)
     /* semaphores for the log threshold */
-    private static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
     private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
     /*
      * The suffix to use in the bean reference corresponding to a generator.
@@ -159,9 +158,9 @@ The configuration settings lack the rules for generating model identifiers!"""
         if (publicationIdBeanMissing) {
             generatorBeans[PUBLICATION_ID_BEAN_NAME] = new NullModelIdentifierGenerator()
         }
-        if (IS_INFO_ENABLED) {
+        if (IS_DEBUG_ENABLED) {
             String MSG = "Constructed the following objects: ${generatorBeans.inspect()}"
-            log.info MSG
+            log.debug MSG
         }
         return generatorBeans
     }
@@ -283,8 +282,8 @@ Consider introducing variable digit patterns or dates into the identifier scheme
     jummp.model.id.submission.partN.width=10"""
             throw new Exception(err)
         }
-        if (IS_INFO_ENABLED) {
-            log.info "The decorators for ${c.inspect()} are ${decorators.inspect()}"
+        if (IS_DEBUG_ENABLED) {
+            log.debug "The decorators for ${c.inspect()} are ${decorators.inspect()}"
         }
         return decorators
     }
