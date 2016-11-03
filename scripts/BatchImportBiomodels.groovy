@@ -30,6 +30,9 @@
 
 import grails.converters.JSON
 import groovy.sql.Sql
+import groovyx.gpars.GParsPool
+import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.ConcurrentHashMap
 import java.util.regex.Pattern
 import net.biomodels.jummp.core.model.ValidationState
 import org.springframework.orm.hibernate4.SessionHolder
@@ -180,6 +183,21 @@ def expectedFiles = [
         "[A-Z0-9]*\\.xpp" : "Auto-generated XPP file" ]
 
 /**
+ * Known file suffixes
+ */
+final String DOT_XML = ".xml"
+final String URL_FILE = "_url.xml"
+final String ORIGIN = "${DOT_XML}.origin"
+
+// templates for submission comments
+final String ORIG_COMMENT_TPL = "Original import of "
+final String UPDATE_COMMENT_TPL = "Current version of "
+
+// BioModels branches
+final String AUTO_GEN = "auto_gen_models"
+final String PUBL = 'publ'
+
+/**
  * Returns a User corresponding to the submitter of the model in BioModels.
  */
 getUserFromBiomodelsId = { bmPersonId ->
@@ -220,8 +238,9 @@ getUserFromBiomodelsId = { bmPersonId ->
  */
 simpleRunAs = { auth, closure ->
     def result
+    def currentAuth
     try {
-        def currentAuth = SecurityContextHolder.context.authentication
+        currentAuth = SecurityContextHolder.context.authentication
         SecurityContextHolder.context.authentication = auth
         result = closure.call()
     } finally {
@@ -350,11 +369,26 @@ giving up. Sorry about that.""", vcsIssues)
     }
 }
 
-target(prepareDataSources: "initialisation of machinery for database interaction") {
-    // bind a Hibernate Session to avoid lazy initialization exceptions
+// to avoid lazy initialization exceptions, call this on all worker threads
+//Binds a Hibernate Session to the current thread
+openSession = {
     def session = sessionFactory.openSession()
     TransactionSynchronizationManager.bindResource(sessionFactory, new SessionHolder(session))
+}
 
+// Clears transaction synchronisations and closes active Hibernate session
+closeSession = {
+    def session = sessionFactory.currentSession
+    if (!session) {
+        error("No active session found for current thread -- skipping Hibernate cleanup.")
+    }
+    session.flush()
+    session.clear()
+    TransactionSynchronizationManager.unbindResourceIfPossible(sessionFactory)
+}
+
+target(prepareDataSources: "initialisation of machinery for database interaction") {
+    openSession()
     // Instantiate direct connections to DB
     biomodelsConnection = Sql.newInstance("jdbc:mysql://${bmServer}:${bmPort}/${bmDB}",
             bmUsername, bmPassword, "com.mysql.jdbc.Driver")
@@ -404,169 +438,246 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
 }
 
 // keep track of the number of models that are processed
-long processedCount = 0
-def failures = [:]
+def processedCount = new AtomicLong()
+def failures = new ConcurrentHashMap()
 target(main: "Puts everything together to import models from a given folder") {
     bootstrapJummp()
 
-    def symlinkPattern = ~/[A-Z0-9]*\.xml/
-    def targetPattern = ~/[a-zA-Z_\-\.\/0-9]*_url\.xml/
+    def modelFolderPattern = ~/(MODEL|BIOMD)\d{10}|BMID\d{12}/
 
     long duration = System.currentTimeMillis()
-    try {
-        modelFolder.eachFileRecurse {
-            boolean modelFileDetected = it.isFile() && symlinkPattern.matcher(it.name).matches()
-            String modelId = it.getName().replace(".xml", "")
-            String modelBranch = getBranch(modelId)
-            if (modelFileDetected && modelBranch) {
-                try {
-                    ++processedCount
-                    // Creates/retrieves user based on the user associated with
-                    // the model in the biomodels DB
-                    def user = getUser(modelId, modelBranch)
-                   // retrieves the model details stored in the biomodels DB
-                   def modelDetails = getModelDetails(modelId, modelBranch)
-
-                   if (user && modelDetails) {
-                        //login as user submitting the model
-                        authenticateAsUser(user)
-
-                        //set additional files / original file
-                        def additionalFiles = []
-                        File originalFile = null
-                        File parent = new File(it.getParent())
-                        parent.eachFile  { additional ->
-                            if (additional != it)  {
-                                additionalFiles.push(additional)
-                            }
-                            if (additional.getName().contains("origin")) {
-                                originalFile = additional
-                            }
-                        }
-                        boolean conventionFollowed = targetPattern.matcher(it.canonicalPath).matches()
-                        if (!conventionFollowed) {
-                            error "${it.absolutePath} should have been a symbolic link!"
-                        }
-                        //if original file exists, only then proceed, otherwise there is an error
-                        if (originalFile) {
-                            //submit first revision, with original file as the main file
-                            def additionals = additionalFiles - originalFile
-                            def submission = getSubmissionData(originalFile, additionals,
-                                    "Original import of ")
-                            def files = getFilesFromSubmissionData(submission)
-                            def revisionCmd = submission.get("revision")
-                            def firstModel = modelService.uploadValidatedModel(files, revisionCmd)
-                            if (!firstModel) {
-                                log("...could not import initial file: ${originalFile.absolutePath}")
-                                failures.put(it.name, "Error importing original file")
-                            }
-                            else {
-                                if ("auto_gen_models" != modelBranch) {
-                                    //Update model of the month
-                                    processModelOfTheMonth(firstModel)
-                                }
-
-                                /* Add the curation notes */
-                                setCurationNotes(firstModel)
-
-                                // TODO should also create a publication for this model !!
-
-                                /* Update revision / model details */
-                                firstModel.revisions[0].uploadDate = modelDetails["submissionDate"]
-                                firstModel.firstPublished = modelDetails["publicationDate"]
-                                firstModel.submissionId = modelDetails["model_id"]
-                                firstModel.validate()
-                                //inspectSession()
-                                firstModel.save(flush: true)
-
-                                // now submit the model as stored in BioModels
-                                def revisionData = getSubmissionData(it, additionalFiles,
-                                        "Current version of ")
-                                files = getFilesFromSubmissionData(revisionData)
-                                def update = revisionData.get("revision")
-
-                                String fmtName = update.format.identifier
-                                String fmtVersion = update.format.formatVersion
-                                // set the revision's model to be the one we just submitted
-                                update.model = mtc.newInstance(
-                                    format: mftc.newInstance(identifier: fmtName,
-                                            formatVersion: fmtVersion),
-                                    submitter: userAuthenticationDetails.principal,
-                                    submissionDate: modelDetails["submissionDate"],
-                                    submissionId: firstModel.submissionId
-                                )
-
-                                /* Upload second / final version of the model */
-                                def secondResult = modelService.addValidatedRevision(files, [],
-                                        update)
-                                if (!secondResult) {
-                                    log("...could not update to latest version: ${originalFile.absolutePath}")
-                                    failures.add(it.absolutePath)
-                                }
-                                boolean curated = "publ" == modelBranch
-
-                                /* Create annotations for the publication link / branch / jws etc */
-                                createBMAnnotation(secondResult, curated, "curated", user.person.userRealName)
-                                String publicationLink = getPublicationLink(modelDetails["publication_id"],
-                                        modelDetails["publication_id_type"])
-                                if (publicationLink) {
-                                   createBMAnnotation(secondResult, publicationLink, "originalModel",
-                                           user.person.userRealName)
-
-                                }
-
-                                if (modelDetails["jwsLink"]) {
-                                   createBMAnnotation(secondResult, modelDetails["jwsLink"],
-                                           "onlineSimulation", user.person.userRealName)
-                                }
-
-                                secondResult.uploadDate = modelDetails["lastModified"]
-                                secondResult.save()
-                            }
-                            log("...finished importing model file ${it.absolutePath}")
-                        }
-                        else {
-                            error "No original file for ${it.absolutePath}"
-                            failures.put(it.name, "No original file found")
-                        }
-                        log("...finished importing model file ${it.absolutePath}")
-                   } else {
-                        if (!user) {
-                            error("No user found for ${it.absolutePath}")
-                            failures.put(it.name, "No user found, please check details in BioModels db")
-                        } else {
-                            error("No model details found for ${it.absolutePath}")
-                            failures.put(it.name, "Error retrieving model details from BioModels db")
-                        }
-                   }
-                // See http://docs.jboss.org/hibernate/orm/4.1/devguide/en-US/html/ch04.html#d5e971
-                if (processedCount % 20 == 0) {
-                   def session = sessionFactory.currentSession
-                   session.flush()
-                   session.clear()
+    // the size of the thread pool -- assumes a hyper threading CPU
+    final int POOL_SIZE = 2 * Runtime.getRuntime().availableProcessors()
+    GParsPool.withPool(POOL_SIZE) {
+        GParsPool.runForkJoin(modelFolder) { File root ->
+            root.eachDir { File child ->
+                final String folderName = child.name
+                if (folderName ==~ modelFolderPattern) {
+                    processModelFolder child
+                } else {
+                    forkOffChild child
                 }
-                } catch (Throwable t) {
-                    error("Something went wrong with ${it.name} - ${t.message}")
-                    failures.put(it.name, t.message)
-                    t.printStackTrace()
-                }
-                //Log back in with the user supplied credentials
-                authenticate(username, password)
             }
         }
-    } finally {
-        duration = (System.currentTimeMillis() - duration) / 1000
-        String formattedDuration = prettify(duration)
-        log("Imported $processedCount models (${failures.size()} failures) in $formattedDuration")
-        if (failures) {
-            log("Failed to import the following models:")
-            failures.each { f ->
-                log "${f.key}: ${f.value}"
-            }
-        }
-        cleanup()
     }
+
+    duration = (System.currentTimeMillis() - duration) / 1000 /* duration in ms */
+    String formattedDuration = prettify(duration)
+    log("Imported ${processedCount.get()} models (${failures.size()} failures) in $formattedDuration")
+    if (failures) {
+        log("Failed to import the following models:")
+        failures.each { f ->
+            log "${f.key}: ${f.value}"
+        }
+    }
+    cleanup()
     return 0
+}
+
+processModelFolder = { File folder ->
+    processedCount.incrementAndGet()
+    final String MODEL_ID = folder.name
+    // find branch
+    final String BRANCH = getBranch MODEL_ID
+    // check symlink
+    boolean haveSymlink = haveSymlinkToUrlFile folder, MODEL_ID
+    if (!haveSymlink) {
+        error "${folder} does not contain a symbolic link to the URL file"
+    }
+    // separate original file from the rest of the folder contents
+    def originalFile = findOriginalFile(folder, MODEL_ID)
+    if (!originalFile) {
+        failures.put(MODEL_ID, "Original submission file not found")
+        return
+    }
+    // find submissionInfo
+    def modelDetails = getModelDetails MODEL_ID, BRANCH
+    if (!modelDetails) {
+        failures.put(MODEL_ID, "Error retrieving model details from BioModels DB")
+        return
+    }
+    openSession()
+    authenticate(username, password)
+    try {
+        // create a Jummp account for submitter
+        def submitter = getUser MODEL_ID, BRANCH
+        if (!submitter) {
+            failures.put(MODEL_ID, "No user found, please check details in BioModels DB")
+            return
+        }
+        // submit first revision as *.origin
+        def submittedModel = submitOriginalFile(BRANCH, MODEL_ID, originalFile, modelDetails)
+        if (!submittedModel) {
+            failures.put(MODEL_ID, "Error importing original file")
+            return
+        }
+        // submit second revision as * without original file
+        def revision = addRevision(MODEL_ID, BRANCH, folder, userAuthenticationDetails, submittedModel)
+        if (!revision) {
+            failures.put(modelId, "Could not update original submission.")
+            return
+        }
+        addRevisionAnnotations(revision, BRANCH, modelDetails, submitter)
+        // TODO publish model
+    } catch (Throwable t) {
+        error("Something went wrong with ${MODEL_ID} - ${t.message}")
+        t.printStackTrace()
+        failures.put(MODEL_ID, t.message)
+    } finally {
+        closeSession()
+        logOut()
+    }
+}
+
+/**
+ * Uploads the original file of the BioModels submission that is being processed.
+ *
+ * @param branch the branch of BioModels containing this model: curated, noncurated, auto-generated
+ * @param modelId the submission identifier that should be used for this model
+ * @param originalFile a file that should be uploaded in Jummp
+ * @param infoMap model details as extracted from BioModels -- see getModelDetails()
+ *
+ * @throws IllegalStateException if there is no auth token for the current thread.
+ *
+ * @return the Model instance that was just created and persisted.
+ */
+submitOriginalFile = { branch, modelId, originalFile, infoMap ->
+    if (!SecurityContextHolder.context) {
+        def msg = "Cannot submit original version of $modelId -- missing security context"
+        throw new IllegalStateException(msg.toString())
+    }
+    def originInfo = getSubmissionData(originalFile, [], ORIG_COMMENT_TPL)
+    def files = getFilesFromSubmissionData originInfo
+    def revisionCmd = originInfo.get("revision")
+    def model = modelService.uploadValidatedModel(files, revisionCmd)
+    if (!model) {
+        return null
+    }
+    if (AUTO_GEN != branch) {
+        processModelOfTheMonth(model)
+        setCurationNotes(model)
+    }
+
+    // modify database to match the information from BioModels about this deposition
+    def uploadDate = infoMap['submissionDate']
+    def firstPublished = infoMap['publicationDate']
+    def submissionId = infoMap['model_id']
+    model.revisions[0].uploadDate = uploadDate
+    model.firstPublished = firstPublished
+    model.submissionId = submissionId
+    model.save(flush: true)
+}
+
+isCuratedAndPublished = { branch ->
+    PUBL  == branch
+}
+
+addRevision = { modelId, branch, parent, auth, model ->
+    def revisionInfo = prepareRevision(modelId, parent, auth, model)
+    try {
+        def revision = modelService.addValidatedRevision(revisionInfo.files, [], revisionInfo.revision)
+        return revision
+    } catch(Exception e) {
+        error("Exception thrown while updating original submission: $e")
+        e.printStackTrace()
+        return null
+    }
+}
+
+addRevisionAnnotations = { revision, branch, modelDetails, user ->
+    boolean inPubl = isCuratedAndPublished(branch)
+    String author = user.person.userRealName
+    createBMAnnotation(revision, inPubl, 'curated', author)
+    String jws = modelDetails['jwsLink']
+    if (jws) {
+        createBMAnnotation(revision, jws, 'onlineSimulation', author)
+    }
+    def publicationId = getPublicationIdFromModelDetails(modelDetails)
+    def publicationType = getPublicationTypeFromModelDetails(modelDetails)
+    boolean havePublication = null != publicationId && null != publicationType
+    if (havePublication) {
+        addPublicationDetails(revision.model, publicationId, publicationType)
+        String publicationURI = getPublicationLink(publicationId, publicationType)
+        createBMAnnotation(revision, publicationURI, "originalModel", author)
+    }
+    def lastModified = modelDetails['lastModified']
+    revision.uploadDate = lastModified
+    revision.save()
+}
+
+getPublicationIdFromModelDetails = { details -> details?.publication_id }
+
+getPublicationTypeFromModelDetails = { details -> details?.publication_id_type }
+
+addPublicationDetails = { revision, accession, type -> // TODO
+    // resolve publication via publicationService
+    // add this publication to the revision's model
+}
+
+getOriginalFileForModel = { folder, id ->
+    new File(folder, "$id$ORIGIN")
+}
+
+getSymlinkFileForModel = { folder, id ->
+    new File(folder, "$id$DOT_XML")
+}
+
+getUrlFileForModel = { folder, id ->
+    new File(folder, "$id$URL_FILE")
+}
+
+/*
+ * Returns true if modelFolder contains a symlink named ${id}.xml pointing to ${id}_url.xml
+ */
+haveSymlinkToUrlFile = { folder, id ->
+    assert folder.exists()
+    File symlink = getSymlinkFileForModel(folder, id)
+    File target = getUrlFileForModel(folder, id)
+    symlink.exists() && target.exists() && symlink.canonicalPath == target.canonicalPath
+}
+
+findOriginalFile = { folder, id ->
+    assert folder.exists()
+    File origin = getOriginalFileForModel(folder, id)
+    origin.exists() ? origin : null
+}
+
+// called after we ensured the original file is present in the folder
+findNewestRevisionFiles = { parent, id ->
+    assert parent.exists()
+    def result = [:]
+    def mainFile = getUrlFileForModel(parent, id)
+    def originalFile = getOriginalFileForModel(parent, id)
+    def symlinkFile = getSymlinkFileForModel(parent, id)
+    assert mainFile.exists()
+    result['mainFile'] = mainFile
+    def additionalFiles = parent.listFiles().findAll { f ->
+        !(f in [mainFile, originalFile, symlinkFile] )
+    }
+    result['additionals'] = additionalFiles
+    result
+}
+
+prepareRevision = { modelId, parent, auth, model ->
+    def fileMap = findNewestRevisionFiles(parent, modelId)
+    def main = fileMap['mainFile']
+    def additionals = fileMap['additionals']
+    def revisionData = getSubmissionData(main, additionals, UPDATE_COMMENT_TPL)
+    def fileTCs = getFilesFromSubmissionData(revisionData)
+    def revisionTC = revisionData.get("revision")
+    String principal = auth.principal
+    Date uploadDate = model.revisions[0].uploadDate
+    revisionTC.model = createModelCommandForRevision(revisionTC, principal, uploadDate, modelId)
+    [revision: revisionTC, files: fileTCs]
+}
+
+createModelCommandForRevision = { revision, submitterName, date, submissionId ->
+    def fmt = revision.format
+    String fmtName = revision.format.identifier
+    String fmtVersion = revision.format.formatVersion
+    def formatCmd = mftc.newInstance(identifier: fmtName, formatVersion: fmtVersion)
+    def modelCmd = mtc.newInstance( format: formatCmd, submitter: submitterName,
+            submissionDate: date, submissionId: submissionId)
 }
 
 target(cleanup: "Shutdown hook used to gracefully close resources") {
@@ -581,16 +692,10 @@ target(expireUserPasswords: 'Forces users with accounts created herein to reset 
         }
 }
 
-target(closeDataSources: "Clears transaction synchronisations and closes active Hibernate session") {
-    def session = sessionFactory.currentSession
-    if (!session) {
-        error("No active session found for current thread -- skipping Hibernate cleanup.")
-    }
-    session.flush()
-    session.clear()
+target(closeDataSources: "Close any active database connections") {
+    closeSession()
     biomodelsConnection?.close()
     authConnection?.close()
-    TransactionSynchronizationManager.unbindResourceIfPossible(sessionFactory)
 }
 
 target(closeCamel: "Shuts down the Camel instance, awaiting for current messages to be delivered") {
@@ -715,6 +820,17 @@ authenticate = { user, passwd ->
     SecurityContextHolder.getContext().setAuthentication(auth)
     userAuthenticationDetails = auth
     return 0
+}
+
+/**
+ * Clears the authentication token for the current thread.
+ *
+ * It is very important that this method is called before the thread is returned to the pool
+ * to avoid unexpected side-effects -- e.g. stale auth tokens being used for submitting a different
+ * model than the designated one.
+ */
+logOut = {
+    SecurityContextHolder.clearContext()
 }
 
 error = { String msg, int code = -1 ->
