@@ -84,6 +84,7 @@ grails.project.dependency.resolution = {
         runtime "postgresql:postgresql:9.1-901.jdbc4"
 
         compile "uk.ac.ebi.ddi:ddi-ebe-ws-dao:1.0-SNAPSHOT"
+        // TODO: remember to update this setting in jummp-plugin-configuration
         compile "net.biomodels.jummp:AnnotationStore:0.3.1-SNAPSHOT"
         compile "org.apache.solr:solr-solrj:5.3.1"
         //required by both JSBML and SolrJ
