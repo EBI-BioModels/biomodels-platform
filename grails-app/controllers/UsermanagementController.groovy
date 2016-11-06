@@ -36,8 +36,7 @@ import grails.plugin.springsecurity.annotation.Secured
 
 
 class UsermanagementController {
-
-	/**
+    /**
      * Dependency injection for the springSecurityService.
      */
     //def springSecurityService
@@ -92,16 +91,18 @@ class UsermanagementController {
     @Secured(["isAuthenticated()"])
     def show() {
     	String user = springSecurityService.principal.username
-        render view: "show", model: [postUrl          : "", flashMessage: checkForMessage(),
-                                     validationErrorOn: checkForErrorBean(),
-    								user: userService.getUser(user),
-    								notificationPermissions: notificationService.getNotificationPermissions(user)]
+        render  view: "show",
+                model: [postUrl: "", flashMessage: checkForMessage(),
+                        validationErrorOn: checkForErrorBean(),
+                        user: userService.getUser(user),
+                        notificationPermissions: notificationService.getNotificationPermissions(user)]
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def forgot() {
-        render view: "forgot", model: [postUrl: "", flashMessage: checkForMessage(),
-    								validationErrorOn: checkForErrorBean()]
+        render  view: "forgot",
+                model: [postUrl: "", flashMessage: checkForMessage(),
+                        validationErrorOn: checkForErrorBean()]
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
