@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -38,17 +38,19 @@
         <p><g:message code="user.forgot.ui.explanation"/></p>
         <div>
             <g:form name="passwordForm" action="requestPassword">
-                <table>
+                <table class="center">
                     <tbody>
                     <tr>
                         <td class='tableLabels'><label><g:message code="user.forgot.ui.username"/>:</label></td>
                         <td><span><g:textField name="username"/></span></td>
                     </tr>
+                    <tr>
+                        <td colspan="2" align="center">
+                            <input type="submit" class="button" value="Submit"/>
+                        </td>
+                    </tr>
                     </tbody>
                 </table>
-                <div class="buttons">
-                    <input type="submit" value="Submit"/>
-                </div>
             </g:form>
         </div>
     </body>

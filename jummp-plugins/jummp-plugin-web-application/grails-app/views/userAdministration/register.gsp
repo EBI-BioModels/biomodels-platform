@@ -41,31 +41,38 @@
                 <table class="center">
                     <tbody>
                     <tr>
-                        <td><label for="register-form-username"><g:message code="user.administration.ui.username"/>:</label></td>
+                        <td><label for="register-form-username" class="forlabelintable">
+                            <g:message code="user.administration.ui.username"/>:</label></td>
                         <td><span><input type="text" id="register-form-username" name="username"/></span></td>
                     </tr>
                     <tr>
-                        <td><label for="register-form-name"><g:message code="user.administration.ui.realname"/>:</label></td>
+                        <td><label for="register-form-name" class="forlabelintable">
+                            <g:message code="user.administration.ui.realname"/>:</label></td>
                         <td><span><input type="text" id="register-form-name" name="userRealName"/></span></td>
                     </tr>
                     <tr>
-                        <td><label for="register-form-email"><g:message code="user.administration.ui.email"/>:</label></td>
+                        <td><label for="register-form-email" class="forlabelintable">
+                            <g:message code="user.administration.ui.email"/>:</label></td>
                         <td><span><input type="text" id="register-form-email" name="email"/></span></td>
                     </tr>
                     <tr>
-                        <td><label for="register-form-institution"><g:message code="user.administration.ui.institution"/>:</label></td>
+                        <td><label for="register-form-institution" class="forlabelintable">
+                            <g:message code="user.administration.ui.institution"/>:</label></td>
                         <td><span><input type="text" id="register-form-institution" name="institution"/></span></td>
                     </tr>
                     <tr>
-                        <td><label for="register-form-orcid"><g:message code="user.administration.ui.orcid"/>:</label></td>
+                        <td><label for="register-form-orcid"  class="forlabelintable">
+                            <g:message code="user.administration.ui.orcid"/>:</label></td>
                         <td><span><input type="text" id="register-form-orcid" name="orcid"/></span></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="text-align: center">
+                            <input type="reset" class="button" value="${g.message(code: 'user.administration.cancel')}"/>
+                            <input type="submit" class="button" value="${g.message(code: 'user.administration.register')}"/>
+                        </td>
                     </tr>
                     </tbody>
                 </table>
-                <div class="buttons">
-                    <input type="reset" value="${g.message(code: 'user.administration.cancel')}"/>
-                    <input type="submit" value="${g.message(code: 'user.administration.register')}"/>
-                </div>
             </form>
         </div>
         <g:javascript>

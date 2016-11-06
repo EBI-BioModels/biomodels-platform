@@ -42,7 +42,7 @@
     <script type="text/javascript">
         $(document).ready(function() {
             var mainContainer = $("#content");
-            mainContainer.css('margin-left', 50+'px');
+            mainContainer.css('margin-left', 40+'px');
         });
     </script>
     <script type="text/x-mathjax-config">

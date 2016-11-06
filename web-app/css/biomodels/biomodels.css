@@ -6,11 +6,17 @@ h1 {
 }
 
 table.center {
-    max-width: 75%;
+    max-width: 95%;
     margin-left: auto;
     margin-right: auto;
 }
 
+.forlabelintable {
+    text-align: right;
+}
+.tableLabels {
+    float: right;
+}
 div#search-results {}
 
 div#search-results h2 {

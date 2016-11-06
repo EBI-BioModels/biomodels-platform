@@ -53,8 +53,8 @@
                         %{--<span style="font-size: x-large;">BioModels</span>--}% <span style="font-size: large;">Found: ${totalCount} ${totalCount > 1 ? 'models' : 'model'}</span></h3>
                     <div class="column row">
                     <g:each status="i" in="${models}" var="model">
-                    <div class="result">
-                        <div class="result-detail">
+                    <div class="row">
+                        <div class="small-12 medium-8 large-8 columns">
                             <h4>
                                 <%
                                     def modelUrl = createLink(controller: 'model', id: model.publicationId ?: model.submissionId, action: 'show')
@@ -81,15 +81,15 @@
                             <span id="modelDescription" class="fieldName"></span>
                             %{--<p>${descriptionShown}</p>--}%
                         </div>
-                        <div class="result-meta">
-                            <div class="entry_actions_panel">
-                                <div class="entry_actions">
+                        <div class="medium-4 large-4 columns hide-for-small-only">
+                            <div class="entry_actions_panel_need_removed">
+                                <div class="entry_actions_need_removed">
                                     %{--<p class="entry_actions_menu">
                                         <a href="">Related data</a>
                                         <a href="">Views</a>
                                     </p>--}%
-                                    <p class="entry-source">
-                                        <span class="source">Source: BioModels</span>
+                                    <p class="entry-source_need_removed">
+                                        <span class="source">Source: BioModels</span><br/>
                                         <span class="source-id">ID: ${model.submissionId}</span>
                                     </p>
                                 </div>

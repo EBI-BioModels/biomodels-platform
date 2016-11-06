@@ -32,9 +32,6 @@
         if (sidebarContent) {
             sidebarContent = sidebarContent.trim()
         }
-        def action = request.forwardURI
-        action = action.substring(action.lastIndexOf("/") + 1)
-
         def facetSearchContent = g.pageProperty(name: 'page.facetsearch')
         if (facetSearchContent) {
             facetSearchContent = facetSearchContent.stripMargin()

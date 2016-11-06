@@ -330,7 +330,8 @@ class SearchController {
         }
         //List<String> facets = ["My models", "Format", "Status"]
         List<String> facets = []
-        return [models: models, facets: facets, modelsAvailable: modelService.getModelCount(), sortBy: sortBy,
+        int totalCount = modelService.getModelCount()
+        return [models: models, facets: facets, modelsAvailable: totalCount, sortBy: sortBy,
                 sortDirection: sortDirection, offset: offset, length: length]
     }
 

@@ -31,7 +31,7 @@
     	<div class="content">
     		<div class="view view-dom-id-9c00a92f557689f996511ded36a88594">
     		<div class="view-content">
-        <div>
+        <div class="row">
 			<table class="center">
 				<thead></thead>
 				<tbody>
@@ -58,7 +58,7 @@
 				</tbody>
 			</table>
 			<h2>Notifications</h2>
-			<table class="center">
+			<table class="responsive-table center">
 				<thead>
 					<th>Notification Type</th>
 					<th>Web Notification</th>
@@ -87,8 +87,8 @@
 				</tbody>
 			</table>
 			<ul id="optionsList">
-				<li><a href='<g:createLink action="edit"/>'>Edit User</a></li>
-				<li><a href='<g:createLink action="editPassword" />'>Change Password</a></li>
+				<li><a href='<g:createLink action="edit"/>' class="button">Edit User</a></li>
+				<li><a href='<g:createLink action="editPassword" />' class="button">Change Password</a></li>
 			</ul>
         </div>
         </div>

@@ -1,5 +1,5 @@
 <g:form name="newTeamForm" action="save">
-	<table class='spaced'>
+	<table class='responsive-table center spaced'>
 		<tbody>
 			<tr>
 				<td><label class="required" for="name">Name</label></td>
@@ -27,7 +27,7 @@
 			<label for="nameSearch">User</label>
 			<input placeholder="Name, username or email" id="nameSearch" name="nameSearch"
                    type="text" style="width: 255px"/>
-			<g:field type="button" name="add" value="Add"/>
+			<g:field type="button" class="button" name="add" value="Add"/>
 		</div>
 		<span class="tip">
 			<span class='tipNote'>Tip:</span>
@@ -49,5 +49,5 @@
 		</div>
 	</div>
 
-	<g:field type="button" class='submitButton' name="${buttonLabel}" value="${buttonLabel}"/>
+	<g:field type="button" class='submitButton button' name="${buttonLabel}" value="${buttonLabel}"/>
 </g:form>

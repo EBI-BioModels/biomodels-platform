@@ -100,7 +100,7 @@
             </table>
         </g:if>
         <span class='spaced'>
-            <g:link controller="team" action="create">Create a team</g:link>
+            <g:link controller="team" action="create" class="button">Create a team</g:link>
         </span>
     </body>
 </html>

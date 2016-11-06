@@ -121,11 +121,6 @@ function updateData() {
 
 $(document).ready(function () {
     updateData();
-    /* Basic initialisations */
-    $("#synopsis").width("94%");
-    $("#affiliation").width("94%");
-    $("#authorList").width("97%");
-
     $("#authorList").change(function() {
         var value = $(this).val();
         var authorDetail = value.split(DELIMITER);

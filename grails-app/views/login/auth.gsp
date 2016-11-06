@@ -34,84 +34,54 @@
         <title>Login</title>
     </head>
     <body>
+        <div id="login" class="row">
+            <div class="medium-6 medium-centered large-4 large-centered columns">
+                <form action='${postUrl}' method='POST' id='loginForm' class='cssform' autocomplete='on'>
+                    <div class="row column log-in-form">
+                        <p>${flash.message}</p>
+                        <h4 class="text-center">Log in with your account</h4>
+                        <label><g:message code="login.form.label"/>
+                            <input type='text' name='j_username' id='username' placeholder="username">
+                        </label>
+                        <label><g:message code="login.form.password"/>
+                            <input type='password' name='j_password' id='password' placeholder="Password"/>
+                        </label>
+                        %{--<input id="show-password" type="checkbox"><label for="show-password">Show password</label>--}%
+                        <p><button type="submit" class="button expanded">Log In</button></p>
+                        <p class="text-center">
+                            <a href="${grailsApplication.config.grails.serverURL}/forgotpassword">Forgot your password?</a></p>
+                        <g:if test="${grailsApplication.config.jummp.security.anonymousRegistration}">
+                        <p class="text-center">
+                            <a href="${grailsApplication.config.grails.serverURL}/registration">Register</a></p>
+                        </g:if>
+                    </div>
+                </form>
 
-    <div id='login'>
-        <form action='${postUrl}' method='POST' id='loginForm' class='cssform' autocomplete='on'>
-            <table class="center">
-                <tr><p>${flash.message}</p></tr>
-                <tbody>
-                    <tr>
-                    	<td class="name" style="text-align: right">
-                                <label for="username">
-                                    <g:message code="login.form.label"/>:
-                                </label>
-                        </td>
-                        <td>
-                            <input type='text' name='j_username' id='username'/>
-                        </td>
-                    </tr>
-                    <tr>
-  	                <td class="name" style="text-align: right">
-                               <label for="password">
-                                    <g:message code="login.form.password"/>:
-                                </label>
-                        </td>
-                    	<td>
-                            <input type='password' name='j_password' id='password'/>
-                    	</td>
-                   </tr>
-                    <tr>
-                        <td>&nbsp;</td>
-                    	<td>
-                    		<button>LOGIN</button>
-                    	</td>
-                   </tr>
-                   <tr>
-                       <td>&nbsp;</td>
-                    	<td>
-                    		<a href="${grailsApplication.config.grails.serverURL}/forgotpassword">
-	  	     					Forgot password?
-	  	     				</a>
-                    	</td>
-                   </tr>
-                    <g:if test="${grailsApplication.config.jummp.security.anonymousRegistration}">
-                    <tr>
-                        <td>&nbsp;</td>
-                        <td>
-                        <a href="${grailsApplication.config.grails.serverURL}/registration">
-                            Register
-                        </a>
-                        </td>
-                    </tr>
-                    </g:if>
-
-                </tbody>
-            </table>
-        </form>
-    </div>
-    <script type='text/javascript'>
-        // TODO: move out of HTML page
-    	$("#loginForm input").focus(function() {
-    		if ($(this).data("reset") === undefined) {
-    		$(this).val("");
-    		$(this).data("reset", true);
-    		}
-    	});
-    	$("#loginForm input").keyup(function(event) {
-    	// magic value 13 is enter
-    	if (event.which == 13) {
-        	$("#loginForm").submit();
-        	}
-        });
-        $("#login div.loginButton button").click(function() {
-        	$("#loginForm").submit();
-        });
-    </script>
+            </div>
+        </div>
+        <script type='text/javascript'>
+            // TODO: move out of HTML page
+            $("#loginForm input").focus(function() {
+                if ($(this).data("reset") === undefined) {
+                $(this).val("");
+                $(this).data("reset", true);
+                }
+            });
+            $("#loginForm input").keyup(function(event) {
+            // magic value 13 is enter
+            if (event.which == 13) {
+                $("#loginForm").submit();
+                }
+            });
+            $("#login div.loginButton button").click(function() {
+                $("#loginForm").submit();
+            });
+        </script>
     </body>
 </html>
 <content tag="title">
-	Login
+    Login
 </content>
 <content tag="contexthelp">
-		login
-	</content>
+    login
+</content>

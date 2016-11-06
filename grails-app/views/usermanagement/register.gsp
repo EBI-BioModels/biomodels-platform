@@ -39,58 +39,76 @@
         </style>
         <link rel="stylesheet" href="${resource(dir: 'css', file: 'jstree.css')}" />
     </head>
- <body>
-        <div>
-            <g:form name="registerForm" action="signUp">
-                <table class="center">
-                    <tbody>
-                    <tr>
-                        <td class='tableLabels'><label class="required" for="register-form-username"><g:message code="user.signup.ui.username"/>:</label></td>
-                        <td><span><g:textField name="username"/></span></td>
-                    </tr>
-                    <tr>
-                        <td class='tableLabels'><label class="required" for="register-form-email"><g:message code="user.signup.ui.email"/>:</label></td>
-                        <td><span><g:textField name="email"/></span></td>
-                    </tr>
-                    <tr>
-                        <td class='tableLabels'><label class="required" for="register-form-name"><g:message code="user.signup.ui.realname"/>:</label></td>
-                        <td><span><g:textField name="userRealName"/></span></td>
-                    </tr>
-                    <tr>
-                        <td class='tableLabels'><label for="register-form-institution"><g:message code="user.signup.ui.institution"/>:</label></td>
-                        <td><span><g:textField name="institution"/></span></td>
-                    </tr>
-                    <tr>
-                        <td class='tableLabels'><label for="register-form-orcid"><g:message code="user.signup.ui.orcid"/>:</label></td>
-                        <td><span><g:textField name="orcid"/></span></td>
-                    </tr>
-                    <tr>
-                        <td class='tableLabels'><label class="required" for="register-form-captcha"><g:message code="user.signup.ui.captcha"/>:</label></td>
-                        <td>
-                            <img style="margin-top:0;float:none" src="${createLink(controller: 'simpleCaptcha', action: 'captcha')}"/>
-                            <br/>
-                            <g:textField name="captcha"/>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" style="text-align: center">
-                            <input type="submit" value="${g.message(code: 'user.signup.register')}"/>
-                            <input type="reset" id="resetFormButton" value="${g.message(code: 'user.signup.reset')}"/>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-                <label class="verysecure">You shouldn't see me.</label>
-                <input class="verysecure" name="securityfeature" value=""/>
-            </g:form>
+    <body>
+        %{--<div class="row">
+            <div class="large-6 columns">
+                <div class="signup-panel">
+                    <p class="welcome"> Welcome to this awesome app!</p>
+                    <form>
+                        <div class="row collapse">
+                            <div class="small-2  columns">
+                                <span class="prefix"><i class="fi-torso-female"></i></span>
+                            </div>
+                            <div class="small-10  columns">
+                                <input type="text" placeholder="username">
+                            </div>
+                        </div>
+                        <div class="row collapse">
+                            <div class="small-2 columns">
+                                <span class="prefix"><i class="fi-mail"></i></span>
+                            </div>
+                            <div class="small-10  columns">
+                                <input type="text" placeholder="email">
+                            </div>
+                        </div>
+                        <div class="row collapse">
+                            <div class="small-2 columns ">
+                                <span class="prefix"><i class="fi-lock"></i></span>
+                            </div>
+                            <div class="small-10 columns ">
+                                <input type="text" placeholder="password">
+                            </div>
+                        </div>
+                    </form>
+                    <a href="#" class="button ">Sign Up! </a>
+                    <p>Already have an account? <a href="#">Login here &raquo</a></p>
+                </div>
+            </div>
+        </div>--}%
+        <div id="register" class="row">
+            <div class="medium-6 medium-centered large-4 large-centered columns">
+                <g:form name="registerForm" action="signUp">
+                    <div class="row column register-form">
+                        <label class="required" for="username"><g:message code="user.signup.ui.username"/></label>
+                        <g:textField name="username" placeholder="Choose an username"/>
+                        <label class="required" for="email"><g:message code="user.signup.ui.email"/></label>
+                        <g:textField name="email" placeholder="Enter your email"/>
+                        <label class="required" for="userRealName"><g:message code="user.signup.ui.realname"/></label>
+                        <g:textField name="userRealName" placeholder="Enter your real name"/>
+                        <label for="institution"><g:message code="user.signup.ui.institution"/></label>
+                        <g:textField name="institution" placeholder="Institution name where you're working"/>
+                        <label for="orcid"><g:message code="user.signup.ui.orcid"/></label>
+                        <g:textField name="orcid" placeholder="For example, 0000-0002-2876-6046"/>
+                        <label class="required" for="captcha"><g:message code="user.signup.ui.captcha"/>:</label>
+                        <img style="margin-top:0;float:none" src="${createLink(controller: 'simpleCaptcha', action: 'captcha')}"/>
+                        <br/>
+                        <g:textField name="captcha"/>
+                        <p><input type="submit" class="button" value="${g.message(code: 'user.signup.register')}"/>
+                        <input type="reset" class="button" id="resetFormButton" value="${g.message(code: 'user.signup.reset')}"/>
+                        </p>
+                    </div>
+                    <label class="verysecure">You shouldn't see me.</label>
+                    <input class="verysecure" name="securityfeature" value=""/>
+                </g:form>
+            </div>
         </div>
-    <script type="text/javascript">
-        $("#registerForm #resetFormButton").click(function() {
-            $('#registerForm')[0].reset();
-        });
-    </script>
-</body>
+        <script type="text/javascript">
+            $("#registerForm #resetFormButton").click(function() {
+                $('#registerForm')[0].reset();
+            });
+        </script>
+    </body>
 </html>
 <content tag="title">
-	<g:message code="user.signup.ui.heading.register"/>
+    <g:message code="user.signup.ui.heading.register"/>
 </content>

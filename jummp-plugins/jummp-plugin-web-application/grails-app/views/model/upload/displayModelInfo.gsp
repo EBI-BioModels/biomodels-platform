@@ -40,7 +40,7 @@
 
         <g:form>
             <div class="dialog">
-                <table class="formtable">
+                <table class="formtable responsive-table center">
                     <tbody>
                         <tr class="prop">
                             <td class="name">
@@ -48,10 +48,10 @@
                             </td>
                             <td class="value">
                                 <g:if test="${workingMemory['new_name']}">
-                                    <g:textField id="name" name="name" style="width: 713px" value="${workingMemory['new_name']}"/>
+                                    <g:textField id="name" name="name" value="${workingMemory['new_name']}"/>
                                 </g:if>
                                 <g:else>
-                                    <g:textField id="name" name="name" style="width: 713px" value="${(workingMemory.get("RevisionTC") as RevisionTransportCommand).name}"/>
+                                    <g:textField id="name" name="name" value="${(workingMemory.get("RevisionTC") as RevisionTransportCommand).name}"/>
                                 </g:else>
                             </td>
                         </tr>
@@ -63,10 +63,10 @@
                             </td>
                             <td class="value">
                                 <g:if test="${workingMemory['new_description']}">
-                                    <g:textField id="description" name="description" style="width: 700px" value="${workingMemory['new_description']}"/>
+                                    <g:textField id="description" name="description" value="${workingMemory['new_description']}"/>
                                 </g:if>
                                 <g:else>
-                                    <g:textArea id="description" cols="70" rows="10" style="width: 700px" name="description" value='${(workingMemory.get("RevisionTC") as RevisionTransportCommand).description}'/>
+                                    <g:textArea id="description" cols="70" rows="10" name="description" value='${(workingMemory.get("RevisionTC") as RevisionTransportCommand).description}'/>
                                 </g:else>
                             </td>
                         </tr>
@@ -74,9 +74,9 @@
                 </table>
                 <input type='hidden' value='false' name='changed' id="changeStatus"/>
                 <div class="buttons">
-                    <g:submitButton name="Cancel" value="Abort" />
-                    <g:submitButton name="Back" value="Back" />
-                    <g:submitButton name="Continue" value="Continue" />
+                    <g:submitButton name="Cancel" class="button" value="Abort" />
+                    <g:submitButton name="Back" class="button" value="Back" />
+                    <g:submitButton name="Continue" class="button" value="Continue" />
                 </div>
             </div>
         </g:form>
