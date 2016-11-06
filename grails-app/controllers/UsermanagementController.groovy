@@ -106,14 +106,13 @@ class UsermanagementController {
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
-    def passwordreset() {
-    	if (params.id) {
-    		flash.hashCode=params.id
-    		redirect action: 'reset'
-    	}
-    	else {
-    		redirect action: 'forgot'
-    	}
+    def resetPassword() {
+        if (params.id) {
+            flash.hashCode = params.id
+            redirect action: 'reset'
+        } else {
+            redirect action: 'forgot'
+        }
     }
 
     /**

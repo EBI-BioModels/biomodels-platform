@@ -493,7 +493,7 @@ class UserService implements IUserService {
         user.save(flush: true)
         // send out notification mail
         String recipient = user.email
-        String url = grailsLinkGenerator.link(controller: 'usermanagement', action: 'passwordreset', id: user.passwordForgottenCode, absolute: true)
+        String url = grailsLinkGenerator.link(controller: 'usermanagement', action: 'resetPassword', id: user.passwordForgottenCode, absolute: true)
         String emailBody = grailsApplication.config.jummp.security.resetPassword.email.body
         emailBody = emailBody.replace("{{REALNAME}}", user.person.userRealName)
         emailBody = emailBody.replace("{{URL}}", url)
