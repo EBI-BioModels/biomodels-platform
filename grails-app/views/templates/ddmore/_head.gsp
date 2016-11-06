@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -37,9 +37,9 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
   <link rel="shortcut icon" href="http://www.ddmore.eu/sites/ddmore/themes/ddmore/favicon.ico" type="image/vnd.microsoft.icon" />
   <meta content="About DDMoRe" about="http://www.ddmore.eu/content/about-ddmore" property="dc:title" />
- 
- <link rel="stylesheet" href="<g:resource dir="css" file="ddmore.css"/>" />
- 
+
+ <link rel="stylesheet" href="<g:resource dir="css" file="ddmore/ddmore.css"/>" />
+
   <!--[if lte IE 7]>
 <link type="text/css" rel="stylesheet" href="http://www.ddmore.eu/sites/ddmore/files/css/css_sIsRwCKuAMZS6YJIMFqPXNCtZHxV56wN2ePifCvkLYc.css" media="all" />
 <![endif]-->
@@ -47,4 +47,4 @@
 <!--[if lte IE 6]>
 <link type="text/css" rel="stylesheet" href="http://www.ddmore.eu/sites/ddmore/files/css/css_N0EHcRmGNgF6d_odKVbSBNnBtfyz9Ndtm25vvkPxWcQ.css" media="all" />
 <![endif]-->
-  
+
