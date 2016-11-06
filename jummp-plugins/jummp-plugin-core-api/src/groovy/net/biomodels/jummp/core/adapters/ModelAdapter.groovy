@@ -20,12 +20,11 @@
 
 package net.biomodels.jummp.core.adapters
 
-import grails.gorm.DetachedCriteria
-import net.biomodels.jummp.model.Model
-import net.biomodels.jummp.model.Publication
-import net.biomodels.jummp.core.model.ModelTransportCommand
-import net.biomodels.jummp.core.model.identifier.*
 import grails.util.Holders
+import net.biomodels.jummp.core.model.ModelTransportCommand
+import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
+import net.biomodels.jummp.model.Model
+
 /**
  * @short Adapter class for the Model domain class
  *
@@ -96,14 +95,14 @@ public class ModelAdapter extends DomainAdapter {
              return null
          }
          perennialId = perennialId.contains("\\.") ? perennialId : perennialId.split("\\.")[0]
-         Model model = Model.createCriteria().get {
+         def results = Model.withCriteria {
              or {
                  FIND_BY_PERENNIAL_ID_CRITERIA.each {
                      eq(it, perennialId)
                  }
              }
          }
-         model
+         results[0]
     }
 
     static Set<String> populateFindByCriteria() {
