@@ -63,7 +63,7 @@
         </g:if>
         </g:if>
         <div class="dialog">
-            <table class="formtable responsive-table center">
+            <table class="formtable responsive-table">
                 <tbody>
                      <tr class="prop">
                         <%

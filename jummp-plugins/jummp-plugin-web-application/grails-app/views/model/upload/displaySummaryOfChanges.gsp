@@ -44,7 +44,7 @@
         %>
         <g:form>
             <div class="dialog">
-                <table class="formtable responsive-table center">
+                <table class="formtable responsive-table">
                     <tbody>
                         <tr class="prop">
                             <td class="name" style="vertical-align:top;">
