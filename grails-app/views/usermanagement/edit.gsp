@@ -31,9 +31,9 @@
     	<div class="content">
     	<div class="view view-dom-id-9c00a92f557689f996511ded36a88594">
     	<div class="view-content">
-        <div>
+        <div class="row column">
 			<g:form action="editUser">
-				<table class="responsive-table center">
+				<table class="responsive-table">
 					<thead></thead>
 					<tbody>
 					<tr>
@@ -59,7 +59,7 @@
 					</tbody>
 				</table>
 				<h2>Notifications</h2>
-				<table class="responsive-table center">
+				<table class="responsive-table">
 					<thead>
 						<th>Notification Type</th>
 						<th>Web Notification</th>
@@ -88,7 +88,7 @@
 					</tbody>
 				</table>
 				<div class="buttons">
-                    <input type="submit" class="button" value="${g.message(code: 'user.administration.edit')}"/>
+                    <input type="submit" class="button" value="${g.message(code: 'user.administration.edit.save')}"/>
 				</div>
 			</g:form>
         </div>

@@ -40,59 +40,30 @@
         <link rel="stylesheet" href="${resource(dir: 'css', file: 'jstree.css')}" />
     </head>
     <body>
-        %{--<div class="row">
-            <div class="large-6 columns">
-                <div class="signup-panel">
-                    <p class="welcome"> Welcome to this awesome app!</p>
-                    <form>
-                        <div class="row collapse">
-                            <div class="small-2  columns">
-                                <span class="prefix"><i class="fi-torso-female"></i></span>
-                            </div>
-                            <div class="small-10  columns">
-                                <input type="text" placeholder="username">
-                            </div>
-                        </div>
-                        <div class="row collapse">
-                            <div class="small-2 columns">
-                                <span class="prefix"><i class="fi-mail"></i></span>
-                            </div>
-                            <div class="small-10  columns">
-                                <input type="text" placeholder="email">
-                            </div>
-                        </div>
-                        <div class="row collapse">
-                            <div class="small-2 columns ">
-                                <span class="prefix"><i class="fi-lock"></i></span>
-                            </div>
-                            <div class="small-10 columns ">
-                                <input type="text" placeholder="password">
-                            </div>
-                        </div>
-                    </form>
-                    <a href="#" class="button ">Sign Up! </a>
-                    <p>Already have an account? <a href="#">Login here &raquo</a></p>
-                </div>
-            </div>
-        </div>--}%
         <div id="register" class="row">
-            <div class="medium-6 medium-centered large-4 large-centered columns">
+            <div class="medium-6 medium-centered large-6 large-centered columns">
                 <g:form name="registerForm" action="signUp">
                     <div class="row column register-form">
                         <label class="required" for="username"><g:message code="user.signup.ui.username"/></label>
                         <g:textField name="username" placeholder="Choose an username"/>
+
                         <label class="required" for="email"><g:message code="user.signup.ui.email"/></label>
-                        <g:textField name="email" placeholder="Enter your email"/>
+                        <g:textField name="email" placeholder="Enter your email address"/>
+
                         <label class="required" for="userRealName"><g:message code="user.signup.ui.realname"/></label>
                         <g:textField name="userRealName" placeholder="Enter your real name"/>
+
                         <label for="institution"><g:message code="user.signup.ui.institution"/></label>
-                        <g:textField name="institution" placeholder="Institution name where you're working"/>
+                        <g:textField name="institution" placeholder="Enter an institution name where you are working now"/>
+
                         <label for="orcid"><g:message code="user.signup.ui.orcid"/></label>
                         <g:textField name="orcid" placeholder="For example, 0000-0002-2876-6046"/>
-                        <label class="required" for="captcha"><g:message code="user.signup.ui.captcha"/>:</label>
+
+                        <label class="required" for="captcha"><g:message code="user.signup.ui.captcha"/></label>
                         <img style="margin-top:0;float:none" src="${createLink(controller: 'simpleCaptcha', action: 'captcha')}"/>
                         <br/>
                         <g:textField name="captcha"/>
+
                         <p><input type="submit" class="button" value="${g.message(code: 'user.signup.register')}"/>
                         <input type="reset" class="button" id="resetFormButton" value="${g.message(code: 'user.signup.reset')}"/>
                         </p>

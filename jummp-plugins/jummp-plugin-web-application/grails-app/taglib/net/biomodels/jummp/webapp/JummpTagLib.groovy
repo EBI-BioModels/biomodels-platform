@@ -64,7 +64,7 @@ class JummpTagLib {
             result.append("<tr class='prop'>\n\t<td class='name'>\n\t\t<label for='mainFile'>\n\t\t\t")
             result.append(message(code: mainFileLabel))
             result.append("\n\t\t</label>\n\t</td>\n\t<td class='value'>\n\t\t")
-            result.append("<button class='file-upload'><input type='file' id='mainFile' name='mainFile'/></button>\n\t</td>\n</tr>")
+            result.append("<input type='file' id='mainFile' name='mainFile'/>\n\t</td>\n</tr>")
             out << result.toString()
             return
         }

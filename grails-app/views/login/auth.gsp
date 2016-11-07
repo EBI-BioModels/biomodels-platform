@@ -35,7 +35,7 @@
     </head>
     <body>
         <div id="login" class="row">
-            <div class="medium-6 medium-centered large-4 large-centered columns">
+            <div class="medium-6 medium-centered large-6 large-centered columns">
                 <form action='${postUrl}' method='POST' id='loginForm' class='cssform' autocomplete='on'>
                     <div class="row column log-in-form">
                         <p>${flash.message}</p>

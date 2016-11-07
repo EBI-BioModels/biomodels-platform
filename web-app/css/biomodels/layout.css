@@ -56,10 +56,6 @@ iframe {
 .ui-widget a:active {color: #0000ff; text-decoration: underline; !important}
 .ui-widget a:visited {color: #008000; text-decoration: underline; !important}
 .ui-widget a:hover {color: #ff0000; text-decoration: none; !important}
-.required:after {
-    content: " *";
-    color: red;
-}
 
 #modelToolbar {
 	box-sizing: border-box;

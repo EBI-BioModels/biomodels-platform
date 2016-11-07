@@ -17,6 +17,20 @@ table.center {
 .tableLabels {
     float: right;
 }
+
+.label-floating-left {
+    float: left;
+}
+
+.label-floating-right {
+    float: right;
+}
+
+.required:after {
+    content: " (*)";
+    color: red;
+}
+
 div#search-results {}
 
 div#search-results h2 {

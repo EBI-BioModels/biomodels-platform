@@ -36,22 +36,16 @@
     </head>
      <body>
         <p><g:message code="user.forgot.ui.explanation"/></p>
-        <div>
+        <div id="requestResetPassword" class="row">
+            <div class="medium-6 medium-centered large-6 large-centered columns">
             <g:form name="passwordForm" action="requestPassword">
-                <table class="center">
-                    <tbody>
-                    <tr>
-                        <td class='tableLabels'><label><g:message code="user.forgot.ui.username"/>:</label></td>
-                        <td><span><g:textField name="username"/></span></td>
-                    </tr>
-                    <tr>
-                        <td colspan="2" align="center">
-                            <input type="submit" class="button" value="Submit"/>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
+                <div class="row column request-reset-password-form">
+                    <label class="required"><g:message code="user.forgot.ui.username"/></label>
+                    <g:textField name="username" placeholder="Enter your username"/>
+                    <input type="submit" class="button" value="Submit"/>
+                </div>
             </g:form>
+            </div>
         </div>
     </body>
 </html>
