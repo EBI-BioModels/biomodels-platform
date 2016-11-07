@@ -133,7 +133,7 @@ class UserService implements IUserService {
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag = "userService.editUser")
     @PreAuthorize("hasRole('ROLE_ADMIN') or isAuthenticated()") //used to be: authentication.name==#username
-    void editUser(User user) throws UserInvalidException {
+    User editUser(User user) throws UserInvalidException {
         checkUserValid(user.username)
         User origUser = User.findByUsername(user.username)
         if (origUser.person.orcid != user.person.orcid) {
@@ -173,6 +173,7 @@ class UserService implements IUserService {
         }
         origUser.person.save(flush: true, failOnError: true)
         origUser.save(flush: true)
+        origUser
     }
 
     @PostLogging(LoggingEventType.RETRIEVAL)

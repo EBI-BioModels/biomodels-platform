@@ -19,14 +19,12 @@
 **/
 
 
-
-
-
-import net.biomodels.jummp.webapp.RegistrationCommand
-import net.biomodels.jummp.webapp.EditUserCommand
-import net.biomodels.jummp.webapp.UpdatePasswordCommand
-import net.biomodels.jummp.webapp.ResetPasswordCommand
 import grails.plugin.springsecurity.annotation.Secured
+import net.biomodels.jummp.plugins.security.User
+import net.biomodels.jummp.webapp.EditUserCommand
+import net.biomodels.jummp.webapp.RegistrationCommand
+import net.biomodels.jummp.webapp.ResetPasswordCommand
+import net.biomodels.jummp.webapp.UpdatePasswordCommand
 
 /*
 * @short Controller for managing user registrations
@@ -152,8 +150,8 @@ class UsermanagementController {
         }
         try {
             def user = cmd.toUser()
-        	userService.editUser(user)
-        	notificationService.updatePreferences(cmd.getPreferences(user))
+        	User user1 = userService.editUser(user)
+        	notificationService.updatePreferences(cmd.getPreferences(user1))
         }
         catch(Exception e) {
             flash.message = e.getMessage()

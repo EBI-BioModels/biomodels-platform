@@ -74,7 +74,7 @@ public interface IUserService {
      * @param user The User with the updated fields
      * @throws net.biomodels.jummp.core.user.UserInvalidException If the modified user does not validate
      */
-    void editUser(User user) throws UserInvalidException
+    User editUser(User user) throws UserInvalidException
     /**
      *
      * @return The current (security sanitized) user
