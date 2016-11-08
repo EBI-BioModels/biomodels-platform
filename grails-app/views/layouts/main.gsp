@@ -90,8 +90,8 @@
                     $( "#helpPanel" ).show();
                     adjustWidth(${helpWidth});
                     $( "#helpPanel" ).position({
-                        my: "right bottom",
-                        at: "right bottom",
+                        my: "right-1 bottom",
+                        at: "right-1 bottom",
                         of: ".main-menu"
                     });
                     helpHidden=0;
