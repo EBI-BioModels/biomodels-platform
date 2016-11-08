@@ -734,11 +734,11 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             def attachedRevision = Revision.findByModelAndRevisionNumber(revision.model,
                 revision.revisionNumber, [fetch: [model: "eager", format: 'eager']])
 
-            def revisionAdapter = DomainAdapter.getAdapter(attachedRevision)
-            RevisionTransportCommand cmd = revisionAdapter.toCommandObject()
+            //def revisionAdapter = DomainAdapter.getAdapter(attachedRevision)
+            //RevisionTransportCommand cmd = revisionAdapter.toCommandObject()
             // can't inject searchService -- cyclic dependency
-            def searchService = grailsApplication.mainContext.searchService
-            searchService.updateIndex(cmd)
+            //def searchService = grailsApplication.mainContext.searchService
+            //searchService.updateIndex(cmd)
             return attachedRevision
         }
         revision
@@ -1008,11 +1008,11 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             // persistence context. Reattach it and its associations before attempting to
             // turn them into transport commands in order to avoid LazyInitialisationExceptions
             def attachedModel = Model.get(model.id)
-            Revision r = attachedModel.revisions.first()
-            RevisionTransportCommand cmd = DomainAdapter.getAdapter(r).toCommandObject()
-            // can't inject searchService -- cyclic dependency
-            def searchService = grailsApplication.mainContext.searchService
-            searchService.updateIndex(cmd)
+            //Revision r = attachedModel.revisions.first()
+            //RevisionTransportCommand cmd = DomainAdapter.getAdapter(r).toCommandObject()
+            //// can't inject searchService -- cyclic dependency
+            //def searchService = grailsApplication.mainContext.searchService
+            //searchService.updateIndex(cmd)
             return attachedModel
         }
         model
