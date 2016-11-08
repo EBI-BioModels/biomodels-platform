@@ -350,10 +350,10 @@ jummp.controllerAnnotations = [
 // ldap
 if ((jummpConfig.jummp.security.ldap.enabled instanceof ConfigObject) || !Boolean.parseBoolean(jummpConfig.jummp.security.ldap.enabled)) {
     jummp.security.ldap.enabled = false
-    println("Excluding ldap")
+    println("INFO\tExcluding ldap")
     pluginsToExclude << "springSecurityLdap"
 } else {
-    println("using ldap")
+    println("INFO\tUsing ldap")
     jummp.security.ldap.enabled = true
     /*grails.plugin.springsecurity.ldap.context.managerDn       = jummpConfig.jummp.security.ldap.managerDn
     grails.plugin.springsecurity.ldap.context.managerPassword   = jummpConfig.jummp.security.ldap.managerPw
@@ -594,9 +594,9 @@ if (!(jummpConfig.jummp.security.cms.policy instanceof ConfigObject)) {
 }
 
 if (jummp.security.cms.policy != null) {
-    println "Using ${jummp.security.cms.policy} to configure Weceem permissions."
+    println "INFO\tUsing ${jummp.security.cms.policy} to configure Weceem permissions."
 } else {
-    println "Using Weceem's default permissions."
+    println "WARN\tUsing Weceem's default permissions."
 }
 
 grails.plugin.springsecurity.controllerAnnotations.staticRules = jummp.controllerAnnotations

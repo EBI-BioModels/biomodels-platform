@@ -58,7 +58,7 @@ grails.project.dependency.resolution = {
     repositories {
         inherits true //inherit repo definitions from plugins
         if (System.getenv("JUMMP_ARTIFACTORY_URL")) {
-            println "Artifactory URL: " + System.getenv("JUMMP_ARTIFACTORY_URL")
+            println "INFO\tArtifactory URL: " + System.getenv("JUMMP_ARTIFACTORY_URL")
             mavenRepo "${System.getenv('JUMMP_ARTIFACTORY_URL')}"
         }
         grailsPlugins()
@@ -196,12 +196,12 @@ grails.plugin.location.'jummp-plugin-omicsdi' = "jummp-plugins/jummp-plugin-omic
 grails.plugin.location.'jummp-plugin-qc-info' = "jummp-plugins/jummp-plugin-qc-info"
 //grails.plugin.location.'jummp-plugin-jms-remote' = "jummp-plugins/jummp-plugin-jms-remote"
 if ("jms".equalsIgnoreCase(System.getenv("JUMMP_EXPORT"))) {
-    println "Enabling JMS remoting..."
+    println "INFO\tEnabling JMS remoting..."
     grails.plugin.location.'jummp-plugin-ast' = 'jummp-plugins/jummp-plugin-ast'
     grails.plugin.location.'jummp-plugin-remote' = "jummp-plugins/jummp-plugin-remote"
     grails.plugin.location.'jummp-plugin-jms' = "jummp-plugins/jummp-plugin-jms"
 } else {
-    println "JMS disabled"
+    println "INFO\tJMS disabled"
 }
 
 // Remove any files not needed in production mode
