@@ -394,6 +394,7 @@ closeSession = {
     }
     session.flush()
     session.clear()
+    session.close()
     TransactionSynchronizationManager.unbindResourceIfPossible(sessionFactory)
 }
 
