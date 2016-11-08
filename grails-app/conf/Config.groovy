@@ -389,33 +389,49 @@ if (jummpConfig.jummp.vcs.workingDirectory) {
     jummp.vcs.workingDirectory = jummpConfig.jummp.vcs.workingDirectory
 }
 // search config
-if (!(jummpConfig.jummp.search.url instanceof ConfigObject)) {
-    final Pattern URL_PATTERN = ~/http:\/\/[a-zA-Z0-9\.\-_]+(:[0-9]+)?(\/[a-zA-Z0-9\-\._]+)*/
-    final String solrSetting = jummpConfig.jummp.search.url
-    final String solrUrl
-    if (solrSetting?.endsWith("/")) {
-        solrUrl = solrSetting.substring(0, solrSetting.length() - 1)
-    } else {
-        solrUrl = solrSetting
-    }
-    if (!solrUrl || ! (solrUrl ==~ URL_PATTERN)) {
-        throw new IllegalArgumentException("""The URL for the search server ($solrUrl) does \
+// model search strategy setting: "omicsdi" or "solr"
+if (!(jummpConfig.jummp.search.strategy instanceof ConfigObject)) {
+    jummp.search.strategy = jummpConfig.jummp.search.strategy
+} else {
+    // default to solr
+    jummp.search.strategy = "solr"
+}
+
+if (jummp.search.strategy == "solr") {
+    if (!(jummpConfig.jummp.search.url instanceof ConfigObject)) {
+        final Pattern URL_PATTERN = ~/http:\/\/[a-zA-Z0-9\.\-_]+(:[0-9]+)?(\/[a-zA-Z0-9\-\._]+)*/
+        final String solrSetting = jummpConfig.jummp.search.url
+        final String solrUrl
+        if (solrSetting?.endsWith("/")) {
+            solrUrl = solrSetting.substring(0, solrSetting.length() - 1)
+        } else {
+            solrUrl = solrSetting
+        }
+        if (!solrUrl || !(solrUrl ==~ URL_PATTERN)) {
+            throw new IllegalArgumentException("""The URL for the search server ($solrUrl) does \
 not look right. Check the value of setting 'jummp.search.url'.""")
+        } else {
+            jummp.search.url = solrUrl
+            println "INFO\tUsing $solrUrl as the URL of the search server."
+        }
     } else {
-        jummp.search.url = solrUrl
-        println "INFO\tUsing $solrUrl as the URL of the search server."
+        throw new IllegalArgumentException("""\
+Please add the setting 'jummp.search.url', pointing to a Solr instance, to your configuration.""")
+    }
+    if (!(jummpConfig.jummp.search.folder instanceof ConfigObject)) {
+        final String searchFolder = jummpConfig.jummp.search.folder
+        jummp.search.folder = searchFolder
+        println "INFO\tSOLR_HOME is set to $searchFolder."
+    } else {
+        println "WARN\tSetting jummp.search.folder is undefined. Have you set \$SOLR_HOME?"
     }
 } else {
-    throw new IllegalArgumentException("""\
-Please add the setting 'jummp.search.url', pointing to a Solr instance, to your configuration.""")
+    // folder containing the exported OmicsDI entries
+    if (!(jummpConfig.jummp.search.exportFolder instanceof ConfigObject)) {
+        jummp.search.exportFolder = jummpConfig.jummp.search.exportFolder
+    }
 }
-if (!(jummpConfig.jummp.search.folder instanceof ConfigObject)) {
-    final String searchFolder = jummpConfig.jummp.search.folder
-    jummp.search.folder = searchFolder
-    println "INFO\tSOLR_HOME is set to $searchFolder."
-} else {
-    println "WARN\tSetting jummp.search.folder is undefined. Have you set \$SOLR_HOME?"
-}
+
 if (!(jummpConfig.jummp.search.pathToIndexerExecutable instanceof ConfigObject)) {
     jummp.search.pathToIndexerExecutable = jummpConfig.jummp.search.pathToIndexerExecutable
 }
@@ -452,17 +468,7 @@ if (!(jummpConfig.jummp.security.curatorByDefault instanceof ConfigObject)) {
     // default to true
     jummp.security.curatorByDefault = true
 }
-// model search strategy setting: "omicsdi" or "solr"
-if (!(jummpConfig.jummp.search.strategy instanceof ConfigObject)) {
-    jummp.search.strategy = jummpConfig.jummp.search.strategy
-} else {
-    // default to solr
-    jummp.search.strategy = "solr"
-}
-// folder containing the exported OmicsDI entries
-if (!(jummpConfig.jummp.search.exportFolder instanceof ConfigObject)) {
-    jummp.search.exportFolder = jummpConfig.jummp.search.exportFolder
-}
+
 if (!(jummpConfig.jummp.security.certificationRole instanceof ConfigObject)) {
     jummp.security.certificationRole = jummpConfig.jummp.security.certificationRole
 } else {

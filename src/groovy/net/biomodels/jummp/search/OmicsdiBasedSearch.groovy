@@ -104,8 +104,6 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
 
     def producerTemplate = Holders.grailsApplication.mainContext.getBean('producerTemplate')
 
-    def solrSvrHolder = Holders.grailsApplication.mainContext.getBean('solrServerHolder')
-
     void onApplicationEvent(ModelOperationEvent event) {
         // look at solrbasedsearch
     }
@@ -271,7 +269,6 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
                 'folder': exchangeFolder,
                 'mainFiles': fetchFilesFromRevision(revision, true),
                 'allFiles': fetchFilesFromRevision(revision, false),
-                'solrServer': solrSvrHolder.SOLR_CORE_URL,
                 'jummpPropFile': configurationService.getConfigFilePath(),
                 'miriamExportFile': registryExport,
                 'searchStrategy': searchStrategy,

@@ -76,10 +76,8 @@ class SearchService {
 
     private void loadSearchStrategy() {
         String strategySetting = grails.util.Holders.grailsApplication.config.jummp.search.strategy
-        if (strategySetting)
-            log.info "Loaded search strategy: ${strategySetting}"
-        else {
-            log.error "Cannot load the value of search strategy property."
+        if (!strategySetting) {
+            log.error "Cannot load the setting model search strategy."
             strategySetting = "solr"
             log.error "... using the default value: ${strategySetting}"
         }
