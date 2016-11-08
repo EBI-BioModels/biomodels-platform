@@ -86,7 +86,7 @@ grails.project.dependency.resolution = {
         compile "uk.ac.ebi.ddi:ddi-ebe-ws-dao:1.0-SNAPSHOT"
         // TODO: remember to update this setting in jummp-plugin-configuration
         compile "net.biomodels.jummp:AnnotationStore:0.3.1-SNAPSHOT"
-        compile "org.apache.solr:solr-solrj:5.3.1"
+        compile "org.apache.solr:solr-solrj:5.4.1"
         //required by both JSBML and SolrJ
         compile "org.codehaus.woodstox:woodstox-core-lgpl:4.4.1"
         // fixes https://issues.apache.org/jira/browse/HTTPCLIENT-1418
