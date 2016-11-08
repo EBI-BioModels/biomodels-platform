@@ -33,6 +33,7 @@ import groovy.sql.Sql
 import groovyx.gpars.GParsPool
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.locks.ReentrantLock
 import java.util.regex.Pattern
 import net.biomodels.jummp.core.model.ValidationState
 import org.springframework.orm.hibernate4.SessionHolder
@@ -114,10 +115,19 @@ Sql authConnection
  */
 File simulationFolder
 
-/*
- * List of users used in this import
+/**
+ * Cache of users used in this import which maps their email to their id.
+ *
+ * Since users in this map may be reused in different threads, and hence different
+ * Hibernate sessions, we cannot put User objects as values. This is because any subsequent
+ * changes to the user object outside of its original session will NOT be persisted in the
+ * database.
  */
-def usersUsed = [] as Set
+def userCache = new ConcurrentHashMap<String, Long>()
+/**
+ * Guard against cache stampedes
+ */
+ReentrantLock userCacheModifier = new ReentrantLock()
 
 /**
  * The branches of BioModels where we look for model information.
@@ -687,9 +697,9 @@ target(cleanup: "Shutdown hook used to gracefully close resources") {
 }
 
 target(expireUserPasswords: 'Forces users with accounts created herein to reset their passwords') {
-        usersUsed.each { userToExpire ->
-            userService.expirePassword(userToExpire.id, true)
-        }
+    userCache.values().each { id ->
+        userService.expirePassword(id, true)
+    }
 }
 
 target(closeDataSources: "Close any active database connections") {
@@ -939,49 +949,142 @@ prettify = { long time ->
  * argument.
  */
 getUser = { modelId, branch ->
-    if (branch) {
-        // get user from appropriate biomodels table
-        int submitterId = getSubmitterIdForModel(modelId, branch)
-        if (!submitterId) {
-            error "No submitter was found for model $modelId in the $branch branch."
-            return null
-        }
-        def row = authConnection.firstRow("select * from auth_persons where person_id = ?",
-                [submitterId])
-        if (!row || !row?.email) {
-            error("Could not find user information for submitter #$submitterId ($modelId): $row")
-            return null
-        }
-        String email = row.email
-        // if user does not exist, create it based on data available in biomodels
-        def user = User.findByEmail(email)
+    if (!branch || !modelId) {
+        return null
+    }
+    // get user from appropriate biomodels table
+    int submitterId = getSubmitterIdForModel(modelId, branch)
+    if (!submitterId) {
+        error "No submitter was found for model $modelId in the $branch branch."
+        return null
+    }
+    def row = authConnection.firstRow("select * from auth_persons where person_id = ?",
+            [submitterId])
+    if (!row || !row?.email) {
+        error("Could not find user information for submitter #$submitterId ($modelId): $row")
+        return null
+    }
+    String email = row.email
+    // if user does not exist, create it based on data available in biomodels
+    def user
+    userCacheModifier.lock()
+    try {
+        user = findUserByEmail(email)
         if (!user) {
             String personName = "${row.given_name} ${row.family_name}"
-            def person = Person.newInstance(userRealName: personName,
-                    institution: row.organisation)
-            user = User.newInstance(person: person,
-                    username: getUsername(row), password: "autocreated",
-                    email: email, accountExpired: false, accountLocked: false,
-                    passwordExpired: false, enabled: true)
-            if (!user.validate()) {
-                def e = user.errors.allErrors.inspect()
-                error "Cannot create valid account for submitter #$submitterId of model $modelId: $e"
-                return null
-            }
-            long userId = userService.register(user, true)
-            if (userId) {
-                user = User.get(userId)
-            } else {
-                user = null
-            }
-        } else {
-            // otherwise use existing user, after un-expiring their password
-            userService.expirePassword(user.id, false)
+            String institution = row.organisation
+            String un = getUsername(row)
+            user = createUser(personName, institution, email, un)
+            putInUserCache(email, user.id)
         }
-        usersUsed.add(user)
+        return user
+    } finally {
+        userCacheModifier.unlock()
+    }
+}
+
+/**
+ * Adds an entry to userCache.
+ *
+ * Logs an error if there is already an entry with the same key.
+ *
+ * @param key the email adress of the user
+ * @param value the ID of the user
+ */
+putInUserCache = { key, value ->
+    userCacheModifier.lock()
+    try {
+        def existing = userCache.putIfAbsent(key, value)
+        if (existing) {
+            error "UserCache already had an entry for email $key: user #$existing, not #$value"
+        }
+    } finally {
+        userCacheModifier.unlock()
+    }
+}
+
+/**
+ * Resets the passwordExpired field for a given user.
+ *
+ * This unit of work is executed in a dedicated Session and transaction
+ * so that other worker threads can see the new value.
+ *
+ * @param user the User instance for which to disable the passwordExpired field.
+ * @return the given user with a valid password.
+ */
+unexpirePasswordIfNecessary = { user ->
+    if (!user.passwordExpired) {
         return user
     }
-    return null
+    user.discard() // detach from current session
+    User.withNewSession {
+        user.attach() // so that it can be attached to the new one
+        User.withTransaction {
+            user.passwordExpired = false
+            user.save(flush: true)
+        }
+    }
+    assert !(user.passwordExpired)
+    // now re-attach to the original session
+    return user.attach()
+}
+
+/**
+ * Looks up a user based on a given email address.
+ *
+ * userCache is consulted for potential matches first, falling back to a
+ * dynamic finder call. If the latter returns a hit, it is added to userCache.
+ *
+ * If a user is found for the given email address, this method will clear the
+ * passwordExpired flag if set.
+ *
+ * This method relies on the synchronisation barrier userCacheModifier to avoid
+ * cache stampedes in cases when multiple threads request the same user which is
+ * not present in the cache.
+ */
+findUserByEmail = { email ->
+    assert email
+    // guard against concurrent attempts to insert the same user
+    userCacheModifier.lock()
+    def result = null
+    try {
+        if (userCache.containsKey(email)) {
+            long id = userCache.get(email)
+            result = User.get(id)
+        } else {
+            result = User.findByEmail(email)
+            if (result) {
+                putInUserCache(email, result.id)
+                unexpirePasswordIfNecessary(result)
+            }
+        }
+        return result
+    } finally {
+        userCacheModifier.unlock()
+    }
+}
+
+/**
+ * Creates and persists a User instance based on the supplied information.
+ *
+ * @param name the name of the person for which this account is created
+ * @param institution the person's affiliation, if known.
+ * @param email the email of the user
+ * @param un the account username
+ */
+createUser = { name, institution, email, un ->
+    assert email
+    def person = Person.newInstance(userRealName: name, institution: institution)
+    user = User.newInstance(person: person, username: un, password: "autocreated",
+            email: email, accountExpired: false, accountLocked: false,
+            passwordExpired: false, enabled: true)
+    if (!user.validate()) {
+        def e = user.errors.allErrors.inspect()
+        error "Cannot create valid account for submitter #$submitterId of model $modelId: $e"
+        return null
+    }
+    long userId = userService.register(user, true)
+    User.get(userId)
 }
 
 /**
