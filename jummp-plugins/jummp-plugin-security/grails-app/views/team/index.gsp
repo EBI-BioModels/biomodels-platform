@@ -40,7 +40,7 @@
                     height: 200
                 });
 
-                $("button").click(function (e) {
+                $("button[id^=btnDelete]").click(function (e) {
                     e.preventDefault();
                     var thisValue = $(this).attr("value");
                     $('#dialog-confirm').dialog({
