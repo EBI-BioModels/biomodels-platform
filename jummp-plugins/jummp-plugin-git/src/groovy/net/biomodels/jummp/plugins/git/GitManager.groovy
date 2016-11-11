@@ -83,7 +83,7 @@ class GitManager implements VcsManager {
     private final ConcurrentHashMap<String, ReentrantLock> locks = new ConcurrentHashMap<String, ReentrantLock>()
     private final ConcurrentHashMap<String, FileLock> diskLocks = new ConcurrentHashMap<String, FileLock>()
     // cache of initialised repositories
-    private final Map<File, Git>  initedRepositories = Collections.synchronizedMap(new LruCache<File, Git>(20))
+    private final Map<File, Git>  initedRepositories = Collections.synchronizedMap(new LruCache<File, Git>(1000))
     // exchange directory
     private File exchangeDirectory
     // legacy parameter specifying remoteness. Probably useless.

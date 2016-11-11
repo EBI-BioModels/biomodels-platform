@@ -1166,13 +1166,13 @@ databaseChangeLog = {
    include file: "20140804_make_repoFile_path_relative.groovy"
 
 
-	include file: 'notifications.groovy'
+   include file: 'notifications.groovy'
 
-	include file: 'addSenderToNotification.groovy'
+   include file: 'addSenderToNotification.groovy'
 
-	include file: 'trackNotificationSeenByUser.groovy'
+   include file: 'trackNotificationSeenByUser.groovy'
 
-	include file: 'removeFromFieldFromNotification.groovy'
+   include file: 'removeFromFieldFromNotification.groovy'
 
     include file: '20150409dropMiriamAnnotationTables.groovy'
 
@@ -1188,7 +1188,11 @@ databaseChangeLog = {
 
     include file: '20150611-widenResourceReferenceName.groovy'
 
-	include file: '20150626_addCollectionNameToResourceReference.groovy'
+    include file: '20150618_createBiomodelsDOM.groovy'
+
+    include file: '20150626_addCollectionNameToResourceReference.groovy'
+
+    include file: '20150820_widen_curation_comments.groovy'
 
 	include file: '20151012_addMetadataValidationToRevision.groovy'
 
@@ -1210,3 +1214,4 @@ databaseChangeLog = {
 
     include file: '20161011_createIndexingPlanTable.groovy'
 }
+

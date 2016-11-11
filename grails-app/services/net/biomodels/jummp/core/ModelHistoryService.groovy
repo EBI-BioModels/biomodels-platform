@@ -105,9 +105,11 @@ class ModelHistoryService {
             return
         }
         // test the number of items in the users history
-        while (ModelHistoryItem.countByUser(user) >= maxNumber) {
-            // exceeded the maximum number - drop oldest item
-            ModelHistoryItem.findByUser(user, [sort: 'lastAccessedDate' ]).delete(flush: true)
+        if (ModelHistoryItem.countByUser(user, [lock: true]) >= maxNumber) {
+            // exceeded the maximum number - drop oldest items
+            List toDelete = ModelHistoryItem.findAllByUser(user,
+                    [sort: 'lastAccessedDate', lock: true, offset: maxNumber - 1])
+            toDelete*.delete(flush: true)
         }
         ModelHistoryItem newItem = ModelHistoryItem.create(model, user)
         newItem.save(flush: true)

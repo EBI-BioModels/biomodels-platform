@@ -455,10 +455,10 @@ OR lower(m.publication.affiliation) like :filter
         Model model = ModelAdapter.findByPerennialIdentifier(id)
         if (model) {
             if (!getLatestRevision(model)) {
-                throw new AccessDeniedException("No access to Model with Id ${id}")
+                throw new AccessDeniedException("No access to the versions of the model with id ${id}".toString())
             }
         } else {
-            throw new AccessDeniedException("No access to Model with Id ${id}")
+            throw new AccessDeniedException("No access to Model with Id ${id}".toString())
         }
         return model
     }
@@ -709,11 +709,12 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             def attachedRevision = Revision.findByModelAndRevisionNumber(revision.model,
                 revision.revisionNumber, [fetch: [model: "eager", format: 'eager']])
 
-            def revisionAdapter = DomainAdapter.getAdapter(attachedRevision)
-            RevisionTransportCommand cmd = revisionAdapter.toCommandObject()
+            //def revisionAdapter = DomainAdapter.getAdapter(attachedRevision)
+            //RevisionTransportCommand cmd = revisionAdapter.toCommandObject()
             // can't inject searchService -- cyclic dependency
-            def searchService = grailsApplication.mainContext.searchService
-            searchService.updateIndex(cmd)
+            //def searchService = grailsApplication.mainContext.searchService
+            //searchService.updateIndex(cmd)
+            return attachedRevision
         }
         revision
     }
@@ -865,12 +866,11 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             boolean fileExists = f.exists()
             if (!fileExists) {
                 log.error("Non-existent path for RepositoryFile ${rf.dump()} from ${repoFileCmds.dump()}")
-                throw new ModelException("There was a problem saving file ${f.name} for this revision.")
+                throw new ModelException("There was a problem saving file ${f.name} for this revision.".toString())
             }
             boolean fileIsEmpty = !f.length()
             if (fileIsEmpty) {
-                log.error("Empty file ${f.name} included in ${repoFileCmds.dump()}")
-                throw new ModelException("Cannot save empty file ${f.name} for this revision.")
+                log.warn("Empty file ${f.name} included in ${repoFileCmds}")
             }
             if (rf.mainFile) {
                 foundValidMainFile = true
@@ -899,7 +899,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
                 msg.append("The file failed due to ${domain.errors.allErrors.inspect()}")
                 log.error(msg)
                 throw new ModelException(m, """\
-Your submission appears to contain invalid file ${fileName}. Please review it and try again.""")
+Your submission appears to contain invalid file ${fileName}. Please review it and try again.""".toString())
             } else {
                 results.add(domain)
             }
@@ -977,11 +977,12 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             // persistence context. Reattach it and its associations before attempting to
             // turn them into transport commands in order to avoid LazyInitialisationExceptions
             def attachedModel = Model.get(model.id)
-            Revision r = attachedModel.revisions.first()
-            RevisionTransportCommand cmd = DomainAdapter.getAdapter(r).toCommandObject()
-            // can't inject searchService -- cyclic dependency
-            def searchService = grailsApplication.mainContext.searchService
-            searchService.updateIndex(cmd)
+            //Revision r = attachedModel.revisions.first()
+            //RevisionTransportCommand cmd = DomainAdapter.getAdapter(r).toCommandObject()
+            //// can't inject searchService -- cyclic dependency
+            //def searchService = grailsApplication.mainContext.searchService
+            //searchService.updateIndex(cmd)
+            return attachedModel
         }
         model
     }
@@ -1019,7 +1020,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         if (!success) {
             def err = "Cannot create the directory where the ${rev.name} should be stored"
             log.error(err)
-            throw new ModelException(rev.model, err)
+            throw new ModelException(rev.model, err.toString())
         }
         model.vcsIdentifier = new StringBuilder(containerName).append(File.separator).
                 append(modelPath).toString()
@@ -1059,7 +1060,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
            // errMsg.append("${model.toCommandObject().properties} to VCS: ${e.getMessage()}.\n")
             errMsg.append("${model.errors.allErrors.inspect()}\n")
             errMsg.append("${revision.errors.allErrors.inspect()}\n")
-            log.error(errMsg)
+            log.error(errMsg.toString())
             stopWatch.stop()
             throw new ModelException(DomainAdapter.getAdapter(model).toCommandObject(),
                 "Could not store new Model ${DomainAdapter.getAdapter(model).toCommandObject().properties} in VCS", e)
@@ -1102,14 +1103,19 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             stopWatch.setTag("modelService.uploadValidatedModel.grantPermissions")
             // let's add the required rights
             final String username = revision.owner.username
-            aclUtilService.addPermission(model, username, BasePermission.ADMINISTRATION)
-            aclUtilService.addPermission(model, username, BasePermission.DELETE)
-            aclUtilService.addPermission(model, username, BasePermission.READ)
-            aclUtilService.addPermission(model, username, BasePermission.WRITE)
-            aclUtilService.addPermission(revision, username, BasePermission.ADMINISTRATION)
-            aclUtilService.addPermission(revision, username, BasePermission.DELETE)
-            aclUtilService.addPermission(revision, username, BasePermission.READ)
+            try {
+                aclUtilService.addPermission(model, username, BasePermission.ADMINISTRATION)
+                aclUtilService.addPermission(model, username, BasePermission.DELETE)
+                aclUtilService.addPermission(model, username, BasePermission.READ)
+                aclUtilService.addPermission(model, username, BasePermission.WRITE)
+                aclUtilService.addPermission(revision, username, BasePermission.ADMINISTRATION)
+                aclUtilService.addPermission(revision, username, BasePermission.DELETE)
+                aclUtilService.addPermission(revision, username, BasePermission.READ)
+            } catch (Throwable e) {
+                log.error("failed to insert permissions for $model and $revision", e)
+            }
             stopWatch.stop()
+
             if (IS_DEBUG_ENABLED) {
                 log.debug("Model $submissionId stored with id ${model.id}")
             }
@@ -1185,7 +1191,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         if (!modelFileFormatService.validate(modelFiles, format, [])) {
             def err = "The files ${modelFiles.inspect()} do no comprise valid ${meta.format.identifier}"
             log.error(err)
-       //     throw new ModelException(meta, "Invalid ${meta.format.identifier} submission.")v
+       //     throw new ModelException(meta, "Invalid ${meta.format.identifier} submission.")
             valid = false
         }
         // model is valid, create a new repository and store it as revision1
@@ -1205,7 +1211,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         if (!success) {
             def err = "Cannot create the directory where the ${name} should be stored"
             log.error(err)
-            throw new ModelException(meta, err)
+            throw new ModelException(meta, err.toString())
         }
         model.vcsIdentifier = new StringBuilder(containerName).append(File.separator).
                     append(modelPath).toString()
@@ -1240,7 +1246,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             log.error(errMsg)
             stopWatch.stop()
             throw new ModelException(DomainAdapter.getAdapter(model).toCommandObject(),
-                "Could not store new Model ${DomainAdapter.getAdapter(model).toCommandObject().properties} in VCS", e)
+                "Could not store new Model ${DomainAdapter.getAdapter(model).toCommandObject().properties} in VCS".toString(), e)
         }
         stopWatch.lap("Finished importing model in VCS.")
         stopWatch.setTag("modelService.uploadModelAsList.gormValidation")

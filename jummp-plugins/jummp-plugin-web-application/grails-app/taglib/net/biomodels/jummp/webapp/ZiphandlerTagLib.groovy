@@ -164,10 +164,11 @@ class ZiphandlerTagLib {
                     }
                 }
      		}
-     		builder.append("</script>")
         }
         catch(Exception e) {
-        	e.printStackTrace()
+            log.error e.message, e
+        } finally {
+            builder.append("</script>")
         }
 	}
 
