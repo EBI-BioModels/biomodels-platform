@@ -189,7 +189,6 @@ def sessionFactory
  * Services used by the script
  */
 def modelService
-def searchService
 def modelFileFormatService
 def userService
 def springSecurityService
@@ -475,7 +474,6 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
     rtc.context = appCtx
     sessionFactory = appCtx.sessionFactory
     modelService = appCtx.modelService
-    searchService = appCtx.searchService
     modelFileFormatService = appCtx.modelFileFormatService
     userService = appCtx.userService
     springSecurityService = appCtx.springSecurityService
@@ -511,23 +509,6 @@ target(main: "Puts everything together to import models from a given folder") {
                 }
             }
         }
-    }
-    log("${new Date()} -- finished insertions...")
-    GParsPool.withPool(POOL_SIZE) {
-        insertedRevisions.eachParallel { rId ->
-            openSession()
-            authenticate(username, password)   
-            try {
-                def revision = Revision.get(rId)
-                def adapter = domainAdapter.getAdapter(revision)
-                def cmd = adapter.toCommandObject()
-                searchService.updateIndex cmd
-            } finally {
-                logOut()
-                closeSession()
-            }
-        }
-        log("${new Date()} -- finished indexing...")
     }
 
     duration = (System.currentTimeMillis() - duration) / 1000 /* duration in ms */
@@ -872,7 +853,7 @@ target(closeCamel: "Shuts down the Camel instance, awaiting for current messages
     duration = System.currentTimeMillis()
     camelContext.shutdown()
     duration = (System.currentTimeMillis() - duration) / 1000
-    //log("Waited ${prettify(duration)} for Camel to stop gracefully.")
+    log("Waited ${prettify(duration)} for Camel to stop gracefully.")
 }
 
 target(sanitiseInput: "Processes user input") {
@@ -1308,16 +1289,6 @@ publishModelRevision = { modelId, revision ->
     } finally {
         logOut()
     }
-}
-
-/**
- * Triggers the indexing of the supplied Revision instance.
- */
-indexModelRevision = { revision ->
-    assert revision
-    def adapter = domainAdapter.getAdapter(revision)
-    def revisionCmd = adapter.toCommandObject(revision)
-    searchService.updateIndex(revisionCmd)
 }
 
 /**

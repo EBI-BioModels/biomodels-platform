@@ -274,9 +274,7 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
                 argsMap['proxySettings'] = ""
             }
             try {
-                //sendMessage("seda:exec", argsMap)
-                //sendMessage("direct:exec", argsMap)
-                producerTemplate.sendBody("direct:exec", argsMap)
+                producerTemplate.sendBody("seda:exec", argsMap)
             } catch (Exception e) {
                 log.error("Failed to index revision $revision.properties - ${e.message}", e)
                 //TODO RETRY
