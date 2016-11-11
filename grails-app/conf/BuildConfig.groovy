@@ -54,7 +54,7 @@ grails.project.dependency.resolution = {
         excludes 'javassist'
     }
     log "warn" // log level of Ivy resolver, either 'error', 'warn', 'info', 'debug' or 'verbose'
-    legacyResolve true
+    legacyResolve false // whether to do a secondary resolve on plugin installation, not advised and here for backwards compatibility
     repositories {
         inherits true //inherit repo definitions from plugins
         if (System.getenv("JUMMP_ARTIFACTORY_URL")) {
