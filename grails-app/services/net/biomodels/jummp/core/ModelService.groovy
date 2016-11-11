@@ -870,8 +870,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             }
             boolean fileIsEmpty = !f.length()
             if (fileIsEmpty) {
-                log.error("Empty file ${f.name} included in ${repoFileCmds.dump()}")
-                throw new ModelException("Cannot save empty file ${f.name} for this revision.")
+                log.warn("Empty file ${f.name} included in ${repoFileCmds}")
             }
             if (rf.mainFile) {
                 foundValidMainFile = true
