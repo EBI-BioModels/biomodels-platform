@@ -34,11 +34,12 @@ import net.biomodels.jummp.core.events.LoggingEventType
 import net.biomodels.jummp.core.events.PostLogging
 import net.biomodels.jummp.core.user.*
 import net.biomodels.jummp.model.PublicationPerson
+import grails.plugin.springsecurity.SpringSecurityUtils
+import grails.plugin.springsecurity.acl.AclSid
 import net.biomodels.jummp.plugins.security.Person
 import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.plugins.security.UserRole
-import grails.plugin.springsecurity.SpringSecurityUtils
 import org.perf4j.aop.Profiled
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.access.prepost.PreAuthorize
@@ -402,6 +403,7 @@ class UserService implements IUserService {
         registrationInvalidation.add(GregorianCalendar.DAY_OF_MONTH, 1)
         newUser.registrationInvalidation = registrationInvalidation.getTime()
         newUser.save(flush: true, failOnError:true)
+        new AclSid(sid: newUser.username, principal: true).save(flush: true)
         UserRole.create(newUser, Role.findByAuthority("ROLE_USER"), true)
         if (grailsApplication.config.jummp.security.curatorByDefault) {
         	UserRole.create(newUser, Role.findByAuthority("ROLE_CURATOR"), true)
