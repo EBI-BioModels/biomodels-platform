@@ -85,9 +85,11 @@ String workingDirectory
  */
 String exchangeDirectory
 /**
- * The authentication details of the user that is logged in.
+ * The authentication details of the user running the batch import
+ *
+ * Populated as part of the script's bootstrap, in prepareImporter().
  */
-def userAuthenticationDetails
+def adminAuthenticationDetails
 
 /*
  * BioModels database credentials
@@ -225,6 +227,7 @@ final String UPDATE_COMMENT_TPL = "Current version of "
 // BioModels branches
 final String AUTO_GEN = "auto_gen_models"
 final String PUBL = 'publ'
+final String UNCURA_PUBL = 'uncura_publ'
 
 /**
  * Returns a User corresponding to the submitter of the model in BioModels.
@@ -266,25 +269,28 @@ getUserFromBiomodelsId = { bmPersonId ->
  * Suitable for lightweight work for which we need not create a separate thread.
  */
 simpleRunAs = { auth, closure ->
-    def result
     def currentAuth
     try {
         currentAuth = SecurityContextHolder.context.authentication
         SecurityContextHolder.context.authentication = auth
-        result = closure.call()
-    } finally {
-        SecurityContextHolder.context.authentication = currentAuth
+        def result = closure.call()
         return result
+    } finally {
+        if (currentAuth) {
+            SecurityContextHolder.context.authentication = currentAuth
+        } else {
+            SecurityContextHolder.clearContext()
+        }
     }
 }
 
 registerUser = { user ->
-    simpleRunAs( userAuthenticationDetails, {
+    simpleRunAs( adminAuthenticationDetails, {
         userService.register(user, true)
     })
 }
 
-getDetailsForLoggedInUser = {
+getDetailsForLoggedInUser = { ->
     SecurityContextHolder.context.authentication
 }
 
@@ -398,6 +404,7 @@ giving up. Sorry about that.""", vcsIssues)
     }
 
     int authIssues = authenticate(username, password)
+    adminAuthenticationDetails = getDetailsForLoggedInUser()
     if (authIssues) {
         error "Wrong auth credentials. Why don't you try again?", authIssues
     }
@@ -485,7 +492,9 @@ target(main: "Puts everything together to import models from a given folder") {
     log("${new Date()} -- commencing batch import")
     long duration = System.currentTimeMillis()
     // the size of the thread pool -- assumes a hyper-threading CPU
-    final int POOL_SIZE = 2 * Runtime.getRuntime().availableProcessors()
+    // at most 48 workers since we have a limit of 50 JDBC connections
+    final int POOL_SIZE = Math.min(48, 2 * Runtime.getRuntime().availableProcessors())
+    log("Pool size is $POOL_SIZE")
     GParsPool.withPool(POOL_SIZE) {
         GParsPool.runForkJoin(modelFolder) { File root ->
             final String rootName = root.name
@@ -503,42 +512,43 @@ target(main: "Puts everything together to import models from a given folder") {
             }
         }
     }
-
-    // largely IO-bound because of the indexer
-    GParsPool.withPool(4 * POOL_SIZE) {
-        insertedRevisions.eachParallel { revisionId ->
+    log("${new Date()} -- finished insertions...")
+    GParsPool.withPool(POOL_SIZE) {
+        insertedRevisions.eachParallel { rId ->
             openSession()
-            authenticate(username, password)
+            authenticate(username, password)   
             try {
-                assert Revision.exists(revisionId)
-                def r = Revision.get(revisionId)
-                indexModelRevision(r)
-            } catch (Throwable t) {
-                error("Failed to index revision $revisionId: $t")
-                t.printStackTrace(System.out)
+                def revision = Revision.get(rId)
+                def adapter = domainAdapter.getAdapter(revision)
+                def cmd = adapter.toCommandObject()
+                searchService.updateIndex cmd
             } finally {
-                closeSession()
                 logOut()
+                closeSession()
             }
         }
+        log("${new Date()} -- finished indexing...")
     }
 
     duration = (System.currentTimeMillis() - duration) / 1000 /* duration in ms */
     String formattedDuration = prettify(duration)
+    logExistingFailures()
     log("Imported ${processedCount.get()} models (${failures.size()} failures) in $formattedDuration")
-    if (failures) {
-        log("Failed to import the following models:")
-        failures.each { modelLog ->
-            def mid = modelLog.key
-            modelLog.value.each { err -> log("$mid: $err") }
-        }
-    }
     cleanup()
     return 0
 }
 
+logExistingFailures = {
+    if (failures) {
+        log("Failed to import the following models:")
+        failures.keySet().sort().each { modelId ->
+            def modelLog = failures[modelId]
+            modelLog.each { err -> log("$modelId: $err") }
+        }
+    }
+}
+
 processModelFolder = { File folder ->
-    processedCount.incrementAndGet()
     final String MODEL_ID = folder.name
     // find branch
     final String BRANCH = getBranch MODEL_ID
@@ -546,6 +556,12 @@ processModelFolder = { File folder ->
         addModelError(MODEL_ID, "Can not find $MODEL_ID in any of $bioModelsBranches")
         return
     }
+    boolean shouldDefer = isModelInUncuraPublAndPubl(MODEL_ID, BRANCH)
+    if (shouldDefer) {
+        error("Not processing model $MODEL_ID in $BRANCH branch because it is also in publ.")
+        return
+    }
+    processedCount.incrementAndGet()
     // check symlink
     boolean haveSymlink = haveSymlinkToUrlFile folder, MODEL_ID
     if (!haveSymlink) {
@@ -563,13 +579,19 @@ processModelFolder = { File folder ->
         addModelError(MODEL_ID, "Error retrieving model details from BioModels DB")
         return
     }
-    openSession()
     try {
+        openSession()
         def submitter
-        simpleRunAs userAuthenticationDetails, {
-            // create a Jummp account for submitter
+        authenticate(username, password)
+        // create a Jummp account for submitter
+        try {
             submitter = getUser MODEL_ID, BRANCH
+        } catch (Exception e) {
+            error("Can't get submitter account for MODEL $MODEL_ID ($BRANCH) :: $e")
+        } finally {
+            logOut()
         }
+
         if (!submitter) {
             addModelError(MODEL_ID, "No user found, please check details in BioModels DB")
             return
@@ -583,13 +605,16 @@ processModelFolder = { File folder ->
         }
         // submit second revision as * without original file
         def revision = addRevision(MODEL_ID, folder, submittedModel)
-        if (!revision) {
-            addModelError(MODEL_ID, "Could not update original submission.")
+        if (!revision || revision?.hasErrors()) {
+            def err = revision?.errors?.allErrors
+            addModelError(MODEL_ID, "Could not update original submission: $err")
             return
         }
         addRevisionAnnotations(revision, BRANCH, modelDetails, submitter)
-        publishModelRevision(revision)
-        insertedRevisions.offer(revision.id)
+        publishRevisionsForModel(MODEL_ID, submittedModel)
+        submittedModel.revisions.each { r ->
+            insertedRevisions.offer(r.id)
+        }
     } catch (Throwable t) {
         error("Something went wrong with ${MODEL_ID} - ${t}")
         addModelError(MODEL_ID, t.message)
@@ -623,15 +648,22 @@ submitOriginalFile = { branch, modelId, originalFile, infoMap ->
     if (!model) {
         error "$modelId ($branch): Submission of original file $originalFile with $infoMap failed -- $model "
         return null
-    } else { }
+    }
     // modify database to match the information from BioModels about this deposition
     def uploadDate = infoMap['submissionDate']
     def firstPublished = infoMap['publicationDate']
     def publicationId = infoMap['biomodels_id']
     def submissionId = infoMap['model_id']
-    if (isCuratedAndPublished(branch) && !publicationId) {
+    def inPublBranch = isCuratedAndPublished(branch)
+    if ( inPublBranch && !publicationId) {
         throw new IllegalStateException("No BIOMD* found for curated model $modelId".toString())
     }
+    log("MODEL $modelId ($branch) -- $model: inPubl: $inPublBranch \
+submissionId: $submissionId \
+publicationId: $publicationId \
+uploaded: $uploadDate \
+firstPublished: $firstPublished \
+in publ: $inPublBranch")
     if (publicationId) {
         model.publicationId = publicationId
         model.submissionId = submissionId
@@ -646,7 +678,12 @@ submitOriginalFile = { branch, modelId, originalFile, infoMap ->
         setCurationNotes(model)
     }
 
-    model.save(flush: true)
+    if (!model.save(flush: true) && model.hasErrors()) {
+        def err = model.errors.allErrors
+        error("$modelId : Validation errors when persisting original submission: $err")
+        return
+    }
+    log "${Thread.currentThread().name} Original model $modelId was successfully imported."
     return model
 }
 
@@ -654,18 +691,26 @@ isCuratedAndPublished = { branch ->
     PUBL  == branch
 }
 
+isNotCuratedAndPublished = { branch ->
+    UNCURA_PUBL == branch
+}
+
 addRevision = { modelId, parent, model ->
-    def revisionInfo = prepareRevision(modelId, parent, model)
-    try {
-        def revision = modelService.addValidatedRevision(revisionInfo.files, [], revisionInfo.revision)
-        log "added revision $revision for $modelId"
-        return revision
-    } catch(Exception e) {
-        error("Exception thrown while updating original submission: $e")
-        addModelError(modelId, "Exception thrown while updating original submission: $e")
-        e.printStackTrace(System.out)
+    if (!model.validate()) {
+        def err = model.errors.allErrors
+        addModelError(modelId, "Refusing to update invalid model $modelId: $err")
         return null
     }
+    def revisionInfo = prepareRevision(modelId, parent, model)
+    def revision
+    try {
+        revision = modelService.addValidatedRevision(revisionInfo.files, [], revisionInfo.revision)
+        log "added revision $revision for $modelId"
+    } catch(Exception e) {
+        error("Exception thrown while updating original submission $modelId: $e")
+        addModelError(modelId, "Exception thrown while updating original submission: $e")
+    }
+    revision
 }
 
 addRevisionAnnotations = { revision, branch, modelDetails, user ->
@@ -710,6 +755,42 @@ getUrlFileForModel = { folder, id ->
     new File(folder, "$id$URL_FILE")
 }
 
+/**
+ * Returns whether a model in uncura_publ is a duplicate of a record in publ.
+ *
+ * Some models appear in uncura_publ even though they have been moved to publ.
+ * The models do not appear in the non-curated list in BioModels, but we need
+ * to deal with the inconsistency in Jummp.
+ *
+ * This closure is used to ignore entries in the uncura_publ table that should
+ * not be there because they are also present in publ.
+ */
+isModelInUncuraPublAndPubl = { id, branch ->
+    if (isNotCuratedAndPublished(branch) && id.startsWith("MODEL")) {
+        def result = modelExistsInPubl(id)
+        return result
+    }
+    return false // let publ and p2m models go through
+}
+
+/**
+ * Checks if there is a BIOMD id for the supplied submission identifier.
+ *
+ * Expects modelId to be of the form MODEL\d{10}.
+ * Uses the cura table to provide this information and returns true iff there is
+ * a row in cura containing modelId as model_id and something starting with "BIOMD"
+ * in the biomodels_id column.
+ */
+modelExistsInPubl = { modelId ->
+    assert modelId?.startsWith("MODEL")
+    def curaRow = getModelById(modelId, "cura")
+    if (!curaRow) {
+        addModelError(modelId, "Expected to find the model in the cura table, but it's not there.")
+        throw new IllegalStateException("Model $modelId not found in cura table".toString())
+    }
+    return curaRow.biomodels_id?.startsWith("BIOMD")
+}
+
 /*
  * Returns true if modelFolder contains a symlink named ${id}.xml pointing to ${id}_url.xml
  */
@@ -743,6 +824,7 @@ findNewestRevisionFiles = { parent, id ->
 }
 
 prepareRevision = { modelId, parent, model ->
+    assert !(model.hasErrors())
     def fileMap = findNewestRevisionFiles(parent, modelId)
     def main = fileMap['mainFile']
     def additionals = fileMap['additionals']
@@ -752,17 +834,19 @@ prepareRevision = { modelId, parent, model ->
     def auth = getDetailsForLoggedInUser()
     String principal = auth.principal
     Date uploadDate = model.revisions[0].uploadDate
-    revisionTC.model = createModelCommandForRevision(revisionTC, principal, uploadDate, modelId)
+    def sId = model.submissionId
+    def pId = model.publicationId
+    revisionTC.model = createModelCommandForRevision(revisionTC, principal, uploadDate, sId, pId)
     [revision: revisionTC, files: fileTCs]
 }
 
-createModelCommandForRevision = { revision, submitterName, date, submissionId ->
+createModelCommandForRevision = { revision, submitterName, date, submissionId, publicationId ->
     def fmt = revision.format
     String fmtName = revision.format.identifier
     String fmtVersion = revision.format.formatVersion
     def formatCmd = mftc.newInstance(identifier: fmtName, formatVersion: fmtVersion)
     def modelCmd = mtc.newInstance( format: formatCmd, submitter: submitterName,
-            submissionDate: date, submissionId: submissionId)
+            submissionDate: date, submissionId: submissionId, publicationId: publicationId)
 }
 
 target(cleanup: "Shutdown hook used to gracefully close resources") {
@@ -903,7 +987,6 @@ authenticate = { user, passwd ->
                 16)
     }
     SecurityContextHolder.getContext().setAuthentication(auth)
-    userAuthenticationDetails = auth
     return 0
 }
 
@@ -919,8 +1002,13 @@ logOut = {
 }
 
 addModelError = { model, msg ->
-    def modelLog = getErrorLogForModel model
-    modelLog << msg
+    failuresLock.lock()
+    try {
+        def modelLog = getErrorLogForModel model
+        modelLog.add msg.toString()
+    } finally {
+        failuresLock.unlock()
+    }
 }
 
 getErrorLogForModel = { model ->
@@ -970,8 +1058,10 @@ getSubmissionData = { file, additional, comment ->
     final String DESCRIPTION = modelFileFormatService.extractDescription([file], format)
     // validate model
     boolean isValid = modelFileFormatService.validate([file], format.identifier, [])
-    def model = mtc.newInstance(submitter: userAuthenticationDetails.principal,
-                            submissionDate: new Date(), format: formatCommand)
+    def auth = getDetailsForLoggedInUser()
+    String principal = auth.principal
+    def model = mtc.newInstance(submitter: principal,
+            submissionDate: new Date(), format: formatCommand)
 
     // generate list of RFTCs
     def files = [modelWrapper]
@@ -1194,14 +1284,29 @@ getSubmitterIdForModel = { String modelId, String branch ->
 /**
  * Publishes a given model revision.
  *
+ * @param modelId the model identifier (either submissionId or publicationId)
+ *      that should be used in the generated log messages.
  * @param revision The Revision instance that should be published.
  */
-publishModelRevision = { revision ->
-    simpleRunAs userAuthenticationDetails, {
+publishRevisionsForModel = { modelId, model ->
+    def revisions = model.revisions
+    revisions.each { r ->
+        publishModelRevision(modelId, r)
+    }
+}
+
+publishModelRevision = { modelId, revision ->
+    authenticate(username, password)
+    try {
         aclUtilService.addPermission(revision, "ROLE_USER", BasePermission.READ)
         aclUtilService.addPermission(revision, "ROLE_ANONYMOUS", BasePermission.READ)
         revision.state = ModelState.PUBLISHED
         revision.save()
+    } catch (Exception e) {
+        error("Unable to publish model revision ${revision.id}: $e")
+        addModelError(modelId, "Unable to publish revision ${revision.id}")
+    } finally {
+        logOut()
     }
 }
 
@@ -1371,7 +1476,6 @@ getModelDetails = { modelId, modelBranch ->
         modelDetails['publication_id_type'] = row.publication_id_type
     } catch(Exception e) {
         error("Problem finding model details for $modelId in branch $modelBranch. ${e.message}.")
-        e.printStackTrace(System.out)
         return null
     }
     return modelDetails
