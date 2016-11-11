@@ -72,18 +72,12 @@
         <p style="padding-bottom:1em"><g:message code="submission.upload.explanation"/></p>
         <g:uploadForm id="fileUpload" novalidate="false" autocomplete="false" name="fileUploadForm">
             <div class="dialog">
-                <table class="formtable responsive-table center">
-                    <tbody>
-                        <jummp:displayExistingMainFile main="${workingMemory['main_file']}"/>
-                    </tbody>
-                </table>
+                <jummp:displayExistingMainFile main="${workingMemory['main_file']}"/>
                 <div id="noMains"></div>
+                <jummp:renderAdditionalFilesLegend/>
                 <fieldset>
-                    <legend>
-                        <jummp:renderAdditionalFilesLegend/>
-                    </legend>
                     <a href="#" id="addFile"><jummp:renderAdditionalFilesAddButton/></a>
-                    <table class='formtable responsive-table center' id="additionalFiles">
+                    <table class='formtable responsive-table' id="additionalFiles">
                         <tbody>
                             <g:if test="${workingMemory['additional_repository_files_in_working']}">
                                 <g:set var="resource" value="${workingMemory['additional_repository_files_in_working']}" />

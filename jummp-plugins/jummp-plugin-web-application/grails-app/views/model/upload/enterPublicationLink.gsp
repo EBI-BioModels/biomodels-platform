@@ -53,8 +53,9 @@
         }
     }
 %>
+<div class="row">
     <h2><g:message code="submission.publicationLink.header"/></h2>
-    <g:form>
+
         <g:message code="submission.publink.publication"/>
         <g:if test="${publication}">
         <g:if test="${publication.title && (publication.affiliation || publication.synopsis)}">
@@ -62,34 +63,26 @@
             <g:render  model="[model: model]" template="/templates/showPublication" />
         </g:if>
         </g:if>
+    <g:form>
         <div class="dialog">
-            <table class="formtable responsive-table">
-                <tbody>
-                     <tr class="prop">
-                        <%
-                            linkSourceTypes = PublicationLinkProvider.LinkType.
-                                values().collect { it.label }
-                        %>
-                        <td class="value" style="vertical-align:top;">
-                            <g:if test="${publication}">
-                                <g:select name="PubLinkProvider" id="pubLinkProvider"
-                                from="${linkSourceTypes}"
-                                        value="${publication.linkProvider.linkType}"
-                                        noSelection="['':'- No publication available -']"/>
-                                <g:textField name="PublicationLink" id="publicationLink" size="100"
-                                             value="${publication.link}"/>
-                            </g:if>
-                            <g:else>
-                                <g:select name="PubLinkProvider" id="pubLinkProvider"
-                                from="${linkSourceTypes}"
-                                noSelection="['':'- No publication available -']"/>
-                                <g:textField name="PublicationLink" id="publicationLink" size="100"/>
-                            </g:else>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            <div>
+            <%
+                linkSourceTypes = PublicationLinkProvider.LinkType.
+                    values().collect { it.label }
+            %>
+            <div class="small-12 medium-12 columns">
+                <g:if test="${publication}">
+                    <g:select name="PubLinkProvider" id="pubLinkProvider"
+                              from="${linkSourceTypes}"
+                              value="${publication.linkProvider.linkType}"
+                              noSelection="['':'- No publication available -']"/>
+                    <g:textField name="PublicationLink" id="publicationLink" value="${publication.link}"/>
+                </g:if>
+                <g:else>
+                    <g:select name="PubLinkProvider" id="pubLinkProvider"
+                              from="${linkSourceTypes}"
+                              noSelection="['':'- No publication available -']"/>
+                    <g:textField name="PublicationLink" id="publicationLink"/>
+                </g:else>
                 <g:submitButton name="Cancel" class="button"
                                 value="${g.message(code: 'submission.common.cancelButton')}" />
                 <g:submitButton name="Back" class="button"
@@ -99,6 +92,7 @@
             </div>
         </div>
     </g:form>
+</div>
 </body>
 <g:render template="/templates/decorateSubmission" />
 <g:render template="/templates/subFlowContextHelp" />

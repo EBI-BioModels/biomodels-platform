@@ -32,13 +32,15 @@
         <span>${it.radio} ${it.label}<br/></span>
     </g:radioGroup>
     <h3>How to generate</h3>
-    <button onclick="<g:remoteFunction controller="Omicsdi"
+    <button class="button" onclick="<g:remoteFunction controller="Omicsdi"
                                        action="exportOmicsdiEntriesWithIndexer"
-                                       name="exportButton" update="schemaXmlContent" asynchronous="false"/>">Export OmicsDI entries via JummpIndexer right now</button>
+                                       name="exportButton" update="schemaXmlContent"
+                                       asynchronous="false"/>">Export OmicsDI entries via JummpIndexer right now</button>
     <br/>
-    <button onclick="<g:remoteFunction controller="Omicsdi"
+    <button class="button" onclick="<g:remoteFunction controller="Omicsdi"
                                        action="exportOmicsdiEntriesWithIndexer"
-                                       name="delegateButton" update="schemaXmlContent" asynchronous="false"/>">Schedule the indexing process via JummpIndexer and QuartzScheduler</button>
+                                       name="delegateButton" update="schemaXmlContent"
+                                       asynchronous="false"/>">Schedule the indexing process via JummpIndexer and QuartzScheduler</button>
     <h2>Content of OmicsDI Schema XML file(s)</h2>
     <g:textArea id="schemaXmlContent" name="omicsdiSchemaXML" cols="100" rows="15">
     </g:textArea>

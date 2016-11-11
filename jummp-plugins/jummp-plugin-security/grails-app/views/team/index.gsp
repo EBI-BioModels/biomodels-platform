@@ -76,7 +76,7 @@
             <div id="dialog-confirm" title="Confirm Delete" style="display:none;">
                 <p>Are you sure you want to delete this team?</p>
             </div>
-            <table>
+            <table class="responsive-table">
                 <thead>
                     <tr>
                         <th class="spaced">Name</th>
@@ -91,7 +91,6 @@
                             <td class="spaced"><g:link action="show" id="${t.id}">${t.name}</g:link></td>
                             <td class="spaced">${t.description}</td>
                             <td class="spaced">${t.owner.person.userRealName}</td>
-                            %{--<td class="spaced">&nbsp;</td>--}%
                             <td class="spaced">
                                 <button id="btnDelete${t.id.toString()}" value="${t.id}">Delete</button></td>
                         </tr>

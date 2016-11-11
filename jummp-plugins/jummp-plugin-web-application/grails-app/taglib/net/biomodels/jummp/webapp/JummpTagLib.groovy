@@ -60,25 +60,27 @@ class JummpTagLib {
         def result = new StringBuilder()
         String mainFileLabel = selectDDMoReAwareMessageCode(
                 "submission.upload.mainFile.ddmore.label", "submission.upload.mainFile.label")
+        String mainFileSectionHeading = "<h3>${message(code: mainFileLabel)}</h3>"
+        result.append(mainFileSectionHeading)
+        result.append("<table class='formtable responsive-table'><tbody>")
         if (!attrs.main) {
-            result.append("<tr class='prop'>\n\t<td class='name'>\n\t\t<label for='mainFile'>\n\t\t\t")
-            result.append(message(code: mainFileLabel))
-            result.append("\n\t\t</label>\n\t</td>\n\t<td class='value'>\n\t\t")
+            result.append("<tr class='prop'>\n\t\t")
+            result.append("<td class='value'>\n\t\t")
             result.append("<input type='file' id='mainFile' name='mainFile'/>\n\t</td>\n</tr>")
+            result.append("</tbody></table>")
             out << result.toString()
             return
         }
         attrs.main.each { m ->
             RepositoryFileTransportCommand command = m as RepositoryFileTransportCommand
             String name = new File(command.path).name
-
-            result.append("<tr class='prop'>\n\t<td class='name'>\n\t\t<label for='mainFile'>\n\t\t\t")
-            result.append(message(code: mainFileLabel))
-            result.append("\n\t\t</label>\n\t</td>\n\t<td class='value'>\n\t\t")
+            result.append("<tr class='prop'>\n\t\t")
+            result.append("<td class='value'>\n\t\t")
             result.append("<span id='mainName_").append(name).append("'>").append(name).append("</span>\n\t\t")
             result.append("<input style='display:none;' type='file' id='mainFile' data-labelname='${name}' name='mainFile' class='mainFile'/>\n\t")
             result.append("<a href='#' class='replaceMain'>Replace</a> | <a href='#' class='removeMain'>Remove</a></td>\n</tr>\n")
         }
+        result.append("</tbody></table>")
         out << result.toString()
     }
 
@@ -108,7 +110,7 @@ class JummpTagLib {
         if (isDDMoReDeployment()) {
             additionalFilesLegend = "submission.upload.additionalFiles.ddmore.legend"
         }
-        out << message(code: additionalFilesLegend)
+        out << "<h3>${message(code: additionalFilesLegend)}</h3>"
     }
 
     def renderAdditionalFilesAddButton = {

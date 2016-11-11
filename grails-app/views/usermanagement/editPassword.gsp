@@ -29,7 +29,7 @@
      </head>
     <body>
         <div class="row">
-            <div class="medium-6 medium-centered large-6 large-centered columns">
+            <div class="medium-12 medium-centered large-8 large-centered columns">
             <g:form action="updatePassword">
                 <div class="row column edit-password-form">
                     <label class="required"><g:message code="user.administration.updatePassword.oldPassword"/></label>
@@ -45,6 +45,7 @@
                     </p>
                 </div>
             </g:form>
+            </div>
         </div>
    </body>
 </html>
