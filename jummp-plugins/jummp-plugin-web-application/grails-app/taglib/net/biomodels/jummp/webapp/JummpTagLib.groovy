@@ -380,7 +380,7 @@ class JummpTagLib {
             <tr>
             <td style="width: 25%; text-align: right; vertical-align: middle"><label>''')
             result.append(g.message(code: "jummp.certification.biomodels.flagLevel.label"))
-            result.append(''':</label></td>
+            result.append('''</label></td>
             <td><div class="rating">
                         <span id="star1" class="star-icon">&#9734;</span>
                         <span id="star2" class="star-icon">&#9734;</span>
