@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -55,8 +55,8 @@
         <g:form>
             <div class="dialog">
                 <div class="buttons">
-                    <g:submitButton name="Cancel" value="${g.message(code: 'submission.common.cancelButton')}" />
-                    <g:submitButton name="Continue" value="${g.message(code: 'submission.disclaimer.continueButton')}" />
+                    <g:submitButton name="Cancel" class="button" value="${g.message(code: 'submission.common.cancelButton')}" />
+                    <g:submitButton name="Continue" class="button" value="${g.message(code: 'submission.disclaimer.continueButton')}" />
                 </div>
             </div>
         </g:form>

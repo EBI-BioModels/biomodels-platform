@@ -35,8 +35,6 @@ import grails.util.Holders
 import net.biomodels.jummp.core.WebflowAclBeanDefinitionProcessor
 import net.biomodels.jummp.core.model.identifier.generator.AbstractModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGeneratorRegistryService
-import net.biomodels.jummp.search.SolrBasedSearch
-import org.apache.log4j.Logger
 import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
 import org.springframework.beans.factory.config.BeanDefinition
 import org.springframework.beans.factory.support.BeanDefinitionRegistry
@@ -74,39 +72,41 @@ beans = {
         timingAspect(org.perf4j.log4j.aop.TimingAspect)
     }
 
-    solrServerHolder(net.biomodels.jummp.search.SolrServerHolder) { bean ->
-        bean.scope = "singleton"
-        bean.autowire = "byName"
-        bean.initMethod = "init"
-        bean.destroyMethod = "destroy"
-    }
-
-    solrBasedSearch(net.biomodels.jummp.search.SolrBasedSearch) { bean ->
-        bean.scope = "singleton"
-        bean.autowire = "byName"
-        bean.singleton = true
-        producerTemplate = ref("producerTemplate")
-        solrServerHolder = ref("solrServerHolder")
-        modelService = ref("modelService")
-        springSecurityService = ref("springSecurityService")
-        grailsApplication = ref("grailsApplication")
-        configurationService = ref("configurationService")
-        miriamService = ref("miriamService")
-        aclUtilService = ref("aclUtilService")
-    }
-
-    omicsdiBasedSearch(net.biomodels.jummp.search.OmicsdiBasedSearch) { bean ->
-        bean.scope = "singleton"
-        bean.autowire = "byName"
-        bean.singleton = true
-        producerTemplate = ref("producerTemplate")
-        solrSvrHolder = ref("solrServerHolder")
-        modelService = ref("modelService")
-        springSecurityService = ref("springSecurityService")
-        grailsApplication = ref("grailsApplication")
-        configurationService = ref("configurationService")
-        miriamService = ref("miriamService")
-        aclUtilService = ref("aclUtilService")
+    println("INFO\tUsing $grailsApp.config.jummp.search.strategy as current model search strategy")
+    if (grailsApp.config.jummp.search.strategy == "solr") {
+        solrServerHolder(net.biomodels.jummp.search.SolrServerHolder) { bean ->
+            bean.scope = "singleton"
+            bean.autowire = "byName"
+            bean.initMethod = "init"
+            bean.destroyMethod = "destroy"
+        }
+        solrBasedSearch(net.biomodels.jummp.search.SolrBasedSearch) { bean ->
+            bean.scope = "singleton"
+            bean.autowire = "byName"
+            bean.singleton = true
+            producerTemplate = ref("producerTemplate")
+            solrServerHolder = ref("solrServerHolder")
+            modelService = ref("modelService")
+            springSecurityService = ref("springSecurityService")
+            grailsApplication = ref("grailsApplication")
+            configurationService = ref("configurationService")
+            miriamService = ref("miriamService")
+            aclUtilService = ref("aclUtilService")
+        }
+    } else {
+        omicsdiBasedSearch(net.biomodels.jummp.search.OmicsdiBasedSearch) { bean ->
+            bean.scope = "singleton"
+            bean.autowire = "byName"
+            bean.singleton = true
+            producerTemplate = ref("producerTemplate")
+            modelService = ref("modelService")
+            springSecurityService = ref("springSecurityService")
+            grailsApplication = ref("grailsApplication")
+            configurationService = ref("configurationService")
+            miriamService = ref("miriamService")
+            aclUtilService = ref("aclUtilService")
+            ebeyeWsConfig("uk.ac.ebi.ddi.ebe.ws.dao.config.EbeyeWsConfigDev")
+        }
     }
 
     revisionCreatedListener(net.biomodels.jummp.plugins.bives.RevisionCreatedListener) { bean ->

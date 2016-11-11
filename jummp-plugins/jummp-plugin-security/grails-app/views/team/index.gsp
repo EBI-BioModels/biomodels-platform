@@ -22,8 +22,6 @@
 <html>
     <head>
         <meta name="layout" content="main"/>
-        <link rel="stylesheet" href="${resource(contextPath: "${grailsApplication.config.grails.serverURL}",
-            dir: '/css/jqueryui/smoothness', file: 'jquery-ui-1.10.3.custom.min.css')}" />
     </head>
     <body>
         <g:if test="${flash.message}">
@@ -102,7 +100,7 @@
             </table>
         </g:if>
         <span class='spaced'>
-            <g:link controller="team" action="create">Create a team</g:link>
+            <g:link controller="team" action="create" class="button">Create a team</g:link>
         </span>
     </body>
 </html>

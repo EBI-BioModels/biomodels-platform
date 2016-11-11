@@ -23,183 +23,161 @@
 <%@ page import="net.biomodels.jummp.core.model.PublicationDetailExtractionContext" %>
 <%@ page import="net.biomodels.jummp.core.model.RevisionTransportCommand" %>
 <%@ page import="net.biomodels.jummp.core.model.PublicationTransportCommand" %>
-    <head>
-        <meta name="layout" content="main"/>
-        <title>
-            <g:if test="${isUpdate}">
-                <g:message code="submission.publicationInfoPage.update.title" args="${ [params.id] }" />
-            </g:if>
-            <g:else>
-                <g:message code="submission.publicationInfoPage.create.title"/>
-            </g:else>
-        </title>
-        <link rel="stylesheet"
-              href="${resource(contextPath: "${grailsApplication.config.grails.serverURL}", dir: '/css', file: 'publicationPageStyle.css')}" />
-        <g:javascript>
-            // Indeed, we don't need to check whether the authors is null or not because if case of the model has
-            // no publication yet, we always create an empty PersonTransportCommand to maintain authors
-            // during the submission flow.
-            if (${workingMemory['Authors'] != null}) {
-                var authorMap = {"authors": ${workingMemory['Authors'].collect {
-                    String userRealName = it.userRealName ?: ""
-                    String institution = it.institution ?: ""
-                    String orcid = it.orcid ?: ""
-                    [userRealName: userRealName, institution: institution, orcid: orcid]
-                    } as JSON}
-                };
-                var authorList = authorMap["authors"];
-            }
-        </g:javascript>
-        <g:javascript contextPath="" src="publicationSubmission.js"/>
-    </head>
-    <body>
-        <%
-            RevisionTransportCommand revision = workingMemory.get("RevisionTC") as RevisionTransportCommand
-            PublicationTransportCommand publication  = revision?.model?.publication as PublicationTransportCommand
-            def publicationMap = workingMemory.get('publication_objects_in_working') as HashMap<Object, PublicationDetailExtractionContext>
-            PublicationDetailExtractionContext pubContext = publicationMap.get(workingMemory.get('SelectedPubLinkProvider'))
-            if (pubContext && pubContext.publication) {
-                publication = pubContext.publication
-            }
-        %>
-        <h2>Update Publication Information</h2>
-        <g:form>
-            <div class="dialog">
-                <table class="formtable">
-                    <tbody>
-                        <tr class="prop">
-                            <td>
-                                <label>
-                                    <g:message code="submission.publication.title"/>
-                                </label>
-                            </td>
-                            <td>
-                                <g:textField class="input50" name="title" size="255" style="width: 98%"
-                                             value="${publication.title}"/>
-                            </td>
-                            <td>
-                                <label for="journal">
-                                    <g:message code="submission.publication.journal"/>
-                                </label>
-                            </td>
-                            <td>
-                                <g:textField class="input50" name="journal" size="255" style="width: 98%"
-                                             value="${publication.journal}"/>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <label>
-                                    <g:message code="submission.publication.authors"/>
-                                </label>
-                            </td>
-                            <td>
-                            <select class="input50" id="authorList" name="authorList" size="${workingMemory.get("Authors")?.size() ?: 5}">
-                                <g:each in="${publication.authors}">
-                                    <option value="${it.userRealName}|${it.orcid ?: ""}|${it.institution ?: ""}">${it.userRealName}</option>
-                                </g:each>
-                            </select>
-                            <div>
-                                <ul class="subListForm">
-                                    <li>
-                                        <label style="display:block; margin-left:0px">Name <span style="color: red">(*)</span></label>
-                                        <span><input class="input40" size="40" type="text" id="newAuthorName"/></span>
-                                    </li>
-                                    <li>
-                                        <label style="display:block;margin-left:0px">ORCID</label>
-                                        <span>
-                                            <input class="input40" size="40" type="text" id="newAuthorOrcid"
-                                                   title="Enter your ORCID ID. For example, an ORCID profile link is often formed as http://orcid.org/0000-0002-2876-6046, therefore this profile's ORCID ID is 0000-0002-2876-6046"/>
-                                        </span>
-                                    </li>
-                                    <li hidden>
-                                        <label style="display:block;margin-left:0px">Institution</label>
-                                        <span><input class="input40" size="40" type="text" id="newAuthorInstitution"/></span>
-                                    </li>
-                                    <li>
-                                        <a href="#" id="addButton" class="button">Add</a>
-                                        <a href="#" id="updateButton" class="button">Update</a>
-                                        <a href="#" id="deleteButton" class="button">Delete</a>
-                                    </li>
-                                </ul>
-                            </div>
-
-                            </td>
-                            <td>
-                                <label>
-                                    <g:message code="submission.publication.synopsis"/>
-                                </label>
-                            </td>
-                            <td>
-                                <g:textArea name="synopsis" id="synopsis" rows="13" cols="32"
-                                            value="${publication.synopsis}"/>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <label>
-                                    <g:message code="submission.publication.affiliation"/>
-                                </label>
-                            </td>
-                            <td>
-                                <g:textArea name="affiliation" id="affiliation" rows="5" cols="32"
-                                            value="${publication.affiliation}"/>
-                            </td>
-                            <td>
-                                <label>
-                                    <g:message code="submission.publication.pubDetails"/>
-                                </label>
-                            </td>
-                            <td>
-                                <div>
-                                    <ul class="subListForm">
-                                        <li>
-                                            <label style="display:block; margin-left:0px">
-                                                <g:message code="submission.publication.date"/></label>
-                                            <span>
-                                                <g:select name="month" from="${1..12}"
-                                                          value="${publication.month?:Calendar.instance.get(Calendar.MONTH)}"/>
-                                                <g:select name="year" from="${1800..Calendar.instance.get(Calendar.YEAR)}"
-                                                          value="${publication.year?:Calendar.instance.get(Calendar.YEAR)}"/>
-                                            </span>
-                                        </li>
-                                        <li>
-                                            <label style="display:block;margin-left:0px">
-                                                <g:message code="submission.publication.volume"/></label>
-                                            <span>
-                                                <g:textField class="input20" name="volume" size="20"
-                                                             value="${publication.volume}"/>
-                                            </span>
-                                        </li>
-                                        <li>
-                                            <label style="display:block;margin-left:0px">
-                                                <g:message code="submission.publication.issue"/></label>
-                                            <span>
-                                                <g:textField class="input20" name="issue" size="20"
-                                                             value="${publication.issue}"/>
-                                            </span>
-                                        </li>
-                                        <li>
-                                            <label style="display:block;margin-left:0px">
-                                                <g:message code="submission.publication.pages"/></label>
-                                            <span>
-                                                <g:textField class="input20" name="pages" size="20"
-                                                             value="${publication.pages}"/>
-                                            </span>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </td>
-                        </tr>
-                        </table>
-                  <div class="buttons">
-                    <g:submitButton name="Cancel" value="${g.message(code: 'submission.common.cancelButton')}" />
-                    <g:submitButton name="Back" value="${g.message(code: 'submission.common.backButton')}" />
-                    <g:submitButton id="continueButton" name="Continue" value="${g.message(code: 'submission.publication.continueButton')}" />
-                    <div name="authorListTemp" id="authorListTemp"
-                         style="width: 800px; height: 50px; margin: auto; border: 3px solid #73AD21; display: none"></div>
+<%
+    def style = grailsApplication.config.jummp.branding.style
+    def serverUrl = grailsApplication.config.grails.serverURL
+%>
+<head>
+    <meta name="layout" content="main"/>
+    <title>
+        <g:if test="${isUpdate}">
+            <g:message code="submission.publicationInfoPage.update.title" args="${ [params.id] }" />
+        </g:if>
+        <g:else>
+            <g:message code="submission.publicationInfoPage.create.title"/>
+        </g:else>
+    </title>
+    <link rel="stylesheet"
+          href="${resource(contextPath: "${serverUrl}", dir: "/css/${style}", file: 'publicationPageStyle.css')}" />
+    <g:javascript>
+        // Indeed, we don't need to check whether the authors is null or not because if case of the model has
+        // no publication yet, we always create an empty PersonTransportCommand to maintain authors
+        // during the submission flow.
+        if (${workingMemory['Authors'] != null}) {
+            var authorMap = {"authors": ${workingMemory['Authors'].collect {
+                String userRealName = it.userRealName ?: ""
+                String institution = it.institution ?: ""
+                String orcid = it.orcid ?: ""
+                [userRealName: userRealName, institution: institution, orcid: orcid]
+                } as JSON}
+            };
+            var authorList = authorMap["authors"];
+        }
+    </g:javascript>
+    <g:javascript contextPath="" src="${style}/publicationSubmission.js"/>
+</head>
+<body>
+    <%
+        RevisionTransportCommand revision = workingMemory.get("RevisionTC") as RevisionTransportCommand
+        PublicationTransportCommand publication  = revision?.model?.publication as PublicationTransportCommand
+        def publicationMap = workingMemory.get('publication_objects_in_working') as HashMap<Object, PublicationDetailExtractionContext>
+        PublicationDetailExtractionContext pubContext = publicationMap.get(workingMemory.get('SelectedPubLinkProvider'))
+        if (pubContext && pubContext.publication) {
+            publication = pubContext.publication
+        }
+    %>
+    <h2>Update Publication Information</h2>
+    <div class="row">
+    <g:form>
+        <div class="dialog">
+            <div class="small-6 medium-6 columns">
+                <label>
+                    <g:message code="submission.publication.title"/>
+                </label>
+                <g:textField class="input50" name="title" value="${publication.title}"/>
+                <label for="journal">
+                    <g:message code="submission.publication.journal"/>
+                </label>
+                <g:textField class="input50" name="journal" value="${publication.journal}"/>
+                <label>
+                    <g:message code="submission.publication.authors"/>
+                    <select class="input50" id="authorList" name="authorList" size="${workingMemory.get("Authors")?.size() ?: 5}" style="height: inherit">
+                        <g:each in="${publication.authors}">
+                            <option value="${it.userRealName}|${it.orcid ?: ""}|${it.institution ?: ""}">${it.userRealName}</option>
+                        </g:each>
+                    </select>
+                </label>
+                <div>
+                    <ul class="subListForm">
+                        <li>
+                            <label class="required">Name</label>
+                            <span><input class="input40" size="40" type="text" id="newAuthorName"/></span>
+                        </li>
+                        <li>
+                            <label style="display:block; margin-left:0px">ORCID</label>
+                            <span>
+                                <input class="input40" size="40" type="text" id="newAuthorOrcid"
+                                       title="Enter your ORCID ID. For example, an ORCID profile link is often formed as http://orcid.org/0000-0002-2876-6046, therefore this profile's ORCID ID is 0000-0002-2876-6046"/>
+                            </span>
+                        </li>
+                        <li hidden>
+                            <label style="display:block;margin-left:0px">Institution</label>
+                            <span><input class="input40" size="40" type="text" id="newAuthorInstitution"/></span>
+                        </li>
+                        <li>
+                            <a href="#" id="addButton" class="button">Add</a>
+                            <a href="#" id="updateButton" class="button">Update</a>
+                            <a href="#" id="deleteButton" class="button">Delete</a>
+                        </li>
+                    </ul>
+                </div>
+                <label>
+                    <g:message code="submission.publication.affiliation"/>
+                </label>
+                <g:textArea name="affiliation" id="affiliation" rows="5" cols="32"
+                            value="${publication.affiliation}"/>
+            </div>
+            <div class="small-6 medium-6 columns">
+                <label>
+                    <g:message code="submission.publication.synopsis"/>
+                </label>
+                <g:textArea name="synopsis" id="synopsis" rows="13" cols="32"
+                            value="${publication.synopsis}"/>
+                <label>
+                    <g:message code="submission.publication.pubDetails"/>
+                </label>
+                <div>
+                    <ul class="subListForm">
+                        <li>
+                            <label style="display: block; margin-left:0px">
+                                <g:message code="submission.publication.date"/></label>
+                            <span>
+                                <g:select name="month" from="${1..12}"
+                                          value="${publication.month?:Calendar.instance.get(Calendar.MONTH)}"/>
+                                <g:select name="year" from="${1800..Calendar.instance.get(Calendar.YEAR)}"
+                                          value="${publication.year?:Calendar.instance.get(Calendar.YEAR)}"/>
+                            </span>
+                        </li>
+                        <li>
+                            <label style="display:block;margin-left:0px">
+                                <g:message code="submission.publication.volume"/></label>
+                            <span>
+                                <g:textField class="input20" name="volume" size="20"
+                                             value="${publication.volume}"/>
+                            </span>
+                            <label style="display:block;margin-left:0px">
+                                <g:message code="submission.publication.issue"/></label>
+                            <span>
+                                <g:textField class="input20" name="issue" size="20"
+                                             value="${publication.issue}"/>
+                            </span>
+                        </li>
+                        <li>
+                            <label style="display:block;margin-left:0px">
+                                <g:message code="submission.publication.pages"/></label>
+                            <span>
+                                <g:textField class="input20" name="pages" size="20"
+                                             value="${publication.pages}"/>
+                            </span>
+                        </li>
+                    </ul>
                 </div>
             </div>
-        </g:form>
-    </body>
-    <g:render template="/templates/decorateSubmission" />
+        </div>
+        <div class="small-12 medium-12 columns">
+            <div class="buttons">
+            <g:submitButton name="Cancel" class="button"
+                            value="${g.message(code: 'submission.common.cancelButton')}" />
+            <g:submitButton name="Back" class="button"
+                            value="${g.message(code: 'submission.common.backButton')}" />
+            <g:submitButton id="continueButton" name="Continue" class="button"
+                            value="${g.message(code: 'submission.publication.continueButton')}" />
+            <div name="authorListTemp" id="authorListTemp"
+                 style="height: 50px; margin: auto; border: 3px solid #73AD21; display: none">
+            </div>
+            </div>
+        </div>
+    </g:form>
+    </div>
+</body>
+<g:render template="/templates/decorateSubmission" />

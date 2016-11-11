@@ -19,14 +19,12 @@
 **/
 
 
-
-
-
-import net.biomodels.jummp.webapp.RegistrationCommand
-import net.biomodels.jummp.webapp.EditUserCommand
-import net.biomodels.jummp.webapp.UpdatePasswordCommand
-import net.biomodels.jummp.webapp.ResetPasswordCommand
 import grails.plugin.springsecurity.annotation.Secured
+import net.biomodels.jummp.plugins.security.User
+import net.biomodels.jummp.webapp.EditUserCommand
+import net.biomodels.jummp.webapp.RegistrationCommand
+import net.biomodels.jummp.webapp.ResetPasswordCommand
+import net.biomodels.jummp.webapp.UpdatePasswordCommand
 
 /*
 * @short Controller for managing user registrations
@@ -36,8 +34,7 @@ import grails.plugin.springsecurity.annotation.Secured
 
 
 class UsermanagementController {
-
-	/**
+    /**
      * Dependency injection for the springSecurityService.
      */
     //def springSecurityService
@@ -92,27 +89,28 @@ class UsermanagementController {
     @Secured(["isAuthenticated()"])
     def show() {
     	String user = springSecurityService.principal.username
-        render view: "show", model: [postUrl          : "", flashMessage: checkForMessage(),
-                                     validationErrorOn: checkForErrorBean(),
-    								user: userService.getUser(user),
-    								notificationPermissions: notificationService.getNotificationPermissions(user)]
+        render  view: "show",
+                model: [postUrl: "", flashMessage: checkForMessage(),
+                        validationErrorOn: checkForErrorBean(),
+                        user: userService.getUser(user),
+                        notificationPermissions: notificationService.getNotificationPermissions(user)]
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def forgot() {
-        render view: "forgot", model: [postUrl: "", flashMessage: checkForMessage(),
-    								validationErrorOn: checkForErrorBean()]
+        render  view: "forgot",
+                model: [postUrl: "", flashMessage: checkForMessage(),
+                        validationErrorOn: checkForErrorBean()]
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
-    def passwordreset() {
-    	if (params.id) {
-    		flash.hashCode=params.id
-    		redirect action: 'reset'
-    	}
-    	else {
-    		redirect action: 'forgot'
-    	}
+    def resetPassword() {
+        if (params.id) {
+            flash.hashCode = params.id
+            redirect action: 'reset'
+        } else {
+            redirect action: 'forgot'
+        }
     }
 
     /**
@@ -152,8 +150,8 @@ class UsermanagementController {
         }
         try {
             def user = cmd.toUser()
-        	userService.editUser(user)
-        	notificationService.updatePreferences(cmd.getPreferences(user))
+        	User user1 = userService.editUser(user)
+        	notificationService.updatePreferences(cmd.getPreferences(user1))
         }
         catch(Exception e) {
             flash.message = e.getMessage()

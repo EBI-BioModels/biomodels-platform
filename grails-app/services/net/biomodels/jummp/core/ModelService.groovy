@@ -33,7 +33,7 @@ package net.biomodels.jummp.core
 import eu.ddmore.publish.service.PublishContext
 import eu.ddmore.publish.service.PublishException
 import eu.ddmore.publish.service.PublishInfo
-import grails.plugin.springsecurity.SpringSecurityService
+import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.transaction.Transactional
 import java.util.concurrent.locks.ReentrantLock
 import net.biomodels.jummp.annotationstore.Qualifier
@@ -41,37 +41,17 @@ import net.biomodels.jummp.annotationstore.ResourceReference
 import net.biomodels.jummp.annotationstore.Statement
 import net.biomodels.jummp.core.adapters.DomainAdapter
 import net.biomodels.jummp.core.adapters.ModelAdapter
-import net.biomodels.jummp.core.events.LoggingEventType
-import net.biomodels.jummp.core.events.ModelCreatedEvent
-import net.biomodels.jummp.core.events.ModelDeletedEvent
-import net.biomodels.jummp.core.events.ModelRestoredEvent
-import net.biomodels.jummp.core.events.PostLogging
-import net.biomodels.jummp.core.events.RevisionCreatedEvent
-import net.biomodels.jummp.core.model.ModelAuditTransportCommand
-import net.biomodels.jummp.core.model.ModelListSorting
-import net.biomodels.jummp.core.model.ModelState
-import net.biomodels.jummp.core.model.ModelTransportCommand
-import net.biomodels.jummp.core.model.PermissionTransportCommand
-import net.biomodels.jummp.core.model.PublicationTransportCommand
-import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
-import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.core.model.ValidationState
+import net.biomodels.jummp.core.events.*
+import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import net.biomodels.jummp.core.vcs.VcsException
 import net.biomodels.jummp.core.vcs.VcsFileDetails
-import net.biomodels.jummp.model.Model
-import net.biomodels.jummp.model.ModelAudit
-import net.biomodels.jummp.model.ModelFormat
-import net.biomodels.jummp.model.Publication
-import net.biomodels.jummp.model.RepositoryFile
-import net.biomodels.jummp.model.Revision
+import net.biomodels.jummp.model.*
 import net.biomodels.jummp.plugins.security.User
-import net.biomodels.jummp.qcinfo.QcInfo
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.apache.tika.detect.DefaultDetector
 import org.apache.tika.metadata.Metadata
-import grails.plugin.springsecurity.SpringSecurityUtils
 import org.perf4j.aop.Profiled
 import org.perf4j.log4j.Log4JStopWatch
 import org.springframework.security.access.AccessDeniedException
@@ -225,7 +205,7 @@ class ModelService {
 
     private String getQueryForUser(ModelListSorting sortColumn, boolean deletedOnly, boolean filterIsValid, String sortingDirection) {
         String query = '''
-SELECT DISTINCT m, r.name, r.uploadDate, r.format.name, m.id, u.person.userRealName
+SELECT DISTINCT m, r.name, r.description, r.uploadDate, r.format.name, m.id, u.person.userRealName
 FROM Revision AS r
 JOIN r.model AS m
 JOIN r.owner as u
@@ -268,7 +248,7 @@ ORDER BY
 
     private String getQueryForAdmin(ModelListSorting sortColumn, boolean deletedOnly, boolean filterIsValid, String sortingDirection) {
         String query = '''
-SELECT DISTINCT m, r.name, r.uploadDate, r.format.name, m.id, u.person.userRealName
+SELECT DISTINCT m, r.name, r.description, r.uploadDate, r.format.name, m.id, u.person.userRealName
 FROM Revision AS r
 JOIN r.model AS m JOIN r.owner as u
 WHERE
@@ -406,8 +386,7 @@ ORDER BY
     public Integer getModelCount(String filter = null, boolean deletedOnly = false) {
         if (SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
             // special handling for Admin - is allowed to see all (not deleted) Models
-            def criteria = Model.createCriteria()
-            return criteria.get {
+            def results = Model.withCriteria {
                 ne("deleted", !deletedOnly)
                 if (filterValid(filter)) {
                     or {
@@ -424,7 +403,8 @@ ORDER BY
                 projections {
                     count("id")
                 }
-            } as Integer
+            }
+            return results[0]
         }
 
         Set<String> roles = getSpringDatabaseRoles()
@@ -1989,8 +1969,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
      * @param model the model for which to verify the publication status.
      */
     private boolean hasPublicRevision(Model model) {
-        def publicRevisionCriteria = Revision.createCriteria()
-        def publicRevisionCriteriaResults = publicRevisionCriteria.list(max: 1) {
+        def publicRevisionCriteriaResults = Revision.withCriteria(uniqueResult: true) {
             and {
                 eq("model", model)
                 or {

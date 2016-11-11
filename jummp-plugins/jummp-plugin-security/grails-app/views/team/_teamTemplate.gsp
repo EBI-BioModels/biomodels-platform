@@ -10,7 +10,7 @@
 		{{#if isEmpty}}
 			<p>Use the search box to add collaborators to this team.</p>
 		{{else}}
-			<table id="membersTable">
+			<table id="membersTable" class="responsive-table center">
 				<thead>
 					<tr>
 						<th>Name</th>

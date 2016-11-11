@@ -29,6 +29,7 @@ $.jummp.userAdministration.loadUserList = function () {
     };
     $('#userTable').dataTable({
         // TODO: in future it might be interesting to allow filtering
+        responsive: true,
         bFilter: false,
         columnDefs: [{
             targets: 2, /* For real name column */

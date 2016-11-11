@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -25,15 +25,15 @@
     <head>
         <title><g:message code="user.administration.ui.heading.user"/></title>
         <meta name="layout" content="main" />
-        <link rel="stylesheet" href="${resource(dir: 'css', file: 'jstree.css')}" /> 
+        <link rel="stylesheet" href="${resource(dir: 'css', file: 'jstree.css')}" />
      </head>
     <body>
     	<div class="content">
     	<div class="view view-dom-id-9c00a92f557689f996511ded36a88594">
     	<div class="view-content">
-        <div>
+        <div class="row column">
 			<g:form action="editUser">
-				<table>
+				<table class="responsive-table">
 					<thead></thead>
 					<tbody>
 					<tr>
@@ -59,7 +59,7 @@
 					</tbody>
 				</table>
 				<h2>Notifications</h2>
-				<table>
+				<table class="responsive-table">
 					<thead>
 						<th>Notification Type</th>
 						<th>Web Notification</th>
@@ -88,7 +88,7 @@
 					</tbody>
 				</table>
 				<div class="buttons">
-						<input type="submit" value="${g.message(code: 'user.administration.edit')}"/>
+                    <input type="submit" class="button" value="${g.message(code: 'user.administration.edit.save')}"/>
 				</div>
 			</g:form>
         </div>

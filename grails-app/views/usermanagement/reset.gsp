@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -37,12 +37,12 @@
         		visibility:hidden;
         	}
         </style>
-        <link rel="stylesheet" href="${resource(dir: 'css', file: 'jstree.css')}" /> 
+        <link rel="stylesheet" href="${resource(dir: 'css', file: 'jstree.css')}" />
     </head>
      <body>
         <div>
             <g:form name="resetForm" action="newPassword">
-                <table>
+                <table class="responsive-table center">
                     <tbody>
                     <tr>
                         <td class='tableLabels'><label for="register-form-username"><g:message code="user.signup.ui.username"/>:</label></td>
@@ -59,7 +59,7 @@
                     </tbody>
                 </table>
                 <div class="buttons">
-                    <input type="submit" value="Reset Password"/>
+                    <input type="submit" class="button" value="Reset Password"/>
                 </div>
                 <input class="verysecure" name="hashCode" value="${hashCode}"/>
             </g:form>

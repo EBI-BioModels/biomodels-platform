@@ -81,7 +81,7 @@ class NotificationService {
             if (existing.sendMail != updated.sendMail || existing.sendNotification != updated.sendNotification) {
                 existing.sendMail = updated.sendMail
                 existing.sendNotification = updated.sendNotification
-                if (!existing.save()) {
+                if (!existing.save(flush: true)) {
                     log.error "Failed to update notification preferences ${existing} for user ${user}"
                 }
             }

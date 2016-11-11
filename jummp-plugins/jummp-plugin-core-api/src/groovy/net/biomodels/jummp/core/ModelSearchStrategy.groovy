@@ -25,8 +25,8 @@
 package net.biomodels.jummp.core
 
 import groovy.transform.CompileStatic
-import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.search.SearchResponse
 
 /**
  * Allow dynamically changing suitable search strategy based on configuration setting.
@@ -40,6 +40,6 @@ interface ModelSearchStrategy {
     void clearIndex()
     void clearAnnotationStatementsFromDatabase()
     void regenerateIndices()
-    Collection<ModelTransportCommand> searchModels(String query)
+    SearchResponse searchModels(String query, Map<String, Integer> paginationCriteria)
     void updateIndex(RevisionTransportCommand revision)
 }

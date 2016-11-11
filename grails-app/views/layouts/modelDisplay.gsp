@@ -38,10 +38,13 @@
     def zipSupported=[:]
 %>
 <head>
-        <title>${revision.name}</title>
-        <link rel="stylesheet" href="<g:resource dir="css/jqueryui/smoothness"
-                                                 file="jquery-ui-1.10.3.custom.min.css"/>" />
-
+    <title>${revision.name}</title>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            var mainContainer = $("#content");
+            mainContainer.css('margin-left', 40+'px');
+        });
+    </script>
     <script type="text/x-mathjax-config">
         MathJax.Hub.Config({
             tex2jax: { inlineMath: [['$','$'],['\\(','\\)']] }
@@ -487,27 +490,11 @@
                     $( ".toolbutton" ).css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
             }
         }
-/*        function displayStar(nbStar) {
-            if (nbStar == 1) {
-                <img style="float:right;margin-top:0;" title="This version of the model is certified"
-                     alt="certified model"
-                     src="${grailsApplication.config.grails.serverURL}/images/icons/yellowfilledinstar.png"/>
-                <img style="float:right;margin-top:0;" title="This version of the model is certified"
-                alt="certified model"
-                src="${grailsApplication.config.grails.serverURL}/images/icons/star.png"/>
-
-            } else {
-
-            }
-            <img style="float:right;margin-top:0;" title="This version of the model is certified"
-                 alt="certified model"
-                 src="${grailsApplication.config.grails.serverURL}/images/icons/star.png"/>
-        }*/
     </script>
     <g:layoutHead/>
     </head>
     <body>
-        <div id="buttonContainer" style="display:inline"<%--class="ui-widget-header ui-corner-all"--%>>
+        <div id="buttonContainer" style="display:inline">
                 <ul id='toolbarList'><li>
                 <button class='toolbutton' id="download"
                         onclick="return $.jummp.openPage('${g.createLink(controller: 'model',
@@ -592,7 +579,7 @@
         </g:if>
         <div id="topBar">
             <div style="float:left;width:75%;">
-                <h1>${revision.name}</h1>
+                <h2>${revision.name}</h2>
             </div>
             <div style="float:right;margin-top:10px;">
                 <g:if test="${revision.qcInfo != null}">

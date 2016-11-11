@@ -29,22 +29,10 @@ import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.annotation.Secured
 import grails.util.Holders
 import groovy.json.JsonBuilder
-import net.biomodels.jummp.core.events.JummpEvent
-import net.biomodels.jummp.core.events.ModelCertifiedEvent
-import net.biomodels.jummp.core.events.ModelDeletedEvent
-import net.biomodels.jummp.core.events.ModelOperationEvent
-import net.biomodels.jummp.core.events.ModelPublishedEvent
-import net.biomodels.jummp.core.events.ModelRestoredEvent
-import net.biomodels.jummp.core.events.RevisionCreatedEvent
-import org.springframework.context.ApplicationListener
-import org.springframework.security.acls.domain.BasePermission
-import org.springframework.security.core.context.SecurityContextHolder
-import java.util.concurrent.atomic.AtomicReference
 import net.biomodels.jummp.core.ModelSearchStrategy
 import net.biomodels.jummp.core.adapters.DomainAdapter
 import net.biomodels.jummp.core.adapters.ModelFormatAdapter
-import net.biomodels.jummp.core.events.LoggingEventType
-import net.biomodels.jummp.core.events.PostLogging
+import net.biomodels.jummp.core.events.*
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.model.Model
@@ -56,7 +44,12 @@ import org.apache.solr.client.solrj.response.QueryResponse
 import org.apache.solr.common.SolrDocumentList
 import org.apache.solr.common.SolrInputDocument
 import org.perf4j.aop.Profiled
+import org.springframework.context.ApplicationListener
+import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.core.Authentication
+import org.springframework.security.core.context.SecurityContextHolder
+
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * @short Singleton-scoped facade for interacting with a SolrServerHolder's instance.
@@ -432,7 +425,7 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
      **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="searchService.searchModels")
-    Collection<ModelTransportCommand> searchModels(String query) {
+    SearchResponse searchModels(String query, Map<String, Integer> paginationCriteria) {
         //solrServerHolder.init()
         long start = System.currentTimeMillis()
         SolrDocumentList results = search(query)
@@ -442,6 +435,7 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
         start = System.currentTimeMillis()
         final int COUNT = results.size()
         Map<String, ModelTransportCommand> returnVals = new LinkedHashMap<>(COUNT + 1, 1.0f)
+        HashSet<ModelTransportCommand> returnModels = new HashSet<ModelTransportCommand>()
         boolean isAdmin = SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")
         results.each {
             if (!it.containsKey("deleted") || !it.get("deleted")) {
@@ -461,22 +455,25 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
                     }
                     if (okayToProceed) {
                         Model model = Model.get(modelId)
-                        Revision latestRevision = modelService.getLatestRevision(model, false)
-                        Revision firstRevision = model.revisions.first()
-                        ModelTransportCommand mtc = new ModelTransportCommand(
-                            submitter: firstRevision.owner.person.userRealName,
-                            submitterUsername: firstRevision.owner.username,
-                            name: latestRevision.name,
-                            submissionId: model.submissionId,
-                            publicationId: model.publicationId,
-                            submissionDate: firstRevision.uploadDate,
-                            lastModifiedDate: latestRevision.uploadDate,
-                            id: model.id,
-                            state: latestRevision.state,
-                            format: new ModelFormatAdapter(format: latestRevision.format).toCommandObject(),
-                            flagLevel: latestRevision.qcInfo?.flag
-                        )
-                        returnVals.put(model.submissionId, mtc)
+                        if (model) {
+                            Revision latestRevision = modelService.getLatestRevision(model, false)
+                            Revision firstRevision = model.revisions.first()
+                            ModelTransportCommand mtc = new ModelTransportCommand(
+                                submitter: firstRevision.owner.person.userRealName,
+                                submitterUsername: firstRevision.owner.username,
+                                name: latestRevision.name,
+                                submissionId: model.submissionId,
+                                publicationId: model.publicationId,
+                                submissionDate: firstRevision.uploadDate,
+                                lastModifiedDate: latestRevision.uploadDate,
+                                id: model.id,
+                                state: latestRevision.state,
+                                format: new ModelFormatAdapter(format: latestRevision.format).toCommandObject(),
+                                flagLevel: latestRevision.qcInfo?.flag
+                            )
+                            returnVals.put(model.submissionId, mtc)
+                            returnModels.add(mtc)
+                        }
                     }
                 }
             }
@@ -484,7 +481,13 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
         if (IS_DEBUG_ENABLED) {
             log.debug("Results processed in ${System.currentTimeMillis() - start}")
         }
-        return returnVals.values()
+
+        // create the returned object
+        SearchResponse searchResponse = new SearchResponse()
+        searchResponse.results = returnModels
+        searchResponse.facets = new HashSet<String>()
+        searchResponse.totalCount = COUNT
+        return searchResponse
     }
 
     /**

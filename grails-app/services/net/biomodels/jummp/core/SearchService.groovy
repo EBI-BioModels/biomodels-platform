@@ -30,6 +30,7 @@ import net.biomodels.jummp.core.events.PostLogging
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.search.OmicsdiBasedSearch
+import net.biomodels.jummp.search.SearchResponse
 import net.biomodels.jummp.search.SolrBasedSearch
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
@@ -75,10 +76,8 @@ class SearchService {
 
     private void loadSearchStrategy() {
         String strategySetting = grails.util.Holders.grailsApplication.config.jummp.search.strategy
-        if (strategySetting)
-            log.info "Loaded search strategy: ${strategySetting}"
-        else {
-            log.error "Cannot load the value of search strategy property."
+        if (!strategySetting) {
+            log.error "Cannot load the setting model search strategy."
             strategySetting = "solr"
             log.error "... using the default value: ${strategySetting}"
         }
@@ -133,8 +132,8 @@ class SearchService {
      **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="searchService.searchModels")
-    Collection<ModelTransportCommand> searchModels(String query) {
-        return strategy.searchModels(query)
+    SearchResponse searchModels(String query, Map<String, Integer> paginationCriteria) {
+        return strategy.searchModels(query, paginationCriteria)
     }
 
     /*
