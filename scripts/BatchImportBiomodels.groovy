@@ -1078,7 +1078,7 @@ getSubmissionData = { file, additional, comment ->
 getFilesFromSubmissionData = { submissionData -> submissionData['files'] }
 
 // converts a length of time into a formatted string
-prettify = { long time ->
+prettify = { time ->
     if (time < 0) {
         error("Expected a non-negative time value, not $time.")
         return
