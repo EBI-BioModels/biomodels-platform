@@ -44,7 +44,7 @@
         %>
         <g:form>
             <div class="dialog">
-                <table class="formtable">
+                <table class="formtable responsive-table">
                     <tbody>
                         <tr class="prop">
                             <td class="name" style="vertical-align:top;">
@@ -123,13 +123,17 @@
                     </tbody>
                 </table>
                 <div class="buttons">
-                    <g:submitButton name="Cancel" value="${g.message(code: 'submission.common.cancelButton')}" />
-                    <g:submitButton name="Back" value="${g.message(code: 'submission.common.backButton')}" />
+                    <g:submitButton name="Cancel" class="button"
+                                    value="${g.message(code: 'submission.common.cancelButton')}" />
+                    <g:submitButton name="Back" class="button"
+                                    value="${g.message(code: 'submission.common.backButton')}" />
                     <g:if test="${workingMemory.get("isUpdateOnExistingModel") as Boolean}">
-                    	<g:submitButton name="Continue" value="${g.message(code: 'submission.summary.update.submitButton')}"/>
+                    	<g:submitButton name="Continue" class="button"
+                                        value="${g.message(code: 'submission.summary.update.submitButton')}"/>
                     </g:if>
                     <g:else>
-                    	<g:submitButton name="Continue" value="${g.message(code: 'submission.summary.create.submitButton')}"/>
+                    	<g:submitButton name="Continue" class="button"
+                                        value="${g.message(code: 'submission.summary.create.submitButton')}"/>
                     </g:else>
                 </div>
             </div>

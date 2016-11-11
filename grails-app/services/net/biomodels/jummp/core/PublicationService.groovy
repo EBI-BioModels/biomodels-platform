@@ -64,7 +64,7 @@ class PublicationService {
                                                                 List<PersonTransportCommand> authors) {
         def provider = PublicationLinkProvider.LinkType.findLinkTypeByLabel(pubLinkProvider)
         PublicationTransportCommand retrieved = new PublicationTransportCommand()
-        PublicationLinkProvider publicationLinkProvider = PublicationLinkProvider.createCriteria().get() {
+        PublicationLinkProvider publicationLinkProvider = PublicationLinkProvider.withCriteria(uniqueResult: true) {
             eq("linkType", provider)
         }
         retrieved.link = pubLink
@@ -75,7 +75,7 @@ class PublicationService {
 
     boolean verifyLink(String linkTypeAsString, String link) {
         def linkProvider = PublicationLinkProvider.LinkType.findLinkTypeByLabel(linkTypeAsString)
-        PublicationLinkProvider pubLinkProvider = PublicationLinkProvider.createCriteria().get() {
+        PublicationLinkProvider pubLinkProvider = PublicationLinkProvider.withCriteria(uniqueResult: true) {
             eq("linkType", linkProvider)
         }
         if (!pubLinkProvider) {
@@ -91,7 +91,7 @@ class PublicationService {
 
     PublicationDetailExtractionContext getPublicationExtractionContext(PublicationTransportCommand cmd) throws JummpException {
         def linkType = PublicationLinkProvider.LinkType.findLinkTypeByLabel(cmd.linkProvider.linkType)
-        Publication publication = Publication.createCriteria().get() {
+        Publication publication = Publication.withCriteria(uniqueResult: true) {
             eq("link", cmd.link)
             linkProvider {
                 eq("linkType", linkType)
@@ -201,7 +201,7 @@ Failed to add author $person to $publication: ${tmp.errors.allErrors.inspect()}"
     }
 
     Publication fromCommandObject(PublicationTransportCommand cmd) {
-        Publication publication = Publication.createCriteria().get() {
+        Publication publication = Publication.withCriteria(uniqueResult: true) {
             eq("link",cmd.link)
             linkProvider {
                 eq("linkType", PublicationLinkProvider.LinkType.findLinkTypeByLabel(cmd.linkProvider.linkType))

@@ -133,7 +133,7 @@ class UserService implements IUserService {
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag = "userService.editUser")
     @PreAuthorize("hasRole('ROLE_ADMIN') or isAuthenticated()") //used to be: authentication.name==#username
-    void editUser(User user) throws UserInvalidException {
+    User editUser(User user) throws UserInvalidException {
         checkUserValid(user.username)
         User origUser = User.findByUsername(user.username)
         if (origUser.person.orcid != user.person.orcid) {
@@ -173,6 +173,7 @@ class UserService implements IUserService {
         }
         origUser.person.save(flush: true, failOnError: true)
         origUser.save(flush: true)
+        origUser
     }
 
     @PostLogging(LoggingEventType.RETRIEVAL)
@@ -493,7 +494,7 @@ class UserService implements IUserService {
         user.save(flush: true)
         // send out notification mail
         String recipient = user.email
-        String url = grailsLinkGenerator.link(controller: 'usermanagement', action: 'passwordreset', id: user.passwordForgottenCode, absolute: true)
+        String url = grailsLinkGenerator.link(controller: 'usermanagement', action: 'resetPassword', id: user.passwordForgottenCode, absolute: true)
         String emailBody = grailsApplication.config.jummp.security.resetPassword.email.body
         emailBody = emailBody.replace("{{REALNAME}}", user.person.userRealName)
         emailBody = emailBody.replace("{{URL}}", url)

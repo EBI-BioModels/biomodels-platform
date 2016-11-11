@@ -56,51 +56,47 @@ class WebflowAclBeanDefinitionProcessor implements Ordered, BeanDefinitionRegist
 
     void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) {
         if (!isEnabled) {
-            log.info "Nothing to do"
+            log.debug "Nothing to do"
             return
         } else {
-	 	    log.info "Starting custom bean definition post-processor..."
+            log.debug "Starting custom bean definition post-processor..."
         }
- 		log.info "Registry has expressionParser bean defined: ${registry.containsBeanDefinition('expressionParser')}"
+        log.debug "Registry has expressionParser bean defined: ${registry.containsBeanDefinition('expressionParser')}"
         if (registry.containsBeanDefinition("expressionParser")) {
             def defn = registry.getBeanDefinition "expressionParser"
- 	    	log.info "eP: ${defn.beanClassName}"
- 			log.info "sep: ${registry.containsBeanDefinition "sep"}"
- 			log.info "cS: ${registry.containsBeanDefinition "conversationService"}"
-            log.info  "class name: ${WebFlowSpringELExpressionParser.class.name}"
             if (defn.beanClassName == WebFlowSpringELExpressionParser.class.name) {
                 registry.removeBeanDefinition "expressionParser"
                 registry.registerBeanDefinition "webflowExpressionParser", defn
                 // just to be sure
                 def newDefn = registry.getBeanDefinition "webflowExpressionParser"
-                log.info "Found webflowExpressionParser bean definition $newDefn"
+                log.debug "Found webflowExpressionParser bean definition $newDefn"
 
                 def clone = defn.cloneBeanDefinition()
                 clone.beanClass = SpelExpressionParser.class
                 clone.beanClassName = SpelExpressionParser.class.name
                 clone.constructorArgumentValues = new ConstructorArgumentValues()
                 registry.registerBeanDefinition "expressionParser", clone
-                log.info "Do this"
+                log.debug "Do this"
             } else {
-			    // expressionParser declared by Acl -- create webflowExpressionParser from scratch
-				def webFlowExpressionParserDefinition = new GenericBeanDefinition()
- 				webFlowExpressionParserDefinition.beanClass = WebFlowSpringELExpressionParser.class
- 				webFlowExpressionParserDefinition.beanClassName =
-						WebFlowSpringELExpressionParser.class.name
+                // expressionParser declared by Acl -- create webflowExpressionParser from scratch
+                def webFlowExpressionParserDefinition = new GenericBeanDefinition()
+                    webFlowExpressionParserDefinition.beanClass = WebFlowSpringELExpressionParser.class
+                    webFlowExpressionParserDefinition.beanClassName =
+                    WebFlowSpringELExpressionParser.class.name
 
-				// now have to set the properties of the bean
-			    def ctorArgs = new ConstructorArgumentValues()
- 				ctorArgs.addIndexedArgumentValue(0, new RuntimeBeanReference("sep"))
- 				ctorArgs.addIndexedArgumentValue(1, new RuntimeBeanReference("conversationService"))
-  				webFlowExpressionParserDefinition.constructorArgumentValues = ctorArgs
+                    // now have to set the properties of the bean
+                    def ctorArgs = new ConstructorArgumentValues()
+                    ctorArgs.addIndexedArgumentValue(0, new RuntimeBeanReference("sep"))
+                    ctorArgs.addIndexedArgumentValue(1, new RuntimeBeanReference("conversationService"))
+                    webFlowExpressionParserDefinition.constructorArgumentValues = ctorArgs
 
-                webFlowExpressionParserDefinition.setAutowireCandidate(true)
+                    webFlowExpressionParserDefinition.setAutowireCandidate(true)
 
-				registry.registerBeanDefinition "webflowExpressionParser",
-						 webFlowExpressionParserDefinition
+                    registry.registerBeanDefinition "webflowExpressionParser",
+                    webFlowExpressionParserDefinition
 
-                log.info "webFlowEP: ${webFlowExpressionParserDefinition.properties}"
-                log.info "Do that"
+                log.debug "webFlowEP: ${webFlowExpressionParserDefinition.properties}"
+                log.debug "Do that"
             }
         } else {
             log.error "expected to find a bean called expressionParser..."
@@ -109,26 +105,26 @@ class WebflowAclBeanDefinitionProcessor implements Ordered, BeanDefinitionRegist
             def defn = registry.getBeanDefinition "flowBuilderServices"
             def wepDefn = registry.getBeanDefinition "webflowExpressionParser"
             String wepBeanName = wepDefn.beanClassName
-	    	log.info "Processing flowBuilderServices bean definition: ${wepDefn} -- ${wepBeanName}"
-//            /*
-//             * in BeanBuilder DSL syntax this would be
-//             * flowBuilderServices(FlowBuilderServices) {
-//             *   expressionParser = ref('webflowExpressionParser')
-//             * }
-//             */
+            log.debug "Processing flowBuilderServices bean definition: ${wepDefn} -- ${wepBeanName}"
+            /*
+             * in BeanBuilder DSL syntax this would be
+             * flowBuilderServices(FlowBuilderServices) {
+             *   expressionParser = ref('webflowExpressionParser')
+             * }
+             */
             defn.propertyValues.add("expressionParser", new RuntimeBeanReference("webflowExpressionParser"))
         }
         if (registry.containsBeanDefinition("expressionParser")) {
             def bd = registry.getBeanDefinition("expressionParser")
-            log.info "ExpressionParser Bean Definition: ${bd}"
+            log.debug "ExpressionParser Bean Definition: ${bd}"
         }
         if (registry.containsBeanDefinition("webflowExpressionParser")) {
             def bd = registry.getBeanDefinition("webflowExpressionParser")
-            log.info "webflowExpressionParser Bean Definition: ${bd}"
+            log.debug "webflowExpressionParser Bean Definition: ${bd}"
         }
         if (registry.containsBeanDefinition("flowBuilderServices")) {
             def bd = registry.getBeanDefinition "flowBuilderServices"
-            log.info "fBS Bean Definition: $bd"
+            log.debug "fBS Bean Definition: $bd"
         }
     }
 
@@ -138,11 +134,11 @@ class WebflowAclBeanDefinitionProcessor implements Ordered, BeanDefinitionRegist
     void postProcessBeanFactory(ConfigurableListableBeanFactory factory) {
         if (factory.containsBeanDefinition("flowBuilderServices")) {
             def bd = factory.getBeanDefinition("flowBuilderServices")
-            log.info "FlowBuilderServices: $bd"
+            log.debug "FlowBuilderServices: $bd"
             def vals = bd.propertyValues.getPropertyValueList()
-            log.info "Vals: ${vals.size()}"
+            log.debug "Vals: ${vals.size()}"
             vals.eachWithIndex { it, i ->
-                log.info "$i -- $it.name : $it.value"
+                log.debug "$i -- $it.name : $it.value"
             }
         }
     }
@@ -156,6 +152,6 @@ class WebflowAclBeanDefinitionProcessor implements Ordered, BeanDefinitionRegist
         isEnabled = [true, true] == ["spring-security-core", "webflow"].collect {
             pluginManager.hasGrailsPlugin(it)
         }
-	log.info "Using custom bean definitions for SpelExpressionParser ${isEnabled ? 'yes' : 'no'}"
+        log.debug "Using custom bean definitions for SpelExpressionParser ${isEnabled ? 'yes' : 'no'}"
     }
 }

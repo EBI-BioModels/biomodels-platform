@@ -34,7 +34,6 @@
 
 package net.biomodels.jummp.core
 
-import net.biomodels.jummp.core.adapters.DomainAdapter 
 import net.biomodels.jummp.core.vcs.VcsException
 import net.biomodels.jummp.core.vcs.VcsFileDetails
 import net.biomodels.jummp.core.vcs.VcsManager
@@ -157,7 +156,7 @@ class VcsService implements InitializingBean {
         if (!isValid()) {
             throw new VcsException("Version Control System is not valid")
         }
-        def latestRevId = Revision.createCriteria().get {
+        def latestRevId = Revision.withCriteria(uniqueResult: true) {
             eq("model.id", revision.model.id)
             projections {
                 max("revisionNumber")

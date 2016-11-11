@@ -1207,4 +1207,6 @@ databaseChangeLog = {
     include file: '20160718_addQcInfoToRevision.groovy'
 
     include file: '20160718_addCertificationConstraints.groovy'
+
+    include file: '20161011_createIndexingPlanTable.groovy'
 }

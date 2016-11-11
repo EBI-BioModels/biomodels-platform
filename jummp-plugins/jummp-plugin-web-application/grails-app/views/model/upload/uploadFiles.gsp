@@ -72,18 +72,12 @@
         <p style="padding-bottom:1em"><g:message code="submission.upload.explanation"/></p>
         <g:uploadForm id="fileUpload" novalidate="false" autocomplete="false" name="fileUploadForm">
             <div class="dialog">
-                <table class="formtable">
-                    <tbody>
-                        <jummp:displayExistingMainFile main = "${workingMemory['main_file']}"/>
-                    </tbody>
-                </table>
+                <jummp:displayExistingMainFile main="${workingMemory['main_file']}"/>
                 <div id="noMains"></div>
+                <jummp:renderAdditionalFilesLegend/>
                 <fieldset>
-                    <legend>
-                        <jummp:renderAdditionalFilesLegend/>
-                    </legend>
                     <a href="#" id="addFile"><jummp:renderAdditionalFilesAddButton/></a>
-                    <table class='formtable' id="additionalFiles">
+                    <table class='formtable responsive-table' id="additionalFiles">
                         <tbody>
                             <g:if test="${workingMemory['additional_repository_files_in_working']}">
                                 <g:set var="resource" value="${workingMemory['additional_repository_files_in_working']}" />
@@ -102,16 +96,16 @@
                     <div id="additionalsOnUI" style="display: none;"></div>
                 </fieldset>
                 <div class="buttons">
-                    <g:submitButton name="Cancel" value="${g.message(code: 'submission.common.cancelButton')}" />
+                    <g:submitButton name="Cancel" class="button" value="${g.message(code: 'submission.common.cancelButton')}" />
                     <g:if test="${!isUpdate}">
-                        <g:submitButton name="Back" value="${g.message(code: 'submission.common.backButton')}" />
+                        <g:submitButton name="Back" class="button" value="${g.message(code: 'submission.common.backButton')}" />
                     </g:if>
-                    <g:submitButton name="Upload" value="${g.message(code: 'submission.upload.uploadButton')}" />
+                    <g:submitButton name="Upload" class="button" value="${g.message(code: 'submission.upload.uploadButton')}" />
                     <g:if test ="${showProceedWithoutValidationDialog || showProceedAsUnknownFormat}">
-                        <g:submitButton name="ProceedWithoutValidation" value="ProceedWithoutValidation" hidden="true"/>
+                        <g:submitButton name="ProceedWithoutValidation" class="button" value="ProceedWithoutValidation" hidden="true"/>
                     </g:if>
                     <g:if test ="${showProceedAsUnknownFormat}">
-                        <g:submitButton name="ProceedAsUnknown" value="ProceedAsUnknown" hidden="true"/>
+                        <g:submitButton name="ProceedAsUnknown" class="button" value="ProceedAsUnknown" hidden="true"/>
                     </g:if>
                 </div>
             </div>

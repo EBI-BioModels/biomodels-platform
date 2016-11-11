@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -25,35 +25,30 @@
     <head>
         <title><g:message code="user.administration.ui.heading.user"/></title>
         <meta name="layout" content="main" />
-        <link rel="stylesheet" href="${resource(dir: 'css', file: 'jstree.css')}" /> 
+        <link rel="stylesheet" href="${resource(dir: 'css', file: 'jstree.css')}" />
      </head>
     <body>
-        <div>
-			<g:form action="updatePassword">
-				<table>
-					<thead></thead>
-					<tbody>
-					<tr>
-						<td class='tableLabels'><label><g:message code="user.administration.updatePassword.oldPassword"/>:</label></td>
-						<td><g:passwordField name="oldPassword"/></td>
-					</tr>
-					<tr>
-						<td class='tableLabels'><label><g:message code="user.administration.updatePassword.newPassword"/>:</label></td>
-						<td><g:passwordField name="newPassword"/></td>
-					</tr>
-					<tr>
-						<td class='tableLabels'><label><g:message code="user.administration.updatePassword.newPasswordRpt"/>:</label></td>
-						<td><g:passwordField name="newPasswordRpt"/></td>
-					</tr>
-					</tbody>
-				</table>
-				<div class="buttons">
-						<input type="submit" value="${g.message(code: 'user.administration.updatePassword.submit')}"/>
-				</div>
-			</g:form>
+        <div class="row">
+            <div class="medium-12 medium-centered large-8 large-centered columns">
+            <g:form action="updatePassword">
+                <div class="row column edit-password-form">
+                    <label class="required"><g:message code="user.administration.updatePassword.oldPassword"/></label>
+                    <g:passwordField name="oldPassword"/>
+
+                    <label class="required"><g:message code="user.administration.updatePassword.newPassword"/></label>
+                    <g:passwordField name="newPassword"/>
+
+                    <label class="required"><g:message code="user.administration.updatePassword.newPasswordRpt"/></label>
+                    <g:passwordField name="newPasswordRpt"/>
+                    <p class="buttons">
+                        <input type="submit" class="button" value="${g.message(code: 'user.administration.updatePassword.submit')}"/>
+                    </p>
+                </div>
+            </g:form>
+            </div>
         </div>
    </body>
 </html>
 <content tag="title">
-	<g:message code="user.administration.updatePassword.heading"/>
+    <g:message code="user.administration.updatePassword.heading"/>
 </content>

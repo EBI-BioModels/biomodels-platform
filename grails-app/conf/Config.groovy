@@ -266,7 +266,12 @@ log4j.main = {
 
     warn   jummpAppender: 'org.mortbay.log'
     // Simple Logging goes to its own file
-    info   eventsAppender: 'net.biomodels.jummp.plugins.simplelogging'
+    info   eventsAppender: [
+        'net.biomodels.jummp.plugins.simplelogging',
+        'net.biomodels.jummp.core.events',
+        'net.biomodels.jummp.plugins.bives',
+        'net.biomodels.jummp.search'
+    ]
 
     rollingFile name: "debugAppender", file: "logs/jummp-debug.log", threshold: org.apache.log4j.Level.DEBUG
     rollingFile name: "hibernateAppender", file: "logs/jummp-hibernate.log", threshold: org.apache.log4j.Level.DEBUG
@@ -280,20 +285,17 @@ log4j.main = {
         'net.biomodels.jummp.core.model.identifier.decorator',
         'net.biomodels.jummp.core.model.identifier.generator',
         'net.biomodels.jummp.core.model.identifier.support',
-        'net.biomodels.jummp.plugins.pharmml'
+        'net.biomodels.jummp.plugins.pharmml',
+        'net.biomodels.jummp.search'
     ]
     debug hibernateAppender: [
         'org.codehaus.groovy.grails.orm.hibernate',
         'org.codehaus.groovy.grails.orm.support',
         'org.hibernate.SQL',
-        'org.springframework.orm.hibernate3.support'
+        'org.springframework.orm.hibernate4.support'
 
     ]
-    trace hibernateAppender: 'org.hibernate.type.descriptor.sql.BasicBinder'
-    info console: ["net.biomodels.jummp.core",
-                   "grails.plugin.cache",
-                   "grails.plugin.cache.ehcache.hibernate"]
-                   //"grails.plugin.springsecurity.web.filter.DebugFilter"]
+    info console: "net.biomodels.jummp.core"
 }
 
 // Added by the Spring Security Core plugin:
@@ -341,16 +343,17 @@ jummp.controllerAnnotations = [
     "/plugins/*/js/*":          ['permitAll'],
     "/plugins/*/css/*":         ['permitAll'],
     "/plugins/*/images/*":      ['permitAll'],
-    "/simpleCaptcha/captcha":   ['permitAll']
+    "/simpleCaptcha/captcha":   ['permitAll'],
+    "/omicsdi/**":              ["hasRole('ROLE_ADMIN')"]
 ]
 
 // ldap
 if ((jummpConfig.jummp.security.ldap.enabled instanceof ConfigObject) || !Boolean.parseBoolean(jummpConfig.jummp.security.ldap.enabled)) {
     jummp.security.ldap.enabled = false
-    println("Excluding ldap")
+    println("INFO\tExcluding ldap")
     pluginsToExclude << "springSecurityLdap"
 } else {
-    println("using ldap")
+    println("INFO\tUsing ldap")
     jummp.security.ldap.enabled = true
     /*grails.plugin.springsecurity.ldap.context.managerDn       = jummpConfig.jummp.security.ldap.managerDn
     grails.plugin.springsecurity.ldap.context.managerPassword   = jummpConfig.jummp.security.ldap.managerPw
@@ -386,33 +389,49 @@ if (jummpConfig.jummp.vcs.workingDirectory) {
     jummp.vcs.workingDirectory = jummpConfig.jummp.vcs.workingDirectory
 }
 // search config
-if (!(jummpConfig.jummp.search.url instanceof ConfigObject)) {
-    final Pattern URL_PATTERN = ~/http:\/\/[a-zA-Z0-9\.\-_]+(:[0-9]+)?(\/[a-zA-Z0-9\-\._]+)*/
-    final String solrSetting = jummpConfig.jummp.search.url
-    final String solrUrl
-    if (solrSetting?.endsWith("/")) {
-        solrUrl = solrSetting.substring(0, solrSetting.length() - 1)
-    } else {
-        solrUrl = solrSetting
-    }
-    if (!solrUrl || ! (solrUrl ==~ URL_PATTERN)) {
-        throw new IllegalArgumentException("""The URL for the search server ($solrUrl) does \
+// model search strategy setting: "omicsdi" or "solr"
+if (!(jummpConfig.jummp.search.strategy instanceof ConfigObject)) {
+    jummp.search.strategy = jummpConfig.jummp.search.strategy
+} else {
+    // default to solr
+    jummp.search.strategy = "solr"
+}
+
+if (jummp.search.strategy == "solr") {
+    if (!(jummpConfig.jummp.search.url instanceof ConfigObject)) {
+        final Pattern URL_PATTERN = ~/http:\/\/[a-zA-Z0-9\.\-_]+(:[0-9]+)?(\/[a-zA-Z0-9\-\._]+)*/
+        final String solrSetting = jummpConfig.jummp.search.url
+        final String solrUrl
+        if (solrSetting?.endsWith("/")) {
+            solrUrl = solrSetting.substring(0, solrSetting.length() - 1)
+        } else {
+            solrUrl = solrSetting
+        }
+        if (!solrUrl || !(solrUrl ==~ URL_PATTERN)) {
+            throw new IllegalArgumentException("""The URL for the search server ($solrUrl) does \
 not look right. Check the value of setting 'jummp.search.url'.""")
+        } else {
+            jummp.search.url = solrUrl
+            println "INFO\tUsing $solrUrl as the URL of the search server."
+        }
     } else {
-        jummp.search.url = solrUrl
-        println "INFO\tUsing $solrUrl as the URL of the search server."
+        throw new IllegalArgumentException("""\
+Please add the setting 'jummp.search.url', pointing to a Solr instance, to your configuration.""")
+    }
+    if (!(jummpConfig.jummp.search.folder instanceof ConfigObject)) {
+        final String searchFolder = jummpConfig.jummp.search.folder
+        jummp.search.folder = searchFolder
+        println "INFO\tSOLR_HOME is set to $searchFolder."
+    } else {
+        println "WARN\tSetting jummp.search.folder is undefined. Have you set \$SOLR_HOME?"
     }
 } else {
-    throw new IllegalArgumentException("""\
-Please add the setting 'jummp.search.url', pointing to a Solr instance, to your configuration.""")
+    // folder containing the exported OmicsDI entries
+    if (!(jummpConfig.jummp.search.exportFolder instanceof ConfigObject)) {
+        jummp.search.exportFolder = jummpConfig.jummp.search.exportFolder
+    }
 }
-if (!(jummpConfig.jummp.search.folder instanceof ConfigObject)) {
-    final String searchFolder = jummpConfig.jummp.search.folder
-    jummp.search.folder = searchFolder
-    println "INFO\tSOLR_HOME is set to $searchFolder."
-} else {
-    println "WARN\tSetting jummp.search.folder is undefined. Have you set \$SOLR_HOME?"
-}
+
 if (!(jummpConfig.jummp.search.pathToIndexerExecutable instanceof ConfigObject)) {
     jummp.search.pathToIndexerExecutable = jummpConfig.jummp.search.pathToIndexerExecutable
 }
@@ -581,9 +600,9 @@ if (!(jummpConfig.jummp.security.cms.policy instanceof ConfigObject)) {
 }
 
 if (jummp.security.cms.policy != null) {
-    println "Using ${jummp.security.cms.policy} to configure Weceem permissions."
+    println "INFO\tUsing ${jummp.security.cms.policy} to configure Weceem permissions."
 } else {
-    println "Using Weceem's default permissions."
+    println "WARN\tUsing Weceem's default permissions."
 }
 
 grails.plugin.springsecurity.controllerAnnotations.staticRules = jummp.controllerAnnotations
@@ -697,9 +716,24 @@ jummp.config.maintenance = false
 
 jummp.id.generators = ModelIdentifierUtils.processGeneratorSettings(jummp)
 
+if (!(jummpConfig.jummp.metadata.officialDatabaseName instanceof ConfigObject)) {
+    jummp.metadata.officialDatabaseName = jummpConfig.jummp.metadata.officialDatabaseName
+} else {
+    jummp.metadata.officialDatabaseName = 'BioModels Database'
+}
+
+if (!(jummpConfig.jummp.metadata.officialDatabaseDescription instanceof ConfigObject)) {
+    jummp.metadata.officialDatabaseDescription = jummpConfig.jummp.metadata.officialDatabaseDescription
+} else {
+    jummp.metadata.officialDatabaseDescription = """\
+        BioModels Database is a repository of computational models of biological processes.
+        Models described from literature are manually curated and enriched with cross-references.
+        """
+}
 // elasticsearch settings for weceem
 elasticSearch.datastoreImpl = 'hibernateDatastore'
-elasticSearch.bulkIndexOnStartup = true
-elasticSearch.disableAutoIndex = false
+elasticSearch.bulkIndexOnStartup = false
+elasticSearch.disableAutoIndex = true
 elasticSearch.client.mode = 'local'
-elasticSearch.index.store.type = 'memory' // store local node in memory and not on disk
+elasticSearch.index.store.type = 'simplefs' // store local node in memory and not on disk
+elasticSearch.maxBulkRequest = 10

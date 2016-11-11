@@ -317,8 +317,7 @@ class SubmissionService {
                 refreshPublication = true
             }
             model.publication.link = publink
-            def criteria = PublicationLinkProvider.createCriteria() as HibernateCriteriaBuilder
-            PublicationLinkProvider publSrc = criteria.get() {
+            PublicationLinkProvider publSrc = PublicationLinkProvider.withCriteria(uniqueResult: true) {
                 eq("linkType", linkType)
             }
             model.publication.linkProvider = DomainAdapter.getAdapter(publSrc).toCommandObject()

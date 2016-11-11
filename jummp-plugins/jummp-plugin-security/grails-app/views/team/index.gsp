@@ -22,8 +22,6 @@
 <html>
     <head>
         <meta name="layout" content="main"/>
-        <link rel="stylesheet" href="${resource(contextPath: "${grailsApplication.config.grails.serverURL}",
-            dir: '/css/jqueryui/smoothness', file: 'jquery-ui-1.10.3.custom.min.css')}" />
     </head>
     <body>
         <g:if test="${flash.message}">
@@ -42,7 +40,7 @@
                     height: 200
                 });
 
-                $("button").click(function (e) {
+                $("button[id^=btnDelete]").click(function (e) {
                     e.preventDefault();
                     var thisValue = $(this).attr("value");
                     $('#dialog-confirm').dialog({
@@ -78,7 +76,7 @@
             <div id="dialog-confirm" title="Confirm Delete" style="display:none;">
                 <p>Are you sure you want to delete this team?</p>
             </div>
-            <table>
+            <table class="responsive-table">
                 <thead>
                     <tr>
                         <th class="spaced">Name</th>
@@ -93,7 +91,6 @@
                             <td class="spaced"><g:link action="show" id="${t.id}">${t.name}</g:link></td>
                             <td class="spaced">${t.description}</td>
                             <td class="spaced">${t.owner.person.userRealName}</td>
-                            %{--<td class="spaced">&nbsp;</td>--}%
                             <td class="spaced">
                                 <button id="btnDelete${t.id.toString()}" value="${t.id}">Delete</button></td>
                         </tr>
@@ -102,7 +99,7 @@
             </table>
         </g:if>
         <span class='spaced'>
-            <g:link controller="team" action="create">Create a team</g:link>
+            <g:link controller="team" action="create" class="button">Create a team</g:link>
         </span>
     </body>
 </html>

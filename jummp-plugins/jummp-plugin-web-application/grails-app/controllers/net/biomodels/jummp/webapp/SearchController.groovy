@@ -34,11 +34,14 @@ import grails.converters.JSON
 import grails.plugin.springsecurity.authentication.GrailsAnonymousAuthenticationToken
 import net.biomodels.jummp.core.adapters.DomainAdapter
 import net.biomodels.jummp.core.model.ModelListSorting
+import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.webapp.rest.search.SearchResults
 import net.biomodels.jummp.webapp.rest.search.BrowseResults
 import net.biomodels.jummp.plugins.security.User
+import net.biomodels.jummp.search.SearchResponse
+import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Facet
 
 @Secured(['IS_AUTHENTICATED_FULLY'])
 class SearchController {
@@ -84,7 +87,7 @@ class SearchController {
             params.sortBy="modified"
         }
         if (!params.sortDir || params.sortDir!="asc") {
-            params.sortDir="desc";
+            params.sortDir="desc"
         }
         if (params.sortBy) {
             switch (params.sortBy) {
@@ -95,13 +98,13 @@ class SearchController {
                 case "modified":
                     break
                 default:
-                    params.sortBy = "modified";
+                    params.sortBy = "modified"
             }
         }
         else {
-            params.sortBy = "modified";
+            params.sortBy = "modified"
         }
-        params.numResults=numResults();
+        params.numResults = numResults()
         if (integerCheck(params.offset, true, -1)) {
             params.offset = params.offset ? Integer.parseInt(params.offset) : 0
         }
@@ -111,7 +114,7 @@ class SearchController {
     }
 
     private int numResults() {
-        final int MAXRESULTS = 50
+        final int MAXRESULTS = 100
         final int MINRESULTS = 10
         User user
         if (!(springSecurityService.principal.username == GrailsAnonymousAuthenticationToken.USERNAME)) {
@@ -127,10 +130,10 @@ class SearchController {
         if (integerCheck(params.numResults, true, -1)) {
             prefs.numResults = params.numResults as Integer
             if (prefs.numResults > MAXRESULTS ) {
-                prefs.numResults = MAXRESULTS;
+                prefs.numResults = MAXRESULTS
             }
             else if (prefs.numResults < MINRESULTS ) {
-                prefs.numResults = MINRESULTS;
+                prefs.numResults = MINRESULTS
             }
             if (user) {
                 prefs.setUser(user)
@@ -174,12 +177,11 @@ class SearchController {
      */
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def search() {
-        sanitiseParams();
+        sanitiseParams()
         if (!params.query) {
             params.query = ""
         }
-        def results = searchCore(params.query, params.sortBy, params.sortDir, params.offset,
-                        params.numResults)
+        def results = searchCore(params.query, params.sortBy, params.sortDir, params.offset, params.numResults)
         if (!params.format || params.format=="html") {
             return results
         }
@@ -194,9 +196,28 @@ class SearchController {
     }
 
     private def searchCore(String query, String sortBy, String sortDirection, int offset, int length) {
+        Map<String, Integer> paginationCriteria = ["start": offset, "length": length, "facetCount": 10]
         List<MTC> models = []
+        List<Facet> facets = []
+        int totalCount
         if (query?.trim()) {
-            models.addAll(searchService.searchModels(query))
+            SearchResponse response = searchService.searchModels(query, paginationCriteria)
+            HashSet<ModelTransportCommand> res = response.results
+            totalCount = response.totalCount
+            println paginationCriteria
+            if (res.size() > 0) {
+                println "Found(s): ${res.size()} records."
+                res.each {
+                    models.add(it)
+                }
+            }
+            HashSet<Facet> facets1 = response.facets
+            if (facets1.size() > 0) {
+                println "Found(s): ${facets1.size()} facets."
+                facets1.each {
+                    facets.add(it)
+                }
+            }
         }
         int sortDir = 1
         if (sortDirection && sortDirection == "asc") {
@@ -226,17 +247,17 @@ class SearchController {
                 models = models.sort{ m1, m2 -> sortDir * m2.name.compareTo(m1.name) }
                 break
         }
-        int retval = models.size()
+
         if (offset > 0 && offset < models.size()) {
             models = models[offset..-1]
-        }
-        else {
+        } else {
             offset = 0
         }
         if (models.size() > length) {
             models = models[0..length-1]
         }
-        return [models: models, matches: retval, sortBy: sortBy, sortDirection: sortDirection,
+
+        return [models: models, facets: facets, matches: totalCount, sortBy: sortBy, sortDirection: sortDirection,
                     offset: offset, length: length, query: query]
     }
 
@@ -307,7 +328,10 @@ class SearchController {
         modelsDomain.each {
             models.add(DomainAdapter.getAdapter(it).toCommandObject())
         }
-        return [models: models, modelsAvailable: modelService.getModelCount(), sortBy: sortBy,
+        //List<String> facets = ["My models", "Format", "Status"]
+        List<String> facets = []
+        int totalCount = modelService.getModelCount()
+        return [models: models, facets: facets, modelsAvailable: totalCount, sortBy: sortBy,
                 sortDirection: sortDirection, offset: offset, length: length]
     }
 

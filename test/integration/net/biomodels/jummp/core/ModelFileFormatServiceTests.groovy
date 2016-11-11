@@ -50,14 +50,12 @@ import static org.junit.Assert.*
 class ModelFileFormatServiceTests {
     def modelFileFormatService
     def grailsApplication
-    @Override
     @Before
     void setUp() {
         FileUtils.deleteDirectory(new File("target/sbml"))
         assertTrue(new File("target/sbml").mkdirs())
     }
 
-    @Override
     @After
     void tearDown() {
         FileUtils.deleteDirectory(new File("target/sbml"))

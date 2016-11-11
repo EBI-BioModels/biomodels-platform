@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -30,21 +30,18 @@
 
 package net.biomodels.jummp.plugins.bives
 
-import de.unirostock.sems.bives.api.SBMLDiff
 import net.biomodels.jummp.core.events.RevisionCreatedEvent
-import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
-import org.springframework.context.ApplicationEvent
+import org.apache.log4j.Logger
 import org.springframework.context.ApplicationListener
 
 /**
  * @short Listener for new revisions
- * 
+ *
  * @author Robert Haelke, robert.haelke@googlemail.com
  * @author Mihai Glonț <mglont@ebi.ac.uk>
  * @date   04/12/2013
  */
-class RevisionCreatedListener implements ApplicationListener {
+class RevisionCreatedListener implements ApplicationListener<RevisionCreatedEvent> {
     /**
      * Dependency Injection of ModelDelegateService
      */
@@ -54,8 +51,11 @@ class RevisionCreatedListener implements ApplicationListener {
      */
     def diffDataService
 
-    public void onApplicationEvent(ApplicationEvent event) {
+    Logger log = Logger.getLogger(getClass())
+
+    public void onApplicationEvent(RevisionCreatedEvent event) {
         if (event instanceof RevisionCreatedEvent) {
+            log.info("The event identified by $event has been exposed at creating the revision $event.revision")
             /*RevisionTransportCommand revision = ((RevisionCreatedEvent) event).revision
             RepositoryFileTransportCommand files = revision.files.find{it.mainFile}
             //ensure there is a previous revision

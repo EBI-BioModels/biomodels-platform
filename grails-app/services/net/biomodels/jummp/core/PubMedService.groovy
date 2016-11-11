@@ -99,7 +99,7 @@ class PubMedService {
         catch (Exception e) {
             throw new JummpException("Error retrieving publication info", e)
         }
-        PublicationLinkProvider link=PublicationLinkProvider.createCriteria().get() {
+        PublicationLinkProvider link = PublicationLinkProvider.withCriteria(uniqueResult: true) {
             eq("linkType",PublicationLinkProvider.LinkType.PUBMED)
         }
         PublicationTransportCommand publication = new PublicationTransportCommand(linkProvider: DomainAdapter.getAdapter(link).toCommandObject(), link: id)

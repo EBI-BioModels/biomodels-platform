@@ -20,22 +20,24 @@
                         <a href="${createLink(controller: "search", action: "archive")}">Browse Archived Models</a>
                     </sec:ifLoggedIn>
                 </g:if>
-                <ul>
-                    <g:each in="${resultOptions}">
-                        <li>
-                            <g:if test="${it == length}">
-                                ${it}
-                            </g:if>
-                            <g:else>
-                                <a href="${createLink(controller: 'search', action: action,
-                                    params: [query: query,  sortDir: sortDirection,
-                                             sortBy: sortBy, offset: 0, numResults: it])}">
+                <g:if test="${models}">
+                    <ul>
+                        <g:each in="${resultOptions}">
+                            <li>
+                                <g:if test="${it == length}">
                                     ${it}
-                                </a>
-                            </g:else>
-                        </li>
-                    </g:each>
-                </ul>
+                                </g:if>
+                                <g:else>
+                                    <a href="${createLink(controller: 'search', action: action,
+                                        params: [query: query,  sortDir: sortDirection,
+                                                 sortBy: sortBy, offset: 0, numResults: it])}">
+                                        ${it}
+                                    </a>
+                                </g:else>
+                            </li>
+                        </g:each>
+                    </ul>
+                </g:if>
             </div>
             <g:if test="${models}">
 	 			<table id="modelTable">
@@ -115,7 +117,7 @@
                 <div class="dataTables_paginate">
                     <g:if test="${currentPage != 1 && numPages > stepPagination}">
                         <a href="${createLink(controller: 'search', action: action,
-                            params: [query: query, sortDir: sortDirection, sortBy: sortBy, offset: 0])}">First</a>
+                            params: [query: query, sortDir: sortDirection, sortBy: sortBy, offset: 0, numResults: length])}">First</a>
                     </g:if>
                     <g:else>
                         First
@@ -125,7 +127,7 @@
                 	</g:if>
                 	<g:else>
                 		<a href="${createLink(controller: 'search', action: action,
-                            params: [query: query, sortDir: sortDirection, sortBy: sortBy, offset: modelStart-length-1])}">
+                            params: [query: query, sortDir: sortDirection, sortBy: sortBy, offset: modelStart-length-1, numResults: length])}">
                 			<g:img dir="${imagePath}/pagination" absolute="true"  contextPath="" file="arrow-previous.gif" alt="Previous"/>
                 		</a>
                 	</g:else>
@@ -143,7 +145,7 @@
                 			</g:if>
                 			<g:else>
                 				<a href="${createLink(controller: 'search', action: action,
-                                    params: [query: query,  sortDir: sortDirection, sortBy: sortBy, offset: (i - 1)*length ])}">
+                                    params: [query: query,  sortDir: sortDirection, sortBy: sortBy, offset: (i - 1)*length, numResults: length])}">
                 					${i}
                 				</a>
                 			</g:else>
@@ -154,13 +156,13 @@
                 	</g:if>
                 	<g:else>
                 		<a href="${createLink(controller: 'search', action: action,
-                            params: [query: query,  sortDir: sortDirection, sortBy: sortBy, offset: modelStart+length-1])}">
+                            params: [query: query,  sortDir: sortDirection, sortBy: sortBy, offset: modelStart+length-1, numResults: length])}">
                 			<g:img dir="${imagePath}/pagination" absolute="true"  contextPath="" file="arrow-next.gif" alt="Next"/>
                 		</a>
                 	</g:else>
                     <g:if test="${currentPage != numPages && numPages > stepPagination}">
                         <a href="${createLink(controller: 'search', action: action,
-                            params: [query: query, sortDir: sortDirection, sortBy: sortBy, offset: length*(numPages-1)])}">Last</a>
+                            params: [query: query, sortDir: sortDirection, sortBy: sortBy, offset: length*(numPages-1), numResults: length])}">Last</a>
                     </g:if>
                     <g:else>
                         Last

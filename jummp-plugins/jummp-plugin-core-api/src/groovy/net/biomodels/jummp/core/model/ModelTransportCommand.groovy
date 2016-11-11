@@ -60,6 +60,10 @@ class ModelTransportCommand implements Serializable {
      */
     String name
     /**
+     * The description of this model
+     */
+    String description
+    /**
      * Whether this model has been deleted.
      */
     boolean deleted

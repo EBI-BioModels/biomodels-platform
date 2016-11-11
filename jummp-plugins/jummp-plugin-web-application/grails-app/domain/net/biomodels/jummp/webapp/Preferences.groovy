@@ -42,7 +42,9 @@ class Preferences implements Serializable {
 
 	public static List getOptions(String preference) {
 		if (preference == "numResults") {
-			return [10, 20, 50]
+            // remember to change places referring to these values, for instance, SearchController
+            // the minimum or maximum value in the following list must comply with the one used for the references
+			return [10, 20, 50, 75, 100]
 		}
 		return null
 	}

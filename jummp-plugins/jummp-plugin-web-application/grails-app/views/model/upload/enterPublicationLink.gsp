@@ -33,71 +33,67 @@
 <%@ page import="net.biomodels.jummp.core.model.RevisionTransportCommand" %>
 <%@ page import="net.biomodels.jummp.core.model.ModelTransportCommand" %>
 <%@ page import=" net.biomodels.jummp.model.PublicationLinkProvider" %>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="layout" content="main"/>
+    <title><g:message code="submission.publicationLink.header"/></title>
+    <g:javascript contextPath="" src="enterPublicationLink.js"/>
+</head>
+<body>
+<%
+    model = workingMemory.get('ModelTC') as ModelTransportCommand
+    revision = workingMemory.get("RevisionTC") as RevisionTransportCommand
+    publication = revision?.model?.publication
+    def publicationMap = workingMemory.get('publication_objects_in_working') as HashMap<Object, PublicationDetailExtractionContext>
+    if (workingMemory.containsKey('SelectedPubLinkProvider')) {
+        PublicationDetailExtractionContext pubContext = publicationMap.get(workingMemory.get('SelectedPubLinkProvider'))
+        PublicationTransportCommand pubTC = pubContext.publication
+        if (pubTC) {
+            publication = pubTC
+        }
+    }
+%>
+<div class="row">
+    <h2><g:message code="submission.publicationLink.header"/></h2>
 
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <meta name="layout" content="main"/>
-        <title><g:message code="submission.publicationLink.header"/></title>
-        <g:javascript contextPath="" src="enterPublicationLink.js"/>
-    </head>
-    <body>
-        <%
-            model = workingMemory.get('ModelTC') as ModelTransportCommand
-            revision = workingMemory.get("RevisionTC") as RevisionTransportCommand
-            publication = revision?.model?.publication
-            def publicationMap = workingMemory.get('publication_objects_in_working') as HashMap<Object, PublicationDetailExtractionContext>
-            if (workingMemory.containsKey('SelectedPubLinkProvider')) {
-                PublicationDetailExtractionContext pubContext = publicationMap.get(workingMemory.get('SelectedPubLinkProvider'))
-                PublicationTransportCommand pubTC = pubContext.publication
-                if (pubTC) {
-                    publication = pubTC
-                }
-            }
-        %>
-        <h2><g:message code="submission.publicationLink.header"/></h2>
-        <g:form>
-            <g:message code="submission.publink.publication"/>
-            <g:if test="${publication}">
-                <g:if test="${publication.title && (publication.affiliation || publication.synopsis)}">
-                    Currently, the model is associated with:
-                    <g:render  model="[model:model]" template="/templates/showPublication" />
+        <g:message code="submission.publink.publication"/>
+        <g:if test="${publication}">
+        <g:if test="${publication.title && (publication.affiliation || publication.synopsis)}">
+            Currently, the model is associated with:
+            <g:render  model="[model: model]" template="/templates/showPublication" />
+        </g:if>
+        </g:if>
+    <g:form>
+        <div class="dialog">
+            <%
+                linkSourceTypes = PublicationLinkProvider.LinkType.
+                    values().collect { it.label }
+            %>
+            <div class="small-12 medium-12 columns">
+                <g:if test="${publication}">
+                    <g:select name="PubLinkProvider" id="pubLinkProvider"
+                              from="${linkSourceTypes}"
+                              value="${publication.linkProvider.linkType}"
+                              noSelection="['':'- No publication available -']"/>
+                    <g:textField name="PublicationLink" id="publicationLink" value="${publication.link}"/>
                 </g:if>
-            </g:if>
-            <div class="dialog">
-                <table class="formtable">
-                    <tbody>
-                         <tr class="prop">
-                            <%
-                                linkSourceTypes = PublicationLinkProvider.LinkType.
-                                    values().collect { it.label }
-                            %>
-                            <td class="value" style="vertical-align:top;">
-                                <g:if test="${publication}">
-                                    <g:select name="PubLinkProvider" id="pubLinkProvider"
-                                    from="${linkSourceTypes}"
-                                            value="${publication.linkProvider.linkType}"
-                                            noSelection="['':'- No publication available -']"/>
-                                    <g:textField name="PublicationLink" id="publicationLink" size="100"
-                                                 value="${publication.link}"/>
-                                </g:if>
-                                <g:else>
-                                    <g:select name="PubLinkProvider" id="pubLinkProvider"
-                                    from="${linkSourceTypes}"
-                                    noSelection="['':'- No publication available -']"/>
-                                    <g:textField name="PublicationLink" id="publicationLink" size="100"/>
-                                </g:else>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div class="buttons">
-                    <g:submitButton name="Cancel" value="${g.message(code: 'submission.common.cancelButton')}" />
-                    <g:submitButton name="Back" value="${g.message(code: 'submission.common.backButton')}" />
-                   	<g:submitButton name="Continue" value="${g.message(code: 'submission.publink.continueButton')}"/>
-                </div>
+                <g:else>
+                    <g:select name="PubLinkProvider" id="pubLinkProvider"
+                              from="${linkSourceTypes}"
+                              noSelection="['':'- No publication available -']"/>
+                    <g:textField name="PublicationLink" id="publicationLink"/>
+                </g:else>
+                <g:submitButton name="Cancel" class="button"
+                                value="${g.message(code: 'submission.common.cancelButton')}" />
+                <g:submitButton name="Back" class="button"
+                                value="${g.message(code: 'submission.common.backButton')}" />
+                <g:submitButton name="Continue" class="button"
+                                value="${g.message(code: 'submission.publink.continueButton')}"/>
             </div>
-        </g:form>
-    </body>
-   <g:render template="/templates/decorateSubmission" />
-   <g:render template="/templates/subFlowContextHelp" />
+        </div>
+    </g:form>
+</div>
+</body>
+<g:render template="/templates/decorateSubmission" />
+<g:render template="/templates/subFlowContextHelp" />
 

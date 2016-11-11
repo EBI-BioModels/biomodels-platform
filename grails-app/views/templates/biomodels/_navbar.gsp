@@ -18,19 +18,20 @@
 --%>
 
 <nav>
-<ul class="grid_24 main-menu" id="local-nav">
-    <li <g:if test="${g.pageProperty(name:'page.browse')?.length()}"> class="active" </g:if>>
+<ul class="grid_24 main-menu dropdown menu float-left columns medium-12"
+    id="local-nav" data-dropdown-menu="true" role="menubar" style="background-color: #00aaaa">
+    <li <g:if test="${g.pageProperty(name:'page.browse')?.length()}"> class="first active" </g:if> role="menuitem">
         <a href="${g.createLink(controller: 'search', action: 'list')}">Browse</a>
     </li>
-    <li <g:if test="${g.pageProperty(name:'page.submit')?.length()}"> class="active" </g:if>>
+    <li <g:if test="${g.pageProperty(name:'page.submit')?.length()}"> class="first active" </g:if> role="menuitem">
         <a href="${g.createLink(controller: 'model', action: 'create')}">Submit</a>
     </li>
     <sec:ifLoggedIn>
-        <li <g:if test="${g.pageProperty(name:'page.teams')?.length()}"> class="active" </g:if>>
+        <li <g:if test="${g.pageProperty(name:'page.teams')?.length()}"> class="active" </g:if> role="menuitem">
             <a href="${g.createLink(controller: 'team', action: 'index')}">My Teams</a>
         </li>
     </sec:ifLoggedIn>
-    <li <g:if test="${g.pageProperty(name:'page.feedback')?.length()}"> class="active" </g:if>>
+    <li <g:if test="${g.pageProperty(name:'page.feedback')?.length()}"> class="active" </g:if> role="menuitem">
         <a href="${g.createLink(controller: 'jummp', action: 'feedback')}">
             <g:message code="jummp.feedback.biomodels.title"/>
         </a>
@@ -40,17 +41,17 @@
        whichever one will show up last...
        For example: -->
     <sec:ifLoggedIn>
-        <li class="functional last">
+        <li class="functional last float-right" role="menuitem">
             <a href="${grailsApplication.config.grails.serverURL}/logout" class="icon icon-functional" data-icon="l">
                 <g:message code="jummp.main.logout"/>
             </a>
         </li>
-        <li class="functional first">
+        <li class="functional first float-right" role="menuitem">
             <a href="${grailsApplication.config.grails.serverURL}/user" class="icon icon-functional" data-icon="5">
                 ${sec.username()}'s Profile
             </a>
         </li>
-        <li class="functional" id="notificationCount">
+        <li class="functional float-right" role="menuitem" id="notificationCount">
       		<a title="View ${sec.username()}'s Notifications" href='<g:createLink controller="notification" action="list"/>'>
                 <img width="20" height="auto" title="notifications" src="${grailsApplication.config.grails.serverURL}/images/email.png"/>
       			<span id="notificationLink" style="display: none;"></span>
@@ -58,12 +59,12 @@
       	</li>
     </sec:ifLoggedIn>
     <sec:ifNotLoggedIn>
-        <li class="functional first">
+        <li class="functional first float-right" role="menuitem">
             <a href="${grailsApplication.config.grails.serverURL}/registration" class="icon icon-functional" data-icon="7">
                 <g:message code="jummp.main.register"/>
             </a>
         </li>
-        <li class="functional last">
+        <li class="functional last float-right" role="menuitem">
             <a href="${grailsApplication.config.grails.serverURL}/login" class="icon icon-functional" data-icon="l">
                 <g:message code="jummp.main.login"/>
             </a>

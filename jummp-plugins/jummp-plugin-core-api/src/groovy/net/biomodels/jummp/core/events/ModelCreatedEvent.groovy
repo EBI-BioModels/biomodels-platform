@@ -36,7 +36,7 @@ import net.biomodels.jummp.core.model.ModelTransportCommand
  * @author Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
-class ModelCreatedEvent extends JummpEvent {
+class ModelCreatedEvent extends ModelOperationEvent {
     /**
      * The newly created model.
      */

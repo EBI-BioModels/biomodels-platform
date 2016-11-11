@@ -35,78 +35,64 @@
         <title>Model Information</title>
     </head>
     <body>
+        <div class="row">
         <h2>Model Information</h2>
         <p>Please ensure the following fields are correctly filled in.</p>
-
         <g:form>
-            <div class="dialog">
-                <table class="formtable">
-                    <tbody>
-                        <tr class="prop">
-                            <td class="name">
-                                <label for="name">Name:</label>
-                            </td>
-                            <td class="value">
-                                <g:if test="${workingMemory['new_name']}">
-                                    <g:textField id="name" name="name" style="width: 713px" value="${workingMemory['new_name']}"/>
-                                </g:if>
-                                <g:else>
-                                    <g:textField id="name" name="name" style="width: 713px" value="${(workingMemory.get("RevisionTC") as RevisionTransportCommand).name}"/>
-                                </g:else>
-                            </td>
-                        </tr>
-                        <tr class="prop">
-                            <td class="name">
-                                <jummp:displayModelDescriptionLabel>
-                                    <label for="description">${description}:</label>
-                                </jummp:displayModelDescriptionLabel>
-                            </td>
-                            <td class="value">
-                                <g:if test="${workingMemory['new_description']}">
-                                    <g:textField id="description" name="description" style="width: 700px" value="${workingMemory['new_description']}"/>
-                                </g:if>
-                                <g:else>
-                                    <g:textArea id="description" cols="70" rows="10" style="width: 700px" name="description" value='${(workingMemory.get("RevisionTC") as RevisionTransportCommand).description}'/>
-                                </g:else>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <input type='hidden' value='false' name='changed' id="changeStatus"/>
-                <div class="buttons">
-                    <g:submitButton name="Cancel" value="Abort" />
-                    <g:submitButton name="Back" value="Back" />
-                    <g:submitButton name="Continue" value="Continue" />
-                </div>
+        <div class="small-12 medium-12 columns">
+            <label for="name" class="required">Name</label>
+            <g:if test="${workingMemory['new_name']}">
+                <g:textField id="name" name="name" value="${workingMemory['new_name']}"/>
+            </g:if>
+            <g:else>
+                <g:textField id="name" name="name" value="${(workingMemory.get("RevisionTC") as RevisionTransportCommand).name}"/>
+            </g:else>
+
+            <jummp:displayModelDescriptionLabel>
+                <label for="description">${description}</label>
+            </jummp:displayModelDescriptionLabel>
+            <g:if test="${workingMemory['new_description']}">
+                <g:textArea id="description" cols="70" rows="10" name="description" value="${workingMemory['new_description']}"/>
+            </g:if>
+            <g:else>
+                <g:textArea id="description" cols="70" rows="10" name="description" value='${(workingMemory.get("RevisionTC") as RevisionTransportCommand).description}'/>
+            </g:else>
+
+            <input type='hidden' value='false' name='changed' id="changeStatus"/>
+            <div class="buttons">
+                <g:submitButton name="Cancel" class="button" value="Abort" />
+                <g:submitButton name="Back" class="button" value="Back" />
+                <g:submitButton name="Continue" class="button" value="Continue" />
             </div>
+        </div>
         </g:form>
+        </div>
+
         <script>
+            function associateEventHandlers(id) {
+                var descBox = document.getElementById(id);
 
-        function associateEventHandlers(id) {
-        	var descBox = document.getElementById(id);
-
-
-        	if ("onpropertychange" in descBox)
-        	{
-        		descBox.attachEvent("onpropertychange", $.proxy(function () {
-        			if (event.propertyName == "value")
-        				$("#changeStatus").val(true);
-        			}, descBox));
-        	}
-        	else
-        	{
-        		descBox.addEventListener("input", function () {
-        			$("#changeStatus").val(true);
-        		});
-        	}
-    	}
-    	$( document ).ready(function() {
-    		associateEventHandlers("description");
-    		associateEventHandlers("name");
-    	});
+                if ("onpropertychange" in descBox)
+                {
+                    descBox.attachEvent("onpropertychange", $.proxy(function () {
+                        if (event.propertyName == "value")
+                            $("#changeStatus").val(true);
+                        }, descBox));
+                }
+                else
+                {
+                    descBox.addEventListener("input", function () {
+                        $("#changeStatus").val(true);
+                    });
+                }
+            }
+            $( document ).ready(function() {
+                associateEventHandlers("description");
+                associateEventHandlers("name");
+            });
     	</script>
 
-     </body>
+    </body>
     <g:render template="/templates/decorateSubmission" />
     <g:render template="/templates/subFlowContextHelp" />
 
