@@ -134,15 +134,33 @@ def userCache = new ConcurrentHashMap<String, Long>()
  */
 ReentrantLock userCacheModifier = new ReentrantLock()
 
+class ModelLogger {
+    Set err
+    Set out
+
+    void logMsg(def msg) {
+        out << msg
+    }
+
+    void errMsg(def msg) {
+        err << msg
+    }
+
+    String toString() {
+        "out: $out, err: $err"
+    }
+}
+
 /**
- * Log for model-related error messages.
+ * Log for model-related messages.
  *
- * Keys represent model identifiers. Values represent ordered sets of messages.
+ * Keys represent model identifiers. Values represent pairs of ordered sets of messages
+ * corresponding to the error log and the info log respectively.
  *
  * Since all messages relating to a model will be inserted by the same thread, there is no
  * need to use locks.
  */
-def failures = new ConcurrentHashMap<String, LinkedHashSet>()
+def messageLog = new ConcurrentHashMap<String, ModelLogger>()
 
 LinkedBlockingQueue insertedRevisions = new LinkedBlockingQueue()
 
@@ -481,6 +499,7 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
 
 // keep track of the number of models that are processed
 def processedCount = new AtomicLong()
+def failureCount = new AtomicLong()
 target(main: "Puts everything together to import models from a given folder") {
     bootstrapJummp()
 
@@ -512,18 +531,24 @@ target(main: "Puts everything together to import models from a given folder") {
 
     duration = (System.currentTimeMillis() - duration) / 1000 /* duration in ms */
     String formattedDuration = prettify(duration)
-    logExistingFailures()
-    log("Imported ${processedCount.get()} models (${failures.size()} failures) in $formattedDuration")
+    printModelLog()
+    log("Imported ${processedCount.get()} models (${failureCount.get()} failures) in $formattedDuration")
     cleanup()
     return 0
 }
 
-logExistingFailures = {
-    if (failures) {
+printModelLog = {
+    messageLog.keySet().sort().each { modelId ->
+        def logger = messageLog[modelId]
+        def infoMessages = logger.out
+        infoMessages.each { m -> log("$modelId: $m") }
+    }
+    if (failureCount.get()) {
         log("Failed to import the following models:")
-        failures.keySet().sort().each { modelId ->
-            def modelLog = failures[modelId]
-            modelLog.each { err -> log("$modelId: $err") }
+        messageLog.keySet().sort().each { modelId ->
+            def logger = messageLog[modelId]
+            def errorMessages = logger.err
+            errorMessages.each { m -> error("$modelId: $m") }
         }
     }
 }
@@ -534,6 +559,7 @@ processModelFolder = { File folder ->
     final String BRANCH = getBranch MODEL_ID
     if (!BRANCH) {
         addModelError(MODEL_ID, "Can not find $MODEL_ID in any of $bioModelsBranches")
+        failureCount.incrementAndGet()
         return
     }
     boolean shouldDefer = isModelInUncuraPublAndPubl(MODEL_ID, BRANCH)
@@ -551,12 +577,14 @@ processModelFolder = { File folder ->
     def originalFile = findOriginalFile(folder, MODEL_ID)
     if (!originalFile) {
         addModelError(MODEL_ID, "Original submission file not found")
+        failureCount.incrementAndGet()
         return
     }
     // find submissionInfo
     def modelDetails = getModelDetails MODEL_ID, BRANCH
     if (!modelDetails) {
         addModelError(MODEL_ID, "Error retrieving model details from BioModels DB")
+        failureCount.incrementAndGet()
         return
     }
     try {
@@ -567,13 +595,14 @@ processModelFolder = { File folder ->
         try {
             submitter = getUser MODEL_ID, BRANCH
         } catch (Exception e) {
-            error("Can't get submitter account for MODEL $MODEL_ID ($BRANCH) :: $e")
+            addModelError(MODEL_ID, "Can't get submitter account for MODEL $MODEL_ID ($BRANCH) :: $e")
         } finally {
             logOut()
         }
 
         if (!submitter) {
             addModelError(MODEL_ID, "No user found, please check details in BioModels DB")
+            failureCount.incrementAndGet()
             return
         }
         authenticateAsUser(submitter)
@@ -581,6 +610,7 @@ processModelFolder = { File folder ->
         def submittedModel = submitOriginalFile(BRANCH, MODEL_ID, originalFile, modelDetails)
         if (!submittedModel) {
             addModelError(MODEL_ID, "Error importing original file")
+            failureCount.incrementAndGet()
             return
         }
         // submit second revision as * without original file
@@ -588,6 +618,7 @@ processModelFolder = { File folder ->
         if (!revision || revision?.hasErrors()) {
             def err = revision?.errors?.allErrors
             addModelError(MODEL_ID, "Could not update original submission: $err")
+            failureCount.incrementAndGet()
             return
         }
         addRevisionAnnotations(revision, BRANCH, modelDetails, submitter)
@@ -596,8 +627,8 @@ processModelFolder = { File folder ->
             insertedRevisions.offer(r.id)
         }
     } catch (Throwable t) {
-        error("Something went wrong with ${MODEL_ID} - ${t}")
-        addModelError(MODEL_ID, t.message)
+        addModelError(MODEL_ID, "Something went wrong with ${MODEL_ID} - ${t}")
+        failureCount.incrementAndGet()
     } finally {
         closeSession()
         logOut()
@@ -638,12 +669,6 @@ submitOriginalFile = { branch, modelId, originalFile, infoMap ->
     if ( inPublBranch && !publicationId) {
         throw new IllegalStateException("No BIOMD* found for curated model $modelId".toString())
     }
-    log("MODEL $modelId ($branch) -- $model: inPubl: $inPublBranch \
-submissionId: $submissionId \
-publicationId: $publicationId \
-uploaded: $uploadDate \
-firstPublished: $firstPublished \
-in publ: $inPublBranch")
     if (publicationId) {
         model.publicationId = publicationId
         model.submissionId = submissionId
@@ -660,10 +685,10 @@ in publ: $inPublBranch")
 
     if (!model.save(flush: true) && model.hasErrors()) {
         def err = model.errors.allErrors
-        error("$modelId : Validation errors when persisting original submission: $err")
+        addModelError(modelId, "Validation errors when persisting original submission: $err")
         return
     }
-    log "${Thread.currentThread().name} Original model $modelId was successfully imported."
+    addModelMsg(modelId, "Original submission successfully imported")
     return model
 }
 
@@ -685,9 +710,8 @@ addRevision = { modelId, parent, model ->
     def revision
     try {
         revision = modelService.addValidatedRevision(revisionInfo.files, [], revisionInfo.revision)
-        log "added revision $revision for $modelId"
+        addModelMsg modelId, "added revision $revision"
     } catch(Exception e) {
-        error("Exception thrown while updating original submission $modelId: $e")
         addModelError(modelId, "Exception thrown while updating original submission: $e")
     }
     revision
@@ -982,11 +1006,18 @@ logOut = {
 }
 
 addModelError = { model, msg ->
-    failures.putIfAbsent(model, new LinkedHashSet())
-    failures[model] << msg.toString()
+    messageLog.putIfAbsent(model, new ModelLogger(err: new LinkedHashSet(), out: new LinkedHashSet()))
+    def logger = messageLog[model]
+    logger.errMsg msg
 }
 
-error = { String msg, int code = -1 ->
+addModelMsg = { model, msg ->
+    messageLog.putIfAbsent(model, new ModelLogger(err: new LinkedHashSet(), out: new LinkedHashSet()))
+    def logger = messageLog[model]
+    logger.logMsg msg
+}
+
+error = { msg, int code = -1 ->
     event('StatusError', [msg])
     if (code != -1) {
         exit code
