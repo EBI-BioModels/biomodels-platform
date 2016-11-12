@@ -138,12 +138,11 @@ ReentrantLock userCacheModifier = new ReentrantLock()
  * Log for model-related error messages.
  *
  * Keys represent model identifiers. Values represent ordered sets of messages.
+ *
+ * Since all messages relating to a model will be inserted by the same thread, there is no
+ * need to use locks.
  */
 def failures = new ConcurrentHashMap<String, LinkedHashSet>()
-/**
- * Guard against concurrent insertions pertaining to the same model.
- */
-ReentrantLock failuresLock = new ReentrantLock()
 
 LinkedBlockingQueue insertedRevisions = new LinkedBlockingQueue()
 
@@ -983,28 +982,8 @@ logOut = {
 }
 
 addModelError = { model, msg ->
-    failuresLock.lock()
-    try {
-        def modelLog = getErrorLogForModel model
-        modelLog.add msg.toString()
-    } finally {
-        failuresLock.unlock()
-    }
-}
-
-getErrorLogForModel = { model ->
-    assert model
-    failuresLock.lock()
-    try {
-        if (failures.contains(model)) {
-            return failures[model]
-        }
-        def msgQueue = new LinkedHashSet()
-        failures.put(model, msgQueue)
-        return msgQueue
-    } finally {
-        failuresLock.unlock()
-    }
+    failures.putIfAbsent(model, new LinkedHashSet())
+    failures[model] << msg.toString()
 }
 
 error = { String msg, int code = -1 ->
