@@ -972,17 +972,6 @@ target(inspectSession: 'Prints information about entities stored in a Hibernate 
     log(result.toString())
 }
 
-inspectModel = { model ->
-    log "model errors : ${model.hasErrors()} -- ${model.errors.allErrors}"
-    long id = model.id
-    if (!id) {
-        log("Model $model has not been saved!")
-    } else {
-        def modelFromDb = Model.withNewSession { Model.get(id) }
-        log("in the database: ${modelFromDb}")
-    }
-}
-
 authenticate = { user, passwd ->
     def authToken = new UsernamePasswordAuthenticationToken(user, passwd)
     def auth = appCtx.getBean("authenticationManager").authenticate(authToken)
