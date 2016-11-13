@@ -1,76 +1,55 @@
 #nameSearch {
-    width:150px;
-    border:1px solid #ccc;
-    min-width: 0px;
-    -ms-box-sizing:content-box;
-    -moz-box-sizing:content-box;
-    box-sizing:content-box;
-    -webkit-box-sizing:content-box;
+
 }
 
 #teamSearch {
-    width:163px;
-    border:1px solid #ccc;
-    min-width: 0px;
-    -ms-box-sizing:content-box;
-    -moz-box-sizing:content-box;
-    box-sizing:content-box;
-    -webkit-box-sizing:content-box;
+
 }
 
 .formElement {
-	float: left;
-	padding: 10px;
+
 }
+
 .formElements {
-	width: 400px;
-	float: left;
+
 }
+
 .containUI {
-	margin-left: 13%;
-	position:static;
-	width:100%
+
 }
+
 #AddButton, #TeamAddButton {
-    /*-webkit-appearance: none; // to set the height */
-    margin-top: 17px;
-    margin-left: 12px;
-    /*height: 29px;*/
+
 }
+
 #collabCreate {
-	float: left;
-	width: 40%;
-	border-style:solid;
-	border-left:none;
-	border-top:none;
-	border-bottom:none;
+
 }
+
 .hideRightBorder {
 	border-right: none !important;
 }
+
 .hideLeftBorder {
 	border-left:none !important;
 }
+
 #currentCollabs {
-	padding-left: 40px;
-	left:40%;
-	width:40%;
-	float: left;
-	border-style:solid;
-	border-top:none;
-	border-bottom:none;
-	border-right: none;
+
 }
+
 .tableEL {
-	padding: 10px;
+
 }
+
 .bold {
 	font-weight: bold;
 }
+
 #collabUI {
-	width: 100%;
+
 }
+
 #ui {
-	margin-left:12%;
-	left:-12%;
+
 }

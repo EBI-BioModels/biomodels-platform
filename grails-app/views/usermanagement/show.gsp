@@ -32,27 +32,27 @@
     		<div class="view view-dom-id-9c00a92f557689f996511ded36a88594">
     		<div class="view-content">
         <div class="row column">
+            <h2>User information</h2>
 			<table class="responsive-table">
-				<thead></thead>
 				<tbody>
 				<tr>
-					<td class='tableLabels'><label><g:message code="user.administration.ui.username"/>:</label></td>
+					<td class='tableLabels'><label><g:message code="user.administration.ui.username"/></label></td>
 					<td>${user.username}</td>
 				</tr>
 				<tr>
-					<td class='tableLabels'><label><g:message code="user.administration.ui.realname"/>:</label></td>
+					<td class='tableLabels'><label><g:message code="user.administration.ui.realname"/></label></td>
 					<td>${user.person.userRealName}</td>
 				</tr>
 				<tr>
-					<td class='tableLabels'><label><g:message code="user.administration.ui.email"/>:</label></td>
+					<td class='tableLabels'><label><g:message code="user.administration.ui.email"/></label></td>
 					<td>${user.email}</td>
 				</tr>
 				<tr>
-					<td class='tableLabels'><label><g:message code="user.administration.ui.institution"/>:</label></td>
+					<td class='tableLabels'><label><g:message code="user.administration.ui.institution"/></label></td>
 					<td>${user.person.institution}</td>
 				</tr>
 				<tr>
-					<td class='tableLabels'><label><g:message code="user.administration.ui.orcid"/>:</label></td>
+					<td class='tableLabels'><label><g:message code="user.administration.ui.orcid"/></label></td>
 					<td>${user.person.orcid}</td>
 				</tr>
 				</tbody>

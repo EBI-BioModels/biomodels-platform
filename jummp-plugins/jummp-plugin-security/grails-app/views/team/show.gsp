@@ -40,7 +40,7 @@
         </div>
         <sec:ifLoggedIn>
       		<g:if test="${sec.username() == team.owner.username}">
-      			<a href="${createLink(action:'edit', id:team.id)}">Edit Team</a>
+      			<a href="${createLink(action:'edit', id:team.id)}" class="button">Edit Team</a>
       		</g:if>
       	</sec:ifLoggedIn>
     </body>
