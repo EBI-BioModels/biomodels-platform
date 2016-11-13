@@ -32,28 +32,29 @@
     	<div class="view view-dom-id-9c00a92f557689f996511ded36a88594">
     	<div class="view-content">
         <div class="row column">
+            <h2>Update user information</h2>
 			<g:form action="editUser">
 				<table class="responsive-table">
 					<thead></thead>
 					<tbody>
 					<tr>
-						<td class='tableLabels'><label for="edit-user-username"><g:message code="user.administration.ui.username"/>:</label></td>
+						<td class='tableLabels'><label for="edit-user-username" class="required"><g:message code="user.administration.ui.username"/></label></td>
 						<td><input type="hidden" id="edit-user-username" name="username" value="${user.username}"/>${user.username}</td>
 					</tr>
 					<tr>
-						<td class='tableLabels'><label for="edit-user-userrealname"><g:message code="user.administration.ui.realname"/>:</label></td>
+						<td class='tableLabels'><label for="edit-user-userrealname" class="required"><g:message code="user.administration.ui.realname"/></label></td>
 						<td><span><input type="text" id="edit-user-userrealname" name="userRealName" value="${user.person.userRealName}"/></span></td>
 					</tr>
 					<tr>
-						<td class='tableLabels'><label for="edit-user-email"><g:message code="user.administration.ui.email"/>:</label></td>
+						<td class='tableLabels'><label for="edit-user-email" class="required"><g:message code="user.administration.ui.email"/></label></td>
 						<td><span><input type="text" id="edit-user-email" name="email" value="${user.email}"/></span></td>
 					</tr>
 					<tr>
-						<td class='tableLabels'><label for="edit-user-institution"><g:message code="user.administration.ui.institution"/>:</label></td>
+						<td class='tableLabels'><label for="edit-user-institution" class="required"><g:message code="user.administration.ui.institution"/></label></td>
 						<td><span><input type="text" id="edit-user-institution" name="institution" value="${user.person.institution}"/></span></td>
 					</tr>
 					<tr>
-						<td class='tableLabels'><label for="edit-user-orcid"><g:message code="user.administration.ui.orcid"/>:</label></td>
+						<td class='tableLabels'><label for="edit-user-orcid"><g:message code="user.administration.ui.orcid"/></label></td>
 						<td><span><input type="text" id="edit-user-orcid" name="orcid" value="${user.person.orcid}"/></span></td>
 					</tr>
 					</tbody>

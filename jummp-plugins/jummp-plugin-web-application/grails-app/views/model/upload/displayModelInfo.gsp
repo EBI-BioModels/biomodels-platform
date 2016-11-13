@@ -39,6 +39,7 @@
         <h2>Model Information</h2>
         <p>Please ensure the following fields are correctly filled in.</p>
         <g:form>
+        <div class="small-12 medium-12 columns">
             <label for="name" class="required">Name</label>
             <g:if test="${workingMemory['new_name']}">
                 <g:textField id="name" name="name" value="${workingMemory['new_name']}"/>
@@ -63,6 +64,7 @@
                 <g:submitButton name="Back" class="button" value="Back" />
                 <g:submitButton name="Continue" class="button" value="Continue" />
             </div>
+        </div>
         </g:form>
         </div>
 

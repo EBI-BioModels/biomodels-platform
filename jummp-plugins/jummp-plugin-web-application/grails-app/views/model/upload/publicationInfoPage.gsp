@@ -66,8 +66,8 @@
             publication = pubContext.publication
         }
     %>
-    <h2>Update Publication Information</h2>
     <div class="row">
+    <h2>Update Publication Information</h2>
     <g:form>
         <div class="dialog">
             <div class="small-6 medium-6 columns">
