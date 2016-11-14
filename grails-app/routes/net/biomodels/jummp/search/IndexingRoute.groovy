@@ -21,6 +21,8 @@
 package net.biomodels.jummp.search
 
 import grails.util.Environment
+import org.apache.camel.Exchange
+import org.apache.camel.Processor
 import org.apache.camel.builder.RouteBuilder
 
 class IndexingRoute extends RouteBuilder {
@@ -38,5 +40,13 @@ class IndexingRoute extends RouteBuilder {
         from("seda:exec")
         .setHeader("CamelExecCommandArgs", simple(CLI_ARGS))
         .to("exec:java")
+        .process(new Processor() {
+            void process(Exchange exchange) {
+                def msg = exchange.in
+                def headers = msg.headers
+                String content = msg.getBody(String.class)
+                println "${Thread.currentThread().name} -- Indexing of $headers produced $content"
+            }
+        })
     }
 }
