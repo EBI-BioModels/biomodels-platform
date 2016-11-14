@@ -175,7 +175,10 @@ def bioModelsBranches = ["publ", "uncura_publ"]//, "anno", "uncura_anno", "cura"
  * instantiated in loadClasses()
  */
 def User
+def Role
+def UserRole
 def Person
+def AclSid
 def rftc
 def mftc
 def rtc
@@ -360,14 +363,14 @@ loadClass = { String fqdn ->
 target(bootstrapJummp: 'Creates a fully-initialised JUMMP environment loaded with seed data') {
     bootstrap() // grails bootstrapping
 
-    // initialise settings, authenticate using supplied credentials
-    prepareImporter()
-
     // load necessary classes
     loadClasses()
 
     // don't send registration confirmation emails to model submitters
     grailsApp.config.jummp.security.registration.email.send = false
+
+    // initialise settings, authenticate using supplied credentials
+    prepareImporter()
 
     // initialise Jummp and BioModels database connections
     prepareDataSources()
@@ -402,6 +405,42 @@ target(fixValidationForExternalDomainClasses:
     }
 }
 
+createRoleIfNecessary = { String authority ->
+    if (!Role.findByAuthority(authority)) {
+        Role.newInstance(authority: authority).save()
+    }
+}
+
+target(createDefaultUserAndRoles: 'Creates the admin account and all roles') {
+    User.withTransaction {
+        ['ROLE_USER', 'ROLE_CURATOR', 'ROLE_ADMIN', 'ROLE_QC_PROVIDER'].each { r ->
+            createRoleIfNecessary r
+        }
+
+        if (!User.findByUsername('administrator')) {
+            def person = Person.newInstance(userRealName: "administrator")
+            person.save()
+            def user = User.newInstance(username: "administrator",
+                    password: springSecurityService.encodePassword("administrator"),
+                    email: "user@test.com",
+                    person: person,
+                    enabled: true,
+                    accountExpired: false,
+                    accountLocked: false,
+                    passwordExpired: false)
+            user.save()
+            AclSid.newInstance(sid: user.username, principal: true).save()
+            ['ROLE_USER', 'ROLE_ADMIN'].each { r ->
+                def role = Role.findByAuthority(r)
+                UserRole.create(user, role, false)
+            }
+        }
+    }
+    User.withNewSession {
+        assert User.findByUsername('administrator')
+    }
+}
+
 target(prepareImporter: 'Preparations for running the script -- CLI args, environment setup') {
     int inputIssues = sanitiseInput()
     if (inputIssues) {
@@ -418,6 +457,9 @@ working or exchange folders do not exist?""", configIssues)
         error("""There was a problem configuring Jummp's model versioning so I'm \
 giving up. Sorry about that.""", vcsIssues)
     }
+
+    // must ensure roles are set up before attempting to authenticate
+    createDefaultUserAndRoles()
 
     int authIssues = authenticate(username, password)
     adminAuthenticationDetails = getDetailsForLoggedInUser()
@@ -439,6 +481,7 @@ closeSession = {
     if (!session) {
         String name = Thread.currentThread().name
         error("$name: No active session found for current thread -- skipping Hibernate cleanup.")
+        return
     }
     session.flush()
     session.clear()
@@ -449,9 +492,11 @@ closeSession = {
 target(prepareDataSources: "initialisation of machinery for database interaction") {
     openSession()
     // Instantiate direct connections to DB
-    biomodelsConnection = Sql.newInstance("jdbc:mysql://${bmServer}:${bmPort}/${bmDB}",
+    def bmUrl = "jdbc:mysql://${bmServer}:${bmPort}/${bmDB}"
+    def aUrl = "jdbc:mysql://${authServer}:${authPort}/${authDB}"
+    biomodelsConnection = Sql.newInstance(bmUrl,
             bmUsername, bmPassword, "com.mysql.jdbc.Driver")
-    authConnection = Sql.newInstance("jdbc:mysql://${authServer}:${authPort}/${authDB}",
+    authConnection = Sql.newInstance(aUrl,
             authUsername, authPassword, "com.mysql.jdbc.Driver")
 }
 
@@ -466,6 +511,11 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
     // submission-related domain classes
     Person = loadClass("net.biomodels.jummp.plugins.security.Person")
     User = loadClass("net.biomodels.jummp.plugins.security.User")
+    Role = loadClass("net.biomodels.jummp.plugins.security.Role")
+    UserRole = loadClass("net.biomodels.jummp.plugins.security.UserRole")
+    AclSid = loadClass("grails.plugin.springsecurity.acl.AclSid")
+    mf = loadClass("net.biomodels.jummp.model.ModelFormat")
+    mf = loadClass("net.biomodels.jummp.model.ModelFormat")
     mf = loadClass("net.biomodels.jummp.model.ModelFormat")
     Revision = loadClass("net.biomodels.jummp.model.Revision")
     PublicationLinkProvider = loadClass("net.biomodels.jummp.model.PublicationLinkProvider")
@@ -564,14 +614,14 @@ processModelFolder = { File folder ->
     }
     boolean shouldDefer = isModelInUncuraPublAndPubl(MODEL_ID, BRANCH)
     if (shouldDefer) {
-        error("Not processing model $MODEL_ID in $BRANCH branch because it is also in publ.")
+        addModelError MODEL_ID, "Entry found both in $BRANCH branch and also in publ."
         return
     }
     processedCount.incrementAndGet()
     // check symlink
     boolean haveSymlink = haveSymlinkToUrlFile folder, MODEL_ID
     if (!haveSymlink) {
-        error "${folder} does not contain a symbolic link to the URL file"
+        addModelError MODEL_ID, "${folder} does not contain a symbolic link to the URL file"
     }
     // separate original file from the rest of the folder contents
     def originalFile = findOriginalFile(folder, MODEL_ID)
@@ -622,7 +672,10 @@ processModelFolder = { File folder ->
             return
         }
         addRevisionAnnotations(revision, BRANCH, modelDetails, submitter)
-        publishRevisionsForModel(MODEL_ID, submittedModel)
+        def revisions = [submittedModel.revisions[0], revision]
+        revisions.each { r ->
+            publishModelRevision(MODEL_ID, r)
+        }
         submittedModel.revisions.each { r ->
             insertedRevisions.offer(r.id)
         }
@@ -656,8 +709,9 @@ submitOriginalFile = { branch, modelId, originalFile, infoMap ->
     def files = getFilesFromSubmissionData originInfo
     def revisionCmd = originInfo.get("revision")
     def model = modelService.uploadValidatedModel(files, revisionCmd)
-    if (!model) {
-        error "$modelId ($branch): Submission of original file $originalFile with $infoMap failed -- $model "
+    if (model?.hasErrors()) {
+        def e = m?.errors?.allErrors
+        addModelError modelId, "Submission of original file with $infoMap failed -- ${e}"
         return null
     }
     // modify database to match the information from BioModels about this deposition
@@ -710,7 +764,7 @@ addRevision = { modelId, parent, model ->
     def revision
     try {
         revision = modelService.addValidatedRevision(revisionInfo.files, [], revisionInfo.revision)
-        addModelMsg modelId, "added revision $revision"
+        addModelMsg modelId, "Added revision $revision"
     } catch(Exception e) {
         addModelError(modelId, "Exception thrown while updating original submission: $e")
     }
@@ -1261,30 +1315,16 @@ getSubmitterIdForModel = { String modelId, String branch ->
     model?.submitter_id
 }
 
-/**
- * Publishes a given model revision.
- *
- * @param modelId the model identifier (either submissionId or publicationId)
- *      that should be used in the generated log messages.
- * @param revision The Revision instance that should be published.
- */
-publishRevisionsForModel = { modelId, model ->
-    def revisions = model.revisions
-    revisions.each { r ->
-        publishModelRevision(modelId, r)
-    }
-}
-
 publishModelRevision = { modelId, revision ->
     authenticate(username, password)
     try {
         aclUtilService.addPermission(revision, "ROLE_USER", BasePermission.READ)
         aclUtilService.addPermission(revision, "ROLE_ANONYMOUS", BasePermission.READ)
         revision.state = ModelState.PUBLISHED
-        revision.save()
+        assert revision.save()
+        addModelMsg modelId, "Successfully published $revision"
     } catch (Exception e) {
-        error("Unable to publish model revision ${revision.id}: $e")
-        addModelError(modelId, "Unable to publish revision ${revision.id}")
+        addModelError(modelId, "Unable to publish revision ${revision.id} -- $e")
     } finally {
         logOut()
     }
@@ -1445,7 +1485,7 @@ getModelDetails = { modelId, modelBranch ->
         modelDetails['publication_id'] = row.publication_id
         modelDetails['publication_id_type'] = row.publication_id_type
     } catch(Exception e) {
-        error("Problem finding model details for $modelId in branch $modelBranch. ${e.message}.")
+        addModelError(modelId, "Problem finding model details in branch $modelBranch: $e"
         return null
     }
     return modelDetails
