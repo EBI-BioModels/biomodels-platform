@@ -91,27 +91,34 @@ class FileSystemServiceTests {
 
     @Test
     void concurrentInsertionsAreHandledGracefully() {
-        service.maxContainerSize = 2
-        def current = service.currentModelContainer.get()
-        int size = 3
-        def pool = Executors.newFixedThreadPool(size)
+        final int CONTAINER_SIZE = 2
+        service.maxContainerSize = CONTAINER_SIZE
+        int poolSize = CONTAINER_SIZE + 1
+        def pool = Executors.newFixedThreadPool(poolSize)
         def latch = new CountDownLatch(1)
-        for (int i = 0; i < size; ++i) {
+        for (int i = 0; i < poolSize; ++i) {
             pool.submit(new Runnable() {
                 void run() {
                     latch.await()
-                    mockModelFolders(1)
+                    mockModelFolders(CONTAINER_SIZE)
                 }
             })
         }
         latch.countDown()
         pool.shutdown()
-        pool.awaitTermination(2, TimeUnit.SECONDS)
+        pool.awaitTermination(1, TimeUnit.SECONDS)
         def cancelled = pool.shutdownNow()
         assertEquals 0, cancelled.size()
         assertTrue pool.isTerminated()
-        def changed = service.currentModelContainer.get()
-        assertNotEquals changed, current
+
+        // ttt, ttu and ttv are full
+        parentLocation.listFiles().each { d ->
+            assertTrue d.isDirectory()
+            assertEquals CONTAINER_SIZE, d.list().length
+        }
+
+        // we now have an empty new container
+        assertTrue service.findCurrentModelContainer().endsWith('ttw')
     }
 
     private void mockModelFolders(final int count) {
