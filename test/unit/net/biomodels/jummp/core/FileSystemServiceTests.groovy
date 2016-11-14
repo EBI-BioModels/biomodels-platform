@@ -32,6 +32,9 @@ package net.biomodels.jummp.core
 
 import grails.test.mixin.TestFor
 import java.util.UUID
+import java.util.concurrent.Executors
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import org.apache.commons.io.FileUtils
 import org.junit.*
 import static org.junit.Assert.*
@@ -48,9 +51,10 @@ class FileSystemServiceTests {
         service.grailsApplication = grailsApplication
         parentLocation = new File(workingDirectoryPath)
         FileUtils.deleteDirectory(parentLocation)
-        assertTrue(parentLocation.mkdir())
         service.root = parentLocation
-        service.currentModelContainer = parentLocation.absolutePath + File.separator + "ttt"
+        def container = new File(parentLocation, "ttt")
+        container.mkdirs()
+        service.currentModelContainer.set(container.absolutePath)
         service.maxContainerSize = 10
     }
 
@@ -72,7 +76,7 @@ class FileSystemServiceTests {
         mockModelFolders(1)
         assertTrue(service.findCurrentModelContainer().endsWith("ttv"))
         File newRoot = new File(parentLocation, "abz")
-        service.currentModelContainer = newRoot.absolutePath
+        service.currentModelContainer.set(newRoot.absolutePath)
         service.maxContainerSize = 1
         assertTrue(service.findCurrentModelContainer().endsWith("abz"))
         mockModelFolders(1)
@@ -80,18 +84,52 @@ class FileSystemServiceTests {
         mockModelFolders(1)
         assertTrue(service.findCurrentModelContainer().endsWith("acb"))
         newRoot = new File(parentLocation, "zzz")
-        service.currentModelContainer = newRoot.absolutePath
+        service.currentModelContainer.set(newRoot.absolutePath)
         mockModelFolders(1)
         assertTrue(service.findCurrentModelContainer().endsWith("aaaa"))
     }
 
+    @Test
+    void concurrentInsertionsAreHandledGracefully() {
+        final int CONTAINER_SIZE = 2
+        service.maxContainerSize = CONTAINER_SIZE
+        int poolSize = CONTAINER_SIZE + 1
+        def pool = Executors.newFixedThreadPool(poolSize)
+        def latch = new CountDownLatch(1)
+        for (int i = 0; i < poolSize; ++i) {
+            pool.submit(new Runnable() {
+                void run() {
+                    latch.await()
+                    mockModelFolders(CONTAINER_SIZE)
+                }
+            })
+        }
+        latch.countDown()
+        pool.shutdown()
+        pool.awaitTermination(1, TimeUnit.SECONDS)
+        def cancelled = pool.shutdownNow()
+        assertEquals 0, cancelled.size()
+        assertTrue pool.isTerminated()
+
+        // ttt, ttu and ttv are full
+        parentLocation.listFiles().each { d ->
+            assertTrue d.isDirectory()
+            assertEquals CONTAINER_SIZE, d.list().length
+        }
+
+        // we now have an empty new container
+        assertTrue service.findCurrentModelContainer().endsWith('ttw')
+    }
+
     private void mockModelFolders(final int count) {
-        String modelSuffix
-        count.times { it ->
-            StringBuilder sb = new StringBuilder(service.findCurrentModelContainer())
-            sb.append(File.separator).append(UUID.randomUUID().toString())
-            File m = new File(sb.toString())
-            m.mkdirs()
+        count.times {
+            synchronized(this) {
+                def parent = service.findCurrentModelContainer()
+                String newModel = UUID.randomUUID().toString()
+                File m = new File(parent, newModel)
+                assertTrue m.mkdirs()
+            }
         }
     }
 }
+

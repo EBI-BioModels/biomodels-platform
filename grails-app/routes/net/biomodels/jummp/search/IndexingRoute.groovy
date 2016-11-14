@@ -35,7 +35,7 @@ class IndexingRoute extends RouteBuilder {
     @Override
     void configure() {
         //from("seda:exec")
-        from("direct:exec")
+        from("seda:exec")
         .setHeader("CamelExecCommandArgs", simple(CLI_ARGS))
         .to("exec:java")
     }
