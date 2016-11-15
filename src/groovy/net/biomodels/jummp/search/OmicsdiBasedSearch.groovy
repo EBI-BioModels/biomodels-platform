@@ -26,8 +26,8 @@ package net.biomodels.jummp.search
 
 import grails.util.Holders
 import groovy.json.JsonBuilder
-import net.biomodels.jummp.core.ModelException
 import net.biomodels.jummp.core.ModelSearchStrategy
+import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.events.ModelOperationEvent
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand
@@ -154,7 +154,7 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
             // entries/models
             entries.eachWithIndex { Entry entry, int i ->
                 String submissionId = entry.id
-                Model thisModel = Model.findBySubmissionId(submissionId) ?: firstPublicModel //TODO fixme
+                Model thisModel = ModelAdapter.findByPerennialIdentifier(submissionId) ?: firstPublicModel //TODO fixme
                 submissionId = thisModel.submissionId
                 boolean isAccessible =
                     aclUtilService.hasPermission(springSecurityService.authentication, thisModel, BasePermission.READ)

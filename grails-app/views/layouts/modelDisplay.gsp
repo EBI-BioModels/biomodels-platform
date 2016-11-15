@@ -399,7 +399,16 @@
                     }
                 }
             });
-            $("body").append("<div id='modelToolbar' class='collapsibleContainer' title='Model Toolbar'>" +
+
+            var top = 225;  // the default value is set for Firefox.
+                            // This value is to be exact height of the header section plus 2px.
+
+            var browser = get_browser(); // find it in jquery.cookiebar.js
+            if (browser.name === 'Chrome'){
+                top = 200;
+            }
+
+            $("body").append("<div id='modelToolbar' style='top: " + top + "px' class='collapsibleContainer' title='Model Toolbar'>" +
                 "<button title='Expand Toolbar' data-showing='0' id='panelToggle'>Expand</button></div>	");
             $("#buttonContainer").prependTo("#modelToolbar");
             $("#panelToggle").click(function (evt){
