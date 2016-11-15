@@ -1976,7 +1976,8 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
      * @param model the model for which to verify the publication status.
      */
     private boolean hasPublicRevision(Model model) {
-        def publicRevisionCriteriaResults = Revision.withCriteria(uniqueResult: true) {
+        def publicRevisions = Revision.withCriteria(uniqueResult: true) {
+            maxResults(1)
             and {
                 eq("model", model)
                 or {
@@ -1985,7 +1986,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
                 }
             }
         }
-        [] != publicRevisionCriteriaResults
+        null != publicRevisions
     }
 
     /**
