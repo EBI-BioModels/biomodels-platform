@@ -1485,7 +1485,7 @@ getModelDetails = { modelId, modelBranch ->
         modelDetails['publication_id'] = row.publication_id
         modelDetails['publication_id_type'] = row.publication_id_type
     } catch(Exception e) {
-        addModelError(modelId, "Problem finding model details in branch $modelBranch: $e"
+        addModelError modelId, "Problem finding model details in branch $modelBranch: $e"
         return null
     }
     return modelDetails
