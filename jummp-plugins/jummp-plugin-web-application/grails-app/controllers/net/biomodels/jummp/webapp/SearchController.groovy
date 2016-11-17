@@ -211,10 +211,10 @@ class SearchController {
                     models.add(it)
                 }
             }
-            HashSet<Facet> facets1 = response.facets
-            if (facets1.size() > 0) {
-                println "Found(s): ${facets1.size()} facets."
-                facets1.each {
+            HashSet<Facet> responsedFacets = response.facets
+            if (responsedFacets.size() > 0) {
+                println "Found(s): ${responsedFacets.size()} facets."
+                responsedFacets.each {
                     facets.add(it)
                 }
             }
