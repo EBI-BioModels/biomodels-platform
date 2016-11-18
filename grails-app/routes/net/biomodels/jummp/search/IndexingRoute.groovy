@@ -36,8 +36,7 @@ class IndexingRoute extends RouteBuilder {
 
     @Override
     void configure() {
-        //from("seda:exec")
-        from("seda:exec")
+        from("seda:exec?concurrentConsumers=15")
         .setHeader("CamelExecCommandArgs", simple(CLI_ARGS))
         .to("exec:java")
         .process(new Processor() {
