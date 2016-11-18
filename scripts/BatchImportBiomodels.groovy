@@ -1145,23 +1145,30 @@ prettify = { time ->
      * assumming double-digit figures for days, hours, minutes and seconds.
      */
     final StringBuilder result = new StringBuilder(38)
+    // preserve original value for exception logging purposes
+    def origTime = time
+    try {
     if (time > DAY) {
-        final int count = time / DAY
-        time = time % DAY
+        final int count = (int) (time / DAY)
+        time = ((int) time) % DAY
         result.append("$count days ")
     }
     if (time > HOUR) {
-        final int count = time / HOUR
-        time = time % HOUR
+        final int count = (int) (time / HOUR)
+        time = ((int) time) % HOUR
         result.append("$count hours ")
     }
     if (time > MINUTE) {
-        final int count = time / MINUTE
-        time = time % MINUTE
+        final int count = (int) (time / MINUTE)
+        time = ((int) time) % MINUTE
         result.append("$count minutes ")
     }
     result.append("$time seconds")
     return result.toString()
+    } catch(Exception e) {
+        error("Failed to pretty-print duration $origTime")
+    }
+    return origTime
 }
 
 /*
