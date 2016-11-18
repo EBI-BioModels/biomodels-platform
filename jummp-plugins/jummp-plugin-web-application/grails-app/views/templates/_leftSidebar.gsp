@@ -63,16 +63,13 @@
         facetList[index] = new List('facetList'+index, options);
     });
 
-    function runFacetSearch(e, facetGroupLabel, facetValue) {
-        var baseURI = e[0].baseURI;
-        var newSearchURI = decodeURI(baseURI)
+    function runFacetSearch(e, facetGroupId, facetValue) {
+        var newSearchURI = "${grailsApplication.config.grails.serverURL}/search?query=${query}"
         if (e[0].checked) {
-            newSearchURI += " and " + facetGroupLabel + ":" + facetValue;
-            console.log(newSearchURI);
-
+            newSearchURI += " and " + facetGroupId + ":" + facetValue;
         } else {
-            // remove the term out the query string, update newSearchURI
-            newSearchURI = newSearchURI.replace(" and " + facetGroupLabel + ":" + facetValue, "");
+            // remove the search term out the query string, update newSearchURI
+            newSearchURI = newSearchURI.replace(" and " + facetGroupId + ":" + facetValue, "");
         }
         window.location.href = newSearchURI;
     }
