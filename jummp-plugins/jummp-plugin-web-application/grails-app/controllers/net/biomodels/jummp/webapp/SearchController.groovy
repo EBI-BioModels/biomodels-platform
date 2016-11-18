@@ -115,7 +115,7 @@ class SearchController {
 
     private int numResults() {
         final int MAXRESULTS = 100
-        final int MINRESULTS = 10
+        final int MINRESULTS = 5
         User user
         if (!(springSecurityService.principal.username == GrailsAnonymousAuthenticationToken.USERNAME)) {
             user = User.findByUsername(springSecurityService.principal.username)
@@ -196,7 +196,7 @@ class SearchController {
     }
 
     private def searchCore(String query, String sortBy, String sortDirection, int offset, int length) {
-        Map<String, Integer> paginationCriteria = ["start": offset, "length": length, "facetCount": 10]
+        Map<String, Integer> paginationCriteria = ["start": offset, "length": length, "facetCount": 100]
         List<MTC> models = []
         List<Facet> facets = []
         int totalCount
@@ -211,13 +211,19 @@ class SearchController {
                     models.add(it)
                 }
             }
-            HashSet<Facet> facets1 = response.facets
-            if (facets1.size() > 0) {
-                println "Found(s): ${facets1.size()} facets."
-                facets1.each {
+            HashSet<Facet> responsedFacets = response.facets
+            if (responsedFacets.size() > 0) {
+                println "Found(s): ${responsedFacets.size()} facets."
+                responsedFacets.each {
                     facets.add(it)
                 }
             }
+            Collections.sort(facets, new Comparator<Facet>() {
+                @Override
+                int compare(Facet o1, Facet o2) {
+                    return o1.label.compareTo(o2.label)
+                }
+            })
         }
         int sortDir = 1
         if (sortDirection && sortDirection == "asc") {

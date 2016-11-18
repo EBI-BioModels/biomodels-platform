@@ -230,8 +230,10 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
                 results.add(mtc)
             }
             // facets
+            boolean ignoredFacets = false
             result.facets?.each { Facet facet ->
-                if (!facet.label.equalsIgnoreCase("source")) {
+                ignoredFacets = facet.label.equalsIgnoreCase("repository") || facet.label.equalsIgnoreCase("source")
+                if (!ignoredFacets) {
                     facets.add(facet)
                 }
             }

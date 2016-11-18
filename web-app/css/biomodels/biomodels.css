@@ -31,6 +31,54 @@ table.center {
     color: red;
 }
 
+pre {
+    /*overflow: auto;*/
+    white-space: pre-wrap;       /* Since CSS 2.1 */
+    white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+    white-space: pre-wrap;       /* Opera 4-6 */
+    white-space: -o-pre-wrap;    /* Opera 7 */
+    word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}
+
+.modelPlaceHolder {
+    border-radius: 5px;
+    border: 1px solid rgb(0, 124, 130);
+    width: 100%;
+    box-shadow: 1px 1px 1px grey;
+    margin-top: 7px;
+}
+
+.facetContainer {
+    padding-top: 5px;
+    border:2px solid #ccc;
+    width: 100%;
+    height: 125px;
+    overflow-y: scroll;
+    font-size: 12px;
+}
+
+.facetContainer ul {
+    list-style-type: none;
+}
+
+.facetContainer ul > li {
+    text-indent: -1.5em;
+}
+
+.facetContainer input {
+    margin-left: 5px;
+}
+
+.facetContainer a {
+    line-height: 0.9;
+}
+
+.searchEachFacet {
+    font-size: 14px;
+    width: 100%;
+    margin-bottom: 2px;
+}
+
 div#search-results {}
 
 div#search-results h2 {
@@ -211,6 +259,7 @@ div.result-meta span.source-id {
     -khtml-border-radius: 5px;
     -webkit-border-radius: 5px;
     border-radius: 5px;*/
+    font-size: 12px;
     display: block;
 }
 
