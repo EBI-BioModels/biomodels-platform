@@ -158,10 +158,8 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
     /**
      * Clears the index. Handle with care.
      */
-    @Secured(['ROLE_ADMIN'])
-    @PostLogging(LoggingEventType.DELETION)
     @Profiled(tag="searchService.clearIndex")
-    void clearIndex() {
+    private void clearIndex() {
         if (IS_DEBUG_ENABLED) {
             log.debug "Clearing the search index."
         }
