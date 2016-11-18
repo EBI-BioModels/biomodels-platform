@@ -98,7 +98,7 @@ class ModelHistoryService {
             return
         }
         User user = User.findByUsername(springSecurityService.authentication.name)
-        ModelHistoryItem item = ModelHistoryItem.findByUserAndModel(user, model)
+        ModelHistoryItem item = ModelHistoryItem.findByUserAndModel(user, model, [lock: true])
         if (item) {
             // we have already an item for this user and model: just touch the date
             item.touch()
@@ -111,8 +111,13 @@ class ModelHistoryService {
                     [sort: 'lastAccessedDate', lock: true, offset: maxNumber - 1])
             toDelete*.delete(flush: true)
         }
-        ModelHistoryItem newItem = ModelHistoryItem.create(model, user)
-        newItem.save(flush: true)
+        try {
+            ModelHistoryItem newItem = ModelHistoryItem.create(model, user)
+            newItem.save(flush: true)
+        } catch (org.springframework.dao.OptimisticLockingFailureException ignored) {
+            // 2 transactions competed for the last entry in the user's history; this one lost
+            // no point in retrying because this would mean deleting the entry from the other tx.
+        }
     }
 
     /**
