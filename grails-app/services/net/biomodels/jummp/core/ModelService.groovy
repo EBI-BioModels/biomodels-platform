@@ -33,6 +33,7 @@ package net.biomodels.jummp.core
 import eu.ddmore.publish.service.PublishContext
 import eu.ddmore.publish.service.PublishException
 import eu.ddmore.publish.service.PublishInfo
+import java.util.concurrent.locks.ReentrantLock
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.transaction.Transactional
 import net.biomodels.jummp.annotationstore.Qualifier
@@ -143,6 +144,10 @@ class ModelService {
     def publishValidator
 
     final boolean MAKE_PUBLICATION_ID = !(publicationIdGenerator instanceof NullModelIdentifierGenerator)
+    /**
+     * Guard insertion of ACL entries from concurrent access.
+     */
+    final ReentrantLock aclInsertionLock = new ReentrantLock()
 
     /**
     * Returns list of Models the user has access to.
@@ -799,25 +804,31 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             model.save(flush: true)
             stopWatch.lap("Model persisted to the database.")
             stopWatch.setTag("modelService.addValidatedRevision.grantPermissions")
-            aclUtilService.addPermission(revision, currentUser.username, BasePermission.ADMINISTRATION)
-            aclUtilService.addPermission(revision, currentUser.username, BasePermission.READ)
-            aclUtilService.addPermission(revision, currentUser.username, BasePermission.DELETE)
+            aclInsertionLock.lock()
+            try {
+                aclUtilService.addPermission(revision, currentUser.username, BasePermission.ADMINISTRATION)
+                aclUtilService.addPermission(revision, currentUser.username, BasePermission.READ)
+                aclUtilService.addPermission(revision, currentUser.username, BasePermission.DELETE)
 
-            //grant admin rights to the owner of the model
-            Revision earliest = Revision.findByModelAndRevisionNumber(revision.model, 1)
-            aclUtilService.addPermission(revision, earliest.owner.username, BasePermission.ADMINISTRATION)
-            aclUtilService.addPermission(revision, earliest.owner.username, BasePermission.DELETE)
+                //grant admin rights to the owner of the model
+                Revision earliest = Revision.findByModelAndRevisionNumber(revision.model, 1)
+                aclUtilService.addPermission(revision, earliest.owner.username, BasePermission.ADMINISTRATION)
+                aclUtilService.addPermission(revision, earliest.owner.username, BasePermission.DELETE)
 
-            // grant read access to all users having read access to the model
-            Acl acl = aclUtilService.readAcl(model)
-            for (ace in acl.entries) {
-                if (ace.sid instanceof PrincipalSid && ace.permission == BasePermission.READ) {
-                    aclUtilService.addPermission(revision, ace.sid.principal, BasePermission.READ)
+                // grant read access to all users having read access to the model
+                Acl acl = aclUtilService.readAcl(model)
+                for (ace in acl.entries) {
+                    if (ace.sid instanceof PrincipalSid && ace.permission == BasePermission.READ) {
+                        aclUtilService.addPermission(revision, ace.sid.principal, BasePermission.READ)
+                    }
+                    if (ace.sid instanceof PrincipalSid && ace.permission == BasePermission.ADMINISTRATION) {
+                        aclUtilService.addPermission(revision, ace.sid.principal, BasePermission.ADMINISTRATION)
+                    }
                 }
-                if (ace.sid instanceof PrincipalSid && ace.permission == BasePermission.ADMINISTRATION) {
-                    aclUtilService.addPermission(revision, ace.sid.principal, BasePermission.ADMINISTRATION)
-                }
+            } finally {
+                aclInsertionLock.unlock()
             }
+
             stopWatch.stop()
             // !! THIS HAS TO BE IN A SEPARATE METHOD WITH A DEDICATED TRANSACTION CONTEXT !!
             /*grailsApplication.mainContext.publishEvent(new RevisionCreatedEvent(this,
@@ -1103,6 +1114,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             stopWatch.setTag("modelService.uploadValidatedModel.grantPermissions")
             // let's add the required rights
             final String username = revision.owner.username
+            aclInsertionLock.lock()
             try {
                 aclUtilService.addPermission(model, username, BasePermission.ADMINISTRATION)
                 aclUtilService.addPermission(model, username, BasePermission.DELETE)
@@ -1113,6 +1125,8 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
                 aclUtilService.addPermission(revision, username, BasePermission.READ)
             } catch (Throwable e) {
                 log.error("failed to insert permissions for $model and $revision", e)
+            } finally {
+                aclInsertionLock.unlock()
             }
             stopWatch.stop()
 
@@ -1957,7 +1971,8 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
      * @param model the model for which to verify the publication status.
      */
     private boolean hasPublicRevision(Model model) {
-        def publicRevisionCriteriaResults = Revision.withCriteria(uniqueResult: true) {
+        def publicRevisions = Revision.withCriteria(uniqueResult: true) {
+            maxResults(1)
             and {
                 eq("model", model)
                 or {
@@ -1966,7 +1981,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
                 }
             }
         }
-        [] != publicRevisionCriteriaResults
+        null != publicRevisions
     }
 
     /**
