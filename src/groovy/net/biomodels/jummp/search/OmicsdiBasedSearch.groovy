@@ -24,9 +24,11 @@
 
 package net.biomodels.jummp.search
 
+import grails.async.Promise
 import grails.util.Holders
 import groovy.json.JsonBuilder
 import net.biomodels.jummp.core.ModelSearchStrategy
+import net.biomodels.jummp.core.adapters.DomainAdapter
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.events.ModelOperationEvent
@@ -42,12 +44,16 @@ import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.springframework.context.ApplicationListener
 import org.springframework.security.acls.domain.BasePermission
+import org.springframework.security.core.Authentication
+import org.springframework.security.core.context.SecurityContextHolder
 import uk.ac.ebi.ddi.ebe.ws.dao.client.dataset.DatasetWsClient
 import uk.ac.ebi.ddi.ebe.ws.dao.config.AbstractEbeyeWsConfig
 import uk.ac.ebi.ddi.ebe.ws.dao.config.EbeyeWsConfigDev
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Entry
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Facet
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.QueryResult
+
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * @short Singleton-scoped facade for interacting with a OmicsdiHolder's instance.
@@ -108,21 +114,45 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
         // look at solrbasedsearch
     }
 
-    void clearIndex() {
-        omicsDiHolder.doSomeStuff()
-        // We cannot clear index
-    }
-
     void clearAnnotationStatementsFromDatabase() {
-        // similar solrbasedsearch
+        log.debug("Begin prunning annotation statements from database")
+        Revision.executeUpdate("delete ElementAnnotation")
+        Revision.executeUpdate("delete Statement")
+        log.debug("Finished prunning annotation statements from database")
     }
 
     void regenerateIndices() {
-        // invoking the method generating OmicsDI schema xml
-    }
+        clearAnnotationStatementsFromDatabase()
+        List<RevisionTransportCommand> revisions = Revision.list(fetch: [model: "eager"]).collect { r ->
+            DomainAdapter.getAdapter(r).toCommandObject()
+        }
+        if (IS_DEBUG_ENABLED) {
+            log.debug "Indexing ${revisions.size()} revisions."
+        }
+        Authentication auth = springSecurityService.authentication
+        AtomicReference<Authentication> authRef = new AtomicReference<>(auth)
+        Promise p = Revision.async.task {
+            SecurityContextHolder.context.authentication = authRef.get()
+            revisions.each {
+                try {
+                    updateIndex(it)
+                }
+                catch(Exception e) {
+                    log.error("Exception thrown while indexing ${it.properties} ${e.getMessage()}", e)
+                }
+            }
+        }
+        p.onComplete {
+            if (IS_INFO_ENABLED) {
+                log.info "Finished regenerating the index."
+            }
+        }
+        p.onError { Throwable e ->
+            log.error("Error regenerating the index: ${e.message}", e)
+        }    }
 
     SearchResponse searchModels(String query,
-        Map<String, Integer> paginationCriteria = ["start": 0, "length": 50, "facetCount": 10] ) {
+            Map<String, Integer> paginationCriteria = ["start": 0, "length": 50, "facetCount": 10] ) {
         long start = System.currentTimeMillis()
         AbstractEbeyeWsConfig ebeyeWsConfig = new EbeyeWsConfigDev()
         DatasetWsClient datasetWsClient = new DatasetWsClient(ebeyeWsConfig)
