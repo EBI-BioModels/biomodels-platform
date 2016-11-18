@@ -218,6 +218,12 @@ class SearchController {
                     facets.add(it)
                 }
             }
+            Collections.sort(facets, new Comparator<Facet>() {
+                @Override
+                int compare(Facet o1, Facet o2) {
+                    return o1.label.compareTo(o2.label)
+                }
+            })
         }
         int sortDir = 1
         if (sortDirection && sortDirection == "asc") {
