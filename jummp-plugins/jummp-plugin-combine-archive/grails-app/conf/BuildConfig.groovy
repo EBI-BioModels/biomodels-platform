@@ -49,7 +49,7 @@ grails.project.dependency.resolution = {
     }
     log "warn"
     // circumvent http://jira.grails.org/browse/GRAILS-9984
-    legacyResolve true
+    legacyResolve false
     repositories {
         if (System.getenv("JUMMP_ARTIFACTORY_URL")) {
             mavenRepo "${System.getenv('JUMMP_ARTIFACTORY_URL')}"

@@ -38,7 +38,7 @@ grails.project.dependency.resolution = {
     inherits("global") {
     }
     log "warn"
-    legacyResolve true
+    legacyResolve false
     repositories {
         if (System.getenv("JUMMP_ARTIFACTORY_URL")) {
             mavenRepo "${System.getenv('JUMMP_ARTIFACTORY_URL')}"
