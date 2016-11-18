@@ -37,7 +37,6 @@ import net.biomodels.jummp.search.SearchResponse
 
 @CompileStatic
 interface ModelSearchStrategy {
-    void clearIndex()
     void clearAnnotationStatementsFromDatabase()
     void regenerateIndices()
     SearchResponse searchModels(String query, Map<String, Integer> paginationCriteria)
