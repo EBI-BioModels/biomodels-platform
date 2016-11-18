@@ -17,15 +17,17 @@
 <div class="content">
     <g:if test="${models}">
         <div class="row">
-            <div class="small-12 large-12 columns">
+            <div class="small-12 medium-12 large-12 columns">
                 <div id="inline-list">
                 <g:if test="${action == "list"}">
                     <sec:ifLoggedIn>
                         <a href="${createLink(controller: "search", action: "archive")}">Browse Archived Models</a>
                     </sec:ifLoggedIn>
                 </g:if>
-
-                <ul class="float-right">
+                <g:else>
+                    <span>Search terms: </span><span id="searchString" style="font-weight: bolder"></span>
+                </g:else>
+                <ul class="float-right" style="margin-right: 14px">
                     <g:each in="${resultOptions}">
                         <li>
                             <g:if test="${it == length}">
@@ -48,57 +50,53 @@
         <div class="row grid_18 omega" id="search-results">
             <section>
                 <div class="modelList">
-                    <h3>
-                        %{--<input type="checkbox" class="checkall" />--}%
-                        %{--<span style="font-size: x-large;">BioModels</span>--}% <span style="font-size: large;">Found: ${totalCount} ${totalCount > 1 ? 'models' : 'model'}</span></h3>
+                    <div class="column row">
+                        <h3>Found: ${totalCount} ${totalCount > 1 ? 'models' : 'model'}</h3>
+                    </div>
                     <div class="column row">
                     <g:each status="i" in="${models}" var="model">
-                    <div class="row">
-                        <div class="small-12 medium-8 large-8 columns">
+                    <div class="column row modelPlaceHolder">
+                        <div class="small-12 medium-12 large-12 columns">
+                            <%
+                                def modelUrl = createLink(controller: 'model', id: model.publicationId ?: model.submissionId, action: 'show')
+                                def description = model.description ?: ""
+                                int maxNumChar = 255
+                                boolean haveMoreDetails = description.length() > maxNumChar
+                                def descriptionShown = description
+                                def moreDetails = ""
+                                if (haveMoreDetails) {
+                                    moreDetails = "<a href=${modelUrl}>... See more</a>"
+                                    descriptionShown = description.substring(1,maxNumChar) + moreDetails
+                                }
+                                // TODO: deal with HTML elements
+                                descriptionShown = description
+                            %>
+                            %{--<input class="export-selection" type="checkbox" value="${model.submissionId}">--}%
                             <h4>
-                                <%
-                                    def modelUrl = createLink(controller: 'model', id: model.publicationId ?: model.submissionId, action: 'show')
-                                    def description = model.description ?: ""
-                                    int maxNumChar = 255
-                                    boolean haveMoreDetails = description.length() > maxNumChar
-                                    def descriptionShown = description
-                                    def moreDetails = ""
-                                    if (haveMoreDetails) {
-                                        moreDetails = "<a href=${modelUrl}>... See more</a>"
-                                        descriptionShown = description.substring(1,maxNumChar) + moreDetails
-                                    }
-                                    // TODO: deal with HTML elements
-                                    descriptionShown = description
-                                %>
-                                %{--<input class="export-selection" type="checkbox" value="${model.submissionId}">--}%
                                 <a href="${modelUrl}">${model.name}</a><br/>
                                 <span style="font-size: small; margin: -25px 0;">
                                 Format: ${model.format.name} |
                                 Submitter: ${model.submitter} |
                                 Uploaded date: ${model.submissionDate.format('yyyy/MM/dd')} |
-                                Last modified date: ${model.lastModifiedDate.format('yyyy/MM/dd')}</span>
+                                Last modified date: ${model.lastModifiedDate.format('yyyy/MM/dd')} |
+                                ID: ${model.publicationId ?: model.submissionId}
+                                </span>
                             </h4>
-                            <span id="modelDescription" class="fieldName"></span>
-                            %{--<p>${descriptionShown}</p>--}%
-                        </div>
-                        <div class="medium-4 large-4 columns hide-for-small-only">
-                            <div class="entry_actions_panel_need_removed">
-                                <div class="entry_actions_need_removed">
-                                    %{--<p class="entry_actions_menu">
-                                        <a href="">Related data</a>
-                                        <a href="">Views</a>
-                                    </p>--}%
-                                    <p class="entry-source_need_removed">
-                                        <span class="source">Source: BioModels</span><br/>
-                                        <span class="source-id">ID: ${model.submissionId}</span>
-                                    </p>
-                                </div>
-                            </div>
+                            <span id="modelDescription"></span>
+                            <p style="font-size: 90%; margin-bottom: 0.5%">${descriptionShown}</p>
                         </div>
                     </div>
                     </g:each>
                     </div>
-
+                    <g:javascript>
+                        // reduce font-size of model's notes (i.e. model description)
+                        $('[class*="dc:"]').css("font-size", "90%");
+                        // show the query string on local search box and string query division at the top of main content division
+                        $(document).ready(function() {
+                            $('#local-searchbox').val("${query}");
+                            $('#searchString').text("${query}");
+                        });
+                    </g:javascript>
                 </div>
             </section>
         </div>
@@ -122,7 +120,7 @@
             }
             int leftPage = currentPage
         %>
-        <div class="row" style="background-color: #00aaaa">
+        <div class="row" style="background-color: #00aaaa; margin-top: 3px">
         <div class="dataTables_info">
             Showing ${modelStart} to ${modelEnd} of ${totalCount} models
         </div>

@@ -196,7 +196,7 @@ class SearchController {
     }
 
     private def searchCore(String query, String sortBy, String sortDirection, int offset, int length) {
-        Map<String, Integer> paginationCriteria = ["start": offset, "length": length, "facetCount": 10]
+        Map<String, Integer> paginationCriteria = ["start": offset, "length": length, "facetCount": 100]
         List<MTC> models = []
         List<Facet> facets = []
         int totalCount
