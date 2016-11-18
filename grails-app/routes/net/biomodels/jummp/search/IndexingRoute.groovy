@@ -23,6 +23,7 @@ package net.biomodels.jummp.search
 import grails.util.Environment
 import org.apache.camel.Exchange
 import org.apache.camel.Processor
+import org.apache.camel.ShutdownRunningTask
 import org.apache.camel.builder.RouteBuilder
 
 class IndexingRoute extends RouteBuilder {
@@ -37,6 +38,7 @@ class IndexingRoute extends RouteBuilder {
     @Override
     void configure() {
         from("seda:exec?concurrentConsumers=15")
+        .shutdownRunningTask(ShutdownRunningTask.CompleteAllTasks)
         .setHeader("CamelExecCommandArgs", simple(CLI_ARGS))
         .to("exec:java")
         .process(new Processor() {
