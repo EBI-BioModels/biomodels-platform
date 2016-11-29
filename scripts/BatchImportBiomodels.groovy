@@ -184,6 +184,8 @@ def mftc
 def rtc
 def mtc
 def plptc
+def Publication
+def ptc
 def mf
 def decorator
 def domainAdapter
@@ -208,6 +210,8 @@ def sessionFactory
 /**
  * Services used by the script
  */
+def pubMedService
+def publicationService
 def modelService
 def modelFileFormatService
 def userService
@@ -507,6 +511,8 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
     rtc = loadClass("net.biomodels.jummp.core.model.RevisionTransportCommand")
     mtc = loadClass("net.biomodels.jummp.core.model.ModelTransportCommand")
     plptc = loadClass("net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand")
+    ptc = loadClass "net.biomodels.jummp.core.model.PublicationTransportCommand"
+    Publication = loadClass "net.biomodels.jummp.model.Publication"
 
     // submission-related domain classes
     Person = loadClass("net.biomodels.jummp.plugins.security.Person")
@@ -541,6 +547,8 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
     rtc.context = appCtx
     sessionFactory = appCtx.sessionFactory
     modelService = appCtx.modelService
+    publicationService = appCtx.publicationService
+    pubMedService = appCtx.pubMedService
     modelFileFormatService = appCtx.modelFileFormatService
     userService = appCtx.userService
     springSecurityService = appCtx.springSecurityService
@@ -793,12 +801,20 @@ addRevisionAnnotations = { revision, branch, modelDetails, user ->
 }
 
 getPublicationIdFromModelDetails = { details -> details?.publication_id }
-
 getPublicationTypeFromModelDetails = { details -> details?.publication_id_type }
 
-addPublicationDetails = { revision, accession, type -> // TODO
-    // resolve publication via publicationService
-    // add this publication to the revision's model
+addPublicationDetails = { model, accession, type ->
+    def publicationCmd = pubMedService.fetchPublicationData accession
+    if (publicationCmd) {
+        model.publication = publicationService.fromCommandObject publicationCmd
+        def id = model.publicationId ?: model.submissionId
+        if (!model.save()) {
+            def e = model.errors.allErrors
+            addModelError id, "Couldn't attach publication $accession: $e"
+        } else {
+            addModelMsg id, "Successfully added publication $accession"
+        }
+    }
 }
 
 getOriginalFileForModel = { folder, id ->
