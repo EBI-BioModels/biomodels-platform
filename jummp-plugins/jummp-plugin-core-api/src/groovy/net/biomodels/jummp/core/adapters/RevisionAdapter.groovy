@@ -68,7 +68,7 @@ public class RevisionAdapter extends DomainAdapter {
         def formatCmd = formatAdapter.toCommandObject()
         String submitterName = revision.owner.person.userRealName
         def modelAdapter = new ModelAdapter(model: revision.model)
-        def modelCmd = modelAdapter.toCommandObject()
+        def modelCmd = modelAdapter.toCommandObject(false)
         QcInfoTransportCommand qcInfoCmd
         use(QcInfoCategory) {
             qcInfoCmd = revision.qcInfo?.toCommandObject()
