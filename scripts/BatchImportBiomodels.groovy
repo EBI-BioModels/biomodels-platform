@@ -16,16 +16,6 @@
  *
  * You should have received a copy of the GNU Affero General Public License along
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
- *
- * Additional permission under GNU Affero GPL version 3 section 7
- *
- * If you modify Jummp, or any covered work, by linking or combining it with
- * groovy, Apache Commons, Spring Framework, Grails (or a modified version of that library), containing parts
- * covered by the terms of Apache License v2.0, the licensors of this
- * Program grant you additional permission to convey the resulting work.
- * {Corresponding Source for a non-source form of such a combination shall
- * include the source code for the parts of groovy, Apache Commons, Spring Framework, Grails used as well as
- * that of the covered work.}
  **/
 
 import grails.converters.JSON
