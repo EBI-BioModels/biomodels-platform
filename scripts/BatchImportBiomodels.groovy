@@ -794,16 +794,20 @@ getPublicationIdFromModelDetails = { details -> details?.publication_id }
 getPublicationTypeFromModelDetails = { details -> details?.publication_id_type }
 
 addPublicationDetails = { model, accession, type ->
-    def publicationCmd = pubMedService.fetchPublicationData accession
-    if (publicationCmd) {
-        model.publication = publicationService.fromCommandObject publicationCmd
-        def id = model.publicationId ?: model.submissionId
-        if (!model.save()) {
-            def e = model.errors.allErrors
-            addModelError id, "Couldn't attach publication $accession: $e"
-        } else {
-            addModelMsg id, "Successfully added publication $accession"
+    def id = model.publicationId ?: model.submissionId
+    try {
+        def publicationCmd = pubMedService.fetchPublicationData accession
+        if (publicationCmd) {
+            model.publication = publicationService.fromCommandObject publicationCmd
+            if (!model.save()) {
+                def e = model.errors.allErrors
+                addModelError id, "Couldn't attach publication $accession: $e"
+            } else {
+                addModelMsg id, "Successfully added publication $accession"
+            }
         }
+    } catch (Exception e) {
+        addModelError id, "Could not extract details for publication with identifier $accession."
     }
 }
 
