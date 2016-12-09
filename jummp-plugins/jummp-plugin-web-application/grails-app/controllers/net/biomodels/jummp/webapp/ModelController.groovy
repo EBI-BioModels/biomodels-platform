@@ -58,6 +58,7 @@ import org.codehaus.groovy.grails.web.json.JSONObject
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.multipart.MultipartFile
 import net.biomodels.jummp.plugins.security.Team
+import net.biomodels.jummp.core.model.FlagTransportCommand
 
 @Api(value = "/model", description = "Operations related to models")
 @Secured(['IS_AUTHENTICATED_FULLY'])
@@ -232,7 +233,7 @@ class ModelController {
             boolean canDelete = modelDelegateService.canDelete(PERENNIAL_ID)
             boolean canShare = modelDelegateService.canShare(PERENNIAL_ID)
             boolean canCertify = modelDelegateService.canCertify(PERENNIAL_ID)
-
+            List<FlagTransportCommand> flags = modelDelegateService.getFlags(PERENNIAL_ID)
             String flashMessage = ""
             if (flash.now["giveMessage"]) {
                 flashMessage = flash.now["giveMessage"]
@@ -251,7 +252,8 @@ class ModelController {
                         canSubmitForPublication: canSubmitForPublication,
                         canCertify: canCertify,
                         validationLevel: rev.getValidationLevelMessage(),
-                        certComment:rev.getCertificationMessage()
+                        certComment: rev.getCertificationMessage(),
+                        flags: flags
             ]
             if (rev.id == modelDelegateService.getLatestRevision(PERENNIAL_ID).id) {
                 flash.genericModel = model
@@ -264,6 +266,7 @@ class ModelController {
                 model["canDelete"] = false
                 model["canShare"] = false
                 model["canCertify"] = false
+                model["flags"] = flags
                 return model
             }
         } else {

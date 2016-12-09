@@ -20,6 +20,8 @@
 
 package net.biomodels.jummp.deployment.biomodels
 
+import net.biomodels.jummp.core.model.FlagTransportCommand
+
 /**
  * @short General purpose helper for rendering BioModels pages.
  *
@@ -50,5 +52,17 @@ class BioModelsTagLib {
                 plugin: 'jummp-plugin-biomodels-dom')
         // calls momService.fetchEntriesForModel for given modelId
         // delegates rendering to dedicated template
+    }
+
+    def renderModelFlags = {attrs ->
+        def base64Flags = attrs.flags?.collect { FlagTransportCommand cmd ->
+            [
+                img: Base64.encoder.encodeToString(cmd.icon),
+                label: cmd.label,
+                description: cmd.description
+            ]
+        }
+        out << render(collection: base64Flags, template: '/templates/modelFlags',
+                plugin: 'jummp-plugin-biomodels-dom', var: "flag")
     }
 }
