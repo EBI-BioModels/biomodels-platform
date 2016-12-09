@@ -26,18 +26,18 @@
   			contextHelpLocation="manual"
   		}
   		int helpWidth=400;
-        def styleName = grailsApplication.config.jummp.branding.style
 %>
 
 <!doctype html>
-<g:render template="/templates/${styleName}/precursor" />
+<g:render template="/templates/${grailsApplication.config.jummp.branding.style}/precursor" />
 <html lang="en">
 <head>
-    <g:render template="/templates/${styleName}/head" />
+    <g:render template="/templates/${grailsApplication.config.jummp.branding.style}/head" />
     <g:javascript library="jquery" plugin="jquery"/>
     <g:javascript src="jquery/jquery.i18n.properties-min-1.0.9.js"/>
     <g:javascript src="jquery/jquery-ui-v1.10.3.js"/>
     <g:javascript>
+        console.log("Using DDMoRe style");
     	$.appName = "${grailsApplication.metadata["app.name"]}";
     	$.serverUrl = "${grailsApplication.config.grails.serverURL}";
     	$.i18n.properties({
@@ -90,8 +90,8 @@
                     $( "#helpPanel" ).show();
                     adjustWidth(${helpWidth});
                     $( "#helpPanel" ).position({
-                        my: "right-1 bottom",
-                        at: "right-1 bottom",
+                        my: "right bottom",
+                        at: "right bottom",
                         of: ".main-menu"
                     });
                     helpHidden=0;
@@ -259,19 +259,19 @@
     </g:javascript>
 
     <link rel="stylesheet" href="<g:resource dir="css" file="notification.css"/>" />
-    <link rel="stylesheet" href="<g:resource dir="css/${styleName}" file="layout.css"/>" />
-    <link rel="stylesheet" href="<g:resource dir="css/${styleName}" file="${styleName}.css"/>" />
+    <link rel="stylesheet" href="<g:resource dir="css" file="layout.css"/>" />
+    <link rel="stylesheet" href="<g:resource dir="css" file="biomodels/biomodels.css"/>" />
     <link rel="stylesheet" href="<g:resource dir="css/jqueryui/smoothness" file="jquery-ui-1.10.3.custom.min.css"/>" />
     <link rel="stylesheet" href="<g:resource dir="css" file="jquery.cookiebar.css"/>" />
     <g:layoutHead/>
 </head>
 <!-- open body tag -->
-<g:render template="/templates/${styleName}/bodyTag"/>
+<g:render template="/templates/${grailsApplication.config.jummp.branding.style}/bodyTag"/>
 <div id="wrapper" class="container_24 page">
     <div id="mainframe">
-        <g:render template="/templates/${styleName}/header"/>
-        <g:render template="/templates/${styleName}/mainbody"/>
-        <g:render template="/templates/${styleName}/footer"/>
+        <g:render template="/templates/${grailsApplication.config.jummp.branding.style}/header"/>
+        <g:render template="/templates/${grailsApplication.config.jummp.branding.style}/mainbody"/>
+        <g:render template="/templates/${grailsApplication.config.jummp.branding.style}/footer"/>
 
         <g:if test="${contextHelpLocation}">
             <div id="helpbutton">

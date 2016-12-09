@@ -21,7 +21,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <meta name="layout" content="main"/>
+        <meta name="layout" content="${session['branding.style']}/main" />
         <title>View team</title>
     </head>
     <body>

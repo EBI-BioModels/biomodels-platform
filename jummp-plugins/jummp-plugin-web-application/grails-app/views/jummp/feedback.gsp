@@ -28,7 +28,7 @@
 
 
 <head>
-        <meta name="layout" content="main"/>
+        <meta name="layout" content="${session['branding.style']}/main" />
 </head>
 <body>
 	<g:message code="${messageCode}" />

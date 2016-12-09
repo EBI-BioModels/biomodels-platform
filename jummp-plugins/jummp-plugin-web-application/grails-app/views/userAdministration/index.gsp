@@ -31,7 +31,7 @@
 <html>
     <head>
         <title>User Administration</title>
-        <meta name="layout" content="main" />
+        <meta name="layout" content="${session['branding.style']}/main" />
         <g:javascript contextPath="" src="useradministration.js"/>
         <g:javascript contextPath="" src="jquery/jquery.dataTables.min.js"/>
         <g:javascript contextPath="" src="jquery/dataTables.responsive.min.js"/>

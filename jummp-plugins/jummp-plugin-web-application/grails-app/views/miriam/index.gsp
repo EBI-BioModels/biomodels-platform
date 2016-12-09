@@ -31,7 +31,7 @@
 <html>
     <head>
         <title><g:message code="miriam.title"/></title>
-        <meta name="layout" content="main" />
+        <meta name="layout" content="${session['branding.style']}/main" />
         <g:javascript contextPath="" src="js/miriamadministration.js"/>
     </head>
     <body>

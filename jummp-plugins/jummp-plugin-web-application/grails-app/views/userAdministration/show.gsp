@@ -31,7 +31,7 @@
 <html>
     <head>
         <title><g:message code="user.administration.ui.heading.user"/></title>
-        <meta name="layout" content="main" />
+        <meta name="layout" content="${session['branding.style']}/main" />
         <g:javascript contextPath="" src="useradministration.js"/>
      </head>
     <body>

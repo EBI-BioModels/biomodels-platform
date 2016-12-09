@@ -29,7 +29,7 @@
 
 <%@ page contentType="text/html;charset=UTF-8" %>
     <head>
-        <meta name="layout" content="main"/>
+        <meta name="layout" content="${session['branding.style']}/main" />
         <g:javascript src="underscore-min.js"/>
         <g:javascript src="handlebars.min.js"/>
         <g:javascript src="backbone-min.js"/>

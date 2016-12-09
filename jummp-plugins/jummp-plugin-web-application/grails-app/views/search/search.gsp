@@ -30,7 +30,7 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
     <head>
         <title>Model Search</title>
-        <meta name="layout" content="main" />
+        <meta name="layout" content="${session['branding.style']}/main" />
          <link rel="stylesheet" href="${resource(contextPath: "${grailsApplication.config.grails.serverURL}", dir: '/css', file: 'datatablestyle.css')}" />
          <g:javascript contextPath="" src="jquery/jquery-ui-v1.10.3.js"/>
     </head>

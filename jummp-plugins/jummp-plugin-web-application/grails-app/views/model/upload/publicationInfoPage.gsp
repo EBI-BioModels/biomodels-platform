@@ -28,7 +28,7 @@
     def serverUrl = grailsApplication.config.grails.serverURL
 %>
 <head>
-    <meta name="layout" content="main"/>
+    <meta name="layout" content="${session['branding.style']}/main" />
     <title>
         <g:if test="${isUpdate}">
             <g:message code="submission.publicationInfoPage.update.title" args="${ [params.id] }" />
