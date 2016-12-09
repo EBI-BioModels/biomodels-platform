@@ -16,30 +16,39 @@
  *
  * You should have received a copy of the GNU Affero General Public License along
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
- **/
+ */
 
 package net.biomodels.jummp.deployment.biomodels
 
-import net.biomodels.jummp.model.Model
-
 /**
- * @short Domain class for storing model of the month information
+ * @short General purpose helper for rendering BioModels pages.
  *
- * @author Raza Ali <raza.ali@ebi.ac.uk>
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
-@groovy.transform.CompileStatic
-class ModelOfTheMonth implements Serializable {
-    static hasMany = [models: Model]
-    final String DATE_FORMAT_PATTERN = 'yyyy-MM'
+class BioModelsTagLib {
+    static defaultEncodeAs = [taglib:'html']
+    static namespace = 'biomd'
 
-    String title
-    String authors
-    Date publicationDate
-    Date lastUpdated
+    /**
+     * Dependency injection
+     */
+    def modelOfTheMonthService
 
-    ModelOfTheMonthTransportCommand toCommandObject() {
-        String date = publicationDate?.format(DATE_FORMAT_PATTERN)
-        new ModelOfTheMonthTransportCommand(authors: authors, date: date)
+    /**
+     * Displays the Model of the Month (MoM) entry for the given model.
+     *
+     * @attr modelId REQUIRED the id of the model for which to render
+     * the MoM entry.
+     */
+    def renderModelOfMonth = { attrs ->
+        Long id = attrs.modelId
+        if (!id) {
+            return
+        }
+        def entries = modelOfTheMonthService.fetchEntriesForModel id
+        out << render(collection: entries, template: '/templates/modelOfTheMonth',
+                plugin: 'jummp-plugin-biomodels-dom')
+        // calls momService.fetchEntriesForModel for given modelId
+        // delegates rendering to dedicated template
     }
 }

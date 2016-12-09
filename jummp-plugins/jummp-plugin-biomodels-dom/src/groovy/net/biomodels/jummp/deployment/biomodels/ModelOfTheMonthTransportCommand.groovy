@@ -16,30 +16,28 @@
  *
  * You should have received a copy of the GNU Affero General Public License along
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
- **/
+ */
 
 package net.biomodels.jummp.deployment.biomodels
 
-import net.biomodels.jummp.model.Model
-
 /**
- * @short Domain class for storing model of the month information
+ * @short Data transfer object (DTO) for ModelOfTheMonth domain class.
  *
- * @author Raza Ali <raza.ali@ebi.ac.uk>
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
 @groovy.transform.CompileStatic
-class ModelOfTheMonth implements Serializable {
-    static hasMany = [models: Model]
-    final String DATE_FORMAT_PATTERN = 'yyyy-MM'
-
-    String title
+class ModelOfTheMonthTransportCommand implements Serializable {
+    static final String URL_SEED =
+            "http://www.ebi.ac.uk/biomodels-main/static-pages.do?page=ModelMonth%2F"
+    static final String FALLBACK_URL = "http://www.ebi.ac.uk/biomodels-main/modelmonth"
     String authors
-    Date publicationDate
-    Date lastUpdated
+    String date
 
-    ModelOfTheMonthTransportCommand toCommandObject() {
-        String date = publicationDate?.format(DATE_FORMAT_PATTERN)
-        new ModelOfTheMonthTransportCommand(authors: authors, date: date)
+    final String getFormattedURL() {
+        return date ? "$URL_SEED$date" : FALLBACK_URL
+    }
+
+    String toString() {
+        "Model of the Month $date by $authors"
     }
 }
