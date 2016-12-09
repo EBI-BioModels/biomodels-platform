@@ -16,30 +16,34 @@
  *
  * You should have received a copy of the GNU Affero General Public License along
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
- **/
+ */
 
 package net.biomodels.jummp.deployment.biomodels
 
+import grails.test.mixin.*
+import grails.test.mixin.domain.DomainClassUnitTestMixin
 import net.biomodels.jummp.model.Model
+import net.biomodels.jummp.model.Revision
+import spock.lang.Specification
 
-/**
- * @short Domain class for storing model of the month information
- *
- * @author Raza Ali <raza.ali@ebi.ac.uk>
- * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
- */
-@groovy.transform.CompileStatic
-class ModelOfTheMonth implements Serializable {
-    static hasMany = [models: Model]
-    final String DATE_FORMAT_PATTERN = 'yyyy-MM'
+@TestMixin(DomainClassUnitTestMixin)
+@TestFor(ModelOfTheMonth)
+class ModelOfTheMonthSpec extends Specification {
 
-    String title
-    String authors
-    Date publicationDate
-    Date lastUpdated
+    void "date formatting works when creating command objects"() {
+        when: "the publication date is January 1970"
+        def date = new Date(0)
+        def mom = new ModelOfTheMonth(publicationDate: date)
+        def cmd = mom.toCommandObject()
 
-    ModelOfTheMonthTransportCommand toCommandObject() {
-        String date = publicationDate?.format(DATE_FORMAT_PATTERN)
-        new ModelOfTheMonthTransportCommand(authors: authors, date: date)
+        then:
+        cmd.date == "1970-01"
+
+        when: "the publication date is not set"
+        mom.publicationDate = null
+        cmd = mom.toCommandObject()
+
+        then:
+        null == cmd.date
     }
 }

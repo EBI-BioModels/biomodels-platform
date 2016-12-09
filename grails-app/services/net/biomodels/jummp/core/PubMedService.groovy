@@ -52,7 +52,6 @@ import org.apache.commons.logging.LogFactory
  */
 class PubMedService {
     final Log log = LogFactory.getLog(getClass())
-    static transactional = true
 
     private setFieldIfItExists(String fieldName, PublicationTransportCommand publication, def xmlField, boolean castToInt) {
         try
@@ -80,7 +79,7 @@ class PubMedService {
      */
     @SuppressWarnings("EmptyCatchBlock")
     @Transactional
-    private PublicationTransportCommand fetchPublicationData(String id) throws JummpException {
+    PublicationTransportCommand fetchPublicationData(String id) throws JummpException {
         URL url
         try {
             url = new URL("http://www.ebi.ac.uk/europepmc/webservices/rest/search/query=ext_id:${id}%20src:med&resulttype=core")

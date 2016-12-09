@@ -16,30 +16,27 @@
  *
  * You should have received a copy of the GNU Affero General Public License along
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
- **/
+ */
 
 package net.biomodels.jummp.deployment.biomodels
 
-import net.biomodels.jummp.model.Model
+import grails.transaction.Transactional
 
 /**
- * @short Domain class for storing model of the month information
+ * @short Service responsible for retrieving BioModels ModelOfTheMonth entries.
  *
- * @author Raza Ali <raza.ali@ebi.ac.uk>
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
-@groovy.transform.CompileStatic
-class ModelOfTheMonth implements Serializable {
-    static hasMany = [models: Model]
-    final String DATE_FORMAT_PATTERN = 'yyyy-MM'
+@Transactional(readOnly = true)
+class ModelOfTheMonthService {
 
-    String title
-    String authors
-    Date publicationDate
-    Date lastUpdated
-
-    ModelOfTheMonthTransportCommand toCommandObject() {
-        String date = publicationDate?.format(DATE_FORMAT_PATTERN)
-        new ModelOfTheMonthTransportCommand(authors: authors, date: date)
+    List fetchEntriesForModel(Long id) {
+        List entries = ModelOfTheMonth.withCriteria {
+            models {
+                eq "id", id
+            }
+        }
+        entries*.toCommandObject()
     }
 }
+

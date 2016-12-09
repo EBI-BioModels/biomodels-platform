@@ -16,16 +16,6 @@
  *
  * You should have received a copy of the GNU Affero General Public License along
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
- *
- * Additional permission under GNU Affero GPL version 3 section 7
- *
- * If you modify Jummp, or any covered work, by linking or combining it with
- * groovy, Apache Commons, Spring Framework, Grails (or a modified version of that library), containing parts
- * covered by the terms of Apache License v2.0, the licensors of this
- * Program grant you additional permission to convey the resulting work.
- * {Corresponding Source for a non-source form of such a combination shall
- * include the source code for the parts of groovy, Apache Commons, Spring Framework, Grails used as well as
- * that of the covered work.}
  **/
 
 import grails.converters.JSON
@@ -184,6 +174,8 @@ def mftc
 def rtc
 def mtc
 def plptc
+def Publication
+def ptc
 def mf
 def decorator
 def domainAdapter
@@ -208,6 +200,8 @@ def sessionFactory
 /**
  * Services used by the script
  */
+def pubMedService
+def publicationService
 def modelService
 def modelFileFormatService
 def userService
@@ -507,6 +501,8 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
     rtc = loadClass("net.biomodels.jummp.core.model.RevisionTransportCommand")
     mtc = loadClass("net.biomodels.jummp.core.model.ModelTransportCommand")
     plptc = loadClass("net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand")
+    ptc = loadClass "net.biomodels.jummp.core.model.PublicationTransportCommand"
+    Publication = loadClass "net.biomodels.jummp.model.Publication"
 
     // submission-related domain classes
     Person = loadClass("net.biomodels.jummp.plugins.security.Person")
@@ -541,6 +537,8 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
     rtc.context = appCtx
     sessionFactory = appCtx.sessionFactory
     modelService = appCtx.modelService
+    publicationService = appCtx.publicationService
+    pubMedService = appCtx.pubMedService
     modelFileFormatService = appCtx.modelFileFormatService
     userService = appCtx.userService
     springSecurityService = appCtx.springSecurityService
@@ -793,12 +791,24 @@ addRevisionAnnotations = { revision, branch, modelDetails, user ->
 }
 
 getPublicationIdFromModelDetails = { details -> details?.publication_id }
-
 getPublicationTypeFromModelDetails = { details -> details?.publication_id_type }
 
-addPublicationDetails = { revision, accession, type -> // TODO
-    // resolve publication via publicationService
-    // add this publication to the revision's model
+addPublicationDetails = { model, accession, type ->
+    def id = model.publicationId ?: model.submissionId
+    try {
+        def publicationCmd = pubMedService.fetchPublicationData accession
+        if (publicationCmd) {
+            model.publication = publicationService.fromCommandObject publicationCmd
+            if (!model.save()) {
+                def e = model.errors.allErrors
+                addModelError id, "Couldn't attach publication $accession: $e"
+            } else {
+                addModelMsg id, "Successfully added publication $accession"
+            }
+        }
+    } catch (Exception e) {
+        addModelError id, "Could not extract details for publication with identifier $accession."
+    }
 }
 
 getOriginalFileForModel = { folder, id ->
@@ -1389,9 +1399,10 @@ populatePublicationLinkProviders = {
  * can be published in a given month, which is valid given current data.
  */
 processModelOfTheMonth = { model ->
+    def modelId = model.publicationId ?: model.submissionId
     def dateFormatter = new java.text.SimpleDateFormat('yyyy-MM')
-    String query = "select * from model_of_month where models_id LIKE '%${model.submissionId}%'"
-    biomodelsConnection.eachRow(query) { row ->
+    String query = "select * from model_of_month where models_id = ?"
+    biomodelsConnection.eachRow(query, [modelId]) { row ->
         def datePublished = dateFormatter.parse(row.pub_month)
         // see if there is an existing model of the month in the Jummp DB for
         // the given month

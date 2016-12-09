@@ -111,12 +111,15 @@ class ModelHistoryService {
                     [sort: 'lastAccessedDate', lock: true, offset: maxNumber - 1])
             toDelete*.delete(flush: true)
         }
-        try {
-            ModelHistoryItem newItem = ModelHistoryItem.create(model, user)
-            newItem.save(flush: true)
-        } catch (org.springframework.dao.OptimisticLockingFailureException ignored) {
-            // 2 transactions competed for the last entry in the user's history; this one lost
-            // no point in retrying because this would mean deleting the entry from the other tx.
+        ModelHistoryItem.withTransaction { status ->
+            try {
+                ModelHistoryItem newItem = ModelHistoryItem.create(model, user)
+                newItem.save(flush: true)
+            } catch (org.springframework.dao.OptimisticLockingFailureException ignored) {
+                // 2 transactions competed for the last entry in the user's history; this one lost
+                // no point in retrying because this would mean deleting the entry from the other tx.
+                status.setRollbackOnly()
+            }
         }
     }
 
