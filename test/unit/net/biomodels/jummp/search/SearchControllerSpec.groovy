@@ -8,7 +8,7 @@ import spock.lang.Specification
  * Created by tnguyen on 09/11/16.
  */
 @TestFor(SearchController)
-class SearchControllerTests extends Specification {
+class SearchControllerSpec extends Specification {
     void setup() {
 
     }
