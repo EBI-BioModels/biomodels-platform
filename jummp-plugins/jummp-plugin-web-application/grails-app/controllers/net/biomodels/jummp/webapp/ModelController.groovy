@@ -120,9 +120,6 @@ class ModelController {
         if (principal instanceof String) {
             username = principal
         }
-        else if (principal) {
-            username = principal.username
-        }
         return username
     }
 
