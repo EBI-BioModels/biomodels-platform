@@ -62,7 +62,7 @@
                                  data-options="closeOnClick:true;" aria-hidden="true"
                                  data-yeti-box="search-global-dropdown" data-resize="search-global-dropdown"
                                  aria-labelledby="ehvmx4-dd-anchor">
-                                <form id="global-search" name="global-search" action="/ebisearch/search.ebi"
+                                <form id="global-search" name="global-search" action="/ebisearch/search"
                                       method="GET">
                                     <fieldset>
                                         <div class="input-group">

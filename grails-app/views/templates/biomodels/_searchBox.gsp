@@ -33,7 +33,7 @@
           
           <div class="left">
             <label>
-            <input type="text" value="${query}" name="search_block_form" id="local-searchbox"></input>
+            <input type="text" value="${query}" name="search_block_form" id="local-searchbox" />
             </label>
           </div>
           
