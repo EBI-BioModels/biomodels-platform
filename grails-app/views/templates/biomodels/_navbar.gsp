@@ -19,7 +19,7 @@
 
 <nav>
 <ul class="grid_24 main-menu dropdown menu float-left columns medium-12"
-    id="local-nav" data-dropdown-menu="true" role="menubar" style="background-color: #00aaaa">
+    id="local-nav" data-dropdown-menu="true" role="menubar">
     <li <g:if test="${g.pageProperty(name:'page.browse')?.length()}"> class="first active" </g:if> role="menuitem">
         <a href="${g.createLink(controller: 'search', action: 'list')}">Browse</a>
     </li>
