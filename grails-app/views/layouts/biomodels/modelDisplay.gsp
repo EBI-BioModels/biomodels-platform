@@ -405,7 +405,7 @@
 
             var browser = get_browser(); // find it in jquery.cookiebar.js
             if (browser.name === 'Chrome'){
-                top = 200;
+                top = 225;
             }
 
             $("body").append("<div id='modelToolbar' style='top: " + top + "px' class='collapsibleContainer' title='Model Toolbar'>" +
