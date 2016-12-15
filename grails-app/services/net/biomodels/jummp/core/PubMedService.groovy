@@ -114,8 +114,8 @@ class PubMedService {
             setFieldIfItExists("month", publication, slurper.resultList.result.journalInfo.monthOfPublication, true)
             setFieldIfItExists("year", publication, slurper.resultList.result.journalInfo.yearOfPublication, true)
             //setFieldIfItExists("day", publication, slurper.resultList.result.journalInfo.dateOfPublication, true) //we have integer, this returns a string
-            setFieldIfItExists("volume", publication, slurper.resultList.result.journalInfo.volume, true)
-            setFieldIfItExists("issue", publication, slurper.resultList.result.journalInfo.issue, true)
+            setFieldIfItExists("volume", publication, slurper.resultList.result.journalInfo.volume, false)
+            setFieldIfItExists("issue", publication, slurper.resultList.result.journalInfo.issue, false)
             setFieldIfItExists("journal", publication, slurper.resultList.result.journalInfo.journal.title, false)
         }
         parseAuthors(slurper, publication)
