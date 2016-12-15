@@ -54,21 +54,24 @@ class PubMedService {
     final Log log = LogFactory.getLog(getClass())
 
     private setFieldIfItExists(String fieldName, PublicationTransportCommand publication, def xmlField, boolean castToInt) {
-        try
-        {
-            if (xmlField && xmlField.size()==1) {
-                String text=xmlField.text()
-                def fields=Publication.getFields()
+        try {
+            if (xmlField && xmlField.size() == 1) {
+                String text = xmlField.text()
                 if (castToInt) {
-                    publication."${fieldName}"=Integer.parseInt(text)
+                    try {
+                        publication."${fieldName}" = text as int
+                    } catch (NumberFormatException ignored) {
+                        final String pId = publication.link
+                        log.warn "Field '$fieldName' of publication $pId is not numerical: $text"
+                    }
                 }
                 else {
-                    publication."${fieldName}"=text
+                    publication."${fieldName}" = text
                 }
             }
         }
         catch(Exception e) {
-            e.printStackTrace()
+            log.error e.message, e
         }
     }
 
