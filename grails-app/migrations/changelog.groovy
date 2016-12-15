@@ -1217,5 +1217,7 @@ databaseChangeLog = {
     include file: '20161207_createFlagTable.groovy'
 
     include file: '20161207_createModelFlagTable.groovy'
+
+    include file: '20161212_publicationPropertiesAsString.groovy'
 }
 
