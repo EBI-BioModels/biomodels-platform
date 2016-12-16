@@ -35,6 +35,9 @@
 package net.biomodels.jummp.core
 
 import net.biomodels.jummp.core.annotation.StatementTransportCommand
+import net.biomodels.jummp.core.model.ModelElementTypeCategory
+import net.biomodels.jummp.core.model.ModelElementTypeTransportCommand
+import net.biomodels.jummp.model.ModelElementType
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.core.model.FileFormatService
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand
@@ -147,6 +150,22 @@ class ModelFileFormatService {
 
     ModelFormatTransportCommand registerModelFormat(final String identifier, final String name) {
         return registerModelFormat(identifier, name, "*")
+    }
+
+    ModelElementTypeTransportCommand registerModelElementType(final ModelFormatTransportCommand modelFormatTC, final String name) {
+        ModelFormat modelFormat = ModelFormat.findByIdentifierAndFormatVersion(modelFormatTC.identifier, modelFormatTC.formatVersion)
+        ModelElementType modelElementType = ModelElementType.findByModelFormatAndName(modelFormat, name)
+        if (modelElementType) {
+            use(ModelElementTypeCategory) {
+                return modelElementType.toCommandObject()
+            }
+        } else {
+            modelElementType = new ModelElementType(modelFormat: modelFormat, name: name)
+            modelElementType.save(flush: true)
+            use(ModelElementTypeCategory) {
+                return modelElementType.toCommandObject()
+            }
+        }
     }
 
     /**

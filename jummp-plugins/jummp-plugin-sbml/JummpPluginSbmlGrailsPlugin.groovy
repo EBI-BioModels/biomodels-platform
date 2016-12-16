@@ -95,6 +95,10 @@ Brief description of the plugin.
             ["*", "L1V1", "L1V2", "L2V1", "L2V2", "L2V3", "L2V4", "L3V1"].each {
                 def modelFormat = service.registerModelFormat("SBML", "SBML", it)
                 service.handleModelFormat(modelFormat, "sbmlService", "sbml")
+                ["model", "reaction", "species", "compartment", "units", "initial assignment",
+                 "constraint", "rule", "event", "parameter", "functions definition"].each { type ->
+                    service.registerModelElementType(modelFormat, type)
+                }
             }
         } catch(NoSuchBeanDefinitionException e) {
             println("ModelFileFormatService is not available!")
