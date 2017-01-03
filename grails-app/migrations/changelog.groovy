@@ -1217,5 +1217,9 @@ databaseChangeLog = {
     include file: '20161207_createFlagTable.groovy'
 
     include file: '20161207_createModelFlagTable.groovy'
+
+    include file: '20161217_createModelElementType.groovy'
+
+    include file: '20161217_addModelElementType_ElementAnnotation.groovy'
 }
 
