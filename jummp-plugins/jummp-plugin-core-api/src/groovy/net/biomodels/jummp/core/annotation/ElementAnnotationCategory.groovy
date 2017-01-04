@@ -21,6 +21,8 @@
 package net.biomodels.jummp.core.annotation
 
 import net.biomodels.jummp.annotationstore.ElementAnnotation
+import net.biomodels.jummp.core.model.ModelElementTypeCategory
+import net.biomodels.jummp.core.model.ModelElementTypeTransportCommand
 
 /**
  * Convenience class for adding methods to the ElementAnnotation class.
@@ -41,6 +43,11 @@ class ElementAnnotationCategory {
         use(StatementCategory) {
             statement = this.statement.toCommandObject()
         }
-        return new ElementAnnotationTransportCommand(creator: this.creatorId, statement: statement)
+        ModelElementTypeTransportCommand modelElementTypeTC
+        use(ModelElementTypeCategory) {
+            modelElementTypeTC = this.modelElementType.toCommandObject()
+        }
+        return new ElementAnnotationTransportCommand(creator: this.creatorId, statement: statement,
+            modelElementType: modelElementTypeTC)
     }
 }

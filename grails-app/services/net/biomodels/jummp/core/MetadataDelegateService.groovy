@@ -24,6 +24,7 @@ import eu.ddmore.metadata.service.ValidationException
 import grails.async.Promises
 import net.biomodels.jummp.annotationstore.ResourceReference
 import net.biomodels.jummp.annotationstore.Statement
+import net.biomodels.jummp.core.annotation.ElementAnnotationTransportCommand
 import net.biomodels.jummp.core.annotation.QualifierTransportCommand
 import net.biomodels.jummp.core.annotation.ResourceReferenceCategory
 import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand
@@ -156,8 +157,15 @@ class MetadataDelegateService implements IMetadataService {
 
     Map<QualifierTransportCommand, List<ResourceReferenceTransportCommand>> fetchGenericAnnotations(
         RevisionTransportCommand rev) {
-        // TODO THIS WILL HAVE TO CHANGE WHEN WE'RE ANNOTATING SUB-ELEMENTS OF THE MODEL
-        List<StatementTransportCommand> statements = rev.annotations*.statement
+        // By default, fetching generic annotations means to grab model-level annotations
+        // The specific levels of annotations should be invoked within another methods
+        List<ElementAnnotationTransportCommand> annotationTCL = rev.annotations
+        List<ElementAnnotationTransportCommand> annotations = new ArrayList<ElementAnnotationTransportCommand>()
+        annotationTCL*.each  {
+            if (it.modelElementType.name == "model")
+                annotations << it
+        }
+        List<StatementTransportCommand> statements = annotations*.statement
         Map result = [:]
         statements.each { StatementTransportCommand s ->
             final QualifierTransportCommand qualifier = s.predicate

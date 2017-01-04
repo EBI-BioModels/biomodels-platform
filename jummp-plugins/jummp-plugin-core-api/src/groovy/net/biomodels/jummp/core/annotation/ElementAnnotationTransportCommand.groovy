@@ -22,6 +22,7 @@ package net.biomodels.jummp.core.annotation
 
 import groovy.transform.CompileStatic
 import groovy.transform.Immutable
+import net.biomodels.jummp.core.model.ModelElementTypeTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 
 /**
@@ -42,4 +43,5 @@ import net.biomodels.jummp.core.model.RevisionTransportCommand
 class ElementAnnotationTransportCommand implements Serializable {
     String creator
     StatementTransportCommand statement
+    ModelElementTypeTransportCommand modelElementType
 }
