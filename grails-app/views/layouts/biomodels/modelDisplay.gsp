@@ -616,7 +616,21 @@
         <li><a href="#Overview">Overview</a></li>
         <li><a href="#Files">Files</a></li>
         <li><a href="#History">History</a></li>
+        <!--
+            These specific tabs would be shown based on specific model format. Every tab is deliberately designed
+            for each part/section in the content of model file.
+            For example:
+            SBML: needs to have tabs such as Math Definition, Physical Entities, Parameters, etc.
+            PharmML: needs to have tabs such as Model Definition, Trial Design, Estimation Steps, etc.
+        -->
         <g:pageProperty name="page.modelspecifictabs" />
+        <!--
+            These specific tabs would be shown based on the presence of data. For example,
+            curation notes do not be included at all the time.
+        -->
+         <g:if test="${curationNotes != null}">
+             <li><a href='#Curation'>Curation</a></li>
+         </g:if>
     </ul>
       <div id="Overview">
           <jummp:displayModelDescriptionLabel>
@@ -741,6 +755,9 @@
         </ul>
       </div>
       <g:pageProperty name="page.modelspecifictabscontent" />
+        <g:if test="${curationNotes != null}">
+            <biomd:renderCurationNotesTab curationNotes="${curationNotes}"/>
+        </g:if>
     </div>
     </div>
     </div>

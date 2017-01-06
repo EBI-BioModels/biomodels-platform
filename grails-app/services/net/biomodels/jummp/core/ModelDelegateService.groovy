@@ -37,30 +37,20 @@ package net.biomodels.jummp.core
 import eu.ddmore.publish.service.PublishContext
 import net.biomodels.jummp.core.adapters.DomainAdapter
 import net.biomodels.jummp.core.adapters.ModelAdapter
-import net.biomodels.jummp.core.model.FlagCategory
-import net.biomodels.jummp.core.model.FlagTransportCommand
-import net.biomodels.jummp.core.model.ModelAuditTransportCommand
-import net.biomodels.jummp.core.model.ModelFormatTransportCommand
-import net.biomodels.jummp.core.model.ModelListSorting
-import net.biomodels.jummp.core.model.ModelState
-import net.biomodels.jummp.core.model.ModelTransportCommand
-import net.biomodels.jummp.core.model.PermissionTransportCommand
-import net.biomodels.jummp.core.model.PublicationTransportCommand
-import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
-import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.core.model.ValidationState
+import net.biomodels.jummp.core.model.*
+import net.biomodels.jummp.core.model.identifier.generator.AbstractModelIdentifierGenerator
+import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import net.biomodels.jummp.core.vcs.VcsFileDetails
+import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
 import net.biomodels.jummp.model.Flag
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.User
-import net.biomodels.jummp.core.model.identifier.generator.AbstractModelIdentifierGenerator
-import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
-import net.biomodels.jummp.qcinfo.QcInfo
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.springframework.security.access.AccessDeniedException
+
 /**
  * @short Service delegating methods to ModelService.
  *
@@ -77,12 +67,17 @@ class ModelDelegateService implements IModelService {
     static transactional = false
     private static final Log log = LogFactory.getLog(this)
 
+    def curationNotesService
     def modelService
     def modelFileFormatService
     def qcInfoDelegateService
     def modelFlagService
     def referenceTracker
     def publicationIdGenerator
+
+    CurationNotesTransportCommand fetchCurationNotes(Long modelId) {
+        curationNotesService.fetchCurationNotesForModel(modelId)
+    }
 
     String getPluginForFormat(ModelFormatTransportCommand format) {
         return modelFileFormatService.getPluginForFormat(format)
