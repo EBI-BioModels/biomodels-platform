@@ -52,6 +52,7 @@ import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.core.model.audit.*
+import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
 import net.biomodels.jummp.plugins.security.PersonTransportCommand
 import org.apache.commons.io.FileUtils
 import org.codehaus.groovy.grails.web.json.JSONObject
@@ -237,7 +238,8 @@ class ModelController {
             }
             List<RevisionTransportCommand> revs =
                         modelDelegateService.getAllRevisions(PERENNIAL_ID)
-
+            CurationNotesTransportCommand curationNotes =
+                modelDelegateService.fetchCurationNotes(rev.model.id)
             def model = [revision: rev,
                         authors: rev.model.creators,
                         allRevs: revs,
@@ -250,7 +252,8 @@ class ModelController {
                         canCertify: canCertify,
                         validationLevel: rev.getValidationLevelMessage(),
                         certComment: rev.getCertificationMessage(),
-                        flags: flags
+                        flags: flags,
+                        curationNotes: curationNotes
             ]
             if (rev.id == modelDelegateService.getLatestRevision(PERENNIAL_ID).id) {
                 flash.genericModel = model
