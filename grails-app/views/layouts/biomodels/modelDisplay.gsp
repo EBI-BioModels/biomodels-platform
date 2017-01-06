@@ -668,17 +668,20 @@
                     </tr>
                     </table>
                     <g:pageProperty name="page.genericAnnotations"/>
-
-                      <table style="margin-top:30px">
-                          <tr>
-                              <td><label>Validation Status:</label></td>
-                              <td><div class='spaced'>${validationLevel}</div></td>
-                          </tr>
-                          <tr>
-                              <td><label>Certification Comment:</label></td>
-                              <td><div class='spaced'>${certComment}</div></td>
-                          </tr>
-                      </table>
+                    <table style="margin-top:30px">
+                    <tr>
+                        <td><label>Curation Status:</label></td>
+                        <td><div class='spaced'>${validationLevel}</div></td>
+                    </tr>
+                    <tr>
+                        <td><label>Validation Status:</label></td>
+                        <td><div class='spaced'>${validationLevel}</div></td>
+                    </tr>
+                    <tr>
+                        <td><label>Certification Comment:</label></td>
+                        <td><div class='spaced'>${certComment}</div></td>
+                    </tr>
+                    </table>
                     </div>
                     <div id="Files" class="filegrid">
                         <div class="filecol-1-3">
