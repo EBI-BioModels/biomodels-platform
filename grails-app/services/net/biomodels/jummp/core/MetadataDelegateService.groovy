@@ -33,6 +33,7 @@ import net.biomodels.jummp.core.annotation.StatementTransportCommand
 import net.biomodels.jummp.core.model.AnnotationValidationContext
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.annotation.SectionContainer
+import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
 import net.biomodels.jummp.model.Revision
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
@@ -58,6 +59,10 @@ class MetadataDelegateService implements IMetadataService {
      * Dependency injection for the metadata service.
      */
     MetadataService metadataService
+    /**
+     * Dependency injection for the curation notes service.
+     */
+    def curationNotesService
 
     /**
      * {@inheritDoc}
@@ -177,5 +182,18 @@ class MetadataDelegateService implements IMetadataService {
             }
         }
         result
+    }
+
+    CurationNotesTransportCommand fetchCurationNotes(RevisionTransportCommand rev) {
+        curationNotesService.fetchCurationNotesForModel(rev.model.id)
+    }
+
+    String fetchCurationStatus(RevisionTransportCommand rev) {
+        List<ElementAnnotationTransportCommand> annotations = rev.annotations
+        List<StatementTransportCommand> statements = annotations*.statement
+        def res = statements.find {
+            it.object.uri == "curated"
+        }
+        return res != null ? "curated" : "non-curated"
     }
 }

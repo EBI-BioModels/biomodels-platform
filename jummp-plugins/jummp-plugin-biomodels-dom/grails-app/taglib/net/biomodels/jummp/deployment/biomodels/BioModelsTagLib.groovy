@@ -87,4 +87,8 @@ class BioModelsTagLib {
                     plugin: 'jummp-plugin-biomodels-dom', var: 'curaRec')
         out << "</div>"
     }
+
+    def renderCurationStatus = { attrs ->
+        out << attrs.curationStatus
+    }
 }

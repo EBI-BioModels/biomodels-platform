@@ -41,7 +41,6 @@ import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.identifier.generator.AbstractModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import net.biomodels.jummp.core.vcs.VcsFileDetails
-import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
 import net.biomodels.jummp.model.Flag
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelFormat
@@ -67,17 +66,12 @@ class ModelDelegateService implements IModelService {
     static transactional = false
     private static final Log log = LogFactory.getLog(this)
 
-    def curationNotesService
     def modelService
     def modelFileFormatService
     def qcInfoDelegateService
     def modelFlagService
     def referenceTracker
     def publicationIdGenerator
-
-    CurationNotesTransportCommand fetchCurationNotes(Long modelId) {
-        curationNotesService.fetchCurationNotesForModel(modelId)
-    }
 
     String getPluginForFormat(ModelFormatTransportCommand format) {
         return modelFileFormatService.getPluginForFormat(format)

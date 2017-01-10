@@ -671,7 +671,7 @@
                     <table style="margin-top:30px">
                     <tr>
                         <td><label>Curation Status:</label></td>
-                        <td><div class='spaced'>${validationLevel}</div></td>
+                        <td><div class='spaced'><biomd:renderCurationStatus curationStatus="${curationStatus}"/></div></td>
                     </tr>
                     <tr>
                         <td><label>Validation Status:</label></td>

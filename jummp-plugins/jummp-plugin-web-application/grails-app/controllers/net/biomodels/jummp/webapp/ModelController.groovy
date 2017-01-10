@@ -104,6 +104,10 @@ class ModelController {
     * Dependency injection of mailService
     */
     def mailService
+    /**
+     * Dependency injection of MetadataDelegateService
+     */
+    def metadataDelegateService
 
     /**
      * The list of actions for which we should not automatically create an audit item.
@@ -239,7 +243,8 @@ class ModelController {
             List<RevisionTransportCommand> revs =
                         modelDelegateService.getAllRevisions(PERENNIAL_ID)
             CurationNotesTransportCommand curationNotes =
-                modelDelegateService.fetchCurationNotes(rev.model.id)
+                metadataDelegateService.fetchCurationNotes(rev)
+            String curationStatus = metadataDelegateService.fetchCurationStatus(rev)
             def model = [revision: rev,
                         authors: rev.model.creators,
                         allRevs: revs,
@@ -253,6 +258,7 @@ class ModelController {
                         validationLevel: rev.getValidationLevelMessage(),
                         certComment: rev.getCertificationMessage(),
                         flags: flags,
+                        curationStatus: curationStatus,
                         curationNotes: curationNotes
             ]
             if (rev.id == modelDelegateService.getLatestRevision(PERENNIAL_ID).id) {
