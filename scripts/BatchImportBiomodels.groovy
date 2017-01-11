@@ -797,17 +797,80 @@ addPublicationDetails = { model, accession, type ->
     def id = model.publicationId ?: model.submissionId
     try {
         def publicationCmd = pubMedService.fetchPublicationData accession
-        if (publicationCmd) {
-            model.publication = publicationService.fromCommandObject publicationCmd
-            if (!model.save()) {
-                def e = model.errors.allErrors
-                addModelError id, "Couldn't attach publication $accession: $e"
-            } else {
-                addModelMsg id, "Successfully added publication $accession"
-            }
+        if (!publicationCmdHasRequiredFields(publicationCmd)) {
+            addModelMsg id, "Attempting to manually populate details for $accession"
+            fetchMissingPaperDetailsFromBioModels(id, publicationCmd, accession, type)
+            addModelMsg id, "The publication is now ${publicationCmd.properties}"
+        }
+        def publication = publicationService.fromCommandObject publicationCmd
+        if (!publication.validate()) {
+            def e = publication.errors.allErrors
+            addModelError id, "Couldn't attach publication $accession: $e"
+        } else {
+            model.publication = publication
+            model.save()
+            addModelMsg id, "Successfully added publication $accession"
         }
     } catch (Exception e) {
-        addModelError id, "Could not extract details for publication with identifier $accession."
+        addModelError id, "Could not extract details for publication with identifier $accession. $e"
+        println "Could not extract details for publication with identifier $accession. $e"
+    }
+}
+
+publicationCmdHasRequiredFields = { publicationCmd ->
+    null == ['title', 'journal', 'affiliation', 'synopsis'].find { f ->
+        !publicationCmd?."$f"
+    }
+}
+
+/**
+ * Attempts to add any publication details not automatically retrieved
+ * from external sources by looking in BioModels.
+ */
+fetchMissingPaperDetailsFromBioModels = { modelId, partialPublication, accession, type ->
+    def paperDetails = biomodelsConnection.firstRow """\
+select title, journal_name as journal, affiliation, abstract as synopsis, year
+from publications
+where id_type = ? and publication_id = ?""", [type, accession]
+
+    partialPublication.year = paperDetails.year
+    ['title', 'journal', 'affiliation', 'synopsis'].each { String f ->
+        String value = paperDetails."$f"
+        try {
+            setPublicationAttribute(modelId, partialPublication, f, value)
+        } catch (Exception e) {
+            addModelError modelId, "Failed to set '$f' to '$value' for publication $accession"
+            println "Failed to set '$f' to '$value' for publication $accession: $e"
+        }
+    }
+    if (isNotPubMedPublication(type)) {
+        // deal with the fact that pubMedService returns a publication command with link type PUBMED
+        def provider
+        switch(type) {
+            case 1:
+                provider = PublicationLinkProvider.findByLinkType(LinkType.DOI)
+            break
+            case 2:
+                provider = PublicationLinkProvider.findByLinkType(LinkType.CUSTOM)
+            break
+            default:
+                String m = "Publication $accession ($modelId) has unsupported type $type"
+                throw new IllegalStateException(m)
+        }
+        def providerCmd = plptc.newInstance(linkType: provider.linkType, pattern: provider.pattern,
+                identifiersPrefix: provider.identifiersPrefix)
+        partialPublication.linkProvider = providerCmd
+    }
+}
+
+boolean isNotPubMedPublication(int type) {
+    type > 0
+}
+
+setPublicationAttribute = { modelId, publicationCmd, field, value ->
+    if (!publicationCmd."$field") {
+        publicationCmd."$field" = value ?: ""
+        addModelMsg modelId, "set publication field $field to ${publicationCmd."$field"}"
     }
 }
 
@@ -1364,11 +1427,11 @@ authenticateAsUser = { user ->
 
 addPublicationLinkProvider =  { def cmd ->
     def publinkType = LinkType.valueOf(cmd.linkType)
-        if (!PublicationLinkProvider.findByLinkType(publinkType)) {
-            def provider = PublicationLinkProvider.newInstance(linkType: publinkType,
-                    pattern:cmd.pattern, identifiersPrefix: cmd.identifiersPrefix)
-                provider.save(flush: true)
-        }
+    if (!PublicationLinkProvider.findByLinkType(publinkType)) {
+        def provider = PublicationLinkProvider.newInstance(linkType: publinkType,
+                pattern:cmd.pattern, identifiersPrefix: cmd.identifiersPrefix)
+        provider.save(flush: true)
+    }
 }
 
 // add supported publication link providers: DOI, PubMed, URI,...
