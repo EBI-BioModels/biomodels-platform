@@ -813,7 +813,6 @@ addPublicationDetails = { model, accession, type ->
         }
     } catch (Exception e) {
         addModelError id, "Could not extract details for publication with identifier $accession. $e"
-        println "Could not extract details for publication with identifier $accession. $e"
     }
 }
 
@@ -840,7 +839,6 @@ where id_type = ? and publication_id = ?""", [type, accession]
             setPublicationAttribute(modelId, partialPublication, f, value)
         } catch (Exception e) {
             addModelError modelId, "Failed to set '$f' to '$value' for publication $accession"
-            println "Failed to set '$f' to '$value' for publication $accession: $e"
         }
     }
     if (isNotPubMedPublication(type)) {
