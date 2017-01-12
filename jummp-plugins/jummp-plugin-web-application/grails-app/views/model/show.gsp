@@ -23,9 +23,6 @@
 
 
 
-
-
-
-<meta name="layout" content="modelDisplay"/>
+<meta name="layout" content="${session['branding.style']}/modelDisplay"/>
 <content tag="modelspecifictabs"/>
 <content tag="modelspecifictabscontent"/>

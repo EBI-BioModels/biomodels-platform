@@ -28,7 +28,7 @@
  the covered work.}
 --%>
 
-<g:applyLayout name="main">
+<g:applyLayout name="jummp/main">
 <%@ page import="java.text.DateFormat"%>
 <%@ page import="net.biomodels.jummp.core.model.ModelState"%>
 <%@ page import="net.biomodels.jummp.qcinfo.*"%>
@@ -39,10 +39,15 @@
 %>
 <head>
     <title>${revision.name}</title>
+    <link rel="stylesheet" href="<g:resource dir="css/jqueryui/smoothness"
+                                             file="jquery-ui-1.10.3.custom.min.css"/>" />
+    <link rel="stylesheet" href="<g:resource dir="css"
+                                             file="biomodels/biomodels.css"/>" />
+
     <script type="text/javascript">
         $(document).ready(function() {
             var mainContainer = $("#content");
-            mainContainer.css('margin-left', 40+'px');
+            mainContainer.css('margin-left', 50+'px');
         });
     </script>
     <script type="text/x-mathjax-config">
@@ -399,16 +404,7 @@
                     }
                 }
             });
-
-            var top = 225;  // the default value is set for Firefox.
-                            // This value is to be exact height of the header section plus 2px.
-
-            var browser = get_browser(); // find it in jquery.cookiebar.js
-            if (browser.name === 'Chrome'){
-                top = 200;
-            }
-
-            $("body").append("<div id='modelToolbar' style='top: " + top + "px' class='collapsibleContainer' title='Model Toolbar'>" +
+            $("body").append("<div id='modelToolbar' class='collapsibleContainer' title='Model Toolbar'>" +
                 "<button title='Expand Toolbar' data-showing='0' id='panelToggle'>Expand</button></div>	");
             $("#buttonContainer").prependTo("#modelToolbar");
             $("#panelToggle").click(function (evt){
@@ -587,7 +583,7 @@
             </div>
         </g:if>
         <div id="topBar">
-            <div style="float:left;width:75%;">
+            <div style="float:left;width:85%;">
                 <h2>${revision.name}</h2>
             </div>
             <div style="float:right;margin-top:10px;">
@@ -741,7 +737,9 @@
     </div>
     </div>
     </div>
-
+    %{--<script type="text/javascript">--}%
+        %{--$("#modelToolbar").css("margin-top", $("#local-masthead").height());--}%
+    %{--</script>--}%
 </body>
 <content tag="contexthelp">
         display

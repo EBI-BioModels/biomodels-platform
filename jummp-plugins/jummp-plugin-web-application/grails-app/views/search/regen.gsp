@@ -31,7 +31,7 @@
 
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <meta name="layout" content="main"/>
+        <meta name="layout" content="${grailsApplication.config.jummp.branding.style}/main"/>
         <title><g:message code="Regeneration Complete"/></title>
     </head>
     <body>

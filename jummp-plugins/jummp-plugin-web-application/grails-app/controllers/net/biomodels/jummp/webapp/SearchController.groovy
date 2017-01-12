@@ -264,7 +264,7 @@ class SearchController {
         }
 
         return [models: models, facets: facets, matches: totalCount, sortBy: sortBy, sortDirection: sortDirection,
-                    offset: offset, length: length, query: query]
+                    offset: paginationCriteria['start'], length: paginationCriteria['length'], query: query]
     }
 
     private def archiveCore(String sortBy, String sortDirection, int offset, int length) {

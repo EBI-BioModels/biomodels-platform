@@ -21,7 +21,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <meta name="layout" content="main"/>
+        <meta name="layout" content="${session['branding.style']}/main" />
         <title>Create a team</title>
         <g:render template="teamTemplate"/>
    </head>

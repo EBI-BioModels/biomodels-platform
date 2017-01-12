@@ -37,6 +37,8 @@ package net.biomodels.jummp.core
 import eu.ddmore.publish.service.PublishContext
 import net.biomodels.jummp.core.adapters.DomainAdapter
 import net.biomodels.jummp.core.adapters.ModelAdapter
+import net.biomodels.jummp.core.model.FlagCategory
+import net.biomodels.jummp.core.model.FlagTransportCommand
 import net.biomodels.jummp.core.model.ModelAuditTransportCommand
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand
 import net.biomodels.jummp.core.model.ModelListSorting
@@ -48,6 +50,7 @@ import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.core.model.ValidationState
 import net.biomodels.jummp.core.vcs.VcsFileDetails
+import net.biomodels.jummp.model.Flag
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.model.Revision
@@ -77,6 +80,7 @@ class ModelDelegateService implements IModelService {
     def modelService
     def modelFileFormatService
     def qcInfoDelegateService
+    def modelFlagService
     def referenceTracker
     def publicationIdGenerator
 
@@ -202,6 +206,23 @@ class ModelDelegateService implements IModelService {
         return DomainAdapter.getAdapter(modelService.addRevision(ModelAdapter.findByPerennialIdentifier(modelId), file,
                     ModelFormat.findByIdentifierAndFormatVersion(format.identifier,
                                     format.formatVersion), comment)).toCommandObject()
+    }
+
+    List<FlagTransportCommand> getFlags(String modelId) {
+        Model model = modelService.getModel(modelId)
+        List<FlagTransportCommand> results = new ArrayList<FlagTransportCommand>()
+        if (model != null) {
+            List<Flag> flags = modelFlagService.getFlags(model)
+            if (!flags.empty) {
+                use(FlagCategory) {
+                    results = flags.collect { Flag flag ->
+                        flag.toCommandObject()
+                    }
+                }
+                return results
+            }
+        }
+        return Collections.emptyList()
     }
 
     Boolean canAddRevision(String modelId) {

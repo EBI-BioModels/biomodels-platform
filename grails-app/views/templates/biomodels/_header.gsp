@@ -33,7 +33,6 @@
 <div data-sticky-container class="sticky-container" >
     <div id="local-masthead" data-sticky data-sticky-on="large" data-top-anchor="165.75" data-btm-anchor="300000"
          class="sticky meta-background-color meta-background-image" data-resize="local-masthead" data-events="resize">
-         %{--style="background-image: url('//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/images/backgrounds/embl-ebi-background.jpg'); max-width: 1905px;">--}%
         <header>
         <div id="global-masthead" class="clearfix">
 	      <!--This has to be one line and no newline characters-->

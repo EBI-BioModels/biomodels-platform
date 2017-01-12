@@ -27,11 +27,14 @@
 
 
 
+<%
+    def styleName = grailsApplication.config.jummp.branding.style
+%>
+
 <!doctype html>
 <html>
     <head>
-        <meta name="layout" content="main"/>
-
+        <meta name="layout" content="${styleName}/main"/>
     </head>
     <body activetab="about">
         <wcm:render path="index"/>

@@ -76,11 +76,11 @@ class PublicationTransportCommand implements Serializable {
     /**
      * The volume of the Journal issue.
      */
-    Integer volume
+    String volume
     /**
      * The issue of the Journal the publication has been published in.
      */
-    Integer issue
+    String issue
     /**
      * The pages of the publication in the Journal Issue.
      */

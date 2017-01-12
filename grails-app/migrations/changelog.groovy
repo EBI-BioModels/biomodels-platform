@@ -1213,5 +1213,11 @@ databaseChangeLog = {
     include file: '20160718_addCertificationConstraints.groovy'
 
     include file: '20161011_createIndexingPlanTable.groovy'
+
+    include file: '20161207_createFlagTable.groovy'
+
+    include file: '20161207_createModelFlagTable.groovy'
+
+    include file: '20161212_publicationPropertiesAsString.groovy'
 }
 

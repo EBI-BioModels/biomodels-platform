@@ -35,7 +35,7 @@
 <%@ page import=" net.biomodels.jummp.model.PublicationLinkProvider" %>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <meta name="layout" content="main"/>
+    <meta name="layout" content="${session['branding.style']}/main" />
     <title><g:message code="submission.publicationLink.header"/></title>
     <g:javascript contextPath="" src="enterPublicationLink.js"/>
 </head>

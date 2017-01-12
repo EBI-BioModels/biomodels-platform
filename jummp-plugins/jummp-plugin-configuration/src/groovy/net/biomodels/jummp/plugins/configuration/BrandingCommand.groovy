@@ -37,8 +37,13 @@ package net.biomodels.jummp.plugins.configuration
 import grails.validation.Validateable
 
 /**
- * Command Object for validating branding settings.
- * @author Jochen Schramm <j.schramm@dkfz-heidelberg.de>
+ * @short   Command Object for validating branding settings.
+ * The possibilities of validating branding settings can be included of
+ * internal and external colours, or branding name, style name, or deployment environment.
+ * Those values are also declared in the main Config.groovy
+ *
+ * @author  Jochen Schramm <j.schramm@dkfz-heidelberg.de>
+ * @author  Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 @Validateable
 class BrandingCommand implements Serializable {
@@ -46,9 +51,13 @@ class BrandingCommand implements Serializable {
 
     String internalColor
     String externalColor
+    String style
+    String deployment
 
     static constraints = {
         internalColor(nullable: false, blank: false)
         externalColor(nullable: true)
+        style(nullable: true, blank: true)
+        deployment(nullable: true, blank: true)
     }
 }

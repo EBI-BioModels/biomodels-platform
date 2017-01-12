@@ -30,7 +30,7 @@
 <%@ page import="net.biomodels.jummp.core.model.RepositoryFileTransportCommand; grails.converters.JSON" contentType="text/html;charset=UTF-8" %>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <meta name="layout" content="main"/>
+        <meta name="layout" content="${session['branding.style']}/main" />
         <title><g:message code="submission.upload.header"/></title>
         <g:javascript contextPath="" src="jquery/jquery-ui-v1.10.3.js"/>
         <g:if test ="${showProceedWithoutValidationDialog || showProceedAsUnknownFormat}">
