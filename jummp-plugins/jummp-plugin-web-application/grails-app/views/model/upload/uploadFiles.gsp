@@ -170,7 +170,7 @@
                                 name: 'extraFiles'
                             })
                         ),
-                        $('</td><td style="width: 285px">').append(
+                        $('</td><td style="width: 785px">').append(
                             $('<input/>', {
                                 type: 'text',
                                 id: 'description' + ++numberOfAdditionalsAtLoadingPage,

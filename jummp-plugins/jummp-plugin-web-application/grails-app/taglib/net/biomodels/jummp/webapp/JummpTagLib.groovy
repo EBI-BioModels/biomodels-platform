@@ -96,7 +96,7 @@ class JummpTagLib {
             out << name
             out << "<input style='display:none' type='file' id='additionalFilesExisting' " +
                    "name='additionalFilesExisting' value='${name}'></td>\n\t"
-            out << "<td style='width: 285px'>" +
+            out << "<td style='width: 785px'>" +
                    "<input name='description${counter}' id='description${counter}' type='text' value='${command.description ?: ""}' " +
                    "style='width: 100%; box-sizing: border-box; -webkit-box-sizing: border-box; -moz-box-sizing: border-box;'></td>\n\t"
             out << "<td><a href='#' class='killer' title='Discard file'>Discard</a></td>\n"
