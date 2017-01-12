@@ -35,8 +35,8 @@ grails.project.dependency.resolution = {
         //mavenRepo "http://repository.jboss.com/maven2/"
     }
     dependencies {
-        // specify dependencies here under either 'build', 'compile', 'runtime', 'test' or 'provided' scopes eg.
-        // runtime 'mysql:mysql-connector-java:5.1.27'
+        compile "org.apache.tika:tika-core:1.14"
+        runtime 'org.apache.tika:tika-parsers:1.14'
     }
 
     plugins {
