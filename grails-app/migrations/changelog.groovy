@@ -1221,5 +1221,7 @@ databaseChangeLog = {
     include file: '20161217_createModelElementType.groovy'
 
     include file: '20161217_addModelElementType_ElementAnnotation.groovy'
+
+    include file: '20161212_publicationPropertiesAsString.groovy'
 }
 
