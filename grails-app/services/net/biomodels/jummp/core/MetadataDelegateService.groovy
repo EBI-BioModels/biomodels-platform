@@ -167,7 +167,7 @@ class MetadataDelegateService implements IMetadataService {
         List<ElementAnnotationTransportCommand> annotationTCL = rev.annotations
         List<ElementAnnotationTransportCommand> annotations = new ArrayList<ElementAnnotationTransportCommand>()
         annotationTCL*.each  {
-            if (it.modelElementType.name == "model")
+            if (it.modelElementType*.name == "model")
                 annotations << it
         }
         List<StatementTransportCommand> statements = annotations*.statement

@@ -43,9 +43,10 @@ class ElementAnnotationCategory {
         use(StatementCategory) {
             statement = this.statement.toCommandObject()
         }
-        ModelElementTypeTransportCommand modelElementTypeTC
+        ModelElementTypeTransportCommand modelElementTypeTC = null
         use(ModelElementTypeCategory) {
-            modelElementTypeTC = this.modelElementType.toCommandObject()
+            if (this.modelElementType)
+                modelElementTypeTC = this.modelElementType.toCommandObject()
         }
         return new ElementAnnotationTransportCommand(creator: this.creatorId, statement: statement,
             modelElementType: modelElementTypeTC)
