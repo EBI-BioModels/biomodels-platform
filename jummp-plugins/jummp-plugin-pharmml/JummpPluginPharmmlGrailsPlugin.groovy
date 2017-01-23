@@ -99,7 +99,10 @@ Provides functionality to support models encoded in PharmML.
             }
         } catch(NoSuchBeanDefinitionException e) {
             println("Cannot register PharmML handler because ModelFileFormatService is not available!")
+        } catch(IllegalStateException e) {
+            println "Cannot register known PharmML element types -- annotations will not be saved."
         }
+
     }
 
     def onChange = { event ->

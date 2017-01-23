@@ -87,9 +87,6 @@ Provides functionality to support models encoded in MDL.
                 def modelFormat = service.registerModelFormat("MDL",
                         "MDL", it)
                 service.handleModelFormat(modelFormat, "mdlService", "mdl")
-                ["model", "reaction", "species", "compartment"].each { type ->
-                    service.registerModelElementType(modelFormat, type)
-                }
             }
         } catch(NoSuchBeanDefinitionException e) {
             println("Cannot register MDL handler because ModelFileFormatService is not available!")

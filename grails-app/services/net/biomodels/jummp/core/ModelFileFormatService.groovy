@@ -154,17 +154,25 @@ class ModelFileFormatService {
 
     ModelElementTypeTransportCommand registerModelElementType(final ModelFormatTransportCommand modelFormatTC, final String name) {
         ModelFormat modelFormat = ModelFormat.findByIdentifierAndFormatVersion(modelFormatTC.identifier, modelFormatTC.formatVersion)
-        ModelElementType modelElementType = ModelElementType.findByModelFormatAndName(modelFormat, name)
-        if (modelElementType) {
-            use(ModelElementTypeCategory) {
-                return modelElementType.toCommandObject()
+        try {
+            ModelElementType modelElementType = ModelElementType.findByModelFormatAndName(modelFormat, name)
+            if (modelElementType) {
+                use(ModelElementTypeCategory) {
+                    return modelElementType.toCommandObject()
+                }
+            } else {
+                modelElementType = new ModelElementType(modelFormat: modelFormat, name: name)
+                if (!modelElementType.save(flush: true)) {
+                    def err = modelElementType.errors.allErrors()
+                    String msg = "Illegal element type $name for fmt ${modelFormat.id}: ${err}"
+                    throw new IllegalArgumentException(msg)
+                }
+                use(ModelElementTypeCategory) {
+                    return modelElementType.toCommandObject()
+                }
             }
-        } else {
-            modelElementType = new ModelElementType(modelFormat: modelFormat, name: name)
-            modelElementType.save(flush: true)
-            use(ModelElementTypeCategory) {
-                return modelElementType.toCommandObject()
-            }
+        } catch (org.springframework.jdbc.BadSqlGrammarException exception) {
+            throw new IllegalStateException("Model element type table does not exist")
         }
     }
 

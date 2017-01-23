@@ -47,6 +47,7 @@ class BootStrap {
     def springSecurityService
     def wcmSecurityService
     def grailsApplication
+    def modelFileFormatService
 
     void addPublicationLinkProvider(PubLinkProvTC cmd) {
         def publinkType=PublicationLinkProvider.LinkType.valueOf(cmd.linkType)
@@ -57,6 +58,19 @@ class BootStrap {
         }
     }
 
+    void registerDefaultModelElementTyps() {
+        def modelFormats = ModelFormat.list().each { ModelFormat fmt ->
+            def fmtCmd = DomainAdapter.getAdapter(fmt).toCommandObject()
+            try {
+                modelFileFormatService.registerModelElementType(fmtCmd, "model")
+            } catch (IllegalStateException e) {
+                String id = fmt.identifier
+                String v = fmt.formatVersion
+                println "Cannot register default model element type for $id $v"
+            }
+        }
+    }
+
     def init = { servletContext ->
         ModelFormat format = ModelFormat.findByIdentifierAndFormatVersion("UNKNOWN", "*")
         if (!format) {
@@ -64,10 +78,10 @@ class BootStrap {
             format.save(flush: true)
         }
         def ctx = servletContext.getAttribute(ApplicationAttributes.APPLICATION_CONTEXT)
-        def service = ctx.getBean("modelFileFormatService")
-        def modelFormat = service.registerModelFormat("UNKNOWN", "UNKNOWN")
-        service.handleModelFormat(modelFormat, "unknownFormatService", "unknown")
-        service.registerModelElementType(modelFormat, "model")
+        def modelFormat = modelFileFormatService.registerModelFormat("UNKNOWN", "UNKNOWN")
+
+        modelFileFormatService.handleModelFormat(modelFormat, "unknownFormatService", "unknown")
+        registerDefaultModelElementTypes()
 
         grailsApplication.domainClasses.each { GrailsClass gc ->
              DomainClassGrailsPlugin.addValidationMethods(grailsApplication, gc,
