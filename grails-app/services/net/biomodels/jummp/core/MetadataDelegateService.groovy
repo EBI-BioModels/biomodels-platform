@@ -24,6 +24,7 @@ import eu.ddmore.metadata.service.ValidationException
 import grails.async.Promises
 import net.biomodels.jummp.annotationstore.ResourceReference
 import net.biomodels.jummp.annotationstore.Statement
+import net.biomodels.jummp.core.annotation.ElementAnnotationTransportCommand
 import net.biomodels.jummp.core.annotation.QualifierTransportCommand
 import net.biomodels.jummp.core.annotation.ResourceReferenceCategory
 import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand
@@ -32,6 +33,7 @@ import net.biomodels.jummp.core.annotation.StatementTransportCommand
 import net.biomodels.jummp.core.model.AnnotationValidationContext
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.annotation.SectionContainer
+import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
 import net.biomodels.jummp.model.Revision
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
@@ -57,6 +59,10 @@ class MetadataDelegateService implements IMetadataService {
      * Dependency injection for the metadata service.
      */
     MetadataService metadataService
+    /**
+     * Dependency injection for the curation notes service.
+     */
+    def curationNotesService
 
     /**
      * {@inheritDoc}
@@ -156,8 +162,15 @@ class MetadataDelegateService implements IMetadataService {
 
     Map<QualifierTransportCommand, List<ResourceReferenceTransportCommand>> fetchGenericAnnotations(
         RevisionTransportCommand rev) {
-        // TODO THIS WILL HAVE TO CHANGE WHEN WE'RE ANNOTATING SUB-ELEMENTS OF THE MODEL
-        List<StatementTransportCommand> statements = rev.annotations*.statement
+        // By default, fetching generic annotations means to grab model-level annotations
+        // The specific levels of annotations should be invoked within another methods
+        List<ElementAnnotationTransportCommand> annotationTCL = rev.annotations
+        List<ElementAnnotationTransportCommand> annotations = new ArrayList<ElementAnnotationTransportCommand>()
+        annotationTCL*.each  {
+            if (it.modelElementType  && it.modelElementType.name == "model")
+                annotations << it
+        }
+        List<StatementTransportCommand> statements = annotations*.statement
         Map result = [:]
         statements.each { StatementTransportCommand s ->
             final QualifierTransportCommand qualifier = s.predicate
@@ -169,5 +182,18 @@ class MetadataDelegateService implements IMetadataService {
             }
         }
         result
+    }
+
+    CurationNotesTransportCommand fetchCurationNotes(RevisionTransportCommand rev) {
+        curationNotesService.fetchCurationNotesForModel(rev.model.id)
+    }
+
+    String fetchCurationStatus(RevisionTransportCommand rev) {
+        List<ElementAnnotationTransportCommand> annotations = rev.annotations
+        List<StatementTransportCommand> statements = annotations*.statement
+        def res = statements.find {
+            it.object.uri == "curated"
+        }
+        return res != null ? "curated" : "non-curated"
     }
 }

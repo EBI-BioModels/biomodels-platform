@@ -405,7 +405,7 @@
 
             var browser = get_browser(); // find it in jquery.cookiebar.js
             if (browser.name === 'Chrome'){
-                top = 200;
+                top = 225;
             }
 
             $("body").append("<div id='modelToolbar' style='top: " + top + "px' class='collapsibleContainer' title='Model Toolbar'>" +
@@ -573,178 +573,197 @@
                 </ul>
          </div>
         <div class="ebiLayout_reduceWidth">
-        <g:if test="${revision.model.deleted}">
-            <div class='PermanentMessage'>
-                This is an archived model.
-            </div>
-        </g:if>
-        <g:if test="${oldVersion}">
-            <div class='PermanentMessage'>
-                You are viewing a version of a model that has been updated.
-                To access the latest version, and a more detailed display please
-                go <a href="${createLink(controller: "model", action: "show", id:
-                    (revision.model.publicationId) ?: (revision.model.submissionId))}">here</a>.
-            </div>
-        </g:if>
-        <div id="topBar">
-            <div style="float:left;width:75%;">
-                <h2>${revision.name}</h2>
-            </div>
-            <div style="float:right;margin-top:10px;">
-                <g:if test="${!flags.empty}">
-                    <biomd:renderModelFlags flags="${flags}"/>
-                </g:if>
-                <g:if test="${revision.qcInfo != null}">
-                    <jummp:renderStarLevels flag="${revision.qcInfo.flag}" />
-                </g:if>
-                <span>&nbsp;</span>
-                <g:if test="${revision.state==ModelState.PUBLISHED}">
-                    <img style="float:right;margin-top:0;" title="This version of the model is public"
-                         alt="public model"
-                         src="${grailsApplication.config.grails.serverURL}/images/unlock.png"/>
-                </g:if>
-                <g:else>
-                    <img style="float:right;margin-top:0;" title="This version of the model is unpublished"
-                         alt="unpublished model"
-                         src="${grailsApplication.config.grails.serverURL}/images/lock.png"/>
-                </g:else>
-            </div>
-        </div>
-     <div id="tablewrapper">
-     <div id="tabs">
-     <ul class='modelTabs'>
-        <li><a href="#Overview">Overview</a></li>
-        <li><a href="#Files">Files</a></li>
-        <li><a href="#History">History</a></li>
-        <g:pageProperty name="page.modelspecifictabs" />
-    </ul>
-      <div id="Overview">
-          <jummp:displayModelDescriptionLabel>
-              <span class="bold">${description}:</span>
-          </jummp:displayModelDescriptionLabel>
-          <div style="margin-left: 30px;">
-              ${raw(revision.description)}
-          </div>
-        <table style="margin-top:30px">
-        <tr>
-            <td><label><g:message code="model.model.format"/></label></td>
-            <td><div class='spaced'>${revision.format.name} ${revision.format.formatVersion!="*"?"(${revision.format.formatVersion})":""}</div></td>
-        </tr>
-        <%
-            model = revision.model
-        %>
-        <g:if test="${model.publication}">
-            <tr>
-                <td><label><g:message code="model.model.publication"/>:</label></td>
-                <td>
-                    <div class='spaced'>
-                        <g:render  model="[model:model]" template="/templates/showPublication" />
-                    </div>
-                </td>
-            </tr>
-        </g:if>
-        <tr>
-            <td><label><g:message code="model.model.authors"/></label></td>
-            <td>
-                <div class='spaced'>
-                    <g:join in="${authors}"/>
+            <g:if test="${revision.model.deleted}">
+                <div class='PermanentMessage'>
+                    This is an archived model.
                 </div>
-            </td>
-        </tr>
-        </table>
-        <g:pageProperty name="page.genericAnnotations"/>
-
-          <table style="margin-top:30px">
-              <tr>
-                  <td><label>Validation Status:</label></td>
-                  <td><div class='spaced'>${validationLevel}</div></td>
-              </tr>
-              <tr>
-                  <td><label>Certification Comment:</label></td>
-                  <td><div class='spaced'>${certComment}</div></td>
-              </tr>
-          </table>
-
-      </div>
-      <div id="Files" class="filegrid">
-        <div class="filecol-1-3">
-            <div id="treeView">
-                <ul>
-                    <li rel="folder">
-                    <jummp:findMainFileLabel>
-                        <a>${mainFile}</a>
-                    </jummp:findMainFileLabel>
-                    <ul>
-                        <Ziphandler:outputFileInfoAsHtml repFiles="${revision.files}" loadedZips="${loadedZips}"
-                                                         zipSupported="${zipSupported}" mainFile="${true}"/>
-                    </ul>
-                    </li>
-                </ul>
-                <ul>
-                    <g:if test="${revision.files.find{!it.hidden && !it.mainFile}}">
-                    <li><a>Additional Files</a>
-                        <ul>
-                            <Ziphandler:outputFileInfoAsHtml repFiles="${revision.files.findAll{!it.hidden}}"
-                                                             loadedZips="${loadedZips}" zipSupported="${zipSupported}"
-                                                             mainFile="${false}"/>
-                       </ul>
-                    </li>
+            </g:if>
+            <g:if test="${oldVersion}">
+                <div class='PermanentMessage'>
+                    You are viewing a version of a model that has been updated.
+                    To access the latest version, and a more detailed display please
+                    go <a href="${createLink(controller: "model", action: "show", id:
+                        (revision.model.publicationId) ?: (revision.model.submissionId))}">here</a>.
+                </div>
+            </g:if>
+            <div id="topBar">
+                <div style="float:left;width:75%;">
+                    <h2>${revision.name}</h2>
+                </div>
+                <div style="float:right;margin-top:10px;">
+                    <g:if test="${!flags.empty}">
+                        <biomd:renderModelFlags flags="${flags}"/>
                     </g:if>
-            </ul>
-        </div>
-        </div>
-        <div class="filecol-2-3">
-            <div id="detailsBox" class="detailsBox"></div>
-        </div>
-      </div>
-      <div id="History">
-        <% DateFormat dateFormat = DateFormat.getDateTimeInstance(); %>
-        <ul>
-            <li>Model owner: ${revision.model.submitter}</li>
-            <li>Submitted: ${dateFormat.format(allRevs.first().uploadDate)}</li>
-            <li>Last Modified: ${dateFormat.format(allRevs.last().uploadDate)}</li>
-        </ul>
-        <h5>Revisions</h5>
-        <ul>
-             <g:each status="i" var="rv" in="${allRevs.sort{a,b -> a.revisionNumber > b.revisionNumber ? -1 : 1}}">
-                <li style="${revision.id == rv.id ?"background-color:#FFFFCC;":""}margin-top:5px">
-                    Version: ${rv.revisionNumber}
-                    <g:if test="${rv.state==ModelState.PUBLISHED}">
-                            <img style="width:12px;margin:2px;float:none;"
-                                 title="This version of the model is public" alt="public model"
-                                 src="${grailsApplication.config.grails.serverURL}/images/unlock.png"/>
+                    <g:if test="${revision.qcInfo != null}">
+                        <jummp:renderStarLevels flag="${revision.qcInfo.flag}" />
+                    </g:if>
+                    <span>&nbsp;</span>
+                    <g:if test="${revision.state==ModelState.PUBLISHED}">
+                        <img style="float:right;margin-top:0;" title="This version of the model is public"
+                             alt="public model"
+                             src="${grailsApplication.config.grails.serverURL}/images/unlock.png"/>
                     </g:if>
                     <g:else>
-                            <img style="width:12px;margin:2px;float:none;"
-                                 title="This version of the model is unpublished" alt="unpublished model"
-                                 src="${grailsApplication.config.grails.serverURL}/images/lock.png"/>
+                        <img style="float:right;margin-top:0;" title="This version of the model is unpublished"
+                             alt="unpublished model"
+                             src="${grailsApplication.config.grails.serverURL}/images/lock.png"/>
                     </g:else>
-                    <g:if test="${revision.id!=rv.id}">
-                        <a class="versionDownload" title="go to version ${rv.revisionNumber}"
-                           href="${g.createLink(controller: 'model', action: 'show', id: rv.identifier())}">
-                            <img style="width:12px;margin:2px;float:none"
-                                 src="${grailsApplication.config.grails.serverURL}/images/external_link.png"/>
-                        </a>
+                </div>
+            </div>
+            <div id="tablewrapper">
+                <div id="tabs">
+                    <ul class='modelTabs'>
+                    <li><a href="#Overview">Overview</a></li>
+                    <li><a href="#Files">Files</a></li>
+                    <li><a href="#History">History</a></li>
+                    <!--
+                        These specific tabs would be shown based on specific model format. Every tab is deliberately designed
+                        for each part/section in the content of model file.
+                        For example:
+                        SBML: needs to have tabs such as Math Definition, Physical Entities, Parameters, etc.
+                        PharmML: needs to have tabs such as Model Definition, Trial Design, Estimation Steps, etc.
+                    -->
+                    <g:pageProperty name="page.modelspecifictabs" />
+                    <!--
+                        These specific tabs would be shown based on the presence of data. For example,
+                        curation notes do not be included at all the time.
+                    -->
+                     <g:if test="${curationNotes != null}">
+                         <li><a href='#Curation'>Curation</a></li>
+                     </g:if>
+                    </ul>
+                    <div id="Overview">
+                        <jummp:displayModelDescriptionLabel>
+                            <span class="bold">${description}:</span>
+                        </jummp:displayModelDescriptionLabel>
+                        <div style="margin-left: 30px;">
+                            ${raw(revision.description)}
+                        </div>
+                    <table style="margin-top:30px">
+                    <tr>
+                        <td><label><g:message code="model.model.format"/></label></td>
+                        <td><div class='spaced'>${revision.format.name}
+                            ${revision.format.formatVersion!="*"?"(${revision.format.formatVersion})":""}</div></td>
+                    </tr>
+                    <%
+                        model = revision.model
+                    %>
+                    <g:if test="${model.publication}">
+                        <tr>
+                            <td><label><g:message code="model.model.publication"/>:</label></td>
+                            <td>
+                                <div class='spaced'>
+                                    <g:render  model="[model:model]" template="/templates/showPublication" />
+                                </div>
+                            </td>
+                        </tr>
                     </g:if>
-                            <a class="versionDownload" title="download"
-                               href="${g.createLink(controller: 'model', action: 'download', id: rv.identifier())}">
-                                <img alt="Download this version" style="width:15px;float:none"
-                                     src="${grailsApplication.config.grails.serverURL}/images/download.png"/>
-                            </a>
+                    <tr>
+                        <td><label><g:message code="model.model.authors"/></label></td>
+                        <td>
+                            <div class='spaced'>
+                                <g:join in="${authors}"/>
+                            </div>
+                        </td>
+                    </tr>
+                    </table>
+                    <g:pageProperty name="page.genericAnnotations"/>
+                    <table style="margin-top:30px">
+                    <tr>
+                        <td><label>Curation Status:</label></td>
+                        <td><div class='spaced'><biomd:renderCurationStatus curationStatus="${curationStatus}"/></div></td>
+                    </tr>
+                    <tr>
+                        <td><label>Validation Status:</label></td>
+                        <td><div class='spaced'>${validationLevel}</div></td>
+                    </tr>
+                    <tr>
+                        <td><label>Certification Comment:</label></td>
+                        <td><div class='spaced'>${certComment}</div></td>
+                    </tr>
+                    </table>
+                    </div>
+                    <div id="Files" class="filegrid">
+                        <div class="filecol-1-3">
+                            <div id="treeView">
+                                <ul>
+                                    <li rel="folder">
+                                    <jummp:findMainFileLabel>
+                                        <a>${mainFile}</a>
+                                    </jummp:findMainFileLabel>
+                                    <ul>
+                                        <Ziphandler:outputFileInfoAsHtml repFiles="${revision.files}" loadedZips="${loadedZips}"
+                                                                         zipSupported="${zipSupported}" mainFile="${true}"/>
+                                    </ul>
+                                    </li>
+                                </ul>
+                                <ul>
+                                    <g:if test="${revision.files.find{!it.hidden && !it.mainFile}}">
+                                    <li><a>Additional Files</a>
+                                        <ul>
+                                            <Ziphandler:outputFileInfoAsHtml repFiles="${revision.files.findAll{!it.hidden}}"
+                                                                 loadedZips="${loadedZips}" zipSupported="${zipSupported}"
+                                                                 mainFile="${false}"/>
+                                        </ul>
+                                    </li>
+                                    </g:if>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="filecol-2-3">
+                            <div id="detailsBox" class="detailsBox"></div>
+                        </div>
+                    </div>
+                    <div id="History">
+                        <% DateFormat dateFormat = DateFormat.getDateTimeInstance(); %>
                         <ul>
-                            <li>Submitted on: ${dateFormat.format(rv.uploadDate)}</li>
-                            <li>Submitted by: ${rv.owner}</li>
-                            <li>With comment: ${rv.comment}</li>
+                            <li>Model owner: ${revision.model.submitter}</li>
+                            <li>Submitted: ${dateFormat.format(allRevs.first().uploadDate)}</li>
+                            <li>Last Modified: ${dateFormat.format(allRevs.last().uploadDate)}</li>
                         </ul>
-                </li>
-             </g:each>
-        </ul>
-      </div>
-      <g:pageProperty name="page.modelspecifictabscontent" />
-    </div>
-    </div>
-    </div>
-
+                        <h5>Revisions</h5>
+                        <ul>
+                            <g:each status="i" var="rv" in="${allRevs.sort{a,b -> a.revisionNumber > b.revisionNumber ? -1 : 1}}">
+                                <li style="${revision.id == rv.id ?"background-color:#FFFFCC;":""}margin-top:5px">
+                                    Version: ${rv.revisionNumber}
+                                    <g:if test="${rv.state==ModelState.PUBLISHED}">
+                                            <img style="width:12px;margin:2px;float:none;"
+                                                 title="This version of the model is public" alt="public model"
+                                                 src="${grailsApplication.config.grails.serverURL}/images/unlock.png"/>
+                                    </g:if>
+                                    <g:else>
+                                            <img style="width:12px;margin:2px;float:none;"
+                                                 title="This version of the model is unpublished" alt="unpublished model"
+                                                 src="${grailsApplication.config.grails.serverURL}/images/lock.png"/>
+                                    </g:else>
+                                    <g:if test="${revision.id!=rv.id}">
+                                        <a class="versionDownload" title="go to version ${rv.revisionNumber}"
+                                           href="${g.createLink(controller: 'model', action: 'show', id: rv.identifier())}">
+                                            <img style="width:12px;margin:2px;float:none"
+                                                 src="${grailsApplication.config.grails.serverURL}/images/external_link.png"/>
+                                        </a>
+                                    </g:if>
+                                            <a class="versionDownload" title="download"
+                                               href="${g.createLink(controller: 'model', action: 'download', id: rv.identifier())}">
+                                                <img alt="Download this version" style="width:15px;float:none"
+                                                     src="${grailsApplication.config.grails.serverURL}/images/download.png"/>
+                                            </a>
+                                        <ul>
+                                            <li>Submitted on: ${dateFormat.format(rv.uploadDate)}</li>
+                                            <li>Submitted by: ${rv.owner}</li>
+                                            <li>With comment: ${rv.comment}</li>
+                                        </ul>
+                                </li>
+                            </g:each>
+                        </ul>
+                    </div>
+                    <g:pageProperty name="page.modelspecifictabscontent" />
+                    <g:if test="${curationNotes != null}">
+                        <biomd:renderCurationNotesTab curationNotes="${curationNotes}"/>
+                    </g:if>
+                </div>
+            </div>
+        </div>
 </body>
 <content tag="contexthelp">
         display

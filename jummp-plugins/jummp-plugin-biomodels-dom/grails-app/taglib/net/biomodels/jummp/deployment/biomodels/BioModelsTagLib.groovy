@@ -22,13 +22,15 @@ package net.biomodels.jummp.deployment.biomodels
 
 import net.biomodels.jummp.core.model.FlagTransportCommand
 
+import java.text.SimpleDateFormat
+
 /**
  * @short General purpose helper for rendering BioModels pages.
  *
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
 class BioModelsTagLib {
-    static defaultEncodeAs = [taglib:'html']
+    static defaultEncodeAs = [taglib:'none']
     static namespace = 'biomd'
 
     /**
@@ -54,7 +56,7 @@ class BioModelsTagLib {
         // delegates rendering to dedicated template
     }
 
-    def renderModelFlags = {attrs ->
+    def renderModelFlags = { attrs ->
         def base64Flags = attrs.flags?.collect { FlagTransportCommand cmd ->
             [
                 img: Base64.encoder.encodeToString(cmd.icon),
@@ -64,5 +66,29 @@ class BioModelsTagLib {
         }
         out << render(collection: base64Flags, template: '/templates/modelFlags',
                 plugin: 'jummp-plugin-biomodels-dom', var: "flag")
+    }
+
+    def renderCurationNotesTab = { attrs ->
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy, HH:mm:ss");
+        def base64CurationNotes = attrs.curationNotes?.collect { CurationNotesTransportCommand cmd ->
+            [
+                model: cmd.model,
+                submitter: cmd.submitter,
+                lastModifier: cmd.lastModifier,
+                dateAdded: dateFormat.format(cmd.dateAdded),
+                lastModified: dateFormat.format(cmd.lastModified),
+                comment: cmd.comment,
+                curationImage: Base64.encoder.encodeToString(cmd.curationImage)
+            ]
+        }
+        // use class 'row' specifically designed by EBI Visual Framework to gain responsive design performance
+        out << "<div id='Curation' class='row'>"
+        out << render(collection: base64CurationNotes, template: '/templates/curationNotes',
+                    plugin: 'jummp-plugin-biomodels-dom', var: 'curaRec')
+        out << "</div>"
+    }
+
+    def renderCurationStatus = { attrs ->
+        out << attrs.curationStatus
     }
 }

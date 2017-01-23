@@ -112,7 +112,7 @@ class OmicsdiService {
             argsMap['proxySettings'] = ""
         }
         try {
-            sendMessage("direct:exec", argsMap)
+            sendMessage("seda:omicsDiExport", argsMap)
         } catch (Exception e) {
             if (IS_ERROR_ENABLED) {
                 log.error("Failed to build OmicsDI XML based schema files - ${e.message}", e)

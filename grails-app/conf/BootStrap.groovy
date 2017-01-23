@@ -67,8 +67,9 @@ class BootStrap {
         def service = ctx.getBean("modelFileFormatService")
         def modelFormat = service.registerModelFormat("UNKNOWN", "UNKNOWN")
         service.handleModelFormat(modelFormat, "unknownFormatService", "unknown")
+        service.registerModelElementType(modelFormat, "model")
 
-         grailsApplication.domainClasses.each { GrailsClass gc ->
+        grailsApplication.domainClasses.each { GrailsClass gc ->
              DomainClassGrailsPlugin.addValidationMethods(grailsApplication, gc,
                     grailsApplication.mainContext)
         }

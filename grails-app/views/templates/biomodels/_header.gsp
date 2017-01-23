@@ -62,7 +62,7 @@
                                  data-options="closeOnClick:true;" aria-hidden="true"
                                  data-yeti-box="search-global-dropdown" data-resize="search-global-dropdown"
                                  aria-labelledby="ehvmx4-dd-anchor">
-                                <form id="global-search" name="global-search" action="/ebisearch/search.ebi"
+                                <form id="global-search" name="global-search" action="/ebisearch/search"
                                       method="GET">
                                     <fieldset>
                                         <div class="input-group">
@@ -91,21 +91,21 @@
                 </div>
             </nav>
         </div>
-        <div class="masthead row" style="max-width: inherit">
+        <div class="masthead row">
             <!-- local-title -->
             <div id="local-title" class="columns medium-12">
-                <div class="row" style="margin: -25px 0;">
-                    <div class="columns large-7 show-for-medium">
-                        <h1 style="margin: -5px -25px 0;">
+                <div class="row" style="margin-top: -25px">
+                    <div class="column small-2 medium-7 large-8">
+                        <h1>
                             <a href="${createLink(uri: '/', absolute: true)}" title="Back to BioModels homepage"
                             style="text-decoration: none; border-bottom-style: none">
                                 <img src="${grailsApplication.config.grails.serverURL}/images/biomodels/logo_small.png"
-                                     height="100" width="100" style="padding-right: 12px;"
-                                     title="Biomodels Database Homepage"/>BioModels Database</a>
+                                     title="Biomodels Database Homepage"/>
+                                <span class="hide-for-small-only">BioModels Database</span></a>
                         </h1>
                     </div>
                     <!-- local-search -->
-                    <div id="localsearch" class="columns large-5 float-right">
+                    <div id="localsearch" class="column small-10 medium-5 large-4 float-right">
                         <form id="local-search" name="local-search"
                               action="${createLink(controller: 'search', action: 'searchRedir')}" method="post">
                             <fieldset>

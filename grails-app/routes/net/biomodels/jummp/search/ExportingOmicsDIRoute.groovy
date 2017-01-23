@@ -23,30 +23,26 @@ package net.biomodels.jummp.search
 import grails.util.Environment
 import org.apache.camel.Exchange
 import org.apache.camel.Processor
-import org.apache.camel.ShutdownRunningTask
 import org.apache.camel.builder.RouteBuilder
 
-class IndexingRoute extends RouteBuilder {
+class ExportingOmicsDIRoute extends RouteBuilder {
     final String DEBUG_CFG =
             "-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=6005"
     final boolean inDevelopment = Environment.isDevelopmentMode()
-    final String JAR_ARGS = '-jar ${body[jarPath]} ${body[jsonPath]}'
+    final String JAR_ARGS = '-jar ${body[jarPath]} ${body[jsonPath]} ${body[omicsdi]}'
     final String CLI_ARGS = inDevelopment ?
             new StringBuilder(DEBUG_CFG).append(' ').append(JAR_ARGS).toString() :
             JAR_ARGS
 
     @Override
     void configure() {
-        from("seda:exec?concurrentConsumers=15")
-        .shutdownRunningTask(ShutdownRunningTask.CompleteAllTasks)
+        from("seda:omicsDiExport")
         .setHeader("CamelExecCommandArgs", simple(CLI_ARGS))
         .to("exec:java")
         .process(new Processor() {
-            void process(Exchange exchange) {
-                def msg = exchange.in
-                def headers = msg.headers
-                String content = msg.getBody(String.class)
-                println "${Thread.currentThread().name} -- Indexing of $headers produced $content"
+            @Override
+            void process(Exchange exchange) throws Exception {
+                println "The job has been launched!"
             }
         })
     }

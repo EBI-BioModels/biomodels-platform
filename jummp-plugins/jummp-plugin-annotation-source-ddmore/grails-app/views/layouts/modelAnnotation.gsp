@@ -1,4 +1,4 @@
-<g:applyLayout name="main">
+<g:applyLayout name="${grailsApplication.config.jummp.branding.style}/main">
     <head>
         <g:javascript src="underscore-min.js" plugin="jummp-plugin-web-application"/>
         <g:javascript src="handlebars.min.js" plugin="jummp-plugin-web-application"/>

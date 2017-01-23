@@ -52,6 +52,7 @@ import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.core.model.audit.*
+import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
 import net.biomodels.jummp.plugins.security.PersonTransportCommand
 import org.apache.commons.io.FileUtils
 import org.codehaus.groovy.grails.web.json.JSONObject
@@ -103,6 +104,10 @@ class ModelController {
     * Dependency injection of mailService
     */
     def mailService
+    /**
+     * Dependency injection of MetadataDelegateService
+     */
+    def metadataDelegateService
 
     /**
      * The list of actions for which we should not automatically create an audit item.
@@ -237,7 +242,9 @@ class ModelController {
             }
             List<RevisionTransportCommand> revs =
                         modelDelegateService.getAllRevisions(PERENNIAL_ID)
-
+            CurationNotesTransportCommand curationNotes =
+                metadataDelegateService.fetchCurationNotes(rev)
+            String curationStatus = metadataDelegateService.fetchCurationStatus(rev)
             def model = [revision: rev,
                         authors: rev.model.creators,
                         allRevs: revs,
@@ -250,7 +257,9 @@ class ModelController {
                         canCertify: canCertify,
                         validationLevel: rev.getValidationLevelMessage(),
                         certComment: rev.getCertificationMessage(),
-                        flags: flags
+                        flags: flags,
+                        curationStatus: curationStatus,
+                        curationNotes: curationNotes
             ]
             if (rev.id == modelDelegateService.getLatestRevision(PERENNIAL_ID).id) {
                 flash.genericModel = model
