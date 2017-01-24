@@ -58,7 +58,7 @@ class BootStrap {
         }
     }
 
-    void registerDefaultModelElementTyps() {
+    void registerDefaultModelElementTypes() {
         def modelFormats = ModelFormat.list().each { ModelFormat fmt ->
             def fmtCmd = DomainAdapter.getAdapter(fmt).toCommandObject()
             try {
