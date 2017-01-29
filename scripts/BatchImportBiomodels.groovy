@@ -636,8 +636,8 @@ processModelFolder = { File folder ->
         failureCount.incrementAndGet()
         return
     }
+
     try {
-        openSession()
         def submitter
         authenticate(username, password)
         // create a Jummp account for submitter
