@@ -682,8 +682,7 @@ processModelFolder = { File folder ->
         addModelError(MODEL_ID, "Something went wrong with ${MODEL_ID} - ${t}")
         failureCount.incrementAndGet()
     } finally {
-        closeSession()
-        logOut()
+      
     }
 }
 
