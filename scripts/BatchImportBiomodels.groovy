@@ -636,8 +636,8 @@ processModelFolder = { File folder ->
         failureCount.incrementAndGet()
         return
     }
+
     try {
-        openSession()
         def submitter
         authenticate(username, password)
         // create a Jummp account for submitter
@@ -682,8 +682,7 @@ processModelFolder = { File folder ->
         addModelError(MODEL_ID, "Something went wrong with ${MODEL_ID} - ${t}")
         failureCount.incrementAndGet()
     } finally {
-        closeSession()
-        logOut()
+      
     }
 }
 
@@ -797,20 +796,39 @@ getPublicationTypeFromModelDetails = { details -> details?.publication_id_type }
 addPublicationDetails = { model, accession, type ->
     def id = model.publicationId ?: model.submissionId
     try {
+        def publication
         def publicationCmd = pubMedService.fetchPublicationData accession
         if (!publicationCmdHasRequiredFields(publicationCmd)) {
+            // The publication does not exist in PubMed Central
             addModelMsg id, "Attempting to manually populate details for $accession"
             fetchMissingPaperDetailsFromBioModels(id, publicationCmd, accession, type)
-            addModelMsg id, "The publication is now ${publicationCmd.properties}"
-        }
-        def publication = publicationService.fromCommandObject publicationCmd
-        if (!publication.validate()) {
-            def e = publication.errors.allErrors
-            addModelError id, "Couldn't attach publication $accession: $e"
+            publication = publicationService.fromCommandObject publicationCmd
         } else {
-            model.publication = publication
-            model.save()
+            // Save the publication if it's not already in the database
+            publication = Publication.findOrCreateWhere(link: accession,
+                title: publicationCmd.title,
+                journal: publicationCmd.journal,
+                affiliation: publicationCmd.affiliation,
+                synopsis: publicationCmd.synopsis
+            )
+            if (publication.id) {
+                addModelMsg id, "Publication $accession exists in database"
+            } else {
+                addModelMsg id, "Publication $accession will be saved in the database in this transaction."
+                if (!publication.validate()) {
+                    def e = publication.errors.allErrors
+                    addModelError id, "Couldn't attach publication $accession: $e"
+                } else {
+                    publication.save()
+                }
+            }
+        }
+        addModelMsg id, "The publication with accession $accession now has id <<${publication.id}>>"
+        model.publication = publication
+        if (model.save()) {
             addModelMsg id, "Successfully added publication $accession"
+        } else {
+            addModelMsg id, "Publication ${publication.dump()} cannot be save with the error: ${publication.errors.allErrors}"
         }
     } catch (Exception e) {
         addModelError id, "Could not extract details for publication with identifier $accession. $e"
@@ -986,6 +1004,7 @@ target(cleanup: "Shutdown hook used to gracefully close resources") {
 }
 
 target(expireUserPasswords: 'Forces users with accounts created herein to reset their passwords') {
+  authenticate(username, password)
     userCache.values().each { id ->
         userService.expirePassword(id, true)
     }
@@ -1405,7 +1424,7 @@ publishModelRevision = { modelId, revision ->
     } catch (Exception e) {
         addModelError(modelId, "Unable to publish revision ${revision.id} -- $e")
     } finally {
-        logOut()
+      logOut()
     }
 }
 
