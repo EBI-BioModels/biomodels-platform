@@ -211,7 +211,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
         final int DEPTH_LIMIT = 15
         BufferedReader reader = null
         String currentLine
-        final def p = Pattern.compile(".*<sbml xmlns=\"http://www\\.sbml\\.org/sbml/level.*\".*")
+        final def p = Pattern.compile(".*\\<sbml.*xmlns=\"http://www\\.sbml\\.org/sbml/level.*\".*")
 
         while (areAllSbml && iFiles < fileCount) {
             try {
