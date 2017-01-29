@@ -1004,6 +1004,7 @@ target(cleanup: "Shutdown hook used to gracefully close resources") {
 }
 
 target(expireUserPasswords: 'Forces users with accounts created herein to reset their passwords') {
+  authenticate(username, password)
     userCache.values().each { id ->
         userService.expirePassword(id, true)
     }
@@ -1423,7 +1424,7 @@ publishModelRevision = { modelId, revision ->
     } catch (Exception e) {
         addModelError(modelId, "Unable to publish revision ${revision.id} -- $e")
     } finally {
-        logOut()
+      logOut()
     }
 }
 
