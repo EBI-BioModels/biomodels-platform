@@ -189,6 +189,7 @@ def ResourceReference
 def Qualifier
 def Statement
 def ElementAnnotation
+def ModelElementType
 def PublicationLinkProvider
 def LinkType
 
@@ -524,7 +525,7 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
     Statement = loadClass("net.biomodels.jummp.annotationstore.Statement")
     ElementAnnotation = loadClass("net.biomodels.jummp.annotationstore.ElementAnnotation")
     Qualifier = loadClass("net.biomodels.jummp.annotationstore.Qualifier")
-
+    ModelElementType = loadClass("net.biomodels.jummp.model.ModelElementType")
     // BioModels-specific domain classes
     CurationNotes = loadClass("net.biomodels.jummp.deployment.biomodels.CurationNotes")
     ModelOfTheMonth = loadClass("net.biomodels.jummp.deployment.biomodels.ModelOfTheMonth")
@@ -1517,9 +1518,10 @@ createBMAnnotation = { revision, object, qual, creator ->
     def statement = Statement.newInstance(subjectId: 'modelLevelAnnotation',
                                           qualifier: qualifier,
                                           object: resourceRef)
+    def modelElementType = ModelElementType.findByModelFormatAndName(revision.format, "model")
     def elementAnnotation = ElementAnnotation.newInstance(creatorId: creator,
                                                           statement: statement,
-                                                          revision: revision)
+                                                          revision: revision, modelElementType: modelElementType)
     elementAnnotation.save(failOnError:true)
 }
 
