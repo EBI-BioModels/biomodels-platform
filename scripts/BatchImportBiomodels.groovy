@@ -572,9 +572,17 @@ target(main: "Puts everything together to import models from a given folder") {
     if (modelpublication.exists()) {
         modelpublication.text = ""
     }
+    /* run batch importer sequentially */
+    for (File f: modelFolder.listFiles()) {
+        if (f.isDirectory() && f.name ==~ modelFolderPattern) {
+            processModelFolder f
+        }
+    }
+
+    /* run batch importer concurrently */
     // the size of the thread pool -- assumes a hyper-threading CPU
     // at most 48 workers since we have a limit of 50 JDBC connections
-    final int POOL_SIZE = Math.min(48, 2 * Runtime.getRuntime().availableProcessors())
+    /*final int POOL_SIZE = Math.min(48, 2 * Runtime.getRuntime().availableProcessors())
     log("Pool size is $POOL_SIZE")
     GParsPool.withPool(POOL_SIZE) {
         GParsPool.runForkJoin(modelFolder) { File root ->
@@ -593,6 +601,7 @@ target(main: "Puts everything together to import models from a given folder") {
             }
         }
     }
+    */
 
     duration = (System.currentTimeMillis() - duration) / 1000 /* duration in ms */
     String formattedDuration = prettify(duration)
@@ -698,8 +707,6 @@ processModelFolder = { File folder ->
     } catch (Throwable t) {
         addModelError(MODEL_ID, "Something went wrong with ${MODEL_ID} - ${t}")
         failureCount.incrementAndGet()
-    } finally {
-      
     }
 }
 
