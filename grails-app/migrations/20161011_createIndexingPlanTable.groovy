@@ -41,9 +41,9 @@ databaseChangeLog = {
     }
 
     changeSet(author: "tung (generated)", id: "1476200957-4") {
-        addForeignKeyConstraint(baseColumnNames: "id", baseTableName: "model",
+        addForeignKeyConstraint(baseColumnNames: "model_id", baseTableName: "indexing_plan",
             constraintName: "FK14762009574", deferrable: "false", initiallyDeferred: "false",
-            referencedColumnNames: "model_id", referencedTableName: "indexing_plan", referencesUniqueColumn: "false")
+            referencedColumnNames: "id", referencedTableName: "model", referencesUniqueColumn: "false")
     }
 
     changeSet(author: "tung (generated)", id: "1476200957-5") {
