@@ -137,24 +137,16 @@ beans = {
 
     //Add annotation store domain classes (defined externally) to the domain model
     //following: https://github.com/pongasoft/external-domain-classes-grails-plugin/blob/master/ExternalDomainClassesGrailsPlugin.groovy#L84
-    def packages = ["net.biomodels.jummp.annotationstore",
-                    "net.biomodels.jummp.core.model",
-                    "net.biomodels.jummp.model",
-                    "net.biomodels.jummp.qcinfo",
-                    "net.biomodels.jummp.plugins.omicsdi",
-                    "net.biomodels.jummp.plugins.security"] as String[]
     BeanDefinitionRegistry simpleRegistry = new SimpleBeanDefinitionRegistry()
     ClassPathBeanDefinitionScanner scanner = new ClassPathBeanDefinitionScanner(simpleRegistry, false)
     scanner.includeAnnotationConfig = false
     scanner.addIncludeFilter(new AnnotationTypeFilter(Entity.class))
-    scanner.scan(packages)
+    scanner.scan("net.biomodels.jummp")
     simpleRegistry?.beanDefinitionNames?.each { String beanName ->
         BeanDefinition bean = simpleRegistry.getBeanDefinition(beanName)
         String beanClassName = bean.beanClassName
         grailsApp.addArtefact(DomainClassArtefactHandler.TYPE,
-                                      Class.forName(beanClassName,
-                                      true,
-                                      Thread.currentThread().contextClassLoader))
+                Class.forName(beanClassName, true, Thread.currentThread().contextClassLoader))
     }
 
     importBeans('classpath:/metadatalib-spring-config.xml')

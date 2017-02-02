@@ -61,6 +61,9 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.acls.domain.PrincipalSid
 import org.springframework.security.acls.model.Acl
+import org.springframework.security.authentication.AnonymousAuthenticationToken
+import org.springframework.security.core.authority.GrantedAuthorityImpl
+import org.springframework.security.core.Authentication
 import org.springframework.transaction.TransactionDefinition
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Propagation
@@ -95,6 +98,8 @@ class ModelService {
      * Threshold for the verbosity of the logger.
      */
     private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
+    private final Authentication anonymousAuthentication = new AnonymousAuthenticationToken(
+            'anon', "ANONYMOUS_USER", [ new GrantedAuthorityImpl("ROLE_ANONYMOUS") ])
     /**
      * Dependency Injection of Spring Security Service
      */
@@ -1971,7 +1976,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
      * @param model the model for which to verify the publication status.
      */
     private boolean hasPublicRevision(Model model) {
-        def publicRevisions = Revision.withCriteria(uniqueResult: true) {
+        def publicRevision = Revision.withCriteria(uniqueResult: true) {
             maxResults(1)
             and {
                 eq("model", model)
@@ -1981,7 +1986,10 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
                 }
             }
         }
-        null != publicRevisions
+        if (!publicRevision) {
+            return false
+        }
+        aclUtilService.hasPermission anonymousAuthentication, publicRevision, BasePermission.READ
     }
 
     /**
