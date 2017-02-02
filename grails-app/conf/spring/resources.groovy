@@ -142,7 +142,8 @@ beans = {
                     "net.biomodels.jummp.model",
                     "net.biomodels.jummp.qcinfo",
                     "net.biomodels.jummp.plugins.omicsdi",
-                    "net.biomodels.jummp.plugins.security"] as String[]
+                    "net.biomodels.jummp.plugins.security",
+                    "net.biomodels.jummp.indexing"] as String[]
     BeanDefinitionRegistry simpleRegistry = new SimpleBeanDefinitionRegistry()
     ClassPathBeanDefinitionScanner scanner = new ClassPathBeanDefinitionScanner(simpleRegistry, false)
     scanner.includeAnnotationConfig = false
