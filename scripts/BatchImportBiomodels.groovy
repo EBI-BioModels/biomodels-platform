@@ -1559,12 +1559,10 @@ createBMAnnotation = { revision, object, qual, creator ->
         qualifier.save(failOnError:true)
     }
     def statement = Statement.newInstance(subjectId: 'modelLevelAnnotation',
-                                          qualifier: qualifier,
-                                          object: resourceRef)
-    def modelElementType = ModelElementType.findByModelFormatAndName(revision.format, "model")
+            qualifier: qualifier, object: resourceRef)
+    def modelElementType = ModelElementType.findByModelFormatAndName(revision.format, 'model')
     def elementAnnotation = ElementAnnotation.newInstance(creatorId: creator,
-                                                          statement: statement,
-                                                          revision: revision, modelElementType: modelElementType)
+            statement: statement, revision: revision, modelElementType: modelElementType)
     elementAnnotation.save(failOnError:true)
 }
 
