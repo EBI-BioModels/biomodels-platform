@@ -243,6 +243,8 @@ final String AUTO_GEN = "auto_gen_models"
 final String PUBL = 'publ'
 final String UNCURA_PUBL = 'uncura_publ'
 
+def filename
+def modelpublication
 /**
  * Returns a User corresponding to the submitter of the model in BioModels.
  */
@@ -556,9 +558,31 @@ target(main: "Puts everything together to import models from a given folder") {
 
     log("${new Date()} -- commencing batch import")
     long duration = System.currentTimeMillis()
+    // store table of model_id and publication_id externally for updating model publication later
+    filename = "modelpublication.csv"
+    String logFolderPath = "logs"
+    File logFolder = new File(logFolderPath)
+    File parentFolder
+    if (logFolder.exists()) {
+        parentFolder = logFolder
+    } else {
+        parentFolder = new File("${System.properties['java.io.tmpdir']}")
+    }
+    modelpublication = new File(parentFolder, filename)
+    if (modelpublication.exists()) {
+        modelpublication.text = ""
+    }
+    /* run batch importer sequentially */
+    for (File f: modelFolder.listFiles()) {
+        if (f.isDirectory() && f.name ==~ modelFolderPattern) {
+            processModelFolder f
+        }
+    }
+
+    /* run batch importer concurrently */
     // the size of the thread pool -- assumes a hyper-threading CPU
     // at most 48 workers since we have a limit of 50 JDBC connections
-    final int POOL_SIZE = Math.min(48, 2 * Runtime.getRuntime().availableProcessors())
+    /*final int POOL_SIZE = Math.min(48, 2 * Runtime.getRuntime().availableProcessors())
     log("Pool size is $POOL_SIZE")
     GParsPool.withPool(POOL_SIZE) {
         GParsPool.runForkJoin(modelFolder) { File root ->
@@ -577,6 +601,7 @@ target(main: "Puts everything together to import models from a given folder") {
             }
         }
     }
+    */
 
     duration = (System.currentTimeMillis() - duration) / 1000 /* duration in ms */
     String formattedDuration = prettify(duration)
@@ -636,8 +661,8 @@ processModelFolder = { File folder ->
         failureCount.incrementAndGet()
         return
     }
+
     try {
-        openSession()
         def submitter
         authenticate(username, password)
         // create a Jummp account for submitter
@@ -678,12 +703,10 @@ processModelFolder = { File folder ->
         submittedModel.revisions.each { r ->
             insertedRevisions.offer(r.id)
         }
+        modelpublication << "$submittedModel.id, $MODEL_ID, $submittedModel.publication.id\n"
     } catch (Throwable t) {
         addModelError(MODEL_ID, "Something went wrong with ${MODEL_ID} - ${t}")
         failureCount.incrementAndGet()
-    } finally {
-        closeSession()
-        logOut()
     }
 }
 
@@ -797,20 +820,39 @@ getPublicationTypeFromModelDetails = { details -> details?.publication_id_type }
 addPublicationDetails = { model, accession, type ->
     def id = model.publicationId ?: model.submissionId
     try {
+        def publication
         def publicationCmd = pubMedService.fetchPublicationData accession
         if (!publicationCmdHasRequiredFields(publicationCmd)) {
+            // The publication does not exist in PubMed Central
             addModelMsg id, "Attempting to manually populate details for $accession"
             fetchMissingPaperDetailsFromBioModels(id, publicationCmd, accession, type)
-            addModelMsg id, "The publication is now ${publicationCmd.properties}"
-        }
-        def publication = publicationService.fromCommandObject publicationCmd
-        if (!publication.validate()) {
-            def e = publication.errors.allErrors
-            addModelError id, "Couldn't attach publication $accession: $e"
+            publication = publicationService.fromCommandObject publicationCmd
         } else {
-            model.publication = publication
-            model.save()
+            // Save the publication if it's not already in the database
+            publication = Publication.findOrCreateWhere(link: accession,
+                title: publicationCmd.title,
+                journal: publicationCmd.journal,
+                affiliation: publicationCmd.affiliation,
+                synopsis: publicationCmd.synopsis
+            )
+            if (publication.id) {
+                addModelMsg id, "Publication $accession exists in database"
+            } else {
+                addModelMsg id, "Publication $accession will be saved in the database in this transaction."
+                if (!publication.validate()) {
+                    def e = publication.errors.allErrors
+                    addModelError id, "Couldn't attach publication $accession: $e"
+                } else {
+                    publication.save()
+                }
+            }
+        }
+        addModelMsg id, "The publication with accession $accession now has id <<${publication.id}>>"
+        model.publication = publication
+        if (model.save()) {
             addModelMsg id, "Successfully added publication $accession"
+        } else {
+            addModelMsg id, "Publication ${publication.dump()} cannot be save with the error: ${publication.errors.allErrors}"
         }
     } catch (Exception e) {
         addModelError id, "Could not extract details for publication with identifier $accession. $e"
@@ -986,6 +1028,7 @@ target(cleanup: "Shutdown hook used to gracefully close resources") {
 }
 
 target(expireUserPasswords: 'Forces users with accounts created herein to reset their passwords') {
+  authenticate(username, password)
     userCache.values().each { id ->
         userService.expirePassword(id, true)
     }
@@ -1405,7 +1448,7 @@ publishModelRevision = { modelId, revision ->
     } catch (Exception e) {
         addModelError(modelId, "Unable to publish revision ${revision.id} -- $e")
     } finally {
-        logOut()
+      logOut()
     }
 }
 

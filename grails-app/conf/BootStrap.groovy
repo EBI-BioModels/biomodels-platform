@@ -28,10 +28,13 @@
 * that of the covered work.}
 **/
 
+
+import grails.plugin.springsecurity.acl.AclSid
 import grails.util.Environment
+import net.biomodels.jummp.core.adapters.DomainAdapter
 import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PubLinkProvTC
-import net.biomodels.jummp.core.model.identifier.decorator.AbstractAppendingDecorator
 import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.core.model.identifier.decorator.AbstractAppendingDecorator
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.plugins.security.Person
@@ -39,7 +42,6 @@ import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.plugins.security.UserRole
 import org.codehaus.groovy.grails.commons.ApplicationAttributes
-import grails.plugin.springsecurity.acl.AclSid
 import org.codehaus.groovy.grails.commons.GrailsClass
 import org.codehaus.groovy.grails.plugins.DomainClassGrailsPlugin
 
