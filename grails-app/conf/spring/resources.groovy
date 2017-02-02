@@ -146,9 +146,7 @@ beans = {
         BeanDefinition bean = simpleRegistry.getBeanDefinition(beanName)
         String beanClassName = bean.beanClassName
         grailsApp.addArtefact(DomainClassArtefactHandler.TYPE,
-                                      Class.forName(beanClassName,
-                                      true,
-                                      Thread.currentThread().contextClassLoader))
+                Class.forName(beanClassName, true, Thread.currentThread().contextClassLoader))
     }
 
     importBeans('classpath:/metadatalib-spring-config.xml')
