@@ -51,6 +51,7 @@ includeTargets << grailsScript("_GrailsBootstrap")
  *
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  * @author Raza Ali <raza.ali@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 
 /*
@@ -176,6 +177,7 @@ def mtc
 def plptc
 def Publication
 def ptc
+def personTC
 def mf
 def decorator
 def domainAdapter
@@ -504,8 +506,8 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
     rtc = loadClass("net.biomodels.jummp.core.model.RevisionTransportCommand")
     mtc = loadClass("net.biomodels.jummp.core.model.ModelTransportCommand")
     plptc = loadClass("net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand")
-    ptc = loadClass "net.biomodels.jummp.core.model.PublicationTransportCommand"
-    Publication = loadClass "net.biomodels.jummp.model.Publication"
+    ptc = loadClass("net.biomodels.jummp.core.model.PublicationTransportCommand")
+    personTC = loadClass("net.biomodels.jummp.plugins.security.PersonTransportCommand")
 
     // submission-related domain classes
     Person = loadClass("net.biomodels.jummp.plugins.security.Person")
@@ -517,6 +519,7 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
     mf = loadClass("net.biomodels.jummp.model.ModelFormat")
     mf = loadClass("net.biomodels.jummp.model.ModelFormat")
     Revision = loadClass("net.biomodels.jummp.model.Revision")
+    Publication = loadClass("net.biomodels.jummp.model.Publication")
     PublicationLinkProvider = loadClass("net.biomodels.jummp.model.PublicationLinkProvider")
     LinkType = PublicationLinkProvider.classes[0] // the only internal class...
     Model = loadClass("net.biomodels.jummp.model.Model")
@@ -706,6 +709,7 @@ processModelFolder = { File folder ->
         modelpublication << "$submittedModel.id, $MODEL_ID, $submittedModel.publication.id\n"
     } catch (Throwable t) {
         addModelError(MODEL_ID, "Something went wrong with ${MODEL_ID} - ${t}")
+        t.printStackTrace()
         failureCount.incrementAndGet()
     }
 }
@@ -829,7 +833,9 @@ addPublicationDetails = { model, accession, type ->
             publication = publicationService.fromCommandObject publicationCmd
         } else {
             // Save the publication if it's not already in the database
-            publication = Publication.findOrCreateWhere(link: accession,
+	        def linkProvider = PublicationLinkProvider.findByLinkType(LinkType.PUBMED)
+	        publication = Publication.findOrCreateWhere(linkProvider: linkProvider,
+                link: accession,
                 title: publicationCmd.title,
                 journal: publicationCmd.journal,
                 affiliation: publicationCmd.affiliation,
@@ -843,7 +849,21 @@ addPublicationDetails = { model, accession, type ->
                     def e = publication.errors.allErrors
                     addModelError id, "Couldn't attach publication $accession: $e"
                 } else {
-                    publication.save()
+                    publication.save(flush: true)
+                    def strAuthors = publicationCmd.authors
+                    strAuthors.eachWithIndex {person, Integer i ->
+                        def orcid = person.orcid
+                        def p = null
+                        if (orcid) {
+                            p = Person.findByOrcid(orcid)
+                        }
+                        if (!p) {
+                            person.save(flush: true)
+                        } else {
+                            person = p
+                        }
+                        publicationService.addPublicationAuthor(publication, person, person.userRealName, i)
+                    }
                 }
             }
         }
@@ -855,7 +875,8 @@ addPublicationDetails = { model, accession, type ->
             addModelMsg id, "Publication ${publication.dump()} cannot be save with the error: ${publication.errors.allErrors}"
         }
     } catch (Exception e) {
-        addModelError id, "Could not extract details for publication with identifier $accession. $e"
+        addModelError id, "Could not extract details for publication with identifier $accession: $e"
+	    e.printStackTrace()
     }
 }
 
@@ -871,7 +892,7 @@ publicationCmdHasRequiredFields = { publicationCmd ->
  */
 fetchMissingPaperDetailsFromBioModels = { modelId, partialPublication, accession, type ->
     def paperDetails = biomodelsConnection.firstRow """\
-select title, journal_name as journal, affiliation, abstract as synopsis, year
+select title, journal_name as journal, affiliation, abstract as synopsis, year, authors
 from publications
 where id_type = ? and publication_id = ?""", [type, accession]
 
@@ -884,21 +905,21 @@ where id_type = ? and publication_id = ?""", [type, accession]
             addModelError modelId, "Failed to set '$f' to '$value' for publication $accession"
         }
     }
-    if (isNotPubMedPublication(type)) {
-        // deal with the fact that pubMedService returns a publication command with link type PUBMED
-        def provider
-        switch(type) {
-            case 1:
-                provider = PublicationLinkProvider.findByLinkType(LinkType.DOI)
-            break
-            case 2:
-                provider = PublicationLinkProvider.findByLinkType(LinkType.CUSTOM)
-            break
-            default:
-                String m = "Publication $accession ($modelId) has unsupported type $type"
-                throw new IllegalStateException(m)
+
+    if (paperDetails.authors) {
+        def strAuthors = paperDetails.authors
+        def splitStrAuthors = strAuthors.split(", ")
+        List listPersonTCs = []
+        splitStrAuthors.eachWithIndex { userRealName ->
+            def person = personTC.newInstance(userRealName: userRealName)
+	    listPersonTCs << person
         }
-        def providerCmd = plptc.newInstance(linkType: provider.linkType, pattern: provider.pattern,
+        partialPublication.authors =  listPersonTCs
+    }
+
+    if (isNotPubMedPublication(type)) {
+        def provider = findLinkTypeProvider(type)
+        def providerCmd = plptc.newInstance(linkType: provider.linkType.label, pattern: provider.pattern,
                 identifiersPrefix: provider.identifiersPrefix)
         partialPublication.linkProvider = providerCmd
     }
@@ -906,6 +927,22 @@ where id_type = ? and publication_id = ?""", [type, accession]
 
 boolean isNotPubMedPublication(int type) {
     type > 0
+}
+
+findLinkTypeProvider = {type ->
+    def provider
+    switch(type) {
+        case 1:
+            provider = PublicationLinkProvider.findByLinkType(LinkType.DOI)
+		    break
+        case 2:
+            provider = PublicationLinkProvider.findByLinkType(LinkType.CUSTOM)
+		    break
+        default:
+            String m = "Publication $accession ($modelId) has unsupported type $type"
+            throw new IllegalStateException(m)
+    }
+    return provider
 }
 
 setPublicationAttribute = { modelId, publicationCmd, field, value ->
