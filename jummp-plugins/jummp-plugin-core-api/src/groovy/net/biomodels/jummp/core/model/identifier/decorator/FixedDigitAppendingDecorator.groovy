@@ -42,7 +42,7 @@ class FixedDigitAppendingDecorator extends AbstractAppendingDecorator {
     /**
      * Don't pass a suffix below 1 to avoid an IllegalArgumentException.
      */
-    public FixedDigitAppendingDecorator(Integer order, int suffix, int width)
+    public FixedDigitAppendingDecorator(Integer order, long suffix, int width)
                 throws IllegalArgumentException {
         boolean orderOk = validateOrderValue(order)
         if (!orderOk) {

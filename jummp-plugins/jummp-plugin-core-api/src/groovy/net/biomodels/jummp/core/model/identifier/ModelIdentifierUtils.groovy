@@ -253,7 +253,7 @@ The configuration settings lack the rules for generating model identifiers!"""
                     // this is a fixed decorator, so nextValue does not need updating
                     break
                 case NumericalModelIdentifierPartition:
-                    int suffix = Integer.parseInt(p.value)
+                    long suffix = Long.parseLong(p.value)
                     if (p.fixed) {
                         d = new FixedDigitAppendingDecorator(i, suffix, p.width)
                     } else {

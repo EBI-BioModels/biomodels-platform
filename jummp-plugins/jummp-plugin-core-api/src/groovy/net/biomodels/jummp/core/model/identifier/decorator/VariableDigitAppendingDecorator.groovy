@@ -46,7 +46,7 @@ public class VariableDigitAppendingDecorator extends AbstractAppendingDecorator 
      * Throws an IllegalArgumentException if @p seed is below 1 or @p width is narrower than
      * the width of @p seed.
      */
-    public VariableDigitAppendingDecorator(Integer order, int seed, int width)
+    public VariableDigitAppendingDecorator(Integer order, long seed, int width)
                 throws IllegalArgumentException {
         boolean orderOk = validateOrderValue(order)
         if (!orderOk) {
