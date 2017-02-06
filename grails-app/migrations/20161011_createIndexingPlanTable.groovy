@@ -29,13 +29,13 @@ databaseChangeLog = {
     }
 
     changeSet(author: "tung (generated)", id: "1476200957-2") {
-        createIndex(indexName: "FK_model_id", tableName: "model") {
+        createIndex(indexName: "FK_model_id", tableName: "indexing_plan") {
             column(name: "model_id")
         }
     }
 
     changeSet(author: "tung (generated)", id: "1476200957-3") {
-        createIndex(indexName: "FK_revision_id", tableName: "revision") {
+        createIndex(indexName: "FK_revision_id", tableName: "indexing_plan") {
             column(name: "revision_id")
         }
     }

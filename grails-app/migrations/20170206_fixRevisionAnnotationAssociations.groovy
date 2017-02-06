@@ -17,7 +17,7 @@ databaseChangeLog = {
 	}
 
 	changeSet(author: "mglont (generated)", id: "1486387545035-3") {
-		dropForeignKeyConstraint(baseTableName: "element_annotation", baseTableSchemaName: "jummp-mglont", constraintName: "FK_nf3bp0l5t5ap8oi168mtpgued")
+		dropForeignKeyConstraint(baseTableName: "element_annotation", constraintName: "FK_nf3bp0l5t5ap8oi168mtpgued")
 	}
 
 	changeSet(author: "mglont (generated)", id: "1486387545035-4") {
