@@ -116,6 +116,7 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
 
     void clearAnnotationStatementsFromDatabase() {
         log.debug("Begin prunning annotation statements from database")
+        Revision.executeUpdate("delete RevisionAnnotation")
         Revision.executeUpdate("delete ElementAnnotation")
         Revision.executeUpdate("delete Statement")
         log.debug("Finished prunning annotation statements from database")
