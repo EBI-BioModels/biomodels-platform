@@ -703,12 +703,13 @@ processModelFolder = { File folder ->
         // need to manually update
         submittedModel = revision.model
         addRevisionAnnotations(revision, BRANCH, modelDetails, submitter)
-        def revisions = [submittedModel.revisions[0], revision]
+        def revisions = submittedModel.revisions
         revisions.each { r ->
-            publishModelRevision(MODEL_ID, r)
-        }
-        submittedModel.revisions.each { r ->
-            insertedRevisions.offer(r.id)
+            try {
+                publishModelRevision(MODEL_ID, r)
+            } finally {
+                insertedRevisions.offer(r.id)
+            }
         }
         modelpublication << "$submittedModel.id, $MODEL_ID, $submittedModel.publication.id\n"
     } catch (Throwable t) {
