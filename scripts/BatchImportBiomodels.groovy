@@ -1484,13 +1484,20 @@ getSubmitterIdForModel = { String modelId, String branch ->
 }
 
 publishModelRevision = { modelId, revision ->
+    if (!revision) {
+        addModelError modelId, "Refusing to publish undefined revision ${revision.properties}"
+    }
     authenticate(username, password)
     try {
         aclUtilService.addPermission(revision, "ROLE_USER", BasePermission.READ)
         aclUtilService.addPermission(revision, "ROLE_ANONYMOUS", BasePermission.READ)
         revision.state = ModelState.PUBLISHED
-        assert revision.save()
-        addModelMsg modelId, "Successfully published $revision"
+        if (!revision.save()) {
+            def err = revision.errors.allErrors
+            addModelError modelId, "Failed to mark revision as published after adding ACLs -- $err"
+        } else {
+            addModelMsg modelId, "Successfully published $revision"
+        }
     } catch (Exception e) {
         addModelError(modelId, "Unable to publish revision ${revision.id} -- $e")
     } finally {
@@ -1593,6 +1600,18 @@ getBranch = { modelId ->
 }
 
 createBMAnnotation = { revision, object, qual, creator ->
+    String id = revision?.model?.publicationId ?: revision?.model?.submissionId
+    if (revision.hasErrors() || !revision?.id) {
+        def anno = "$creator ${object.properties} ${object.properties}"
+        if (id) {
+            def err = revision?.errors?.allErrors
+            addModelError id, "refusing to add custom BioModels annotation $anno: $err"
+        } else {
+            def r = revision.properties
+            addModelError "UNKNOWN", "refusing to add custom annotation $anno for $r"
+        }
+        return
+    }
     def resourceRef = ResourceReference.findByUriAndDatatype(object, "biomodelsCustomAnnotation")
     if (!resourceRef) {
         resourceRef = ResourceReference.newInstance(uri: object, datatype: "biomodelsCustomAnnotation")
