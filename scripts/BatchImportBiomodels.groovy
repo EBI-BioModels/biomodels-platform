@@ -711,7 +711,7 @@ processModelFolder = { File folder ->
                 insertedRevisions.offer(r.id)
             }
         }
-        modelpublication << "$submittedModel.id, $MODEL_ID, $submittedModel.publication.id\n"
+        modelpublication << "${submittedModel.id}, $MODEL_ID, ${submittedModel.publication?.id}\n"
     } catch (Throwable t) {
         addModelError(MODEL_ID, "Something went wrong with ${MODEL_ID} - ${t}")
         t.printStackTrace()
