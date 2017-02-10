@@ -1623,12 +1623,24 @@ createBMAnnotation = { revision, object, qual, creator ->
                                           uri: qual)
         qualifier.save(failOnError:true)
     }
-    def statement = Statement.newInstance(subjectId: 'modelLevelAnnotation',
+    def statement = Statement.findOrCreateWhere(subjectId: 'modelLevelAnnotation',
             qualifier: qualifier, object: resourceRef)
     def modelElementType = ModelElementType.findByModelFormatAndName(revision.format, 'model')
-    def elementAnnotation = ElementAnnotation.newInstance(creatorId: creator,
-            statement: statement, revision: revision, modelElementType: modelElementType)
-    elementAnnotation.save(failOnError:true)
+    def elementAnnotation
+    // can only use findOrCreate with associations if the associated object is already saved
+    if (statement.id) {
+        elementAnnotation = ElementAnnotation.findOrCreateByCreatorIdAndStatementAndModelElementType(
+                creator, statement, modelElementType)
+    } else {
+        elementAnnotation = ElementAnnotation.newInstance(
+                modelElementType: modelElementType, creatorId: creator, statement: statement)
+    }
+
+    elementAnnotation.addToRevisions revision
+
+    if (!elementAnnotation.save()) {
+        addModelError id, "Failed to save annotation ${elementAnnotation.properties}"
+    }
 }
 
 getPublicationLink = { publication_id, publication_id_type ->
