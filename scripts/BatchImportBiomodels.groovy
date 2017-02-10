@@ -698,6 +698,10 @@ processModelFolder = { File folder ->
             failureCount.incrementAndGet()
             return
         }
+        // we cleared the session before adding the second revision
+        // submittedModel is now stale -- it still thinks there's only 1 revision
+        // need to manually update
+        submittedModel = revision.model
         addRevisionAnnotations(revision, BRANCH, modelDetails, submitter)
         def revisions = [submittedModel.revisions[0], revision]
         revisions.each { r ->
@@ -789,7 +793,11 @@ addRevision = { modelId, parent, model ->
     def revisionInfo = prepareRevision(modelId, parent, model)
     def revision
     try {
+        // clear current persistence context -- it will be stale after adding second revision
+        Revision.withSession { s -> s.clear() }
         revision = modelService.addValidatedRevision(revisionInfo.files, [], revisionInfo.revision)
+        model = Model.get(revision.model.id)
+
         addModelMsg modelId, "Added revision $revision"
     } catch(Exception e) {
         addModelError(modelId, "Exception thrown while updating original submission: $e")
