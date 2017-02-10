@@ -698,15 +698,20 @@ processModelFolder = { File folder ->
             failureCount.incrementAndGet()
             return
         }
+        // we cleared the session before adding the second revision
+        // submittedModel is now stale -- it still thinks there's only 1 revision
+        // need to manually update
+        submittedModel = revision.model
         addRevisionAnnotations(revision, BRANCH, modelDetails, submitter)
-        def revisions = [submittedModel.revisions[0], revision]
+        def revisions = submittedModel.revisions
         revisions.each { r ->
-            publishModelRevision(MODEL_ID, r)
+            try {
+                publishModelRevision(MODEL_ID, r)
+            } finally {
+                insertedRevisions.offer(r.id)
+            }
         }
-        submittedModel.revisions.each { r ->
-            insertedRevisions.offer(r.id)
-        }
-        modelpublication << "$submittedModel.id, $MODEL_ID, $submittedModel.publication.id\n"
+        modelpublication << "${submittedModel.id}, $MODEL_ID, ${submittedModel.publication?.id}\n"
     } catch (Throwable t) {
         addModelError(MODEL_ID, "Something went wrong with ${MODEL_ID} - ${t}")
         t.printStackTrace()
@@ -789,7 +794,11 @@ addRevision = { modelId, parent, model ->
     def revisionInfo = prepareRevision(modelId, parent, model)
     def revision
     try {
+        // clear current persistence context -- it will be stale after adding second revision
+        Revision.withSession { s -> s.clear() }
         revision = modelService.addValidatedRevision(revisionInfo.files, [], revisionInfo.revision)
+        model = Model.get(revision.model.id)
+
         addModelMsg modelId, "Added revision $revision"
     } catch(Exception e) {
         addModelError(modelId, "Exception thrown while updating original submission: $e")
@@ -1475,13 +1484,20 @@ getSubmitterIdForModel = { String modelId, String branch ->
 }
 
 publishModelRevision = { modelId, revision ->
+    if (!revision) {
+        addModelError modelId, "Refusing to publish undefined revision ${revision.properties}"
+    }
     authenticate(username, password)
     try {
         aclUtilService.addPermission(revision, "ROLE_USER", BasePermission.READ)
         aclUtilService.addPermission(revision, "ROLE_ANONYMOUS", BasePermission.READ)
         revision.state = ModelState.PUBLISHED
-        assert revision.save()
-        addModelMsg modelId, "Successfully published $revision"
+        if (!revision.save()) {
+            def err = revision.errors.allErrors
+            addModelError modelId, "Failed to mark revision as published after adding ACLs -- $err"
+        } else {
+            addModelMsg modelId, "Successfully published $revision"
+        }
     } catch (Exception e) {
         addModelError(modelId, "Unable to publish revision ${revision.id} -- $e")
     } finally {
@@ -1584,6 +1600,18 @@ getBranch = { modelId ->
 }
 
 createBMAnnotation = { revision, object, qual, creator ->
+    String id = revision?.model?.publicationId ?: revision?.model?.submissionId
+    if (revision.hasErrors() || !revision?.id) {
+        def anno = "$creator ${object.properties} ${object.properties}"
+        if (id) {
+            def err = revision?.errors?.allErrors
+            addModelError id, "refusing to add custom BioModels annotation $anno: $err"
+        } else {
+            def r = revision.properties
+            addModelError "UNKNOWN", "refusing to add custom annotation $anno for $r"
+        }
+        return
+    }
     def resourceRef = ResourceReference.findByUriAndDatatype(object, "biomodelsCustomAnnotation")
     if (!resourceRef) {
         resourceRef = ResourceReference.newInstance(uri: object, datatype: "biomodelsCustomAnnotation")
@@ -1595,12 +1623,24 @@ createBMAnnotation = { revision, object, qual, creator ->
                                           uri: qual)
         qualifier.save(failOnError:true)
     }
-    def statement = Statement.newInstance(subjectId: 'modelLevelAnnotation',
+    def statement = Statement.findOrCreateWhere(subjectId: 'modelLevelAnnotation',
             qualifier: qualifier, object: resourceRef)
     def modelElementType = ModelElementType.findByModelFormatAndName(revision.format, 'model')
-    def elementAnnotation = ElementAnnotation.newInstance(creatorId: creator,
-            statement: statement, revision: revision, modelElementType: modelElementType)
-    elementAnnotation.save(failOnError:true)
+    def elementAnnotation
+    // can only use findOrCreate with associations if the associated object is already saved
+    if (statement.id) {
+        elementAnnotation = ElementAnnotation.findOrCreateByCreatorIdAndStatementAndModelElementType(
+                creator, statement, modelElementType)
+    } else {
+        elementAnnotation = ElementAnnotation.newInstance(
+                modelElementType: modelElementType, creatorId: creator, statement: statement)
+    }
+
+    elementAnnotation.addToRevisions revision
+
+    if (!elementAnnotation.save()) {
+        addModelError id, "Failed to save annotation ${elementAnnotation.properties}"
+    }
 }
 
 getPublicationLink = { publication_id, publication_id_type ->
