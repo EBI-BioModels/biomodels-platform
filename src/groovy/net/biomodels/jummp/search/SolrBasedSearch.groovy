@@ -159,27 +159,12 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
      * Clears the index. Handle with care.
      */
     @Profiled(tag="searchService.clearIndex")
-    private void clearIndex() {
+    void clearIndex() {
         if (IS_DEBUG_ENABLED) {
             log.debug "Clearing the search index."
         }
         solrServerHolder.solrClient.deleteByQuery("*:*")
         log.info "Cleared the search index."
-    }
-
-    /*
-     * Removes revision annotations from the database.
-     *
-     * This is necessary to ensure that we keep in sync Solr with the database
-     * at the start of the reindexing process.
-     */
-    @Profiled(tag = "searchService.clearAnnotationStatementsFromDatabase")
-    void clearAnnotationStatementsFromDatabase() {
-        log.debug("Begin prunning annotation statements from database")
-        Revision.executeUpdate("delete RevisionAnnotation")
-        Revision.executeUpdate("delete ElementAnnotation")
-        Revision.executeUpdate("delete Statement")
-        log.debug("Finished prunning annotation statements from database")
     }
 
     private List<String> fetchFilesFromRevision(RevisionTransportCommand rev, boolean filterMains) {
@@ -291,7 +276,6 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
     @Profiled(tag="searchService.regenerateIndices")
     void regenerateIndices() {
         clearIndex()
-        clearAnnotationStatementsFromDatabase()
         List<RevisionTransportCommand> revisions = Revision.list(fetch: [model: "eager"]).collect { r ->
             DomainAdapter.getAdapter(r).toCommandObject()
         }

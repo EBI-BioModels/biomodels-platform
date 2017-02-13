@@ -114,15 +114,16 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
         // look at solrbasedsearch
     }
 
-    void clearAnnotationStatementsFromDatabase() {
-        log.debug("Begin prunning annotation statements from database")
-        Revision.executeUpdate("delete ElementAnnotation")
-        Revision.executeUpdate("delete Statement")
-        log.debug("Finished prunning annotation statements from database")
+    void clearIndex() {
+        // Delete indexing plans from the database
+        if (IS_DEBUG_ENABLED) {
+            log.debug "Clearing the indexing plans."
+        }
+        Revision.executeUpdate("delete IndexingPlan")
     }
 
     void regenerateIndices() {
-        clearAnnotationStatementsFromDatabase()
+        clearIndex()
         List<RevisionTransportCommand> revisions = Revision.list(fetch: [model: "eager"]).collect { r ->
             DomainAdapter.getAdapter(r).toCommandObject()
         }

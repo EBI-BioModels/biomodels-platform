@@ -27,8 +27,8 @@ package net.biomodels.jummp.core
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.events.LoggingEventType
 import net.biomodels.jummp.core.events.PostLogging
-import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.search.OmicsdiBasedSearch
 import net.biomodels.jummp.search.SearchResponse
 import net.biomodels.jummp.search.SolrBasedSearch
@@ -97,6 +97,7 @@ class SearchService {
     @Profiled(tag="searchService.clearIndex")
     void clearIndex() {
         strategy.clearIndex()
+        clearAnnotationStatementsFromDatabase()
     }
 
     /**
@@ -139,12 +140,15 @@ class SearchService {
     /*
      * Removes revision annotations from the database.
      *
-     * This is necessary to ensure that we keep in sync Solr with the database
+     * This is necessary to ensure that we keep in sync Solr & OmicsDI entries with the database
      * at the start of the reindexing process.
      */
     @Profiled(tag = "searchService.clearAnnotationStatementsFromDatabase")
     void clearAnnotationStatementsFromDatabase() {
-        strategy.clearAnnotationStatementsFromDatabase()
+        log.debug("Begin prunning annotation statements from database")
+        Revision.executeUpdate("delete ElementAnnotation")
+        Revision.executeUpdate("delete Statement")
+        log.debug("Finished prunning annotation statements from database")
     }
 }
 
