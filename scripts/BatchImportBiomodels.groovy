@@ -919,7 +919,7 @@ where id_type = ? and publication_id = ?""", [type, accession]
         def strAuthors = paperDetails.authors
         def splitStrAuthors = strAuthors.split(", ")
         List listPersonTCs = []
-        splitStrAuthors.eachWithIndex { userRealName ->
+        splitStrAuthors.each { userRealName ->
             def person = personTC.newInstance(userRealName: userRealName)
 	    listPersonTCs << person
         }
