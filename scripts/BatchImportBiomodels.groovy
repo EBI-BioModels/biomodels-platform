@@ -917,11 +917,12 @@ where id_type = ? and publication_id = ?""", [type, accession]
 
     if (paperDetails.authors) {
         def strAuthors = paperDetails.authors
-        def splitStrAuthors = strAuthors.split(", ")
+        def splitStrAuthors = strAuthors.split(",")
         List listPersonTCs = []
-        splitStrAuthors.eachWithIndex { userRealName ->
-            def person = personTC.newInstance(userRealName: userRealName)
-	    listPersonTCs << person
+        splitStrAuthors.each { userRealName ->
+            String trimmedAuthorName = userRealName.trim()
+            def person = personTC.newInstance(userRealName: trimmedAuthorName)
+            listPersonTCs << person
         }
         partialPublication.authors =  listPersonTCs
     }
@@ -943,10 +944,10 @@ findLinkTypeProvider = {type ->
     switch(type) {
         case 1:
             provider = PublicationLinkProvider.findByLinkType(LinkType.DOI)
-		    break
+            break
         case 2:
             provider = PublicationLinkProvider.findByLinkType(LinkType.CUSTOM)
-		    break
+            break
         default:
             String m = "Publication $accession ($modelId) has unsupported type $type"
             throw new IllegalStateException(m)
