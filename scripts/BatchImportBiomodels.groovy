@@ -917,10 +917,11 @@ where id_type = ? and publication_id = ?""", [type, accession]
 
     if (paperDetails.authors) {
         def strAuthors = paperDetails.authors
-        def splitStrAuthors = strAuthors.split(", ")
+        def splitStrAuthors = strAuthors.split(",")
         List listPersonTCs = []
         splitStrAuthors.each { userRealName ->
-            def person = personTC.newInstance(userRealName: userRealName)
+            String trimmedAuthorName = userRealName.trim()
+            def person = personTC.newInstance(userRealName: trimmedAuthorName)
             listPersonTCs << person
         }
         partialPublication.authors =  listPersonTCs
