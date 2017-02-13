@@ -921,7 +921,7 @@ where id_type = ? and publication_id = ?""", [type, accession]
         List listPersonTCs = []
         splitStrAuthors.each { userRealName ->
             def person = personTC.newInstance(userRealName: userRealName)
-	    listPersonTCs << person
+            listPersonTCs << person
         }
         partialPublication.authors =  listPersonTCs
     }
@@ -943,10 +943,10 @@ findLinkTypeProvider = {type ->
     switch(type) {
         case 1:
             provider = PublicationLinkProvider.findByLinkType(LinkType.DOI)
-		    break
+            break
         case 2:
             provider = PublicationLinkProvider.findByLinkType(LinkType.CUSTOM)
-		    break
+            break
         default:
             String m = "Publication $accession ($modelId) has unsupported type $type"
             throw new IllegalStateException(m)
