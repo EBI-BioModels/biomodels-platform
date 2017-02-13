@@ -24,13 +24,10 @@
 
 package net.biomodels.jummp.search
 
-import grails.async.Promise
 import grails.plugin.springsecurity.SpringSecurityUtils
-import grails.plugin.springsecurity.annotation.Secured
 import grails.util.Holders
 import groovy.json.JsonBuilder
 import net.biomodels.jummp.core.ModelSearchStrategy
-import net.biomodels.jummp.core.adapters.DomainAdapter
 import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.events.*
 import net.biomodels.jummp.core.model.ModelTransportCommand
@@ -46,10 +43,6 @@ import org.apache.solr.common.SolrInputDocument
 import org.perf4j.aop.Profiled
 import org.springframework.context.ApplicationListener
 import org.springframework.security.acls.domain.BasePermission
-import org.springframework.security.core.Authentication
-import org.springframework.security.core.context.SecurityContextHolder
-
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * @short Singleton-scoped facade for interacting with a SolrServerHolder's instance.
@@ -263,45 +256,6 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
                 log.error("Failed to index revision $revision.properties - ${e.message}", e)
                 //TODO RETRY
             }
-        }
-    }
-
-    /**
-     * Clears the existing index and then regenerates it.
-     *
-     * This method requires ROLE_ADMIN permissions.
-     **/
-    @Secured(['ROLE_ADMIN'])
-    @PostLogging(LoggingEventType.CREATION)
-    @Profiled(tag="searchService.regenerateIndices")
-    void regenerateIndices() {
-        clearIndex()
-        List<RevisionTransportCommand> revisions = Revision.list(fetch: [model: "eager"]).collect { r ->
-            DomainAdapter.getAdapter(r).toCommandObject()
-        }
-        if (IS_DEBUG_ENABLED) {
-            log.debug "Indexing ${revisions.size()} revisions."
-        }
-        Authentication auth = springSecurityService.authentication
-        AtomicReference<Authentication> authRef = new AtomicReference<>(auth)
-        Promise p = Revision.async.task {
-            SecurityContextHolder.context.authentication = authRef.get()
-            revisions.each {
-                try {
-                    updateIndex(it)
-                }
-                catch(Exception e) {
-                    log.error("Exception thrown while indexing ${it.properties} ${e.getMessage()}", e)
-                }
-            }
-        }
-        p.onComplete {
-            if (IS_INFO_ENABLED) {
-                log.info "Finished regenerating the index."
-            }
-        }
-        p.onError { Throwable e ->
-            log.error("Error regenerating the index: ${e.message}", e)
         }
     }
 

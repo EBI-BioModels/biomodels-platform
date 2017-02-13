@@ -24,7 +24,9 @@
 
 package net.biomodels.jummp.core
 
+import grails.async.Promise
 import grails.plugin.springsecurity.annotation.Secured
+import net.biomodels.jummp.core.adapters.DomainAdapter
 import net.biomodels.jummp.core.events.LoggingEventType
 import net.biomodels.jummp.core.events.PostLogging
 import net.biomodels.jummp.core.model.RevisionTransportCommand
@@ -35,6 +37,11 @@ import net.biomodels.jummp.search.SolrBasedSearch
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.perf4j.aop.Profiled
+import org.springframework.security.core.Authentication
+import org.springframework.security.core.context.SecurityContextHolder
+
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * @short Singleton-scoped facade for interacting with a searching service's instance.
@@ -50,7 +57,15 @@ class SearchService {
     /**
      * The class logger.
      */
-    static final Log log = LogFactory.getLog(SearchService)
+    static final Log log = LogFactory.getLog(SearchService.class)
+    /**
+     * Flag indicating the logger's verbosity threshold.
+     */
+    static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
+    /**
+     * Flag indicating the logger's verbosity threshold.
+     */
+    static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
     /**
      * Disable default transactional behaviour.
      */
@@ -121,7 +136,38 @@ class SearchService {
     @PostLogging(LoggingEventType.CREATION)
     @Profiled(tag="searchService.regenerateIndices")
     void regenerateIndices() {
-        strategy.regenerateIndices()
+        strategy.clearIndex()
+        List<RevisionTransportCommand> revisions = Revision.list(fetch: [model: "eager"]).collect { r ->
+            DomainAdapter.getAdapter(r).toCommandObject()
+        }
+        if (IS_DEBUG_ENABLED) {
+            log.debug "Indexing ${revisions.size()} revisions."
+        }
+        Authentication auth = springSecurityService.authentication
+        AtomicReference<Authentication> authRef = new AtomicReference<>(auth)
+        Promise p = Revision.async.task {
+            SecurityContextHolder.context.authentication = authRef.get()
+            final int revisionCount = revisions.size()
+            final AtomicInteger index = new AtomicInteger()
+            revisions.each { revision ->
+                try {
+                    updateIndex(revision)
+                }
+                catch(Exception e) {
+                    log.error("Exception thrown while indexing ${revision.properties} ${e.getMessage()}", e)
+                } finally {
+                    log.info "Revision ${revision.id} has been indexed. Iteration ${index.incrementAndGet()} of $revisionCount."
+                }
+            }
+        }
+        p.onComplete {
+            if (IS_INFO_ENABLED) {
+                log.info "Finished regenerating the index."
+            }
+        }
+        p.onError { Throwable e ->
+            log.error("Error regenerating the index: ${e.message}", e)
+        }
     }
 
     /**
