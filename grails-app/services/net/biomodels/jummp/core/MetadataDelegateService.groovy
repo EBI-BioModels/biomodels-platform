@@ -192,7 +192,7 @@ class MetadataDelegateService implements IMetadataService {
         List<ElementAnnotationTransportCommand> annotations = rev.annotations
         List<StatementTransportCommand> statements = annotations*.statement
         def res = statements.find {
-            it.object.uri == "curated"
+            it.predicate.type == "biomodelsCustomAnnotation" && it.predicate.uri == "curated"
         }
         return res != null ? "curated" : "non-curated"
     }
