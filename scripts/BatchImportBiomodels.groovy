@@ -1560,8 +1560,8 @@ populatePublicationLinkProviders = {
 processModelOfTheMonth = { model ->
     def modelId = model.publicationId ?: model.submissionId
     def dateFormatter = new java.text.SimpleDateFormat('yyyy-MM')
-    String query = "select * from model_of_month where models_id = ?"
-    biomodelsConnection.eachRow(query, [modelId]) { row ->
+    String query = "select * from model_of_month where models_id like ?"
+    biomodelsConnection.eachRow(query, ["%${modelId}%"]) { row ->
         def datePublished = dateFormatter.parse(row.pub_month)
         // see if there is an existing model of the month in the Jummp DB for
         // the given month
