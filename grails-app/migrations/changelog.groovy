@@ -1224,8 +1224,8 @@ databaseChangeLog = {
 
     include file: '20161212_publicationPropertiesAsString.groovy'
 
-	include file: '2017-02-01_make_publication_details_nullable.groovy'
+    include file: '2017-02-01_make_publication_details_nullable.groovy'
 
-	include file: '20170206_fixRevisionAnnotationAssociations.groovy'
+    include file: '20170206_fixRevisionAnnotationAssociations.groovy'
 }
 
