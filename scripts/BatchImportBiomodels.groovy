@@ -901,12 +901,13 @@ publicationCmdHasRequiredFields = { publicationCmd ->
  */
 fetchMissingPaperDetailsFromBioModels = { modelId, partialPublication, accession, type ->
     def paperDetails = biomodelsConnection.firstRow """\
-select title, journal_name as journal, affiliation, abstract as synopsis, year, authors
+select title, journal_name, journal, affiliation, abstract as synopsis, year, authors
 from publications
 where id_type = ? and publication_id = ?""", [type, accession]
 
+    partialPublication.journal = paperDetails.journal ?: paperDetails.journal_name
     partialPublication.year = paperDetails.year
-    ['title', 'journal', 'affiliation', 'synopsis'].each { String f ->
+    ['title', 'affiliation', 'synopsis'].each { String f ->
         String value = paperDetails."$f"
         try {
             setPublicationAttribute(modelId, partialPublication, f, value)
@@ -957,7 +958,7 @@ findLinkTypeProvider = {type ->
 
 setPublicationAttribute = { modelId, publicationCmd, field, value ->
     if (!publicationCmd."$field") {
-        publicationCmd."$field" = value ?: ""
+        publicationCmd."$field" = value
         addModelMsg modelId, "set publication field $field to ${publicationCmd."$field"}"
     }
 }
