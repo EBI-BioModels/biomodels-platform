@@ -958,7 +958,7 @@ findLinkTypeProvider = {type ->
 
 setPublicationAttribute = { modelId, publicationCmd, field, value ->
     if (!publicationCmd."$field") {
-        publicationCmd."$field" = value
+        publicationCmd."$field" = value ?: null
         addModelMsg modelId, "set publication field $field to ${publicationCmd."$field"}"
     }
 }
