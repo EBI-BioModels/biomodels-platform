@@ -322,7 +322,7 @@ SELECT * FROM simulations WHERE model_id = :mid """, [mid: modelId])
     if (row) {
         def submitterId = row.submitter_id
         def modifierId = row.modifier_id
-        def submitter = getUserFromBiomodelsId(submitter_id)
+        def submitter = getUserFromBiomodelsId(submitterId)
         if (!submitter) {
             addModelError(modelId,
                     "Could not find submitter with id: $submitterId, curation notes not imported")
@@ -348,7 +348,9 @@ SELECT * FROM simulations WHERE model_id = :mid """, [mid: modelId])
                 lastModified: row.last_modification_date,
                 comment: row.comments,
                 curationImage: new File(simulationFolder, row.file_name).getBytes())
-        notes.save()
+        if (!notes.save(flush: true)) {
+            addModelError(modelId, "Cannot persist curation note because of ${notes.errors.allErrors}")
+        }
      }
 }
 
