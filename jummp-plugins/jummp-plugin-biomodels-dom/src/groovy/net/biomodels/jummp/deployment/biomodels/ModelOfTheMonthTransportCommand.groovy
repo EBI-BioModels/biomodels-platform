@@ -38,6 +38,6 @@ class ModelOfTheMonthTransportCommand implements Serializable {
     }
 
     String toString() {
-        "Model of the Month $date by $authors"
+        "$date"
     }
 }

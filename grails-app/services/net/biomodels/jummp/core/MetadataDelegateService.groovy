@@ -175,10 +175,16 @@ class MetadataDelegateService implements IMetadataService {
         statements.each { StatementTransportCommand s ->
             final QualifierTransportCommand qualifier = s.predicate
             final ResourceReferenceTransportCommand xref = s.object
-            if (result.containsKey(qualifier)) {
-                result[qualifier] << xref
-            } else {
-                result[qualifier] = [xref]
+            // ignore the biomodels custom annotation denoting curation status
+            // because it is already shown at the curation status line
+            boolean isCurationStatus = qualifier.type == "biomodelsCustomAnnotation" &&
+                qualifier.uri == "curated"
+            if (!isCurationStatus) {
+                if (result.containsKey(qualifier)) {
+                    result[qualifier] << xref
+                } else {
+                    result[qualifier] = [xref]
+                }
             }
         }
         result
@@ -192,7 +198,7 @@ class MetadataDelegateService implements IMetadataService {
         List<ElementAnnotationTransportCommand> annotations = rev.annotations
         List<StatementTransportCommand> statements = annotations*.statement
         def res = statements.find {
-            it.object.uri == "curated"
+            it.predicate.type == "biomodelsCustomAnnotation" && it.predicate.uri == "curated"
         }
         return res != null ? "curated" : "non-curated"
     }
