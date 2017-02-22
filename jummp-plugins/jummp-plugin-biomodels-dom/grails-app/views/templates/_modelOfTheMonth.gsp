@@ -1,1 +1,1 @@
-<span>${it.formattedURL}</span>
+<span><a href="${it.formattedURL}">${it.toString()}</a></span>
