@@ -265,7 +265,8 @@ getUserFromBiomodelsId = { bmPersonId ->
             institution: personDetails.organisation)
     def userCreated = User.newInstance(person: person,
             username: getUsername(personDetails), password: "autocreated",
-            email: personDetails.email)
+            email: personDetails.email, accountLocked: false, accountExpired: false,
+            passwordExpired: false, enabled: true)
     if (!userCreated.validate()) {
         error("Cannot create account for submitter $bmPersonId: ${userCreated.errors.allErrors}")
     }
