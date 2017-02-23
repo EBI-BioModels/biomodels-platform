@@ -316,15 +316,16 @@ getDetailsForLoggedInUser = { ->
  * Extracts the curation notes corresponding to the model from BioModels that we are importing.
  */
 setCurationNotes = { modelSubmitted ->
-    String modelId = modelSubmitted.submissionId
+    String submissionId = modelSubmitted.submissionId
+    String publicationId = modelSubmitted.publicationId
     def row = biomodelsConnection.firstRow("""\
-SELECT * FROM simulations WHERE model_id = :mid """, [mid: modelId])
+SELECT * FROM simulations WHERE curation_id = :sid OR model_id = :pid """, [sid: submissionId, pid: publicationId])
     if (row) {
         def submitterId = row.submitter_id
-        def modifierId = row.modifier_id
+        def modifierId = row.last_modifier_id
         def submitter = getUserFromBiomodelsId(submitterId)
         if (!submitter) {
-            addModelError(modelId,
+            addModelError(submissionId,
                     "Could not find submitter with id: $submitterId, curation notes not imported")
             return
         }
@@ -334,7 +335,7 @@ SELECT * FROM simulations WHERE model_id = :mid """, [mid: modelId])
         } else {
             modifier = getUserFromBiomodelsId(modifierId)
             if (!modifier) {
-                 addModelError(modelId,
+                 addModelError(submissionId,
                         "Could not find modifier with id: $modifierId, curation notes not imported")
                  return
              }
