@@ -1229,5 +1229,7 @@ databaseChangeLog = {
     include file: '20170206_fixRevisionAnnotationAssociations.groovy'
 
     include file: '20170217_makeResourceReferenceSynonymsText.groovy'
+
+    include file: '20170223_makeCurationNotesCommentText.groovy'
 }
 
