@@ -871,7 +871,11 @@ addPublicationDetails = { model, accession, type ->
                             p = Person.findByOrcid(orcid)
                         }
                         if (!p) {
-                            person.save(flush: true)
+                            if (!person.save(flush: true)) {
+                                addModelError id, """\
+Cannot save author #$i ${person.userRealName} for publication $accession: ${person.errors.allErrors}"""
+                                return // don't try to associate them with the publication
+                            }
                         } else {
                             person = p
                         }
