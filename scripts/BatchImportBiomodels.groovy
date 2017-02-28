@@ -319,6 +319,7 @@ getDetailsForLoggedInUser = { ->
 setCurationNotes = { modelSubmitted ->
     String submissionId = modelSubmitted.submissionId
     String publicationId = modelSubmitted.publicationId
+    String perennialId = publicationId ?: submissionId
     def row = biomodelsConnection.firstRow("""\
 SELECT * FROM simulations WHERE curation_id = :sid OR model_id = :pid """, [sid: submissionId, pid: publicationId])
     if (row) {
@@ -326,7 +327,7 @@ SELECT * FROM simulations WHERE curation_id = :sid OR model_id = :pid """, [sid:
         def modifierId = row.last_modifier_id
         def submitter = getUserFromBiomodelsId(submitterId)
         if (!submitter) {
-            addModelError(submissionId,
+            addModelError(perennialId,
                     "Could not find submitter with id: $submitterId, curation notes not imported")
             return
         }
@@ -336,10 +337,18 @@ SELECT * FROM simulations WHERE curation_id = :sid OR model_id = :pid """, [sid:
         } else {
             modifier = getUserFromBiomodelsId(modifierId)
             if (!modifier) {
-                 addModelError(submissionId,
+                 addModelError(perennialId,
                         "Could not find modifier with id: $modifierId, curation notes not imported")
                  return
              }
+        }
+
+        def curationImg
+        try {
+            File img = new File(simulationFolder, row.file_name)
+            curationImg = img.getBytes()
+        } catch(Exception e) {
+            addModelError perennialId, "Error retrieving the simulation result file $img: $e"
         }
 
         def notes = CurationNotes.newInstance(
@@ -349,10 +358,12 @@ SELECT * FROM simulations WHERE curation_id = :sid OR model_id = :pid """, [sid:
                 dateAdded: row.submission_date,
                 lastModified: row.last_modification_date,
                 comment: row.comments,
-                curationImage: new File(simulationFolder, row.file_name).getBytes())
+                curationImage: curationImg)
         if (!notes.save(flush: true)) {
-            addModelError(modelId, "Cannot persist curation note because of ${notes.errors.allErrors}")
+            addModelError(perennialId, "Cannot persist curation note because of ${notes.errors.allErrors}")
         }
+     } else {
+        addModelMsg perennialId, "No simulation result found!"
      }
 }
 
