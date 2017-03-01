@@ -344,8 +344,9 @@ SELECT * FROM simulations WHERE curation_id = :sid OR model_id = :pid """, [sid:
         }
 
         def curationImg
+        File img
         try {
-            File img = new File(simulationFolder, row.file_name)
+            img = new File(simulationFolder, row.file_name)
             curationImg = img.getBytes()
         } catch(Exception e) {
             addModelError perennialId, "Error retrieving the simulation result file $img: $e"
