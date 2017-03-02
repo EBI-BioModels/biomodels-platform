@@ -246,7 +246,6 @@ final String PUBL = 'publ'
 final String UNCURA_PUBL = 'uncura_publ'
 
 def filename
-def modelpublication
 /**
  * Returns a User corresponding to the submitter of the model in BioModels.
  */
@@ -577,20 +576,6 @@ target(main: "Puts everything together to import models from a given folder") {
 
     log("${new Date()} -- commencing batch import")
     long duration = System.currentTimeMillis()
-    // store table of model_id and publication_id externally for updating model publication later
-    filename = "modelpublication.csv"
-    String logFolderPath = "logs"
-    File logFolder = new File(logFolderPath)
-    File parentFolder
-    if (logFolder.exists()) {
-        parentFolder = logFolder
-    } else {
-        parentFolder = new File("${System.properties['java.io.tmpdir']}")
-    }
-    modelpublication = new File(parentFolder, filename)
-    if (modelpublication.exists()) {
-        modelpublication.text = ""
-    }
     /* run batch importer sequentially */
     for (File f: modelFolder.listFiles()) {
         if (f.isDirectory() && f.name ==~ modelFolderPattern) {
@@ -727,7 +712,6 @@ processModelFolder = { File folder ->
                 insertedRevisions.offer(r.id)
             }
         }
-        modelpublication << "${submittedModel.id}, $MODEL_ID, ${submittedModel.publication?.id}\n"
     } catch (Throwable t) {
         addModelError(MODEL_ID, "Something went wrong with ${MODEL_ID} - ${t}")
         t.printStackTrace()
