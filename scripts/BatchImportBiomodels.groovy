@@ -18,14 +18,9 @@
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
  **/
 
+
 import grails.converters.JSON
 import groovy.sql.Sql
-import groovyx.gpars.GParsPool
-import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.locks.ReentrantLock
-import java.util.regex.Pattern
 import net.biomodels.jummp.core.model.ModelState
 import net.biomodels.jummp.core.model.ValidationState
 import net.biomodels.jummp.model.Flag
@@ -34,6 +29,13 @@ import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.transaction.support.TransactionSynchronizationManager
+
+import org.apache.commons.io.IOUtils
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.locks.ReentrantLock
+import java.util.regex.Pattern
 
 includeTargets << grailsScript("_GrailsArgParsing")
 includeTargets << grailsScript("_GrailsBootstrap")
@@ -817,10 +819,10 @@ addRevision = { modelId, parent, model ->
 addRevisionAnnotations = { revision, branch, modelDetails, user ->
     boolean inPubl = isCuratedAndPublished(branch)
     String author = user.person.userRealName
-    createBMAnnotation(revision, inPubl, 'curated', author)
+    createBMAnnotation(revision, inPubl, 'curated', "biomodelsCustomAnnotation", "", author)
     String jws = modelDetails['jwsLink']
     if (jws) {
-        createBMAnnotation(revision, jws, 'onlineSimulation', author)
+        createBMAnnotation(revision, jws, 'onlineSimulation', "biomodelsCustomAnnotation", "", author)
     }
     def publicationId = getPublicationIdFromModelDetails(modelDetails)
     def publicationType = getPublicationTypeFromModelDetails(modelDetails)
@@ -828,8 +830,13 @@ addRevisionAnnotations = { revision, branch, modelDetails, user ->
     if (havePublication) {
         addPublicationDetails(revision.model, publicationId, publicationType)
         String publicationURI = getPublicationLink(publicationId, publicationType)
-        createBMAnnotation(revision, publicationURI, "originalModel", author)
+        createBMAnnotation(revision, publicationURI, "originalModel", "biomodelsCustomAnnotation", "", author)
     }
+    String original_model = modelDetails['original_model']
+    if (original_model) {
+        createBMAnnotation(revision, original_model, "isDerivedFrom", "ModelQualifier", "http://biomodels.net/model-qualifiers/", author)
+    }
+
     def lastModified = modelDetails['lastModified']
     revision.uploadDate = lastModified
     revision.save()
@@ -1670,7 +1677,7 @@ getBranch = { modelId ->
     }
 }
 
-createBMAnnotation = { revision, object, qual, creator ->
+createBMAnnotation = { revision, object, qual, qualType, qualNamespace, creator ->
     String id = revision?.model?.publicationId ?: revision?.model?.submissionId
     if (revision.hasErrors() || !revision?.id) {
         def anno = "$creator ${object.properties} ${object.properties}"
@@ -1688,10 +1695,10 @@ createBMAnnotation = { revision, object, qual, creator ->
         resourceRef = ResourceReference.newInstance(uri: object, datatype: "biomodelsCustomAnnotation")
         resourceRef.save(failOnError: true)
     }
-    def qualifier = Qualifier.findByQualifierTypeAndUri("biomodelsCustomAnnotation", qual)
+    def qualifier = Qualifier.findByQualifierTypeAndUri(qualType, "${qualNamespace}${qual}")
     if (!qualifier) {
-        qualifier = Qualifier.newInstance(qualifierType: "biomodelsCustomAnnotation",
-                                          uri: qual)
+        qualifier = Qualifier.newInstance(qualifierType: qualType, accession: qual,
+            namespace: qualNamespace, uri: "${qualNamespace}${qual}")
         qualifier.save(failOnError:true)
     }
     def statement = Statement.findOrCreateWhere(subjectId: 'modelLevelAnnotation',
@@ -1757,6 +1764,7 @@ getModelDetails = { modelId, modelBranch ->
                 modelDetails['sbml_extended'] = row.sbml_extended
             }
         }
+        modelDetails['original_model'] = row.original_model
         modelDetails['publication_id'] = row.publication_id
         modelDetails['publication_id_type'] = row.publication_id_type
     } catch(Exception e) {
