@@ -9,6 +9,7 @@
     facets.eachWithIndex {value, index ->
         listOfFacets.add(index)
     }
+    def specialCharacters = "([:+\\(\\)\\[\\]\\{\\}\\|\\*\\&\"\\?\'\\!\\^])"
 %>
 
 <g:if test="${models}">
@@ -23,15 +24,19 @@
                 <g:each in="${facet.facetValues}" var="fv">
                     <li>
                     <%
-                        boolean isAsked = query.contains("${facet.id}:${fv.value}")
+                        String escapedFacetValue = fv.value.replaceAll("${specialCharacters}", '\\\\$1')
+                        boolean isAsked = query.contains("${facet.id}:${escapedFacetValue}")
+                        String fvSearchURL = "${grailsApplication.config.grails.serverURL}/search?query=${query}%20and%20${facet.id}%3A${escapedFacetValue}"
                     %>
                     <g:if test="${isAsked}">
-                        <input type="checkbox" value="${fv.value}" checked onchange="runFacetSearch($(this), '${facet.id}' ,'${fv.value}')">
+                        <input type="checkbox" value="${fv.value}" checked 
+				onchange="runFacetSearch($(this), '${facet.id}' ,'${escapedFacetValue}')">
                         <span class="facetLabel">${fv.label} (${fv.count})</span>
                     </g:if>
                     <g:else>
-                        <input type="checkbox" value="${fv.value}" id="choosenFacetValue" onchange="runFacetSearch($(this), '${facet.id}' ,'${fv.value}')">
-                        <a href="${grailsApplication.config.grails.serverURL}/search?query=${query} and ${facet.id}:${fv.value}" class="facetLabel">
+                        <input type="checkbox" value="${fv.value}" id="choosenFacetValue" 
+				onchange="runFacetSearch($(this), '${facet.id}' ,'${escapedFacetValue}')">
+                        <a href="${fvSearchURL}" class="facetLabel">
                             <span class="facetLabel">${fv.label} (${fv.count})</span></a>
                     </g:else></li>
                 </g:each>
@@ -64,13 +69,17 @@
     });
 
     function runFacetSearch(e, facetGroupId, facetValue) {
-        var newSearchURI = "${grailsApplication.config.grails.serverURL}/search?query=${query}"
+        var currentSearchURI = window.location.href;
+        var newSearchURI = "${grailsApplication.config.grails.serverURL}/search?query="
+        var entireQueryString = currentSearchURI.substring(currentSearchURI.search("=") + 1);
+	var lastQueryString = "%20and%20" + facetGroupId + "%3A" + facetValue;
         if (e[0].checked) {
-            newSearchURI += " and " + facetGroupId + ":" + facetValue;
+            entireQueryString += lastQueryString;
         } else {
             // remove the search term out the query string, update newSearchURI
-            newSearchURI = newSearchURI.replace(" and " + facetGroupId + ":" + facetValue, "");
+            entireQueryString = entireQueryString.replace(lastQueryString, "");
         }
+        newSearchURI += entireQueryString;
         window.location.href = newSearchURI;
     }
 </g:javascript>
