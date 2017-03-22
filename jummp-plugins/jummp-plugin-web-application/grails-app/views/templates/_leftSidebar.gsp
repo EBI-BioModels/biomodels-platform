@@ -11,7 +11,22 @@
     }
     def specialCharacters = "([:+\\(\\)\\[\\]\\{\\}\\|\\*\\&\"\\?\'\\!\\^])"
 %>
-
+<g:javascript>
+    function escapeSpecialLuceneCharacters(facet_value) {
+        facet_value = facet_value.replace(/\+/g, '\\+');
+        facet_value = facet_value.replace(/\?/g, '\\?');
+        facet_value = facet_value.replace(/\*/g, '\\*');
+        facet_value = facet_value.replace(/\(/g, '\\(');
+        facet_value = facet_value.replace(/\)/g, '\\)');
+        facet_value = facet_value.replace(/\[/g, '\\[');
+        facet_value = facet_value.replace(/\]/g, '\\]');
+        facet_value = facet_value.replace(/\{/g, '\\{');
+        facet_value = facet_value.replace(/\}/g, '\\}');
+        facet_value = facet_value.replace(/\:/g, '\\:');
+        facet_value = facet_value.replace(/\//g, '\\/');
+        return facet_value;
+    }
+</g:javascript>
 <g:if test="${models}">
     <g:if test="${actionName == 'search'}">
         <h4>Filter your results</h4>
@@ -73,7 +88,8 @@
         var currentSearchURI = window.location.href;
         var newSearchURI = "${grailsApplication.config.grails.serverURL}/search?query="
         var entireQueryString = currentSearchURI.substring(currentSearchURI.search("=") + 1);
-	var lastQueryString = "%20and%20" + facetGroupId + "%3A" + facetValue;
+        facetValue = escapeSpecialLuceneCharacters(facetValue);
+	    var lastQueryString = "+and+" + encodeURIComponent(facetGroupId + ":" + facetValue);
         if (e[0].checked) {
             entireQueryString += lastQueryString;
         } else {
