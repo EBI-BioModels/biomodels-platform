@@ -26,6 +26,7 @@ package net.biomodels.jummp.search
 
 import grails.util.Holders
 import groovy.json.JsonBuilder
+import net.biomodels.jummp.annotationstore.ResourceReference
 import net.biomodels.jummp.core.ModelSearchStrategy
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.ModelFormatAdapter
@@ -47,6 +48,7 @@ import uk.ac.ebi.ddi.ebe.ws.dao.config.AbstractEbeyeWsConfig
 import uk.ac.ebi.ddi.ebe.ws.dao.config.EbeyeWsConfigDev
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Entry
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Facet
+import uk.ac.ebi.ddi.ebe.ws.dao.model.common.FacetValue
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.QueryResult
 
 /**
@@ -207,7 +209,20 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
             results = []
             facets = []
         }
-
+        Set<String> immutableFacets = ["Organisms", "Publication Date", "Omics type"]
+        facets.findAll({ Facet f ->
+            !(immutableFacets.contains(f.label))
+        })*.facetValues.flatten().each { FacetValue value ->
+            String currentLabel = value.label
+            if (currentLabel.contains(" ")) {
+                return
+            }
+            ResourceReference reference = ResourceReference.findWhere(accession: currentLabel)
+            String referenceName = reference?.name
+            if (referenceName) {
+                value.setLabel(referenceName)
+            }
+        }
         if (IS_DEBUG_ENABLED) {
             log.debug("Results processed in ${System.currentTimeMillis() - start}")
         }
