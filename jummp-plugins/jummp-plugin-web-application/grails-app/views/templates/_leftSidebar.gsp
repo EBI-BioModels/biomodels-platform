@@ -26,19 +26,20 @@
                     <%
                         String escapedFacetValue = fv.value.replaceAll("${specialCharacters}", '\\\\$1')
                         boolean isAsked = query.contains("${facet.id}:${escapedFacetValue}")
-                        String fvSearchURL = "${grailsApplication.config.grails.serverURL}/search?query=${query}%20and%20${facet.id}%3A${escapedFacetValue}"
+                        String newQuery = "${query} and ${facet.id}:${escapedFacetValue}"
                     %>
                     <g:if test="${isAsked}">
-                        <input type="checkbox" value="${fv.value}" checked 
-				onchange="runFacetSearch($(this), '${facet.id}' ,'${escapedFacetValue}')">
+                        <input type="checkbox" id="facetValue_${fv.value}" value="${fv.value}" checked title="${fv.value}"
+				            onchange="runFacetSearch($(this), '${facet.id}' ,'${escapedFacetValue}')">
                         <span class="facetLabel">${fv.label} (${fv.count})</span>
                     </g:if>
                     <g:else>
-                        <input type="checkbox" value="${fv.value}" id="choosenFacetValue" 
-				onchange="runFacetSearch($(this), '${facet.id}' ,'${escapedFacetValue}')">
-                        <a href="${fvSearchURL}" class="facetLabel">
-                            <span class="facetLabel">${fv.label} (${fv.count})</span></a>
-                    </g:else></li>
+                        <input type="checkbox" value="${fv.value}" id="choosenFacetValue" title="${fv.value}"
+				            onchange="runFacetSearch($(this), '${facet.id}' ,'${escapedFacetValue}')">
+                        <g:link controller="search" action="search" params="${[query: newQuery]}" class="facetLabel">
+                            <span class="facetLabel">${fv.label} (${fv.count})</span></g:link>
+                    </g:else>
+                    </li>
                 </g:each>
                 </ul>
             </div>
