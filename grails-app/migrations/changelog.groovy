@@ -1229,5 +1229,7 @@ databaseChangeLog = {
 	include file: '20170206_fixRevisionAnnotationAssociations.groovy'
 
 	include file: '20170320_index_annotation_qualifier_uri.groovy'
+
+	include file: '20170322_add_statement_index.groovy'
 }
 
