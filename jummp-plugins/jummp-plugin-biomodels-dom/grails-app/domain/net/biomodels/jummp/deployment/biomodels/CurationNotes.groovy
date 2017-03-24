@@ -41,9 +41,13 @@ class CurationNotes implements Serializable {
     Date lastModified
     String comment
     byte[] curationImage
-    
-    static constraints = {
-        curationImage(nullable:true, maxSize:5242880) // max of 5MB file
+
+    static mapping = {
+        comment type: 'text'
     }
-    
+
+    static constraints = {
+        curationImage(nullable: true, maxSize: 5242880) // max of 5MB file
+        comment nullable: true, blank: false
+    }
 }
