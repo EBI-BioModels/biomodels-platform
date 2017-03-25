@@ -40,6 +40,7 @@ import eu.ddmore.publish.service.PublishException
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import groovy.json.JsonSlurper
+import net.biomodels.jummp.core.model.ModelFormatTransportCommand
 import net.biomodels.jummp.core.model.PublicationDetailExtractionContext
 import org.apache.commons.lang3.exception.ExceptionUtils
 import java.util.zip.ZipEntry
@@ -263,8 +264,14 @@ class ModelController {
             ]
             if (rev.id == modelDelegateService.getLatestRevision(PERENNIAL_ID).id) {
                 flash.genericModel = model
-                forward controller: modelFileFormatService.getPluginForFormat(rev.model.format),
-                            action: "show", id: PERENNIAL_ID
+                ModelFormatTransportCommand format = rev.model.format
+                String formatController =  modelFileFormatService.getPluginForFormat(format)
+                if (formatController) {
+                    forward controller: formatController, action: "show", id: PERENNIAL_ID
+                } else {
+                    final String fmtId = format.identifier
+                    log.error "Could not find a controller for format $fmtId of $PERENNIAL_ID"
+                }
             } else { //showing an old version, with the default page. Do not allow updates.
                 model["canUpdate"] = false
                 model["showPublishOption"] = false
