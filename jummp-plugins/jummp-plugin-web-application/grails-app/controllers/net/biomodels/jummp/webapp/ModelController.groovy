@@ -786,7 +786,7 @@ About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
                 flow.workingMemory.remove("changedMainFiles")
                 submissionService.performValidation(flow.workingMemory)
                 MFTC format = flow.workingMemory.get("model_type")
-                if (format && format.identifier !="UNKNOWN" && format.formatVersion == "*") {
+                if (format && format.identifier !="UNKNOWN" && format.identifier != "matlab" && format.formatVersion == "*") {
                     UnknownFormatVersion()
                 }
                 else if (!flow.workingMemory.containsKey("validation_error")) {
