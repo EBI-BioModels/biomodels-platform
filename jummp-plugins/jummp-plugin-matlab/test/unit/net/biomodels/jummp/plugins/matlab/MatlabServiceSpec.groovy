@@ -64,7 +64,7 @@ class MatlabServiceSpec extends Specification {
 % b=wtsgaus(p,N);
 % Last revised 2003-3-14
 %
-% Weights for gaussian filter with specified frequency response 
+% Weights for gaussian filter with specified frequency response
 % Specify te wavelength for the 0.50 respons, and the length of series, get
 % the coefficients, or weights
 %
@@ -76,10 +76,10 @@ class MatlabServiceSpec extends Specification {
 %*** OUTPUT
 %
 % b (1 x n)r  computed weights
-% 
+%
 %
 %*** REFERENCES
-% 
+%
 % WMO 1966, p. 47
 %
 %*** UW FUNCTIONS CALLED -- NONE
@@ -87,7 +87,7 @@ class MatlabServiceSpec extends Specification {
 %
 %*** NOTES
 %
-% Amplitude of frequency response drops to 0.50 at a wavelength of 
+% Amplitude of frequency response drops to 0.50 at a wavelength of
 % about 6 standard deviations of the appropriate guassian curve
 %
 % N is used as an input to restict the possible filter size (number of weights) to
@@ -157,6 +157,13 @@ view(3)
 
         then: 'areFilesThisFormat returns true'
         service.areFilesThisFormat files
+
+        when: 'the file is empty'
+        def f2 = File.createTempFile("matlab", '.m', tmpFolder)
+	 f2.text = ""
+
+        then: 'areFilesThisFormat returns false'
+        !service.areFilesThisFormat([f2])
     }
 }
 
@@ -164,8 +171,8 @@ view(3)
  * Mock ModelFileFormatService implementation to be used for this unit tests.
  *
  * The class under test needs to be able to call the ModelFileFormatService bean
- * in order to validate requests 
- * Its reference implementation is in the main application. 
+ * in order to validate requests
+ * Its reference implementation is in the main application.
  */
 class MockFormatService {
     /**
