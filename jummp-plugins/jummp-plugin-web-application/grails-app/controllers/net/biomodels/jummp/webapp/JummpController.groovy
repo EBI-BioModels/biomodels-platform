@@ -34,7 +34,7 @@ class JummpController {
     def grailsApplication
     def teamService
 
-    @Secured(["isAuthenticated()"])
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def feedback() {
         String theme = grailsApplication.config.jummp.branding.style
         if ('ddmore' != theme && 'biomodels' != theme) {
