@@ -45,7 +45,7 @@
         <!-- show descriptive statistics, GO chart, etc. -->
         <g:render template="/templates/rightSidebar" model="['action': 'search']"/>
     </content>
-    <content tag="searchQuery">
+    <content tag="search">
         ${query}
     </content>
 

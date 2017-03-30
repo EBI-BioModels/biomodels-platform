@@ -20,13 +20,16 @@
 <nav>
 <ul class="grid_24 main-menu dropdown menu float-left columns medium-12"
     id="local-nav" data-dropdown-menu="true" role="menubar">
-    <li <g:if test="${g.pageProperty(name:'page.browse')?.length()}"> class="first active" </g:if> role="menuitem">
-        <a href="${g.createLink(controller: 'search', action: 'list')}">Browse</a>
+    <li <g:if test="${g.pageProperty(name:'page.search')?.length()}"> class="first active" </g:if> role="menuitem">
+        <a href="${g.createLink(controller: 'search', action: 'search', params: [query: '*:*'])}">Browse</a>
     </li>
-    <li <g:if test="${g.pageProperty(name:'page.submit')?.length()}"> class="first active" </g:if> role="menuitem">
+    <li <g:if test="${g.pageProperty(name:'page.submit')?.length()}"> class="active" </g:if> role="menuitem">
         <a href="${g.createLink(controller: 'model', action: 'create')}">Submit</a>
     </li>
     <sec:ifLoggedIn>
+        <li <g:if test="${g.pageProperty(name:'page.mymodels')?.length()}"> class="active" </g:if> role="menuitem">
+            <a href="${g.createLink(controller: 'search', action: 'list')}">My Models</a>
+        </li>
         <li <g:if test="${g.pageProperty(name:'page.teams')?.length()}"> class="active" </g:if> role="menuitem">
             <a href="${g.createLink(controller: 'team', action: 'index')}">My Teams</a>
         </li>
@@ -53,7 +56,8 @@
         </li>
         <li class="functional float-right" role="menuitem" id="notificationCount">
       		<a title="View ${sec.username()}'s Notifications" href='<g:createLink controller="notification" action="list"/>'>
-                <img width="20" height="auto" title="notifications" src="${grailsApplication.config.grails.serverURL}/images/email.png"/>
+                <img width="20" height="auto" title="notifications"
+                     src="${grailsApplication.config.grails.serverURL}/images/email.png"/>
       			<span id="notificationLink" style="display: none;"></span>
       		</a>
       	</li>
