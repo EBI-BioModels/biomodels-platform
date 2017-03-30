@@ -117,10 +117,10 @@
                                 </div>
                                 <p id="example">
                                     Examples:
-                                    <g:link controller="search" action="search" params="${[query: "*:*"]}" class="secondary label" title="everything">*:*</g:link>
-                                    <g:link controller="search" action="search" params="${[query: "health"]}" class="secondary label" title="everything">health</g:link>
-                                    <g:link controller="search" action="search" params="${[query: "homo sapiens"]}" class="secondary label" title="everything">homo sapiens</g:link>
-                                    <g:link controller="search" action="search" params="${[query: "lung cancer"]}" class="secondary label" title="everything">lung cancer</g:link>
+                                    <g:link controller="search" action="search" params="${[query: "*:*"]}" class="secondary label" title="Search all">*:*</g:link>
+                                    <g:link controller="search" action="search" params="${[query: "MAPK cascade"]}" class="secondary label" title="Search by GO term">MAPK cascade</g:link>
+                                    <g:link controller="search" action="search" params="${[query: "homo sapiens"]}" class="secondary label" title="Search by Taxonomy term">homo sapiens</g:link>
+                                    <g:link controller="search" action="search" params="${[query: "lung cancer"]}" class="secondary label" title="Search by Disease term">lung cancer</g:link>
                                 </p>
                             </fieldset>
                         </form>
