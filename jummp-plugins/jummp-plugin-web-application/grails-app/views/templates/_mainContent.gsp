@@ -25,6 +25,12 @@
                     </sec:ifLoggedIn>
                 </g:if>
                 <g:else>
+                    <g:if test="${params.flashMessage}">
+                        <div class="alert warning">
+                            <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+                            <h5>${params.flashMessage}</h5>
+                        </div>
+                    </g:if>
                     <span>Search terms: </span><span id="searchString" style="font-weight: bolder"></span>
                 </g:else>
                 <ul class="float-right" style="margin-right: 14px">
@@ -187,5 +193,9 @@
         <g:else>
             <p>No available models matched your query. Please try logging in to access more models, or another search query.</p>
         </g:else>
+        <div class="alert info">
+            <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+            <h5>Please also check the syntax of your search terms.</h5>
+        </div>
     </g:else>
 </div>

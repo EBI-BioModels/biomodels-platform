@@ -180,6 +180,11 @@ class SearchController {
         sanitiseParams()
         if (!params.query) {
             params.query = ""
+        } else {
+            if (params.query in ["*", "*.*", "*?*", "***"]) {
+                params.query = "*:*"
+                params.flashMessage = "Please use *:* to browse all models."
+            }
         }
         def results = searchCore(params.query, params.sortBy, params.sortDir, params.offset, params.numResults)
         if (!params.format || params.format=="html") {
