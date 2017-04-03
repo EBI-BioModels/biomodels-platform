@@ -75,15 +75,15 @@
                             <h4>
                                 <a href="${modelUrl}">${model.name}</a><br/>
                                 <span style="font-size: small; margin: -25px 0;">
+                                ID: ${model.publicationId ?: model.submissionId} |
                                 Format: ${model.format.name} |
                                 Submitter: ${model.submitter} |
                                 Uploaded date: ${model.submissionDate.format('yyyy/MM/dd')} |
-                                Last modified date: ${model.lastModifiedDate.format('yyyy/MM/dd')} |
-                                ID: ${model.publicationId ?: model.submissionId}
+                                Last modified date: ${model.lastModifiedDate.format('yyyy/MM/dd')}
                                 </span>
                             </h4>
-                            <span id="modelDescription"></span>
-                            <p style="font-size: 90%; margin-bottom: 0.5%">${descriptionShown}</p>
+                            %{--<span id="modelDescription"></span>
+                            <p style="font-size: 90%; margin-bottom: 0.5%">${descriptionShown}</p>--}%
                         </div>
                     </div>
                     </g:each>
