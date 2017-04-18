@@ -32,6 +32,7 @@
   <!-- A few keywords that relate to the content of THIS PAGE (not the whol project) -->
   <meta name="keywords" content="bioinformatics, europe, institute">
   <meta name="jummp" content="EMBL-EBI"/><!-- Your [project-name] here -->
+  <meta name="ebi:localmasthead-color" content="#254146">
   <meta name="ebi:localmasthead-image" content="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/images/backgrounds/embl-ebi-background.jpg"/>
 
   <!-- Mobile viewport optimized: j.mp/bplateviewport -->
