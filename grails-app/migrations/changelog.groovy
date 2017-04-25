@@ -1235,5 +1235,9 @@ databaseChangeLog = {
     include file: 'delta.groovy'
 
     include file: '20170316_makeURIsUnique.groovy'
+
+    include file: '20170320_index_annotation_qualifier_uri.groovy'
+
+    include file: '20170322_add_statement_index.groovy'
 }
 
