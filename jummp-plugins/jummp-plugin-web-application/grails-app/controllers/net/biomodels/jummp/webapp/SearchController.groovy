@@ -32,6 +32,7 @@ package net.biomodels.jummp.webapp
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.authentication.GrailsAnonymousAuthenticationToken
+import groovy.json.JsonBuilder
 import net.biomodels.jummp.core.adapters.DomainAdapter
 import net.biomodels.jummp.core.model.ModelListSorting
 import net.biomodels.jummp.core.model.ModelTransportCommand
@@ -42,6 +43,7 @@ import net.biomodels.jummp.webapp.rest.search.BrowseResults
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.search.SearchResponse
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Facet
+import uk.ac.ebi.ddi.ebe.ws.dao.model.common.FacetValue
 
 @Secured(['IS_AUTHENTICATED_FULLY'])
 class SearchController {
@@ -63,7 +65,7 @@ class SearchController {
     def modelHistoryService
 
     def index = {
-        redirect action: 'list'
+        redirect action: 'search'
     }
 
     private boolean integerCheck(def input, boolean minValueCheck=false, int minValue=-1) {
@@ -146,10 +148,10 @@ class SearchController {
     /**
      * Default action showing a list view
      */
-    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    @Secured(['IS_AUTHENTICATED_FULLY'])
     def list() {
         sanitiseParams()
-        def results = browseCore(params.sortBy, params.sortDir, params.offset, params.numResults)
+        def results = browseCore(params.sortBy, params.sortDir, params.offset, params.numResults, params.query)
 
         if (!params.format || params.format=="html") {
             results["history"] = modelHistoryService.history()
@@ -230,6 +232,7 @@ class SearchController {
                 }
             })
         }
+        JsonBuilder builder = new JsonBuilder(facets)
         int sortDir = 1
         if (sortDirection && sortDirection == "asc") {
             sortDir = -1
@@ -268,8 +271,9 @@ class SearchController {
             models = models[0..length-1]
         }
 
-        return [models: models, facets: facets, matches: totalCount, sortBy: sortBy, sortDirection: sortDirection,
-                    offset: paginationCriteria['start'], length: paginationCriteria['length'], query: query]
+        return [models: models, facets: facets, matches: totalCount, sortBy: sortBy,
+                sortDirection: sortDirection, offset: paginationCriteria['start'],
+                length: paginationCriteria['length'], query: query, facetStats: builder.toString()]
     }
 
     private def archiveCore(String sortBy, String sortDirection, int offset, int length) {
@@ -308,7 +312,7 @@ class SearchController {
                     sortDirection: sortDirection, offset: offset, length: length]
     }
 
-    private def browseCore(String sortBy, String sortDirection, int offset, int length) {
+    private def browseCore(String sortBy, String sortDirection, int offset, int length, String filter) {
         int sortDir = 1
         if (sortDirection == "asc") {
             sortDir = -1
@@ -334,16 +338,69 @@ class SearchController {
                 sort = ModelListSorting.ID
                 break
         }
-        List modelsDomain = modelService.getAllModels(offset, length, sortDirection == "asc", sort)
+        List modelsDomain = modelService.getAllModels(offset, length, sortDirection == "asc", sort, filter)
         List models = []
         modelsDomain.each {
             models.add(DomainAdapter.getAdapter(it).toCommandObject())
         }
-        //List<String> facets = ["My models", "Format", "Status"]
-        List<String> facets = []
-        int totalCount = modelService.getModelCount()
-        return [models: models, facets: facets, modelsAvailable: totalCount, sortBy: sortBy,
+        List<Facet> basicFacets = buildBasicFacets(models)
+        int totalCount = models.size()
+        return [models: models, facets: basicFacets, modelsAvailable: totalCount, sortBy: sortBy,
                 sortDirection: sortDirection, offset: offset, length: length]
+    }
+
+    private List<Facet> buildBasicFacets(List<ModelTransportCommand> models) {
+        List<Facet> facets = []
+        def formats = models.collect(
+            new HashSet(), {
+            [it.format.identifier, it.format.name, 0]
+        })
+        def submitters = models.collect(
+            new HashSet(), {
+            [it.submitter, 0]
+        })
+
+        models.each {
+            String format = it.format.identifier
+            formats.each {
+                if (it[0] == format) {
+                    it[2] += 1
+                }
+            }
+
+            String submitter = it.submitter
+            submitters.each {
+                if (it[0] == submitter) {
+                    it[1] += 1
+                }
+            }
+        }
+
+        def facet = new Facet()
+        List<FacetValue> fvs = []
+        facet.id = "Format"
+        facet.label = "Format"
+        facet.facetValues = []
+        formats.each {
+            FacetValue fv = new FacetValue(label: it[1], value: it[0], count: it[2])
+            fvs << fv
+        }
+        facet.facetValues = fvs
+        facets << facet
+
+        facet = new Facet()
+        fvs = []
+        facet.id = "Submitter"
+        facet.label = "Collaborator"
+        facet.facetValues = []
+        submitters.each {
+            FacetValue fv = new FacetValue(label: it[0], value: it[0], count: it[1])
+            fvs << fv
+        }
+        facet.facetValues = fvs
+        facets << facet
+
+        facets
     }
 
     private String getSortColumn(int sc) {
