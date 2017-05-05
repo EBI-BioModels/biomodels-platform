@@ -1235,5 +1235,7 @@ databaseChangeLog = {
     include file: 'delta.groovy'
 
     include file: '20170316_makeURIsUnique.groovy'
+
+    include file: '20170410_addShortDescription_PreviewImage_MOM.groovy'
 }
 
