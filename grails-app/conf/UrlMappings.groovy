@@ -70,10 +70,12 @@ class UrlMappings {
         "/search"(controller: "search", action: "search")
         "/omicsdi"(controller: "omicsdi", action: "index")
         "/archive"(controller: "search", action: "archive")
-        "/support"(controller:"jummp", action:"feedback")
-        "/lookupUser"(controller:"jummp", action:"lookupUser")
+        "/support"(controller: "jummp", action: "support")
+        "/about"(controller: "jummp", action: "aboutus")
+        "/contact"(controller: "jummp", action: "contactus")
+        "/lookupUser"(controller: "jummp", action: "lookupUser")
         if (Holders.config.jummp.security.anonymousRegistration) {
-            "/registration"(controller:"usermanagement", action:"create")
+            "/registration"(controller: "usermanagement", action:"create")
         }
         "/forgotpassword"(controller:"usermanagement", action:"forgot")
         "/user/editUser"(controller:"usermanagement", action:"edit")

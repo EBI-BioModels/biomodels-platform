@@ -119,8 +119,8 @@
             </li>
         </sec:ifLoggedIn>
         <li class="expanded">
-          <a href="${g.createLink(controller: 'jummp', action: 'feedback')}"
-            <g:if test="${g.pageProperty(name:'page.feedback')?.length()}">
+          <a href="${g.createLink(controller: 'jummp', action: 'contactus')}"
+            <g:if test="${g.pageProperty(name:'page.contactus')?.length()}">
             class="active-trail active"
             </g:if>>
             <g:message code="jummp.feedback.ddmore.title"/></a>

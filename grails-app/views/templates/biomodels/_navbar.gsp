@@ -34,9 +34,26 @@
             <a href="${g.createLink(controller: 'team', action: 'index')}">My Teams</a>
         </li>
     </sec:ifLoggedIn>
-    <li <g:if test="${g.pageProperty(name:'page.feedback')?.length()}"> class="active" </g:if> role="menuitem">
-        <a href="${g.createLink(controller: 'jummp', action: 'feedback')}">
-            <g:message code="jummp.feedback.biomodels.title"/>
+    <li <g:if test="${g.pageProperty(name:'page.support')?.length()}"> class="active" </g:if> role="menuitem">
+        <a href="${g.createLink(controller: 'jummp', action: 'support')}">
+            <g:message code="jummp.support.biomodels.title"/>
+        </a>
+        <ul class="menu">
+            <li><a href="http://www.ebi.ac.uk/biomodels-main/faq" target="_blank">FAQ</a></li>
+            <li><a href="http://www.ebi.ac.uk/biomodels-main/courses">Courses</a></li>
+            <li><a href="http://www.ebi.ac.uk/biomodels/tools/converters/" target="_blank">Online converters</a></li>
+            <li><a href="https://www.ebi.ac.uk/rdf/services/biomodels/sparql" target="_blank">SPARQL Endpoint</a></li>
+            <li><a href="https://bitbucket.org/jummp/jummp">Technical corner</a></li>
+        </ul>
+    </li>
+    <li <g:if test="${g.pageProperty(name:'page.aboutus')?.length()}"> class="active" </g:if> role="menuitem">
+        <a href="${g.createLink(controller: 'jummp', action: 'aboutus')}">
+            <g:message code="jummp.aboutus.biomodels.title"/>
+        </a>
+    </li>
+    <li <g:if test="${g.pageProperty(name:'page.contactus')?.length()}"> class="active" </g:if> role="menuitem">
+        <a href="${g.createLink(controller: 'jummp', action: 'contactus')}">
+            <g:message code="jummp.contactus.biomodels.title"/>
         </a>
     </li>
     <!-- If you need to include functional (as opposed to purely navigational) links in your local menu,

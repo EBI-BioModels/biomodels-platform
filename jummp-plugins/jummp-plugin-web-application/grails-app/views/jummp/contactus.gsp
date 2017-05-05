@@ -32,10 +32,10 @@
 </head>
 <body>
 	<g:message code="${messageCode}" />
-</body>	
-<content tag="feedback">
+</body>
+<content tag="contactus">
     	selected
 </content>
 <content tag="title">
-	<g:message code="${titleCode}" default="Feedback" />
+	<g:message code="${titleCode}" default="Contact us" />
 </content>

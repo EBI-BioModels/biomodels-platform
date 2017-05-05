@@ -34,15 +34,36 @@ class JummpController {
     def grailsApplication
     def teamService
 
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
-    def feedback() {
-        String theme = grailsApplication.config.jummp.branding.style
-        if ('ddmore' != theme && 'biomodels' != theme) {
+    final List<String> AUDIT_EXCEPTIONS = ['support', 'aboutus', 'contactus', 'lookupUser',
+                                           'autoCompleteUser', 'teamLookup']
+    String theme
+
+    //def beforeInterceptor = [action: this.&detectTheme, except: AUDIT_EXCEPTIONS]
+
+    private void detectTheme() {
+        theme = grailsApplication.config.jummp.branding.style
+        if (!theme)
             theme = 'default'
-        }
-        [messageCode: "jummp.feedback.${theme}.message",
-            titleCode: "jummp.feedback.${theme}.title"
-        ]
+    }
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def support() {
+        detectTheme()
+        [messageCode: "jummp.support.${theme}.message",
+         titleCode: "jummp.support.${theme}.title"]
+    }
+
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def aboutus() {
+        detectTheme()
+        [messageCode: "jummp.aboutus.${theme}.message",
+         titleCode: "jummp.aboutus.${theme}.title"]
+    }
+
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def contactus() {
+        detectTheme()
+        [messageCode: "jummp.contactus.${theme}.message",
+         titleCode: "jummp.contactus.${theme}.title"]
     }
 
     def lookupUser = {
