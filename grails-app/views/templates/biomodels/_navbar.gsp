@@ -23,13 +23,15 @@
     <li <g:if test="${g.pageProperty(name:'page.search')?.length()}"> class="first active" </g:if> role="menuitem">
         <a href="${g.createLink(controller: 'search', action: 'search', params: [query: '*:*'])}">Browse</a>
     </li>
-    <li <g:if test="${g.pageProperty(name:'page.submit')?.length()}"> class="active" </g:if> role="menuitem">
-        <a href="${g.createLink(controller: 'model', action: 'create')}">Submit</a>
-    </li>
     <sec:ifLoggedIn>
         <li <g:if test="${g.pageProperty(name:'page.mymodels')?.length()}"> class="active" </g:if> role="menuitem">
             <a href="${g.createLink(controller: 'search', action: 'list')}">My Models</a>
         </li>
+    </sec:ifLoggedIn>
+    <li <g:if test="${g.pageProperty(name:'page.submit')?.length()}"> class="active" </g:if> role="menuitem">
+        <a href="${g.createLink(controller: 'model', action: 'create')}">Submit</a>
+    </li>
+    <sec:ifLoggedIn>
         <li <g:if test="${g.pageProperty(name:'page.teams')?.length()}"> class="active" </g:if> role="menuitem">
             <a href="${g.createLink(controller: 'team', action: 'index')}">My Teams</a>
         </li>
