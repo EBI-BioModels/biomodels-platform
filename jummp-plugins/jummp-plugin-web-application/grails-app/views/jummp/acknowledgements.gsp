@@ -25,6 +25,11 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <head>
     <meta name="layout" content="${session['branding.style']}/main" />
+    <style type="text/css">
+        .underline {
+            border-bottom: 1px solid grey;
+        }
+    </style>
 </head>
 <body>
 
@@ -39,7 +44,7 @@ BioModels Database is developed by the <a href="http://biomodels.net/" title="Bi
 </div>
 
 
-<h3>BioModels Database funders</h3>
+<h3 class="underline">BioModels Database funders</h3>
 
 <p>
   BioModels Database is supported by the <a href="http://www.embl.org/" class="external">European Molecular Biology Laboratory</a>, the <a href="http://www.bbsrc.ac.uk/" class="external">Biotechnology and Biological Sciences Research Council</a>, the <a href="http://www.imi.europa.eu/" title="Innovative Medicines Initiative (IMI)">Innovative Medicines Initiative</a> (<a href="http://ddmore.eu/" title="Drug Disease Model Resources (DDMoRe)">DDMoRe</a>) and the <a href="http://cordis.europa.eu/fp7/" title="Seventh Framework Programme (FP7)">Seventh Framework Programme</a> (<a href="http://agedbrainsysbio.eu/" title="AgedBrainSYSBIO: Systems biology of pathways involved in brain ageing">AgedBrainSYSBIO</a>, <a href="http://community.isbe.eu/" title="Infrastructure for Systems Biology – Europe' (ISBE)">ISBE</a>).
@@ -52,14 +57,14 @@ BioModels Database is developed by the <a href="http://biomodels.net/" title="Bi
   <a href="http://cordis.europa.eu/fp7/" title="Seventh Framework Programme (FP7)"><img src="http://www.ebi.ac.uk/biomodels/GRAPHICS/FP7_logo-small.png" title="Seventh Framework Programme (FP7)" alt="FP7 logo" style="padding-left:60px; vertical-align:middle;" /></a>
 </div>
 
-<h3>Former funders</h3>
+<h4>Former funders</h4>
 
 <p>
   BioModels Database also benefited from the help of the <a href="http://www.nigms.nih.gov/" class="external">National Institute of General Medical Sciences</a> (USA), the <a href="http://www.sys-bio.org/" class="external">Sauro Lab</a> (University of Washington, USA), the <a href="http://sbi.jp/" class="external">Systems Biology Institute</a> (Tokyo, JP), and from funds of the <a href="http://www.darpa.mil/" class="external">DARPA</a> (USA).
 </p>
 
 
-<h3>BioModels Database collaboration</h3>
+<h3 class="underline">BioModels Database collaboration</h3>
 
 <!--
 <p>
@@ -76,7 +81,7 @@ BioModels Database is developed by the <a href="http://biomodels.net/" title="Bi
   <a href="http://sems.uni-rostock.de/" title="Simulation Experiment Management for Systems Biology, Systems Biology and Bioinformatics, University of Rostock" style="padding-left:20px;"><img border="0" title="Simulation Experiment Management for Systems Biology" alt="SEMS logo" src="http://www.ebi.ac.uk/biomodels/GRAPHICS/SEMS_logo.png" style="vertical-align:middle;" /></a>
 </div>
 
-<h3>Former collaborators</h3>
+<h4>Former collaborators</h4>
 
 <p>
   BioModels Database collaborated with <a href="http://doqcs.ncbs.res.in/" class="external">DOQCS</a> (National Center for Biological Sciences, India), <a href="http://www.ccam.uchc.edu/" class="external">the Virtual Cell</a> (University of Connecticut Health Center, USA) and the <a href="http://www.cellml.org" class="external">CellML Team</a> (Auckland Bioengineering Institute, NZ).
@@ -103,7 +108,7 @@ BioModels Database is developed by the <a href="http://biomodels.net/" title="Bi
 </p>
 -->
 
-<h3>Scientific Advisory Board</h3>
+<h3 class="underline">Scientific Advisory Board</h3>
 
 <ul>
   <li>Carole Goble, <a href="http://www.manchester.ac.uk/" title="The University of Manchester">University of Manchester</a></li>
@@ -113,7 +118,7 @@ BioModels Database is developed by the <a href="http://biomodels.net/" title="Bi
   <li>Philippe Sanseau, <a href="http://www.gsk.com/" title="GlaxoSmithKline">GSK</a></li>
 </ul>
 
-<h3>Former members</h3>
+<h4>Former members</h4>
 
 <ul>
   <li>Upinder S. Bhalla, National Center for Biological Sciences, Bangalore, IN</li>
