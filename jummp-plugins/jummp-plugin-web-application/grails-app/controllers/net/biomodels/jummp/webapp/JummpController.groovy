@@ -85,6 +85,12 @@ class JummpController {
         render(view: "acknowledgements", model: [titleCode: "jummp.acknowledgements.${theme}.title"])
     }
 
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def jobs() {
+        detectTheme()
+        render(view: "jobs", model: [titleCode: "jummp.jobs.${theme}.title"])
+    }
+
     def lookupUser = {
         if (params.name) {
             String user = userService.getUsername(params.name)

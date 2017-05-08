@@ -57,7 +57,7 @@
             <li><a href="${g.createLink(controller: 'jummp', action: 'howToCiteBioModelsDatabase')}">Citation</a></li>
             <li><a href="${grailsApplication.config.grails.serverURL}/content/news">News</a></li>
             <li><a href="${g.createLink(controller: 'jummp', action: 'acknowledgements')}">Acknowledgements</a></li>
-            <li><a href="https://bitbucket.org/jummp/jummp">Jobs</a></li>
+            <li><a href="${g.createLink(controller: 'jummp', action: 'jobs')}">Jobs</a></li>
         </ul>
     </li>
     <li <g:if test="${g.pageProperty(name:'page.contactus')?.length()}"> class="active" </g:if> role="menuitem">
