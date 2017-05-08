@@ -1,5 +1,5 @@
 /*
- * The notification system depends on including notificationDiv template in the 
+ * The notification system depends on including notificationDiv template in the
  * page (ensuring the presence of the notification div)
  */
 function scheduleHide() {
@@ -25,7 +25,7 @@ function pollForNotifications(url) {
             $("#notificationLink").text(' (' + data + ')');
             $("#notificationLink").show();
         } else {
-            $("#notificationLink").hide();
+            //$("#notificationLink").hide();
         }
     });
 }

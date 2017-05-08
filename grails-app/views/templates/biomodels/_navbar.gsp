@@ -23,23 +23,11 @@
     <li <g:if test="${g.pageProperty(name:'page.search')?.length()}"> class="first active" </g:if> role="menuitem">
         <a href="${g.createLink(controller: 'search', action: 'search', params: [query: '*:*'])}">Browse</a>
     </li>
-    <sec:ifLoggedIn>
-        <li <g:if test="${g.pageProperty(name:'page.mymodels')?.length()}"> class="active" </g:if> role="menuitem">
-            <a href="${g.createLink(controller: 'search', action: 'list')}">My Models</a>
-        </li>
-    </sec:ifLoggedIn>
     <li <g:if test="${g.pageProperty(name:'page.submit')?.length()}"> class="active" </g:if> role="menuitem">
         <a href="${g.createLink(controller: 'model', action: 'create')}">Submit</a>
     </li>
-    <sec:ifLoggedIn>
-        <li <g:if test="${g.pageProperty(name:'page.teams')?.length()}"> class="active" </g:if> role="menuitem">
-            <a href="${g.createLink(controller: 'team', action: 'index')}">My Teams</a>
-        </li>
-    </sec:ifLoggedIn>
     <li <g:if test="${g.pageProperty(name:'page.support')?.length()}"> class="active" </g:if> role="menuitem">
-        <a href="#">
-            <g:message code="jummp.support.biomodels.title"/>
-        </a>
+        <a><g:message code="jummp.support.biomodels.title"/></a>
         <ul class="menu">
             <li><a href="http://www.ebi.ac.uk/biomodels-main/faq" target="_blank">FAQ</a></li>
             <li><a href="http://www.ebi.ac.uk/biomodels-main/courses">Courses</a></li>
@@ -49,9 +37,7 @@
         </ul>
     </li>
     <li <g:if test="${g.pageProperty(name:'page.aboutus')?.length()}"> class="active" </g:if> role="menuitem">
-        <a href="#">
-            <g:message code="jummp.aboutus.biomodels.title"/>
-        </a>
+        <a><g:message code="jummp.aboutus.biomodels.title"/></a>
         <ul class="menu">
             <li><a href="${g.createLink(controller: 'jummp', action: 'termsOfUse')}">Terms of Use</a></li>
             <li><a href="${g.createLink(controller: 'jummp', action: 'howToCiteBioModelsDatabase')}">Citation</a></li>
@@ -70,23 +56,34 @@
        whichever one will show up last...
        For example: -->
     <sec:ifLoggedIn>
-        <li class="functional last float-right" role="menuitem">
-            <a href="${grailsApplication.config.grails.serverURL}/logout" class="icon icon-functional" data-icon="l">
-                <g:message code="jummp.main.logout"/>
-            </a>
-        </li>
         <li class="functional first float-right" role="menuitem">
-            <a href="${grailsApplication.config.grails.serverURL}/user" class="icon icon-functional" data-icon="5">
-                ${sec.username()}'s Profile
-            </a>
+            <a>My Account</a>
+            <ul class="menu">
+                <li><a href="${grailsApplication.config.grails.serverURL}/user" class="icon icon-functional" data-icon="5">
+                    ${sec.username()}'s Profile</a></li>
+                <li class="divider"></li>
+                <li><a href="${g.createLink(controller: 'search', action: 'list')}">
+                    <img width="20" height="auto" title="Click here to see your models"
+                         src="${grailsApplication.config.grails.serverURL}/images/biomodels/mymodels.png"/>&nbsp;My Models</a></li>
+                <li><a href="${g.createLink(controller: 'team', action: 'index')}">
+                    <img width="20" height="auto" title="Click here to see your teams"
+                         src="${grailsApplication.config.grails.serverURL}/images/biomodels/team.png"/>
+                    My Teams</a></li>
+                <li class="functional float-right" role="menuitem" id="notificationCount">
+                    <a title="View ${sec.username()}'s Notifications" href='<g:createLink controller="notification" action="list"/>'>
+                        <img width="20" height="auto" title="Click here to see your notifications"
+                             src="${grailsApplication.config.grails.serverURL}/images/email.png"/>
+                        <span id="notificationLink">My Notifications</span>
+                    </a>
+                </li>
+                <li class="divider"></li>
+                <li class="functional last float-right" role="menuitem">
+                    <a href="${grailsApplication.config.grails.serverURL}/logout" class="icon icon-functional" data-icon="l">
+                        <g:message code="jummp.main.logout"/>
+                    </a>
+                </li>
+            </ul>
         </li>
-        <li class="functional float-right" role="menuitem" id="notificationCount">
-      		<a title="View ${sec.username()}'s Notifications" href='<g:createLink controller="notification" action="list"/>'>
-                <img width="20" height="auto" title="notifications"
-                     src="${grailsApplication.config.grails.serverURL}/images/email.png"/>
-      			<span id="notificationLink" style="display: none;"></span>
-      		</a>
-      	</li>
     </sec:ifLoggedIn>
     <sec:ifNotLoggedIn>
         <li class="functional first float-right" role="menuitem">
