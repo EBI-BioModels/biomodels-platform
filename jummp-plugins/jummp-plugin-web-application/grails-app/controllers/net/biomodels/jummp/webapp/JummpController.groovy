@@ -79,6 +79,12 @@ class JummpController {
         render(view: "howToCite", model: [titleCode: "jummp.howToCite.${theme}.title"])
     }
 
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def acknowledgements() {
+        detectTheme()
+        render(view: "acknowledgements", model: [titleCode: "jummp.acknowledgements.${theme}.title"])
+    }
+
     def lookupUser = {
         if (params.name) {
             String user = userService.getUsername(params.name)
