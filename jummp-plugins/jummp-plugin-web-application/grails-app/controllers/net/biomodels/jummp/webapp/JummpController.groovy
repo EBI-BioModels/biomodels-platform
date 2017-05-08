@@ -66,6 +66,19 @@ class JummpController {
          titleCode: "jummp.contactus.${theme}.title"]
     }
 
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def termsOfUse() {
+        detectTheme()
+        [messageCode: "jummp.termsOfUse.${theme}.message",
+         titleCode: "jummp.termsOfUse.${theme}.title"]
+    }
+
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def howToCiteBioModelsDatabase() {
+        detectTheme()
+        render(view: "howToCite", model: [titleCode: "jummp.howToCite.${theme}.title"])
+    }
+
     def lookupUser = {
         if (params.name) {
             String user = userService.getUsername(params.name)

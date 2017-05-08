@@ -19,7 +19,7 @@
 
 <nav>
 <ul class="grid_24 main-menu dropdown menu float-left columns medium-12"
-    id="local-nav" data-dropdown-menu="true" role="menubar">
+    id="local-nav" data-dropdown-menu role="menubar">
     <li <g:if test="${g.pageProperty(name:'page.search')?.length()}"> class="first active" </g:if> role="menuitem">
         <a href="${g.createLink(controller: 'search', action: 'search', params: [query: '*:*'])}">Browse</a>
     </li>
@@ -35,7 +35,7 @@
         </li>
     </sec:ifLoggedIn>
     <li <g:if test="${g.pageProperty(name:'page.support')?.length()}"> class="active" </g:if> role="menuitem">
-        <a href="${g.createLink(controller: 'jummp', action: 'support')}">
+        <a href="#">
             <g:message code="jummp.support.biomodels.title"/>
         </a>
         <ul class="menu">
@@ -47,9 +47,17 @@
         </ul>
     </li>
     <li <g:if test="${g.pageProperty(name:'page.aboutus')?.length()}"> class="active" </g:if> role="menuitem">
-        <a href="${g.createLink(controller: 'jummp', action: 'aboutus')}">
+        <a href="#">
             <g:message code="jummp.aboutus.biomodels.title"/>
         </a>
+        <ul class="menu">
+            <li><a href="${g.createLink(controller: 'jummp', action: 'termsOfUse')}">Terms of Use</a></li>
+            <li><a href="${g.createLink(controller: 'jummp', action: 'howToCiteBioModelsDatabase')}">Citation</a></li>
+            <li><a href="${grailsApplication.config.grails.serverURL}/content/news">News</a></li>
+            <li><a href="https://www.ebi.ac.uk/rdf/services/biomodels/sparql" target="_blank">Acknowledgements</a></li>
+            <li><a href="https://bitbucket.org/jummp/jummp">Jobs</a></li>
+            <li><a href="https://bitbucket.org/jummp/jummp">Curator Sign in</a></li>
+        </ul>
     </li>
     <li <g:if test="${g.pageProperty(name:'page.contactus')?.length()}"> class="active" </g:if> role="menuitem">
         <a href="${g.createLink(controller: 'jummp', action: 'contactus')}">

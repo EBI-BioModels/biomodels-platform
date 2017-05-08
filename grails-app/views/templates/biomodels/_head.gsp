@@ -87,7 +87,7 @@
           margin: 2px 5px auto;
       }
   </style>
-  <link rel="stylesheet" href="<g:resource dir="css" file="biomodels/biomodels.css"/>" />
+  <link rel="stylesheet" type="text/css" href="<g:resource dir="css" file="biomodels/biomodels.css"/>">
   <!-- end CSS-->
 
   <!-- All JavaScript at the bottom, except for Modernizr / Respond.

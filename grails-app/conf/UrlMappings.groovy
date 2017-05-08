@@ -72,6 +72,8 @@ class UrlMappings {
         "/archive"(controller: "search", action: "archive")
         "/support"(controller: "jummp", action: "support")
         "/about"(controller: "jummp", action: "aboutus")
+        "/termsofuse"(controller: "jummp", action: "termsOfUse")
+        "/citation"(controller: "jummp", action: "howToCiteBioModelsDatabase")
         "/contact"(controller: "jummp", action: "contactus")
         "/lookupUser"(controller: "jummp", action: "lookupUser")
         if (Holders.config.jummp.security.anonymousRegistration) {
