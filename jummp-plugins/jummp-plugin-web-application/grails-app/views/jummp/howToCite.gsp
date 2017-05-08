@@ -37,7 +37,7 @@
     </script>
 </head>
 <body>
-    <h1>How can I quote BioModels Database?</h1>
+    <h2>How can I quote BioModels Database?</h2>
 
 <p>
   Several papers about BioModels Database and related efforts have been published. Please see below for how to cite: <a href="#biom
@@ -51,7 +51,7 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
 </p>
 
 
-<h2 id="biomodels">BioModels Database</h2>
+<h3 id="biomodels">BioModels Database</h3>
 
 <dl>
   <dt>
@@ -186,7 +186,7 @@ akshmi},
 </pre>
 
 
-<h2 id="path2models">Path2Models</h2>
+<h3 id="path2models">Path2Models</h3>
 
 <dl>
   <dt>
@@ -224,7 +224,7 @@ akshmi},
 </pre>
 
 
-<h2 id="associated_services">Associated services</h2>
+<h3 id="associated_services">Associated services</h3>
 
 <dl>
   <dt>
@@ -293,7 +293,7 @@ akshmi},
 </pre>
 
 
-<h2 id="others">Other publications</h2>
+<h3 id="others">Other publications</h3>
 
 <dl>
   <dt>
