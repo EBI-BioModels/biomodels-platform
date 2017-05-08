@@ -54,7 +54,7 @@
             <li><a href="${g.createLink(controller: 'jummp', action: 'termsOfUse')}">Terms of Use</a></li>
             <li><a href="${g.createLink(controller: 'jummp', action: 'howToCiteBioModelsDatabase')}">Citation</a></li>
             <li><a href="${grailsApplication.config.grails.serverURL}/content/news">News</a></li>
-            <li><a href="https://www.ebi.ac.uk/rdf/services/biomodels/sparql" target="_blank">Acknowledgements</a></li>
+            <li><a href="${g.createLink(controller: 'jummp', action: 'acknowledgements')}">Acknowledgements</a></li>
             <li><a href="https://bitbucket.org/jummp/jummp">Jobs</a></li>
             <li><a href="https://bitbucket.org/jummp/jummp">Curator Sign in</a></li>
         </ul>
