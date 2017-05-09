@@ -29,8 +29,8 @@
     <li <g:if test="${g.pageProperty(name:'page.support')?.length()}"> class="active" </g:if> role="menuitem">
         <a><g:message code="jummp.support.biomodels.title"/></a>
         <ul class="menu">
-            <li><a href="http://www.ebi.ac.uk/biomodels-main/faq" target="_blank">FAQ</a></li>
-            <li><a href="http://www.ebi.ac.uk/biomodels-main/courses">Courses</a></li>
+            <li><a href="${g.createLink(controller: 'jummp', action: 'faq')}">FAQ</a></li>
+            <li><a href="${g.createLink(controller: 'jummp', action: 'courses')}">Courses</a></li>
             <li><a href="http://www.ebi.ac.uk/biomodels/tools/converters/" target="_blank">Online converters</a></li>
             <li><a href="https://www.ebi.ac.uk/rdf/services/biomodels/sparql" target="_blank">SPARQL Endpoint</a></li>
             <li><a href="https://bitbucket.org/jummp/jummp">Technical corner</a></li>

@@ -53,6 +53,18 @@ class JummpController {
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def faq() {
+        detectTheme()
+        render(view: "faq", model: [titleCode: "jummp.faq.${theme}.title"])
+    }
+
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def courses() {
+        detectTheme()
+        render(view: "courses", model: [titleCode: "jummp.courses.${theme}.title"])
+    }
+
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def aboutus() {
         detectTheme()
         [messageCode: "jummp.aboutus.${theme}.message",

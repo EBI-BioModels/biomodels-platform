@@ -71,6 +71,8 @@ class UrlMappings {
         "/omicsdi"(controller: "omicsdi", action: "index")
         "/archive"(controller: "search", action: "archive")
         "/support"(controller: "jummp", action: "support")
+        "/faq"(controller: "jummp", action: "faq")
+        "/courses"(controller: "jummp", action: "courses")
         "/about"(controller: "jummp", action: "aboutus")
         "/termsofuse"(controller: "jummp", action: "termsOfUse")
         "/citation"(controller: "jummp", action: "howToCiteBioModelsDatabase")
