@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2017 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -25,20 +25,33 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import grails.transaction.Transactional
-import grails.util.Holders
+import net.biomodels.jummp.core.adapters.ModelAdapter
+import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.model.Model
-import net.biomodels.jummp.model.Revision
 
+/**
+ * @short Service responsible for retrieving necessary data to design front page and
+ * other static pages.
+ *
+ * This class  is used for accessing database and resulting required data aiming to
+ * populate in home page. The example of this use is to get the recently published and accessed models.
+ *
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
+ */
 @Transactional
 class DecorationService {
-
-    static String getPopularModels() {
+    /**
+     * get 10 of the most accessed models from the last six months
+     * @return A map of ModelTransportCommand associating with their hits
+     */
+    Map<ModelTransportCommand, Integer> getRecentlyAccessedModels() {
         String query = '''
 SELECT ma.model, COUNT(*) as hits
 FROM ModelAudit AS ma
 JOIN ma.model AS model
 JOIN model.revisions rev
 WHERE
+  ma.dateCreated BETWEEN :then AND :now AND
   ma.success = 1 AND
   rev.id IN(
      SELECT aoi.objectId
@@ -54,25 +67,29 @@ WHERE
 GROUP BY ma.model
 ORDER BY hits DESC
 '''
-        def matchedModels = Model.executeQuery(query, [max: 10])
-        String result = ""
-        def g = Holders.grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
-        if (matchedModels.size()) {
-            matchedModels.each {
-                Model model = it[0]
-                int nbAccessed = it[1]
-                Revision theLatestRevision = model.revisions.last()
-                String modelUrl = g.createLink(controller: 'model', id: model.publicationId ?: model.submissionId, action: 'show')
-                String modelLink= '<a href=' + '"' + modelUrl + '">' + theLatestRevision.name + '</a>'
-                result += " (" + nbAccessed.toString() + ")\t" + modelLink + "<br/>"
-            }
+        def now = new Date()
+        def then
+        use(groovy.time.TimeCategory) {
+            then = now - 6.months
         }
-        return result
+        def matchedModels = Model.executeQuery(query, [then: then, now: now, max: 10])
+        Map<ModelTransportCommand, Integer> returnedModels = new HashMap<Model, Integer>()
+        matchedModels.each {
+            Model model = it[0]
+            ModelTransportCommand mtc = new ModelAdapter(model: model).toCommandObject()
+            int hits = it[1]
+            returnedModels.put(mtc, hits)
+        }
+        returnedModels
     }
 
-    static String getLatestPublishedModels() {
+    /**
+     * get 10 of the most recently published models
+     * @return A map of ModelTransportCommand associating with latest published date
+     */
+    Map<ModelTransportCommand, Date> getRecentlyPublishedModels() {
         String query = '''
-SELECT model, max(rev.uploadDate), max(rev.revisionNumber)
+SELECT model, max(model.firstPublished)
 FROM Model AS model
 JOIN model.revisions AS rev
 WHERE
@@ -88,21 +105,15 @@ WHERE
             AND sid.sid = 'ROLE_ANONYMOUS'
             AND ace.mask = 1)
 GROUP BY model
-ORDER BY rev.uploadDate DESC'''
+ORDER BY model.firstPublished DESC'''
         def matchedModels = Model.executeQuery(query, [max: 10])
-        String result = ""
-        def g = Holders.grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib')
-        if (matchedModels.size()) {
-            matchedModels.each {
-                Model model = it[0]
-                Date uploadDate = it[1]
-                int maxRevisionNumber = it[2]
-                Revision theLatestRevision = model.revisions.find({it.revisionNumber == maxRevisionNumber})
-                String modelUrl = g.createLink(controller: 'model', id: model.publicationId ?: model.submissionId, action: 'show')
-                String modelLink= '<a href=' + '"' + modelUrl + '">' + theLatestRevision.name + '</a>'
-                result += uploadDate.format("dd MMM yyyy").toString() + " " + modelLink + "<br/>"
-            }
+        Map<ModelTransportCommand, Date> returnedModels = new HashMap<ModelTransportCommand, Date>()
+        matchedModels.each {
+            Model model = it[0]
+	        ModelTransportCommand mtc = new ModelAdapter(model: model).toCommandObject()
+            Date uploadDate = it[1]
+            returnedModels.put(mtc, uploadDate)
         }
-        return result
+        returnedModels
     }
 }
