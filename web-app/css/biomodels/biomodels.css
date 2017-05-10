@@ -1134,3 +1134,58 @@ a span.link-pdf {
     background: none;
     padding: 0 0 0 0;
 }
+
+/* The alert message box */
+.alert {
+    padding: 20px;
+    background-color: #f44336; /* Red */
+    color: white;
+    margin-bottom: 15px;
+}
+
+.alert.success {background-color: #4CAF50;}
+.alert.info {background-color: #2196F3;}
+.alert.warning {background-color: #ff9800;}
+
+/* The close button */
+.closebtn {
+    margin-left: 15px;
+    color: white;
+    font-weight: bold;
+    float: right;
+    font-size: 22px;
+    line-height: 20px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+/* When moving the mouse over the close button */
+.closebtn:hover {
+    color: black;
+}
+
+/* chart */
+.arc text {
+    font: 10px sans-serif;
+    text-anchor: middle;
+}
+
+.arc path {
+    stroke: #fff;
+}
+
+#globalchart {
+    width: 380px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+/* external links opened in a popup (displayed with an arrow) */
+a.external:link, a.external:visited {
+    background: transparent url(../../images/biomodels/external_link.gif) no-repeat scroll right center;
+    padding-right: 13px !important;
+}
+a.external:hover, a.external:active {
+    background: transparent url(../../images/biomodels/external_active.gif) no-repeat scroll right center;
+    padding-right: 13px !important;
+}

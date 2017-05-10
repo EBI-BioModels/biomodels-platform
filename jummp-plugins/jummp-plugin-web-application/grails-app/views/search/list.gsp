@@ -46,7 +46,7 @@
         <!-- show facets search on the left side bar -->
         <g:render template="/templates/leftSidebar" />
     </content>
-    <content tag="browse">
+    <content tag="mymodels">
         selected
     </content>
     <content tag="title">

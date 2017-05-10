@@ -491,7 +491,7 @@ class SubmissionService {
             try {
                 List<RFTC> repoFiles = getRepFiles(workingMemory)
                 File parent = null
-                repoFiles.each { RFTC it ->
+                repoFiles?.each { RFTC it ->
                     File deleteMe = new File(it.path)
                     if (!parent) {
                         parent = deleteMe.getParentFile()

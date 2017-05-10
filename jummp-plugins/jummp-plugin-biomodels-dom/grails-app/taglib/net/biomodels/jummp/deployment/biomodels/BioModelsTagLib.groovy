@@ -38,6 +38,8 @@ class BioModelsTagLib {
      */
     def modelOfTheMonthService
 
+    def decorationService
+
     /**
      * Displays the Model of the Month (MoM) entry for the given model.
      *
@@ -93,5 +95,10 @@ class BioModelsTagLib {
 
     def renderCurationStatus = { attrs ->
         out << attrs.curationStatus
+    }
+
+    def renderLatestPublisedModels = {attrs ->
+        String result = decorationService.getLatestPublishedModels()
+        out << result
     }
 }
