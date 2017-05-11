@@ -117,10 +117,10 @@
                                 </div>
                                 <p id="example">
                                     Examples:
-                                    <a class="secondary label" href="${grailsApplication.config.grails.serverURL}/search?query=health">health</a>
-                                    <a class="secondary label" href="${grailsApplication.config.grails.serverURL}/search?query=homo sapiens">homo sapiens</a>
-                                    <a class="secondary label" href="${grailsApplication.config.grails.serverURL}/search?query=lung cancer">lung cancer</a>
-                                    <span>...</span>
+                                    <g:link controller="search" action="search" params="${[query: "*:*"]}" class="secondary label" title="Search all">*:*</g:link>
+                                    <g:link controller="search" action="search" params="${[query: "MAPK cascade"]}" class="secondary label" title="Search by GO term">MAPK cascade</g:link>
+                                    <g:link controller="search" action="search" params="${[query: "homo sapiens"]}" class="secondary label" title="Search by Taxonomy term">homo sapiens</g:link>
+                                    <g:link controller="search" action="search" params="${[query: "lung cancer"]}" class="secondary label" title="Search by Disease term">lung cancer</g:link>
                                 </p>
                             </fieldset>
                         </form>

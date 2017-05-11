@@ -18,21 +18,24 @@
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
  **/
 
+
 import grails.converters.JSON
 import groovy.sql.Sql
-import groovyx.gpars.GParsPool
-import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.locks.ReentrantLock
-import java.util.regex.Pattern
 import net.biomodels.jummp.core.model.ModelState
 import net.biomodels.jummp.core.model.ValidationState
+import net.biomodels.jummp.model.Flag
 import org.springframework.orm.hibernate4.SessionHolder
 import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.transaction.support.TransactionSynchronizationManager
+
+import org.apache.commons.io.IOUtils
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.locks.ReentrantLock
+import java.util.regex.Pattern
 
 includeTargets << grailsScript("_GrailsArgParsing")
 includeTargets << grailsScript("_GrailsBootstrap")
@@ -170,6 +173,7 @@ def Role
 def UserRole
 def Person
 def AclSid
+def ftc
 def rftc
 def mftc
 def rtc
@@ -206,6 +210,7 @@ def sessionFactory
 def pubMedService
 def publicationService
 def modelService
+def modelFlagService
 def modelFileFormatService
 def userService
 def springSecurityService
@@ -391,6 +396,7 @@ target(bootstrapJummp: 'Creates a fully-initialised JUMMP environment loaded wit
 
     // bootstrap code and plugins' doWithSpring closure not executed, call relevant parts manually
     populatePublicationLinkProviders()
+    populateModelFlagTypes()
     registerFormatHandlers()
     fixValidationForExternalDomainClasses()
 }
@@ -523,6 +529,7 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
     plptc = loadClass("net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand")
     ptc = loadClass("net.biomodels.jummp.core.model.PublicationTransportCommand")
     personTC = loadClass("net.biomodels.jummp.plugins.security.PersonTransportCommand")
+    ftc = loadClass("net.biomodels.jummp.core.model.FlagTransportCommand")
 
     // submission-related domain classes
     Person = loadClass("net.biomodels.jummp.plugins.security.Person")
@@ -558,6 +565,7 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
     rtc.context = appCtx
     sessionFactory = appCtx.sessionFactory
     modelService = appCtx.modelService
+    modelFlagService = appCtx.modelFlagService
     publicationService = appCtx.publicationService
     pubMedService = appCtx.pubMedService
     modelFileFormatService = appCtx.modelFileFormatService
@@ -703,6 +711,8 @@ processModelFolder = { File folder ->
         // submittedModel is now stale -- it still thinks there's only 1 revision
         // need to manually update
         submittedModel = revision.model
+        // persist model flags
+        persistModelFlags(modelDetails, submittedModel)
         addRevisionAnnotations(revision, BRANCH, modelDetails, submitter)
         def revisions = submittedModel.revisions
         revisions.each { r ->
@@ -809,10 +819,10 @@ addRevision = { modelId, parent, model ->
 addRevisionAnnotations = { revision, branch, modelDetails, user ->
     boolean inPubl = isCuratedAndPublished(branch)
     String author = user.person.userRealName
-    createBMAnnotation(revision, inPubl, 'curated', author)
+    createBMAnnotation(revision, inPubl, 'curated', "biomodelsCustomAnnotation", "", author)
     String jws = modelDetails['jwsLink']
     if (jws) {
-        createBMAnnotation(revision, jws, 'onlineSimulation', author)
+        createBMAnnotation(revision, jws, 'onlineSimulation', "biomodelsCustomAnnotation", "", author)
     }
     def publicationId = getPublicationIdFromModelDetails(modelDetails)
     def publicationType = getPublicationTypeFromModelDetails(modelDetails)
@@ -820,8 +830,13 @@ addRevisionAnnotations = { revision, branch, modelDetails, user ->
     if (havePublication) {
         addPublicationDetails(revision.model, publicationId, publicationType)
         String publicationURI = getPublicationLink(publicationId, publicationType)
-        createBMAnnotation(revision, publicationURI, "originalModel", author)
+        createBMAnnotation(revision, publicationURI, "originalModel", "biomodelsCustomAnnotation", "", author)
     }
+    String original_model = modelDetails['original_model']
+    if (original_model) {
+        createBMAnnotation(revision, original_model, "isDerivedFrom", "ModelQualifier", "http://biomodels.net/model-qualifiers/", author)
+    }
+
     def lastModified = modelDetails['lastModified']
     revision.uploadDate = lastModified
     revision.save()
@@ -1556,6 +1571,63 @@ populatePublicationLinkProviders = {
             pattern: "^(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]"))
 }
 
+addFlagType = { def cmd ->
+    def label = cmd.label
+    if (!Flag.findByLabel(label)) {
+        modelFlagService.saveFlag(cmd.label, cmd.description, cmd.icon)
+    }
+}
+// add model flag types such as Non Kinetic, Non Miriam, Sbml Extended
+populateModelFlagTypes = {
+    def iconFiles = ["http://www.ebi.ac.uk/biomodels//icons/nonkineticFlag.png",
+                     "http://www.ebi.ac.uk/biomodels//icons/nonMiriamFlag.png",
+                     "http://www.ebi.ac.uk/biomodels//icons/sbmlExtendedFlag.png"]
+    def icons = []
+    iconFiles.each {
+        def urlImage = new URL(it)
+        def InputStream is = new BufferedInputStream(urlImage.openStream())
+        byte[] bytes = IOUtils.toByteArray(is)
+        icons << bytes
+    }
+
+    addFlagType(ftc.newInstance(
+        label: "Non Kinetic",
+        description: "The model is not a kinetic model and cannot be instantiated in a dynamic simulation",
+        icon: icons[0]
+    ))
+
+    addFlagType(ftc.newInstance(
+        label: "Non Miriam",
+        description: "The model is not MIRIAM compliant",
+        icon: icons[1]
+    ))
+
+    addFlagType(ftc.newInstance(
+        label: "Sbml Extended",
+        description: "This model is a valid SBML model, but some important parts are encoded in the annotation of the model",
+        icon: icons[2]
+    ))
+}
+
+/**
+ * for non-curated models from biomodels take into account the following columns:
+ * non_kinetic, non_miriam, sbml_extended and create the respective flags for each imported model;
+ */
+persistModelFlags = {modelDetails, submittedModel ->
+    if (modelDetails['non_kinetic'] == "Y") {
+        def flag = Flag.findByLabel("Non Kinetic")
+        modelFlagService.flagModel(submittedModel, flag)
+    }
+    if (modelDetails['non_miriam'] == "Y") {
+        def flag = Flag.findByLabel("Non Miriam")
+        modelFlagService.flagModel(submittedModel, flag)
+    }
+    if (modelDetails['sbml_extended'] == "Y") {
+        def flag = Flag.findByLabel("Sbml Extended")
+        modelFlagService.flagModel(submittedModel, flag)
+    }
+}
+
 /**
  * Processes model of the month for a given model. The model of the month can
  * be comprised of several models, therefore the ModelOfTheMonth.models collection
@@ -1605,7 +1677,7 @@ getBranch = { modelId ->
     }
 }
 
-createBMAnnotation = { revision, object, qual, creator ->
+createBMAnnotation = { revision, object, qual, qualType, qualNamespace, creator ->
     String id = revision?.model?.publicationId ?: revision?.model?.submissionId
     if (revision.hasErrors() || !revision?.id) {
         def anno = "$creator ${object.properties} ${object.properties}"
@@ -1623,10 +1695,10 @@ createBMAnnotation = { revision, object, qual, creator ->
         resourceRef = ResourceReference.newInstance(uri: object, datatype: "biomodelsCustomAnnotation")
         resourceRef.save(failOnError: true)
     }
-    def qualifier = Qualifier.findByQualifierTypeAndUri("biomodelsCustomAnnotation", qual)
+    def qualifier = Qualifier.findByQualifierTypeAndUri(qualType, "${qualNamespace}${qual}")
     if (!qualifier) {
-        qualifier = Qualifier.newInstance(qualifierType: "biomodelsCustomAnnotation",
-                                          uri: qual)
+        qualifier = Qualifier.newInstance(qualifierType: qualType, accession: qual,
+            namespace: qualNamespace, uri: "${qualNamespace}${qual}")
         qualifier.save(failOnError:true)
     }
     def statement = Statement.findOrCreateWhere(subjectId: 'modelLevelAnnotation',
@@ -1686,7 +1758,13 @@ getModelDetails = { modelId, modelBranch ->
             } else {
                 modelDetails['model_id'] = row.model_id
             }
+            if ("uncura_publ" == modelBranch || "uncura_anno" == modelBranch) {
+                modelDetails['non_kinetic'] = row.non_kinetic
+                modelDetails['non_miriam'] = row.non_miriam
+                modelDetails['sbml_extended'] = row.sbml_extended
+            }
         }
+        modelDetails['original_model'] = row.original_model
         modelDetails['publication_id'] = row.publication_id
         modelDetails['publication_id_type'] = row.publication_id_type
     } catch(Exception e) {

@@ -186,7 +186,12 @@ class ModelService {
 
         Map namedParams = [:]
         if (filterIsValid) {
-            namedParams.put("filter", "%${filter.toLowerCase()}%");
+            if (filter.take(6) == "Format") {
+                namedParams.put("filter", "%${filter.drop(7).toLowerCase()}%")
+            }
+            if (filter.take(9) == "Submitter") {
+                namedParams.put("filter", "%${filter.drop(10).toLowerCase()}%")
+            }
         }
 
         String query
@@ -204,6 +209,7 @@ class ModelService {
                 roles      :  roles
             ]
         }
+
         List<List<Model, String, Date, String, Long, String>> resultSet = Model.executeQuery(query, namedParams, metaParams)
         return resultSet.collect{ it.first() }
     }
@@ -236,11 +242,18 @@ WHERE r.deleted = false
 
         query += " AND m.deleted = ${deletedOnly} "
         if (filterIsValid) {
-            query += '''
+           /* query += '''
 AND (
 lower(m.publication.journal) like :filter
 OR lower(m.publication.title) like :filter
 OR lower(m.publication.affiliation) like :filter
+OR lower(r.format.identifier) like :filter
+)
+'''*/
+            query +='''
+AND(
+lower(r.format.identifier) like :filter OR
+lower(u.person.userRealName) like :filter
 )
 '''
         }
@@ -266,11 +279,17 @@ WHERE
         }
         query += "m.deleted = ${deletedOnly} AND r.deleted = false"
         if (filterIsValid) {
-            query += '''
+            /*query += '''
 AND (
 lower(m.publication.journal) like :filter
 OR lower(m.publication.title) like :filter
 OR lower(m.publication.affiliation) like :filter
+)
+'''*/
+            query +='''
+AND(
+lower(r.format.identifier) like :filter OR
+lower(u.person.userRealName) like :filter
 )
 '''
         }

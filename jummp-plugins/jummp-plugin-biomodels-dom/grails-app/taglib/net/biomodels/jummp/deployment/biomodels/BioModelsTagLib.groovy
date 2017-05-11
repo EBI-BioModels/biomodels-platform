@@ -20,7 +20,13 @@
 
 package net.biomodels.jummp.deployment.biomodels
 
+import grails.util.Holders
+import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.model.FlagTransportCommand
+import net.biomodels.jummp.core.model.ModelTransportCommand
+import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.model.Model
+import net.biomodels.jummp.model.Revision
 
 import java.text.SimpleDateFormat
 
@@ -34,10 +40,11 @@ class BioModelsTagLib {
     static namespace = 'biomd'
 
     /**
-     * Dependency injection
+     * Declare dependency injections
      */
+    def decorationService
     def modelOfTheMonthService
-
+    def modelDelegateService
     /**
      * Displays the Model of the Month (MoM) entry for the given model.
      *
@@ -93,5 +100,33 @@ class BioModelsTagLib {
 
     def renderCurationStatus = { attrs ->
         out << attrs.curationStatus
+    }
+
+    def renderRecentlyAccessedModels = {
+        Map<ModelTransportCommand, Integer> models = decorationService.getRecentlyAccessedModels()
+        StringBuilder result = new StringBuilder()
+        models?.each {
+            ModelTransportCommand mtc = it.key
+	        String modelId = mtc.publicationId ?: mtc.submissionId
+            String modelURI = g.createLink(controller: 'model', id: modelId, action: 'show')
+            RevisionTransportCommand rtc = modelDelegateService.getLatestRevision(modelId)
+	        String modelLink = "<a href='${modelURI}'>${rtc.name}</a><br/>"
+            result.append(modelLink)
+        }
+        out << result.toString()
+    }
+
+    def renderRecentlyPublishedModels = {
+        Map<ModelTransportCommand, Date> models = decorationService.getRecentlyPublishedModels()
+        StringBuilder result = new StringBuilder()
+        models?.each {
+            ModelTransportCommand mtc = it.key
+	        String modelId = mtc.publicationId ?: mtc.submissionId
+            RevisionTransportCommand rtc = modelDelegateService.getLatestRevision(modelId)
+            String modelURI = g.createLink(controller: 'model', id: modelId, action: 'show')
+            String modelLink= "<a href='${modelURI}'>${rtc.name}</a><br/>"
+            result.append(modelLink)
+        }
+        out << result.toString()
     }
 }
