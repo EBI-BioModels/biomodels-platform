@@ -75,6 +75,9 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
      * Flag indicating the logger's verbosity threshold.
      */
     static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
+
+    private final java.util.regex.Pattern pattern = ~/(\p{Alnum}+:)(\p{Alnum}+):(\d+)/
+    private final String replacement = '$1$2\\\\:$3' // note the single quotes to avoid Groovy string interpolation
     /**
      * The OmicsDI Request Handler to use for handling searches.
      */
@@ -118,11 +121,23 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
         Revision.executeUpdate("delete IndexingPlan")
     }
 
+    private String escapeLuceneFieldSeparator(String query) {
+        def matcher = query =~ pattern
+        def out = new StringBuffer()
+        while (matcher) {
+            matcher.appendReplacement(out, replacement)
+        }
+        matcher.appendTail(out)
+        out.toString()
+    }
+
     SearchResponse searchModels(String query,
             Map<String, Integer> paginationCriteria = ["start": 0, "length": 50, "facetCount": 10] ) {
         long start = System.currentTimeMillis()
         AbstractEbeyeWsConfig ebeyeWsConfig = new EbeyeWsConfigDev()
         DatasetWsClient datasetWsClient = new DatasetWsClient(ebeyeWsConfig)
+        // escape special Lucene field separators in query string
+        query = escapeLuceneFieldSeparator(query)
         // TODO: should allow searching information of other fields
         // create the returned object
         SearchResponse searchResponse = new SearchResponse()
