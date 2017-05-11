@@ -834,7 +834,7 @@ addRevisionAnnotations = { revision, branch, modelDetails, user ->
     }
     String original_model = modelDetails['original_model']
     if (original_model) {
-        createBMAnnotation(revision, original_model, "isDerivedFrom", "ModelQualifier", "http://biomodels.net/model-qualifiers/", author)
+        createBMAnnotation(revision, original_model, "isDerivedFrom", "http://biomodels.net/model-qualifiers/", "http://biomodels.net/model-qualifiers/", author)
     }
 
     def lastModified = modelDetails['lastModified']
