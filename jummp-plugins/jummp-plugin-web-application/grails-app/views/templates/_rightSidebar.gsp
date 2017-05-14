@@ -7,10 +7,15 @@
         <div class="element">
             <h3>Make descriptive statistics</h3>
             <div id="globalchart">
-                <svg width="375" height="375"></svg>
+                <svg width="200" height="200" id="pieChart"></svg>
             </div>
+            <g:javascript>
+                var widthRightSidebar = $('#rightSidebar').width();
+            </g:javascript>
             <script src="https://d3js.org/d3.v4.min.js"></script>
             <g:javascript>
+                document.getElementById("pieChart").setAttribute("width", widthRightSidebar);
+                document.getElementById("pieChart").setAttribute("height", widthRightSidebar);
                 var svg = d3.select("svg"),
                     width = +svg.attr("width"),
                     height = +svg.attr("height"),

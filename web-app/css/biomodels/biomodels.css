@@ -1175,7 +1175,7 @@ a span.link-pdf {
 }
 
 #globalchart {
-    width: 380px;
+    /*width: 380px;*/
     margin: 0 auto;
     text-align: center;
 }
