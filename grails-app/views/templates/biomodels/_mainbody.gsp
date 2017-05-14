@@ -54,7 +54,8 @@
                             <g:pageProperty name="page.main-content" />
                             <g:layoutBody/>
                         </div>
-                        <div class="small-2 medium-3 large-3 columns sidebar sticky-container show-for-medium hide-for-small-only" data-sticky-container>
+                        <div class="small-2 medium-3 large-3 columns sidebar sticky-container
+                        show-for-medium hide-for-small-only" data-sticky-container>
                             ${raw(sidebarContent)}
                         </div>
                     </g:if>

@@ -21,7 +21,8 @@
                 <div id="inline-list">
                 <g:if test="${action == "list"}">
                     <sec:ifLoggedIn>
-                        <a href="${createLink(controller: "search", action: "archive")}">Browse Archived Models</a>
+                        <a href="${createLink(controller: "search", action: "archive")}">
+                            Browse Archived Models</a>
                     </sec:ifLoggedIn>
                 </g:if>
                 <g:else>
@@ -64,7 +65,8 @@
                     <div class="column row modelPlaceHolder">
                         <div class="small-12 medium-12 large-12 columns">
                             <%
-                                def modelUrl = createLink(controller: 'model', id: model.publicationId ?: model.submissionId, action: 'show')
+                                def id = model.publicationId ?: model.submissionId
+                                def modelUrl = createLink(controller: 'model', id: id, action: 'show')
                                 def description = model.description ?: ""
                                 int maxNumChar = 255
                                 boolean haveMoreDetails = description.length() > maxNumChar
@@ -97,7 +99,8 @@
                     <g:javascript>
                         // reduce font-size of model's notes (i.e. model description)
                         $('[class*="dc:"]').css("font-size", "90%");
-                        // show the query string on local search box and string query division at the top of main content division
+                        // show the query string on local search box and string query division
+                        // at the top of main content division
                         $(document).ready(function() {
                             $('#local-searchbox').val("${query}");
                             $('#searchString').text("${query}");
@@ -133,18 +136,22 @@
         <div class="dataTables_paginate">
             <g:if test="${currentPage != 1 && numPages > stepPagination}">
                 <a href="${createLink(controller: 'search', action: action,
-                    params: [query: query, sortDir: sortDirection, sortBy: sortBy, offset: 0, numResults: length])}">First</a>
+                    params: [query: query, sortDir: sortDirection, sortBy: sortBy, offset: 0,
+                             numResults: length])}">First</a>
             </g:if>
             <g:else>
                 First
             </g:else>
             <g:if test="${currentPage == 1 || numPages <= stepPagination}">
-                <g:img dir="${imagePath}/pagination" absolute="true" contextPath="" file="arrow-previous-disable.gif" alt="Previous"/>
+                <g:img dir="${imagePath}/pagination" absolute="true" contextPath=""
+                       file="arrow-previous-disable.gif" alt="Previous"/>
             </g:if>
             <g:else>
                 <a href="${createLink(controller: 'search', action: action,
-                    params: [query: query, sortDir: sortDirection, sortBy: sortBy, offset: modelStart-length-1, numResults: length])}">
-                    <g:img dir="${imagePath}/pagination" absolute="true"  contextPath="" file="arrow-previous.gif" alt="Previous"/>
+                    params: [query: query, sortDir: sortDirection, sortBy: sortBy,
+                             offset: modelStart-length-1, numResults: length])}">
+                    <g:img dir="${imagePath}/pagination" absolute="true"  contextPath=""
+                           file="arrow-previous.gif" alt="Previous"/>
                 </a>
             </g:else>
             <g:if test="${currentPage + stepPagination >= numPages}">
@@ -161,24 +168,29 @@
                     </g:if>
                     <g:else>
                         <a href="${createLink(controller: 'search', action: action,
-                            params: [query: query,  sortDir: sortDirection, sortBy: sortBy, offset: (i - 1)*length, numResults: length])}">
+                            params: [query: query,  sortDir: sortDirection, sortBy: sortBy,
+                                     offset: (i - 1)*length, numResults: length])}">
                             ${i}
                         </a>
                     </g:else>
                 </span>
             </g:each>
             <g:if test="${modelEnd == totalCount || numPages <= stepPagination}">
-                <g:img dir="${imagePath}/pagination" absolute="true"  contextPath="" file="arrow-next-disable.gif" alt="Next"/>
+                <g:img dir="${imagePath}/pagination" absolute="true"  contextPath=""
+                       file="arrow-next-disable.gif" alt="Next"/>
             </g:if>
             <g:else>
                 <a href="${createLink(controller: 'search', action: action,
-                    params: [query: query,  sortDir: sortDirection, sortBy: sortBy, offset: modelStart+length-1, numResults: length])}">
-                    <g:img dir="${imagePath}/pagination" absolute="true"  contextPath="" file="arrow-next.gif" alt="Next"/>
+                    params: [query: query,  sortDir: sortDirection, sortBy: sortBy,
+                             offset: modelStart+length-1, numResults: length])}">
+                    <g:img dir="${imagePath}/pagination" absolute="true"  contextPath=""
+                           file="arrow-next.gif" alt="Next"/>
                 </a>
             </g:else>
             <g:if test="${currentPage != numPages && numPages > stepPagination}">
                 <a href="${createLink(controller: 'search', action: action,
-                    params: [query: query, sortDir: sortDirection, sortBy: sortBy, offset: length*(numPages-1), numResults: length])}">Last</a>
+                    params: [query: query, sortDir: sortDirection, sortBy: sortBy,
+                             offset: length*(numPages-1), numResults: length])}">Last</a>
             </g:if>
             <g:else>
                 Last
@@ -188,10 +200,12 @@
     </g:if>
     <g:else>
         <g:if test="${matches != null}">
-            <p>No available models matched your query. Please try logging in to access more models, or another search query.</p>
+            <p>No available models matched your query. Please try logging in to
+            access more models, or another search query.</p>
         </g:if>
         <g:else>
-            <p>No available models matched your query. Please try logging in to access more models, or another search query.</p>
+            <p>No available models matched your query. Please try logging in to
+            access more models, or another search query.</p>
         </g:else>
         <div class="alert info">
             <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>

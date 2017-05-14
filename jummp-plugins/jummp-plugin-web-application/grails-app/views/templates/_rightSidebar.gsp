@@ -103,7 +103,8 @@
                 <h3><g:message code="model.history.title"/></h3>
                 <ul>
                     <g:each in="${history}">
-                        <li><a href="${createLink(controller: "model", action: "show", id: it.publicationId ?: it.submissionId)}">${it.name}</a><br/>
+                        <li><a href="${createLink(controller: "model", action: "show",
+                            id: it.publicationId ?: it.submissionId)}">${it.name}</a><br/>
                             <g:message code="model.history.submitter"/>${it.submitter}</li>
                     </g:each>
                 </ul>
