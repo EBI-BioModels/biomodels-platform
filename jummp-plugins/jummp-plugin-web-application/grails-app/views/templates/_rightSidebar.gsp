@@ -4,8 +4,8 @@
 %>
 <g:if test="${models}">
     <g:if test="${actionName == 'search'}">
-        <div class="element">
-            <h3>Make descriptive statistics</h3>
+        <div class="element" id="rightSidebar">
+            <h4>Make descriptive statistics</h4>
             <div id="globalchart">
                 <svg width="200" height="200" id="pieChart"></svg>
             </div>
