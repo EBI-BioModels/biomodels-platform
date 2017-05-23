@@ -40,26 +40,37 @@ class JummpTagLib {
         return deploymentEnvironment.equalsIgnoreCase("ddmore")
     }
 
-    def selectDDMoReAwareMessageCode(String ddmoreCode, String defaultCode) {
-        isDDMoReDeployment() ? ddmoreCode : defaultCode
+    private boolean isBioModelsDeployment() {
+        String deploymentEnvironment = grailsApplication.config.jummp.branding.deployment
+        return deploymentEnvironment.equalsIgnoreCase("biomodels")
+    }
+
+    def detectDeploymentEnvironment() {
+        String de = ""
+        if (isDDMoReDeployment()) {
+            de = ".ddmore"
+        } else if (isBioModelsDeployment()) {
+            de = ".biomodels"
+        }
+        de
     }
 
     def findMainFileLabel = { attrs, body ->
-        String msg = selectDDMoReAwareMessageCode("submission.upload.mainFile.ddmore.label",
-                "submission.upload.mainFile.label")
+        String de = detectDeploymentEnvironment()
+        String msg = "submission.upload.mainFile${de}.label"
         out << body(mainFile: g.message(code: msg))
     }
 
     def displayModelDescriptionLabel = { attrs, body ->
-        String msg = selectDDMoReAwareMessageCode("submission.summary.descriptionLabel.ddmore",
-                "submission.summary.descriptionLabel")
+        String de = detectDeploymentEnvironment()
+        String msg = "submission.summary.descriptionLabel${de}"
         out << body(description: g.message(code: msg))
     }
 
     def displayExistingMainFile = { attrs ->
         def result = new StringBuilder()
-        String mainFileLabel = selectDDMoReAwareMessageCode(
-                "submission.upload.mainFile.ddmore.label", "submission.upload.mainFile.label")
+        String de = detectDeploymentEnvironment()
+        String mainFileLabel = "submission.upload.mainFile${de}.label"
         String mainFileSectionHeading = "<h3>${message(code: mainFileLabel)}</h3>"
         result.append(mainFileSectionHeading)
         result.append("<table class='formtable responsive-table'><tbody>")
@@ -106,35 +117,32 @@ class JummpTagLib {
     }
 
     def renderAdditionalFilesLegend = {
-        String additionalFilesLegend = "submission.upload.additionalFiles.legend"
-        if (isDDMoReDeployment()) {
-            additionalFilesLegend = "submission.upload.additionalFiles.ddmore.legend"
-        }
-        out << "<h3>${message(code: additionalFilesLegend)}</h3>"
+        String de = detectDeploymentEnvironment()
+        String additionalFilesLegend = "submission.upload.additionalFiles${de}.legend"
+        out << "<h3>${message(code: additionalFilesLegend)}<sup><abbr id='howAboutThis' title='How about this'>?</abbr></sup></h3>"
+    }
+
+    def renderAdditionalFilesExplanation = {
+        String de = detectDeploymentEnvironment()
+        String additionalFilesExplanation = "submission.upload.additionalFiles${de}.explanation"
+        out << message(code: additionalFilesExplanation)
     }
 
     def renderAdditionalFilesAddButton = {
-        String deploymentEnvironment = grailsApplication.config.jummp.branding.deployment
-        String additionalFilesAddButton = "submission.upload.additionalFiles.addButton"
-        if (deploymentEnvironment.equalsIgnoreCase("ddmore")) {
-            additionalFilesAddButton = "submission.upload.additionalFiles.ddmore.addButton"
-        }
+        String de = detectDeploymentEnvironment()
+        String additionalFilesAddButton = "submission.upload.additionalFiles${de}.addButton"
         out << message(code: additionalFilesAddButton)
     }
 
     def renderSubmitForPublicationConfirmDialogMessage = {
-        String submitForPublicationConfirmDialogMessage = "model.toolbar.submit-for-publication.message"
-        if (isDDMoReDeployment()) {
-            submitForPublicationConfirmDialogMessage = "model.toolbar.submit-for-publication.ddmore.message"
-        }
+        String de = detectDeploymentEnvironment()
+        String submitForPublicationConfirmDialogMessage = "model.toolbar.submit-for-publication${de}.message"
         out << message(code: submitForPublicationConfirmDialogMessage)
     }
 
     def renderSubmitForPublicationConfirmDialogTitle = {
-        String submitForPublicationConfirmDialogMessage = "model.toolbar.submit-for-publication.title"
-        if (isDDMoReDeployment()) {
-            submitForPublicationConfirmDialogMessage = "model.toolbar.submit-for-publication.ddmore.title"
-        }
+        String de = detectDeploymentEnvironment()
+        String submitForPublicationConfirmDialogMessage = "model.toolbar.submit-for-publication${de}.title"
         out << message(code: submitForPublicationConfirmDialogMessage)
     }
 

@@ -75,6 +75,7 @@
                 <jummp:displayExistingMainFile main="${workingMemory['main_file']}"/>
                 <div id="noMains"></div>
                 <jummp:renderAdditionalFilesLegend/>
+                <div id="additionalFilesExplanation"><jummp:renderAdditionalFilesExplanation/></div>
                 <fieldset>
                     <a href="#" id="addFile"><jummp:renderAdditionalFilesAddButton/></a>
                     <table class='formtable responsive-table' id="additionalFiles">
@@ -111,6 +112,14 @@
             </div>
         </g:uploadForm>
         <g:javascript>
+            $('#additionalFilesExplanation').hide();
+            $('#howAboutThis').click(function () {
+                if ($("div#additionalFilesExplanation").is(":hidden")) {
+                    $("div#additionalFilesExplanation").show("slow");
+                } else {
+                    $("div#additionalFilesExplanation").slideUp();
+                }
+            });
             var nbExtraFiles = 0;
             var numberOfAdditionalsAtLoadingPage = $('input[id^=description]').size();
             function populateDiv() {
