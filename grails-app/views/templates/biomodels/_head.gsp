@@ -83,9 +83,16 @@
   -->
   <style type="text/css">
     /* You have the option of setting a maximum width for your page, and making sure everything is centered */
-      body {
-          margin: 2px 5px auto;
-      }
+    body {
+        margin: 2px 5px auto;
+    }
+    li.divider {
+        border-top: 1px solid #999;
+    }
+
+    #local-masthead nav ul.menu li:hover {
+        background: rgb(0,124,130);
+    }
   </style>
   <link rel="stylesheet" type="text/css" href="<g:resource dir="css" file="biomodels/biomodels.css"/>">
   <!-- end CSS-->
