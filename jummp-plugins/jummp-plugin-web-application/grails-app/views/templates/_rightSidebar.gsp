@@ -100,7 +100,7 @@
     <g:elseif test="${actionName == 'list'}">
         <g:if test="${history}">
             <div class="element" id="sidebar-element-last-accessed-models">
-                <h3><g:message code="model.history.title"/></h3>
+                <h4><g:message code="model.history.title"/></h4>
                 <ul>
                     <g:each in="${history}">
                         <li><a href="${createLink(controller: "model", action: "show",
