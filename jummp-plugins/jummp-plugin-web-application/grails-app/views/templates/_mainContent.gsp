@@ -209,7 +209,7 @@
         </g:else>
         <div class="alert info">
             <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
-            <h5>Please also check the syntax of your search terms.</h5>
+            <h5 style="color: #ffffff">Please also check the syntax of your search terms.</h5>
         </div>
     </g:else>
 </div>

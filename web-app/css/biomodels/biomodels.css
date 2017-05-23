@@ -1143,9 +1143,14 @@ a span.link-pdf {
     margin-bottom: 15px;
 }
 
-.alert.success {background-color: #4CAF50;}
-.alert.info {background-color: #2196F3;}
-.alert.warning {background-color: #ff9800;}
+.alert.success {
+    background-color: #00aaaa;}
+.alert.info {
+    background-color: rgb(0, 128, 128);
+}
+.alert.warning {
+    background-color: #00aaaa;
+}
 
 /* The close button */
 .closebtn {
