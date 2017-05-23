@@ -77,6 +77,8 @@ class UrlMappings {
         "/termsofuse"(controller: "jummp", action: "termsOfUse")
         "/citation"(controller: "jummp", action: "howToCiteBioModelsDatabase")
         "/contact"(controller: "jummp", action: "contactus")
+	    "/acknowledgements"(controller: "jummp", action: "acknowledgements")
+	    "/jobs"(controller: "jummp", action: "jobs")
         "/lookupUser"(controller: "jummp", action: "lookupUser")
         if (Holders.config.jummp.security.anonymousRegistration) {
             "/registration"(controller: "usermanagement", action:"create")
