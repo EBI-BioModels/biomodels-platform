@@ -212,10 +212,11 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
                 results.add(mtc)
             }
             // facets
-            boolean ignoredFacets = false
+            Set<String> hiddenFacets = ["PUBLICATION DATE", "OMICS TYPE", "REPOSITORY", "SOURCE"]
+            boolean shouldBeHidden = false
             result.facets?.each { Facet facet ->
-                ignoredFacets = facet.label.equalsIgnoreCase("repository") || facet.label.equalsIgnoreCase("source")
-                if (!ignoredFacets) {
+                shouldBeHidden = hiddenFacets.contains(facet.label.toUpperCase())
+                if (!shouldBeHidden) {
                     facets.add(facet)
                 }
             }
