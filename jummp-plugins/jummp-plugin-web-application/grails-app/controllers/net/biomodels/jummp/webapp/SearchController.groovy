@@ -38,6 +38,7 @@ import net.biomodels.jummp.core.model.ModelListSorting
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
 import grails.plugin.springsecurity.annotation.Secured
+import net.biomodels.jummp.search.OrderedFacet
 import net.biomodels.jummp.webapp.rest.search.SearchResults
 import net.biomodels.jummp.webapp.rest.search.BrowseResults
 import net.biomodels.jummp.plugins.security.User
@@ -218,19 +219,13 @@ class SearchController {
                     models.add(it)
                 }
             }
-            HashSet<Facet> respondedFacets = response.facets
+            LinkedHashMap<String, OrderedFacet> respondedFacets = response.facets
             if (respondedFacets.size() > 0) {
                 println "Found(s): ${respondedFacets.size()} facets."
                 respondedFacets.each {
-                    facets.add(it)
+                    facets.add(it.value.facet)
                 }
             }
-            Collections.sort(facets, new Comparator<Facet>() {
-                @Override
-                int compare(Facet o1, Facet o2) {
-                    return o1.label.compareTo(o2.label)
-                }
-            })
         }
         JsonBuilder builder = new JsonBuilder(facets)
         int sortDir = 1

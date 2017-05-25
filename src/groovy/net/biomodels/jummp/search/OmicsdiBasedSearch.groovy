@@ -78,6 +78,22 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
 
     private final java.util.regex.Pattern pattern = ~/(\p{Alnum}+:)(\p{Alnum}+):(\d+)/
     private final String replacement = '$1$2\\\\:$3' // note the single quotes to avoid Groovy string interpolation
+
+    private final Map<String, Integer> FACET_ORDER = new TreeMap<String, Integer>(String.CASE_INSENSITIVE_ORDER) {
+        {
+            put("Curation status", 1)
+            put("Model format", 2)
+            put("Modelling approaches", 3)
+            put("Organisms", 4)
+            put("Disease", 5)
+            put("GO", 6)
+            put("UniProt", 7)
+            put("ChEBI", 8)
+            put("ChEMBL", 9)
+            put("Ensembl", 10)
+        }
+    }
+
     /**
      * The OmicsDI Request Handler to use for handling searches.
      */
@@ -239,12 +255,24 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
                 value.setLabel(referenceName)
             }
         }
+        // build a TreeMap based on the deliberately designed order of our Facets
+        TreeSet<OrderedFacet> orderedFacets = new TreeSet<OrderedFacet>()
+        facets.each {Facet facet ->
+            int order = FACET_ORDER.get(facet.label) ?: FACET_ORDER.size() + 1
+            OrderedFacet of = new OrderedFacet(facet, order)
+            orderedFacets.add(of)
+        }
+        // do not care about the facets order because an LinkedHashMap object can preserve
+        // the insertion order. Here we just copy all facets ordered above to the
+        // SearchResponse's facets placeholder
+        orderedFacets.each {
+            searchResponse.facets.putAt(it.facet.label, it)
+        }
+        searchResponse.results = results
+        searchResponse.totalCount = totalCount
         if (IS_DEBUG_ENABLED) {
             log.debug("Results processed in ${System.currentTimeMillis() - start}")
         }
-        searchResponse.results = results
-        searchResponse.facets = facets
-        searchResponse.totalCount = totalCount
         return searchResponse
     }
 
