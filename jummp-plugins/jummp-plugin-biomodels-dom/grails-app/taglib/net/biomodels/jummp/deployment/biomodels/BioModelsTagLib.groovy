@@ -87,8 +87,8 @@ class BioModelsTagLib {
                 lastModifier: cmd.lastModifier,
                 dateAdded: dateFormat.format(cmd.dateAdded),
                 lastModified: dateFormat.format(cmd.lastModified),
-                comment: cmd.comment,
-                curationImage: Base64.encoder.encodeToString(cmd.curationImage)
+                comment: cmd.comment ?: "",
+                curationImage: cmd.curationImage ? Base64.encoder.encodeToString(cmd.curationImage) : null
             ]
         }
         // use class 'row' specifically designed by EBI Visual Framework to gain responsive design performance
