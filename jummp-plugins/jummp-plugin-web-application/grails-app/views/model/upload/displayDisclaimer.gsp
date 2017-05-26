@@ -30,6 +30,9 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <%
     String style = session['branding.style']
+    String faqURI = g.createLink(uri: '/faq', absolute: true)
+    String contactURI = g.createLink(uri: '/contact', absolute: true)
+    def createMsgArgs = [contactURI, faqURI]
 %>
     <head>
         <meta name="layout" content="${style}/main" />
@@ -59,7 +62,7 @@
         </g:if>
         <g:else>
             <g:if test="${'default' != style}">
-                <g:message code="submission.disclaimer.${style}.createMessage" args="${ [g.createLink(uri: '/', absolute: true)] }"/>
+                <g:message code="submission.disclaimer.${style}.createMessage" args="${createMsgArgs}"/>
             </g:if>
             <g:else>
                 <g:message code="submission.disclaimer.default.createMessage"/>
