@@ -1690,9 +1690,9 @@ createBMAnnotation = { revision, object, qual, qualType, qualNamespace, creator 
         }
         return
     }
-    def resourceRef = ResourceReference.findByUriAndDatatype(object, "biomodelsCustomAnnotation")
+    def resourceRef = ResourceReference.findByUri(object)
     if (!resourceRef) {
-        resourceRef = ResourceReference.newInstance(uri: object, datatype: "biomodelsCustomAnnotation")
+        resourceRef = ResourceReference.newInstance(uri: object, datatype: "unknown")
         resourceRef.save(failOnError: true)
     }
     def qualifier = Qualifier.findByQualifierTypeAndUri(qualType, "${qualNamespace}${qual}")
