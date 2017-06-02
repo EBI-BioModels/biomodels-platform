@@ -1194,3 +1194,108 @@ a.external:hover, a.external:active {
     background: transparent url(../../images/biomodels/external_active.gif) no-repeat scroll right center;
     padding-right: 13px !important;
 }
+
+.w3-display-topleft {
+    position: absolute;
+    left: 0;
+    top: 0
+}
+
+.w3-display-topright {
+    position: absolute;
+    right: 0;
+    top: 0
+}
+
+.w3-display-bottomleft {
+    position: absolute;
+    left: 0;
+    bottom: 0
+}
+
+.w3-display-bottomright {
+    position: absolute;
+    right: 0;
+    bottom: 0
+}
+
+.w3-display-middle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%)
+}
+
+.w3-display-left {
+    position: absolute;
+    top: 50%;
+    left: 0%;
+    transform: translate(0%, -50%);
+    -ms-transform: translate(-0%, -50%)
+}
+
+.w3-display-right {
+    position: absolute;
+    top: 50%;
+    right: 0%;
+    transform: translate(0%, -50%);
+    -ms-transform: translate(0%, -50%)
+}
+
+.w3-display-topmiddle {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translate(-50%, 0%);
+    -ms-transform: translate(-50%, 0%)
+}
+
+.w3-display-bottommiddle {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translate(-50%, 0%);
+    -ms-transform: translate(-50%, 0%)
+}
+
+.w3-large {
+    font-size: 18px !important
+}
+
+.w3-padding-small {
+    padding: 4px 8px !important
+}
+
+.w3-padding {
+    padding: 8px 16px !important
+}
+
+.w3-padding-large {
+    padding: 12px 24px !important
+}
+
+.w3-padding-16 {
+    padding-top: 16px !important;
+    padding-bottom: 16px !important
+}
+
+.w3-padding-24 {
+    padding-top: 24px !important;
+    padding-bottom: 24px !important
+}
+
+.w3-padding-32 {
+    padding-top: 32px !important;
+    padding-bottom: 32px !important
+}
+
+.w3-padding-48 {
+    padding-top: 48px !important;
+    padding-bottom: 48px !important
+}
+
+.w3-padding-64 {
+    padding-top: 64px !important;
+    padding-bottom: 64px !important
+}

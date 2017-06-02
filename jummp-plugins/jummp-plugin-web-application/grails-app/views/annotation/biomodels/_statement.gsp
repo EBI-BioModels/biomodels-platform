@@ -17,23 +17,20 @@
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
-
-<table>
-    <g:each in="${annotations}" var="s">
-        <tr>
-            <td>
-                <g:render template="/annotation/biomodels/qualifier" model="['qualifier': s.key]"/>
-            </td>
+<g:each in="${annotations}" var="s">
+    <div class="row">
+        <div class="medium-3 columns">
+            <g:render template="/annotation/biomodels/qualifier" model="['qualifier': s.key]"/>
+        </div>
+        <div class="medium-9 columns">
             <g:each in="${s.value}" var = "xref">
-                <td>
-                    <g:render template="/annotation/biomodels/resourceReference"
-                              model="['reference': xref, 'include': ['link']]"/>
-                </td>
-                <td>
-                    <g:render template="/annotation/biomodels/resourceReference"
-                              model="['reference': xref, 'include': ['collectionName']]"/>
-                </td>
+                <g:render template="/annotation/biomodels/resourceReference"
+                          model="['reference': xref, 'include': ['collectionName']]"/>
+                <g:render template="/annotation/biomodels/resourceReference"
+                          model="['reference': xref, 'include': ['link']]"/>
+                <br/>
             </g:each>
-        </tr>
-    </g:each>
-</table>
+        </div>
+    </div>
+    <div class="row"><span>&nbsp;</span></div>
+</g:each>
