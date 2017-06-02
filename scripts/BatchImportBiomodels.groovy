@@ -836,7 +836,9 @@ addRevisionAnnotations = { revision, branch, modelDetails, user ->
     }
     String original_model = modelDetails['original_model']
     if (original_model) {
-        createBMAnnotation(revision, original_model, "isDerivedFrom", "http://biomodels.net/model-qualifiers/", "http://biomodels.net/model-qualifiers/", author)
+        createBMAnnotation(revision, original_model, "isDerivedFrom",
+            "http://biomodels.net/model-qualifiers/",
+            "http://biomodels.net/model-qualifiers/", author)
     }
 
     def lastModified = modelDetails['lastModified']
@@ -1757,7 +1759,7 @@ createBMAnnotation = { revision, object, qual, qualType, qualNamespace, creator 
     if (!qualifier) {
         qualifier = Qualifier.newInstance(qualifierType: qualType, accession: qual,
             namespace: qualNamespace, uri: "${qualNamespace}${qual}")
-        qualifier.save(failOnError:true)
+        qualifier.save(failOnError: true)
     }
     def statement = Statement.findOrCreateWhere(subjectId: 'modelLevelAnnotation',
             qualifier: qualifier, object: resourceRef)
