@@ -714,6 +714,7 @@ processModelFolder = { File folder ->
         // persist model flags
         persistModelFlags(modelDetails, submittedModel)
         addRevisionAnnotations(revision, BRANCH, modelDetails, submitter)
+        annotateModellingApproaches(revision, BRANCH, modelDetails, submitter)
         def revisions = submittedModel.revisions
         revisions.each { r ->
             try {
@@ -1628,6 +1629,46 @@ persistModelFlags = {modelDetails, submittedModel ->
     }
 }
 
+annotateModellingApproaches = { revision, branch, modelDetails, user ->
+    // add modelling approaches to model/revision, see JBM-68
+    def object = []
+    def qualifierAccession = "hasProperty"
+    def rrAccessions = []
+    def rrName = ""
+    String creator = user.person.userRealName
+
+    // Logical model
+    if (modelDetails['format_extensions'] == "qual") {
+        rrAccessions << "MAMO_0000030"
+        rrName = "Logical model"
+    }
+    // Ordinary differential equation (ODE) model
+    if (modelDetails['non_kinetic'] == "N") {
+        rrAccessions << "MAMO_0000046"
+        rrName = "Ordinary differential equation model"
+    }
+    // Petri-net model
+    if (modelDetails['model_id'] in ["MODEL1308080002", "MODEL1403040000", "MODEL1403120000"]) {
+        rrAccessions << "MAMO_0000025"
+        rrName = "Petri net"
+    }
+    // Constraint-based model
+    if (modelDetails['non_kinetic'] == "Y" && modelDetails['format_extensions'] == "fbc") {
+        rrAccessions << "MAMO_0000009"
+        rrName = "Constraint-based model"
+    }
+    rrAccessions.each {String rrAccession ->
+        object << rrAccession
+        object << rrName
+        object << "http://identifiers.org/mamo/${rrAccession}"
+        createBMAnnotation(revision, object, qualifierAccession,
+            "http://biomodels.net/biology-qualifiers/", "http://biomodels.net/biology-qualifiers/", creator)
+    }
+    if (rrAccessions) {
+        revision.save()
+    }
+}
+
 /**
  * Processes model of the month for a given model. The model of the month can
  * be comprised of several models, therefore the ModelOfTheMonth.models collection
@@ -1690,9 +1731,25 @@ createBMAnnotation = { revision, object, qual, qualType, qualNamespace, creator 
         }
         return
     }
+    String dataType = "unknown"
+    String accession = ""
+    String name = ""
+    String uri = ""
+    if (object instanceof List<String> && object.indexOf("/mamo/") > 0) {
+        dataType = "mamo"
+        accession = object[0]
+        name = object[1]
+        uri = object[2]
+    }
     def resourceRef = ResourceReference.findByUri(object)
     if (!resourceRef) {
-        resourceRef = ResourceReference.newInstance(uri: object, datatype: "unknown")
+        if (dataType == "mamo") {
+            resourceRef = ResourceReference.newInstance(uri: uri, datatype: dataType,
+                accession: accession, collectionName: "Mathematical Modelling Ontology",
+                name: name)
+        } else {
+            resourceRef = ResourceReference.newInstance(uri: object, datatype: dataType)
+        }
         resourceRef.save(failOnError: true)
     }
     def qualifier = Qualifier.findByQualifierTypeAndUri(qualType, "${qualNamespace}${qual}")
@@ -1764,6 +1821,7 @@ getModelDetails = { modelId, modelBranch ->
                 modelDetails['sbml_extended'] = row.sbml_extended
             }
         }
+        modelDetails['format_extensions'] = row.format_extensions
         modelDetails['original_model'] = row.original_model
         modelDetails['publication_id'] = row.publication_id
         modelDetails['publication_id_type'] = row.publication_id_type
