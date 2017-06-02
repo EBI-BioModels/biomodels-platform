@@ -43,7 +43,7 @@
     </body>
     <content tag="sidebar">
         <!-- show descriptive statistics, GO chart, etc. -->
-        <g:render template="/templates/rightSidebar" model="['action': 'search']"/>
+        %{--<g:render template="/templates/rightSidebar" model="['action': 'search']"/>--}%
     </content>
     <content tag="search">
         ${query}
