@@ -830,8 +830,6 @@ addRevisionAnnotations = { revision, branch, modelDetails, user ->
     boolean havePublication = null != publicationId && null != publicationType
     if (havePublication) {
         addPublicationDetails(revision.model, publicationId, publicationType)
-        String publicationURI = getPublicationLink(publicationId, publicationType)
-        createBMAnnotation(revision, publicationURI, "originalModel", "biomodelsCustomAnnotation", "", author)
     }
     String original_model = modelDetails['original_model']
     if (original_model) {
