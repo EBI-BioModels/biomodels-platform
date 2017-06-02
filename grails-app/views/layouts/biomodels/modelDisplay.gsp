@@ -65,6 +65,15 @@
                 border-left: none;
                 margin: 0;
             }
+            .rounded-header {
+                background-color: rgb(0, 124, 150);
+                border-bottom: 0 none;
+                border-top-left-radius: 5px;
+                border-top-right-radius: 5px;
+                line-height: inherit;
+                margin: 0;
+                padding: 0;
+            }
         </style>
         <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.handsontable.full.min.css')}"/>
         <link rel="stylesheet" href="${resource(dir: 'css', file: 'jstree.css')}" />
@@ -633,56 +642,56 @@
                          <li><a href='#Curation'>Curation</a></li>
                      </g:if>
                     </ul>
-                    <div id="Overview">
-                        <jummp:displayModelDescriptionLabel>
-                            <span class="bold">${description}:</span>
-                        </jummp:displayModelDescriptionLabel>
-                        <div style="margin-left: 30px;">
-                            ${raw(revision.description)}
-                        </div>
-                    <table style="margin-top:30px">
-                    <tr>
-                        <td><label><g:message code="model.model.format"/></label></td>
-                        <td><div class='spaced'>${revision.format.name}
-                            ${revision.format.formatVersion!="*"?"(${revision.format.formatVersion})":""}</div></td>
-                    </tr>
-                    <%
-                        model = revision.model
-                    %>
-                    <g:if test="${model.publication}">
-                        <tr>
-                            <td><label><g:message code="model.model.publication"/>:</label></td>
-                            <td>
+                    <div id="Overview" class="row">
+                        <div class="small-12 medium-8 large-8 columns">
+                            <jummp:displayModelDescriptionLabel>
+                                <span class="bold">${description}:</span>
+                            </jummp:displayModelDescriptionLabel>
+                            <div style="margin-left: 30px;">
+                                ${raw(revision.description)}
+                            </div>
+                            <div style="margin-top:30px">
                                 <div class='spaced'>
+                                    <g:message code="model.model.format"/>
+                                    ${revision.format.name}
+                                        ${revision.format.formatVersion!="*"?"(${revision.format.formatVersion})":""}
+                                </div>
+                                <%
+                                    model = revision.model
+                                %>
+                                <g:if test="${model.publication}">
+                                <div class='spaced'>
+                                    <g:message code="model.model.publication"/>:
                                     <g:render  model="[model:model]" template="/templates/showPublication" />
                                 </div>
-                            </td>
-                        </tr>
-                    </g:if>
-                    <tr>
-                        <td><label><g:message code="model.model.authors"/></label></td>
-                        <td>
-                            <div class='spaced'>
-                                <g:join in="${authors}"/>
+                                </g:if>
+                                <div class='spaced'>
+                                    <g:message code="model.model.authors"/>
+                                    <g:join in="${authors}"/>
+                                </div>
                             </div>
-                        </td>
-                    </tr>
-                    </table>
-                    <g:pageProperty name="page.genericAnnotations"/>
-                    <table style="margin-top:30px">
-                    <tr>
-                        <td><label>Curation Status:</label></td>
-                        <td><div class='spaced'><biomd:renderCurationStatus curationStatus="${curationStatus}"/></div></td>
-                    </tr>
-                    <tr>
-                        <td><label>Validation Status:</label></td>
-                        <td><div class='spaced'>${validationLevel}</div></td>
-                    </tr>
-                    <tr>
-                        <td><label>Certification Comment:</label></td>
-                        <td><div class='spaced'>${certComment}</div></td>
-                    </tr>
-                    </table>
+                        </div>
+
+                        <div class="small-12 medium-4 large-4 columns">
+                            <div class="rounded-header"><h4 style="color: #ffffee">Metadata information</h4></div>
+                            <g:pageProperty name="page.genericAnnotations"/>
+                            <div class="row">
+                                <br/>
+                            </div>
+                            <div class='row'>
+                                <div class="medium-3 columns">Curation Status</div>
+                                <div class="medium-9 columns">
+                                    <biomd:renderCurationStatus curationStatus="${curationStatus}"/></div>
+                            </div>
+                            %{--<div class='row'>
+                                <div class="medium-3 columns">Validation Status</div>
+                                <div class="medium-9 columns">${validationLevel}</div>
+                            </div>
+                            <div class='row'>
+                                <div class="medium-3 columns">Certification Comment</div>
+                                <div class="medium-9 columns">${certComment}</div>
+                            </div>--}%
+                        </div>
                     </div>
                     <div id="Files" class="filegrid">
                         <div class="filecol-1-3">
