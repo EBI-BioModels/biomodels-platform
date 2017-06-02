@@ -101,7 +101,8 @@
                             style="text-decoration: none; border-bottom-style: none">
                                 <img src="${grailsApplication.config.grails.serverURL}/images/biomodels/logo_small.png"
                                      title="Biomodels Database Homepage"/>
-                                <span class="hide-for-small-only">BioModels Database</span></a>
+                                <span class="hide-for-small-only">BioModels Database</span>
+                                <sup><span class="icon icon-generic" data-icon=">"></span></sup></a>
                         </h1>
                     </div>
                     <!-- local-search -->
