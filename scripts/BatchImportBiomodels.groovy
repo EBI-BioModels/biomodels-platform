@@ -776,6 +776,9 @@ submitOriginalFile = { branch, modelId, originalFile, infoMap ->
 
     if (AUTO_GEN != branch) {
         processModelOfTheMonth(model)
+    }
+
+    if (inPublBranch) {
         setCurationNotes(model)
     }
 
