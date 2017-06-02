@@ -26,7 +26,15 @@
     <li <g:if test="${g.pageProperty(name:'page.submit')?.length()}"> class="active" </g:if> role="menuitem">
         <a href="${g.createLink(controller: 'model', action: 'create')}">Submit</a>
     </li>
-    <li <g:if test="${g.pageProperty(name:'page.support')?.length()}"> class="active" </g:if> role="menuitem">
+    <%
+        boolean selectedSupportItems = g.pageProperty(name:'page.faq')?.length() || g.pageProperty(name:'page.courses')?.length()
+        boolean selectedAboutusItems = g.pageProperty(name:'page.termsOfUse')?.length() ||
+            g.pageProperty(name:'page.citation')?.length() ||
+            g.pageProperty(name:'page.news')?.length() ||
+            g.pageProperty(name:'page.acknowledgements')?.length() ||
+            g.pageProperty(name:'page.jobs')?.length()
+    %>
+    <li <g:if test="${selectedSupportItems}"> class="active" </g:if> role="menuitem">
         <a><g:message code="jummp.support.biomodels.title"/></a>
         <ul class="menu">
             <li><a href="${g.createLink(controller: 'jummp', action: 'faq')}">FAQ</a></li>
@@ -36,7 +44,7 @@
             <li><a href="https://bitbucket.org/jummp/jummp">Technical corner</a></li>
         </ul>
     </li>
-    <li <g:if test="${g.pageProperty(name:'page.aboutus')?.length()}"> class="active" </g:if> role="menuitem">
+    <li <g:if test="${selectedAboutusItems}"> class="active" </g:if> role="menuitem">
         <a><g:message code="jummp.aboutus.biomodels.title"/></a>
         <ul class="menu">
             <li><a href="${g.createLink(controller: 'jummp', action: 'termsOfUse')}">Terms of Use</a></li>
