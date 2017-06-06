@@ -70,12 +70,12 @@
                 <g:else>
                     <!-- Facets search is unavailable -->
                     <g:if test="${sidebarContent}">
-                        <div class="small-12 medium-10 large-10 columns">
+                        <div class="small-12 medium-8 large-9 columns">
                             <g:render template="/templates/notification/showNotificationDiv"/>
                             <g:pageProperty name="page.main-content" />
                             <g:layoutBody/>
                         </div>
-                        <div class="medium-2 large-2 columns sticky-container" data-sticky-container>
+                        <div class="small-12 medium-4 large-3 columns sticky-container" data-sticky-container>
                             ${raw(sidebarContent)}
                         </div>
                     </g:if>
