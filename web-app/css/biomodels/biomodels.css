@@ -53,6 +53,7 @@ pre {
     border:2px solid #ccc;
     width: 100%;
     height: 125px;
+    overflow-x: scroll;
     overflow-y: scroll;
     font-size: 12px;
 }
@@ -62,15 +63,10 @@ pre {
 }
 
 .facetContainer ul > li {
-    text-indent: -1.5em;
-}
-
-.facetContainer input {
-    margin-left: 5px;
-}
-
-.facetContainer a {
-    line-height: 0.9;
+    text-indent: -1.6em;
+    padding-left: 0.45em;
+    white-space: nowrap;
+    margin: -3px 0;
 }
 
 .searchEachFacet {

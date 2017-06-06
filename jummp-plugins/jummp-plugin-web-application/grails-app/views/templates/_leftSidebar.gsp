@@ -33,9 +33,10 @@
         <g:each in="${facets}" var="facet" status="i">
             <div id="facetList${i}">
             <h5 style="padding-top: 5px">${facet.label}</h5>
-            <input type="text" placeholder="Find your ${facet.label}" class="searchEachFacet search" />
-            <div class="facetContainer" id="${facet.label}">
-                <ul id="${facet.label.replace(' ', '')}" class="list">
+            <% String idFacet = facet.label.replace(' ', '') %>
+            <input type="text" id="txtSearch${idFacet}" placeholder="Find your ${facet.label}" class="searchEachFacet search" />
+            <div class="facetContainer" id="facet${idFacet}">
+                <ul id="${idFacet}" class="list">
                 <g:each in="${facet.facetValues}" var="fv">
                     <li>
                     <%
@@ -57,6 +58,14 @@
                     </li>
                 </g:each>
                 </ul>
+                <g:javascript>
+                    var nbFV = ${facet.facetValues.size()};
+                    if (nbFV < 5) {
+                        $("#facet${idFacet}").outerHeight(nbFV*29 + 20);
+                        $("#facet${idFacet}").css("overflow-y", "hidden");
+                        $("#txtSearch${idFacet}").hide();
+                    }
+                </g:javascript>
             </div>
             </div> <!-- facetList -->
         </g:each>
@@ -67,9 +76,10 @@
         <g:each in="${facets}" var="facet" status="i">
             <div id="facetList${i}">
                 <h5 style="padding-top: 5px">${facet.label}</h5>
-                <input type="text" placeholder="Find your ${facet.label}" class="searchEachFacet search" />
-                <div class="facetContainer" id="${facet.label}">
-                    <ul id="${facet.label.replace(' ', '')}" class="list">
+                <% String idFacet = facet.label.replace(' ', '') %>
+                <input type="text" id="txtSearch${idFacet}" placeholder="Find your ${facet.label}" class="searchEachFacet search" />
+                <div class="facetContainer" id="facet${idFacet}">
+                    <ul id="${idFacet}" class="list">
                         <g:each in="${facet.facetValues}" var="fv">
                             <li>
                                 <%
