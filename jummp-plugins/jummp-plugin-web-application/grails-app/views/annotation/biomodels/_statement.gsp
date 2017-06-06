@@ -19,10 +19,10 @@
 
 <g:each in="${annotations}" var="s">
     <div class="row">
-        <div class="medium-3 columns">
+        <div class="small-12 medium-6 large-4 columns" style="word-wrap: break-word">
             <g:render template="/annotation/biomodels/qualifier" model="['qualifier': s.key]"/>
         </div>
-        <div class="medium-9 columns">
+        <div class="small-12 medium-6 large-8 columns" style="word-wrap: break-word">
             <g:each in="${s.value}" var = "xref">
                 <g:render template="/annotation/biomodels/resourceReference"
                           model="['reference': xref, 'include': ['collectionName']]"/>
