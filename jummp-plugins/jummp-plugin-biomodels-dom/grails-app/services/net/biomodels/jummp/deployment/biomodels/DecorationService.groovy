@@ -76,7 +76,6 @@ ORDER BY hits DESC
         def matchedModels = Model.executeQuery(query, [then: then, now: now, max: 5])
         Map<ModelTransportCommand, ModelHits> returnedModels = new HashMap<>()
         matchedModels.each {
-            println(it.getClass().name)
             Model m = it[0]
             int hits = it[1]
             ModelTransportCommand mtc = new ModelAdapter(model: m).toCommandObject()
@@ -112,7 +111,6 @@ ORDER BY model.firstPublished DESC'''
         def matchedModels = Model.executeQuery(query, [max: 5])
         Map<ModelTransportCommand, ModelLatestPublished> returnedModels = new HashMap<ModelTransportCommand, ModelLatestPublished>()
         matchedModels.each {
-            println(it.getClass().isArray())
             Model model = it[0]
             Date latestPublished = it[1]
 	        ModelTransportCommand mtc = new ModelAdapter(model: model).toCommandObject()
