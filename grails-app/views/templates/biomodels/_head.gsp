@@ -74,10 +74,6 @@
 
   <!-- you can replace this with [projectname]-colours.css. See http://frontier.ebi.ac.uk/web/style/colour
   for details of how to do this -->
-  <!-- also inform ES so we can host your colour palette file -->
-  <link rel="stylesheet" type="text/css" media="all"
-        href="https://www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/css/theme-embl-petrol.css">
-  <!-- for production the above can be replaced with -->
   <!--
   <link rel="stylesheet" href="//www.ebi.ac.uk/web_guidelines/css/compliance/mini/ebi-fluid-embl.css">
   -->
