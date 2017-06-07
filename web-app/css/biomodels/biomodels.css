@@ -75,12 +75,6 @@ pre {
     margin-bottom: 2px;
 }
 
-div#search-results {}
-
-div#search-results h2 {
-    font-size: 182%;
-}
-
 span.searchterm {
     font-weight: bold;
     font-style: italic;
@@ -149,6 +143,11 @@ p#searchterm-details span.search-filter {
     padding: 0.2em 0.5em;
 }
 
+div#search-results {}
+
+div#search-results h2 {
+    font-size: 182%;
+}
 
 div#search-results h3 {
     padding-top: 9px;
@@ -211,6 +210,12 @@ div#search-results h4 a:active
     color: #111111;
 }
 
+div#search-results h4 a.icon-bg:link {
+    background-repeat: no-repeat;
+    background-position: right;
+    border-right: 5px solid transparent;
+    padding-right: 35px;
+}
 
 p.view-all { clear: left; }
 
@@ -572,13 +577,6 @@ div.result-meta  .links p {
 /* *************************************************
     new classes indicating mimetype content content
    ************************************************* */
-
-div#search-results h4 a.icon-bg:link {
-    background-repeat: no-repeat;
-    background-position: right;
-    border-right: 5px solid transparent;
-    padding-right: 35px;
-}
 
 .application_xml_content {
     background-image: url("../images/mimeTypes/application_xml.png");
@@ -1176,7 +1174,6 @@ a span.link-pdf {
 }
 
 #globalchart {
-    /*width: 380px;*/
     margin: 0 auto;
     text-align: center;
 }
