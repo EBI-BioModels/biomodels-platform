@@ -28,6 +28,7 @@ import grails.util.Holders
 import groovy.json.JsonBuilder
 import net.biomodels.jummp.annotationstore.ResourceReference
 import net.biomodels.jummp.core.ModelSearchStrategy
+import net.biomodels.jummp.core.adapters.DomainAdapter
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.events.ModelOperationEvent
@@ -157,73 +158,51 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
         // TODO: should allow searching information of other fields
         // create the returned object
         SearchResponse searchResponse = new SearchResponse()
-        String[] fields = ["name", "description"]
-        QueryResult result = datasetWsClient.getDatasets("biomodels", query, fields, null, null,
+        String[] fields = ["name", "description", "submitter", "curationstatus",
+                           "last_modification_date", "submission_date", "publication_date",
+                           "modelformat", "levelversion", "full_dataset_link"]
+        String sortField = "name"
+        QueryResult result = datasetWsClient.getDatasets("biomodels", query, fields, sortField, null,
             paginationCriteria['start'], paginationCriteria['length'], paginationCriteria['facetCount'])
         List<Entry> entries = result.getEntries()
         List<Facet> facets = []
         int totalCount = result.count
         // convert all the returned entries to ModelTransportCommand objects
         HashSet<ModelTransportCommand> results = new HashSet<ModelTransportCommand>()
-        // TODO: replace them with the actual models when biomodels importer finishes,
-        // the following aims to create fake data
-        List<Revision> publicRevisions = Revision.findAllByState(ModelState.PUBLISHED)
-        // or get the list revisions can be retrieved by the current logged in user
-
-        Model firstPublicModel
-        Revision first
-        Revision latest
-        if (publicRevisions) {
-            // get the first public revision among these public ones
-            latest = publicRevisions.first()
-            firstPublicModel = latest.getModel()
-            // retrieve the first revision of the model containing it and the above latest
-            first = firstPublicModel.revisions.first()
+        if (entries) {
             // entries/models
             entries.eachWithIndex { Entry entry, int i ->
                 String submissionId = entry.id
-                Model thisModel = ModelAdapter.findByPerennialIdentifier(submissionId) ?: firstPublicModel //TODO fixme
-                submissionId = thisModel.submissionId
-                boolean isAccessible =
-                    aclUtilService.hasPermission(springSecurityService.authentication, thisModel, BasePermission.READ)
-                if (submissionId != firstPublicModel.submissionId && isAccessible) {
-                    first = Revision.findByModelAndRevisionNumber(thisModel, 1)
-                    latest = modelService.getLatestRevision(thisModel, false)
-                }
-                boolean haveName = entry.getFields().get('name')?.length > 0
-                String name
-                if (haveName) {
-                    name = entry.getFields().get('name')[0]
+                String modelName = entry.getFields().get('name')[0]
+                String submissionDateString = entry.getFields().get('submission_date')[0]
+                java.text.SimpleDateFormat simpleDateFormat = new java.text.SimpleDateFormat("yyyymmdd")
+                Date submissionDate = simpleDateFormat.parse(submissionDateString)
+                String description = entry.getFields().get('description')[0]
+                String submitterName = entry.getFields().get('submitter')[0]
+                // TODO: get rid of condition once the updated OmicsDI is exported
+                boolean haveModifiedDate = entry.getFields().get('last_modification_date')?.length > 0
+                Date modifiedDate
+                if (haveModifiedDate) {
+                    String modifiedDateString = entry.getFields().get('last_modification_date')[0]
+                    simpleDateFormat = new java.text.SimpleDateFormat("yyyymmdd")
+                    modifiedDate = simpleDateFormat.parse(modifiedDateString)
                 } else {
-                    log.warn("The search index entry for Model ${submissionId} did not contain the model name")
-                    name = latest.name
+                    modifiedDate = submissionDate
                 }
-                String description = latest?.description ?: ""
-                User submitter = first.owner
-                String submitterName = submitter.person.userRealName
-                String submitterUsername = submitter.username
-                String publicationId = thisModel.publicationId
-                Date uploadDate = first.uploadDate
-                Date modifiedDate = latest.uploadDate
-                Long id = thisModel.id
-                ModelState state = latest.state
+                ModelState state = ModelState.PUBLISHED
+                String formatName = entry.getFields().get('modelformat')[0]
+                String formatVersion = entry.getFields().get('levelversion')[0]
                 ModelFormatTransportCommand format =
-                    new ModelFormatAdapter(format: latest.format).toCommandObject()
-                FlagLevel qcFlag = latest.qcInfo?.flag
-
+                    new ModelFormatTransportCommand(name: formatName, formatVersion: formatVersion)
                 ModelTransportCommand mtc = new ModelTransportCommand(
                     submitter: submitterName,
-                    submitterUsername: submitterUsername,
-                    name: name,
+                    name: modelName,
                     description: description,
                     submissionId: submissionId,
-                    publicationId: publicationId,
-                    submissionDate: uploadDate,
+                    submissionDate: submissionDate,
                     lastModifiedDate: modifiedDate,
-                    id: id,
                     state: state,
-                    format: format,
-                    flagLevel: qcFlag
+                    format: format
                 )
                 results.add(mtc)
             }
