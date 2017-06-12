@@ -20,13 +20,8 @@
 
 package net.biomodels.jummp.deployment.biomodels
 
-import grails.util.Holders
-import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.model.FlagTransportCommand
 import net.biomodels.jummp.core.model.ModelTransportCommand
-import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.model.Model
-import net.biomodels.jummp.model.Revision
 
 import java.text.SimpleDateFormat
 
@@ -103,17 +98,16 @@ class BioModelsTagLib {
     }
 
     def renderRecentlyAccessedModels = {
-        Map<ModelTransportCommand, Integer> models = decorationService.getRecentlyAccessedModels()
+        Map<ModelTransportCommand, ModelHits> models = decorationService.getRecentlyAccessedModels()
         StringBuilder result = new StringBuilder("<ul style='list-style: none; " +
             "list-style-position: inside; padding: 0; margin-left: 0'>")
         models?.each {
             ModelTransportCommand mtc = it.key
 	        String modelId = mtc.publicationId ?: mtc.submissionId
             String modelURI = g.createLink(controller: 'model', id: modelId, action: 'show')
-            RevisionTransportCommand rtc = modelDelegateService.getLatestRevision(modelId)
 	        String modelLink = "<li style='text-indent: -1.2em; padding-left: 1em'>" +
                 "<span class='icon icon-functional' data-icon='4'>&nbsp;</span>" +
-                "<a href='${modelURI}'>${rtc.name}</a></li>"
+                "<a href='${modelURI}'>${it.value.modelName}</a></li>"
             result.append(modelLink)
         }
 	    result.append("</ul>")
@@ -121,17 +115,16 @@ class BioModelsTagLib {
     }
 
     def renderRecentlyPublishedModels = {
-        Map<ModelTransportCommand, Date> models = decorationService.getRecentlyPublishedModels()
+        Map<ModelTransportCommand, ModelLatestPublished> models = decorationService.getRecentlyPublishedModels()
         StringBuilder result = new StringBuilder("<ul style='list-style: none; " +
             "list-style-position: inside; padding: 0; margin-left: 0'>")
         models?.each {
             ModelTransportCommand mtc = it.key
 	        String modelId = mtc.publicationId ?: mtc.submissionId
-            RevisionTransportCommand rtc = modelDelegateService.getLatestRevision(modelId)
             String modelURI = g.createLink(controller: 'model', id: modelId, action: 'show')
             String modelLink= "<li style='text-indent: -1.2em; padding-left: 1em'>" +
                 "<span class='icon icon-functional' data-icon='U'>&nbsp;</span>" +
-                "<a href='${modelURI}'>${rtc.name}</a></li>"
+                "<a href='${modelURI}'>${it.value.modelName}</a></li>"
             result.append(modelLink)
         }
 	    result.append("</ul>")

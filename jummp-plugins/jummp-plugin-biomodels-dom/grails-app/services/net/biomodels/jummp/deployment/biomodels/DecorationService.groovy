@@ -25,6 +25,7 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import grails.transaction.Transactional
+import groovy.time.TimeCategory
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.model.Model
@@ -44,9 +45,9 @@ class DecorationService {
      * get 10 of the most accessed models from the last six months
      * @return A map of ModelTransportCommand associating with their hits
      */
-    Map<ModelTransportCommand, Integer> getRecentlyAccessedModels() {
+    Map<ModelTransportCommand, ModelHits> getRecentlyAccessedModels() {
         String query = '''
-SELECT ma.model, COUNT(*) as hits
+SELECT ma.model, COUNT(*) as hits, rev.name
 FROM ModelAudit AS ma
 JOIN ma.model AS model
 JOIN model.revisions rev
@@ -69,16 +70,17 @@ ORDER BY hits DESC
 '''
         def now = new Date()
         def then
-        use(groovy.time.TimeCategory) {
+        use(TimeCategory) {
             then = now - 6.months
         }
-        def matchedModels = Model.executeQuery(query, [then: then, now: now, max: 10])
-        Map<ModelTransportCommand, Integer> returnedModels = new HashMap<Model, Integer>()
+        def matchedModels = Model.executeQuery(query, [then: then, now: now, max: 5])
+        Map<ModelTransportCommand, ModelHits> returnedModels = new HashMap<>()
         matchedModels.each {
-            Model model = it[0]
-            ModelTransportCommand mtc = new ModelAdapter(model: model).toCommandObject()
+            Model m = it[0]
             int hits = it[1]
-            returnedModels.put(mtc, hits)
+            ModelTransportCommand mtc = new ModelAdapter(model: m).toCommandObject()
+            String modelName = it[2]
+            returnedModels.put(mtc, new ModelHits(modelName, hits))
         }
         returnedModels
     }
@@ -87,9 +89,9 @@ ORDER BY hits DESC
      * get 10 of the most recently published models
      * @return A map of ModelTransportCommand associating with latest published date
      */
-    Map<ModelTransportCommand, Date> getRecentlyPublishedModels() {
+    Map<ModelTransportCommand, ModelLatestPublished> getRecentlyPublishedModels() {
         String query = '''
-SELECT model, max(model.firstPublished)
+SELECT model, max(model.firstPublished), rev.name
 FROM Model AS model
 JOIN model.revisions AS rev
 WHERE
@@ -106,14 +108,35 @@ WHERE
             AND ace.mask = 1)
 GROUP BY model
 ORDER BY model.firstPublished DESC'''
-        def matchedModels = Model.executeQuery(query, [max: 10])
-        Map<ModelTransportCommand, Date> returnedModels = new HashMap<ModelTransportCommand, Date>()
+        def matchedModels = Model.executeQuery(query, [max: 5])
+        Map<ModelTransportCommand, ModelLatestPublished> returnedModels = new HashMap<ModelTransportCommand, ModelLatestPublished>()
         matchedModels.each {
             Model model = it[0]
+            Date latestPublished = it[1]
 	        ModelTransportCommand mtc = new ModelAdapter(model: model).toCommandObject()
-            Date uploadDate = it[1]
-            returnedModels.put(mtc, uploadDate)
+            String modelName = it[2]
+            returnedModels.put(mtc, new ModelLatestPublished(modelName, latestPublished))
         }
         returnedModels
+    }
+}
+
+class ModelHits {
+    String modelName
+    Integer hits
+
+    ModelHits(String modelName, Integer hits) {
+        this.modelName = modelName
+        this.hits = hits
+    }
+}
+
+class ModelLatestPublished {
+    String modelName
+    Date latestAccessedDate
+
+    ModelLatestPublished(String modelName, Date latestAccessedDate) {
+        this.modelName = modelName
+        this.latestAccessedDate = latestAccessedDate
     }
 }
