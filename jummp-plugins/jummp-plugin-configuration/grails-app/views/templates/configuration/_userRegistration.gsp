@@ -51,7 +51,7 @@
             <tr class="prop">
                 <td class="name"><label for="sendToAdmin">Send Email to Admin User instead of new user:</label></td>
                 <td class="value ${hasErrors(bean: userRegistration, field: 'sendToAdmin', 'errors')}">
-                    <input type="checkbox" name="sendEmail" id="sendToAdmin" ${userRegistration && userRegistration.sendToAdmin ? 'checked="checked"' : ''} title="Send Email to Admin User instead of new user"/>
+                    <input type="checkbox" name="sendToAdmin" id="sendToAdmin" ${userRegistration && userRegistration.sendToAdmin ? 'checked="checked"' : ''} title="Send Email to Admin User instead of new user"/>
                 </td>
             </tr>
             <tr class="prop">
