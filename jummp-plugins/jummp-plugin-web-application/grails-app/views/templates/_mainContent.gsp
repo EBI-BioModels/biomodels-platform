@@ -51,8 +51,24 @@
                     </g:each>
                     <li>Page size </li>
                 </ul>
-                </div>
             </div>
+        </div>
+        <div class="row">
+                <g:if test="${action == "list"}">
+                    <sec:ifLoggedIn>
+                        <a href="${createLink(controller: "search", action: "archive")}">
+                            Browse Archived Models</a>
+                    </sec:ifLoggedIn>
+                </g:if>
+                <g:else>
+                    <g:if test="${params.flashMessage}">
+                        <div class="alert warning">
+                            <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+                            <h5>${params.flashMessage}</h5>
+                        </div>
+                    </g:if>
+                    <span>Search terms: </span><span id="searchString" style="font-weight: bolder"></span>
+                </g:else>
         </div>
         <div class="row grid_18 omega" id="search-results">
             <section>
