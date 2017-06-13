@@ -180,16 +180,9 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
                 Date submissionDate = simpleDateFormat.parse(submissionDateString)
                 String description = entry.getFields().get('description')[0]
                 String submitterName = entry.getFields().get('submitter')[0]
-                // TODO: get rid of condition once the updated OmicsDI is exported
-                boolean haveModifiedDate = entry.getFields().get('last_modification_date')?.length > 0
-                Date modifiedDate
-                if (haveModifiedDate) {
-                    String modifiedDateString = entry.getFields().get('last_modification_date')[0]
-                    simpleDateFormat = new java.text.SimpleDateFormat("yyyymmdd")
-                    modifiedDate = simpleDateFormat.parse(modifiedDateString)
-                } else {
-                    modifiedDate = submissionDate
-                }
+                String modifiedDateString = entry.getFields().get('last_modification_date')[0]
+                simpleDateFormat = new java.text.SimpleDateFormat("yyyymmdd")
+                Date modifiedDate = simpleDateFormat.parse(modifiedDateString)
                 ModelState state = ModelState.PUBLISHED
                 String formatName = entry.getFields().get('modelformat')[0]
                 String formatVersion = entry.getFields().get('levelversion')[0]
