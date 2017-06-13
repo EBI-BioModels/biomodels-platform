@@ -120,9 +120,6 @@
                             $('#searchString').text("${query}");
                             if ("${params.sort}") {
                                 $('div#sorting > label > select').val("${params.sort}");
-                                console.log("${params.sort}");
-                            } else {
-                                console.log("Uncreated!");
                             }
                         });
 
