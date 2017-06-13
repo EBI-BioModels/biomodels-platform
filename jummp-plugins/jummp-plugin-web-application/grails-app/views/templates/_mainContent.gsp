@@ -86,8 +86,8 @@
                                 ID: ${model.publicationId ?: model.submissionId} |
                                 Format: ${model.format.name} |
                                 Submitter: ${model.submitter} |
-                                Uploaded date: ${model.submissionDate.format('yyyy/MM/dd')} |
-                                Last modified date: ${model.lastModifiedDate.format('yyyy/MM/dd')}
+                                Uploaded date: ${model.submissionDate.format('dd/MM/yyyy')} |
+                                Last modified date: ${model.lastModifiedDate.format('dd/MM/yyyy')}
                                 </span>
                             </h4>
                             %{--<span id="modelDescription"></span>
