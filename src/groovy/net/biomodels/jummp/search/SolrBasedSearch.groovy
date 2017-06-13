@@ -360,7 +360,7 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
      **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="searchService.searchModels")
-    SearchResponse searchModels(String query, Map<String, Integer> paginationCriteria) {
+    SearchResponse searchModels(String query, SortOrder sortOrder, Map<String, Integer> paginationCriteria) {
         //solrServerHolder.init()
         long start = System.currentTimeMillis()
         SolrDocumentList results = search(query)
@@ -370,7 +370,7 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
         start = System.currentTimeMillis()
         final int COUNT = results.size()
         Map<String, ModelTransportCommand> returnVals = new LinkedHashMap<>(COUNT + 1, 1.0f)
-        HashSet<ModelTransportCommand> returnModels = new HashSet<ModelTransportCommand>()
+        List<ModelTransportCommand> returnModels = new ArrayList<ModelTransportCommand>()
         boolean isAdmin = SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")
         results.each {
             if (!it.containsKey("deleted") || !it.get("deleted")) {
@@ -423,6 +423,10 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
         searchResponse.facets = new HashSet<String>()
         searchResponse.totalCount = COUNT
         return searchResponse
+    }
+
+    String[] getSortFields() {
+        ["relevance"]
     }
 
     /**

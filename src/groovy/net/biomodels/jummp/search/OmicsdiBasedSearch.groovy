@@ -148,7 +148,7 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
         out.toString()
     }
 
-    SearchResponse searchModels(String query,
+    SearchResponse searchModels(String query, SortOrder sortOrder,
             Map<String, Integer> paginationCriteria = ["start": 0, "length": 50, "facetCount": 10] ) {
         long start = System.currentTimeMillis()
         AbstractEbeyeWsConfig ebeyeWsConfig = new EbeyeWsConfigDev()
@@ -158,17 +158,18 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
         // TODO: should allow searching information of other fields
         // create the returned object
         SearchResponse searchResponse = new SearchResponse()
-        String[] fields = ["name", "description", "submitter", "curationstatus",
+        String[] fields = ["name", "description", "submitter", "curationstatus", "submissionid",
                            "last_modification_date", "submission_date", "publication_date",
                            "modelformat", "levelversion", "full_dataset_link"]
-        String sortField = "name"
-        QueryResult result = datasetWsClient.getDatasets("biomodels", query, fields, sortField, null,
+        String sortField = sortOrder.getField()
+        String sortDir = sortOrder.direction == SortOrder.SortDirection.ASC ? "ascending" : "descending"
+        QueryResult result = datasetWsClient.getDatasets("biomodels", query, fields, sortField, sortDir,
             paginationCriteria['start'], paginationCriteria['length'], paginationCriteria['facetCount'])
         List<Entry> entries = result.getEntries()
         List<Facet> facets = []
         int totalCount = result.count
         // convert all the returned entries to ModelTransportCommand objects
-        HashSet<ModelTransportCommand> results = new HashSet<ModelTransportCommand>()
+        List<ModelTransportCommand> results = new ArrayList<ModelTransportCommand>()
         if (entries) {
             // entries/models
             entries.eachWithIndex { Entry entry, int i ->
@@ -336,6 +337,10 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
                 //TODO RETRY
             }
         }
+    }
+
+    String[] getSortFields() {
+        ["relevance", "submissionid", "name"]
     }
 
     private List<String> fetchFilesFromRevision(RevisionTransportCommand rev, boolean filterMains) {

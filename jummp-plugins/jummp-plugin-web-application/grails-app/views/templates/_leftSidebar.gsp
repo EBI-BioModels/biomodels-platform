@@ -133,7 +133,12 @@
         facetValue = escapeSpecialLuceneCharacters(facetValue);
 	    var lastQueryString = "+and+" + encodeURIComponent(facetGroupId + ":" + facetValue);
         if (e[0].checked) {
-            entireQueryString += lastQueryString;
+            if ("${params.sort}") {
+                entireQueryString = entireQueryString.replace("&sort=${params.sort}", "");
+                entireQueryString += lastQueryString + "&sort=${params.sort}";
+            } else {
+                entireQueryString += lastQueryString;
+            }
         } else {
             // remove the search term out the query string, update newSearchURI
             entireQueryString = entireQueryString.replace(lastQueryString, "");
