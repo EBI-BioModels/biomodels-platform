@@ -12,6 +12,7 @@
     if (!params.sort) {
         params.sort = "relevance-desc"
     }
+    String queryString = params.query.replaceAll('"', '\\\\"')
 %>
 <div class="content">
     <g:if test="${models}">
@@ -116,8 +117,9 @@
                         // show the query string on local search box and string query division
                         // at the top of main content division
                         $(document).ready(function() {
-                            $('#local-searchbox').val("${query}");
-                            $('#searchString').text("${query}");
+                            var query = "${queryString}";
+                            $('#local-searchbox').val(query);
+                            $('#searchString').text(query);
                             if ("${params.sort}") {
                                 $('div#sorting > label > select').val("${params.sort}");
                             }
