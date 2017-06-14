@@ -31,18 +31,19 @@
 package net.biomodels.jummp.webapp
 
 import grails.converters.JSON
+import grails.plugin.springsecurity.annotation.Secured
 import grails.plugin.springsecurity.authentication.GrailsAnonymousAuthenticationToken
 import groovy.json.JsonBuilder
 import net.biomodels.jummp.core.adapters.DomainAdapter
 import net.biomodels.jummp.core.model.ModelListSorting
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
-import grails.plugin.springsecurity.annotation.Secured
-import net.biomodels.jummp.search.OrderedFacet
-import net.biomodels.jummp.webapp.rest.search.SearchResults
-import net.biomodels.jummp.webapp.rest.search.BrowseResults
 import net.biomodels.jummp.plugins.security.User
+import net.biomodels.jummp.search.OrderedFacet
 import net.biomodels.jummp.search.SearchResponse
+import net.biomodels.jummp.search.SortOrder
+import net.biomodels.jummp.webapp.rest.search.BrowseResults
+import net.biomodels.jummp.webapp.rest.search.SearchResults
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Facet
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.FacetValue
 
@@ -86,26 +87,13 @@ class SearchController {
     }
 
     private void sanitiseParams() {
-        if (!params.sortBy) {
-            params.sortBy="modified"
-        }
-        if (!params.sortDir || params.sortDir!="asc") {
-            params.sortDir="desc"
-        }
-        if (params.sortBy) {
-            switch (params.sortBy) {
-                case "name":
-                case "format":
-                case "submitter":
-                case "submitted":
-                case "modified":
-                    break
-                default:
-                    params.sortBy = "modified"
-            }
-        }
-        else {
-            params.sortBy = "modified"
+        if (params.sort) {
+            def sortVal = params.sort.split("-")
+            params.sortBy = sortVal[0]
+            params.sortDir = sortVal[1]
+        } else {
+            params.sortBy = "relevance"
+            params.sortDir = "desc"
         }
         params.numResults = numResults()
         if (integerCheck(params.offset, true, -1)) {
@@ -118,7 +106,7 @@ class SearchController {
 
     private int numResults() {
         final int MAXRESULTS = 100
-        final int MINRESULTS = 5
+        final int MINRESULTS = 10
         User user
         if (!(springSecurityService.principal.username == GrailsAnonymousAuthenticationToken.USERNAME)) {
             user = User.findByUsername(springSecurityService.principal.username)
@@ -140,7 +128,7 @@ class SearchController {
             }
             if (user) {
                 prefs.setUser(user)
-                prefs.save(flush:true)
+                prefs.save(flush: true)
             }
         }
         return prefs.numResults
@@ -205,14 +193,14 @@ class SearchController {
 
     private def searchCore(String query, String sortBy, String sortDirection, int offset, int length) {
         Map<String, Integer> paginationCriteria = ["start": offset, "length": length, "facetCount": 100]
+        SortOrder sortOrder = new SortOrder(sortBy, sortDirection)
         List<MTC> models = []
         List<Facet> facets = []
         int totalCount
         if (query?.trim()) {
-            SearchResponse response = searchService.searchModels(query, paginationCriteria)
-            HashSet<ModelTransportCommand> res = response.results
+            SearchResponse response = searchService.searchModels(query, sortOrder, paginationCriteria)
+            ArrayList<ModelTransportCommand> res = response.results
             totalCount = response.totalCount
-            println paginationCriteria
             if (res.size() > 0) {
                 println "Found(s): ${res.size()} records."
                 res.each {
@@ -228,7 +216,8 @@ class SearchController {
             }
         }
         JsonBuilder builder = new JsonBuilder(facets)
-        int sortDir = 1
+
+        /*int sortDir = 1
         if (sortDirection && sortDirection == "asc") {
             sortDir = -1
         }
@@ -255,7 +244,7 @@ class SearchController {
             default:
                 models = models.sort{ m1, m2 -> sortDir * m2.name.compareTo(m1.name) }
                 break
-        }
+        }*/
 
         if (offset > 0 && offset < models.size()) {
             models = models[offset..-1]
@@ -266,9 +255,10 @@ class SearchController {
             models = models[0..length-1]
         }
 
-        return [models: models, facets: facets, matches: totalCount, sortBy: sortBy,
-                sortDirection: sortDirection, offset: paginationCriteria['start'],
-                length: paginationCriteria['length'], query: query, facetStats: builder.toString()]
+        return [models: models, facets: facets, matches: totalCount,
+                offset: paginationCriteria['start'],
+                length: paginationCriteria['length'],
+                query: query, facetStats: builder.toString()]
     }
 
     private def archiveCore(String sortBy, String sortDirection, int offset, int length) {

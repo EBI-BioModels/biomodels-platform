@@ -31,7 +31,8 @@
     	<div class="content">
     		<div class="view view-dom-id-9c00a92f557689f996511ded36a88594">
     		<div class="view-content">
-        <div class="row column">
+        <div class="row">
+            <div class="small-6 columns">
             <h2>User information</h2>
 			<table class="responsive-table">
 				<tbody>
@@ -57,7 +58,9 @@
 				</tr>
 				</tbody>
 			</table>
-			<h2>Notifications</h2>
+            </div>
+            <div class="small-6 columns">
+            <h2>Notifications</h2>
 			<table class="responsive-table">
 				<thead>
 					<th>Notification Type</th>
@@ -69,24 +72,29 @@
 						<tr><td class='tableLabels'><label>${perm.notificationType.toString()}</label></td>
 						<td>
 							<g:if test="${perm.sendNotification}">
-								<img width="20px" height="auto" title="Receiving notifications on the website" src="${grailsApplication.config.grails.serverURL}/images/Accept.png"/>
+								<img width="20px" height="auto" title="Receiving notifications on the website"
+                                     src="${grailsApplication.config.grails.serverURL}/images/Accept.png"/>
 							</g:if>
 							<g:else>
-								<img width="20px" height="auto" title="Not receiving notifications on the website" src="${grailsApplication.config.grails.serverURL}/images/close.png"/>
+								<img width="20px" height="auto" title="Not receiving notifications on the website"
+                                     src="${grailsApplication.config.grails.serverURL}/images/close.png"/>
 							</g:else>
 						</td>
 						<td>
 							<g:if test="${perm.sendMail}">
-								<img width="20px" height="auto" title="Receiving notifications by email" src="${grailsApplication.config.grails.serverURL}/images/Accept.png"/>
+								<img width="20px" height="auto" title="Receiving notifications by email"
+                                     src="${grailsApplication.config.grails.serverURL}/images/Accept.png"/>
 							</g:if>
 							<g:else>
-								<img width="20px" height="auto" title="Not receiving notifications by email" src="${grailsApplication.config.grails.serverURL}/images/close.png"/>
+								<img width="20px" height="auto" title="Not receiving notifications by email"
+                                     src="${grailsApplication.config.grails.serverURL}/images/close.png"/>
 							</g:else>
 						</td></tr>
 					</g:each>
 				</tbody>
 			</table>
-            <div class="buttons">
+            </div>
+            <div class="buttons medium-12 columns">
                 <a href='<g:createLink action="edit"/>' class="button">Edit User</a>
                 <a href='<g:createLink action="editPassword" />' class="button">Change Password</a>
             </div>

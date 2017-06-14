@@ -679,8 +679,8 @@
                                 <br/>
                             </div>
                             <div class='row'>
-                                <div class="medium-3 columns">Curation Status</div>
-                                <div class="medium-9 columns">
+                                <div class="small-12 medium-6 large-4 columns">Curation Status</div>
+                                <div class="small-12 medium-6 large-8 columns">
                                     <biomd:renderCurationStatus curationStatus="${curationStatus}"/></div>
                             </div>
                             %{--<div class='row'>

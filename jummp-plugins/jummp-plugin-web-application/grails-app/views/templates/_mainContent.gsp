@@ -1,7 +1,3 @@
-<%@
-    page import="net.biomodels.jummp.core.model.ModelState"
-%>
-
 <%
     def totalCount
     if (matches) {
@@ -13,12 +9,50 @@
     def imagePath = "/images"
     def resultOptions = net.biomodels.jummp.webapp.Preferences.getOptions("numResults")
     resultOptions = resultOptions.reverse()
+    if (!params.sort) {
+        params.sort = "relevance-desc"
+    }
+    String queryString = params.query.replaceAll('"', '\\\\"')
 %>
 <div class="content">
     <g:if test="${models}">
+        <div id="inline-list" class="row">
+            <div class="small-12 medium-12 large-6 columns" id="sorting">
+                <!-- Show Sort by box on the search page only for now-->
+                <g:if test="${action == "search"}">
+                <label style="display: inline-block; float: left; padding-right: 4px; width: 100%">Sort by
+                    <select name="sortBy"
+                            style="display: inline-block; width: 50%; font-size: 85%;
+                            height: 30px !important; margin: 0 0 0.125em;">
+                        <option value="relevance-desc">Relevance</option>
+                        <option value="id-asc">Model ID: A to Z</option>
+                        <option value="id-desc">Model ID: Z to A</option>
+                        <option value="name-asc">Model Name: A to Z</option>
+                        <option value="name-desc">Model Name: Z to A</option>
+                    </select>
+                </label>
+                </g:if>
+            </div>
+            <div class="small-12 medium-12 large-6 columns">
+                <ul>
+                    <g:each in="${resultOptions}">
+                        <li>
+                            <g:if test="${it == length}">
+                                ${it}
+                            </g:if>
+                            <g:else>
+                                <a href="${createLink(controller: 'search', action: action,
+                                    params: [query: query, offset: 0, numResults: it, sort: params.sort])}">
+                                    ${it}
+                                </a>
+                            </g:else>
+                        </li>
+                    </g:each>
+                    <li>Page size </li>
+                </ul>
+            </div>
+        </div>
         <div class="row">
-            <div class="small-12 medium-12 large-12 columns">
-                <div id="inline-list">
                 <g:if test="${action == "list"}">
                     <sec:ifLoggedIn>
                         <a href="${createLink(controller: "search", action: "archive")}">
@@ -34,25 +68,6 @@
                     </g:if>
                     <span>Search terms: </span><span id="searchString" style="font-weight: bolder"></span>
                 </g:else>
-                <ul class="float-right" style="margin-right: 14px">
-                    <g:each in="${resultOptions}">
-                        <li>
-                            <g:if test="${it == length}">
-                                ${it}
-                            </g:if>
-                            <g:else>
-                                <a href="${createLink(controller: 'search', action: action,
-                                    params: [query: query,  sortDir: sortDirection,
-                                             sortBy: sortBy, offset: 0, numResults: it])}">
-                                    ${it}
-                                </a>
-                            </g:else>
-                        </li>
-                    </g:each>
-                    <li>Page size </li>
-                </ul>
-                </div>
-            </div>
         </div>
         <div class="row grid_18 omega" id="search-results">
             <section>
@@ -86,8 +101,8 @@
                                 ID: ${model.publicationId ?: model.submissionId} |
                                 Format: ${model.format.name} |
                                 Submitter: ${model.submitter} |
-                                Uploaded date: ${model.submissionDate.format('yyyy/MM/dd')} |
-                                Last modified date: ${model.lastModifiedDate.format('yyyy/MM/dd')}
+                                Uploaded date: ${model.submissionDate.format('dd/MM/yyyy')} |
+                                Last modified date: ${model.lastModifiedDate.format('dd/MM/yyyy')}
                                 </span>
                             </h4>
                             %{--<span id="modelDescription"></span>
@@ -102,8 +117,26 @@
                         // show the query string on local search box and string query division
                         // at the top of main content division
                         $(document).ready(function() {
-                            $('#local-searchbox').val("${query}");
-                            $('#searchString').text("${query}");
+                            var query = "${queryString}";
+                            $('#local-searchbox').val(query);
+                            $('#searchString').text(query);
+                            if ("${params.sort}") {
+                                $('div#sorting > label > select').val("${params.sort}");
+                            }
+                        });
+
+                        $('div#sorting > label > select').click(function() {
+                            var selectedValue = $(this).val();
+                            var url = "${createLink(controller: 'search', action: "${action}",
+                                                    params: [query: "${query}"])}";
+			                if ("${params.offset}") {
+			                    url += "&offset=${params.offset}";
+			                }
+			                if ("${params.numResults}") {
+			                    url += "&numResults=${params.numResults}";
+			                }
+			                url += "&sort=" + selectedValue;
+                            window.location.href = url;
                         });
                     </g:javascript>
                 </div>
@@ -136,8 +169,7 @@
         <div class="dataTables_paginate">
             <g:if test="${currentPage != 1 && numPages > stepPagination}">
                 <a href="${createLink(controller: 'search', action: action,
-                    params: [query: query, sortDir: sortDirection, sortBy: sortBy, offset: 0,
-                             numResults: length])}">First</a>
+                    params: [query: query, offset: 0, numResults: length, sort: params.sort])}">First</a>
             </g:if>
             <g:else>
                 First
@@ -148,8 +180,7 @@
             </g:if>
             <g:else>
                 <a href="${createLink(controller: 'search', action: action,
-                    params: [query: query, sortDir: sortDirection, sortBy: sortBy,
-                             offset: modelStart-length-1, numResults: length])}">
+                    params: [query: query, offset: modelStart - length - 1, numResults: length, sort: params.sort])}">
                     <g:img dir="${imagePath}/pagination" absolute="true"  contextPath=""
                            file="arrow-previous.gif" alt="Previous"/>
                 </a>
@@ -168,8 +199,7 @@
                     </g:if>
                     <g:else>
                         <a href="${createLink(controller: 'search', action: action,
-                            params: [query: query,  sortDir: sortDirection, sortBy: sortBy,
-                                     offset: (i - 1)*length, numResults: length])}">
+                            params: [query: query, offset: (i - 1) * length, numResults: length, sort: params.sort])}">
                             ${i}
                         </a>
                     </g:else>
@@ -181,16 +211,14 @@
             </g:if>
             <g:else>
                 <a href="${createLink(controller: 'search', action: action,
-                    params: [query: query,  sortDir: sortDirection, sortBy: sortBy,
-                             offset: modelStart+length-1, numResults: length])}">
+                    params: [query: query, offset: modelStart + length - 1, numResults: length, sort: params.sort])}">
                     <g:img dir="${imagePath}/pagination" absolute="true"  contextPath=""
                            file="arrow-next.gif" alt="Next"/>
                 </a>
             </g:else>
             <g:if test="${currentPage != numPages && numPages > stepPagination}">
                 <a href="${createLink(controller: 'search', action: action,
-                    params: [query: query, sortDir: sortDirection, sortBy: sortBy,
-                             offset: length*(numPages-1), numResults: length])}">Last</a>
+                    params: [query: query, offset: length * (numPages - 1), numResults: length, sort: params.sort])}">Last</a>
             </g:if>
             <g:else>
                 Last

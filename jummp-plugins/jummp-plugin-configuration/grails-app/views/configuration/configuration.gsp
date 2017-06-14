@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -44,8 +44,8 @@
             <g:form name="configurationForm" action="${action}">
                 <g:render template="/templates/configuration/${template}"/>
                 <div class="buttons">
-                    <jummp:button id="cancelButton">Cancel</jummp:button>
-                    <jummp:button id="submitButton">Save</jummp:button>
+                    <button id="cancelButton" class="button">Cancel</button>
+                    <button id="submitButton" class="button">Save</button>
                 </div>
             </g:form>
         </div>
