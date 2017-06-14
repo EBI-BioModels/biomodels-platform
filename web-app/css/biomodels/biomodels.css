@@ -40,6 +40,17 @@ pre {
     word-wrap: break-word;       /* Internet Explorer 5.5+ */
 }
 
+/* styling for entries on the news index page /content/news */
+.news-summary-block {
+    margin: 1em;
+    border: 1px solid #FFF;
+    border-radius: 5px;
+    box-shadow: 2px 2px 5px #888888;
+    padding-left: 1em;
+    padding-top: 0.25em;
+    padding-bottom: 0.5em;
+}
+
 .modelPlaceHolder {
     border-radius: 5px;
     border: 1px solid rgb(0, 124, 130);
