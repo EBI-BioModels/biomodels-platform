@@ -62,7 +62,10 @@
                         %>
                         <input type="checkbox" value="${fv.value}" id="choosenFacetValue" title="${fv.value}"
 				            onchange="runFacetSearch($(this), '${facet.id}' ,'${escapedFacetValue}')">
-                        <g:link controller="search" action="search" params="${[query: newQuery]}" class="facetLabel">
+                        <g:link controller="search" action="search"
+                                params="${[query: newQuery, offset: params.offset,
+                                           numResults: params.numResults, sort: params.sort]}"
+                                class="facetLabel">
                             <span class="facetLabel">${fv.label} (${fv.count})</span></g:link>
                     </g:else>
                     </li>
