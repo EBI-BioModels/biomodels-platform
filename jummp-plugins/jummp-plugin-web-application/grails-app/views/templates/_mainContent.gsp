@@ -12,7 +12,7 @@
     if (!params.sort) {
         params.sort = "relevance-desc"
     }
-    String queryString = params.query.replaceAll('"', '\\\\"')
+    String queryString = params.query?.replaceAll('"', '\\\\"')
 %>
 <div class="content">
     <g:if test="${models}">

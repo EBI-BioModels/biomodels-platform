@@ -11,7 +11,7 @@
     }
     def specialCharacters = "([:+\\(\\)\\[\\]\\{\\}\\|\\*\\&\"\\?\'\\!\\^])"
     def FACETS_WRAPPED_DOUBLE_QUOTE = ["curationstatus", "modelformat", "disease"]
-    String queryString = params.query.replaceAll('"', '\\\\"')
+    String queryString = params.query?.replaceAll('"', '\\\\"')
 %>
 <g:javascript>
     function escapeSpecialLuceneCharacters(facet_value) {
