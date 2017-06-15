@@ -141,19 +141,19 @@
 
     function runFacetSearch(e, facetGroupId, facetValue) {
         var newSearchURI = "${grailsApplication.config.grails.serverURL}/search?query="
-        var a = "${FACETS_WRAPPED_DOUBLE_QUOTE}".indexOf(facetGroupId)
-        if ("${FACETS_WRAPPED_DOUBLE_QUOTE}".indexOf(facetGroupId) > -1) {
+        var isNeededDQ = "${FACETS_WRAPPED_DOUBLE_QUOTE}".indexOf(facetGroupId) > -1
+        if (isNeededDQ) {
             facetValue = '"' + facetValue + '"';
         }
 	    var lastQueryString = " and " + facetGroupId + ":" + facetValue;
 	    var currentQuery = "${queryString}";
-	    var otherParams = "";
         if (e[0].checked) {
             currentQuery += lastQueryString;
         } else {
             // remove the search term out the query string, update newSearchURI
             currentQuery = currentQuery.replace(lastQueryString, "")
         }
+        var otherParams = "";
         if ("${params.offset}") {
             otherParams += "&offset=${params.offset}";
         }
