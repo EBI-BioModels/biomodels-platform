@@ -1241,5 +1241,7 @@ databaseChangeLog = {
     include file: '20170322_add_statement_index.groovy'
 
     include file: '20170410_addShortDescription_PreviewImage_MOM.groovy'
+
+    include file: '20170615_add_resource_reference_accession_index.groovy'
 }
 
