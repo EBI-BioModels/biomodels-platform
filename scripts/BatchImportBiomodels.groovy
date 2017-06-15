@@ -1801,7 +1801,7 @@ getModelDetails = { modelId, modelBranch ->
         def row = getModelById(modelId, modelBranch)
         modelDetails['submissionDate'] = row.submission_date
         modelDetails['lastModified'] = row.last_modification_date
-        modelDetails['publicationDate'] = row.publication_date
+        modelDetails['publicationDate'] = row.creation_date
         modelDetails['originalModel'] = row.original_model
         if ("auto_gen_models" == modelBranch) {
             modelDetails['model_id'] = row.id
