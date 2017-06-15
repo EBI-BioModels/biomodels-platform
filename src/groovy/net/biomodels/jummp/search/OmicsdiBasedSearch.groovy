@@ -219,17 +219,22 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
             facets = []
         }
         Set<String> immutableFacets = ["Organisms", "Publication Date", "Omics type"]
-        facets.findAll({ Facet f ->
+
+        // potentially turn facets into a HashSet/HashMap so that we can more easily
+        // compute the delta b/w facets and immutable facets
+        List<FacetValue> facetValues = facets.findAll({ Facet f ->
             !(immutableFacets.contains(f.label))
-        })*.facetValues.flatten().each { FacetValue value ->
-            String currentLabel = value.label
-            if (currentLabel.contains(" ")) {
-                return
-            }
-            ResourceReference reference = ResourceReference.findWhere(accession: currentLabel)
-            String referenceName = reference?.name
+        })*.facetValues.flatten().findAll { FacetValue value -> !value.label.contains(' ') }
+        Map<String, String> labelsForAccessions = new LinkedHashMap<>(facetValues.size())
+        List<String> labels = facetValues.collect { it.label }
+        List<ResourceReference> references = ResourceReference.findAllByAccessionInList(labels)
+        references.each { ResourceReference r ->
+            labelsForAccessions[r.accession] = r.name
+        }
+        facetValues.each { FacetValue v ->
+            String referenceName = labelsForAccessions[v.label]
             if (referenceName) {
-                value.setLabel(referenceName)
+                v.label = referenceName
             }
         }
         // build a TreeMap based on the deliberately designed order of our Facets
