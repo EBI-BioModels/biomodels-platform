@@ -125,7 +125,7 @@
                             }
                         });
 
-                        $('div#sorting > label > select').click(function() {
+                        $('div#sorting > label > select').change(function() {
                             var selectedValue = $(this).val();
                             var url = "${createLink(controller: 'search', action: "${action}",
                                                     params: [query: "${query}"])}";
