@@ -59,13 +59,23 @@
                     <g:else>
                         <%
                             String newQuery = "${query} and ${selectedFacet}"
+                            def newParams = [:]
+                            if (params.query) {
+                                newParams["query"] = newQuery
+                            }
+                            if (params.offset) {
+                                newParams["offset"] = params.offset
+                            }
+                            if (params.numResults) {
+                                newParams["numResults"] = params.numResults
+                            }
+                            if (params.sort) {
+                                newParams["sort"] = params.sort
+                            }
                         %>
                         <input type="checkbox" value="${fv.value}" id="choosenFacetValue" title="${fv.value}"
 				            onchange="runFacetSearch($(this), '${facet.id}' ,'${escapedFacetValue}')">
-                        <g:link controller="search" action="search"
-                                params="${[query: newQuery, offset: params.offset,
-                                           numResults: params.numResults, sort: params.sort]}"
-                                class="facetLabel">
+                        <g:link controller="search" action="search" params="${newParams}" class="facetLabel">
                             <span class="facetLabel">${fv.label} (${fv.count})</span></g:link>
                     </g:else>
                     </li>
