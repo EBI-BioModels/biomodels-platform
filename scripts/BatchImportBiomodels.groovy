@@ -195,6 +195,7 @@ def ResourceReference
 def Qualifier
 def Statement
 def ElementAnnotation
+def RevisionAnnotation
 def ModelElementType
 def PublicationLinkProvider
 def LinkType
@@ -551,6 +552,7 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
     ResourceReference = loadClass("net.biomodels.jummp.annotationstore.ResourceReference")
     Statement = loadClass("net.biomodels.jummp.annotationstore.Statement")
     ElementAnnotation = loadClass("net.biomodels.jummp.annotationstore.ElementAnnotation")
+    RevisionAnnotation = loadClass("net.biomodels.jummp.annotationstore.RevisionAnnotation")
     Qualifier = loadClass("net.biomodels.jummp.annotationstore.Qualifier")
     ModelElementType = loadClass("net.biomodels.jummp.model.ModelElementType")
     // BioModels-specific domain classes
@@ -1772,13 +1774,13 @@ createBMAnnotation = { revision, object, qual, qualType, qualNamespace, creator 
     } else {
         elementAnnotation = ElementAnnotation.newInstance(
                 modelElementType: modelElementType, creatorId: creator, statement: statement)
+        if (!elementAnnotation.save()) {
+            addModelError id, "Failed to save annotation ${elementAnnotation.properties}"
+        }
+        return // don't try to create a RevisionAnnotation for a transient elementAnnotation
     }
 
-    elementAnnotation.addToRevisions revision
-
-    if (!elementAnnotation.save()) {
-        addModelError id, "Failed to save annotation ${elementAnnotation.properties}"
-    }
+    RevisionAnnotation.create(revision, elementAnnotation)
 }
 
 getPublicationLink = { publication_id, publication_id_type ->
