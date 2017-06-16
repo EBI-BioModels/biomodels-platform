@@ -11,7 +11,7 @@
     }
     def specialCharacters = "([:+\\(\\)\\[\\]\\{\\}\\|\\*\\&\"\\?\'\\!\\^])"
     def FACETS_WRAPPED_DOUBLE_QUOTE = ["curationstatus", "modelformat", "disease"]
-    String queryString = params.query.replaceAll('"', '\\\\"')
+    String queryString = params.query?.replaceAll('"', '\\\\"')
 %>
 <g:javascript>
     function escapeSpecialLuceneCharacters(facet_value) {
@@ -59,13 +59,23 @@
                     <g:else>
                         <%
                             String newQuery = "${query} and ${selectedFacet}"
+                            def newParams = [:]
+                            if (params.query) {
+                                newParams["query"] = newQuery
+                            }
+                            if (params.offset) {
+                                newParams["offset"] = params.offset
+                            }
+                            if (params.numResults) {
+                                newParams["numResults"] = params.numResults
+                            }
+                            if (params.sort) {
+                                newParams["sort"] = params.sort
+                            }
                         %>
                         <input type="checkbox" value="${fv.value}" id="choosenFacetValue" title="${fv.value}"
 				            onchange="runFacetSearch($(this), '${facet.id}' ,'${escapedFacetValue}')">
-                        <g:link controller="search" action="search"
-                                params="${[query: newQuery, offset: params.offset,
-                                           numResults: params.numResults, sort: params.sort]}"
-                                class="facetLabel">
+                        <g:link controller="search" action="search" params="${newParams}" class="facetLabel">
                             <span class="facetLabel">${fv.label} (${fv.count})</span></g:link>
                     </g:else>
                     </li>
@@ -141,19 +151,19 @@
 
     function runFacetSearch(e, facetGroupId, facetValue) {
         var newSearchURI = "${grailsApplication.config.grails.serverURL}/search?query="
-        var a = "${FACETS_WRAPPED_DOUBLE_QUOTE}".indexOf(facetGroupId)
-        if ("${FACETS_WRAPPED_DOUBLE_QUOTE}".indexOf(facetGroupId) > -1) {
+        var isNeededDQ = "${FACETS_WRAPPED_DOUBLE_QUOTE}".indexOf(facetGroupId) > -1
+        if (isNeededDQ) {
             facetValue = '"' + facetValue + '"';
         }
 	    var lastQueryString = " and " + facetGroupId + ":" + facetValue;
 	    var currentQuery = "${queryString}";
-	    var otherParams = "";
         if (e[0].checked) {
             currentQuery += lastQueryString;
         } else {
             // remove the search term out the query string, update newSearchURI
             currentQuery = currentQuery.replace(lastQueryString, "")
         }
+        var otherParams = "";
         if ("${params.offset}") {
             otherParams += "&offset=${params.offset}";
         }

@@ -21,6 +21,8 @@
 package net.biomodels.jummp.core.adapters
 
 import grails.util.Holders
+import net.biomodels.jummp.annotationstore.ElementAnnotation
+import net.biomodels.jummp.annotationstore.RevisionAnnotation
 import net.biomodels.jummp.core.annotation.ElementAnnotationCategory
 import net.biomodels.jummp.core.annotation.ElementAnnotationTransportCommand
 import net.biomodels.jummp.core.certification.QcInfoCategory
@@ -62,7 +64,8 @@ public class RevisionAdapter extends DomainAdapter {
     RevisionTransportCommand toCommandObject() {
         List<ElementAnnotationTransportCommand> annotations
         use(ElementAnnotationCategory) {
-            annotations = revision.annotations.collect { it.toCommandObject() }
+            List<ElementAnnotation> revisionAnnotations = RevisionAnnotation.findAllByRevision(revision)
+            annotations = revisionAnnotations.collect { it.elementAnnotation.toCommandObject() }
         }
         def formatAdapter = getAdapter(revision.format)
         def formatCmd = formatAdapter.toCommandObject()
