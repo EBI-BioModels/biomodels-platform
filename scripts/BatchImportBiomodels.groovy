@@ -1774,9 +1774,10 @@ createBMAnnotation = { revision, object, qual, qualType, qualNamespace, creator 
     } else {
         elementAnnotation = ElementAnnotation.newInstance(
                 modelElementType: modelElementType, creatorId: creator, statement: statement)
-        if (!elementAnnotation.save()) {
-            addModelError id, "Failed to save annotation ${elementAnnotation.properties}"
-        }
+    }
+    if (!elementAnnotation.save(flush: true) || elementAnnotation.hasErrors()) { // need to flush in order to obtain an ID
+        addModelError id, "Failed to save annotation ${elementAnnotation.properties}"
+        error "Failed to save annotation ${elementAnnotation.properties}"
         return // don't try to create a RevisionAnnotation for a transient elementAnnotation
     }
 
