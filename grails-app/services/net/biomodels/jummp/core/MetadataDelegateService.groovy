@@ -194,12 +194,16 @@ class MetadataDelegateService implements IMetadataService {
         curationNotesService.fetchCurationNotesForModel(rev.model.id)
     }
 
+    /**
+     * Returns whether a revision command belongs to a curated or non-curated model.
+     *
+     * This relies on BioModels' workflow of assigning a publication identifier for
+     * curated models.
+     *
+     * @param rev the {@link RevisionTransportCommand} to check
+     * @return the String 'curated' iff the model has been curated, or 'non-curated' otherwise.
+     */
     String fetchCurationStatus(RevisionTransportCommand rev) {
-        List<ElementAnnotationTransportCommand> annotations = rev.annotations
-        List<StatementTransportCommand> statements = annotations*.statement
-        def res = statements.find {
-            it.predicate.type == "biomodelsCustomAnnotation" && it.predicate.uri == "curated"
-        }
-        return res != null ? "curated" : "non-curated"
+        rev.model.publicationId ? "curated" : "non-curated"
     }
 }

@@ -34,6 +34,7 @@ import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.search.OmicsdiBasedSearch
 import net.biomodels.jummp.search.SearchResponse
 import net.biomodels.jummp.search.SolrBasedSearch
+import net.biomodels.jummp.search.SortOrder
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.perf4j.aop.Profiled
@@ -179,8 +180,8 @@ class SearchService {
      **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="searchService.searchModels")
-    SearchResponse searchModels(String query, Map<String, Integer> paginationCriteria) {
-        return strategy.searchModels(query, paginationCriteria)
+    SearchResponse searchModels(String query, SortOrder sortOrder, Map<String, Integer> paginationCriteria) {
+        return strategy.searchModels(query, sortOrder, paginationCriteria)
     }
 
     /*
@@ -195,6 +196,10 @@ class SearchService {
         Revision.executeUpdate("delete ElementAnnotation")
         Revision.executeUpdate("delete Statement")
         log.debug("Finished prunning annotation statements from database")
+    }
+
+    String[] getSearchFields() {
+        strategy.getSortFields()
     }
 }
 
