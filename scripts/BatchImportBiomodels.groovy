@@ -776,7 +776,7 @@ submitOriginalFile = { branch, modelId, originalFile, infoMap ->
     }
     model.revisions[0].uploadDate = uploadDate
 
-    if (AUTO_GEN != branch) {
+    if (inPublBranch) {
         processModelOfTheMonth(model)
     }
 
@@ -825,11 +825,7 @@ addRevision = { modelId, parent, model ->
 addRevisionAnnotations = { revision, branch, modelDetails, user ->
     boolean inPubl = isCuratedAndPublished(branch)
     String author = user.person.userRealName
-    createBMAnnotation(revision, inPubl, 'curated', "biomodelsCustomAnnotation", "", author)
-    String jws = modelDetails['jwsLink']
-    if (jws) {
-        createBMAnnotation(revision, jws, 'onlineSimulation', "biomodelsCustomAnnotation", "", author)
-    }
+    //createBMAnnotation(revision, inPubl, 'curated', "biomodelsCustomAnnotation", "", author)
     def publicationId = getPublicationIdFromModelDetails(modelDetails)
     def publicationType = getPublicationTypeFromModelDetails(modelDetails)
     boolean havePublication = null != publicationId && null != publicationType
@@ -838,9 +834,9 @@ addRevisionAnnotations = { revision, branch, modelDetails, user ->
     }
     String original_model = modelDetails['original_model']
     if (original_model) {
-        createBMAnnotation(revision, original_model, "isDerivedFrom",
-            "http://biomodels.net/model-qualifiers/",
-            "http://biomodels.net/model-qualifiers/", author)
+        createBMAnnotation(revision, original_model, "source",
+            "http://purl.org/dc/elements/1.1/",
+            "http://purl.org/dc/elements/1.1/", author)
     }
 
     def lastModified = modelDetails['lastModified']
