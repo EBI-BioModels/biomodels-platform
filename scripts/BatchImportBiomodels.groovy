@@ -1680,7 +1680,7 @@ processModelOfTheMonth = { model ->
     def modelId = model.publicationId ?: model.submissionId
     def dateFormatter = new java.text.SimpleDateFormat('yyyy-MM')
     String query = "select * from model_of_month where models_id like ?"
-    biomodelsConnection.eachRow(query, ["%${modelId}%"]) { row ->
+    biomodelsConnection.eachRow(query, ["%${modelId}%".toString()]) { row ->
         def datePublished = dateFormatter.parse(row.pub_month)
         // see if there is an existing model of the month in the Jummp DB for
         // the given month
@@ -1692,7 +1692,9 @@ processModelOfTheMonth = { model ->
             modelMonth.lastUpdated=row.last_modification_date
         }
         modelMonth.addToModels(model)
-        modelMonth.save()
+        if (!modelMonth.save()) {
+            addModelError modelId, "Failed to save MoM ${row.id}: ${modelMonth.errors.allErrors}"
+        }
     }
 }
 
