@@ -854,7 +854,6 @@ addPublicationDetails = { model, accession, type ->
         def publicationCmd = pubMedService.fetchPublicationData accession
         if (!publicationCmdHasRequiredFields(publicationCmd)) {
             // The publication does not exist in PubMed Central
-            addModelMsg id, "Attempting to manually populate details for $accession"
             fetchMissingPaperDetailsFromBioModels(id, publicationCmd, accession, type)
             publication = publicationService.fromCommandObject publicationCmd
         } else {
@@ -867,10 +866,7 @@ addPublicationDetails = { model, accession, type ->
                 affiliation: publicationCmd.affiliation,
                 synopsis: publicationCmd.synopsis
             )
-            if (publication.id) {
-                addModelMsg id, "Publication $accession exists in database"
-            } else {
-                addModelMsg id, "Publication $accession will be saved in the database in this transaction."
+            if (!publication.id) {
                 if (!publication.validate()) {
                     def e = publication.errors.allErrors
                     addModelError id, "Couldn't attach publication $accession: $e"
@@ -897,7 +893,6 @@ Cannot save author #$i ${person.userRealName} for publication $accession: ${pers
                 }
             }
         }
-        addModelMsg id, "The publication with accession $accession now has id <<${publication.id}>>"
         model.publication = publication
         if (model.save()) {
             addModelMsg id, "Successfully added publication $accession"
@@ -1680,8 +1675,11 @@ processModelOfTheMonth = { model ->
     def modelId = model.publicationId ?: model.submissionId
     def dateFormatter = new java.text.SimpleDateFormat('yyyy-MM')
     String query = "select * from model_of_month where models_id like ?"
+    addModelMsg modelId, "begin processing MoM..."
     biomodelsConnection.eachRow(query, ["%${modelId}%".toString()]) { row ->
+        addModelMsg modelId, "processing MoM row $row"
         def datePublished = dateFormatter.parse(row.pub_month)
+        addModelMsg modelId, "Adding MoM $datePublished"
         // see if there is an existing model of the month in the Jummp DB for
         // the given month
         def modelMonth = ModelOfTheMonth.findByPublicationDate(datePublished)
@@ -1696,6 +1694,7 @@ processModelOfTheMonth = { model ->
             addModelError modelId, "Failed to save MoM ${row.id}: ${modelMonth.errors.allErrors}"
         }
     }
+    addModelMsg modelId, "...done processing MoM"
 }
 
 
