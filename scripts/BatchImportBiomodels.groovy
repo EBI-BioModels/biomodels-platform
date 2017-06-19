@@ -1738,28 +1738,32 @@ createBMAnnotation = { revision, object, qual, qualType, qualNamespace, creator 
     String accession = ""
     String name = ""
     String uri = ""
-    if (object instanceof List<String> && object.indexOf("/mamo/") > 0) {
+    if (object instanceof List<String>) {
         dataType = "mamo"
         accession = object[0]
         name = object[1]
         uri = object[2]
     }
-    def resourceRef = ResourceReference.findByUri(object)
+    def resourceRef = ResourceReference.findByUri(uri)
     if (!resourceRef) {
         if (dataType == "mamo") {
             resourceRef = ResourceReference.newInstance(uri: uri, datatype: dataType,
                 accession: accession, collectionName: "Mathematical Modelling Ontology",
                 name: name)
         } else {
-            resourceRef = ResourceReference.newInstance(uri: object, datatype: dataType)
+            resourceRef = ResourceReference.newInstance(uri: uri, datatype: dataType)
         }
-        resourceRef.save(failOnError: true)
+        if (!resourceRef.save()) {
+            def errors = resourceRef.errors.allErrors
+            addModelError id, "Cannot save xref $object for $qualNamespace$qual: $errors"
+            return // don't try anything else
+        }
     }
-    def qualifier = Qualifier.findByQualifierTypeAndUri(qualType, "${qualNamespace}${qual}")
-    if (!qualifier) {
-        qualifier = Qualifier.newInstance(qualifierType: qualType, accession: qual,
-            namespace: qualNamespace, uri: "${qualNamespace}${qual}")
-        qualifier.save(failOnError: true)
+    def qualifier = Qualifier.findOrSaveWhere(qualifierType: qualType, namespace:
+        qualNamespace, uri: "${qualNamespace}${qual}", accession: qual)
+    if (qualifier.hasErrors()) {
+        addModelError id, "Cannot save qualifier $qualNamespace$qual: ${qualifier.errors.allErrors}"
+        return
     }
     def statement = Statement.findOrCreateWhere(subjectId: 'modelLevelAnnotation',
             qualifier: qualifier, object: resourceRef)
