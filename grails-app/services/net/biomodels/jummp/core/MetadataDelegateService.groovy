@@ -55,6 +55,12 @@ class MetadataDelegateService implements IMetadataService {
     private final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
     static transactional = false
 
+    private final Map<String, String> MODELLING_APPROACHES =
+        ["MAMO_0000009": "Constraint-based model",
+         "MAMO_0000025": "Petri net",
+         "MAMO_0000030": "Logical model",
+         "MAMO_0000046": "Ordinary differential equation model"]
+
     /**
      * Dependency injection for the metadata service.
      */
@@ -162,15 +168,7 @@ class MetadataDelegateService implements IMetadataService {
 
     Map<QualifierTransportCommand, List<ResourceReferenceTransportCommand>> fetchGenericAnnotations(
         RevisionTransportCommand rev) {
-        // By default, fetching generic annotations means to grab model-level annotations
-        // The specific levels of annotations should be invoked within another methods
-        List<ElementAnnotationTransportCommand> annotationTCL = rev.annotations
-        List<ElementAnnotationTransportCommand> annotations = new ArrayList<ElementAnnotationTransportCommand>()
-        annotationTCL*.each  {
-            if (it.modelElementType  && it.modelElementType.name == "model")
-                annotations << it
-        }
-        List<StatementTransportCommand> statements = annotations*.statement
+        List<StatementTransportCommand> statements = getModelLevelAnnotations(rev)
         Map result = [:]
         statements.each { StatementTransportCommand s ->
             final QualifierTransportCommand qualifier = s.predicate
@@ -179,6 +177,7 @@ class MetadataDelegateService implements IMetadataService {
             // because it is already shown at the curation status line
             boolean isCurationStatus = qualifier.type == "biomodelsCustomAnnotation" &&
                 qualifier.uri == "curated"
+
             if (!isCurationStatus) {
                 if (result.containsKey(qualifier)) {
                     result[qualifier] << xref
@@ -205,5 +204,30 @@ class MetadataDelegateService implements IMetadataService {
      */
     String fetchCurationStatus(RevisionTransportCommand rev) {
         rev.model.publicationId ? "curated" : "non-curated"
+    }
+
+    Map<String, String> fetchModellingApproaches(RevisionTransportCommand rev) {
+        List<StatementTransportCommand> statements = getModelLevelAnnotations(rev)
+        Map result = [:]
+        statements.each { StatementTransportCommand s ->
+            final ResourceReferenceTransportCommand xref = s.object
+            if (MODELLING_APPROACHES.containsKey(xref.accession)) {
+                result.put(xref.accession, MODELLING_APPROACHES.get(xref.accession))
+            }
+        }
+        result
+    }
+
+    private List<StatementTransportCommand> getModelLevelAnnotations(RevisionTransportCommand rev) {
+        // By default, fetching generic annotations means to grab model-level annotations
+        // The specific levels of annotations should be invoked within another methods
+        List<ElementAnnotationTransportCommand> annotationTCL = rev.annotations
+        List<ElementAnnotationTransportCommand> annotations = new ArrayList<ElementAnnotationTransportCommand>()
+        annotationTCL*.each  {
+            if (it.modelElementType  && it.modelElementType.name == "model")
+                annotations << it
+        }
+        List<StatementTransportCommand> statements = annotations*.statement
+        statements
     }
 }

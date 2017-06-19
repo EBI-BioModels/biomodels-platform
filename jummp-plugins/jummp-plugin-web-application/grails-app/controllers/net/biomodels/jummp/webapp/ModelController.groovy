@@ -246,6 +246,8 @@ class ModelController {
             CurationNotesTransportCommand curationNotes =
                 metadataDelegateService.fetchCurationNotes(rev)
             String curationStatus = metadataDelegateService.fetchCurationStatus(rev)
+            Map<String, String> modellingApproaches =
+                metadataDelegateService.fetchModellingApproaches(rev)
             def model = [revision: rev,
                         authors: rev.model.creators,
                         allRevs: revs,
@@ -260,6 +262,7 @@ class ModelController {
                         certComment: rev.getCertificationMessage(),
                         flags: flags,
                         curationStatus: curationStatus,
+                        modellingApproaches: modellingApproaches,
                         curationNotes: curationNotes
             ]
             if (rev.id == modelDelegateService.getLatestRevision(PERENNIAL_ID).id) {
