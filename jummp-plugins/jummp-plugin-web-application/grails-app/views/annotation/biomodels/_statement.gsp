@@ -18,7 +18,7 @@
 --%>
 
 <g:each in="${annotations}" var="s">
-    <div class="row">
+    <div class="row" style="padding-bottom: 12px">
         <div class="small-12 medium-6 large-4 columns" style="word-wrap: break-word">
             <g:render template="/annotation/biomodels/qualifier" model="['qualifier': s.key]"/>
         </div>
@@ -32,5 +32,4 @@
             </g:each>
         </div>
     </div>
-    <div class="row"><span>&nbsp;</span></div>
 </g:each>
