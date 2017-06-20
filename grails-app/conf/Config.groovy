@@ -150,6 +150,7 @@ environments {
    }
    production {
       grails.logging.jul.usebridge = false
+      grails.plugin.console.enabled = true
    }
 }
 
@@ -338,8 +339,8 @@ jummp.controllerAnnotations = [
     "/plugins/blueprint*/**":   ["permitAll"],
     "/plugins/ckeditor*/**":    ["permitAll"],
     "/plugins/weceem*/**":      ["permitAll"],
-    "/console/**":              ["permitAll"],
-    "/plugins/console*/**":     ['permitAll'],
+    "/console/**":              ["ROLE_ADMIN"],
+    "/plugins/console*/**":     ['ROLE_ADMIN'],
     "/plugins/*/js/*":          ['permitAll'],
     "/plugins/*/css/*":         ['permitAll'],
     "/plugins/*/images/*":      ['permitAll'],
