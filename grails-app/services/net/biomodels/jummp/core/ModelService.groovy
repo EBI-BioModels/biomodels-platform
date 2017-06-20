@@ -232,7 +232,8 @@ WHERE r.deleted = false
                         AND ace2.sid.sid IN (:roles) AND ace2.mask IN (:permissions)
                         AND ace2.granting = true)'''
         } else {
-            ////otherwise sortColumn must be the following .. ie we want to sort by the first revision (sortColumn==ModelListSorting.SUBMITTER || sortColumn==ModelListSorting.SUBMISSION_DATE)
+            // otherwise sortColumn must be the following .. ie we want to sort by the first revision
+            // (sortColumn==ModelListSorting.SUBMITTER || sortColumn==ModelListSorting.SUBMISSION_DATE)
             query += '''AND r.revisionNumber=(SELECT MIN(r2.revisionNumber) from Revision r2,
                         AclEntry ace2  where r.model=r2.model
                         AND r2.id=ace2.aclObjectIdentity.objectId
@@ -243,14 +244,6 @@ WHERE r.deleted = false
 
         query += " AND m.deleted = ${deletedOnly} "
         if (filterIsValid) {
-           /* query += '''
-AND (
-lower(m.publication.journal) like :filter
-OR lower(m.publication.title) like :filter
-OR lower(m.publication.affiliation) like :filter
-OR lower(r.format.identifier) like :filter
-)
-'''*/
             query +='''
 AND(
 lower(r.format.identifier) like :filter OR
@@ -280,13 +273,6 @@ WHERE
         }
         query += "m.deleted = ${deletedOnly} AND r.deleted = false"
         if (filterIsValid) {
-            /*query += '''
-AND (
-lower(m.publication.journal) like :filter
-OR lower(m.publication.title) like :filter
-OR lower(m.publication.affiliation) like :filter
-)
-'''*/
             query +='''
 AND(
 lower(r.format.identifier) like :filter OR
@@ -306,7 +292,7 @@ ORDER BY
      * @param sortColumn
      * @return
      */
-    // ToDo: this should really be enum-properties in the ModelListSorting enum itself..
+    // ToDo: this should really be enum-properties in the ModelListSorting enum itself.
     private java.lang.String getSortColumnAsString(ModelListSorting sortColumn) {
         String result
         switch (sortColumn) {
