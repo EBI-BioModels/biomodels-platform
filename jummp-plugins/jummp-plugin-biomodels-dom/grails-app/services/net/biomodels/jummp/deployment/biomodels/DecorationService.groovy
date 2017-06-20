@@ -42,7 +42,7 @@ import net.biomodels.jummp.model.Model
 @Transactional
 class DecorationService {
     /**
-     * get 10 of the most accessed models from the last six months
+     * get 5 of the most accessed models from the last six months
      * @return A map of ModelTransportCommand associating with their hits
      */
     Map<ModelTransportCommand, ModelHits> getRecentlyAccessedModels() {
@@ -78,7 +78,7 @@ ORDER BY hits DESC
         matchedModels.each {
             Model m = it[0]
             int hits = it[1]
-            ModelTransportCommand mtc = new ModelAdapter(model: m).toCommandObject()
+            ModelTransportCommand mtc = new ModelAdapter(model: m).toCommandObject(false)
             String modelName = it[2]
             returnedModels.put(mtc, new ModelHits(modelName, hits))
         }
@@ -86,7 +86,7 @@ ORDER BY hits DESC
     }
 
     /**
-     * get 10 of the most recently published models
+     * get 5 of the most recently published models
      * @return A map of ModelTransportCommand associating with latest published date
      */
     Map<ModelTransportCommand, ModelLatestPublished> getRecentlyPublishedModels() {
@@ -113,7 +113,7 @@ ORDER BY model.firstPublished DESC'''
         matchedModels.each {
             Model model = it[0]
             Date latestPublished = it[1]
-	        ModelTransportCommand mtc = new ModelAdapter(model: model).toCommandObject()
+	        ModelTransportCommand mtc = new ModelAdapter(model: model).toCommandObject(false)
             String modelName = it[2]
             returnedModels.put(mtc, new ModelLatestPublished(modelName, latestPublished))
         }
