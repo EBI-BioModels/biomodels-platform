@@ -35,7 +35,8 @@ import grails.orm.HibernateCriteriaBuilder
 import groovy.transform.CompileStatic
 import groovy.transform.TypeChecked
 import groovy.transform.TypeCheckingMode
-import net.biomodels.jummp.core.adapters.DomainAdapter
+import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter
+import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC //rude?
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
 import net.biomodels.jummp.core.model.PublicationDetailExtractionContext
@@ -320,7 +321,8 @@ class SubmissionService {
             PublicationLinkProvider publSrc = PublicationLinkProvider.withCriteria(uniqueResult: true) {
                 eq("linkType", linkType)
             }
-            model.publication.linkProvider = DomainAdapter.getAdapter(publSrc).toCommandObject()
+            model.publication.linkProvider = new PublicationLinkProviderAdapter(linkProvider:
+                    publSrc).toCommandObject()
             return refreshPublication
         }
 
@@ -625,7 +627,7 @@ class SubmissionService {
             revision.comment = "Import of ${revision.name}".toString()
             Model newModel = modelService.uploadValidatedModel(repoFiles, revision)
             Revision latest = modelService.getLatestRevision(newModel, false)
-            RTC latestRTC = DomainAdapter.getAdapter(latest).toCommandObject()
+            RTC latestRTC = new RevisionAdapter(revision: latest).toCommandObject()
 
             final String NEW_NAME = workingMemory["new_name"]
             final String NEW_DESCRIPTION = workingMemory["new_description"]
@@ -771,7 +773,7 @@ class SubmissionService {
                 }
             }
             Revision newlyCreated = modelService.addValidatedRevision(repoFiles, deleteFiles, revision)
-            RTC newlyCreatedRTC = DomainAdapter.getAdapter(newlyCreated).toCommandObject()
+            RTC newlyCreatedRTC = new RevisionAdapter(revision: newlyCreated).toCommandObject()
             final String NEW_NAME = workingMemory["new_name"]
             final String NEW_DESCRIPTION = workingMemory["new_description"]
             final boolean SHOULD_UPDATE = NEW_NAME || NEW_DESCRIPTION

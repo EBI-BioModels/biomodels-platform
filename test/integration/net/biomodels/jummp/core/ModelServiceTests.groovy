@@ -34,6 +34,8 @@
 
 package net.biomodels.jummp.core
 
+import net.biomodels.jummp.core.adapters.RevisionAdapter
+
 import static org.junit.Assert.*
 import grails.test.mixin.Mock
 import grails.test.mixin.TestMixin
@@ -61,7 +63,7 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.junit.*
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.acls.domain.BasePermission
-import net.biomodels.jummp.core.adapters.DomainAdapter
+import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 
 @TestMixin(IntegrationTestMixin)
 class ModelServiceTests extends JummpIntegrationTest {
@@ -972,7 +974,7 @@ class ModelServiceTests extends JummpIntegrationTest {
         // complete name cannot be tested, as it uses a generated date and we do not know the date
         assertTrue(model.vcsIdentifier.endsWith("${model.submissionId}/"))
         File parent = new File(grailsApplication.config.jummp.vcs.workingDirectory, model.vcsIdentifier)
-        
+
         File gitFile = new File(parent, importFile.getName())
         List<String> lines = gitFile.readLines()
         assertEquals(1, lines.size())
@@ -1008,7 +1010,7 @@ class ModelServiceTests extends JummpIntegrationTest {
         assertTrue((modelService.uploadModelAsFile(rf2, meta)).validate())
         // an invalid submission should yield a model with validated flag set to false
         meta.name = "test2"
-        meta.format = DomainAdapter.getAdapter(ModelFormat.findByIdentifierAndFormatVersion("SBML", "*")).toCommandObject()
+        meta.format = new ModelFormatAdapter(format: ModelFormat.findByIdentifierAndFormatVersion("SBML", "*")).toCommandObject()
         File sbmlFile = new File("target/sbml/sbmlTestFile")
         FileUtils.deleteQuietly(sbmlFile)
         FileUtils.touch(sbmlFile)
@@ -1127,7 +1129,7 @@ class ModelServiceTests extends JummpIntegrationTest {
         shouldFail(ModelException) {
             modelService.retrieveModelFiles(rev)
         }
-        // retrieving the proper uploaded revision should 
+        // retrieving the proper uploaded revision should
         List<RepositoryFileTransportCommand> files = modelService.retrieveModelFiles(rev4)
         assertEquals(1, files.size())
         bytes = (new File(files.first().path)).getBytes()
@@ -1386,7 +1388,7 @@ class ModelServiceTests extends JummpIntegrationTest {
         def firstRevision = Revision.last()
         assertEquals "Test model", firstRevision.name
         println "first revision: ${firstRevision.dump()}"
-        def secondRevision = DomainAdapter.getAdapter(firstRevision).toCommandObject()
+        def secondRevision = new RevisionAdapter(revision: firstRevision).toCommandObject()
         secondRevision.name = "Some other name"
         secondRevision.description = "Some other description"
         secondRevision.comment = "Some important change"

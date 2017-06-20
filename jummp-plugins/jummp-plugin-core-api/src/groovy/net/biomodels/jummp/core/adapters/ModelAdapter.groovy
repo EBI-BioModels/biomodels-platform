@@ -20,17 +20,20 @@
 
 package net.biomodels.jummp.core.adapters
 
+import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.util.Holders
+import groovy.transform.CompileStatic
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 import net.biomodels.jummp.model.Model
+import net.biomodels.jummp.model.Revision
 
 /**
  * @short Adapter class for the Model domain class
  *
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  */
-public class ModelAdapter extends DomainAdapter {
+public class ModelAdapter {
     Model model
 
     static final Set<String> PERENNIAL_IDENTIFIER_TYPES = ModelIdentifierUtils.perennialFields
@@ -38,7 +41,7 @@ public class ModelAdapter extends DomainAdapter {
 
     def modelService = Holders.getGrailsApplication().mainContext.modelService
 
-
+    //@CompileStatic
     ModelTransportCommand toCommandObject(boolean saveHistory = true) {
         // TODO: is it correct to show the latest upload date as the lastModifiedDate or does it need ACL restrictions?
         Set<String> creators = []
@@ -49,38 +52,42 @@ public class ModelAdapter extends DomainAdapter {
                 creatorUsernames.add(revision.owner.username)
             }
         }
-        def latestRev
-        def firstRev
+        Revision latestRev
+        Revision firstRev
         Long modelId = model.id
-        boolean modelIsSaved = null != modelId && Model.exists(modelId)
+        boolean modelIsSaved = null != modelId
         if (modelIsSaved) {
-            latestRev = modelService?.getLatestRevision(model, saveHistory)
+            if (SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
+                latestRev = model.revisions.last()
+                firstRev = model.revisions.first()
+            } else {
+                latestRev = modelService.getLatestRevision(model, saveHistory)
+                firstRev = model.revisions.first()
+            }
         } else {
             // if the model is not saved, there can only be at most one revision
-            latestRev = model.revisions ? model.revisions[0] : null
-            firstRev = model.revisions ? model.revisions[0] : null
+            latestRev = model.revisions?.first()
+            firstRev = latestRev
         }
-        if (!firstRev && model.revisions) {
-            firstRev = model.revisions.sort { it.revisionNumber }.first()
-        }
+
         return new ModelTransportCommand(
-            id: model.id,
+            id: modelId,
             submissionId: model.submissionId,
             publicationId: model.publicationId,
             firstPublished: model.firstPublished,
-            name: latestRev ? latestRev.name : null,
-            description: latestRev ? latestRev.description : null,
-            state: latestRev ? latestRev.state : null,
-            lastModifiedDate: latestRev ? latestRev.uploadDate : null,
-            format: latestRev ? getAdapter(latestRev.format).toCommandObject() : null,
-            publication: model.publication ? getAdapter(model.publication).toCommandObject() : null,
+            name: latestRev?.name,
+            description: latestRev?.description,
+            state: latestRev?.state,
+            lastModifiedDate: latestRev?.uploadDate,
+            format: latestRev ? new ModelFormatAdapter(format: latestRev.format).toCommandObject() : null,
+            publication: model.publication ? new PublicationAdapter(publication:  model.publication).toCommandObject() : null,
             deleted: model.deleted,
-            submitter: firstRev?.owner.person.userRealName,
-            submitterUsername: firstRev?.owner.username,
+            submitter: firstRev?.owner?.person?.userRealName,
+            submitterUsername: firstRev?.owner?.username,
             submissionDate: firstRev?.uploadDate,
             creators: creators,
             creatorUsernames: creatorUsernames,
-            flagLevel: latestRev ? (latestRev.qcInfo ? latestRev.qcInfo.flag : null) : null
+            flagLevel: latestRev?.qcInfo?.flag
         )
     }
 

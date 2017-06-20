@@ -26,9 +26,9 @@ import net.biomodels.jummp.core.model.ModelFormatTransportCommand
  *
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  */
-public class ModelFormatAdapter extends DomainAdapter {
+public class ModelFormatAdapter {
     ModelFormat format
-    
+
     ModelFormatTransportCommand toCommandObject() {
         return new ModelFormatTransportCommand(id: format.id, identifier: format.identifier, name: format.name, formatVersion: format.formatVersion)
     }

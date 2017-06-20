@@ -26,7 +26,8 @@ package net.biomodels.jummp.core
 
 import grails.async.Promise
 import grails.plugin.springsecurity.annotation.Secured
-import net.biomodels.jummp.core.adapters.DomainAdapter
+import net.biomodels.jummp.core.adapters.RevisionAdapter
+import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.events.LoggingEventType
 import net.biomodels.jummp.core.events.PostLogging
 import net.biomodels.jummp.core.model.RevisionTransportCommand
@@ -139,7 +140,7 @@ class SearchService {
     void regenerateIndices() {
         strategy.clearIndex()
         List<RevisionTransportCommand> revisions = Revision.list(fetch: [model: "eager"]).collect { r ->
-            DomainAdapter.getAdapter(r).toCommandObject()
+            new RevisionAdapter(revision: r).toCommandObject()
         }
         if (IS_DEBUG_ENABLED) {
             log.debug "Indexing ${revisions.size()} revisions."

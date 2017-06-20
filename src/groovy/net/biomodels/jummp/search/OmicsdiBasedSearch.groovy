@@ -28,7 +28,6 @@ import grails.util.Holders
 import groovy.json.JsonBuilder
 import net.biomodels.jummp.annotationstore.ResourceReference
 import net.biomodels.jummp.core.ModelSearchStrategy
-import net.biomodels.jummp.core.adapters.DomainAdapter
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.events.ModelOperationEvent

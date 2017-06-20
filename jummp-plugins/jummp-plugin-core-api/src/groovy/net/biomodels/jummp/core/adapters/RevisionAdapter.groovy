@@ -36,7 +36,7 @@ import net.biomodels.jummp.model.Revision
  *
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  */
-public class RevisionAdapter extends DomainAdapter {
+public class RevisionAdapter {
     Revision revision
 
     def modelService = Holders.getGrailsApplication().mainContext.modelService
@@ -67,7 +67,7 @@ public class RevisionAdapter extends DomainAdapter {
             List<ElementAnnotation> revisionAnnotations = RevisionAnnotation.findAllByRevision(revision)
             annotations = revisionAnnotations.collect { it.elementAnnotation.toCommandObject() }
         }
-        def formatAdapter = getAdapter(revision.format)
+        def formatAdapter = new ModelFormatAdapter(format: revision.format)
         def formatCmd = formatAdapter.toCommandObject()
         String submitterName = revision.owner.person.userRealName
         def modelAdapter = new ModelAdapter(model: revision.model)

@@ -30,7 +30,7 @@ import net.biomodels.jummp.annotation.ValueContainer
 import net.biomodels.jummp.annotationstore.Qualifier
 import net.biomodels.jummp.annotationstore.ResourceReference
 import net.biomodels.jummp.annotationstore.Statement
-import net.biomodels.jummp.core.adapters.DomainAdapter
+import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.annotation.StatementTransportCommand
 import net.biomodels.jummp.core.model.AnnotationValidationContext
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
@@ -202,7 +202,7 @@ class MetadataService {
         Model theModel = Model.findBySubmissionIdOrPublicationId(model, model)
         Revision baseRevision = modelService.getLatestRevision(theModel, false)
         boolean isUpdate = baseRevision.annotations?.size() > 0
-        RevisionTransportCommand newRevision = DomainAdapter.getAdapter(baseRevision).toCommandObject()
+        RevisionTransportCommand newRevision = new RevisionAdapter(revision: baseRevision).toCommandObject()
         newRevision.comment = "Updated model annotations."
         AnnotationValidationContext avc = validateModelRevision(baseRevision,statements)
         newRevision.validationLevel = avc.validationLevel
@@ -258,7 +258,7 @@ class MetadataService {
         String format = revision.format.identifier
         MetadataSavingStrategy strategy = createMetadataSavingStrategyForFormat format
 
-        RevisionTransportCommand revisionTC = DomainAdapter.getAdapter(revision).toCommandObject()
+        RevisionTransportCommand revisionTC = new RevisionAdapter(revision: revision).toCommandObject()
         def metadataWriter = strategy.createMetadataWriter(revisionTC, statements)
 
         StringBuffer validationReport = new StringBuffer();

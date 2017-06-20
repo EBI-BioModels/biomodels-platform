@@ -24,7 +24,7 @@
 
 package net.biomodels.jummp.core.model
 
-import net.biomodels.jummp.core.adapters.DomainAdapter
+import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.model.ModelElementType
 
 /**
@@ -45,7 +45,7 @@ class ModelElementTypeCategory {
      */
     public ModelElementTypeTransportCommand toCommandObject() {
         ModelFormatTransportCommand modelFormatTransportCommand
-        modelFormatTransportCommand = DomainAdapter.getAdapter(this.modelFormat).toCommandObject()
+        modelFormatTransportCommand = new ModelFormatAdapter(format: this.modelFormat).toCommandObject()
         String name = this.name
         return new ModelElementTypeTransportCommand(modelFormat: modelFormatTransportCommand, name: name)
     }

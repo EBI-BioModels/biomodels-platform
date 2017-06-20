@@ -34,7 +34,6 @@
 
 package net.biomodels.jummp.core
 
-import net.biomodels.jummp.core.annotation.StatementTransportCommand
 import net.biomodels.jummp.core.model.ModelElementTypeCategory
 import net.biomodels.jummp.core.model.ModelElementTypeTransportCommand
 import net.biomodels.jummp.model.ModelElementType
@@ -45,7 +44,8 @@ import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.model.Revision
 import org.perf4j.aop.Profiled
-import net.biomodels.jummp.core.adapters.DomainAdapter
+import net.biomodels.jummp.core.adapters.ModelFormatAdapter
+
 /**
  * @short Service to handle Model files.
  *
@@ -105,22 +105,22 @@ class ModelFileFormatService {
         String match = services.keySet().find {
             if (it == "UNKNOWN") return false
             String serviceName = services.getAt(it)
-            def ffs = grailsApplication.mainContext.getBean(serviceName)
+            def ffs = grailsApplication.mainContext.getBean(serviceName, FileFormatService)
             return ffs.areFilesThisFormat(fileList)
         }
         if (!match) {
-            return DomainAdapter.getAdapter(
+            return new ModelFormatAdapter(format:
                 ModelFormat.findByIdentifierAndFormatVersion("UNKNOWN", "*")).toCommandObject()
         } else {
             ModelFormatTransportCommand unknownVersionFormat =
-                    DomainAdapter.getAdapter(ModelFormat.findByIdentifierAndFormatVersion(match, "*"))
+                    new ModelFormatAdapter(format:ModelFormat.findByIdentifierAndFormatVersion(match, "*"))
                                                         .toCommandObject()
             RevisionTransportCommand rev = new RevisionTransportCommand(files: modelFiles,
                                                                         format: unknownVersionFormat)
             String formatVersion = getFormatVersion(rev)
             ModelFormat knownVersionFormat = ModelFormat.findByIdentifierAndFormatVersion(match, formatVersion);
             if (knownVersionFormat) {
-                return DomainAdapter.getAdapter(knownVersionFormat).toCommandObject()
+                return new ModelFormatAdapter(format:knownVersionFormat).toCommandObject()
             }
             return unknownVersionFormat
         }
@@ -140,11 +140,11 @@ class ModelFileFormatService {
     ModelFormatTransportCommand registerModelFormat(final String identifier, final String name, String version) {
         ModelFormat modelFormat = ModelFormat.findByIdentifierAndFormatVersion(identifier, version)
         if (modelFormat) {
-            return DomainAdapter.getAdapter(modelFormat).toCommandObject()
+            return new ModelFormatAdapter(format:modelFormat).toCommandObject()
         } else {
             modelFormat = new ModelFormat(identifier: identifier, name: name, formatVersion: version)
             modelFormat.save(flush: true)
-            return DomainAdapter.getAdapter(modelFormat).toCommandObject()
+            return new ModelFormatAdapter(format:modelFormat).toCommandObject()
         }
     }
 
@@ -290,7 +290,7 @@ class ModelFileFormatService {
     List<String> getAllAnnotationURNs(Revision rev) {
         FileFormatService service = serviceForFormat(rev.format)
         if (service) {
-            return service.getAllAnnotationURNs(DomainAdapter.getAdapter(rev).toCommandObject())
+            return service.getAllAnnotationURNs(new ModelFormatAdapter(format:rev).toCommandObject())
         } else {
             return []
         }
@@ -305,7 +305,7 @@ class ModelFileFormatService {
     List<String> getPubMedAnnotation(Revision rev) {
         FileFormatService service = serviceForFormat(rev.format)
         if (service) {
-            return service.getPubMedAnnotation(DomainAdapter.getAdapter(rev).toCommandObject())
+            return service.getPubMedAnnotation(new ModelFormatAdapter(format:rev).toCommandObject())
         } else {
             return []
         }

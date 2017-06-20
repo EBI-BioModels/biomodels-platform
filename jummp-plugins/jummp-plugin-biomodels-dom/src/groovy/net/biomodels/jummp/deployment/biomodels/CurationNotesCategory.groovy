@@ -20,7 +20,7 @@
 
 package net.biomodels.jummp.deployment.biomodels
 
-import net.biomodels.jummp.core.adapters.DomainAdapter
+import net.biomodels.jummp.core.adapters.ModelAdapter
 
 /**
  * Convenience class for adding customised methods to the CurationNotes domain class.
@@ -39,7 +39,7 @@ class CurationNotesCategory {
      */
     CurationNotesTransportCommand toCommandObject() {
         new CurationNotesTransportCommand(
-            model: DomainAdapter.getAdapter(this.model).toCommandObject(),
+            model: new ModelAdapter(model: model).toCommandObject(),
             submitter: this.submitter, lastModifier: this.lastModifier,
             dateAdded: this.dateAdded, lastModified: this.lastModified,
             comment: this.comment, curationImage: this.curationImage)
