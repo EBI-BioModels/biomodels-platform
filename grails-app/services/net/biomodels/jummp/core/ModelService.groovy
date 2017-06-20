@@ -171,18 +171,19 @@ class ModelService {
     @Profiled(tag="modelService.getAllModels")
     public List<Model> getAllModels(int offset, int count, boolean sortOrder, ModelListSorting sortColumn,
                 String filter = null, boolean deletedOnly=false) {
+        Map metaParams
         if (offset < 0 || count <= 0) {
             // safety check
-            return []
+            metaParams = [:]
+        } else {
+            metaParams = [
+                max: count, offset: offset
+            ]
         }
 
         String sortingDirection = sortOrder ? 'asc' : 'desc'
 
         boolean filterIsValid = filterValid(filter)
-
-        Map metaParams = [
-            max: count, offset: offset
-        ]
 
         Map namedParams = [:]
         if (filterIsValid) {
@@ -408,64 +409,9 @@ ORDER BY
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getModelCount")
     public Integer getModelCount(String filter = null, boolean deletedOnly = false) {
-        if (SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
-            // special handling for Admin - is allowed to see all (not deleted) Models
-            def results = Model.withCriteria {
-                ne("deleted", !deletedOnly)
-                if (filterValid(filter)) {
-                    or {
-                        ilike("name", "%${filter}%")
-                        publication {
-                            or {
-                                ilike("journal", "%${filter}%")
-                                ilike("title", "%${filter}%")
-                                ilike("affiliation", "%${filter}%")
-                            }
-                        }
-                    }
-                }
-                projections {
-                    count("id")
-                }
-            }
-            return results[0]
-        }
-
-        Set<String> roles = getSpringDatabaseRoles()
-
-        String query = '''
-SELECT COUNT(DISTINCT m.id) FROM Revision AS r, AclEntry AS ace
-JOIN r.model AS m
-JOIN ace.aclObjectIdentity AS aoi
-JOIN aoi.aclClass AS ac
-JOIN ace.sid AS sid
-WHERE
-aoi.objectId = r.id
-AND ac.className = :className
-AND sid.sid IN (:roles)
-AND ace.mask IN (:permissions)
-AND ace.granting = true
-AND r.deleted = false
-'''
-query+=" AND m.deleted=${deletedOnly} "
-        if (filterValid(filter)) {
-            query += '''
-AND (
-lower(m.publication.journal) like :filter
-OR lower(m.publication.title) like :filter
-OR lower(m.publication.affiliation) like :filter
-)
-'''
-        }
-        Map params = [
-            className: Revision.class.getName(),
-            permissions: [BasePermission.READ.getMask(), BasePermission.ADMINISTRATION.getMask()],
-            roles: roles]
-        if (filterValid(filter)) {
-            params.put("filter", "%${filter.toLowerCase()}%");
-        }
-
-        return Model.executeQuery(query, params)[0] as Integer
+        ModelListSorting sorting
+        List<Model> resultSet = getAllModels(-1, 0, false, sorting, filter, false)
+        return resultSet.size()
     }
 
     /** convenience method to check if our filter is OK */
