@@ -116,15 +116,37 @@
 				                    }
                                 %>
                                 <g:if test="${isAsked}">
-                                    <input type="checkbox" id="facetValue_${fv.value}" value="${fv.value}" checked title="${fv.value}"
+                                    <input type="checkbox" id="facetValue_${fv.value}" value="${fv.value}"
+                                           checked title="${fv.value}"
                                            onchange="runFacetList($(this), '${facet.id}' ,'${escapedFacetValue}')">
-                                    <span class="facetLabel">${fv.label} (${fv.count})</span>
+                                    <span class="facetLabel"
+                                          onclick="runFacetList($(this), '${facet.id}' ,'${escapedFacetValue}')">
+                                        ${fv.label}</span>
                                 </g:if>
                                 <g:else>
+                                    <%
+                                        String selectedFacet = "${facet.id}:${fv.value}"
+                                        newQuery = "${query} and ${selectedFacet}"
+                                        def newParams = [:]
+                                        if (params.query) {
+                                            newParams["query"] = newQuery
+                                        } else {
+                                            newParams["query"] = "${selectedFacet}"
+                                        }
+                                        if (params.offset) {
+                                            newParams["offset"] = params.offset
+                                        }
+                                        if (params.numResults) {
+                                            newParams["numResults"] = params.numResults
+                                        }
+                                        if (params.sort) {
+                                            newParams["sort"] = params.sort
+                                        }
+                                    %>
                                     <input type="checkbox" value="${fv.value}" id="choosenFacetValue" title="${fv.value}"
                                            onchange="runFacetList($(this), '${facet.id}' ,'${escapedFacetValue}')">
-                                    <g:link controller="search" action="list" params="${[query: newQuery]}" class="facetLabel">
-                                        <span class="facetLabel">${fv.label} (${fv.count})</span></g:link>
+                                    <g:link controller="search" action="list" params="${newParams}" class="facetLabel">
+                                        <span class="facetLabel">${fv.label}</span></g:link>
                                 </g:else>
                             </li>
                         </g:each>

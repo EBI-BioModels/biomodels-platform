@@ -329,7 +329,7 @@ class SearchController {
             models.add(DomainAdapter.getAdapter(it).toCommandObject())
         }
         List<Facet> basicFacets = buildBasicFacets(models)
-        int totalCount = models.size()
+        int totalCount = modelService.getModelCount(filter, false)
         return [models: models, facets: basicFacets, modelsAvailable: totalCount, sortBy: sortBy,
                 sortDirection: sortDirection, offset: offset, length: length]
     }

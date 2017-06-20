@@ -270,6 +270,8 @@ WHERE
             query += '''r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2 where r.model=r2.model) AND '''
         } else if (sortColumn == ModelListSorting.SUBMITTER || sortColumn == ModelListSorting.SUBMISSION_DATE) {
             query += '''r.revisionNumber=(SELECT MIN(r2.revisionNumber) from Revision r2 where r.model=r2.model) AND '''
+        } else {
+            query += '''r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2 where r.model=r2.model) AND '''
         }
         query += "m.deleted = ${deletedOnly} AND r.deleted = false"
         if (filterIsValid) {
