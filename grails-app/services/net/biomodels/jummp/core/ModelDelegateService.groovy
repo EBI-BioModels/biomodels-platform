@@ -36,6 +36,8 @@ package net.biomodels.jummp.core
 
 import eu.ddmore.publish.service.PublishContext
 import net.biomodels.jummp.core.adapters.ModelAdapter
+import net.biomodels.jummp.core.adapters.PublicationAdapter
+import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.identifier.generator.AbstractModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
@@ -151,7 +153,7 @@ class ModelDelegateService implements IModelService {
         }
         Revision rev = modelService.getLatestRevision(model, addToHistory)
         if (rev) {
-            return new ModelAdapter(model: rev).toCommandObject()
+            return new RevisionAdapter(revision: rev).toCommandObject()
         } else {
             throw new AccessDeniedException("No access to any revision of Model ${modelId}")
         }
@@ -160,17 +162,17 @@ class ModelDelegateService implements IModelService {
     List<RevisionTransportCommand> getAllRevisions(String modelId) {
         List<RevisionTransportCommand> revisions = []
         modelService.getAllRevisions(ModelAdapter.findByPerennialIdentifier(modelId)).each {
-            revisions << new ModelAdapter(model: it).toCommandObject()
+            revisions << new RevisionAdapter(revision: it).toCommandObject()
         }
         return revisions
     }
 
     RevisionTransportCommand getRevision(String identifier) {
-        return new ModelAdapter(model: modelService.getRevision(identifier)).toCommandObject()
+        return new RevisionAdapter(revision: modelService.getRevision(identifier)).toCommandObject()
     }
 
     RevisionTransportCommand getRevision(String modelId, int revisionNumber) {
-        return new ModelAdapter(model: modelService.getRevision(
+        return new RevisionAdapter(revision: modelService.getRevision(
                     ModelAdapter.findByPerennialIdentifier(modelId), revisionNumber)).toCommandObject()
     }
 
@@ -179,7 +181,7 @@ class ModelDelegateService implements IModelService {
         def publication = modelService.getPublication(
                                ModelAdapter.findByPerennialIdentifier(modelId))
         if (publication) {
-            return new ModelAdapter(model: publication).toCommandObject()
+            return new PublicationAdapter(publication: publication).toCommandObject()
         }
         return null
     }
@@ -191,9 +193,11 @@ class ModelDelegateService implements IModelService {
 
     RevisionTransportCommand addRevision(String modelId, File file,
                 ModelFormatTransportCommand format, String comment) throws ModelException {
-        return new ModelAdapter(model: modelService.addRevision(ModelAdapter.findByPerennialIdentifier(modelId), file,
-                    ModelFormat.findByIdentifierAndFormatVersion(format.identifier,
-                                    format.formatVersion), comment)).toCommandObject()
+        Model model = ModelAdapter.findByPerennialIdentifier(modelId)
+        ModelFormat modelFormat = ModelFormat.findByIdentifierAndFormatVersion(format.identifier,
+            format.formatVersion)
+        Revision revision = modelService.addRevisionAsFile(model, file, modelFormat, comment)
+        return new RevisionAdapter(revision: revision).toCommandObject()
     }
 
     List<FlagTransportCommand> getFlags(String modelId) {
