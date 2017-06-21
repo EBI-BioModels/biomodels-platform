@@ -27,8 +27,8 @@ import org.apache.camel.ShutdownRunningTask
 import org.apache.camel.builder.RouteBuilder
 
 class IndexingRoute extends RouteBuilder {
-    final String DEBUG_CFG =
-            "-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=6005"
+    final String DEBUG_CFG = ""
+            //"-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=6005"
     final boolean inDevelopment = Environment.isDevelopmentMode()
     final String JAR_ARGS = '-jar ${body[jarPath]} ${body[jsonPath]}'
     final String CLI_ARGS = inDevelopment ?
