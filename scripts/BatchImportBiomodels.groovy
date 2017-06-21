@@ -184,7 +184,6 @@ def ptc
 def personTC
 def mf
 def decorator
-def domainAdapter
 def Model
 def Revision
 
@@ -558,9 +557,6 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
     // BioModels-specific domain classes
     CurationNotes = loadClass("net.biomodels.jummp.deployment.biomodels.CurationNotes")
     ModelOfTheMonth = loadClass("net.biomodels.jummp.deployment.biomodels.ModelOfTheMonth")
-
-    // DomainClass -> TransportCommand converter
-    domainAdapter = loadClass("net.biomodels.jummp.core.adapters.DomainAdapter")
 
     // inject applicationContext in POGOs that expect it
     decorator.context = appCtx

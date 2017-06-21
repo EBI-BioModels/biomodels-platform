@@ -34,7 +34,7 @@ import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import grails.plugin.springsecurity.authentication.GrailsAnonymousAuthenticationToken
 import groovy.json.JsonBuilder
-import net.biomodels.jummp.core.adapters.DomainAdapter
+import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.model.ModelListSorting
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
@@ -291,7 +291,7 @@ class SearchController {
                 modelService.getAllModels(offset, length, sortDirection == "asc", sort, null, true)
         List models = []
         modelsDomain.each {
-            models.add(DomainAdapter.getAdapter(it).toCommandObject())
+            models.add(new ModelAdapter(model: it).toCommandObject())
         }
         return [models: models, modelsAvailable: modelService.getModelCount(null, true), sortBy: sortBy,
                     sortDirection: sortDirection, offset: offset, length: length]
@@ -326,7 +326,7 @@ class SearchController {
         List modelsDomain = modelService.getAllModels(offset, length, sortDirection == "asc", sort, filter)
         List models = []
         modelsDomain.each {
-            models.add(DomainAdapter.getAdapter(it).toCommandObject())
+            models.add(new ModelAdapter(model: it).toCommandObject())
         }
         List<Facet> basicFacets = buildBasicFacets(models)
         int totalCount = modelService.getModelCount(filter, false)

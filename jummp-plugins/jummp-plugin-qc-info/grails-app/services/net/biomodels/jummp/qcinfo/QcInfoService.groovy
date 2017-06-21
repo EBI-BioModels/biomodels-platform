@@ -1,7 +1,7 @@
 package net.biomodels.jummp.qcinfo
 
 import grails.util.Holders
-import net.biomodels.jummp.core.adapters.DomainAdapter
+import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.events.ModelCertifiedEvent
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.model.Model
@@ -45,7 +45,7 @@ class QcInfoService {
             throw new IllegalArgumentException("Cannot add QC information to deleted revision ${revision.id}.")
         }
 
-        RevisionTransportCommand revTC = DomainAdapter.getAdapter(revision).toCommandObject()
+        RevisionTransportCommand revTC = new RevisionAdapter(revision: revision).toCommandObject()
         ModelCertifiedEvent event = new ModelCertifiedEvent(this, revTC, false)
         Revision.withTransaction {status ->
             try {
