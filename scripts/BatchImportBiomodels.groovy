@@ -613,6 +613,9 @@ target(main: "Puts everything together to import models from a given folder") {
     }
     */
 
+    // import MoM entries if they have not been imported
+    processModelOfTheMonth()
+
     duration = (System.currentTimeMillis() - duration) / 1000 /* duration in ms */
     String formattedDuration = prettify(duration)
     printModelLog()
@@ -771,10 +774,6 @@ submitOriginalFile = { branch, modelId, originalFile, infoMap ->
         model.submissionId = submissionId
     }
     model.revisions[0].uploadDate = uploadDate
-
-    if (inPublBranch) {
-        processModelOfTheMonth(model)
-    }
 
     if (inPublBranch) {
         setCurationNotes(model)
@@ -1667,32 +1666,45 @@ annotateModellingApproaches = { revision, branch, modelDetails, user ->
  * is updated. The importer relies on an assumption that only one model of the month
  * can be published in a given month, which is valid given current data.
  */
-processModelOfTheMonth = { model ->
-    def modelId = model.publicationId ?: model.submissionId
+processModelOfTheMonth = {
     def dateFormatter = new java.text.SimpleDateFormat('yyyy-MM')
-    String query = "select * from model_of_month where models_id like ?"
-    addModelMsg modelId, "begin processing MoM..."
-    biomodelsConnection.eachRow(query, ["%${modelId}%".toString()]) { row ->
-        addModelMsg modelId, "processing MoM row $row"
+    String query = "select * from model_of_month"
+    def momBMEntries = biomodelsConnection.rows(query)
+    momBMEntries.each { row ->
+        def model_ids = row.models_id
+        addModelMsg model_ids, "begin processing MoM..."
+        addModelMsg model_ids, "processing MoM row $row"
         def datePublished = dateFormatter.parse(row.pub_month)
-        addModelMsg modelId, "Adding MoM $datePublished"
+        addModelMsg model_ids, "Adding MoM $datePublished"
         // see if there is an existing model of the month in the Jummp DB for
         // the given month
         def modelMonth = ModelOfTheMonth.findByPublicationDate(datePublished)
-        if (!modelMonth) { //import new model of the month
+        if (!modelMonth) { // import new model of the month
             modelMonth = ModelOfTheMonth.newInstance(title: row.title,
-                    authors: row.authors, publicationDate: datePublished)
+                authors: row.authors, publicationDate: datePublished)
             modelMonth.save() // save once to set the last_updated, then modify it
-            modelMonth.lastUpdated=row.last_modification_date
+            modelMonth.lastUpdated = row.last_modification_date
         }
-        modelMonth.addToModels(model)
-        if (!modelMonth.save()) {
-            addModelError modelId, "Failed to save MoM ${row.id}: ${modelMonth.errors.allErrors}"
-        }
-    }
-    addModelMsg modelId, "...done processing MoM"
-}
 
+        List modelIds = model_ids.split(", ")
+        modelIds.each {modelId ->
+	  modelId = modelId.trim()
+	    addModelMsg modelId, "creating a record between MoM ${modelMonth.id} and the model ${modelId}"
+            def model = Model.findByPublicationId(modelId)
+	    
+            if (model) {
+                modelMonth.addToModels(model)
+                addModelMsg modelId, "added the model ${modelId} to the MoM entry ${modelMonth.id}" 
+            } else {
+                addModelError modelId, "Cannot create an association of the model ${modelId} with the MoM ${modelMonth.dump()}"
+            }
+        }
+        if (!modelMonth.save(flush: true)) {
+            addModelError model_ids, "Failed to save MoM ${row.id}: ${modelMonth.errors.allErrors}"
+        }
+        addModelMsg model_ids, "...done processing MoM"
+    }
+}
 
 /*
  * Gets the username associated with a person in the biomodels database. Used to
