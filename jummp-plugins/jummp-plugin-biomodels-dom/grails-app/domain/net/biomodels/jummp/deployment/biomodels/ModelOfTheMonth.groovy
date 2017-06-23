@@ -44,7 +44,7 @@ class ModelOfTheMonth implements Serializable {
 
     static constraints = {
         shortDescription nullable: true, blank: true, maxSize: 1024
-        previewImage nullable: true, blank: true, maxSize: 3072
+        previewImage nullable: true, blank: true
     }
 
     ModelOfTheMonthTransportCommand toCommandObject() {
