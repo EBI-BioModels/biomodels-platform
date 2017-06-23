@@ -1688,15 +1688,15 @@ processModelOfTheMonth = {
 
         List modelIds = model_ids.split(", ")
         modelIds.each {modelId ->
-	  modelId = modelId.trim()
-	    addModelMsg modelId, "creating a record between MoM ${modelMonth.id} and the model ${modelId}"
+	        modelId = modelId.trim()
+	        addModelMsg modelId, "creating a record between MoM ${modelMonth.id} and the model ${modelId}"
             def model = Model.findByPublicationId(modelId)
-	    
+
             if (model) {
                 modelMonth.addToModels(model)
-                addModelMsg modelId, "added the model ${modelId} to the MoM entry ${modelMonth.id}" 
+                addModelMsg modelId, "added the model ${modelId} to the MoM entry ${modelMonth.id}"
             } else {
-                addModelError modelId, "Cannot create an association of the model ${modelId} with the MoM ${modelMonth.dump()}"
+                addModelError modelId, "cannot create an association of the model ${modelId} with the MoM ${modelMonth.dump()}"
             }
         }
         if (!modelMonth.save(flush: true)) {
