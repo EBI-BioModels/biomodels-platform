@@ -66,6 +66,7 @@
                             <h5>${params.flashMessage}</h5>
                         </div>
                     </g:if>
+                    <span id="flashMessage"></span>
                     <span>Search terms: </span><span id="searchString" style="font-weight: bolder"></span>
                 </g:else>
         </div>
@@ -73,40 +74,45 @@
             <section>
                 <div class="modelList">
                     <div class="column row">
-                        <h3>Found: ${totalCount} ${totalCount > 1 ? 'models' : 'model'}</h3>
+                        <h3>
+                            Found: ${totalCount} ${totalCount > 1 ? 'models' : 'model'}
+                            <span style="float: right"><a id="btnDownload">Download</a></span>
+                            <span style="float: right"><a id="checkAll">Select all</a> |&nbsp;</span>
+                        </h3>
                     </div>
                     <div class="column row">
                     <g:each status="i" in="${models}" var="model">
                     <div class="column row modelPlaceHolder">
-                        <div class="small-12 medium-12 large-12 columns">
-                            <%
-                                def id = model.publicationId ?: model.submissionId
-                                def modelUrl = createLink(controller: 'model', id: id, action: 'show')
-                                def description = model.description ?: ""
-                                int maxNumChar = 255
-                                boolean haveMoreDetails = description.length() > maxNumChar
-                                def descriptionShown = description
-                                def moreDetails = ""
-                                if (haveMoreDetails) {
-                                    moreDetails = "<a href=${modelUrl}>... See more</a>"
-                                    descriptionShown = description.substring(1,maxNumChar) + moreDetails
-                                }
-                                // TODO: deal with HTML elements
-                                descriptionShown = description
-                            %>
-                            %{--<input class="export-selection" type="checkbox" value="${model.submissionId}">--}%
+                    <%
+                        def id = model.publicationId ?: model.submissionId
+                        def modelUrl = createLink(controller: 'model', id: id, action: 'show')
+                        def description = model.description ?: ""
+                        int maxNumChar = 255
+                        boolean haveMoreDetails = description.length() > maxNumChar
+                        def descriptionShown = description
+                        def moreDetails = ""
+                        if (haveMoreDetails) {
+                            moreDetails = "<a href=${modelUrl}>... See more</a>"
+                            descriptionShown = description.substring(1,maxNumChar) + moreDetails
+                        }
+                        // TODO: deal with HTML elements
+                        descriptionShown = description
+                    %>
+                        <div class="small-11 medium-11 large-11 columns">
                             <h4>
-                                <a href="${modelUrl}">${model.name}</a><br/>
+                                <a href="${modelUrl}">${model.name}</a>
+                                <br/>
                                 <span style="font-size: small; margin: -25px 0;">
-                                ID: ${model.publicationId ?: model.submissionId} |
+                                ID: ${id} |
                                 Format: ${model.format.name} |
                                 Submitter: ${model.submitter} |
                                 Uploaded date: ${model.submissionDate.format('dd/MM/yyyy')} |
                                 Last modified date: ${model.lastModifiedDate.format('dd/MM/yyyy')}
                                 </span>
                             </h4>
-                            %{--<span id="modelDescription"></span>
-                            <p style="font-size: 90%; margin-bottom: 0.5%">${descriptionShown}</p>--}%
+                        </div>
+                        <div class="small-1 medium-1 large-1 columns" id="download">
+                            <input id="chkDownload" type="checkbox" value="${id}" style="float: right; margin-top: 5px">
                         </div>
                     </div>
                     </g:each>
@@ -137,6 +143,54 @@
 			                }
 			                url += "&sort=" + selectedValue;
                             window.location.href = url;
+                        });
+                        var selectedModels = [];
+                        $('div#download > input').click(function() {
+                            var isChecked = $(this).is(':checked');
+                            var checkedValue = $(this).val();
+                            if (isChecked)
+                                selectedModels.push(checkedValue);
+                            else {
+                                var index = selectedModels.indexOf(checkedValue);
+                                if (index > -1) {
+                                    selectedModels.splice(index, 1);
+                                }
+                            }
+                            console.log(selectedModels);
+                        });
+                        $('#checkAll').click(function() {
+                            selectedModels = [];
+                            var operation = $(this).text();
+                            if (operation === "Select all") {
+                                $('#download > input').prop('checked', true);
+                                $(this).text("Deselect all");
+                                $('#download > input').each(function() {
+                                    selectedModels.push($(this).val());
+                                });
+                            } else {
+                                $('#download > input').prop('checked', false);
+                                $(this).text("Select all");
+                            }
+                            console.log(selectedModels);
+                        });
+                        $('#btnDownload').click(function() {
+                            if (typeof selectedModels != undefined && selectedModels.length > 0) {
+                                console.log("Downloading...")
+                            } else {
+                                var strHtml ="<div class='alert info'><span class='closebtn'>&times;</span> " +
+                                    "<h5 style='color: #ffffff'>Please select at least one model.</h5> </div>";
+                                var shouldShown = typeof $('.alert').val() === "undefined" || $('.alert').val() === "";
+                                console.log(shouldShown);
+                                if (shouldShown) {
+                                    $(strHtml).insertBefore('#flashMessage');
+                                }
+                                $('.closetbn').click(function() {
+                                    $(this).slideUp();
+                                })
+                                $('.alert').click(function() {
+                                    $(this).slideUp();
+                                })
+                            }
                         });
                     </g:javascript>
                 </div>
