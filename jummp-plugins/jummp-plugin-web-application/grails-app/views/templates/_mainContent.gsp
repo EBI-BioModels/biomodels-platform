@@ -20,36 +20,13 @@
             <div class="small-12 medium-12 large-6 columns" id="sorting">
                 <!-- Show Sort by box on the search page only for now-->
                 <g:if test="${action == "search"}">
-                <label style="display: inline-block; float: left; padding-right: 4px; width: 100%">Sort by
-                    <select name="sortBy"
-                            style="display: inline-block; width: 50%; font-size: 85%;
-                            height: 35px !important; margin: 0 0 0.125em;">
-                        <option value="relevance-desc">Relevance</option>
-                        <option value="id-asc">Model ID: A to Z</option>
-                        <option value="id-desc">Model ID: Z to A</option>
-                        <option value="name-asc">Model Name: A to Z</option>
-                        <option value="name-desc">Model Name: Z to A</option>
-                    </select>
-                </label>
+                    <g:render template="/templates/sorting" />
                 </g:if>
             </div>
             <div class="small-12 medium-12 large-6 columns">
-                <ul>
-                    <g:each in="${resultOptions}">
-                        <li>
-                            <g:if test="${it == length}">
-                                ${it}
-                            </g:if>
-                            <g:else>
-                                <a href="${createLink(controller: 'search', action: action,
-                                    params: [query: query, offset: 0, numResults: it, sort: params.sort])}">
-                                    ${it}
-                                </a>
-                            </g:else>
-                        </li>
-                    </g:each>
-                    <li>Page size </li>
-                </ul>
+                <g:render template="/templates/pageSize"
+                          model="[resultOptions: resultOptions, length: length,
+                                  action: action, query: query]"/>
             </div>
         </div>
         <div class="row">
@@ -74,11 +51,8 @@
             <section>
                 <div class="modelList">
                     <div class="column row">
-                        <h3>
-                            Found: ${totalCount} ${totalCount > 1 ? 'models' : 'model'}
-                            <span style="float: right"><a id="btnDownload">Download</a></span>
-                            <span style="float: right"><a id="checkAll">Select all</a> |&nbsp;</span>
-                        </h3>
+                        <g:render template="/templates/resultHeader"
+                                  model="[totalCount: totalCount, action: action]"/>
                     </div>
                     <div class="column row">
                     <g:each status="i" in="${models}" var="model">
