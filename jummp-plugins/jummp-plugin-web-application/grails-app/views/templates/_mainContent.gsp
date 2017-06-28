@@ -86,7 +86,10 @@
                             </h4>
                         </div>
                         <div class="small-1 medium-1 large-1 columns" id="download">
-                            <input id="chkDownload" type="checkbox" value="${id}" style="float: right; margin-top: 5px">
+                            <g:if test="${action == 'search'}">
+                                <input id="chkDownload" type="checkbox" value="${id}"
+                                       style="float: right; margin-top: 5px">
+                            </g:if>
                         </div>
                     </div>
                     </g:each>
@@ -105,67 +108,72 @@
                             }
                         });
 
-                        $('div#sorting > label > select').change(function() {
-                            var selectedValue = $(this).val();
-                            var url = "${createLink(controller: 'search', action: "${action}",
-                                                    params: [query: "${query}"])}";
-			                if ("${params.offset}") {
-			                    url += "&offset=${params.offset}";
-			                }
-			                if ("${params.numResults}") {
-			                    url += "&numResults=${params.numResults}";
-			                }
-			                url += "&sort=" + selectedValue;
-                            window.location.href = url;
-                        });
-                        var selectedModels = [];
-                        $('div#download > input').click(function() {
-                            var isChecked = $(this).is(':checked');
-                            var checkedValue = $(this).val();
-                            if (isChecked)
-                                selectedModels.push(checkedValue);
-                            else {
-                                var index = selectedModels.indexOf(checkedValue);
-                                if (index > -1) {
-                                    selectedModels.splice(index, 1);
+                        if (${action == 'search'}) {
+                            $('div#sorting > label > select').change(function() {
+                                var selectedValue = $(this).val();
+                                var url = "${createLink(controller: 'search', action: "${action}",
+                            params: [query: "${query}"])}";
+                                if ("${params.offset}") {
+                                    url += "&offset=${params.offset}";
                                 }
-                            }
-                            console.log(selectedModels);
-                        });
-                        $('#checkAll').click(function() {
-                            selectedModels = [];
-                            var operation = $(this).text();
-                            if (operation === "Select all") {
-                                $('#download > input').prop('checked', true);
-                                $(this).text("Deselect all");
-                                $('#download > input').each(function() {
-                                    selectedModels.push($(this).val());
-                                });
-                            } else {
-                                $('#download > input').prop('checked', false);
-                                $(this).text("Select all");
-                            }
-                            console.log(selectedModels);
-                        });
-                        $('#btnDownload').click(function() {
-                            if (typeof selectedModels != undefined && selectedModels.length > 0) {
-                                console.log("Downloading...")
-                            } else {
-                                var strHtml ="<div class='alert info'><span class='closebtn'>&times;</span> " +
-                                    "<h5 style='color: #ffffff'>Please select at least one model.</h5> </div>";
-                                var shouldShown = typeof $('.alert').val() === "undefined" || $('.alert').val() === "";
-                                console.log(shouldShown);
-                                if (shouldShown) {
-                                    $(strHtml).insertBefore('#flashMessage');
+                                if ("${params.numResults}") {
+                                    url += "&numResults=${params.numResults}";
                                 }
-                                $('.closetbn').click(function() {
-                                    $(this).slideUp();
-                                })
-                                $('.alert').click(function() {
-                                    $(this).slideUp();
-                                })
-                            }
-                        });
+                                url += "&sort=" + selectedValue;
+                                window.location.href = url;
+                            });
+                            var selectedModels = [];
+                            $('div#download > input').click(function() {
+                                var isChecked = $(this).is(':checked');
+                                var checkedValue = $(this).val();
+                                if (isChecked)
+                                    selectedModels.push(checkedValue);
+                                else {
+                                    var index = selectedModels.indexOf(checkedValue);
+                                    if (index > -1) {
+                                        selectedModels.splice(index, 1);
+                                    }
+                                }
+                            });
+                            $('#checkAll').click(function() {
+                                selectedModels = [];
+                                var operation = $(this).text();
+                                if (operation === "Select all") {
+                                    $('#download > input').prop('checked', true);
+                                    $(this).text("Deselect all");
+                                    $('#download > input').each(function() {
+                                        selectedModels.push($(this).val());
+                                    });
+                                } else {
+                                    $('#download > input').prop('checked', false);
+                                    $(this).text("Select all");
+                                }
+                            });
+                            var link = "";
+                            $('#btnDownload').click(function() {
+                                if (typeof selectedModels != undefined && selectedModels.length > 0) {
+                                    link = "${g.createLink(controller: "search", action: "download", params: ['models': ''])}";
+                                    link += selectedModels.join();
+                                    // if the browser sees the response type of 'link' to be binary, then it will download
+                                    // the file rather than trying to display it as plain text. The response type is set in
+                                    // the controller method
+                                    window.location = link;
+                                } else {
+                                    var strHtml ="<div class='alert info'><span class='closebtn'>&times;</span> " +
+                                                "<h5 style='color: #ffffff'>Please select at least one model.</h5> </div>";
+                                    var shouldShown = typeof $('.alert').val() === "undefined" || $('.alert').val() === "";
+                                    if (shouldShown) {
+                                        $(strHtml).insertBefore('#flashMessage');
+                                    }
+                                    $('.closetbn').click(function() {
+                                        $(this).slideUp();
+                                    })
+                                    $('.alert').click(function() {
+                                        $(this).slideUp();
+                                    })
+                                }
+                            });
+                        }
                     </g:javascript>
                 </div>
             </section>
