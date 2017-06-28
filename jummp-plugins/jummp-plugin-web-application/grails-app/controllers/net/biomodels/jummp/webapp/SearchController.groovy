@@ -61,6 +61,8 @@ class SearchController {
      * Dependency injection of modelService.
      **/
     def modelService
+
+    def modelDelegateService
     /**
      * Dependency injection of modelHistoryService.
     **/
@@ -189,6 +191,30 @@ class SearchController {
         long start = System.currentTimeMillis()
         searchService.regenerateIndices()
         [regenTime: System.currentTimeMillis() - start]
+    }
+
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def download() {
+        if (!params.models) {
+            def params = [query: "*:*", flashMessage : g.message(code: "jummp.search.download.warningMessage")]
+            forward action: 'search', params: params
+            return // don't continue any further with this.
+        }
+        String[] models = params.models.split(',')
+	    byte[] data = modelDelegateService.serveModelFilesAsZip(models)
+        if (data) {
+            // the data could be null in a few situations such as the model files are unaccessible
+            response.setContentType("application/zip")
+            String date = new Date().format("yyyyMMdd-HHmm")
+            String filename = "BioModels-search-results_${date}.zip".toString()
+            response.setHeader("Content-disposition", "attachment;filename=\"${filename}\"")
+            response.outputStream << new ByteArrayInputStream(data)
+        } else {
+            def params = [query: "*:*", flashMessage: "Model files of the models you have chosen " +
+                "are unavailable at the moment. Please try again or come back later."]
+            forward(action: 'search', params: params)
+            return [query: "*:*"]
+        }
     }
 
     private def searchCore(String query, String sortBy, String sortDirection, int offset, int length) {

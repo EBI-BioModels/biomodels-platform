@@ -51,6 +51,9 @@ import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.springframework.security.access.AccessDeniedException
 
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
+
 /**
  * @short Service delegating methods to ModelService.
  *
@@ -65,7 +68,7 @@ import org.springframework.security.access.AccessDeniedException
  */
 class ModelDelegateService implements IModelService {
     static transactional = false
-    private static final Log log = LogFactory.getLog(this)
+    private static final Log log = LogFactory.getLog(ModelDelegateService.class)
 
     def modelService
     def modelFileFormatService
@@ -198,6 +201,29 @@ class ModelDelegateService implements IModelService {
             format.formatVersion)
         Revision revision = modelService.addRevisionAsFile(model, file, modelFormat, comment)
         return new RevisionAdapter(revision: revision).toCommandObject()
+    }
+
+    Byte[] serveModelFilesAsZip(List<RepositoryFileTransportCommand> files) {
+        ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream()
+        ZipOutputStream zipFile = new ZipOutputStream(byteBuffer)
+        files.each {
+            File file = new File(it.path)
+            zipFile.putNextEntry(new ZipEntry(file.getName()))
+            byte[] fileData = file.getBytes()
+            zipFile.write(fileData, 0, fileData.length)
+            zipFile.closeEntry()
+        }
+        zipFile.close()
+        byte[] response = byteBuffer.toByteArray()
+        response
+    }
+
+    Byte[] serveModelFilesAsZip(String[] modelIDs) {
+        List<RepositoryFileTransportCommand> files = modelService.fetchMainFileForModels(modelIDs)
+        if (files) {
+            return serveModelFilesAsZip(files)
+        } else
+        return null
     }
 
     List<FlagTransportCommand> getFlags(String modelId) {

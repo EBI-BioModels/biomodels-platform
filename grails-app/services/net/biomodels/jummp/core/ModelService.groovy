@@ -2298,4 +2298,57 @@ Failed to update audit $itemId to $success: ${audit.errors.allErrors.inspect()}"
         }
         return modelFileFormatService.getPubMedAnnotation(revision)
     }
+
+    /**
+     * Retrieves the main file of the models given in a list
+     * @param modelIDs The list of model identities being retrieved
+     * @return either the list of RepositoryFileTransportCommand objects or null
+     *         if there is no model files available
+     */
+    List<RepositoryFileTransportCommand> fetchMainFileForModels(String[] modelIDs) {
+        List<RepositoryFileTransportCommand> results = []
+        List mids = modelIDs.toList()
+        String query = """
+SELECT
+    r1
+FROM
+Revision AS r1
+JOIN r1.model AS model
+WHERE
+	r1.revisionNumber = (select max(r2.revisionNumber) from Revision AS r2 where r2.model = model)
+    AND (model.submissionId IN (:mids) OR model.publicationId IN (:mids))
+    AND r1.id IN (
+        SELECT aoi.objectId
+        FROM
+            AclEntry AS ace
+            JOIN ace.aclObjectIdentity AS aoi
+            JOIN aoi.aclClass AS aclClass
+            JOIN ace.sid AS sid
+        WHERE
+            aclClass.className = 'net.biomodels.jummp.model.Revision'
+            AND sid.sid = 'ROLE_ANONYMOUS'
+            AND ace.mask = 1)"""
+        List revisions = Model.executeQuery(query, [mids: mids])
+
+        revisions.each {Revision revision ->
+            List<File> files = retrieveModelRepFiles(revision)
+            RepositoryFile rf = revision.repoFiles.find { RepositoryFile rf -> rf.mainFile }
+            File f = files.find { it.name == rf.path }
+            if (!f) {
+                log.error "Cannot find main file for revision {}", revision.id
+                return
+            }
+            RepositoryFileTransportCommand rftc = new RepositoryFileTransportCommand(
+                id: rf.id,
+                path: f.getCanonicalPath(),
+                description: rf.description,
+                hidden: rf.hidden,
+                mainFile: rf.mainFile,
+                userSubmitted: rf.userSubmitted,
+                mimeType: rf.mimeType)
+            results.add(rftc)
+        }
+
+	    return results
+    }
 }
