@@ -1624,33 +1624,28 @@ annotateModellingApproaches = { revision, branch, modelDetails, user ->
     // add modelling approaches to model/revision, see JBM-68
     def object = []
     def qualifierAccession = "hasProperty"
-    def rrAccessions = []
-    def rrName = ""
+    def rrAccessions = [:]
     String creator = user.person.userRealName
 
     // Logical model
     if (modelDetails['format_extensions'] == "qual") {
-        rrAccessions << "MAMO_0000030"
-        rrName = "Logical model"
+        rrAccessions["MAMO_0000030"] = "Logical model"
     }
     // Ordinary differential equation (ODE) model
     if (modelDetails['non_kinetic'] == "N") {
-        rrAccessions << "MAMO_0000046"
-        rrName = "Ordinary differential equation model"
+        rrAccessions["MAMO_0000046"] = "Ordinary differential equation model"
     }
     // Petri-net model
     if (modelDetails['model_id'] in ["MODEL1308080002", "MODEL1403040000", "MODEL1403120000"]) {
-        rrAccessions << "MAMO_0000025"
-        rrName = "Petri net"
+        rrAccessions["MAMO_0000025"] = "Petri net"
     }
     // Constraint-based model
     if (modelDetails['non_kinetic'] == "Y" && modelDetails['format_extensions'] == "fbc") {
-        rrAccessions << "MAMO_0000009"
-        rrName = "Constraint-based model"
+        rrAccessions["MAMO_0000009"] = "Constraint-based model"
     }
-    rrAccessions.each {String rrAccession ->
-        object << rrAccession
-        object << rrName
+    rrAccessions.each { accession, name ->
+        object << accession
+        object << name
         object << "http://identifiers.org/mamo/${rrAccession}"
         createBMAnnotation(revision, object, qualifierAccession,
             "http://biomodels.net/biology-qualifiers/", "http://biomodels.net/biology-qualifiers/", creator)
