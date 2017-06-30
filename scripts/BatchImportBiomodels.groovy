@@ -1646,7 +1646,7 @@ annotateModellingApproaches = { revision, branch, modelDetails, user ->
     rrAccessions.each { accession, name ->
         object << accession
         object << name
-        object << "http://identifiers.org/mamo/${rrAccession}"
+        object << "http://identifiers.org/mamo/${accession}"
         createBMAnnotation(revision, object, qualifierAccession,
             "http://biomodels.net/biology-qualifiers/", "http://biomodels.net/biology-qualifiers/", creator)
     }
