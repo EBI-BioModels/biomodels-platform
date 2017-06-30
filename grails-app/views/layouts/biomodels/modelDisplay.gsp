@@ -459,12 +459,12 @@
                         primary:"ui-icon-person"
                     }
             }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
-            $("#annotate").button({
+            /*$("#annotate").button({
                 text: false,
                 icons: {
                     primary: "ui-icon-tag"
                 }
-            }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
+            }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });*/
             $("#certify").button({
                 text: false,
                 icons: {
@@ -563,14 +563,14 @@
                             action: 'share', id: revision.identifier())}')">Share</button>
                     </li>
                 </g:if>
-                <g:if test="${canUpdate}">
+                %{--<g:if test="${canUpdate}">
                     <li>
                         <button class='toolbutton' id='annotate'
                                 onclick="return $.jummp.openPage('${g.createLink(controller: 'annotation',
                                 action: 'edit',
                                 id: (revision.model.publicationId) ?: (revision.model.submissionId))}')">Annotate</button>
                     </li>
-                </g:if>
+                </g:if>--}%
                     <g:if test="${canCertify}">
                         <li>
                             <button class='toolbutton' id="certify"
