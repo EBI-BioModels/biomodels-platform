@@ -88,7 +88,7 @@
                         <div class="small-1 medium-1 large-1 columns" id="download">
                             <g:if test="${action == 'search'}">
                                 <input id="chkDownload" type="checkbox" value="${id}"
-                                       style="float: right; margin-top: 5px">
+                                       style="float: right; margin-top: 10px">
                             </g:if>
                         </div>
                     </div>

@@ -201,6 +201,11 @@ class SearchController {
             return // don't continue any further with this.
         }
         String[] models = params.models.split(',')
+        if (models.size() > 100) {
+            def params = [query: "*:*", flashMessage: g.message(code: "jummp.search.download.exceededThreshold.warningMessage")]
+            forward(action: 'search', params: params)
+            return params
+        }
 	    byte[] data = modelDelegateService.serveModelFilesAsZip(models)
         if (data) {
             // the data could be null in a few situations such as the model files are unaccessible
@@ -210,8 +215,7 @@ class SearchController {
             response.setHeader("Content-disposition", "attachment;filename=\"${filename}\"")
             response.outputStream << new ByteArrayInputStream(data)
         } else {
-            def params = [query: "*:*", flashMessage: "Model files of the models you have chosen " +
-                "are unavailable at the moment. Please try again or come back later."]
+            def params = [query: "*:*", flashMessage: g.message(code: "jummp.search.download.unavailable.warningMessage")]
             forward(action: 'search', params: params)
             return [query: "*:*"]
         }
