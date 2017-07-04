@@ -10,7 +10,7 @@
         listOfFacets.add(index)
     }
     def specialCharacters = "([:+\\(\\)\\[\\]\\{\\}\\|\\*\\&\"\\?\'\\!\\^])"
-    def FACETS_WRAPPED_DOUBLE_QUOTE = ["curationstatus", "modelformat", "disease"]
+    def FACETS_WRAPPED_DOUBLE_QUOTE = ["curationstatus", "modelformat", "disease", "modellingapproach", "modelflag"]
     String queryString = params.query?.replaceAll('"', '\\\\"')
 %>
 <g:javascript>

@@ -28,21 +28,15 @@ import grails.util.Holders
 import groovy.json.JsonBuilder
 import net.biomodels.jummp.annotationstore.ResourceReference
 import net.biomodels.jummp.core.ModelSearchStrategy
-import net.biomodels.jummp.core.adapters.ModelAdapter
-import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.events.ModelOperationEvent
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand
 import net.biomodels.jummp.core.model.ModelState
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Revision
-import net.biomodels.jummp.plugins.security.User
-import net.biomodels.jummp.qcinfo.FlagLevel
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.springframework.context.ApplicationListener
-import org.springframework.security.acls.domain.BasePermission
 import uk.ac.ebi.ddi.ebe.ws.dao.client.dataset.DatasetWsClient
 import uk.ac.ebi.ddi.ebe.ws.dao.config.AbstractEbeyeWsConfig
 import uk.ac.ebi.ddi.ebe.ws.dao.config.EbeyeWsConfigDev
@@ -83,14 +77,15 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
         {
             put("Curation status", 1)
             put("Model format", 2)
-            put("Modelling approaches", 3)
-            put("Organisms", 4)
-            put("Disease", 5)
-            put("GO", 6)
-            put("UniProt", 7)
-            put("ChEBI", 8)
-            put("ChEMBL", 9)
-            put("Ensembl", 10)
+            put("Modelling approach", 3)
+            put("Model flag", 4)
+            put("Organisms", 5)
+            put("Disease", 6)
+            put("GO", 7)
+            put("UniProt", 8)
+            put("ChEBI", 9)
+            put("ChEMBL", 10)
+            put("Ensembl", 11)
         }
     }
 
@@ -207,6 +202,15 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
             Set<String> hiddenFacets = ["PUBLICATION DATE", "OMICS TYPE", "REPOSITORY", "SOURCE"]
             boolean shouldBeHidden = false
             result.facets?.each { Facet facet ->
+                // deal with two fields due to camel case in the field names
+                // will be cleaned up once www-prod team launches the next configuration
+                if (facet.id == "modellingApproach") {
+                    facet.id = "modellingapproach"
+                }
+                if (facet.id == "modelFlag") {
+                    facet.id = "modelflag"
+                }
+
                 shouldBeHidden = hiddenFacets.contains(facet.label.toUpperCase())
                 if (!shouldBeHidden) {
                     facets.add(facet)
