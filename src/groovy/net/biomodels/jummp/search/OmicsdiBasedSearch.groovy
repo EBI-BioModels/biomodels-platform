@@ -24,6 +24,7 @@
 
 package net.biomodels.jummp.search
 
+import grails.util.Environment
 import grails.util.Holders
 import groovy.json.JsonBuilder
 import net.biomodels.jummp.annotationstore.ResourceReference
@@ -40,6 +41,7 @@ import org.springframework.context.ApplicationListener
 import uk.ac.ebi.ddi.ebe.ws.dao.client.dataset.DatasetWsClient
 import uk.ac.ebi.ddi.ebe.ws.dao.config.AbstractEbeyeWsConfig
 import uk.ac.ebi.ddi.ebe.ws.dao.config.EbeyeWsConfigDev
+import uk.ac.ebi.ddi.ebe.ws.dao.config.EbeyeWsConfigProd
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Entry
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Facet
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.FacetValue
@@ -145,7 +147,14 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
     SearchResponse searchModels(String query, SortOrder sortOrder,
             Map<String, Integer> paginationCriteria = ["start": 0, "length": 50, "facetCount": 10] ) {
         long start = System.currentTimeMillis()
-        AbstractEbeyeWsConfig ebeyeWsConfig = new EbeyeWsConfigDev()
+        /*boolean inDevMode = Environment.isDevelopmentMode()
+        AbstractEbeyeWsConfig ebeyeWsConfig
+        if (inDevMode) {
+            ebeyeWsConfig = new EbeyeWsConfigDev()
+        } else {
+            ebeyeWsConfig = new EbeyeWsConfigProd()
+        }*/
+        AbstractEbeyeWsConfig ebeyeWsConfig = new EbeyeWsConfigProd()
         DatasetWsClient datasetWsClient = new DatasetWsClient(ebeyeWsConfig)
         // escape special Lucene field separators in query string
         query = escapeLuceneFieldSeparator(query)
