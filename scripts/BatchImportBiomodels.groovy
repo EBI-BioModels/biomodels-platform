@@ -71,6 +71,14 @@ String password
  */
 File modelFolder
 /**
+ * The directory containing all additional files provided by the submitter
+ */
+File additionalFilesFolder
+/**
+ * The map containing the additional files records fetched from BioModels database
+ */
+def additionalFilesMap
+/**
  * The directory where all models are stored.
  */
 String workingDirectory
@@ -579,6 +587,9 @@ target(main: "Puts everything together to import models from a given folder") {
     bootstrapJummp()
 
     def modelFolderPattern = ~/(MODEL|BIOMD)\d{10}|BMID\d{12}/
+    /* fetch all the records of additional files once */
+    String query = "select model_id, name, description, mime_type, file, date_creation from additional_files"
+    additionalFilesMap = biomodelsConnection.rows(query)
 
     log("${new Date()} -- commencing batch import")
     long duration = System.currentTimeMillis()
@@ -748,7 +759,7 @@ submitOriginalFile = { branch, modelId, originalFile, infoMap ->
         def msg = "Cannot submit original version of $modelId -- missing security context"
         throw new IllegalStateException(msg.toString())
     }
-    def originInfo = getSubmissionData(originalFile, [], ORIG_COMMENT_TPL)
+    def originInfo = getSubmissionData(modelId, originalFile, [], ORIG_COMMENT_TPL)
     def files = getFilesFromSubmissionData originInfo
     def revisionCmd = originInfo.get("revision")
     def model = modelService.uploadValidatedModel(files, revisionCmd)
@@ -1059,8 +1070,41 @@ prepareRevision = { modelId, parent, model ->
     def fileMap = findNewestRevisionFiles(parent, modelId)
     def main = fileMap['mainFile']
     def additionals = fileMap['additionals']
-    def revisionData = getSubmissionData(main, additionals, UPDATE_COMMENT_TPL)
+    def revisionData = getSubmissionData(modelId, main, additionals, UPDATE_COMMENT_TPL)
     def fileTCs = getFilesFromSubmissionData(revisionData)
+
+    // Add the originally additional files provided by submitter
+    def originalAdditionalFiles = additionalFilesFolder.listFiles().find {
+        it.name == modelId
+    }
+
+    def theseFilesFetchedFromDB = additionalFilesMap.findAll {
+        it['model_id'] == modelId
+    }
+
+    if (originalAdditionalFiles && theseFilesFetchedFromDB) {
+        def parentFolder = new File(additionalFilesFolder, modelId)
+        if (parentFolder) {
+            parentFolder.listFiles().each {
+	            String fileName = it.name
+                if (fileName != "index.html") {
+                    String description = "The originally additional file provided by the submitter"
+                    String mimeType = "Unknown"
+                    def theFile = theseFilesFetchedFromDB.find {
+                        it['file'] == fileName
+                    }
+		            if (theFile) {
+		                description = theFile['description']
+		                mimeType = theFile['mime_type']
+		            }
+                    fileTCs.push(rftc.newInstance(path: it.absolutePath,
+                        description: description, mimeType: mimeType,
+                        mainFile: false, userSubmitted: true, hidden: false))
+                }
+            }
+        }
+    }
+
     def revisionTC = revisionData.get("revision")
     def auth = getDetailsForLoggedInUser()
     String principal = auth.principal
@@ -1112,6 +1156,7 @@ target(sanitiseInput: "Processes user input") {
     parseArguments()
     def modelFolderParameter = argsMap.get("models")
     def credentialsParameter = argsMap.get("credentials")
+    def additionalFilesParameter = argsMap.get("additionals")
     File credentials
     if (argsMap.size() < 3 || !modelFolderParameter || !credentialsParameter ||
             argsMap.get("params")) {
@@ -1123,6 +1168,10 @@ batch-import --models=<model_folder_location> --credentials=<path_to_credentials
         error "There is no directory that I can access ${location.absolutePath}", 2
     }
     modelFolder = location.getCanonicalFile()
+
+    File additionalFilesLocation = new File(additionalFilesParameter)
+    additionalFilesFolder = additionalFilesLocation.getCanonicalFile()
+
     location = new File(credentialsParameter)
     if (!location.exists() || !location.isFile()) {
         error "Did not find any credentials in ${location.absolutePath}", 4
@@ -1252,7 +1301,7 @@ log = { msg ->
  * RevisionTransportCommand corresponding to this submission. The map's keys
  * are 'files' and 'revision'.
  */
-getSubmissionData = { file, additional, comment ->
+getSubmissionData = { modelId, file, additional, comment ->
     def modelWrapper = rftc.newInstance(path: file.absolutePath, description: "",
             mainFile: true, userSubmitted: true, hidden: false)
     // infer model format
@@ -1281,11 +1330,12 @@ getSubmissionData = { file, additional, comment ->
         }
         if (pattern) {
             fileTrack.remove(pattern)
-                String path = addFile.absolutePath
-                boolean hidden = false
-                if (pattern.contains("_manual")) {
-                    hidden = true
-                }
+            String path = addFile.absolutePath
+            boolean hidden = false
+            if (pattern.contains("_manual")) {
+                hidden = true
+            }
+
             files.push(rftc.newInstance(path: path, description: expectedFiles.get(pattern),
                 mainFile: false, userSubmitted: false, hidden: hidden))
         }
