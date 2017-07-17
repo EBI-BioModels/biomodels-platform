@@ -52,7 +52,30 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
 
 
 <h3 id="biomodels">BioModels Database</h3>
+<dl>
+    <dt>
+        <strong>Vijayalakshmi Chelliah, Nick Juty, Ishan Ajmera, Raza Ali, Marine Dumousseau, Mihai Glont, Michael Hucka, Gaël Jalowicki, Sarah Keating, Vincent Knight-Schrijver, Audald Lloret-Villas, Kedar Nath Natarajan, Jean-Baptiste Pettit, Nicolas Rodriguez, Michael Schubert, Sarala M. Wimalaratne, Yangyang Zhao, Henning Hermjakob, Nicolas Le Novère and Camille Laibe</strong>
+    </dt>
+    <dd style="margin-left:0;">
+        <div class="pubtitle">BioModels: ten-year anniversary.</div>
+        <div class="pubjournal"><em>Nucl. Acids Res.</em> 2015</div>
+        [<a href="http://nar.oxfordjournals.org/content/early/2014/11/20/nar.gku1181" title="Publication on Nucl. Acids Res. (Open Access)">Nucl. Acids Res.</a>]
 
+<a href="javascript:toggleDisplayById('bib_Chelliah2015');" title="Display/hide the BibTeX entry for this publication"><img src="http://www.ebi.ac.uk/biomodels/icons/plus.gif" alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>
+<pre id="bib_Chelliah2015" class="hidden">
+    @ARTICLE{BioModels2015a,
+    author  = {Chelliah, Vijayalakshmi and Juty, Nick and Ajmera, Ishan and Ali, Raza and Dumousseau, Marine and Glont, Mihai
+    and Hucka, Michael and Jalowicki, Ga{\"e}l and Keating, Sarah and Knight-Schrijver, Vincent and Lloret-Villas, Audald
+    and Nath Natarajan, Kedar and Pettit, Jean-Baptiste and Rodriguez, Nicolas and Schubert, Michael
+    and Wimalaratne, Sarala M. and Zhao, Yangyang and Hermjakob, Henning and Le Nov{\`e}re, Nicolas and Laibe, Camille},
+    title   = {{BioModels: ten-year anniversary.}},
+    journal = {Nucl. Acids Res.},
+    year    = {2015},
+    doi     = {10.1093/nar/gku1181}
+    }
+</pre>
+    </dd>
+</dl>
 <dl>
   <dt>
       <strong>Nick Juty, Raza Ali, Mihai Glont, Sarah Keating, Nicolas Rodriguez, Maciej J. Swat, Sarala M. Wimalaratne, Henning He
@@ -85,37 +108,6 @@ akshmi},
   doi     = {10.1002/psp4.3}
 }
 </pre>
-<dl>
-  <dt>
-      <strong>Vijayalakshmi Chelliah, Nick Juty, Ishan Ajmera, Raza Ali, Marine Dumousseau, Mihai Glont, Michael Hucka, Gaël Jalowicki, Sarah Keating, Vincent Knight-Schrijver, Audald Lloret-Villas, Kedar Nath Natarajan, Jean-Baptiste Pettit, Nicolas Rodriguez, Michael Schubert, Sarala M. Wimalaratne, Yangyang Zhao, Henning Hermjakob, Nicolas Le Novère and Camille Laibe</strong>
-  </dt>
-  <dd style="margin-left:0;">
-      <div class="pubtitle">BioModels: ten-year anniversary.</div>
-  </dd>
-  <dd style="margin-left:0;">
-      <div class="pubjournal"><em>Nucl. Acids Res.</em> 2015</div>
-
-  </dd>
-  <dd style="margin-left:0;">
-      [<a href="http://nar.oxfordjournals.org/content/early/2014/11/20/nar.gku1181" title="Publication on Nucl. Acids Res. (Open Access)">Nucl. Acids Res.</a>]
-  </dd>
-</dl>
-
-<a href="javascript:toggleDisplayById('bib_Chelliah2015');" title="Display/hide the BibTeX entry for this publication"><img src="http://www.ebi.ac.uk/biomodels/icons/plus.gif" alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>
-
-<pre id="bib_Chelliah2015" class="hidden">
-@ARTICLE{BioModels2015a,
-  author  = {Chelliah, Vijayalakshmi and Juty, Nick and Ajmera, Ishan and Ali, Raza and Dumousseau, Marine and Glont, Mihai
-             and Hucka, Michael and Jalowicki, Ga{\"e}l and Keating, Sarah and Knight-Schrijver, Vincent and Lloret-Villas, Audald
-             and Nath Natarajan, Kedar and Pettit, Jean-Baptiste and Rodriguez, Nicolas and Schubert, Michael
-             and Wimalaratne, Sarala M. and Zhao, Yangyang and Hermjakob, Henning and Le Nov{\`e}re, Nicolas and Laibe, Camille},
-  title   = {{BioModels: ten-year anniversary.}},
-  journal = {Nucl. Acids Res.},
-  year    = {2015},
-  doi     = {10.1093/nar/gku1181}
-}
-</pre>
-
 
 <dl>
   <dt>
