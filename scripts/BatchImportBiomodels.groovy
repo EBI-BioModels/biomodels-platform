@@ -258,7 +258,34 @@ final String AUTO_GEN = "auto_gen_models"
 final String PUBL = 'publ'
 final String UNCURA_PUBL = 'uncura_publ'
 
-def filename
+// mapping the models encoded in non SBML format or
+// extended SBML (i.e. used comp package - SBML level 3, version 1)
+def nonStandardSBMLModels = [
+                    "MODEL1505050000": ["Model_Code_Final.nb":"Main file",
+                                        "README.rtf":"Readme file",
+                                        "Data_supplementary.xlsx":"Supplementary data",
+                                        "Data.xlsx":"Supplementary data",
+                                        "10000parameter.csv":"Simulation data 1",
+                                        "1506parameter.csv":"Simulation data 2"],
+                    "MODEL1505130000": ["paper_figs_Jalil_Sacktor_Shouval_supplemental_new.m":"Main file"],
+                    "MODEL1505130001": ["paper_figs_Jalil_Sacktor_Shouval.m":"Main file"],
+                    "MODEL1603310000": ["Palsson2013.m":"Main file"],
+                    "MODEL1604260000": ["vacSim-ori.m":"Main file",
+                                        "data.mat":"Data file in Matlab",
+                                        "comment":"Notes -- comments",
+                                        "vacSim.m":"Main file -- out of updated"],
+                    "MODEL1604270000": ["Zhu2015_basic_ADAPT5.txt":"Main file"],
+                    "MODEL1604270001": ["Zhu2015_mechanistic_ADAPT5.txt":"Supplementary file"],
+                    "MODEL1604270002": ["Palmer2014_notebook.nb":"Main file"],
+                    "MODEL1604270003": ["sharan2014_ADAPT5.txt":"Main file",
+                                        "sharan2014_Berkeley.txt":"Main file"],
+                    "MODEL1604270004": ["odm_CaBone_v1_2011_04_April.zip":"Main file"],
+                    "MODEL1612120000": ["MODEL1612120000_Purified_HFSC_Equilibrium___main.xml":"Main file",
+                                        "MODEL1612120000_Purified_HFSC_Equilibrium__flux.xml":"Containing flux",
+                                        "MODEL1612120000_Purified_HFSC_Equilibrium__environment.xml":"Containing environment",
+                                        "MODEL1612120000_CellML.xml":"CellML file",
+                                        "MODEL1612120000_antimony.txt":"Antimony file"]]
+def NON_SBML_MODEL_FOLDER = "/nfs/production/biomodels/WWW/biomodels/models"
 /**
  * Returns a User corresponding to the submitter of the model in BioModels.
  */
@@ -653,6 +680,7 @@ printModelLog = {
 
 processModelFolder = { File folder ->
     final String MODEL_ID = folder.name
+    boolean isNonSBMLModel = nonStandardSBMLModels.containsKey(MODEL_ID)
     // find branch
     final String BRANCH = getBranch MODEL_ID
     if (!BRANCH) {
@@ -672,7 +700,13 @@ processModelFolder = { File folder ->
         addModelError MODEL_ID, "${folder} does not contain a symbolic link to the URL file"
     }
     // separate original file from the rest of the folder contents
-    def originalFile = findOriginalFile(folder, MODEL_ID)
+    def originalFile
+    if (isNonSBMLModel) {
+        folder = new File(NON_SBML_MODEL_FOLDER, MODEL_ID)
+        originalFile = new File("$NON_SBML_MODEL_FOLDER/$MODEL_ID", nonStandardSBMLModels.get(MODEL_ID).keySet()[0])
+    } else {
+        originalFile = findOriginalFile(folder, MODEL_ID)
+    }
     if (!originalFile) {
         addModelError(MODEL_ID, "Original submission file not found")
         failureCount.incrementAndGet()
@@ -704,29 +738,34 @@ processModelFolder = { File folder ->
             return
         }
         authenticateAsUser(submitter)
-        // submit first revision as *.origin
+        // submit first revision as *.origin or the non SBML models as the original files
         def submittedModel = submitOriginalFile(BRANCH, MODEL_ID, originalFile, modelDetails)
         if (!submittedModel) {
             addModelError(MODEL_ID, "Error importing original file")
             failureCount.incrementAndGet()
             return
         }
-        // submit second revision as * without original file
-        def revision = addRevision(MODEL_ID, folder, submittedModel)
-        if (!revision || revision?.hasErrors()) {
-            def err = revision?.errors?.allErrors
-            addModelError(MODEL_ID, "Could not update original submission: $err")
-            failureCount.incrementAndGet()
-            return
+        if (isNonSBMLModel) {
+            annotateModellingApproaches(submittedModel.revisions.first(), BRANCH, modelDetails, submitter)
+        } else {
+            // submit second revision as * without original file
+            def revision = addRevision(MODEL_ID, folder, submittedModel)
+            if (!revision || revision?.hasErrors()) {
+                def err = revision?.errors?.allErrors
+                addModelError(MODEL_ID, "Could not update original submission: $err")
+                failureCount.incrementAndGet()
+                return
+            }
+
+            // we cleared the session before adding the second revision
+            // submittedModel is now stale -- it still thinks there's only 1 revision
+            // need to manually update
+            submittedModel = revision.model
+            addRevisionAnnotations(revision, BRANCH, modelDetails, submitter)
+            annotateModellingApproaches(revision, BRANCH, modelDetails, submitter)
         }
-        // we cleared the session before adding the second revision
-        // submittedModel is now stale -- it still thinks there's only 1 revision
-        // need to manually update
-        submittedModel = revision.model
         // persist model flags
         persistModelFlags(modelDetails, submittedModel)
-        addRevisionAnnotations(revision, BRANCH, modelDetails, submitter)
-        annotateModellingApproaches(revision, BRANCH, modelDetails, submitter)
         def revisions = submittedModel.revisions
         revisions.each { r ->
             try {
@@ -759,12 +798,17 @@ submitOriginalFile = { branch, modelId, originalFile, infoMap ->
         def msg = "Cannot submit original version of $modelId -- missing security context"
         throw new IllegalStateException(msg.toString())
     }
-    def originInfo = getSubmissionData(modelId, originalFile, [], ORIG_COMMENT_TPL)
+    def additionals = []
+    if (nonStandardSBMLModels.containsKey(modelId)) {
+        additionals = getAdditionalFilesForNonSBMLModel(modelId)
+    }
+    def originInfo = getSubmissionData(modelId, originalFile, additionals, ORIG_COMMENT_TPL)
     def files = getFilesFromSubmissionData originInfo
     def revisionCmd = originInfo.get("revision")
+    revisionCmd.name = infoMap['name']
     def model = modelService.uploadValidatedModel(files, revisionCmd)
     if (model?.hasErrors()) {
-        def e = m?.errors?.allErrors
+        def e = model?.errors?.allErrors
         addModelError modelId, "Submission of original file with $infoMap failed -- ${e}"
         return null
     }
@@ -997,6 +1041,21 @@ getUrlFileForModel = { folder, id ->
     new File(folder, "$id$URL_FILE")
 }
 
+getAdditionalFilesForNonSBMLModel = { modelId ->
+    File model = new File(NON_SBML_MODEL_FOLDER, modelId)
+    model.listFiles().findAll {File file ->
+        boolean isMainFile = file.name == nonStandardSBMLModels.get(modelId).keySet()[0]
+        boolean isIndexFile = file.name == "index.html"
+        boolean isAddFile = !isMainFile && !isIndexFile
+        println "${file.name} -- ${isAddFile}"
+        isAddFile
+    }
+}
+
+getMainFileNameForNonSBMLModel = {modelId ->
+    def extraFiles = nonStandardSBMLModels.get(modelId)
+    extraFiles.keySet()[0]
+}
 /**
  * Returns whether a model in uncura_publ is a duplicate of a record in publ.
  *
@@ -1048,6 +1107,7 @@ findOriginalFile = { folder, id ->
     File origin = getOriginalFileForModel(folder, id)
     origin.exists() ? origin : null
 }
+
 
 // called after we ensured the original file is present in the folder
 findNewestRevisionFiles = { parent, id ->
@@ -1309,6 +1369,8 @@ getSubmissionData = { modelId, file, additional, comment ->
     def format = mf.findByIdentifierAndFormatVersion(formatCommand.identifier,
             formatCommand.formatVersion)
     // get name and description
+    // if the model is non SBML, the original file will be submitted but getting name and
+    // description from the dummy SBML file
     final String MODEL_NAME = modelFileFormatService.extractName([file], format)?:
             new File(file.absolutePath).getName()
     modelWrapper.description = "${MODEL_NAME}"
@@ -1324,6 +1386,17 @@ getSubmissionData = { modelId, file, additional, comment ->
     def files = [modelWrapper]
     def fileTrack = []
     fileTrack.addAll(expectedFiles.keySet())
+    boolean isNonSBMLModel = nonStandardSBMLModels.containsKey(modelId)
+    if (isNonSBMLModel) {
+        modelWrapper.description = nonStandardSBMLModels.get(modelId).get(file.name)
+        additional.each { additionalFile ->
+            String path = additionalFile.absolutePath
+            String description = nonStandardSBMLModels.get(modelId).get(additionalFile.name)
+            boolean hidden = false
+            files.push(rftc.newInstance(path: path, description: description,
+                mainFile: false, userSubmitted: true, hidden: hidden))
+        }
+    } else
     additional.each { addFile ->
         def pattern = expectedFiles.keySet().find {testPattern ->
             Pattern.matches(testPattern, addFile.getName())
@@ -1856,6 +1929,7 @@ getModelDetails = { modelId, modelBranch ->
     def modelDetails = [:]
     try {
         def row = getModelById(modelId, modelBranch)
+        modelDetails['name'] = row.name
         modelDetails['submissionDate'] = row.submission_date
         modelDetails['lastModified'] = row.last_modification_date
         modelDetails['publicationDate'] = row.creation_date
