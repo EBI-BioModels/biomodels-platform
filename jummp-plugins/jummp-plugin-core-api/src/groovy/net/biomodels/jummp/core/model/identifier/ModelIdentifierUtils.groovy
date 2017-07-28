@@ -70,12 +70,25 @@ class ModelIdentifierUtils {
     static final String DEFAULT_DIALECT = ""
     static final String DEFAULT_DRIVER = "org.h2.Driver"
     static final String DEFAULT_PROTOCOL = "h2"
+    /**
+     * MySQL uses latin-1 charset by default, so it's essential to enable Unicode
+     * characters support mode alongside the mandatory properties of database connection string
+     */
+    static final String UNICODE_OPTIONS = "useUnicode=yes&characterEncoding=UTF-8"
     /* stores the patterns that are used to generate a model identifier */
     static ConfigObject settings
     static TreeSet perennialFields
 
     /* hide constructor - all non-private methods are static. */
     protected ModelIdentifierUtils() {}
+
+    static String simplifyDbConnStr(String dbConnStr) {
+        int posUnicodeOptions = dbConnStr.indexOf(UNICODE_OPTIONS)
+        if (posUnicodeOptions > 0) {
+            dbConnStr = dbConnStr.substring(0, posUnicodeOptions)
+        }
+        dbConnStr
+    }
 
     /** The starting point for wiring up model identifier generator beans. */
     static Map processGeneratorSettings(ConfigObject jummpConfig) {
@@ -139,7 +152,7 @@ The configuration settings lack the rules for generating model identifiers!"""
             final String BEAN_NAME = "${name}${GENERATOR_BEAN_SUFFIX}"
             if (generatorBeans[BEAN_NAME]) {
                 String err = "Duplicate settings for '$name' identifier."
-                log.erorr(err)
+                log.error(err)
                 throw new Exception(err)
             }
             final String PROPERTY_NAME = "${name}Id"
@@ -199,6 +212,9 @@ The configuration settings lack the rules for generating model identifiers!"""
             username = dbSettings.username
             password = dbSettings.password
             url = "jdbc:$type://$server:$port/$db"
+        }
+        if (protocol == 'mysql') {
+            url = "$url?$UNICODE_OPTIONS"
         }
         def out = [ driver: driver, url: url, user: username, password: password ]
         if (IS_DEBUG_ENABLED) {

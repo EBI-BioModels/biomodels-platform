@@ -59,6 +59,10 @@ try {
                     "jdbc:${protocol}://${server}:${port}/${database}")
         databaseProperties.setProperty("jummp.database.pooled", "true")
     }
+    if (protocol == 'mysql') {
+        databaseProperties.setProperty("jummp.database.url",
+            "jdbc:${protocol}://${server}:${port}/${database}?$ModelIdentifierUtils.UNICODE_OPTIONS")
+    }
     def databaseConfig = new ConfigSlurper().parse(databaseProperties)
 
     dataSource {
