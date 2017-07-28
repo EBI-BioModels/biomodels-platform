@@ -64,7 +64,7 @@ public class RevisionAdapter {
     RevisionTransportCommand toCommandObject() {
         List<ElementAnnotationTransportCommand> annotations
         use(ElementAnnotationCategory) {
-            List<ElementAnnotation> revisionAnnotations = RevisionAnnotation.findAllByRevision(revision)
+            List<ElementAnnotation> revisionAnnotations = RevisionAnnotation.findAllByRevision(revision, [max: 100])
             annotations = revisionAnnotations.collect { it.elementAnnotation.toCommandObject() }
         }
         def formatAdapter = new ModelFormatAdapter(format: revision.format)
