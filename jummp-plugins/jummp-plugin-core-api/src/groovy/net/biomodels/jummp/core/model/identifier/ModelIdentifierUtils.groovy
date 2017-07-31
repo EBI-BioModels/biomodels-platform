@@ -85,7 +85,7 @@ class ModelIdentifierUtils {
     static String simplifyDbConnStr(String dbConnStr) {
         int posUnicodeOptions = dbConnStr.indexOf(UNICODE_OPTIONS)
         if (posUnicodeOptions > 0) {
-            dbConnStr = dbConnStr.substring(0, posUnicodeOptions)
+            dbConnStr = dbConnStr.substring(0, posUnicodeOptions-1) // take into account the ? symbol
         }
         dbConnStr
     }
