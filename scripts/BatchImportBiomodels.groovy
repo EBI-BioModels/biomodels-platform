@@ -804,6 +804,39 @@ submitOriginalFile = { branch, modelId, originalFile, infoMap ->
     }
     def originInfo = getSubmissionData(modelId, originalFile, additionals, ORIG_COMMENT_TPL)
     def files = getFilesFromSubmissionData originInfo
+
+    // Add the originally additional files provided by submitter
+    def originalAdditionalFiles = additionalFilesFolder.listFiles().find {
+        it.name == modelId
+    }
+
+    def theseFilesFetchedFromDB = additionalFilesMap.findAll {
+        it['model_id'] == modelId
+    }
+
+    if (originalAdditionalFiles && theseFilesFetchedFromDB) {
+        def parentFolder = new File(additionalFilesFolder, modelId)
+        if (parentFolder) {
+            parentFolder.listFiles().each {
+                String fileName = it.name
+                if (fileName != "index.html") {
+                    String description = "The originally additional file provided by the submitter"
+                    String mimeType = "Unknown"
+                    def theFile = theseFilesFetchedFromDB.find {
+                        it['file'] == fileName
+                    }
+                    if (theFile) {
+                        description = theFile['description']
+                        mimeType = theFile['mime_type']
+                    }
+                    files.push(rftc.newInstance(path: it.absolutePath,
+                        description: description, mimeType: mimeType,
+                        mainFile: false, userSubmitted: true, hidden: false))
+                }
+            }
+        }
+    }
+
     def revisionCmd = originInfo.get("revision")
     revisionCmd.name = infoMap['name']
     def model = modelService.uploadValidatedModel(files, revisionCmd)
@@ -1132,38 +1165,6 @@ prepareRevision = { modelId, parent, model ->
     def additionals = fileMap['additionals']
     def revisionData = getSubmissionData(modelId, main, additionals, UPDATE_COMMENT_TPL)
     def fileTCs = getFilesFromSubmissionData(revisionData)
-
-    // Add the originally additional files provided by submitter
-    def originalAdditionalFiles = additionalFilesFolder.listFiles().find {
-        it.name == modelId
-    }
-
-    def theseFilesFetchedFromDB = additionalFilesMap.findAll {
-        it['model_id'] == modelId
-    }
-
-    if (originalAdditionalFiles && theseFilesFetchedFromDB) {
-        def parentFolder = new File(additionalFilesFolder, modelId)
-        if (parentFolder) {
-            parentFolder.listFiles().each {
-	            String fileName = it.name
-                if (fileName != "index.html") {
-                    String description = "The originally additional file provided by the submitter"
-                    String mimeType = "Unknown"
-                    def theFile = theseFilesFetchedFromDB.find {
-                        it['file'] == fileName
-                    }
-		            if (theFile) {
-		                description = theFile['description']
-		                mimeType = theFile['mime_type']
-		            }
-                    fileTCs.push(rftc.newInstance(path: it.absolutePath,
-                        description: description, mimeType: mimeType,
-                        mainFile: false, userSubmitted: true, hidden: false))
-                }
-            }
-        }
-    }
 
     def revisionTC = revisionData.get("revision")
     def auth = getDetailsForLoggedInUser()
