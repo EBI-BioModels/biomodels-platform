@@ -1622,7 +1622,7 @@ getSubmitterIdForModel = { String modelId, String branch ->
 
 publishModelRevision = { modelId, revision ->
     if (!revision) {
-        addModelError modelId, "Refusing to publish undefined revision ${revision.properties}"
+        addModelError modelId, "Refusing to publish undefined revision"
     }
     authenticate(username, password)
     try {
@@ -1791,18 +1791,20 @@ processModelOfTheMonth = {
     def momBMEntries = biomodelsConnection.rows(query)
     momBMEntries.each { row ->
         def model_ids = row.models_id
-        addModelMsg model_ids, "begin processing MoM..."
         addModelMsg model_ids, "processing MoM row $row"
         def datePublished = dateFormatter.parse(row.pub_month)
-        addModelMsg model_ids, "Adding MoM $datePublished"
+
         // see if there is an existing model of the month in the Jummp DB for
         // the given month
         def modelMonth = ModelOfTheMonth.findByPublicationDate(datePublished)
         if (!modelMonth) { // import new model of the month
+            addModelMsg model_ids, "Adding MoM $datePublished"
             modelMonth = ModelOfTheMonth.newInstance(title: row.title,
                 authors: row.authors, publicationDate: datePublished)
             modelMonth.save() // save once to set the last_updated, then modify it
             modelMonth.lastUpdated = row.last_modification_date
+        } else {
+            addModelMsg model_ids, "exists in the database"
         }
 
         List modelIds = model_ids.split(", ")
@@ -1815,7 +1817,8 @@ processModelOfTheMonth = {
                 modelMonth.addToModels(model)
                 addModelMsg modelId, "added the model ${modelId} to the MoM entry ${modelMonth.id}"
             } else {
-                addModelError modelId, "cannot create an association of the model ${modelId} with the MoM ${modelMonth.dump()}"
+                addModelError modelId, "cannot create an association of " +
+                    "the model ${modelId} with the MoM ${modelMonth.id}: ${modelMonth.title} (authors: ${modelMonth.authors})"
             }
         }
         if (!modelMonth.save(flush: true)) {
@@ -1850,12 +1853,12 @@ getBranch = { modelId ->
 createBMAnnotation = { revision, object, qual, qualType, qualNamespace, creator ->
     String id = revision?.model?.publicationId ?: revision?.model?.submissionId
     if (revision.hasErrors() || !revision?.id) {
-        def anno = "$creator ${object.properties} ${object.properties}"
+        def anno = "$creator ${object.properties}"
         if (id) {
             def err = revision?.errors?.allErrors
             addModelError id, "refusing to add custom BioModels annotation $anno: $err"
         } else {
-            def r = revision.properties
+            def r = revision.id
             addModelError "UNKNOWN", "refusing to add custom annotation $anno for $r"
         }
         return
@@ -1904,8 +1907,12 @@ createBMAnnotation = { revision, object, qual, qualType, qualNamespace, creator 
                 modelElementType: modelElementType, creatorId: creator, statement: statement)
     }
     if (!elementAnnotation.save(flush: true) || elementAnnotation.hasErrors()) { // need to flush in order to obtain an ID
-        addModelError id, "Failed to save annotation ${elementAnnotation.properties}"
-        error "Failed to save annotation ${elementAnnotation.properties}"
+        def errorMsg = """
+Failed to save annotation associated with the model element type ${elementAnnotation.modelElementType},
+creator: ${elementAnnotation.creatorId} and the statement ${elementAnnotation.statement}:
+${elementAnnotation.errors.allErrors}"""
+        addModelError id, errorMsg
+        error errorMsg
         return // don't try to create a RevisionAnnotation for a transient elementAnnotation
     }
 
