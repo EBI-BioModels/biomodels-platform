@@ -20,6 +20,9 @@
 <nav>
 <ul class="grid_24 main-menu dropdown menu float-left columns medium-12"
     id="local-nav" data-dropdown-menu role="menubar">
+    <li <g:if test="${actionName == null}"> class="first active" </g:if> role="menuitem">
+        <a href="${createLink(uri: '/', absolute: true)}" title="Back to BioModels Database homepage">Home</a>
+    </li>
     <li <g:if test="${g.pageProperty(name:'page.search')?.length()}"> class="first active" </g:if> role="menuitem">
         <a href="${g.createLink(controller: 'search', action: 'search', params: [query: '*:*'])}">Browse</a>
     </li>
