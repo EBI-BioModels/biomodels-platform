@@ -73,7 +73,7 @@ ORDER BY hits DESC
         use(TimeCategory) {
             then = now - 6.months
         }
-        def matchedModels = Model.executeQuery(query, [then: then, now: now, max: 5])
+        def matchedModels = Model.executeQuery(query, [then: then, now: now, max: 7])
         Map<ModelTransportCommand, ModelHits> returnedModels = new HashMap<>()
         matchedModels.each {
             Model m = it[0]
@@ -108,7 +108,7 @@ WHERE
             AND ace.mask = 1)
 GROUP BY model
 ORDER BY model.firstPublished DESC'''
-        def matchedModels = Model.executeQuery(query, [max: 5])
+        def matchedModels = Model.executeQuery(query, [max: 7])
         Map<ModelTransportCommand, ModelLatestPublished> returnedModels = new HashMap<ModelTransportCommand, ModelLatestPublished>()
         matchedModels.each {
             Model model = it[0]
