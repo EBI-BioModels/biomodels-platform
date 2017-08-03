@@ -275,5 +275,8 @@
             <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
             <h5 style="color: #ffffff">Please also check the syntax of your search terms.</h5>
         </div>
+        <script>
+            $('#clearsearch').hide();
+        </script>
     </g:else>
 </div>

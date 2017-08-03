@@ -107,24 +107,7 @@
                     </div>
                     <!-- local-search -->
                     <div id="localsearch" class="column small-10 medium-5 large-4 float-right">
-                        <form id="local-search" name="local-search"
-                              action="${createLink(controller: 'search', action: 'searchRedir')}" method="post">
-                            <fieldset>
-                                <div class="input-group">
-                                    <input type="text" name="search_block_form" id="local-searchbox" class="input-group-field" tabindex="1" size="35" maxlength="2048">
-                                    <div class="input-group-button">
-                                        <input id="search_submit" class="button icon icon-functional" tabindex="2" type="submit" name="submit1" value="1" />
-                                    </div>
-                                </div>
-                                <p id="example">
-                                    Examples:
-                                    <g:link controller="search" action="search" params="${[query: "*:*"]}" class="secondary label" title="Search all">*:*</g:link>
-                                    <g:link controller="search" action="search" params="${[query: "MAPK cascade"]}" class="secondary label" title="Search by GO term">MAPK cascade</g:link>
-                                    <g:link controller="search" action="search" params="${[query: "homo sapiens"]}" class="secondary label" title="Search by Taxonomy term">homo sapiens</g:link>
-                                    <g:link controller="search" action="search" params="${[query: "lung cancer"]}" class="secondary label" title="Search by Disease term">lung cancer</g:link>
-                                </p>
-                            </fieldset>
-                        </form>
+                        <g:render template="/templates/${grailsApplication.config.jummp.branding.style}/searchBox"/>
                     </div>
                 </div>
             </div>
