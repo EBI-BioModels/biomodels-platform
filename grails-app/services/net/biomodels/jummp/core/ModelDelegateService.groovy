@@ -255,8 +255,7 @@ class ModelDelegateService implements IModelService {
         return modelService.canShare(ModelAdapter.findByPerennialIdentifier(modelId))
     }
 
-    Boolean canPublish(String modelId) {
-        def revision = getLatestRevision(modelId)
+    Boolean canPublish(RevisionTransportCommand revision) {
         if (revision.state == ModelState.UNPUBLISHED) {
             try {
                 return modelService.canPublish(Revision.get(revision.id))
@@ -268,16 +267,25 @@ class ModelDelegateService implements IModelService {
         return false
     }
 
-    Boolean canCertify(String modelId) {
+    Boolean canPublish(String modelId) {
         def revision = getLatestRevision(modelId)
-        if(!revision.qcInfo)
+        canPublish(revision)
+    }
+
+    Boolean canCertify(RevisionTransportCommand revision) {
+        if(!revision.qcInfo) {
+            String modelId = revision.model.publicationId ?: revision.model.submissionId
             return qcInfoDelegateService.canCertify(ModelAdapter.findByPerennialIdentifier(modelId))
-        else
+        } else
             return false
     }
 
-    Boolean canSubmitForPublication(String modelId) {
+    Boolean canCertify(String modelId) {
         def revision = getLatestRevision(modelId)
+        canCertify(revision)
+    }
+
+    Boolean canSubmitForPublication(RevisionTransportCommand revision) {
         if ((revision.state == ModelState.UNPUBLISHED) && (revision.state != ModelState.UNDER_CURATION)) {
             try {
                 return modelService.canSubmitForPublication(Revision.get(revision.id))
@@ -286,6 +294,11 @@ class ModelDelegateService implements IModelService {
             }
         }
         return false
+    }
+
+    Boolean canSubmitForPublication(String modelId) {
+        def revision = getLatestRevision(modelId)
+        canSubmitForPublication(revision)
     }
 
     List<RepositoryFileTransportCommand> retrieveModelFiles(RevisionTransportCommand revision)

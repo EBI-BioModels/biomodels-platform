@@ -229,20 +229,20 @@ class ModelController {
                 return
             }
             final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
-            boolean showPublishOption = modelDelegateService.canPublish(PERENNIAL_ID)
-            boolean canSubmitForPublication = modelDelegateService.canSubmitForPublication(PERENNIAL_ID)
-            boolean show = modelDelegateService.canPublish(PERENNIAL_ID)
+            RevisionTransportCommand revision = modelDelegateService.getLatestRevision(PERENNIAL_ID)
+            boolean showPublishOption = modelDelegateService.canPublish(revision)
+            boolean canSubmitForPublication = modelDelegateService.canSubmitForPublication(revision)
+            boolean canCertify = modelDelegateService.canCertify(revision)
             boolean canUpdate = modelDelegateService.canAddRevision(PERENNIAL_ID)
             boolean canDelete = modelDelegateService.canDelete(PERENNIAL_ID)
             boolean canShare = modelDelegateService.canShare(PERENNIAL_ID)
-            boolean canCertify = modelDelegateService.canCertify(PERENNIAL_ID)
             List<FlagTransportCommand> flags = modelDelegateService.getFlags(PERENNIAL_ID)
             String flashMessage = ""
             if (flash.now["giveMessage"]) {
                 flashMessage = flash.now["giveMessage"]
             }
             List<RevisionTransportCommand> revs =
-                        modelDelegateService.getAllRevisions(PERENNIAL_ID)
+                modelDelegateService.getAllRevisions(PERENNIAL_ID)
             CurationNotesTransportCommand curationNotes =
                 metadataDelegateService.fetchCurationNotes(rev)
             String curationStatus = metadataDelegateService.fetchCurationStatus(rev)
@@ -265,7 +265,7 @@ class ModelController {
                         modellingApproaches: modellingApproaches,
                         curationNotes: curationNotes
             ]
-            if (rev.id == modelDelegateService.getLatestRevision(PERENNIAL_ID).id) {
+            if (rev.id == revision.id) {
                 flash.genericModel = model
                 ModelFormatTransportCommand format = rev.model.format
                 String formatController =  modelFileFormatService.getPluginForFormat(format)
