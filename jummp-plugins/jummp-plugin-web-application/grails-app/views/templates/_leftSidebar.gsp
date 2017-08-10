@@ -58,7 +58,7 @@
                     </g:if>
                     <g:else>
                         <%
-                            String newQuery = "${query} and ${selectedFacet}"
+                            String newQuery = "${query} AND ${selectedFacet}"
                             def newParams = [:]
                             if (params.query) {
                                 newParams["query"] = newQuery
@@ -126,7 +126,7 @@
                                 <g:else>
                                     <%
                                         String selectedFacet = "${facet.id}:${fv.value}"
-                                        newQuery = "${query} and ${selectedFacet}"
+                                        newQuery = "${query} AND ${selectedFacet}"
                                         def newParams = [:]
                                         if (params.query) {
                                             newParams["query"] = newQuery
@@ -177,7 +177,7 @@
         if (isNeededDQ) {
             facetValue = '"' + facetValue + '"';
         }
-	    var lastQueryString = " and " + facetGroupId + ":" + facetValue;
+	    var lastQueryString = " AND " + facetGroupId + ":" + facetValue;
 	    var currentQuery = "${queryString}";
         if (e[0].checked) {
             currentQuery += lastQueryString;
