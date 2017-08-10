@@ -101,17 +101,24 @@ class RevisionTransportCommand implements Serializable {
     /**
      * The list of files associated with this revision
      */
-     List<RepositoryFileTransportCommand> files = null;
+    List<RepositoryFileTransportCommand> files = null
     /**
      * The list of annotations for this revision.
      */
-    List<ElementAnnotationTransportCommand> annotations
+    List<ElementAnnotationTransportCommand> annotations = null
 
     ValidationState validationLevel
 
     String validationReport
 
     QcInfoTransportCommand qcInfo
+
+    List<ElementAnnotationTransportCommand> getAnnotations() {
+        if (!annotations) {
+            annotations = context.metadataDelegateService.fetchAnnotations(this)
+        }
+        return annotations
+    }
 
      List<RepositoryFileTransportCommand> getFiles() {
          if (!files) {

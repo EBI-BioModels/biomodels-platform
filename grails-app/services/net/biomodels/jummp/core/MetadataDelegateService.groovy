@@ -22,8 +22,11 @@ package net.biomodels.jummp.core
 
 import eu.ddmore.metadata.service.ValidationException
 import grails.async.Promises
+import net.biomodels.jummp.annotationstore.ElementAnnotation
 import net.biomodels.jummp.annotationstore.ResourceReference
+import net.biomodels.jummp.annotationstore.RevisionAnnotation
 import net.biomodels.jummp.annotationstore.Statement
+import net.biomodels.jummp.core.annotation.ElementAnnotationCategory
 import net.biomodels.jummp.core.annotation.ElementAnnotationTransportCommand
 import net.biomodels.jummp.core.annotation.QualifierTransportCommand
 import net.biomodels.jummp.core.annotation.ResourceReferenceCategory
@@ -166,6 +169,21 @@ class MetadataDelegateService implements IMetadataService {
         metadataService.getMetadataNamespaces()
     }
 
+    List<ElementAnnotationTransportCommand> fetchAnnotations(RevisionTransportCommand rev) {
+        List<ElementAnnotationTransportCommand> annotations = null
+        use(ElementAnnotationCategory) {
+            List<RevisionAnnotation>  revisionAnnotations = null
+            def values = RevisionAnnotation.where {
+                revision.id == rev.id
+            }
+            revisionAnnotations = values.list()
+            annotations = revisionAnnotations.collect {RevisionAnnotation ra ->
+                ra.elementAnnotation.toCommandObject()
+            }
+        }
+        annotations
+    }
+
     Map<QualifierTransportCommand, List<ResourceReferenceTransportCommand>> fetchGenericAnnotations(
         RevisionTransportCommand rev) {
         List<StatementTransportCommand> statements = getModelLevelAnnotations(rev)
@@ -221,11 +239,15 @@ class MetadataDelegateService implements IMetadataService {
     private List<StatementTransportCommand> getModelLevelAnnotations(RevisionTransportCommand rev) {
         // By default, fetching generic annotations means to grab model-level annotations
         // The specific levels of annotations should be invoked within another methods
-        List<ElementAnnotationTransportCommand> annotationTCL = rev.annotations
-        List<ElementAnnotationTransportCommand> annotations = new ArrayList<ElementAnnotationTransportCommand>()
-        annotationTCL*.each  {
-            if (it.modelElementType  && it.modelElementType.name == "model")
-                annotations << it
+        def modelRAs = RevisionAnnotation.where {
+            revision.id == rev.id && elementAnnotation.modelElementType.name == 'model'
+        }
+        List<RevisionAnnotation> revisionAnnotations = modelRAs.list()
+        List<ElementAnnotationTransportCommand> annotations
+        use(ElementAnnotationCategory) {
+            annotations = revisionAnnotations.collect { RevisionAnnotation ra ->
+                ra.elementAnnotation.toCommandObject()
+            }
         }
         List<StatementTransportCommand> statements = annotations*.statement
         statements

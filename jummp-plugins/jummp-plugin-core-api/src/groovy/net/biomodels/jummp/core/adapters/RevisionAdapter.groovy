@@ -62,11 +62,6 @@ public class RevisionAdapter {
     }
 
     RevisionTransportCommand toCommandObject() {
-        List<ElementAnnotationTransportCommand> annotations
-        use(ElementAnnotationCategory) {
-            List<ElementAnnotation> revisionAnnotations = RevisionAnnotation.findAllByRevision(revision, [max: 100])
-            annotations = revisionAnnotations.collect { it.elementAnnotation.toCommandObject() }
-        }
         def formatAdapter = new ModelFormatAdapter(format: revision.format)
         def formatCmd = formatAdapter.toCommandObject()
         String submitterName = revision.owner.person.userRealName
@@ -89,7 +84,6 @@ public class RevisionAdapter {
                 uploadDate: revision.uploadDate,
                 format: formatCmd,
                 model: modelCmd,
-                annotations: annotations,
                 validationLevel: revision.validationLevel,
                 validationReport: revision.validationReport,
                 qcInfo: qcInfoCmd
