@@ -1881,6 +1881,8 @@ createBMAnnotation = { revision, object, qual, qualType, qualNamespace, creator 
         accession = object[0]
         name = object[1]
         uri = object[2]
+    } else {
+        uri = object
     }
     def resourceRef = ResourceReference.findByUri(uri)
     if (!resourceRef) {
