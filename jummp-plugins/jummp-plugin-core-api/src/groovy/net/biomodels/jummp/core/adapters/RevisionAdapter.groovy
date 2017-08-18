@@ -49,7 +49,7 @@ public class RevisionAdapter {
             if (tmpFile != null) {
                 RFTC rftc = new RFTC(
                     id: rf.id,
-                    path: tmpFile.getCanonicalPath(),
+                    path: tmpFile.absolutePath,
                     description: rf.description,
                     hidden: rf.hidden,
                     mainFile: rf.mainFile,
