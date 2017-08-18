@@ -148,14 +148,13 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
     SearchResponse searchModels(String query, SortOrder sortOrder,
             Map<String, Integer> paginationCriteria = ["start": 0, "length": 50, "facetCount": 10] ) {
         long start = System.currentTimeMillis()
-        /*boolean inDevMode = Environment.isDevelopmentMode()
+        boolean inDevMode = Environment.isDevelopmentMode()
         AbstractEbeyeWsConfig ebeyeWsConfig
         if (inDevMode) {
             ebeyeWsConfig = new EbeyeWsConfigDev()
         } else {
             ebeyeWsConfig = new EbeyeWsConfigProd()
-        }*/
-        AbstractEbeyeWsConfig ebeyeWsConfig = new EbeyeWsConfigProd()
+        }
         DatasetWsClient datasetWsClient = new DatasetWsClient(ebeyeWsConfig)
         // escape special Lucene field separators in query string
         query = escapeLuceneFieldSeparator(query)
