@@ -236,7 +236,7 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
             indexingData.setText(builder.toPrettyString())
 
             String jarPath = grailsApplication.config.jummp.search.pathToIndexerExecutable
-            def argsMap = [jarPath: jarPath, jsonPath: indexingData.getCanonicalPath()]
+            def argsMap = [jarPath: jarPath, jsonPath: indexingData.absolutePath]
 
             String httpProxy = System.getProperty("http.proxyHost")
             if (httpProxy) {
