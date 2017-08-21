@@ -286,7 +286,8 @@ def nonStandardSBMLModels = [
                                         "MODEL1612120000_CellML.xml":"CellML file",
                                         "MODEL1612120000_antimony.txt":"Antimony file"]]
 def NON_SBML_MODEL_FOLDER
-def big_models_ignored = []
+def bigModelsIgnored = []
+boolean excludeBigModels = true
 /**
  * Returns a User corresponding to the submitter of the model in BioModels.
  */
@@ -623,8 +624,17 @@ target(main: "Puts everything together to import models from a given folder") {
     long duration = System.currentTimeMillis()
     /* run batch importer sequentially */
     for (File f: modelFolder.listFiles()) {
-        boolean ignored = big_models_ignored.contains(f.name)
-        if (f.isDirectory() && f.name ==~ modelFolderPattern && !ignored) {
+        boolean tobeProcessed
+        boolean isBigModel = bigModelsIgnored.contains(f.name)
+        if (!bigModelsIgnored) {
+            /* when no big models are precised, we need to import all */
+            tobeProcessed = true
+        } else  {
+            /* when excludeBigModels flag is indicated Y, the big model should be ignored */
+            tobeProcessed = (excludeBigModels) ? !isBigModel : isBigModel
+        }
+
+        if (f.isDirectory() && f.name ==~ modelFolderPattern && tobeProcessed) {
             processModelFolder f
         }
     }
@@ -1222,6 +1232,7 @@ target(sanitiseInput: "Processes user input") {
     def additionalFilesParameter = argsMap.get("additionals")
     def nonSbmlModelsParameter = argsMap.get("nonsbmlmodels")
     def bigModelsIdParameter = argsMap.get("bigmodelsid")
+    def excludeBMs = argsMap.get("exclude-big-models")
     File credentials
     if (argsMap.size() < 3 || !modelFolderParameter || !credentialsParameter ||
             argsMap.get("params")) {
@@ -1239,10 +1250,12 @@ batch-import --models=<model_folder_location> --credentials=<path_to_credentials
 
     NON_SBML_MODEL_FOLDER = nonSbmlModelsParameter
 
+    /* determine the flag if the importer excludes or includes the big models */
+    excludeBigModels = (excludeBMs == "Y") ? true : false
     /* load big models to be ignored. In our case, a big model has equal or greater than 10MB */
     File fileBigModels = new File(bigModelsIdParameter)
     fileBigModels.readLines().each {
-        big_models_ignored << it.split()[1]
+        bigModelsIgnored << it.split()[1]
     }
 
     location = new File(credentialsParameter)
