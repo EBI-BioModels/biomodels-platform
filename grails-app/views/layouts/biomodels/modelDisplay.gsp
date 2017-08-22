@@ -675,9 +675,15 @@
                         <div class="small-12 medium-4 large-4 columns">
                             <div class="rounded-header"><h4 style="color: #ffffee">Metadata information</h4></div>
                             <g:pageProperty name="page.genericAnnotations"/>
+                            <g:if test="${curationStatus}">
+                            <div class='row'>
+                                <div class="small-12 medium-6 large-4 columns">Curation status</div>
+                                <div class="small-12 medium-6 large-8 columns">
+                                    <biomd:renderCurationStatus curationStatus="${curationStatus}"/></div>
+                            </div></g:if>
                             <g:if test="${modellingApproaches}">
                             <div class='row'>
-                                <div class="small-12 medium-6 large-4 columns">Modelling approach</div>
+                                <div class="small-12 medium-6 large-4 columns">Modelling approach(es)</div>
                                 <div class="small-12 medium-6 large-8 columns">
                                     <biomd:renderModellingApproaches modellingApproaches="${modellingApproaches}"/>
                                 </div>
