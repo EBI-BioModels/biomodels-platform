@@ -246,6 +246,7 @@ class ModelController {
             CurationNotesTransportCommand curationNotes =
                 metadataDelegateService.fetchCurationNotes(rev)
             String curationStatus = metadataDelegateService.fetchCurationStatus(rev)
+            List<String> originalModels = metadataDelegateService.fetchOriginalModels(rev)
             Map<String, String> modellingApproaches =
                 metadataDelegateService.fetchModellingApproaches(rev)
             def model = [revision: rev,
@@ -263,7 +264,8 @@ class ModelController {
                         flags: flags,
                         curationStatus: curationStatus,
                         modellingApproaches: modellingApproaches,
-                        curationNotes: curationNotes
+                        curationNotes: curationNotes,
+                        originalModels: originalModels
             ]
             if (rev.id == revision.id) {
                 flash.genericModel = model

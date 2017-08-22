@@ -103,6 +103,12 @@ class BioModelsTagLib {
             plugin: 'jummp-plugin-biomodels-dom', var: 'modellingApproach')
     }
 
+    def renderOriginalModels = { attrs ->
+        out << render(collection: attrs.sources,
+            template: '/templates/originalModel',
+            plugin: 'jummp-plugin-biomodels-dom', var: 'source')
+    }
+
     def renderRecentlyAccessedModels = {
         Map<ModelTransportCommand, ModelHits> models = decorationService.getRecentlyAccessedModels()
         StringBuilder result = new StringBuilder("<ul style='list-style: none; " +

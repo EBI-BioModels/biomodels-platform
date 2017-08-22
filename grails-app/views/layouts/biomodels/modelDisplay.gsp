@@ -688,11 +688,11 @@
                                     <biomd:renderModellingApproaches modellingApproaches="${modellingApproaches}"/>
                                 </div>
                             </div></g:if>
-                            <g:if test="${curationStatus}">
+                            <g:if test="${originalModels}">
                             <div class='row'>
-                                <div class="small-12 medium-6 large-4 columns">Curation Status</div>
+                                <div class="small-12 medium-6 large-4 columns">Original model(s)</div>
                                 <div class="small-12 medium-6 large-8 columns">
-                                    <biomd:renderCurationStatus curationStatus="${curationStatus}"/></div>
+                                    <biomd:renderOriginalModels sources="${originalModels}"/></div>
                             </div></g:if>
                             %{--<div class='row'>
                                 <div class="medium-3 columns">Validation Status</div>
