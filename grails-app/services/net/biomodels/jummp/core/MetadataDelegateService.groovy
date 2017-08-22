@@ -196,7 +196,8 @@ class MetadataDelegateService implements IMetadataService {
             boolean isCurationStatus = qualifier.type == "biomodelsCustomAnnotation" &&
                 qualifier.uri == "curated"
 
-            if (!isCurationStatus) {
+            boolean isOriginalModel = qualifier.accession == "source"
+            if (!isCurationStatus && !isOriginalModel) {
                 if (result.containsKey(qualifier)) {
                     result[qualifier] << xref
                 } else {
@@ -231,6 +232,17 @@ class MetadataDelegateService implements IMetadataService {
             final ResourceReferenceTransportCommand xref = s.object
             if (MODELLING_APPROACHES.containsKey(xref.accession)) {
                 result.put(xref.accession, MODELLING_APPROACHES.get(xref.accession))
+            }
+        }
+        result
+    }
+
+    List<String> fetchOriginalModels(RevisionTransportCommand rev) {
+        List<StatementTransportCommand> statements = getModelLevelAnnotations(rev)
+        List<String> result = []
+        statements.each { StatementTransportCommand s ->
+            if (s.predicate.accession == "source") {
+                result << s.object.uri
             }
         }
         result
