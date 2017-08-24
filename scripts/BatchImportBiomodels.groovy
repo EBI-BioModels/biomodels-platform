@@ -959,7 +959,12 @@ addPublicationDetails = { model, accession, type ->
                 title: publicationCmd.title,
                 journal: publicationCmd.journal,
                 affiliation: publicationCmd.affiliation,
-                synopsis: publicationCmd.synopsis
+                synopsis: publicationCmd.synopsis,
+                month: publicationCmd.month,
+                year: publicationCmd.year,
+                volume: publicationCmd.volume,
+                issue: publicationCmd.issue,
+                pages: publicationCmd.pages
             )
             if (!publication.id) {
                 if (!publication.validate()) {
