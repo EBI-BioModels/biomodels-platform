@@ -1144,8 +1144,7 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
         }
         zipFile.close()
         resp.setContentType("application/zip")
-        // TODO: set a proper name for the model
-        resp.setHeader("Content-disposition", "attachment;filename=\"model.zip\"")
+        resp.setHeader("Content-disposition", "attachment;filename=\"${params.id}.zip\"")
         resp.outputStream << new ByteArrayInputStream(byteBuffer.toByteArray())
     }
 
