@@ -34,33 +34,30 @@
 
 package net.biomodels.jummp.webapp
 
-import com.wordnik.swagger.annotations.*
+import com.wordnik.swagger.annotations.Api
+import com.wordnik.swagger.annotations.ApiImplicitParam
+import com.wordnik.swagger.annotations.ApiOperation
 import eu.ddmore.publish.service.PublishContext
 import eu.ddmore.publish.service.PublishException
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import groovy.json.JsonSlurper
-import net.biomodels.jummp.core.model.ModelFormatTransportCommand
-import net.biomodels.jummp.core.model.PublicationDetailExtractionContext
-import org.apache.commons.lang3.exception.ExceptionUtils
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
-import net.biomodels.jummp.core.model.ModelAuditTransportCommand
-import net.biomodels.jummp.core.model.ModelTransportCommand
-import net.biomodels.jummp.core.model.PermissionTransportCommand
-import net.biomodels.jummp.core.model.PublicationTransportCommand
-import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
+import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
-import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.core.model.audit.*
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
+import net.biomodels.jummp.core.model.audit.AccessFormat
+import net.biomodels.jummp.core.model.audit.AccessType
 import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
 import net.biomodels.jummp.plugins.security.PersonTransportCommand
+import net.biomodels.jummp.plugins.security.Team
 import org.apache.commons.io.FileUtils
+import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONObject
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.multipart.MultipartFile
-import net.biomodels.jummp.plugins.security.Team
-import net.biomodels.jummp.core.model.FlagTransportCommand
+
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 
 @Api(value = "/model", description = "Operations related to models")
 @Secured(['IS_AUTHENTICATED_FULLY'])
@@ -109,6 +106,10 @@ class ModelController {
      * Dependency injection of MetadataDelegateService
      */
     def metadataDelegateService
+    /**
+     * Dependency injection of OmexService
+     */
+    def omexService
 
     /**
      * The list of actions for which we should not automatically create an audit item.
@@ -1132,6 +1133,20 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
         displayErrorPage()
     }
 
+    private void serveModelAsCombineArchive(List<RFTC> files, def resp) {
+        String omexFileName = omexService.createCombineArchive(files, params.id)
+        File omexFile = new File(omexFileName)
+        String name = omexFile.name
+        resp.setContentType("application/zip")
+        resp.setHeader("Content-disposition", "attachment;filename=\"${name}\"")
+        resp.outputStream << new ByteArrayInputStream(omexFile.readBytes())
+        if (omexFile.delete()) {
+            log.info("The temporary file was deleted successfully.")
+        } else {
+            log.info("Cannot delete the temporary file.")
+        }
+    }
+
     private void serveModelAsZip(List<RFTC> files, def resp) {
         ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream()
         ZipOutputStream zipFile = new ZipOutputStream(byteBuffer)
@@ -1172,14 +1187,7 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
         if (!params.filename) {
             final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(
                             modelDelegateService.getRevisionFromParams(params.id, params.revisionId))
-            List<RFTC> mainFiles = FILES.findAll { it.mainFile }
-            if (FILES.size() == 1) {
-                serveModelAsFile(FILES.first(), response, false)
-            } else if (mainFiles.size() == 1) {
-                serveModelAsFile(mainFiles.first(), response, false)
-            } else {
-                serveModelAsZip(FILES, response)
-            }
+            serveModelAsCombineArchive(FILES, response)
         } else {
             final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(
                             modelDelegateService.getRevisionFromParams(params.id, params.revisionId))
