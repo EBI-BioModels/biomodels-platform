@@ -1247,5 +1247,7 @@ databaseChangeLog = {
     include file: '20170720_widenRepositoryFileDescription.groovy'
 
     include file: '20170914_changePK_PublicationPerson.groovy'
+
+    include file: '20170914_createtable_Feedback.groovy'
 }
 
