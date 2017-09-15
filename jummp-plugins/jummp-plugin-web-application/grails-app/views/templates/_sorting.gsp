@@ -5,11 +5,11 @@
         <option value="relevance-desc">Relevance</option>
         <option value="first_author-asc">Author name: A to Z</option>
         <option value="first_author-desc">Author name: Z to A</option>
-        <option value="id-asc">Model ID: A to Z</option>
-        <option value="id-desc">Model ID: Z to A</option>
+        <option value="id-asc">BioModels ID: A to Z</option>
+        <option value="id-desc">BioModels ID: Z to A</option>
         <option value="name-asc">Model Name: A to Z</option>
         <option value="name-desc">Model Name: Z to A</option>
-        <option value="publication_year-asc">Publication year: A to Z</option>
-        <option value="publication_year-desc">Publication year: Z to A</option>
+        <option value="publication_year-asc">Publication year: oldest first</option>
+        <option value="publication_year-desc">Publication year: newest first</option>
     </select>
 </label>
