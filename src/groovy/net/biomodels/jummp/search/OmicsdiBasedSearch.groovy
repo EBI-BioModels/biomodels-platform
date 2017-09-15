@@ -33,6 +33,7 @@ import net.biomodels.jummp.core.events.ModelOperationEvent
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand
 import net.biomodels.jummp.core.model.ModelState
 import net.biomodels.jummp.core.model.ModelTransportCommand
+import net.biomodels.jummp.core.model.PublicationTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 import net.biomodels.jummp.model.Revision
@@ -193,8 +194,17 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
                 ModelState state = ModelState.PUBLISHED
                 String formatName = entry.getFields().get('modelformat')[0]
                 String formatVersion = entry.getFields().get('levelversion')[0]
+                boolean havePublicationYear = entry.getFields().get('publication_year').length > 0
+                String publicationYear = ""
+                if (havePublicationYear) {
+                    publicationYear = entry.getFields().get('publication_year')[0]
+                }
                 ModelFormatTransportCommand format =
                     new ModelFormatTransportCommand(name: formatName, formatVersion: formatVersion)
+                PublicationTransportCommand ptc = null
+                if (publicationYear) {
+                    ptc = new PublicationTransportCommand(year: Integer.parseInt(publicationYear))
+                }
                 ModelTransportCommand mtc = new ModelTransportCommand(
                     submitter: submitterName,
                     name: modelName,
@@ -203,7 +213,8 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
                     submissionDate: submissionDate,
                     lastModifiedDate: modifiedDate,
                     state: state,
-                    format: format
+                    format: format,
+                    publication: ptc
                 )
                 results.add(mtc)
             }

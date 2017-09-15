@@ -84,6 +84,7 @@
                                 Submitter: ${model.submitter} |
                                 Uploaded date: ${model.submissionDate.format('dd/MM/yyyy')} |
                                 Last modified date: ${model.lastModifiedDate.format('dd/MM/yyyy')}
+                                <g:if test="${model.publication}"> | Published in: ${model.publication.year}</g:if>
                                 </span>
                             </h4>
                         </div>

@@ -288,6 +288,7 @@ class SearchController {
         return [models: models, facets: facets, matches: totalCount,
                 offset: paginationCriteria['start'],
                 length: paginationCriteria['length'],
+                sortBy: sortBy, sortDirection: sortDirection,
                 query: query, facetStats: builder.toString()]
     }
 
