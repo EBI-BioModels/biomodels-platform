@@ -163,7 +163,7 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
         SearchResponse searchResponse = new SearchResponse()
         String[] fields = ["name", "description", "submitter", "curationstatus",
                            "last_modification_date", "submission_date",
-                           "modelformat", "levelversion", "author", "publication_year"]
+                           "modelformat", "levelversion", "first_author", "publication_year"]
         String sortField = sortOrder.getField()
         String sortDir = sortOrder.direction == SortOrder.SortDirection.ASC ? "ascending" : "descending"
         QueryResult result = datasetWsClient.getDatasets("biomodels", query, fields, sortField, sortDir,
