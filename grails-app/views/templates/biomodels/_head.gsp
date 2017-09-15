@@ -29,7 +29,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
   <!-- Describe what this page is about -->
   <meta name="description" content="EMBL-EBI"/>
-  <!-- A few keywords that relate to the content of THIS PAGE (not the whol project) -->
+  <!-- A few keywords that relate to the content of THIS PAGE (not the whole project) -->
   <meta name="keywords" content="bioinformatics, europe, institute">
   <meta name="jummp" content="EMBL-EBI"/><!-- Your [project-name] here -->
   <meta name="ebi:localmasthead-color" content="#254146">
@@ -91,6 +91,7 @@
     }
   </style>
   <link rel="stylesheet" type="text/css" href="<g:resource dir="css" file="biomodels/biomodels.css"/>">
+  <link rel="stylesheet" type="text/css" href="<g:resource dir="css" file="common.css"/>">
   <!-- end CSS-->
 
   <!-- All JavaScript at the bottom, except for Modernizr / Respond.

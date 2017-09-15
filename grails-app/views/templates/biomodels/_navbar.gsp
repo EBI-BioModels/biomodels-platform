@@ -62,6 +62,11 @@
             <g:message code="jummp.contactus.biomodels.title"/>
         </a>
     </li>
+    <li style="border-right: none" id="menuItemFeedback" data-open="rate_review_form">
+        <!-- rate_review_form is the identifier of the modal feedback form defined in the footer.
+             This form is rendered using the feedback template of the web plugin -->
+        <a><g:message code="jummp.feedback.default.title"/></a>
+    </li>
     <!-- If you need to include functional (as opposed to purely navigational) links in your local menu,
        add them here, and give them a class of "functional". Remember: you'll need a class of "last" for
        whichever one will show up last...

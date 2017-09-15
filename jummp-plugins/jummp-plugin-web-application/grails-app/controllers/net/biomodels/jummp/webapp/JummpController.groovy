@@ -33,6 +33,7 @@ class JummpController {
     def userService
     def grailsApplication
     def teamService
+    def feedbackService
 
     final List<String> AUDIT_EXCEPTIONS = ['support', 'aboutus', 'contactus', 'lookupUser',
                                            'autoCompleteUser', 'teamLookup']
@@ -101,6 +102,25 @@ class JummpController {
     def jobs() {
         detectTheme()
         render(view: "jobs", model: [titleCode: "jummp.jobs.${theme}.title"])
+    }
+
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def feedback() {
+        byte star = Byte.parseByte(params.star)
+        def email = params.email
+        def comment = params.comment
+        if (star < 1 && star > 5) {
+            render([status: '500', message: "Please rate between 1 and 5 stars."] as JSON)
+        } else {
+            // save the data to the database
+            boolean result = feedbackService.persist(star, email, comment)
+            if (result) {
+                render([status: '200', message: "Thank you for your feedback."] as JSON)
+            } else {
+                render([status: '500', message: "Cannot persist your feedback into the database because of " +
+                    "the duplicated email and rating. Please try again."] as JSON)
+            }
+        }
     }
 
     def lookupUser = {

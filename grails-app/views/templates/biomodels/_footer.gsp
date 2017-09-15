@@ -44,6 +44,7 @@
             <!-- Footer meta will be automatically inserted by footer.js -->
         </section>
     </div>
+     <g:render template="/templates/feedback" plugin="jummp-plugin-web-application"/>
  </footer>
 </div> <!--! end of #wrapper -->
 
@@ -60,6 +61,8 @@
   <script type="text/JavaScript">$(document).foundation();</script>
   <script type="text/JavaScript">$(document).foundationExtendEBI();</script>
 
+  <!-- customised scripts -->
+  <g:javascript src="common.js"></g:javascript>
   <!-- end scripts-->
 
   <!-- Google Analytics details... -->
