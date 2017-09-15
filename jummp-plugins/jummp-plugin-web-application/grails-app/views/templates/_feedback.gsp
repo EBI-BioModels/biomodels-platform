@@ -22,8 +22,3 @@
         </form>
     </div>
 </div>
-
-<div class="feedback-container">
-    <div id="feedback_button" data-open="rate_review_form">
-    </div>
-</div>

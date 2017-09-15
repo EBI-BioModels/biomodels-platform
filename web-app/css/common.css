@@ -1,18 +1,4 @@
 /* For star based rating system */
-.feedback_container{
-    height: 100px;
-    width: 100px;
-    position: relative;
-}
-#feedback_button {
-    background: url("http://air-staging-assets.s3.amazonaws.com/assets/feedback_icon.png") 0 0 no-repeat transparent;
-    height: 67px;
-    width: 67px;
-    position: fixed;
-    bottom: 0;
-    right: 0;
-}
-
 .rating {
     unicode-bidi: bidi-override;
     direction: rtl;
