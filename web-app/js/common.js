@@ -62,10 +62,7 @@ $('#submitButtonRate').on("click", function(event) {
         },
         error: function (jqXHR) {
             console.error("epic fail", jqXHR.responseText);
-            $("#message").removeClass("success");
-            $("#message").removeClass("jummpWarning");
-            $("#message").addClass("failure");
-            $('#message').html("There was an internal error while certifing the information provided.");
+            $('#feedback_panel').html("There is an error when trying to submit your feedback. Please fresh the page and try again!");
         },
         success: function (response) {
             if (response.status == "200") {
@@ -80,8 +77,8 @@ $('#submitButtonRate').on("click", function(event) {
                 $('#rate_review_form').css('background-color', '#007c96')
                 $('#feedback_panel').html(thankyouMessage);
             } else {
-                $("#message").addClass("failure");
-                $('#message').html(response.message);
+                $("#feedback_panel").addClass("failure");
+                $('#feedback_panel').html(response.message);
             }
         }
     });
