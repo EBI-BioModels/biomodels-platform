@@ -70,8 +70,8 @@ $('#submitButtonRate').on("click", function(event) {
         success: function (response) {
             if (response.status == "200") {
                 var thankyouMessage = '<div style="text-align:center;">';
-                thankyouMessage += '<img style="text-align: center;" ' +
-                    'src="https://maps.gstatic.com/places-api/reviews-widget/images/img_done_check_2x_1.png" />';
+                thankyouMessage += '<img style="text-align: center;" src="' +
+                    $.serverUrl + '/images/img_done_check_2x_1.png" />';
                 thankyouMessage += '</div>';
                 thankyouMessage += '<button class="button" ' +
                     'style="background-color: grey;" onclick="closeForm()">Done</button>';
