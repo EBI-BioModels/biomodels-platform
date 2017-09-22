@@ -42,7 +42,7 @@ class Feedback implements Serializable {
     String comment
 
     static constraints = {
-        email nullable: true, blank: true, maxSize: 128
+        email nullable: true, blank: true, email: true, maxSize: 128, unique: 'star'
         comment nullable: true, blank: true, maxSize: 1024
     }
 }

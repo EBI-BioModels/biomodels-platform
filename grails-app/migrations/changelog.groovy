@@ -1249,5 +1249,7 @@ databaseChangeLog = {
     include file: '20170914_changePK_PublicationPerson.groovy'
 
     include file: '20170914_createtable_Feedback.groovy'
+
+    include file: '20170915_changeConstraints_Feedback.groovy'
 }
 
