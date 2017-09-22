@@ -67,13 +67,13 @@ grails.project.dependency.resolution = {
 
         mavenLocal()
         mavenCentral()
-        mavenRepo "http://www.ebi.ac.uk/~maven/m2repo"
-        mavenRepo "http://www.ebi.ac.uk/~maven/m2repo_snapshots/"
-        mavenRepo "http://download.eclipse.org/jgit/maven"
-        mavenRepo "http://www.biojava.org/download/maven/"
-        mavenRepo "http://maven.mango-solutions.com/ddmore/"
-        mavenRepo "http://repo.spring.io/milestone"
-        mavenRepo "http://repo.grails.org/grails/core"
+        mavenRepo "//www.ebi.ac.uk/~maven/m2repo"
+        mavenRepo "//www.ebi.ac.uk/~maven/m2repo_snapshots/"
+        mavenRepo "//download.eclipse.org/jgit/maven"
+        mavenRepo "//www.biojava.org/download/maven/"
+        mavenRepo "//maven.mango-solutions.com/ddmore/"
+        mavenRepo "//repo.spring.io/milestone"
+        mavenRepo "//repo.grails.org/grails/core"
     }
     dependencies {
         // required by OntologyLookupResolver
