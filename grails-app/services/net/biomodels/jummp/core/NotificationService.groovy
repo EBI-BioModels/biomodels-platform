@@ -33,13 +33,16 @@
 
 package net.biomodels.jummp.core
 
+import grails.transaction.Transactional
+import net.biomodels.jummp.core.model.ModelTransportCommand
+import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
+import net.biomodels.jummp.plugins.security.UserRole
 import net.biomodels.jummp.webapp.Notification
 import net.biomodels.jummp.webapp.NotificationType
 import net.biomodels.jummp.webapp.NotificationTypePreferences
 import net.biomodels.jummp.webapp.NotificationUser
-import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.core.model.ModelTransportCommand
 import org.springframework.security.access.prepost.PreAuthorize
 
 /**
@@ -48,8 +51,10 @@ import org.springframework.security.access.prepost.PreAuthorize
  *
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  * @date 20160330
  */
+@Transactional
 class NotificationService {
     def grailsApplication
     def mailService
@@ -216,11 +221,13 @@ class NotificationService {
     }
 
     void markAsRead(def msgID, String username) {
-        Notification notification = Notification.get(msgID)
-        User notificationsFor = User.findByUsername(username)
-        NotificationUser notificationUser = NotificationUser.findByNotificationAndUser(notification, notificationsFor)
-        notificationUser.setNotificationSeen(true)
-        notificationUser.save()
+        if (msgID && username) {
+            Notification notification = Notification.get(msgID)
+            User notificationsFor = User.findByUsername(username)
+            NotificationUser notificationUser = NotificationUser.findByNotificationAndUser(notification, notificationsFor)
+            notificationUser.setNotificationSeen(true)
+            notificationUser.save()
+        }
     }
 
     void delete(def body) {
@@ -247,5 +254,27 @@ class NotificationService {
                 body.user,
                 getNotificationRecipients(body.perms),
                 model)
+    }
+
+    void feedback2Admin(def body) {
+        User user = body.user
+        if (!user) {
+            user = User.findByUsername("anonymous")
+        }
+        String receiverRolesSetting  = grailsApplication.config.jummp.feedback.receiver.roles
+        List<String> rolesSetting = receiverRolesSetting.split(",").collect {
+            it.trim()
+        }
+        List<Role> roles = Role.findAllByAuthorityInList(rolesSetting)
+        List<UserRole> userRoles = UserRole.findAllByRoleInList(roles)
+        List<User> observers = userRoles.collect {
+            it.user
+        }
+        Set<User> watchers = new HashSet<User>(observers)
+        useGenericNotificationStructure("notification.jummp.feedback.title",
+            [body.star] as String[],
+            "notification.jummp.feedback.body",
+            [body.star, body.email, body.comment] as String[],
+            NotificationType.FEEDBACK_ARRIVED, user, watchers, null)
     }
 }

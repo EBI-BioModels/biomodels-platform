@@ -26,32 +26,37 @@ package net.biomodels.jummp.webapp
 
 /**
  * @short Representation of one NotificationType.
- * This enum represents the types of notications available 
+ * This enum represents the types of notifications available
  * @author Raza Ali <raza.ali@ebi.ac.uk>
+ * @author Tung Nguyen <tnguyen@ebi.ac.uk>
+ * @date updated on 20/09/2017
  */
-enum NotificationType { 
-   PUBLISH (1, "Publish"), 
-   VERSION_CREATED (2, "Version Created"), 
-   ACCESS_GRANTED (3, "Another user is granted access to a model"), 
+enum NotificationType {
+   PUBLISH (1, "Publish"),
+   VERSION_CREATED (2, "Version Created"),
+   ACCESS_GRANTED (3, "Another user is granted access to a model"),
    DELETED (4, "Model Deleted"),
-   ACCESS_GRANTED_TO (5, "Access is granted to you")
-   
-   final int id 
-   final String textRepresentation 
+   ACCESS_GRANTED_TO (5, "Access is granted to you"),
+   FEEDBACK_ARRIVED (6, "A feedback has been sent to you")
 
-   private NotificationType(int id, String textRepresentation) { 
-      this.id = id 
-      this.textRepresentation = textRepresentation 
-   } 
-   
+   final int id
+   final String textRepresentation
+
+   private NotificationType(int id, String textRepresentation) {
+      this.id = id
+      this.textRepresentation = textRepresentation
+   }
+
    static NotificationType getById(int id) {
    	   switch(id) {
-   	   	   case 1: return PUBLISH;
-   	   	   case 2: return VERSION_CREATED;
-   	   	   case 3: return ACCESS_GRANTED;
-   	   	   case 4: return DELETED;
+   	   	   case 1: return PUBLISH
+   	   	   case 2: return VERSION_CREATED
+   	   	   case 3: return ACCESS_GRANTED
+   	   	   case 4: return DELETED
+           case 5: return ACCESS_GRANTED_TO
+           case 6: return FEEDBACK_ARRIVED
    	   }
    }
-   
-   String toString() { textRepresentation } 
-} 
+
+   String toString() { textRepresentation }
+}

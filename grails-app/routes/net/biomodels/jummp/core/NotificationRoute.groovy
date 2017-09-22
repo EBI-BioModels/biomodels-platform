@@ -31,5 +31,6 @@ class NotificationRoute extends RouteBuilder {
         from("seda:model.writeAccessGranted").to("bean:notificationService?method=writeAccessGranted")
         from("seda:model.delete").to("bean:notificationService?method=delete")
         from("seda:model.update").to("bean:notificationService?method=update")
+        from("seda:jummp.feedback").to("bean:notificationService?method=feedback2Admin")
     }
 }

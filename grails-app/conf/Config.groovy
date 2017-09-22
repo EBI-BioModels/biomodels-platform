@@ -476,6 +476,12 @@ if (!(jummpConfig.jummp.security.certificationRole instanceof ConfigObject)) {
     jummp.security.certificationRole = ['ROLE_ADMIN']
 }
 
+if (!(jummpConfig.jummp.feedback.receiver.roles instanceof ConfigObject)) {
+    jummp.feedback.receiver.roles = jummpConfig.jummp.feedback.receiver.roles
+} else {
+    jummp.feedback.receiver.roles = ["ROLE_ADMIN","ROLE_CURATOR"]
+}
+
 if (!(jummpConfig.jummp.security.certificationAllowed instanceof ConfigObject)) {
     jummp.security.certificationAllowed = Boolean.parseBoolean(jummpConfig.jummp.security.certificationAllowed)
 } else {
