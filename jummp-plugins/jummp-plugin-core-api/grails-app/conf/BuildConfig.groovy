@@ -62,12 +62,12 @@ grails.project.dependency.resolution = {
         // from public Maven repositories
         mavenLocal()
         mavenCentral()
-        //mavenRepo "//snapshots.repository.codehaus.org"
-        //mavenRepo "//repository.codehaus.org"
-        //mavenRepo "//download.java.net/maven/2/"
-        //mavenRepo "//repository.jboss.com/maven2/"
-        mavenRepo "//www.ebi.ac.uk/~maven/m2repo"
-        mavenRepo "//www.ebi.ac.uk/~maven/m2repo_snapshots/"
+        //mavenRepo "http://snapshots.repository.codehaus.org"
+        //mavenRepo "http://repository.codehaus.org"
+        //mavenRepo "http://download.java.net/maven/2/"
+        //mavenRepo "http://repository.jboss.com/maven2/"
+        mavenRepo "http://www.ebi.ac.uk/~maven/m2repo"
+        mavenRepo "http://www.ebi.ac.uk/~maven/m2repo_snapshots/"
     }
     dependencies {
         compile("eu.ddmore.pharmml:libPharmML:0.4-beta-b3")
