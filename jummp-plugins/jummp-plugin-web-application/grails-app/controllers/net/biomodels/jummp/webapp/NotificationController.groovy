@@ -32,21 +32,21 @@ class NotificationController {
 
     @Secured(["isAuthenticated()"])
 	def unreadNotificationCount() {
-		render notificationService.unreadNotificationCount();
+		render notificationService.unreadNotificationCount()
 	}
 
 	@Secured(["isAuthenticated()"])
 	def list() {
 		if (params.all) {
-			return [notifications: notificationService.list(userService.getCurrentUser().username), partial: false];
+			return [notifications: notificationService.list(userService.getCurrentUser().username), partial: false]
 		}
 		else {
-			return [notifications: notificationService.list(userService.getCurrentUser().username, 10), partial: true];
+			return [notifications: notificationService.list(userService.getCurrentUser().username, 10), partial: true]
 		}
 	}
 
 	@Secured(["isAuthenticated()"])
 	def markAsRead(int msg) {
-		notificationService.markAsRead(msg, userService.getCurrentUser().username);
+		notificationService.markAsRead(msg, userService.getCurrentUser().username)
 	}
 }
