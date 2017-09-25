@@ -188,9 +188,18 @@ class SearchController {
 
     @Secured(['ROLE_ADMIN'])
     def regen() {
+        render(view: "regen")
+    }
+
+    @Secured(['ROLE_ADMIN'])
+    def regenIndices() {
         long start = System.currentTimeMillis()
         searchService.regenerateIndices()
-        [regenTime: System.currentTimeMillis() - start]
+        def regenTime = System.currentTimeMillis() - start
+        def result ="""\
+<h3>Report</h3>
+<p>Indices regenerated!<br/>Regenerated in ${regenTime/1000f}ms</p>"""
+        render result
     }
 
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
