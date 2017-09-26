@@ -29,7 +29,7 @@ class UrlMappings {
         "/model/update"(controller: "model", action: "update")
         "/model/publish"(controller: "model", action: "publish")
         "/share"(controller: "model", action: "share")
-        "/model/$id(.$revisionId)?" {
+        "/$id(.$revisionId)?" {
             controller = "model"
             action = 'show'
             constraints {
