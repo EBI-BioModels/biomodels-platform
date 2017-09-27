@@ -29,9 +29,9 @@ import grails.plugin.springsecurity.annotation.Secured
 @Secured(["hasRole('ROLE_ADMIN')"])
 class OmicsdiController {
     /**
-     * Flag that checks whether the dynamically-inserted logger is set to DEBUG or higher.
+     * Flag that checks whether the dynamically-inserted logger is set to INFO or higher.
      */
-    private final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
+    private final boolean IS_INFO_ENABLED = log.isInfoEnabled()
 
     def omicsdiService
 
@@ -40,10 +40,8 @@ class OmicsdiController {
     }
 
     def exportOmicsdiEntriesWithIndexer() {
-        if (IS_DEBUG_ENABLED) {
-            log.debug "Delegating this work to JummpIndexer."
-        } else {
-            println "Delegating this work to JummpIndexer."
+        if (IS_INFO_ENABLED) {
+            log.info "Delegating this work to JummpIndexer."
         }
         omicsdiService.exportOmicsdiEntries()
         render "Sent the request to JummpIndexer"
