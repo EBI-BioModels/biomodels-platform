@@ -92,7 +92,7 @@ grails.project.dependency.resolution = {
     plugins {
         build ":tomcat:7.0.55.3"
 
-        compile ":perf4j:0.2"
+        compile ":perf4j:0.2.1"
     }
 }
 grails.plugin.location.'jummp-plugin-security'="../jummp-plugin-security"
