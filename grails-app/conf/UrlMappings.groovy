@@ -33,7 +33,7 @@ class UrlMappings {
             controller = "model"
             action = 'show'
             constraints {
-                id(nullable: false, matches: /[a-zA-Z-_0-9]+/)
+                id(nullable: false, matches: /[a-zA-Z\\-_0-9]+/)
                 revisionId(matches: /\d+/)
             }
         }
@@ -41,7 +41,7 @@ class UrlMappings {
             controller = 'model'
             action = action
             constraints {
-                id(nullable: false, matches: /[a-zA-Z-_0-9]+/)
+                id(nullable: false, matches: /[a-zA-Z\\-_0-9]+/)
                 action(nullable: false)
                 revisionId(matches: /\d+/)
             }
