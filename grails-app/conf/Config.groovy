@@ -300,6 +300,10 @@ grails.plugin.springsecurity.authority.className = 'net.biomodels.jummp.plugins.
 grails.plugin.springsecurity.securityConfigType = "Annotation" // "Annotation", "InterceptUrlMap", "Requestmap"
 
 jummp.controllerAnnotations = [
+    // /model/create and /model/create?execution=e.*s1 show the display the submission guidelines, which should be visible without logging in
+    '/model/create': ["request.getParameter('execution') == null ? permitAll : (request.getParameter('execution').matches('^e.*?s1\$') ? permitAll: fullyAuthenticated)"],
+
+    // request.getParameter('execution')) == null ? matches('^e.*?s1\$') ? permitAll: fullyAuthenticated
     "/":                        ["permitAll"],
     "/index":                   ["permitAll"],
     '/index.gsp':               ['permitAll'],
