@@ -18,7 +18,7 @@
 --%>
 
 <%
-/*
+
   		def contextHelpLocation=g.pageProperty(name:'page.contexthelp')
   		if (contextHelpLocation) {
   			contextHelpLocation=contextHelpLocation.trim()
@@ -27,7 +27,7 @@
   			contextHelpLocation="manual"
   		}
   		int helpWidth=400;
-*/
+
         def styleName = grailsApplication.config.jummp.branding.style
 %>
 
