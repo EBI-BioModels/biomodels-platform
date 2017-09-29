@@ -41,7 +41,7 @@
     </head>
     <body>
         <div id="register" class="row">
-            <div class="medium-6 medium-centered large-6 large-centered columns">
+            <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
                 <g:form name="registerForm" action="signUp">
                     <div class="row column register-form">
                         <label class="required" for="username"><g:message code="user.signup.ui.username"/></label>

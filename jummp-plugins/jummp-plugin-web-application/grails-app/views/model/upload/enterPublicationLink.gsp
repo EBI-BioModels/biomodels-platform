@@ -69,7 +69,7 @@
                 linkSourceTypes = PublicationLinkProvider.LinkType.
                     values().collect { it.label }
             %>
-            <div class="small-12 medium-12 columns">
+            <div class="small-12 medium-6 large-4 columns">
                 <g:if test="${publication}">
                     <g:select name="PubLinkProvider" id="pubLinkProvider"
                               from="${linkSourceTypes}"

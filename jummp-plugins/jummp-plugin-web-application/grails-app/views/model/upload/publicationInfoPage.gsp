@@ -81,7 +81,9 @@
                 <g:textField class="input50" name="journal" value="${publication.journal}"/>
                 <label>
                     <g:message code="submission.publication.authors"/>
-                    <select class="input50" id="authorList" name="authorList" size="${workingMemory.get("Authors")?.size() ?: 5}" style="height: inherit">
+                    <select class="input50" id="authorList" name="authorList"
+                            size="${workingMemory.get("Authors")?.size() > 5 || workingMemory.get("Authors") == null ? 5 : workingMemory.get("Authors")?.size()}"
+                            style="height: inherit">
                         <g:each in="${publication.authors}">
                             <option value="${it.userRealName}|${it.orcid ?: ""}|${it.institution ?: ""}">${it.userRealName}</option>
                         </g:each>
