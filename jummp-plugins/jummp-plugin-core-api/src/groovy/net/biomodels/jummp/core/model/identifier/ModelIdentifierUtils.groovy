@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2017 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -36,6 +36,7 @@ import net.biomodels.jummp.core.model.identifier.support.DateModelIdentifierPart
 import net.biomodels.jummp.core.model.identifier.support.LiteralModelIdentifierPartition
 import net.biomodels.jummp.core.model.identifier.support.ModelIdentifierPartition
 import net.biomodels.jummp.core.model.identifier.support.ModelIdentifierPartitionManager
+import net.biomodels.jummp.core.model.identifier.support.ModelIdentifierPartitionRegexFactory
 import net.biomodels.jummp.core.model.identifier.support.NumericalModelIdentifierPartition
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
@@ -52,6 +53,9 @@ class ModelIdentifierUtils {
     private static final Log log = LogFactory.getLog(this)
     /* semaphores for the log threshold */
     private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
+    // Regular expressions for each model identifier generator scheme (submission, publication, ...)
+    static final Set<String> MODEL_ID_REGEXES = new LinkedHashSet<>()
+
     /*
      * The suffix to use in the bean reference corresponding to a generator.
      * For instance, for the settings
@@ -245,6 +249,7 @@ The configuration settings lack the rules for generating model identifiers!"""
         if (IS_DEBUG_ENABLED) {
             log.debug "Turned decorator settings ${c.inspect()} into ${partitions.inspect()}"
         }
+        StringBuilder regexForThisIdentifier = new StringBuilder()
         partitions.eachWithIndex { p, i ->
             OrderedModelIdentifierDecorator d
             boolean validPartition = p.validate()
@@ -252,33 +257,42 @@ The configuration settings lack the rules for generating model identifiers!"""
                 log.warn "ModelIdentifierPartition ${p.dump()} is not valid!"
                 throw new Exception("Incorrect model identifier settings: ${p.properties}")
             }
+            String partitionRegex
             switch(p) {
                 case DateModelIdentifierPartition:
                     // this decorator sets nextValue to today's date, which is sensible
-                    d = new DateAppendingDecorator(i, p.format)
+                    String format = p.format
+                    d = new DateAppendingDecorator(i, format)
                     // don't lose the last value used by this decorator
                     d.nextValue.set(p.value)
+                    partitionRegex = ModelIdentifierPartitionRegexFactory.forDatePartition format
                     break
                 case ChecksumModelIdentifierPartition:
                     char sep = ChecksumAppendingDecorator.DEFAULT_SEPARATOR
                     d = new ChecksumModelIdentifierPartition(i, sep)
+                    partitionRegex = ModelIdentifierPartitionRegexFactory.forChecksumPartition(sep)
                     //no need to update the value of the checksum
                     break
                 case LiteralModelIdentifierPartition:
-                    d = new FixedLiteralAppendingDecorator(i, p.value)
+                    String suffix = p.value
+                    d = new FixedLiteralAppendingDecorator(i, suffix)
+                    partitionRegex = ModelIdentifierPartitionRegexFactory.forLiteral suffix
                     // this is a fixed decorator, so nextValue does not need updating
                     break
                 case NumericalModelIdentifierPartition:
                     long suffix = Long.parseLong(p.value)
+                    int width = p.width
                     if (p.fixed) {
-                        d = new FixedDigitAppendingDecorator(i, suffix, p.width)
+                        d = new FixedDigitAppendingDecorator(i, suffix, width)
                     } else {
-                        d = new VariableDigitAppendingDecorator(i, suffix, p.width)
+                        d = new VariableDigitAppendingDecorator(i, suffix, width)
                         // trigger decorator update
                         d.lastUsedSuffix.set(suffix)
                     }
+                    partitionRegex = ModelIdentifierPartitionRegexFactory.forNumericalPartition width
                     break
                 default:
+                    partitionRegex = null
                     String M = "Unknown model identifier setting type $p"
                     log.error M
                     throw new Exception(M)
@@ -287,6 +301,7 @@ The configuration settings lack the rules for generating model identifiers!"""
                 log.debug "Created ${d.dump()} based on partition ${p.dump()}"
             }
             decorators.add d
+            regexForThisIdentifier.append partitionRegex
         }
         boolean haveVariableDecorator = decorators.find{ it.isFixed() == false } != null
         if (!haveVariableDecorator) {
@@ -298,8 +313,10 @@ Consider introducing variable digit patterns or dates into the identifier scheme
     jummp.model.id.submission.partN.width=10"""
             throw new Exception(err)
         }
+        MODEL_ID_REGEXES.add regexForThisIdentifier.toString()
+
         if (IS_DEBUG_ENABLED) {
-            log.debug "The decorators for ${c.inspect()} are ${decorators.inspect()}"
+            log.debug "Identifier settings ${c.inspect()} converted to ${decorators.inspect()} and regex $regexForThisIdentifier"
         }
         return decorators
     }
