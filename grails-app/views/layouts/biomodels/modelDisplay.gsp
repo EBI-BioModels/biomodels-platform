@@ -394,7 +394,7 @@
             $('#confirm-model-notify').dialog({
                 resizable: false,
                 autoOpen: false,
-                height: 200,
+                height: 250,
                 width: 525,
                 modal: true,
                 buttons: {
