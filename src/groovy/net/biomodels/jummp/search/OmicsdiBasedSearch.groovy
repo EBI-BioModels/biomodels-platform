@@ -169,14 +169,15 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
         String sortDir = sortOrder.direction == SortOrder.SortDirection.ASC ? "ascending" : "descending"
         QueryResult result = datasetWsClient.getDatasets("biomodels", query, fields, sortField, sortDir,
             paginationCriteria['start'], paginationCriteria['length'], paginationCriteria['facetCount'])
-        List<Entry> entries = result.getEntries()
         List<Facet> facets = []
-        int totalCount = result.count
+        int totalCount
         // convert all the returned entries to ModelTransportCommand objects
         List<ModelTransportCommand> results = new ArrayList<ModelTransportCommand>()
-        if (entries) {
+        if (result) {
             // entries/models
-            entries.eachWithIndex { Entry entry, int i ->
+            totalCount = result.count
+            List<Entry> entries = result.getEntries()
+            entries?.eachWithIndex { Entry entry, int i ->
                 String submissionId = entry.id
                 String modelName = entry.getFields().get('name')[0]
                 String submissionDateString = entry.getFields().get('submission_date')[0]
