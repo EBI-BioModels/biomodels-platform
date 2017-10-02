@@ -54,7 +54,7 @@ class UrlMappings {
             action = 'show'
             constraints {
                 id(nullable: false, validator: { modelId ->
-                    String pattern = "(${ModelIdentifierUtils.MODEL_ID_REGEXES.join('|')})"
+                    String pattern = ModelIdentifierUtils.MODEL_ID_REGEXES.join('|')
                     modelId.matches pattern
                 })
                 revisionId(matches: /\d+/)
