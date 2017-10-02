@@ -160,7 +160,7 @@
     <p></p>
 </g:else>
 
-<script src="//listjs.com/assets/javascripts/list.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/list.js/1.5.0/list.min.js"></script>
 
 <g:javascript>
     var options = {
