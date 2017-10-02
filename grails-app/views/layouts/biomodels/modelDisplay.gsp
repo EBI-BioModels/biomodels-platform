@@ -37,7 +37,7 @@
     def loadedZips=new HashMap();
     def zipSupported=[:]
 %>
-<head>
+<head xmlns="http://www.w3.org/1999/html">
     <title>${revision.name}</title>
     <script type="text/javascript">
         $(document).ready(function() {
@@ -644,29 +644,56 @@
                     </ul>
                     <div id="Overview" class="row">
                         <div class="small-12 medium-8 large-8 columns">
-                            <jummp:displayModelDescriptionLabel>
-                                <span class="bold">${description}:</span>
-                            </jummp:displayModelDescriptionLabel>
-                            <div style="margin-left: 30px;">
-                                ${raw(revision.description)}
+                            <div class="row">
+                                <div class="small-12 medium-2 large-2 columns">
+                                    <jummp:displayModelDescriptionLabel>
+                                        <span style="font-weight: bold; color: rgb(0,124,130)">${description}</span>
+                                    </jummp:displayModelDescriptionLabel>
+                                </div>
+                                <div class="small-12 medium-10 large-10 columns">
+                                    %{--<a class="descriptionToggle" title="Click to see more">
+                                        <span>Click here to collapse/expand the description
+                                            <img style="width:12px;margin:2px;float:none"
+                                                 src="${grailsApplication.config.grails.serverURL}/images/expand.png"/>
+                                        </span>
+                                    </a>--}%
+                                    <div id="description">
+                                        ${raw(revision.description)}
+                                    </div>
+                                </div>
+                                <g:javascript>
+                                    /*$('.descriptionToggle').click(function() {
+                                        $('#description').slideToggle('fast');
+                                    });*/
+                                </g:javascript>
                             </div>
-                            <div style="margin-top:30px">
-                                <div class='spaced'>
-                                    <g:message code="model.model.format"/>
+                            <div class="row">
+                                <div class="small-12 medium-2 large-2 columns">
+                                    <span style="font-weight: bold; color: rgb(0,124,130)"><g:message code="model.model.format"/></span>
+                                </div>
+                                <div class="small-12 medium-10 large-10 columns">
                                     ${revision.format.name}
                                         ${revision.format.formatVersion!="*"?"(${revision.format.formatVersion})":""}
                                 </div>
-                                <%
-                                    model = revision.model
-                                %>
-                                <g:if test="${model.publication}">
-                                <div class='spaced'>
-                                    <g:message code="model.model.publication"/>:
-                                    <g:render  model="[model:model]" template="/templates/showPublication" />
+                            </div>
+                            <g:if test="${revision.model.publication}">
+                            <%
+                                model = revision.model
+                            %>
+                            <div class="row">
+                            <div class="small-12 medium-2 large-2 columns">
+                                <span style="font-weight: bold; color: rgb(0,124,130)"><g:message code="model.model.publication"/></span>
+                            </div>
+                            <div class="small-12 medium-10 large-10 columns">
+                                <g:render  model="[model:model]" template="/templates/showPublication" />
+                            </div>
+                            </div>
+                            </g:if>
+                            <div class="row">
+                                <div class="small-12 medium-2 large-2 columns">
+                                    <span style="font-weight: bold; color: rgb(0,124,130)"><g:message code="model.model.authors"/></span>
                                 </div>
-                                </g:if>
-                                <div class='spaced'>
-                                    <g:message code="model.model.authors"/>
+                                <div class="small-12 medium-10 large-10 columns">
                                     <g:join in="${authors}"/>
                                 </div>
                             </div>
