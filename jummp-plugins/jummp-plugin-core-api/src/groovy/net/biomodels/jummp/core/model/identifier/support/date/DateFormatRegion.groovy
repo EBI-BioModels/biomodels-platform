@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2017 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -18,32 +18,30 @@
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
  **/
 
+package net.biomodels.jummp.core.model.identifier.support.date
 
+/**
+ * Simple representation of a homogenous part of a SimpleDateFormat instance.
+ *
+ * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ */
+final class DateFormatRegion {
+    DateFormatRegionType type
+    StringBuilder contents = new StringBuilder()
 
-
-
-package net.biomodels.jummp.plugins.omicsdi
-
-import grails.plugin.springsecurity.annotation.Secured
-
-@Secured(["hasRole('ROLE_ADMIN')"])
-class OmicsdiController {
-    /**
-     * Flag that checks whether the dynamically-inserted logger is set to INFO or higher.
-     */
-    private final boolean IS_INFO_ENABLED = log.isInfoEnabled()
-
-    def omicsdiService
-
-    def index() {
-        render(view: "index")
+    boolean add(char c) {
+        def typeForThisChar = DateFormatRegionType.from(c)
+        if (contents.length() == 0) {
+            type = typeForThisChar
+        }
+        if (type == typeForThisChar) {
+            contents.append(c)
+            return true
+        }
+        false
     }
 
-    def exportOmicsdiEntriesWithIndexer() {
-        if (IS_INFO_ENABLED) {
-            log.info "Delegating this work to JummpIndexer."
-        }
-        omicsdiService.exportOmicsdiEntries()
-        render "Sent the request to JummpIndexer"
+    String getContents() {
+        return contents.toString()
     }
 }
