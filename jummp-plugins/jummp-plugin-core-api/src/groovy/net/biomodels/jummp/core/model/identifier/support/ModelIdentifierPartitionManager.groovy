@@ -233,6 +233,7 @@ class ModelIdentifierPartitionManager {
             if (incorrectWidth) {
                 return false
             }
+            log.info "Processing partition ${p.value} for $ID; width ${p.width} (${p.beginIndex} -> ${p.endIndex})"
             final String NEW_VALUE = ID[START..END]
             p.value = NEW_VALUE
             if (log.isDebugEnabled()) {
