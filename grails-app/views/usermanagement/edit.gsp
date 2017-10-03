@@ -37,7 +37,7 @@
                 <h2>Update user information</h2>
                 <label for="edit-user-username">
                     <span class="required"><g:message code="user.administration.ui.username"/></span>
-                    <input type="text" id="edit-user-username" name="username" value="${user.username}" disabled />
+                    <input type="text" id="edit-user-username" name="username" value="${user.username}" />
                 </label>
                 <label for="edit-user-userrealname">
                     <span class="required"><g:message code="user.administration.ui.realname"/></span>
