@@ -1,5 +1,5 @@
 <div>
-    <h2>Updated the preview image and short description</h2>
+    <h3>Updated the preview image and short description</h3>
     <button class="button"
             onclick="<g:remoteFunction controller="ModelOfTheMonth"
                                        action="updatePreviewImageAndShortDescription"

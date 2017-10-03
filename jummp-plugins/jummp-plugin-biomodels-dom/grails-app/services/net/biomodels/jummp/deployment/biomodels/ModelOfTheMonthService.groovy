@@ -57,6 +57,9 @@ class ModelOfTheMonthService {
         entries*.toCommandObject()
     }
 
+    List<ModelOfTheMonth> list() {
+        ModelOfTheMonth.getAll()
+    }
     /**
      * Update the preview image and short description of a given model of the month entry
      */
