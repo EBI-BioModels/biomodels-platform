@@ -34,7 +34,6 @@
 
 package net.biomodels.jummp.core
 
-import eu.ddmore.publish.service.PublishContext
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.PublicationAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
@@ -376,8 +375,8 @@ class ModelDelegateService implements IModelService {
         return new ModelAdapter(model: REV).toCommandObject()
     }
 
-    PublishContext publishModelRevision(RevisionTransportCommand revision) {
-        return modelService.publishModelRevision(Revision.get(revision.id))
+    void publishModelRevision(RevisionTransportCommand revision) {
+        modelService.publishModelRevision(Revision.get(revision.id))
     }
 
     void unpublishModelRevision(RevisionTransportCommand revision) {
