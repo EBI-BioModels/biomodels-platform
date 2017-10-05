@@ -135,7 +135,7 @@ submission_id as submissionId,
 perennialPublicationIdentifier as publicationId
 from model where model.submission_id = (select max(submission_id) from model)""")
                 def lastPublished = sql.firstRow "select max(perennialPublicationIdentifier) as pId from model"
-                if (lastPublished) {
+                if (lastPublished && mostRecentModelDetails) {
                     mostRecentModelDetails.publicationId = lastPublished.pId
                 }
             } catch (Exception e) {
