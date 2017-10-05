@@ -22,10 +22,8 @@ function showNotification(message) {
 function pollForNotifications(url) {
     $.get( url, function(data) {
         if (data > 0) {
-            $("#notificationLink").text(' (' + data + ')');
+            $("#notificationLink").text('My notifications (' + data + ')');
             $("#notificationLink").show();
-        } else {
-            //$("#notificationLink").hide();
         }
     });
 }

@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2017 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -22,26 +22,27 @@
 
 
 
-package net.biomodels.jummp.model
+package net.biomodels.jummp
 
-import net.biomodels.jummp.plugins.security.Person
+import grails.persistence.Entity
 
 /**
- * @short Links publication and persons
- * A publication is used by a Model to reference the meta information
- * about the paper the Model belongs to, records the alias used in the
- * publication and the position of the author in the paper
- * @see Publication, Person
- * @author Raza Ali <raza.ali@ebi.ac.uk>
+ * @short A light-weight feedback mechanism
+ * This class is introduced to capture users' rating at the site from 1 to 5 stars.
+ * The email and additional comment are optional.
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
+ * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @date 14/09/2017
  */
-class PublicationPerson implements Serializable {
-    Publication publication
-    Person person
-    String pubAlias  //name used in publication 
-    Integer position
-    
-    static mapping = {
-        id composite: ['publication', 'person']
-        version false
+
+@Entity
+class Feedback implements Serializable {
+    byte star
+    String email
+    String comment
+
+    static constraints = {
+        email nullable: true, blank: true, email: true, maxSize: 128, unique: 'star'
+        comment nullable: true, blank: true, maxSize: 1024
     }
 }

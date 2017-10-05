@@ -401,6 +401,20 @@ class JummpTagLib {
         out << result.toString()
     }
 
+    def renderRatingStars = {
+        def result = new StringBuilder()
+        result.append('''
+        <div class="rating">
+            <span id="star5" class="star-icon">&#9734;</span>
+            <span id="star4" class="star-icon">&#9734;</span>
+            <span id="star3" class="star-icon">&#9734;</span>
+            <span id="star2" class="star-icon">&#9734;</span>
+            <span id="star1" class="star-icon">&#9734;</span></div>
+        <input id="rateStar" name="rateStar" hidden required="true" />
+        ''')
+        out << result.toString()
+    }
+
     def renderStarLevels = { attrs ->
         def result = new StringBuilder()
         def yellowStar = "${grailsApplication.config.grails.serverURL}/images/star.svg"

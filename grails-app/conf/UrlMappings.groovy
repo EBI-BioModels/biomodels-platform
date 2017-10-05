@@ -19,7 +19,7 @@
 **/
 
 import grails.util.Holders
-
+import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 
 
 class UrlMappings {
@@ -29,19 +29,11 @@ class UrlMappings {
         "/model/update"(controller: "model", action: "update")
         "/model/publish"(controller: "model", action: "publish")
         "/share"(controller: "model", action: "share")
-        "/model/$id(.$revisionId)?" {
-            controller = "model"
-            action = 'show'
-            constraints {
-                id(nullable: false, matches: /[a-zA-Z-_0-9]+/)
-                revisionId(matches: /\d+/)
-            }
-        }
         "/model/$action/$id(.$revisionId)?" {
             controller = 'model'
             action = action
             constraints {
-                id(nullable: false, matches: /[a-zA-Z-_0-9]+/)
+                id(nullable: false, matches: /[a-zA-Z\\-_0-9]+/)
                 action(nullable: false)
                 revisionId(matches: /\d+/)
             }
@@ -57,7 +49,17 @@ class UrlMappings {
                 // apply constraints here
             }
         }
-
+        "/$id(.$revisionId)?" {
+            controller = "model"
+            action = 'show'
+            constraints {
+                id(nullable: false, validator: { modelId ->
+                    String pattern = ModelIdentifierUtils.MODEL_ID_REGEXES.join('|')
+                    modelId.matches pattern
+                })
+                revisionId(matches: /\d+/)
+            }
+        }
         "/"(view: "/index")
         "/maintenance"(controller: 'maintenance')
         "/maintenance/turnOn"(controller: 'maintenance', action: 'turnOn')

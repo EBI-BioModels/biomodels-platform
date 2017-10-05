@@ -37,7 +37,7 @@ class ModelOfTheMonthController {
     def modelOfTheMonthService
 
     def index() {
-        render(view: "index")
+        render(view: "index", model: [entries: list()])
     }
 
     def updatePreviewImageAndShortDescription() {
@@ -47,5 +47,10 @@ class ModelOfTheMonthController {
             updateReport += "${model.publicationDate.toString()}: ${model.shortDescription}<br/>"
         }
         render updateReport
+    }
+
+    List list() {
+        List<ModelOfTheMonth> entries = modelOfTheMonthService.list()
+        entries
     }
 }

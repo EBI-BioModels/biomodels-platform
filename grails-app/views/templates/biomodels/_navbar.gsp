@@ -21,7 +21,7 @@
 <ul class="grid_24 main-menu dropdown menu float-left columns medium-12"
     id="local-nav" data-dropdown-menu role="menubar">
     <li <g:if test="${actionName == null}"> class="first active" </g:if> role="menuitem">
-        <a href="${createLink(uri: '/', absolute: true)}" title="Back to BioModels Database homepage">Home</a>
+        <a href="${createLink(uri: '/', absolute: true)}" title="Back to BioModels homepage">Home</a>
     </li>
     <li <g:if test="${g.pageProperty(name:'page.search')?.length()}"> class="first active" </g:if> role="menuitem">
         <a href="${g.createLink(controller: 'search', action: 'search', params: [query: '*:*'])}">Browse</a>
@@ -42,9 +42,9 @@
         <ul class="menu">
             <li><a href="${g.createLink(controller: 'jummp', action: 'faq')}">FAQ</a></li>
             <li><a href="${g.createLink(controller: 'jummp', action: 'courses')}">Courses</a></li>
-            <li><a href="http://www.ebi.ac.uk/biomodels/tools/converters/" target="_blank">Online converters</a></li>
-            <li><a href="https://www.ebi.ac.uk/rdf/services/biomodels/sparql" target="_blank">SPARQL Endpoint</a></li>
-            <li><a href="https://bitbucket.org/jummp/jummp">Technical corner</a></li>
+            <li><a href="//www.ebi.ac.uk/biomodels/tools/converters/" target="_blank">Online converters</a></li>
+            <li><a href="//www.ebi.ac.uk/rdf/services/biomodels/sparql" target="_blank">SPARQL Endpoint</a></li>
+            <li><a href="//bitbucket.org/jummp/jummp">Technical corner</a></li>
         </ul>
     </li>
     <li <g:if test="${selectedAboutusItems}"> class="active" </g:if> role="menuitem">
@@ -61,6 +61,11 @@
         <a href="${g.createLink(controller: 'jummp', action: 'contactus')}">
             <g:message code="jummp.contactus.biomodels.title"/>
         </a>
+    </li>
+    <li style="border-right: none" id="menuItemFeedback" data-open="rate_review_form">
+        <!-- rate_review_form is the identifier of the modal feedback form defined in the footer.
+             This form is rendered using the feedback template of the web plugin -->
+        <a><g:message code="jummp.feedback.default.title"/></a>
     </li>
     <!-- If you need to include functional (as opposed to purely navigational) links in your local menu,
        add them here, and give them a class of "functional". Remember: you'll need a class of "last" for

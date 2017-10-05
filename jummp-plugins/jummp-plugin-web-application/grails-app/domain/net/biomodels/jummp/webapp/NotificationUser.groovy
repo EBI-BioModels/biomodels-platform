@@ -26,16 +26,16 @@ package net.biomodels.jummp.webapp
 import net.biomodels.jummp.plugins.security.User
 /**
  * @short Representation of the Notification User relationship.
- * This class is the representation of a Notification send to a User. 
+ * This class is the representation of a Notification send to a User.
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  */
 class NotificationUser implements Serializable {
     private static final long serialVersionUID = 1L
-    
-    Notification notification;
-    User user;
-    boolean notificationSeen = false;
-    
+
+    Notification notification
+    User user
+    boolean notificationSeen = false
+
     static constraints = {
         notification(nullable: false, unique: false)
         user(nullable: false, unique: false)

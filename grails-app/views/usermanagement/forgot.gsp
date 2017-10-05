@@ -35,9 +35,9 @@
         <link rel="stylesheet" href="${resource(dir: 'css', file: 'jstree.css')}" />
     </head>
      <body>
-        <p><g:message code="user.forgot.ui.explanation"/></p>
         <div id="requestResetPassword" class="row">
-            <div class="medium-6 medium-centered large-6 large-centered columns">
+            <p style="text-align: center"><g:message code="user.forgot.ui.explanation"/></p>
+            <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
             <g:form name="passwordForm" action="requestPassword">
                 <div class="row column request-reset-password-form">
                     <label class="required"><g:message code="user.forgot.ui.username"/></label>

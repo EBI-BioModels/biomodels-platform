@@ -163,6 +163,20 @@ class BootStrap {
                 userRole = Role.findByAuthority("ROLE_ADMIN")
                 UserRole.create(user, userRole, true)
             }
+
+            if (!User.findByUsername("anonymous")) {
+                def person = new Person(userRealName: "anonymous")
+                person.save(flush: true)
+                def user = new User(username: "anonymous",
+                        password: springSecurityService.encodePassword("anonymous"),
+                        email: "user@anoymous.com",
+                        person: person,
+                        enabled: false,
+                        accountExpired: true,
+                        accountLocked: true,
+                        passwordExpired: true)
+                user.save(flush: true)
+            }
         }
 
         // custom mapping for weceem as it fails to work with an LDAPUserDetailsImpl

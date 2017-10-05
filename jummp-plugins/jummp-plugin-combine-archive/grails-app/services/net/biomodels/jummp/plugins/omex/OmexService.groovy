@@ -34,19 +34,23 @@
 
 package net.biomodels.jummp.plugins.omex
 
-import java.nio.file.FileSystem
-import java.nio.file.FileSystems
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
+import com.hp.hpl.jena.rdf.model.Model
+import com.hp.hpl.jena.rdf.model.Resource
+import com.hp.hpl.jena.vocabulary.DCTerms
 import net.biomodels.jummp.core.model.FileFormatService
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
-import org.perf4j.aop.Profiled
 import org.apache.tika.detect.DefaultDetector
 import org.apache.tika.metadata.Metadata
-import org.apache.tika.mime.MediaType
+import org.mbine.co.archive.ArtifactInfo
+import org.mbine.co.archive.CombineArchiveFactory
+import org.mbine.co.archive.ICombineArchive
+import org.mbine.co.archive.MetadataManager
+import org.perf4j.aop.Profiled
+
+import java.nio.file.*
 
 /**
  * Provides methods to handle the COMBINE archive format.
@@ -153,7 +157,7 @@ class OmexService implements FileFormatService {
         def sherlock = new DefaultDetector()
         String properType = sherlock.detect(new BufferedInputStream(
                         new FileInputStream(f)), new Metadata()).toString()
-                
+
         boolean correctMIME = "application/zip".equals(properType)
         if (!correctMIME) {
             if (IS_INFO_ENABLED) {
@@ -192,5 +196,47 @@ class OmexService implements FileFormatService {
 
     boolean doBeforeSavingAnnotations(File annoFile, RevisionTransportCommand rev) {
         return true
+    }
+
+    /**
+     * Create a combine archive from a list of RepositoryFileTransportCommand objects
+     * associated with an individual model given by the model submission identifier
+     * @argument a list of RepositoryFileTransportCommand objects
+     * @argument a (perennial) submission identifier
+     * @return a string indicates the absolute path of the combine archive file
+     */
+    String createCombineArchive(List<RFTC> files, String modelId) {
+        String dateTimeString = new Date().format("yyyyMMdd-HHmmss")
+        String TEMP_PATH = System.getProperty("java.io.tmpdir")
+        String absoluteOmexFileName = "${TEMP_PATH}/${modelId}-${dateTimeString}.omex"
+        ICombineArchive arch
+        CombineArchiveFactory fact = new CombineArchiveFactory()
+        arch = fact.openArchive(absoluteOmexFileName, true)
+
+        files.each {RFTC rftc ->
+            File file = new File(rftc.path)
+            String fileName = file.getName()
+            Path path = Paths.get(rftc.path)
+            ArtifactInfo artifactInfo = arch.createArtifact(fileName, rftc.mimeType)
+            OutputStream writer = arch.writeArtifact(artifactInfo)
+            Files.copy(path, writer)
+            writer.close()
+        }
+
+        // customise the metadata.rdf
+        String licenceValue = "http://creativecommons.org/publicdomain/zero/1.0/"
+        String timeStamp = new Date().format("E LLL dd HH:mm:ss z yyyy")
+        String provenanceValue = """\
+This model was downloaded from BioModels (http://www.ebi.ac.uk/biomodels/) on ${timeStamp}"""
+        MetadataManager mdm = arch.getMetadata()
+        mdm.load()
+        Model model = mdm.RDFModel
+        Resource resource
+        resource = model.getResource("file:///")
+        resource.addProperty(DCTerms.provenance, provenanceValue)
+        resource.addProperty(DCTerms.license, licenceValue)
+        mdm.save()
+        arch.close()
+        return absoluteOmexFileName
     }
 }

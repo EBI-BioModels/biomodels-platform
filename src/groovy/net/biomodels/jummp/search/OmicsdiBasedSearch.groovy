@@ -33,6 +33,7 @@ import net.biomodels.jummp.core.events.ModelOperationEvent
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand
 import net.biomodels.jummp.core.model.ModelState
 import net.biomodels.jummp.core.model.ModelTransportCommand
+import net.biomodels.jummp.core.model.PublicationTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 import net.biomodels.jummp.model.Revision
@@ -163,19 +164,20 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
         SearchResponse searchResponse = new SearchResponse()
         String[] fields = ["name", "description", "submitter", "curationstatus",
                            "last_modification_date", "submission_date",
-                           "modelformat", "levelversion"]
+                           "modelformat", "levelversion", "first_author", "publication_year"]
         String sortField = sortOrder.getField()
         String sortDir = sortOrder.direction == SortOrder.SortDirection.ASC ? "ascending" : "descending"
         QueryResult result = datasetWsClient.getDatasets("biomodels", query, fields, sortField, sortDir,
             paginationCriteria['start'], paginationCriteria['length'], paginationCriteria['facetCount'])
-        List<Entry> entries = result.getEntries()
         List<Facet> facets = []
-        int totalCount = result.count
+        int totalCount
         // convert all the returned entries to ModelTransportCommand objects
         List<ModelTransportCommand> results = new ArrayList<ModelTransportCommand>()
-        if (entries) {
+        if (result) {
             // entries/models
-            entries.eachWithIndex { Entry entry, int i ->
+            totalCount = result.count
+            List<Entry> entries = result.getEntries()
+            entries?.eachWithIndex { Entry entry, int i ->
                 String submissionId = entry.id
                 String modelName = entry.getFields().get('name')[0]
                 String submissionDateString = entry.getFields().get('submission_date')[0]
@@ -193,8 +195,17 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
                 ModelState state = ModelState.PUBLISHED
                 String formatName = entry.getFields().get('modelformat')[0]
                 String formatVersion = entry.getFields().get('levelversion')[0]
+                boolean havePublicationYear = entry.getFields().get('publication_year').length > 0
+                String publicationYear = ""
+                if (havePublicationYear) {
+                    publicationYear = entry.getFields().get('publication_year')[0]
+                }
                 ModelFormatTransportCommand format =
                     new ModelFormatTransportCommand(name: formatName, formatVersion: formatVersion)
+                PublicationTransportCommand ptc = null
+                if (publicationYear) {
+                    ptc = new PublicationTransportCommand(year: Integer.parseInt(publicationYear))
+                }
                 ModelTransportCommand mtc = new ModelTransportCommand(
                     submitter: submitterName,
                     name: modelName,
@@ -203,7 +214,8 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
                     submissionDate: submissionDate,
                     lastModifiedDate: modifiedDate,
                     state: state,
-                    format: format
+                    format: format,
+                    publication: ptc
                 )
                 results.add(mtc)
             }

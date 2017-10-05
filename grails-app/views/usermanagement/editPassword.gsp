@@ -29,22 +29,23 @@
      </head>
     <body>
         <div class="row">
-            <div class="medium-12 medium-centered large-8 large-centered columns">
-            <g:form action="updatePassword">
-                <div class="row column edit-password-form">
-                    <label class="required"><g:message code="user.administration.updatePassword.oldPassword"/></label>
-                    <g:passwordField name="oldPassword"/>
+            <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
+                <h3>Change your password</h3>
+                <g:form action="updatePassword">
+                    <div class="row column edit-password-form">
+                        <label class="required"><g:message code="user.administration.updatePassword.oldPassword"/></label>
+                        <g:passwordField name="oldPassword"/>
 
-                    <label class="required"><g:message code="user.administration.updatePassword.newPassword"/></label>
-                    <g:passwordField name="newPassword"/>
+                        <label class="required"><g:message code="user.administration.updatePassword.newPassword"/></label>
+                        <g:passwordField name="newPassword"/>
 
-                    <label class="required"><g:message code="user.administration.updatePassword.newPasswordRpt"/></label>
-                    <g:passwordField name="newPasswordRpt"/>
-                    <p class="buttons">
-                        <input type="submit" class="button" value="${g.message(code: 'user.administration.updatePassword.submit')}"/>
-                    </p>
-                </div>
-            </g:form>
+                        <label class="required"><g:message code="user.administration.updatePassword.newPasswordRpt"/></label>
+                        <g:passwordField name="newPasswordRpt"/>
+                        <p class="buttons">
+                            <input type="submit" class="button" value="${g.message(code: 'user.administration.updatePassword.submit')}"/>
+                        </p>
+                    </div>
+                </g:form>
             </div>
         </div>
    </body>

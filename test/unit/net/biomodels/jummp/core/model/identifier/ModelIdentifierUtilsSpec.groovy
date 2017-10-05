@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2017 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -36,6 +36,18 @@ import org.junit.*
  */
 @TestMixin(GrailsUnitTestMixin)
 class ModelIdentifierUtilsSpec {
+    Set<String> actualIdentifierSchemeRegexes
+
+    @Before
+    void setUp() {
+        actualIdentifierSchemeRegexes = ModelIdentifierUtils.MODEL_ID_REGEXES
+        ModelIdentifierUtils.MODEL_ID_REGEXES.clear()
+    }
+
+    @After
+    void tearDown() {
+        ModelIdentifierUtils.MODEL_ID_REGEXES.addAll(actualIdentifierSchemeRegexes)
+    }
 
     void testParseSettingsExpectsPartsToBeConsecutive() {
         def conf = '''
@@ -171,6 +183,14 @@ Model id part order invalid: Expected part1, not part2. Please review the settin
         final int WIDTH = 12
         assertEquals WIDTH, numericalDecorator.WIDTH
         assertEquals "0".padLeft(12, '0'), numericalDecorator.nextValue.get()
+        assertEquals 1, ModelIdentifierUtils.MODEL_ID_REGEXES.size()
+        assertEquals "MODEL\\d{2}?\\d{2}?\\d{2}?\\d{12}?",
+                ModelIdentifierUtils.MODEL_ID_REGEXES.first()
+
+        ModelIdentifierUtils.MODEL_ID_REGEXES.add("BIOMD\\d{10}")
+        String p = ModelIdentifierUtils.MODEL_ID_REGEXES.join('|')
+        assertTrue "BIOMD0000000001".matches(p)
+        assertTrue "MODEL987789123456123456".matches(p)
     }
 
     void testParseSettingsHasMandatoryConfigAttribute() {

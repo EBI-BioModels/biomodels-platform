@@ -29,25 +29,88 @@
 
 <h2>Internship opportunities</h2>
 
-<h3>Curation internship: Literature curation of mechanistic models of disease pathways</h3>
+<h3 style="border-bottom: 1px solid grey">Curation internship: Literature curation of mechanistic models of disease pathways</h3>
 
-<p>
-  <a href="http://www.ebi.ac.uk/biomodels/" title="BioModels Database">BioModels Database</a> is a central repository of mathematical models of biological/biomedical processes. It is hosted at EMBL-EBI and is one of the resources of the molecular systems cluster. The models distributed through BioModels are extensively tested and encoded in standard formats (for example, SBML (Systems Biology Markup Language)) and are free to use. In addition, the models and their components are cross-referenced with external data resources and ontologies, which facilitates search and retrieval, and maximises the benefits of the growing number of already existing models.
+<p><a href="http://www.ebi.ac.uk/biomodels/" title="BioModels Database">BioModels</a> is a
+central repository of mathematical models of biological/biomedical processes. It is hosted
+at EMBL-EBI and is one of the resources of the molecular systems cluster. The models
+distributed through BioModels are extensively tested and encoded in standard formats
+(for example, SBML (Systems Biology Markup Language)) and are free to use. In addition,
+the models and their components are cross-referenced with external data resources and
+ontologies, which facilitates search and retrieval, and maximises the benefits of the
+growing number of already existing models.</p>
+<p> Curating models of biological processes is an effective training in computational
+systems biology, where the curators gain an integrative knowledge on biological systems,
+modelling and bioinformatics. We have a number of internship opportunities available within
+the team, to carry out targeted curation of mechanistic models of certain disease pathways.
+The topics likely to be focused, but not limited to, are cancer, diabetes
+[<a href="#ref1" title="Go to this reference">1</a>], arthritis (inflammation &amp; immunology),
+plant systems, and neurodegeneration [<a href="#ref2" title="Go to this reference">2</a>].</p>
+<p> The internships might be ideal for a master degree thesis or for candidates who are in between
+their masters and PhD. An initial knowledge of biology, mathematics and computing is desirable.
+The successful candidate will be a master student in bioinformatics or systems biology.
+Training will be given to understand basics of modelling, and on modelling and simulation tools.
+The position is ideally for 6 months, but can be extended up to one year. A fixed monthly
+allowance is provided to help towards living costs.
 </p>
-<p>
-Curating models of biological processes is an effective training in computational systems biology, where the curators gain an integrative knowledge on biological systems, modelling and bioinformatics. We have a number of internship opportunities available within the team, to carry out targeted curation of mechanistic models of certain disease pathways.  The topics likely to be focused, but not limited to, are cancer, diabetes [<a href="#ref1" title="Go to this reference">1</a>], arthritis (inflammation &amp; immunology), plant systems, and neurodegeneration [<a href="#ref2" title="Go to this reference">2</a>].
-</p>
-<p>
-The internships might be ideal for a master degree thesis or for candidates who are in between their masters and PhD. An initial knowledge of biology, mathematics and computing is desirable. The successful candidate will be a master student in bioinformatics or systems biology. Training will be given to understand basics of modelling, and on modelling and simulation tools.  The position is ideally for 6 months, but can be extended up to one year. A fixed monthly allowance is provided to help towards living costs.
-</p>
-<p>
-  For further enquiries or to make an application (attach your CV and a cover letter), please contact: Vijayalakshmi Chelliah (viji AT ebi.ac.uk).
-</p>
+<p>For further enquiries or to make an application (attach your CV and a cover letter),
+please contact: Rahuman Sheriff (sheriff AT ebi.ac.uk).</p>
 
 <ol>
-<li id="ref1">Ajmera I., Swat M., Laibe C., Le Novèrei N., Chelliah V. <a href="http://identifiers.org/pubmed/23842097">The impact of mathematical modeling on the understanding of diabetes and related complications.</a> <em>CPT: Pharmacometrics &amp; Systems Pharmacology</em>. Jul 10;2:e54. 2013.</li>
-<li id="ref2">Lloret-Villas A., Varusai T.M., Juty N., Laibe C., Le Novèrei N., Hermjakob H., Chelliah V. The impact of mathematical modeling in understanding the mechanisms underlying neurodegeneration: evolving dimensions and future directions.</a> <em>CPT: Pharmacometrics &amp; Systems Pharmacology</em>. (<em>in press</em>)</li>
+    <li id="ref1">Ajmera I., Swat M., Laibe C., Le Novère N., Chelliah V.
+        <a href="http://identifiers.org/pubmed/23842097">
+        The impact of mathematical modeling on the understanding of diabetes and related complications.</a>
+        <em>CPT: Pharmacometrics &amp; Systems Pharmacology</em>. Jul 10;2:e54. 2013.</li>
+    <li id="ref2">Lloret-Villas A., Varusai T.M., Juty N., Laibe C., Le Novèrei N., Hermjakob H., Chelliah V.
+    The impact of mathematical modeling in understanding the mechanisms underlying neurodegeneration:
+    evolving dimensions and future directions.</a>
+        <em>CPT: Pharmacometrics &amp; Systems Pharmacology</em>. (<em>in press</em>)</li>
 </ol>
+
+<h3 style="border-bottom: 1px solid grey">Software development internship:
+Cluster Analysis of BioModels using Biomedical Ontologies</h3>
+<p>Ontologies provide formal means of defining concepts and their interrelationships as a
+knowledge graph routinely consisting of thousands or tens of thousands of terms arranged
+hierarchically. Amid the exponential increase of data available in life sciences, ontologies
+have become the cornerstone of data integration and search.</p>
+<p><a href="http://www.ebi.ac.uk/biomodels" target="_blank">BioModels</a>
+at the European Bioinformatics Institute is a repository of mathematical models
+describing biological processes. It hosts over 8400 submissions derived from the literature
+and over 142000 models that have been automatically generated from pathway resources. All
+depositions are linked, using semantic annotations, to terms from established resources like
+the NCBI Taxonomy database or biomedical ontologies such as Gene Ontology, ChEBI or Systems
+Biology Ontology.</p>
+<p>The hierarchical nature of these classifications can be leveraged to help users
+progressively find the content of interest (e.g.
+<a href="http://www.ebi.ac.uk/biomodels-main/gotree" target="_blank">
+    http://www.ebi.ac.uk/biomodels-main/gotree</a>),
+but a common usability challenge with such approaches is the need to prune intermediate
+categories. Previous attempts to do so (<a href="" target="_blank">
+http://www.ebi.ac.uk/biomodels-main/gochart</a>) have relied on manual input and are not
+immediately reusable for other ontologies.</p>
+<p>In this context, this project strives to
+(1) develop automated methods for clustering models based on their semantic annotations
+and an arbitrarily-chosen set of ontologies;
+(2) create novel visualisation components which use the results of the cluster analysis
+to provide user-friendly ways of browsing BioModels content.
+<p>Required skills and experience:</p>
+<ul>
+    <li>solid understanding of Computer Science underpinnings, in particular,
+        algorithms and data structures commonly-used in graph theory;</li>
+    <li>familiarity with machine learning approaches and toolkits;</li>
+    <li>good command of one or more mainstream programming languages (Java, C++, Python);</li>
+    <li>willingness to develop new abilities as the project requires;</li>
+    <li>self-motivated and capable of working both independently and as part of a team;</li>
+    <li>proficient communication, interpersonal and English language skills;</li>
+</ul>
+<p>Desirable experience:</p>
+<ul>
+    <li>hands-on experience of working with Semantic Web technologies;</li>
+    <li>familiarity with modern JavaScript language features and libraries</li>
+</ul>
+<p>This project is expected to last around six months and would be ideally suited for a
+dissertation project or internship. For further enquiries or to make an application
+(attach your CV and a cover letter), please contact: Mihai Glont (mglont AT ebi.ac.uk).
 </body>
 <content tag="jobs">
     selected
