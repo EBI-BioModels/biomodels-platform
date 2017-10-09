@@ -30,9 +30,6 @@
 
 package net.biomodels.jummp.core
 
-import eu.ddmore.publish.service.PublishContext
-import eu.ddmore.publish.service.PublishException
-import eu.ddmore.publish.service.PublishInfo
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import java.util.concurrent.locks.ReentrantLock
 import grails.plugin.springsecurity.SpringSecurityUtils
@@ -146,7 +143,7 @@ class ModelService {
      */
     def publicationIdGenerator
 
-    def publishValidator
+    //def publishValidator
 
     final boolean MAKE_PUBLICATION_ID = !(publicationIdGenerator instanceof NullModelIdentifierGenerator)
     /**
@@ -2105,7 +2102,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
     @PreAuthorize("hasRole('ROLE_CURATOR') or hasRole('ROLE_ADMIN')") //used to be: (hasRole('ROLE_CURATOR') and hasPermission(#revision, admin))
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.publishModelRevision")
-    public PublishContext publishModelRevision(Revision revision) {
+    public void publishModelRevision(Revision revision) {
         if (!SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
             if (!aclUtilService.hasPermission(springSecurityService.authentication, revision,
                         BasePermission.ADMINISTRATION)) {
@@ -2119,6 +2116,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             throw new IllegalArgumentException("Revision may not be deleted")
         }
         Model model = revision.model
+/*
 
         //validating publish process
         if(!revision.validationLevel.equals(ValidationState.APPROVED)){
@@ -2160,6 +2158,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         if(!scenario) {
             throw new PublishException("Submission did not match any of the scenarios. Please upload all required files")
         }
+*/
 
         if (MAKE_PUBLICATION_ID) {
             model.publicationId = model.publicationId ?: publicationIdGenerator.generate()
@@ -2173,7 +2172,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
                     "Cannot publish model ${model.submissionId}:${b.errors.allErrors.inspect()}")
         }
 
-        return publishValidator.generatePublishContext(scenario)
+        //return publishValidator.generatePublishContext(scenario)
     }
 
     /**

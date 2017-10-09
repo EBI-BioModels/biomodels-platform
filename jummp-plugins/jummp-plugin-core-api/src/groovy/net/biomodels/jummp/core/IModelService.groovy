@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2017 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -34,7 +34,6 @@
 
 package net.biomodels.jummp.core
 
-import eu.ddmore.publish.service.PublishContext
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand
 import net.biomodels.jummp.core.model.ModelListSorting
 import net.biomodels.jummp.core.model.ModelTransportCommand
@@ -287,7 +286,7 @@ public interface IModelService {
     **/
     public boolean restoreModel(String modelId)
     public boolean deleteRevision(RevisionTransportCommand revision)
-    public PublishContext publishModelRevision(RevisionTransportCommand revision)
+    void publishModelRevision(RevisionTransportCommand revision)
 
 //    public void validateModelRevision(RevisionTransportCommand revision)
     /**

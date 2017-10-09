@@ -18,6 +18,9 @@ databaseChangeLog = {
 
 	changeSet(author: "mglont (generated)", id: "1486387545035-3") {
 		dropForeignKeyConstraint(baseTableName: "element_annotation", constraintName: "FK_nf3bp0l5t5ap8oi168mtpgued")
+        preConditions(onFail: "MARK_RAN") {
+           foreignKeyConstraintExists(foreignKeyName: "miriam_identifier")
+        }
 	}
 
 	changeSet(author: "mglont (generated)", id: "1486387545035-4") {
@@ -52,6 +55,9 @@ databaseChangeLog = {
 
 	changeSet(author: "mglont (generated)", id: "1486387545035-7") {
 		dropColumn(columnName: "revision_id", tableName: "element_annotation")
+        preConditions(onFail: "MARK_RAN") {
+            columnExists(columnName: "revision_id", tableName: "element_annotation")
+        }
 	}
 
 	changeSet(author: "mglont (generated)", id: "1486387545035-8") {

@@ -471,7 +471,7 @@ if (!(jummpConfig.jummp.security.curatorByDefault instanceof ConfigObject)) {
 if (!(jummpConfig.jummp.security.certificationRole instanceof ConfigObject)) {
     jummp.security.certificationRole = jummpConfig.jummp.security.certificationRole
 } else {
-    jummp.security.certificationRole = ['ROLE_ADMIN']
+    jummp.security.certificationRole = 'ROLE_ADMIN' // either single value or comma-separated string
 }
 
 if (!(jummpConfig.jummp.feedback.receiver.roles instanceof ConfigObject)) {
