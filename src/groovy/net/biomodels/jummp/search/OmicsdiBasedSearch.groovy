@@ -277,6 +277,7 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
         searchResponse.results = results
         searchResponse.totalCount = totalCount
         if (IS_DEBUG_ENABLED) {
+            log.debug("Search terms: $query")
             log.debug("Results processed in ${System.currentTimeMillis() - start}")
         }
         return searchResponse

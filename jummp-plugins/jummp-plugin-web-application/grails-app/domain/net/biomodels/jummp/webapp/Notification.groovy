@@ -42,7 +42,7 @@ class Notification implements Serializable {
 
     static constraints = {
         title(nullable: false, blank: false, unique: false)
-        body(nullable: false, blank: false, unique: false)
+        body(nullable: false, blank: false, unique: false, maxSize: 1024)
         notificationType(nullable: false, blank: false, unique: false)
         sender(nullable: false, blank: false, unique: false)
     }
