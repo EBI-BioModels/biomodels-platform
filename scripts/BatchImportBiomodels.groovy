@@ -692,7 +692,6 @@ printModelLog = {
 
 processModelFolder = { File folder ->
     final String MODEL_ID = folder.name
-    boolean isNonSBMLModel = nonStandardSBMLModels.containsKey(MODEL_ID)
     // find branch
     final String BRANCH = getBranch MODEL_ID
     if (!BRANCH) {
@@ -713,6 +712,7 @@ processModelFolder = { File folder ->
     }
     // separate original file from the rest of the folder contents
     def originalFile
+    boolean isNonSBMLModel = nonStandardSBMLModels.containsKey(MODEL_ID)
     if (isNonSBMLModel) {
         folder = new File(NON_SBML_MODEL_FOLDER, MODEL_ID)
         originalFile = new File("$NON_SBML_MODEL_FOLDER/$MODEL_ID", nonStandardSBMLModels.get(MODEL_ID).keySet()[0])
