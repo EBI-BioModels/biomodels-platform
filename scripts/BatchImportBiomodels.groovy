@@ -707,7 +707,7 @@ processModelFolder = { File folder ->
     processedCount.incrementAndGet()
     // check symlink
     boolean haveSymlink = haveSymlinkToUrlFile folder, MODEL_ID
-    if (!haveSymlink) {
+    if (!haveSymlink && BRANCH != "pdgsm_models") {
         addModelError MODEL_ID, "${folder} does not contain a symbolic link to the URL file"
     }
     // separate original file from the rest of the folder contents
@@ -761,7 +761,7 @@ processModelFolder = { File folder ->
             annotateModellingApproaches(submittedModel.revisions.first(), BRANCH, modelDetails, submitter)
         } else {
             // submit second revision as * without original file
-            def revision = addRevision(MODEL_ID, folder, submittedModel)
+            def revision = addRevision(BRANCH, MODEL_ID, folder, submittedModel)
             if (!revision || revision?.hasErrors()) {
                 def err = revision?.errors?.allErrors
                 addModelError(MODEL_ID, "Could not update original submission: $err")
@@ -896,13 +896,13 @@ isNotCuratedAndPublished = { branch ->
     UNCURA_PUBL == branch
 }
 
-addRevision = { modelId, parent, model ->
+addRevision = { branch, modelId, parent, model ->
     if (!model.validate()) {
         def err = model.errors.allErrors
         addModelError(modelId, "Refusing to update invalid model $modelId: $err")
         return null
     }
-    def revisionInfo = prepareRevision(modelId, parent, model)
+    def revisionInfo = prepareRevision(branch, modelId, parent, model)
     def revision
     try {
         // clear current persistence context -- it will be stale after adding second revision
@@ -1091,6 +1091,10 @@ getUrlFileForModel = { folder, id ->
     new File(folder, "$id$URL_FILE")
 }
 
+getMainFileForPDGSMModel = { folder, id ->
+    new File(folder, "$id$DOT_XML")
+}
+
 getAdditionalFilesForNonSBMLModel = { modelId ->
     File model = new File(NON_SBML_MODEL_FOLDER, modelId)
     model.listFiles().findAll {File file ->
@@ -1160,10 +1164,15 @@ findOriginalFile = { folder, id ->
 
 
 // called after we ensured the original file is present in the folder
-findNewestRevisionFiles = { parent, id ->
+findNewestRevisionFiles = { branch, parent, id ->
     assert parent.exists()
     def result = [:]
-    def mainFile = getUrlFileForModel(parent, id)
+    def mainFile
+    if (branch == "pdgsm_models") {
+        mainFile = getMainFileForPDGSMModel(parent, id)
+    } else {
+        mainFile = getUrlFileForModel(parent, id)
+    }
     def originalFile = getOriginalFileForModel(parent, id)
     def symlinkFile = getSymlinkFileForModel(parent, id)
     assert mainFile.exists()
@@ -1175,9 +1184,9 @@ findNewestRevisionFiles = { parent, id ->
     result
 }
 
-prepareRevision = { modelId, parent, model ->
+prepareRevision = { branch, modelId, parent, model ->
     assert !(model.hasErrors())
-    def fileMap = findNewestRevisionFiles(parent, modelId)
+    def fileMap = findNewestRevisionFiles(branch, parent, modelId)
     def main = fileMap['mainFile']
     def additionals = fileMap['additionals']
     def revisionData = getSubmissionData(modelId, main, additionals, UPDATE_COMMENT_TPL)
