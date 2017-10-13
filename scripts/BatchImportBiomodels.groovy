@@ -1679,7 +1679,7 @@ publishModelRevision = { modelId, revision ->
  * names for the model identifier.
  */
 getModelById = { modelId, branch ->
-    String idColumnName = 'auto_gen_models' == branch ? 'id' : 'model_id'
+    String idColumnName = (('auto_gen_models' == branch) || ('pdgsm_models') == branch) ? 'id' : 'model_id'
     biomodelsConnection.firstRow("select * from $branch where $idColumnName = ?", [modelId])
 }
 
@@ -1972,9 +1972,13 @@ getModelDetails = { modelId, modelBranch ->
         modelDetails['name'] = row.name
         modelDetails['submissionDate'] = row.submission_date
         modelDetails['lastModified'] = row.last_modification_date
-        modelDetails['publicationDate'] = row.creation_date
+        if (modelBranch == "pdgsm_models") {
+            modelDetails['publicationDate'] = row.publication_date
+        } else {
+            modelDetails['publicationDate'] = row.creation_date
+        }
         modelDetails['originalModel'] = row.original_model
-        if ("auto_gen_models" == modelBranch) {
+        if ("auto_gen_models" == modelBranch || "pdgsm_models" == modelBranch) {
             modelDetails['model_id'] = row.id
         } else {
             if ("publ" == modelBranch || "anno" == modelBranch) {
@@ -1999,6 +2003,9 @@ getModelDetails = { modelId, modelBranch ->
         modelDetails['original_model'] = row.original_model
         modelDetails['publication_id'] = row.publication_id
         modelDetails['publication_id_type'] = row.publication_id_type
+        if (modelBranch == "pdgsm_models") {
+            modelDetails['publication_id_type'] = 1
+        }
     } catch(Exception e) {
         addModelError modelId, "Problem finding model details in branch $modelBranch: $e"
         return null
