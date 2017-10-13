@@ -170,7 +170,7 @@ LinkedBlockingQueue insertedRevisions = new LinkedBlockingQueue()
 /**
  * The branches of BioModels where we look for model information.
  */
-def bioModelsBranches = ["publ", "uncura_publ"]//, "anno", "uncura_anno", "cura", "auto_gen_models"]
+def bioModelsBranches = ["publ", "uncura_publ", "pdgsm_models"]//, "anno", "uncura_anno", "cura", "auto_gen_models"]
 
 /*
  * Domain classes that will be needed in multiple closures, declared globally,
