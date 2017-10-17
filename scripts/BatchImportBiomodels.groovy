@@ -2013,7 +2013,8 @@ getModelDetails = { modelId, modelBranch ->
         modelDetails['publication_id'] = row.publication_id
         modelDetails['publication_id_type'] = row.publication_id_type
         if (modelBranch == "pdgsm_models") {
-            modelDetails['publication_id_type'] = 1
+            modelDetails['publication_id'] = "28818916"
+            modelDetails['publication_id_type'] = 0
         }
     } catch(Exception e) {
         addModelError modelId, "Problem finding model details in branch $modelBranch: $e"
