@@ -40,6 +40,7 @@ import net.biomodels.jummp.model.Revision
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.springframework.context.ApplicationListener
+import org.springframework.web.client.HttpClientErrorException
 import uk.ac.ebi.ddi.ebe.ws.dao.client.dataset.DatasetWsClient
 import uk.ac.ebi.ddi.ebe.ws.dao.config.AbstractEbeyeWsConfig
 import uk.ac.ebi.ddi.ebe.ws.dao.config.EbeyeWsConfigDev
@@ -167,8 +168,19 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
                            "modelformat", "levelversion", "first_author", "publication_year"]
         String sortField = sortOrder.getField()
         String sortDir = sortOrder.direction == SortOrder.SortDirection.ASC ? "ascending" : "descending"
-        QueryResult result = datasetWsClient.getDatasets("biomodels", query, fields, sortField, sortDir,
-            paginationCriteria['start'], paginationCriteria['length'], paginationCriteria['facetCount'])
+        QueryResult result
+        try {
+            result = datasetWsClient.getDatasets("biomodels", query, fields, sortField, sortDir,
+                paginationCriteria['start'], paginationCriteria['length'], paginationCriteria['facetCount'])
+        } catch (HttpClientErrorException e) {
+            log.debug("""\
+There was a problem obtaining search result from EBI search server. The root cause is ${e.toString()}""")
+            log.debug("Status code: ${e.statusCode.value()}. Message: ${e.message}")
+            if (e.statusCode.value() == 400) {
+                log.debug("The querying string might be wrong syntax or contains restricted characters.")
+            }
+            result = null
+        }
         List<Facet> facets = []
         int totalCount
         // convert all the returned entries to ModelTransportCommand objects

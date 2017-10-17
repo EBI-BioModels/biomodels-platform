@@ -182,6 +182,7 @@ class SearchService {
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="searchService.searchModels")
     SearchResponse searchModels(String query, SortOrder sortOrder, Map<String, Integer> paginationCriteria) {
+        println("Search terms: $query")
         return strategy.searchModels(query, sortOrder, paginationCriteria)
     }
 
