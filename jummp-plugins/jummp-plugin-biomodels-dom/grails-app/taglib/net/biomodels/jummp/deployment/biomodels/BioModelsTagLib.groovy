@@ -106,16 +106,9 @@ class BioModelsTagLib {
                 params: ["model": model.first()]) {
                 "Edit"
             }
-            def rLink = g.remoteLink(controller: "curationNotes",
-                action: "edit", class: "button",
-                params: ["model": model.first()]) {
-                "Edit"
-            }
-            println href
-            println rLink
             String view = """\
                 <div class="small-12 medium-12 large-12 columns">
-                        ${href}<br/> ${rLink}
+                        ${href}
                     </div>
                 """
             out << view
