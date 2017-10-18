@@ -193,17 +193,17 @@ class ZiphandlerTagLib {
 			if (!attrs.repFiles || attrs.loadedZips==null || attrs.zipSupported==null || attrs.mainFile==null) {
         		return
         	}
-        	def loadedZips=attrs.loadedZips
-        	def zipSupported=attrs.zipSupported
+        	def loadedZips = attrs.loadedZips
+        	def zipSupported = attrs.zipSupported
         	attrs.repFiles.each {
-        		if (attrs.mainFile==it.mainFile) {
-        			File f=new File(it.path)
+        		if (attrs.mainFile == it.mainFile) {
+        			File f = new File(it.path)
         			builder.append('''<li rel="file"><a title="''')
         			builder.append(f.name)
         			builder.append('''"><span class="pointerhere">''')
-        			String filename=f.name
-        			if (filename.length()>20) {
-        				filename=filename.substring(0,20)+"..."
+        			String filename = f.name
+        			if (filename.length()>64) {
+        				filename = filename.substring(0,64) + "..."
         			}
         			builder.append(filename).append("</span></a>")
                     if (it.mimeType != null) {
