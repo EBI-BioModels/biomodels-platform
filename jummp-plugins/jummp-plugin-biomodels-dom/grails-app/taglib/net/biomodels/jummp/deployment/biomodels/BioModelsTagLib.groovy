@@ -22,6 +22,8 @@ package net.biomodels.jummp.deployment.biomodels
 
 import net.biomodels.jummp.core.model.FlagTransportCommand
 import net.biomodels.jummp.core.model.ModelTransportCommand
+import net.biomodels.jummp.plugins.security.Role
+import org.springframework.security.core.GrantedAuthority
 
 import java.text.SimpleDateFormat
 
@@ -40,6 +42,7 @@ class BioModelsTagLib {
     def decorationService
     def modelOfTheMonthService
     def modelDelegateService
+    def springSecurityService
     /**
      * Displays the Model of the Month (MoM) entry for the given model.
      *
@@ -90,6 +93,33 @@ class BioModelsTagLib {
         out << "<div id='Curation' class='row'>"
         out << render(collection: base64CurationNotes, template: '/templates/curationNotes',
                     plugin: 'jummp-plugin-biomodels-dom', var: 'curaRec')
+        Collection<GrantedAuthority> grantedAuthorities = springSecurityService.getPrincipal().getAuthorities()
+        Set<String> roleNames = grantedAuthorities.collect {
+            it.getAuthority()
+        }
+        boolean hasCuratorRole = "ROLE_CURATOR" in roleNames
+        def model = base64CurationNotes["model"].publicationId ?: base64CurationNotes["model"].submissionId
+        println model
+        if (hasCuratorRole) {
+            def href = g.link(controller: "curationNotes",
+                action: "edit", class: "button",
+                params: ["model": model.first()]) {
+                "Edit"
+            }
+            def rLink = g.remoteLink(controller: "curationNotes",
+                action: "edit", class: "button",
+                params: ["model": model.first()]) {
+                "Edit"
+            }
+            println href
+            println rLink
+            String view = """\
+                <div class="small-12 medium-12 large-12 columns">
+                        ${href}<br/> ${rLink}
+                    </div>
+                """
+            out << view
+        }
         out << "</div>"
     }
 
