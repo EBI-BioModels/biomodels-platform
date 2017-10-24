@@ -35,13 +35,5 @@ class IndexingRoute extends RouteBuilder {
         .shutdownRunningTask(ShutdownRunningTask.CompleteAllTasks)
         .setHeader("CamelExecCommandArgs", simple(JAR_ARGS))
         .to("exec:java")
-        .process(new Processor() {
-            void process(Exchange exchange) {
-                def msg = exchange.in
-                def headers = msg.headers
-                String content = msg.getBody(String.class)
-                println "${Thread.currentThread().name} -- Indexing of $headers produced $content"
-            }
-        })
     }
 }
