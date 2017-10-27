@@ -337,6 +337,7 @@ jummp.controllerAnnotations = [
     "/plugins/blueprint*/**":   ["permitAll"],
     "/plugins/ckeditor*/**":    ["permitAll"],
     "/plugins/weceem*/**":      ["permitAll"],
+    "/api-docs/**":             ["permitAll"],
     "/console/**":              ["ROLE_ADMIN"],
     "/plugins/console*/**":     ['ROLE_ADMIN'],
     "/plugins/*/js/*":          ['permitAll'],

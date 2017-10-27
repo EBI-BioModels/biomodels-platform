@@ -58,7 +58,7 @@ import org.springframework.web.multipart.MultipartFile
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-@Api(value = "/model", description = "Operations related to models")
+@Api(value = "/model", description = "Operations related to models", produces = "application/json")
 @Secured(['IS_AUTHENTICATED_FULLY'])
 class ModelController {
     /**
