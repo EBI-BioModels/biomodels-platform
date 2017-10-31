@@ -765,7 +765,7 @@
                     <div id="History">
                         <% DateFormat dateFormat = DateFormat.getDateTimeInstance(); %>
                         <ul>
-                            <li>Model owner: ${revision.model.submitter}</li>
+                            <li>Model originally submitted by : ${revision.model.submitter}</li>
                             <li>Submitted: ${dateFormat.format(allRevs.first().uploadDate)}</li>
                             <li>Last Modified: ${dateFormat.format(allRevs.last().uploadDate)}</li>
                         </ul>
