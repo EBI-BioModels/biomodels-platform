@@ -99,7 +99,6 @@ class BioModelsTagLib {
         }
         boolean hasCuratorRole = "ROLE_CURATOR" in roleNames
         def model = base64CurationNotes["model"].publicationId ?: base64CurationNotes["model"].submissionId
-        println model
         if (hasCuratorRole) {
             def href = g.link(controller: "curationNotes",
                 action: "edit", class: "button",
