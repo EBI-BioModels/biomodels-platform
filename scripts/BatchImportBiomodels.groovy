@@ -288,6 +288,7 @@ def nonStandardSBMLModels = [
 def NON_SBML_MODEL_FOLDER
 def bigModelsIgnored = []
 boolean excludeBigModels = true
+TreeSet<String> modelsImported = []
 /**
  * Returns a User corresponding to the submitter of the model in BioModels.
  */
@@ -619,7 +620,9 @@ target(main: "Puts everything together to import models from a given folder") {
     /* fetch all the records of additional files once */
     String query = "select model_id, name, description, mime_type, file, date_creation from additional_files"
     additionalFilesMap = biomodelsConnection.rows(query)
-
+    modelsImported = Model.list().collect {
+      it.submissionId
+    }
     log("${new Date()} -- commencing batch import")
     long duration = System.currentTimeMillis()
     /* run batch importer sequentially */
@@ -633,10 +636,13 @@ target(main: "Puts everything together to import models from a given folder") {
             /* when excludeBigModels flag is indicated Y, the big model should be ignored */
             tobeProcessed = (excludeBigModels) ? !isBigModel : isBigModel
         }
-
-        if (f.isDirectory() && f.name ==~ modelFolderPattern && tobeProcessed) {
+	boolean existed = modelsImported.contains(f.name)
+        if (f.isDirectory() && f.name ==~ modelFolderPattern && tobeProcessed & !existed) {
             processModelFolder f
         }
+	if (existed) {
+	  addModelError(f.name, "The model was already imported!")
+	}
     }
 
     /* run batch importer concurrently */
@@ -786,6 +792,8 @@ processModelFolder = { File folder ->
                 insertedRevisions.offer(r.id)
             }
         }
+	// append the model submission id to the imported models
+	modelsImported.add(MODEL_ID)
     } catch (Throwable t) {
         addModelError(MODEL_ID, "Something went wrong with ${MODEL_ID} - ${t}")
         t.printStackTrace()

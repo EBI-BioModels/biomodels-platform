@@ -26,6 +26,7 @@ class NotificationRoute extends RouteBuilder {
 
     @Override
     void configure() {
+        from("seda:model.create").to("bean:notificationService?method=modelCreated")
         from("seda:model.publish").to("bean:notificationService?method=modelPublished")
         from("seda:model.readAccessGranted").to("bean:notificationService?method=readAccessGranted")
         from("seda:model.writeAccessGranted").to("bean:notificationService?method=writeAccessGranted")

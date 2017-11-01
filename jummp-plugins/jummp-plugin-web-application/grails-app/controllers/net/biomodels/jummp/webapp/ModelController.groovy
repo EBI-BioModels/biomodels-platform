@@ -48,6 +48,7 @@ import net.biomodels.jummp.core.model.audit.AccessType
 import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
 import net.biomodels.jummp.plugins.security.PersonTransportCommand
 import net.biomodels.jummp.plugins.security.Team
+import net.biomodels.jummp.plugins.security.User
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONObject
@@ -57,7 +58,7 @@ import org.springframework.web.multipart.MultipartFile
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-@Api(value = "/model", description = "Operations related to models")
+@Api(value = "/model", description = "Operations related to models", produces = "application/json")
 @Secured(['IS_AUTHENTICATED_FULLY'])
 class ModelController {
     /**
@@ -120,12 +121,20 @@ class ModelController {
     def afterInterceptor = [action: this.&auditAfter, except: AUDIT_EXCEPTIONS]
 
     private String getUsername() {
-        String username="anonymous"
+        String username = "anonymous"
         def principal = springSecurityService.principal
         if (principal instanceof String) {
             username = principal
         }
         return username
+    }
+
+    private String getUserEmailAddress() {
+        def principal = springSecurityService.getCurrentUser()
+        if (principal) {
+            return principal.email
+        }
+        return null
     }
 
     // if this method returns false, the controller method is no longer called.
@@ -505,6 +514,15 @@ class ModelController {
                 final String USERNAME = getUsername()
                 final String AUDIT_ID = session.result_submission
                 updateHistory(AUDIT_ID, USERNAME, "create", "html", null, true)
+                final String submitterEmail = getUserEmailAddress()
+                if (submitterEmail && USERNAME) {
+                    String model = session.result_submission
+                    def notification = [
+                            model: modelDelegateService.getModel(model),
+                            user: springSecurityService.currentUser,
+                            email: submitterEmail]
+                    sendMessage("seda:model.create", notification)
+                }
             }.to "displayConfirmationPage"
             on("displayErrorPage").to "displayErrorPage"
         }
@@ -780,7 +798,6 @@ About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
             on("success").to "performValidation"
             on(Exception).to "handleException"
         }
-
         performValidation {
             action {
                 final boolean SHOULD_DETECT_FORMAT = flow.workingMemory["changedMainFiles"] ||

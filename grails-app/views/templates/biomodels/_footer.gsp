@@ -31,7 +31,9 @@
     <!-- Optional local footer (insert citation / project-specific copyright / etc here -->
     <div id="local-footer">
         <div class="row">
-            <span><wcm:render path="footer"/></span>
+            <div class="float-right"><a href="https://www.ebi.ac.uk/biomodels-main/" title="Switch to the previous version of the BioModels platform">Back to classic BioModels</a></div>
+            <div class="float-left"><wcm:render path="footer"/></div>
+            <div class="clear"></div>
         </div>
     </div>
     <!-- End optional local footer -->

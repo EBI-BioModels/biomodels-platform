@@ -126,7 +126,7 @@ environments {
         grails.serverURL = jummpConfig.jummp.server.url
     }
     development {
-        grails.serverURL = "http://localhost:8080/${appName}"
+        grails.serverURL = jummpConfig.jummp.server.url //"http://localhost:8080/${appName}"
     }
     test {
         grails.serverURL = "http://localhost:8080/${appName}"
@@ -337,6 +337,7 @@ jummp.controllerAnnotations = [
     "/plugins/blueprint*/**":   ["permitAll"],
     "/plugins/ckeditor*/**":    ["permitAll"],
     "/plugins/weceem*/**":      ["permitAll"],
+    "/api-docs/**":             ["permitAll"],
     "/console/**":              ["ROLE_ADMIN"],
     "/plugins/console*/**":     ['ROLE_ADMIN'],
     "/plugins/*/js/*":          ['permitAll'],
