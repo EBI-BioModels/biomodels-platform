@@ -112,7 +112,17 @@ class OmicsdiService {
             argsMap['proxySettings'] = ""
         }
         try {
-            sendMessage("seda:omicsDiExport", argsMap)
+            String serverAddress = grailsApplication.config.jummp.search.indexer.server
+            Socket socket = new Socket(serverAddress, 9090)
+
+            // client receives data from server
+            BufferedReader input =
+                new BufferedReader(new InputStreamReader(socket.getInputStream()))
+            String answer = input.readLine()
+            System.out.println(answer)
+            // client sends data to server
+            PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true)
+            printWriter.println("${indexingData.absolutePath}, OmicsDIXML")
         } catch (Exception e) {
             if (IS_ERROR_ENABLED) {
                 log.error("Failed to build OmicsDI XML based schema files - ${e.message}", e)
