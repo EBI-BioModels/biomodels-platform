@@ -439,13 +439,6 @@ else {
 	println "WARN\tSetting jummp.search.pathToIndexerExecutable is undefined. Models will not be indexed correctly in the search engine."
 }
 
-if (!(jummpConfig.jummp.search.indexer.server instanceof ConfigObject)) {
-    jummp.search.indexer.server = jummpConfig.jummp.search.indexer.server
-} else {
-    // default to the localhost
-    jummp.search.indexer.server = "127.0.0.1"
-}
-
 // registration settings
 if (!(jummpConfig.jummp.security.registration.email.send instanceof ConfigObject) && Boolean.parseBoolean(jummpConfig.jummp.security.registration.email.send)) {
     jummp.security.registration.email.send         = Boolean.parseBoolean(jummpConfig.jummp.security.registration.email.send)

@@ -372,19 +372,7 @@ There was a problem obtaining search result from EBI search server. The root cau
                 argsMap['proxySettings'] = ""
             }
             try {
-                /* get the ip address of indexing server. By default, it is the localhost
-                 * if we don't have any dedicated server running indexer
-                 **/
-                String serverAddress = grailsApplication.config.jummp.search.indexer.server
-                Socket socket = new Socket(serverAddress, 9090)
-                // client receives data from server
-                BufferedReader input =
-                    new BufferedReader(new InputStreamReader(socket.getInputStream()))
-                String answer = input.readLine()
-                log.debug answer
-                // client sends data to server
-                PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true)
-                printWriter.println("${indexingData.absolutePath}")
+                producerTemplate.sendBody("seda:exec", argsMap)
             } catch (Exception e) {
                 log.error("Failed to index revision $revision.properties - ${e.message}", e)
                 //TODO RETRY
