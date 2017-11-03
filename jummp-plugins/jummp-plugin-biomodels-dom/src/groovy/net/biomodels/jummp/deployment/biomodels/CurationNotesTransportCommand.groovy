@@ -30,6 +30,7 @@ import net.biomodels.jummp.plugins.security.User
  */
 class CurationNotesTransportCommand implements Serializable {
     private static final long serialVersionUID = 1L
+    Long id
     ModelTransportCommand model
     User submitter
     User lastModifier
