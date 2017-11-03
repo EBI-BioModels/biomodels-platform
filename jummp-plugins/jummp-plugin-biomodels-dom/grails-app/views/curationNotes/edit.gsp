@@ -1,6 +1,6 @@
-<%--
+B<%--
   Created by IntelliJ IDEA.
-  User: tnguyen
+  Author: Tung Nguyen <tnguyen@ebi.ac.uk>
   Date: 18/10/17
   Time: 13:23
 --%>
@@ -99,6 +99,101 @@
             </div>
         </form>
     </div>
+    <g:javascript>
+        function readURL(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
 
+                reader.onload = function (e) {
+                    $('#curaImageHolder').attr('src', e.target.result);
+                }
+            }
+        }
+
+        function saveImage(input) {
+            if (input.files && input.files[0]) {
+                console.log(input.files[0]);
+                var reader = new FileReader();
+                reader.onload = function(event) {
+                    var file = input.files[0];
+                    var fileName = input.files[0].name;
+                    // remove the prefix to only keep data, but it depends on the server
+                    var data = event.target.result.replace("data:"+ file.type +";base64,", '');
+                    $.ajax({
+                        type: "POST",
+                        url: $.jummp.createLink("curationNotes", "updateCurationImage"),
+                        dataType: "text",
+                        data: {
+                            curaImg: data,
+                            model: "${modelPerennialOrSubmissionId}"
+                        },
+                        cache: true,
+                        async: true,
+                        processData: true,
+                        success: function(data) {
+	                       console.log(data);
+	                    },
+	                    error: function(jqXHR, textStatus, errorThrown) {
+	                        console.error("Error: ", jqXHR.responseText + "\n" + textStatus + ": " + errorThrown);
+	                        console.log(JSON.stringify(jqXHR));
+	                    }
+                    });
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        $("#uploadCurationImage").change(function(){
+            readURL(this);
+            // save it to the database
+            saveImage(this);
+            reloadEditFormSilent();
+        });
+
+        $('#btnSave').on("click", function(event) {
+            var comment = $('#comment').val();
+            var submitter = $('#submitter').val();
+            var lastModifier = $('#lastModifier').val();
+            var dateAdded = $('#txtDateAdded').val();
+            var lastModified = $('#txtLastModified').val();
+            var curationNotes = {
+                'id': ${curationNotes.id},
+                'comment': comment,
+                'submitter': submitter,
+                'lastModifier': lastModifier,
+                'dateAdded': dateAdded,
+                'lastModified': lastModified
+            }
+            curationNotes = JSON.stringify(curationNotes);
+            "use strict";
+            event.preventDefault();
+	        console.log(curationNotes);
+            $.ajax({
+                dataType: "text",
+                type: "GET",
+                url: $.jummp.createLink("curationNotes", "update"),
+                cache: true,
+                contentType: "application/json; charset=utf-8",
+                data: {
+                    curationNotes: curationNotes,
+                    model: "${modelPerennialOrSubmissionId}"
+                },
+                processData: true,
+	            async: false,
+                beforeSend: function() {
+	                console.log("The curation notes are being saved. Please wait...");
+                },
+                success: function(data) {
+	                console.log(data);
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+	                console.error("Error: ", jqXHR.responseText + textStatus + errorThrown);
+	                console.log(JSON.stringify(jqXHR));
+	            }
+            });
+        });
+
+
+    </g:javascript>
 </body>
 </html>
