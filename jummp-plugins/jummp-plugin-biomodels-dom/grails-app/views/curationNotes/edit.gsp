@@ -115,7 +115,6 @@ B<%--
 
         function saveImage(input) {
             if (input.files && input.files[0]) {
-                console.log(input.files[0]);
                 var reader = new FileReader();
                 reader.onload = function(event) {
                     var file = input.files[0];
@@ -134,11 +133,10 @@ B<%--
                         async: true,
                         processData: true,
                         success: function(data) {
-	                       console.log(data);
+                            $('#txtStatus').text(data);
 	                    },
 	                    error: function(jqXHR, textStatus, errorThrown) {
-	                        console.error("Error: ", jqXHR.responseText + "\n" + textStatus + ": " + errorThrown);
-	                        console.log(JSON.stringify(jqXHR));
+	                        $('#txtStatus').text("Error: ", jqXHR.responseText + "\n" + textStatus + ": " + errorThrown);
 	                    }
                     });
                 }
@@ -169,7 +167,6 @@ B<%--
             curationNotes = JSON.stringify(curationNotes);
             "use strict";
             event.preventDefault();
-	        console.log(curationNotes);
             $.ajax({
                 dataType: "text",
                 type: "GET",
@@ -183,14 +180,13 @@ B<%--
                 processData: true,
 	            async: false,
                 beforeSend: function() {
-	                console.log("The curation notes are being saved. Please wait...");
+	                $('#txtStatus').text("The curation notes are being saved. Please wait...");
                 },
                 success: function(data) {
-	                console.log(data);
+	                $('#txtStatus').text(data);
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
-	                console.error("Error: ", jqXHR.responseText + textStatus + errorThrown);
-	                console.log(JSON.stringify(jqXHR));
+	                $('#txtStatus').text("Error: ", jqXHR.responseText + textStatus + errorThrown);
 	            }
             });
         });
