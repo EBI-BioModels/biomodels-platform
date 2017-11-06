@@ -100,13 +100,16 @@ B<%--
         </form>
     </div>
     <g:javascript>
-        function readURL(input) {
+        function previewImage(input) {
+            // reused sample codes from https://stackoverflow.com/a/4459419/865603
             if (input.files && input.files[0]) {
                 var reader = new FileReader();
-
-                reader.onload = function (e) {
-                    $('#curaImageHolder').attr('src', e.target.result);
+                var image = input.files[0];
+                reader.onload = function (event) {
+                    var imgSrc = event.target.result;
+                    $('#curaImageHolder').attr('src', imgSrc);
                 }
+                reader.readAsDataURL(image);
             }
         }
 
@@ -144,10 +147,9 @@ B<%--
         }
 
         $("#uploadCurationImage").change(function(){
-            readURL(this);
+            previewImage(this);
             // save it to the database
             saveImage(this);
-            reloadEditFormSilent();
         });
 
         $('#btnSave').on("click", function(event) {
@@ -192,8 +194,6 @@ B<%--
 	            }
             });
         });
-
-
     </g:javascript>
 </body>
 </html>
