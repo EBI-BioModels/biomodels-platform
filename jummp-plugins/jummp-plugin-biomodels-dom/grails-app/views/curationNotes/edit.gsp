@@ -105,6 +105,31 @@
         </form>
     </div>
     <g:javascript>
+        $('#txtDateAdded').datepicker({
+            dateFormat: 'yy-mm-dd',
+            onSelect: function(datetext) {
+                datetext = datetext + updateOnSelect();
+                $('#datepicker').val(datetext);
+                console.log(datetext);
+            }
+        });
+
+	$('#txtLastModified').datepicker({
+	    dateFormat: 'yy-mm-dd',
+	    onSelect: function(datetext) {
+	        datetext = datetext + updateOnSelect();
+	        $(this).val(datetext);
+	    }
+	});
+
+	function updateOnSelect() {
+	    var d = new Date(); // for now
+            var hour = d.getHours() < 10 ? "0" + d.getHours().toString() : d.getHours();
+            var minute = d.getMinutes() < 10 ? "0" + d.getMinutes().toString() : d.getMinutes();
+            var second = d.getSeconds() < 10 ? "0" + d.getSeconds().toString() : d.getSeconds();
+            return "T" + hour + ":" + minute + ":"+ second;
+        }
+
         function previewImage(input) {
             // reused sample codes from https://stackoverflow.com/a/4459419/865603
             if (input.files && input.files[0]) {
@@ -191,8 +216,8 @@
 	                $('#txtStatus').text(data);
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
-	                $('#txtStatus').text("Error: ", jqXHR.responseText + textStatus + errorThrown);
-	            }
+	                $('#txtStatus').text("Error: ", jqXHR.responseText + textStatus + errorThrown + JSON.stringify(jqXHR));
+	        }
             });
         });
 
