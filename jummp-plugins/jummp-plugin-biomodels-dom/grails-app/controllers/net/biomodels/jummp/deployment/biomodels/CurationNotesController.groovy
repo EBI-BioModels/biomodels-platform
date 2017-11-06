@@ -61,7 +61,7 @@ class CurationNotesController {
         if (status) {
             render "Simulation results have been updated successfully"
         } else {
-            render "There is an error while it tries to save the curation notes"
+            render "There is an error while trying to persist the curation notes into the database"
         }
     }
 

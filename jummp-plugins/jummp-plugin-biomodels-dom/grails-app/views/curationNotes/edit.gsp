@@ -71,25 +71,27 @@
 
                         <div class="medium-12  large-12 cell">
                             <label>Submitter
-                                <input type="text" id="submitter" placeholder=".medium-6.cell"
+                                <input type="text" id="submitter" placeholder="the submitter who had deposited the simulation results"
                                        value="${curationNotes.submitter.username}">
                             </label>
                         </div>
                         <div class="medium-12 large-12 large-12 cell">
                             <label>Last modifier
-                                <input type="text" id="lastModifier" placeholder=".medium-6.cell"
+                                <input type="text" id="lastModifier" placeholder="the last modifier who is updating the simulation results"
                                        value="${curationNotes.lastModifier.username}">
                             </label>
                         </div>
                         <div class="row">
                             <div class="small-12 medium-6 large-6 columns">
                                 <label>Date added
-                                    <input type="datetime-local" step="1" id="txtDateAdded" value="${dateFormat.format(curationNotes.dateAdded)}">
+                                    <input type="text" id="txtDateAdded" placeholder="enter the date when the simulation results were added"
+					   value="${dateFormat.format(curationNotes.dateAdded)}">
                                 </label>
                             </div>
                             <div class="small-12 medium-6 large-6 columns">
                                 <label>Last modified
-                                    <input type="datetime-local" step="1" id="txtLastModified" value="${dateFormat.format(curationNotes.lastModified)}">
+                                    <input type="text" id="txtLastModified" placeholder="enter the latest date when the simulation results have been updated"
+					   value="${dateFormat.format(curationNotes.lastModified)}">
                                 </label>
                             </div>
                         </div>
