@@ -193,6 +193,14 @@
 	            }
             });
         });
+
+        $('#btnReset').on('click', function(event) {
+            $('#comment').val("${curationNotes.comment}");
+            $('#submitter').val("${curationNotes.submitter.username}");
+            $('#lastModifier').val("${curationNotes.lastModifier.username}");
+            $('#txtDateAdded').val("${dateFormat.format(curationNotes.dateAdded)}");
+            $('#txtLastModified').val("${dateFormat.format(curationNotes.lastModified)}");
+        });
     </g:javascript>
 </body>
 </html>
