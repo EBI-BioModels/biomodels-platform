@@ -1,4 +1,4 @@
-B<%--
+<%--
   Created by IntelliJ IDEA.
   Author: Tung Nguyen <tnguyen@ebi.ac.uk>
   Date: 18/10/17
@@ -10,6 +10,8 @@ B<%--
 <%@ page import="net.biomodels.jummp.deployment.biomodels.CurationNotes" contentType="text/html;charset=UTF-8" %>
 <%@ page import="net.biomodels.jummp.model.Model" contentType="text/html;charset=UTF-8" %>
 <%@ page import="groovy.json.JsonOutput" contentType="text/html;charset=UTF-8" %>
+<%@ page import="java.util.Date" contentType="text/html;charset=UTF-8" %>
+<%@ page import="java.text.SimpleDateFormat" contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -28,6 +30,7 @@ B<%--
         }
         String curationImage
         curationImage = curationNotesTC.curationImage ? Base64.encoder.encodeToString(curationNotesTC.curationImage) : null
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
     %>
     <div class="row">
         <h2>Update curation notes of the model
@@ -81,12 +84,12 @@ B<%--
                         <div class="row">
                             <div class="small-12 medium-6 large-6 columns">
                                 <label>Date added
-                                    <input type="text"id="txtDateAdded" value="${curationNotes.dateAdded}">
+                                    <input type="datetime-local" step="1" id="txtDateAdded" value="${dateFormat.format(curationNotes.dateAdded)}">
                                 </label>
                             </div>
                             <div class="small-12 medium-6 large-6 columns">
                                 <label>Last modified
-                                    <input type="text" id="txtLastModified" value="${curationNotes.lastModified}">
+                                    <input type="datetime-local" step="1" id="txtLastModified" value="${dateFormat.format(curationNotes.lastModified)}">
                                 </label>
                             </div>
                         </div>

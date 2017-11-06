@@ -44,7 +44,7 @@ class CurationNotesController {
         User lastModifier = User.findByUsername(lastModifierUsername)
         def newDateAdded = curationNotes["dateAdded"]
         def newLastModified = curationNotes["lastModified"]
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
         Date dateAdded = dateFormat.parse(newDateAdded)
         Date lastModified = dateFormat.parse(newLastModified)
         Model model = Model.findByPublicationIdOrSubmissionId(modelId, modelId)
