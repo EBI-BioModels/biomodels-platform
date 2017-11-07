@@ -114,16 +114,16 @@
             }
         });
 
-	$('#txtLastModified').datepicker({
-	    dateFormat: 'yy-mm-dd',
-	    onSelect: function(datetext) {
-	        datetext = datetext + updateOnSelect();
-	        $(this).val(datetext);
-	    }
-	});
+        $('#txtLastModified').datepicker({
+            dateFormat: 'yy-mm-dd',
+            onSelect: function(datetext) {
+                datetext = datetext + updateOnSelect();
+                $(this).val(datetext);
+            }
+        });
 
-	function updateOnSelect() {
-	    var d = new Date(); // for now
+        function updateOnSelect() {
+            var d = new Date(); // for now
             var hour = d.getHours() < 10 ? "0" + d.getHours().toString() : d.getHours();
             var minute = d.getMinutes() < 10 ? "0" + d.getMinutes().toString() : d.getMinutes();
             var second = d.getSeconds() < 10 ? "0" + d.getSeconds().toString() : d.getSeconds();
@@ -164,10 +164,10 @@
                         processData: true,
                         success: function(data) {
                             $('#txtStatus').text(data);
-	                    },
-	                    error: function(jqXHR, textStatus, errorThrown) {
-	                        $('#txtStatus').text("Error: ", jqXHR.responseText + "\n" + textStatus + ": " + errorThrown);
-	                    }
+                        },
+                        error: function(jqXHR, textStatus, errorThrown) {
+                            $('#txtStatus').text("Error: ", jqXHR.responseText + "\n" + textStatus + ": " + errorThrown);
+                        }
                     });
                 }
                 reader.readAsDataURL(input.files[0]);
@@ -208,16 +208,16 @@
                     model: "${modelPerennialOrSubmissionId}"
                 },
                 processData: true,
-	            async: false,
+                async: false,
                 beforeSend: function() {
-	                $('#txtStatus').text("The curation notes are being saved. Please wait...");
+                    $('#txtStatus').text("The curation notes are being saved. Please wait...");
                 },
                 success: function(data) {
-	                $('#txtStatus').text(data);
+                    $('#txtStatus').text(data);
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
-	                $('#txtStatus').text("Error: ", jqXHR.responseText + textStatus + errorThrown + JSON.stringify(jqXHR));
-	        }
+                    $('#txtStatus').text("Error: ", jqXHR.responseText + textStatus + errorThrown + JSON.stringify(jqXHR));
+	            }
             });
         });
 
