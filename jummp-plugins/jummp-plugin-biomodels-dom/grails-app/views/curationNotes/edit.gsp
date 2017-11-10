@@ -105,6 +105,48 @@
         </form>
     </div>
     <g:javascript>
+        $('#submitter, #lastModifier').on('keydown', function() {
+            console.log("ajax to load data for autocomplete");
+            $(this).autocomplete({
+                source: function(request, response) {
+                    $.ajax({
+                        url: $.jummp.createLink('usermanagement', 'fetchUsers'),
+                        type: 'POST',
+                        dataType: 'json',
+                        data: {
+                            search: request.term,
+                            request: 1
+                        },
+                        success: function(data) {
+                            response(data);
+                        }
+                    });
+                },
+                select: function(event, ui) {
+                    $(this).val(ui.item.username);   // display the selected text
+                    var username = ui.item.username; // selected value
+                    $.ajax({
+                        url: $.jummp.createLink('usermanagement', 'fetchUsers'),
+                        type: 'POST',
+                        data: {
+                            username: username,
+                            request: 2
+                        },
+                        dataType: 'json',
+                        success: function(response) {
+                            var len = response.length;
+                            if(len > 0){
+                                var id = response[0]['id'];
+                                var username = response[0]['username'];
+                                var email = response[0]['email'];
+                            }
+                        }
+                    });
+                    return false;
+                }
+            });
+        });
+
         $('#txtDateAdded').datepicker({
             dateFormat: 'yy-mm-dd',
             onSelect: function(datetext) {
