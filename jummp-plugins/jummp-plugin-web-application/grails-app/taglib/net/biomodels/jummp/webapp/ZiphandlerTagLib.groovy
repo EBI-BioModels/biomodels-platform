@@ -203,7 +203,7 @@ class ZiphandlerTagLib {
         			builder.append('''"><span class="pointerhere">''')
         			String filename = f.name
         			if (filename.length()>64) {
-        				filename = filename.substring(0,64) + "..."
+        				filename = filename.substring(0,63) + "..."
         			}
         			builder.append(filename).append("</span></a>")
                     if (it.mimeType != null) {

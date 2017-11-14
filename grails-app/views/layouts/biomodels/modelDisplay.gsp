@@ -74,6 +74,12 @@
                 margin: 0;
                 padding: 0;
             }
+            /* word wrap the overlong file names */
+            #treeView a {
+                white-space: normal !important;
+                height: auto;
+                padding: 1px 2px;
+            }
         </style>
         <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.handsontable.full.min.css')}"/>
         <link rel="stylesheet" href="${resource(dir: 'css', file: 'jstree.css')}" />
@@ -731,8 +737,8 @@
                             </div>--}%
                         </div>
                     </div>
-                    <div id="Files" class="filegrid">
-                        <div class="filecol-1-3">
+                    <div id="Files" class="row filegrid">
+                        <div class="small-12 medium-3 large-3 columns">
                             <div id="treeView">
                                 <ul>
                                     <li rel="folder">
@@ -758,7 +764,7 @@
                                 </ul>
                             </div>
                         </div>
-                        <div class="filecol-2-3">
+                        <div class="small-12 medium-9 large-9 columns">
                             <div id="detailsBox" class="detailsBox"></div>
                         </div>
                     </div>
