@@ -135,6 +135,7 @@ grails.project.dependency.resolution = {
         compile("org.mbine.co:libCombineArchive:0.1-SNAPSHOT") {
             excludes 'junit', 'slf4j-api', 'slf4j-log4j12', 'jmock-junit4', 'jena-core'
         }
+        compile "de.unirostock.sems:CombineExt:1.2.4"
         // need to add this as an explicit dependency to configure exclusions
         // can't use apache-jena-libs due to pom packaging, rely on jena-tdb instead
         compile("eu.ddmore:lib-metadata:0.1.3-SNAPSHOT") {

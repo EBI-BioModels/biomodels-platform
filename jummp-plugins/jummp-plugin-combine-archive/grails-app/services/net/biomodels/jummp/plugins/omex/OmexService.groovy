@@ -37,6 +37,7 @@ package net.biomodels.jummp.plugins.omex
 import com.hp.hpl.jena.rdf.model.Model
 import com.hp.hpl.jena.rdf.model.Resource
 import com.hp.hpl.jena.vocabulary.DCTerms
+import de.unirostock.sems.cbext.Formatizer
 import net.biomodels.jummp.core.model.FileFormatService
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand
@@ -56,6 +57,7 @@ import java.nio.file.*
  * Provides methods to handle the COMBINE archive format.
  * @see net.biomodels.jummp.core.model.FileFormatService
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 class OmexService implements FileFormatService {
     private static final Log log = LogFactory.getLog(this)
@@ -217,7 +219,9 @@ class OmexService implements FileFormatService {
             File file = new File(rftc.path)
             String fileName = file.getName()
             Path path = Paths.get(rftc.path)
-            ArtifactInfo artifactInfo = arch.createArtifact(fileName, rftc.mimeType)
+            URI uri = Formatizer.guessFormat(file)
+            String mimeType = uri.toString()
+            ArtifactInfo artifactInfo = arch.createArtifact(fileName, mimeType)
             OutputStream writer = arch.writeArtifact(artifactInfo)
             Files.copy(path, writer)
             writer.close()
