@@ -30,6 +30,7 @@ import net.biomodels.jummp.webapp.UpdatePasswordCommand
 /*
 * @short Controller for managing user registrations
 * @author Raza Ali <raza.ali@ebi.ac.uk>
+* @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
 */
 
 
@@ -71,12 +72,12 @@ class UsermanagementController {
 
     @Secured(["isAuthenticated()"])
     def edit() {
-    	String user = springSecurityService.principal.username
+        User currentUser = springSecurityService.currentUser
         render  view: "edit",
                 model: [postUrl: "", flashMessage: checkForMessage(),
                         validationErrorOn: checkForErrorBean(),
-                        user: userService.getUser(user),
-                        notificationPermissions: notificationService.getNotificationPermissions(user)]
+                        user: currentUser,
+                        notificationPermissions: notificationService.getNotificationPermissions(currentUser.username)]
     }
 
     @Secured(["isAuthenticated()"])
@@ -89,12 +90,12 @@ class UsermanagementController {
 
     @Secured(["isAuthenticated()"])
     def show() {
-    	String user = springSecurityService.principal.username
+        User currentUser = userService.getCurrentUser()
         render  view: "show",
                 model: [postUrl: "", flashMessage: checkForMessage(),
                         validationErrorOn: checkForErrorBean(),
-                        user: userService.getUser(user),
-                        notificationPermissions: notificationService.getNotificationPermissions(user)]
+                        user: currentUser,
+                        notificationPermissions: notificationService.getNotificationPermissions(currentUser.username)]
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
