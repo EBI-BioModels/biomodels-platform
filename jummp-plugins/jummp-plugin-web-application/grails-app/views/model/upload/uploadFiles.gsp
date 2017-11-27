@@ -139,22 +139,10 @@
 
             $(document).ready(function () {
                 populateDiv();
-                $('.removeMain').click(function(e) {
-                    e.preventDefault();
-                    var parent = $(this).parent().get(0).innerHTML;
-                    var trimmedParent = parent.replace(/^\s+/g,"");
-                    var start = "<span id='mainName_".length;
-                    var end = trimmedParent.indexOf("\">", start);
-                    var name = trimmedParent.substring(start, end);
-                    var hi = "<input value='" + name + "' name='deletedMain' hidden>";
-                    document.getElementById("noMains").innerHTML += hi;
-                    $(this).parent().get(0).innerHTML = "<input type='file' id='mainFile' name='mainFile' class='mainFile' >\n\t</td>\n</tr>";
-
-                });
-
                 $('.replaceMain').click(function(e) {
                     e.preventDefault();
-                    $(this).parent().get(0).getElementsByTagName("input")[0].click();
+                    // firing a click event on the main file upload element
+                    $('#mainFile').click();
                 });
 
                 $('.mainFile').change(function(click) {
@@ -165,6 +153,7 @@
                     var newValue = this.value;
                     var newName = trimElementName("\\", newValue);
                     document.getElementById(id).innerHTML = newName;
+                    $('#mainFileDescription').val('');
                 });
 
                 $("#addFile").click(function (evt) {
@@ -172,23 +161,23 @@
                     $('<tr>', {
                         class: 'fileEntry'
                     }).append(
-                        $('<td class="name">').append(
+                        $('<td class="name" style="width: 20%">').append(
                             $('<input/>', {
                                 type: 'file',
                                 id: 'extraFiles' + nbExtraFiles,
                                 name: 'extraFiles'
                             })
                         ),
-                        $('</td><td style="width: 785px">').append(
+                        $('</td><td style="width: 70%">').append(
                             $('<input/>', {
                                 type: 'text',
                                 id: 'description' + ++numberOfAdditionalsAtLoadingPage,
                                 name: 'description',
                                 style: "width: 100%; box-sizing: border-box; -webkit-box-sizing: border-box; -moz-box-sizing: border-box;",
                                 placeholder: 'Please enter a description'
-                            })
+                            }).prop('required', true)
                         ),
-                        $('</td><td>&nbsp;').append(
+                        $('</td><td style="width: 10%; display: table-cell; vertical-align: middle; text-align: right">&nbsp;').append(
                             $('<a>', {
                                 href: "#",
                                 class: 'killer',
