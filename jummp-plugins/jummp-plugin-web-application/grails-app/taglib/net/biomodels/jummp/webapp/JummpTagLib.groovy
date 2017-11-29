@@ -86,10 +86,12 @@ class JummpTagLib {
         attrs.main.each { m ->
             RepositoryFileTransportCommand command = m as RepositoryFileTransportCommand
             String name = new File(command.path).name
+            String description = command.description
             result.append("<tr class='prop'>\n\t\t")
             result.append("<td class='value' style='width: 20%'>\n\t\t")
             result.append("<span id='mainName_").append(name).append("'>").append(name).append("</span></td>\n\t\t")
-            result.append("<td style='width: 70%'><input type='text' id='mainFileDescription' name='mainFileDescription' required placeholder='Please enter a description'>\n\t\t")
+            result.append("<td style='width: 70%'>")
+            result.append("<input type='text' id='mainFileDescription' name='mainFileDescription' value='${description}' required placeholder='Please enter a description'>\n\t\t")
             result.append("<input style='display:none;' type='file' id='mainFile' data-labelname='${name}' name='mainFile' class='mainFile'/></td>\n\t")
             result.append("<td style='width: 10%; text-align: right'><a href='#' class='replaceMain'>Replace</a></td>\n</tr>\n")
         }
