@@ -145,6 +145,27 @@
                     $('#mainFile').click();
                 });
 
+                $('.removeMain').click(function(e) {
+                    e.preventDefault();
+                    var td = $(this).parent().get(0);
+                    var tr = $(td).parent().get(0);
+                    console.log($(tr).find("td:first").html());
+                    var tbody = $(td).parent().parent().get(0);
+                    // update the temporary container's content
+                    var parent = $(tr).find("td:first").html();
+                    var trimmedParent = parent.replace(/^\s+/g,"");
+                    var start = "<span id='mainName_".length;
+                    var end = trimmedParent.indexOf("\">", start);
+                    var name = trimmedParent.substring(start, end);
+                    var hi = "<input value='" + name + "' name='deletedMain' hidden>";
+                    document.getElementById("noMains").innerHTML += hi;
+                    // get rid of the current row where Remove button is placed
+                    $(td).closest("tr").remove();
+                    // generate a new row in order to allow browsing a new file
+                    var row = "<jummp:renderRowInMainFileTable />";
+                    $(tbody).append(row);
+                });
+
                 $('.mainFile').change(function(click) {
                     var oldName = $(this).data("labelname");
                     var hi = "<input type='hidden' value='" + oldName + "' name='deletedMain'/>";

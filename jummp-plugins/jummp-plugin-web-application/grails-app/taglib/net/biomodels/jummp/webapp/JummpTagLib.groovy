@@ -67,6 +67,19 @@ class JummpTagLib {
         out << body(description: g.message(code: msg))
     }
 
+    def renderRowInMainFileTable = {
+        out << renderRowInMainFileTable().replaceAll("\n", "").replaceAll("\t", "")
+    }
+
+    String renderRowInMainFileTable() {
+        StringBuilder row = new StringBuilder();
+        row.append("<tr class='prop'>\n\t\t")
+        row.append("<td class='value' style='width: 20%'>\n\t\t")
+        row.append("<input type='file' id='mainFile' name='mainFile'>\n\t\t</td>")
+        row.append("<td class='name' style='width: 80%'><input type='text' id='mainFileDescription' name='mainFileDescription' required placeholder='Please enter a description'></td></tr>")
+        row.toString()
+    }
+
     def displayExistingMainFile = { attrs ->
         def result = new StringBuilder()
         String de = detectDeploymentEnvironment()
@@ -75,10 +88,7 @@ class JummpTagLib {
         result.append(mainFileSectionHeading)
         result.append("<table class='formtable responsive-table'><tbody>")
         if (!attrs.main) {
-            result.append("<tr class='prop'>\n\t\t")
-            result.append("<td class='value' style='width: 20%'>\n\t\t")
-            result.append("<input type='file' id='mainFile' name='mainFile'>\n\t\t</td>")
-            result.append("<td class='name' style='width: 80%'><input type='text' id='mainFileDescription' name='mainFileDescription' required placeholder='Please enter a description'></td></tr>")
+            result.append(renderRowInMainFileTable());
             result.append("</tbody></table>")
             out << result.toString()
             return
@@ -93,7 +103,7 @@ class JummpTagLib {
             result.append("<td style='width: 70%'>")
             result.append("<input type='text' id='mainFileDescription' name='mainFileDescription' value='${description}' required placeholder='Please enter a description'>\n\t\t")
             result.append("<input style='display:none;' type='file' id='mainFile' data-labelname='${name}' name='mainFile' class='mainFile'/></td>\n\t")
-            result.append("<td style='width: 10%; text-align: right'><a href='#' class='replaceMain'>Replace</a></td>\n</tr>\n")
+            result.append("<td style='width: 10%; text-align: right'><a href='#' class='replaceMain'>Replace</a> | <a href='#' class='removeMain'>Remove</a></td>\n</tr>\n")
         }
         result.append("</tbody></table>")
         out << result.toString()
