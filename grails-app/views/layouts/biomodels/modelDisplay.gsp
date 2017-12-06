@@ -147,12 +147,13 @@
         });
 
         function getCSVData(data) {
-            var lines=data.match(/[^\r\n]+/g);
+            var lines = data.match(/[^\r\n]+/g);
             /*var content=[];
             content.push("<table>");*/
             var data = [];
-            for (var line in lines) {
-                var fields=lines[line].split(",");
+            for (var id = 0; id < lines.length; id++) {
+                var line = lines[id];
+                var fields = line.split(",");
                 data.push(fields);
             }
             return data;
