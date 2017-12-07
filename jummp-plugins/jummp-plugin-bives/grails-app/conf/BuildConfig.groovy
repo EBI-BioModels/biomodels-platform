@@ -75,7 +75,7 @@ grails.project.dependency.resolution = {
         // specify dependencies here under either 'build', 'compile', 'runtime', 'test' or 'provided' scopes eg.
 
         // runtime 'mysql:mysql-connector-java:5.1.13'
-        compile "de.unirostock.sems:BiVeS:1.1-SNAPSHOT"
+        compile "de.unirostock.sems:BiVeS:1.11.1"
     }
     plugins {
         build ":tomcat:7.0.55.3"
