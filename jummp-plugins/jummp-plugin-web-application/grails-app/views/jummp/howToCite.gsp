@@ -54,6 +54,41 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
 <h3 id="biomodels">BioModels Database</h3>
 <dl>
     <dt>
+        Mihai Glont, Tung V. N. Nguyen, Martin Graesslin, Robert Hälke, Raza Ali,
+        Jochen Schramm, Sarala M. Wimalaratne, Varun B. Kothamachu , Nicolas Rodriguez,
+        Maciej J. Swat, Jurgen Eils, Roland Eils, Camille Laibe, Rahuman S. Malik-Sheriff,
+        Vijayalakshmi Chelliah, Nicolas Le Novère, Henning Hermjakob
+    </dt>
+    <dd style="margin-left:0;">
+        <div class="pubtitle">BioModels: expanding horizons to include more modelling approaches and formats.</div>
+        <div class="pubjournal"><em>Nucl. Acids Res.</em> 2017</div>
+        [<a href="//academic.oup.com/nar/advance-article/doi/10.1093/nar/gkx1023/4584626"
+            title="Publication on Nucl. Acids Res. (Open Access)">Nucl. Acids Res.</a>]
+    [<a href="javascript:toggleDisplayById('bib_Glont2017');"
+        title="Display/hide the BibTeX entry for this publication">
+        <img src="//www.ebi.ac.uk/biomodels/icons/plus.gif" alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
+<pre id="bib_Glont2017" class="hidden">
+@ARTICLE{BioModels2017,
+    author  = {Glont, Mihai and Nguyen, Tung V. N. and Graesslin, Martin and Hälke, Robert
+            and Ali, Raza and Schramm, Jochen and Wimalaratne, Sarala M. and Kothamachu, Varun B.
+            and Rodriguez, Nicolas and Swat, Maciej J. and Eils, Jurgen and Eils, Roland
+            and Laibe, Camille and Malik-Sheriff, Rahuman S. and Chelliah, Vijayalakshmi
+            and Le Novère, Nicolas and Hermjakob, Henning},
+    title   = {BioModels: expanding horizons to include more modelling approaches and formats},
+    journal = {Nucleic Acids Research},
+    volume  = {},
+    number  = {},
+    pages   = {gkx1023},
+    year    = {2017},
+    doi     = {10.1093/nar/gkx1023},
+    URL     = {https://dx.doi.org/10.1093/nar/gkx1023},
+}
+</pre>
+    </dd>
+</dl>
+
+<dl>
+    <dt>
         Vijayalakshmi Chelliah, Nick Juty, Ishan Ajmera, Raza Ali, Marine Dumousseau,
         Mihai Glont, Michael Hucka, Gaël Jalowicki, Sarah Keating, Vincent Knight-Schrijver,
         Audald Lloret-Villas, Kedar Nath Natarajan, Jean-Baptiste Pettit, Nicolas Rodriguez,
@@ -63,7 +98,7 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
     <dd style="margin-left:0;">
         <div class="pubtitle">BioModels: ten-year anniversary.</div>
         <div class="pubjournal"><em>Nucl. Acids Res.</em> 2015</div>
-        [<a href="http://nar.oxfordjournals.org/content/early/2014/11/20/nar.gku1181"
+        [<a href="//nar.oxfordjournals.org/content/early/2014/11/20/nar.gku1181"
             title="Publication on Nucl. Acids Res. (Open Access)">Nucl. Acids Res.</a>]
         [<a href="javascript:toggleDisplayById('bib_Chelliah2015');"
             title="Display/hide the BibTeX entry for this publication">
@@ -91,7 +126,7 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
   <dd style="margin-left:0;">
       <div class="pubtitle">BioModels: Content, Features, Functionality and Use.</div>
       <div class="pubjournal"><em>CPT: Pharmacometrics &amp; Systems Pharmacology</em> 2015</div>
-      [<a href="http://onlinelibrary.wiley.com/doi/10.1002/psp4.3/full"
+      [<a href="//onlinelibrary.wiley.com/doi/10.1002/psp4.3/full"
           title="Publication on CPT:PSP (Open Access)">CPT: Pharmacometrics &amp; Systems Pharmacology</a>]
       [<a href="javascript:toggleDisplayById('bib_Juty2015');"
           title="Display/hide the BibTeX entry for this publication">
@@ -119,9 +154,9 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
   <dd style="margin-left:0;">
       <div class="pubtitle">BioModels Database: An enhanced, curated and annotated resource for published quantitative kinetic models.</div>
       <div class="pubjournal"><em>BMC Systems Biology</em> 2010, 4:92</div>
-      [<a href="http://europepmc.org/abstract/MED/20587024"
+      [<a href="//europepmc.org/abstract/MED/20587024"
           title="Publication on Europe PMC">Europe PMC</a>]
-      [<a href="http://www.biomedcentral.com/1752-0509/4/92"
+      [<a href="//www.biomedcentral.com/1752-0509/4/92"
           title="Publication on BMC Systems Biology (Open Access)">BMC Sys Bio</a>]
       [<a href="javascript:toggleDisplayById('bib_Li2010b');"
           title="Display/hide the BibTeX entry for this publication">
@@ -154,9 +189,9 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
   <dd style="margin-left:0;">
       <div class="pubtitle">BioModels Database: A Free, Centralized Database of Curated, Published, Quantitative Kinetic Models of Biochemical and Cellular Systems.</div>
       <div class="pubjournal"><em>Nucleic Acids Research</em> 2006, 34(Database issue):D689-91</div>
-      [<a href="http://europepmc.org/abstract/MED/16381960"
+      [<a href="//europepmc.org/abstract/MED/16381960"
           title="Publication on Europe PMC">Europe PMC</a>]
-      [<a href="http://nar.oxfordjournals.org/cgi/content/full/34/suppl_1/D689"
+      [<a href="//nar.oxfordjournals.org/cgi/content/full/34/suppl_1/D689"
           title="Publication on Nucleic Acids Research">Nucleic Acids Res</a>]
       [<a href="javascript:toggleDisplayById('bib_lenovere2006');"
           title="Display/hide the BibTeX entry for this publication">
@@ -195,9 +230,9 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
   <dd style="margin-left:0;">
       <div class="pubtitle">Path2Models: large-scale generation of computational models from biochemical pathway maps.</div>
       <div class="pubjournal"><em>BMC Systems Biology</em> 2013, 7:116</div>
-      [<a href="http://europepmc.org/abstract/MED/24180668"
+      [<a href="//europepmc.org/abstract/MED/24180668"
           title="Publication on Europe PMC">Europe PMC</a>]
-      [<a href="http://www.biomedcentral.com/1752-0509/7/116"
+      [<a href="//www.biomedcentral.com/1752-0509/7/116"
           title="Publication on BMC Systems Biology (Open Access)">BMC Sys Bio</a>]
       [<a href="javascript:toggleDisplayById('bib_Buchel2013');"
           title="Display/hide the BibTeX entry for this publication">
@@ -230,9 +265,9 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
   <dd style="margin-left:0;">
       <div class="pubtitle">BioModels linked dataset.</div>
       <div class="pubjournal"><em>BMC Systems Biology</em> 2014, 8(1):91</div>
-      [<a href="http://europepmc.org/abstract/MED/25182954"
+      [<a href="//europepmc.org/abstract/MED/25182954"
           title="Publication on Europe PMC">Europe PMC</a>]
-      [<a href="http://www.biomedcentral.com/1752-0509/8/91"
+      [<a href="//www.biomedcentral.com/1752-0509/8/91"
           title="Publication on BMC Systems Biology (Open Access)">BMC Sys Bio</a>]
       [<a href="javascript:toggleDisplayById('bib_Wimalaratne2014');"
           title="Display/hide the BibTeX entry for this publication">
@@ -263,9 +298,9 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
   <dd style="margin-left:0;">
       <div class="pubtitle">BioModels.net Web Services, a free and integrated toolkit for computational modelling software.</div>
       <div class="pubjournal"><em>Briefings in Bioinformatics</em> 2010, 11:270-277</div>
-      [<a href="http://europepmc.org/abstract/MED/19939940"
+      [<a href="//europepmc.org/abstract/MED/19939940"
           title="Publication on Europe PMC">Europe PMC</a>]
-      [<a href="http://bib.oxfordjournals.org/content/11/3/270.abstract"
+      [<a href="//bib.oxfordjournals.org/content/11/3/270.abstract"
           title="Publication on Briefings in Bioinformatics (Open Access)">Brief Bioinform</a>]
       [<a href="javascript:toggleDisplayById('bib_Li2010a');"
           title="Display/hide the BibTeX entry for this publication">
@@ -295,9 +330,9 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
   <dd style="margin-left:0;">
       <div class="pubtitle">BioModels Database: A Repository of Mathematical Models of Biological Processes.</div>
       <div class="pubjournal"><em>Methods in Molecular Biology</em> 2013, 1021:189-199</div>
-      [<a href="http://europepmc.org/abstract/MED/23715986"
+      [<a href="//europepmc.org/abstract/MED/23715986"
           title="Publication on Europe PMC">Europe PMC</a>]
-      [<a href="http://link.springer.com/protocol/10.1007%2F978-1-62703-450-0_10"
+      [<a href="//link.springer.com/protocol/10.1007%2F978-1-62703-450-0_10"
           title="Publication on Springer (Open Access)">Springer</a>]
       [<a href="javascript:toggleDisplayById('bib_Chelliah2013');"
           title="Display/hide the BibTeX entry for this publication">
