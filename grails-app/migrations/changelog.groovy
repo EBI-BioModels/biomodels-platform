@@ -1253,5 +1253,7 @@ databaseChangeLog = {
     include file: '20170915_changeConstraints_Feedback.groovy'
 
     include file: '20171009_changeConstraints_Notification.groovy'
+
+    include file: '20171124_setRepositoryFileDescriptionNotNull.groovy'
 }
 

@@ -31,6 +31,7 @@ import java.text.SimpleDateFormat
  * @short General purpose helper for rendering BioModels pages.
  *
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 class BioModelsTagLib {
     static defaultEncodeAs = [taglib:'none']
@@ -76,6 +77,9 @@ class BioModelsTagLib {
                 plugin: 'jummp-plugin-biomodels-dom', var: "flag")
     }
 
+    /**
+     * Rendering CurationNotes tab for the curated models
+     */
     def renderCurationNotesTab = { attrs ->
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy, HH:mm:ss");
         def base64CurationNotes = attrs.curationNotes?.collect { CurationNotesTransportCommand cmd ->
@@ -98,8 +102,8 @@ class BioModelsTagLib {
             it.getAuthority()
         }
         boolean hasCuratorRole = "ROLE_CURATOR" in roleNames
-        def model = base64CurationNotes["model"].publicationId ?: base64CurationNotes["model"].submissionId
-        println model
+        boolean havePublicationId = base64CurationNotes["model"].publicationId != [null]
+        def model =  havePublicationId ? base64CurationNotes["model"].publicationId : base64CurationNotes["model"].submissionId
         if (hasCuratorRole) {
             def href = g.link(controller: "curationNotes",
                 action: "edit", class: "button",
@@ -107,7 +111,7 @@ class BioModelsTagLib {
                 "Edit"
             }
             String view = """\
-                <div class="small-12 medium-12 large-12 columns">
+                <div class="small-12 medium-12 large-12 columns" id="btnEditCurationNotes">
                         ${href}
                     </div>
                 """

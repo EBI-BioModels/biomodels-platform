@@ -438,6 +438,7 @@ if (!(jummpConfig.jummp.search.pathToIndexerExecutable instanceof ConfigObject))
 else {
 	println "WARN\tSetting jummp.search.pathToIndexerExecutable is undefined. Models will not be indexed correctly in the search engine."
 }
+
 // registration settings
 if (!(jummpConfig.jummp.security.registration.email.send instanceof ConfigObject) && Boolean.parseBoolean(jummpConfig.jummp.security.registration.email.send)) {
     jummp.security.registration.email.send         = Boolean.parseBoolean(jummpConfig.jummp.security.registration.email.send)

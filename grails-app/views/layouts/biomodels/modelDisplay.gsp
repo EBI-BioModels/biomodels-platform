@@ -74,6 +74,12 @@
                 margin: 0;
                 padding: 0;
             }
+            /* word wrap the overlong file names */
+            #treeView a {
+                white-space: normal !important;
+                height: auto;
+                padding: 1px 2px;
+            }
         </style>
         <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.handsontable.full.min.css')}"/>
         <link rel="stylesheet" href="${resource(dir: 'css', file: 'jstree.css')}" />
@@ -141,12 +147,13 @@
         });
 
         function getCSVData(data) {
-            var lines=data.match(/[^\r\n]+/g);
+            var lines = data.match(/[^\r\n]+/g);
             /*var content=[];
             content.push("<table>");*/
             var data = [];
-            for (var line in lines) {
-                var fields=lines[line].split(",");
+            for (var id = 0; id < lines.length; id++) {
+                var line = lines[id];
+                var fields = line.split(",");
                 data.push(fields);
             }
             return data;
@@ -731,8 +738,8 @@
                             </div>--}%
                         </div>
                     </div>
-                    <div id="Files" class="filegrid">
-                        <div class="filecol-1-3">
+                    <div id="Files" class="row filegrid">
+                        <div class="small-12 medium-3 large-3 columns">
                             <div id="treeView">
                                 <ul>
                                     <li rel="folder">
@@ -758,14 +765,14 @@
                                 </ul>
                             </div>
                         </div>
-                        <div class="filecol-2-3">
+                        <div class="small-12 medium-9 large-9 columns">
                             <div id="detailsBox" class="detailsBox"></div>
                         </div>
                     </div>
                     <div id="History">
                         <% DateFormat dateFormat = DateFormat.getDateTimeInstance(); %>
                         <ul>
-                            <li>Model owner: ${revision.model.submitter}</li>
+                            <li>Model originally submitted by : ${revision.model.submitter}</li>
                             <li>Submitted: ${dateFormat.format(allRevs.first().uploadDate)}</li>
                             <li>Last Modified: ${dateFormat.format(allRevs.last().uploadDate)}</li>
                         </ul>
