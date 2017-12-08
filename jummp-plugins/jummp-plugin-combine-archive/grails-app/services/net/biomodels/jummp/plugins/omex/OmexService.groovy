@@ -208,7 +208,8 @@ class OmexService implements FileFormatService {
     String createCombineArchive(List<RFTC> files, String modelId) {
         String dateTimeString = new Date().format("yyyyMMdd-HHmmss")
         String TEMP_PATH = System.getProperty("java.io.tmpdir")
-        String absoluteOmexFileName = "${TEMP_PATH}/${modelId}-${dateTimeString}.omex"
+        String absoluteOmexFileName = Paths.get(TEMP_PATH,
+                "$modelId-${dateTimeString}.omex").toUri()
         ICombineArchive arch
         CombineArchiveFactory fact = new CombineArchiveFactory()
         arch = fact.openArchive(absoluteOmexFileName, true)
