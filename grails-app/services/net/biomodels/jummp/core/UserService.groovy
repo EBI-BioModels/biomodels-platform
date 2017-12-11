@@ -196,6 +196,28 @@ class UserService implements IUserService {
         return user.sanitizedUser()
     }
 
+    /**
+     * This method is being served for the registration process. It is used for looking up the
+     * being typed values by a potential user whether they exist/are being used by someone else
+     * into our database or not.
+     *
+     * @param query The username, email or ORCID identifier which is looked up against the database
+     * @return A user if it matches the query, or null in the otherwise case
+     */
+    @PreAuthorize("isAnonymous()")
+    User lookupUser(String query, int column) {
+        if (column == 1) {
+            return User.findByUsername(query)
+        } else if (column == 2) {
+            return User.findByEmail(query)
+        } else {
+            // column == 3 --> search Person by ORCHID identifier
+            Person person = Person.findByOrcid(query)
+            User user = User.findByPerson(person)
+            return user
+        }
+    }
+
     @Profiled(tag="userService.hasRole")
     @PreAuthorize("isAuthenticated()")
     boolean hasRole(User user, Role role) {
