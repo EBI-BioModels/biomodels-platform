@@ -211,7 +211,7 @@ class OmexService implements FileFormatService {
         String dateTimeString = new Date().format("yyyyMMdd-HHmmss")
         String TEMP_PATH = System.getProperty("java.io.tmpdir")
         String absoluteOmexFileName = Paths.get(TEMP_PATH,
-                "$modelId-${dateTimeString}.omex").toUri()
+                "$modelId-${dateTimeString}.omex").toString()
         ICombineArchive arch
         CombineArchiveFactory fact = new CombineArchiveFactory()
         arch = fact.openArchive(absoluteOmexFileName, true)
