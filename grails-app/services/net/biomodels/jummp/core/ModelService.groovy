@@ -2168,7 +2168,9 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         aclUtilService.addPermission(revision, "ROLE_ANONYMOUS", BasePermission.READ)
         revision.state = ModelState.PUBLISHED
         if (!model.save(flush: true)) {
-                    log.error("Cannot publish model ${model.submissionId}:${model.errors.allErrors.inspect()}")
+            ModelTransportCommand cmd = new ModelAdapter(model: model).toCommandObject(false)
+            throw new ModelException(cmd,
+                    "Cannot publish model ${model.submissionId}:${model.errors.allErrors.inspect()}")
         }
 
         //return publishValidator.generatePublishContext(scenario)
