@@ -672,6 +672,19 @@ target(main: "Puts everything together to import models from a given folder") {
     // import MoM entries if they have not been imported
     processModelOfTheMonth()
 
+    // wait for pending indexing jobs to complete before stopping
+    def indexRequestDispatcher = camelContext.routes.find {
+        // we use seda:exec to invoke the indexer
+        it.consumer.endpoint.endpointKey.startsWith("seda://exec")
+    }.consumer
+
+    int pendingIndexingJobs = indexRequestDispatcher.pendingExchangesSize
+    while (pending > 0) {
+        log("Waiting for ${pendingIndexingJobs} models to be indexed...")
+        Thread.sleep(30000)
+        pendingIndexingJobs = indexRequestDispatcher.pendingExchangesSize
+    }
+
     duration = (System.currentTimeMillis() - duration) / 1000 /* duration in ms */
     String formattedDuration = prettify(duration)
     printModelLog()
