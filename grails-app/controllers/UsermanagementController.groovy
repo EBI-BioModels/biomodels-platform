@@ -269,7 +269,7 @@ class UsermanagementController {
             log.error e.message, e
    			return redirect(action:"create")
     	}
-    	render view: "successfulregistration"
+    	render(view: "successfulregistration", model: [email: cmd.email])
     }
 
     /**
