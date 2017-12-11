@@ -42,16 +42,16 @@
     <body>
         <div id="register" class="row">
             <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
-                <g:form name="registerForm" action="signUp">
+                <g:form name="registerForm" action="signUp" >
                     <div class="row column register-form">
                         <label class="required" for="username"><g:message code="user.signup.ui.username"/></label>
-                        <g:textField name="username" placeholder="Choose an username"/>
+                        <g:textField name="username" placeholder="Choose an username" required="true" />
 
                         <label class="required" for="email"><g:message code="user.signup.ui.email"/></label>
-                        <g:textField name="email" placeholder="Enter your email address"/>
+                        <g:textField name="email" placeholder="Enter your email address" required="true" />
 
                         <label class="required" for="userRealName"><g:message code="user.signup.ui.realname"/></label>
-                        <g:textField name="userRealName" placeholder="Enter your real name"/>
+                        <g:textField name="userRealName" placeholder="Enter your real name" required="true" />
 
                         <label for="institution"><g:message code="user.signup.ui.institution"/></label>
                         <g:textField name="institution" placeholder="Enter an institution name where you are working now"/>
@@ -62,7 +62,7 @@
                         <label class="required" for="captcha"><g:message code="user.signup.ui.captcha"/></label>
                         <img style="margin-top:0;float:none" src="${createLink(controller: 'simpleCaptcha', action: 'captcha')}"/>
                         <br/>
-                        <g:textField name="captcha"/>
+                        <g:textField name="captcha" required="true"/>
 
                         <p><input type="submit" class="button" value="${g.message(code: 'user.signup.register')}"/>
                         <input type="reset" class="button" id="resetFormButton" value="${g.message(code: 'user.signup.reset')}"/>
