@@ -377,13 +377,12 @@ class UserService implements IUserService {
                 }
             } else {
                 if (!newUser.person.save(flush: true)) {
-                    log.error("cannot save user ${newUser.properties} - ${newUser.errors.allErrors.inspect()}. oops")
+                    log.error("Cannot save user ${newUser.properties} - ${newUser.errors.allErrors.inspect()}. oops")
                 } else {
                     log.debug(newUser)
                 }
             }
-        }
-        else {
+        } else {
             newUser.person.save(flush:true, failOnError:true)
         }
         boolean adminRegistration = false
