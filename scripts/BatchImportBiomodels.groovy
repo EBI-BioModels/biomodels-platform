@@ -632,21 +632,23 @@ target(main: "Puts everything together to import models from a given folder") {
     /* run batch importer sequentially */
     for (File f: modelFolder.listFiles()) {
         boolean tobeProcessed
-        boolean isBigModel = bigModelsIgnored.contains(f.name)
-        if (!bigModelsIgnored) {
-            /* when no big models are precised, we need to import all */
+        if (excludeBigModels) {
+            boolean isBigModel = !bigModelsIgnored?.isEmpty() && bigModelsIgnored.contains(f.name)
+            if (isBigModel) {
+                tobeProcessed = false
+            }
+        } else {
+            // process the model folder regardless of its size
             tobeProcessed = true
-        } else  {
-            /* when excludeBigModels flag is indicated Y, the big model should be ignored */
-            tobeProcessed = (excludeBigModels) ? !isBigModel : isBigModel
         }
-	boolean existed = modelsImported.contains(f.name)
-        if (f.isDirectory() && f.name ==~ modelFolderPattern && tobeProcessed & !existed) {
+
+        boolean existed = modelsImported.contains(f.name)
+        if (f.isDirectory() && f.name ==~ modelFolderPattern && tobeProcessed && !existed) {
             processModelFolder f
         }
-	if (existed) {
-	  addModelError(f.name, "The model was already imported!")
-	}
+        if (existed) {
+            addModelError(f.name, "The model was already imported!")
+        }
     }
 
     /* run batch importer concurrently */
