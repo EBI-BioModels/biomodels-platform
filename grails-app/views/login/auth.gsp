@@ -41,7 +41,7 @@
                         <p>${flash.message}</p>
                         <h3 class="text-center">Log in to your account</h3>
                         <label><g:message code="login.form.label"/>
-                            <input type='text' name='j_username' id='username' placeholder="username">
+                            <input type='text' name='j_username' id='username' placeholder="Username">
                         </label>
                         <label><g:message code="login.form.password"/>
                             <input type='password' name='j_password' id='password' placeholder="Password"/>
