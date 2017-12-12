@@ -612,6 +612,8 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
     springSecurityService   = appCtx.springSecurityService
     aclUtilService          = appCtx.aclUtilService
     camelContext            = appCtx.camelContext
+    // wait for the indexing jobs to complete before stopping Camel
+    camelContext.shutdownStrategy.setTimeout(Long.MAX_VALUE)
 }
 
 // keep track of the number of models that are processed
