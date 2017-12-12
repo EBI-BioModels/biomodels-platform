@@ -223,6 +223,7 @@ def modelFileFormatService
 def userService
 def springSecurityService
 def aclUtilService
+def camelContext
 
 /**
  * Expected contents of a typical folder for literature-based models
@@ -599,15 +600,18 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
     // inject applicationContext in POGOs that expect it
     decorator.context = appCtx
     rtc.context = appCtx
-    sessionFactory = appCtx.sessionFactory
-    modelService = appCtx.modelService
-    modelFlagService = appCtx.modelFlagService
-    publicationService = appCtx.publicationService
-    pubMedService = appCtx.pubMedService
-    modelFileFormatService = appCtx.modelFileFormatService
-    userService = appCtx.userService
-    springSecurityService = appCtx.springSecurityService
-    aclUtilService = appCtx.aclUtilService
+
+    // obtain references to singleton services
+    sessionFactory          = appCtx.sessionFactory
+    modelService            = appCtx.modelService
+    modelFlagService        = appCtx.modelFlagService
+    publicationService      = appCtx.publicationService
+    pubMedService           = appCtx.pubMedService
+    modelFileFormatService  = appCtx.modelFileFormatService
+    userService             = appCtx.userService
+    springSecurityService   = appCtx.springSecurityService
+    aclUtilService          = appCtx.aclUtilService
+    camelContext            = appCtx.camelContext
 }
 
 // keep track of the number of models that are processed
@@ -679,7 +683,7 @@ target(main: "Puts everything together to import models from a given folder") {
     }.consumer
 
     int pendingIndexingJobs = indexRequestDispatcher.pendingExchangesSize
-    while (pending > 0) {
+    while (pendingIndexingJobs > 0) {
         log("Waiting for ${pendingIndexingJobs} models to be indexed...")
         Thread.sleep(30000)
         pendingIndexingJobs = indexRequestDispatcher.pendingExchangesSize
@@ -1252,7 +1256,6 @@ target(closeDataSources: "Close any active database connections") {
 }
 
 target(closeCamel: "Shuts down the Camel instance, awaiting for current messages to be delivered") {
-    def camelContext = appCtx.camelContext
     duration = System.currentTimeMillis()
     camelContext.shutdown()
     duration = (System.currentTimeMillis() - duration) / 1000
