@@ -1,5 +1,6 @@
 /**
  * Created by Tung Nguyen <tnguyen@ebi.ac.uk> on 14/09/17.
+ * Updated: 13/12/2017
  */
 
 /**
@@ -87,3 +88,85 @@ $('#submitButtonRate').on("click", function(event) {
 function closeForm() {
     $('#rate_review_form').foundation('close');
 }
+
+/**
+ * The following code is being used for handling sign up a new account and edit user profile
+ */
+// reference: https://wiki.eprints.org/w/ORCID
+var orcidRegExp = /^\d{4}-\d{4}-\d{4}-\d{3}(?:\d|X)$/gi;
+$("#registerForm #resetFormButton").click(function() {
+    $('#registerForm')[0].reset();
+});
+$('#registerForm input').on("change input", function() {
+    hideNow();
+});
+$('input[name=username]').blur(function() {
+    var username = $(this).val();
+    var message = "";
+    $.ajax({
+        dataType: "json",
+        cache: false,
+        data: {
+            query: username,
+            column:  1
+        },
+        url: $.jummp.createLink("usermanagement", "lookupUser"),
+        success: function(response) {
+            username = response[0];
+            if (username.trim()) {
+                message = "A user with this username " + username.trim() + " already exists. Please try another one."
+                showNotification(message);
+            }
+        }
+    });
+
+});
+$('input[name=email]').blur(function() {
+    var email = $(this).val();
+    var message = "";
+    $.ajax({
+        dataType: "json",
+        cache: false,
+        data: {
+            query: email,
+            column:  2
+        },
+        url: $.jummp.createLink("usermanagement", "lookupUser"),
+        success: function(response) {
+            message = response[0];
+            if (message.trim()) {
+                message = "A user with this email address " + message.trim() + " already exists in our database. Please use a different one."
+                showNotification(message);
+            }
+        }
+    });
+});
+$('input[name=orcid]').change(function() {
+    var orcid = $(this).val();
+    var message = "";
+    if (orcid.match(orcidRegExp)) {
+        // look it up in the database
+        $.ajax({
+            dataType: "json",
+            cache: false,
+            data: {
+                query: orcid,
+                column: 3
+            },
+            url: $.jummp.createLink("usermanagement", "lookupUser"),
+            success: function(response) {
+                message = response[0];
+                if (message.trim()) {
+                    message = "Someone with this ORCID is already registered in our database.";
+                    showNotification(message);
+                }
+            }
+        });
+    } else {
+        message = "The ORCID provided is not valid";
+        //"<g:message code="net.biomodels.jummp.webapp.RegistrationCommand.orcid.validator.error"/>";
+    }
+    if (message.trim() !== "") {
+        showNotification(message);
+    }
+});

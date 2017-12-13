@@ -204,14 +204,14 @@ class UserService implements IUserService {
      * @param query The username, email or ORCID identifier which is looked up against the database
      * @return A user if it matches the query, or null in the otherwise case
      */
-    @PreAuthorize("isAnonymous()")
+    @PreAuthorize("isAnonymous() or isAuthenticated()")
     User lookupUser(String query, int column) {
         if (column == 1) {
             return User.findByUsername(query)
         } else if (column == 2) {
             return User.findByEmail(query)
         } else {
-            // column == 3 --> search Person by ORCHID identifier
+            // column == 3 --> search Person by ORCID identifier
             Person person = Person.findByOrcid(query)
             User user = User.findByPerson(person)
             return user

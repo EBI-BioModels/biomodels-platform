@@ -44,20 +44,7 @@
             <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
                 <g:form name="registerForm" action="signUp" onkeypress="return event.keyCode != 13;">
                     <div class="row column register-form">
-                        <label class="required" for="username"><g:message code="user.signup.ui.username"/></label>
-                        <g:textField name="username" placeholder="Choose an username" required="true" />
-
-                        <label class="required" for="email"><g:message code="user.signup.ui.email"/></label>
-                        <g:textField name="email" placeholder="Enter your email address" required="true" />
-
-                        <label class="required" for="userRealName"><g:message code="user.signup.ui.realname"/></label>
-                        <g:textField name="userRealName" placeholder="Enter your real name" required="true" />
-
-                        <label for="institution"><g:message code="user.signup.ui.institution"/></label>
-                        <g:textField name="institution" placeholder="Enter an institution name where you are working now"/>
-
-                        <label for="orcid"><g:message code="user.signup.ui.orcid"/></label>
-                        <g:textField name="orcid" placeholder="For example, 0000-0002-2876-6046"/>
+                        <g:render template="userInforInput" model="[user: null]"/>
 
                         <label class="required" for="captcha"><g:message code="user.signup.ui.captcha"/></label>
                         <img style="margin-top:0;float:none" src="${createLink(controller: 'simpleCaptcha', action: 'captcha')}"/>
@@ -73,84 +60,7 @@
                 </g:form>
             </div>
         </div>
-        <script type="text/javascript">
-            var orcidRegExp = /^\d{4}-\d{4}-\d{4}-\d{3}(?:\d|X)$/gi;
-            $("#registerForm #resetFormButton").click(function() {
-                $('#registerForm')[0].reset();
-            });
-            $('#registerForm input').on("change input", function() {
-                hideNow();
-            });
-            $('input[name=username]').blur(function() {
-                var username = $(this).val();
-                var message = "";
-                $.ajax({
-                    dataType: "json",
-                    cache: false,
-                    data: {
-                        query: username,
-                        column:  1
-                    },
-                    url: $.jummp.createLink("usermanagement", "lookupUser"),
-                    success: function(response) {
-                        username = response[0];
-                        if (username.trim()) {
-                            message = "A user with this username " + username.trim() + " already exists. Please try another one."
-                            showNotification(message);
-                        }
-                    }
-                });
-
-            });
-            $('input[name=email]').blur(function() {
-                var email = $(this).val();
-                var message = "";
-                $.ajax({
-                    dataType: "json",
-                    cache: false,
-                    data: {
-                        query: email,
-                        column:  2
-                    },
-                    url: $.jummp.createLink("usermanagement", "lookupUser"),
-                    success: function(response) {
-                        message = response[0];
-                        if (message.trim()) {
-                            message = "A user with this email address " + message.trim() + " already exists in our database. Please use a different one."
-                            showNotification(message);
-                        }
-                    }
-                });
-            });
-            $('input[name=orcid]').change(function() {
-                var orcid = $(this).val();
-                var message = "";
-                if (orcid.match(orcidRegExp)) {
-                    // look it up in the database
-                    $.ajax({
-                        dataType: "json",
-                        cache: false,
-                        data: {
-                            query: orcid,
-                            column: 3
-                        },
-                        url: $.jummp.createLink("usermanagement", "lookupUser"),
-                        success: function(response) {
-                            message = response[0];
-                            if (message.trim()) {
-                                message = "Someone with this ORCID is already registered in our database.";
-                                showNotification(message);
-                            }
-                        }
-                    });
-                } else {
-                    message = "<g:message code="net.biomodels.jummp.webapp.RegistrationCommand.orcid.validator.error"/>";
-                }
-                if (message.trim() !== "") {
-                    showNotification(message);
-                }
-            });
-        </script>
+        <script type="application/javascript" src="${resource(dir: 'js', file: 'common.js')}"></script>
     </body>
 </html>
 <content tag="title">
