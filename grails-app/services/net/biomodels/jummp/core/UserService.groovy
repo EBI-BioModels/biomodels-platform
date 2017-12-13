@@ -33,13 +33,14 @@ package net.biomodels.jummp.core
 import net.biomodels.jummp.core.events.LoggingEventType
 import net.biomodels.jummp.core.events.PostLogging
 import net.biomodels.jummp.core.user.*
-import net.biomodels.jummp.model.PublicationPerson
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.acl.AclSid
 import net.biomodels.jummp.plugins.security.Person
 import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.plugins.security.UserRole
+import org.apache.commons.logging.Log
+import org.apache.commons.logging.LogFactory
 import org.perf4j.aop.Profiled
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.access.prepost.PreAuthorize
@@ -59,6 +60,7 @@ import org.springframework.transaction.TransactionStatus
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  */
 class UserService implements IUserService {
+    private static final Log log = LogFactory.getLog(this.getClass())
     /**
      * Dependency injection of springSecurityService
      */
@@ -131,49 +133,38 @@ class UserService implements IUserService {
         springSecurityService.reauthenticate(user.username, newPassword)
     }
 
+    void handleOrcidModification(User newUserData, User existing) {
+        UpdateOrcid updateOrcid = new UpdateOrcid()
+        String oldOrcid = existing.person.orcid
+        String newOrcid = newUserData.person.orcid
+        UpdateOrcidStrategy updateStrategy
+        if (newOrcid) {         /* add/modify ORCID */
+            updateStrategy = new AddOrModifyOrcidStrategy()
+        } else if (oldOrcid) {  /* remove ORCID */
+            updateStrategy =  new RemoveOrcidUserEdit()
+        }
+        if (updateStrategy) {
+            updateOrcid.setStrategy(updateStrategy)
+            updateOrcid.oldUser = existing
+            updateOrcid.newUser = newUserData
+            updateOrcid.update()
+        }
+    }
+
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag = "userService.editUser")
     @PreAuthorize("hasRole('ROLE_ADMIN') or isAuthenticated()") //used to be: authentication.name==#username
     User editUser(User user) throws UserInvalidException {
         checkUserValid(user.username)
         User origUser = User.findByUsername(user.username)
-        if (origUser.person.orcid != user.person.orcid) {
-            Person sameOrcid = Person.findByOrcid(user.person.orcid)
-            if (sameOrcid) {
-                if (User.findByPerson(sameOrcid)) {
-                    log.warn("User ${user.username} tried to register orcid ${user.person.orcid} which is already in use by ${sameOrcid.userRealName}")
-                    throw new UserInvalidException("Someone with this ORCID is already registered in the repository", origUser.id)
-                }
-                else {
-                    Person possiblyNoLongerNeeded = origUser.person
-                    origUser.person = sameOrcid
-                    def anyPublications = PublicationPerson.findByPerson(possiblyNoLongerNeeded)
-                    if (!anyPublications) {
-                        possiblyNoLongerNeeded.delete()
-                    }
-                }
-            }
-            else {
-                def anyPublications = PublicationPerson.findByPerson(origUser.person)
-                if (!anyPublications) {
-                    origUser.person.orcid = user.person.orcid
-                }
-                else {
-                    origUser.person = new Person(orcid: user.person.orcid)
-                }
-            }
-        }
+        handleOrcidModification(user, origUser)
         origUser.person.userRealName = user.person.userRealName
         origUser.person.institution = user.person.institution
         origUser.email = user.email
-        if (!origUser.person.validate()) {
-        	throw new UserInvalidException(user.username)
+        if (!origUser.save(flush: true)) {
+            throw new UserUpdateException("""\
+Cannot persist the user data ${origUser.id} into the database due to ${origUser.errors.allErrors.inspect()}""", origUser.id)
         }
-        if (!origUser.validate()) {
-            throw new UserInvalidException(user.username)
-        }
-        origUser.person.save(flush: true, failOnError: true)
-        origUser.save(flush: true)
         origUser
     }
 
@@ -188,7 +179,7 @@ class UserService implements IUserService {
     @Profiled(tag="userService.getUser")
     @PreAuthorize("hasRole('ROLE_ADMIN') or isAuthenticated()") //used to be: authentication.name==#username
     User getUser(String username) throws UserNotFoundException {
-        //checkUserValid(username)  -> dont need to be admin to get a user by their username anymore, legitimate use case -> model sharing
+        //checkUserValid(username)  -> don't need to be admin to get a user by their username anymore, legitimate use case -> model sharing
         User user = User.findByUsername(username)
         if (!user) {
             throw new UserNotFoundException(username)
@@ -670,5 +661,44 @@ class UserService implements IUserService {
         }
         addRoleToUser(user.id, userRole.id)
         return true
+    }
+
+    static interface UpdateOrcidStrategy {
+        void updateUser(User oldUser, User newUser)
+    }
+
+    static class AddOrModifyOrcidStrategy implements UpdateOrcidStrategy {
+        @Override
+        void updateUser(User oldUser, User newUser) {
+            String orcid4NewUser = newUser.person.orcid
+            Person potential = Person.findByOrcid(orcid4NewUser)
+            if (potential) {
+                if (User.findByPerson(potential)) {
+                    log.warn("""\
+User ${newUser.username} tried to register orcid ${orcid4NewUser} which is already in use by ${potential.userRealName}""")
+                    throw new UserInvalidException("Someone with this ORCID (${orcid4NewUser}) is already registered in the repository", oldUser.id)
+                } else {
+                    oldUser.person = potential
+                }
+            } else {
+                oldUser.person.orcid = orcid4NewUser
+            }
+        }
+    }
+
+    static class RemoveOrcidUserEdit implements UpdateOrcidStrategy {
+        void updateUser(User oldUser, User newUser) {
+            oldUser.person.orcid = null
+        }
+    }
+
+    class UpdateOrcid {
+        UpdateOrcidStrategy strategy
+        User oldUser
+        User newUser
+
+        void update() {
+            this.strategy.updateUser(oldUser, newUser)
+        }
     }
 }
