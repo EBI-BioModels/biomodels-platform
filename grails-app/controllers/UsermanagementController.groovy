@@ -312,7 +312,7 @@ class UsermanagementController {
      *
      * @return JSON string  the query if an user matches with, or an empty string in otherwise.
      */
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY", "IS_AUTHENTICATED_FULLY"])
     def lookupUser() {
         String query = params?.query
         int column = Integer.parseInt(params?.column)
