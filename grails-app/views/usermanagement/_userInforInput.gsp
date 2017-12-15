@@ -1,5 +1,11 @@
 <label class="required" for="username"><g:message code="user.signup.ui.username"/></label>
-<g:textField name="username" value="${user?.username}" placeholder="Choose an username" required="true" />
+<g:if test="${user}"> <!-- case: edit user, the username should be readonly -->
+    <g:textField name="username" value="${user.username}" placeholder="Choose an username" readonly="true"/>
+</g:if>
+<g:else>
+    <g:textField name="username" placeholder="Choose an username" required="true" />
+</g:else>
+
 
 <label class="required" for="email"><g:message code="user.signup.ui.email"/></label>
 <g:textField name="email" value="${user?.email}" placeholder="Enter your email address" required="true" />
