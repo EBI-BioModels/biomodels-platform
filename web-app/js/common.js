@@ -121,6 +121,8 @@ $('input[name=username]').blur(function() {
                 }
             }
         });
+    } else {
+        hideNow();
     }
 });
 $('input[name=email]').blur(function() {
@@ -143,9 +145,11 @@ $('input[name=email]').blur(function() {
                 }
             }
         });
+    } else {
+        hideNow();
     }
 });
-$('input[name=orcid]').change(function() {
+$('input[name=orcid]').blur(function() {
     var orcid = $(this).val().trim();
     if (orcid !== currentOrcid) {
         var message = "";
@@ -174,5 +178,7 @@ $('input[name=orcid]').change(function() {
         if (message.trim() !== "") {
             showNotification(message);
         }
+    } else {
+        hideNow();
     }
 });
