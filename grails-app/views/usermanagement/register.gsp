@@ -60,6 +60,13 @@
                 </g:form>
             </div>
         </div>
+        <g:javascript>
+            // define the variables tighted on the working user for later usages in common.js
+            var currentUsername = "";
+            var currentEmail = "";
+            var currentRealName = "";
+            var currentOrcid = "";
+        </g:javascript>
         <script type="application/javascript" src="${resource(dir: 'js', file: 'common.js')}"></script>
     </body>
 </html>
