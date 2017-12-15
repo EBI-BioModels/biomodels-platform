@@ -8,7 +8,7 @@
 
 
 <label class="required" for="email"><g:message code="user.signup.ui.email"/></label>
-<g:textField name="email" value="${user?.email}" placeholder="Enter your email address" required="true" />
+<g:field type="email" name="email" value="${user?.email}" placeholder="Enter your email address" required="true" />
 
 <label class="required" for="userRealName"><g:message code="user.signup.ui.realname"/></label>
 <g:textField name="userRealName" value="${user?.person?.userRealName}" placeholder="Enter your real name" required="true" />
