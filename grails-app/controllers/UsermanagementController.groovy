@@ -316,7 +316,7 @@ class UsermanagementController {
     def lookupUser() {
         String query = params?.query
         int column = Integer.parseInt(params?.column)
-        def user = userService.lookupUser(query, column)
+        User user = userService.lookupUser(query, column)
         String response = ""
         if (user) {
             response = query

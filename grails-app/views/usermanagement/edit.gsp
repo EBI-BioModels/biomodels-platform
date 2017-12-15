@@ -74,6 +74,13 @@
         </div>
         </div>
         </div>
+        <g:javascript>
+            // define the current user variables for later usages in common.js
+            var currentUsername = "${user.username}";
+            var currentEmail = "${user.email}";
+            var currentRealName = "${user.person.userRealName}";
+            var currentOrcid = "${user.person.orcid}";
+        </g:javascript>
         <script type="application/javascript" src="${resource(dir: 'js', file: 'common.js')}"></script>
    </body>
 </html>
