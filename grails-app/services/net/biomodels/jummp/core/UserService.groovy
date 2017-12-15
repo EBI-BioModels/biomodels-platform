@@ -673,7 +673,8 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
             String orcid4NewUser = newUser.person.orcid
             Person potential = Person.findByOrcid(orcid4NewUser)
             if (potential) {
-                if (User.findByPerson(potential)) {
+                User user = User.findByPerson(potential)
+                if (user && user != oldUser) {
                     log.warn("""\
 User ${newUser.username} tried to register orcid ${orcid4NewUser} which is already in use by ${potential.userRealName}""")
                     throw new UserInvalidException("Someone with this ORCID (${orcid4NewUser}) is already registered in the repository", oldUser.id)
