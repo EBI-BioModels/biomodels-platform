@@ -514,13 +514,15 @@ class ModelController {
                 final String USERNAME = getUsername()
                 final String AUDIT_ID = session.result_submission
                 updateHistory(AUDIT_ID, USERNAME, "create", "html", null, true)
+                //final String biomodelsCuraMailingList = "biomodels-cura@ebi.ac.uk"
+                final String biomodelsCuraMailingList = "tungnvn@gmail.com"
                 final String submitterEmail = getUserEmailAddress()
                 if (submitterEmail && USERNAME) {
                     String model = session.result_submission
                     def notification = [
                             model: modelDelegateService.getModel(model),
                             user: springSecurityService.currentUser,
-                            email: submitterEmail]
+                            emails: [biomodelsCuraMailingList, submitterEmail]]
                     sendMessage("seda:model.create", notification)
                 }
             }.to "displayConfirmationPage"

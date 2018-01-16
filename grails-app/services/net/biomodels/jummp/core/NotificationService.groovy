@@ -124,18 +124,50 @@ class NotificationService {
     }
 
     void modelCreated(def body) {
-        // email notification to the submitter
         ModelTransportCommand model = body.model
-        User user = body.user
-        String userRealName = user.person.userRealName
+        User submitter = body.user
+        String submitterRealName = submitter.person.userRealName
+        String submitterEmail = submitter.email
+        String emailTo
         String emailFrom = grailsApplication.config.jummp.security.registration.email.sender //"biomodels-cura@ebi.ac.uk"
-        String emailTo = body.email
-        String emailSubject = "Your submission to BioModels: ${model.submissionId}"
+        String emailSubject
         String emailBody
 
+        /* email notification to the curators' mailing list */
+        emailTo = body.emails[0]
+        emailSubject = "New model submission: ${model.id} -- ${model.submissionId}"
+        StringBuilder curatorMailContent = new StringBuilder()
+        curatorMailContent.append("A new model has been submitted: ${model.id}")
+        curatorMailContent.append("\n\nName:\nz\t")
+        curatorMailContent.append(model.name)
+        curatorMailContent.append("\nSubmitter:\n\t")
+        if (submitterRealName) {
+            curatorMailContent.append(submitterRealName)
+        }
+        curatorMailContent.append(" (${submitterEmail})")
+        curatorMailContent.append("\n\nRelated publication:\n")
+
+        curatorMailContent.append("\n\nSubmission time:\n\t")
+        GregorianCalendar cal = new GregorianCalendar()
+        curatorMailContent.append(cal.getTime())
+        curatorMailContent.append("\n\n---")
+        curatorMailContent.append("\nBioModels")
+        curatorMailContent.append("\nhttps://www.ebi.ac.uk/biomodels/")
+        curatorMailContent.append("\nTwitter: @biomodels\n")
+        emailBody = curatorMailContent.toString()
+        mailService.sendMail {
+            to emailTo
+            from emailFrom
+            subject emailSubject
+            text emailBody
+        }
+
+        // email notification to the submitter
+        emailTo = body.emails[1]
+        emailSubject = "Your submission to BioModels: ${model.submissionId}"
         StringBuilder submitterMailContent = new StringBuilder()
-        if (null != userRealName) {
-            submitterMailContent.append("Dear $userRealName,\n\n")
+        if (null != submitterRealName) {
+            submitterMailContent.append("Dear $submitterRealName,\n\n")
         } else {
             submitterMailContent.append("Dear submitter,\n\n")
         }
@@ -171,7 +203,7 @@ class NotificationService {
 
         submitterMailContent.append("\n\n-- ")
         submitterMailContent.append("\nBioModels")
-        submitterMailContent.append("\nhttp://www.ebi.ac.uk/biomodels/")
+        submitterMailContent.append("\nhttps://www.ebi.ac.uk/biomodels/")
         submitterMailContent.append("\nTwitter: @biomodels\n")
 
         emailBody = submitterMailContent.toString()
