@@ -24,25 +24,68 @@
 
 <div id="OmicsDISchemaXMLeditor" class="editor">
     <h2>Options</h2>
-    <h3>How to save information</h3>
-    <g:radioGroup name="howToSaveFile"
-                  labels="['The whole database will be exported in a file.',
-                           'Each model will be accommodated in a file.']"
-                  values="[1,2]">
-        <span>${it.radio} ${it.label}<br/></span>
-    </g:radioGroup>
-    <h3>How to generate</h3>
-    <button class="button" type="button"
-            onclick="<g:remoteFunction controller="Omicsdi"
-                                       action="exportOmicsdiEntriesWithIndexer"
-                                       name="exportButton" update="schemaXmlContent"
-                                       asynchronous="false"/>">Export OmicsDI entries via JummpIndexer right now</button>
-    <br/>
-    <button class="button" type="button" onclick="<g:remoteFunction controller="Omicsdi"
-                                       action="exportOmicsdiEntriesWithIndexer"
-                                       name="delegateButton" update="schemaXmlContent"
-                                       asynchronous="false"/>">Schedule the indexing process via JummpIndexer and QuartzScheduler</button>
-    <h2>Content of OmicsDI Schema XML file(s)</h2>
-    <g:textArea id="schemaXmlContent" name="omicsdiSchemaXML" cols="100" rows="15">
-    </g:textArea>
+    <h3>How to export OmicsDI XML file(s)</h3>
+    <input type="radio" name="howToExportFile" value="1" checked> All models of the whole database will be exported in an XML file.<br>
+    <input type="radio" name="howToExportFile" value="2"> Multiple models will be accommodated in an XML file.
+    <div id="nbEntries" class="small-12 medium-6">
+        <label>How many models are exported in each XML file?<input type="number" id="numberEntriesOnEachFile" width="10%"/></label>
+    </div>
+    <h3>How to launch the job</h3>
+    <button class="button" type="button" id="btnExport">Export OmicsDI entries via JummpIndexer right now</button>
+    %{--<button class="button" type="button" id="delegateButton">Schedule the indexing process via JummpIndexer and QuartzScheduler</button>--}%
+    %{--<h2>Content of OmicsDI Schema XML file(s)</h2>
+    <g:textArea id="schemaXmlContent" name="omicsdiSchemaXML" cols="100" rows="15"></g:textArea>--}%
 </div>
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('#nbEntries').hide();
+    });
+    var element = $('input[name="howToExportFile"]');
+    var res = element.filter(function() {
+        return this.checked;
+    });
+    // when select option 2, need to enter the number of file
+    var option = 1;
+    var nbEntriesPerFile = '';
+    $('input[name="howToExportFile"]').click(function () {
+        option = $(this).val();
+        if (option === "2") {
+            $('#numberEntriesOnEachFile').prop('required', true);
+            $('#nbEntries').show();
+        } else {
+            $('#numberEntriesOnEachFile').val('');
+            $('#numberEntriesOnEachFile').removeAttr('required');
+            $('#nbEntries').hide();
+        }
+    });
+    $('#btnExport').click(function () {
+        console.log("selected the option " + option);
+        if (option === "2") {
+            var nbFiles = $('#numberEntriesOnEachFile').val();
+            if (nbFiles === '') {
+                showNotification("Please enter a positive integer number.");
+                $('#numberEntriesOnEachFile').focus();
+                return false;
+            } else {
+                nbEntriesPerFile = nbFiles;
+            }
+        }
+        $.ajax({
+            dataType: "json",
+            cache: false,
+            data: {
+                howToExportFile: option,
+                numberEntriesOnEachFile: $('#numberEntriesOnEachFile').val()
+            },
+            url: $.jummp.createLink("Omicsdi", "exportOmicsdiEntriesWithIndexer"),
+            success: function (response) {
+                message = response[0];
+                if (message.trim()) {
+                    message = message.trim();
+                    showNotification(message);
+                    /*$('#schemaXmlContent').val(message);*/
+                }
+            }
+        });
+    });
+</script>

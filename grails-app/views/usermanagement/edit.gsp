@@ -35,31 +35,7 @@
             <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
 			<g:form action="editUser">
                 <h2>Update user information</h2>
-                <label for="edit-user-username">
-                    <span class="required"><g:message code="user.administration.ui.username"/></span>
-                    <input type="text" id="edit-user-username" name="username" value="${user.username}" />
-                </label>
-                <label for="edit-user-userrealname">
-                    <span class="required"><g:message code="user.administration.ui.realname"/></span>
-                    <input type="text" id="edit-user-userrealname" name="userRealName"
-                           value="${user.person.userRealName}" required />
-                </label>
-                <label for="edit-user-email">
-                    <span class="required"><g:message code="user.administration.ui.email"/></span>
-                    <input type="text" id="edit-user-email" name="email"
-                           value="${user.email}" required/>
-                </label>
-                <label for="edit-user-institution">
-                    <g:message code="user.administration.ui.institution"/>
-                    <input type="text" id="edit-user-institution" name="institution"
-                           value="${user.person.institution}"/>
-                </label>
-                <label for="edit-user-orcid"><g:message code="user.administration.ui.orcid"/>
-                    <input type="text" id="edit-user-orcid" name="orcid"
-                           value="${user.person.orcid}"/>
-                </label>
-
-
+                <g:render template="userInforInput" model="[user: user]"/>
 				<h2>Notifications</h2>
 				<table class="responsive-table">
 					<thead>
@@ -98,6 +74,14 @@
         </div>
         </div>
         </div>
+        <g:javascript>
+            // define the current user variables for later usages in common.js
+            var currentUsername = "${user.username}";
+            var currentEmail = "${user.email}";
+            var currentRealName = "${user.person.userRealName}";
+            var currentOrcid = "${user.person.orcid}";
+        </g:javascript>
+        <script type="application/javascript" src="${resource(dir: 'js', file: 'common.js')}"></script>
    </body>
 </html>
 <content tag="title">

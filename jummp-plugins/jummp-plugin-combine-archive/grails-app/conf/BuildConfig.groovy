@@ -55,13 +55,13 @@ grails.project.dependency.resolution = {
             mavenRepo "${System.getenv('JUMMP_ARTIFACTORY_URL')}"
         }
         grailsCentral()
-        mavenLocal()
+        mavenRepo("http://mvn.sems.uni-rostock.de/releases/")
         mavenCentral()
         mavenRepo "http://www.ebi.ac.uk/~maven/m2repo"
         mavenRepo "http://www.ebi.ac.uk/~maven/m2repo_snapshots/"
     }
     dependencies {
-        compile("org.mbine.co:libCombineArchive:0.1-SNAPSHOT") {
+        compile("org.mbine.co:libCombineArchive:0.1") { 
             excludes 'junit', 'slf4j-api', 'slf4j-log4j12', 'jmock-junit4'
         }
         compile "de.unirostock.sems:CombineExt:1.2.4"

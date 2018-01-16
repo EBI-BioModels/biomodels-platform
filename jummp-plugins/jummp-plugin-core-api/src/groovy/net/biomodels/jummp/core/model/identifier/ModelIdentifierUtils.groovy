@@ -43,6 +43,8 @@ import org.apache.commons.logging.LogFactory
 import org.apache.tomcat.jdbc.pool.DataSource
 import org.apache.tomcat.jdbc.pool.PoolProperties
 
+import java.util.regex.Pattern
+
 /**
  * @short Helper class containing methods for interacting with model id scheme settings.
  *
@@ -156,6 +158,26 @@ The configuration settings lack the rules for generating model identifiers!"""
             log.error e
             throw new Exception(e)
         }
+
+        boolean shouldComputeRegexes = true
+        def regexSetting = idSettings.remove("regex")
+        if (regexSetting instanceof String) {
+            if (!regexSetting?.trim()) {
+                throw new IllegalArgumentException("Invalid configuration value for the model \
+identifier regex. Remove it if you want it to be automatically generated from the settings.")
+            }
+            shouldComputeRegexes = false
+            String modelIdentifierSchemePattern
+            try {
+                modelIdentifierSchemePattern = Pattern.compile regexSetting
+            } catch (Exception ignore) {
+                throw new IllegalArgumentException("w-t-f $regexSetting ?!!")
+            }
+            if (IS_DEBUG_ENABLED) {
+                log.debug "Using model identifier regex $modelIdentifierSchemePattern"
+            }
+            MODEL_ID_REGEXES.add(modelIdentifierSchemePattern)
+        }
         idSettings.each { name, cfg ->
             final String BEAN_NAME = "${name}${GENERATOR_BEAN_SUFFIX}"
             if (generatorBeans[BEAN_NAME]) {
@@ -164,12 +186,12 @@ The configuration settings lack the rules for generating model identifiers!"""
                 throw new Exception(err)
             }
             final String PROPERTY_NAME = "${name}Id"
-            final String LAST_ID_FROM_THIS_GENERATOR
+            final String LAST_ID_FROM_THIS_GENERATOR = null
             if (mostRecentModelDetails?.containsKey(PROPERTY_NAME)) {
                 LAST_ID_FROM_THIS_GENERATOR = mostRecentModelDetails[PROPERTY_NAME]
             }
-            Set<OrderedModelIdentifierDecorator> decorators =
-                        buildDecoratorsFromSettings(cfg, LAST_ID_FROM_THIS_GENERATOR)
+            Set<OrderedModelIdentifierDecorator> decorators = buildDecoratorsFromSettings(
+                    cfg, LAST_ID_FROM_THIS_GENERATOR, shouldComputeRegexes)
             ModelIdentifierGenerator generator = new DefaultModelIdentifierGenerator(decorators)
             generatorBeans[BEAN_NAME] = generator
         }
@@ -245,7 +267,7 @@ The configuration settings lack the rules for generating model identifiers!"""
      * initial values.
      */
     private static TreeSet<OrderedModelIdentifierDecorator> buildDecoratorsFromSettings(
-                ConfigObject c, String mostRecentId = null) {
+                ConfigObject c, String mostRecentId = null, boolean shouldComputeRegexes = true) {
         ModelIdentifierPartitionManager partitionManager =
                     new ModelIdentifierPartitionManager(c, mostRecentId)
         TreeSet<OrderedModelIdentifierDecorator> decorators = new TreeSet()
@@ -261,6 +283,7 @@ The configuration settings lack the rules for generating model identifiers!"""
                 log.warn "ModelIdentifierPartition ${p.dump()} is not valid!"
                 throw new Exception("Incorrect model identifier settings: ${p.properties}")
             }
+
             String partitionRegex
             switch(p) {
                 case DateModelIdentifierPartition:
@@ -269,18 +292,21 @@ The configuration settings lack the rules for generating model identifiers!"""
                     d = new DateAppendingDecorator(i, format)
                     // don't lose the last value used by this decorator
                     d.nextValue.set(p.value)
-                    partitionRegex = ModelIdentifierPartitionRegexFactory.forDatePartition format
+                    if (shouldComputeRegexes)
+                        partitionRegex = ModelIdentifierPartitionRegexFactory.forDatePartition format
                     break
                 case ChecksumModelIdentifierPartition:
                     char sep = ChecksumAppendingDecorator.DEFAULT_SEPARATOR
                     d = new ChecksumModelIdentifierPartition(i, sep)
-                    partitionRegex = ModelIdentifierPartitionRegexFactory.forChecksumPartition(sep)
+                    if (shouldComputeRegexes)
+                        partitionRegex = ModelIdentifierPartitionRegexFactory.forChecksumPartition(sep)
                     //no need to update the value of the checksum
                     break
                 case LiteralModelIdentifierPartition:
                     String suffix = p.value
                     d = new FixedLiteralAppendingDecorator(i, suffix)
-                    partitionRegex = ModelIdentifierPartitionRegexFactory.forLiteral suffix
+                    if (shouldComputeRegexes)
+                        partitionRegex = ModelIdentifierPartitionRegexFactory.forLiteral suffix
                     // this is a fixed decorator, so nextValue does not need updating
                     break
                 case NumericalModelIdentifierPartition:
@@ -293,7 +319,8 @@ The configuration settings lack the rules for generating model identifiers!"""
                         // trigger decorator update
                         d.lastUsedSuffix.set(suffix)
                     }
-                    partitionRegex = ModelIdentifierPartitionRegexFactory.forNumericalPartition width
+                    if (shouldComputeRegexes)
+                        partitionRegex = ModelIdentifierPartitionRegexFactory.forNumericalPartition width
                     break
                 default:
                     partitionRegex = null
@@ -305,7 +332,8 @@ The configuration settings lack the rules for generating model identifiers!"""
                 log.debug "Created ${d.dump()} based on partition ${p.dump()}"
             }
             decorators.add d
-            regexForThisIdentifier.append partitionRegex
+            if (shouldComputeRegexes)
+                regexForThisIdentifier.append partitionRegex
         }
         boolean haveVariableDecorator = decorators.find{ it.isFixed() == false } != null
         if (!haveVariableDecorator) {
@@ -317,7 +345,9 @@ Consider introducing variable digit patterns or dates into the identifier scheme
     jummp.model.id.submission.partN.width=10"""
             throw new Exception(err)
         }
-        MODEL_ID_REGEXES.add regexForThisIdentifier.toString()
+        if (shouldComputeRegexes) {
+            MODEL_ID_REGEXES.add regexForThisIdentifier.toString()
+        }
 
         if (IS_DEBUG_ENABLED) {
             log.debug "Identifier settings ${c.inspect()} converted to ${decorators.inspect()} and regex $regexForThisIdentifier"

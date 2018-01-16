@@ -223,6 +223,7 @@ def modelFileFormatService
 def userService
 def springSecurityService
 def aclUtilService
+def camelContext
 
 /**
  * Expected contents of a typical folder for literature-based models
@@ -599,15 +600,20 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
     // inject applicationContext in POGOs that expect it
     decorator.context = appCtx
     rtc.context = appCtx
-    sessionFactory = appCtx.sessionFactory
-    modelService = appCtx.modelService
-    modelFlagService = appCtx.modelFlagService
-    publicationService = appCtx.publicationService
-    pubMedService = appCtx.pubMedService
-    modelFileFormatService = appCtx.modelFileFormatService
-    userService = appCtx.userService
-    springSecurityService = appCtx.springSecurityService
-    aclUtilService = appCtx.aclUtilService
+
+    // obtain references to singleton services
+    sessionFactory          = appCtx.sessionFactory
+    modelService            = appCtx.modelService
+    modelFlagService        = appCtx.modelFlagService
+    publicationService      = appCtx.publicationService
+    pubMedService           = appCtx.pubMedService
+    modelFileFormatService  = appCtx.modelFileFormatService
+    userService             = appCtx.userService
+    springSecurityService   = appCtx.springSecurityService
+    aclUtilService          = appCtx.aclUtilService
+    camelContext            = appCtx.camelContext
+    // wait for the indexing jobs to complete before stopping Camel
+    camelContext.shutdownStrategy.setTimeout(Long.MAX_VALUE)
 }
 
 // keep track of the number of models that are processed
@@ -628,21 +634,23 @@ target(main: "Puts everything together to import models from a given folder") {
     /* run batch importer sequentially */
     for (File f: modelFolder.listFiles()) {
         boolean tobeProcessed
-        boolean isBigModel = bigModelsIgnored.contains(f.name)
-        if (!bigModelsIgnored) {
-            /* when no big models are precised, we need to import all */
+        if (excludeBigModels) {
+            boolean isBigModel = !bigModelsIgnored?.isEmpty() && bigModelsIgnored.contains(f.name)
+            if (isBigModel) {
+                tobeProcessed = false
+            }
+        } else {
+            // process the model folder regardless of its size
             tobeProcessed = true
-        } else  {
-            /* when excludeBigModels flag is indicated Y, the big model should be ignored */
-            tobeProcessed = (excludeBigModels) ? !isBigModel : isBigModel
         }
-	boolean existed = modelsImported.contains(f.name)
-        if (f.isDirectory() && f.name ==~ modelFolderPattern && tobeProcessed & !existed) {
+
+        boolean existed = modelsImported.contains(f.name)
+        if (f.isDirectory() && f.name ==~ modelFolderPattern && tobeProcessed && !existed) {
             processModelFolder f
         }
-	if (existed) {
-	  addModelError(f.name, "The model was already imported!")
-	}
+        if (existed) {
+            addModelError(f.name, "The model was already imported!")
+        }
     }
 
     /* run batch importer concurrently */
@@ -671,6 +679,19 @@ target(main: "Puts everything together to import models from a given folder") {
 
     // import MoM entries if they have not been imported
     processModelOfTheMonth()
+
+    // wait for pending indexing jobs to complete before stopping
+    def indexRequestDispatcher = camelContext.routes.find {
+        // we use seda:exec to invoke the indexer
+        it.consumer.endpoint.endpointKey.startsWith("seda://exec")
+    }.consumer
+
+    int pendingIndexingJobs = indexRequestDispatcher.pendingExchangesSize
+    while (pendingIndexingJobs > 0) {
+        log("Waiting for ${pendingIndexingJobs} models to be indexed...")
+        Thread.sleep(30000)
+        pendingIndexingJobs = indexRequestDispatcher.pendingExchangesSize
+    }
 
     duration = (System.currentTimeMillis() - duration) / 1000 /* duration in ms */
     String formattedDuration = prettify(duration)
@@ -1239,7 +1260,6 @@ target(closeDataSources: "Close any active database connections") {
 }
 
 target(closeCamel: "Shuts down the Camel instance, awaiting for current messages to be delivered") {
-    def camelContext = appCtx.camelContext
     duration = System.currentTimeMillis()
     camelContext.shutdown()
     duration = (System.currentTimeMillis() - duration) / 1000

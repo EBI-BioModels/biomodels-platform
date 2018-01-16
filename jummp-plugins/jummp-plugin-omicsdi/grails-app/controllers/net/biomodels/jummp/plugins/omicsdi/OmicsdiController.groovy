@@ -24,6 +24,7 @@
 
 package net.biomodels.jummp.plugins.omicsdi
 
+import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 
 @Secured(["hasRole('ROLE_ADMIN')"])
@@ -43,7 +44,12 @@ class OmicsdiController {
         if (IS_INFO_ENABLED) {
             log.info "Delegating this work to JummpIndexer."
         }
-        omicsdiService.exportOmicsdiEntries()
-        render "Sent the request to JummpIndexer"
+        String allowMultipleFilesParam = (params.howToExportFile == "1") ? "false" : "true"
+        def options = [
+            'allowMultipleFiles': allowMultipleFilesParam,
+            'numberEntriesOnEachFile': params.numberEntriesOnEachFile
+        ]
+        omicsdiService.exportOmicsdiEntries(options)
+        render(["Sent the request to JummpIndexer with the options ${options}"] as JSON)
     }
 }

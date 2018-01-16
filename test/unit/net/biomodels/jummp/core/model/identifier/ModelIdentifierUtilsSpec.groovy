@@ -80,7 +80,7 @@ class ModelIdentifierUtilsSpec {
         try {
             ModelIdentifierUtils.processGeneratorSettings(settings)
             fail("The previous call should have thrown an exception.")
-        } catch(Exception e) {
+        } catch (Exception e) {
             String expected = """\
 The configuration settings lack the rules for generating model identifiers!"""
             assertEquals(expected, e.message)
@@ -100,7 +100,7 @@ The configuration settings lack the rules for generating model identifiers!"""
         try {
             ModelIdentifierUtils.processGeneratorSettings(settings)
             fail("The previous call should have thrown an exception.")
-        } catch(Exception e) {
+        } catch (Exception e) {
             String expected = """\
 Model id part order invalid: Expected part1, not part2. Please review the settings for jummp.model.id and ensure that the defined identifier parts are in consecutive order."""
             assertEquals(expected, e.message)
@@ -120,7 +120,7 @@ Model id part order invalid: Expected part1, not part2. Please review the settin
         try {
             ModelIdentifierUtils.processGeneratorSettings(settings)
             fail("The previous call should have thrown an exception.")
-        } catch(Exception e) {
+        } catch (Exception e) {
             String expected = "Unknown model id part type for part1: unknown"
             assertEquals(expected, e.message)
         }
@@ -156,8 +156,8 @@ Model id part order invalid: Expected part1, not part2. Please review the settin
         ConfigObject settings = new ConfigSlurper().parse(conf)
         def results = ModelIdentifierUtils.processGeneratorSettings(settings)
         assertNotNull results
-        def generators = [ 'submissionIdGenerator' : DefaultModelIdentifierGenerator.class,
-                    'publicationIdGenerator' : NullModelIdentifierGenerator.class
+        def generators = ['submissionIdGenerator' : DefaultModelIdentifierGenerator.class,
+                          'publicationIdGenerator': NullModelIdentifierGenerator.class
         ]
         assertEquals generators.keySet(), results.keySet()
         assertEquals generators.size(), results.size()
@@ -184,8 +184,8 @@ Model id part order invalid: Expected part1, not part2. Please review the settin
         assertEquals WIDTH, numericalDecorator.WIDTH
         assertEquals "0".padLeft(12, '0'), numericalDecorator.nextValue.get()
         assertEquals 1, ModelIdentifierUtils.MODEL_ID_REGEXES.size()
-        assertEquals "MODEL\\d{2}?\\d{2}?\\d{2}?\\d{12}?",
-                ModelIdentifierUtils.MODEL_ID_REGEXES.first()
+        assertEquals "\\QMODEL\\E\\d{2}?\\d{2}?\\d{2}?\\d{12}?",
+            ModelIdentifierUtils.MODEL_ID_REGEXES.first()
 
         ModelIdentifierUtils.MODEL_ID_REGEXES.add("BIOMD\\d{10}")
         String p = ModelIdentifierUtils.MODEL_ID_REGEXES.join('|')
@@ -201,7 +201,7 @@ Model id part order invalid: Expected part1, not part2. Please review the settin
             assertTrue(e instanceof Exception)
             String firstLine = e.message.split(System.properties["line.separator"])[0]
             String expected = "The settings for the model identification scheme are missing."
-            assertEquals expected, firstLine
+            assertTrue e.message.startsWith(expected)
         }
     }
 
@@ -309,11 +309,72 @@ Model id part order invalid: Expected part1, not part2. Please review the settin
         ConfigObject submissionSettings = settings.model.id.submission
         try {
             def result = ModelIdentifierUtils.buildDecoratorsFromSettings(submissionSettings,
-                    "MODEL6687654321")
+                "MODEL6687654321")
             assertNotNull result
             println result.properties
         } catch (Exception e) {
             fail("Should have not encountered an exception while processing MODEL6687654321: $e")
         }
+    }
+
+    void testExplicitSettingOfModelIdentifierRegex() {
+        def conf = '''
+            model {
+                id {
+                    submission {
+                        part1 {
+                            type = "literal"
+                            suffix = "MYMODEL"
+                        }
+                        part2 {
+                            type = "numerical"
+                            fixed = "false"
+                            width = "22"
+                        }
+                    }
+                    regex = "MYMODEL\\\\d{22}"
+                }
+            }
+            database {
+                username = "sa"
+                password = ""
+                type = "h2"
+                // fall back to an in-memory H2 database instance
+            }
+        '''
+        ConfigObject config = new ConfigSlurper().parse(conf)
+        ModelIdentifierUtils.processGeneratorSettings(config)
+        assertEquals 1, ModelIdentifierUtils.MODEL_ID_REGEXES.size()
+        assertEquals "MYMODEL\\d{22}", ModelIdentifierUtils.MODEL_ID_REGEXES.first()
+    }
+
+    @Test(expected = IllegalArgumentException)
+    void testInvalidRegexSetting() {
+        def conf = '''
+            model {
+                id {
+                    submission {
+                        part1 {
+                            type = "literal"
+                            suffix = "ABC"
+                        }
+                        part2 {
+                            type = "numerical"
+                            fixed = "false"
+                            width = "2"
+                        }
+                    }
+                    regex = "\\\\"
+                }
+            }
+            database {
+                username = "sa"
+                password = ""
+                type = "h2"
+                // fall back to an in-memory H2 database instance
+            }
+        '''
+        ConfigObject config = new ConfigSlurper().parse(conf)
+        ModelIdentifierUtils.processGeneratorSettings(config)
     }
 }

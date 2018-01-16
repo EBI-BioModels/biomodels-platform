@@ -269,7 +269,7 @@ class UsermanagementController {
             log.error e.message, e
    			return redirect(action:"create")
     	}
-    	render view: "successfulregistration"
+    	render(view: "successfulregistration", model: [email: cmd.email])
     }
 
     /**
@@ -302,5 +302,25 @@ class UsermanagementController {
             User user = userService.getUser(username)
             render([user] as JSON)
         }
+    }
+
+    /**
+     * This controller tries to query the database to get the user who is potentially associated
+     * with the fields provided by new users. It is called in the register view where we parse
+     * the input values and come up with a Ajax call to UserService in order to look up them
+     * into the database.
+     *
+     * @return JSON string  the query if an user matches with, or an empty string in otherwise.
+     */
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY", "IS_AUTHENTICATED_FULLY"])
+    def lookupUser() {
+        String query = params?.query
+        int column = Integer.parseInt(params?.column)
+        User user = userService.lookupUser(query, column)
+        String response = ""
+        if (user) {
+            response = query
+        }
+        render([response] as JSON)
     }
 }
