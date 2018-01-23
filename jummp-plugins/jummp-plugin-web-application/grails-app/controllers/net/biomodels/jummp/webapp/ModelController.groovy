@@ -514,8 +514,7 @@ class ModelController {
                 final String USERNAME = getUsername()
                 final String AUDIT_ID = session.result_submission
                 updateHistory(AUDIT_ID, USERNAME, "create", "html", null, true)
-                //final String biomodelsCuraMailingList = "biomodels-cura@ebi.ac.uk"
-                final String biomodelsCuraMailingList = "tungnvn@gmail.com"
+                final String biomodelsCuraMailingList = grailsApplication.config.jummp.model.curators.mailinglist
                 final String submitterEmail = getUserEmailAddress()
                 if (submitterEmail && USERNAME) {
                     String model = session.result_submission
