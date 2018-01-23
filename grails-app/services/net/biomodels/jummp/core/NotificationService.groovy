@@ -35,8 +35,8 @@ package net.biomodels.jummp.core
 
 import grails.transaction.Transactional
 import net.biomodels.jummp.core.model.ModelTransportCommand
+import net.biomodels.jummp.core.model.PublicationTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.plugins.security.Person
 import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.plugins.security.UserRole
@@ -129,89 +129,94 @@ class NotificationService {
         String submitterRealName = submitter.person.userRealName
         String submitterEmail = submitter.email
         String emailTo
-        String emailFrom = grailsApplication.config.jummp.security.registration.email.sender //"biomodels-cura@ebi.ac.uk"
+        String emailFrom = grailsApplication.config.jummp.security.registration.email.sender
         String emailSubject
         String emailBody
 
         /* email notification to the curators' mailing list */
         emailTo = body.emails[0]
-        emailSubject = "New model submission: ${model.id} -- ${model.submissionId}"
-        StringBuilder curatorMailContent = new StringBuilder()
-        curatorMailContent.append("A new model has been submitted: ${model.id}")
-        curatorMailContent.append("\n\nName:\nz\t")
-        curatorMailContent.append(model.name)
-        curatorMailContent.append("\nSubmitter:\n\t")
-        if (submitterRealName) {
-            curatorMailContent.append(submitterRealName)
+        if (emailTo) {
+            emailSubject = "New model submission: ${model.id} -- ${model.submissionId}"
+            StringBuilder curatorMailContent = new StringBuilder()
+            curatorMailContent.append("A new model has been submitted: ${model.id}")
+            curatorMailContent.append("\n\nName:\n\t")
+            curatorMailContent.append(model.name)
+            curatorMailContent.append("\nSubmitter:\n\t")
+            if (submitterRealName) {
+                curatorMailContent.append(submitterRealName)
+            }
+            curatorMailContent.append(" (${submitterEmail})")
+            curatorMailContent.append("\n\nRelated publication:")
+            PublicationTransportCommand ptc = model.publication
+            String pubData = ptc ? ptc.prettierPrint() : "\n\tnot yet published"
+            curatorMailContent.append(pubData)
+            curatorMailContent.append("\n\nSubmission time:\n\t")
+            GregorianCalendar cal = new GregorianCalendar()
+            curatorMailContent.append(cal.getTime())
+            curatorMailContent.append("\n\n---")
+            curatorMailContent.append("\nBioModels")
+            curatorMailContent.append("\nhttps://www.ebi.ac.uk/biomodels/")
+            curatorMailContent.append("\nTwitter: @biomodels\n")
+            emailBody = curatorMailContent.toString()
+            mailService.sendMail {
+                to emailTo
+                from emailFrom
+                subject emailSubject
+                text emailBody
+            }
         }
-        curatorMailContent.append(" (${submitterEmail})")
-        curatorMailContent.append("\n\nRelated publication:\n")
-
-        curatorMailContent.append("\n\nSubmission time:\n\t")
-        GregorianCalendar cal = new GregorianCalendar()
-        curatorMailContent.append(cal.getTime())
-        curatorMailContent.append("\n\n---")
-        curatorMailContent.append("\nBioModels")
-        curatorMailContent.append("\nhttps://www.ebi.ac.uk/biomodels/")
-        curatorMailContent.append("\nTwitter: @biomodels\n")
-        emailBody = curatorMailContent.toString()
-        mailService.sendMail {
-            to emailTo
-            from emailFrom
-            subject emailSubject
-            text emailBody
-        }
-
-        // email notification to the submitter
+        /* email notification to the submitter */
         emailTo = body.emails[1]
-        emailSubject = "Your submission to BioModels: ${model.submissionId}"
-        StringBuilder submitterMailContent = new StringBuilder()
-        if (null != submitterRealName) {
-            submitterMailContent.append("Dear $submitterRealName,\n\n")
-        } else {
-            submitterMailContent.append("Dear submitter,\n\n")
-        }
-        submitterMailContent.append("This is an automatically generated message confirming that you successfully submitted the model named \"")
-        submitterMailContent.append(model.name)
-        submitterMailContent.append("\" to BioModels.\n")
-        submitterMailContent.append("\nThis model is now in the curation pipeline and has been assigned the following submission identifier: ")
-        submitterMailContent.append(model.submissionId)
-        submitterMailContent.append(".\n\n")
+        if (emailTo) {
+            emailSubject = "Your submission to BioModels: ${model.submissionId}"
+            StringBuilder submitterMailContent = new StringBuilder()
+            if (null != submitterRealName) {
+                submitterMailContent.append("Dear $submitterRealName,\n\n")
+            } else {
+                submitterMailContent.append("Dear submitter,\n\n")
+            }
+            submitterMailContent.append("This is an automatically generated message confirming that you successfully submitted the model named \"")
+            submitterMailContent.append(model.name)
+            submitterMailContent.append("\" to BioModels.\n")
+            submitterMailContent.append("\nThis model is now in the curation pipeline and has been assigned the following submission identifier: ")
+            submitterMailContent.append(model.submissionId)
+            submitterMailContent.append(".\n\n")
 
-        // model not yet published
-        submitterMailContent.append("We kindly ask you to add in your manuscript (typically just before or in the Acknowledgements) " +
-            "a sentence mentioning the deposition of your model. For this purpose, you can use the following template:")
-        submitterMailContent.append("\n\n- - - - - -\n")
-        submitterMailContent.append("This model was deposited in BioModels [1] and assigned the identifier ")
-        submitterMailContent.append(model.submissionId)
-        submitterMailContent.append(".")
-        submitterMailContent.append("\n\n[1] Chelliah V et al. BioModels: ten-year anniversary. Nucl. Acids Res. 2015, 43(Database issue):D542-8")
-        submitterMailContent.append("\n- - - - - -")
-        submitterMailContent.append("\n\nThis model will only become publicly available from BioModels when " +
-            "its associated paper has been published. Moreover, it needs to undergo various automated and manually " +
-            "performed curation and annotation processes, to ensure a consistent level of quality and accuracy. " +
-            "In order for us to perform those tasks and ensure a timely publication of your model, it would be helpful " +
-            "if you could provide us an early access to your manuscript.")
-        submitterMailContent.append("\nAlso, it is essential that you inform us of the first (online) publication of " +
-            "your manuscript, otherwise the model will remain inaccessible to readers.")
-        submitterMailContent.append("\n\nFinally, we can provide access to the model for reviewers of your manuscript. " +
-            "Please contact us if you wish to request this service.")
+            // model not yet published
+            submitterMailContent.append("We kindly ask you to add in your manuscript (typically just before or in the Acknowledgements) " +
+                "a sentence mentioning the deposition of your model. For this purpose, you can use the following template:")
+            submitterMailContent.append("\n\n- - - - - -\n")
+            submitterMailContent.append("This model was deposited in BioModels [1] and assigned the identifier ")
+            submitterMailContent.append(model.submissionId)
+            submitterMailContent.append(".")
+            submitterMailContent.append("\n\n[1] Chelliah V et al. BioModels: ten-year anniversary. Nucl. Acids Res. 2015, 43(Database issue):D542-8")
+            submitterMailContent.append("\n- - - - - -")
+            submitterMailContent.append("\n\nThis model will only become publicly available from BioModels when " +
+                "its associated paper has been published. Moreover, it needs to undergo various automated and manually " +
+                "performed curation and annotation processes, to ensure a consistent level of quality and accuracy. " +
+                "In order for us to perform those tasks and ensure a timely publication of your model, it would be helpful " +
+                "if you could provide us an early access to your manuscript.")
+            submitterMailContent.append("\nAlso, it is essential that you inform us of the first (online) publication of " +
+                "your manuscript, otherwise the model will remain inaccessible to readers.")
+            submitterMailContent.append("\n\nFinally, we can provide access to the model for reviewers of your manuscript. " +
+                "Please contact us if you wish to request this service.")
 
-        submitterMailContent.append("\n\nIf you have any query related to this submission, please contact us at " +
-            "biomodels-cura@ebi.ac.uk (quoting the submission identifier of the model) or just reply to this message.")
-        submitterMailContent.append("\n\n\nThank you for submitting your model to BioModels.")
+            submitterMailContent.append("\n\nIf you have any query related to this submission, please contact us at " +
+                "biomodels-cura@ebi.ac.uk (quoting the submission identifier of the model) or just reply to this message.")
+            submitterMailContent.append("\n\n\nThank you for submitting your model to BioModels.")
 
-        submitterMailContent.append("\n\n-- ")
-        submitterMailContent.append("\nBioModels")
-        submitterMailContent.append("\nhttps://www.ebi.ac.uk/biomodels/")
-        submitterMailContent.append("\nTwitter: @biomodels\n")
+            submitterMailContent.append("\n\n-- ")
+            submitterMailContent.append("\nBioModels")
+            submitterMailContent.append("\nhttps://www.ebi.ac.uk/biomodels/")
+            submitterMailContent.append("\nTwitter: @biomodels\n")
 
-        emailBody = submitterMailContent.toString()
-        mailService.sendMail {
-            to emailTo
-            from emailFrom
-            subject emailSubject
-            text emailBody
+            emailBody = submitterMailContent.toString()
+            mailService.sendMail {
+                to emailTo
+                from emailFrom
+                subject emailSubject
+                text emailBody
+            }
         }
     }
 
