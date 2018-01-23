@@ -605,7 +605,7 @@
             <div id="topBar">
                 <div style="float:left;width:75%;">
                     <h2>${revision.name}</h2>
-                    <p><biomd:renderModelOfMonth modelId="${revision.model.id}" /></p>
+                    <p class="readmore button"><biomd:renderModelOfMonth modelId="${revision.model.id}" /></p>
                 </div>
                 <div style="float:right;margin-top:10px;">
                     <g:if test="${!flags.empty}">
