@@ -57,12 +57,12 @@ class BioModelsTagLib {
         }
         def entries = modelOfTheMonthService.fetchEntriesForModel id
         if (entries) {
+            out << '<p class="readmore button">'
             out << "<span>View the Model of the Month entry for this model: </span>"
-        }
-        out << render(collection: entries, template: '/templates/modelOfTheMonth',
+            out << render(collection: entries, template: '/templates/modelOfTheMonth',
                 plugin: 'jummp-plugin-biomodels-dom')
-        // calls momService.fetchEntriesForModel for given modelId
-        // delegates rendering to dedicated template
+            out << "</p>"
+        }
     }
 
     def renderModelFlags = { attrs ->
