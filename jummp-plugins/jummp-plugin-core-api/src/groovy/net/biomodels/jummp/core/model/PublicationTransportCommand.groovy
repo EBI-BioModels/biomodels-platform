@@ -121,11 +121,11 @@ class PublicationTransportCommand implements Serializable {
         Publication publication = Publication.findByLink(link)
         StringBuilder returnedText = new StringBuilder("")
         String linkTypeLabel = linkProvider.linkType
-        returnedText.append("\n${linkTypeLabel}:\n\t")
+        returnedText.append("${linkTypeLabel}:<br/>&emsp;")
         returnedText.append(publication.link)
-        returnedText.append("\nTitle:\n\t")
+        returnedText.append("<br/>Title:<br/>&emsp;")
         returnedText.append(publication.title)
-        returnedText.append("\nAbstract:\n\t")
+        returnedText.append("<br/>Abstract:<br/>&emsp;")
         returnedText.append(publication.synopsis)
         returnedText.toString()
     }
