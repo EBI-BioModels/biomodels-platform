@@ -34,6 +34,7 @@
 package net.biomodels.jummp.core
 
 import grails.transaction.Transactional
+import net.biomodels.jummp.core.model.ModelFormatTransportCommand
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.PublicationTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
@@ -141,6 +142,12 @@ class NotificationService {
             curatorMailContent.append("A new model has been submitted: ${model.id}")
             curatorMailContent.append("\n\nName:\n\t")
             curatorMailContent.append(model.name)
+            curatorMailContent.append("\n\nSubmission identifier:\n\t")
+            curatorMailContent.append(model.submissionId)
+            curatorMailContent.append("\n\nFormat:\n\t")
+            ModelFormatTransportCommand formatTC = model.format
+            String format = "${formatTC.identifier} (${formatTC.name}) (version: ${formatTC.formatVersion})"
+            curatorMailContent.append(format)
             curatorMailContent.append("\nSubmitter:\n\t")
             if (submitterRealName) {
                 curatorMailContent.append(submitterRealName)
