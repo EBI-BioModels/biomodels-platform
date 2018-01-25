@@ -75,8 +75,11 @@ class JummpTagLib {
         StringBuilder row = new StringBuilder();
         row.append("<tr class='prop'>\n\t\t")
         row.append("<td class='value' style='width: 20%'>\n\t\t")
-        row.append("<input type='file' id='mainFile' name='mainFile'>\n\t\t</td>")
-        row.append("<td class='name' style='width: 80%'><input type='text' id='mainFileDescription' name='mainFileDescription' required placeholder='Please enter a description'></td></tr>")
+        row.append("<input type='file' id='mainFile' name='mainFile' class='mainFile'>\n\t\t</td>")
+        row.append("""\
+    <td class='name' style='width: 80%'>
+    <input type='text' id='mainFileDescription' name='mainFileDescription' 
+           placeholder='Please enter a description' required></td></tr>""")
         row.toString()
     }
 
@@ -93,17 +96,28 @@ class JummpTagLib {
             out << result.toString()
             return
         }
-        attrs.main.each { m ->
+        attrs.main.eachWithIndex { m, index ->
             RepositoryFileTransportCommand command = m as RepositoryFileTransportCommand
             String name = new File(command.path).name
             String description = command.description
             result.append("<tr class='prop'>\n\t\t")
             result.append("<td class='value' style='width: 20%'>\n\t\t")
-            result.append("<span id='mainName_").append(name).append("'>").append(name).append("</span></td>\n\t\t")
+            result.append("<span id='mainFile${index}").
+                append("'").append("class='mainFile${index}").
+                append("'").append(">").
+                append(name).
+                append("</span>\n\t\t")
+            result.append("""\
+                <input style='display: none;' type='file' id='mainFile' 
+                       name='mainFile' class='mainFile${index}'/></td>\n\t""")
             result.append("<td style='width: 70%'>")
-            result.append("<input type='text' id='mainFileDescription' name='mainFileDescription' value='${description}' required placeholder='Please enter a description'>\n\t\t")
-            result.append("<input style='display:none;' type='file' id='mainFile' data-labelname='${name}' name='mainFile' class='mainFile'/></td>\n\t")
-            result.append("<td style='width: 10%; text-align: right'><a href='#' class='replaceMain'>Replace</a> | <a href='#' class='removeMain'>Remove</a></td>\n</tr>\n")
+            result.append("""\
+                <input type='text' id='mainFileDescription${index}' class='mainFileDescription${index}' 
+                        name='mainFileDescription' value='${description}' 
+                        placeholder='Please enter a description' required></td>\n\t\t""")
+            result.append("""\
+                <td style='width: 10%; text-align: right'><a href='#' 
+                class='replaceMain'>Replace</a> | <a href='#' class='removeMain'>Remove</a></td>\n</tr>\n""")
         }
         result.append("</tbody></table>")
         out << result.toString()
@@ -119,14 +133,20 @@ class JummpTagLib {
             String name = new File(command.path).name
             out << "<tr class='fileEntry'>\n\t<td class='name' style='width: 20%'>"
             out << name
-            out << "<input style='display:none' type='file' id='additionalFilesExisting' " +
-                   "name='additionalFilesExisting' value='${name}'></td>\n\t"
-            out << "<td class='name' style='width: 70%'>" +
-                   "<input name='description${counter}' id='description${counter}' type='text' value='${command.description ?: ""}' " +
-                   "style='width: 100%; box-sizing: border-box; -webkit-box-sizing: border-box; -moz-box-sizing: border-box;' required></td>\n\t"
-            out << "<td style='width: 10%; vertical-align: middle'><a href='#' class='killer' title='Discard file'>Discard</a></td>\n"
+            out << """\
+                <input style='display: inline' type='file' id='additionalFilesExisting' 
+                name='additionalFilesExisting' value='${name}'></td>\n\t"""
+            out << """\
+                <td class='name' style='width: 70%'>
+                <input name='description${counter}' id='description${counter}' 
+                type='text' value='${command.description ?: ""}' 
+                style='width: 100%; box-sizing: border-box; -webkit-box-sizing: border-box; -moz-box-sizing: border-box;' 
+                required></td>\n\t"""
+            out << """\
+                <td style='width: 10%; vertical-align: middle'><a href='#' class='killer' 
+                title='Discard file'>Discard</a></td>\n"""
             out << "</tr>\n"
-            counter++;
+            counter++
         }
     }
 
