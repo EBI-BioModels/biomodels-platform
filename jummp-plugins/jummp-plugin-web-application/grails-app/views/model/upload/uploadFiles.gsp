@@ -131,8 +131,9 @@
             });
             var nbExtraFiles = 0;
             var numberOfAdditionalsAtLoadingPage = $('input[id^=description]').size();
-            function populateDiv() {
-                descriptionMap.files = []
+
+            function updateAdditionalFilesOnUI() {
+                descriptionMap.files = [];
                 $.each(existingAdditionalFiles, function(index, fileEntry) {
                     // key here is the index, value is the actual value we are interested in
                     var fileName = fileEntry["filename"];
@@ -281,7 +282,7 @@
                         if (existingAdditionalFiles[index].filename == fileName) {
                             existingAdditionalFiles.splice(index, 1);
                         }
-                    populateDiv();
+                    updateAdditionalFilesOnUI();
                 }
                 $(tr).empty();
             });
@@ -302,7 +303,7 @@
                         $(this).attr('value', fileName);
                         var discardID = "discard" + $(this).attr('id');
                         $("#"+discardID).attr('download', fileName);
-                        populateDiv();
+                        updateAdditionalFilesOnUI();
                     }
                 }
             });
@@ -332,7 +333,7 @@
                         return v.filename === fileName;
                     })[0].description = $(this).val();
                 }
-                populateDiv();
+                updateAdditionalFilesOnUI();
             });
 
             $( "#dialog-confirm" ).dialog({
