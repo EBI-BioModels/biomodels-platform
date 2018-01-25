@@ -38,6 +38,15 @@
                 dir: '/css/jqueryui/smoothness', file: 'jquery-ui-1.10.3.custom.min.css')}" />
         </g:if>
         <script type="text/javascript">
+            var descriptionMainMap = { "files": ${workingMemory['main_files'].collect {
+                            RepositoryFileTransportCommand rf ->
+                                String key = new File(rf.path).name
+                                String value = rf.description
+                                [ filename: key, description: value ]
+                        } as JSON}
+            };
+
+            var existingMainFiles = descriptionMainMap["files"];
             var descriptionMap = { "files": ${workingMemory['additional_files'].collect {
                             RepositoryFileTransportCommand rf ->
                                 String key = new File(rf.path).name
