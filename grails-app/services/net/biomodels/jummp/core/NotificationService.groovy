@@ -143,7 +143,7 @@ class NotificationService {
             String format = "${formatTC.identifier} (${formatTC.name}) (version: ${formatTC.formatVersion})"
             String submitterInfo = "${submitterRealName} (${submitterEmail})"
             PublicationTransportCommand ptc = model.publication
-            String pubData = ptc ? ptc.prettierPrint() : "<br/>&emsp;not yet published"
+            String pubData = ptc ? ptc.prettierPrint() : "&emsp;not yet published"
             GregorianCalendar cal = new GregorianCalendar()
             String submissionTime = cal.getTime().toGMTString()
             String[] args = [model.id.toString(), model.name, model.submissionId, format,
