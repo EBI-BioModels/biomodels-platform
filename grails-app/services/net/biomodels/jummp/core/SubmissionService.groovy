@@ -122,20 +122,13 @@ class SubmissionService {
             } else {
                 mainFiles = new HashMap<File, String>()
             }
-//            if (workingMemory.containsKey("submitted_additionals")) {
-//                additionals = workingMemory.remove("submitted_additionals") as Map<File, String>
-//            } else {
-//                additionals = new HashMap<File, String>()
-//            }
-            if (workingMemory.containsKey("additional_files_in_working")) {
-                def additionalFilesInWorking = workingMemory.remove("additional_files_in_working") as HashMap<File, String>
+            if (workingMemory.containsKey("submitted_additionals")) {
+                additionalFiles = workingMemory.remove("submitted_additionals") as HashMap<File, String>
                 List<RFTC> allExtraFilesWorking = new LinkedList<RFTC>()
-                additionalFilesInWorking.each { File key, String value ->
+                additionalFiles.each { File key, String value ->
                     allExtraFilesWorking.add(createRFTC(key, false, value))
                 }
                 workingMemory.put("additional_repository_files_in_working", allExtraFilesWorking)
-                workingMemory.put("additional_files", allExtraFilesWorking)
-                additionalFiles = additionalFilesInWorking
             } else {
                 additionalFiles = new HashMap<File, String>()
             }
