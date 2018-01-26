@@ -756,50 +756,66 @@ Error in uploading files. Cmd did not validate: ${cmd.getProperties()}""")
                         submission_folder = (new File(existing.path)).getParentFile()
                     }
                     def parent = submission_folder.canonicalPath + sep
-                    // transfer uploaded files to File objects:
-                    // For Main file
+
+                    /**
+                     Transfer HashMap<String, String> to HashMap<File, String>
+                     We know that a map of file names with their descriptions
+                     is built at the end of uploadFiles step. This map maintains the newly-updated files
+                     which do not contain the deleted ones. Why do we need to transfer?
+                     we can get the submission folder at this step and
+                     this operation repairs the data for handling file upload afterward.
+                    */
+
+                    // FOR THE MAIN FILES
+                    // Transfer uploaded files to File objects
                     List<File> mainFileList
                     if (cmd.mainFile) {
+                        // main files might be just uploaded
                         mainFileList = transferFiles(parent, cmd.mainFile)
                     }
-                    else {
-                        mainFileList = new LinkedList<File>()
+                    // Build a map of main file objects from the working main files
+                    Map<File, String> mainFilesMap = new HashMap<File, String>()
+                    if (flow.workingMemory.containsKey("mains_in_working")) {
+                        def mains_in_working = flow.workingMemory.get("mains_in_working") as HashMap<String, String>
+                        mains_in_working.each {String keyAsFilename, String valueAsDescription ->
+                            mainFilesMap.put(new File(parent, keyAsFilename), valueAsDescription)
+                        }
+                        flow.workingMemory["submitted_mains"] = mainFilesMap
                     }
-                    // For the extra files, i.e. the files have just added, not the existing
-                    // additional files. This does not allow us modifying the descriptions of
-                    // the existing ones.
-                    List<File> extraFileList = transferFiles(parent, cmd.extraFiles)
-                    List<String> descriptionList = cmd.description
-                    def additionalsMap = [:]
-                    extraFileList.eachWithIndex{ file, i ->
-                        additionalsMap[file] = descriptionList[i]
+                    // FOR THE ADDITIONAL FILES
+                    // Transfer uploaded files to File objects
+                    List<File> extraFileList
+                    if (!cmd.extraFiles?.isEmpty()) {
+                        extraFileList = transferFiles(parent, cmd.extraFiles)
+                        if (extraFileList.size() == 0) {
+                            log.debug("""\
+There is an error while attempting to copy the supplemental files
+wrapped in ${cmd.extraFiles.inspect()} to exchanged folder""")
+                        }
                     }
+                    // Build a map of additional file objects from the working additional files
+                    Map<File, String> additionalFilesMap = new HashMap<File, String>()
+                    if (flow.workingMemory.containsKey("additionals_in_working")) {
+                        def additionals_in_working =
+                            flow.workingMemory.get("additionals_in_working") as HashMap<String, String>
+                        additionals_in_working.each {String keyAsFilename, String valueAsDescription ->
+                            additionalFilesMap.put(new File(parent, keyAsFilename), valueAsDescription)
+                        }
+                        flow.workingMemory["submitted_additionals"] = additionalFilesMap
+                    }
+
                     if (IS_DEBUG_ENABLED) {
                         log.debug """\
-About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
+About to submit ${mainFileList.inspect()} and ${additionalFilesMap.inspect()}."""
                     }
-                    flow.workingMemory["submitted_mains"] = mainFileList
-                    flow.workingMemory["submitted_additionals"] = additionalsMap
 
+                    // FOR THE DELETED FILES
                     // store the deleted file names into working memory
                     List<String> deletedFileNames = []
                     deletedFileNames.addAll(deletedMains)
                     deletedFileNames.addAll(cmd.extraDeletes)
                     // ensure there are no lists within this list
                     flow.workingMemory["deleted_filenames"] = deletedFileNames.flatten()
-
-                    // transfer HashMap<String, String> to HashMap<File, String>
-                    // Why? we can get the submission folder at this step and this operation
-                    // repairs the data for handling file upload afterward.
-                    if (flow.workingMemory.containsKey("additionals_in_working")) {
-                        Map<File, String> additionalFiles = new HashMap<File, String>()
-                        def additionals_in_working =
-                            flow.workingMemory.get("additionals_in_working") as HashMap<String, String>
-                        additionals_in_working.each {String keyAsFilename, String valueAsDescription ->
-                            additionalFiles.put(new File(parent+keyAsFilename), valueAsDescription)
-                        }
-                        flow.workingMemory.put("additional_files_in_working", additionalFiles)
-                    }
                     submissionService.handleFileUpload(flow.workingMemory)
                 }
 
