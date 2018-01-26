@@ -108,12 +108,19 @@ class SubmissionService {
         @Profiled(tag = "submissionService.handleFileUpload")
         void handleFileUpload(Map<String, Object> workingMemory) {
             List<RFTC> filesToBeAdded
-            List<String> filesToDelete;
-            List<File> mainFiles
+            List<String> filesToDelete
+            Map<File, String> mainFiles
             Map<File, String> additionalFiles
             if (workingMemory.containsKey("submitted_mains")) {
-                mainFiles = workingMemory.remove("submitted_mains") as List<File>
+                mainFiles = workingMemory.remove("submitted_mains") as HashMap<File, String>
                 workingMemory.put("reprocess_files", true)
+                List<RFTC> mainRFTCs = new LinkedList<RFTC>()
+                mainFiles.each {File key, String value ->
+                    mainRFTCs.add(createRFTC(key, true, value))
+                }
+                workingMemory.put("main_repository_files_in_working", mainRFTCs)
+            } else {
+                mainFiles = new HashMap<File, String>()
             }
 //            if (workingMemory.containsKey("submitted_additionals")) {
 //                additionals = workingMemory.remove("submitted_additionals") as Map<File, String>
@@ -512,16 +519,16 @@ class SubmissionService {
         /**
          * Purpose
          *
-         * @param mainFiles a List of all the main files associated with the model.
+         * @param mainFiles       a Map of all the main files alongside their descriptions associated with the model.
          * @param additionalFiles a Map comprising any supplementary files and corresponding descriptions
          *                          that are also part of the model that is submitted.
          */
         @Profiled(tag = "submissionService.createRFTCList")
-        protected List<RFTC> createRFTCList(List<File> mainFiles,
+        protected List<RFTC> createRFTCList(Map<File, String> mainFiles,
                 Map<File, String> additionalFiles) {
             List<RFTC> returnMe = new LinkedList<RFTC>()
-            mainFiles.each { File it ->
-                returnMe.add(createRFTC(it, true, ""))
+            mainFiles.keySet().each { File it ->
+                returnMe.add(createRFTC(it, true, mainFiles.get(it)))
             }
             additionalFiles.keySet().each { File it ->
                 returnMe.add(createRFTC(it, false, additionalFiles.get(it)))
