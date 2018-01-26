@@ -549,7 +549,7 @@ class ModelController {
             action {
                 Map<String, Object> workingMemory = new HashMap<String,Object>()
                 flow.workingMemory = workingMemory
-                flow.workingMemory.put("isUpdateOnExistingModel",flow.isUpdate)
+                flow.workingMemory.put("isUpdateOnExistingModel", flow.isUpdate)
                 conversation.changesMade = new TreeSet<String>()
                 if (flow.isUpdate) {
                     String model_id = conversation.model_id
@@ -648,9 +648,9 @@ class ModelController {
                     cmd.extraFiles = extraMultipartList
                     cmd.mainDeletes = mainsToBeDeleted
                     cmd.extraDeletes = additionalFilesToBeDeleted
-                    cmd.description = descriptionFields
+                    cmd.description = descriptionFields.toList()
                     if (IS_DEBUG_ENABLED) {
-                        log.debug "Data binding done :${cmd.properties}"
+                        log.debug "Data binding done: ${cmd.properties}"
                     }
                     flow.workingMemory.put("UploadCommand", cmd)
                     // parse JSON string of the main files populated on GUI
@@ -738,12 +738,12 @@ Error in uploading files. Cmd did not validate: ${cmd.getProperties()}""")
                     }
                 }
                 if (!fileValidationError && furtherProcessingRequired) {
-                    //should this be in a separate action state?
+                    // should this be in a separate action state?
                     def uuid = UUID.randomUUID().toString()
                     if (IS_DEBUG_ENABLED) {
                         log.debug "Generated submission UUID: ${uuid}"
                     }
-                    //pray that exchangeDirectory has been defined
+                    // pray that exchangeDirectory has been defined
                     File submission_folder = null
                     def sep = File.separator
                     if (!flow.workingMemory.containsKey("repository_files")) {
@@ -874,7 +874,7 @@ About to submit ${mainFileList.inspect()} and ${additionalFilesMap.inspect()}.""
                 flash.modelFormatDetectedAs = flow.workingMemory.get("model_type").identifier
             }.to "uploadFiles"
             on("FilesNotValid") {
-                flash.error = "submission.upload.error.fileerror"
+                flash.flashMessage = "submission.upload.error.fileerror"
             }.to "uploadFiles"
             on(Exception).to "handleException"
         }
@@ -900,8 +900,8 @@ About to submit ${mainFileList.inspect()} and ${additionalFilesMap.inspect()}.""
                 }
                 modifications.put("changeStatus", changeStatus);
                 submissionService.refineModelInfo(flow.workingMemory, modifications)
-                ModelTransportCommand model = flow.workingMemory.get('ModelTC') as ModelTransportCommand
-                RevisionTransportCommand revision = flow.workingMemory.get("RevisionTC") as RevisionTransportCommand
+                //ModelTransportCommand model = flow.workingMemory.get('ModelTC') as ModelTransportCommand
+                //RevisionTransportCommand revision = flow.workingMemory.get("RevisionTC") as RevisionTransportCommand
             }.to "enterPublicationLink"
             on("Cancel").to "cleanUpAndTerminate"
             on("Back"){}.to "uploadFiles"

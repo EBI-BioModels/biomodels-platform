@@ -773,7 +773,7 @@ class SubmissionService {
             }
             def existing = workingMemory.get("existing_files") as List<RFTC>
             repoFiles.each { RFTC it ->
-                String fileAdded = new File(it.path).getName();
+                String fileAdded = new File(it.path).getName()
                 def exists = existing.find { RFTC fileExisting ->
                     fileAdded == new File(fileExisting.path).getName()
                 }
