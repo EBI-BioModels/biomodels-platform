@@ -230,7 +230,7 @@ class SubmissionService {
                 } else {
                     workingMemory.put("changedMainFiles", false)
                 }
-                //additionals = existing - main
+                mains = workingMemory.remove("main_repository_files_in_working") as List<RFTC>
                 additionals = workingMemory.remove("additional_repository_files_in_working") as List<RFTC>
             } else {
                 /* case: at the beginning of the updating process, i.e. at the time when hitting Update button first */
