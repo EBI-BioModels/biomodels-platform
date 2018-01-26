@@ -653,6 +653,20 @@ class ModelController {
                         log.debug "Data binding done :${cmd.properties}"
                     }
                     flow.workingMemory.put("UploadCommand", cmd)
+                    // parse JSON string of the main files populated on GUI
+                    // store them into the working memory in mains_in_working variable
+                    Map<String, String> mainFiles = new HashMap<String, String>()
+                    def slurper0 = new JsonSlurper()
+                    def res = slurper0.parseText(params.mainFilesInWorking)
+                    if (res["files"]) {
+                        def workingFiles = res["files"]
+                        workingFiles.each { f ->
+                            mainFiles.put(f["filename"], f["description"])
+                        }
+                        flow.workingMemory.put("mains_in_working", mainFiles)
+                    } else {
+                        log.debug("There is an error while loading the latest changes on the main files")
+                    }
 
                     // store additional files existing on UI, i.e. the files are in updated process
                     // data stored are a map of file names and corresponding descriptions.
