@@ -107,10 +107,10 @@ class SubmissionService {
          */
         @Profiled(tag = "submissionService.handleFileUpload")
         void handleFileUpload(Map<String, Object> workingMemory) {
-            List<RFTC> tobeAdded;
+            List<RFTC> filesToBeAdded
             List<String> filesToDelete;
             List<File> mainFiles
-            Map<File, String> additionals
+            Map<File, String> additionalFiles
             if (workingMemory.containsKey("submitted_mains")) {
                 mainFiles = workingMemory.remove("submitted_mains") as List<File>
                 workingMemory.put("reprocess_files", true)
@@ -128,21 +128,21 @@ class SubmissionService {
                 }
                 workingMemory.put("additional_repository_files_in_working", allExtraFilesWorking)
                 workingMemory.put("additional_files", allExtraFilesWorking)
-                additionals = additionalFilesInWorking
+                additionalFiles = additionalFilesInWorking
             } else {
-                additionals = new HashMap<File, String>()
+                additionalFiles = new HashMap<File, String>()
             }
-            tobeAdded = createRFTCList(mainFiles, additionals)
+            filesToBeAdded = createRFTCList(mainFiles, additionalFiles)
             if (workingMemory.containsKey("removeFromVCS")) {
                 def removeFromVcs = workingMemory.get("removeFromVCS") as List<RFTC>
-                removeFromVcs.removeAll(tobeAdded) // update after delete -> update
+                removeFromVcs.removeAll(filesToBeAdded) // update after delete -> update
             }
             if (workingMemory.containsKey("deleted_filenames")) {
                 filesToDelete = workingMemory.remove("deleted_filenames") as List<String>
                 workingMemory.put("reprocess_files", true)
                 // check for replacement
                 def overlapping = filesToDelete.findAll {
-                    tobeAdded.find { RFTC testFile -> new File(testFile.path).getName() == it }
+                    filesToBeAdded.find { RFTC testFile -> new File(testFile.path).getName() == it }
                 }
                 if (overlapping) {
                     filesToDelete = filesToDelete - overlapping
@@ -150,7 +150,7 @@ class SubmissionService {
             }
             // update the list of RFTC and the list of files that would be deleted
             // this update is really done on workingMemory
-            storeRFTC(workingMemory, tobeAdded, filesToDelete)
+            storeRFTC(workingMemory, filesToBeAdded, filesToDelete)
         }
 
         /**
@@ -179,7 +179,7 @@ class SubmissionService {
         protected void storeRFTC(Map<String, Object> workingMemory,
                                  List<RFTC> tobeAdded,
                                  List<String> filesToDelete) {
-            Collection<RFTC> main
+            Collection<RFTC> mains
             Collection<RFTC> additionals
             if (workingMemory.containsKey("repository_files")) {
                 Collection<RFTC> existing = workingMemory.get("repository_files") as List<RFTC>
@@ -216,8 +216,8 @@ class SubmissionService {
                 if (tobeAdded) {
                     existing.addAll(tobeAdded)
                 }
-                main = existing.findAll { RFTC it -> it.mainFile }
-                if (currentMains != main) {
+                mains = existing.findAll { RFTC it -> it.mainFile }
+                if (currentMains != mains) {
                     workingMemory.put("changedMainFiles", true)
                 } else {
                     workingMemory.put("changedMainFiles", false)
@@ -228,10 +228,10 @@ class SubmissionService {
                 workingMemory.put("repository_files", tobeAdded)
                 // DON'T CHANGE IF IS UPDATE ON EXISTING MODEL
                 workingMemory.put("changedMainFiles", true)
-                main = tobeAdded.findAll { RFTC it -> it.mainFile }
-                additionals = tobeAdded - main
+                mains = tobeAdded.findAll { RFTC it -> it.mainFile }
+                additionals = tobeAdded - mains
             }
-            workingMemory.put("main_file", main)
+            workingMemory.put("main_files", mains)
             workingMemory.put("additional_files", additionals)
         }
 
