@@ -94,16 +94,17 @@ class SubmissionService {
     abstract class StateMachineStrategy {
 
         /**
-         * Purpose
+         * Load existing objects associated with the model in working into the application cache,
+         * called workingMemory before the upload (i.e. new submission and update) process is into gear.
          *
          * @param workingMemory a Map containing all objects exchanged throughout the flow.
          */
         abstract void initialise(Map<String, Object> workingMemory);
         /**
-         * Purpose
+         * The method allows filtering out the files being added and the ones will be deleted.
+         * At the same time, the cache system, i.e. workingMemory, is also made up-to-date.
          *
          * @param workingMemory a Map containing all objects exchanged throughout the flow.
-         * @param modifications a Map containing the existing files in the model, to be modified
          */
         @Profiled(tag = "submissionService.handleFileUpload")
         void handleFileUpload(Map<String, Object> workingMemory) {
@@ -170,7 +171,13 @@ class SubmissionService {
         abstract void removeFromVCS(Map<String, Object> workingMemory, List<RFTC> filesToDelete);
 
         /**
-         * Purpose Append supplied RFTC list to those in workingMemory (if any, otherwise create)
+         * Purpose: append supplied RFTC list to those in workingMemory (if any, otherwise create)
+         * The method updates the list of main files and the list of additional files which are used for
+         * the next phase. For example:
+         * a) Once pressing update button, the method gets the list of main files and additional files existing
+         *    into the database which are displayed on the upload file page
+         * b) Once adding or discarding files and then hitting Upload button, the method will update the list of
+         *    main and additional files which are gone alongside the new revision.
          *
          * @param workingMemory a Map containing all objects exchanged throughout the flow.
          * @param modifications a Map containing the existing files in the model, to be modified
@@ -182,6 +189,7 @@ class SubmissionService {
             Collection<RFTC> mains
             Collection<RFTC> additionals
             if (workingMemory.containsKey("repository_files")) {
+	            /* case: the repository files are being updated and maintained in memory */
                 Collection<RFTC> existing = workingMemory.get("repository_files") as List<RFTC>
                 if (!tobeAdded && !filesToDelete &&
                         !workingMemory['isUpdateOnExistingModel']) {
@@ -225,6 +233,7 @@ class SubmissionService {
                 //additionals = existing - main
                 additionals = workingMemory.remove("additional_repository_files_in_working") as List<RFTC>
             } else {
+                /* case: at the beginning of the updating process, i.e. at the time when hitting Update button first */
                 workingMemory.put("repository_files", tobeAdded)
                 // DON'T CHANGE IF IS UPDATE ON EXISTING MODEL
                 workingMemory.put("changedMainFiles", true)
