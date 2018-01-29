@@ -2160,9 +2160,9 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         }
 */
 
-        if (MAKE_PUBLICATION_ID) {
+        /*if (MAKE_PUBLICATION_ID) {
             model.publicationId = model.publicationId ?: publicationIdGenerator.generate()
-        }
+        }*/
         model.firstPublished = new Date()
         aclUtilService.addPermission(revision, "ROLE_USER", BasePermission.READ)
         aclUtilService.addPermission(revision, "ROLE_ANONYMOUS", BasePermission.READ)
