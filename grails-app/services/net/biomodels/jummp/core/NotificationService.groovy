@@ -168,7 +168,13 @@ class NotificationService {
             } else {
                 salutation = "submitter"
             }
-            String[] args = [salutation, model.name, model.submissionId]
+            String withPubMsgCode = "notification.model.created.emailToSubmitter.body.withPublicationProvided"
+            String noPubMsgCode = "notification.model.created.emailToSubmitter.body.noPublicationProvided"
+            String withPublicationProvided = messageSource.getMessage(withPubMsgCode, [] as String[],  null)
+            String noPublicationProvided = messageSource.getMessage(noPubMsgCode, [] as String[], null)
+            String askAcknowledgement = model.publication ? withPublicationProvided : noPublicationProvided
+            String serverURL = grailsApplication.config.grails.serverURL
+            String[] args = [salutation, model.name, model.submissionId, askAcknowledgement, serverURL]
             emailBody = messageSource.getMessage("notification.model.created.emailToSubmitter.body", args, null)
             mailService.sendMail {
                 async true
