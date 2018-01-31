@@ -702,7 +702,7 @@ class ModelController {
                 boolean fileValidationError = false
                 boolean furtherProcessingRequired = true
                 def deletedMains = cmd.mainDeletes
-                List mainFiles = flow.workingMemory.get("repository_files").findAll { it.mainFile }
+                List mainFiles = getMainFiles(flow.workingMemory)
                 boolean mainFileDeleted = mainFileDeleted(mainFiles, cmd.mainFile, deletedMains)
                 if (mainFileDeleted) {
                     return MainFileMissingError()
