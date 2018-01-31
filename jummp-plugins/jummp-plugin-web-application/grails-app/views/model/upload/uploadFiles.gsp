@@ -83,6 +83,9 @@
             <div class="dialog">
                 <jummp:displayExistingMainFile main="${workingMemory['main_file']}"/>
                 <div id="noMains"></div>
+                <div id="noMains" style="display: none;"></div>
+                <!-- This div stores input element which value is assigned to JSON string -->
+                <div id="mainsOnUI" style="display: none"></div>
                 <jummp:renderAdditionalFilesLegend/>
                 <div id="additionalFilesExplanation"><jummp:renderAdditionalFilesExplanation/></div>
                 <fieldset>
@@ -101,7 +104,7 @@
                             <jummp:displayExistingAdditionalFiles additionals = "${resource}"/>
                         </tbody>
                     </table>
-                    <div id="noAdditionals"></div>
+                    <div id="noAdditionals" style="display: none"></div>
                     <!-- This div stores input element which value is assigned to JSON string -->
                     <div id="additionalsOnUI" style="display: none;"></div>
                 </fieldset>

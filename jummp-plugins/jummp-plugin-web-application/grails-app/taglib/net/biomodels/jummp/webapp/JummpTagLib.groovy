@@ -134,7 +134,7 @@ class JummpTagLib {
             out << "<tr class='fileEntry'>\n\t<td class='name' style='width: 20%'>"
             out << name
             out << """\
-                <input style='display: inline' type='file' id='additionalFilesExisting' 
+                <input style='display: none' type='file' id='additionalFilesExisting' 
                 name='additionalFilesExisting' value='${name}'></td>\n\t"""
             out << """\
                 <td class='name' style='width: 70%'>
