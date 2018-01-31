@@ -79,7 +79,8 @@
         <g:render template="/templates/errorMessage"/>
         <h2><g:message code="submission.upload.header"/></h2>
         <p style="padding-bottom:1em"><g:message code="submission.upload.explanation"/></p>
-        <g:uploadForm id="fileUpload" novalidate="false" autocomplete="false" name="fileUploadForm" onsubmit="return validate()">
+        <g:uploadForm id="fileUpload" novalidate="false" autocomplete="false" name="fileUploadForm"
+                      onsubmit="return validate()">
             <div class="dialog">
                 <jummp:displayExistingMainFile main="${workingMemory['main_file']}"/>
                 <div id="noMains"></div>
@@ -150,28 +151,44 @@
                 document.getElementById("additionalsOnUI").innerHTML = input;
             }
 
+                });
+            var clickBack = false;
+            var clickCancel = false;
             function validate() {
-                // validate the upload form
-                var result = $("input[id^=description]").filter(function() {
-                    var element = $(this);
-                    console.log(element.val());
-                    return $.trim(this.value) === "";
-                });
-                var mainValid = $("input[id^=mainFileDescription]").filter(function() {
-                    var element = $(this);
-                    console.log(element.val());
-                    return $.trim(this.value) === "";
-                });
-                var isValid = result.length == 0 && mainValid.length == 0;
-                if (isValid) {
-                    console.log("All required fields have been filled in");
+                if (clickBack || clickCancel) {
+                    // click Back or Cancel button in either updating or creating process
                     return true;
                 } else {
-                    var flashDiv = $('.flashNotificationDiv');
-                    $(flashDiv).html("Please fill in all required fields");
-                    $(flashDiv).show();
-                    console.log("Some required fields cannot be empty");
-                    return false;
+                    // click Upload button in either updating or creating process
+                    var message = "";
+                    if (${isUpdate}) {
+                        message = "Updating the model process";
+                    } else {
+                        message = "Creating the model process";
+                    }
+                    console.log(message);
+                    // validate the upload form
+                    var result = $("input[id^=description]").filter(function() {
+                        var element = $(this);
+                        console.log(element.val());
+                        return $.trim(this.value) === "";
+                    });
+                    var mainValid = $("input[id^=mainFileDescription]").filter(function() {
+                        var element = $(this);
+                        console.log(element.val());
+                        return $.trim(this.value) === "";
+                    });
+                    var isValid = result.length == 0 && mainValid.length == 0;
+                    if (isValid) {
+                        console.log("All required fields have been filled in");
+                        return true;
+                    } else {
+                        var flashDiv = $('.flashNotificationDiv');
+                        $(flashDiv).html("Please fill in all required fields");
+                        $(flashDiv).show();
+                        console.log("Some required fields cannot be empty");
+                        return false;
+                    }
                 }
             }
 
@@ -253,12 +270,12 @@
                     document.getElementById("additionalsOnUI").innerHTML = input;
                 });
 
-                $("#uploadButton").click( function() {
-                    $("#fileUpload").submit();
+                $("#_eventId_Back").click( function() {
+                    clickBack = true;
                 });
 
-                $("#cancelButton").click( function() {
-                    $("#fileUpload").reset();
+                $("#_eventId_Cancel").click( function() {
+                    clickCancel = true;
                 });
             });
 
