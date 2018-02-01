@@ -133,6 +133,9 @@
                     $("div#additionalFilesExplanation").slideUp();
                 }
             });
+            $('.flashNotificationDiv').click(function() {
+                $(this).hide();
+            });
             var nbExtraFiles = 0;
             var numberOfAdditionalsAtLoadingPage = $('input[id^=description]').size();
 
