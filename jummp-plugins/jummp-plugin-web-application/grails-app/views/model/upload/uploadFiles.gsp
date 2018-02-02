@@ -157,15 +157,30 @@
                     descriptionMap.files.push({'filename': fileName, 'description': fileDescription});
                 });
                 // update the hidden input element containing the latest additional files
-                // the map should be converted to json string that will be transfered to controller
+                // the map should be converted to json string that will be transferred to controller
                 var input = "<input name='additionalFilesInWorking' size='220' value='";
                     input += JSON.stringify(descriptionMap) + "'/>";
                 document.getElementById("additionalsOnUI").innerHTML = input;
             }
 
+            function updateMainFilesOnUI() {
+                descriptionMainMap.files = [];
+                $.each(existingMainFiles, function(index, fileEntry) {
+                    // key here is the index, value is the actual value we are interested in
+                    var fileName = fileEntry["filename"];
+                    var fileDescription  = fileEntry["description"];
+                    descriptionMainMap.files.push({'filename': fileName, 'description': fileDescription});
                 });
+                // update the hidden input element containing the latest additional files
+                // the map should be converted to json string that will be transferred to controller
+                var input = "<input name='mainFilesInWorking' size='220' value='";
+                    input += JSON.stringify(descriptionMainMap) + "'/>";
+                document.getElementById("mainsOnUI").innerHTML = input;
+            }
+
             var clickBack = false;
             var clickCancel = false;
+
             function validate() {
                 if (clickBack || clickCancel) {
                     // click Back or Cancel button in either updating or creating process
@@ -205,43 +220,146 @@
             }
 
             $(document).ready(function () {
-                populateDiv();
+                updateMainFilesOnUI();
+                updateAdditionalFilesOnUI();
+                var isMainFileReplaced = false;
                 $('.replaceMain').click(function(e) {
                     e.preventDefault();
-                    // firing a click event on the main file upload element
                     $('#mainFile').click();
+                    isMainFileReplaced = true;
                 });
 
                 $('.removeMain').click(function(e) {
                     e.preventDefault();
                     var td = $(this).parent().get(0);
                     var tr = $(td).parent().get(0);
-                    console.log($(tr).find("td:first").html());
-                    var tbody = $(td).parent().parent().get(0);
-                    // update the temporary container's content
                     var parent = $(tr).find("td:first").html();
-                    var trimmedParent = parent.replace(/^\s+/g,"");
-                    var start = "<span id='mainName_".length;
-                    var end = trimmedParent.indexOf("\">", start);
-                    var name = trimmedParent.substring(start, end);
-                    var hi = "<input value='" + name + "' name='deletedMain' hidden>";
-                    document.getElementById("noMains").innerHTML += hi;
-                    // get rid of the current row where Remove button is placed
-                    $(td).closest("tr").remove();
-                    // generate a new row in order to allow browsing a new file
-                    var row = "<jummp:renderRowInMainFileTable />";
-                    $(tbody).append(row);
+                    var span = $($.parseHTML(parent))[1];
+                    var id = span.id;
+                    // xoa span
+                    if ($('#'+id).is("span")) {
+                        var mainFileName = $('#'+id).text();
+                        $('#'+id).text('');
+                        for (index in existingMainFiles)
+                            if (existingMainFiles[index].filename === mainFileName) {
+                                existingMainFiles.splice(index, 1);
+                            }
+                        $('#'+id).remove();
+                        // the former main file will be deleted
+                        var hi = "<input value='" + mainFileName + "' name='deletedMain'>";
+                        document.getElementById("noMains").innerHTML += hi;
+	                }
+                    // update UI
+	                updateMainFilesOnUI();
+                    // hidden Replace button to avoid being confused
+                    $(td).text("");
+                    // reshow the file upload
+                    $('#mainFile').show();
+                });
+                var formerMainFileName = "";
+                $('#mainFile').change(function(event) {
+                    var newFileName = $(this)[0].files[0].name;
+                    if (existingMainFiles.length === 0) {
+                        // new submission or update but all the main files has been removed
+                        // so retain the working main file
+                        formerMainFileName = newFileName;
+                        // add the new file to existingMainFiles
+                        var newFile = {filename: newFileName, description: ""}
+                        existingMainFiles.push(newFile);
+                        // display it on the page
+                        $(this).attr("value", newFileName);
+                        $(this).css("display", "inline");
+                        //var discardID = "discard" + $(this).attr('id');
+                        //$("#"+discardID).attr('download', fileName);
+                        $('#mainFileDescription').val('');
+
+                    } else {
+                        var td = $(this).parent().get(0);
+                        var span = $($.parseHTML($(td).html()))[1];
+                        if ($('#' + span.id).is("span")) {
+                            formerMainFileName = $('#' + span.id).text();
+                        } else {
+                            formerMainFileName = existingMainFiles.last()["filename"];
+                        }
+
+                        var hi = "<input value='" + formerMainFileName + "' name='deletedMain'>";
+                        document.getElementById("noMains").innerHTML += hi;
+
+                        if (existingMainFiles.filter(function(v) {
+                            return v.filename === newFileName;
+                        })[0]) {
+                            var message = "The file named " + newFileName + " already exists. " +
+                             "Please rename it or select another file.";
+                            showNotification(message);
+                        } else if (isMainFileReplaced) { // update process
+                            /* remove the old/current one */
+                            for (index in existingMainFiles)
+                            if (existingMainFiles[index].filename === formerMainFileName) {
+                                existingMainFiles.splice(index, 1);
+                                // update the former main on GUI
+                            }
+
+                            isMainFileReplaced = false;
+                            /* update the new file */
+                            // display the new file to gui
+                            span = $(span)[0].id;
+                            $('#' + span).text(newFileName);
+                            // add the new file to existingMainFiles
+                            var newFile = {filename: newFileName, description: ""}
+                            existingMainFiles.push(newFile);
+                            $(this).attr('value', newFileName);
+                            $('#mainFileDescription').val('');
+                        } else { // submission process
+                            for (index in existingMainFiles)
+                                if (existingMainFiles[index].filename === formerMainFileName) {
+                                    existingMainFiles.splice(index, 1);
+                                    // update the former main on GUI
+
+                                }
+
+                            var newFile = {filename: newFileName, description: ""}
+                            existingMainFiles.push(newFile);
+                            $(this).attr('value', newFileName);
+                            $('#mainFileDescription').val('');
+                        }
+                    }
+                    updateMainFilesOnUI();
                 });
 
-                $('.mainFile').change(function(click) {
-                    var oldName = $(this).data("labelname");
-                    var hi = "<input type='hidden' value='" + oldName + "' name='deletedMain'/>";
-                    document.getElementById("noMains").innerHTML += hi;
-                    var id = "mainName_" + oldName;
-                    var newValue = this.value;
-                    var newName = trimElementName("\\", newValue);
-                    document.getElementById(id).innerHTML = newName;
-                    $('#mainFileDescription').val('');
+                $('input[id^=mainFileDescription]').change(function() {
+                    var parent = $(this).parent().parent();
+                    var content = parent.find("td:first").html();
+                    var span = $.parseHTML(content);
+                    var span = $(span)[1];
+                    if (existingMainFiles.length > 0) {
+                        var id = span.id;
+                        var fileName = "";
+                        if ($('#' + id).is("span")) {
+                            // case: there are existing main files either submission or update process
+                            fileName = $('#' + id).text();
+                        } else {
+                            // case: only happen in submission process
+                            fileName = $('input[id^=mainFile]')[0].files[0].name;
+                        }
+                        var description = $(this).val();
+                        if (fileName) {
+                            if (existingMainFiles.length > 0) {
+                                existingMainFiles.filter(function(v) {
+                                    return v.filename === fileName;
+                                })[0].description = description;
+                            } else if (fileName) {
+                                var newFile = {filename: fileName, description: fileName}
+                                existingMainFiles.push(newFile);
+                            }
+                        } else {
+                            console.log("Not found the file name to remove");
+                        }
+                        updateMainFilesOnUI();
+                    } else {
+                        var flashDiv = $('.flashNotificationDiv');
+                        $(flashDiv).html("The main file cannot be empty");
+                        $(flashDiv).show();
+                    }
                 });
 
                 $("#addFile").click(function (evt) {
