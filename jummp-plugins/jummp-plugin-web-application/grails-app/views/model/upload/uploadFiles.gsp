@@ -82,11 +82,20 @@
         <g:uploadForm id="fileUpload" novalidate="false" autocomplete="false" name="fileUploadForm"
                       onsubmit="return validate()">
             <div class="dialog">
-                <jummp:displayExistingMainFile main="${workingMemory['main_file']}"/>
-                <div id="noMains"></div>
+                <g:if test="${workingMemory['main_repository_files_in_working']}">
+                    <g:set var="mainfiles" value="${workingMemory['main_repository_files_in_working']}"/>
+                </g:if>
+                <g:elseif test="${workingMemory['main_files']}">
+                    <g:set var="mainfiles" value="${workingMemory['main_files']}" />
+                </g:elseif>
+                <g:else>
+                    <g:set var="mainfiles" value="${[]}" />
+                </g:else>
+                <jummp:displayExistingMainFile main="${mainfiles}"/>
                 <div id="noMains" style="display: none;"></div>
                 <!-- This div stores input element which value is assigned to JSON string -->
                 <div id="mainsOnUI" style="display: none"></div>
+
                 <jummp:renderAdditionalFilesLegend/>
                 <div id="additionalFilesExplanation"><jummp:renderAdditionalFilesExplanation/></div>
                 <fieldset>
