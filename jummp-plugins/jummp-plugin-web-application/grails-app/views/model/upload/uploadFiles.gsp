@@ -111,7 +111,7 @@
                             <g:else>
                                 <g:set var="resource" value="${[]}" />
                             </g:else>
-                            <jummp:displayExistingAdditionalFiles additionals = "${resource}"/>
+                            <jummp:displayExistingAdditionalFiles additionals="${resource}"/>
                         </tbody>
                     </table>
                     <div id="noAdditionals" style="display: none"></div>
@@ -124,10 +124,10 @@
                         <g:submitButton name="Back" class="button" value="${g.message(code: 'submission.common.backButton')}" />
                     </g:if>
                     <g:submitButton name="Upload" class="button" value="${g.message(code: 'submission.upload.uploadButton')}" />
-                    <g:if test ="${showProceedWithoutValidationDialog || showProceedAsUnknownFormat}">
+                    <g:if test="${showProceedWithoutValidationDialog || showProceedAsUnknownFormat}">
                         <g:submitButton name="ProceedWithoutValidation" class="button" value="ProceedWithoutValidation" hidden="true"/>
                     </g:if>
-                    <g:if test ="${showProceedAsUnknownFormat}">
+                    <g:if test="${showProceedAsUnknownFormat}">
                         <g:submitButton name="ProceedAsUnknown" class="button" value="ProceedAsUnknown" hidden="true"/>
                     </g:if>
                 </div>
@@ -193,27 +193,22 @@
                     } else {
                         message = "Creating the model process";
                     }
-                    console.log(message);
                     // validate the upload form
                     var result = $("input[id^=description]").filter(function() {
                         var element = $(this);
-                        console.log(element.val());
                         return $.trim(this.value) === "";
                     });
                     var mainValid = $("input[id^=mainFileDescription]").filter(function() {
                         var element = $(this);
-                        console.log(element.val());
                         return $.trim(this.value) === "";
                     });
                     var isValid = result.length == 0 && mainValid.length == 0;
                     if (isValid) {
-                        console.log("All required fields have been filled in");
                         return true;
                     } else {
                         var flashDiv = $('.flashNotificationDiv');
                         $(flashDiv).html("Please fill in all required fields");
                         $(flashDiv).show();
-                        console.log("Some required fields cannot be empty");
                         return false;
                     }
                 }
@@ -351,8 +346,6 @@
                                 var newFile = {filename: fileName, description: fileName}
                                 existingMainFiles.push(newFile);
                             }
-                        } else {
-                            console.log("Not found the file name to remove");
                         }
                         updateMainFilesOnUI();
                     } else {
@@ -398,6 +391,7 @@
                     var input = "<input name='additionalFilesInWorking' value='";
                     input += JSON.stringify(descriptionMap) + "'/>";
                     document.getElementById("additionalsOnUI").innerHTML = input;
+
                     input = "<input name='mainFilesInWorking' value='";
                     input += JSON.stringify(descriptionMainMap) + "'/>";
                     $('#mainsOnUI').innerHTML = input;
@@ -497,7 +491,7 @@
                         buttons: {
                             "Proceed Without Validation": function() {
                             	var eventID = '_eventId_ProceedWithoutValidation';
-                            	<g:if test='${showProceedAsUnknownFormat}'>
+                                <g:if test='${showProceedAsUnknownFormat}'>
                             		eventID = '_eventId_ProceedAsUnknown';
                             	</g:if>
                                 document.getElementById(eventID).click();
