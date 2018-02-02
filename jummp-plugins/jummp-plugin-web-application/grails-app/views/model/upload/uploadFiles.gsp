@@ -280,6 +280,9 @@
                     var input = "<input name='additionalFilesInWorking' value='";
                     input += JSON.stringify(descriptionMap) + "'/>";
                     document.getElementById("additionalsOnUI").innerHTML = input;
+                    input = "<input name='mainFilesInWorking' value='";
+                    input += JSON.stringify(descriptionMainMap) + "'/>";
+                    $('#mainsOnUI').innerHTML = input;
                 });
 
                 $("#_eventId_Back").click( function() {
