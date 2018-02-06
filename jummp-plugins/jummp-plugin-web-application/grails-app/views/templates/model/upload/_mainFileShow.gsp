@@ -1,0 +1,16 @@
+<tr class="prop">
+    <td class="value" style="width: 20%">
+        <span id="mainFile${index}" class="mainFile${index}">${name}</span>
+        <input style="display: none;" type="file" id="mainFile"
+               name="mainFile" class="mainFile${index}"/>
+    </td>
+    <td style="width: 70%">
+        <input type="text" id="mainFileDescription${index}"
+               class="mainFileDescription${index}"
+               name="mainFileDescription" value="${description}"
+               placeholder="Please enter a description" required>
+    </td>
+    <td style="width: 10%; text-align: right">
+        <a href="#" class="replaceMain">Replace</a> | <a href="#" class="removeMain">Remove</a>
+    </td>
+</tr>

@@ -68,86 +68,43 @@ class JummpTagLib {
     }
 
     def renderRowInMainFileTable = {
-        out << renderRowInMainFileTable().replaceAll("\n", "").replaceAll("\t", "")
-    }
-
-    String renderRowInMainFileTable() {
-        StringBuilder row = new StringBuilder();
-        row.append("<tr class='prop'>\n\t\t")
-        row.append("<td class='value' style='width: 20%'>\n\t\t")
-        row.append("<input type='file' id='mainFile' name='mainFile' class='mainFile'>\n\t\t</td>")
-        row.append("""\
-    <td class='name' style='width: 80%'>
-    <input type='text' id='mainFileDescription' name='mainFileDescription' 
-           placeholder='Please enter a description' required></td></tr>""")
-        row.toString()
+        out << render(plugin: "jummp-plugin-web-application", template: "/templates/model/upload/mainFileInput")
     }
 
     def displayExistingMainFile = { attrs ->
-        def result = new StringBuilder()
         String de = detectDeploymentEnvironment()
         String mainFileLabel = "submission.upload.mainFile${de}.label"
         String mainFileSectionHeading = "<h3>${message(code: mainFileLabel)}</h3>"
-        result.append(mainFileSectionHeading)
-        result.append("<table class='formtable responsive-table'><tbody>")
+        out << mainFileSectionHeading
+        out << "<table class='formtable responsive-table'><tbody>"
         if (!attrs.main) {
-            result.append(renderRowInMainFileTable());
-            result.append("</tbody></table>")
-            out << result.toString()
-            return
-        }
-        attrs.main.eachWithIndex { m, index ->
+            out << renderRowInMainFileTable()
+        } else attrs.main.eachWithIndex { m, index ->
             RepositoryFileTransportCommand command = m as RepositoryFileTransportCommand
             String name = new File(command.path).name
             String description = command.description
-            result.append("<tr class='prop'>\n\t\t")
-            result.append("<td class='value' style='width: 20%'>\n\t\t")
-            result.append("<span id='mainFile${index}").
-                append("'").append("class='mainFile${index}").
-                append("'").append(">").
-                append(name).
-                append("</span>\n\t\t")
-            result.append("""\
-                <input style='display: none;' type='file' id='mainFile' 
-                       name='mainFile' class='mainFile${index}'/></td>\n\t""")
-            result.append("<td style='width: 70%'>")
-            result.append("""\
-                <input type='text' id='mainFileDescription${index}' class='mainFileDescription${index}' 
-                        name='mainFileDescription' value='${description}' 
-                        placeholder='Please enter a description' required></td>\n\t\t""")
-            result.append("""\
-                <td style='width: 10%; text-align: right'><a href='#' 
-                class='replaceMain'>Replace</a> | <a href='#' class='removeMain'>Remove</a></td>\n</tr>\n""")
+            out << render(plugin: "jummp-plugin-web-application",
+                template: "/templates/model/upload/mainFileShow",
+                model: [index: index, name: name, description: description])
         }
-        result.append("</tbody></table>")
-        out << result.toString()
+        out << "</tbody></table>"
     }
 
     def displayExistingAdditionalFiles = { attrs ->
-        if (!attrs.additionals) {
-            return
+        out << "<table class='formtable responsive-table' id='additionalFiles'><tbody>"
+        if (attrs.additionals) {
+            int counter = 1
+            attrs.additionals.each { f ->
+                RepositoryFileTransportCommand command = f as RepositoryFileTransportCommand
+                String name = new File(command.path).name
+                String description = command.description ?: ""
+                out << render(plugin: "jummp-plugin-web-application",
+                    template: "/templates/model/upload/additionalFileShow",
+                    model: [counter: counter, name: name, description: description])
+                counter++
+            }
         }
-        int counter = 1
-        attrs.additionals.each { f ->
-            RepositoryFileTransportCommand command = f as RepositoryFileTransportCommand
-            String name = new File(command.path).name
-            out << "<tr class='fileEntry'>\n\t<td class='name' style='width: 20%'>"
-            out << name
-            out << """\
-                <input style='display: none' type='file' id='additionalFilesExisting' 
-                name='additionalFilesExisting' value='${name}'></td>\n\t"""
-            out << """\
-                <td class='name' style='width: 70%'>
-                <input name='description${counter}' id='description${counter}' 
-                type='text' value='${command.description ?: ""}' 
-                style='width: 100%; box-sizing: border-box; -webkit-box-sizing: border-box; -moz-box-sizing: border-box;' 
-                required></td>\n\t"""
-            out << """\
-                <td style='width: 10%; vertical-align: middle'><a href='#' class='killer' 
-                title='Discard file'>Discard</a></td>\n"""
-            out << "</tr>\n"
-            counter++
-        }
+        out << "</tbody></table>"
     }
 
     def renderAdditionalFilesLegend = {
