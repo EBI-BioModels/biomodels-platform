@@ -98,26 +98,21 @@
 
                 <jummp:renderAdditionalFilesLegend/>
                 <div id="additionalFilesExplanation"><jummp:renderAdditionalFilesExplanation/></div>
-                <fieldset>
-                    <a href="#" id="addFile"><jummp:renderAdditionalFilesAddButton/></a>
-                    <table class='formtable responsive-table' id="additionalFiles">
-                        <tbody>
-                            <g:if test="${workingMemory['additional_repository_files_in_working']}">
-                                <g:set var="resource" value="${workingMemory['additional_repository_files_in_working']}" />
-                            </g:if>
-                            <g:elseif test="${workingMemory['additional_files']}">
-                                <g:set var="resource" value="${workingMemory['additional_files']}" />
-                            </g:elseif>
-                            <g:else>
-                                <g:set var="resource" value="${[]}" />
-                            </g:else>
-                            <jummp:displayExistingAdditionalFiles additionals="${resource}"/>
-                        </tbody>
-                    </table>
-                    <div id="noAdditionals" style="display: none"></div>
-                    <!-- This div stores input element which value is assigned to JSON string -->
-                    <div id="additionalsOnUI" style="display: none;"></div>
-                </fieldset>
+                <a href="#" id="addFile"><jummp:renderAdditionalFilesAddButton/></a>
+                <g:if test="${workingMemory['additional_repository_files_in_working']}">
+                    <g:set var="resource" value="${workingMemory['additional_repository_files_in_working']}" />
+                </g:if>
+                <g:elseif test="${workingMemory['additional_files']}">
+                    <g:set var="resource" value="${workingMemory['additional_files']}" />
+                </g:elseif>
+                <g:else>
+                    <g:set var="resource" value="${[]}" />
+                </g:else>
+                <jummp:displayExistingAdditionalFiles additionals="${resource}"/>
+                <div id="noAdditionals" style="display: none"></div>
+                <!-- This div stores input element which value is assigned to JSON string -->
+                <div id="additionalsOnUI" style="display: none;"></div>
+
                 <div class="buttons">
                     <g:submitButton name="Cancel" class="button" value="${g.message(code: 'submission.common.cancelButton')}" />
                     <g:if test="${!isUpdate}">
