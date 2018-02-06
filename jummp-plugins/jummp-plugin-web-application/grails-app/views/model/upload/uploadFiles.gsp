@@ -193,17 +193,19 @@
                     } else {
                         message = "Creating the model process";
                     }
+
                     // validate the upload form
-                    var result = $("input[id^=description]").filter(function() {
+                    var hasEmptyAddFileDesc = $("input[id^=description]").filter(function() {
                         var element = $(this);
                         return $.trim(this.value) === "";
                     });
-                    var mainValid = $("input[id^=mainFileDescription]").filter(function() {
+                    var hasEmptyMainFileDesc = $("input[id^=mainFileDescription]").filter(function() {
                         var element = $(this);
                         return $.trim(this.value) === "";
                     });
-                    var isValid = result.length == 0 && mainValid.length == 0;
-                    if (isValid) {
+                    var isFileDescValid = hasEmptyAddFileDesc.length == 0 && hasEmptyMainFileDesc.length == 0;
+	                var hasAtLeastMainFile = existingMainFiles.length > 0
+                    if (isFileDescValid && hasAtLeastMainFile) {
                         return true;
                     } else {
                         var flashDiv = $('.flashNotificationDiv');
