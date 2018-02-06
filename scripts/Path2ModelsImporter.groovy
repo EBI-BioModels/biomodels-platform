@@ -400,11 +400,6 @@ void publish(Revision r) {
     })
 }
 
-/*
-    TODO
-    externalise settings -- modelFolder, db connection details etc: use environment properties, not cli args
- */
-
 // set the application context reference in POGOs that expect it
 AbstractAppendingDecorator.context = ctx
 RevisionTransportCommand.context = ctx
