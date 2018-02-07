@@ -40,15 +40,17 @@ import com.wordnik.swagger.annotations.ApiOperation
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import groovy.json.JsonSlurper
+import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.audit.AccessFormat
 import net.biomodels.jummp.core.model.audit.AccessType
 import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
+import net.biomodels.jummp.model.Model
+import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.PersonTransportCommand
 import net.biomodels.jummp.plugins.security.Team
-import net.biomodels.jummp.plugins.security.User
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONObject
@@ -199,8 +201,7 @@ class ModelController {
         AccessFormat format = AccessFormat.HTML
         try {
             format = AccessFormat.valueOf(formatType.toUpperCase())
-        }
-        catch(Exception ignore) {
+        } catch(Exception ignore) {
         }
         ModelTransportCommand model = modelDelegateService.findByPerennialIdentifier(modelId)
         ModelAuditTransportCommand audit = new ModelAuditTransportCommand(
@@ -210,8 +211,7 @@ class ModelController {
                     type: AccessType.fromAction(accessType),
                     changesMade: changesMade,
                     success: success)
-        long returned = modelDelegateService.createAuditItem(audit)
-        return returned
+        return modelDelegateService.createAuditItem(audit)
     }
 
     def showWithMessage = {
@@ -229,75 +229,101 @@ class ModelController {
     @ApiImplicitParam(name = "modelId", value = "The model identifier", required = true, allowMultiple = false)
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def show() {
-        RevisionTransportCommand rev = modelDelegateService.getRevisionFromParams(params.id,
-                    params.revisionId)
+        RevisionTransportCommand rev
+        boolean isPrivateModel = false
+        try {
+            rev = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
+        } catch (AccessDeniedException e) {
+            if (e instanceof AccessDeniedException) {
+                Model model = Model.findBySubmissionId(params.id)
+                log.warn("""\
+An anonymous or restricted access user is trying to retrieve this model: ${model.submissionId}""")
+                int revisionNumber = model.revisions.size() - 1 // get the latest revision
+                if (params.revisionId) {
+                   revisionNumber = Integer.parseInt(params.revisionId)
+                }
+                Revision revision = revisionNumber >= 0 ? model.revisions.getAt(revisionNumber) : model.revisions.last()
+                rev = new RevisionAdapter(revision: revision).toCommandObject()
+                rev.name = rev.model.submissionId
+                model.publication = null
+                rev.format = new ModelFormatTransportCommand()
+                rev.files = new ArrayList<>()
+                rev.description = "A model with this identifier exists in the system, but you do not have the necessary permissions to access it"
+                isPrivateModel = true
+            }
+        }
         if (!params.format || (params.format != "json" && params.format != "xml") ) {
             if (!rev) {
                 forward(controller: 'errors', action: 'error403')
                 return
             }
-            final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
-            RevisionTransportCommand revision = modelDelegateService.getLatestRevision(PERENNIAL_ID)
-            boolean showPublishOption = modelDelegateService.canPublish(revision)
-            boolean canSubmitForPublication = modelDelegateService.canSubmitForPublication(revision)
-            boolean canCertify = modelDelegateService.canCertify(revision)
-            boolean canUpdate = modelDelegateService.canAddRevision(PERENNIAL_ID)
-            boolean canDelete = modelDelegateService.canDelete(PERENNIAL_ID)
-            boolean canShare = modelDelegateService.canShare(PERENNIAL_ID)
-            List<FlagTransportCommand> flags = modelDelegateService.getFlags(PERENNIAL_ID)
-            String flashMessage = ""
-            if (flash.now["giveMessage"]) {
-                flashMessage = flash.now["giveMessage"]
-            }
-            List<RevisionTransportCommand> revs =
-                modelDelegateService.getAllRevisions(PERENNIAL_ID)
-            CurationNotesTransportCommand curationNotes =
-                metadataDelegateService.fetchCurationNotes(rev)
-            String curationStatus = metadataDelegateService.fetchCurationStatus(rev)
-            List<String> originalModels = metadataDelegateService.fetchOriginalModels(rev)
-            Map<String, String> modellingApproaches =
-                metadataDelegateService.fetchModellingApproaches(rev)
-            def model = [revision: rev,
-                        authors: rev.model.creators,
-                        allRevs: revs,
-                        flashMessage: flashMessage,
-                        canUpdate: canUpdate,
-                        canDelete: canDelete,
-                        canShare: canShare,
-                        showPublishOption: showPublishOption,
-                        canSubmitForPublication: canSubmitForPublication,
-                        canCertify: canCertify,
-                        validationLevel: rev.getValidationLevelMessage(),
-                        certComment: rev.getCertificationMessage(),
-                        flags: flags,
-                        curationStatus: curationStatus,
-                        modellingApproaches: modellingApproaches,
-                        curationNotes: curationNotes,
-                        originalModels: originalModels
-            ]
-            if (rev.id == revision.id) {
-                flash.genericModel = model
-                ModelFormatTransportCommand format = rev.model.format
-                String formatController =  modelFileFormatService.getPluginForFormat(format)
-                if (formatController) {
-                    forward controller: formatController, action: "show", id: PERENNIAL_ID
-                } else {
-                    final String fmtId = format.identifier
-                    log.error "Could not find a controller for format $fmtId of $PERENNIAL_ID"
+            if (isPrivateModel) {
+                render(view: "showBasicView", model: [id: rev.model.submissionId])
+                return
+            } else {
+                final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
+                RevisionTransportCommand revision = modelDelegateService.getLatestRevision(PERENNIAL_ID)
+                boolean showPublishOption = modelDelegateService.canPublish(revision)
+                boolean canSubmitForPublication = modelDelegateService.canSubmitForPublication(revision)
+                boolean canCertify = modelDelegateService.canCertify(revision)
+                boolean canUpdate = modelDelegateService.canAddRevision(PERENNIAL_ID)
+                boolean canDelete = modelDelegateService.canDelete(PERENNIAL_ID)
+                boolean canShare = modelDelegateService.canShare(PERENNIAL_ID)
+                List<FlagTransportCommand> flags = modelDelegateService.getFlags(PERENNIAL_ID)
+                String flashMessage = ""
+                if (flash.now["giveMessage"]) {
+                    flashMessage = flash.now["giveMessage"]
                 }
-            } else { //showing an old version, with the default page. Do not allow updates.
-                model["canUpdate"] = false
-                model["showPublishOption"] = false
-                model["oldVersion"] = true
-                model["canDelete"] = false
-                model["canShare"] = false
-                model["canCertify"] = false
-                model["flags"] = flags
-                return model
+                List<RevisionTransportCommand> revs =
+                    modelDelegateService.getAllRevisions(PERENNIAL_ID)
+                CurationNotesTransportCommand curationNotes =
+                    metadataDelegateService.fetchCurationNotes(rev)
+                String curationStatus = metadataDelegateService.fetchCurationStatus(rev)
+                List<String> originalModels = metadataDelegateService.fetchOriginalModels(rev)
+                Map<String, String> modellingApproaches =
+                    metadataDelegateService.fetchModellingApproaches(rev)
+                def model = [revision               : rev,
+                             authors                : rev.model.creators,
+                             allRevs                : revs,
+                             flashMessage           : flashMessage,
+                             canUpdate              : canUpdate,
+                             canDelete              : canDelete,
+                             canShare               : canShare,
+                             showPublishOption      : showPublishOption,
+                             canSubmitForPublication: canSubmitForPublication,
+                             canCertify             : canCertify,
+                             validationLevel        : rev.getValidationLevelMessage(),
+                             certComment            : rev.getCertificationMessage(),
+                             flags                  : flags,
+                             curationStatus         : curationStatus,
+                             modellingApproaches    : modellingApproaches,
+                             curationNotes          : curationNotes,
+                             originalModels         : originalModels
+                ]
+                if (rev.id == revision.id) {
+                    flash.genericModel = model
+                    ModelFormatTransportCommand format = revision.format
+                    String formatController = modelFileFormatService.getPluginForFormat(format)
+                    if (formatController) {
+                        forward controller: formatController, action: "show", id: PERENNIAL_ID
+                    } else {
+                        final String fmtId = format.identifier
+                        log.error "Could not find a controller for format $fmtId of $PERENNIAL_ID"
+                    }
+                } else { //showing an old version, with the default page. Do not allow updates.
+                    model["canUpdate"] = false
+                    model["showPublishOption"] = false
+                    model["oldVersion"] = true
+                    model["canDelete"] = false
+                    model["canShare"] = false
+                    model["canCertify"] = false
+                    model["flags"] = flags
+                    return model
+                }
             }
         } else {
             if (!rev) {
-                respond net.biomodels.jummp.webapp.rest.error.Error("Invalid Id",
+                respond net.biomodels.jummp.webapp.rest.errors.Error("Invalid Id",
                         "An invalid model id was specified")
             } else {
                 respond new net.biomodels.jummp.webapp.rest.model.show.Model(rev)
