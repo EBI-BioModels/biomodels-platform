@@ -30,14 +30,10 @@
 
 package net.biomodels.jummp.core
 
-import net.biomodels.jummp.core.adapters.RevisionAdapter
-import java.util.concurrent.locks.ReentrantLock
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.transaction.Transactional
-import net.biomodels.jummp.annotationstore.Qualifier
-import net.biomodels.jummp.annotationstore.ResourceReference
-import net.biomodels.jummp.annotationstore.Statement
 import net.biomodels.jummp.core.adapters.ModelAdapter
+import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.events.*
 import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
@@ -59,11 +55,13 @@ import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.acls.domain.PrincipalSid
 import org.springframework.security.acls.model.Acl
 import org.springframework.security.authentication.AnonymousAuthenticationToken
-import org.springframework.security.core.authority.GrantedAuthorityImpl
 import org.springframework.security.core.Authentication
+import org.springframework.security.core.authority.GrantedAuthorityImpl
 import org.springframework.transaction.TransactionDefinition
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Propagation
+
+import java.util.concurrent.locks.ReentrantLock
 
 /**
  * @short Service class for managing Models
@@ -78,6 +76,8 @@ import org.springframework.transaction.annotation.Propagation
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  * @author Sarala Wimalaratne <sarala@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
+ *
  * @date 20151014
  */
 @SuppressWarnings("GroovyUnusedCatchParameter")
@@ -87,10 +87,6 @@ class ModelService {
      * The class logger.
      */
     private static final Log log = LogFactory.getLog(this)
-    /**
-     * Threshold for the verbosity of the logger.
-     */
-    private static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
     /**
      * Threshold for the verbosity of the logger.
      */
@@ -561,6 +557,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         Revision revision = Revision.findByRevisionNumberAndModel(revisionNumber, model)
         if (!revision || revision.deleted /*|| model.deleted */) {
             throw new AccessDeniedException("Sorry you are not allowed to access this Model.")
+
         } else {
             modelHistoryService.addModelToHistory(model)
             revision.refresh()
@@ -1462,7 +1459,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             return new RevisionAdapter(revision: revision).getRepositoryFilesForRevision()
         } else {
             log.error "you can't access revision ${revision.id}!"
-            throw new AccessDeniedException("Sorry you are not allowed to download this Model.")
+            throw new AccessDeniedException("Sorry you are not allowed to download this Model")
         }
     }
 
