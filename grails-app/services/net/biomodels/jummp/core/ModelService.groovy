@@ -2253,8 +2253,13 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
                     type: cmd.type,
                     changesMade: cmd.changesMade,
                     success: cmd.success)
-            audit.save()
-            return audit.id
+            if (!audit.save(flush: true)) {
+                log.error("""\
+While trying to update an audit record, there is an error: ${audit.getErrors().allErrors.inspect()}""")
+                return -1
+            } else {
+                return audit.id
+            }
         }
         return -1
     }
