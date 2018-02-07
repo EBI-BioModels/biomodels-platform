@@ -326,7 +326,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                 respond net.biomodels.jummp.webapp.rest.errors.Error("Invalid Id",
                         "An invalid model id was specified")
             } else {
-                respond new net.biomodels.jummp.webapp.rest.model.show.Model(rev)
+                respond new net.biomodels.jummp.webapp.rest.model.show.Model(rev, isPrivateModel)
             }
         }
     }
