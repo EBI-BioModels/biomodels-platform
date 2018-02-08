@@ -32,12 +32,63 @@
     <div id="local-footer">
         <div class="row">
             <div class="float-right" style="font-weight: bold;">
-                <a href="https://www.ebi.ac.uk/biomodels-main/" style="color: orange;" title="Switch to the previous version of the BioModels platform">Back to classic BioModels</a>
+                <a href="//www.ebi.ac.uk/biomodels-main/" style="color: orange;"
+                   title="Switch to the previous version of the BioModels platform">Back to classic BioModels</a>
             </div>
             <div class="float-left"><wcm:render path="footer"/></div>
             <div class="clear"></div>
         </div>
     </div>
+     <div id="elixir-banner" data-color="grey" data-name="This service"
+          data-description="BioModels is an ELIXIR Deposition Database"
+          data-more-information-link="//www.elixir-europe.org/platforms/data/elixir-deposition-databases"
+          data-use-basic-styles="true"></div>
+     <script defer="defer"
+             src="//ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/js/elixirBanner.js"></script>
+     <style>
+         .elixir-ribbon {
+             padding: 1rem 0;
+             /*background-color: rgb(79,138,156);*/
+             background-color: rgb(0, 124, 130);
+             /*background-color:#008080;*/
+             vertical-align: middle;
+         }
+
+         .elixir-ribbon,
+         .elixir-ribbon h5,
+         .elixir-ribbon a,
+         .elixir-ribbon a:active,
+         .elixir-ribbon a:visited,
+         .elixir-ribbon a:hover {
+             color: #fff;
+             text-decoration: none;
+         }
+         .elixir-ribbon a:hover {
+             opacity: .8;
+         }
+         .elixir-ribbon .readmore {
+             border-bottom: 1px dotted #fff;
+         }
+         .elixir-ribbon h5 {
+             margin: 0;
+         }
+         .elixir-ribbon .elixir-logo-kite {
+             background: 80% 58% url("https://ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.2/images/logos/assorted/elixir_kitemark-60px.png") no-repeat;
+             position: relative;
+             /*top: -5px;*/
+             /*margin: 0 1rem -.5rem 0;*/
+             margin-left: 1.25rem;
+             height: 60px;
+             width: 60px;
+             display: inline-block;
+             float: left;
+             background-size: 60px;
+             vertical-align: middle;
+         }
+         .elixir-ribbon .row {
+             margin: 0 !important;
+         }
+     </style>
     <!-- End optional local footer -->
 
     <div id="global-footer">
