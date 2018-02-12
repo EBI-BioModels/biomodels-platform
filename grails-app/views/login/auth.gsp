@@ -35,13 +35,13 @@
     </head>
     <body>
         <div id="login" class="row">
-            <div class="medium-6 medium-centered large-6 large-centered columns">
+            <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
                 <form action='${postUrl}' method='POST' id='loginForm' class='cssform' autocomplete='on'>
                     <div class="row column log-in-form">
                         <p>${flash.message}</p>
-                        <h4 class="text-center">Log in with your account</h4>
+                        <h3 class="text-center">Log in to your account</h3>
                         <label><g:message code="login.form.label"/>
-                            <input type='text' name='j_username' id='username' placeholder="username">
+                            <input type='text' name='j_username' id='username' placeholder="Username">
                         </label>
                         <label><g:message code="login.form.password"/>
                             <input type='password' name='j_password' id='password' placeholder="Password"/>

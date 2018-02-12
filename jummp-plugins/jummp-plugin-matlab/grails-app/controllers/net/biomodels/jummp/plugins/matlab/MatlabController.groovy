@@ -17,6 +17,6 @@ class MatlabController {
 
         model['annotations'] = anno
         model['matlabFiles'] = matlabFiles
-        render model: model, view: '/mdl/show', plugin: 'jummp-plugin-matlab'
+        render model: model, view: '/model/matlab/show', plugin: 'jummp-plugin-matlab'
     }
 }

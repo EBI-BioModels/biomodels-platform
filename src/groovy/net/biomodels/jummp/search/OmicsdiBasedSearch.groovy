@@ -24,36 +24,31 @@
 
 package net.biomodels.jummp.search
 
-import grails.async.Promise
+import grails.util.Environment
 import grails.util.Holders
 import groovy.json.JsonBuilder
+import net.biomodels.jummp.annotationstore.ResourceReference
 import net.biomodels.jummp.core.ModelSearchStrategy
-import net.biomodels.jummp.core.adapters.DomainAdapter
-import net.biomodels.jummp.core.adapters.ModelAdapter
-import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.events.ModelOperationEvent
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand
 import net.biomodels.jummp.core.model.ModelState
 import net.biomodels.jummp.core.model.ModelTransportCommand
+import net.biomodels.jummp.core.model.PublicationTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.model.Model
+import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 import net.biomodels.jummp.model.Revision
-import net.biomodels.jummp.plugins.security.User
-import net.biomodels.jummp.qcinfo.FlagLevel
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.springframework.context.ApplicationListener
-import org.springframework.security.acls.domain.BasePermission
-import org.springframework.security.core.Authentication
-import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.web.client.HttpClientErrorException
 import uk.ac.ebi.ddi.ebe.ws.dao.client.dataset.DatasetWsClient
 import uk.ac.ebi.ddi.ebe.ws.dao.config.AbstractEbeyeWsConfig
 import uk.ac.ebi.ddi.ebe.ws.dao.config.EbeyeWsConfigDev
+import uk.ac.ebi.ddi.ebe.ws.dao.config.EbeyeWsConfigProd
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Entry
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Facet
+import uk.ac.ebi.ddi.ebe.ws.dao.model.common.FacetValue
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.QueryResult
-
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * @short Singleton-scoped facade for interacting with a OmicsdiHolder's instance.
@@ -79,6 +74,26 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
      * Flag indicating the logger's verbosity threshold.
      */
     static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
+
+    private final java.util.regex.Pattern pattern = ~/(\p{Alnum}+:)(\p{Alnum}+):(\d+)/
+    private final String replacement = '$1$2\\\\:$3' // note the single quotes to avoid Groovy string interpolation
+
+    private final Map<String, Integer> FACET_ORDER = new TreeMap<String, Integer>(String.CASE_INSENSITIVE_ORDER) {
+        {
+            put("Curation status", 1)
+            put("Model format", 2)
+            put("Modelling approach", 3)
+            put("Model flag", 4)
+            put("Organisms", 5)
+            put("Disease", 6)
+            put("GO", 7)
+            put("UniProt", 8)
+            put("ChEBI", 9)
+            put("ChEMBL", 10)
+            put("Ensembl", 11)
+        }
+    }
+
     /**
      * The OmicsDI Request Handler to use for handling searches.
      */
@@ -114,126 +129,123 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
         // look at solrbasedsearch
     }
 
-    void clearAnnotationStatementsFromDatabase() {
-        log.debug("Begin prunning annotation statements from database")
-        Revision.executeUpdate("delete ElementAnnotation")
-        Revision.executeUpdate("delete Statement")
-        log.debug("Finished prunning annotation statements from database")
+    void clearIndex() {
+        // Delete indexing plans from the database
+        if (IS_DEBUG_ENABLED) {
+            log.debug "Clearing the indexing plans."
+        }
+        Revision.executeUpdate("delete IndexingPlan")
     }
 
-    void regenerateIndices() {
-        clearAnnotationStatementsFromDatabase()
-        List<RevisionTransportCommand> revisions = Revision.list(fetch: [model: "eager"]).collect { r ->
-            DomainAdapter.getAdapter(r).toCommandObject()
+    private String escapeLuceneFieldSeparator(String query) {
+        def matcher = query =~ pattern
+        def out = new StringBuffer()
+        while (matcher) {
+            matcher.appendReplacement(out, replacement)
         }
-        if (IS_DEBUG_ENABLED) {
-            log.debug "Indexing ${revisions.size()} revisions."
-        }
-        Authentication auth = springSecurityService.authentication
-        AtomicReference<Authentication> authRef = new AtomicReference<>(auth)
-        Promise p = Revision.async.task {
-            SecurityContextHolder.context.authentication = authRef.get()
-            revisions.each {
-                try {
-                    updateIndex(it)
-                }
-                catch(Exception e) {
-                    log.error("Exception thrown while indexing ${it.properties} ${e.getMessage()}", e)
-                }
-            }
-        }
-        p.onComplete {
-            if (IS_INFO_ENABLED) {
-                log.info "Finished regenerating the index."
-            }
-        }
-        p.onError { Throwable e ->
-            log.error("Error regenerating the index: ${e.message}", e)
-        }    }
+        matcher.appendTail(out)
+        out.toString()
+    }
 
-    SearchResponse searchModels(String query,
+    SearchResponse searchModels(String query, SortOrder sortOrder,
             Map<String, Integer> paginationCriteria = ["start": 0, "length": 50, "facetCount": 10] ) {
         long start = System.currentTimeMillis()
-        AbstractEbeyeWsConfig ebeyeWsConfig = new EbeyeWsConfigDev()
+        boolean inDevMode = Environment.isDevelopmentMode()
+        AbstractEbeyeWsConfig ebeyeWsConfig
+        if (inDevMode) {
+            ebeyeWsConfig = new EbeyeWsConfigDev()
+        } else {
+            ebeyeWsConfig = new EbeyeWsConfigProd()
+        }
         DatasetWsClient datasetWsClient = new DatasetWsClient(ebeyeWsConfig)
+        // escape special Lucene field separators in query string
+        query = escapeLuceneFieldSeparator(query)
         // TODO: should allow searching information of other fields
         // create the returned object
         SearchResponse searchResponse = new SearchResponse()
-        String[] fields = ["name", "description"]
-        QueryResult result = datasetWsClient.getDatasets("biomodels", query, fields, null, null,
-            paginationCriteria['start'], paginationCriteria['length'], paginationCriteria['facetCount'])
-        List<Entry> entries = result.getEntries()
+        String[] fields = ["name", "description", "submitter", "curationstatus",
+                           "last_modification_date", "submission_date",
+                           "modelformat", "levelversion", "first_author", "publication_year"]
+        String sortField = sortOrder.getField()
+        String sortDir = sortOrder.direction == SortOrder.SortDirection.ASC ? "ascending" : "descending"
+        QueryResult result
+        try {
+            result = datasetWsClient.getDatasets("biomodels", query, fields, sortField, sortDir,
+                paginationCriteria['start'], paginationCriteria['length'], paginationCriteria['facetCount'])
+        } catch (HttpClientErrorException e) {
+            log.debug("""\
+There was a problem obtaining search result from EBI search server. The root cause is ${e.toString()}""")
+            log.debug("Status code: ${e.statusCode.value()}. Message: ${e.message}")
+            if (e.statusCode.value() == 400) {
+                log.debug("The querying string might be wrong syntax or contains restricted characters.")
+            }
+            result = null
+        }
         List<Facet> facets = []
-        int totalCount = result.count
+        int totalCount
         // convert all the returned entries to ModelTransportCommand objects
-        HashSet<ModelTransportCommand> results = new HashSet<ModelTransportCommand>()
-        // TODO: replace them with the actual models when biomodels importer finishes,
-        // the following aims to create fake data
-        List<Revision> publicRevisions = Revision.findAllByState(ModelState.PUBLISHED)
-        // or get the list revisions can be retrieved by the current logged in user
-
-        Model firstPublicModel
-        Revision first
-        Revision latest
-        if (publicRevisions) {
-            // get the first public revision among these public ones
-            latest = publicRevisions.first()
-            firstPublicModel = latest.getModel()
-            // retrieve the first revision of the model containing it and the above latest
-            first = firstPublicModel.revisions.first()
+        List<ModelTransportCommand> results = new ArrayList<ModelTransportCommand>()
+        if (result) {
             // entries/models
-            entries.eachWithIndex { Entry entry, int i ->
+            totalCount = result.count
+            List<Entry> entries = result.getEntries()
+            entries?.eachWithIndex { Entry entry, int i ->
                 String submissionId = entry.id
-                Model thisModel = ModelAdapter.findByPerennialIdentifier(submissionId) ?: firstPublicModel //TODO fixme
-                submissionId = thisModel.submissionId
-                boolean isAccessible =
-                    aclUtilService.hasPermission(springSecurityService.authentication, thisModel, BasePermission.READ)
-                if (submissionId != firstPublicModel.submissionId && isAccessible) {
-                    first = Revision.findByModelAndRevisionNumber(thisModel, 1)
-                    latest = modelService.getLatestRevision(thisModel, false)
+                String modelName = entry.getFields().get('name')[0]
+                String submissionDateString = entry.getFields().get('submission_date')[0]
+                java.text.SimpleDateFormat simpleDateFormat = new java.text.SimpleDateFormat("yyyymmdd")
+                Date submissionDate = simpleDateFormat.parse(submissionDateString)
+                String description = ""
+                boolean haveDescription = entry.getFields().get('description').length > 0
+                if (haveDescription) {
+                    description = entry.getFields().get('description')[0]
                 }
-                boolean haveName = entry.getFields().get('name')?.length > 0
-                String name
-                if (haveName) {
-                    name = entry.getFields().get('name')[0]
-                } else {
-                    log.warn("The search index entry for Model ${submissionId} did not contain the model name")
-                    name = latest.name
+                String submitterName = entry.getFields().get('submitter')[0]
+                String modifiedDateString = entry.getFields().get('last_modification_date')[0]
+                simpleDateFormat = new java.text.SimpleDateFormat("yyyymmdd")
+                Date modifiedDate = simpleDateFormat.parse(modifiedDateString)
+                ModelState state = ModelState.PUBLISHED
+                String formatName = entry.getFields().get('modelformat')[0]
+                String formatVersion = entry.getFields().get('levelversion')[0]
+                boolean havePublicationYear = entry.getFields().get('publication_year').length > 0
+                String publicationYear = ""
+                if (havePublicationYear) {
+                    publicationYear = entry.getFields().get('publication_year')[0]
                 }
-                String description = latest?.description ?: ""
-                User submitter = first.owner
-                String submitterName = submitter.person.userRealName
-                String submitterUsername = submitter.username
-                String publicationId = thisModel.publicationId
-                Date uploadDate = first.uploadDate
-                Date modifiedDate = latest.uploadDate
-                Long id = thisModel.id
-                ModelState state = latest.state
                 ModelFormatTransportCommand format =
-                    new ModelFormatAdapter(format: latest.format).toCommandObject()
-                FlagLevel qcFlag = latest.qcInfo?.flag
-
+                    new ModelFormatTransportCommand(name: formatName, formatVersion: formatVersion)
+                PublicationTransportCommand ptc = null
+                if (publicationYear) {
+                    ptc = new PublicationTransportCommand(year: Integer.parseInt(publicationYear))
+                }
                 ModelTransportCommand mtc = new ModelTransportCommand(
                     submitter: submitterName,
-                    submitterUsername: submitterUsername,
-                    name: name,
+                    name: modelName,
                     description: description,
                     submissionId: submissionId,
-                    publicationId: publicationId,
-                    submissionDate: uploadDate,
+                    submissionDate: submissionDate,
                     lastModifiedDate: modifiedDate,
-                    id: id,
                     state: state,
                     format: format,
-                    flagLevel: qcFlag
+                    publication: ptc
                 )
                 results.add(mtc)
             }
             // facets
-            boolean ignoredFacets = false
+            Set<String> hiddenFacets = ["PUBLICATION DATE", "OMICS TYPE", "REPOSITORY", "SOURCE"]
+            boolean shouldBeHidden = false
             result.facets?.each { Facet facet ->
-                ignoredFacets = facet.label.equalsIgnoreCase("repository") || facet.label.equalsIgnoreCase("source")
-                if (!ignoredFacets) {
+                // deal with two fields due to camel case in the field names
+                // will be cleaned up once www-prod team launches the next configuration
+                if (facet.id == "modellingApproach") {
+                    facet.id = "modellingapproach"
+                }
+                if (facet.id == "modelFlag") {
+                    facet.id = "modelflag"
+                }
+
+                shouldBeHidden = hiddenFacets.contains(facet.label.toUpperCase())
+                if (!shouldBeHidden) {
                     facets.add(facet)
                 }
             }
@@ -242,13 +254,44 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
             results = []
             facets = []
         }
+        Set<String> immutableFacets = ["Organisms", "Publication Date", "Omics type"]
 
-        if (IS_DEBUG_ENABLED) {
-            log.debug("Results processed in ${System.currentTimeMillis() - start}")
+        // potentially turn facets into a HashSet/HashMap so that we can more easily
+        // compute the delta b/w facets and immutable facets
+        List<FacetValue> facetValues = facets.findAll({ Facet f ->
+            !(immutableFacets.contains(f.label))
+        })*.facetValues.flatten().findAll { FacetValue value -> !value.label.contains(' ') }
+        Map<String, String> labelsForAccessions = new LinkedHashMap<>(facetValues.size())
+        List<String> labels = facetValues.collect { it.label }
+        List<ResourceReference> references = ResourceReference.findAllByAccessionInList(labels)
+        references.each { ResourceReference r ->
+            labelsForAccessions[r.accession] = r.name
+        }
+        facetValues.each { FacetValue v ->
+            String referenceName = labelsForAccessions[v.label]
+            if (referenceName) {
+                v.label = referenceName
+            }
+        }
+        // build a TreeMap based on the deliberately designed order of our Facets
+        TreeSet<OrderedFacet> orderedFacets = new TreeSet<OrderedFacet>()
+        facets.each {Facet facet ->
+            int order = FACET_ORDER.get(facet.label) ?: FACET_ORDER.size() + 1
+            OrderedFacet of = new OrderedFacet(facet, order)
+            orderedFacets.add(of)
+        }
+        // do not care about the facets order because an LinkedHashMap object can preserve
+        // the insertion order. Here we just copy all facets ordered above to the
+        // SearchResponse's facets placeholder
+        orderedFacets.each {
+            searchResponse.facets.putAt(it.facet.label, it)
         }
         searchResponse.results = results
-        searchResponse.facets = facets
         searchResponse.totalCount = totalCount
+        if (IS_DEBUG_ENABLED) {
+            log.debug("Search terms: $query")
+            log.debug("Results processed in ${System.currentTimeMillis() - start}")
+        }
         return searchResponse
     }
 
@@ -266,6 +309,8 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
             def dsConfig = grailsApplication.config.dataSource
             def searchStrategy = grailsApplication.config.jummp.search.strategy
             String dbUrl = dsConfig?.url
+            // the database connection string with unicode options is not working with Indexer
+            dbUrl = ModelIdentifierUtils.simplifyDbConnStr(dbUrl)
             String dbUsername = dsConfig?.username
             String dbPassword = dsConfig?.password
             def dbSettings = [ 'url': dbUrl, 'username': dbUsername, 'password': dbPassword ]
@@ -309,7 +354,7 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
             indexingData.setText(builder.toPrettyString())
 
             String jarPath = grailsApplication.config.jummp.search.pathToIndexerExecutable
-            def argsMap = [jarPath: jarPath, jsonPath: indexingData.getCanonicalPath()]
+            def argsMap = [jarPath: jarPath, jsonPath: indexingData.absolutePath]
 
             String httpProxy = System.getProperty("http.proxyHost")
             if (httpProxy) {
@@ -333,6 +378,10 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
                 //TODO RETRY
             }
         }
+    }
+
+    String[] getSortFields() {
+        ["relevance", "submissionid", "name"]
     }
 
     private List<String> fetchFilesFromRevision(RevisionTransportCommand rev, boolean filterMains) {

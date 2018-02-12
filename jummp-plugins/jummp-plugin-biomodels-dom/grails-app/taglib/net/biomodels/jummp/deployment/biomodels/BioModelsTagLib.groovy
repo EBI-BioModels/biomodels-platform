@@ -21,6 +21,9 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import net.biomodels.jummp.core.model.FlagTransportCommand
+import net.biomodels.jummp.core.model.ModelTransportCommand
+import net.biomodels.jummp.plugins.security.Role
+import org.springframework.security.core.GrantedAuthority
 
 import java.text.SimpleDateFormat
 
@@ -28,16 +31,19 @@ import java.text.SimpleDateFormat
  * @short General purpose helper for rendering BioModels pages.
  *
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 class BioModelsTagLib {
     static defaultEncodeAs = [taglib:'none']
     static namespace = 'biomd'
 
     /**
-     * Dependency injection
+     * Declare dependency injections
      */
+    def decorationService
     def modelOfTheMonthService
-
+    def modelDelegateService
+    def springSecurityService
     /**
      * Displays the Model of the Month (MoM) entry for the given model.
      *
@@ -50,6 +56,9 @@ class BioModelsTagLib {
             return
         }
         def entries = modelOfTheMonthService.fetchEntriesForModel id
+        if (entries) {
+            out << "<span>View the Model of the Month entry for this model: </span>"
+        }
         out << render(collection: entries, template: '/templates/modelOfTheMonth',
                 plugin: 'jummp-plugin-biomodels-dom')
         // calls momService.fetchEntriesForModel for given modelId
@@ -68,6 +77,9 @@ class BioModelsTagLib {
                 plugin: 'jummp-plugin-biomodels-dom', var: "flag")
     }
 
+    /**
+     * Rendering CurationNotes tab for the curated models
+     */
     def renderCurationNotesTab = { attrs ->
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy, HH:mm:ss");
         def base64CurationNotes = attrs.curationNotes?.collect { CurationNotesTransportCommand cmd ->
@@ -77,18 +89,84 @@ class BioModelsTagLib {
                 lastModifier: cmd.lastModifier,
                 dateAdded: dateFormat.format(cmd.dateAdded),
                 lastModified: dateFormat.format(cmd.lastModified),
-                comment: cmd.comment,
-                curationImage: Base64.encoder.encodeToString(cmd.curationImage)
+                comment: cmd.comment ?: "",
+                curationImage: cmd.curationImage ? Base64.encoder.encodeToString(cmd.curationImage) : null
             ]
         }
         // use class 'row' specifically designed by EBI Visual Framework to gain responsive design performance
         out << "<div id='Curation' class='row'>"
         out << render(collection: base64CurationNotes, template: '/templates/curationNotes',
                     plugin: 'jummp-plugin-biomodels-dom', var: 'curaRec')
+        Collection<GrantedAuthority> grantedAuthorities = springSecurityService.getPrincipal().getAuthorities()
+        Set<String> roleNames = grantedAuthorities.collect {
+            it.getAuthority()
+        }
+        boolean hasCuratorRole = "ROLE_CURATOR" in roleNames
+        boolean havePublicationId = base64CurationNotes["model"].publicationId != [null]
+        def model =  havePublicationId ? base64CurationNotes["model"].publicationId : base64CurationNotes["model"].submissionId
+        if (hasCuratorRole) {
+            def href = g.link(controller: "curationNotes",
+                action: "edit", class: "button",
+                params: ["model": model.first()]) {
+                "Edit"
+            }
+            String view = """\
+                <div class="small-12 medium-12 large-12 columns" id="btnEditCurationNotes">
+                        ${href}
+                    </div>
+                """
+            out << view
+        }
         out << "</div>"
     }
 
     def renderCurationStatus = { attrs ->
         out << attrs.curationStatus
+    }
+
+    def renderModellingApproaches = { attrs ->
+        out << render(collection:  attrs.modellingApproaches,
+            template: '/templates/modellingApproach',
+            plugin: 'jummp-plugin-biomodels-dom', var: 'modellingApproach')
+    }
+
+    def renderOriginalModels = { attrs ->
+        out << render(collection: attrs.sources,
+            template: '/templates/originalModel',
+            plugin: 'jummp-plugin-biomodels-dom', var: 'source')
+    }
+
+    def renderRecentlyAccessedModels = {
+        Map<ModelTransportCommand, ModelHits> models = decorationService.getRecentlyAccessedModels()
+        StringBuilder result = new StringBuilder("<ul style='list-style: none; " +
+            "list-style-position: inside; padding: 0; margin-left: 0'>")
+        models?.each {
+            ModelTransportCommand mtc = it.key
+	        String modelId = mtc.publicationId ?: mtc.submissionId
+            String modelURI = g.createLink(controller: 'model', id: modelId, action: 'show')
+	        String modelLink = "<li style='text-indent: -1.2em; padding-left: 1em'>" +
+                "<span class='icon icon-functional' data-icon='4'>&nbsp;</span>" +
+                "<a href='${modelURI}'>${it.value.modelName}</a></li>"
+            result.append(modelLink)
+        }
+	    result.append("</ul>")
+        out << result.toString()
+    }
+
+    def renderRecentlyPublishedModels = {
+        Map<ModelTransportCommand, ModelLatestPublished> models = decorationService.getRecentlyPublishedModels()
+        StringBuilder result = new StringBuilder("<ul style='list-style: none; " +
+            "list-style-position: inside; padding: 0; margin-left: 0'>")
+        models?.each {
+            ModelTransportCommand mtc = it.key
+	        String modelId = mtc.publicationId ?: mtc.submissionId
+            String modelURI = g.createLink(controller: 'model', id: modelId, action: 'show')
+            String modelLink= "<li style='text-indent: -1.2em; padding-left: 1em'>" +
+                "<span class='icon icon-functional' data-icon='U'>&nbsp;</span>" +
+                "<a href='${modelURI}'>${it.value.modelName}</a></li>"
+            result.append(modelLink)
+        }
+	    result.append("</ul>")
+        out << result.toString()
     }
 }

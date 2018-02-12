@@ -22,8 +22,11 @@ package net.biomodels.jummp.core
 
 import eu.ddmore.metadata.service.ValidationException
 import grails.async.Promises
+import net.biomodels.jummp.annotationstore.ElementAnnotation
 import net.biomodels.jummp.annotationstore.ResourceReference
+import net.biomodels.jummp.annotationstore.RevisionAnnotation
 import net.biomodels.jummp.annotationstore.Statement
+import net.biomodels.jummp.core.annotation.ElementAnnotationCategory
 import net.biomodels.jummp.core.annotation.ElementAnnotationTransportCommand
 import net.biomodels.jummp.core.annotation.QualifierTransportCommand
 import net.biomodels.jummp.core.annotation.ResourceReferenceCategory
@@ -54,6 +57,12 @@ class MetadataDelegateService implements IMetadataService {
     private final Log log = LogFactory.getLog(getClass())
     private final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
     static transactional = false
+
+    private final Map<String, String> MODELLING_APPROACHES =
+        ["MAMO_0000009": "Constraint-based model",
+         "MAMO_0000025": "Petri net",
+         "MAMO_0000030": "Logical model",
+         "MAMO_0000046": "Ordinary differential equation model"]
 
     /**
      * Dependency injection for the metadata service.
@@ -160,25 +169,40 @@ class MetadataDelegateService implements IMetadataService {
         metadataService.getMetadataNamespaces()
     }
 
+    List<ElementAnnotationTransportCommand> fetchAnnotations(RevisionTransportCommand rev) {
+        List<ElementAnnotationTransportCommand> annotations = null
+        use(ElementAnnotationCategory) {
+            List<RevisionAnnotation>  revisionAnnotations = null
+            def values = RevisionAnnotation.where {
+                revision.id == rev.id
+            }
+            revisionAnnotations = values.list()
+            annotations = revisionAnnotations.collect {RevisionAnnotation ra ->
+                ra.elementAnnotation.toCommandObject()
+            }
+        }
+        annotations
+    }
+
     Map<QualifierTransportCommand, List<ResourceReferenceTransportCommand>> fetchGenericAnnotations(
         RevisionTransportCommand rev) {
-        // By default, fetching generic annotations means to grab model-level annotations
-        // The specific levels of annotations should be invoked within another methods
-        List<ElementAnnotationTransportCommand> annotationTCL = rev.annotations
-        List<ElementAnnotationTransportCommand> annotations = new ArrayList<ElementAnnotationTransportCommand>()
-        annotationTCL*.each  {
-            if (it.modelElementType  && it.modelElementType.name == "model")
-                annotations << it
-        }
-        List<StatementTransportCommand> statements = annotations*.statement
+        List<StatementTransportCommand> statements = getModelLevelAnnotations(rev)
         Map result = [:]
         statements.each { StatementTransportCommand s ->
             final QualifierTransportCommand qualifier = s.predicate
             final ResourceReferenceTransportCommand xref = s.object
-            if (result.containsKey(qualifier)) {
-                result[qualifier] << xref
-            } else {
-                result[qualifier] = [xref]
+            // ignore the biomodels custom annotation denoting curation status
+            // because it is already shown at the curation status line
+            boolean isCurationStatus = qualifier.type == "biomodelsCustomAnnotation" &&
+                qualifier.uri == "curated"
+
+            boolean isOriginalModel = qualifier.accession == "source"
+            if (!isCurationStatus && !isOriginalModel) {
+                if (result.containsKey(qualifier)) {
+                    result[qualifier] << xref
+                } else {
+                    result[qualifier] = [xref]
+                }
             }
         }
         result
@@ -188,12 +212,56 @@ class MetadataDelegateService implements IMetadataService {
         curationNotesService.fetchCurationNotesForModel(rev.model.id)
     }
 
+    /**
+     * Returns whether a revision command belongs to a curated or non-curated model.
+     *
+     * This relies on BioModels' workflow of assigning a publication identifier for
+     * curated models.
+     *
+     * @param rev the {@link RevisionTransportCommand} to check
+     * @return the String 'curated' iff the model has been curated, or 'non-curated' otherwise.
+     */
     String fetchCurationStatus(RevisionTransportCommand rev) {
-        List<ElementAnnotationTransportCommand> annotations = rev.annotations
-        List<StatementTransportCommand> statements = annotations*.statement
-        def res = statements.find {
-            it.object.uri == "curated"
+        rev.model.publicationId ? "curated" : "non-curated"
+    }
+
+    Map<String, String> fetchModellingApproaches(RevisionTransportCommand rev) {
+        List<StatementTransportCommand> statements = getModelLevelAnnotations(rev)
+        Map result = [:]
+        statements.each { StatementTransportCommand s ->
+            final ResourceReferenceTransportCommand xref = s.object
+            if (MODELLING_APPROACHES.containsKey(xref.accession)) {
+                result.put(xref.accession, MODELLING_APPROACHES.get(xref.accession))
+            }
         }
-        return res != null ? "curated" : "non-curated"
+        result
+    }
+
+    List<String> fetchOriginalModels(RevisionTransportCommand rev) {
+        List<StatementTransportCommand> statements = getModelLevelAnnotations(rev)
+        List<String> result = []
+        statements.each { StatementTransportCommand s ->
+            if (s.predicate.accession == "source") {
+                result << s.object.uri
+            }
+        }
+        result
+    }
+
+    private List<StatementTransportCommand> getModelLevelAnnotations(RevisionTransportCommand rev) {
+        // By default, fetching generic annotations means to grab model-level annotations
+        // The specific levels of annotations should be invoked within another methods
+        def modelRAs = RevisionAnnotation.where {
+            revision.id == rev.id && elementAnnotation.modelElementType.name == 'model'
+        }
+        List<RevisionAnnotation> revisionAnnotations = modelRAs.list()
+        List<ElementAnnotationTransportCommand> annotations
+        use(ElementAnnotationCategory) {
+            annotations = revisionAnnotations.collect { RevisionAnnotation ra ->
+                ra.elementAnnotation.toCommandObject()
+            }
+        }
+        List<StatementTransportCommand> statements = annotations*.statement
+        statements
     }
 }

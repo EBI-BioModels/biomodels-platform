@@ -40,29 +40,28 @@
         <link rel="stylesheet" href="${resource(dir: 'css', file: 'jstree.css')}" />
     </head>
      <body>
-        <div>
-            <g:form name="resetForm" action="newPassword">
-                <table class="responsive-table center">
-                    <tbody>
-                    <tr>
-                        <td class='tableLabels'><label for="register-form-username"><g:message code="user.signup.ui.username"/>:</label></td>
-                        <td><span><g:textField name="username"/></span></td>
-                    </tr>
-                    <tr>
-						<td class='tableLabels'><label><g:message code="user.administration.updatePassword.newPassword"/>:</label></td>
-						<td><g:passwordField name="newPassword"/></td>
-					</tr>
-					<tr>
-						<td class='tableLabels'><label><g:message code="user.administration.updatePassword.newPasswordRpt"/>:</label></td>
-						<td><g:passwordField name="newPasswordRpt"/></td>
-					</tr>
-                    </tbody>
-                </table>
+        <div class="row">
+            <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
+            <h3 class="text-center">Reset your password</h3>
+            <g:form name="resetForm" action="newPassword" class="log-in-form">
+                <label for="username">
+                    <span class="required"><g:message code="user.signup.ui.username"/></span>
+                    <g:textField name="username"/>
+                </label>
+                <label for="newPassword">
+                    <span class="required"><g:message code="user.administration.updatePassword.newPassword"/></span>
+                    <g:passwordField name="newPassword"/>
+                </label>
+                <label for="newPasswordRpt">
+                    <span class="required"><g:message code="user.administration.updatePassword.newPasswordRpt"/></span>
+                    <g:passwordField name="newPasswordRpt"/>
+                </label>
                 <div class="buttons">
                     <input type="submit" class="button" value="Reset Password"/>
                 </div>
                 <input class="verysecure" name="hashCode" value="${hashCode}"/>
             </g:form>
+            </div>
         </div>
         </body>
 </html>

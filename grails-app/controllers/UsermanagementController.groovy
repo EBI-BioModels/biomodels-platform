@@ -19,6 +19,7 @@
 **/
 
 
+import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.webapp.EditUserCommand
@@ -29,6 +30,7 @@ import net.biomodels.jummp.webapp.UpdatePasswordCommand
 /*
 * @short Controller for managing user registrations
 * @author Raza Ali <raza.ali@ebi.ac.uk>
+* @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
 */
 
 
@@ -70,12 +72,12 @@ class UsermanagementController {
 
     @Secured(["isAuthenticated()"])
     def edit() {
-    	String user = springSecurityService.principal.username
+        User currentUser = springSecurityService.currentUser
         render  view: "edit",
                 model: [postUrl: "", flashMessage: checkForMessage(),
                         validationErrorOn: checkForErrorBean(),
-                        user: userService.getUser(user),
-                        notificationPermissions: notificationService.getNotificationPermissions(user)]
+                        user: currentUser,
+                        notificationPermissions: notificationService.getNotificationPermissions(currentUser.username)]
     }
 
     @Secured(["isAuthenticated()"])
@@ -88,12 +90,12 @@ class UsermanagementController {
 
     @Secured(["isAuthenticated()"])
     def show() {
-    	String user = springSecurityService.principal.username
+        User currentUser = userService.getCurrentUser()
         render  view: "show",
                 model: [postUrl: "", flashMessage: checkForMessage(),
                         validationErrorOn: checkForErrorBean(),
-                        user: userService.getUser(user),
-                        notificationPermissions: notificationService.getNotificationPermissions(user)]
+                        user: currentUser,
+                        notificationPermissions: notificationService.getNotificationPermissions(currentUser.username)]
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
@@ -267,6 +269,58 @@ class UsermanagementController {
             log.error e.message, e
    			return redirect(action:"create")
     	}
-    	render view: "successfulregistration"
+    	render(view: "successfulregistration", model: [email: cmd.email])
+    }
+
+    /**
+     * Fetch users' data based what customers are typing. The data populate the source of
+     * Autocomplete widgets. The data can be customised but they have to include two mandatory
+     * fields as label and value. The two fields are formed from the other ones. For example:
+     * label = userRealName (username<email>)
+     */
+    @Secured(["IS_AUTHENTICATED_FULLY"])
+    def fetchUsers() {
+        def request = params.request
+        def searchTerm = params.search
+        if (Integer.parseInt(request) == 1) {
+            List users = userService.searchUsers(searchTerm)
+            def usersMap = []
+            users.each {user ->
+                def email = user[0]
+                def username = user[1]
+                def userRealName = user[2]
+                def id = user[3]
+                usersMap << [label: "${userRealName} (${username}<${email}>)",
+                             value: id,
+                             username: username,
+                             email: email,
+                             userRealname: userRealName]
+            }
+            render(usersMap as JSON)
+        } else {
+            def username = params.username
+            User user = userService.getUser(username)
+            render([user] as JSON)
+        }
+    }
+
+    /**
+     * This controller tries to query the database to get the user who is potentially associated
+     * with the fields provided by new users. It is called in the register view where we parse
+     * the input values and come up with a Ajax call to UserService in order to look up them
+     * into the database.
+     *
+     * @return JSON string  the query if an user matches with, or an empty string in otherwise.
+     */
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY", "IS_AUTHENTICATED_FULLY"])
+    def lookupUser() {
+        String query = params?.query
+        int column = Integer.parseInt(params?.column)
+        User user = userService.lookupUser(query, column)
+        String response = ""
+        if (user) {
+            response = query
+        }
+        render([response] as JSON)
     }
 }

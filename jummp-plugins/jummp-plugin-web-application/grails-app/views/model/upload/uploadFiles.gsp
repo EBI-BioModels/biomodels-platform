@@ -70,11 +70,12 @@
         <g:render template="/templates/errorMessage"/>
         <h2><g:message code="submission.upload.header"/></h2>
         <p style="padding-bottom:1em"><g:message code="submission.upload.explanation"/></p>
-        <g:uploadForm id="fileUpload" novalidate="false" autocomplete="false" name="fileUploadForm">
+        <g:uploadForm id="fileUpload" novalidate="false" autocomplete="false" name="fileUploadForm" onsubmit="return validate()">
             <div class="dialog">
                 <jummp:displayExistingMainFile main="${workingMemory['main_file']}"/>
                 <div id="noMains"></div>
                 <jummp:renderAdditionalFilesLegend/>
+                <div id="additionalFilesExplanation"><jummp:renderAdditionalFilesExplanation/></div>
                 <fieldset>
                     <a href="#" id="addFile"><jummp:renderAdditionalFilesAddButton/></a>
                     <table class='formtable responsive-table' id="additionalFiles">
@@ -111,6 +112,14 @@
             </div>
         </g:uploadForm>
         <g:javascript>
+            $('#additionalFilesExplanation').hide();
+            $('#howAboutThis').click(function () {
+                if ($("div#additionalFilesExplanation").is(":hidden")) {
+                    $("div#additionalFilesExplanation").show("slow");
+                } else {
+                    $("div#additionalFilesExplanation").slideUp();
+                }
+            });
             var nbExtraFiles = 0;
             var numberOfAdditionalsAtLoadingPage = $('input[id^=description]').size();
             function populateDiv() {
@@ -128,24 +137,58 @@
                 document.getElementById("additionalsOnUI").innerHTML = input;
             }
 
+            function validate() {
+                // validate the upload form
+                var result = $("input[id^=description]").filter(function() {
+                    var element = $(this);
+                    console.log(element.val());
+                    return $.trim(this.value) === "";
+                });
+                var mainValid = $("input[id^=mainFileDescription]").filter(function() {
+                    var element = $(this);
+                    console.log(element.val());
+                    return $.trim(this.value) === "";
+                });
+                var isValid = result.length == 0 && mainValid.length == 0;
+                if (isValid) {
+                    console.log("All required fields have been filled in");
+                    return true;
+                } else {
+                    var flashDiv = $('.flashNotificationDiv');
+                    $(flashDiv).html("Please fill in all required fields");
+                    $(flashDiv).show();
+                    console.log("Some required fields cannot be empty");
+                    return false;
+                }
+            }
+
             $(document).ready(function () {
                 populateDiv();
+                $('.replaceMain').click(function(e) {
+                    e.preventDefault();
+                    // firing a click event on the main file upload element
+                    $('#mainFile').click();
+                });
+
                 $('.removeMain').click(function(e) {
                     e.preventDefault();
-                    var parent = $(this).parent().get(0).innerHTML;
+                    var td = $(this).parent().get(0);
+                    var tr = $(td).parent().get(0);
+                    console.log($(tr).find("td:first").html());
+                    var tbody = $(td).parent().parent().get(0);
+                    // update the temporary container's content
+                    var parent = $(tr).find("td:first").html();
                     var trimmedParent = parent.replace(/^\s+/g,"");
                     var start = "<span id='mainName_".length;
                     var end = trimmedParent.indexOf("\">", start);
                     var name = trimmedParent.substring(start, end);
                     var hi = "<input value='" + name + "' name='deletedMain' hidden>";
                     document.getElementById("noMains").innerHTML += hi;
-                    $(this).parent().get(0).innerHTML = "<input type='file' id='mainFile' name='mainFile' class='mainFile' >\n\t</td>\n</tr>";
-
-                });
-
-                $('.replaceMain').click(function(e) {
-                    e.preventDefault();
-                    $(this).parent().get(0).getElementsByTagName("input")[0].click();
+                    // get rid of the current row where Remove button is placed
+                    $(td).closest("tr").remove();
+                    // generate a new row in order to allow browsing a new file
+                    var row = "<jummp:renderRowInMainFileTable />";
+                    $(tbody).append(row);
                 });
 
                 $('.mainFile').change(function(click) {
@@ -156,6 +199,7 @@
                     var newValue = this.value;
                     var newName = trimElementName("\\", newValue);
                     document.getElementById(id).innerHTML = newName;
+                    $('#mainFileDescription').val('');
                 });
 
                 $("#addFile").click(function (evt) {
@@ -163,23 +207,23 @@
                     $('<tr>', {
                         class: 'fileEntry'
                     }).append(
-                        $('<td class="name">').append(
+                        $('<td class="name" style="width: 20%">').append(
                             $('<input/>', {
                                 type: 'file',
                                 id: 'extraFiles' + nbExtraFiles,
                                 name: 'extraFiles'
                             })
                         ),
-                        $('</td><td style="width: 785px">').append(
+                        $('</td><td style="width: 70%">').append(
                             $('<input/>', {
                                 type: 'text',
                                 id: 'description' + ++numberOfAdditionalsAtLoadingPage,
                                 name: 'description',
                                 style: "width: 100%; box-sizing: border-box; -webkit-box-sizing: border-box; -moz-box-sizing: border-box;",
                                 placeholder: 'Please enter a description'
-                            })
+                            }).prop('required', true)
                         ),
-                        $('</td><td>&nbsp;').append(
+                        $('</td><td style="width: 10%; display: table-cell; vertical-align: middle; text-align: right">&nbsp;').append(
                             $('<a>', {
                                 href: "#",
                                 class: 'killer',

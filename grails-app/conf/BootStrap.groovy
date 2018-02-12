@@ -31,7 +31,7 @@
 
 import grails.plugin.springsecurity.acl.AclSid
 import grails.util.Environment
-import net.biomodels.jummp.core.adapters.DomainAdapter
+import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PubLinkProvTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.core.model.identifier.decorator.AbstractAppendingDecorator
@@ -62,7 +62,7 @@ class BootStrap {
 
     void registerDefaultModelElementTypes() {
         def modelFormats = ModelFormat.list().each { ModelFormat fmt ->
-            def fmtCmd = DomainAdapter.getAdapter(fmt).toCommandObject()
+            def fmtCmd = new ModelFormatAdapter(format: fmt).toCommandObject()
             try {
                 modelFileFormatService.registerModelElementType(fmtCmd, "model")
             } catch (IllegalStateException e) {
@@ -162,6 +162,20 @@ class BootStrap {
                 UserRole.create(user, userRole, true)
                 userRole = Role.findByAuthority("ROLE_ADMIN")
                 UserRole.create(user, userRole, true)
+            }
+
+            if (!User.findByUsername("anonymous")) {
+                def person = new Person(userRealName: "anonymous")
+                person.save(flush: true)
+                def user = new User(username: "anonymous",
+                        password: springSecurityService.encodePassword("anonymous"),
+                        email: "user@anoymous.com",
+                        person: person,
+                        enabled: false,
+                        accountExpired: true,
+                        accountLocked: true,
+                        passwordExpired: true)
+                user.save(flush: true)
             }
         }
 

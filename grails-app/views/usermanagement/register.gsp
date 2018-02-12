@@ -41,28 +41,15 @@
     </head>
     <body>
         <div id="register" class="row">
-            <div class="medium-6 medium-centered large-6 large-centered columns">
-                <g:form name="registerForm" action="signUp">
+            <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
+                <g:form name="registerForm" action="signUp" onkeypress="return event.keyCode != 13;">
                     <div class="row column register-form">
-                        <label class="required" for="username"><g:message code="user.signup.ui.username"/></label>
-                        <g:textField name="username" placeholder="Choose an username"/>
-
-                        <label class="required" for="email"><g:message code="user.signup.ui.email"/></label>
-                        <g:textField name="email" placeholder="Enter your email address"/>
-
-                        <label class="required" for="userRealName"><g:message code="user.signup.ui.realname"/></label>
-                        <g:textField name="userRealName" placeholder="Enter your real name"/>
-
-                        <label for="institution"><g:message code="user.signup.ui.institution"/></label>
-                        <g:textField name="institution" placeholder="Enter an institution name where you are working now"/>
-
-                        <label for="orcid"><g:message code="user.signup.ui.orcid"/></label>
-                        <g:textField name="orcid" placeholder="For example, 0000-0002-2876-6046"/>
+                        <g:render template="userInforInput" model="[user: null]"/>
 
                         <label class="required" for="captcha"><g:message code="user.signup.ui.captcha"/></label>
                         <img style="margin-top:0;float:none" src="${createLink(controller: 'simpleCaptcha', action: 'captcha')}"/>
                         <br/>
-                        <g:textField name="captcha"/>
+                        <g:textField name="captcha" required="true"/>
 
                         <p><input type="submit" class="button" value="${g.message(code: 'user.signup.register')}"/>
                         <input type="reset" class="button" id="resetFormButton" value="${g.message(code: 'user.signup.reset')}"/>
@@ -73,11 +60,14 @@
                 </g:form>
             </div>
         </div>
-        <script type="text/javascript">
-            $("#registerForm #resetFormButton").click(function() {
-                $('#registerForm')[0].reset();
-            });
-        </script>
+        <g:javascript>
+            // define the variables tighted on the working user for later usages in common.js
+            var currentUsername = "";
+            var currentEmail = "";
+            var currentRealName = "";
+            var currentOrcid = "";
+        </g:javascript>
+        <script type="application/javascript" src="${resource(dir: 'js', file: 'common.js')}"></script>
     </body>
 </html>
 <content tag="title">

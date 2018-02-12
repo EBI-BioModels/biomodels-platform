@@ -35,7 +35,7 @@
     </head>
      <body>
         <div>
-            <g:message code="user.signup.ui.register.success.message"/>
+            <g:message code="user.signup.ui.register.success.message" args="${[email]}"/>
         </div>
         </body>
 </html>

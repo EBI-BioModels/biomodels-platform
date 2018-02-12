@@ -91,7 +91,6 @@ grails.converters.encoding = "UTF-8"
 grails.views.gsp.sitemesh.preprocess = true
 // scaffolding templates configuration
 grails.scaffolding.templates.domainSuffix = 'Instance'
-
 // Set to false to use the new Grails 1.2 JSONBuilder in the render method
 grails.json.legacy.builder = false
 // enabled native2ascii conversion of i18n properties files
@@ -100,22 +99,17 @@ grails.enable.native2ascii = true
 grails.logging.jul.usebridge = true
 // packages to include in Spring bean scanning
 grails.spring.bean.packages = []
-
 // The default scope for controllers. May be prototype, session or singleton.
 // If unspecified, controllers are prototype scoped.
 grails.controllers.defaultScope = 'singleton'
-
 // configure auto-caching of queries by default (if false you can cache individual queries with 'cache: true')
 grails.hibernate.cache.queries = false
-
 // configure passing transaction's read-only attribute to Hibernate session, queries and criterias
 // set "singleSession = false" OSIV mode in hibernate configuration after enabling
 grails.hibernate.pass.readonly = false
 // configure passing read-only to OSIV session by default, requires "singleSession = false" OSIV mode
 grails.hibernate.osiv.readonly = false
-
 grails.views.javascript.library="jquery"
-
 // avoid ehcache duplicate CacheManager exception mess
 beans {
     cacheManager {
@@ -132,7 +126,7 @@ environments {
         grails.serverURL = jummpConfig.jummp.server.url
     }
     development {
-        grails.serverURL = "http://localhost:8080/${appName}"
+        grails.serverURL = jummpConfig.jummp.server.url //"http://localhost:8080/${appName}"
     }
     test {
         grails.serverURL = "http://localhost:8080/${appName}"
@@ -145,11 +139,12 @@ environments {
    development {
       grails.logging.jul.usebridge = false
       grails.plugin.springsecurity.debug.useFilter = false
-      // enable/disable console plugin
+      // enable/disable web-based console plugin
       grails.plugin.console.enabled = true
    }
    production {
       grails.logging.jul.usebridge = false
+      grails.plugin.console.enabled = true
    }
 }
 
@@ -305,6 +300,10 @@ grails.plugin.springsecurity.authority.className = 'net.biomodels.jummp.plugins.
 grails.plugin.springsecurity.securityConfigType = "Annotation" // "Annotation", "InterceptUrlMap", "Requestmap"
 
 jummp.controllerAnnotations = [
+    // /model/create and /model/create?execution=e.*s1 show the display the submission guidelines, which should be visible without logging in
+    '/model/create': ["request.getParameter('execution') == null ? permitAll : (request.getParameter('execution').matches('^e.*?s1\$') ? permitAll: fullyAuthenticated)"],
+
+    // request.getParameter('execution')) == null ? matches('^e.*?s1\$') ? permitAll: fullyAuthenticated
     "/":                        ["permitAll"],
     "/index":                   ["permitAll"],
     '/index.gsp':               ['permitAll'],
@@ -338,8 +337,9 @@ jummp.controllerAnnotations = [
     "/plugins/blueprint*/**":   ["permitAll"],
     "/plugins/ckeditor*/**":    ["permitAll"],
     "/plugins/weceem*/**":      ["permitAll"],
-    "/console/**":              ["permitAll"],
-    "/plugins/console*/**":     ['permitAll'],
+    "/api-docs/**":             ["permitAll"],
+    "/console/**":              ["ROLE_ADMIN"],
+    "/plugins/console*/**":     ['ROLE_ADMIN'],
     "/plugins/*/js/*":          ['permitAll'],
     "/plugins/*/css/*":         ['permitAll'],
     "/plugins/*/images/*":      ['permitAll'],
@@ -438,6 +438,7 @@ if (!(jummpConfig.jummp.search.pathToIndexerExecutable instanceof ConfigObject))
 else {
 	println "WARN\tSetting jummp.search.pathToIndexerExecutable is undefined. Models will not be indexed correctly in the search engine."
 }
+
 // registration settings
 if (!(jummpConfig.jummp.security.registration.email.send instanceof ConfigObject) && Boolean.parseBoolean(jummpConfig.jummp.security.registration.email.send)) {
     jummp.security.registration.email.send         = Boolean.parseBoolean(jummpConfig.jummp.security.registration.email.send)
@@ -472,7 +473,13 @@ if (!(jummpConfig.jummp.security.curatorByDefault instanceof ConfigObject)) {
 if (!(jummpConfig.jummp.security.certificationRole instanceof ConfigObject)) {
     jummp.security.certificationRole = jummpConfig.jummp.security.certificationRole
 } else {
-    jummp.security.certificationRole = ['ROLE_ADMIN']
+    jummp.security.certificationRole = 'ROLE_ADMIN' // either single value or comma-separated string
+}
+
+if (!(jummpConfig.jummp.feedback.receiver.roles instanceof ConfigObject)) {
+    jummp.feedback.receiver.roles = jummpConfig.jummp.feedback.receiver.roles
+} else {
+    jummp.feedback.receiver.roles = ["ROLE_ADMIN","ROLE_CURATOR"]
 }
 
 if (!(jummpConfig.jummp.security.certificationAllowed instanceof ConfigObject)) {

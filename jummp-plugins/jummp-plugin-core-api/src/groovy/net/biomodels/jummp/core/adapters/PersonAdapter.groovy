@@ -26,9 +26,9 @@ import net.biomodels.jummp.plugins.security.PersonTransportCommand
  *
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  */
-public class PersonAdapter extends DomainAdapter {
+public class PersonAdapter {
     Person person
-    
+
     public PersonTransportCommand toCommandObject() {
     	return new PersonTransportCommand(id: person.id,
     									  userRealName: person.userRealName,

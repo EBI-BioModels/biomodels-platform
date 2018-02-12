@@ -89,8 +89,8 @@ grails.project.dependency.resolution = {
         //      https://github.com/BD2K-DDI/ddi-ebeye-ws-dao/blob/8bd08f/pom.xml
         compile "com.fasterxml.jackson.core:jackson-databind:2.5.2"
 
-        // remember to update this setting in jummp-plugin-configuration
-        compile "net.biomodels.jummp:AnnotationStore:0.3.1-SNAPSHOT"
+        // remember to update this setting in jummp-plugin-configuration, jummp-plugin-core-api
+        compile "net.biomodels.jummp:AnnotationStore:0.3.2-SNAPSHOT"
         compile "org.apache.solr:solr-solrj:5.4.1"
         //required by both JSBML and SolrJ
         compile "org.codehaus.woodstox:woodstox-core-lgpl:4.4.1"
@@ -132,9 +132,10 @@ grails.project.dependency.resolution = {
         runtime "org.apache.camel:camel-exec:2.13.0"
 
         // DDMoRe Metadata Information Service uses jena 2.13
-        compile("org.mbine.co:libCombineArchive:0.1-SNAPSHOT") {
+        compile("org.mbine.co:libCombineArchive:0.1") {
             excludes 'junit', 'slf4j-api', 'slf4j-log4j12', 'jmock-junit4', 'jena-core'
         }
+        compile "de.unirostock.sems:CombineExt:1.2.4"
         // need to add this as an explicit dependency to configure exclusions
         // can't use apache-jena-libs due to pom packaging, rely on jena-tdb instead
         compile("eu.ddmore:lib-metadata:0.1.3-SNAPSHOT") {

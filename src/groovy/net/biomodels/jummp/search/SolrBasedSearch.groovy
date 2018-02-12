@@ -24,17 +24,15 @@
 
 package net.biomodels.jummp.search
 
-import grails.async.Promise
 import grails.plugin.springsecurity.SpringSecurityUtils
-import grails.plugin.springsecurity.annotation.Secured
 import grails.util.Holders
 import groovy.json.JsonBuilder
 import net.biomodels.jummp.core.ModelSearchStrategy
-import net.biomodels.jummp.core.adapters.DomainAdapter
 import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.events.*
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Revision
 import org.apache.commons.logging.Log
@@ -46,10 +44,6 @@ import org.apache.solr.common.SolrInputDocument
 import org.perf4j.aop.Profiled
 import org.springframework.context.ApplicationListener
 import org.springframework.security.acls.domain.BasePermission
-import org.springframework.security.core.Authentication
-import org.springframework.security.core.context.SecurityContextHolder
-
-import java.util.concurrent.atomic.AtomicReference
 
 /**
  * @short Singleton-scoped facade for interacting with a SolrServerHolder's instance.
@@ -159,26 +153,12 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
      * Clears the index. Handle with care.
      */
     @Profiled(tag="searchService.clearIndex")
-    private void clearIndex() {
+    void clearIndex() {
         if (IS_DEBUG_ENABLED) {
             log.debug "Clearing the search index."
         }
         solrServerHolder.solrClient.deleteByQuery("*:*")
         log.info "Cleared the search index."
-    }
-
-    /*
-     * Removes revision annotations from the database.
-     *
-     * This is necessary to ensure that we keep in sync Solr with the database
-     * at the start of the reindexing process.
-     */
-    @Profiled(tag = "searchService.clearAnnotationStatementsFromDatabase")
-    void clearAnnotationStatementsFromDatabase() {
-        log.debug("Begin prunning annotation statements from database")
-        Revision.executeUpdate("delete ElementAnnotation")
-        Revision.executeUpdate("delete Statement")
-        log.debug("Finished prunning annotation statements from database")
     }
 
     private List<String> fetchFilesFromRevision(RevisionTransportCommand rev, boolean filterMains) {
@@ -210,6 +190,8 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
             def dsConfig = grailsApplication.config.dataSource
             def searchStrategy = grailsApplication.config.jummp.search.strategy
             String dbUrl = dsConfig?.url
+            // the database connection string with unicode options is not working with Indexer
+            dbUrl = ModelIdentifierUtils.simplifyDbConnStr(dbUrl)
             String dbUsername = dsConfig?.username
             String dbPassword = dsConfig?.password
             def dbSettings = [ 'url': dbUrl, 'username': dbUsername, 'password': dbPassword ]
@@ -254,7 +236,7 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
             indexingData.setText(builder.toPrettyString())
 
             String jarPath = grailsApplication.config.jummp.search.pathToIndexerExecutable
-            def argsMap = [jarPath: jarPath, jsonPath: indexingData.getCanonicalPath()]
+            def argsMap = [jarPath: jarPath, jsonPath: indexingData.absolutePath]
 
             String httpProxy = System.getProperty("http.proxyHost")
             if (httpProxy) {
@@ -277,46 +259,6 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
                 log.error("Failed to index revision $revision.properties - ${e.message}", e)
                 //TODO RETRY
             }
-        }
-    }
-
-    /**
-     * Clears the existing index and then regenerates it.
-     *
-     * This method requires ROLE_ADMIN permissions.
-     **/
-    @Secured(['ROLE_ADMIN'])
-    @PostLogging(LoggingEventType.CREATION)
-    @Profiled(tag="searchService.regenerateIndices")
-    void regenerateIndices() {
-        clearIndex()
-        clearAnnotationStatementsFromDatabase()
-        List<RevisionTransportCommand> revisions = Revision.list(fetch: [model: "eager"]).collect { r ->
-            DomainAdapter.getAdapter(r).toCommandObject()
-        }
-        if (IS_DEBUG_ENABLED) {
-            log.debug "Indexing ${revisions.size()} revisions."
-        }
-        Authentication auth = springSecurityService.authentication
-        AtomicReference<Authentication> authRef = new AtomicReference<>(auth)
-        Promise p = Revision.async.task {
-            SecurityContextHolder.context.authentication = authRef.get()
-            revisions.each {
-                try {
-                    updateIndex(it)
-                }
-                catch(Exception e) {
-                    log.error("Exception thrown while indexing ${it.properties} ${e.getMessage()}", e)
-                }
-            }
-        }
-        p.onComplete {
-            if (IS_INFO_ENABLED) {
-                log.info "Finished regenerating the index."
-            }
-        }
-        p.onError { Throwable e ->
-            log.error("Error regenerating the index: ${e.message}", e)
         }
     }
 
@@ -421,7 +363,7 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
      **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="searchService.searchModels")
-    SearchResponse searchModels(String query, Map<String, Integer> paginationCriteria) {
+    SearchResponse searchModels(String query, SortOrder sortOrder, Map<String, Integer> paginationCriteria) {
         //solrServerHolder.init()
         long start = System.currentTimeMillis()
         SolrDocumentList results = search(query)
@@ -431,7 +373,7 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
         start = System.currentTimeMillis()
         final int COUNT = results.size()
         Map<String, ModelTransportCommand> returnVals = new LinkedHashMap<>(COUNT + 1, 1.0f)
-        HashSet<ModelTransportCommand> returnModels = new HashSet<ModelTransportCommand>()
+        List<ModelTransportCommand> returnModels = new ArrayList<ModelTransportCommand>()
         boolean isAdmin = SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")
         results.each {
             if (!it.containsKey("deleted") || !it.get("deleted")) {
@@ -484,6 +426,10 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
         searchResponse.facets = new HashSet<String>()
         searchResponse.totalCount = COUNT
         return searchResponse
+    }
+
+    String[] getSortFields() {
+        ["relevance"]
     }
 
     /**

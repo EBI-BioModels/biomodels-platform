@@ -40,33 +40,55 @@ class JummpTagLib {
         return deploymentEnvironment.equalsIgnoreCase("ddmore")
     }
 
-    def selectDDMoReAwareMessageCode(String ddmoreCode, String defaultCode) {
-        isDDMoReDeployment() ? ddmoreCode : defaultCode
+    private boolean isBioModelsDeployment() {
+        String deploymentEnvironment = grailsApplication.config.jummp.branding.deployment
+        return deploymentEnvironment.equalsIgnoreCase("biomodels")
+    }
+
+    def detectDeploymentEnvironment() {
+        String de = ""
+        if (isDDMoReDeployment()) {
+            de = ".ddmore"
+        } else if (isBioModelsDeployment()) {
+            de = ".biomodels"
+        }
+        de
     }
 
     def findMainFileLabel = { attrs, body ->
-        String msg = selectDDMoReAwareMessageCode("submission.upload.mainFile.ddmore.label",
-                "submission.upload.mainFile.label")
+        String de = detectDeploymentEnvironment()
+        String msg = "submission.upload.mainFile${de}.label"
         out << body(mainFile: g.message(code: msg))
     }
 
     def displayModelDescriptionLabel = { attrs, body ->
-        String msg = selectDDMoReAwareMessageCode("submission.summary.descriptionLabel.ddmore",
-                "submission.summary.descriptionLabel")
+        String de = detectDeploymentEnvironment()
+        String msg = "submission.summary.descriptionLabel${de}"
         out << body(description: g.message(code: msg))
+    }
+
+    def renderRowInMainFileTable = {
+        out << renderRowInMainFileTable().replaceAll("\n", "").replaceAll("\t", "")
+    }
+
+    String renderRowInMainFileTable() {
+        StringBuilder row = new StringBuilder();
+        row.append("<tr class='prop'>\n\t\t")
+        row.append("<td class='value' style='width: 20%'>\n\t\t")
+        row.append("<input type='file' id='mainFile' name='mainFile'>\n\t\t</td>")
+        row.append("<td class='name' style='width: 80%'><input type='text' id='mainFileDescription' name='mainFileDescription' required placeholder='Please enter a description'></td></tr>")
+        row.toString()
     }
 
     def displayExistingMainFile = { attrs ->
         def result = new StringBuilder()
-        String mainFileLabel = selectDDMoReAwareMessageCode(
-                "submission.upload.mainFile.ddmore.label", "submission.upload.mainFile.label")
+        String de = detectDeploymentEnvironment()
+        String mainFileLabel = "submission.upload.mainFile${de}.label"
         String mainFileSectionHeading = "<h3>${message(code: mainFileLabel)}</h3>"
         result.append(mainFileSectionHeading)
         result.append("<table class='formtable responsive-table'><tbody>")
         if (!attrs.main) {
-            result.append("<tr class='prop'>\n\t\t")
-            result.append("<td class='value'>\n\t\t")
-            result.append("<input type='file' id='mainFile' name='mainFile'/>\n\t</td>\n</tr>")
+            result.append(renderRowInMainFileTable());
             result.append("</tbody></table>")
             out << result.toString()
             return
@@ -74,11 +96,14 @@ class JummpTagLib {
         attrs.main.each { m ->
             RepositoryFileTransportCommand command = m as RepositoryFileTransportCommand
             String name = new File(command.path).name
+            String description = command.description
             result.append("<tr class='prop'>\n\t\t")
-            result.append("<td class='value'>\n\t\t")
-            result.append("<span id='mainName_").append(name).append("'>").append(name).append("</span>\n\t\t")
-            result.append("<input style='display:none;' type='file' id='mainFile' data-labelname='${name}' name='mainFile' class='mainFile'/>\n\t")
-            result.append("<a href='#' class='replaceMain'>Replace</a> | <a href='#' class='removeMain'>Remove</a></td>\n</tr>\n")
+            result.append("<td class='value' style='width: 20%'>\n\t\t")
+            result.append("<span id='mainName_").append(name).append("'>").append(name).append("</span></td>\n\t\t")
+            result.append("<td style='width: 70%'>")
+            result.append("<input type='text' id='mainFileDescription' name='mainFileDescription' value='${description}' required placeholder='Please enter a description'>\n\t\t")
+            result.append("<input style='display:none;' type='file' id='mainFile' data-labelname='${name}' name='mainFile' class='mainFile'/></td>\n\t")
+            result.append("<td style='width: 10%; text-align: right'><a href='#' class='replaceMain'>Replace</a> | <a href='#' class='removeMain'>Remove</a></td>\n</tr>\n")
         }
         result.append("</tbody></table>")
         out << result.toString()
@@ -92,49 +117,46 @@ class JummpTagLib {
         attrs.additionals.each { f ->
             RepositoryFileTransportCommand command = f as RepositoryFileTransportCommand
             String name = new File(command.path).name
-            out << "<tr class='fileEntry'>\n\t<td class='name'>"
+            out << "<tr class='fileEntry'>\n\t<td class='name' style='width: 20%'>"
             out << name
             out << "<input style='display:none' type='file' id='additionalFilesExisting' " +
                    "name='additionalFilesExisting' value='${name}'></td>\n\t"
-            out << "<td style='width: 785px'>" +
+            out << "<td class='name' style='width: 70%'>" +
                    "<input name='description${counter}' id='description${counter}' type='text' value='${command.description ?: ""}' " +
-                   "style='width: 100%; box-sizing: border-box; -webkit-box-sizing: border-box; -moz-box-sizing: border-box;'></td>\n\t"
-            out << "<td><a href='#' class='killer' title='Discard file'>Discard</a></td>\n"
+                   "style='width: 100%; box-sizing: border-box; -webkit-box-sizing: border-box; -moz-box-sizing: border-box;' required></td>\n\t"
+            out << "<td style='width: 10%; vertical-align: middle'><a href='#' class='killer' title='Discard file'>Discard</a></td>\n"
             out << "</tr>\n"
             counter++;
         }
     }
 
     def renderAdditionalFilesLegend = {
-        String additionalFilesLegend = "submission.upload.additionalFiles.legend"
-        if (isDDMoReDeployment()) {
-            additionalFilesLegend = "submission.upload.additionalFiles.ddmore.legend"
-        }
-        out << "<h3>${message(code: additionalFilesLegend)}</h3>"
+        String de = detectDeploymentEnvironment()
+        String additionalFilesLegend = "submission.upload.additionalFiles${de}.legend"
+        out << "<h3>${message(code: additionalFilesLegend)}<sup><abbr id='howAboutThis' title='How about this'>?</abbr></sup></h3>"
+    }
+
+    def renderAdditionalFilesExplanation = {
+        String de = detectDeploymentEnvironment()
+        String additionalFilesExplanation = "submission.upload.additionalFiles${de}.explanation"
+        out << message(code: additionalFilesExplanation)
     }
 
     def renderAdditionalFilesAddButton = {
-        String deploymentEnvironment = grailsApplication.config.jummp.branding.deployment
-        String additionalFilesAddButton = "submission.upload.additionalFiles.addButton"
-        if (deploymentEnvironment.equalsIgnoreCase("ddmore")) {
-            additionalFilesAddButton = "submission.upload.additionalFiles.ddmore.addButton"
-        }
+        String de = detectDeploymentEnvironment()
+        String additionalFilesAddButton = "submission.upload.additionalFiles${de}.addButton"
         out << message(code: additionalFilesAddButton)
     }
 
     def renderSubmitForPublicationConfirmDialogMessage = {
-        String submitForPublicationConfirmDialogMessage = "model.toolbar.submit-for-publication.message"
-        if (isDDMoReDeployment()) {
-            submitForPublicationConfirmDialogMessage = "model.toolbar.submit-for-publication.ddmore.message"
-        }
+        String de = detectDeploymentEnvironment()
+        String submitForPublicationConfirmDialogMessage = "model.toolbar.submit-for-publication${de}.message"
         out << message(code: submitForPublicationConfirmDialogMessage)
     }
 
     def renderSubmitForPublicationConfirmDialogTitle = {
-        String submitForPublicationConfirmDialogMessage = "model.toolbar.submit-for-publication.title"
-        if (isDDMoReDeployment()) {
-            submitForPublicationConfirmDialogMessage = "model.toolbar.submit-for-publication.ddmore.title"
-        }
+        String de = detectDeploymentEnvironment()
+        String submitForPublicationConfirmDialogMessage = "model.toolbar.submit-for-publication${de}.title"
         out << message(code: submitForPublicationConfirmDialogMessage)
     }
 
@@ -390,6 +412,20 @@ class JummpTagLib {
             </tr>
             ''')
         }
+        out << result.toString()
+    }
+
+    def renderRatingStars = {
+        def result = new StringBuilder()
+        result.append('''
+        <div class="rating">
+            <span id="star5" class="star-icon">&#9734;</span>
+            <span id="star4" class="star-icon">&#9734;</span>
+            <span id="star3" class="star-icon">&#9734;</span>
+            <span id="star2" class="star-icon">&#9734;</span>
+            <span id="star1" class="star-icon">&#9734;</span></div>
+        <input id="rateStar" name="rateStar" hidden required="true" />
+        ''')
         out << result.toString()
     }
 

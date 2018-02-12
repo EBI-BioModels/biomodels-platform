@@ -33,13 +33,17 @@
 
 package net.biomodels.jummp.core
 
+import grails.transaction.Transactional
+import net.biomodels.jummp.core.model.ModelTransportCommand
+import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.plugins.security.Person
+import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
+import net.biomodels.jummp.plugins.security.UserRole
 import net.biomodels.jummp.webapp.Notification
 import net.biomodels.jummp.webapp.NotificationType
 import net.biomodels.jummp.webapp.NotificationTypePreferences
 import net.biomodels.jummp.webapp.NotificationUser
-import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.core.model.ModelTransportCommand
 import org.springframework.security.access.prepost.PreAuthorize
 
 /**
@@ -48,8 +52,10 @@ import org.springframework.security.access.prepost.PreAuthorize
  *
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  * @date 20160330
  */
+@Transactional
 class NotificationService {
     def grailsApplication
     def mailService
@@ -114,6 +120,66 @@ class NotificationService {
             log.error("Notification $notification for users $watchers was not persisted")
         } else {
             watchers.each { sendNotificationToUser(it, notification) }
+        }
+    }
+
+    void modelCreated(def body) {
+        // email notification to the submitter
+        ModelTransportCommand model = body.model
+        User user = body.user
+        String userRealName = user.person.userRealName
+        String emailFrom = grailsApplication.config.jummp.security.registration.email.sender //"biomodels-cura@ebi.ac.uk"
+        String emailTo = body.email
+        String emailSubject = "Your submission to BioModels: ${model.submissionId}"
+        String emailBody
+
+        StringBuilder submitterMailContent = new StringBuilder()
+        if (null != userRealName) {
+            submitterMailContent.append("Dear $userRealName,\n\n")
+        } else {
+            submitterMailContent.append("Dear submitter,\n\n")
+        }
+        submitterMailContent.append("This is an automatically generated message confirming that you successfully submitted the model named \"")
+        submitterMailContent.append(model.name)
+        submitterMailContent.append("\" to BioModels.\n")
+        submitterMailContent.append("\nThis model is now in the curation pipeline and has been assigned the following submission identifier: ")
+        submitterMailContent.append(model.submissionId)
+        submitterMailContent.append(".\n\n")
+
+        // model not yet published
+        submitterMailContent.append("We kindly ask you to add in your manuscript (typically just before or in the Acknowledgements) " +
+            "a sentence mentioning the deposition of your model. For this purpose, you can use the following template:")
+        submitterMailContent.append("\n\n- - - - - -\n")
+        submitterMailContent.append("This model was deposited in BioModels [1] and assigned the identifier ")
+        submitterMailContent.append(model.submissionId)
+        submitterMailContent.append(".")
+        submitterMailContent.append("\n\n[1] Chelliah V et al. BioModels: ten-year anniversary. Nucl. Acids Res. 2015, 43(Database issue):D542-8")
+        submitterMailContent.append("\n- - - - - -")
+        submitterMailContent.append("\n\nThis model will only become publicly available from BioModels when " +
+            "its associated paper has been published. Moreover, it needs to undergo various automated and manually " +
+            "performed curation and annotation processes, to ensure a consistent level of quality and accuracy. " +
+            "In order for us to perform those tasks and ensure a timely publication of your model, it would be helpful " +
+            "if you could provide us an early access to your manuscript.")
+        submitterMailContent.append("\nAlso, it is essential that you inform us of the first (online) publication of " +
+            "your manuscript, otherwise the model will remain inaccessible to readers.")
+        submitterMailContent.append("\n\nFinally, we can provide access to the model for reviewers of your manuscript. " +
+            "Please contact us if you wish to request this service.")
+
+        submitterMailContent.append("\n\nIf you have any query related to this submission, please contact us at " +
+            "biomodels-cura@ebi.ac.uk (quoting the submission identifier of the model) or just reply to this message.")
+        submitterMailContent.append("\n\n\nThank you for submitting your model to BioModels.")
+
+        submitterMailContent.append("\n\n-- ")
+        submitterMailContent.append("\nBioModels")
+        submitterMailContent.append("\nhttp://www.ebi.ac.uk/biomodels/")
+        submitterMailContent.append("\nTwitter: @biomodels\n")
+
+        emailBody = submitterMailContent.toString()
+        mailService.sendMail {
+            to emailTo
+            from emailFrom
+            subject emailSubject
+            text emailBody
         }
     }
 
@@ -216,11 +282,13 @@ class NotificationService {
     }
 
     void markAsRead(def msgID, String username) {
-        Notification notification = Notification.get(msgID)
-        User notificationsFor = User.findByUsername(username)
-        NotificationUser notificationUser = NotificationUser.findByNotificationAndUser(notification, notificationsFor)
-        notificationUser.setNotificationSeen(true)
-        notificationUser.save()
+        if (msgID && username) {
+            Notification notification = Notification.get(msgID)
+            User notificationsFor = User.findByUsername(username)
+            NotificationUser notificationUser = NotificationUser.findByNotificationAndUser(notification, notificationsFor)
+            notificationUser.setNotificationSeen(true)
+            notificationUser.save()
+        }
     }
 
     void delete(def body) {
@@ -247,5 +315,27 @@ class NotificationService {
                 body.user,
                 getNotificationRecipients(body.perms),
                 model)
+    }
+
+    void feedback2Admin(def body) {
+        User user = body.user
+        if (!user) {
+            user = User.findByUsername("anonymous")
+        }
+        String receiverRolesSetting  = grailsApplication.config.jummp.feedback.receiver.roles
+        List<String> rolesSetting = receiverRolesSetting.split(",").collect {
+            it.trim()
+        }
+        List<Role> roles = Role.findAllByAuthorityInList(rolesSetting)
+        List<UserRole> userRoles = UserRole.findAllByRoleInList(roles)
+        List<User> observers = userRoles.collect {
+            it.user
+        }
+        Set<User> watchers = new HashSet<User>(observers)
+        useGenericNotificationStructure("notification.jummp.feedback.title",
+            [body.star] as String[],
+            "notification.jummp.feedback.body",
+            [body.star, body.email, body.comment] as String[],
+            NotificationType.FEEDBACK_ARRIVED, user, watchers, null)
     }
 }

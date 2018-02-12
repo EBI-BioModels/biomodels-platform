@@ -1224,12 +1224,36 @@ databaseChangeLog = {
 
     include file: '20161212_publicationPropertiesAsString.groovy'
 
-	include file: '2017-02-01_make_publication_details_nullable.groovy'
+    include file: '2017-02-01_make_publication_details_nullable.groovy'
 
-	include file: '20170206_fixRevisionAnnotationAssociations.groovy'
+    include file: '20170206_fixRevisionAnnotationAssociations.groovy'
 
-	include file: '20170320_index_annotation_qualifier_uri.groovy'
+    include file: '20170217_makeResourceReferenceSynonymsText.groovy'
 
-	include file: '20170322_add_statement_index.groovy'
+    include file: '20170223_makeCurationNotesCommentText.groovy'
+
+    include file: 'delta.groovy'
+
+    include file: '20170316_makeURIsUnique.groovy'
+
+    include file: '20170320_index_annotation_qualifier_uri.groovy'
+
+    include file: '20170322_add_statement_index.groovy'
+
+    include file: '20170410_addShortDescription_PreviewImage_MOM.groovy'
+
+    include file: '20170615_add_resource_reference_accession_index.groovy'
+
+    include file: '20170720_widenRepositoryFileDescription.groovy'
+
+    include file: '20170914_changePK_PublicationPerson.groovy'
+
+    include file: '20170914_createtable_Feedback.groovy'
+
+    include file: '20170915_changeConstraints_Feedback.groovy'
+
+    include file: '20171009_changeConstraints_Notification.groovy'
+
+    include file: '20171124_setRepositoryFileDescriptionNotNull.groovy'
 }
 

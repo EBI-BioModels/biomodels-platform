@@ -34,34 +34,31 @@
 
 package net.biomodels.jummp.webapp
 
-import com.wordnik.swagger.annotations.*
-import eu.ddmore.publish.service.PublishContext
-import eu.ddmore.publish.service.PublishException
+import com.wordnik.swagger.annotations.Api
+import com.wordnik.swagger.annotations.ApiImplicitParam
+import com.wordnik.swagger.annotations.ApiOperation
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import groovy.json.JsonSlurper
-import net.biomodels.jummp.core.model.PublicationDetailExtractionContext
-import org.apache.commons.lang3.exception.ExceptionUtils
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
-import net.biomodels.jummp.core.model.ModelAuditTransportCommand
-import net.biomodels.jummp.core.model.ModelTransportCommand
-import net.biomodels.jummp.core.model.PermissionTransportCommand
-import net.biomodels.jummp.core.model.PublicationTransportCommand
-import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
+import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
-import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.core.model.audit.*
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
+import net.biomodels.jummp.core.model.audit.AccessFormat
+import net.biomodels.jummp.core.model.audit.AccessType
 import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
 import net.biomodels.jummp.plugins.security.PersonTransportCommand
+import net.biomodels.jummp.plugins.security.Team
+import net.biomodels.jummp.plugins.security.User
 import org.apache.commons.io.FileUtils
+import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONObject
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.multipart.MultipartFile
-import net.biomodels.jummp.plugins.security.Team
-import net.biomodels.jummp.core.model.FlagTransportCommand
 
-@Api(value = "/model", description = "Operations related to models")
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
+
+@Api(value = "/model", description = "Operations related to models", produces = "application/json")
 @Secured(['IS_AUTHENTICATED_FULLY'])
 class ModelController {
     /**
@@ -108,6 +105,10 @@ class ModelController {
      * Dependency injection of MetadataDelegateService
      */
     def metadataDelegateService
+    /**
+     * Dependency injection of OmexService
+     */
+    def omexService
 
     /**
      * The list of actions for which we should not automatically create an audit item.
@@ -120,12 +121,20 @@ class ModelController {
     def afterInterceptor = [action: this.&auditAfter, except: AUDIT_EXCEPTIONS]
 
     private String getUsername() {
-        String username="anonymous"
+        String username = "anonymous"
         def principal = springSecurityService.principal
         if (principal instanceof String) {
             username = principal
         }
         return username
+    }
+
+    private String getUserEmailAddress() {
+        def principal = springSecurityService.getCurrentUser()
+        if (principal) {
+            return principal.email
+        }
+        return null
     }
 
     // if this method returns false, the controller method is no longer called.
@@ -228,23 +237,26 @@ class ModelController {
                 return
             }
             final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
-            boolean showPublishOption = modelDelegateService.canPublish(PERENNIAL_ID)
-            boolean canSubmitForPublication = modelDelegateService.canSubmitForPublication(PERENNIAL_ID)
-            boolean show = modelDelegateService.canPublish(PERENNIAL_ID)
+            RevisionTransportCommand revision = modelDelegateService.getLatestRevision(PERENNIAL_ID)
+            boolean showPublishOption = modelDelegateService.canPublish(revision)
+            boolean canSubmitForPublication = modelDelegateService.canSubmitForPublication(revision)
+            boolean canCertify = modelDelegateService.canCertify(revision)
             boolean canUpdate = modelDelegateService.canAddRevision(PERENNIAL_ID)
             boolean canDelete = modelDelegateService.canDelete(PERENNIAL_ID)
             boolean canShare = modelDelegateService.canShare(PERENNIAL_ID)
-            boolean canCertify = modelDelegateService.canCertify(PERENNIAL_ID)
             List<FlagTransportCommand> flags = modelDelegateService.getFlags(PERENNIAL_ID)
             String flashMessage = ""
             if (flash.now["giveMessage"]) {
                 flashMessage = flash.now["giveMessage"]
             }
             List<RevisionTransportCommand> revs =
-                        modelDelegateService.getAllRevisions(PERENNIAL_ID)
+                modelDelegateService.getAllRevisions(PERENNIAL_ID)
             CurationNotesTransportCommand curationNotes =
                 metadataDelegateService.fetchCurationNotes(rev)
             String curationStatus = metadataDelegateService.fetchCurationStatus(rev)
+            List<String> originalModels = metadataDelegateService.fetchOriginalModels(rev)
+            Map<String, String> modellingApproaches =
+                metadataDelegateService.fetchModellingApproaches(rev)
             def model = [revision: rev,
                         authors: rev.model.creators,
                         allRevs: revs,
@@ -259,12 +271,20 @@ class ModelController {
                         certComment: rev.getCertificationMessage(),
                         flags: flags,
                         curationStatus: curationStatus,
-                        curationNotes: curationNotes
+                        modellingApproaches: modellingApproaches,
+                        curationNotes: curationNotes,
+                        originalModels: originalModels
             ]
-            if (rev.id == modelDelegateService.getLatestRevision(PERENNIAL_ID).id) {
+            if (rev.id == revision.id) {
                 flash.genericModel = model
-                forward controller: modelFileFormatService.getPluginForFormat(rev.model.format),
-                            action: "show", id: PERENNIAL_ID
+                ModelFormatTransportCommand format = rev.model.format
+                String formatController =  modelFileFormatService.getPluginForFormat(format)
+                if (formatController) {
+                    forward controller: formatController, action: "show", id: PERENNIAL_ID
+                } else {
+                    final String fmtId = format.identifier
+                    log.error "Could not find a controller for format $fmtId of $PERENNIAL_ID"
+                }
             } else { //showing an old version, with the default page. Do not allow updates.
                 model["canUpdate"] = false
                 model["showPublishOption"] = false
@@ -302,7 +322,7 @@ class ModelController {
         RevisionTransportCommand rev
         try {
             rev = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
-            PublishContext publishContext = modelDelegateService.publishModelRevision(rev)
+            modelDelegateService.publishModelRevision(rev)
             def currentUser = springSecurityService.currentUser
             if (currentUser) {
                 def notification = [
@@ -314,7 +334,7 @@ class ModelController {
 
             redirect(action: "showWithMessage",
                         id: rev.identifier(),
-                        params: [flashMessage: "Model has been published." + publishContext.getMessage()])
+                        params: [flashMessage: "Model has been published."])
         } catch(AccessDeniedException e) {
             log.error(e.message, e)
             forward(controller: "errors", action: "error403")
@@ -324,11 +344,6 @@ class ModelController {
                     id: rev.identifier(),
                     params: [flashMessage: "Model has not been published because there is a " +
                             "problem with this version of the model. Sorry!"])
-        } catch(PublishException e) {
-            log.error(e.message)
-            redirect(action: "showWithMessage",
-                id: rev.identifier(),
-                params: [flashMessage: e.message])
         }
     }
 
@@ -499,6 +514,15 @@ class ModelController {
                 final String USERNAME = getUsername()
                 final String AUDIT_ID = session.result_submission
                 updateHistory(AUDIT_ID, USERNAME, "create", "html", null, true)
+                final String submitterEmail = getUserEmailAddress()
+                if (submitterEmail && USERNAME) {
+                    String model = session.result_submission
+                    def notification = [
+                            model: modelDelegateService.getModel(model),
+                            user: springSecurityService.currentUser,
+                            email: submitterEmail]
+                    sendMessage("seda:model.create", notification)
+                }
             }.to "displayConfirmationPage"
             on("displayErrorPage").to "displayErrorPage"
         }
@@ -774,7 +798,6 @@ About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
             on("success").to "performValidation"
             on(Exception).to "handleException"
         }
-
         performValidation {
             action {
                 final boolean SHOULD_DETECT_FORMAT = flow.workingMemory["changedMainFiles"] ||
@@ -786,7 +809,7 @@ About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
                 flow.workingMemory.remove("changedMainFiles")
                 submissionService.performValidation(flow.workingMemory)
                 MFTC format = flow.workingMemory.get("model_type")
-                if (format && format.identifier !="UNKNOWN" && format.formatVersion == "*") {
+                if (format && format.identifier !="UNKNOWN" && format.identifier != "matlab" && format.formatVersion == "*") {
                     UnknownFormatVersion()
                 }
                 else if (!flow.workingMemory.containsKey("validation_error")) {
@@ -1120,6 +1143,20 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
         displayErrorPage()
     }
 
+    private void serveModelAsCombineArchive(List<RFTC> files, def resp) {
+        String omexFileName = omexService.createCombineArchive(files, params.id)
+        File omexFile = new File(omexFileName)
+        String name = omexFile.name
+        resp.setContentType("application/zip")
+        resp.setHeader("Content-disposition", "attachment;filename=\"${name}\"")
+        resp.outputStream << new ByteArrayInputStream(omexFile.readBytes())
+        if (omexFile.delete()) {
+            log.info("The temporary file was deleted successfully.")
+        } else {
+            log.info("Cannot delete the temporary file.")
+        }
+    }
+
     private void serveModelAsZip(List<RFTC> files, def resp) {
         ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream()
         ZipOutputStream zipFile = new ZipOutputStream(byteBuffer)
@@ -1132,8 +1169,7 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
         }
         zipFile.close()
         resp.setContentType("application/zip")
-        // TODO: set a proper name for the model
-        resp.setHeader("Content-disposition", "attachment;filename=\"model.zip\"")
+        resp.setHeader("Content-disposition", "attachment;filename=\"${params.id}.zip\"")
         resp.outputStream << new ByteArrayInputStream(byteBuffer.toByteArray())
     }
 
@@ -1161,14 +1197,7 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
         if (!params.filename) {
             final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(
                             modelDelegateService.getRevisionFromParams(params.id, params.revisionId))
-            List<RFTC> mainFiles = FILES.findAll { it.mainFile }
-            if (FILES.size() == 1) {
-                serveModelAsFile(FILES.first(), response, false)
-            } else if (mainFiles.size() == 1) {
-                serveModelAsFile(mainFiles.first(), response, false)
-            } else {
-                serveModelAsZip(FILES, response)
-            }
+            serveModelAsCombineArchive(FILES, response)
         } else {
             final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(
                             modelDelegateService.getRevisionFromParams(params.id, params.revisionId))

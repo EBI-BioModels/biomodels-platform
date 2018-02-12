@@ -30,16 +30,13 @@
 
 package net.biomodels.jummp.core
 
-import eu.ddmore.publish.service.PublishContext
-import eu.ddmore.publish.service.PublishException
-import eu.ddmore.publish.service.PublishInfo
+import net.biomodels.jummp.core.adapters.RevisionAdapter
 import java.util.concurrent.locks.ReentrantLock
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.transaction.Transactional
 import net.biomodels.jummp.annotationstore.Qualifier
 import net.biomodels.jummp.annotationstore.ResourceReference
 import net.biomodels.jummp.annotationstore.Statement
-import net.biomodels.jummp.core.adapters.DomainAdapter
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.events.*
 import net.biomodels.jummp.core.model.*
@@ -146,7 +143,7 @@ class ModelService {
      */
     def publicationIdGenerator
 
-    def publishValidator
+    //def publishValidator
 
     final boolean MAKE_PUBLICATION_ID = !(publicationIdGenerator instanceof NullModelIdentifierGenerator)
     /**
@@ -171,22 +168,28 @@ class ModelService {
     @Profiled(tag="modelService.getAllModels")
     public List<Model> getAllModels(int offset, int count, boolean sortOrder, ModelListSorting sortColumn,
                 String filter = null, boolean deletedOnly=false) {
+        Map metaParams
         if (offset < 0 || count <= 0) {
             // safety check
-            return []
+            metaParams = [:]
+        } else {
+            metaParams = [
+                max: count, offset: offset
+            ]
         }
 
         String sortingDirection = sortOrder ? 'asc' : 'desc'
 
         boolean filterIsValid = filterValid(filter)
 
-        Map metaParams = [
-            max: count, offset: offset
-        ]
-
         Map namedParams = [:]
         if (filterIsValid) {
-            namedParams.put("filter", "%${filter.toLowerCase()}%");
+            if (filter.take(6) == "Format") {
+                namedParams.put("filter", "%${filter.drop(7).toLowerCase()}%")
+            }
+            if (filter.take(9) == "Submitter") {
+                namedParams.put("filter", "%${filter.drop(10).toLowerCase()}%")
+            }
         }
 
         String query
@@ -204,6 +207,7 @@ class ModelService {
                 roles      :  roles
             ]
         }
+
         List<List<Model, String, Date, String, Long, String>> resultSet = Model.executeQuery(query, namedParams, metaParams)
         return resultSet.collect{ it.first() }
     }
@@ -225,7 +229,8 @@ WHERE r.deleted = false
                         AND ace2.sid.sid IN (:roles) AND ace2.mask IN (:permissions)
                         AND ace2.granting = true)'''
         } else {
-            ////otherwise sortColumn must be the following .. ie we want to sort by the first revision (sortColumn==ModelListSorting.SUBMITTER || sortColumn==ModelListSorting.SUBMISSION_DATE)
+            // otherwise sortColumn must be the following .. ie we want to sort by the first revision
+            // (sortColumn==ModelListSorting.SUBMITTER || sortColumn==ModelListSorting.SUBMISSION_DATE)
             query += '''AND r.revisionNumber=(SELECT MIN(r2.revisionNumber) from Revision r2,
                         AclEntry ace2  where r.model=r2.model
                         AND r2.id=ace2.aclObjectIdentity.objectId
@@ -236,11 +241,10 @@ WHERE r.deleted = false
 
         query += " AND m.deleted = ${deletedOnly} "
         if (filterIsValid) {
-            query += '''
-AND (
-lower(m.publication.journal) like :filter
-OR lower(m.publication.title) like :filter
-OR lower(m.publication.affiliation) like :filter
+            query +='''
+AND(
+lower(r.format.identifier) like :filter OR
+lower(u.person.userRealName) like :filter
 )
 '''
         }
@@ -263,14 +267,15 @@ WHERE
             query += '''r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2 where r.model=r2.model) AND '''
         } else if (sortColumn == ModelListSorting.SUBMITTER || sortColumn == ModelListSorting.SUBMISSION_DATE) {
             query += '''r.revisionNumber=(SELECT MIN(r2.revisionNumber) from Revision r2 where r.model=r2.model) AND '''
+        } else {
+            query += '''r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2 where r.model=r2.model) AND '''
         }
         query += "m.deleted = ${deletedOnly} AND r.deleted = false"
         if (filterIsValid) {
-            query += '''
-AND (
-lower(m.publication.journal) like :filter
-OR lower(m.publication.title) like :filter
-OR lower(m.publication.affiliation) like :filter
+            query +='''
+AND(
+lower(r.format.identifier) like :filter OR
+lower(u.person.userRealName) like :filter
 )
 '''
         }
@@ -286,7 +291,7 @@ ORDER BY
      * @param sortColumn
      * @return
      */
-    // ToDo: this should really be enum-properties in the ModelListSorting enum itself..
+    // ToDo: this should really be enum-properties in the ModelListSorting enum itself.
     private java.lang.String getSortColumnAsString(ModelListSorting sortColumn) {
         String result
         switch (sortColumn) {
@@ -389,64 +394,9 @@ ORDER BY
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getModelCount")
     public Integer getModelCount(String filter = null, boolean deletedOnly = false) {
-        if (SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
-            // special handling for Admin - is allowed to see all (not deleted) Models
-            def results = Model.withCriteria {
-                ne("deleted", !deletedOnly)
-                if (filterValid(filter)) {
-                    or {
-                        ilike("name", "%${filter}%")
-                        publication {
-                            or {
-                                ilike("journal", "%${filter}%")
-                                ilike("title", "%${filter}%")
-                                ilike("affiliation", "%${filter}%")
-                            }
-                        }
-                    }
-                }
-                projections {
-                    count("id")
-                }
-            }
-            return results[0]
-        }
-
-        Set<String> roles = getSpringDatabaseRoles()
-
-        String query = '''
-SELECT COUNT(DISTINCT m.id) FROM Revision AS r, AclEntry AS ace
-JOIN r.model AS m
-JOIN ace.aclObjectIdentity AS aoi
-JOIN aoi.aclClass AS ac
-JOIN ace.sid AS sid
-WHERE
-aoi.objectId = r.id
-AND ac.className = :className
-AND sid.sid IN (:roles)
-AND ace.mask IN (:permissions)
-AND ace.granting = true
-AND r.deleted = false
-'''
-query+=" AND m.deleted=${deletedOnly} "
-        if (filterValid(filter)) {
-            query += '''
-AND (
-lower(m.publication.journal) like :filter
-OR lower(m.publication.title) like :filter
-OR lower(m.publication.affiliation) like :filter
-)
-'''
-        }
-        Map params = [
-            className: Revision.class.getName(),
-            permissions: [BasePermission.READ.getMask(), BasePermission.ADMINISTRATION.getMask()],
-            roles: roles]
-        if (filterValid(filter)) {
-            params.put("filter", "%${filter.toLowerCase()}%");
-        }
-
-        return Model.executeQuery(query, params)[0] as Integer
+        ModelListSorting sorting
+        List<Model> resultSet = getAllModels(-1, 0, false, sorting, filter, false)
+        return resultSet.size()
     }
 
     /** convenience method to check if our filter is OK */
@@ -719,7 +669,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             def attachedRevision = Revision.findByModelAndRevisionNumber(revision.model,
                 revision.revisionNumber, [fetch: [model: "eager", format: 'eager']])
 
-            def revisionAdapter = DomainAdapter.getAdapter(attachedRevision)
+            def revisionAdapter = new RevisionAdapter(revision: attachedRevision)
             RevisionTransportCommand cmd = revisionAdapter.toCommandObject()
             // can't inject searchService -- cyclic dependency
             def searchService = grailsApplication.mainContext.searchService
@@ -781,7 +731,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             domainObjects.each{ it.discard() }
             log.error("Exception occurred during uploading a new Model Revision to VCS: ${e.getMessage()}")
             stopWatch.stop()
-            throw new ModelException(DomainAdapter.getAdapter(model).toCommandObject(),
+            throw new ModelException(new ModelAdapter(model: model).toCommandObject(),
                 "Could not store new Model Revision for Model ${model.id} with VcsIdentifier ${model.vcsIdentifier} in VCS", e)
         }
         domainObjects.each {
@@ -837,14 +787,14 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             stopWatch.stop()
             // !! THIS HAS TO BE IN A SEPARATE METHOD WITH A DEDICATED TRANSACTION CONTEXT !!
             /*grailsApplication.mainContext.publishEvent(new RevisionCreatedEvent(this,
-                    DomainAdapter.getAdapter(revision).toCommandObject(), vcsService.retrieveFiles(revision)))*/
+                   new RevisionAdapter(revision: revision).toCommandObject(), vcsService.retrieveFiles(revision)))*/
         } else {
             // TODO: this means we have imported the revision into the VCS, but it failed to be saved in the database, which is pretty bad
             revision.errors.allErrors.each {
                log.error(it)
             }
             revision.discard()
-            final def m = DomainAdapter.getAdapter(model).toCommandObject()
+            final def m = new ModelAdapter(model: model).toCommandObject()
             log.error("New Revision containing ${repoFiles.inspect()} for Model ${m} with VcsIdentifier ${model.vcsIdentifier} added to VCS, but not stored in database")
             stopWatch.stop()
             throw new ModelException(m, "Revision stored in VCS, but not in database")
@@ -910,7 +860,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
                 domain.hidden = rf.hidden
             }
             if (!domain.validate()) {
-                final def m = DomainAdapter.getAdapter(revision.model).toCommandObject()
+                final def m = new ModelAdapter(model: revision.model).toCommandObject()
                 def msg = new StringBuffer("Invalid file ${rf.properties} uploaded for model ${m.properties}.")
                 msg.append("The file failed due to ${domain.errors.allErrors.inspect()}")
                 log.error(msg)
@@ -921,7 +871,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             }
         }
         if (!foundValidMainFile) {
-            final def m = DomainAdapter.getAdapter(revision.model).toCommandObject()
+            final def m = new ModelAdapter(model: revision.model).toCommandObject()
             log.error("Can't persist repository files ${repoFileCmds.dump()} for revision ${revision.dump()} without main file")
             throw new ModelException(m, "Missing main file for the new model revision ${revision.name}")
         }
@@ -994,7 +944,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             // turn them into transport commands in order to avoid LazyInitialisationExceptions
             def attachedModel = Model.get(model.id)
             Revision r = attachedModel.revisions.first()
-            RevisionTransportCommand cmd = DomainAdapter.getAdapter(r).toCommandObject()
+            RevisionTransportCommand cmd = new RevisionAdapter(revision: r).toCommandObject()
             // can't inject searchService -- cyclic dependency
             def searchService = grailsApplication.mainContext.searchService
             searchService.updateIndex(cmd)
@@ -1078,8 +1028,8 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             errMsg.append("${revision.errors.allErrors.inspect()}\n")
             log.error(errMsg.toString())
             stopWatch.stop()
-            throw new ModelException(DomainAdapter.getAdapter(model).toCommandObject(),
-                "Could not store new Model ${DomainAdapter.getAdapter(model).toCommandObject().properties} in VCS", e)
+            ModelTransportCommand m = new ModelAdapter(model: model).toCommandObject()
+            throw new ModelException(m, "Could not store new Model ${m.properties} in VCS", e)
         }
         stopWatch.lap("Finished importing the model into the VCS.")
         stopWatch.setTag("modelService.uploadValidatedModel.gormValidation")
@@ -1100,7 +1050,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
                 msg.append("${revision.errors.allErrors.inspect()}\n")
                 log.error(msg)
                 stopWatch.stop()
-                throw new ModelException(DomainAdapter.getAdapter(model).toCommandObject(), "New model does not validate")
+                throw new ModelException(new ModelAdapter(model: model).toCommandObject(), "New model does not validate")
             }
             model.save(flush: true)
             domainObjects.each { rf ->
@@ -1141,7 +1091,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
 
             // don't broadcast event yet,wait for the current tx to commit
             /*grailsApplication.mainContext.publishEvent(new ModelCreatedEvent(this,
-                                  DomainAdapter.getAdapter(model).toCommandObject(), modelFiles))*/
+                                new ModelAdapter(model: model).toCommandObject(), modelFiles))*/
         } else {
             // TODO: this means we have imported the file into the VCS, but it failed to be saved in the database, which is pretty bad
             revision.discard()
@@ -1149,7 +1099,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             model.discard()
             log.error("New Model does not validate:${revision.errors.allErrors.inspect()}")
             stopWatch.stop()
-            throw new ModelException(DomainAdapter.getAdapter(model).toCommandObject(), "Sorry, but the new Model does not seem to be valid.")
+            throw new ModelException(new ModelAdapter(model: model).toCommandObject(), "Sorry, but the new Model does not seem to be valid.")
         }
         return model
     }
@@ -1259,13 +1209,14 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             model.discard()
             //TODO undo the addition of the files to the VCS.
             def errMsg = new StringBuffer("Exception occurred while storing new Model ")
-            errMsg.append("${DomainAdapter.getAdapter(model).toCommandObject().properties} to VCS: ${e.getMessage()}.\n")
+            def m = new ModelAdapter(model: model).toCommandObject()
+            errMsg.append("${m.properties} to VCS: ${e.getMessage()}.\n")
             errMsg.append("${model.errors.allErrors.inspect()}\n")
             errMsg.append("${revision.errors.allErrors.inspect()}\n")
             log.error(errMsg)
             stopWatch.stop()
-            throw new ModelException(DomainAdapter.getAdapter(model).toCommandObject(),
-                "Could not store new Model ${DomainAdapter.getAdapter(model).toCommandObject().properties} in VCS".toString(), e)
+            throw new ModelException(m,
+                "Could not store new Model $m.properties} in VCS".toString(), e)
         }
         stopWatch.lap("Finished importing model in VCS.")
         stopWatch.setTag("modelService.uploadModelAsList.gormValidation")
@@ -1286,7 +1237,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
                 msg.append("${revision.errors.allErrors.inspect()}\n")
                 log.error(msg)
                 stopWatch.stop()
-                throw new ModelException(DomainAdapter.getAdapter(model).toCommandObject(), "New model does not validate")
+                throw new ModelException(new ModelAdapter(model: model).toCommandObject(), "New model does not validate")
             }
             model.save(flush: true)
             stopWatch.lap("Finished GORM validation.")
@@ -1303,14 +1254,14 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             stopWatch.stop()
 
             // broadcast event
-            grailsApplication.mainContext.publishEvent(new ModelCreatedEvent(this, DomainAdapter.getAdapter(model).toCommandObject(), modelFiles))
+            grailsApplication.mainContext.publishEvent(new ModelCreatedEvent(this,new ModelAdapter(model: model).toCommandObject(), modelFiles))
         } else {
             // TODO: this means we have imported the file into the VCS, but it failed to be saved in the database, which is pretty bad
             revision.discard()
             domainObjects.each {it.discard()}
             model.discard()
             log.error("New Model ${model.properties} with properties ${meta.properties} does not validate:${revision.errors.allErrors.inspect()}")
-            throw new ModelException(DomainAdapter.getAdapter(model).toCommandObject(), "Sorry, but the new Model does not seem to be valid.")
+            throw new ModelException(new ModelAdapter(model: model).toCommandObject(), "Sorry, but the new Model does not seem to be valid.")
         }
         return model
     }
@@ -1356,48 +1307,48 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             throw new ModelException(null, "Model may not be null")
         }
         if (model.deleted) {
-            throw new ModelException(DomainAdapter.getAdapter(model).toCommandObject(), "A new Revision cannot be added to a deleted model")
+            throw new ModelException(new ModelAdapter(model: model).toCommandObject(), "A new Revision cannot be added to a deleted model")
         }
         if (comment == null) {
-            throw new ModelException(DomainAdapter.getAdapter(model).toCommandObject(), "Comment may not be null, empty comment is allowed")
+            throw new ModelException(new ModelAdapter(model: model).toCommandObject(), "Comment may not be null, empty comment is allowed")
         }
         if (!repoFiles || repoFiles.size() == 0) {
             log.error("No files were provided as part of the update of model ${model.properties}")
-            throw new ModelException(DomainAdapter.getAdapter(model).toCommandObject(), "A new version of the model must contain at least one file.")
+            throw new ModelException(new ModelAdapter(model: model).toCommandObject(), "A new version of the model must contain at least one file.")
         }
         List<File> modelFiles = []
         for (rf in repoFiles) {
             if (!rf || !rf.path) {
                 log.error("No file was provided as part of the update of model ${model.properties}")
-                throw new ModelException(DomainAdapter.getAdapter(model).toCommandObject(), "Please supply at least one file for the new version of this model.")
+                throw new ModelException(new ModelAdapter(model: model).toCommandObject(), "Please supply at least one file for the new version of this model.")
             }
             final String path = rf.path
             if (!path || path.isEmpty()) {
                 log.error("Null file encountered while uploading a new revision for ${model.properties}: ${repoFiles.properties}")
-                throw new ModelException(DomainAdapter.getAdapter(model).toCommandObject(),
+                throw new ModelException(new ModelAdapter(model: model).toCommandObject(),
                     "Sorry, there was something wrong with one of the files you submitted. Please refine the files you wish to upload and try again.")
             }
             final def f = new File(path)
             if (!f.exists()) {
                 log.error("Non-existent file detected while uploading a new revision for ${model.properties}: ${f.properties}")
-                throw new ModelException(DomainAdapter.getAdapter(model).toCommandObject(),
+                throw new ModelException(new ModelAdapter(model: model).toCommandObject(),
                     "Sorry, one of the files you submitted does not appear to exist. Please refine the files you wish to upload and try again")
             }
             if (f.isDirectory()) {
                 log.error("Folder detected while uploading a new revision for ${model.properties}: ${repoFiles.properties}")
-                throw new ModelException(DomainAdapter.getAdapter(model).toCommandObject(),
+                throw new ModelException(new ModelAdapter(model: model).toCommandObject(),
                     "Sorry, we currently do not accept model organised into sub-folders.")
             }
             if (rf.mainFile && f.length() == 0) {
                 def err = "File ${f.name} cannot be empty because it is the main file of the submission."
                 log.error err
-                throw new ModelException(DomainAdapter.getAdapter(model).toCommandObject(), err)
+                throw new ModelException(new ModelAdapter(model: model).toCommandObject(), err)
             }
             modelFiles.add(f)
         }
         boolean valid = true
         if (!modelFileFormatService.validate(modelFiles, format, [])) {
-            final def m = DomainAdapter.getAdapter(model).toCommandObject()
+            final def m = new ModelAdapter(model: model).toCommandObject()
             log.warn("New revision of model ${m.properties} containing ${modelFiles.inspect()} does not comprise valid ${format.identifier}")
             //throw new ModelException(m, "The file list does not comprise valid ${format.identifier}")
             valid = false
@@ -1420,7 +1371,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             revision.discard()
             domainObjects.each{ it.discard() }
             log.error("Exception occurred during uploading a new Model Revision to VCS: ${e.getMessage()}")
-            throw new ModelException(DomainAdapter.getAdapter(model).toCommandObject(),
+            throw new ModelException(new ModelAdapter(model: model).toCommandObject(),
                 "Could not store new Model Revision for Model ${model.id} with VcsIdentifier ${model.vcsIdentifier} in VCS", e)
         }
         domainObjects.each {
@@ -1446,11 +1397,11 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             }
             revision.refresh()
             grailsApplication.mainContext.publishEvent(new RevisionCreatedEvent(this,
-                    DomainAdapter.getAdapter(revision).toCommandObject(), vcsService.retrieveFiles(revision)))
+                   new RevisionAdapter(revision: revision).toCommandObject(), vcsService.retrieveFiles(revision)))
         } else {
             // TODO: this means we have imported the revision into the VCS, but it failed to be saved in the database, which is pretty bad
             revision.discard()
-            final def m = DomainAdapter.getAdapter(model).toCommandObject()
+            final def m = new ModelAdapter(model: model).toCommandObject()
             log.error("New Revision containing ${repoFiles.inspect()} for Model ${m} with VcsIdentifier ${model.vcsIdentifier} added to VCS, but not stored in database")
             throw new ModelException(m, "Revision stored in VCS, but not in database")
         }
@@ -1491,7 +1442,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             files = vcsService.retrieveFiles(revision)
         } catch (VcsException e) {
             log.error("Retrieving Revision ${revision.vcsId} for Model ${revision.name} from VCS failed.", e)
-            throw new ModelException(DomainAdapter.getAdapter(revision.model).toCommandObject(), "Retrieving Revision ${revision.vcsId} from VCS failed.", e)
+            throw new ModelException(new ModelAdapter(model: revision.model).toCommandObject(), "Retrieving Revision ${revision.vcsId} from VCS failed.", e)
         }
         return files
     }
@@ -1508,7 +1459,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
     List<RepositoryFileTransportCommand> retrieveModelFiles(final Revision revision) throws ModelException {
         if (aclUtilService.hasPermission(springSecurityService.authentication, revision, BasePermission.READ)
                 || SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')) {
-            return DomainAdapter.getAdapter(revision).getRepositoryFilesForRevision()
+            return new RevisionAdapter(revision: revision).getRepositoryFilesForRevision()
         } else {
             log.error "you can't access revision ${revision.id}!"
             throw new AccessDeniedException("Sorry you are not allowed to download this Model.")
@@ -1966,7 +1917,8 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
 
         model.deleted = true
         model.save(flush: true)
-        grailsApplication.mainContext.publishEvent(new ModelDeletedEvent(this, DomainAdapter.getAdapter(model).toCommandObject()))
+        grailsApplication.mainContext.publishEvent(new ModelDeletedEvent(this,
+                new ModelAdapter(model: model).toCommandObject()))
         return true
     }
 
@@ -2017,7 +1969,8 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         model.deleted = false
         model.save(flush: true)
         model.refresh()
-        grailsApplication.mainContext.publishEvent(new ModelRestoredEvent(this, DomainAdapter.getAdapter(model).toCommandObject()))
+        grailsApplication.mainContext.publishEvent(new ModelRestoredEvent(this,
+            new ModelAdapter(model: model).toCommandObject()))
         return !model.deleted
     }
 
@@ -2149,7 +2102,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
     @PreAuthorize("hasRole('ROLE_CURATOR') or hasRole('ROLE_ADMIN')") //used to be: (hasRole('ROLE_CURATOR') and hasPermission(#revision, admin))
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.publishModelRevision")
-    public PublishContext publishModelRevision(Revision revision) {
+    public void publishModelRevision(Revision revision) {
         if (!SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
             if (!aclUtilService.hasPermission(springSecurityService.authentication, revision,
                         BasePermission.ADMINISTRATION)) {
@@ -2163,6 +2116,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             throw new IllegalArgumentException("Revision may not be deleted")
         }
         Model model = revision.model
+/*
 
         //validating publish process
         if(!revision.validationLevel.equals(ValidationState.APPROVED)){
@@ -2204,6 +2158,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         if(!scenario) {
             throw new PublishException("Submission did not match any of the scenarios. Please upload all required files")
         }
+*/
 
         if (MAKE_PUBLICATION_ID) {
             model.publicationId = model.publicationId ?: publicationIdGenerator.generate()
@@ -2213,11 +2168,12 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         aclUtilService.addPermission(revision, "ROLE_ANONYMOUS", BasePermission.READ)
         revision.state = ModelState.PUBLISHED
         if (!model.save(flush: true)) {
-            throw new ModelException(
-                    "Cannot publish model ${model.submissionId}:${b.errors.allErrors.inspect()}")
+            ModelTransportCommand cmd = new ModelAdapter(model: model).toCommandObject(false)
+            throw new ModelException(cmd,
+                    "Cannot publish model ${model.submissionId}:${model.errors.allErrors.inspect()}")
         }
 
-        return publishValidator.generatePublishContext(scenario)
+        //return publishValidator.generatePublishContext(scenario)
     }
 
     /**
@@ -2341,5 +2297,58 @@ Failed to update audit $itemId to $success: ${audit.errors.allErrors.inspect()}"
             return null
         }
         return modelFileFormatService.getPubMedAnnotation(revision)
+    }
+
+    /**
+     * Retrieves the main file of the models given in a list
+     * @param modelIDs The list of model identities being retrieved
+     * @return either the list of RepositoryFileTransportCommand objects or null
+     *         if there is no model files available
+     */
+    List<RepositoryFileTransportCommand> fetchMainFileForModels(String[] modelIDs) {
+        List<RepositoryFileTransportCommand> results = []
+        List mids = modelIDs.toList()
+        String query = """
+SELECT
+    r1
+FROM
+Revision AS r1
+JOIN r1.model AS model
+WHERE
+	r1.revisionNumber = (select max(r2.revisionNumber) from Revision AS r2 where r2.model = model)
+    AND (model.submissionId IN (:mids) OR model.publicationId IN (:mids))
+    AND r1.id IN (
+        SELECT aoi.objectId
+        FROM
+            AclEntry AS ace
+            JOIN ace.aclObjectIdentity AS aoi
+            JOIN aoi.aclClass AS aclClass
+            JOIN ace.sid AS sid
+        WHERE
+            aclClass.className = 'net.biomodels.jummp.model.Revision'
+            AND sid.sid = 'ROLE_ANONYMOUS'
+            AND ace.mask = 1)"""
+        List revisions = Model.executeQuery(query, [mids: mids])
+
+        revisions.each {Revision revision ->
+            List<File> files = retrieveModelRepFiles(revision)
+            RepositoryFile rf = revision.repoFiles.find { RepositoryFile rf -> rf.mainFile }
+            File f = files.find { it.name == rf.path }
+            if (!f) {
+                log.error "Cannot find main file for revision {}", revision.id
+                return
+            }
+            RepositoryFileTransportCommand rftc = new RepositoryFileTransportCommand(
+                id: rf.id,
+                path: f.getCanonicalPath(),
+                description: rf.description,
+                hidden: rf.hidden,
+                mainFile: rf.mainFile,
+                userSubmitted: rf.userSubmitted,
+                mimeType: rf.mimeType)
+            results.add(rftc)
+        }
+
+	    return results
     }
 }

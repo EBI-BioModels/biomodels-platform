@@ -26,7 +26,7 @@ import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand
  *
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  */
-public class PublicationLinkProviderAdapter extends DomainAdapter {
+public class PublicationLinkProviderAdapter {
     PublicationLinkProvider linkProvider
 
     PublicationLinkProviderTransportCommand toCommandObject() {

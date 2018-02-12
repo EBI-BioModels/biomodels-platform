@@ -78,7 +78,7 @@ grails.project.dependency.resolution = {
         // runtime 'mysql:mysql-connector-java:5.1.13'
         // miriam lib required by sbml converters
         runtime('uk.ac.ebi.miriam:miriam-lib:1.1.3')// { transitive = false }
-        compile("org.sbml.jsbml:jsbml-core:1.2") {
+        compile("org.sbml.jsbml:jsbml:1.2") {
             // Java 1.6+ already has these classes
             excludes 'stax-api'
         }
@@ -92,7 +92,7 @@ grails.project.dependency.resolution = {
     plugins {
         build ":tomcat:7.0.55.3"
 
-        compile ":perf4j:0.2"
+        compile ":perf4j:0.2.1"
     }
 }
 grails.plugin.location.'jummp-plugin-security'="../jummp-plugin-security"

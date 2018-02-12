@@ -18,6 +18,7 @@
 --%>
 
 <%
+
   		def contextHelpLocation=g.pageProperty(name:'page.contexthelp')
   		if (contextHelpLocation) {
   			contextHelpLocation=contextHelpLocation.trim()
@@ -25,8 +26,15 @@
   		else {
   			contextHelpLocation="manual"
   		}
-  		int helpWidth=400;
+  		int helpWidth = 800;
+
         def styleName = grailsApplication.config.jummp.branding.style
+
+        response.setHeader("Cache-Control","no-cache");
+        response.setHeader("Cache-Control","no-store");
+        response.setDateHeader("Expires", 0);
+        response.setHeader("Pragma","no-cache");
+
 %>
 
 <!doctype html>
@@ -38,7 +46,6 @@
     <g:javascript src="jquery/jquery.i18n.properties-min-1.0.9.js"/>
     <g:javascript src="jquery/jquery-ui-v1.10.3.js"/>
     <g:javascript>
-        console.log("Using BioModels Style");
     	$.appName = "${grailsApplication.metadata["app.name"]}";
     	$.serverUrl = "${grailsApplication.config.grails.serverURL}";
     	$.i18n.properties({

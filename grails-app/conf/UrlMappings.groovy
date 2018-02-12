@@ -19,7 +19,7 @@
 **/
 
 import grails.util.Holders
-
+import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 
 
 class UrlMappings {
@@ -29,19 +29,11 @@ class UrlMappings {
         "/model/update"(controller: "model", action: "update")
         "/model/publish"(controller: "model", action: "publish")
         "/share"(controller: "model", action: "share")
-        "/model/$id(.$revisionId)?" {
-            controller = "model"
-            action = 'show'
-            constraints {
-                id(nullable: false, matches: /[a-zA-Z-_0-9]+/)
-                revisionId(matches: /\d+/)
-            }
-        }
         "/model/$action/$id(.$revisionId)?" {
             controller = 'model'
             action = action
             constraints {
-                id(nullable: false, matches: /[a-zA-Z-_0-9]+/)
+                id(nullable: false, matches: /[a-zA-Z\\-_0-9]+/)
                 action(nullable: false)
                 revisionId(matches: /\d+/)
             }
@@ -57,7 +49,21 @@ class UrlMappings {
                 // apply constraints here
             }
         }
-
+        "/$id(.$revisionId)?" {
+            controller = "model"
+            action = 'show'
+            constraints {
+                id(nullable: false, validator: { modelId ->
+                    Set<String> modelIdRegexes = ModelIdentifierUtils.MODEL_ID_REGEXES
+                    if (!modelIdRegexes) {
+                        ModelIdentifierUtils.processGeneratorSettings(Holders.config.jummp)
+                    }
+                    String pattern = modelIdRegexes.join('|')
+                    modelId.matches pattern
+                })
+                revisionId(matches: /\d+/)
+            }
+        }
         "/"(view: "/index")
         "/maintenance"(controller: 'maintenance')
         "/maintenance/turnOn"(controller: 'maintenance', action: 'turnOn')
@@ -70,14 +76,23 @@ class UrlMappings {
         "/search"(controller: "search", action: "search")
         "/omicsdi"(controller: "omicsdi", action: "index")
         "/archive"(controller: "search", action: "archive")
-        "/support"(controller:"jummp", action:"feedback")
-        "/lookupUser"(controller:"jummp", action:"lookupUser")
+        "/support"(controller: "jummp", action: "support")
+        "/faq"(controller: "jummp", action: "faq")
+        "/courses"(controller: "jummp", action: "courses")
+        "/about"(controller: "jummp", action: "aboutus")
+        "/termsofuse"(controller: "jummp", action: "termsOfUse")
+        "/citation"(controller: "jummp", action: "howToCiteBioModelsDatabase")
+        "/contact"(controller: "jummp", action: "contactus")
+	    "/acknowledgements"(controller: "jummp", action: "acknowledgements")
+	    "/jobs"(controller: "jummp", action: "jobs")
+        "/lookupUser"(controller: "jummp", action: "lookupUser")
         if (Holders.config.jummp.security.anonymousRegistration) {
-            "/registration"(controller:"usermanagement", action:"create")
+            "/registration"(controller: "usermanagement", action:"create")
         }
         "/forgotpassword"(controller:"usermanagement", action:"forgot")
         "/user/editUser"(controller:"usermanagement", action:"edit")
         "/user/editPassword"(controller:"usermanagement", action:"editPassword")
         "/user"(controller:"usermanagement", action:"show")
+        "/mommanagement"(controller: "modelOfTheMonth", action: "index")
     }
 }

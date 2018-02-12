@@ -20,6 +20,7 @@
 
 package net.biomodels.jummp.deployment.biomodels
 
+import grails.persistence.Entity
 import net.biomodels.jummp.model.Model
 
 /**
@@ -27,8 +28,9 @@ import net.biomodels.jummp.model.Model
  *
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-@groovy.transform.CompileStatic
+@Entity
 class ModelOfTheMonth implements Serializable {
     static hasMany = [models: Model]
     final String DATE_FORMAT_PATTERN = 'yyyy-MM'
@@ -37,6 +39,13 @@ class ModelOfTheMonth implements Serializable {
     String authors
     Date publicationDate
     Date lastUpdated
+    String shortDescription
+    byte[] previewImage
+
+    static constraints = {
+        shortDescription nullable: true, blank: true, maxSize: 1024
+        previewImage nullable: true, blank: true
+    }
 
     ModelOfTheMonthTransportCommand toCommandObject() {
         String date = publicationDate?.format(DATE_FORMAT_PATTERN)

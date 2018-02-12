@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2017 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -36,11 +36,14 @@ import net.biomodels.jummp.core.model.identifier.support.DateModelIdentifierPart
 import net.biomodels.jummp.core.model.identifier.support.LiteralModelIdentifierPartition
 import net.biomodels.jummp.core.model.identifier.support.ModelIdentifierPartition
 import net.biomodels.jummp.core.model.identifier.support.ModelIdentifierPartitionManager
+import net.biomodels.jummp.core.model.identifier.support.ModelIdentifierPartitionRegexFactory
 import net.biomodels.jummp.core.model.identifier.support.NumericalModelIdentifierPartition
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.apache.tomcat.jdbc.pool.DataSource
 import org.apache.tomcat.jdbc.pool.PoolProperties
+
+import java.util.regex.Pattern
 
 /**
  * @short Helper class containing methods for interacting with model id scheme settings.
@@ -52,6 +55,9 @@ class ModelIdentifierUtils {
     private static final Log log = LogFactory.getLog(this)
     /* semaphores for the log threshold */
     private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
+    // Regular expressions for each model identifier generator scheme (submission, publication, ...)
+    static final Set<String> MODEL_ID_REGEXES = new LinkedHashSet<>()
+
     /*
      * The suffix to use in the bean reference corresponding to a generator.
      * For instance, for the settings
@@ -70,12 +76,25 @@ class ModelIdentifierUtils {
     static final String DEFAULT_DIALECT = ""
     static final String DEFAULT_DRIVER = "org.h2.Driver"
     static final String DEFAULT_PROTOCOL = "h2"
+    /**
+     * MySQL uses latin-1 charset by default, so it's essential to enable Unicode
+     * characters support mode alongside the mandatory properties of database connection string
+     */
+    static final String UNICODE_OPTIONS = "useUnicode=yes&characterEncoding=UTF-8"
     /* stores the patterns that are used to generate a model identifier */
     static ConfigObject settings
     static TreeSet perennialFields
 
     /* hide constructor - all non-private methods are static. */
     protected ModelIdentifierUtils() {}
+
+    static String simplifyDbConnStr(String dbConnStr) {
+        int posUnicodeOptions = dbConnStr.indexOf(UNICODE_OPTIONS)
+        if (posUnicodeOptions > 0) {
+            dbConnStr = dbConnStr.substring(0, posUnicodeOptions-1) // take into account the ? symbol
+        }
+        dbConnStr
+    }
 
     /** The starting point for wiring up model identifier generator beans. */
     static Map processGeneratorSettings(ConfigObject jummpConfig) {
@@ -117,6 +136,10 @@ select id,
 submission_id as submissionId,
 perennialPublicationIdentifier as publicationId
 from model where model.submission_id = (select max(submission_id) from model)""")
+                def lastPublished = sql.firstRow "select max(perennialPublicationIdentifier) as pId from model"
+                if (lastPublished && mostRecentModelDetails) {
+                    mostRecentModelDetails.publicationId = lastPublished.pId
+                }
             } catch (Exception e) {
                 final String W = """Unable to access the database - model IDs will be created \
 using the default values."""
@@ -135,20 +158,40 @@ The configuration settings lack the rules for generating model identifiers!"""
             log.error e
             throw new Exception(e)
         }
+
+        boolean shouldComputeRegexes = true
+        def regexSetting = idSettings.remove("regex")
+        if (regexSetting instanceof String) {
+            if (!regexSetting?.trim()) {
+                throw new IllegalArgumentException("Invalid configuration value for the model \
+identifier regex. Remove it if you want it to be automatically generated from the settings.")
+            }
+            shouldComputeRegexes = false
+            String modelIdentifierSchemePattern
+            try {
+                modelIdentifierSchemePattern = Pattern.compile regexSetting
+            } catch (Exception ignore) {
+                throw new IllegalArgumentException("w-t-f $regexSetting ?!!")
+            }
+            if (IS_DEBUG_ENABLED) {
+                log.debug "Using model identifier regex $modelIdentifierSchemePattern"
+            }
+            MODEL_ID_REGEXES.add(modelIdentifierSchemePattern)
+        }
         idSettings.each { name, cfg ->
             final String BEAN_NAME = "${name}${GENERATOR_BEAN_SUFFIX}"
             if (generatorBeans[BEAN_NAME]) {
                 String err = "Duplicate settings for '$name' identifier."
-                log.erorr(err)
+                log.error(err)
                 throw new Exception(err)
             }
             final String PROPERTY_NAME = "${name}Id"
-            final String LAST_ID_FROM_THIS_GENERATOR
+            final String LAST_ID_FROM_THIS_GENERATOR = null
             if (mostRecentModelDetails?.containsKey(PROPERTY_NAME)) {
                 LAST_ID_FROM_THIS_GENERATOR = mostRecentModelDetails[PROPERTY_NAME]
             }
-            Set<OrderedModelIdentifierDecorator> decorators =
-                        buildDecoratorsFromSettings(cfg, LAST_ID_FROM_THIS_GENERATOR)
+            Set<OrderedModelIdentifierDecorator> decorators = buildDecoratorsFromSettings(
+                    cfg, LAST_ID_FROM_THIS_GENERATOR, shouldComputeRegexes)
             ModelIdentifierGenerator generator = new DefaultModelIdentifierGenerator(decorators)
             generatorBeans[BEAN_NAME] = generator
         }
@@ -200,6 +243,9 @@ The configuration settings lack the rules for generating model identifiers!"""
             password = dbSettings.password
             url = "jdbc:$type://$server:$port/$db"
         }
+        if (protocol == 'mysql') {
+            url = "$url?$UNICODE_OPTIONS"
+        }
         def out = [ driver: driver, url: url, user: username, password: password ]
         if (IS_DEBUG_ENABLED) {
             log.debug "Extracted the following database settings: $out"
@@ -221,7 +267,7 @@ The configuration settings lack the rules for generating model identifiers!"""
      * initial values.
      */
     private static TreeSet<OrderedModelIdentifierDecorator> buildDecoratorsFromSettings(
-                ConfigObject c, String mostRecentId = null) {
+                ConfigObject c, String mostRecentId = null, boolean shouldComputeRegexes = true) {
         ModelIdentifierPartitionManager partitionManager =
                     new ModelIdentifierPartitionManager(c, mostRecentId)
         TreeSet<OrderedModelIdentifierDecorator> decorators = new TreeSet()
@@ -229,6 +275,7 @@ The configuration settings lack the rules for generating model identifiers!"""
         if (IS_DEBUG_ENABLED) {
             log.debug "Turned decorator settings ${c.inspect()} into ${partitions.inspect()}"
         }
+        StringBuilder regexForThisIdentifier = new StringBuilder()
         partitions.eachWithIndex { p, i ->
             OrderedModelIdentifierDecorator d
             boolean validPartition = p.validate()
@@ -236,33 +283,47 @@ The configuration settings lack the rules for generating model identifiers!"""
                 log.warn "ModelIdentifierPartition ${p.dump()} is not valid!"
                 throw new Exception("Incorrect model identifier settings: ${p.properties}")
             }
+
+            String partitionRegex
             switch(p) {
                 case DateModelIdentifierPartition:
                     // this decorator sets nextValue to today's date, which is sensible
-                    d = new DateAppendingDecorator(i, p.format)
+                    String format = p.format
+                    d = new DateAppendingDecorator(i, format)
                     // don't lose the last value used by this decorator
                     d.nextValue.set(p.value)
+                    if (shouldComputeRegexes)
+                        partitionRegex = ModelIdentifierPartitionRegexFactory.forDatePartition format
                     break
                 case ChecksumModelIdentifierPartition:
                     char sep = ChecksumAppendingDecorator.DEFAULT_SEPARATOR
                     d = new ChecksumModelIdentifierPartition(i, sep)
+                    if (shouldComputeRegexes)
+                        partitionRegex = ModelIdentifierPartitionRegexFactory.forChecksumPartition(sep)
                     //no need to update the value of the checksum
                     break
                 case LiteralModelIdentifierPartition:
-                    d = new FixedLiteralAppendingDecorator(i, p.value)
+                    String suffix = p.value
+                    d = new FixedLiteralAppendingDecorator(i, suffix)
+                    if (shouldComputeRegexes)
+                        partitionRegex = ModelIdentifierPartitionRegexFactory.forLiteral suffix
                     // this is a fixed decorator, so nextValue does not need updating
                     break
                 case NumericalModelIdentifierPartition:
                     long suffix = Long.parseLong(p.value)
+                    int width = p.width
                     if (p.fixed) {
-                        d = new FixedDigitAppendingDecorator(i, suffix, p.width)
+                        d = new FixedDigitAppendingDecorator(i, suffix, width)
                     } else {
-                        d = new VariableDigitAppendingDecorator(i, suffix, p.width)
+                        d = new VariableDigitAppendingDecorator(i, suffix, width)
                         // trigger decorator update
                         d.lastUsedSuffix.set(suffix)
                     }
+                    if (shouldComputeRegexes)
+                        partitionRegex = ModelIdentifierPartitionRegexFactory.forNumericalPartition width
                     break
                 default:
+                    partitionRegex = null
                     String M = "Unknown model identifier setting type $p"
                     log.error M
                     throw new Exception(M)
@@ -271,6 +332,8 @@ The configuration settings lack the rules for generating model identifiers!"""
                 log.debug "Created ${d.dump()} based on partition ${p.dump()}"
             }
             decorators.add d
+            if (shouldComputeRegexes)
+                regexForThisIdentifier.append partitionRegex
         }
         boolean haveVariableDecorator = decorators.find{ it.isFixed() == false } != null
         if (!haveVariableDecorator) {
@@ -282,8 +345,12 @@ Consider introducing variable digit patterns or dates into the identifier scheme
     jummp.model.id.submission.partN.width=10"""
             throw new Exception(err)
         }
+        if (shouldComputeRegexes) {
+            MODEL_ID_REGEXES.add regexForThisIdentifier.toString()
+        }
+
         if (IS_DEBUG_ENABLED) {
-            log.debug "The decorators for ${c.inspect()} are ${decorators.inspect()}"
+            log.debug "Identifier settings ${c.inspect()} converted to ${decorators.inspect()} and regex $regexForThisIdentifier"
         }
         return decorators
     }

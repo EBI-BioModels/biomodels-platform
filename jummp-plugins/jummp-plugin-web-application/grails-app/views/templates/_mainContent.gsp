@@ -1,7 +1,3 @@
-<%@
-    page import="net.biomodels.jummp.core.model.ModelState"
-%>
-
 <%
     def totalCount
     if (matches) {
@@ -13,77 +9,90 @@
     def imagePath = "/images"
     def resultOptions = net.biomodels.jummp.webapp.Preferences.getOptions("numResults")
     resultOptions = resultOptions.reverse()
+    if (!params.sort) {
+        params.sort = "relevance-desc"
+    }
+    String queryString = params.query?.replaceAll('"', '\\\\"')
 %>
 <div class="content">
     <g:if test="${models}">
+        <div id="inline-list" class="row">
+            <div class="small-12 medium-12 large-6 columns" id="sorting">
+                <!-- Show Sort by box on the search page only for now-->
+                <g:if test="${action == "search"}">
+                    <g:render template="/templates/sorting" />
+                </g:if>
+            </div>
+            <div class="small-12 medium-12 large-6 columns">
+                <g:render template="/templates/pageSize"
+                          model="[resultOptions: resultOptions, length: length,
+                                  action: action, query: query]"/>
+            </div>
+        </div>
         <div class="row">
-            <div class="small-12 medium-12 large-12 columns">
-                <div id="inline-list">
                 <g:if test="${action == "list"}">
                     <sec:ifLoggedIn>
-                        <a href="${createLink(controller: "search", action: "archive")}">Browse Archived Models</a>
+                        <a href="${createLink(controller: "search", action: "archive")}">
+                            Browse Archived Models</a>
                     </sec:ifLoggedIn>
                 </g:if>
                 <g:else>
-                    <span>Search terms: </span><span id="searchString" style="font-weight: bolder"></span>
+                    <g:if test="${params.flashMessage}">
+                        <div class="alert warning">
+                            <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+                            <h5>${params.flashMessage}</h5>
+                        </div>
+                    </g:if>
+                    <span id="flashMessage"></span>
+                    <span style="font-size: 85%">Search terms: </span>
+                    <span id="searchString" style="font-weight: bolder; font-size: 85%"></span>
+                    <span id="resetSearch" style="margin-left: 1em; font-size: 85%"></span>
                 </g:else>
-                <ul class="float-right" style="margin-right: 14px">
-                    <g:each in="${resultOptions}">
-                        <li>
-                            <g:if test="${it == length}">
-                                ${it}
-                            </g:if>
-                            <g:else>
-                                <a href="${createLink(controller: 'search', action: action,
-                                    params: [query: query,  sortDir: sortDirection,
-                                             sortBy: sortBy, offset: 0, numResults: it])}">
-                                    ${it}
-                                </a>
-                            </g:else>
-                        </li>
-                    </g:each>
-                    <li>Page size </li>
-                </ul>
-                </div>
-            </div>
         </div>
         <div class="row grid_18 omega" id="search-results">
             <section>
                 <div class="modelList">
                     <div class="column row">
-                        <h3>Found: ${totalCount} ${totalCount > 1 ? 'models' : 'model'}</h3>
+                        <g:render template="/templates/resultHeader"
+                                  model="[totalCount: totalCount, action: action]"/>
                     </div>
                     <div class="column row">
                     <g:each status="i" in="${models}" var="model">
                     <div class="column row modelPlaceHolder">
-                        <div class="small-12 medium-12 large-12 columns">
-                            <%
-                                def modelUrl = createLink(controller: 'model', id: model.publicationId ?: model.submissionId, action: 'show')
-                                def description = model.description ?: ""
-                                int maxNumChar = 255
-                                boolean haveMoreDetails = description.length() > maxNumChar
-                                def descriptionShown = description
-                                def moreDetails = ""
-                                if (haveMoreDetails) {
-                                    moreDetails = "<a href=${modelUrl}>... See more</a>"
-                                    descriptionShown = description.substring(1,maxNumChar) + moreDetails
-                                }
-                                // TODO: deal with HTML elements
-                                descriptionShown = description
-                            %>
-                            %{--<input class="export-selection" type="checkbox" value="${model.submissionId}">--}%
+                    <%
+                        def id = model.publicationId ?: model.submissionId
+                        def modelUrl = createLink(controller: 'model', id: id, action: 'show')
+                        def description = model.description ?: ""
+                        int maxNumChar = 255
+                        boolean haveMoreDetails = description.length() > maxNumChar
+                        def descriptionShown = description
+                        def moreDetails = ""
+                        if (haveMoreDetails) {
+                            moreDetails = "<a href=${modelUrl}>... See more</a>"
+                            descriptionShown = description.substring(1,maxNumChar) + moreDetails
+                        }
+                        // TODO: deal with HTML elements
+                        descriptionShown = description
+                    %>
+                        <div class="small-11 medium-11 large-11 columns">
                             <h4>
-                                <a href="${modelUrl}">${model.name}</a><br/>
+                                <a href="${modelUrl}">${model.name}</a>
+                                <br/>
                                 <span style="font-size: small; margin: -25px 0;">
+                                ID: ${id} |
                                 Format: ${model.format.name} |
                                 Submitter: ${model.submitter} |
-                                Uploaded date: ${model.submissionDate.format('yyyy/MM/dd')} |
-                                Last modified date: ${model.lastModifiedDate.format('yyyy/MM/dd')} |
-                                ID: ${model.publicationId ?: model.submissionId}
+                                Uploaded date: ${model.submissionDate.format('dd/MM/yyyy')} |
+                                Last modified date: ${model.lastModifiedDate.format('dd/MM/yyyy')}
+                                <g:if test="${model.publication}"> | Published in: ${model.publication.year}</g:if>
                                 </span>
                             </h4>
-                            <span id="modelDescription"></span>
-                            <p style="font-size: 90%; margin-bottom: 0.5%">${descriptionShown}</p>
+                        </div>
+                        <div class="small-1 medium-1 large-1 columns" id="download">
+                            <g:if test="${action == 'search'}">
+                                <input id="chkDownload" type="checkbox" value="${id}"
+                                       style="float: right; margin-top: 10px">
+                            </g:if>
                         </div>
                     </div>
                     </g:each>
@@ -91,11 +100,90 @@
                     <g:javascript>
                         // reduce font-size of model's notes (i.e. model description)
                         $('[class*="dc:"]').css("font-size", "90%");
-                        // show the query string on local search box and string query division at the top of main content division
+                        // show the query string on local search box and string query division
+                        // at the top of main content division
                         $(document).ready(function() {
-                            $('#local-searchbox').val("${query}");
-                            $('#searchString').text("${query}");
+                            var query = "${queryString}";
+                            $('#local-searchbox').val(query);
+                            $('#searchString').text(query);
+                            if ("${params.sort}") {
+                                $('div#sorting > label > select').val("${params.sort}");
+                            }
                         });
+
+                        if (${action == 'search'}) {
+                            $('div#sorting > label > select').change(function() {
+                                var selectedValue = $(this).val();
+                                var url = "${createLink(controller: 'search', action: "${action}",
+                            params: [query: "${query}"])}";
+                                if ("${params.offset}") {
+                                    url += "&offset=${params.offset}";
+                                }
+                                if ("${params.numResults}") {
+                                    url += "&numResults=${params.numResults}";
+                                }
+                                url += "&sort=" + selectedValue;
+                                window.location.href = url;
+                            });
+                            var selectedModels = [];
+                            $('div#download > input').click(function() {
+                                var isChecked = $(this).is(':checked');
+                                var checkedValue = $(this).val();
+                                if (isChecked)
+                                    selectedModels.push(checkedValue);
+                                else {
+                                    var index = selectedModels.indexOf(checkedValue);
+                                    if (index > -1) {
+                                        selectedModels.splice(index, 1);
+                                    }
+                                }
+                            });
+                            $('#checkAll').click(function() {
+                                selectedModels = [];
+                                var operation = $(this).text();
+                                if (operation === "Select all") {
+                                    $('#download > input').prop('checked', true);
+                                    $(this).text("Deselect all");
+                                    $('#download > input').each(function() {
+                                        selectedModels.push($(this).val());
+                                    });
+                                } else {
+                                    $('#download > input').prop('checked', false);
+                                    $(this).text("Select all");
+                                }
+                            });
+                            var link = "";
+                            $('#btnDownload').click(function() {
+                                if (typeof selectedModels != undefined && selectedModels.length > 0) {
+                                    link = "${g.createLink(controller: "search", action: "download", params: ['models': ''])}";
+                                    link += selectedModels.join();
+                                    // if the browser sees the response type of 'link' to be binary, then it will download
+                                    // the file rather than trying to display it as plain text. The response type is set in
+                                    // the controller method
+                                    window.location = link;
+                                } else {
+                                    var strHtml ="<div class='alert info'><span class='closebtn'>&times;</span> " +
+                                                "<h5 style='color: #ffffff'>Please select at least one model.</h5> </div>";
+                                    var shouldShown = typeof $('.alert').val() === "undefined" || $('.alert').val() === "";
+                                    if (shouldShown) {
+                                        $(strHtml).insertBefore('#flashMessage');
+                                    }
+                                    $('.closetbn').click(function() {
+                                        $(this).slideUp();
+                                    })
+                                    $('.alert').click(function() {
+                                        $(this).slideUp();
+                                    })
+                                }
+                            });
+                        }
+                        // show all models ~ reset the current search ==> start a new search
+                        var query = "${queryString}";
+                        if (query !== "*:*") {
+                            var url = "${createLink(controller: 'search', action: "${action}",
+                                        params: [query: "*:*"])}";
+                            $('#resetSearch').html('<a href="' + url + '" title="Clear the current search">Reset</a>');
+                        }
                     </g:javascript>
                 </div>
             </section>
@@ -127,18 +215,20 @@
         <div class="dataTables_paginate">
             <g:if test="${currentPage != 1 && numPages > stepPagination}">
                 <a href="${createLink(controller: 'search', action: action,
-                    params: [query: query, sortDir: sortDirection, sortBy: sortBy, offset: 0, numResults: length])}">First</a>
+                    params: [query: query, offset: 0, numResults: length, sort: params.sort])}">First</a>
             </g:if>
             <g:else>
                 First
             </g:else>
             <g:if test="${currentPage == 1 || numPages <= stepPagination}">
-                <g:img dir="${imagePath}/pagination" absolute="true" contextPath="" file="arrow-previous-disable.gif" alt="Previous"/>
+                <g:img dir="${imagePath}/pagination" absolute="true" contextPath=""
+                       file="arrow-previous-disable.gif" alt="Previous"/>
             </g:if>
             <g:else>
                 <a href="${createLink(controller: 'search', action: action,
-                    params: [query: query, sortDir: sortDirection, sortBy: sortBy, offset: modelStart-length-1, numResults: length])}">
-                    <g:img dir="${imagePath}/pagination" absolute="true"  contextPath="" file="arrow-previous.gif" alt="Previous"/>
+                    params: [query: query, offset: modelStart - length - 1, numResults: length, sort: params.sort])}">
+                    <g:img dir="${imagePath}/pagination" absolute="true"  contextPath=""
+                           file="arrow-previous.gif" alt="Previous"/>
                 </a>
             </g:else>
             <g:if test="${currentPage + stepPagination >= numPages}">
@@ -155,24 +245,26 @@
                     </g:if>
                     <g:else>
                         <a href="${createLink(controller: 'search', action: action,
-                            params: [query: query,  sortDir: sortDirection, sortBy: sortBy, offset: (i - 1)*length, numResults: length])}">
+                            params: [query: query, offset: (i - 1) * length, numResults: length, sort: params.sort])}">
                             ${i}
                         </a>
                     </g:else>
                 </span>
             </g:each>
             <g:if test="${modelEnd == totalCount || numPages <= stepPagination}">
-                <g:img dir="${imagePath}/pagination" absolute="true"  contextPath="" file="arrow-next-disable.gif" alt="Next"/>
+                <g:img dir="${imagePath}/pagination" absolute="true"  contextPath=""
+                       file="arrow-next-disable.gif" alt="Next"/>
             </g:if>
             <g:else>
                 <a href="${createLink(controller: 'search', action: action,
-                    params: [query: query,  sortDir: sortDirection, sortBy: sortBy, offset: modelStart+length-1, numResults: length])}">
-                    <g:img dir="${imagePath}/pagination" absolute="true"  contextPath="" file="arrow-next.gif" alt="Next"/>
+                    params: [query: query, offset: modelStart + length - 1, numResults: length, sort: params.sort])}">
+                    <g:img dir="${imagePath}/pagination" absolute="true"  contextPath=""
+                           file="arrow-next.gif" alt="Next"/>
                 </a>
             </g:else>
             <g:if test="${currentPage != numPages && numPages > stepPagination}">
                 <a href="${createLink(controller: 'search', action: action,
-                    params: [query: query, sortDir: sortDirection, sortBy: sortBy, offset: length*(numPages-1), numResults: length])}">Last</a>
+                    params: [query: query, offset: length * (numPages - 1), numResults: length, sort: params.sort])}">Last</a>
             </g:if>
             <g:else>
                 Last
@@ -182,10 +274,19 @@
     </g:if>
     <g:else>
         <g:if test="${matches != null}">
-            <p>No available models matched your query. Please try logging in to access more models, or another search query.</p>
+            <p>No available models matched your query. Please try logging in to
+            access more models, or another search query.</p>
         </g:if>
         <g:else>
-            <p>No available models matched your query. Please try logging in to access more models, or another search query.</p>
+            <p>No available models matched your query. Please try logging in to
+            access more models, or another search query.</p>
         </g:else>
+        <div class="alert info">
+            <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+            <h5 style="color: #ffffff">Please also check the syntax of your search terms.</h5>
+        </div>
+        <script>
+            $('#clearsearch').hide();
+        </script>
     </g:else>
 </div>

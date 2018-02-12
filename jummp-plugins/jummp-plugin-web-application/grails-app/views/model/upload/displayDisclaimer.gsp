@@ -28,8 +28,14 @@
 
 
 <%@ page contentType="text/html;charset=UTF-8" %>
+<%
+    String style = session['branding.style']
+    String faqURI = g.createLink(uri: '/faq', absolute: true)
+    String contactURI = g.createLink(uri: '/contact', absolute: true)
+    def createMsgArgs = [contactURI, faqURI]
+%>
     <head>
-        <meta name="layout" content="${session['branding.style']}/main" />
+        <meta name="layout" content="${style}/main" />
         <title>
         	<g:if test="${isUpdate}">
         	      <g:message code="submission.disclaimer.update.title" args="${ [params.id] }" />
@@ -38,6 +44,16 @@
         	      <g:message code="submission.disclaimer.create.title"/>
         	</g:else>
         </title>
+        <script type="text/javascript">
+            $(document).ready(function() {
+                $('#creatorExample').click(function () {
+                    $("#dialog").dialog({
+                        width: 659,
+                        height: 755
+                    });
+                });
+            });
+        </script>
     </head>
     <body>
         <h2>Submission Guidelines</h2>
@@ -45,8 +61,8 @@
         	<g:message code="submission.disclaimer.updateMessage" args="${ [params.id] }" />
         </g:if>
         <g:else>
-            <g:if test="${'ddmore' == grailsApplication.config.jummp.branding.style}">
-                <g:message code="submission.disclaimer.ddmore.createMessage" args="${ [g.createLink(uri: '/', absolute: true)] }"/>
+            <g:if test="${'default' != style}">
+                <g:message code="submission.disclaimer.${style}.createMessage" args="${createMsgArgs}"/>
             </g:if>
             <g:else>
                 <g:message code="submission.disclaimer.default.createMessage"/>
@@ -60,6 +76,9 @@
                 </div>
             </div>
         </g:form>
+        <div id="dialog" title="SBML creator sample" hidden>
+            <p><g:message code="submission.disclaimer.biomodels.guidelines.sbmlexample"/></p>
+        </div>
     </body>
     <g:render template="/templates/decorateSubmission" />
     <g:render template="/templates/subFlowContextHelp" />

@@ -27,19 +27,13 @@ import org.apache.camel.ShutdownRunningTask
 import org.apache.camel.builder.RouteBuilder
 
 class IndexingRoute extends RouteBuilder {
-    final String DEBUG_CFG =
-            "-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=6005"
-    final boolean inDevelopment = Environment.isDevelopmentMode()
     final String JAR_ARGS = '-jar ${body[jarPath]} ${body[jsonPath]}'
-    final String CLI_ARGS = inDevelopment ?
-            new StringBuilder(DEBUG_CFG).append(' ').append(JAR_ARGS).toString() :
-            JAR_ARGS
 
     @Override
     void configure() {
         from("seda:exec?concurrentConsumers=15")
         .shutdownRunningTask(ShutdownRunningTask.CompleteAllTasks)
-        .setHeader("CamelExecCommandArgs", simple(CLI_ARGS))
+        .setHeader("CamelExecCommandArgs", simple(JAR_ARGS))
         .to("exec:java")
         .process(new Processor() {
             void process(Exchange exchange) {

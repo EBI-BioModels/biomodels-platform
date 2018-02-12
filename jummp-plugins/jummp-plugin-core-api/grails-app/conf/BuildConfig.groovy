@@ -71,7 +71,7 @@ grails.project.dependency.resolution = {
     }
     dependencies {
         compile("eu.ddmore.pharmml:libPharmML:0.4-beta-b3")
-        compile("net.biomodels.jummp:AnnotationStore:0.3.1-SNAPSHOT")
+        compile("net.biomodels.jummp:AnnotationStore:0.3.2-SNAPSHOT")
         compile ("eu.ddmore.metadata:lib-metadata:1.5.2-SNAPSHOT") {
             excludes 'spring-context','spring-core','spring-test', 'jena'
         }
@@ -84,7 +84,7 @@ grails.project.dependency.resolution = {
     }
     plugins {
         build ":tomcat:7.0.55.3"
-        compile ":perf4j:0.2"
+        compile ":perf4j:0.2.1"
         runtime ":hibernate4:4.3.10"
     }
 }

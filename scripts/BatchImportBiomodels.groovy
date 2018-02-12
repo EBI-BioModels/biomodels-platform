@@ -18,21 +18,24 @@
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
  **/
 
+
 import grails.converters.JSON
 import groovy.sql.Sql
-import groovyx.gpars.GParsPool
-import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.locks.ReentrantLock
-import java.util.regex.Pattern
 import net.biomodels.jummp.core.model.ModelState
 import net.biomodels.jummp.core.model.ValidationState
+import net.biomodels.jummp.model.Flag
 import org.springframework.orm.hibernate4.SessionHolder
 import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.transaction.support.TransactionSynchronizationManager
+
+import org.apache.commons.io.IOUtils
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.locks.ReentrantLock
+import java.util.regex.Pattern
 
 includeTargets << grailsScript("_GrailsArgParsing")
 includeTargets << grailsScript("_GrailsBootstrap")
@@ -67,6 +70,14 @@ String password
  * The target directory containing all the models we wish to import.
  */
 File modelFolder
+/**
+ * The directory containing all additional files provided by the submitter
+ */
+File additionalFilesFolder
+/**
+ * The map containing the additional files records fetched from BioModels database
+ */
+def additionalFilesMap
 /**
  * The directory where all models are stored.
  */
@@ -159,7 +170,7 @@ LinkedBlockingQueue insertedRevisions = new LinkedBlockingQueue()
 /**
  * The branches of BioModels where we look for model information.
  */
-def bioModelsBranches = ["publ", "uncura_publ"]//, "anno", "uncura_anno", "cura", "auto_gen_models"]
+def bioModelsBranches = ["publ", "uncura_publ", "pdgsm_models"]//, "anno", "uncura_anno", "cura", "auto_gen_models"]
 
 /*
  * Domain classes that will be needed in multiple closures, declared globally,
@@ -170,6 +181,7 @@ def Role
 def UserRole
 def Person
 def AclSid
+def ftc
 def rftc
 def mftc
 def rtc
@@ -180,7 +192,6 @@ def ptc
 def personTC
 def mf
 def decorator
-def domainAdapter
 def Model
 def Revision
 
@@ -191,6 +202,7 @@ def ResourceReference
 def Qualifier
 def Statement
 def ElementAnnotation
+def RevisionAnnotation
 def ModelElementType
 def PublicationLinkProvider
 def LinkType
@@ -206,10 +218,12 @@ def sessionFactory
 def pubMedService
 def publicationService
 def modelService
+def modelFlagService
 def modelFileFormatService
 def userService
 def springSecurityService
 def aclUtilService
+def camelContext
 
 /**
  * Expected contents of a typical folder for literature-based models
@@ -245,8 +259,37 @@ final String AUTO_GEN = "auto_gen_models"
 final String PUBL = 'publ'
 final String UNCURA_PUBL = 'uncura_publ'
 
-def filename
-def modelpublication
+// mapping the models encoded in non SBML format or
+// extended SBML (i.e. used comp package - SBML level 3, version 1)
+def nonStandardSBMLModels = [
+                    "MODEL1505050000": ["Model_Code_Final.nb":"Main file",
+                                        "README.rtf":"Readme file",
+                                        "Data_supplementary.xlsx":"Supplementary data",
+                                        "Data.xlsx":"Supplementary data",
+                                        "10000parameter.csv":"Simulation data 1",
+                                        "1506parameter.csv":"Simulation data 2"],
+                    "MODEL1505130000": ["paper_figs_Jalil_Sacktor_Shouval_supplemental_new.m":"Main file"],
+                    "MODEL1505130001": ["paper_figs_Jalil_Sacktor_Shouval.m":"Main file"],
+                    "MODEL1603310000": ["Palsson2013.m":"Main file"],
+                    "MODEL1604260000": ["vacSim-ori.m":"Main file",
+                                        "data.mat":"Data file in Matlab",
+                                        "comment":"Notes -- comments",
+                                        "vacSim.m":"Main file -- out of updated"],
+                    "MODEL1604270000": ["Zhu2015_basic_ADAPT5.txt":"Main file"],
+                    "MODEL1604270001": ["Zhu2015_mechanistic_ADAPT5.txt":"Supplementary file"],
+                    "MODEL1604270002": ["Palmer2014_notebook.nb":"Main file"],
+                    "MODEL1604270003": ["sharan2014_ADAPT5.txt":"Main file",
+                                        "sharan2014_Berkeley.txt":"Main file"],
+                    "MODEL1604270004": ["odm_CaBone_v1_2011_04_April.zip":"Main file"],
+                    "MODEL1612120000": ["MODEL1612120000_Purified_HFSC_Equilibrium___main.xml":"Main file",
+                                        "MODEL1612120000_Purified_HFSC_Equilibrium__flux.xml":"Containing flux",
+                                        "MODEL1612120000_Purified_HFSC_Equilibrium__environment.xml":"Containing environment",
+                                        "MODEL1612120000_CellML.xml":"CellML file",
+                                        "MODEL1612120000_antimony.txt":"Antimony file"]]
+def NON_SBML_MODEL_FOLDER
+def bigModelsIgnored = []
+boolean excludeBigModels = true
+TreeSet<String> modelsImported = []
 /**
  * Returns a User corresponding to the submitter of the model in BioModels.
  */
@@ -265,7 +308,8 @@ getUserFromBiomodelsId = { bmPersonId ->
             institution: personDetails.organisation)
     def userCreated = User.newInstance(person: person,
             username: getUsername(personDetails), password: "autocreated",
-            email: personDetails.email)
+            email: personDetails.email, accountLocked: false, accountExpired: false,
+            passwordExpired: false, enabled: true)
     if (!userCreated.validate()) {
         error("Cannot create account for submitter $bmPersonId: ${userCreated.errors.allErrors}")
     }
@@ -316,15 +360,17 @@ getDetailsForLoggedInUser = { ->
  * Extracts the curation notes corresponding to the model from BioModels that we are importing.
  */
 setCurationNotes = { modelSubmitted ->
-    String modelId = modelSubmitted.submissionId
+    String submissionId = modelSubmitted.submissionId
+    String publicationId = modelSubmitted.publicationId
+    String perennialId = publicationId ?: submissionId
     def row = biomodelsConnection.firstRow("""\
-SELECT * FROM simulations WHERE model_id = :mid """, [mid: modelId])
+SELECT * FROM simulations WHERE curation_id = :sid OR model_id = :pid """, [sid: submissionId, pid: publicationId])
     if (row) {
         def submitterId = row.submitter_id
-        def modifierId = row.modifier_id
-        def submitter = getUserFromBiomodelsId(submitter_id)
+        def modifierId = row.last_modifier_id
+        def submitter = getUserFromBiomodelsId(submitterId)
         if (!submitter) {
-            addModelError(modelId,
+            addModelError(perennialId,
                     "Could not find submitter with id: $submitterId, curation notes not imported")
             return
         }
@@ -334,10 +380,19 @@ SELECT * FROM simulations WHERE model_id = :mid """, [mid: modelId])
         } else {
             modifier = getUserFromBiomodelsId(modifierId)
             if (!modifier) {
-                 addModelError(modelId,
+                 addModelError(perennialId,
                         "Could not find modifier with id: $modifierId, curation notes not imported")
                  return
              }
+        }
+
+        def curationImg
+        File img
+        try {
+            img = new File(simulationFolder, row.file_name)
+            curationImg = img.getBytes()
+        } catch(Exception e) {
+            addModelError perennialId, "Error retrieving the simulation result file $img: $e"
         }
 
         def notes = CurationNotes.newInstance(
@@ -347,8 +402,12 @@ SELECT * FROM simulations WHERE model_id = :mid """, [mid: modelId])
                 dateAdded: row.submission_date,
                 lastModified: row.last_modification_date,
                 comment: row.comments,
-                curationImage: new File(simulationFolder, row.file_name).getBytes())
-        notes.save()
+                curationImage: curationImg)
+        if (!notes.save(flush: true)) {
+            addModelError(perennialId, "Cannot persist curation note because of ${notes.errors.allErrors}")
+        }
+     } else {
+        addModelMsg perennialId, "No simulation result found!"
      }
 }
 
@@ -376,6 +435,7 @@ target(bootstrapJummp: 'Creates a fully-initialised JUMMP environment loaded wit
 
     // bootstrap code and plugins' doWithSpring closure not executed, call relevant parts manually
     populatePublicationLinkProviders()
+    populateModelFlagTypes()
     registerFormatHandlers()
     fixValidationForExternalDomainClasses()
 }
@@ -508,6 +568,7 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
     plptc = loadClass("net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand")
     ptc = loadClass("net.biomodels.jummp.core.model.PublicationTransportCommand")
     personTC = loadClass("net.biomodels.jummp.plugins.security.PersonTransportCommand")
+    ftc = loadClass("net.biomodels.jummp.core.model.FlagTransportCommand")
 
     // submission-related domain classes
     Person = loadClass("net.biomodels.jummp.plugins.security.Person")
@@ -529,26 +590,30 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
     ResourceReference = loadClass("net.biomodels.jummp.annotationstore.ResourceReference")
     Statement = loadClass("net.biomodels.jummp.annotationstore.Statement")
     ElementAnnotation = loadClass("net.biomodels.jummp.annotationstore.ElementAnnotation")
+    RevisionAnnotation = loadClass("net.biomodels.jummp.annotationstore.RevisionAnnotation")
     Qualifier = loadClass("net.biomodels.jummp.annotationstore.Qualifier")
     ModelElementType = loadClass("net.biomodels.jummp.model.ModelElementType")
     // BioModels-specific domain classes
     CurationNotes = loadClass("net.biomodels.jummp.deployment.biomodels.CurationNotes")
     ModelOfTheMonth = loadClass("net.biomodels.jummp.deployment.biomodels.ModelOfTheMonth")
 
-    // DomainClass -> TransportCommand converter
-    domainAdapter = loadClass("net.biomodels.jummp.core.adapters.DomainAdapter")
-
     // inject applicationContext in POGOs that expect it
     decorator.context = appCtx
     rtc.context = appCtx
-    sessionFactory = appCtx.sessionFactory
-    modelService = appCtx.modelService
-    publicationService = appCtx.publicationService
-    pubMedService = appCtx.pubMedService
-    modelFileFormatService = appCtx.modelFileFormatService
-    userService = appCtx.userService
-    springSecurityService = appCtx.springSecurityService
-    aclUtilService = appCtx.aclUtilService
+
+    // obtain references to singleton services
+    sessionFactory          = appCtx.sessionFactory
+    modelService            = appCtx.modelService
+    modelFlagService        = appCtx.modelFlagService
+    publicationService      = appCtx.publicationService
+    pubMedService           = appCtx.pubMedService
+    modelFileFormatService  = appCtx.modelFileFormatService
+    userService             = appCtx.userService
+    springSecurityService   = appCtx.springSecurityService
+    aclUtilService          = appCtx.aclUtilService
+    camelContext            = appCtx.camelContext
+    // wait for the indexing jobs to complete before stopping Camel
+    camelContext.shutdownStrategy.setTimeout(Long.MAX_VALUE)
 }
 
 // keep track of the number of models that are processed
@@ -558,27 +623,33 @@ target(main: "Puts everything together to import models from a given folder") {
     bootstrapJummp()
 
     def modelFolderPattern = ~/(MODEL|BIOMD)\d{10}|BMID\d{12}/
-
+    /* fetch all the records of additional files once */
+    String query = "select model_id, name, description, mime_type, file, date_creation from additional_files"
+    additionalFilesMap = biomodelsConnection.rows(query)
+    modelsImported = Model.list().collect {
+      it.submissionId
+    }
     log("${new Date()} -- commencing batch import")
     long duration = System.currentTimeMillis()
-    // store table of model_id and publication_id externally for updating model publication later
-    filename = "modelpublication.csv"
-    String logFolderPath = "logs"
-    File logFolder = new File(logFolderPath)
-    File parentFolder
-    if (logFolder.exists()) {
-        parentFolder = logFolder
-    } else {
-        parentFolder = new File("${System.properties['java.io.tmpdir']}")
-    }
-    modelpublication = new File(parentFolder, filename)
-    if (modelpublication.exists()) {
-        modelpublication.text = ""
-    }
     /* run batch importer sequentially */
     for (File f: modelFolder.listFiles()) {
-        if (f.isDirectory() && f.name ==~ modelFolderPattern) {
+        boolean tobeProcessed
+        if (excludeBigModels) {
+            boolean isBigModel = !bigModelsIgnored?.isEmpty() && bigModelsIgnored.contains(f.name)
+            if (isBigModel) {
+                tobeProcessed = false
+            }
+        } else {
+            // process the model folder regardless of its size
+            tobeProcessed = true
+        }
+
+        boolean existed = modelsImported.contains(f.name)
+        if (f.isDirectory() && f.name ==~ modelFolderPattern && tobeProcessed && !existed) {
             processModelFolder f
+        }
+        if (existed) {
+            addModelError(f.name, "The model was already imported!")
         }
     }
 
@@ -605,6 +676,22 @@ target(main: "Puts everything together to import models from a given folder") {
         }
     }
     */
+
+    // import MoM entries if they have not been imported
+    processModelOfTheMonth()
+
+    // wait for pending indexing jobs to complete before stopping
+    def indexRequestDispatcher = camelContext.routes.find {
+        // we use seda:exec to invoke the indexer
+        it.consumer.endpoint.endpointKey.startsWith("seda://exec")
+    }.consumer
+
+    int pendingIndexingJobs = indexRequestDispatcher.pendingExchangesSize
+    while (pendingIndexingJobs > 0) {
+        log("Waiting for ${pendingIndexingJobs} models to be indexed...")
+        Thread.sleep(30000)
+        pendingIndexingJobs = indexRequestDispatcher.pendingExchangesSize
+    }
 
     duration = (System.currentTimeMillis() - duration) / 1000 /* duration in ms */
     String formattedDuration = prettify(duration)
@@ -647,11 +734,18 @@ processModelFolder = { File folder ->
     processedCount.incrementAndGet()
     // check symlink
     boolean haveSymlink = haveSymlinkToUrlFile folder, MODEL_ID
-    if (!haveSymlink) {
+    if (!haveSymlink && BRANCH != "pdgsm_models") {
         addModelError MODEL_ID, "${folder} does not contain a symbolic link to the URL file"
     }
     // separate original file from the rest of the folder contents
-    def originalFile = findOriginalFile(folder, MODEL_ID)
+    def originalFile
+    boolean isNonSBMLModel = nonStandardSBMLModels.containsKey(MODEL_ID)
+    if (isNonSBMLModel) {
+        folder = new File(NON_SBML_MODEL_FOLDER, MODEL_ID)
+        originalFile = new File("$NON_SBML_MODEL_FOLDER/$MODEL_ID", nonStandardSBMLModels.get(MODEL_ID).keySet()[0])
+    } else {
+        originalFile = findOriginalFile(folder, MODEL_ID)
+    }
     if (!originalFile) {
         addModelError(MODEL_ID, "Original submission file not found")
         failureCount.incrementAndGet()
@@ -683,30 +777,44 @@ processModelFolder = { File folder ->
             return
         }
         authenticateAsUser(submitter)
-        // submit first revision as *.origin
+        // submit first revision as *.origin or the non SBML models as the original files
         def submittedModel = submitOriginalFile(BRANCH, MODEL_ID, originalFile, modelDetails)
         if (!submittedModel) {
             addModelError(MODEL_ID, "Error importing original file")
             failureCount.incrementAndGet()
             return
         }
-        // submit second revision as * without original file
-        def revision = addRevision(MODEL_ID, folder, submittedModel)
-        if (!revision || revision?.hasErrors()) {
-            def err = revision?.errors?.allErrors
-            addModelError(MODEL_ID, "Could not update original submission: $err")
-            failureCount.incrementAndGet()
-            return
+        if (isNonSBMLModel) {
+            annotateModellingApproaches(submittedModel.revisions.first(), BRANCH, modelDetails, submitter)
+        } else {
+            // submit second revision as * without original file
+            def revision = addRevision(BRANCH, MODEL_ID, folder, submittedModel)
+            if (!revision || revision?.hasErrors()) {
+                def err = revision?.errors?.allErrors
+                addModelError(MODEL_ID, "Could not update original submission: $err")
+                failureCount.incrementAndGet()
+                return
+            }
+
+            // we cleared the session before adding the second revision
+            // submittedModel is now stale -- it still thinks there's only 1 revision
+            // need to manually update
+            submittedModel = revision.model
+            addRevisionAnnotations(revision, BRANCH, modelDetails, submitter)
+            annotateModellingApproaches(revision, BRANCH, modelDetails, submitter)
         }
-        addRevisionAnnotations(revision, BRANCH, modelDetails, submitter)
-        def revisions = [submittedModel.revisions[0], revision]
+        // persist model flags
+        persistModelFlags(modelDetails, submittedModel)
+        def revisions = submittedModel.revisions
         revisions.each { r ->
-            publishModelRevision(MODEL_ID, r)
+            try {
+                publishModelRevision(MODEL_ID, r)
+            } finally {
+                insertedRevisions.offer(r.id)
+            }
         }
-        submittedModel.revisions.each { r ->
-            insertedRevisions.offer(r.id)
-        }
-        modelpublication << "$submittedModel.id, $MODEL_ID, $submittedModel.publication.id\n"
+	// append the model submission id to the imported models
+	modelsImported.add(MODEL_ID)
     } catch (Throwable t) {
         addModelError(MODEL_ID, "Something went wrong with ${MODEL_ID} - ${t}")
         t.printStackTrace()
@@ -731,12 +839,50 @@ submitOriginalFile = { branch, modelId, originalFile, infoMap ->
         def msg = "Cannot submit original version of $modelId -- missing security context"
         throw new IllegalStateException(msg.toString())
     }
-    def originInfo = getSubmissionData(originalFile, [], ORIG_COMMENT_TPL)
+    def additionals = []
+    if (nonStandardSBMLModels.containsKey(modelId)) {
+        additionals = getAdditionalFilesForNonSBMLModel(modelId)
+    }
+    def originInfo = getSubmissionData(modelId, originalFile, additionals, ORIG_COMMENT_TPL)
     def files = getFilesFromSubmissionData originInfo
+
+    // Add the originally additional files provided by submitter
+    def originalAdditionalFiles = additionalFilesFolder.listFiles().find {
+        it.name == modelId
+    }
+
+    def theseFilesFetchedFromDB = additionalFilesMap.findAll {
+        it['model_id'] == modelId
+    }
+
+    if (originalAdditionalFiles && theseFilesFetchedFromDB) {
+        def parentFolder = new File(additionalFilesFolder, modelId)
+        if (parentFolder) {
+            parentFolder.listFiles().each {
+                String fileName = it.name
+                if (fileName != "index.html") {
+                    String description = "The originally additional file provided by the submitter"
+                    String mimeType = "Unknown"
+                    def theFile = theseFilesFetchedFromDB.find {
+                        it['file'] == fileName
+                    }
+                    if (theFile) {
+                        description = theFile['description']
+                        mimeType = theFile['mime_type']
+                    }
+                    files.push(rftc.newInstance(path: it.absolutePath,
+                        description: description, mimeType: mimeType,
+                        mainFile: false, userSubmitted: true, hidden: false))
+                }
+            }
+        }
+    }
+
     def revisionCmd = originInfo.get("revision")
+    revisionCmd.name = infoMap['name']
     def model = modelService.uploadValidatedModel(files, revisionCmd)
     if (model?.hasErrors()) {
-        def e = m?.errors?.allErrors
+        def e = model?.errors?.allErrors
         addModelError modelId, "Submission of original file with $infoMap failed -- ${e}"
         return null
     }
@@ -758,8 +904,7 @@ submitOriginalFile = { branch, modelId, originalFile, infoMap ->
     }
     model.revisions[0].uploadDate = uploadDate
 
-    if (AUTO_GEN != branch) {
-        processModelOfTheMonth(model)
+    if (inPublBranch) {
         setCurationNotes(model)
     }
 
@@ -780,16 +925,20 @@ isNotCuratedAndPublished = { branch ->
     UNCURA_PUBL == branch
 }
 
-addRevision = { modelId, parent, model ->
+addRevision = { branch, modelId, parent, model ->
     if (!model.validate()) {
         def err = model.errors.allErrors
         addModelError(modelId, "Refusing to update invalid model $modelId: $err")
         return null
     }
-    def revisionInfo = prepareRevision(modelId, parent, model)
+    def revisionInfo = prepareRevision(branch, modelId, parent, model)
     def revision
     try {
+        // clear current persistence context -- it will be stale after adding second revision
+        Revision.withSession { s -> s.clear() }
         revision = modelService.addValidatedRevision(revisionInfo.files, [], revisionInfo.revision)
+        model = Model.get(revision.model.id)
+
         addModelMsg modelId, "Added revision $revision"
     } catch(Exception e) {
         addModelError(modelId, "Exception thrown while updating original submission: $e")
@@ -800,19 +949,20 @@ addRevision = { modelId, parent, model ->
 addRevisionAnnotations = { revision, branch, modelDetails, user ->
     boolean inPubl = isCuratedAndPublished(branch)
     String author = user.person.userRealName
-    createBMAnnotation(revision, inPubl, 'curated', author)
-    String jws = modelDetails['jwsLink']
-    if (jws) {
-        createBMAnnotation(revision, jws, 'onlineSimulation', author)
-    }
+    //createBMAnnotation(revision, inPubl, 'curated', "biomodelsCustomAnnotation", "", author)
     def publicationId = getPublicationIdFromModelDetails(modelDetails)
     def publicationType = getPublicationTypeFromModelDetails(modelDetails)
     boolean havePublication = null != publicationId && null != publicationType
     if (havePublication) {
         addPublicationDetails(revision.model, publicationId, publicationType)
-        String publicationURI = getPublicationLink(publicationId, publicationType)
-        createBMAnnotation(revision, publicationURI, "originalModel", author)
     }
+    String original_model = modelDetails['original_model']
+    if (original_model) {
+        createBMAnnotation(revision, original_model, "source",
+            "http://purl.org/dc/elements/1.1/",
+            "http://purl.org/dc/elements/1.1/", author)
+    }
+
     def lastModified = modelDetails['lastModified']
     revision.uploadDate = lastModified
     revision.save()
@@ -828,7 +978,6 @@ addPublicationDetails = { model, accession, type ->
         def publicationCmd = pubMedService.fetchPublicationData accession
         if (!publicationCmdHasRequiredFields(publicationCmd)) {
             // The publication does not exist in PubMed Central
-            addModelMsg id, "Attempting to manually populate details for $accession"
             fetchMissingPaperDetailsFromBioModels(id, publicationCmd, accession, type)
             publication = publicationService.fromCommandObject publicationCmd
         } else {
@@ -839,12 +988,14 @@ addPublicationDetails = { model, accession, type ->
                 title: publicationCmd.title,
                 journal: publicationCmd.journal,
                 affiliation: publicationCmd.affiliation,
-                synopsis: publicationCmd.synopsis
+                synopsis: publicationCmd.synopsis,
+                month: publicationCmd.month,
+                year: publicationCmd.year,
+                volume: publicationCmd.volume,
+                issue: publicationCmd.issue,
+                pages: publicationCmd.pages
             )
-            if (publication.id) {
-                addModelMsg id, "Publication $accession exists in database"
-            } else {
-                addModelMsg id, "Publication $accession will be saved in the database in this transaction."
+            if (!publication.id) {
                 if (!publication.validate()) {
                     def e = publication.errors.allErrors
                     addModelError id, "Couldn't attach publication $accession: $e"
@@ -858,7 +1009,11 @@ addPublicationDetails = { model, accession, type ->
                             p = Person.findByOrcid(orcid)
                         }
                         if (!p) {
-                            person.save(flush: true)
+                            if (!person.save(flush: true)) {
+                                addModelError id, """\
+Cannot save author #$i ${person.userRealName} for publication $accession: ${person.errors.allErrors}"""
+                                return // don't try to associate them with the publication
+                            }
                         } else {
                             person = p
                         }
@@ -867,7 +1022,6 @@ addPublicationDetails = { model, accession, type ->
                 }
             }
         }
-        addModelMsg id, "The publication with accession $accession now has id <<${publication.id}>>"
         model.publication = publication
         if (model.save()) {
             addModelMsg id, "Successfully added publication $accession"
@@ -892,12 +1046,13 @@ publicationCmdHasRequiredFields = { publicationCmd ->
  */
 fetchMissingPaperDetailsFromBioModels = { modelId, partialPublication, accession, type ->
     def paperDetails = biomodelsConnection.firstRow """\
-select title, journal_name as journal, affiliation, abstract as synopsis, year, authors
+select title, journal_name, journal, affiliation, abstract as synopsis, year, authors
 from publications
 where id_type = ? and publication_id = ?""", [type, accession]
 
+    partialPublication.journal = paperDetails.journal ?: paperDetails.journal_name
     partialPublication.year = paperDetails.year
-    ['title', 'journal', 'affiliation', 'synopsis'].each { String f ->
+    ['title', 'affiliation', 'synopsis'].each { String f ->
         String value = paperDetails."$f"
         try {
             setPublicationAttribute(modelId, partialPublication, f, value)
@@ -908,11 +1063,12 @@ where id_type = ? and publication_id = ?""", [type, accession]
 
     if (paperDetails.authors) {
         def strAuthors = paperDetails.authors
-        def splitStrAuthors = strAuthors.split(", ")
+        def splitStrAuthors = strAuthors.split(",")
         List listPersonTCs = []
-        splitStrAuthors.eachWithIndex { userRealName ->
-            def person = personTC.newInstance(userRealName: userRealName)
-	    listPersonTCs << person
+        splitStrAuthors.each { userRealName ->
+            String trimmedAuthorName = userRealName.trim()
+            def person = personTC.newInstance(userRealName: trimmedAuthorName)
+            listPersonTCs << person
         }
         partialPublication.authors =  listPersonTCs
     }
@@ -934,10 +1090,10 @@ findLinkTypeProvider = {type ->
     switch(type) {
         case 1:
             provider = PublicationLinkProvider.findByLinkType(LinkType.DOI)
-		    break
+            break
         case 2:
             provider = PublicationLinkProvider.findByLinkType(LinkType.CUSTOM)
-		    break
+            break
         default:
             String m = "Publication $accession ($modelId) has unsupported type $type"
             throw new IllegalStateException(m)
@@ -947,7 +1103,7 @@ findLinkTypeProvider = {type ->
 
 setPublicationAttribute = { modelId, publicationCmd, field, value ->
     if (!publicationCmd."$field") {
-        publicationCmd."$field" = value ?: ""
+        publicationCmd."$field" = value ?: null
         addModelMsg modelId, "set publication field $field to ${publicationCmd."$field"}"
     }
 }
@@ -964,6 +1120,25 @@ getUrlFileForModel = { folder, id ->
     new File(folder, "$id$URL_FILE")
 }
 
+getMainFileForPDGSMModel = { folder, id ->
+    new File(folder, "$id$DOT_XML")
+}
+
+getAdditionalFilesForNonSBMLModel = { modelId ->
+    File model = new File(NON_SBML_MODEL_FOLDER, modelId)
+    model.listFiles().findAll {File file ->
+        boolean isMainFile = file.name == nonStandardSBMLModels.get(modelId).keySet()[0]
+        boolean isIndexFile = file.name == "index.html"
+        boolean isAddFile = !isMainFile && !isIndexFile
+        println "${file.name} -- ${isAddFile}"
+        isAddFile
+    }
+}
+
+getMainFileNameForNonSBMLModel = {modelId ->
+    def extraFiles = nonStandardSBMLModels.get(modelId)
+    extraFiles.keySet()[0]
+}
 /**
  * Returns whether a model in uncura_publ is a duplicate of a record in publ.
  *
@@ -1016,11 +1191,17 @@ findOriginalFile = { folder, id ->
     origin.exists() ? origin : null
 }
 
+
 // called after we ensured the original file is present in the folder
-findNewestRevisionFiles = { parent, id ->
+findNewestRevisionFiles = { branch, parent, id ->
     assert parent.exists()
     def result = [:]
-    def mainFile = getUrlFileForModel(parent, id)
+    def mainFile
+    if (branch == "pdgsm_models") {
+        mainFile = getMainFileForPDGSMModel(parent, id)
+    } else {
+        mainFile = getUrlFileForModel(parent, id)
+    }
     def originalFile = getOriginalFileForModel(parent, id)
     def symlinkFile = getSymlinkFileForModel(parent, id)
     assert mainFile.exists()
@@ -1032,13 +1213,14 @@ findNewestRevisionFiles = { parent, id ->
     result
 }
 
-prepareRevision = { modelId, parent, model ->
+prepareRevision = { branch, modelId, parent, model ->
     assert !(model.hasErrors())
-    def fileMap = findNewestRevisionFiles(parent, modelId)
+    def fileMap = findNewestRevisionFiles(branch, parent, modelId)
     def main = fileMap['mainFile']
     def additionals = fileMap['additionals']
-    def revisionData = getSubmissionData(main, additionals, UPDATE_COMMENT_TPL)
+    def revisionData = getSubmissionData(modelId, main, additionals, UPDATE_COMMENT_TPL)
     def fileTCs = getFilesFromSubmissionData(revisionData)
+
     def revisionTC = revisionData.get("revision")
     def auth = getDetailsForLoggedInUser()
     String principal = auth.principal
@@ -1078,7 +1260,6 @@ target(closeDataSources: "Close any active database connections") {
 }
 
 target(closeCamel: "Shuts down the Camel instance, awaiting for current messages to be delivered") {
-    def camelContext = appCtx.camelContext
     duration = System.currentTimeMillis()
     camelContext.shutdown()
     duration = (System.currentTimeMillis() - duration) / 1000
@@ -1090,6 +1271,10 @@ target(sanitiseInput: "Processes user input") {
     parseArguments()
     def modelFolderParameter = argsMap.get("models")
     def credentialsParameter = argsMap.get("credentials")
+    def additionalFilesParameter = argsMap.get("additionals")
+    def nonSbmlModelsParameter = argsMap.get("nonsbmlmodels")
+    def bigModelsIdParameter = argsMap.get("bigmodelsid")
+    def excludeBMs = argsMap.get("exclude-big-models")
     File credentials
     if (argsMap.size() < 3 || !modelFolderParameter || !credentialsParameter ||
             argsMap.get("params")) {
@@ -1101,6 +1286,20 @@ batch-import --models=<model_folder_location> --credentials=<path_to_credentials
         error "There is no directory that I can access ${location.absolutePath}", 2
     }
     modelFolder = location.getCanonicalFile()
+
+    File additionalFilesLocation = new File(additionalFilesParameter)
+    additionalFilesFolder = additionalFilesLocation.getCanonicalFile()
+
+    NON_SBML_MODEL_FOLDER = nonSbmlModelsParameter
+
+    /* determine the flag if the importer excludes or includes the big models */
+    excludeBigModels = (excludeBMs == "Y") ? true : false
+    /* load big models to be ignored. In our case, a big model has equal or greater than 10MB */
+    File fileBigModels = new File(bigModelsIdParameter)
+    fileBigModels.readLines().each {
+        bigModelsIgnored << it.split()[1]
+    }
+
     location = new File(credentialsParameter)
     if (!location.exists() || !location.isFile()) {
         error "Did not find any credentials in ${location.absolutePath}", 4
@@ -1230,7 +1429,7 @@ log = { msg ->
  * RevisionTransportCommand corresponding to this submission. The map's keys
  * are 'files' and 'revision'.
  */
-getSubmissionData = { file, additional, comment ->
+getSubmissionData = { modelId, file, additional, comment ->
     def modelWrapper = rftc.newInstance(path: file.absolutePath, description: "",
             mainFile: true, userSubmitted: true, hidden: false)
     // infer model format
@@ -1238,6 +1437,8 @@ getSubmissionData = { file, additional, comment ->
     def format = mf.findByIdentifierAndFormatVersion(formatCommand.identifier,
             formatCommand.formatVersion)
     // get name and description
+    // if the model is non SBML, the original file will be submitted but getting name and
+    // description from the dummy SBML file
     final String MODEL_NAME = modelFileFormatService.extractName([file], format)?:
             new File(file.absolutePath).getName()
     modelWrapper.description = "${MODEL_NAME}"
@@ -1253,17 +1454,29 @@ getSubmissionData = { file, additional, comment ->
     def files = [modelWrapper]
     def fileTrack = []
     fileTrack.addAll(expectedFiles.keySet())
+    boolean isNonSBMLModel = nonStandardSBMLModels.containsKey(modelId)
+    if (isNonSBMLModel) {
+        modelWrapper.description = nonStandardSBMLModels.get(modelId).get(file.name)
+        additional.each { additionalFile ->
+            String path = additionalFile.absolutePath
+            String description = nonStandardSBMLModels.get(modelId).get(additionalFile.name)
+            boolean hidden = false
+            files.push(rftc.newInstance(path: path, description: description,
+                mainFile: false, userSubmitted: true, hidden: hidden))
+        }
+    } else
     additional.each { addFile ->
         def pattern = expectedFiles.keySet().find {testPattern ->
             Pattern.matches(testPattern, addFile.getName())
         }
         if (pattern) {
             fileTrack.remove(pattern)
-                String path = addFile.absolutePath
-                boolean hidden = false
-                if (pattern.contains("_manual")) {
-                    hidden = true
-                }
+            String path = addFile.absolutePath
+            boolean hidden = false
+            if (pattern.contains("_manual")) {
+                hidden = true
+            }
+
             files.push(rftc.newInstance(path: path, description: expectedFiles.get(pattern),
                 mainFile: false, userSubmitted: false, hidden: hidden))
         }
@@ -1475,13 +1688,20 @@ getSubmitterIdForModel = { String modelId, String branch ->
 }
 
 publishModelRevision = { modelId, revision ->
+    if (!revision) {
+        addModelError modelId, "Refusing to publish undefined revision"
+    }
     authenticate(username, password)
     try {
         aclUtilService.addPermission(revision, "ROLE_USER", BasePermission.READ)
         aclUtilService.addPermission(revision, "ROLE_ANONYMOUS", BasePermission.READ)
         revision.state = ModelState.PUBLISHED
-        assert revision.save()
-        addModelMsg modelId, "Successfully published $revision"
+        if (!revision.save()) {
+            def err = revision.errors.allErrors
+            addModelError modelId, "Failed to mark revision as published after adding ACLs -- $err"
+        } else {
+            addModelMsg modelId, "Successfully published $revision"
+        }
     } catch (Exception e) {
         addModelError(modelId, "Unable to publish revision ${revision.id} -- $e")
     } finally {
@@ -1496,7 +1716,7 @@ publishModelRevision = { modelId, revision ->
  * names for the model identifier.
  */
 getModelById = { modelId, branch ->
-    String idColumnName = 'auto_gen_models' == branch ? 'id' : 'model_id'
+    String idColumnName = (('auto_gen_models' == branch) || ('pdgsm_models') == branch) ? 'id' : 'model_id'
     biomodelsConnection.firstRow("select * from $branch where $idColumnName = ?", [modelId])
 }
 
@@ -1534,32 +1754,146 @@ populatePublicationLinkProviders = {
             pattern: "^(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]"))
 }
 
+addFlagType = { def cmd ->
+    def label = cmd.label
+    if (!Flag.findByLabel(label)) {
+        modelFlagService.saveFlag(cmd.label, cmd.description, cmd.icon)
+    }
+}
+// add model flag types such as Non Kinetic, Non Miriam, Sbml Extended
+populateModelFlagTypes = {
+    def iconFiles = ["http://www.ebi.ac.uk/biomodels//icons/nonkineticFlag.png",
+                     "http://www.ebi.ac.uk/biomodels//icons/nonMiriamFlag.png",
+                     "http://www.ebi.ac.uk/biomodels//icons/sbmlExtendedFlag.png"]
+    def icons = []
+    iconFiles.each {
+        def urlImage = new URL(it)
+        def InputStream is = new BufferedInputStream(urlImage.openStream())
+        byte[] bytes = IOUtils.toByteArray(is)
+        icons << bytes
+    }
+
+    addFlagType(ftc.newInstance(
+        label: "Non Kinetic",
+        description: "The model is not a kinetic model and cannot be instantiated in a dynamic simulation",
+        icon: icons[0]
+    ))
+
+    addFlagType(ftc.newInstance(
+        label: "Non Miriam",
+        description: "The model is not MIRIAM compliant",
+        icon: icons[1]
+    ))
+
+    addFlagType(ftc.newInstance(
+        label: "Sbml Extended",
+        description: "This model is a valid SBML model, but some important parts are encoded in the annotation of the model",
+        icon: icons[2]
+    ))
+}
+
+/**
+ * for non-curated models from biomodels take into account the following columns:
+ * non_kinetic, non_miriam, sbml_extended and create the respective flags for each imported model;
+ */
+persistModelFlags = {modelDetails, submittedModel ->
+    if (modelDetails['non_kinetic'] == "Y") {
+        def flag = Flag.findByLabel("Non Kinetic")
+        modelFlagService.flagModel(submittedModel, flag)
+    }
+    if (modelDetails['non_miriam'] == "Y") {
+        def flag = Flag.findByLabel("Non Miriam")
+        modelFlagService.flagModel(submittedModel, flag)
+    }
+    if (modelDetails['sbml_extended'] == "Y") {
+        def flag = Flag.findByLabel("Sbml Extended")
+        modelFlagService.flagModel(submittedModel, flag)
+    }
+}
+
+annotateModellingApproaches = { revision, branch, modelDetails, user ->
+    // add modelling approaches to model/revision, see JBM-68
+    def object = []
+    def qualifierAccession = "hasProperty"
+    def rrAccessions = [:]
+    String creator = user.person.userRealName
+
+    // Logical model
+    if (modelDetails['format_extensions'] == "qual") {
+        rrAccessions["MAMO_0000030"] = "Logical model"
+    }
+    // Ordinary differential equation (ODE) model
+    if (modelDetails['non_kinetic'] == "N") {
+        rrAccessions["MAMO_0000046"] = "Ordinary differential equation model"
+    }
+    // Petri-net model
+    if (modelDetails['model_id'] in ["MODEL1308080002", "MODEL1403040000", "MODEL1403120000"]) {
+        rrAccessions["MAMO_0000025"] = "Petri net"
+    }
+    // Constraint-based model
+    if (modelDetails['non_kinetic'] == "Y" && modelDetails['format_extensions'] == "fbc") {
+        rrAccessions["MAMO_0000009"] = "Constraint-based model"
+    }
+    rrAccessions.each { accession, name ->
+        object << accession
+        object << name
+        object << "http://identifiers.org/mamo/${accession}"
+        createBMAnnotation(revision, object, qualifierAccession,
+            "http://biomodels.net/biology-qualifiers/", "http://biomodels.net/biology-qualifiers/", creator)
+    }
+    if (rrAccessions) {
+        revision.save()
+    }
+}
+
 /**
  * Processes model of the month for a given model. The model of the month can
  * be comprised of several models, therefore the ModelOfTheMonth.models collection
  * is updated. The importer relies on an assumption that only one model of the month
  * can be published in a given month, which is valid given current data.
  */
-processModelOfTheMonth = { model ->
-    def modelId = model.publicationId ?: model.submissionId
+processModelOfTheMonth = {
     def dateFormatter = new java.text.SimpleDateFormat('yyyy-MM')
-    String query = "select * from model_of_month where models_id = ?"
-    biomodelsConnection.eachRow(query, [modelId]) { row ->
+    String query = "select * from model_of_month"
+    def momBMEntries = biomodelsConnection.rows(query)
+    momBMEntries.each { row ->
+        def model_ids = row.models_id
+        addModelMsg model_ids, "processing MoM row $row"
         def datePublished = dateFormatter.parse(row.pub_month)
+
         // see if there is an existing model of the month in the Jummp DB for
         // the given month
         def modelMonth = ModelOfTheMonth.findByPublicationDate(datePublished)
-        if (!modelMonth) { //import new model of the month
+        if (!modelMonth) { // import new model of the month
+            addModelMsg model_ids, "Adding MoM $datePublished"
             modelMonth = ModelOfTheMonth.newInstance(title: row.title,
-                    authors: row.authors, publicationDate: datePublished)
+                authors: row.authors, publicationDate: datePublished)
             modelMonth.save() // save once to set the last_updated, then modify it
-            modelMonth.lastUpdated=row.last_modification_date
+            modelMonth.lastUpdated = row.last_modification_date
+        } else {
+            addModelMsg model_ids, "exists in the database"
         }
-        modelMonth.addToModels(model)
-        modelMonth.save()
+
+        List modelIds = model_ids.split(",")
+        modelIds.each {modelId ->
+            modelId = modelId.trim()
+            addModelMsg modelId, "creating a record between MoM ${modelMonth.id} and the model ${modelId}"
+            def model = Model.findByPublicationId(modelId)
+
+            if (model) {
+                modelMonth.addToModels(model)
+                addModelMsg modelId, "added the model ${modelId} to the MoM entry ${modelMonth.id}"
+            } else {
+                addModelError modelId, """Cannot create an association of the model ${modelId}
+with MoM ${modelMonth.id}: ${modelMonth.title} (authors: ${modelMonth.authors})"""
+            }
+        }
+        if (!modelMonth.save(flush: true)) {
+            addModelError model_ids, "Failed to save MoM ${row.id}: ${modelMonth.errors.allErrors}"
+        }
+        addModelMsg model_ids, "...done processing MoM"
     }
 }
-
 
 /*
  * Gets the username associated with a person in the biomodels database. Used to
@@ -1583,24 +1917,75 @@ getBranch = { modelId ->
     }
 }
 
-createBMAnnotation = { revision, object, qual, creator ->
-    def resourceRef = ResourceReference.findByUriAndDatatype(object, "biomodelsCustomAnnotation")
+createBMAnnotation = { revision, object, qual, qualType, qualNamespace, creator ->
+    String id = revision?.model?.publicationId ?: revision?.model?.submissionId
+    if (revision.hasErrors() || !revision?.id) {
+        def anno = "$creator ${object.properties}"
+        if (id) {
+            def err = revision?.errors?.allErrors
+            addModelError id, "refusing to add custom BioModels annotation $anno: $err"
+        } else {
+            def r = revision.id
+            addModelError "UNKNOWN", "refusing to add custom annotation $anno for $r"
+        }
+        return
+    }
+    String dataType = "unknown"
+    String accession = ""
+    String name = ""
+    String uri = ""
+    if (object instanceof List<String>) {
+        dataType = "mamo"
+        accession = object[0]
+        name = object[1]
+        uri = object[2]
+    } else {
+        uri = object
+    }
+    def resourceRef = ResourceReference.findByUri(uri)
     if (!resourceRef) {
-        resourceRef = ResourceReference.newInstance(uri: object, datatype: "biomodelsCustomAnnotation")
-        resourceRef.save(failOnError: true)
+        if (dataType == "mamo") {
+            resourceRef = ResourceReference.newInstance(uri: uri, datatype: dataType,
+                accession: accession, collectionName: "Mathematical Modelling Ontology",
+                name: name)
+        } else {
+            resourceRef = ResourceReference.newInstance(uri: uri, datatype: dataType)
+        }
+        if (!resourceRef.save()) {
+            def errors = resourceRef.errors.allErrors
+            addModelError id, "Cannot save xref $object for $qualNamespace$qual: $errors"
+            return // don't try anything else
+        }
     }
-    def qualifier = Qualifier.findByQualifierTypeAndUri("biomodelsCustomAnnotation", qual)
-    if (!qualifier) {
-        qualifier = Qualifier.newInstance(qualifierType: "biomodelsCustomAnnotation",
-                                          uri: qual)
-        qualifier.save(failOnError:true)
+    def qualifier = Qualifier.findOrSaveWhere(qualifierType: qualType, namespace:
+        qualNamespace, uri: "${qualNamespace}${qual}", accession: qual)
+    if (qualifier.hasErrors()) {
+        addModelError id, "Cannot save qualifier $qualNamespace$qual: ${qualifier.errors.allErrors}"
+        return
     }
-    def statement = Statement.newInstance(subjectId: 'modelLevelAnnotation',
+    def statement = Statement.findOrCreateWhere(subjectId: 'modelLevelAnnotation',
             qualifier: qualifier, object: resourceRef)
     def modelElementType = ModelElementType.findByModelFormatAndName(revision.format, 'model')
-    def elementAnnotation = ElementAnnotation.newInstance(creatorId: creator,
-            statement: statement, revision: revision, modelElementType: modelElementType)
-    elementAnnotation.save(failOnError:true)
+    def elementAnnotation
+    // can only use findOrCreate with associations if the associated object is already saved
+    if (statement.id) {
+        elementAnnotation = ElementAnnotation.findOrCreateByCreatorIdAndStatementAndModelElementType(
+                creator, statement, modelElementType)
+    } else {
+        elementAnnotation = ElementAnnotation.newInstance(
+                modelElementType: modelElementType, creatorId: creator, statement: statement)
+    }
+    if (!elementAnnotation.save(flush: true) || elementAnnotation.hasErrors()) { // need to flush in order to obtain an ID
+        def errorMsg = """
+Failed to save annotation associated with the model element type ${elementAnnotation.modelElementType},
+creator: ${elementAnnotation.creatorId} and the statement ${elementAnnotation.statement}:
+${elementAnnotation.errors.allErrors}"""
+        addModelError id, errorMsg
+        error errorMsg
+        return // don't try to create a RevisionAnnotation for a transient elementAnnotation
+    }
+
+    RevisionAnnotation.create(revision, elementAnnotation)
 }
 
 getPublicationLink = { publication_id, publication_id_type ->
@@ -1621,11 +2006,16 @@ getModelDetails = { modelId, modelBranch ->
     def modelDetails = [:]
     try {
         def row = getModelById(modelId, modelBranch)
+        modelDetails['name'] = row.name
         modelDetails['submissionDate'] = row.submission_date
         modelDetails['lastModified'] = row.last_modification_date
-        modelDetails['publicationDate'] = row.publication_date
+        if (modelBranch == "pdgsm_models") {
+            modelDetails['publicationDate'] = row.publication_date
+        } else {
+            modelDetails['publicationDate'] = row.creation_date
+        }
         modelDetails['originalModel'] = row.original_model
-        if ("auto_gen_models" == modelBranch) {
+        if ("auto_gen_models" == modelBranch || "pdgsm_models" == modelBranch) {
             modelDetails['model_id'] = row.id
         } else {
             if ("publ" == modelBranch || "anno" == modelBranch) {
@@ -1640,9 +2030,20 @@ getModelDetails = { modelId, modelBranch ->
             } else {
                 modelDetails['model_id'] = row.model_id
             }
+            if ("uncura_publ" == modelBranch || "uncura_anno" == modelBranch) {
+                modelDetails['non_kinetic'] = row.non_kinetic
+                modelDetails['non_miriam'] = row.non_miriam
+                modelDetails['sbml_extended'] = row.sbml_extended
+            }
         }
+        modelDetails['format_extensions'] = row.format_extensions
+        modelDetails['original_model'] = row.original_model
         modelDetails['publication_id'] = row.publication_id
         modelDetails['publication_id_type'] = row.publication_id_type
+        if (modelBranch == "pdgsm_models") {
+            modelDetails['publication_id'] = "28818916"
+            modelDetails['publication_id_type'] = 0
+        }
     } catch(Exception e) {
         addModelError modelId, "Problem finding model details in branch $modelBranch: $e"
         return null

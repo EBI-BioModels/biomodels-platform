@@ -31,17 +31,21 @@
 package net.biomodels.jummp.webapp
 
 import grails.converters.JSON
+import grails.plugin.springsecurity.annotation.Secured
 import grails.plugin.springsecurity.authentication.GrailsAnonymousAuthenticationToken
-import net.biomodels.jummp.core.adapters.DomainAdapter
+import groovy.json.JsonBuilder
+import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.model.ModelListSorting
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
-import grails.plugin.springsecurity.annotation.Secured
-import net.biomodels.jummp.webapp.rest.search.SearchResults
-import net.biomodels.jummp.webapp.rest.search.BrowseResults
 import net.biomodels.jummp.plugins.security.User
+import net.biomodels.jummp.search.OrderedFacet
 import net.biomodels.jummp.search.SearchResponse
+import net.biomodels.jummp.search.SortOrder
+import net.biomodels.jummp.webapp.rest.search.BrowseResults
+import net.biomodels.jummp.webapp.rest.search.SearchResults
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Facet
+import uk.ac.ebi.ddi.ebe.ws.dao.model.common.FacetValue
 
 @Secured(['IS_AUTHENTICATED_FULLY'])
 class SearchController {
@@ -57,13 +61,15 @@ class SearchController {
      * Dependency injection of modelService.
      **/
     def modelService
+
+    def modelDelegateService
     /**
      * Dependency injection of modelHistoryService.
     **/
     def modelHistoryService
 
     def index = {
-        redirect action: 'list'
+        redirect action: 'search'
     }
 
     private boolean integerCheck(def input, boolean minValueCheck=false, int minValue=-1) {
@@ -83,26 +89,13 @@ class SearchController {
     }
 
     private void sanitiseParams() {
-        if (!params.sortBy) {
-            params.sortBy="modified"
-        }
-        if (!params.sortDir || params.sortDir!="asc") {
-            params.sortDir="desc"
-        }
-        if (params.sortBy) {
-            switch (params.sortBy) {
-                case "name":
-                case "format":
-                case "submitter":
-                case "submitted":
-                case "modified":
-                    break
-                default:
-                    params.sortBy = "modified"
-            }
-        }
-        else {
-            params.sortBy = "modified"
+        if (params.sort) {
+            def sortVal = params.sort.split("-")
+            params.sortBy = sortVal[0]
+            params.sortDir = sortVal[1]
+        } else {
+            params.sortBy = "relevance"
+            params.sortDir = "desc"
         }
         params.numResults = numResults()
         if (integerCheck(params.offset, true, -1)) {
@@ -115,7 +108,7 @@ class SearchController {
 
     private int numResults() {
         final int MAXRESULTS = 100
-        final int MINRESULTS = 5
+        final int MINRESULTS = 10
         User user
         if (!(springSecurityService.principal.username == GrailsAnonymousAuthenticationToken.USERNAME)) {
             user = User.findByUsername(springSecurityService.principal.username)
@@ -137,7 +130,7 @@ class SearchController {
             }
             if (user) {
                 prefs.setUser(user)
-                prefs.save(flush:true)
+                prefs.save(flush: true)
             }
         }
         return prefs.numResults
@@ -146,10 +139,10 @@ class SearchController {
     /**
      * Default action showing a list view
      */
-    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    @Secured(['IS_AUTHENTICATED_FULLY'])
     def list() {
         sanitiseParams()
-        def results = browseCore(params.sortBy, params.sortDir, params.offset, params.numResults)
+        def results = browseCore(params.sortBy, params.sortDir, params.offset, params.numResults, params.query)
 
         if (!params.format || params.format=="html") {
             results["history"] = modelHistoryService.history()
@@ -180,6 +173,11 @@ class SearchController {
         sanitiseParams()
         if (!params.query) {
             params.query = ""
+        } else {
+            if (params.query in ["*", "*.*", "*?*", "***"]) {
+                params.query = "*:*"
+                params.flashMessage = "Please use *:* to browse all models."
+            }
         }
         def results = searchCore(params.query, params.sortBy, params.sortDir, params.offset, params.numResults)
         if (!params.format || params.format=="html") {
@@ -190,42 +188,75 @@ class SearchController {
 
     @Secured(['ROLE_ADMIN'])
     def regen() {
+        render(view: "regen")
+    }
+
+    @Secured(['ROLE_ADMIN'])
+    def regenIndices() {
         long start = System.currentTimeMillis()
         searchService.regenerateIndices()
-        [regenTime: System.currentTimeMillis() - start]
+        def regenTime = System.currentTimeMillis() - start
+        def result ="""\
+<h3>Report</h3>
+<p>Indices regenerated!<br/>Regenerated in ${regenTime/1000f}ms</p>"""
+        render result
+    }
+
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def download() {
+        if (!params.models) {
+            def params = [query: "*:*", flashMessage : g.message(code: "jummp.search.download.warningMessage")]
+            forward action: 'search', params: params
+            return // don't continue any further with this.
+        }
+        String[] models = params.models.split(',')
+        if (models.size() > 100) {
+            def params = [query: "*:*", flashMessage: g.message(code: "jummp.search.download.exceededThreshold.warningMessage")]
+            forward(action: 'search', params: params)
+            return params
+        }
+	    byte[] data = modelDelegateService.serveModelFilesAsZip(models)
+        if (data) {
+            // the data could be null in a few situations such as the model files are unaccessible
+            response.setContentType("application/zip")
+            String date = new Date().format("yyyyMMdd-HHmm")
+            String filename = "BioModels-search-results_${date}.zip".toString()
+            response.setHeader("Content-disposition", "attachment;filename=\"${filename}\"")
+            response.outputStream << new ByteArrayInputStream(data)
+        } else {
+            def params = [query: "*:*", flashMessage: g.message(code: "jummp.search.download.unavailable.warningMessage")]
+            forward(action: 'search', params: params)
+            return [query: "*:*"]
+        }
     }
 
     private def searchCore(String query, String sortBy, String sortDirection, int offset, int length) {
         Map<String, Integer> paginationCriteria = ["start": offset, "length": length, "facetCount": 100]
+        SortOrder sortOrder = new SortOrder(sortBy, sortDirection)
         List<MTC> models = []
         List<Facet> facets = []
         int totalCount
         if (query?.trim()) {
-            SearchResponse response = searchService.searchModels(query, paginationCriteria)
-            HashSet<ModelTransportCommand> res = response.results
+            SearchResponse response = searchService.searchModels(query, sortOrder, paginationCriteria)
+            ArrayList<ModelTransportCommand> res = response.results
             totalCount = response.totalCount
-            println paginationCriteria
             if (res.size() > 0) {
                 println "Found(s): ${res.size()} records."
                 res.each {
                     models.add(it)
                 }
             }
-            HashSet<Facet> responsedFacets = response.facets
-            if (responsedFacets.size() > 0) {
-                println "Found(s): ${responsedFacets.size()} facets."
-                responsedFacets.each {
-                    facets.add(it)
+            LinkedHashMap<String, OrderedFacet> respondedFacets = response.facets
+            if (respondedFacets.size() > 0) {
+                println "Found(s): ${respondedFacets.size()} facets."
+                respondedFacets.each {
+                    facets.add(it.value.facet)
                 }
             }
-            Collections.sort(facets, new Comparator<Facet>() {
-                @Override
-                int compare(Facet o1, Facet o2) {
-                    return o1.label.compareTo(o2.label)
-                }
-            })
         }
-        int sortDir = 1
+        JsonBuilder builder = new JsonBuilder(facets)
+
+        /*int sortDir = 1
         if (sortDirection && sortDirection == "asc") {
             sortDir = -1
         }
@@ -252,7 +283,7 @@ class SearchController {
             default:
                 models = models.sort{ m1, m2 -> sortDir * m2.name.compareTo(m1.name) }
                 break
-        }
+        }*/
 
         if (offset > 0 && offset < models.size()) {
             models = models[offset..-1]
@@ -263,8 +294,11 @@ class SearchController {
             models = models[0..length-1]
         }
 
-        return [models: models, facets: facets, matches: totalCount, sortBy: sortBy, sortDirection: sortDirection,
-                    offset: paginationCriteria['start'], length: paginationCriteria['length'], query: query]
+        return [models: models, facets: facets, matches: totalCount,
+                offset: paginationCriteria['start'],
+                length: paginationCriteria['length'],
+                sortBy: sortBy, sortDirection: sortDirection,
+                query: query, facetStats: builder.toString()]
     }
 
     private def archiveCore(String sortBy, String sortDirection, int offset, int length) {
@@ -297,13 +331,13 @@ class SearchController {
                 modelService.getAllModels(offset, length, sortDirection == "asc", sort, null, true)
         List models = []
         modelsDomain.each {
-            models.add(DomainAdapter.getAdapter(it).toCommandObject())
+            models.add(new ModelAdapter(model: it).toCommandObject())
         }
         return [models: models, modelsAvailable: modelService.getModelCount(null, true), sortBy: sortBy,
                     sortDirection: sortDirection, offset: offset, length: length]
     }
 
-    private def browseCore(String sortBy, String sortDirection, int offset, int length) {
+    private def browseCore(String sortBy, String sortDirection, int offset, int length, String filter) {
         int sortDir = 1
         if (sortDirection == "asc") {
             sortDir = -1
@@ -329,16 +363,69 @@ class SearchController {
                 sort = ModelListSorting.ID
                 break
         }
-        List modelsDomain = modelService.getAllModels(offset, length, sortDirection == "asc", sort)
+        List modelsDomain = modelService.getAllModels(offset, length, sortDirection == "asc", sort, filter)
         List models = []
         modelsDomain.each {
-            models.add(DomainAdapter.getAdapter(it).toCommandObject())
+            models.add(new ModelAdapter(model: it).toCommandObject())
         }
-        //List<String> facets = ["My models", "Format", "Status"]
-        List<String> facets = []
-        int totalCount = modelService.getModelCount()
-        return [models: models, facets: facets, modelsAvailable: totalCount, sortBy: sortBy,
+        List<Facet> basicFacets = buildBasicFacets(models)
+        int totalCount = modelService.getModelCount(filter, false)
+        return [models: models, facets: basicFacets, modelsAvailable: totalCount, sortBy: sortBy,
                 sortDirection: sortDirection, offset: offset, length: length]
+    }
+
+    private List<Facet> buildBasicFacets(List<ModelTransportCommand> models) {
+        List<Facet> facets = []
+        def formats = models.collect(
+            new HashSet(), {
+            [it.format.identifier, it.format.name, 0]
+        })
+        def submitters = models.collect(
+            new HashSet(), {
+            [it.submitter, 0]
+        })
+
+        models.each {
+            String format = it.format.identifier
+            formats.each {
+                if (it[0] == format) {
+                    it[2] += 1
+                }
+            }
+
+            String submitter = it.submitter
+            submitters.each {
+                if (it[0] == submitter) {
+                    it[1] += 1
+                }
+            }
+        }
+
+        def facet = new Facet()
+        List<FacetValue> fvs = []
+        facet.id = "Format"
+        facet.label = "Format"
+        facet.facetValues = []
+        formats.each {
+            FacetValue fv = new FacetValue(label: it[1], value: it[0], count: it[2])
+            fvs << fv
+        }
+        facet.facetValues = fvs
+        facets << facet
+
+        facet = new Facet()
+        fvs = []
+        facet.id = "Submitter"
+        facet.label = "Collaborator"
+        facet.facetValues = []
+        submitters.each {
+            FacetValue fv = new FacetValue(label: it[0], value: it[0], count: it[1])
+            fvs << fv
+        }
+        facet.facetValues = fvs
+        facets << facet
+
+        facets
     }
 
     private String getSortColumn(int sc) {

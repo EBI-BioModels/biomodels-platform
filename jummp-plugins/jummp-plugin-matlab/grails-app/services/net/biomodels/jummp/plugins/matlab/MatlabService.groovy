@@ -37,7 +37,10 @@ class MatlabService implements FileFormatService {
     final boolean IS_INFO_ENABLED = log.isInfoEnabled()
     final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
     final String FORMAT_VERSION = '*'
-    final String TARGET_MIME_TYPE = "application/x-matlab"
+    final static Set<String> TARGET_MIME_TYPES = ["application/x-matlab",
+                                           "application/matlab",
+                                           "text/x-matlab",
+                                           "text/matlab"]
 
     def modelFileFormatService
 
@@ -111,32 +114,24 @@ class MatlabService implements FileFormatService {
 
     private boolean isRevisionFormatSupported(RevisionTransportCommand revisionCmd) {
         ModelFormatTransportCommand fmt = revisionCmd?.format
-        if (!fmt) {
-            return false
-        }
-        FileFormatService expected = modelFileFormatService.serviceForFormat(fmt)
-        this == expected
+        return fmt?.identifier == "matlab"
     }
 
     private boolean isMatlabFile(File f) {
-        return f?.name?.endsWith(".m")
-        
-        // currently blocked by https://issues.apache.org/jira/browse/TIKA-2194
-/*        def mimeDetector = new MimeTypes()
+        def mimeDetector = new DefaultDetector()
         def metadata = new Metadata()
         metadata.set(Metadata.RESOURCE_NAME_KEY, f.name)
-        f.withInputStream { InputStream stream ->
+        boolean result = f.withInputStream { InputStream stream ->
             try {
                 String mime = mimeDetector.detect(stream, metadata)?.toString()
                 log.debug "File $f has media type $mime"
                 println "File $f has media type $mime"
-                return TARGET_MIME_TYPE == mime
+                return mime in TARGET_MIME_TYPES
             } catch (IOException e) {
                 String n = f.name
                 log.error("Could not probe $n for MIME type detection.", e)
             }
         }
-        false
-*/
+        result
     }
 }

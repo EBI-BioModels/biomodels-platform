@@ -24,7 +24,7 @@
 
 package net.biomodels.jummp.core
 
-import net.biomodels.jummp.core.adapters.DomainAdapter
+import net.biomodels.jummp.core.adapters.PublicationAdapter
 import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter
 import net.biomodels.jummp.core.model.PublicationDetailExtractionContext
 import net.biomodels.jummp.core.model.PublicationTransportCommand
@@ -68,7 +68,8 @@ class PublicationService {
             eq("linkType", provider)
         }
         retrieved.link = pubLink
-        retrieved.linkProvider = DomainAdapter.getAdapter(publicationLinkProvider).toCommandObject()
+        retrieved.linkProvider = new PublicationLinkProviderAdapter(linkProvider:
+                publicationLinkProvider).toCommandObject()
         retrieved.authors = authors
         retrieved
     }
@@ -100,7 +101,7 @@ class PublicationService {
         PublicationDetailExtractionContext ctx = new  PublicationDetailExtractionContext()
         if (publication) {
             // if existing in database
-            ctx.publication = DomainAdapter.getAdapter(publication).toCommandObject()
+            ctx.publication = new PublicationAdapter(publication: publication).toCommandObject()
             ctx.comesFromDatabase = true
         } else {
             // if not in database

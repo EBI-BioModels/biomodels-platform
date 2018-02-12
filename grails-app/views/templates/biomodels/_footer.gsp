@@ -31,7 +31,11 @@
     <!-- Optional local footer (insert citation / project-specific copyright / etc here -->
     <div id="local-footer">
         <div class="row">
-            <span><wcm:render path="footer"/></span>
+            <div class="float-right" style="font-weight: bold;">
+                <a href="https://www.ebi.ac.uk/biomodels-main/" style="color: orange;" title="Switch to the previous version of the BioModels platform">Back to classic BioModels</a>
+            </div>
+            <div class="float-left"><wcm:render path="footer"/></div>
+            <div class="clear"></div>
         </div>
     </div>
     <!-- End optional local footer -->
@@ -44,6 +48,7 @@
             <!-- Footer meta will be automatically inserted by footer.js -->
         </section>
     </div>
+     <g:render template="/templates/feedback" plugin="jummp-plugin-web-application"/>
  </footer>
 </div> <!--! end of #wrapper -->
 
@@ -51,28 +56,26 @@
   <!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if offline -->
 
   <script defer="defer" src="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/js/cookiebanner.js"></script>
-  <script defer="defer" src="https://www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/js/foot.js"></script>
-  <script defer="defer" src="https://www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/js/script.js"></script>
+  <script defer="defer" src="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/js/foot.js"></script>
+  <script defer="defer" src="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/js/script.js"></script>
 
   <!-- The Foundation theme JavaScript -->
-  <script src="https://www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/libraries/foundation-6/js/foundation.js"></script>
-  <script src="https://www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/js/foundationExtendEBI.js"></script>
+  <script src="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/libraries/foundation-6/js/foundation.js"></script>
+  <script src="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/js/foundationExtendEBI.js"></script>
   <script type="text/JavaScript">$(document).foundation();</script>
   <script type="text/JavaScript">$(document).foundationExtendEBI();</script>
 
+  <!-- customised scripts -->
+  <g:javascript src="common.js"></g:javascript>
   <!-- end scripts-->
 
   <!-- Google Analytics details... -->
-  <!-- Change UA-XXXXX-X to be your site's ID -->
-  <!--
   <script>
-    window._gaq = [['_setAccount','UAXXXXXXXX1'],['_trackPageview'],['_trackPageLoadTime']];
+    window._gaq = [['_setAccount','UA-106769759-1'],['_trackPageview'],['_trackPageLoadTime']];
     Modernizr.load({
       load: ('https:' == location.protocol ? '//ssl' : '//www') + '.google-analytics.com/ga.js'
     });
   </script>
-  -->
-
 
   <!-- Prompt IE 6 users to install Chrome Frame. Remove this if you want to support IE 6.
        chromium.org/developers/how-tos/chrome-frame-getting-started -->

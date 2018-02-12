@@ -29,10 +29,12 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
   <!-- Describe what this page is about -->
   <meta name="description" content="EMBL-EBI"/>
-  <!-- A few keywords that relate to the content of THIS PAGE (not the whol project) -->
+  <!-- A few keywords that relate to the content of THIS PAGE (not the whole project) -->
   <meta name="keywords" content="bioinformatics, europe, institute">
   <meta name="jummp" content="EMBL-EBI"/><!-- Your [project-name] here -->
-  <meta name="ebi:localmasthead-image" content="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/images/backgrounds/embl-ebi-background.jpg"/>
+  <meta name="ebi:localmasthead-color" content="#254146">
+  <meta name="ebi:localmasthead-image"
+        content="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/images/backgrounds/embl-ebi-background.jpg"/>
 
   <!-- Mobile viewport optimized: j.mp/bplateviewport -->
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -63,25 +65,33 @@
   <link rel="dns-prefetch" href="//embl.de" />
   <!-- CSS: implied media=all -->
   <!-- CSS concatenated and minified via ant build script -->
-  <link rel="stylesheet" href="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/libraries/foundation-6/css/foundation.css" type="text/css">
-  <link rel="stylesheet" href="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/css/ebi-global.css" type="text/css">
+  <link rel="stylesheet" type="text/css"
+        href="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/libraries/foundation-6/css/foundation.css">
+  <link rel="stylesheet" href="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/css/ebi-global.css">
   <link rel="stylesheet" href="//www.ebi.ac.uk/web_guidelines/EBI-Icon-fonts/v1.1/fonts.css" type="text/css">
-  <link rel="stylesheet" href="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/css/theme-embl-petrol.css" type="text/css">
+  <link rel="stylesheet" type="text/css"
+        href="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/css/theme-embl-petrol.css">
 
-  <!-- you can replace this with [projectname]-colours.css. See http://frontier.ebi.ac.uk/web/style/colour for details of how to do this -->
-  <!-- also inform ES so we can host your colour palette file -->
-  <link rel="stylesheet" href="https://www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/css/theme-embl-petrol.css" type="text/css" media="all">
-  <!-- for production the above can be replaced with -->
+  <!-- you can replace this with [projectname]-colours.css. See http://frontier.ebi.ac.uk/web/style/colour
+  for details of how to do this -->
   <!--
   <link rel="stylesheet" href="//www.ebi.ac.uk/web_guidelines/css/compliance/mini/ebi-fluid-embl.css">
   -->
   <style type="text/css">
     /* You have the option of setting a maximum width for your page, and making sure everything is centered */
-      body {
-          margin: 2px 5px auto;
-      }
+    body {
+        margin: 2px 5px auto;
+    }
+    li.divider {
+        border-top: 1px solid #999;
+    }
+
+    #local-masthead nav ul.menu li:hover {
+        background: rgb(0,124,130);
+    }
   </style>
-  <link rel="stylesheet" href="<g:resource dir="css" file="biomodels/biomodels.css"/>" />
+  <link rel="stylesheet" type="text/css" href="<g:resource dir="css" file="biomodels/biomodels.css"/>">
+  <link rel="stylesheet" type="text/css" href="<g:resource dir="css" file="common.css"/>">
   <!-- end CSS-->
 
   <!-- All JavaScript at the bottom, except for Modernizr / Respond.

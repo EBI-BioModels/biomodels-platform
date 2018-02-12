@@ -37,7 +37,7 @@ class AnnotationController {
     def modelDelegateService
     def metadataDelegateService
 
-    def edit() {
+    /*def edit() {
         if (!params.id) {
             forward controller: "errors", action: "error404"
             return
@@ -97,7 +97,7 @@ class AnnotationController {
             modelId: modelId
         ]
         render model: theModel, view: 'edit'
-    }
+    }*/
 
     def save() {
         if (!params.revision) {

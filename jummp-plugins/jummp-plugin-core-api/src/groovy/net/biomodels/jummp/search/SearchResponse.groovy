@@ -25,7 +25,7 @@
 package net.biomodels.jummp.search
 
 import net.biomodels.jummp.core.model.ModelTransportCommand
-import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Facet
+
 /**
  * This class provides means of dealing with searching related results.
  *
@@ -34,10 +34,18 @@ import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Facet
  * @date   27/10/2016
  */
 class SearchResponse {
-    // the set of models/entries matching what are looking for
-    HashSet<ModelTransportCommand> results = new HashSet<ModelTransportCommand>()
-    // the set of facets what the models/entries should belong in
-    HashSet<Facet> facets = new HashSet<Facet>()
+    /**
+     * the set of models/entries matching what are looking for
+     * Using ArrayList to reserve the inserting order of Model Transport Command in the results list
+     */
+    List<ModelTransportCommand> results = new ArrayList<ModelTransportCommand>()
+    /**
+     * the map of facets what the models/entries should belong in
+     * The reason of using LinkedHashMap is because we want to preserve the order of facets
+     * duration fetching them from search server as well as filtering before adding them
+     * to the fixed order map.
+     */
+    Map<String, OrderedFacet> facets = new LinkedHashMap<String, OrderedFacet>()
     // the number of total results
     long totalCount = 0
 }

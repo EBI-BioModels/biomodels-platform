@@ -30,8 +30,8 @@
 
 package net.biomodels.jummp.core
 
-import net.biomodels.jummp.core.adapters.DomainAdapter
-import net.biomodels.jummp.model.Publication
+import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter
+import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand
 import net.biomodels.jummp.model.PublicationLinkProvider
 import org.xml.sax.SAXParseException
 import org.springframework.transaction.annotation.Transactional
@@ -85,7 +85,7 @@ class PubMedService {
     PublicationTransportCommand fetchPublicationData(String id) throws JummpException {
         URL url
         try {
-            url = new URL("http://www.ebi.ac.uk/europepmc/webservices/rest/search/query=ext_id:${id}%20src:med&resulttype=core")
+            url = new URL("https://www.ebi.ac.uk/europepmc/webservices/rest/search/query=ext_id:${id}%20src:med&resulttype=core")
         } catch (MalformedURLException e) {
             // TODO: throw a specific exception
             throw new JummpException("PubMed URL is malformed", e)
@@ -104,7 +104,10 @@ class PubMedService {
         PublicationLinkProvider link = PublicationLinkProvider.withCriteria(uniqueResult: true) {
             eq("linkType",PublicationLinkProvider.LinkType.PUBMED)
         }
-        PublicationTransportCommand publication = new PublicationTransportCommand(linkProvider: DomainAdapter.getAdapter(link).toCommandObject(), link: id)
+        PublicationLinkProviderTransportCommand linkCommand = new PublicationLinkProviderAdapter(
+                linkProvider: link).toCommandObject()
+        PublicationTransportCommand publication = new PublicationTransportCommand(linkProvider:
+                linkCommand, link: id)
         setFieldIfItExists("pages", publication, slurper.resultList.result.pageInfo, false)
         setFieldIfItExists("title", publication, slurper.resultList.result.title, false)
         setFieldIfItExists("affiliation", publication, slurper.resultList.result.affiliation, false)

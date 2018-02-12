@@ -59,6 +59,10 @@ try {
                     "jdbc:${protocol}://${server}:${port}/${database}")
         databaseProperties.setProperty("jummp.database.pooled", "true")
     }
+    if (protocol == 'mysql') {
+        databaseProperties.setProperty("jummp.database.url",
+            "jdbc:${protocol}://${server}:${port}/${database}?$ModelIdentifierUtils.UNICODE_OPTIONS")
+    }
     def databaseConfig = new ConfigSlurper().parse(databaseProperties)
 
     dataSource {
@@ -95,11 +99,11 @@ try {
     hibernate {
         cache.use_second_level_cache = true
         cache.use_query_cache = true
-	cache.region.factory_class = 'grails.plugin.cache.ehcache.hibernate.BeanEhcacheRegionFactory4' // needed to runApp
+	    cache.region.factory_class = 'grails.plugin.cache.ehcache.hibernate.BeanEhcacheRegionFactory4' // needed to runApp
         format_sql = true
         use_sql_comments = true
-	singleSession = true // configure OSIV singleSession mode
-	flush.mode = 'manual' // OSIV session flush mode outside of transactional context
+	    singleSession = true // configure OSIV singleSession mode
+	    flush.mode = 'manual' // OSIV session flush mode outside of transactional context
     }
     // environment specific settings
     environments {

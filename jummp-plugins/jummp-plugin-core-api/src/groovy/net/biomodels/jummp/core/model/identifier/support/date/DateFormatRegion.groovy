@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2017 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -18,30 +18,30 @@
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
  **/
 
-package net.biomodels.jummp.core.adapters
+package net.biomodels.jummp.core.model.identifier.support.date
 
 /**
- * @short composite class for use with externally defined domain objects. Use
- * via DomainAdapter
+ * Simple representation of a homogenous part of a SimpleDateFormat instance.
  *
- * @author Raza Ali <raza.ali@ebi.ac.uk>
+ * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
-public class DomainObjectComposite {
-    private domainObject
-    private adapter
-    
-    DomainObjectComposite(domainObject, adapter) {
-        this.domainObject = domainObject
-        this.adapter = adapter
+final class DateFormatRegion {
+    DateFormatRegionType type
+    StringBuilder contents = new StringBuilder()
+
+    boolean add(char c) {
+        def typeForThisChar = DateFormatRegionType.from(c)
+        if (contents.length() == 0) {
+            type = typeForThisChar
+        }
+        if (type == typeForThisChar) {
+            contents.append(c)
+            return true
+        }
+        false
     }
-    
-    def invokeMethod(String name, args) {
-        def domainObjectSupported = domainObject.metaClass.methods*.name.unique()
-        if (domainObjectSupported.contains(name)) {
-            domainObject.invokeMethod(name, args)
-        }
-        else {
-            adapter.invokeMethod(name, args)
-        }
+
+    String getContents() {
+        return contents.toString()
     }
 }

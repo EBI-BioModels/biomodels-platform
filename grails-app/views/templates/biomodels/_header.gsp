@@ -100,30 +100,14 @@
                             <a href="${createLink(uri: '/', absolute: true)}" title="Back to BioModels homepage"
                             style="text-decoration: none; border-bottom-style: none">
                                 <img src="${grailsApplication.config.grails.serverURL}/images/biomodels/logo_small.png"
-                                     title="Biomodels Database Homepage"/>
-                                <span class="hide-for-small-only">BioModels Database</span></a>
+                                     title="BioModels Homepage"/>
+                                <span class="hide-for-small-only">BioModels</span>
+                                <sup><span class="icon icon-generic" data-icon=">"></span></sup></a>
                         </h1>
                     </div>
                     <!-- local-search -->
                     <div id="localsearch" class="column small-10 medium-5 large-4 float-right">
-                        <form id="local-search" name="local-search"
-                              action="${createLink(controller: 'search', action: 'searchRedir')}" method="post">
-                            <fieldset>
-                                <div class="input-group">
-                                    <input type="text" name="search_block_form" id="local-searchbox" class="input-group-field" tabindex="1" size="35" maxlength="2048">
-                                    <div class="input-group-button">
-                                        <input id="search_submit" class="button icon icon-functional" tabindex="2" type="submit" name="submit1" value="1" />
-                                    </div>
-                                </div>
-                                <p id="example">
-                                    Examples:
-                                    <a class="secondary label" href="${grailsApplication.config.grails.serverURL}/search?query=health">health</a>
-                                    <a class="secondary label" href="${grailsApplication.config.grails.serverURL}/search?query=homo sapiens">homo sapiens</a>
-                                    <a class="secondary label" href="${grailsApplication.config.grails.serverURL}/search?query=lung cancer">lung cancer</a>
-                                    <span>...</span>
-                                </p>
-                            </fieldset>
-                        </form>
+                        <g:render template="/templates/${grailsApplication.config.jummp.branding.style}/searchBox"/>
                     </div>
                 </div>
             </div>

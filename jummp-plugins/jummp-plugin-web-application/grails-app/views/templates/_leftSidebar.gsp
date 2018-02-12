@@ -9,42 +9,150 @@
     facets.eachWithIndex {value, index ->
         listOfFacets.add(index)
     }
+    def specialCharacters = "([:+\\(\\)\\[\\]\\{\\}\\|\\*\\&\"\\?\'\\!\\^])"
+    def FACETS_WRAPPED_DOUBLE_QUOTE = ["curationstatus", "modelformat", "disease", "modellingapproach", "modelflag"]
+    String queryString = params.query?.replaceAll('"', '\\\\"')
 %>
-
+<g:javascript>
+    function escapeSpecialLuceneCharacters(facet_value) {
+        facet_value = facet_value.replace(/\+/g, '\\+');
+        facet_value = facet_value.replace(/\?/g, '\\?');
+        facet_value = facet_value.replace(/\*/g, '\\*');
+        facet_value = facet_value.replace(/\(/g, '\\(');
+        facet_value = facet_value.replace(/\)/g, '\\)');
+        facet_value = facet_value.replace(/\[/g, '\\[');
+        facet_value = facet_value.replace(/\]/g, '\\]');
+        facet_value = facet_value.replace(/\{/g, '\\{');
+        facet_value = facet_value.replace(/\}/g, '\\}');
+        facet_value = facet_value.replace(/\:/g, '\\:');
+        facet_value = facet_value.replace(/\//g, '\\/');
+        return facet_value;
+    }
+</g:javascript>
 <g:if test="${models}">
     <g:if test="${actionName == 'search'}">
         <h4>Filter your results</h4>
         <g:each in="${facets}" var="facet" status="i">
             <div id="facetList${i}">
             <h5 style="padding-top: 5px">${facet.label}</h5>
-            <input type="text" placeholder="Find your ${facet.label}" class="searchEachFacet search" />
-            <div class="facetContainer" id="${facet.label}">
-                <ul id="${facet.label.replace(' ', '')}" class="list">
+            <% String idFacet = facet.label.replace(' ', '') %>
+            <input type="text" id="txtSearch${idFacet}" placeholder="Find your ${facet.label}" class="searchEachFacet search" />
+            <div class="facetContainer" id="facet${idFacet}">
+                <ul id="${idFacet}" class="list">
                 <g:each in="${facet.facetValues}" var="fv">
                     <li>
                     <%
-                        boolean isAsked = query.contains("${facet.id}:${fv.value}")
+                        String escapedFacetValue = fv.value.replaceAll("${specialCharacters}", '\\\\$1')
+                        String selectedFacet = "${facet.id}:${fv.value}"
+                        boolean isNeededDQ = facet.id in FACETS_WRAPPED_DOUBLE_QUOTE
+                        if (isNeededDQ) {
+                            selectedFacet = "${facet.id}:\"${fv.value}\""
+                        }
+                        boolean isAsked = query.contains(selectedFacet)
                     %>
                     <g:if test="${isAsked}">
-                        <input type="checkbox" value="${fv.value}" checked onchange="runFacetSearch($(this), '${facet.id}' ,'${fv.value}')">
-                        <span class="facetLabel">${fv.label} (${fv.count})</span>
+                        <input type="checkbox" id="facetValue_${fv.value}" value="${fv.value}" checked title="${fv.value}"
+				            onchange="runFacetSearch($(this), '${facet.id}' ,'${escapedFacetValue}')">
+                        <span class="facetLabel" onclick="runFacetSearch($(this), '${facet.id}' ,'${escapedFacetValue}')">
+                            ${fv.label} (${fv.count})</span>
                     </g:if>
                     <g:else>
-                        <input type="checkbox" value="${fv.value}" id="choosenFacetValue" onchange="runFacetSearch($(this), '${facet.id}' ,'${fv.value}')">
-                        <a href="${grailsApplication.config.grails.serverURL}/search?query=${query} and ${facet.id}:${fv.value}" class="facetLabel">
-                            <span class="facetLabel">${fv.label} (${fv.count})</span></a>
-                    </g:else></li>
+                        <%
+                            String newQuery = "${query} AND ${selectedFacet}"
+                            def newParams = [:]
+                            if (params.query) {
+                                newParams["query"] = newQuery
+                            }
+                            if (params.offset) {
+                                newParams["offset"] = params.offset
+                            }
+                            if (params.numResults) {
+                                newParams["numResults"] = params.numResults
+                            }
+                            if (params.sort) {
+                                newParams["sort"] = params.sort
+                            }
+                        %>
+                        <input type="checkbox" value="${fv.value}" id="choosenFacetValue" title="${fv.value}"
+				            onchange="runFacetSearch($(this), '${facet.id}' ,'${escapedFacetValue}')">
+                        <g:link controller="search" action="search" params="${newParams}" class="facetLabel">
+                            <span class="facetLabel">${fv.label} (${fv.count})</span></g:link>
+                    </g:else>
+                    </li>
                 </g:each>
                 </ul>
+                <g:javascript>
+                    var nbFV = ${facet.facetValues.size()};
+                    if (nbFV < 5) {
+                        $("#facet${idFacet}").outerHeight(nbFV*29 + 20);
+                        $("#facet${idFacet}").css("overflow-y", "hidden");
+                        $("#txtSearch${idFacet}").hide();
+                    }
+                </g:javascript>
             </div>
             </div> <!-- facetList -->
         </g:each>
     </g:if>
     <g:elseif test="${actionName == 'list'}">
-        <h3>Filter your models</h3>
-        <g:each in="${facets}" var="facet">
-            <h4>${facet}</h4>
-            <p>Will be realised soon!!!</p>
+        <input id="filterModel" name="query" hidden/>
+        <h4>Filter your models</h4>
+        <g:each in="${facets}" var="facet" status="i">
+            <div id="facetList${i}">
+                <h5 style="padding-top: 5px">${facet.label}</h5>
+                <% String idFacet = facet.label.replace(' ', '') %>
+                <input type="text" id="txtSearch${idFacet}" placeholder="Find your ${facet.label}" class="searchEachFacet search" />
+                <div class="facetContainer" id="facet${idFacet}">
+                    <ul id="${idFacet}" class="list">
+                        <g:each in="${facet.facetValues}" var="fv">
+                            <li>
+                                <%
+                                    String escapedFacetValue = fv.value.replaceAll("${specialCharacters}", '\\\\$1')
+                                    boolean isAsked = params.query?.contains("${facet.id}:${escapedFacetValue}")
+                                    String newQuery = params.query
+                				    if (query) { // rather: params.query
+                                        newQuery += " or ${facet.id}:${escapedFacetValue}"
+				                    } else {
+                                        newQuery = "${facet.id}:${escapedFacetValue}"
+				                    }
+                                %>
+                                <g:if test="${isAsked}">
+                                    <input type="checkbox" id="facetValue_${fv.value}" value="${fv.value}"
+                                           checked title="${fv.value}"
+                                           onchange="runFacetList($(this), '${facet.id}' ,'${escapedFacetValue}')">
+                                    <span class="facetLabel"
+                                          onclick="runFacetList($(this), '${facet.id}' ,'${escapedFacetValue}')">
+                                        ${fv.label}</span>
+                                </g:if>
+                                <g:else>
+                                    <%
+                                        String selectedFacet = "${facet.id}:${fv.value}"
+                                        newQuery = "${query} AND ${selectedFacet}"
+                                        def newParams = [:]
+                                        if (params.query) {
+                                            newParams["query"] = newQuery
+                                        } else {
+                                            newParams["query"] = "${selectedFacet}"
+                                        }
+                                        if (params.offset) {
+                                            newParams["offset"] = params.offset
+                                        }
+                                        if (params.numResults) {
+                                            newParams["numResults"] = params.numResults
+                                        }
+                                        if (params.sort) {
+                                            newParams["sort"] = params.sort
+                                        }
+                                    %>
+                                    <input type="checkbox" value="${fv.value}" id="choosenFacetValue" title="${fv.value}"
+                                           onchange="runFacetList($(this), '${facet.id}' ,'${escapedFacetValue}')">
+                                    <g:link controller="search" action="list" params="${newParams}" class="facetLabel">
+                                        <span class="facetLabel">${fv.label}</span></g:link>
+                                </g:else>
+                            </li>
+                        </g:each>
+                    </ul>
+                </div>
+            </div>
         </g:each>
     </g:elseif>
 </g:if>
@@ -52,7 +160,7 @@
     <p></p>
 </g:else>
 
-<script src="http://listjs.com/assets/javascripts/list.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/list.js/1.5.0/list.min.js"></script>
 
 <g:javascript>
     var options = {
@@ -64,12 +172,51 @@
     });
 
     function runFacetSearch(e, facetGroupId, facetValue) {
-        var newSearchURI = "${grailsApplication.config.grails.serverURL}/search?query=${query}"
+        var newSearchURI = "${grailsApplication.config.grails.serverURL}/search?query="
+        var isNeededDQ = "${FACETS_WRAPPED_DOUBLE_QUOTE}".indexOf(facetGroupId) > -1
+        if (isNeededDQ) {
+            facetValue = '"' + facetValue + '"';
+        }
+	    var lastQueryString = " AND " + facetGroupId + ":" + facetValue;
+	    var currentQuery = "${queryString}";
         if (e[0].checked) {
-            newSearchURI += " and " + facetGroupId + ":" + facetValue;
+            currentQuery += lastQueryString;
         } else {
             // remove the search term out the query string, update newSearchURI
-            newSearchURI = newSearchURI.replace(" and " + facetGroupId + ":" + facetValue, "");
+            currentQuery = currentQuery.replace(lastQueryString, "")
+        }
+        var otherParams = "";
+        if ("${params.offset}") {
+            otherParams += "&offset=${params.offset}";
+        }
+        if ("${params.numResults}") {
+            otherParams += "&numResults=${params.numResults}";
+        }
+        if ("${params.sort}") {
+            otherParams += "&sort=${params.sort}";
+        }
+        newSearchURI += encodeURIComponent(currentQuery) + otherParams;
+        window.location.href = newSearchURI;
+    }
+
+    function runFacetList(e, facetGroupId, facetValue) {
+        var entireQueryString = $("#filterModel").val();
+        facetValue = escapeSpecialLuceneCharacters(facetValue);
+	    var lastQueryString = encodeURIComponent(facetGroupId + ":" + facetValue);
+        if (e[0].checked) {
+            if (entireQueryString == "") {
+                entireQueryString = lastQueryString;
+            } else {
+                entireQueryString += "+or+" + lastQueryString;
+            }
+        } else {
+            // remove the search term out the query string
+            entireQueryString = entireQueryString.replace(lastQueryString, "");
+        }
+        $("#filterModel").val(entireQueryString);
+        var newSearchURI = "${grailsApplication.config.grails.serverURL}/models"
+        if (entireQueryString != "") {
+            newSearchURI += "?query=" + entireQueryString;
         }
         window.location.href = newSearchURI;
     }

@@ -21,6 +21,8 @@
 package net.biomodels.jummp.core.adapters
 
 import grails.util.Holders
+import net.biomodels.jummp.annotationstore.ElementAnnotation
+import net.biomodels.jummp.annotationstore.RevisionAnnotation
 import net.biomodels.jummp.core.annotation.ElementAnnotationCategory
 import net.biomodels.jummp.core.annotation.ElementAnnotationTransportCommand
 import net.biomodels.jummp.core.certification.QcInfoCategory
@@ -34,7 +36,7 @@ import net.biomodels.jummp.model.Revision
  *
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  */
-public class RevisionAdapter extends DomainAdapter {
+public class RevisionAdapter {
     Revision revision
 
     def modelService = Holders.getGrailsApplication().mainContext.modelService
@@ -47,7 +49,7 @@ public class RevisionAdapter extends DomainAdapter {
             if (tmpFile != null) {
                 RFTC rftc = new RFTC(
                     id: rf.id,
-                    path: tmpFile.getCanonicalPath(),
+                    path: tmpFile.absolutePath,
                     description: rf.description,
                     hidden: rf.hidden,
                     mainFile: rf.mainFile,
@@ -60,11 +62,7 @@ public class RevisionAdapter extends DomainAdapter {
     }
 
     RevisionTransportCommand toCommandObject() {
-        List<ElementAnnotationTransportCommand> annotations
-        use(ElementAnnotationCategory) {
-            annotations = revision.annotations.collect { it.toCommandObject() }
-        }
-        def formatAdapter = getAdapter(revision.format)
+        def formatAdapter = new ModelFormatAdapter(format: revision.format)
         def formatCmd = formatAdapter.toCommandObject()
         String submitterName = revision.owner.person.userRealName
         def modelAdapter = new ModelAdapter(model: revision.model)
@@ -86,7 +84,6 @@ public class RevisionAdapter extends DomainAdapter {
                 uploadDate: revision.uploadDate,
                 format: formatCmd,
                 model: modelCmd,
-                annotations: annotations,
                 validationLevel: revision.validationLevel,
                 validationReport: revision.validationReport,
                 qcInfo: qcInfoCmd

@@ -37,7 +37,7 @@
     def loadedZips=new HashMap();
     def zipSupported=[:]
 %>
-<head>
+<head xmlns="http://www.w3.org/1999/html">
     <title>${revision.name}</title>
     <script type="text/javascript">
         $(document).ready(function() {
@@ -64,6 +64,21 @@
             .ui-button {
                 border-left: none;
                 margin: 0;
+            }
+            .rounded-header {
+                background-color: rgb(0, 124, 150);
+                border-bottom: 0 none;
+                border-top-left-radius: 5px;
+                border-top-right-radius: 5px;
+                line-height: inherit;
+                margin: 0;
+                padding: 0;
+            }
+            /* word wrap the overlong file names */
+            #treeView a {
+                white-space: normal !important;
+                height: auto;
+                padding: 1px 2px;
             }
         </style>
         <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.handsontable.full.min.css')}"/>
@@ -132,12 +147,13 @@
         });
 
         function getCSVData(data) {
-            var lines=data.match(/[^\r\n]+/g);
+            var lines = data.match(/[^\r\n]+/g);
             /*var content=[];
             content.push("<table>");*/
             var data = [];
-            for (var line in lines) {
-                var fields=lines[line].split(",");
+            for (var id = 0; id < lines.length; id++) {
+                var line = lines[id];
+                var fields = line.split(",");
                 data.push(fields);
             }
             return data;
@@ -385,7 +401,7 @@
             $('#confirm-model-notify').dialog({
                 resizable: false,
                 autoOpen: false,
-                height: 200,
+                height: 250,
                 width: 525,
                 modal: true,
                 buttons: {
@@ -450,12 +466,12 @@
                         primary:"ui-icon-person"
                     }
             }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
-            $("#annotate").button({
+            /*$("#annotate").button({
                 text: false,
                 icons: {
                     primary: "ui-icon-tag"
                 }
-            }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
+            }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });*/
             $("#certify").button({
                 text: false,
                 icons: {
@@ -554,14 +570,14 @@
                             action: 'share', id: revision.identifier())}')">Share</button>
                     </li>
                 </g:if>
-                <g:if test="${canUpdate}">
+                %{--<g:if test="${canUpdate}">
                     <li>
                         <button class='toolbutton' id='annotate'
                                 onclick="return $.jummp.openPage('${g.createLink(controller: 'annotation',
                                 action: 'edit',
                                 id: (revision.model.publicationId) ?: (revision.model.submissionId))}')">Annotate</button>
                     </li>
-                </g:if>
+                </g:if>--}%
                     <g:if test="${canCertify}">
                         <li>
                             <button class='toolbutton' id="certify"
@@ -589,6 +605,7 @@
             <div id="topBar">
                 <div style="float:left;width:75%;">
                     <h2>${revision.name}</h2>
+                    <p><biomd:renderModelOfMonth modelId="${revision.model.id}" /></p>
                 </div>
                 <div style="float:right;margin-top:10px;">
                     <g:if test="${!flags.empty}">
@@ -632,59 +649,97 @@
                          <li><a href='#Curation'>Curation</a></li>
                      </g:if>
                     </ul>
-                    <div id="Overview">
-                        <jummp:displayModelDescriptionLabel>
-                            <span class="bold">${description}:</span>
-                        </jummp:displayModelDescriptionLabel>
-                        <div style="margin-left: 30px;">
-                            ${raw(revision.description)}
-                        </div>
-                    <table style="margin-top:30px">
-                    <tr>
-                        <td><label><g:message code="model.model.format"/></label></td>
-                        <td><div class='spaced'>${revision.format.name}
-                            ${revision.format.formatVersion!="*"?"(${revision.format.formatVersion})":""}</div></td>
-                    </tr>
-                    <%
-                        model = revision.model
-                    %>
-                    <g:if test="${model.publication}">
-                        <tr>
-                            <td><label><g:message code="model.model.publication"/>:</label></td>
-                            <td>
-                                <div class='spaced'>
-                                    <g:render  model="[model:model]" template="/templates/showPublication" />
+                    <div id="Overview" class="row">
+                        <div class="small-12 medium-8 large-8 columns">
+                            <div class="row">
+                                <div class="small-12 medium-2 large-2 columns">
+                                    <jummp:displayModelDescriptionLabel>
+                                        <span style="font-weight: bold; color: rgb(0,124,130)">${description}</span>
+                                    </jummp:displayModelDescriptionLabel>
                                 </div>
-                            </td>
-                        </tr>
-                    </g:if>
-                    <tr>
-                        <td><label><g:message code="model.model.authors"/></label></td>
-                        <td>
-                            <div class='spaced'>
-                                <g:join in="${authors}"/>
+                                <div class="small-12 medium-10 large-10 columns">
+                                    %{--<a class="descriptionToggle" title="Click to see more">
+                                        <span>Click here to collapse/expand the description
+                                            <img style="width:12px;margin:2px;float:none"
+                                                 src="${grailsApplication.config.grails.serverURL}/images/expand.png"/>
+                                        </span>
+                                    </a>--}%
+                                    <div id="description">
+                                        ${raw(revision.description)}
+                                    </div>
+                                </div>
+                                <g:javascript>
+                                    /*$('.descriptionToggle').click(function() {
+                                        $('#description').slideToggle('fast');
+                                    });*/
+                                </g:javascript>
                             </div>
-                        </td>
-                    </tr>
-                    </table>
-                    <g:pageProperty name="page.genericAnnotations"/>
-                    <table style="margin-top:30px">
-                    <tr>
-                        <td><label>Curation Status:</label></td>
-                        <td><div class='spaced'><biomd:renderCurationStatus curationStatus="${curationStatus}"/></div></td>
-                    </tr>
-                    <tr>
-                        <td><label>Validation Status:</label></td>
-                        <td><div class='spaced'>${validationLevel}</div></td>
-                    </tr>
-                    <tr>
-                        <td><label>Certification Comment:</label></td>
-                        <td><div class='spaced'>${certComment}</div></td>
-                    </tr>
-                    </table>
+                            <div class="row">
+                                <div class="small-12 medium-2 large-2 columns">
+                                    <span style="font-weight: bold; color: rgb(0,124,130)"><g:message code="model.model.format"/></span>
+                                </div>
+                                <div class="small-12 medium-10 large-10 columns">
+                                    ${revision.format.name}
+                                        ${revision.format.formatVersion!="*"?"(${revision.format.formatVersion})":""}
+                                </div>
+                            </div>
+                            <g:if test="${revision.model.publication}">
+                            <%
+                                model = revision.model
+                            %>
+                            <div class="row">
+                            <div class="small-12 medium-2 large-2 columns">
+                                <span style="font-weight: bold; color: rgb(0,124,130)"><g:message code="model.model.publication"/></span>
+                            </div>
+                            <div class="small-12 medium-10 large-10 columns">
+                                <g:render  model="[model:model]" template="/templates/showPublication" />
+                            </div>
+                            </div>
+                            </g:if>
+                            <div class="row">
+                                <div class="small-12 medium-2 large-2 columns">
+                                    <span style="font-weight: bold; color: rgb(0,124,130)"><g:message code="model.model.authors"/></span>
+                                </div>
+                                <div class="small-12 medium-10 large-10 columns">
+                                    <g:join in="${authors}"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="small-12 medium-4 large-4 columns">
+                            <div class="rounded-header"><h4 style="color: #ffffee">Metadata information</h4></div>
+                            <g:pageProperty name="page.genericAnnotations"/>
+                            <g:if test="${curationStatus}">
+                            <div class='row'>
+                                <div class="small-12 medium-6 large-4 columns">Curation status</div>
+                                <div class="small-12 medium-6 large-8 columns">
+                                    <biomd:renderCurationStatus curationStatus="${curationStatus}"/></div>
+                            </div></g:if>
+                            <g:if test="${modellingApproaches}">
+                            <div class='row'>
+                                <div class="small-12 medium-6 large-4 columns">Modelling approach(es)</div>
+                                <div class="small-12 medium-6 large-8 columns">
+                                    <biomd:renderModellingApproaches modellingApproaches="${modellingApproaches}"/>
+                                </div>
+                            </div></g:if>
+                            <g:if test="${originalModels}">
+                            <div class='row'>
+                                <div class="small-12 medium-6 large-4 columns">Original model(s)</div>
+                                <div class="small-12 medium-6 large-8 columns">
+                                    <biomd:renderOriginalModels sources="${originalModels}"/></div>
+                            </div></g:if>
+                            %{--<div class='row'>
+                                <div class="medium-3 columns">Validation Status</div>
+                                <div class="medium-9 columns">${validationLevel}</div>
+                            </div>
+                            <div class='row'>
+                                <div class="medium-3 columns">Certification Comment</div>
+                                <div class="medium-9 columns">${certComment}</div>
+                            </div>--}%
+                        </div>
                     </div>
-                    <div id="Files" class="filegrid">
-                        <div class="filecol-1-3">
+                    <div id="Files" class="row filegrid">
+                        <div class="small-12 medium-3 large-3 columns">
                             <div id="treeView">
                                 <ul>
                                     <li rel="folder">
@@ -710,14 +765,14 @@
                                 </ul>
                             </div>
                         </div>
-                        <div class="filecol-2-3">
+                        <div class="small-12 medium-9 large-9 columns">
                             <div id="detailsBox" class="detailsBox"></div>
                         </div>
                     </div>
                     <div id="History">
                         <% DateFormat dateFormat = DateFormat.getDateTimeInstance(); %>
                         <ul>
-                            <li>Model owner: ${revision.model.submitter}</li>
+                            <li>Model originally submitted by : ${revision.model.submitter}</li>
                             <li>Submitted: ${dateFormat.format(allRevs.first().uploadDate)}</li>
                             <li>Last Modified: ${dateFormat.format(allRevs.last().uploadDate)}</li>
                         </ul>

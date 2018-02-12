@@ -57,6 +57,16 @@ iframe {
 .ui-widget a:visited {color: #008000; text-decoration: underline; !important}
 .ui-widget a:hover {color: #ff0000; text-decoration: none; !important}
 
+#btnEditCurationNotes a:link {
+    color: #ffffff;
+    text-decoration: none;
+}
+
+#btnEditCurationNotes a:visited {
+    color: #ffffff;
+    text-decoration: none;
+}
+
 #modelToolbar {
 	box-sizing: border-box;
 	border-right-width-value: 1px;

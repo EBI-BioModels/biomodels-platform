@@ -27,6 +27,7 @@ package net.biomodels.jummp.core
 import groovy.transform.CompileStatic
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.search.SearchResponse
+import net.biomodels.jummp.search.SortOrder
 
 /**
  * Allow dynamically changing suitable search strategy based on configuration setting.
@@ -37,8 +38,8 @@ import net.biomodels.jummp.search.SearchResponse
 
 @CompileStatic
 interface ModelSearchStrategy {
-    void clearAnnotationStatementsFromDatabase()
-    void regenerateIndices()
-    SearchResponse searchModels(String query, Map<String, Integer> paginationCriteria)
+    void clearIndex()
+    SearchResponse searchModels(String query, SortOrder sortOrder, Map<String, Integer> paginationCriteria)
     void updateIndex(RevisionTransportCommand revision)
+    String[] getSortFields()
 }
