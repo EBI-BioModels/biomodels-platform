@@ -152,6 +152,7 @@
             onSelect: function(datetext) {
                 datetext = datetext + updateOnSelect();
                 $('#datepicker').val(datetext);
+                $(this).val(datetext);
                 console.log(datetext);
             }
         });
@@ -160,7 +161,9 @@
             dateFormat: 'yy-mm-dd',
             onSelect: function(datetext) {
                 datetext = datetext + updateOnSelect();
+                $('#datepicker').val(datetext);
                 $(this).val(datetext);
+                console.log(datetext);
             }
         });
 
