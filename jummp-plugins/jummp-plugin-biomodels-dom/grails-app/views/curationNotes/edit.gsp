@@ -106,7 +106,6 @@
     </div>
     <g:javascript>
         $('#submitter, #lastModifier').on('keydown', function() {
-            console.log("ajax to load data for autocomplete");
             $(this).autocomplete({
                 source: function(request, response) {
                     $.ajax({
@@ -153,7 +152,6 @@
                 datetext = datetext + updateOnSelect();
                 $('#datepicker').val(datetext);
                 $(this).val(datetext);
-                console.log(datetext);
             }
         });
 
@@ -163,7 +161,6 @@
                 datetext = datetext + updateOnSelect();
                 $('#datepicker').val(datetext);
                 $(this).val(datetext);
-                console.log(datetext);
             }
         });
 
