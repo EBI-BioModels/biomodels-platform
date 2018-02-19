@@ -65,7 +65,12 @@
                     <div class="grid-x grid-padding-x">
                         <div class="medium-12 large-12 cell">
                             <label>Comments
-                                <textarea id="comment" placeholder="none" aria-multiline="true" rows="5">${curationNotes.comment}</textarea>
+                                <textarea id="comment" placeholder="Enter your curation comments here"
+                                          aria-multiline="true" rows="5"
+                                          style="white-space: pre-wrap">${curationNotes.comment}</textarea>
+                                <textarea id="tmpComment"
+                                          aria-multiline="true"
+                                          rows="5" style="display: none">${curationNotes.comment}</textarea>
                             </label>
                         </div>
 
@@ -264,8 +269,8 @@
         });
 
         $('#btnReset').on('click', function(event) {
-            var comment = "${curationNotes.comment.replace("\n", "<br/>")}";
-            $('#comment').html(comment);
+            var orgComment = $('#tmpComment').val();
+            $('#comment').val(orgComment);
             $('#submitter').val("${curationNotes.submitter.username}");
             $('#lastModifier').val("${curationNotes.lastModifier.username}");
             $('#txtDateAdded').val("${dateFormat.format(curationNotes.dateAdded)}");
