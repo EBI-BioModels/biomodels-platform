@@ -267,7 +267,8 @@
         });
 
         $('#btnReset').on('click', function(event) {
-            $('#comment').val("${curationNotes.comment}");
+            var comment = "${curationNotes.comment.replace("\n", "<br/>")}";
+            $('#comment').html(comment);
             $('#submitter').val("${curationNotes.submitter.username}");
             $('#lastModifier').val("${curationNotes.lastModifier.username}");
             $('#txtDateAdded').val("${dateFormat.format(curationNotes.dateAdded)}");
