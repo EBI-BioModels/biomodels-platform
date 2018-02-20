@@ -644,11 +644,11 @@ target(main: "Puts everything together to import models from a given folder") {
             tobeProcessed = true
         }
 
-        boolean existed = modelsImported.contains(f.name)
-        if (f.isDirectory() && f.name ==~ modelFolderPattern && tobeProcessed && !existed) {
+        boolean exists = modelsImported.contains(f.name)
+        if (f.isDirectory() && f.name ==~ modelFolderPattern && tobeProcessed && !exists) {
             processModelFolder f
         }
-        if (existed) {
+        if (exists) {
             addModelError(f.name, "The model was already imported!")
         }
     }
