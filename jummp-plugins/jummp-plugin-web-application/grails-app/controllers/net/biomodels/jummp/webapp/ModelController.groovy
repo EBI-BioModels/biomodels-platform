@@ -243,6 +243,10 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                    revisionNumber = Integer.parseInt(params.revisionId)
                 }
                 Revision revision = revisionNumber >= 0 ? model.revisions.getAt(revisionNumber) : model.revisions.last()
+                if (!revision) {
+                    forward(controller: 'errors', action: 'error404')
+                    return
+                }
                 rev = new RevisionAdapter(revision: revision).toCommandObject()
                 rev.name = rev.model.submissionId
                 model.publication = null
