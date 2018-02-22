@@ -472,6 +472,12 @@
                     primary: "ui-icon-tag"
                 }
             }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });*/
+            $("#checkConsistency").button({
+                text: false,
+                icons: {
+                    primary: "ui-icon-check"
+                }
+            }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
             $("#certify").button({
                 text: false,
                 icons: {
@@ -584,6 +590,15 @@
                                     onclick="return $.jummp.openPage('${g.createLink(controller: 'qcInfo',
                                     action: 'edit',
                             id: (revision.model.publicationId) ?: (revision.model.submissionId))}')">Certify</button>
+                        </li>
+                    </g:if>
+                    <g:if test="${canCheckConsistency}">
+                        <li>
+                            <button id="checkConsistency"
+                                    class="toolbutton"
+                                    onclick="alert('This function is under construction')">
+                                Check Consistency
+                            </button>
                         </li>
                     </g:if>
                 </ul>
