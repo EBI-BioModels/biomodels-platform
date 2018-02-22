@@ -30,11 +30,12 @@ import net.biomodels.jummp.core.model.RevisionTransportCommand
 
 /**
  * Controller for handling Model files in the SBML format.
- * @author  Raza Ali <raza.ali@ebi.ac.uk>
+ * @author Raza Ali <raza.ali@ebi.ac.uk>
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
 class SbmlController {
+    def modelDelegateService
     def metadataDelegateService
 
     def show = {
@@ -45,6 +46,8 @@ class SbmlController {
         if (genericAnno) {
             model["genericAnnotations"] = genericAnno
         }
+        boolean canCheckConsistency = modelDelegateService.canCheckConsistency(r)
+        model["canCheckConsistency"] = canCheckConsistency
         render(view: "/model/sbml/show", model: model)
     }
 }

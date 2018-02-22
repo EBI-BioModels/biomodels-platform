@@ -2088,6 +2088,23 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
     }
 
     /**
+     * Check if the current user could do a consistency check. Only logged-in user who has
+     * read permission on the revision can check consistency of its content.
+     *
+     * @param   revision    The revision object is checked consistency
+     * @return  logical val true/false will be returned depending on the combined criteria
+     */
+    boolean canCheckConsistency(Revision revision) {
+        final boolean isAnonymous = !springSecurityService.isLoggedIn() &&
+                                    SpringSecurityUtils.ifAllGranted('ROLE_ANONYMOUS')
+        final boolean isAuthenticated = !isAnonymous
+        final boolean isReadable = SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN") ||
+            aclUtilService.hasPermission(springSecurityService.authentication, revision, [BasePermission.READ])
+        final boolean isAccessible = isAuthenticated && isReadable
+        isAccessible
+    }
+
+    /**
      * Makes a Model Revision publicly available.
      * This means that ROLE_USER and ROLE_ANONYMOUS gain read access to the Revision and by that also to
      * the Model.

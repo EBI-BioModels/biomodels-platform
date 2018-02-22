@@ -284,6 +284,11 @@ class ModelDelegateService implements IModelService {
         canCertify(revision)
     }
 
+    Boolean canCheckConsistency(RevisionTransportCommand revision) {
+        Revision actualRevision = Revision.get(revision.id)
+        modelService.canCheckConsistency(actualRevision)
+    }
+
     Boolean canSubmitForPublication(RevisionTransportCommand revision) {
         if ((revision.state == ModelState.UNPUBLISHED) && (revision.state != ModelState.UNDER_CURATION)) {
             try {
