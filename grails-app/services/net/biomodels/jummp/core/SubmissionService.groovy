@@ -593,7 +593,7 @@ class SubmissionService {
 
         //Always process files in create mode. Possibly needs optimisation.
         boolean processingRequired(Map<String, Object> workingMemory) {
-            return true;
+            return true
         }
 
         /**

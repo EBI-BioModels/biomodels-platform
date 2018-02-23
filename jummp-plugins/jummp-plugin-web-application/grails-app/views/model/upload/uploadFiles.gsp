@@ -59,22 +59,20 @@
     </head>
     <body>
         <g:if test="${showProceedAsUnknownFormat}">
-          <div id="dialog-confirm" title="Model Format Error">
-            <p>The model was detected as ${modelFormatDetectedAs} but is not a
-            supported version. You can proceed with the submission but the model
-            will be stored as an unknown model. Would you like to proceed?</p>
-          </div>
+            <div id="dialog-confirm" title="Model Format Error">
+                <p>The model was detected as ${modelFormatDetectedAs} but is not a
+                supported version. You can proceed with the submission but the model
+                will be stored as an unknown model. Would you like to proceed?</p>
+            </div>
         </g:if>
         <g:if test ="${showProceedWithoutValidationDialog}">
-          <div id="dialog-confirm" title="Validation Error">
-            <p>The model files did not pass validation, with errors as below. Would you like to proceed?</p>
-            <ul>
-            	<g:each in="${workingMemory['validationErrorList']}">
-            		<li>${it}</li>
-            	</g:each>
-            </ul>
-            </p>
-          </div>
+            <div id="dialog-confirm" title="Validation Error">
+                <p>The model files did not pass validation, with errors as below. Would you like to proceed?</p>
+                <ul><g:each in="${workingMemory['validationErrorList']}">
+                    <li>${it}</li>
+                    </g:each>
+                </ul></p>
+            </div>
         </g:if>
         <g:render template="/templates/errorMessage"/>
         <h2><g:message code="submission.upload.header"/></h2>

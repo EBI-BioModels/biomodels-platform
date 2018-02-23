@@ -872,17 +872,13 @@ About to submit ${mainFileList.inspect()} and ${additionalFilesMap.inspect()}.""
                 MFTC format = flow.workingMemory.get("model_type")
                 if (format && format.identifier !="UNKNOWN" && format.identifier != "matlab" && format.formatVersion == "*") {
                     UnknownFormatVersion()
-                }
-                else if (!flow.workingMemory.containsKey("validation_error")) {
+                } else if (!flow.workingMemory.containsKey("validation_error")) {
                     Valid()
-                }
-                else
-                {
+                } else {
                     String errorAsString = flow.workingMemory.remove("validation_error") as String
                     if (errorAsString.contains("ModelValidationError")) {
                         ModelNotValid()
-                    }
-                    else {
+                    } else {
                         FilesNotValid()
                     }
                 }
