@@ -102,6 +102,7 @@ import org.springframework.beans.factory.InitializingBean
  * @author  Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
  * @author  Raza Ali <raza.ali@ebi.ac.uk>
  * @author  Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author  Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
     static transactional = true
@@ -144,6 +145,21 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
             //sbml2OctaveConverter()
             // FIXME: fails the startup of Tomcat server
             //sbml2BioPaxConverter()
+        }
+    }
+
+    void checkConsistency(RevisionTransportCommand revision, final List<String> errors) {
+        RepositoryFileTransportCommand mainFileTC = revision.files.find {
+            it.mainFile
+        }
+        if (!mainFileTC) {
+            String modelSubmissionId = revision.model.submissionId
+            String error = "SBMLModel with the identifier ${modelSubmissionId} has no a main file"
+            log.debug(error)
+            errors.add(error)
+        } else {
+            File sbmlFile = new File(mainFileTC.path)
+            getFileAsValidatedSBMLDocument(sbmlFile, errors)
         }
     }
 

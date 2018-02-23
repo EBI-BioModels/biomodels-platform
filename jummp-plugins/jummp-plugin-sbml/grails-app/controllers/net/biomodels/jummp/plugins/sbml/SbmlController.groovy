@@ -24,9 +24,11 @@
 
 package net.biomodels.jummp.plugins.sbml
 
+import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.annotation.QualifierTransportCommand
 import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
+import org.springframework.security.access.AccessDeniedException
 
 /**
  * Controller for handling Model files in the SBML format.
@@ -37,6 +39,7 @@ import net.biomodels.jummp.core.model.RevisionTransportCommand
 class SbmlController {
     def modelDelegateService
     def metadataDelegateService
+    def sbmlService
 
     def show = {
         Map model = flash.genericModel
@@ -49,5 +52,53 @@ class SbmlController {
         boolean canCheckConsistency = modelDelegateService.canCheckConsistency(r)
         model["canCheckConsistency"] = canCheckConsistency
         render(view: "/model/sbml/show", model: model)
+    }
+
+    @Secured(['IS_AUTHENTICATED_FULLY'])
+    def checkConsistency() {
+        RevisionTransportCommand rev
+        try {
+            rev = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
+            List<String> errors = new ArrayList<String>()
+            sbmlService.checkConsistency(rev, errors)
+            String message = errors.size() > 0 ? ">> with ${errors.size()} error(s):" : ">> no error"
+            log.info("checking consistency $message")
+            println("checking consistency $message")
+            String report = message
+            if (errors.size()) {
+                report = report.concat("<ul>")
+                errors.each {
+                    log.error(it)
+                    println(it)
+                    report = report.concat("<li>").concat(it).concat("</li>")
+                }
+                report = report.concat("</ul>")
+            }
+            redirect(action: "showWithMessage",
+                id: rev.identifier(),
+                params: [flashMessage: "Model has been checked consistency with the report: <br/>".concat(report)])
+        } catch(AccessDeniedException e) {
+            log.error(e.message, e)
+            forward(plugin: "jummp-plugin-web-application", controller: "errors", action: "error403")
+        } catch(IllegalArgumentException e) {
+            log.error(e.message)
+            redirect(action: "showWithMessage",
+                id: rev.identifier(),
+                params: [
+                    flashMessage: """\
+Model has not been checked consistency because there is a problem with this version of the model. Sorry!"""
+                ])
+        }
+    }
+
+    @Secured(['IS_AUTHENTICATED_FULLY'])
+    def showWithMessage() {
+        flash["giveMessage"] = params.flashMessage
+        StringBuilder modelId = new StringBuilder(params.id)
+        if (params.revisionId) {
+            modelId.append('.').append(params.revisionId)
+        }
+        //redirect(plugin: "jummp-plugin-web-application", controller: "model", action: "show", id: modelId.toString())
+        redirect(url: "${grailsApplication.config.grails.serverURL}/${modelId.toString()}")
     }
 }

@@ -381,10 +381,29 @@
             tree.bind("loaded.jstree", function (event, data) {
                 tree.jstree("open_all");
             });
+            $('#confirm-model-consistency-check').dialog({
+                resizable: false,
+                autoOpen: false,
+                height: 250,
+                width: 500,
+                modal: true,
+                buttons: {
+                    Confirm: function() {
+                        var url = "${g.createLink(controller: 'sbml',
+                                        action: 'checkConsistency',
+                                        id: revision.identifier())}";
+                        $.jummp.openPage(url);
+                        $(this).dialog("close");
+                    },
+                    Cancel: function() {
+                        $(this).dialog("close");
+                    }
+                }
+            });
             $('#confirm-model-publish').dialog({
                 resizable: false,
                 autoOpen: false,
-                height: 300,
+                height: 250,
                 width: 500,
                 modal: true,
                 buttons: {
@@ -593,10 +612,13 @@
                         </li>
                     </g:if>
                     <g:if test="${canCheckConsistency}">
+                        <div id="confirm-model-consistency-check" title="Model consistency check" style="display:none;">
+                            <p>Checking model consistency uses an online validator. This might take time for uploading and validating the model. Do you want to proceed the validation?</p>
+                        </div>
                         <li>
                             <button id="checkConsistency"
                                     class="toolbutton"
-                                    onclick="alert('This function is under construction')">
+                                    onclick="return $('#confirm-model-consistency-check').dialog('open');">
                                 Check Consistency
                             </button>
                         </li>
