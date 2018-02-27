@@ -239,7 +239,7 @@ class SbmlServiceTests extends JummpIntegrationTest {
         fileSystemService.root = new File("target/sbml/git/").getCanonicalFile()
         fileSystemService.root.mkdirs()
         String containerPath = fileSystemService.root.absolutePath + "/sss/"
-        fileSystemService.currentModelContainer = containerPath
+        fileSystemService.currentModelContainer.set(containerPath)
         modelService.vcsService.modelContainerRoot = fileSystemService.root
         GitManagerFactory gitService = new GitManagerFactory()
         gitService.grailsApplication = grailsApplication
