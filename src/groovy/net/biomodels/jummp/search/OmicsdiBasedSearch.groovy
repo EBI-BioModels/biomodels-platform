@@ -193,7 +193,7 @@ There was a problem obtaining search result from EBI search server. The root cau
                 String submissionId = entry.id
                 String modelName = entry.getFields().get('name')[0]
                 String submissionDateString = entry.getFields().get('submission_date')[0]
-                java.text.SimpleDateFormat simpleDateFormat = new java.text.SimpleDateFormat("yyyymmdd")
+                java.text.SimpleDateFormat simpleDateFormat = new java.text.SimpleDateFormat("yyyyMMdd")
                 Date submissionDate = simpleDateFormat.parse(submissionDateString)
                 String description = ""
                 boolean haveDescription = entry.getFields().get('description').length > 0
@@ -202,7 +202,7 @@ There was a problem obtaining search result from EBI search server. The root cau
                 }
                 String submitterName = entry.getFields().get('submitter')[0]
                 String modifiedDateString = entry.getFields().get('last_modification_date')[0]
-                simpleDateFormat = new java.text.SimpleDateFormat("yyyymmdd")
+                simpleDateFormat = new java.text.SimpleDateFormat("yyyyMMdd")
                 Date modifiedDate = simpleDateFormat.parse(modifiedDateString)
                 ModelState state = ModelState.PUBLISHED
                 String formatName = entry.getFields().get('modelformat')[0]
