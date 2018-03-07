@@ -25,8 +25,19 @@
         Model model = Model.findByPublicationIdOrSubmissionId(modelPerennialOrSubmissionId, modelPerennialOrSubmissionId)
         CurationNotes curationNotes = CurationNotes.findByModel(model)
         CurationNotesTransportCommand curationNotesTC
-        use(CurationNotesCategory) {
-            curationNotesTC = curationNotes.toCommandObject()
+        if (curationNotes) {
+            use(CurationNotesCategory) {
+                curationNotesTC = curationNotes.toCommandObject()
+            }
+        } else {
+            curationNotesTC = new CurationNotesTransportCommand()
+            curationNotesTC.id = -1
+            curationNotesTC.comment = null
+            curationNotesTC.dateAdded = new Date()
+            curationNotesTC.lastModified = new Date()
+            curationNotesTC.curationImage = null
+            curationNotesTC.lastModifier = null
+            curationNotesTC.submitter = null
         }
         String curationImage
         curationImage = curationNotesTC.curationImage ? Base64.encoder.encodeToString(curationNotesTC.curationImage) : null
@@ -234,12 +245,14 @@
             var dateAdded = $('#txtDateAdded').val();
             var lastModified = $('#txtLastModified').val();
             var curationNotes = {
-                'id': ${curationNotes.id},
                 'comment': comment,
                 'submitter': submitter,
                 'lastModifier': lastModifier,
                 'dateAdded': dateAdded,
                 'lastModified': lastModified
+            };
+            if (${curationNotesTC.id != -1}) {
+                curationNotes['id'] = ${curationNotesTC.id};
             }
             curationNotes = JSON.stringify(curationNotes);
             "use strict";
