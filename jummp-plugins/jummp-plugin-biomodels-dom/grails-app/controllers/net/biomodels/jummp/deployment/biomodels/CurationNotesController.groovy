@@ -27,6 +27,10 @@ class CurationNotesController {
     def edit() {
         render(view: "edit")
     }
+	
+	def add() {
+		render(view: "edit")
+	}
 
     def updateCurationImage() {
         curationNotesService.updateCurationImage(params.model, params.curaImg)

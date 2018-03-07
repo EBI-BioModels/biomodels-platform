@@ -56,7 +56,8 @@ import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONObject
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.multipart.MultipartFile
-
+import net.biomodels.jummp.plugins.security.Role
+import org.springframework.security.core.GrantedAuthority
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -286,6 +287,11 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                 List<String> originalModels = metadataDelegateService.fetchOriginalModels(rev)
                 Map<String, String> modellingApproaches =
                     metadataDelegateService.fetchModellingApproaches(rev)
+		        Collection<GrantedAuthority> grantedAuthorities = springSecurityService.getPrincipal().getAuthorities()
+                Set<String> roleNames = grantedAuthorities.collect {
+                    it.getAuthority()
+                }
+                boolean hasCuratorRole = "ROLE_CURATOR" in roleNames
                 def model = [revision               : rev,
                              authors                : rev.model.creators,
                              allRevs                : revs,
@@ -302,7 +308,8 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                              curationStatus         : curationStatus,
                              modellingApproaches    : modellingApproaches,
                              curationNotes          : curationNotes,
-                             originalModels         : originalModels
+                             originalModels         : originalModels,
+                             hasCuratorRole         : hasCuratorRole
                 ]
                 if (rev.id == revision.id) {
                     flash.genericModel = model
