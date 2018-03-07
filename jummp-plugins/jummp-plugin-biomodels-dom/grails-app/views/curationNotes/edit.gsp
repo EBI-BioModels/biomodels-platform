@@ -67,36 +67,36 @@
                             <label>Comments
                                 <textarea id="comment" placeholder="Enter your curation comments here"
                                           aria-multiline="true" rows="5"
-                                          style="white-space: pre-wrap">${curationNotes.comment}</textarea>
+                                          style="white-space: pre-wrap">${curationNotesTC.comment}</textarea>
                                 <textarea id="tmpComment"
                                           aria-multiline="true"
-                                          rows="5" style="display: none">${curationNotes.comment}</textarea>
+                                          rows="5" style="display: none">${curationNotesTC.comment}</textarea>
                             </label>
                         </div>
 
                         <div class="medium-12  large-12 cell">
                             <label>Submitter
                                 <input type="text" id="submitter" placeholder="the submitter who had deposited the simulation results"
-                                       value="${curationNotes.submitter.username}">
+                                       value="${curationNotesTC.submitter?.username}">
                             </label>
                         </div>
                         <div class="medium-12 large-12 large-12 cell">
                             <label>Last modifier
                                 <input type="text" id="lastModifier" placeholder="the last modifier who is updating the simulation results"
-                                       value="${curationNotes.lastModifier.username}">
+                                       value="${curationNotesTC.lastModifier?.username}">
                             </label>
                         </div>
                         <div class="row">
                             <div class="small-12 medium-6 large-6 columns">
                                 <label>Date added
                                     <input type="text" id="txtDateAdded" placeholder="enter the date when the simulation results were added"
-					   value="${dateFormat.format(curationNotes.dateAdded)}">
+					   value="${dateFormat.format(curationNotesTC.dateAdded)}">
                                 </label>
                             </div>
                             <div class="small-12 medium-6 large-6 columns">
                                 <label>Last modified
                                     <input type="text" id="txtLastModified" placeholder="enter the latest date when the simulation results have been updated"
-					   value="${dateFormat.format(curationNotes.lastModified)}">
+					   value="${dateFormat.format(curationNotesTC.lastModified)}">
                                 </label>
                             </div>
                         </div>
@@ -271,10 +271,10 @@
         $('#btnReset').on('click', function(event) {
             var orgComment = $('#tmpComment').val();
             $('#comment').val(orgComment);
-            $('#submitter').val("${curationNotes.submitter.username}");
-            $('#lastModifier').val("${curationNotes.lastModifier.username}");
-            $('#txtDateAdded').val("${dateFormat.format(curationNotes.dateAdded)}");
-            $('#txtLastModified').val("${dateFormat.format(curationNotes.lastModified)}");
+            $('#submitter').val("${curationNotesTC.submitter?.username}");
+            $('#lastModifier').val("${curationNotesTC.lastModifier?.username}");
+            $('#txtDateAdded').val("${dateFormat.format(curationNotesTC.dateAdded)}");
+            $('#txtLastModified').val("${dateFormat.format(curationNotesTC.lastModified)}");
         });
     </g:javascript>
 </body>
