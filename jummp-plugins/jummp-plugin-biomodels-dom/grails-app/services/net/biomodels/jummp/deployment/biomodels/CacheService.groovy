@@ -1,14 +1,14 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import grails.util.Holders
-import net.biomodels.jummp.models.Cache
+import net.biomodels.jummp.models.JummpEntry
 import net.biomodels.jummp.utils.TimeUtils
 
 import java.nio.file.Files
 
 class CacheService {
 
-    private Map<String, Cache<Long, Serializable>> cached = new HashMap<>()
+    private Map<String, JummpEntry<Long, Serializable>> cached = new HashMap<>()
 
     CacheService() {
         reloadCachedFiles(getCacheDir())
@@ -79,7 +79,7 @@ class CacheService {
         if (hasCache(name)) {
             cached.get(name).setValue(value);
         } else {
-            cached.put(name, new Cache<Long, Serializable>(TimeUtils.currentTimestamp + expired, value))
+            cached.put(name, new JummpEntry<Long, Serializable>(TimeUtils.currentTimestamp + expired, value))
         }
         writeObjectToFile(getCacheDir(), name, cached.get(name))
     }
@@ -102,9 +102,9 @@ class CacheService {
      * @param file
      * @return
      */
-    Cache<Long, Serializable> loadObjectFromFile(File file) {
+    JummpEntry<Long, Serializable> loadObjectFromFile(File file) {
         return new FileInputStream(file).withObjectInputStream(getClass().classLoader) {
-            is -> is.readObject() as Cache<Long, Serializable>
+            is -> is.readObject() as JummpEntry<Long, Serializable>
         }
     }
 }
