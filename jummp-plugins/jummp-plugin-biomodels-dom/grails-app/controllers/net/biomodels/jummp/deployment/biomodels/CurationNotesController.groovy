@@ -24,12 +24,40 @@ class CurationNotesController {
 
     }
 
+    private collectParams() {
+        def modelPerennialOrSubmissionId = params.model
+        Model model = Model.findByPublicationIdOrSubmissionId(modelPerennialOrSubmissionId, modelPerennialOrSubmissionId)
+        CurationNotes curationNotes = CurationNotes.findByModel(model)
+        CurationNotesTransportCommand curationNotesTC
+        if (curationNotes) {
+            use(CurationNotesCategory) {
+                curationNotesTC = curationNotes.toCommandObject()
+            }
+        } else {
+            curationNotesTC = new CurationNotesTransportCommand()
+            curationNotesTC.id = -1
+            curationNotesTC.comment = null
+            curationNotesTC.dateAdded = new Date()
+            curationNotesTC.lastModified = new Date()
+            curationNotesTC.curationImage = null
+            curationNotesTC.lastModifier = null
+            curationNotesTC.submitter = null
+        }
+        String curationImage
+        curationImage = curationNotesTC.curationImage ? Base64.encoder.encodeToString(curationNotesTC.curationImage) : null
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+        ['curationNotesTC': curationNotesTC, 'curationImage': curationImage,
+         'dateFormat': dateFormat, 'id': modelPerennialOrSubmissionId]
+    }
+
     def edit() {
-        render(view: "edit")
+        def data = collectParams()
+        render(view: "edit", model: data)
     }
 	
 	def add() {
-		render(view: "edit")
+        def data = collectParams()
+		render(view: "add", model: data)
 	}
 
     def updateCurationImage() {

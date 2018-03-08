@@ -20,31 +20,15 @@
 </head>
 
 <body>
-    <%
-        def modelPerennialOrSubmissionId = params.model
-        Model model = Model.findByPublicationIdOrSubmissionId(modelPerennialOrSubmissionId, modelPerennialOrSubmissionId)
-        CurationNotes curationNotes = CurationNotes.findByModel(model)
-        CurationNotesTransportCommand curationNotesTC
-        if (curationNotes) {
-            use(CurationNotesCategory) {
-                curationNotesTC = curationNotes.toCommandObject()
-            }
-        } else {
-            curationNotesTC = new CurationNotesTransportCommand()
-            curationNotesTC.id = -1
-            curationNotesTC.comment = null
-            curationNotesTC.dateAdded = new Date()
-            curationNotesTC.lastModified = new Date()
-            curationNotesTC.curationImage = null
-            curationNotesTC.lastModifier = null
-            curationNotesTC.submitter = null
-        }
-        String curationImage
-        curationImage = curationNotesTC.curationImage ? Base64.encoder.encodeToString(curationNotesTC.curationImage) : null
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
-    %>
     <div class="row">
         <h2>Update curation notes of the model
+            <a href="${createLink(controller: "model", action: "show", id: id)}"
+               title="Back to the model display page">${id}</a></h2>
+        <g:render template="/templates/curationNotesEditor"
+                  plugin="jummp-plugin-biomodels-dom"
+                  model="['curationNotesTC': curationNotesTC,
+                          'curationImage': curationImage,
+                          'dateFormat': dateFormat]" />
             <a href="${createLink(controller: "model", action: "show", id: modelPerennialOrSubmissionId)}"
                title="Back to the model display page">${modelPerennialOrSubmissionId}</a></h2>
         <div id="txtStatus" style="color: #550000; font-weight: 900; font-size: larger"></div>
