@@ -53,24 +53,11 @@ class CurationNotesService {
             model {
                 eq "id", modelId
             }
+            order("lastModified", "desc")
         }
         CurationNotesTransportCommand latestCurationNotes = null
-        if (!entries.isEmpty()) {
-            // assume the first element as the deliberately returned one
-            CurationNotes proposedCurationNotes = entries[0]
-            Date lastModifiedDate = proposedCurationNotes.lastModified
-            use(CurationNotesCategory) {
-                latestCurationNotes = proposedCurationNotes.toCommandObject()
-            }
-            // determine the latest curation notes
-            use(CurationNotesCategory) {
-                entries.each { CurationNotes e ->
-                    if (e.lastModified > lastModifiedDate) {
-                        lastModifiedDate = e.lastModified
-                        latestCurationNotes = e.toCommandObject()
-                    }
-                }
-            }
+        use(CurationNotesCategory) {
+            latestCurationNotes = entries.first().toCommandObject()
         }
         return latestCurationNotes
     }
