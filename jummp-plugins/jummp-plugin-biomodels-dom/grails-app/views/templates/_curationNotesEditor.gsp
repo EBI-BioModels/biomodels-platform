@@ -1,5 +1,4 @@
-<div id="txtStatus" style="color: #ED0000; font-weight: 900; font-size: larger"></div>
-<form>
+<div id="txtStatus" style="color: #ED0000; font-weight: 600; font-size: larger"></div>
 <form id="curationNotesForm">
     <div class="small-12 medium-6 large-6 columns">
         <div class="grid-container">
