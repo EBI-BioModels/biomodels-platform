@@ -13,6 +13,7 @@
                         </g:if>
                         <g:else>
                             <img src="${grailsApplication.config.grails.serverURL}/images/biomodels/No-Image-Available.jpg"
+                                 id="curaImageHolder"
                                  title="The curation images are not available" />
                         </g:else><br/>
                     </label>
