@@ -166,6 +166,7 @@ function buildCurationNotesTC() {
     curationNotes = JSON.stringify(curationNotes);
     return curationNotes;
 }
+
 function previewImage(input) {
     // reused sample codes from https://stackoverflow.com/a/4459419/865603
     if (input.files && input.files[0]) {
@@ -192,7 +193,7 @@ $('#btnSave').on("click", function(event) {
         $.ajax({
             dataType: "text",
             type: "POST",
-            url: $.jummp.createLink("curationNotes", "update"),
+            url: $.jummp.createLink("curationNotes", "doAddOrUpdate"),
             cache: true,
             data: {
                 curationNotes: curationNotes,

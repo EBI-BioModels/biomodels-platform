@@ -85,9 +85,9 @@ class CurationNotesController {
 		render(view: "add", model: data)
 	}
 
-    def update() {
+    def doAddOrUpdate() {
         CurationNotesTransportCommand command = parseCuratioNotes()
-        boolean status = curationNotesService.updateCurationNotes(command)
+        boolean status = curationNotesService.doAddOrUpdateCurationNotes(command)
         String message
         if (status) {
             message = "Simulation results have been updated successfully"
