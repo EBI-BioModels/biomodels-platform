@@ -72,6 +72,7 @@
 </form>
 </div>
 <g:javascript>
+    var imgUploadedStream;
     $('#submitter, #lastModifier').on('keydown', function() {
     $(this).autocomplete({
         source: function(request, response) {
@@ -156,6 +157,7 @@ function buildCurationNotesTC() {
     if (${curationNotesTC.id != -1}) {
         curationNotes['id'] = ${curationNotesTC.id};
     }
+    curationNotes['curationImage'] = imgUploadedStream;
     curationNotes = JSON.stringify(curationNotes);
     return curationNotes;
 }
@@ -166,49 +168,15 @@ function previewImage(input) {
         var image = input.files[0];
         reader.onload = function (event) {
             var imgSrc = event.target.result;
+            imgUploadedStream = event.target.result.replace("data:"+ image.type +";base64,", '');
             $('#curaImageHolder').attr('src', imgSrc);
         }
         reader.readAsDataURL(image);
     }
 }
 
-function saveImage(input) {
-    if (input.files && input.files[0]) {
-        var reader = new FileReader();
-        reader.onload = function(event) {
-            var file = input.files[0];
-            var fileName = input.files[0].name;
-            // remove the prefix to only keep data, but it depends on the server
-            var data = event.target.result.replace("data:"+ file.type +";base64,", '');
-            var curationNotes = buildCurationNotesTC();
-            $.ajax({
-                type: "POST",
-                url: $.jummp.createLink("curationNotes", "updateCurationImage"),
-                dataType: "text",
-                data: {
-                    curationNotes: curationNotes,
-                    curationImage: data,
-                    model: "${id}"
-                },
-                cache: true,
-                async: true,
-                processData: true,
-                success: function(data) {
-                    $('#txtStatus').text(data);
-                },
-                error: function(jqXHR, textStatus, errorThrown) {
-                    $('#txtStatus').text("Error: ", jqXHR.responseText + "\n" + textStatus + ": " + errorThrown);
-                }
-            });
-        }
-        reader.readAsDataURL(input.files[0]);
-    }
-}
-
 $("#uploadCurationImage").change(function(){
     previewImage(this);
-    // save it to the database
-    saveImage(this);
 });
 
 $('#btnSave').on("click", function(event) {

@@ -69,6 +69,9 @@ class CurationNotesController {
                           dateAdded: dateAdded,
                           lastModified: lastModified]
         CurationNotesTransportCommand command = new CurationNotesTransportCommand(bindingMap)
+        if (curationNotes["curationImage"]) {
+            command.curationImage = Base64.decoder.decode(curationNotes["curationImage"])
+        }
         command
     }
 
@@ -81,24 +84,6 @@ class CurationNotesController {
         def data = sanitiseParams()
 		render(view: "add", model: data)
 	}
-
-    def updateCurationImage() {
-        CurationNotesTransportCommand command = parseCuratioNotes()
-        if (params.curationImage) {
-            command.curationImage = Base64.decoder.decode(params.curationImage)
-        }
-        boolean success = curationNotesService.updateCurationImage(command)
-        String message
-        if (success) {
-            message ="Curation image has been updated successfully"
-            render message
-            log.debug(message)
-        } else {
-            message ="There is an error when trying to persist curation image"
-            render message
-            log.error(message)
-        }
-    }
 
     def update() {
         CurationNotesTransportCommand command = parseCuratioNotes()
