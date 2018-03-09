@@ -27,13 +27,8 @@ class CurationNotesController {
     private collectParams() {
         def modelPerennialOrSubmissionId = params.model
         Model model = Model.findByPublicationIdOrSubmissionId(modelPerennialOrSubmissionId, modelPerennialOrSubmissionId)
-        CurationNotes curationNotes = CurationNotes.findByModel(model)
-        CurationNotesTransportCommand curationNotesTC
-        if (curationNotes) {
-            use(CurationNotesCategory) {
-                curationNotesTC = curationNotes.toCommandObject()
-            }
-        } else {
+        CurationNotesTransportCommand curationNotesTC = curationNotesService.fetchCurationNotesForModel(model.id)
+        if (!curationNotesTC) {
             curationNotesTC = new CurationNotesTransportCommand()
             curationNotesTC.id = -1
             curationNotesTC.comment = null
