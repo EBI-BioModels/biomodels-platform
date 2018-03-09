@@ -131,21 +131,23 @@ There is an error when trying to persist curate image into database: ${cn.errors
         Model model = Model.get(cntc.model.id)
         Long id = cntc.id
         CurationNotes cn = CurationNotes.get(id)
-        if (cn) {
-            cn.comment = cntc.comment
-            cn.submitter = cntc.submitter
-            cn.lastModifier = cntc.lastModifier
-            cn.dateAdded = cntc.dateAdded
-            cn.lastModified = cntc.lastModified
-            cn.curationImage = cntc.curationImage
-            if (cn.save(flush: true)) {
-                log.debug("The simulation results of the model $model.id have been saved!")
-                return true
-            } else {
-                log.error("""\
-Failed to try to persist curation notes of the model $model.id into database: ${cn.errors.allErrors.inspect()}""")
-            }
+        if (!cn) {
+            cn = new CurationNotes()
         }
-        false
+        cn.model = model
+        cn.comment = cntc.comment
+        cn.submitter = cntc.submitter
+        cn.lastModifier = cntc.lastModifier
+        cn.dateAdded = cntc.dateAdded
+        cn.lastModified = cntc.lastModified
+        cn.curationImage = cntc.curationImage
+        if (cn.save(flush: true)) {
+            log.debug("The simulation results of the model $model.id have been saved!")
+            return true
+        } else {
+            log.error("""\
+Failed to try to persist curation notes of the model $model.id into database: ${cn.errors.allErrors.inspect()}""")
+            return false
+        }
     }
 }
