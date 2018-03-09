@@ -1,5 +1,6 @@
 <div id="txtStatus" style="color: #ED0000; font-weight: 900; font-size: larger"></div>
 <form>
+<form id="curationNotesForm">
     <div class="small-12 medium-6 large-6 columns">
         <div class="grid-container">
             <div class="grid-x grid-padding-x">
@@ -37,27 +38,31 @@
                 </div>
 
                 <div class="medium-12  large-12 cell">
-                    <label>Submitter
-                        <input type="text" id="submitter" placeholder="the submitter who had deposited the simulation results"
+                    <label>Submitter <small style="color: red">required</small>
+                        <input type="text" id="submitter" required
+                               placeholder="the submitter who had deposited the simulation results"
                                value="${curationNotesTC.submitter?.username}">
                     </label>
                 </div>
                 <div class="medium-12 large-12 large-12 cell">
-                    <label>Last modifier
-                        <input type="text" id="lastModifier" placeholder="the last modifier who is updating the simulation results"
+                    <label>Last modifier <small style="color: red">required</small>
+                        <input type="text" id="lastModifier" required
+                               placeholder="the last modifier who is updating the simulation results"
                                value="${curationNotesTC.lastModifier?.username}">
                     </label>
                 </div>
                 <div class="row">
                     <div class="small-12 medium-6 large-6 columns">
-                        <label>Date added
-                            <input type="text" id="txtDateAdded" placeholder="enter the date when the simulation results were added"
+                        <label>Date added <small style="color: red">required</small>
+                            <input type="text" id="txtDateAdded" required
+                                   placeholder="enter the date when the simulation results were added"
                                    value="${dateFormat.format(curationNotesTC.dateAdded)}">
                         </label>
                     </div>
                     <div class="small-12 medium-6 large-6 columns">
-                        <label>Last modified
-                            <input type="text" id="txtLastModified" placeholder="enter the latest date when the simulation results have been updated"
+                        <label>Last modified <small style="color: red">required</small>
+                            <input type="text" id="txtLastModified" required
+                                   placeholder="enter the latest date when the simulation results have been updated"
                                    value="${dateFormat.format(curationNotesTC.lastModified)}">
                         </label>
                     </div>
@@ -180,31 +185,34 @@ $("#uploadCurationImage").change(function(){
 });
 
 $('#btnSave').on("click", function(event) {
-    var curationNotes = buildCurationNotesTC();
-    "use strict";
-    event.preventDefault();
-    $.ajax({
-        dataType: "text",
-        type: "GET",
-        url: $.jummp.createLink("curationNotes", "update"),
-        cache: true,
-        contentType: "application/json; charset=utf-8",
-        data: {
-            curationNotes: curationNotes,
-            model: "${id}"
-        },
-        processData: true,
-        async: false,
-        beforeSend: function() {
-            $('#txtStatus').text("The curation notes are being saved. Please wait...");
-        },
-        success: function(data) {
-            $('#txtStatus').text(data);
-        },
-        error: function(jqXHR, textStatus, errorThrown) {
-            $('#txtStatus').text("Error: ", jqXHR.responseText + textStatus + errorThrown + JSON.stringify(jqXHR));
-        }
-    });
+    if ($('#curationNotesForm')[0].checkValidity()) {
+        var curationNotes = buildCurationNotesTC();
+        "use strict";
+        event.preventDefault();
+        $.ajax({
+            dataType: "text",
+            type: "POST",
+            url: $.jummp.createLink("curationNotes", "update"),
+            cache: true,
+            data: {
+                curationNotes: curationNotes,
+                model: "${id}"
+            },
+            processData: true,
+            async: true,
+            beforeSend: function() {
+                $('#txtStatus').text("The curation notes are being saved. Please wait...");
+            },
+            success: function(data) {
+                $('#txtStatus').text(data);
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                $('#txtStatus').text("Error: ", jqXHR.responseText + textStatus + errorThrown + JSON.stringify(jqXHR));
+            }
+        });
+    } else {
+        $('#txtStatus').text("Please check required fields and click Save button again...");
+    }
 });
 
 $('#btnReset').on('click', function(event) {
