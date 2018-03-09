@@ -139,6 +139,26 @@ function updateOnSelect() {
     return "T" + hour + ":" + minute + ":"+ second;
 }
 
+function buildCurationNotesTC() {
+    var comment = $('#comment').val();
+    var submitter = $('#submitter').val();
+    var lastModifier = $('#lastModifier').val();
+    var dateAdded = $('#txtDateAdded').val();
+    var lastModified = $('#txtLastModified').val();
+    var curationNotes = {
+        'comment': comment,
+        'submitter': submitter,
+        'lastModifier': lastModifier,
+        'dateAdded': dateAdded,
+        'lastModified': lastModified
+    };
+    // this case means to update
+    if (${curationNotesTC.id != -1}) {
+        curationNotes['id'] = ${curationNotesTC.id};
+    }
+    curationNotes = JSON.stringify(curationNotes);
+    return curationNotes;
+}
 function previewImage(input) {
     // reused sample codes from https://stackoverflow.com/a/4459419/865603
     if (input.files && input.files[0]) {
@@ -160,6 +180,7 @@ function saveImage(input) {
             var fileName = input.files[0].name;
             // remove the prefix to only keep data, but it depends on the server
             var data = event.target.result.replace("data:"+ file.type +";base64,", '');
+            var curationNotes = buildCurationNotesTC();
             $.ajax({
                 type: "POST",
                 url: $.jummp.createLink("curationNotes", "updateCurationImage"),
@@ -190,22 +211,7 @@ $("#uploadCurationImage").change(function(){
 });
 
 $('#btnSave').on("click", function(event) {
-    var comment = $('#comment').val();
-    var submitter = $('#submitter').val();
-    var lastModifier = $('#lastModifier').val();
-    var dateAdded = $('#txtDateAdded').val();
-    var lastModified = $('#txtLastModified').val();
-    var curationNotes = {
-        'comment': comment,
-        'submitter': submitter,
-        'lastModifier': lastModifier,
-        'dateAdded': dateAdded,
-        'lastModified': lastModified
-    };
-    if (${curationNotesTC.id != -1}) {
-        curationNotes['id'] = ${curationNotesTC.id};
-    }
-    curationNotes = JSON.stringify(curationNotes);
+    var curationNotes = buildCurationNotesTC();
     "use strict";
     event.preventDefault();
     $.ajax({
