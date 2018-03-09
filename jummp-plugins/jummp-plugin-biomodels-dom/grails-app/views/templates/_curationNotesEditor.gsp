@@ -186,7 +186,8 @@ function saveImage(input) {
                 url: $.jummp.createLink("curationNotes", "updateCurationImage"),
                 dataType: "text",
                 data: {
-                    curaImg: data,
+                    curationNotes: curationNotes,
+                    curationImage: data,
                     model: "${id}"
                 },
                 cache: true,
