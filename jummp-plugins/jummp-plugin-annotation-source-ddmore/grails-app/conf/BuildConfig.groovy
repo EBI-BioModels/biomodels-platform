@@ -63,7 +63,7 @@ grails.project.dependency.resolution = {
 
         compile("eu.ddmore.metadata:lib-metadata:1.5.2-SNAPSHOT") {
             // can't use Spring 4.1 yet, fall back on Grails defaults
-            excludes 'spring-core', 'spring-context'
+            excludes 'spring-core', 'spring-context', 'slf4j-log4j12'
         }
 
 /*        compile "net.biomodels.jummp:AnnotationStore:0.2.9-SNAPSHOT"*/
