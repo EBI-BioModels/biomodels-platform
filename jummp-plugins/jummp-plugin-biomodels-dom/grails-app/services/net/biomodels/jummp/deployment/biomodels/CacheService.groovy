@@ -2,6 +2,7 @@ package net.biomodels.jummp.deployment.biomodels
 
 import grails.util.Holders
 import net.biomodels.jummp.models.JummpEntry
+import net.biomodels.jummp.utils.FileUtils
 import net.biomodels.jummp.utils.TimeUtils
 
 import java.nio.file.Files
@@ -30,7 +31,9 @@ class CacheService {
     void reloadCachedFiles(File cacheDir) {
         for (final File fileEntry : cacheDir.listFiles()) {
             if (!fileEntry.isDirectory()) {
-                cached.put(fileEntry.getName(), loadObjectFromFile(fileEntry))
+                JummpEntry<Long, Serializable> cache =
+                    FileUtils.loadObjectFromFile(fileEntry) as JummpEntry<Long, Serializable>
+                cached.put(fileEntry.getName(), cache)
             }
         }
     }
@@ -81,30 +84,6 @@ class CacheService {
         } else {
             cached.put(name, new JummpEntry<Long, Serializable>(TimeUtils.currentTimestamp + expired, value))
         }
-        writeObjectToFile(getCacheDir(), name, cached.get(name))
-    }
-
-    /**
-     * Write object to file for future recover
-     * @param name
-     * @param object
-     */
-    void writeObjectToFile(File cacheDir, String name, Serializable object) {
-        FileOutputStream cacheFile = new FileOutputStream(new File(cacheDir, name))
-        ObjectOutputStream objectOutputStream = new ObjectOutputStream(cacheFile)
-        objectOutputStream.writeObject(object)
-        objectOutputStream.close()
-        cacheFile.close()
-    }
-
-    /**
-     * Load object from file
-     * @param file
-     * @return
-     */
-    JummpEntry<Long, Serializable> loadObjectFromFile(File file) {
-        return new FileInputStream(file).withObjectInputStream(getClass().classLoader) {
-            is -> is.readObject() as JummpEntry<Long, Serializable>
-        }
+        FileUtils.writeObjectToFile(new File(getCacheDir(), name), cached.get(name))
     }
 }
