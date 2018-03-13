@@ -10,6 +10,8 @@ import net.biomodels.jummp.utils.TimeUtils
 import org.springframework.http.HttpMethod
 import org.springframework.web.util.UriComponentsBuilder
 
+import javax.xml.ws.Holder
+
 class ModelClassifierService {
 
     /**
@@ -27,9 +29,9 @@ class ModelClassifierService {
      * @param model
      */
     private isOutDate(Model model, Date uploadDate) {
-        print("Called hasCache")
         if (cacheService.hasCache(model.getSubmissionId())) {
-            JummpEntry<Long, String> cache = cacheService.getCache(model.getSubmissionId()) as JummpEntry<Long, String>
+            JummpEntry<Long, Serializable> cache =
+                cacheService.getCache(model.getSubmissionId()) as JummpEntry<Long, Serializable>
             if (cache.key == TimeUtils.getTimestamp(uploadDate)) {
                 return false
             }
@@ -49,10 +51,15 @@ class ModelClassifierService {
         if (isOutDate(model, date)) {
             Map<String, String> result = classifyModel(model)
             int expired = MathUtils.rand(TimeUtils.ONE_YEAR, TimeUtils.TWO_YEAR)
-            cacheService.setCache(model.getSubmissionId(), result as Serializable, expired)
+            JummpEntry<Long, Serializable> cache = new JummpEntry<>()
+            cache.setKey(TimeUtils.getTimestamp(date))
+            cache.setValue(result as Serializable)
+            cacheService.setCache(model.getSubmissionId(), cache, expired)
             return result
         }
-        return cacheService.getCache(model.getSubmissionId()) as Map<String, String>
+        JummpEntry<Long, Serializable> cache =
+            cacheService.getCache(model.getSubmissionId()) as JummpEntry<Long, Serializable>
+        return cache.getValue() as Map<String, String>
     }
 
     Map<?, ?> classifyModels(List<JummpEntry<Model, Date>> models) {

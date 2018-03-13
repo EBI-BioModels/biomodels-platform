@@ -21,8 +21,9 @@ class FileUtils {
      * @return
      */
     static Serializable loadObjectFromFile(File file) {
-        return new FileInputStream(file).withObjectInputStream(getClass().classLoader) {
+        Serializable object = new FileInputStream(file).withObjectInputStream(getClass().classLoader) {
             is -> is.readObject()
         } as Serializable
+        return object
     }
 }

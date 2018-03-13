@@ -7,6 +7,12 @@ import net.biomodels.jummp.utils.TimeUtils
 
 import java.nio.file.Files
 
+/**
+ * Cache data service
+ * Please keep in mind that this cache will save into both memory (RAM) and Storage Disk
+ * Because of improving speed
+ * So, only caching a lightweight data, and caching when really needed
+ */
 class CacheService {
 
     private Map<String, JummpEntry<Long, Serializable>> cached = new HashMap<>()

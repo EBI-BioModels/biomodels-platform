@@ -9,7 +9,7 @@ import spock.lang.Specification
 @TestFor(CacheService)
 class CacheServiceSpec extends Specification {
 
-    String cacheDir = "/nfs/production3/biomodels/work/jummp/cache/test"
+    String cacheDir = ""
 
     def setup() {
         grailsApplication.config.jummp.cache.dir = cacheDir

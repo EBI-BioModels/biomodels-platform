@@ -164,6 +164,12 @@ class ModelService {
     @Profiled(tag="modelService.getAllModels")
     public List<Model> getAllModels(int offset, int count, boolean sortOrder, ModelListSorting sortColumn,
                 String filter = null, boolean deletedOnly=false) {
+
+        return getAllModelWithDetails(offset, count, sortOrder, sortColumn, filter, deletedOnly).collect{ it.first() }
+    }
+
+    public List<List<Model, String, Date, String, Long, String>> getAllModelWithDetails(int offset, int count,
+                 boolean sortOrder, ModelListSorting sortColumn, String filter = null, boolean deletedOnly=false) {
         Map metaParams
         if (offset < 0 || count <= 0) {
             // safety check
@@ -204,8 +210,7 @@ class ModelService {
             ]
         }
 
-        List<List<Model, String, Date, String, Long, String>> resultSet = Model.executeQuery(query, namedParams, metaParams)
-        return resultSet.collect{ it.first() }
+        return Model.executeQuery(query, namedParams, metaParams)
     }
 
     private String getQueryForUser(ModelListSorting sortColumn, boolean deletedOnly, boolean filterIsValid, String sortingDirection) {
