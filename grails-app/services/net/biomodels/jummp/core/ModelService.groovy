@@ -168,7 +168,8 @@ class ModelService {
         return getAllModelWithDetails(offset, count, sortOrder, sortColumn, filter, deletedOnly).collect{ it.first() }
     }
 
-    public List<List<Model, String, Date, String, Long, String>> getAllModelWithDetails(int offset, int count,
+    @Profiled(tag = "modelService.getAllModelWithDetails")
+    List getAllModelWithDetails(int offset, int count,
                  boolean sortOrder, ModelListSorting sortColumn, String filter = null, boolean deletedOnly=false) {
         Map metaParams
         if (offset < 0 || count <= 0) {
