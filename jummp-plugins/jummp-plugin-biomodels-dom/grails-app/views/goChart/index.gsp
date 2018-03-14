@@ -33,17 +33,17 @@
         cursor: pointer;
     }
 
-    body {
+    #vis {
         width: 880px;
         margin: 0 auto;
     }
 
-    h1 {
+    #vis h1 {
         text-align: center;
         margin: .5em 0;
     }
 
-    p#intro {
+    #vis p#intro {
         text-align: center;
         margin: 1em 0;
     }
@@ -51,7 +51,8 @@
 </head>
 <body>
 <div id="vis">&nbsp;</div>
-<g:javascript src="http://d3js.org/d3.v3.js">
+<g:javascript src="d3.v3.js" plugin="jummp-plugin-web-application"/>
+<g:javascript>
 
     var json =
         [

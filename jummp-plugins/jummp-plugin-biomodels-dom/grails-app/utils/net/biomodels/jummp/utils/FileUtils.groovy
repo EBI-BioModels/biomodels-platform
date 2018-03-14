@@ -20,10 +20,10 @@ class FileUtils {
      * @param file
      * @return
      */
-    static Serializable loadObjectFromFile(File file) {
-        Serializable object = new FileInputStream(file).withObjectInputStream(getClass().classLoader) {
+    static <T> T loadObjectFromFile(File file, Class<T> tClass) {
+        T object = new FileInputStream(file).withObjectInputStream(tClass.classLoader) {
             is -> is.readObject()
-        } as Serializable
+        } as T
         return object
     }
 }

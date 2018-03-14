@@ -7,36 +7,24 @@ import net.biomodels.jummp.models.JummpEntry
 import net.biomodels.jummp.utils.MathUtils
 import net.biomodels.jummp.utils.RestUtils
 import net.biomodels.jummp.utils.TimeUtils
+import org.apache.commons.logging.Log
+import org.apache.commons.logging.LogFactory
 import org.springframework.http.HttpMethod
 import org.springframework.web.util.UriComponentsBuilder
 
-import javax.xml.ws.Holder
-
 class ModelClassifierService {
 
-    /**
-     * Dependency Injection of CacheService
-     */
-    def cacheService
+    static final Log log = LogFactory.getLog(this.getClass())
 
     private static String classificationEndpoint
 
+    private File cacheDir
+
     ModelClassifierService() {
         classificationEndpoint = Holders.grailsApplication.config.jummp.classification.endpoint
-    }
-/**
-     * Check if this model was modified or not
-     * @param model
-     */
-    private isOutDate(Model model, Date uploadDate) {
-        if (cacheService.hasCache(model.getSubmissionId())) {
-            JummpEntry<Long, Serializable> cache =
-                cacheService.getCache(model.getSubmissionId()) as JummpEntry<Long, Serializable>
-            if (cache.key == TimeUtils.getTimestamp(uploadDate)) {
-                return false
-            }
-        }
-        return true
+        String cacheDirString = Holders.grailsApplication.config.jummp.cache.dir
+        cacheDir = new File(cacheDirString)
+        CacheService.loadCachedFiles(cacheDir)
     }
 
     private static Map<String, String> classifyModel(Model model) {
@@ -48,23 +36,28 @@ class ModelClassifierService {
     }
 
     private Map<String, String> classifyModel(Model model, Date date) {
-        if (isOutDate(model, date)) {
-            Map<String, String> result = classifyModel(model)
-            int expired = MathUtils.rand(TimeUtils.ONE_YEAR, TimeUtils.TWO_YEAR)
-            JummpEntry<Long, Serializable> cache = new JummpEntry<>()
-            cache.setKey(TimeUtils.getTimestamp(date))
-            cache.setValue(result as Serializable)
-            cacheService.setCache(model.getSubmissionId(), cache, expired)
-            return result
+        if (CacheService.hasCache(model.getSubmissionId(), cacheDir)) {
+            JummpEntry<Long, Serializable> cache =
+                CacheService.getCache(model.getSubmissionId()) as JummpEntry<Long, Serializable>
+            /**
+             * Check whether the model is updated or not
+             */
+            if (cache.key == TimeUtils.getTimestamp(date)) {
+                return cache.getValue() as Map<String, String>
+            }
         }
-        JummpEntry<Long, Serializable> cache =
-            cacheService.getCache(model.getSubmissionId()) as JummpEntry<Long, Serializable>
-        return cache.getValue() as Map<String, String>
+
+        Map<String, String> result = classifyModel(model)
+        int expired = MathUtils.rand(TimeUtils.ONE_YEAR, TimeUtils.TWO_YEAR)
+        JummpEntry<Long, Serializable> cache = new JummpEntry<>(TimeUtils.getTimestamp(date), result as Serializable)
+        CacheService.setCache(model.getSubmissionId(), cache, expired, cacheDir)
+        return result
     }
 
     Map<?, ?> classifyModels(List<JummpEntry<Model, Date>> models) {
         Map<?, ?> results = new HashMap<>()
         for (JummpEntry<Model, Date> model : models) {
+
             Map<String, String> classified = classifyModel(model.getKey(), model.getValue())
             if (classified == null || classified.get("code") != "200") {
                 continue
