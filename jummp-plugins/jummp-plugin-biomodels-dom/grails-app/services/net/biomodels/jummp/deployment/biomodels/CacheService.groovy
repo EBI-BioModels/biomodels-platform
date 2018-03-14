@@ -3,7 +3,10 @@ package net.biomodels.jummp.deployment.biomodels
 import net.biomodels.jummp.models.JummpEntry
 import net.biomodels.jummp.utils.FileUtils
 import net.biomodels.jummp.utils.TimeUtils
+import org.springframework.context.annotation.Scope
+import org.springframework.context.annotation.ScopedProxyMode
 
+import javax.annotation.PostConstruct
 import java.nio.file.Files
 
 /**
@@ -12,15 +15,33 @@ import java.nio.file.Files
  * Because of improving speed
  * So, only caching a lightweight data, and caching when really needed
  */
+@Scope(value = "application", proxyMode = ScopedProxyMode.TARGET_CLASS)
 class CacheService {
+    static transactional = false
 
-    private static Map<String, JummpEntry<Long, Serializable>> cached = new HashMap<>()
+    private Map<String, JummpEntry<Long, Serializable>> cached = new HashMap<>()
+
+    def grailsApplication
+
+    @PostConstruct
+    def init() {
+        reloadCachedFiles(getCacheDir())
+    }
+
+    /**
+     * Get cache dir path from config then create File object from it
+     * @return
+     */
+    File getCacheDir() {
+        String cacheDirString = grailsApplication.config.jummp.cache.dir
+        return new File(cacheDirString)
+    }
 
     /**
      * Reload all cached files from cacheDir
      * @param cacheDir
      */
-    static void loadCachedFiles(File cacheDir) {
+    void reloadCachedFiles(File cacheDir) {
         for (final File fileEntry : cacheDir.listFiles()) {
             if (!fileEntry.isDirectory()) {
                 JummpEntry<Long, Serializable> cache =
@@ -37,20 +58,20 @@ class CacheService {
      * @param name
      * @return
      */
-    static boolean hasCache(String name, File cacheDir) {
+    boolean hasCache(String name) {
         if (cached.containsKey(name)) {
             if (cached.get(name).getKey() > TimeUtils.currentTimestamp) {
                 return true
             }
-            removeCache(name, cacheDir)
+            removeCache(name)
         }
         return false
     }
 
-    static void removeCache(String name, File cacheDir) {
+    void removeCache(String name) {
         if (cached.containsKey(name)) {
             cached.remove(name)
-            File cache = new File(cacheDir, name)
+            File cache = new File(getCacheDir(), name)
             Files.deleteIfExists(cache.toPath())
         }
     }
@@ -60,7 +81,7 @@ class CacheService {
      * @param name
      * @return
      */
-    static Serializable getCache(String name) {
+    Serializable getCache(String name) {
         return cached.get(name).getValue();
     }
 
@@ -70,12 +91,12 @@ class CacheService {
      * @param value
      * @param expired number of second from now when the cache will be expire
      */
-    static void setCache(String name, Serializable value , int expired, File cacheDir) {
-        if (hasCache(name, cacheDir)) {
+    void setCache(String name, Serializable value , int expired) {
+        if (hasCache(name)) {
             cached.get(name).setValue(value);
         } else {
             cached.put(name, new JummpEntry<Long, Serializable>(TimeUtils.currentTimestamp + expired, value))
         }
-        FileUtils.writeObjectToFile(new File(cacheDir, name), cached.get(name))
+        FileUtils.writeObjectToFile(new File(getCacheDir(), name), cached.get(name))
     }
 }

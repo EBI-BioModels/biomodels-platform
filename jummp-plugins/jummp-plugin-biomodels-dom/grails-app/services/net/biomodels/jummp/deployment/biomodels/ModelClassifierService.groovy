@@ -1,7 +1,6 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import com.fasterxml.jackson.core.type.TypeReference
-import grails.util.Holders
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.models.JummpEntry
 import net.biomodels.jummp.utils.MathUtils
@@ -9,25 +8,27 @@ import net.biomodels.jummp.utils.RestUtils
 import net.biomodels.jummp.utils.TimeUtils
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.http.HttpMethod
 import org.springframework.web.util.UriComponentsBuilder
 
-class ModelClassifierService {
+class ModelClassifierService implements InitializingBean {
+    static transactional = false
+
+    /**
+     * Dependency Injection of CacheService
+     */
+    def cacheService
+    /**
+     * Dependency Injection of GrailsApplication
+     */
+    def grailsApplication
 
     static final Log log = LogFactory.getLog(this.getClass())
 
-    private static String classificationEndpoint
+    private String classificationEndpoint
 
-    private File cacheDir
-
-    ModelClassifierService() {
-        classificationEndpoint = Holders.grailsApplication.config.jummp.classification.endpoint
-        String cacheDirString = Holders.grailsApplication.config.jummp.cache.dir
-        cacheDir = new File(cacheDirString)
-        CacheService.loadCachedFiles(cacheDir)
-    }
-
-    private static Map<String, String> classifyModel(Model model) {
+    private Map<String, String> classifyModel(Model model) {
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(classificationEndpoint)
         uriComponentsBuilder.path("/predict")
         uriComponentsBuilder.queryParam("model_id", model.getSubmissionId())
@@ -36,9 +37,9 @@ class ModelClassifierService {
     }
 
     private Map<String, String> classifyModel(Model model, Date date) {
-        if (CacheService.hasCache(model.getSubmissionId(), cacheDir)) {
+        if (cacheService.hasCache(model.getSubmissionId())) {
             JummpEntry<Long, Serializable> cache =
-                CacheService.getCache(model.getSubmissionId()) as JummpEntry<Long, Serializable>
+                cacheService.getCache(model.getSubmissionId()) as JummpEntry<Long, Serializable>
             /**
              * Check whether the model is updated or not
              */
@@ -50,14 +51,13 @@ class ModelClassifierService {
         Map<String, String> result = classifyModel(model)
         int expired = MathUtils.rand(TimeUtils.ONE_YEAR, TimeUtils.TWO_YEAR)
         JummpEntry<Long, Serializable> cache = new JummpEntry<>(TimeUtils.getTimestamp(date), result as Serializable)
-        CacheService.setCache(model.getSubmissionId(), cache, expired, cacheDir)
+        cacheService.setCache(model.getSubmissionId(), cache, expired)
         return result
     }
 
     Map<?, ?> classifyModels(List<JummpEntry<Model, Date>> models) {
         Map<?, ?> results = new HashMap<>()
         for (JummpEntry<Model, Date> model : models) {
-
             Map<String, String> classified = classifyModel(model.getKey(), model.getValue())
             if (classified == null || classified.get("code") != "200") {
                 continue
@@ -91,4 +91,7 @@ class ModelClassifierService {
         return classified
     }
 
+    void afterPropertiesSet() throws Exception {
+        classificationEndpoint = grailsApplication.config.jummp.classification.endpoint
+    }
 }
