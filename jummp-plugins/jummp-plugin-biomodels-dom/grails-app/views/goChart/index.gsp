@@ -21,6 +21,8 @@
 <head>
     <title>Model GO Categories</title>
     <meta name="layout" content="${session['branding.style']}/main" />
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.dataTables.min.css')}" type="text/css">
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'buttons.dataTables.min.css')}" type="text/css">
     <style>
     path {
         stroke: #000;
@@ -33,11 +35,6 @@
         cursor: pointer;
     }
 
-    #vis {
-        width: 880px;
-        margin: 0 auto;
-    }
-
     #vis h1 {
         text-align: center;
         margin: .5em 0;
@@ -47,400 +44,125 @@
         text-align: center;
         margin: 1em 0;
     }
+        .container {
+            width: 100%;
+        }
+        .container #vis {
+            width: 42%;
+            float: left;
+        }
+        .container #model_data_wrapper {
+            width: 55%;
+            padding: 40px 10px;
+            float: right;
+            clear: inherit;
+        }
+        .container #model_data {
+            visibility: hidden;
+        }
+
+        #model_data thead {
+            background-color: #008080;
+            color: white;
+        }
     </style>
 </head>
 <body>
-<div id="vis">&nbsp;</div>
-<g:javascript src="d3.v3.js" plugin="jummp-plugin-web-application"/>
+<div class="container">
+    <div id="vis">&nbsp;</div>
+    <table id="model_data" class="display">
+    </table>
+</div>
+<div style="clear: both"></div>
+
+<g:javascript src="d3.v3.js"/>
+<g:javascript src="jquery.dataTables.min.js"/>
+<g:javascript src="dataTables.buttons.min.js"/>
+<g:javascript src="buttons.flash.min.js"/>
+<g:javascript src="jszip.min.js"/>
+<g:javascript src="pdfmake.min.js"/>
+<g:javascript src="vfs_fonts.js"/>
+<g:javascript src="buttons.html5.min.js"/>
+<g:javascript src="buttons.print.min.js"/>
+
 <g:javascript>
+    $(document).ready(function() {
 
-    var json =
-        [
-            {
-                "name": "Aromas",
-                "children": [
-                    {
-                        "name": "Enzymatic",
-                        "children": [
-                            {
-                                "name": "Flowery",
-                                "children": [
-                                    {
-                                        "name": "Floral",
-                                        "children": [
-                                            {
-                                                "name": "Coffee Blossom", "colour": "#f9f0ab"
-                                            },
-                                            {
-                                                "name": "Tea Rose", "colour": "#e8e596"
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "name": "Fragrant",
-                                        "children": [
-                                            {
-                                                "name": "Cardamon Caraway", "colour": "#f0e2a3"
-                                            },
-                                            {
-                                                "name": "Coriander Seeds", "colour": "#ede487"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "name": "Fruity",
-                                "children": [
-                                    {
-                                        "name": "Citrus",
-                                        "children": [
-                                            {
-                                                "name": "Lemon", "colour": "#efd580"
-                                            },
-                                            {
-                                                "name": "Apple", "colour": "#f1cb82"
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "name": "Berry-like",
-                                        "children": [
-                                            {
-                                                "name": "Apricot", "colour": "#f1c298"
-                                            },
-                                            {
-                                                "name": "Blackberry", "colour": "#e8b598"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "name": "Herby",
-                                "children": [
-                                    {
-                                        "name": "Alliaceous",
-                                        "children": [
-                                            {
-                                                "name": "Onion", "colour": "#d5dda1"
-                                            },
-                                            {
-                                                "name": "Garlic", "colour": "#c9d2b5"
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "name": "Leguminous",
-                                        "children": [
-                                            {
-                                                "name": "Cucumber", "colour": "#aec1ad"
-                                            },
-                                            {
-                                                "name": "Garden Peas", "colour": "#a7b8a8"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        "name": "Sugar Browning",
-                        "children": [
-                            {
-                                "name": "Nutty",
-                                "children": [
-                                    {
-                                        "name": "Nut-like",
-                                        "children": [
-                                            {
-                                                "name": "Roasted Peanuts", "colour": "#b49a3d"
-                                            },
-                                            {
-                                                "name": "Walnuts", "colour": "#b28647"
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "name": "Malt-like",
-                                        "children": [
-                                            {
-                                                "name": "Balsamic Rice", "colour": "#a97d32"
-                                            },
-                                            {
-                                                "name": "Toast", "colour": "#b68334"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "name": "Carmelly",
-                                "children": [
-                                    {
-                                        "name": "Candy-like",
-                                        "children": [
-                                            {
-                                                "name": "Roasted Hazelnut", "colour": "#d6a680"
-                                            },
-                                            {
-                                                "name": "Roasted Almond", "colour": "#dfad70"
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "name": "Syrup-like",
-                                        "children": [
-                                            {
-                                                "name": "Honey", "colour": "#a2765d"
-                                            },
-                                            {
-                                                "name": "Maple Syrup", "colour": "#9f6652"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "name": "Chocolatey",
-                                "children": [
-                                    {
-                                        "name": "Chocolate-like",
-                                        "children": [
-                                            {
-                                                "name": "Bakers", "colour": "#b9763f"
-                                            },
-                                            {
-                                                "name": "Dark Chocolate", "colour": "#bf6e5d"
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "name": "Vanilla-like",
-                                        "children": [
-                                            {
-                                                "name": "Swiss", "colour": "#af643c"
-                                            },
-                                            {
-                                                "name": "Butter", "colour": "#9b4c3f"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        "name": "Dry Distillation",
-                        "children": [
-                            {
-                                "name": "Resinous",
-                                "children": [
-                                    {
-                                        "name": "Turpeny",
-                                        "children": [
-                                            {
-                                                "name": "Piney", "colour": "#72659d"
-                                            },
-                                            {
-                                                "name": "Blackcurrant-like", "colour": "#8a6e9e"
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "name": "Medicinal",
-                                        "children": [
-                                            {
-                                                "name": "Camphoric", "colour": "#8f5c85"
-                                            },
-                                            {
-                                                "name": "Cineolic", "colour": "#934b8b"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "name": "Spicy",
-                                "children": [
-                                    {
-                                        "name": "Warming",
-                                        "children": [
-                                            {
-                                                "name": "Cedar", "colour": "#9d4e87"
-                                            },
-                                            {
-                                                "name": "Pepper", "colour": "#92538c"
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "name": "Pungent",
-                                        "children": [
-                                            {
-                                                "name": "Clove", "colour": "#8b6397"
-                                            },
-                                            {
-                                                "name": "Thyme", "colour": "#716084"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "name": "Carbony",
-                                "children": [
-                                    {
-                                        "name": "Smokey",
-                                        "children": [
-                                            {
-                                                "name": "Tarry", "colour": "#2e6093"
-                                            },
-                                            {
-                                                "name": "Pipe Tobacco", "colour": "#3a5988"
-                                            }
-                                        ]
-                                    },
-                                    {
-                                        "name": "Ashy",
-                                        "children": [
-                                            {
-                                                "name": "Burnt", "colour": "#4a5072"
-                                            },
-                                            {
-                                                "name": "Charred", "colour": "#393e64"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
-                "name": "Tastes",
-                "children": [
-                    {
-                        "name": "Bitter",
-                        "children": [
-                            {
-                                "name": "Pungent",
-                                "children": [
-                                    {
-                                        "name": "Creosol", "colour": "#aaa1cc"
-                                    },
-                                    {
-                                        "name": "Phenolic", "colour": "#e0b5c9"
-                                    }
-                                ]
-                            },
-                            {
-                                "name": "Harsh",
-                                "children": [
-                                    {
-                                        "name": "Caustic", "colour": "#e098b0"
-                                    },
-                                    {
-                                        "name": "Alkaline", "colour": "#ee82a2"
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        "name": "Salt",
-                        "children": [
-                            {
-                                "name": "Sharp",
-                                "children": [
-                                    {
-                                        "name": "Astringent", "colour": "#ef91ac"
-                                    },
-                                    {
-                                        "name": "Rough", "colour": "#eda994"
-                                    }
-                                ]
-                            },
-                            {
-                                "name": "Bland",
-                                "children": [
-                                    {
-                                        "name": "Neutral", "colour": "#eeb798"
-                                    },
-                                    {
-                                        "name": "Soft", "colour": "#ecc099"
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        "name": "Sweet",
-                        "children": [
-                            {
-                                "name": "Mellow",
-                                "children": [
-                                    {
-                                        "name": "Delicate", "colour": "#f6d5aa"
-                                    },
-                                    {
-                                        "name": "Mild", "colour": "#f0d48a"
-                                    }
-                                ]
-                            },
-                            {
-                                "name": "Acidy",
-                                "children": [
-                                    {
-                                        "name": "Nippy", "colour": "#efd95f"
-                                    },
-                                    {
-                                        "name": "Piquant", "colour": "#eee469"
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        "name": "Sour",
-                        "children": [
-                            {
-                                "name": "Winey",
-                                "children": [
-                                    {
-                                        "name": "Tangy", "colour": "#dbdc7f"
-                                    },
-                                    {
-                                        "name": "Tart", "colour": "#dfd961"
-                                    }
-                                ]
-                            },
-                            {
-                                "name": "Soury",
-                                "children": [
-                                    {
-                                        "name": "Hard", "colour": "#ebe378"
-                                    },
-                                    {
-                                        "name": "Acrid", "colour": "#f5e351"
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
+    } );
+    var json = $.parseJSON('${classifiedModels.toString().replace('\'', '\\\'')}');
 
-    var width = 840,
+    var width = $("#vis").width(),
         height = width,
         radius = width / 2,
         x = d3.scale.linear().range([0, 2 * Math.PI]),
         y = d3.scale.pow().exponent(1.3).domain([0, 1]).range([0, radius]),
         padding = 5,
         duration = 1000;
+
+    function hasMoreWord(d) {
+        parts = d.name.split(" ");
+        return parts.length > 1;
+    }
+
+    function fillTableData(d) {
+        var models = recursiveGetData(d);
+        if ($.fn.dataTable.isDataTable('#model_data')) {
+            table = $('#model_data').DataTable();
+            table.clear()
+            .rows.add(models)
+            .draw()
+        } else {
+            $('#model_data').DataTable({
+                "searching": true,
+                "lengthChange": false,
+                "pageLength": 14,
+                "columns": [
+                    {
+                        "title": "Model Id",
+                        "data": "modelId",
+                        "render": function(data, type, row, meta){
+                            if(type === 'display'){
+                                data = '<a target="_blank" href="https://wwwdev.ebi.ac.uk/biomodels/' + data + '">' + data + '</a>';
+                            }
+
+                            return data;
+                         }
+                    },
+                    {"title": "Model Name", "data": "name"},
+                    {"title": "Date Update", "data": "updateDate"}
+                ],
+                "dom": 'Bfrtip',
+                "buttons": [
+                    'copy', 'csv', 'excel', 'pdf', 'print'
+                ],
+                "language": {
+                    "lengthMenu": '_MENU_ search',
+                        "search": '<i class="fa fa-search"></i>',
+                        "searchPlaceholder": "Search",
+                        "paginate": {
+                        "previous": '<i class="fa fa-angle-left"></i>',
+                            "next": '<i class="fa fa-angle-right"></i>'
+                    }
+                },
+                "data": models
+            });
+        }
+
+        $("#model_data").css('visibility', 'inherit')
+        $("#model_data").css('min-height', $("#vis").width() + "px")
+    }
+
+    function recursiveGetData(d) {
+        if (Object.keys(d).indexOf("models") > -1) {
+            return d.models
+        }
+        var result = [];
+        for (var i = 0; i < d.children.length; i++) {
+            result = result.concat(recursiveGetData(d.children[i]));
+        }
+        return result
+    }
+
 
     var div = d3.select("#vis");
 
@@ -491,11 +213,28 @@
         .on("click", click);
     textEnter.append("tspan")
         .attr("x", 0)
-        .text(function(d) { return d.depth ? d.name.split(" ")[0] : ""; });
+        .text(function(d) {
+            if (d.depth) {
+                if (hasMoreWord(d)) {
+                    return d.name.split(" ")[0]
+                }
+                return d.name + " (" + d.count + ")"
+            }
+            return "";
+        });
     textEnter.append("tspan")
         .attr("x", 0)
         .attr("dy", "1em")
-        .text(function(d) { return d.depth ? d.name.split(" ")[1] || "" : ""; });
+        .text(function(d) {
+            if (d.depth) {
+                if (hasMoreWord(d)) {
+                    return d.name.split(" ")[1] + " (" + d.count + ")"
+                }
+            }
+            return "";
+        });
+
+    fillTableData(nodes[0])
 
     function click(d) {
         path.transition()
@@ -525,6 +264,7 @@
             .each("end", function(e) {
             d3.select(this).style("visibility", isParentOf(d, e) ? null : "hidden");
         });
+        fillTableData(d);
     }
 
     function isParentOf(p, c) {
@@ -538,15 +278,7 @@
     }
 
     function colour(d) {
-        if (d.children) {
-            // There is a maximum of two children!
-            var colours = d.children.map(colour),
-                a = d3.hsl(colours[0]),
-                b = d3.hsl(colours[1]);
-            // L*a*b* might be better here...
-            return d3.hsl((a.h + b.h) / 2, a.s * 1.2, a.l / 1.2);
-        }
-        return d.colour || "#fff";
+        return '#008080'
     }
 
     // Interpolate the scales!
@@ -569,19 +301,19 @@
         return rgb.r * .299 + rgb.g * .587 + rgb.b * .114;
     }
 </g:javascript>
-<script>
-    if (top != self) top.location.replace(location);
-</script>
+%{--<script>--}%
+    %{--if (top != self) top.location.replace(location);--}%
+%{--</script>--}%
 
 </body>
 
-<content tag="goChart">
-    selected
-</content>
+%{--<content tag="goChart">--}%
+    %{--selected--}%
+%{--</content>--}%
 
-<content tag="title">
-    Model Gene Ontology Categories
-</content>
-<content tag="contexthelp">
-    Model Gene Ontology Categories
-</content>
+%{--<content tag="title">--}%
+    %{--Model Gene Ontology Categories--}%
+%{--</content>--}%
+%{--<content tag="contexthelp">--}%
+    %{--Model Gene Ontology Categories--}%
+%{--</content>--}%
