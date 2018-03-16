@@ -141,6 +141,8 @@ class ModelService {
 
     //def publishValidator
 
+    def modelConversionService
+
     final boolean MAKE_PUBLICATION_ID = !(publicationIdGenerator instanceof NullModelIdentifierGenerator)
     /**
      * Guard insertion of ACL entries from concurrent access.
@@ -669,6 +671,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             def revisionAdapter = new RevisionAdapter(revision: attachedRevision)
             RevisionTransportCommand cmd = revisionAdapter.toCommandObject()
             indexModelRevision(cmd)
+            convertModelToOtherFormats(cmd)
             return attachedRevision
         }
         revision
@@ -941,6 +944,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             Revision r = attachedModel.revisions.first()
             RevisionTransportCommand cmd = new RevisionAdapter(revision: r).toCommandObject()
             indexModelRevision(cmd)
+            convertModelToOtherFormats(cmd)
             return attachedModel
         }
         model
@@ -2377,5 +2381,11 @@ WHERE
         // can't inject searchService -- cyclic dependency
         def searchService = grailsApplication.mainContext.searchService
         searchService.updateIndex(cmd)
+    }
+
+    private convertModelToOtherFormats(RevisionTransportCommand cmd) {
+        log.info("""\
+Try to connect with Conversion service to export the model ${cmd.model.submissionId} under the other formats""")
+        modelConversionService.generateExports(cmd)
     }
 }
