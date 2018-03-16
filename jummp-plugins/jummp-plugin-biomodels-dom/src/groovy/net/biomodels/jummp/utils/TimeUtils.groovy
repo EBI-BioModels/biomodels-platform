@@ -1,5 +1,7 @@
 package net.biomodels.jummp.utils
 
+import net.biomodels.jummp.models.SimpleDateFormatThreadSafe
+
 class TimeUtils {
 
     private static final ONE_SECOND = 1000;
@@ -14,5 +16,10 @@ class TimeUtils {
 
     static Long getTimestamp(Date date) {
         return date.getTime() / ONE_SECOND;
+    }
+
+    static String convertDate(Date date, String format) {
+        SimpleDateFormatThreadSafe simpleDateFormat = new SimpleDateFormatThreadSafe(format)
+        return simpleDateFormat.format(date)
     }
 }

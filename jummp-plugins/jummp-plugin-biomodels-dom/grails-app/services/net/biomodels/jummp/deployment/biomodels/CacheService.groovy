@@ -19,6 +19,7 @@ import java.nio.file.Files
 class CacheService {
     static transactional = false
 
+    //Todo: Apply soft reference
     private Map<String, JummpEntry<Long, Serializable>> cached = new HashMap<>()
 
     def grailsApplication

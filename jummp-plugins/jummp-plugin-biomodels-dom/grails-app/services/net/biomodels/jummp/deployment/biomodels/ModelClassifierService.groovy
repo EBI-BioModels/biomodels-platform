@@ -3,6 +3,7 @@ package net.biomodels.jummp.deployment.biomodels
 import com.fasterxml.jackson.core.type.TypeReference
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.models.JummpEntry
+import net.biomodels.jummp.models.ModelDetails
 import net.biomodels.jummp.utils.MathUtils
 import net.biomodels.jummp.utils.RestUtils
 import net.biomodels.jummp.utils.TimeUtils
@@ -55,10 +56,11 @@ class ModelClassifierService implements InitializingBean {
         return result
     }
 
-    Map<?, ?> classifyModels(List<JummpEntry<Model, Date>> models) {
+    Map<?, ?> classifyModels(List<ModelDetails> models) {
         Map<?, ?> results = new HashMap<>()
-        for (JummpEntry<Model, Date> model : models) {
-            Map<String, String> classified = classifyModel(model.getKey(), model.getValue())
+        for (ModelDetails model : models) {
+
+            Map<String, String> classified = classifyModel(model.model, model.updateDate)
             if (classified == null || classified.get("code") != "200") {
                 continue
             }
@@ -66,18 +68,18 @@ class ModelClassifierService implements InitializingBean {
             entries.add(new JummpEntry<>(classified.get("root_class"), classified.get("root_class_name")))
             entries.add(new JummpEntry<>(classified.get("parent_class"), classified.get("parent_class_name")))
             entries.add(new JummpEntry<>(classified.get("class"), classified.get("class_name")))
-            classifyModels(results, entries.iterator(), model.getKey())
+            classifyModels(results, entries.iterator(), model)
         }
         return results
     }
 
-    Map<?, ?> classifyModels(Map<?, ?> classified, Iterator<JummpEntry<String, String>> iterator, Model model) {
+    Map<?, ?> classifyModels(Map<?, ?> classified, Iterator<JummpEntry<String, String>> iterator, Object model) {
         JummpEntry<String, String> entry = iterator.next()
         if (!iterator.hasNext()) {
             if (classified.containsKey(entry)) {
-                (classified.get(entry) as List<Model>).add(model)
+                (classified.get(entry) as List<Object>).add(model)
             } else {
-                List<Model> allModels = new ArrayList<>()
+                List<Object> allModels = new ArrayList<>()
                 allModels.add(model)
                 classified.put(entry, allModels)
             }
