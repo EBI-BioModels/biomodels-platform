@@ -668,9 +668,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
 
             def revisionAdapter = new RevisionAdapter(revision: attachedRevision)
             RevisionTransportCommand cmd = revisionAdapter.toCommandObject()
-            // can't inject searchService -- cyclic dependency
-            def searchService = grailsApplication.mainContext.searchService
-            searchService.updateIndex(cmd)
+            indexModelRevision(cmd)
             return attachedRevision
         }
         revision
@@ -942,9 +940,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             def attachedModel = Model.get(model.id)
             Revision r = attachedModel.revisions.first()
             RevisionTransportCommand cmd = new RevisionAdapter(revision: r).toCommandObject()
-            // can't inject searchService -- cyclic dependency
-            def searchService = grailsApplication.mainContext.searchService
-            searchService.updateIndex(cmd)
+            indexModelRevision(cmd)
             return attachedModel
         }
         model
@@ -2369,5 +2365,17 @@ WHERE
         }
 
 	    return results
+    }
+
+    /**
+     * Invoking updateIndex method of search service
+     *
+     * @param   cmd The representation of revision whereby search service will be updated its indexes
+     * @return
+     */
+    private indexModelRevision(RevisionTransportCommand cmd) {
+        // can't inject searchService -- cyclic dependency
+        def searchService = grailsApplication.mainContext.searchService
+        searchService.updateIndex(cmd)
     }
 }
