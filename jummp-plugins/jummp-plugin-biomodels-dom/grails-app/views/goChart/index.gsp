@@ -40,6 +40,10 @@
         margin: .5em 0;
     }
 
+    .highlight {
+        fill: green !important;
+    }
+
     #vis p#intro {
         text-align: center;
         margin: 1em 0;
@@ -196,6 +200,9 @@
 
     var text = vis.selectAll("text").data(nodes);
     var textEnter = text.enter().append("text")
+        .attr("id", function(d, i) {
+          return "text-" + i;
+        })
         .style("fill-opacity", 1)
         .style("fill", function(d) {
         return brightness(d3.rgb(colour(d))) < 125 ? "#eee" : "#000";
@@ -234,9 +241,18 @@
             return "";
         });
 
-    fillTableData(nodes[0])
-
+    fillTableData(nodes[0]);
+    var lastClick = null;
     function click(d) {
+        var ref = d3.select(this);
+        if (this.id.indexOf('text') > -1) {
+            ref = d3.select('#path-' + this.id.split("-")[1])
+        }
+        if (lastClick != null) {
+            lastClick.classed("highlight", false)
+        }
+        lastClick = ref;
+        ref.classed("highlight", true);
         path.transition()
             .duration(duration)
             .attrTween("d", arcTween(d));
@@ -260,7 +276,9 @@
                 return "rotate(" + rotate + ")translate(" + (y(d.y) + padding) + ")rotate(" + (angle > 90 ? -180 : 0) + ")";
             };
         })
-            .style("fill-opacity", function(e) { return isParentOf(d, e) ? 1 : 1e-6; })
+            .style("fill-opacity", function(e) {
+                return isParentOf(d, e) ? 1 : 1e-6;
+            })
             .each("end", function(e) {
             d3.select(this).style("visibility", isParentOf(d, e) ? null : "hidden");
         });
