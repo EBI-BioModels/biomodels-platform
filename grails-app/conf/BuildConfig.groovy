@@ -37,7 +37,8 @@ grails.project.dependency.resolver = "maven"
 customJvmArgs = ["-server", "-noverify", "-XX:+UseConcMarkSweepGC", "-XX:+UseParNewGC" ]
 grails.project.fork = [
     // configure settings for the test-app JVM, uses the daemon by default
-    test: [maxMemory: 2048, minMemory: 64, debug: false, maxPerm: 512, daemon:true],
+    //test: [maxMemory: 2048, minMemory: 64, debug: false, maxPerm: 512, daemon: true],
+    test: false,
     // configure settings for the run-app JVM
     run: [maxMemory: 2048, minMemory: 64, debug: false, maxPerm: 512, forkReserve:false, jvmArgs: customJvmArgs],
     // configure settings for the run-war JVM
@@ -74,6 +75,9 @@ grails.project.dependency.resolution = {
         mavenRepo "http://maven.mango-solutions.com/ddmore/"
         mavenRepo "http://repo.spring.io/milestone"
         mavenRepo "http://repo.grails.org/grails/core"
+
+        // for spock-reports
+        mavenRepo "http://jcenter.bintray.com"
     }
     dependencies {
         // required by OntologyLookupResolver
@@ -128,6 +132,13 @@ grails.project.dependency.resolution = {
             excludes 'junit', 'commons-logging'
         }
         test "org.grails:grails-datastore-test-support:1.0-grails-2.3"
+
+        // for spock-reports
+        test "com.athaydes:spock-reports:1.3.0"
+//        build "com.athaydes:spock-reports:1.3.0"
+//        compile "com.athaydes:spock-reports:1.3.0"
+//        runtime "com.athaydes:spock-reports:1.3.0"
+
         runtime 'org.javassist:javassist:3.17.1-GA'
         runtime "org.apache.camel:camel-exec:2.13.0"
 
