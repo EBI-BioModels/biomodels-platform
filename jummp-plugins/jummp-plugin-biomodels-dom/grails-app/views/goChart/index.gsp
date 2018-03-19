@@ -242,15 +242,14 @@
         });
 
     fillTableData(nodes[0]);
-    var lastClick = null;
+    var lastClick = d3.select('#path-0');
+    lastClick.classed("highlight", true);
     function click(d) {
         var ref = d3.select(this);
         if (this.id.indexOf('text') > -1) {
             ref = d3.select('#path-' + this.id.split("-")[1])
         }
-        if (lastClick != null) {
-            lastClick.classed("highlight", false)
-        }
+        lastClick.classed("highlight", false)
         lastClick = ref;
         ref.classed("highlight", true);
         path.transition()
