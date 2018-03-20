@@ -58,16 +58,17 @@ please contact: Rahuman Sheriff (sheriff AT ebi.ac.uk).</p>
 
 <ol>
     <li id="ref1">Ajmera I., Swat M., Laibe C., Le Novère N., Chelliah V.
-        <a href="http://identifiers.org/pubmed/23842097">
+        <a href="//identifiers.org/pubmed/23842097">
         The impact of mathematical modeling on the understanding of diabetes and related complications.</a>
         <em>CPT: Pharmacometrics &amp; Systems Pharmacology</em>. Jul 10;2:e54. 2013.</li>
     <li id="ref2">Lloret-Villas A., Varusai T.M., Juty N., Laibe C., Le Novèrei N., Hermjakob H., Chelliah V.
-    The impact of mathematical modeling in understanding the mechanisms underlying neurodegeneration:
-    evolving dimensions and future directions.</a>
-        <em>CPT: Pharmacometrics &amp; Systems Pharmacology</em>. (<em>in press</em>)</li>
+        <a href="//ascpt.onlinelibrary.wiley.com/doi/abs/10.1002/psp4.12155">
+        The impact of mathematical modeling in understanding the mechanisms underlying
+        neurodegeneration: evolving dimensions and future directions.</a>
+        <em>CPT: Pharmacometrics &amp; Systems Pharmacology</em>. 2017</li>
 </ol>
 
-<h3 style="border-bottom: 1px solid grey">Software development internship:
+%{--<h3 style="border-bottom: 1px solid grey">Software development internship:
 Cluster Analysis of BioModels using Biomedical Ontologies</h3>
 <p>Ontologies provide formal means of defining concepts and their interrelationships as a
 knowledge graph routinely consisting of thousands or tens of thousands of terms arranged
@@ -110,7 +111,7 @@ to provide user-friendly ways of browsing BioModels content.
 </ul>
 <p>This project is expected to last around six months and would be ideally suited for a
 dissertation project or internship. For further enquiries or to make an application
-(attach your CV and a cover letter), please contact: Mihai Glont (mglont AT ebi.ac.uk).
+(attach your CV and a cover letter), please contact: Mihai Glont (mglont AT ebi.ac.uk).--}%
 </body>
 <content tag="jobs">
     selected
