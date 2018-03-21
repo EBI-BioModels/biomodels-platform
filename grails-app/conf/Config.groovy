@@ -401,6 +401,14 @@ if (jummpConfig.jummp.model.curators.mailinglist) {
     jummp.model.curators.mailinglist = jummpConfig.jummp.model.curators.mailinglist
 }
 
+if (jummpConfig.jummp.cache.dir) {
+    jummp.cache.dir = jummpConfig.jummp.cache.dir
+}
+
+if (jummpConfig.jummp.classification.endpoint) {
+    jummp.classification.endpoint = jummpConfig.jummp.classification.endpoint
+}
+
 if (jummp.search.strategy == "solr") {
     if (!(jummpConfig.jummp.search.url instanceof ConfigObject)) {
         final Pattern URL_PATTERN = ~/http:\/\/[a-zA-Z0-9\.\-_]+(:[0-9]+)?(\/[a-zA-Z0-9\-\._]+)*/
