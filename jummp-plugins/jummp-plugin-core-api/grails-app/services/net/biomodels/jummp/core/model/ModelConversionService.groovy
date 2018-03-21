@@ -34,11 +34,13 @@
  * @date 20180316
  */
 
-package net.biomodels.jummp.core
+package net.biomodels.jummp.core.model
 
 import grails.util.Holders
 import groovy.json.JsonException
 import groovy.json.JsonSlurper
+import net.biomodels.jummp.core.IModelConversionService
+import net.biomodels.jummp.core.JummpException
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import org.apache.commons.logging.Log
@@ -49,7 +51,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 
-class ModelConversionService implements IModelConversionService {
+class ModelConversionService /*implements IModelConversionService*/ {
 
     private static final Log log = LogFactory.getLog(ModelConversionService.class)
 
@@ -88,13 +90,14 @@ class ModelConversionService implements IModelConversionService {
     }
 
     List<String> generateExports(String modelId, String revisionId) {
+        RTC revisionTC
         try {
-            RTC revisionTC = modelDelegateService.getRevisionFromParams(modelId, revisionId)
+            revisionTC = modelDelegateService.getRevisionFromParams(modelId, revisionId)
         } catch(AccessDeniedException e) {
             log.error(e.message, e)
             return null
         } finally {
-            return generateExports(revisionTC).collect {it.text}
+            return generateExports(revisionTC).collect {it.toString()}
         }
     }
 
