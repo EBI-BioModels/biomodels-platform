@@ -79,11 +79,13 @@
                                 <a href="${modelUrl}">${model.name}</a>
                                 <br/>
                                 <span style="font-size: small; margin: -25px 0;">
-                                ID: ${id} |
+                                ID: ${id}
+                                <g:if test="${model.state == net.biomodels.jummp.core.model.ModelState.PUBLISHED}">|
                                 Format: ${model.format.name} |
                                 Submitter: ${model.submitter} |
                                 Uploaded date: ${model.submissionDate.format('dd/MM/yyyy')} |
                                 Last modified date: ${model.lastModifiedDate.format('dd/MM/yyyy')}
+                                </g:if>
                                 <g:if test="${model.publication}"> | Published in: ${model.publication.year}</g:if>
                                 </span>
                             </h4>
