@@ -23,6 +23,7 @@
     <meta name="layout" content="${session['branding.style']}/main" />
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.dataTables.min.css')}" type="text/css">
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'buttons.dataTables.min.css')}" type="text/css">
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'select.dataTables.min.css')}" type="text/css">
     <style>
     path {
         stroke: #000;
@@ -65,10 +66,18 @@
             visibility: hidden;
         }
 
+    th.dt-center, td.dt-center { text-align: center; }
+
         #model_data thead {
             background-color: #008080;
             color: white;
         }
+    button:disabled,
+    button[disabled]{
+        border: 1px solid #999999;
+        background-color: #cccccc;
+        color: #666666;
+    }
     </style>
 </head>
 <body>
@@ -88,6 +97,7 @@
 <g:javascript src="vfs_fonts.js"/>
 <g:javascript src="buttons.html5.min.js"/>
 <g:javascript src="buttons.print.min.js"/>
+<g:javascript src="dataTables.select.min.js"/>
 
 <g:javascript>
     $(document).ready(function() {
@@ -107,7 +117,7 @@
         parts = d.name.split(" ");
         return parts.length > 1;
     }
-
+    var table;
     function fillTableData(d) {
         var models = recursiveGetData(d);
         if ($.fn.dataTable.isDataTable('#model_data')) {
@@ -116,11 +126,22 @@
             .rows.add(models)
             .draw()
         } else {
-            $('#model_data').DataTable({
+            table = $('#model_data').DataTable({
                 "searching": true,
                 "lengthChange": false,
-                "pageLength": 14,
+                "pageLength": 12,
                 "columns": [
+                    {
+                        "orderable": false,
+                        'checkboxes': true,
+                        "targets":   0,
+                        "data": "modelId",
+                        'className': 'dt-body-center',
+                        'title': '<input name="select_all" value="1" id="example-select-all" type="checkbox">',
+                        'render': function (data, type, full, meta) {
+                           return '<input type="checkbox" name="model_id[]" value="' + $('<div/>').text(data).html() + '">';
+                        }
+                    },
                     {
                         "title": "Model Id",
                         "data": "modelId",
@@ -133,11 +154,29 @@
                          }
                     },
                     {"title": "Model Name", "data": "name"},
-                    {"title": "Date Update", "data": "updateDate"}
+                    {"title": "Date Update", "data": "updateDate", "width": "14%", "className": "dt-center", "targets": "_all"}
                 ],
                 "dom": 'Bfrtip',
                 "buttons": [
-                    'copy', 'csv', 'excel', 'pdf', 'print'
+                    'copy', 'csv', 'excel', 'pdf', 'print',
+                     {
+                        text: 'Download',
+                        className : 'download-button',
+                        action: function ( e, dt, node, config ) {
+                            var rows = table.rows({ 'search': 'applied' }).nodes();
+                            modelDownload = [];
+                            $('input[type="checkbox"]:checked', rows).each(function() {
+                                modelDownload.push($(this).attr('value'))
+                            });
+                            if (modelDownload.length === 0) {
+                                alert("You have to select at least one model to download");
+                                return
+                            }
+                            var url = '/jummp-biomodels/search/download?models=' + modelDownload.join(",");
+                            var win = window.open(url, '_blank');
+                            win.focus();
+                        }
+                    }
                 ],
                 "language": {
                     "lengthMenu": '_MENU_ search',
@@ -148,12 +187,13 @@
                             "next": '<i class="fa fa-angle-right"></i>'
                     }
                 },
+                "order": [[ 1, 'asc' ]],
                 "data": models
             });
         }
 
-        $("#model_data").css('visibility', 'inherit')
-        $("#model_data").css('min-height', $("#vis").width() + "px")
+        $("#model_data").css('visibility', 'inherit');
+        $("#model_data").css('min-height', $("#vis").width() + "px");
     }
 
     function recursiveGetData(d) {
@@ -242,6 +282,30 @@
         });
 
     fillTableData(nodes[0]);
+
+    function toggleDownloadButton() {
+        if ($('input[type="checkbox"]:checked', rows).length > 0 ) {
+            $('.download-button').prop("disabled", false);
+        } else {
+            $('.download-button').prop("disabled", true);
+        }
+    }
+
+    $('.download-button').prop("disabled", true);
+
+    $('#example-select-all').on('click', function(){
+       // Get all rows with search applied
+       var rows = table.rows({ 'search': 'applied' }).nodes();
+       // Check/uncheck checkboxes for all rows in the table
+       $('input[type="checkbox"]', rows).prop('checked', this.checked);
+       toggleDownloadButton()
+    });
+
+    var rows = table.rows({ 'search': 'applied' }).nodes();
+    $('input[type="checkbox"]', rows).change(function() {
+        toggleDownloadButton()
+    });
+
     var lastClick = d3.select('#path-0');
     lastClick.classed("highlight", true);
     function click(d) {
@@ -249,7 +313,7 @@
         if (this.id.indexOf('text') > -1) {
             ref = d3.select('#path-' + this.id.split("-")[1])
         }
-        lastClick.classed("highlight", false)
+        lastClick.classed("highlight", false);
         lastClick = ref;
         ref.classed("highlight", true);
         path.transition()
