@@ -62,7 +62,7 @@ class GoChartController {
                     }
                     child.put("modelId", modelId)
                     child.put("name", model.name)
-                    child.put("updateDate", TimeUtils.convertDate(model.updateDate, "yyyy-MM-dd"))
+                    child.put("updateDate", model.updateDate.format("yyyy-MM-dd"))
                     modelNodes.add(child)
                 }
                 node.putArray("models").addAll(modelNodes)
