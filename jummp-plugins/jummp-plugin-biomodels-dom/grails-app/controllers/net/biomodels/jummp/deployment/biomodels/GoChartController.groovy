@@ -24,7 +24,10 @@ class GoChartController {
      */
     def modelClassifierService
 
-    ObjectMapper objectMapper = new ObjectMapper()
+    /**
+     * Dependency Injection of ObjectMapper
+     */
+    def objectMapper
 
     def index() {
         List<List<Model, String, String, Date, String, Long, String>> data =
