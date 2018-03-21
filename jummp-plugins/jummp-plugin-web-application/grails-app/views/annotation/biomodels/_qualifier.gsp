@@ -16,5 +16,5 @@
  You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
-<abbr title="${qualifier.type} qualifier. For more information please refer to ${qualifier.namespace}">${qualifier.accession}</abbr>
+<abbr title="${qualifier.type}/qualifier. For more information please refer to ${qualifier.namespace}">${qualifier.accession}</abbr>
 
