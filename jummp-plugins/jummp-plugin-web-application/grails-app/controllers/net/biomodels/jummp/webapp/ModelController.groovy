@@ -113,6 +113,8 @@ class ModelController {
      */
     def omexService
 
+    def modelConversionService
+
     /**
      * The list of actions for which we should not automatically create an audit item.
      */
@@ -292,6 +294,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     it.getAuthority()
                 }
                 boolean hasCuratorRole = "ROLE_CURATOR" in roleNames
+                boolean supportedForConversion = modelConversionService.isSupportedForConversion(rev)
                 def model = [revision               : rev,
                              authors                : rev.model.creators,
                              allRevs                : revs,
@@ -309,7 +312,8 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                              modellingApproaches    : modellingApproaches,
                              curationNotes          : curationNotes,
                              originalModels         : originalModels,
-                             hasCuratorRole         : hasCuratorRole
+                             hasCuratorRole         : hasCuratorRole,
+                             supportedForConversion : supportedForConversion
                 ]
                 if (rev.id == revision.id) {
                     flash.genericModel = model

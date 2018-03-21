@@ -400,6 +400,24 @@
                     }
                 }
             });
+            $('#confirm-model-conversion').dialog({
+                resizable: false,
+                autoOpen: false,
+                height: 250,
+                width: 500,
+                modal: true,
+                buttons: {
+                    Confirm: function() {
+                        var url = "${g.createLink(controller: 'conversion', action: 'convert', id: revision.identifier())}";
+                        $.jummp.openPage(url);
+                        $(this).dialog("close");
+                    },
+                    Cancel: function() {
+                        $(this).dialog("close");
+                    }
+                }
+            });
+
             $('#confirm-model-publish').dialog({
                 resizable: false,
                 autoOpen: false,
@@ -503,6 +521,13 @@
                     primary: "ui-icon-star"
                 }
             }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
+            $("#convert").button({
+                text: false,
+                icons: {
+                    primary: "ui-icon-transferthick-e-w"
+                }
+            }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
+
             $("#panelToggle").button({
                     text:false,
                     icons: {
@@ -620,6 +645,19 @@
                                     class="toolbutton"
                                     onclick="return $('#confirm-model-consistency-check').dialog('open');">
                                 Check Consistency
+                            </button>
+                        </li>
+                    </g:if>
+                    <g:if test="${hasCuratorRole && supportedForConversion}">
+                        <div id="confirm-model-conversion" title="Model Conversion" style="display:none;">
+                            <p>Exporting this model to other formats uses an online service. This might take time for
+                            uploading and exporting the model. Do you want to proceed the model conversion?</p>
+                        </div>
+                        <li>
+                            <button id="convert"
+                                    class="toolbutton"
+                                    onclick="return $('#confirm-model-conversion').dialog('open');">
+                                Convert This Model To The Other Formats
                             </button>
                         </li>
                     </g:if>
