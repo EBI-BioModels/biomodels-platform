@@ -436,6 +436,21 @@ Please add the setting 'jummp.search.url', pointing to a Solr instance, to your 
     }
 }
 
+// folder containing the exports
+if (!(jummpConfig.jummp.model.exportFolder instanceof ConfigObject)) {
+    jummp.model.exportFolder = jummpConfig.jummp.model.exportFolder
+}
+else {
+    jummp.model.exportFolder = jummp.search.exportFolder
+}
+// external conversion service url
+if (!(jummpConfig.jummp.model.converter.url instanceof ConfigObject)) {
+    jummp.model.converter.url = jummpConfig.jummp.model.converter.url
+}
+else {
+    println "ERROR\tSetting jummp.model.converter.url is undefined. The conversion of the model will be failed."
+}
+
 if (!(jummpConfig.jummp.search.pathToIndexerExecutable instanceof ConfigObject)) {
     jummp.search.pathToIndexerExecutable = jummpConfig.jummp.search.pathToIndexerExecutable
 }
