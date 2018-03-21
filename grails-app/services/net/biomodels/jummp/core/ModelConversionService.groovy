@@ -43,6 +43,7 @@ import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+import org.springframework.security.access.AccessDeniedException
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -55,6 +56,8 @@ class ModelConversionService implements IModelConversionService {
     final String CONVERSION_SERVICE_URL = Holders.grailsApplication.config.jummp.model.converter.url
 
     final String EXPORT_FOLDER = Holders.grailsApplication.config.jummp.model.exportFolder
+
+    def modelDelegateService
 
     Set<String> listOfFormatsSupportedExport() {
         // TODO: should retrieve from the external conversion service
@@ -84,7 +87,18 @@ class ModelConversionService implements IModelConversionService {
         supportedFormats.size() > 0
     }
 
-    def generateExports(RTC revisionTC) {
+    List<String> generateExports(String modelId, String revisionId) {
+        try {
+            RTC revisionTC = modelDelegateService.getRevisionFromParams(modelId, revisionId)
+        } catch(AccessDeniedException e) {
+            log.error(e.message, e)
+            return null
+        } finally {
+            return generateExports(revisionTC).collect {it.text}
+        }
+    }
+
+    List<Path> generateExports(RTC revisionTC) {
         if (isSupportedForConversion(revisionTC)) {
             // Create the subfolder named revision_number under the model submission id folder
             final String MODEL_FOLDER = revisionTC.model?.submissionId
@@ -100,12 +114,18 @@ Connecting conversion service to generate exports of the model ${revisionTC?.mod
             mainFile = mainFile?.first()
             String format = revisionTC.format.identifier
             Set<String> supportedFormats = listOfFormatsSupportedForExport(format)
+            List<Path> result = new ArrayList<Path>()
             supportedFormats.each {
-                convertAndCache(mainFile, it, revisionTC, revisionFolder)
+                Path path = convertAndCache(mainFile, it, revisionTC, revisionFolder)
+                if (path) {
+                    result.add(path)
+                }
             }
+            return result
         } else {
             log.info("""\
 The model ${revisionTC?.model?.submissionId} with the format ${revisionTC.format?.identifier} has not been supported for conversion yet""")
+            return null
         }
     }
 
