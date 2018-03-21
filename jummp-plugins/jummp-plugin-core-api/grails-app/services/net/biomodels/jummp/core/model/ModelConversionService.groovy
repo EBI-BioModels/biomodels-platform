@@ -45,21 +45,18 @@ import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
-import org.springframework.security.access.AccessDeniedException
 
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 
-class ModelConversionService /*implements IModelConversionService*/ {
+class ModelConversionService implements IModelConversionService {
 
     private static final Log log = LogFactory.getLog(ModelConversionService.class)
 
     final String CONVERSION_SERVICE_URL = Holders.grailsApplication.config.jummp.model.converter.url
 
     final String EXPORT_FOLDER = Holders.grailsApplication.config.jummp.model.exportFolder
-
-    def modelDelegateService
 
     Set<String> listOfFormatsSupportedExport() {
         // TODO: should retrieve from the external conversion service
@@ -87,18 +84,6 @@ class ModelConversionService /*implements IModelConversionService*/ {
         String format = revisionTC.format.identifier
         Set<String> supportedFormats = listOfFormatsSupportedForExport(format)
         supportedFormats.size() > 0
-    }
-
-    List<String> generateExports(String modelId, String revisionId) {
-        RTC revisionTC
-        try {
-            revisionTC = modelDelegateService.getRevisionFromParams(modelId, revisionId)
-        } catch(AccessDeniedException e) {
-            log.error(e.message, e)
-            return null
-        } finally {
-            return generateExports(revisionTC).collect {it.toString()}
-        }
     }
 
     List<Path> generateExports(RTC revisionTC) {
