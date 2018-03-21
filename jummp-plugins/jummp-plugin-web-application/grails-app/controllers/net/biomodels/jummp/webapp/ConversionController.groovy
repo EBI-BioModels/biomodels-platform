@@ -43,7 +43,10 @@ class ConversionController {
     def convert() {
         RevisionTransportCommand revisionTC
         try {
-            List<String> result = modelConversionService.generateExports(params.id, params.revisionId)
+            String modelId = params.id
+            String revisionId = params.revisionId
+            revisionTC = modelDelegateService.getRevisionFromParams(modelId, revisionId)
+            modelConversionService.generateExports(revisionTC)
             redirect(controller: "model", action: "showWithMessage",
                 id: revisionTC.identifier(),
                 params: [flashMessage: """The request of converting the model ${revisionTC.identifier()} 

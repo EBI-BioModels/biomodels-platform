@@ -34,6 +34,7 @@
 package net.biomodels.jummp.core
 
 import grails.test.mixin.TestFor
+import net.biomodels.jummp.core.model.ModelConversionService
 import spock.lang.Specification
 
 /**
