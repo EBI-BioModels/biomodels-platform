@@ -41,11 +41,10 @@ import javax.servlet.http.HttpServletRequest
 */
 
 class LocaleService implements LocaleVariantResolver {
-    static transactional = false
 
     @SuppressWarnings("GrailsStatelessService")
-    def grailsApplication
-
+    def grailsApplication		
+	
     String resolveLocaleVariant(Locale locale, HttpServletRequest request) {
         grailsApplication.config.jummp.branding.deployment
     }

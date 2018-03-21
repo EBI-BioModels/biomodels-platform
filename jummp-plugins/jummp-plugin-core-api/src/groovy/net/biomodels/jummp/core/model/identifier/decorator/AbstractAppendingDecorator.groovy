@@ -73,10 +73,6 @@ abstract class AbstractAppendingDecorator implements OrderedModelIdentifierDecor
         context.publishEvent(evt)
     }
 
-    void publishEvent(Object ignored) {
-        throw new UnsupportedOperationException("Please use publishObject(ApplicationEvent e) instead")
-    }
-
     /**
      * Defines the natural order for instances of OrderedModelIdentifierDecorator implementations.
      */
