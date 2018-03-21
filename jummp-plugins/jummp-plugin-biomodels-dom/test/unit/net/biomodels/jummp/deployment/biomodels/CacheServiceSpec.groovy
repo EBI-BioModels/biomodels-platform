@@ -3,6 +3,11 @@ package net.biomodels.jummp.deployment.biomodels
 import grails.test.mixin.TestFor
 import spock.lang.Specification
 
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
  */
@@ -28,7 +33,7 @@ class CacheServiceSpec extends Specification {
         when: 'check whether it has cache for a non exist object'
         String cacheName = 'non-exist'
         then: 'must return false'
-        !service.hasCache(cacheName)
+        null == service.getCache(cacheName)
     }
 
     void "create a new cache"() {
@@ -47,11 +52,11 @@ class CacheServiceSpec extends Specification {
         String cacheName = 'cache-exists-2'
         service.setCache(cacheName, 1, 5)
         then: 'must return that object exists'
-        service.hasCache(cacheName)
+        null != service.getCache(cacheName)
         when: 'time expired'
         Thread.sleep(5000)
         then: 'must return that object no longer exists'
-        !service.hasCache(cacheName)
+        null == service.getCache(cacheName)
         and: 'must remove the cache file'
         File file = new File(cacheDir, cacheName)
         !file.isFile()

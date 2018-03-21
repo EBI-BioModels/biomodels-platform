@@ -7,8 +7,8 @@ import net.biomodels.jummp.models.ModelDetails
 import net.biomodels.jummp.utils.MathUtils
 import net.biomodels.jummp.utils.RestUtils
 import net.biomodels.jummp.utils.TimeUtils
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.http.HttpMethod
 import org.springframework.web.util.UriComponentsBuilder
@@ -25,22 +25,26 @@ class ModelClassifierService implements InitializingBean {
      */
     def grailsApplication
 
-    static final Log log = LogFactory.getLog(this.getClass())
+    static final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
 
     private String classificationEndpoint
 
     private Map<String, String> classifyModel(Model model) {
+        LOGGER.debug("Starting classify model {}", model.submissionId)
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(classificationEndpoint)
         uriComponentsBuilder.path("/predict")
         uriComponentsBuilder.queryParam("model_id", model.getSubmissionId())
         URI request = uriComponentsBuilder.build().encode().toUri()
-        return  RestUtils.exchange(request, HttpMethod.GET, new TypeReference<HashMap<String, String>>(){})
+        Map<String, String> result = RestUtils.exchange(request, HttpMethod.GET,
+            new TypeReference<HashMap<String, String>>(){})
+        LOGGER.debug("Model {} classified result: {}", model.submissionId, result)
+        return result
     }
 
     private Map<String, String> classifyModel(Model model, Date date) {
-        if (cacheService.hasCache(model.getSubmissionId())) {
-            JummpEntry<Long, Serializable> cache =
-                cacheService.getCache(model.getSubmissionId()) as JummpEntry<Long, Serializable>
+        JummpEntry<Long, Serializable> cache =
+            cacheService.getCache(model.getSubmissionId()) as JummpEntry<Long, Serializable>
+        if (cache != null) {
             /**
              * Check whether the model is updated or not
              */
@@ -51,15 +55,15 @@ class ModelClassifierService implements InitializingBean {
 
         Map<String, String> result = classifyModel(model)
         int expired = MathUtils.rand(TimeUtils.ONE_YEAR, TimeUtils.TWO_YEAR)
-        JummpEntry<Long, Serializable> cache = new JummpEntry<>(TimeUtils.getTimestamp(date), result as Serializable)
+        cache = new JummpEntry<>(TimeUtils.getTimestamp(date), result as Serializable)
         cacheService.setCache(model.getSubmissionId(), cache, expired)
         return result
     }
 
     Map<?, ?> classifyModels(List<ModelDetails> models) {
+        LOGGER.info("Starting to classify models")
         Map<?, ?> results = new HashMap<>()
         for (ModelDetails model : models) {
-
             Map<String, String> classified = classifyModel(model.model, model.updateDate)
             if (classified == null || classified.get("code") != "200") {
                 continue
@@ -70,6 +74,7 @@ class ModelClassifierService implements InitializingBean {
             entries.add(new JummpEntry<>(classified.get("class"), classified.get("class_name")))
             classifyModels(results, entries.iterator(), model)
         }
+        LOGGER.info("Finished classify models")
         return results
     }
 

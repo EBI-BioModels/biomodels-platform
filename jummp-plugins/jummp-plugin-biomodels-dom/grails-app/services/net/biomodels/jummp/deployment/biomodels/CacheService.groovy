@@ -3,11 +3,14 @@ package net.biomodels.jummp.deployment.biomodels
 import net.biomodels.jummp.models.JummpEntry
 import net.biomodels.jummp.utils.FileUtils
 import net.biomodels.jummp.utils.TimeUtils
+import org.apache.commons.lang.NullArgumentException
 import org.springframework.context.annotation.Scope
 import org.springframework.context.annotation.ScopedProxyMode
 
 import javax.annotation.PostConstruct
+import java.lang.ref.SoftReference
 import java.nio.file.Files
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Cache data service
@@ -19,8 +22,7 @@ import java.nio.file.Files
 class CacheService {
     static transactional = false
 
-    //Todo: Apply soft reference
-    private Map<String, JummpEntry<Long, Serializable>> cached = new HashMap<>()
+    private Map<String, SoftReference<JummpEntry<Long, Serializable>>> cached = new ConcurrentHashMap<>()
 
     def grailsApplication
 
@@ -47,7 +49,7 @@ class CacheService {
             if (!fileEntry.isDirectory()) {
                 JummpEntry<Long, Serializable> cache =
                     FileUtils.loadObjectFromFile(fileEntry, JummpEntry.class) as JummpEntry<Long, Serializable>
-                cached.put(fileEntry.getName(), cache)
+                cached.put(fileEntry.getName(), new SoftReference<>(cache))
             }
         }
     }
@@ -55,13 +57,15 @@ class CacheService {
     /**
      * Check whether we have cache for the given name or not
      * We also check if the time of cache was expired then remove it
+     * Note: We moved this function to private since we can't keep the state of soft reference
+     * Call getCache(String name) instead
      *
      * @param name
      * @return
      */
-    boolean hasCache(String name) {
+    private boolean hasCache(String name) {
         if (cached.containsKey(name)) {
-            if (cached.get(name).getKey() > TimeUtils.currentTimestamp) {
+            if (cached.get(name).get() != null && cached.get(name).get().getKey() > TimeUtils.currentTimestamp) {
                 return true
             }
             removeCache(name)
@@ -69,7 +73,7 @@ class CacheService {
         return false
     }
 
-    void removeCache(String name) {
+    synchronized void removeCache(String name) {
         if (cached.containsKey(name)) {
             cached.remove(name)
             File cache = new File(getCacheDir(), name)
@@ -78,26 +82,39 @@ class CacheService {
     }
 
     /**
-     * Get back cache object
+     * Get back the cache object
+     * Return null if the cache is not exist or expired
      * @param name
      * @return
      */
     Serializable getCache(String name) {
-        return cached.get(name).getValue();
+        if (hasCache(name)) {
+            JummpEntry<Long, Serializable> cache = cached.get(name).get()
+            if (cache != null) {
+                return cache.value
+            }
+        }
+        return null
     }
 
     /**
      * Set a new cache
-     * @param name key
-     * @param value
+     * @param name key non null
+     * @param value non null
      * @param expired number of second from now when the cache will be expire
      */
-    void setCache(String name, Serializable value , int expired) {
-        if (hasCache(name)) {
-            cached.get(name).setValue(value);
-        } else {
-            cached.put(name, new JummpEntry<Long, Serializable>(TimeUtils.currentTimestamp + expired, value))
+    synchronized void setCache(String name, Serializable value , int expired) {
+        if (name == null) {
+            throw new NullArgumentException("name")
         }
-        FileUtils.writeObjectToFile(new File(getCacheDir(), name), cached.get(name))
+        if (!hasCache(name)) {
+            if (value == null) {
+                throw new NullArgumentException("value")
+            }
+            JummpEntry<Long, Serializable> cache = new JummpEntry<Long, Serializable>(
+                TimeUtils.currentTimestamp + expired, value)
+            cached.put(name, new SoftReference<>(cache))
+            FileUtils.writeObjectToFile(new File(getCacheDir(), name), cache)
+        }
     }
 }
