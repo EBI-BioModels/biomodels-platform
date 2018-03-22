@@ -295,6 +295,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                 }
                 boolean hasCuratorRole = "ROLE_CURATOR" in roleNames
                 boolean supportedForConversion = modelConversionService.isSupportedForConversion(rev)
+		        List<RFTC> convertedFilesTC = modelConversionService.getConvertedFiles(revision)
                 def model = [revision               : rev,
                              authors                : rev.model.creators,
                              allRevs                : revs,
@@ -313,7 +314,8 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                              curationNotes          : curationNotes,
                              originalModels         : originalModels,
                              hasCuratorRole         : hasCuratorRole,
-                             supportedForConversion : supportedForConversion
+                             supportedForConversion : supportedForConversion,
+                             convertedFilesTC       : convertedFilesTC
                 ]
                 if (rev.id == revision.id) {
                     flash.genericModel = model
