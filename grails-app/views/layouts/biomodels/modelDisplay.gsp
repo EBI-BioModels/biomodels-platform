@@ -34,8 +34,12 @@
 <%@ page import="net.biomodels.jummp.qcinfo.*"%>
 
 <%
-    def loadedZips=new HashMap();
+    def loadedZips=new HashMap()
     def zipSupported=[:]
+    def repFiles = revision.files.findAll {!it.hidden}
+    convertedFilesTC.each {
+        repFiles.add(it)
+    }
 %>
 <head xmlns="http://www.w3.org/1999/html">
     <title>${revision.name}</title>
@@ -87,7 +91,7 @@
         <link rel="stylesheet" href="${resource(dir: 'css/syntax', file: 'shCore.css')}" />
         <link rel="stylesheet" href="${resource(dir: 'css/syntax', file: 'shThemeDefault.css')}" />
 
-        <Ziphandler:outputFileInfoAsJS repFiles="${revision.files.findAll{!it.hidden}}"
+        <Ziphandler:outputFileInfoAsJS repFiles="${repFiles}"
                                        loadedZips="${loadedZips}" zipSupported="${zipSupported}"/>
         <script>
         $(function() {
@@ -247,9 +251,11 @@
                                     tcontent.push("</td></tr>");
                                 }
                             }
-                            tcontent.push("<tr><td><b>Submitted</b></td><td>",new Date(data[0].commit))
+                            // tcontent.push("<tr><td><b>Submitted</b></td><td>", new Date(data[0].commit))
+                            tcontent.push("<tr><td><b>Submitted</b></td><td>", new Date())
                             tcontent.push("</td></tr>")
-                            tcontent.push("<tr><td><b>Last Modified</b></td><td>",new Date(data[data.length-1].commit))
+                            // tcontent.push("<tr><td><b>Last Modified</b></td><td>", new Date(data[data.length-1].commit))
+                            tcontent.push("<tr><td><b>Last Modified</b></td><td>", new Date())
                             tcontent.push("</td></tr>")
 
                             tcontent.push("</table>");
@@ -821,8 +827,10 @@
                                         <a>${mainFile}</a>
                                     </jummp:findMainFileLabel>
                                     <ul>
-                                        <Ziphandler:outputFileInfoAsHtml repFiles="${revision.files}" loadedZips="${loadedZips}"
-                                                                         zipSupported="${zipSupported}" mainFile="${true}"/>
+                                        <Ziphandler:outputFileInfoAsHtml repFiles="${revision.files}"
+                                                 loadedZips="${loadedZips}"
+                                                 zipSupported="${zipSupported}"
+                                                 mainFile="${true}"/>
                                     </ul>
                                     </li>
                                 </ul>
@@ -831,12 +839,20 @@
                                     <li><a>Additional Files</a>
                                         <ul>
                                             <Ziphandler:outputFileInfoAsHtml repFiles="${revision.files.findAll{!it.hidden}}"
-                                                                 loadedZips="${loadedZips}" zipSupported="${zipSupported}"
-                                                                 mainFile="${false}"/>
+                                                 loadedZips="${loadedZips}"
+                                                 zipSupported="${zipSupported}"
+                                                 mainFile="${false}"/>
                                         </ul>
                                     </li>
                                     </g:if>
                                 </ul>
+                                <g:if test="${convertedFilesTC}">
+                                <ul>
+                                    <li><a>Exports</a>
+                                        <ul><Ziphandler:outputConvertedFiles convertedFilesTC="${convertedFilesTC}" /></ul>
+                                    </li>
+                                </ul>
+                                </g:if>
                             </div>
                         </div>
                         <div class="small-12 medium-9 large-9 columns">
