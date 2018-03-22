@@ -189,6 +189,15 @@ class ZiphandlerTagLib {
         out << outputFiles(convertedFilesTC, [:], [:] , false)
     }
 
+    def renderConvertedFiles = { attrs ->
+        List<RFTC> convertedFilesTC = attrs.convertedFilesTC
+        out << "<ul>"
+        out << render(plugin: "jummp-plugin-web-application",
+            template: "/templates/model/convert/convertedFileShow",
+            collection: convertedFilesTC, var: "fileTC")
+        out << "</ul>"
+    }
+
     private String outputFiles(List<RFTC> repFiles, HashMap loadedZips, Map zipSupported, boolean mainFile) {
         StringBuilder builder = new StringBuilder()
         try {

@@ -31,6 +31,8 @@
 package net.biomodels.jummp.webapp
 
 import grails.plugin.springsecurity.annotation.Secured
+import grails.util.Holders
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import org.springframework.security.access.AccessDeniedException
 
@@ -63,5 +65,24 @@ to the other formats has been sent to the external conversion service."""])
                         Model couldn't export to the other format. Try again, please!"""
                 ])
         }
+    }
+
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def download() {
+        final String EXPORT_FOLDER = Holders.grailsApplication.config.jummp.model.exportFolder
+        String modelId = params.id
+        String revisionId = params.revisionId
+        String fileName = params.fileName
+        String mimeType = params.mimeType
+        String revisionFolder = "${EXPORT_FOLDER}${File.separator}"
+        revisionFolder += "${modelId}${File.separator}${revisionId}${File.separator}"
+        File file = new File(revisionFolder, fileName)
+        response.setContentType(mimeType)
+        final String INLINE = "attachment"
+        response.setHeader("Content-disposition", "${INLINE};filename=\"${fileName}\"")
+        byte[] fileData = file.readBytes()
+        int previewSize = grailsApplication.config.jummp.web.file.preview as Integer
+        response.outputStream << new ByteArrayInputStream(fileData)
+
     }
 }

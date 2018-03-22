@@ -36,10 +36,6 @@
 <%
     def loadedZips=new HashMap()
     def zipSupported=[:]
-    def repFiles = revision.files.findAll {!it.hidden}
-    convertedFilesTC.each {
-        repFiles.add(it)
-    }
 %>
 <head xmlns="http://www.w3.org/1999/html">
     <title>${revision.name}</title>
@@ -91,7 +87,7 @@
         <link rel="stylesheet" href="${resource(dir: 'css/syntax', file: 'shCore.css')}" />
         <link rel="stylesheet" href="${resource(dir: 'css/syntax', file: 'shThemeDefault.css')}" />
 
-        <Ziphandler:outputFileInfoAsJS repFiles="${repFiles}"
+        <Ziphandler:outputFileInfoAsJS repFiles="${revision.files.findAll{!it.hidden}}"
                                        loadedZips="${loadedZips}" zipSupported="${zipSupported}"/>
         <script>
         $(function() {
@@ -251,11 +247,9 @@
                                     tcontent.push("</td></tr>");
                                 }
                             }
-                            // tcontent.push("<tr><td><b>Submitted</b></td><td>", new Date(data[0].commit))
-                            tcontent.push("<tr><td><b>Submitted</b></td><td>", new Date())
+                            tcontent.push("<tr><td><b>Submitted</b></td><td>", new Date(data[0].commit))
                             tcontent.push("</td></tr>")
-                            // tcontent.push("<tr><td><b>Last Modified</b></td><td>", new Date(data[data.length-1].commit))
-                            tcontent.push("<tr><td><b>Last Modified</b></td><td>", new Date())
+                            tcontent.push("<tr><td><b>Last Modified</b></td><td>", new Date(data[data.length-1].commit))
                             tcontent.push("</td></tr>")
 
                             tcontent.push("</table>");
@@ -714,6 +708,8 @@
                     <li><a href="#Overview">Overview</a></li>
                     <li><a href="#Files">Files</a></li>
                     <li><a href="#History">History</a></li>
+                    <g:if test="${convertedFilesTC}">
+                    <li><a href="#Exports">Exports</a></li></g:if>
                     <!--
                         These specific tabs would be shown based on specific model format. Every tab is deliberately designed
                         for each part/section in the content of model file.
@@ -846,13 +842,6 @@
                                     </li>
                                     </g:if>
                                 </ul>
-                                <g:if test="${convertedFilesTC}">
-                                <ul>
-                                    <li><a>Exports</a>
-                                        <ul><Ziphandler:outputConvertedFiles convertedFilesTC="${convertedFilesTC}" /></ul>
-                                    </li>
-                                </ul>
-                                </g:if>
                             </div>
                         </div>
                         <div class="small-12 medium-9 large-9 columns">
@@ -902,6 +891,12 @@
                             </g:each>
                         </ul>
                     </div>
+                    <g:if test="${convertedFilesTC}">
+                    <div id="Exports">
+                        <h3>Below are the converted model files where you could download</h3>
+                        <Ziphandler:renderConvertedFiles convertedFilesTC="${convertedFilesTC}"/>
+                    </div>
+                    </g:if>
                     <g:pageProperty name="page.modelspecifictabscontent" />
                     <g:if test="${curationNotes != null || hasCuratorRole}">
                         <biomd:renderCurationNotesTab curationNotes="${curationNotes}"

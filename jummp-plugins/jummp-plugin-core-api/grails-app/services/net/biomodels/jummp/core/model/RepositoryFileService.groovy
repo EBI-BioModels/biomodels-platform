@@ -82,7 +82,7 @@ There is an error when trying to update the description: $description --- of the
             def is = new BufferedInputStream(new FileInputStream(file))
             String mimeType = sherlock.detect(is, new Metadata()).toString()
             RepositoryFileTransportCommand command = new RepositoryFileTransportCommand(
-                path: file.path,
+                path: file.name,
                 description: file.name,
                 mimeType: mimeType
             )
