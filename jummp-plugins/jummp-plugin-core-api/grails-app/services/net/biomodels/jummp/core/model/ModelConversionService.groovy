@@ -58,6 +58,8 @@ class ModelConversionService implements IModelConversionService {
 
     final String EXPORT_FOLDER = Holders.grailsApplication.config.jummp.model.exportFolder
 
+    def repositoryFileService
+
     Set<String> listOfFormatsSupportedExport() {
         // TODO: should retrieve from the external conversion service
         return ["SBML", "PharmML"]
@@ -154,6 +156,37 @@ There is an error while converting the model ${revisionTC.model.submissionId} to
             File target = new File(revisionFolder, sourceFileName)
             Path result = Files.copy(source.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING)
             return result
+        }
+        return null
+    }
+
+    /**
+     * This method enables us to retrieve the converted files of a given revision
+     *
+     * @param revisionTC    The revision transport command represents the target revision
+     * @return a list       The list of files converted from the revision's format to the others
+     */
+    List<RFTC> getConvertedFiles(RTC revisionTC) {
+        log.info("""\
+Getting all converted files of the model ${revisionTC.model.submissionId}, revision ${revisionTC.revisionNumber}""")
+        final String MODEL_FOLDER = revisionTC.model?.submissionId
+        String modelFolder = "${EXPORT_FOLDER}${File.separator}${MODEL_FOLDER}"
+        File revisionFolder = new File(modelFolder, revisionTC.revisionNumber.toString())
+        if (!revisionFolder.exists()) {
+            log.error("""\
+Oops, the model ${MODEL_FOLDER} doesn't exist because the conversion might be unfinished""")
+        } else {
+            List<File> files = revisionFolder.listFiles()
+            List<RFTC> fileTCs = repositoryFileService.asRFTCList(files)
+            // The RFTC objects have been already initialised three attributes.
+            // We just need to update the remaining attributes
+            fileTCs.each {
+                it.mainFile = false
+                it.hidden = false
+                it.userSubmitted = false
+                it.revision = revisionTC
+            }
+            return fileTCs
         }
         return null
     }
