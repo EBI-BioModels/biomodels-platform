@@ -223,10 +223,18 @@
         .value(function(d) { return 5.8 - d.depth; });
 
     var arc = d3.svg.arc()
-        .startAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x))); })
-        .endAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x + d.dx))); })
-        .innerRadius(function(d) { return Math.max(0, d.y ? y(d.y) : d.y); })
-        .outerRadius(function(d) { return Math.max(0, y(d.y + d.dy)); });
+        .startAngle(function(d) {
+            return Math.max(0, Math.min(2 * Math.PI, x(d.x)));
+        })
+        .endAngle(function(d) {
+            return Math.max(0, Math.min(2 * Math.PI, x(d.x + d.dx)));
+        })
+        .innerRadius(function(d) {
+            return Math.max(0, d.y ? y(d.y) : d.y);
+        })
+        .outerRadius(function(d) {
+            return Math.max(0, y(d.y + d.dy));
+        });
 
     var nodes = partition.nodes({children: json});
 
@@ -283,7 +291,7 @@
 
     fillTableData(nodes[0]);
 
-    function toggleDownloadButton() {
+    function toggleDownloadButton(rows) {
         if ($('input[type="checkbox"]:checked', rows).length > 0 ) {
             $('.download-button').prop("disabled", false);
         } else {
@@ -298,24 +306,17 @@
        var rows = table.rows({ 'search': 'applied' }).nodes();
        // Check/uncheck checkboxes for all rows in the table
        $('input[type="checkbox"]', rows).prop('checked', this.checked);
-       toggleDownloadButton()
+       toggleDownloadButton(rows)
     });
 
     var rows = table.rows({ 'search': 'applied' }).nodes();
     $('input[type="checkbox"]', rows).change(function() {
-        toggleDownloadButton()
+        toggleDownloadButton(rows)
     });
 
     var lastClick = d3.select('#path-0');
     lastClick.classed("highlight", true);
     function click(d) {
-        var ref = d3.select(this);
-        if (this.id.indexOf('text') > -1) {
-            ref = d3.select('#path-' + this.id.split("-")[1])
-        }
-        lastClick.classed("highlight", false);
-        lastClick = ref;
-        ref.classed("highlight", true);
         path.transition()
             .duration(duration)
             .attrTween("d", arcTween(d));
@@ -346,6 +347,18 @@
             d3.select(this).style("visibility", isParentOf(d, e) ? null : "hidden");
         });
         fillTableData(d);
+        var ref = d3.select(this);
+        if (this.id.indexOf('text') > -1) {
+            ref = d3.select('#path-' + this.id.split("-")[1])
+        }
+        lastClick.classed("highlight", false);
+        lastClick = ref;
+        ref.classed("highlight", true);
+
+        var rows = table.rows({ 'search': 'applied' }).nodes();
+        $('input[type="checkbox"]', rows).change(function() {
+            toggleDownloadButton(rows)
+        });
     }
 
     function isParentOf(p, c) {
