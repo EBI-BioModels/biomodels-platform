@@ -295,7 +295,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                 }
                 boolean hasCuratorRole = "ROLE_CURATOR" in roleNames
                 boolean supportedForConversion = modelConversionService.isSupportedForConversion(rev)
-		        List<RFTC> convertedFilesTC = modelConversionService.getConvertedFiles(revision)
+		        List<RFTC> convertedFilesTC = modelConversionService.getConvertedFiles(rev)
                 def model = [revision               : rev,
                              authors                : rev.model.creators,
                              allRevs                : revs,
