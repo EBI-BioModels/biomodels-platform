@@ -408,7 +408,8 @@
                 modal: true,
                 buttons: {
                     Confirm: function() {
-                        var url = "${g.createLink(controller: 'conversion', action: 'convert', id: revision.identifier())}";
+                        var url = "${g.createLink(controller: 'conversion', action: 'convert')}";
+                        url += "?id=${revision.model.submissionId}&revisionId=${revision.revisionNumber}"
                         $.jummp.openPage(url);
                         $(this).dialog("close");
                     },
