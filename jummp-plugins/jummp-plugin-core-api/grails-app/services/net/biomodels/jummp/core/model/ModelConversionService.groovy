@@ -174,7 +174,7 @@ Getting all converted files of the model ${revisionTC.model.submissionId}, revis
         File revisionFolder = new File(modelFolder, revisionTC.revisionNumber.toString())
         if (!revisionFolder.exists()) {
             log.error("""\
-Oops, the model ${MODEL_FOLDER} doesn't exist because the conversion might be unfinished""")
+Oops, the model ${MODEL_FOLDER} doesn't exist because the conversion might either be unfinished or not has been launch yet""")
         } else {
             List<File> files = revisionFolder.listFiles()
             List<RFTC> fileTCs = repositoryFileService.asRFTCList(files)
