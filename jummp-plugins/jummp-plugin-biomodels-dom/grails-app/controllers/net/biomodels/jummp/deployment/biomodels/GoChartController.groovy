@@ -32,11 +32,9 @@ class GoChartController {
             Map<?, ?> classified = modelClassifierService.classifyModels(models)
             ArrayNode converted = modelClassifierService.convertToJson(classified, new AtomicInteger(0))
             ['classifiedModels': converted]
-        } catch (Exception e) {
+        } catch (ConnectException e) {
             LOGGER.error(e.getMessage(), e)
-            redirect(controller: "model", action: "showWithMessage",
-                id: '500',
-                params: [flashMessage: "500 Internal Server Error"])
+            render(controller: "errors", action: "error500", plugin: "jummp-plugin-web-application")
         }
     }
 }
