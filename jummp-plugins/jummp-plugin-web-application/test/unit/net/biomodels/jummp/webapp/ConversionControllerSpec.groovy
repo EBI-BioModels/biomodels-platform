@@ -3,6 +3,8 @@ package net.biomodels.jummp.webapp
 import grails.test.mixin.TestFor
 import net.biomodels.jummp.core.IModelConversionService
 import net.biomodels.jummp.core.IModelService
+import net.biomodels.jummp.core.model.ModelTransportCommand
+import net.biomodels.jummp.core.model.RevisionTransportCommand
 import spock.lang.Specification
 
 /**
@@ -11,16 +13,16 @@ import spock.lang.Specification
 @TestFor(ConversionController)
 class ConversionControllerSpec extends Specification {
 
-    def setup() {
-    }
-
-    def cleanup() {
-    }
-
     void "test convert"() {
         setup: "declare essential variables"
-        IModelService modelDelegateService = Mock()
-        controller.modelDelegateService = modelDelegateService
+        def modelDelegateService = mockFor(IModelService)
+
+        modelDelegateService.demand.getRevisionFromParams = { modelId, revisionId ->
+            new RevisionTransportCommand(model: new ModelTransportCommand(
+                submissionId: modelId
+            ), revisionNumber: revisionId)
+        }
+        controller.modelDelegateService = modelDelegateService.createMock()
         IModelConversionService modelConversionService = Mock()
         controller.modelConversionService = modelConversionService
         when: "hit convert method"
