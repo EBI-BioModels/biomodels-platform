@@ -27,7 +27,7 @@
     <style>
     path {
         stroke: #000;
-        stroke-width: 1.5;
+        stroke-width: .5;
         cursor: pointer;
     }
 
@@ -53,11 +53,11 @@
             width: 100%;
         }
         .container #vis {
-            width: 42%;
+            width: 48%;
             float: left;
         }
         .container #model_data_wrapper {
-            width: 55%;
+            width: 50%;
             padding: 40px 10px;
             float: right;
             clear: inherit;
@@ -100,10 +100,19 @@
 <g:javascript src="dataTables.select.min.js"/>
 
 <g:javascript>
-    $(document).ready(function() {
-
-    } );
     var json = $.parseJSON('${classifiedModels.toString().replace('\'', '\\\'')}');
+
+    var totalModels = 0;
+    for (var i = 0; i < json.length; i++) {
+        totalModels += json[i].count;
+    }
+
+    json = {
+        name: "All GO Models",
+        children: json,
+        count: totalModels,
+        x: -30
+    };
 
     var width = $("#vis").width(),
         height = width,
@@ -113,11 +122,8 @@
         padding = 5,
         duration = 1000;
 
-    function hasMoreWord(d) {
-        parts = d.name.split(" ");
-        return parts.length > 1;
-    }
     var table;
+    var color = d3.scale.category20c();
     function fillTableData(d) {
         var models = recursiveGetData(d);
         if ($.fn.dataTable.isDataTable('#model_data')) {
@@ -129,7 +135,7 @@
             table = $('#model_data').DataTable({
                 "searching": true,
                 "lengthChange": false,
-                "pageLength": 12,
+                "pageLength": 14,
                 "columns": [
                     {
                         "orderable": false,
@@ -220,7 +226,7 @@
 
     var partition = d3.layout.partition()
         .sort(null)
-        .value(function(d) { return 5.8 - d.depth; });
+        .value(function(d) { return d.count + 30 });
 
     var arc = d3.svg.arc()
         .startAngle(function(d) {
@@ -236,58 +242,79 @@
             return Math.max(0, y(d.y + d.dy));
         });
 
-    var nodes = partition.nodes({children: json});
+    var nodes = partition.nodes(json);
 
     var path = vis.selectAll("path").data(nodes);
     path.enter().append("path")
         .attr("id", function(d, i) { return "path-" + i; })
         .attr("d", arc)
         .attr("fill-rule", "evenodd")
-        .style("fill", colour)
+        .style("fill", function(d) { return color((d.children ? d : d.parent).name); })
         .on("click", click);
 
     var text = vis.selectAll("text").data(nodes);
-    var textEnter = text.enter().append("text")
+    text.enter().append("text")
         .attr("id", function(d, i) {
           return "text-" + i;
         })
         .style("fill-opacity", 1)
         .style("fill", function(d) {
-        return brightness(d3.rgb(colour(d))) < 125 ? "#eee" : "#000";
+        return brightness(d3.rgb(color((d.children ? d : d.parent).name))) < 125 ? "#eee" : "#000";
     })
         .attr("text-anchor", function(d) {
         return x(d.x + d.dx / 2) > Math.PI ? "end" : "start";
     })
-        .attr("dy", ".2em")
+        .attr("dy", ".5em")
         .attr("transform", function(d) {
-        var multiline = (d.name || "").split(" ").length > 1,
-            angle = x(d.x + d.dx / 2) * 180 / Math.PI - 90,
-            rotate = angle + (multiline ? -.5 : 0);
-        return "rotate(" + rotate + ")translate(" + (y(d.y) + padding) + ")rotate(" + (angle > 90 ? -180 : 0) + ")";
-    })
+            var dx = d.x;
+            var multiline = (d.name || "").split(" ").length > 1,
+                angle = x(dx + d.dx / 2) * 180 / Math.PI - 90,
+                rotate = angle;
+            return "rotate(" + rotate + ")translate(" + (y(d.y) + padding) + ")rotate(" + (angle > 90 ? -180 : 0) + ")";
+        })
+        .text(function(d) {
+          return d.name + "#(" + d.count + ")";
+        })
+        .call(wrap, 124)
         .on("click", click);
-    textEnter.append("tspan")
-        .attr("x", 0)
-        .text(function(d) {
-            if (d.depth) {
-                if (hasMoreWord(d)) {
-                    return d.name.split(" ")[0]
-                }
-                return d.name + " (" + d.count + ")"
+
+    function wrap(text, width) {
+        text.each(function () {
+            var dw = width;
+            var text = d3.select(this),
+                words = text.text().split(/\s+/).reverse(),
+                word,
+                line = [],
+                lineNumber = 0,
+                x = 0,
+                y = 0,
+                dy = 0; //parseFloat(text.attr("dy")),
+            if (this.id == "text-0") {
+                dw = 50;
+                x = -35;
             }
-            return "";
-        });
-    textEnter.append("tspan")
-        .attr("x", 0)
-        .attr("dy", "1em")
-        .text(function(d) {
-            if (d.depth) {
-                if (hasMoreWord(d)) {
-                    return d.name.split(" ")[1] + " (" + d.count + ")"
+            var tspan = text.text(null)
+                        .append("tspan")
+                        .attr("x", x)
+                        .attr("y", y)
+                        .attr("dy", dy + "em");
+            while (word = words.pop()) {
+                word = word.replace("#", " ");
+                line.push(word);
+                tspan.text(line.join(" "));
+                if (tspan.node().getComputedTextLength() > dw) {
+                    line.pop();
+                    tspan.text(line.join(" "));
+                    line = [word];
+                    tspan = text.append("tspan")
+                                .attr("x", x)
+                                .attr("y", y)
+                                .attr("dy", ++lineNumber + "em")
+                                .text(word);
                 }
             }
-            return "";
         });
+    }
 
     fillTableData(nodes[0]);
 
@@ -316,10 +343,27 @@
 
     var lastClick = d3.select('#path-0');
     lastClick.classed("highlight", true);
+
+    function endall(transition, callback) {
+        if (typeof callback !== "function") throw new Error("Wrong callback in endall");
+        if (transition.size() === 0) { callback() }
+        var n = 0;
+        transition
+            .each(function() { ++n; })
+            .each("end", function() { if (!--n) callback.apply(this, arguments); });
+    }
+
     function click(d) {
         path.transition()
             .duration(duration)
-            .attrTween("d", arcTween(d));
+            .attrTween("d", arcTween(d))
+            .call(endall, function() {
+                fillTableData(d);
+                var rows = table.rows({ 'search': 'applied' }).nodes();
+                $('input[type="checkbox"]', rows).change(function() {
+                    toggleDownloadButton(rows)
+                });
+             });
 
         // Somewhat of a hack as we rely on arcTween updating the scales.
         text.style("visibility", function(e) {
@@ -332,10 +376,12 @@
                 return x(d.x + d.dx / 2) > Math.PI ? "end" : "start";
             };
         })
+
             .attrTween("transform", function(d) {
             var multiline = (d.name || "").split(" ").length > 1;
             return function() {
-                var angle = x(d.x + d.dx / 2) * 180 / Math.PI - 90,
+                var dx = d.x;
+                var angle = x(dx + d.dx / 2) * 180 / Math.PI - 90,
                     rotate = angle + (multiline ? -.5 : 0);
                 return "rotate(" + rotate + ")translate(" + (y(d.y) + padding) + ")rotate(" + (angle > 90 ? -180 : 0) + ")";
             };
@@ -346,7 +392,6 @@
             .each("end", function(e) {
             d3.select(this).style("visibility", isParentOf(d, e) ? null : "hidden");
         });
-        fillTableData(d);
         var ref = d3.select(this);
         if (this.id.indexOf('text') > -1) {
             ref = d3.select('#path-' + this.id.split("-")[1])
@@ -354,11 +399,6 @@
         lastClick.classed("highlight", false);
         lastClick = ref;
         ref.classed("highlight", true);
-
-        var rows = table.rows({ 'search': 'applied' }).nodes();
-        $('input[type="checkbox"]', rows).change(function() {
-            toggleDownloadButton(rows)
-        });
     }
 
     function isParentOf(p, c) {
@@ -369,10 +409,6 @@
             });
         }
         return false;
-    }
-
-    function colour(d) {
-        return '#008080'
     }
 
     // Interpolate the scales!
