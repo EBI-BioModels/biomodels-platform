@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap
 class CacheService {
     static transactional = false
 
-    private Map<String, SoftReference<JummpEntry<Long, Serializable>>> cached = new ConcurrentHashMap<>()
+    private Map<String, SoftReference<JummpEntry<Long, ? extends Serializable>>> cached = new ConcurrentHashMap<>()
 
     def grailsApplication
 
@@ -47,8 +47,8 @@ class CacheService {
     void reloadCachedFiles(File cacheDir) {
         for (final File fileEntry : cacheDir.listFiles()) {
             if (!fileEntry.isDirectory()) {
-                JummpEntry<Long, Serializable> cache =
-                    FileUtils.loadObjectFromFile(fileEntry, JummpEntry.class) as JummpEntry<Long, Serializable>
+                JummpEntry<Long, ? extends Serializable> cache =
+                    FileUtils.loadObjectFromFile(fileEntry, JummpEntry.class) as JummpEntry<Long, ? extends Serializable>
                 cached.put(fileEntry.getName(), new SoftReference<>(cache))
             }
         }
@@ -87,11 +87,11 @@ class CacheService {
      * @param name
      * @return
      */
-    Serializable getCache(String name) {
+    def <T extends Serializable> T getCache(String name) {
         if (hasCache(name)) {
-            JummpEntry<Long, Serializable> cache = cached.get(name).get()
+            JummpEntry<Long, ? extends Serializable> cache = cached.get(name).get()
             if (cache != null) {
-                return cache.value
+                return cache.value as T
             }
         }
         return null
@@ -111,7 +111,7 @@ class CacheService {
             if (value == null) {
                 throw new NullArgumentException("value")
             }
-            JummpEntry<Long, Serializable> cache = new JummpEntry<Long, Serializable>(
+            JummpEntry<Long, ? extends Serializable> cache = new JummpEntry<Long, ? extends Serializable>(
                 TimeUtils.currentTimestamp + expired, value)
             cached.put(name, new SoftReference<>(cache))
             FileUtils.writeObjectToFile(new File(getCacheDir(), name), cache)
