@@ -48,6 +48,7 @@ import org.apache.commons.logging.LogFactory
 
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 
 class ModelConversionService implements IModelConversionService {
@@ -150,11 +151,10 @@ The model ${revisionTC?.model?.submissionId} with the format ${revisionTC.format
 There is an error while converting the model ${revisionTC.model.submissionId} to the format ${toFormat}""")
                 return null
             }
-            filePath = filePath.substring(5) // get rid of the prefix 'file:'
-            File source = new File(filePath)
-            String sourceFileName = filePath.substring(filePath.lastIndexOf(File.separator)+1)
-            File target = new File(revisionFolder, sourceFileName)
-            Path result = Files.copy(source.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING)
+            Path source = Paths.get(new URI(filePath))
+            String fileName = source.getFileName()
+            Path target = Paths.get(revisionFolder.getAbsolutePath(), fileName)
+            Path result = Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING)
             return result
         }
         return null
