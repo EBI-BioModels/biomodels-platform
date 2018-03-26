@@ -78,8 +78,10 @@ class CacheService {
                 removeCache(name)
             } else {
                 File cacheFile = new File(getCacheDir(), name)
-                reloadCachedFile(cacheFile)
-                return hasCache(name)
+                if (cacheFile.isFile()) {
+                    reloadCachedFile(cacheFile)
+                    return hasCache(name)
+                }
             }
         }
         return false
