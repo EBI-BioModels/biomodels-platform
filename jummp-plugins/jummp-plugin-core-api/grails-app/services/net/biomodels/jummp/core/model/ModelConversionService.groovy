@@ -61,11 +61,14 @@ class ModelConversionService implements IModelConversionService {
 
     def repositoryFileService
 
-    Set<String> listOfFormatsSupportedExport() {
-        // TODO: should retrieve from the external conversion service
-        return ["SBML", "PharmML"]
-    }
-
+    /**
+     * This method returns the list of model formats that Conversion Service
+     * currently supports for converting the model under to a given format to
+     * these supported formats.
+     *
+     * @param   fromFormat A string representing a specific model format
+     * @return  a set      The list of strings which are formats supported by Conversion Service
+     */
     Set<String> listOfFormatsSupportedForExport(String fromFormat) {
         // TODO: invoke the external service
         Set<String> formats
@@ -83,12 +86,30 @@ class ModelConversionService implements IModelConversionService {
         formats
     }
 
+    /**
+     * This methods determines whether a given model revision will be supported
+     * for the conversion or not
+     *
+     * @param revisionTC    A revision transport command objects representing
+     *                      the model which will be converted
+     * @return a boolean    True/False
+     */
     boolean isSupportedForConversion(RTC revisionTC) {
         String format = revisionTC.format.identifier
         Set<String> supportedFormats = listOfFormatsSupportedForExport(format)
         supportedFormats.size() > 0
     }
 
+    /**
+     * This method allows to generate exports of a given model revision to all supported formats.
+     * Based on the list of supported formats by Conversion Service, this method will try to convert
+     * the model to each formats and store the converted file into the location externalised in the
+     * application settings.
+     *
+     * @param revisionTC    A revision transport command objects representing
+     *                      the model which will be converted
+     * @return a list       The list of Paths which files are converted ones
+     */
     List<Path> generateExports(RTC revisionTC) {
         if (isSupportedForConversion(revisionTC)) {
             // Create the subfolder named revision_number under the model submission id folder
@@ -120,6 +141,15 @@ The model ${revisionTC?.model?.submissionId} with the format ${revisionTC.format
         }
     }
 
+    /**
+     * This method aims to convert and store the result in the externalised location
+     *
+     * @param mainFile      A repository file transport command representing the main file
+     * @param toFormat      A string representing the output format
+     * @param revisionTC    A revision transport command representing the model revision
+     * @param revisionFolder A file object denoting the location whereby the converted will be stored
+     * @return a Path object A Path object showing the location where the file presents.
+     */
     private Path convertAndCache(RFTC mainFile, String toFormat,
                                  RTC revisionTC, File revisionFolder) {
         String fromFile = new File(mainFile.path).toURI()
