@@ -1,13 +1,14 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import com.fasterxml.jackson.databind.node.ArrayNode
-import com.fasterxml.jackson.databind.node.ObjectNode
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.model.ModelListSorting
 import net.biomodels.jummp.model.Model
-import net.biomodels.jummp.models.JummpEntry
 import net.biomodels.jummp.models.ModelDetails
-import net.biomodels.jummp.models.RefData
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
+import java.util.concurrent.atomic.AtomicInteger
 
 @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
 class GoChartController {
@@ -22,16 +23,20 @@ class GoChartController {
      */
     def modelClassifierService
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(GoChartController.class)
 
     def index() {
-        List data = modelService.getAllModelWithDetails(0, 0, true, ModelListSorting.ID)
-        List<ModelDetails> models = data.collect{new ModelDetails(it[0] as Model, it[1] as String, it[3] as Date)}
-        Map<?, ?> classified = modelClassifierService.classifyModels(models)
-        ArrayNode converted = convertToJson(classified, new RefData<Integer>(0))
-        ['classifiedModels': converted]
-    }
-
+        try {
+            List data = modelService.getAllModelWithDetails(0, 0, true, ModelListSorting.ID)
+            List<ModelDetails> models = data.collect{new ModelDetails(it[0] as Model, it[1] as String, it[3] as Date)}
+            Map<?, ?> classified = modelClassifierService.classifyModels(models)
+            ArrayNode converted = modelClassifierService.convertToJson(classified, new AtomicInteger(0))
+            ['classifiedModels': converted]
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e)
+            redirect(controller: "model", action: "showWithMessage",
+                id: '500',
+                params: [flashMessage: "500 Internal Server Error"])
         }
-        return arrayNode
     }
 }
