@@ -1,6 +1,8 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.node.ArrayNode
+import com.fasterxml.jackson.databind.node.ObjectNode
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.models.JummpEntry
 import net.biomodels.jummp.models.ModelDetails
@@ -12,6 +14,8 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.http.HttpMethod
 import org.springframework.web.util.UriComponentsBuilder
+
+import java.util.concurrent.atomic.AtomicInteger
 
 class ModelClassifierService implements InitializingBean {
     static transactional = false
@@ -25,7 +29,13 @@ class ModelClassifierService implements InitializingBean {
      */
     def grailsApplication
 
+    /**
+     * Dependency Injection of GrailsApplication
+     */
+    def objectMapper
+
     static final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
+    static final int RETRY_CLASSIFY_TIMES = 3
 
     private String classificationEndpoint
 
@@ -36,7 +46,7 @@ class ModelClassifierService implements InitializingBean {
         uriComponentsBuilder.queryParam("model_id", model.getSubmissionId())
         URI request = uriComponentsBuilder.build().encode().toUri()
         Map<String, String> result = RestUtils.exchange(request, HttpMethod.GET,
-            new TypeReference<HashMap<String, String>>(){})
+            new TypeReference<HashMap<String, String>>(){}, RETRY_CLASSIFY_TIMES)
         LOGGER.debug("Model {} classified result: {}", model.submissionId, result)
         return result
     }
