@@ -47,10 +47,16 @@ class CacheService {
     void reloadCachedFiles(File cacheDir) {
         for (final File fileEntry : cacheDir.listFiles()) {
             if (!fileEntry.isDirectory()) {
-                JummpEntry<Long, ? extends Serializable> cache =
-                    FileUtils.loadObjectFromFile(fileEntry, JummpEntry.class) as JummpEntry<Long, ? extends Serializable>
-                cached.put(fileEntry.getName(), new SoftReference<>(cache))
+                reloadCachedFile(fileEntry)
             }
+        }
+    }
+
+    private synchronized void reloadCachedFile(File file) {
+        if (file.isFile()) {
+            JummpEntry<Long, ? extends Serializable> cache =
+                FileUtils.loadObjectFromFile(file, JummpEntry.class) as JummpEntry<Long, ? extends Serializable>
+            cached.put(file.getName(), new SoftReference<>(cache))
         }
     }
 
@@ -65,10 +71,16 @@ class CacheService {
      */
     private boolean hasCache(String name) {
         if (cached.containsKey(name)) {
-            if (cached.get(name).get() != null && cached.get(name).get().getKey() > TimeUtils.currentTimestamp) {
-                return true
+            if (cached.get(name).get() != null) {
+                if (cached.get(name).get().getKey() > TimeUtils.currentTimestamp) {
+                    return true
+                }
+                removeCache(name)
+            } else {
+                File cacheFile = new File(getCacheDir(), name)
+                reloadCachedFile(cacheFile)
+                return hasCache(name)
             }
-            removeCache(name)
         }
         return false
     }
