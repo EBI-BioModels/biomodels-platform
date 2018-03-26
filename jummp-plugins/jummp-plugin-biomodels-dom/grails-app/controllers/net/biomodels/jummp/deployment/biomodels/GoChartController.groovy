@@ -22,10 +22,6 @@ class GoChartController {
      */
     def modelClassifierService
 
-    /**
-     * Dependency Injection of ObjectMapper
-     */
-    def objectMapper
 
     def index() {
         List data = modelService.getAllModelWithDetails(0, 0, true, ModelListSorting.ID)
@@ -35,41 +31,6 @@ class GoChartController {
         ['classifiedModels': converted]
     }
 
-    ArrayNode convertToJson(Map<?, ?> classified, RefData<Integer> refInt) {
-        ArrayNode arrayNode = objectMapper.createArrayNode()
-        classified.each { JummpEntry<String, String> key, value ->
-            RefData<Integer> total = new RefData<>(0)
-            ObjectNode node = objectMapper.createObjectNode()
-            if (key.value != null) {
-                node.put("name", key.value.replace("_", " "))
-            } else {
-                node.put("name", key.key)
-            }
-            node.put("code", key.key)
-            if (value instanceof Map) {
-                RefData<Integer> count = new RefData<>(0)
-                node.putArray("children").addAll(convertToJson(value as Map<?, ?>, count))
-                total.setData(total.getData() + count.data)
-            } else {
-                ArrayNode modelNodes = objectMapper.createArrayNode()
-
-                for (ModelDetails model : (value as List<ModelDetails>)) {
-                    total.data += 1
-                    ObjectNode child = objectMapper.createObjectNode()
-                    String modelId = model.model.getPublicationId()
-                    if (modelId == null) {
-                        modelId = model.model.submissionId
-                    }
-                    child.put("modelId", modelId)
-                    child.put("name", model.name)
-                    child.put("updateDate", model.updateDate.format("yyyy-MM-dd"))
-                    modelNodes.add(child)
-                }
-                node.putArray("models").addAll(modelNodes)
-            }
-            node.put("count", total.data)
-            arrayNode.add(node)
-            refInt.setData(refInt.data + total.data)
         }
         return arrayNode
     }

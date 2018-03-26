@@ -98,6 +98,45 @@ class ModelClassifierService implements InitializingBean {
         return classified
     }
 
+    ArrayNode convertToJson(Map<?, ?> classified, AtomicInteger totalCount) {
+        ArrayNode arrayNode = objectMapper.createArrayNode()
+        classified.each { JummpEntry<String, String> key, value ->
+            AtomicInteger total = new AtomicInteger(0)
+            ObjectNode node = objectMapper.createObjectNode()
+            if (key.value != null) {
+                node.put("name", key.value.replace("_", " "))
+            } else {
+                node.put("name", key.key)
+            }
+            node.put("code", key.key)
+            if (value instanceof Map) {
+                AtomicInteger count = new AtomicInteger(0);
+                node.putArray("children").addAll(convertToJson(value as Map<?, ?>, count))
+                total.set(total.get() + count.get())
+            } else {
+                ArrayNode modelNodes = objectMapper.createArrayNode()
+
+                for (ModelDetails model : (value as List<ModelDetails>)) {
+                    total.incrementAndGet()
+                    ObjectNode child = objectMapper.createObjectNode()
+                    String modelId = model.model.getPublicationId()
+                    if (modelId == null) {
+                        modelId = model.model.submissionId
+                    }
+                    child.put("modelId", modelId)
+                    child.put("name", model.name)
+                    child.put("updateDate", model.updateDate.format("yyyy-MM-dd"))
+                    modelNodes.add(child)
+                }
+                node.putArray("models").addAll(modelNodes)
+            }
+            node.put("count", total.get())
+            arrayNode.add(node)
+            totalCount.set(totalCount.get() + total.get())
+        }
+        return arrayNode
+    }
+
     void afterPropertiesSet() throws Exception {
         classificationEndpoint = grailsApplication.config.jummp.classification.endpoint
     }
