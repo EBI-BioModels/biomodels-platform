@@ -32,7 +32,7 @@ class GoChartController {
             Map<?, ?> classified = modelClassifierService.classifyModels(models)
             ArrayNode converted = modelClassifierService.convertToJson(classified, new AtomicInteger(0))
             ['classifiedModels': converted]
-        } catch (ConnectException e) {
+        } catch (Exception e) {
             LOGGER.error(e.getMessage(), e)
             render(controller: "errors", action: "error500", plugin: "jummp-plugin-web-application")
         }
