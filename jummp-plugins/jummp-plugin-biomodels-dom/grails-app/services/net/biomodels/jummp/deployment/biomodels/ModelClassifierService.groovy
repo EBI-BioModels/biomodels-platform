@@ -70,7 +70,7 @@ class ModelClassifierService implements InitializingBean {
         return result
     }
 
-    Map<?, ?> classifyModels(List<ModelDetails> models) {
+    private Map<?, ?> classifyModels(List<ModelDetails> models) {
         LOGGER.info("Starting to classify models")
         Map<?, ?> results = new HashMap<>()
         for (ModelDetails model : models) {
@@ -88,7 +88,8 @@ class ModelClassifierService implements InitializingBean {
         return results
     }
 
-    Map<?, ?> classifyModels(Map<?, ?> classified, Iterator<JummpEntry<String, String>> iterator, Object model) {
+    private Map<?, ?> classifyModels(Map<?, ?> classified, Iterator<JummpEntry<String, String>> iterator,
+                                     Object model) {
         JummpEntry<String, String> entry = iterator.next()
         if (!iterator.hasNext()) {
             if (classified.containsKey(entry)) {
@@ -108,7 +109,12 @@ class ModelClassifierService implements InitializingBean {
         return classified
     }
 
-    ArrayNode convertToJson(Map<?, ?> classified, AtomicInteger totalCount) {
+    ArrayNode classify(List<ModelDetails> models) {
+        Map<?, ?> classified = classifyModels(models)
+        convertToJson(classified, new AtomicInteger(0))
+    }
+
+    private ArrayNode convertToJson(Map<?, ?> classified, AtomicInteger totalCount) {
         ArrayNode arrayNode = objectMapper.createArrayNode()
         classified.each { JummpEntry<String, String> key, value ->
             AtomicInteger total = new AtomicInteger(0)

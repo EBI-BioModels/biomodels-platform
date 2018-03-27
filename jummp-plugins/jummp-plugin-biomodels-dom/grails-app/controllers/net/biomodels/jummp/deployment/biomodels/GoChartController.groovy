@@ -29,9 +29,7 @@ class GoChartController {
         try {
             List data = modelService.getAllModelWithDetails(0, 0, true, ModelListSorting.ID)
             List<ModelDetails> models = data.collect{new ModelDetails(it[0] as Model, it[1] as String, it[3] as Date)}
-            Map<?, ?> classified = modelClassifierService.classifyModels(models)
-            ArrayNode converted = modelClassifierService.convertToJson(classified, new AtomicInteger(0))
-            ['classifiedModels': converted]
+            ['classifiedModels': modelClassifierService.classify(models)]
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e)
             render(controller: "errors", action: "error500", plugin: "jummp-plugin-web-application")
