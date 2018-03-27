@@ -2235,15 +2235,16 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             throw new IllegalArgumentException("Revision may not be deleted")
         }
         Model model = revision.model
-        // grant read access this model revision to all existing curators
+        // grant write access this model revision to all existing curators
         List<User> curators = userService.getUsersByRole("ROLE_CURATOR")
         curators.each { curator ->
-            grantReadAccess(model, curator)
+            grantWriteAccess(model, curator)
         }
         // grant read access and administrative privilege to future curators
         aclUtilService.addPermission(revision, "ROLE_CURATOR", BasePermission.ADMINISTRATION)
         aclUtilService.addPermission(revision, "ROLE_CURATOR", BasePermission.READ)
-        revision.state = ModelState.UNDER_CURATION
+        aclUtilService.addPermission(revision, "ROLE_CURATOR", BasePermission.WRITE)
+        revision.state = ModelState.UNPUBLISHED
         revision.save(flush: true)
     }
 
