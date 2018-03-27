@@ -1,3 +1,24 @@
+/**
+ * Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Deutsches Krebsforschungszentrum (DKFZ)
+ *
+ * This file is part of Jummp.
+ *
+ * Jummp is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation; either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along
+ * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
+ */
+
+
 package net.biomodels.jummp.deployment.biomodels
 
 import com.fasterxml.jackson.core.type.TypeReference
@@ -17,6 +38,10 @@ import org.springframework.web.util.UriComponentsBuilder
 
 import java.util.concurrent.atomic.AtomicInteger
 
+/**
+ * @short: Service responsible for classify the bio-models into different categories
+ * @author: Vu Tu <tvu@ebi.ac.uk>
+ */
 class ModelClassifierService implements InitializingBean {
     static transactional = false
 
@@ -30,15 +55,33 @@ class ModelClassifierService implements InitializingBean {
     def grailsApplication
 
     /**
-     * Dependency Injection of GrailsApplication
+     * Dependency Injection of ObjectMapper
      */
     def objectMapper
 
     static final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
+
+    /**
+     * Number of times that we will retry to call Classification API when it got an error
+     * Out of this times, the service will raise that error
+     */
     static final int RETRY_CLASSIFY_TIMES = 3
 
+    /**
+     * Endpoint of the Classification API
+     */
     private String classificationEndpoint
 
+    void afterPropertiesSet() throws Exception {
+        classificationEndpoint = grailsApplication.config.jummp.classification.endpoint
+    }
+
+    /**
+     * Classify a model by make a request to Classification API
+     * This method will raise an exception when it can't perform the request more than RETRY_CLASSIFY_TIMES
+     * @param model: Model to classify
+     * @return the HashMap represent the response from the Classification API
+     */
     private Map<String, String> classifyModel(Model model) {
         LOGGER.debug("Starting classify model {}", model.submissionId)
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(classificationEndpoint)
@@ -51,6 +94,13 @@ class ModelClassifierService implements InitializingBean {
         return result
     }
 
+    /**
+     * Classify a model
+     * Check if we already have cached, then return the cache instead of classify it again
+     * @param model: Model to classify
+     * @param date: The date that the model has been updated
+     * @return the HashMap represent the response from the Classification API
+     */
     private Map<String, String> classifyModel(Model model, Date date) {
         JummpEntry<Long, Serializable> cache =
             cacheService.getCache(model.getSubmissionId()) as JummpEntry<Long, Serializable>
@@ -70,6 +120,23 @@ class ModelClassifierService implements InitializingBean {
         return result
     }
 
+    /**
+     * Classify a list of models
+     * @param models: List of models to classify
+     * @return a Map that represent the tree of the classified result
+     *
+     * Example result:
+     *  --Root
+     *  ----Metabolic Process
+     *  --------PhotoSynthesis
+     *  ---------------Model 1
+     *  ---------------Model 2
+     *  ---------------Model 3
+     *  ----Signalling
+     *  --------Chemical synaptic transmission
+     *  ---------------Model 4
+     *  ---------------Model 5
+     */
     private Map<?, ?> classifyModels(List<ModelDetails> models) {
         LOGGER.info("Starting to classify models")
         Map<?, ?> results = new HashMap<>()
@@ -88,6 +155,12 @@ class ModelClassifierService implements InitializingBean {
         return results
     }
 
+    /**
+     * Add the model to the right place in the result tree
+     * @param classified: The Tree that represent the classified result
+     * @param iterator: The List that represent each level of the classified model [root, parent, class]
+     * @param model: The Model need to add
+     */
     private Map<?, ?> classifyModels(Map<?, ?> classified, Iterator<JummpEntry<String, String>> iterator,
                                      Object model) {
         JummpEntry<String, String> entry = iterator.next()
@@ -109,11 +182,24 @@ class ModelClassifierService implements InitializingBean {
         return classified
     }
 
+    /**
+     * Classify list of model
+     * Also convert the result into ArrayNode (json)
+     * @param models: List of models to classify
+     * @return ArrayNode: object json represent the classified result tree
+     */
     ArrayNode classify(List<ModelDetails> models) {
         Map<?, ?> classified = classifyModels(models)
         convertToJson(classified, new AtomicInteger(0))
     }
 
+    /**
+     * Convert the tree classified result from type of Map to type of ArrayNode (json)
+     * Calculate the number models belonging each category
+     * @param classified: The Map represent the tree classified result
+     * @param totalCount: Start point (must be zero)
+     * @return ArrayNode: object json represent the classified result tree
+     */
     private ArrayNode convertToJson(Map<?, ?> classified, AtomicInteger totalCount) {
         ArrayNode arrayNode = objectMapper.createArrayNode()
         classified.each { JummpEntry<String, String> key, value ->
@@ -151,9 +237,5 @@ class ModelClassifierService implements InitializingBean {
             totalCount.set(totalCount.get() + total.get())
         }
         return arrayNode
-    }
-
-    void afterPropertiesSet() throws Exception {
-        classificationEndpoint = grailsApplication.config.jummp.classification.endpoint
     }
 }

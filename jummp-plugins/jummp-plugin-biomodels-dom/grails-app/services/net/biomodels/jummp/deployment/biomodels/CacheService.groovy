@@ -1,3 +1,24 @@
+/**
+ * Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Deutsches Krebsforschungszentrum (DKFZ)
+ *
+ * This file is part of Jummp.
+ *
+ * Jummp is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation; either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along
+ * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
+ */
+
+
 package net.biomodels.jummp.deployment.biomodels
 
 import net.biomodels.jummp.models.JummpEntry
@@ -13,17 +34,27 @@ import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Cache data service
- * Please keep in mind that this cache will save into both memory (RAM) and Storage Disk
- * Because of improving speed
- * So, only caching a lightweight data, and caching when really needed
+ * @short: Service responsible for caching data
+ *
+ * Allow concurrent request
+ *
+ * Please keep in mind that this cache will save data into both memory (RAM) and Storage Disk
+ * Because of improving speed, only caching lightweight data when really needed circumstances
+ *
+ * @author: Vu Tu <tvu@ebi.ac.uk>
  */
 @Scope(value = "application", proxyMode = ScopedProxyMode.TARGET_CLASS)
 class CacheService {
     static transactional = false
 
+    /**
+     * The map that keep the cached object
+     */
     private Map<String, SoftReference<JummpEntry<Long, ? extends Serializable>>> cached = new ConcurrentHashMap<>()
 
+    /**
+     * Dependency Injection of GrailsApplication
+     */
     def grailsApplication
 
     @PostConstruct
@@ -33,7 +64,6 @@ class CacheService {
 
     /**
      * Get cache dir path from config then create File object from it
-     * @return
      */
     File getCacheDir() {
         String cacheDirString = grailsApplication.config.jummp.cache.dir
@@ -42,7 +72,7 @@ class CacheService {
 
     /**
      * Reload all cached files from cacheDir
-     * @param cacheDir
+     * @param cacheDir: the File that contain path to the cache dir
      */
     void reloadCachedFiles(File cacheDir) {
         for (final File fileEntry : cacheDir.listFiles()) {
@@ -52,6 +82,10 @@ class CacheService {
         }
     }
 
+    /**
+     * Reload a cache that saved in to a file
+     * @param file: the cache file
+     */
     private synchronized void reloadCachedFile(File file) {
         if (file.isFile()) {
             JummpEntry<Long, ? extends Serializable> cache =
@@ -66,8 +100,10 @@ class CacheService {
      * Note: We moved this function to private since we can't keep the state of soft reference
      * Call getCache(String name) instead
      *
-     * @param name
+     * @param name: name of the cache
      * @return
+     *          True if we have that cache and not expired
+     *          False otherwise
      */
     private boolean hasCache(String name) {
         if (cached.containsKey(name)) {
@@ -87,6 +123,10 @@ class CacheService {
         return false
     }
 
+    /**
+     * Remove the cache from both memory and hard disk
+     * @param name: the name of the cache
+     */
     synchronized void removeCache(String name) {
         if (cached.containsKey(name)) {
             cached.remove(name)
@@ -96,10 +136,10 @@ class CacheService {
     }
 
     /**
-     * Get back the cache object
+     * Get the cache object
      * Return null if the cache is not exist or expired
-     * @param name
-     * @return
+     * @param name: the name of the cache
+     * @return: Object cached
      */
     def <T extends Serializable> T getCache(String name) {
         if (hasCache(name)) {
@@ -113,8 +153,8 @@ class CacheService {
 
     /**
      * Set a new cache
-     * @param name key non null
-     * @param value non null
+     * @param name: the name of the cache, non null
+     * @param value: the object of the cache, non null
      * @param expired number of second from now when the cache will be expire
      */
     synchronized void setCache(String name, Serializable value , int expired) {
