@@ -11,5 +11,7 @@
 <div class="small-12 medium-6 large-6 columns">
     <strong>Curator's comment:</strong><br/>
     <em>(added: ${curaRec.dateAdded}, updated: ${curaRec.lastModified})</em><br/>
+    <div style="white-space: pre-line">
     ${curaRec.comment}
+    </div>
 </div>

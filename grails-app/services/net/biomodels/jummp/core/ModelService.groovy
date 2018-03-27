@@ -30,14 +30,10 @@
 
 package net.biomodels.jummp.core
 
-import net.biomodels.jummp.core.adapters.RevisionAdapter
-import java.util.concurrent.locks.ReentrantLock
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.transaction.Transactional
-import net.biomodels.jummp.annotationstore.Qualifier
-import net.biomodels.jummp.annotationstore.ResourceReference
-import net.biomodels.jummp.annotationstore.Statement
 import net.biomodels.jummp.core.adapters.ModelAdapter
+import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.events.*
 import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
@@ -59,11 +55,13 @@ import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.acls.domain.PrincipalSid
 import org.springframework.security.acls.model.Acl
 import org.springframework.security.authentication.AnonymousAuthenticationToken
-import org.springframework.security.core.authority.GrantedAuthorityImpl
 import org.springframework.security.core.Authentication
+import org.springframework.security.core.authority.GrantedAuthorityImpl
 import org.springframework.transaction.TransactionDefinition
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Propagation
+
+import java.util.concurrent.locks.ReentrantLock
 
 /**
  * @short Service class for managing Models
@@ -78,6 +76,8 @@ import org.springframework.transaction.annotation.Propagation
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  * @author Sarala Wimalaratne <sarala@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
+ *
  * @date 20151014
  */
 @SuppressWarnings("GroovyUnusedCatchParameter")
@@ -87,10 +87,6 @@ class ModelService {
      * The class logger.
      */
     private static final Log log = LogFactory.getLog(this)
-    /**
-     * Threshold for the verbosity of the logger.
-     */
-    private static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
     /**
      * Threshold for the verbosity of the logger.
      */
@@ -144,6 +140,8 @@ class ModelService {
     def publicationIdGenerator
 
     //def publishValidator
+
+    def modelConversionService
 
     final boolean MAKE_PUBLICATION_ID = !(publicationIdGenerator instanceof NullModelIdentifierGenerator)
     /**
@@ -561,6 +559,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         Revision revision = Revision.findByRevisionNumberAndModel(revisionNumber, model)
         if (!revision || revision.deleted /*|| model.deleted */) {
             throw new AccessDeniedException("Sorry you are not allowed to access this Model.")
+
         } else {
             modelHistoryService.addModelToHistory(model)
             revision.refresh()
@@ -671,9 +670,8 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
 
             def revisionAdapter = new RevisionAdapter(revision: attachedRevision)
             RevisionTransportCommand cmd = revisionAdapter.toCommandObject()
-            // can't inject searchService -- cyclic dependency
-            def searchService = grailsApplication.mainContext.searchService
-            searchService.updateIndex(cmd)
+            indexModelRevision(cmd)
+            convertModelToOtherFormats(cmd)
             return attachedRevision
         }
         revision
@@ -945,9 +943,8 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             def attachedModel = Model.get(model.id)
             Revision r = attachedModel.revisions.first()
             RevisionTransportCommand cmd = new RevisionAdapter(revision: r).toCommandObject()
-            // can't inject searchService -- cyclic dependency
-            def searchService = grailsApplication.mainContext.searchService
-            searchService.updateIndex(cmd)
+            indexModelRevision(cmd)
+            convertModelToOtherFormats(cmd)
             return attachedModel
         }
         model
@@ -1462,7 +1459,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             return new RevisionAdapter(revision: revision).getRepositoryFilesForRevision()
         } else {
             log.error "you can't access revision ${revision.id}!"
-            throw new AccessDeniedException("Sorry you are not allowed to download this Model.")
+            throw new AccessDeniedException("Sorry you are not allowed to download this Model")
         }
     }
 
@@ -2091,6 +2088,23 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
     }
 
     /**
+     * Check if the current user could do a consistency check. Only logged-in user who has
+     * read permission on the revision can check consistency of its content.
+     *
+     * @param   revision    The revision object is checked consistency
+     * @return  logical val true/false will be returned depending on the combined criteria
+     */
+    boolean canCheckConsistency(Revision revision) {
+        final boolean isAnonymous = !springSecurityService.isLoggedIn() &&
+                                    SpringSecurityUtils.ifAllGranted('ROLE_ANONYMOUS')
+        final boolean isAuthenticated = !isAnonymous
+        final boolean isReadable = SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN") ||
+            aclUtilService.hasPermission(springSecurityService.authentication, revision, [BasePermission.READ])
+        final boolean isAccessible = isAuthenticated && isReadable
+        isAccessible
+    }
+
+    /**
      * Makes a Model Revision publicly available.
      * This means that ROLE_USER and ROLE_ANONYMOUS gain read access to the Revision and by that also to
      * the Model.
@@ -2160,9 +2174,9 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         }
 */
 
-        if (MAKE_PUBLICATION_ID) {
+        /*if (MAKE_PUBLICATION_ID) {
             model.publicationId = model.publicationId ?: publicationIdGenerator.generate()
-        }
+        }*/
         model.firstPublished = new Date()
         aclUtilService.addPermission(revision, "ROLE_USER", BasePermission.READ)
         aclUtilService.addPermission(revision, "ROLE_ANONYMOUS", BasePermission.READ)
@@ -2253,8 +2267,13 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
                     type: cmd.type,
                     changesMade: cmd.changesMade,
                     success: cmd.success)
-            audit.save()
-            return audit.id
+            if (!audit.save(flush: true)) {
+                log.error("""\
+While trying to update an audit record, there is an error: ${audit.getErrors().allErrors.inspect()}""")
+                return -1
+            } else {
+                return audit.id
+            }
         }
         return -1
     }
@@ -2350,5 +2369,23 @@ WHERE
         }
 
 	    return results
+    }
+
+    /**
+     * Invoking updateIndex method of search service
+     *
+     * @param   cmd The representation of revision whereby search service will be updated its indexes
+     * @return
+     */
+    private indexModelRevision(RevisionTransportCommand cmd) {
+        // can't inject searchService -- cyclic dependency
+        def searchService = grailsApplication.mainContext.searchService
+        searchService.updateIndex(cmd)
+    }
+
+    private convertModelToOtherFormats(RevisionTransportCommand cmd) {
+        log.info("""\
+Try to connect with Conversion service to export the model ${cmd.model.submissionId} under the other formats""")
+        modelConversionService.generateExports(cmd)
     }
 }

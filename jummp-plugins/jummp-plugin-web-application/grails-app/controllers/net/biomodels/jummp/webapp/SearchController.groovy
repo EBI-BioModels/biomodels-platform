@@ -179,6 +179,7 @@ class SearchController {
                 params.flashMessage = "Please use *:* to browse all models."
             }
         }
+        println "Search terms: ${params.query}, requested from: ${request.getRemoteAddr()} under the format: ${params.format}"
         def results = searchCore(params.query, params.sortBy, params.sortDir, params.offset, params.numResults)
         if (!params.format || params.format=="html") {
             return results

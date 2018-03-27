@@ -57,12 +57,9 @@ class BioModelsTagLib {
         }
         def entries = modelOfTheMonthService.fetchEntriesForModel id
         if (entries) {
-            out << "<span>View the Model of the Month entry for this model: </span>"
-        }
-        out << render(collection: entries, template: '/templates/modelOfTheMonth',
+            out << render(collection: entries, template: '/templates/modelOfTheMonth',
                 plugin: 'jummp-plugin-biomodels-dom')
-        // calls momService.fetchEntriesForModel for given modelId
-        // delegates rendering to dedicated template
+        }
     }
 
     def renderModelFlags = { attrs ->
@@ -81,34 +78,36 @@ class BioModelsTagLib {
      * Rendering CurationNotes tab for the curated models
      */
     def renderCurationNotesTab = { attrs ->
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy, HH:mm:ss");
-        def base64CurationNotes = attrs.curationNotes?.collect { CurationNotesTransportCommand cmd ->
-            [
-                model: cmd.model,
-                submitter: cmd.submitter,
-                lastModifier: cmd.lastModifier,
-                dateAdded: dateFormat.format(cmd.dateAdded),
-                lastModified: dateFormat.format(cmd.lastModified),
-                comment: cmd.comment ?: "",
-                curationImage: cmd.curationImage ? Base64.encoder.encodeToString(cmd.curationImage) : null
-            ]
-        }
-        // use class 'row' specifically designed by EBI Visual Framework to gain responsive design performance
         out << "<div id='Curation' class='row'>"
-        out << render(collection: base64CurationNotes, template: '/templates/curationNotes',
+        if (attrs.curationNotes != null) {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy, HH:mm:ss");
+            def base64CurationNotes = attrs.curationNotes?.collect { CurationNotesTransportCommand cmd ->
+                [
+                    model: cmd.model,
+                    submitter: cmd.submitter,
+                    lastModifier: cmd.lastModifier,
+                    dateAdded: dateFormat.format(cmd.dateAdded),
+                    lastModified: dateFormat.format(cmd.lastModified),
+                    comment: cmd.comment ?: "",
+                    curationImage: cmd.curationImage ? Base64.encoder.encodeToString(cmd.curationImage) : null
+                ]
+            }
+            // use class 'row' specifically designed by EBI Visual Framework to gain responsive design performance
+            out << render(collection: base64CurationNotes, template: '/templates/curationNotes',
                     plugin: 'jummp-plugin-biomodels-dom', var: 'curaRec')
-        Collection<GrantedAuthority> grantedAuthorities = springSecurityService.getPrincipal().getAuthorities()
-        Set<String> roleNames = grantedAuthorities.collect {
-            it.getAuthority()
+	    } else {
+            out << "<h3>This model is currently not curated</h3>"
         }
-        boolean hasCuratorRole = "ROLE_CURATOR" in roleNames
-        boolean havePublicationId = base64CurationNotes["model"].publicationId != [null]
-        def model =  havePublicationId ? base64CurationNotes["model"].publicationId : base64CurationNotes["model"].submissionId
+        boolean hasCuratorRole = attrs.hasCuratorRole
+        boolean havePublicationId = attrs.model?.publicationId != null
+        def model =  havePublicationId ? attrs.model.publicationId : attrs.model.submissionId
         if (hasCuratorRole) {
+            def btnLabel = attrs.curationNotes ? "Edit" : "Change curation status"
+            def actionName = attrs.curationNotes ? "edit" : "add"
             def href = g.link(controller: "curationNotes",
-                action: "edit", class: "button",
-                params: ["model": model.first()]) {
-                "Edit"
+                action: actionName, class: "button",
+                params: ["model": model]) {
+                btnLabel
             }
             String view = """\
                 <div class="small-12 medium-12 large-12 columns" id="btnEditCurationNotes">
@@ -117,7 +116,7 @@ class BioModelsTagLib {
                 """
             out << view
         }
-        out << "</div>"
+        out << "</div>" // for id = Curation
     }
 
     def renderCurationStatus = { attrs ->

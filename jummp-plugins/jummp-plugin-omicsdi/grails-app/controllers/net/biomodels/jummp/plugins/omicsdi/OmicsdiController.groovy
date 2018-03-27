@@ -44,10 +44,14 @@ class OmicsdiController {
         if (IS_INFO_ENABLED) {
             log.info "Delegating this work to JummpIndexer."
         }
-        String allowMultipleFilesParam = (params.howToExportFile == "1") ? "false" : "true"
+        boolean allowMultipleFilesParam = (params.howToExportFile == "1") ? false : true
+        int numberEntriesOnEachFile = 0
+        if (params.numberEntriesOnEachFile != "") {
+            numberEntriesOnEachFile = Integer.parseInt(nbEntries)
+        }
         def options = [
             'allowMultipleFiles': allowMultipleFilesParam,
-            'numberEntriesOnEachFile': params.numberEntriesOnEachFile
+            'numberEntriesOnEachFile': numberEntriesOnEachFile
         ]
         omicsdiService.exportOmicsdiEntries(options)
         render(["Sent the request to JummpIndexer with the options ${options}"] as JSON)

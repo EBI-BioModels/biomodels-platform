@@ -132,10 +132,18 @@ A sample configuration is
             sql = new Sql(ds)
             try {
                 mostRecentModelDetails = sql.firstRow("""\
-select id,
-submission_id as submissionId,
-perennialPublicationIdentifier as publicationId
-from model where model.submission_id = (select max(submission_id) from model)""")
+select model.id,
+model.submission_id as submissionId,
+model.perennialPublicationIdentifier as publicationId
+from model
+where id = (
+    select model_id 
+    from revision 
+    where upload_date = (
+        select max(upload_date) from revision where revision_number = 1
+    )
+)
+""")
                 def lastPublished = sql.firstRow "select max(perennialPublicationIdentifier) as pId from model"
                 if (lastPublished && mostRecentModelDetails) {
                     mostRecentModelDetails.publicationId = lastPublished.pId
@@ -144,11 +152,12 @@ from model where model.submission_id = (select max(submission_id) from model)"""
                 final String W = """Unable to access the database - model IDs will be created \
 using the default values."""
                 log.warn (W, e)
+            } finally {
+                sql.close() // very important
             }
             if (IS_DEBUG_ENABLED) {
                 log.debug "Most recent model in database is ${mostRecentModelDetails}"
             }
-            sql.close() // very important
         }
         Map<String, ModelIdentifierGenerator> generatorBeans = [:]
         boolean submissionIdSettingsMissing = idSettings.submission.isEmpty()

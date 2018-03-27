@@ -59,7 +59,9 @@ grails.project.dependency.resolution = {
         //mavenRepo "http://repository.jboss.com/maven2/"
     }
     dependencies {
-        compile("eu.ddmore.pharmml:libPharmML:0.4.5-b1")
+        compile("eu.ddmore.pharmml:libPharmML:0.4.5-b1") {
+            excludes "slf4j-log4j12"
+        }
         runtime("commons-jexl:commons-jexl:1.1") { excludes 'junit', 'commons-logging' }
         compile "org.apache.tika:tika-core:1.3"
     }

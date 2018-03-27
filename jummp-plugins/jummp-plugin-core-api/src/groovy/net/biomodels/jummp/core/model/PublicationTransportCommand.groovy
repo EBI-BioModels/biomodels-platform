@@ -33,15 +33,17 @@
 
 
 package net.biomodels.jummp.core.model
-import net.biomodels.jummp.plugins.security.Person
+
+import net.biomodels.jummp.model.Publication
+import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.plugins.security.PersonTransportCommand
-import org.codehaus.groovy.grails.validation.Validateable
+
 /**
  * @short Wrapper for a Publciation to be transported through JMS.
  *
  * @author Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
  */
-@grails.validation.Validateable	
+@grails.validation.Validateable
 class PublicationTransportCommand implements Serializable {
     private static final long serialVersionUID = 1L
     /**
@@ -113,5 +115,18 @@ class PublicationTransportCommand implements Serializable {
         authors nullable: false, validator: { authorValue, pubObj ->
         	return !authorValue.isEmpty()
         }
+    }
+
+    String prettierPrint() {
+        Publication publication = Publication.findByLink(link)
+        StringBuilder returnedText = new StringBuilder("")
+        String linkTypeLabel = linkProvider.linkType
+        returnedText.append("${linkTypeLabel}:<br/>&emsp;")
+        returnedText.append(publication.link)
+        returnedText.append("<br/>Title:<br/>&emsp;")
+        returnedText.append(publication.title)
+        returnedText.append("<br/>Abstract:<br/>&emsp;")
+        returnedText.append(publication.synopsis)
+        returnedText.toString()
     }
 }

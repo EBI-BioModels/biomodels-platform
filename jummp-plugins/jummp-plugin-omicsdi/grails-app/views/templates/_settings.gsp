@@ -32,9 +32,6 @@
     </div>
     <h3>How to launch the job</h3>
     <button class="button" type="button" id="btnExport">Export OmicsDI entries via JummpIndexer right now</button>
-    %{--<button class="button" type="button" id="delegateButton">Schedule the indexing process via JummpIndexer and QuartzScheduler</button>--}%
-    %{--<h2>Content of OmicsDI Schema XML file(s)</h2>
-    <g:textArea id="schemaXmlContent" name="omicsdiSchemaXML" cols="100" rows="15"></g:textArea>--}%
 </div>
 <script type="text/javascript">
     $(document).ready(function () {
@@ -83,7 +80,6 @@
                 if (message.trim()) {
                     message = message.trim();
                     showNotification(message);
-                    /*$('#schemaXmlContent').val(message);*/
                 }
             }
         });

@@ -23,15 +23,15 @@
 
 
 package net.biomodels.jummp.webapp
-import net.biomodels.jummp.webapp.rest.error.Error
+import net.biomodels.jummp.webapp.rest.errors.Error
 
 import javax.servlet.http.HttpServletResponse
 
 class ErrorsController {
-    
+
 	def springSecurityService
 	def messageSource
-	
+
 	private Error getError(String code, Object[] args = null) {
 		return new Error(messageSource.getMessage("error.${code}.title",args, Locale.getDefault()),
 						 messageSource.getMessage("error.${code}.explanation",args, Locale.getDefault()))
@@ -67,7 +67,7 @@ class ErrorsController {
         }
         digest = digest.encodeAsMD5()
         if (params.format && params.format!="html") {
-        	respond new Error("Internal Server Error", digest)    
+        	respond new Error("Internal Server Error", digest)
         } else {
             [code: digest]
         }

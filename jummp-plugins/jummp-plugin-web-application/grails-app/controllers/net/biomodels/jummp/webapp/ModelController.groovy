@@ -40,21 +40,24 @@ import com.wordnik.swagger.annotations.ApiOperation
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import groovy.json.JsonSlurper
+import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.audit.AccessFormat
 import net.biomodels.jummp.core.model.audit.AccessType
 import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
+import net.biomodels.jummp.model.Model
+import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.PersonTransportCommand
 import net.biomodels.jummp.plugins.security.Team
-import net.biomodels.jummp.plugins.security.User
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONObject
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.multipart.MultipartFile
-
+import net.biomodels.jummp.plugins.security.Role
+import org.springframework.security.core.GrantedAuthority
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -109,6 +112,8 @@ class ModelController {
      * Dependency injection of OmexService
      */
     def omexService
+
+    def modelConversionService
 
     /**
      * The list of actions for which we should not automatically create an audit item.
@@ -172,7 +177,7 @@ class ModelController {
                 return true
             } else {
                 log.error "Ignoring invalid request for $actionUri with params $params."
-                forward(controller: "errors", action: "error403")
+                forward(controller: "errors", action: "error404")
                 return false
             }
         } catch(Exception e) {
@@ -199,8 +204,7 @@ class ModelController {
         AccessFormat format = AccessFormat.HTML
         try {
             format = AccessFormat.valueOf(formatType.toUpperCase())
-        }
-        catch(Exception ignore) {
+        } catch(Exception ignore) {
         }
         ModelTransportCommand model = modelDelegateService.findByPerennialIdentifier(modelId)
         ModelAuditTransportCommand audit = new ModelAuditTransportCommand(
@@ -210,8 +214,7 @@ class ModelController {
                     type: AccessType.fromAction(accessType),
                     changesMade: changesMade,
                     success: success)
-        long returned = modelDelegateService.createAuditItem(audit)
-        return returned
+        return modelDelegateService.createAuditItem(audit)
     }
 
     def showWithMessage = {
@@ -229,78 +232,118 @@ class ModelController {
     @ApiImplicitParam(name = "modelId", value = "The model identifier", required = true, allowMultiple = false)
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def show() {
-        RevisionTransportCommand rev = modelDelegateService.getRevisionFromParams(params.id,
-                    params.revisionId)
+        RevisionTransportCommand rev
+        boolean isPrivateModel = false
+        try {
+            rev = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
+        } catch (AccessDeniedException e) {
+            if (e instanceof AccessDeniedException) {
+                Model model = Model.findBySubmissionId(params.id)
+                log.warn("""\
+An anonymous or restricted access user is trying to retrieve this model: ${model.submissionId}""")
+                int revisionNumber = model.revisions.size() - 1 // get the latest revision
+                if (params.revisionId) {
+                   revisionNumber = Integer.parseInt(params.revisionId)
+                }
+                Revision revision = revisionNumber >= 0 ? model.revisions.getAt(revisionNumber) : model.revisions.last()
+                if (!revision) {
+                    forward(controller: 'errors', action: 'error404')
+                    return
+                }
+                rev = new RevisionAdapter(revision: revision).toCommandObject()
+                rev.name = rev.model.submissionId
+                model.publication = null
+                rev.format = new ModelFormatTransportCommand()
+                rev.files = new ArrayList<>()
+                rev.description = "A model with this identifier exists in the system, but you do not have the necessary permissions to access it"
+                isPrivateModel = true
+            }
+        }
         if (!params.format || (params.format != "json" && params.format != "xml") ) {
             if (!rev) {
                 forward(controller: 'errors', action: 'error403')
                 return
             }
-            final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
-            RevisionTransportCommand revision = modelDelegateService.getLatestRevision(PERENNIAL_ID)
-            boolean showPublishOption = modelDelegateService.canPublish(revision)
-            boolean canSubmitForPublication = modelDelegateService.canSubmitForPublication(revision)
-            boolean canCertify = modelDelegateService.canCertify(revision)
-            boolean canUpdate = modelDelegateService.canAddRevision(PERENNIAL_ID)
-            boolean canDelete = modelDelegateService.canDelete(PERENNIAL_ID)
-            boolean canShare = modelDelegateService.canShare(PERENNIAL_ID)
-            List<FlagTransportCommand> flags = modelDelegateService.getFlags(PERENNIAL_ID)
-            String flashMessage = ""
-            if (flash.now["giveMessage"]) {
-                flashMessage = flash.now["giveMessage"]
-            }
-            List<RevisionTransportCommand> revs =
-                modelDelegateService.getAllRevisions(PERENNIAL_ID)
-            CurationNotesTransportCommand curationNotes =
-                metadataDelegateService.fetchCurationNotes(rev)
-            String curationStatus = metadataDelegateService.fetchCurationStatus(rev)
-            List<String> originalModels = metadataDelegateService.fetchOriginalModels(rev)
-            Map<String, String> modellingApproaches =
-                metadataDelegateService.fetchModellingApproaches(rev)
-            def model = [revision: rev,
-                        authors: rev.model.creators,
-                        allRevs: revs,
-                        flashMessage: flashMessage,
-                        canUpdate: canUpdate,
-                        canDelete: canDelete,
-                        canShare: canShare,
-                        showPublishOption: showPublishOption,
-                        canSubmitForPublication: canSubmitForPublication,
-                        canCertify: canCertify,
-                        validationLevel: rev.getValidationLevelMessage(),
-                        certComment: rev.getCertificationMessage(),
-                        flags: flags,
-                        curationStatus: curationStatus,
-                        modellingApproaches: modellingApproaches,
-                        curationNotes: curationNotes,
-                        originalModels: originalModels
-            ]
-            if (rev.id == revision.id) {
-                flash.genericModel = model
-                ModelFormatTransportCommand format = rev.model.format
-                String formatController =  modelFileFormatService.getPluginForFormat(format)
-                if (formatController) {
-                    forward controller: formatController, action: "show", id: PERENNIAL_ID
-                } else {
-                    final String fmtId = format.identifier
-                    log.error "Could not find a controller for format $fmtId of $PERENNIAL_ID"
+            if (isPrivateModel) {
+                render(view: "showBasicView", model: [id: rev.model.submissionId])
+                return
+            } else {
+                final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
+                RevisionTransportCommand revision = modelDelegateService.getLatestRevision(PERENNIAL_ID)
+                boolean showPublishOption = modelDelegateService.canPublish(revision)
+                boolean canSubmitForPublication = modelDelegateService.canSubmitForPublication(revision)
+                boolean canCertify = modelDelegateService.canCertify(revision)
+                boolean canUpdate = modelDelegateService.canAddRevision(PERENNIAL_ID)
+                boolean canDelete = modelDelegateService.canDelete(PERENNIAL_ID)
+                boolean canShare = modelDelegateService.canShare(PERENNIAL_ID)
+                List<FlagTransportCommand> flags = modelDelegateService.getFlags(PERENNIAL_ID)
+                String flashMessage = ""
+                if (flash.now["giveMessage"]) {
+                    flashMessage = flash.now["giveMessage"]
                 }
-            } else { //showing an old version, with the default page. Do not allow updates.
-                model["canUpdate"] = false
-                model["showPublishOption"] = false
-                model["oldVersion"] = true
-                model["canDelete"] = false
-                model["canShare"] = false
-                model["canCertify"] = false
-                model["flags"] = flags
-                return model
+                List<RevisionTransportCommand> revs =
+                    modelDelegateService.getAllRevisions(PERENNIAL_ID)
+                CurationNotesTransportCommand curationNotes =
+                    metadataDelegateService.fetchCurationNotes(rev)
+                String curationStatus = metadataDelegateService.fetchCurationStatus(rev)
+                List<String> originalModels = metadataDelegateService.fetchOriginalModels(rev)
+                Map<String, String> modellingApproaches =
+                    metadataDelegateService.fetchModellingApproaches(rev)
+		        Collection<GrantedAuthority> grantedAuthorities = springSecurityService.getPrincipal().getAuthorities()
+                Set<String> roleNames = grantedAuthorities.collect {
+                    it.getAuthority()
+                }
+                boolean hasCuratorRole = "ROLE_CURATOR" in roleNames
+                boolean supportedForConversion = modelConversionService.isSupportedForConversion(rev)
+		        List<RFTC> convertedFilesTC = modelConversionService.getConvertedFiles(rev)
+                def model = [revision               : rev,
+                             authors                : rev.model.creators,
+                             allRevs                : revs,
+                             flashMessage           : flashMessage,
+                             canUpdate              : canUpdate,
+                             canDelete              : canDelete,
+                             canShare               : canShare,
+                             showPublishOption      : showPublishOption,
+                             canSubmitForPublication: canSubmitForPublication,
+                             canCertify             : canCertify,
+                             validationLevel        : rev.getValidationLevelMessage(),
+                             certComment            : rev.getCertificationMessage(),
+                             flags                  : flags,
+                             curationStatus         : curationStatus,
+                             modellingApproaches    : modellingApproaches,
+                             curationNotes          : curationNotes,
+                             originalModels         : originalModels,
+                             hasCuratorRole         : hasCuratorRole,
+                             supportedForConversion : supportedForConversion,
+                             convertedFilesTC       : convertedFilesTC
+                ]
+                if (rev.id == revision.id) {
+                    flash.genericModel = model
+                    ModelFormatTransportCommand format = revision.format
+                    String formatController = modelFileFormatService.getPluginForFormat(format)
+                    if (formatController) {
+                        forward controller: formatController, action: "show", id: PERENNIAL_ID
+                    } else {
+                        final String fmtId = format.identifier
+                        log.error "Could not find a controller for format $fmtId of $PERENNIAL_ID"
+                    }
+                } else { //showing an old version, with the default page. Do not allow updates.
+                    model["canUpdate"] = false
+                    model["showPublishOption"] = false
+                    model["oldVersion"] = true
+                    model["canDelete"] = false
+                    model["canShare"] = false
+                    model["canCertify"] = false
+                    model["flags"] = flags
+                    return model
+                }
             }
         } else {
             if (!rev) {
-                respond net.biomodels.jummp.webapp.rest.error.Error("Invalid Id",
+                respond net.biomodels.jummp.webapp.rest.errors.Error("Invalid Id",
                         "An invalid model id was specified")
             } else {
-                respond new net.biomodels.jummp.webapp.rest.model.show.Model(rev)
+                respond new net.biomodels.jummp.webapp.rest.model.show.Model(rev, isPrivateModel)
             }
         }
     }
@@ -313,7 +356,7 @@ class ModelController {
             respond new net.biomodels.jummp.webapp.rest.model.show.ModelFiles(responseFiles)
         } catch(Exception err) {
             log.error err.message, err
-            respond net.biomodels.jummp.webapp.rest.error.Error("Invalid Id",
+            respond net.biomodels.jummp.webapp.rest.errors.Error("Invalid Id",
             "An invalid model id was specified")
         }
     }
@@ -514,13 +557,14 @@ class ModelController {
                 final String USERNAME = getUsername()
                 final String AUDIT_ID = session.result_submission
                 updateHistory(AUDIT_ID, USERNAME, "create", "html", null, true)
+                final String biomodelsCuraMailingList = grailsApplication.config.jummp.model.curators.mailinglist
                 final String submitterEmail = getUserEmailAddress()
                 if (submitterEmail && USERNAME) {
                     String model = session.result_submission
                     def notification = [
                             model: modelDelegateService.getModel(model),
                             user: springSecurityService.currentUser,
-                            email: submitterEmail]
+                            emails: [biomodelsCuraMailingList, submitterEmail]]
                     sendMessage("seda:model.create", notification)
                 }
             }.to "displayConfirmationPage"
@@ -548,7 +592,7 @@ class ModelController {
             action {
                 Map<String, Object> workingMemory = new HashMap<String,Object>()
                 flow.workingMemory = workingMemory
-                flow.workingMemory.put("isUpdateOnExistingModel",flow.isUpdate)
+                flow.workingMemory.put("isUpdateOnExistingModel", flow.isUpdate)
                 conversation.changesMade = new TreeSet<String>()
                 if (flow.isUpdate) {
                     String model_id = conversation.model_id
@@ -647,11 +691,25 @@ class ModelController {
                     cmd.extraFiles = extraMultipartList
                     cmd.mainDeletes = mainsToBeDeleted
                     cmd.extraDeletes = additionalFilesToBeDeleted
-                    cmd.description = descriptionFields
+                    cmd.description = descriptionFields.toList()
                     if (IS_DEBUG_ENABLED) {
-                        log.debug "Data binding done :${cmd.properties}"
+                        log.debug "Data binding done: ${cmd.properties}"
                     }
                     flow.workingMemory.put("UploadCommand", cmd)
+                    // parse JSON string of the main files populated on GUI
+                    // store them into the working memory in mains_in_working variable
+                    Map<String, String> mainFiles = new HashMap<String, String>()
+                    def slurper0 = new JsonSlurper()
+                    def res = slurper0.parseText(params.mainFilesInWorking)
+                    if (res["files"]) {
+                        def workingFiles = res["files"]
+                        workingFiles.each { f ->
+                            mainFiles.put(f["filename"], f["description"])
+                        }
+                        flow.workingMemory.put("mains_in_working", mainFiles)
+                    } else {
+                        log.debug("There is an error while loading the latest changes on the main files")
+                    }
 
                     // store additional files existing on UI, i.e. the files are in updated process
                     // data stored are a map of file names and corresponding descriptions.
@@ -687,7 +745,7 @@ class ModelController {
                 boolean fileValidationError = false
                 boolean furtherProcessingRequired = true
                 def deletedMains = cmd.mainDeletes
-                List mainFiles = flow.workingMemory.get("repository_files").findAll { it.mainFile }
+                List mainFiles = getMainFiles(flow.workingMemory)
                 boolean mainFileDeleted = mainFileDeleted(mainFiles, cmd.mainFile, deletedMains)
                 if (mainFileDeleted) {
                     return MainFileMissingError()
@@ -723,12 +781,12 @@ Error in uploading files. Cmd did not validate: ${cmd.getProperties()}""")
                     }
                 }
                 if (!fileValidationError && furtherProcessingRequired) {
-                    //should this be in a separate action state?
+                    // should this be in a separate action state?
                     def uuid = UUID.randomUUID().toString()
                     if (IS_DEBUG_ENABLED) {
                         log.debug "Generated submission UUID: ${uuid}"
                     }
-                    //pray that exchangeDirectory has been defined
+                    // pray that exchangeDirectory has been defined
                     File submission_folder = null
                     def sep = File.separator
                     if (!flow.workingMemory.containsKey("repository_files")) {
@@ -741,50 +799,66 @@ Error in uploading files. Cmd did not validate: ${cmd.getProperties()}""")
                         submission_folder = (new File(existing.path)).getParentFile()
                     }
                     def parent = submission_folder.canonicalPath + sep
-                    // transfer uploaded files to File objects:
-                    // For Main file
+
+                    /**
+                     Transfer HashMap<String, String> to HashMap<File, String>
+                     We know that a map of file names with their descriptions
+                     is built at the end of uploadFiles step. This map maintains the newly-updated files
+                     which do not contain the deleted ones. Why do we need to transfer?
+                     we can get the submission folder at this step and
+                     this operation repairs the data for handling file upload afterward.
+                    */
+
+                    // FOR THE MAIN FILES
+                    // Transfer uploaded files to File objects
                     List<File> mainFileList
                     if (cmd.mainFile) {
+                        // main files might be just uploaded
                         mainFileList = transferFiles(parent, cmd.mainFile)
                     }
-                    else {
-                        mainFileList = new LinkedList<File>()
+                    // Build a map of main file objects from the working main files
+                    Map<File, String> mainFilesMap = new HashMap<File, String>()
+                    if (flow.workingMemory.containsKey("mains_in_working")) {
+                        def mains_in_working = flow.workingMemory.get("mains_in_working") as HashMap<String, String>
+                        mains_in_working.each {String keyAsFilename, String valueAsDescription ->
+                            mainFilesMap.put(new File(parent, keyAsFilename), valueAsDescription)
+                        }
+                        flow.workingMemory["submitted_mains"] = mainFilesMap
                     }
-                    // For the extra files, i.e. the files have just added, not the existing
-                    // additional files. This does not allow us modifying the descriptions of
-                    // the existing ones.
-                    List<File> extraFileList = transferFiles(parent, cmd.extraFiles)
-                    List<String> descriptionList = cmd.description
-                    def additionalsMap = [:]
-                    extraFileList.eachWithIndex{ file, i ->
-                        additionalsMap[file] = descriptionList[i]
+                    // FOR THE ADDITIONAL FILES
+                    // Transfer uploaded files to File objects
+                    List<File> extraFileList
+                    if (!cmd.extraFiles?.isEmpty()) {
+                        extraFileList = transferFiles(parent, cmd.extraFiles)
+                        if (extraFileList.size() == 0) {
+                            log.debug("""\
+There is an error while attempting to copy the supplemental files
+wrapped in ${cmd.extraFiles.inspect()} to exchanged folder""")
+                        }
                     }
+                    // Build a map of additional file objects from the working additional files
+                    Map<File, String> additionalFilesMap = new HashMap<File, String>()
+                    if (flow.workingMemory.containsKey("additionals_in_working")) {
+                        def additionals_in_working =
+                            flow.workingMemory.get("additionals_in_working") as HashMap<String, String>
+                        additionals_in_working.each {String keyAsFilename, String valueAsDescription ->
+                            additionalFilesMap.put(new File(parent, keyAsFilename), valueAsDescription)
+                        }
+                        flow.workingMemory["submitted_additionals"] = additionalFilesMap
+                    }
+
                     if (IS_DEBUG_ENABLED) {
                         log.debug """\
-About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
+About to submit ${mainFileList.inspect()} and ${additionalFilesMap.inspect()}."""
                     }
-                    flow.workingMemory["submitted_mains"] = mainFileList
-                    flow.workingMemory["submitted_additionals"] = additionalsMap
 
+                    // FOR THE DELETED FILES
                     // store the deleted file names into working memory
                     List<String> deletedFileNames = []
                     deletedFileNames.addAll(deletedMains)
                     deletedFileNames.addAll(cmd.extraDeletes)
                     // ensure there are no lists within this list
                     flow.workingMemory["deleted_filenames"] = deletedFileNames.flatten()
-
-                    // transfer HashMap<String, String> to HashMap<File, String>
-                    // Why? we can get the submission folder at this step and this operation
-                    // repairs the data for handling file upload afterward.
-                    if (flow.workingMemory.containsKey("additionals_in_working")) {
-                        Map<File, String> additionalFiles = new HashMap<File, String>()
-                        def additionals_in_working =
-                            flow.workingMemory.get("additionals_in_working") as HashMap<String, String>
-                        additionals_in_working.each {String keyAsFilename, String valueAsDescription ->
-                            additionalFiles.put(new File(parent+keyAsFilename), valueAsDescription)
-                        }
-                        flow.workingMemory.put("additional_files_in_working", additionalFiles)
-                    }
                     submissionService.handleFileUpload(flow.workingMemory)
                 }
 
@@ -811,17 +885,13 @@ About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
                 MFTC format = flow.workingMemory.get("model_type")
                 if (format && format.identifier !="UNKNOWN" && format.identifier != "matlab" && format.formatVersion == "*") {
                     UnknownFormatVersion()
-                }
-                else if (!flow.workingMemory.containsKey("validation_error")) {
+                } else if (!flow.workingMemory.containsKey("validation_error")) {
                     Valid()
-                }
-                else
-                {
+                } else {
                     String errorAsString = flow.workingMemory.remove("validation_error") as String
                     if (errorAsString.contains("ModelValidationError")) {
                         ModelNotValid()
-                    }
-                    else {
+                    } else {
                         FilesNotValid()
                     }
                 }
@@ -843,7 +913,7 @@ About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
                 flash.modelFormatDetectedAs = flow.workingMemory.get("model_type").identifier
             }.to "uploadFiles"
             on("FilesNotValid") {
-                flash.error = "submission.upload.error.fileerror"
+                flash.flashMessage = "submission.upload.error.fileerror"
             }.to "uploadFiles"
             on(Exception).to "handleException"
         }
@@ -869,8 +939,8 @@ About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
                 }
                 modifications.put("changeStatus", changeStatus);
                 submissionService.refineModelInfo(flow.workingMemory, modifications)
-                ModelTransportCommand model = flow.workingMemory.get('ModelTC') as ModelTransportCommand
-                RevisionTransportCommand revision = flow.workingMemory.get("RevisionTC") as RevisionTransportCommand
+                //ModelTransportCommand model = flow.workingMemory.get('ModelTC') as ModelTransportCommand
+                //RevisionTransportCommand revision = flow.workingMemory.get("RevisionTC") as RevisionTransportCommand
             }.to "enterPublicationLink"
             on("Cancel").to "cleanUpAndTerminate"
             on("Back"){}.to "uploadFiles"

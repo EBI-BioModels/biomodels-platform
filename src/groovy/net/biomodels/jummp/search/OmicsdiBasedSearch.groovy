@@ -190,45 +190,61 @@ There was a problem obtaining search result from EBI search server. The root cau
             totalCount = result.count
             List<Entry> entries = result.getEntries()
             entries?.eachWithIndex { Entry entry, int i ->
+                ModelTransportCommand mtc
                 String submissionId = entry.id
                 String modelName = entry.getFields().get('name')[0]
-                String submissionDateString = entry.getFields().get('submission_date')[0]
-                java.text.SimpleDateFormat simpleDateFormat = new java.text.SimpleDateFormat("yyyymmdd")
-                Date submissionDate = simpleDateFormat.parse(submissionDateString)
                 String description = ""
                 boolean haveDescription = entry.getFields().get('description').length > 0
                 if (haveDescription) {
                     description = entry.getFields().get('description')[0]
                 }
-                String submitterName = entry.getFields().get('submitter')[0]
-                String modifiedDateString = entry.getFields().get('last_modification_date')[0]
-                simpleDateFormat = new java.text.SimpleDateFormat("yyyymmdd")
-                Date modifiedDate = simpleDateFormat.parse(modifiedDateString)
-                ModelState state = ModelState.PUBLISHED
-                String formatName = entry.getFields().get('modelformat')[0]
-                String formatVersion = entry.getFields().get('levelversion')[0]
-                boolean havePublicationYear = entry.getFields().get('publication_year').length > 0
-                String publicationYear = ""
-                if (havePublicationYear) {
-                    publicationYear = entry.getFields().get('publication_year')[0]
+                boolean haveSubmissionDate = entry.getFields().get('submission_date').length > 0
+                boolean haveModifiedDate = entry.getFields().get('last_modification_date').length > 0
+                boolean haveSubmitter = entry.getFields().get('submitter').length > 0
+                ModelState state
+                if (!haveSubmissionDate && !haveModifiedDate && !haveSubmitter) {
+                    // TODO: make the condition of a private model stronger
+                    state = ModelState.UNPUBLISHED
+                    mtc = new ModelTransportCommand(
+                        submissionId: submissionId,
+                        name: modelName,
+                        description: description,
+                        state: state
+                    )
+                } else {
+                    state = ModelState.PUBLISHED
+                    String submissionDateString = entry.getFields().get('submission_date')[0]
+                    java.text.SimpleDateFormat simpleDateFormat = new java.text.SimpleDateFormat("yyyyMMdd")
+                    Date submissionDate = simpleDateFormat.parse(submissionDateString)
+                    String submitterName = entry.getFields().get('submitter')[0]
+                    String modifiedDateString = entry.getFields().get('last_modification_date')[0]
+                    simpleDateFormat = new java.text.SimpleDateFormat("yyyyMMdd")
+                    Date modifiedDate = simpleDateFormat.parse(modifiedDateString)
+                    String formatName = entry.getFields().get('modelformat')[0]
+                    String formatVersion = entry.getFields().get('levelversion')[0]
+                    boolean havePublicationYear = entry.getFields().get('publication_year').length > 0
+                    String publicationYear = ""
+                    if (havePublicationYear) {
+                        publicationYear = entry.getFields().get('publication_year')[0]
+                    }
+                    ModelFormatTransportCommand format =
+                        new ModelFormatTransportCommand(name: formatName, formatVersion: formatVersion)
+                    PublicationTransportCommand ptc = null
+                    if (publicationYear) {
+                        ptc = new PublicationTransportCommand(year: Integer.parseInt(publicationYear))
+                    }
+                    mtc = new ModelTransportCommand(
+                        submitter: submitterName,
+                        name: modelName,
+                        description: description,
+                        submissionId: submissionId,
+                        submissionDate: submissionDate,
+                        lastModifiedDate: modifiedDate,
+                        state: state,
+                        format: format,
+                        publication: ptc
+                    )
                 }
-                ModelFormatTransportCommand format =
-                    new ModelFormatTransportCommand(name: formatName, formatVersion: formatVersion)
-                PublicationTransportCommand ptc = null
-                if (publicationYear) {
-                    ptc = new PublicationTransportCommand(year: Integer.parseInt(publicationYear))
-                }
-                ModelTransportCommand mtc = new ModelTransportCommand(
-                    submitter: submitterName,
-                    name: modelName,
-                    description: description,
-                    submissionId: submissionId,
-                    submissionDate: submissionDate,
-                    lastModifiedDate: modifiedDate,
-                    state: state,
-                    format: format,
-                    publication: ptc
-                )
                 results.add(mtc)
             }
             // facets

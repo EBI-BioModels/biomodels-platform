@@ -18,7 +18,7 @@
 * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 **/
 
-package net.biomodels.jummp.webapp.rest.error
+package net.biomodels.jummp.webapp.rest.errors
 
 class Error {
     String errorType

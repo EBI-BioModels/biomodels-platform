@@ -42,19 +42,19 @@ enum AccessType {
    }
 
    static AccessType fromAction(String action) {
-   	   action=action.toLowerCase();
+   	   action = action.toLowerCase()
    	   switch(action) {
-   	   	   case "create": return CREATE;
-   	   	   case "update": return UPDATE;
-   	   	   case "show": return READ;
-   	   	   case "publish": return PUBLISH;
-   	   	   case "delete": return ARCHIVE;
-   	   	   case "download": return DOWNLOAD;
-   	   	   case "shareupdate": return SHARE;
-   	   	   case "files": return FILES;
-           case "validate": return VALIDATE;
+   	   	   case "create": return CREATE
+   	   	   case "update": return UPDATE
+   	   	   case "show": return READ
+   	   	   case "publish": return PUBLISH
+   	   	   case "delete": return ARCHIVE
+   	   	   case "download": return DOWNLOAD
+   	   	   case "shareupdate": return SHARE
+   	   	   case "files": return FILES
+           case "validate": return VALIDATE
    	   }
-   	   return null;
+   	   return null
    }
 
 

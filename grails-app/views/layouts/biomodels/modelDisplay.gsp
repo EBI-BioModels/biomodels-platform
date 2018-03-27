@@ -34,7 +34,7 @@
 <%@ page import="net.biomodels.jummp.qcinfo.*"%>
 
 <%
-    def loadedZips=new HashMap();
+    def loadedZips=new HashMap()
     def zipSupported=[:]
 %>
 <head xmlns="http://www.w3.org/1999/html">
@@ -247,9 +247,9 @@
                                     tcontent.push("</td></tr>");
                                 }
                             }
-                            tcontent.push("<tr><td><b>Submitted</b></td><td>",new Date(data[0].commit))
+                            tcontent.push("<tr><td><b>Submitted</b></td><td>", new Date(data[0].commit))
                             tcontent.push("</td></tr>")
-                            tcontent.push("<tr><td><b>Last Modified</b></td><td>",new Date(data[data.length-1].commit))
+                            tcontent.push("<tr><td><b>Last Modified</b></td><td>", new Date(data[data.length-1].commit))
                             tcontent.push("</td></tr>")
 
                             tcontent.push("</table>");
@@ -381,10 +381,48 @@
             tree.bind("loaded.jstree", function (event, data) {
                 tree.jstree("open_all");
             });
+            $('#confirm-model-consistency-check').dialog({
+                resizable: false,
+                autoOpen: false,
+                height: 250,
+                width: 500,
+                modal: true,
+                buttons: {
+                    Confirm: function() {
+                        var url = "${g.createLink(controller: 'sbml',
+                                        action: 'checkConsistency',
+                                        id: revision.identifier())}";
+                        $.jummp.openPage(url);
+                        $(this).dialog("close");
+                    },
+                    Cancel: function() {
+                        $(this).dialog("close");
+                    }
+                }
+            });
+            $('#confirm-model-conversion').dialog({
+                resizable: false,
+                autoOpen: false,
+                height: 250,
+                width: 500,
+                modal: true,
+                buttons: {
+                    Confirm: function() {
+                        var url = "${g.createLink(controller: 'conversion', action: 'convert')}";
+                        url += "?id=${revision.model.submissionId}&revisionId=${revision.revisionNumber}"
+                        $.jummp.openPage(url);
+                        $(this).dialog("close");
+                    },
+                    Cancel: function() {
+                        $(this).dialog("close");
+                    }
+                }
+            });
+
             $('#confirm-model-publish').dialog({
                 resizable: false,
                 autoOpen: false,
-                height: 300,
+                height: 250,
                 width: 500,
                 modal: true,
                 buttons: {
@@ -472,12 +510,25 @@
                     primary: "ui-icon-tag"
                 }
             }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });*/
+            $("#checkConsistency").button({
+                text: false,
+                icons: {
+                    primary: "ui-icon-check"
+                }
+            }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
             $("#certify").button({
                 text: false,
                 icons: {
                     primary: "ui-icon-star"
                 }
             }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
+            $("#convert").button({
+                text: false,
+                icons: {
+                    primary: "ui-icon-transferthick-e-w"
+                }
+            }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
+
             $("#panelToggle").button({
                     text:false,
                     icons: {
@@ -586,6 +637,31 @@
                             id: (revision.model.publicationId) ?: (revision.model.submissionId))}')">Certify</button>
                         </li>
                     </g:if>
+                    <g:if test="${canCheckConsistency}">
+                        <div id="confirm-model-consistency-check" title="Model consistency check" style="display:none;">
+                            <p>Checking model consistency uses an online validator. This might take time for uploading and validating the model. Do you want to proceed the validation?</p>
+                        </div>
+                        <li>
+                            <button id="checkConsistency"
+                                    class="toolbutton"
+                                    onclick="return $('#confirm-model-consistency-check').dialog('open');">
+                                Check Consistency
+                            </button>
+                        </li>
+                    </g:if>
+                    <g:if test="${hasCuratorRole && supportedForConversion}">
+                        <div id="confirm-model-conversion" title="Model Conversion" style="display:none;">
+                            <p>Exporting this model to other formats uses an online service. This might take time for
+                            uploading and exporting the model. Do you want to proceed the model conversion?</p>
+                        </div>
+                        <li>
+                            <button id="convert"
+                                    class="toolbutton"
+                                    onclick="return $('#confirm-model-conversion').dialog('open');">
+                                Convert This Model To The Other Formats
+                            </button>
+                        </li>
+                    </g:if>
                 </ul>
          </div>
         <div class="ebiLayout_reduceWidth">
@@ -605,7 +681,7 @@
             <div id="topBar">
                 <div style="float:left;width:75%;">
                     <h2>${revision.name}</h2>
-                    <p><biomd:renderModelOfMonth modelId="${revision.model.id}" /></p>
+                    <biomd:renderModelOfMonth modelId="${revision.model.id}" />
                 </div>
                 <div style="float:right;margin-top:10px;">
                     <g:if test="${!flags.empty}">
@@ -633,6 +709,8 @@
                     <li><a href="#Overview">Overview</a></li>
                     <li><a href="#Files">Files</a></li>
                     <li><a href="#History">History</a></li>
+                    <g:if test="${convertedFilesTC}">
+                    <li><a href="#Exports">Exports</a></li></g:if>
                     <!--
                         These specific tabs would be shown based on specific model format. Every tab is deliberately designed
                         for each part/section in the content of model file.
@@ -645,9 +723,8 @@
                         These specific tabs would be shown based on the presence of data. For example,
                         curation notes do not be included at all the time.
                     -->
-                     <g:if test="${curationNotes != null}">
-                         <li><a href='#Curation'>Curation</a></li>
-                     </g:if>
+		            <g:if test="${curationNotes != null || hasCuratorRole}">
+                    <li><a href='#Curation'>Curation</a></li></g:if>
                     </ul>
                     <div id="Overview" class="row">
                         <div class="small-12 medium-8 large-8 columns">
@@ -747,8 +824,10 @@
                                         <a>${mainFile}</a>
                                     </jummp:findMainFileLabel>
                                     <ul>
-                                        <Ziphandler:outputFileInfoAsHtml repFiles="${revision.files}" loadedZips="${loadedZips}"
-                                                                         zipSupported="${zipSupported}" mainFile="${true}"/>
+                                        <Ziphandler:outputFileInfoAsHtml repFiles="${revision.files}"
+                                                 loadedZips="${loadedZips}"
+                                                 zipSupported="${zipSupported}"
+                                                 mainFile="${true}"/>
                                     </ul>
                                     </li>
                                 </ul>
@@ -757,8 +836,9 @@
                                     <li><a>Additional Files</a>
                                         <ul>
                                             <Ziphandler:outputFileInfoAsHtml repFiles="${revision.files.findAll{!it.hidden}}"
-                                                                 loadedZips="${loadedZips}" zipSupported="${zipSupported}"
-                                                                 mainFile="${false}"/>
+                                                 loadedZips="${loadedZips}"
+                                                 zipSupported="${zipSupported}"
+                                                 mainFile="${false}"/>
                                         </ul>
                                     </li>
                                     </g:if>
@@ -812,9 +892,17 @@
                             </g:each>
                         </ul>
                     </div>
+                    <g:if test="${convertedFilesTC}">
+                    <div id="Exports">
+                        <h3>Below are the converted model files where you could download</h3>
+                        <Ziphandler:renderConvertedFiles convertedFilesTC="${convertedFilesTC}"/>
+                    </div>
+                    </g:if>
                     <g:pageProperty name="page.modelspecifictabscontent" />
-                    <g:if test="${curationNotes != null}">
-                        <biomd:renderCurationNotesTab curationNotes="${curationNotes}"/>
+                    <g:if test="${curationNotes != null || hasCuratorRole}">
+                        <biomd:renderCurationNotesTab curationNotes="${curationNotes}"
+                                                      model="${revision.model}"
+                                                      hasCuratorRole="${hasCuratorRole}"/>
                     </g:if>
                 </div>
             </div>

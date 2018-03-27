@@ -24,16 +24,28 @@ class CurationNotesController {
 
     }
 
-    def edit() {
-        render(view: "edit")
+    private sanitiseParams() {
+        def modelPerennialOrSubmissionId = params.model
+        Model model = Model.findByPublicationIdOrSubmissionId(modelPerennialOrSubmissionId, modelPerennialOrSubmissionId)
+        CurationNotesTransportCommand curationNotesTC = curationNotesService.fetchCurationNotesForModel(model.id)
+        if (!curationNotesTC) {
+            curationNotesTC = new CurationNotesTransportCommand()
+            curationNotesTC.id = -1
+            curationNotesTC.comment = null
+            curationNotesTC.dateAdded = new Date()
+            curationNotesTC.lastModified = new Date()
+            curationNotesTC.curationImage = null
+            curationNotesTC.lastModifier = null
+            curationNotesTC.submitter = null
+        }
+        String curationImage
+        curationImage = curationNotesTC.curationImage ? Base64.encoder.encodeToString(curationNotesTC.curationImage) : null
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+        ['curationNotesTC': curationNotesTC, 'curationImage': curationImage,
+         'dateFormat': dateFormat, 'id': modelPerennialOrSubmissionId]
     }
 
-    def updateCurationImage() {
-        curationNotesService.updateCurationImage(params.model, params.curaImg)
-        render "Curation image has been updated successfully"
-    }
-
-    def update() {
+    private parseCuratioNotes() {
         def curationNotes = new JsonSlurper().parseText(params.curationNotes)
         Long id = curationNotes["id"]
         String modelId = params.model
@@ -57,11 +69,34 @@ class CurationNotesController {
                           dateAdded: dateAdded,
                           lastModified: lastModified]
         CurationNotesTransportCommand command = new CurationNotesTransportCommand(bindingMap)
-        boolean status = curationNotesService.updateCurationNotes(command)
+        if (curationNotes["curationImage"]) {
+            command.curationImage = Base64.decoder.decode(curationNotes["curationImage"])
+        }
+        command
+    }
+
+    def edit() {
+        def data = sanitiseParams()
+        render(view: "edit", model: data)
+    }
+
+	def add() {
+        def data = sanitiseParams()
+		render(view: "add", model: data)
+	}
+
+    def doAddOrUpdate() {
+        CurationNotesTransportCommand command = parseCuratioNotes()
+        boolean status = curationNotesService.doAddOrUpdateCurationNotes(command)
+        String message
         if (status) {
-            render "Simulation results have been updated successfully"
+            message = "Simulation results have been updated successfully"
+            render message
+            log.debug(message)
         } else {
-            render "There is an error while trying to persist the curation notes into the database"
+            message = "There is an error while trying to persist the curation notes into the database"
+            render message
+            log.error(message)
         }
     }
 

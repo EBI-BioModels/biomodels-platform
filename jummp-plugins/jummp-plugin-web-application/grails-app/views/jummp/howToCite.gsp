@@ -52,12 +52,45 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
 
 
 <h3 id="biomodels">BioModels Database</h3>
+
+<dl>
+    <dt>
+        A Lloret‐Villas, TM Varusai, N Juty, C Laibe, N Le Novère, H Hermjakob and V Chelliah
+    </dt>
+    <dd style="margin-left:0;">
+        <div class="pubtitle">The Impact of Mathematical Modeling in Understanding the Mechanisms Underlying
+        Neurodegeneration: Evolving Dimensions and Future Directions.</div>
+        <div class="pubjournal"><em>CPT: Pharmacometrics &amp; Systems Pharmacology</em> 2017</div>
+        [<a href="//ascpt.onlinelibrary.wiley.com/doi/abs/10.1002/psp4.12155"
+            title="Publication on CPT: Pharmacometrics &amp; Systems Pharmacology (Open Access)">
+        CPT: Pharmacometrics &amp; Systems Pharmacology</a>]
+    [<a href="javascript:toggleDisplayById('bib_ALVillas2017');"
+        title="Display/hide the BibTeX entry for this publication">
+        <img src="//www.ebi.ac.uk/biomodels/icons/plus.gif" alt="+ icon"
+             style="padding-right: 5px;" />BibTeX entry</a>]
+<pre id="bib_ALVillas2017" class="hidden">
+@ARTICLE{BioModels2017a,
+    author  = {A Lloret‐Villas and TM Varusai and N Juty and C Laibe and N Le Novère and H Hermjakob and V Chelliah},
+    title   = {The Impact of Mathematical Modeling in Understanding the Mechanisms Underlying
+               Neurodegeneration: Evolving Dimensions and Future Directions},
+    journal = {CPT: Pharmacometrics &amp; Systems Pharmacology},
+    volume  = {6},
+    number  = {2},
+    pages   = {73-86},
+    year    = {2017},
+    doi     = {10.1002/psp4.12155},
+    URL     = {https://ascpt.onlinelibrary.wiley.com/doi/abs/10.1002/psp4.12155}
+}
+</pre>
+    </dd>
+</dl>
+
 <dl>
     <dt>
         Mihai Glont, Tung V. N. Nguyen, Martin Graesslin, Robert Hälke, Raza Ali,
         Jochen Schramm, Sarala M. Wimalaratne, Varun B. Kothamachu , Nicolas Rodriguez,
         Maciej J. Swat, Jurgen Eils, Roland Eils, Camille Laibe, Rahuman S. Malik-Sheriff,
-        Vijayalakshmi Chelliah, Nicolas Le Novère, Henning Hermjakob
+        Vijayalakshmi Chelliah, Nicolas Le Novère and Henning Hermjakob
     </dt>
     <dd style="margin-left:0;">
         <div class="pubtitle">BioModels: expanding horizons to include more modelling approaches and formats.</div>
@@ -68,7 +101,7 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
         title="Display/hide the BibTeX entry for this publication">
         <img src="//www.ebi.ac.uk/biomodels/icons/plus.gif" alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
 <pre id="bib_Glont2017" class="hidden">
-@ARTICLE{BioModels2017,
+@ARTICLE{BioModels2017b,
     author  = {Glont, Mihai and Nguyen, Tung V. N. and Graesslin, Martin and Hälke, Robert
             and Ali, Raza and Schramm, Jochen and Wimalaratne, Sarala M. and Kothamachu, Varun B.
             and Rodriguez, Nicolas and Swat, Maciej J. and Eils, Jurgen and Eils, Roland
@@ -78,7 +111,7 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
     journal = {Nucleic Acids Research},
     volume  = {},
     number  = {},
-    pages   = {gkx1023},
+    pages   = {D1248–D1253},
     year    = {2017},
     doi     = {10.1093/nar/gkx1023},
     URL     = {https://dx.doi.org/10.1093/nar/gkx1023},

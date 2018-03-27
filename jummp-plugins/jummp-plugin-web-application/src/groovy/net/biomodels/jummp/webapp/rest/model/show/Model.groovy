@@ -43,7 +43,7 @@ class Model {
     String submissionId
     String publicationId
 
-    public Model(RevisionTransportCommand revision) {
+    public Model(RevisionTransportCommand revision, boolean isPrivate) {
         ModelTransportCommand model = revision.model
         name = revision.name
         description = revision.description
@@ -53,7 +53,11 @@ class Model {
                           model.publication.linkProvider.identifiersPrefix + model.publication.link :
                           model.publication.link
         }
-        files = new ModelFiles(revision.files.findAll{ !it.hidden })
+        if (isPrivate) {
+            files = new ModelFiles()
+        } else {
+            files = new ModelFiles(revision.files.findAll{ !it.hidden })
+        }
         history = new History(model.submissionId)
         submissionId = model.submissionId
         publicationId = model.publicationId

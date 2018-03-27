@@ -38,6 +38,15 @@
                 dir: '/css/jqueryui/smoothness', file: 'jquery-ui-1.10.3.custom.min.css')}" />
         </g:if>
         <script type="text/javascript">
+            var descriptionMainMap = { "files": ${workingMemory['main_files'].collect {
+                            RepositoryFileTransportCommand rf ->
+                                String key = new File(rf.path).name
+                                String value = rf.description
+                                [ filename: key, description: value ]
+                        } as JSON}
+            };
+
+            var existingMainFiles = descriptionMainMap["files"];
             var descriptionMap = { "files": ${workingMemory['additional_files'].collect {
                             RepositoryFileTransportCommand rf ->
                                 String key = new File(rf.path).name
@@ -50,62 +59,68 @@
     </head>
     <body>
         <g:if test="${showProceedAsUnknownFormat}">
-          <div id="dialog-confirm" title="Model Format Error">
-            <p>The model was detected as ${modelFormatDetectedAs} but is not a
-            supported version. You can proceed with the submission but the model
-            will be stored as an unknown model. Would you like to proceed?</p>
-          </div>
+            <div id="dialog-confirm" title="Model Format Error">
+                <p>The model was detected as ${modelFormatDetectedAs} but is not a
+                supported version. You can proceed with the submission but the model
+                will be stored as an unknown model. Would you like to proceed?</p>
+            </div>
         </g:if>
         <g:if test ="${showProceedWithoutValidationDialog}">
-          <div id="dialog-confirm" title="Validation Error">
-            <p>The model files did not pass validation, with errors as below. Would you like to proceed?</p>
-            <ul>
-            	<g:each in="${workingMemory['validationErrorList']}">
-            		<li>${it}</li>
-            	</g:each>
-            </ul>
-            </p>
-          </div>
+            <div id="dialog-confirm" title="Validation Error">
+                <p>The model files did not pass validation, with errors as below. Would you like to proceed?</p>
+                <ul><g:each in="${workingMemory['validationErrorList']}">
+                    <li>${it}</li>
+                    </g:each>
+                </ul></p>
+            </div>
         </g:if>
         <g:render template="/templates/errorMessage"/>
         <h2><g:message code="submission.upload.header"/></h2>
         <p style="padding-bottom:1em"><g:message code="submission.upload.explanation"/></p>
-        <g:uploadForm id="fileUpload" novalidate="false" autocomplete="false" name="fileUploadForm" onsubmit="return validate()">
+        <g:uploadForm id="fileUpload" novalidate="false" autocomplete="false" name="fileUploadForm"
+                      onsubmit="return validate()">
             <div class="dialog">
-                <jummp:displayExistingMainFile main="${workingMemory['main_file']}"/>
-                <div id="noMains"></div>
+                <g:if test="${workingMemory['main_repository_files_in_working']}">
+                    <g:set var="mainfiles" value="${workingMemory['main_repository_files_in_working']}"/>
+                </g:if>
+                <g:elseif test="${workingMemory['main_files']}">
+                    <g:set var="mainfiles" value="${workingMemory['main_files']}" />
+                </g:elseif>
+                <g:else>
+                    <g:set var="mainfiles" value="${[]}" />
+                </g:else>
+                <jummp:displayExistingMainFile main="${mainfiles}"/>
+                <div id="noMains" style="display: none;"></div>
+                <!-- This div stores input element which value is assigned to JSON string -->
+                <div id="mainsOnUI" style="display: none"></div>
+
                 <jummp:renderAdditionalFilesLegend/>
                 <div id="additionalFilesExplanation"><jummp:renderAdditionalFilesExplanation/></div>
-                <fieldset>
-                    <a href="#" id="addFile"><jummp:renderAdditionalFilesAddButton/></a>
-                    <table class='formtable responsive-table' id="additionalFiles">
-                        <tbody>
-                            <g:if test="${workingMemory['additional_repository_files_in_working']}">
-                                <g:set var="resource" value="${workingMemory['additional_repository_files_in_working']}" />
-                            </g:if>
-                            <g:elseif test="${workingMemory['additional_files']}">
-                                <g:set var="resource" value="${workingMemory['additional_files']}" />
-                            </g:elseif>
-                            <g:else>
-                                <g:set var="resource" value="${[]}" />
-                            </g:else>
-                            <jummp:displayExistingAdditionalFiles additionals = "${resource}"/>
-                        </tbody>
-                    </table>
-                    <div id="noAdditionals"></div>
-                    <!-- This div stores input element which value is assigned to JSON string -->
-                    <div id="additionalsOnUI" style="display: none;"></div>
-                </fieldset>
+                <a href="#" id="addFile"><jummp:renderAdditionalFilesAddButton/></a>
+                <g:if test="${workingMemory['additional_repository_files_in_working']}">
+                    <g:set var="resource" value="${workingMemory['additional_repository_files_in_working']}" />
+                </g:if>
+                <g:elseif test="${workingMemory['additional_files']}">
+                    <g:set var="resource" value="${workingMemory['additional_files']}" />
+                </g:elseif>
+                <g:else>
+                    <g:set var="resource" value="${[]}" />
+                </g:else>
+                <jummp:displayExistingAdditionalFiles additionals="${resource}"/>
+                <div id="noAdditionals" style="display: none"></div>
+                <!-- This div stores input element which value is assigned to JSON string -->
+                <div id="additionalsOnUI" style="display: none;"></div>
+
                 <div class="buttons">
                     <g:submitButton name="Cancel" class="button" value="${g.message(code: 'submission.common.cancelButton')}" />
                     <g:if test="${!isUpdate}">
                         <g:submitButton name="Back" class="button" value="${g.message(code: 'submission.common.backButton')}" />
                     </g:if>
                     <g:submitButton name="Upload" class="button" value="${g.message(code: 'submission.upload.uploadButton')}" />
-                    <g:if test ="${showProceedWithoutValidationDialog || showProceedAsUnknownFormat}">
+                    <g:if test="${showProceedWithoutValidationDialog || showProceedAsUnknownFormat}">
                         <g:submitButton name="ProceedWithoutValidation" class="button" value="ProceedWithoutValidation" hidden="true"/>
                     </g:if>
-                    <g:if test ="${showProceedAsUnknownFormat}">
+                    <g:if test="${showProceedAsUnknownFormat}">
                         <g:submitButton name="ProceedAsUnknown" class="button" value="ProceedAsUnknown" hidden="true"/>
                     </g:if>
                 </div>
@@ -120,10 +135,14 @@
                     $("div#additionalFilesExplanation").slideUp();
                 }
             });
+            $('.flashNotificationDiv').click(function() {
+                $(this).hide();
+            });
             var nbExtraFiles = 0;
             var numberOfAdditionalsAtLoadingPage = $('input[id^=description]').size();
-            function populateDiv() {
-                descriptionMap.files = []
+
+            function updateAdditionalFilesOnUI() {
+                descriptionMap.files = [];
                 $.each(existingAdditionalFiles, function(index, fileEntry) {
                     // key here is the index, value is the actual value we are interested in
                     var fileName = fileEntry["filename"];
@@ -131,75 +150,204 @@
                     descriptionMap.files.push({'filename': fileName, 'description': fileDescription});
                 });
                 // update the hidden input element containing the latest additional files
-                // the map should be converted to json string that will be transfered to controller
+                // the map should be converted to json string that will be transferred to controller
                 var input = "<input name='additionalFilesInWorking' size='220' value='";
                     input += JSON.stringify(descriptionMap) + "'/>";
                 document.getElementById("additionalsOnUI").innerHTML = input;
             }
 
+            function updateMainFilesOnUI() {
+                descriptionMainMap.files = [];
+                $.each(existingMainFiles, function(index, fileEntry) {
+                    // key here is the index, value is the actual value we are interested in
+                    var fileName = fileEntry["filename"];
+                    var fileDescription  = fileEntry["description"];
+                    descriptionMainMap.files.push({'filename': fileName, 'description': fileDescription});
+                });
+                // update the hidden input element containing the latest additional files
+                // the map should be converted to json string that will be transferred to controller
+                var input = "<input name='mainFilesInWorking' size='220' value='";
+                    input += JSON.stringify(descriptionMainMap) + "'/>";
+                document.getElementById("mainsOnUI").innerHTML = input;
+            }
+
+            var clickBack = false;
+            var clickCancel = false;
+
             function validate() {
-                // validate the upload form
-                var result = $("input[id^=description]").filter(function() {
-                    var element = $(this);
-                    console.log(element.val());
-                    return $.trim(this.value) === "";
-                });
-                var mainValid = $("input[id^=mainFileDescription]").filter(function() {
-                    var element = $(this);
-                    console.log(element.val());
-                    return $.trim(this.value) === "";
-                });
-                var isValid = result.length == 0 && mainValid.length == 0;
-                if (isValid) {
-                    console.log("All required fields have been filled in");
+                if (clickBack || clickCancel) {
+                    // click Back or Cancel button in either updating or creating process
                     return true;
                 } else {
-                    var flashDiv = $('.flashNotificationDiv');
-                    $(flashDiv).html("Please fill in all required fields");
-                    $(flashDiv).show();
-                    console.log("Some required fields cannot be empty");
-                    return false;
+                    // click Upload button in either updating or creating process
+                    var message = "";
+                    if (${isUpdate}) {
+                        message = "Updating the model process";
+                    } else {
+                        message = "Creating the model process";
+                    }
+
+                    // validate the upload form
+                    var hasEmptyAddFileDesc = $("input[id^=description]").filter(function() {
+                        var element = $(this);
+                        return $.trim(this.value) === "";
+                    });
+                    var hasEmptyMainFileDesc = $("input[id^=mainFileDescription]").filter(function() {
+                        var element = $(this);
+                        return $.trim(this.value) === "";
+                    });
+                    var isFileDescValid = hasEmptyAddFileDesc.length == 0 && hasEmptyMainFileDesc.length == 0;
+	                var hasAtLeastMainFile = existingMainFiles.length > 0
+                    if (isFileDescValid && hasAtLeastMainFile) {
+                        return true;
+                    } else {
+                        var flashDiv = $('.flashNotificationDiv');
+                        $(flashDiv).html("Please fill in all required fields");
+                        $(flashDiv).show();
+                        return false;
+                    }
                 }
             }
 
             $(document).ready(function () {
-                populateDiv();
+                updateMainFilesOnUI();
+                updateAdditionalFilesOnUI();
+                var isMainFileReplaced = false;
                 $('.replaceMain').click(function(e) {
                     e.preventDefault();
-                    // firing a click event on the main file upload element
                     $('#mainFile').click();
+                    isMainFileReplaced = true;
                 });
 
                 $('.removeMain').click(function(e) {
                     e.preventDefault();
                     var td = $(this).parent().get(0);
                     var tr = $(td).parent().get(0);
-                    console.log($(tr).find("td:first").html());
-                    var tbody = $(td).parent().parent().get(0);
-                    // update the temporary container's content
                     var parent = $(tr).find("td:first").html();
-                    var trimmedParent = parent.replace(/^\s+/g,"");
-                    var start = "<span id='mainName_".length;
-                    var end = trimmedParent.indexOf("\">", start);
-                    var name = trimmedParent.substring(start, end);
-                    var hi = "<input value='" + name + "' name='deletedMain' hidden>";
-                    document.getElementById("noMains").innerHTML += hi;
-                    // get rid of the current row where Remove button is placed
-                    $(td).closest("tr").remove();
-                    // generate a new row in order to allow browsing a new file
-                    var row = "<jummp:renderRowInMainFileTable />";
-                    $(tbody).append(row);
+                    var span = $($.parseHTML(parent))[1];
+                    var id = span.id;
+                    // xoa span
+                    if ($('#'+id).is("span")) {
+                        var mainFileName = $('#'+id).text();
+                        $('#'+id).text('');
+                        for (index in existingMainFiles)
+                            if (existingMainFiles[index].filename === mainFileName) {
+                                existingMainFiles.splice(index, 1);
+                            }
+                        $('#'+id).remove();
+                        // the former main file will be deleted
+                        var hi = "<input value='" + mainFileName + "' name='deletedMain'>";
+                        document.getElementById("noMains").innerHTML += hi;
+	                }
+                    // update UI
+	                updateMainFilesOnUI();
+                    // hidden Replace button to avoid being confused
+                    $(td).text("");
+                    // reshow the file upload
+                    $('#mainFile').show();
+                });
+                var formerMainFileName = "";
+                $('#mainFile').change(function(event) {
+                    var newFileName = $(this)[0].files[0].name;
+                    if (existingMainFiles.length === 0) {
+                        // new submission or update but all the main files has been removed
+                        // so retain the working main file
+                        formerMainFileName = newFileName;
+                        // add the new file to existingMainFiles
+                        var newFile = {filename: newFileName, description: ""}
+                        existingMainFiles.push(newFile);
+                        // display it on the page
+                        $(this).attr("value", newFileName);
+                        $(this).css("display", "inline");
+                        //var discardID = "discard" + $(this).attr('id');
+                        //$("#"+discardID).attr('download', fileName);
+                        $('#mainFileDescription').val('');
+
+                    } else {
+                        var td = $(this).parent().get(0);
+                        var span = $($.parseHTML($(td).html()))[1];
+                        if ($('#' + span.id).is("span")) {
+                            formerMainFileName = $('#' + span.id).text();
+                        } else {
+                            formerMainFileName = existingMainFiles.last()["filename"];
+                        }
+
+                        var hi = "<input value='" + formerMainFileName + "' name='deletedMain'>";
+                        document.getElementById("noMains").innerHTML += hi;
+
+                        if (existingMainFiles.filter(function(v) {
+                            return v.filename === newFileName;
+                        })[0]) {
+                            var message = "The file named " + newFileName + " already exists. " +
+                             "Please rename it or select another file.";
+                            showNotification(message);
+                        } else if (isMainFileReplaced) { // update process
+                            /* remove the old/current one */
+                            for (index in existingMainFiles)
+                            if (existingMainFiles[index].filename === formerMainFileName) {
+                                existingMainFiles.splice(index, 1);
+                                // update the former main on GUI
+                            }
+
+                            isMainFileReplaced = false;
+                            /* update the new file */
+                            // display the new file to gui
+                            span = $(span)[0].id;
+                            $('#' + span).text(newFileName);
+                            // add the new file to existingMainFiles
+                            var newFile = {filename: newFileName, description: ""}
+                            existingMainFiles.push(newFile);
+                            $(this).attr('value', newFileName);
+                            $('#mainFileDescription').val('');
+                        } else { // submission process
+                            for (index in existingMainFiles)
+                                if (existingMainFiles[index].filename === formerMainFileName) {
+                                    existingMainFiles.splice(index, 1);
+                                    // update the former main on GUI
+
+                                }
+
+                            var newFile = {filename: newFileName, description: ""}
+                            existingMainFiles.push(newFile);
+                            $(this).attr('value', newFileName);
+                            $('#mainFileDescription').val('');
+                        }
+                    }
+                    updateMainFilesOnUI();
                 });
 
-                $('.mainFile').change(function(click) {
-                    var oldName = $(this).data("labelname");
-                    var hi = "<input type='hidden' value='" + oldName + "' name='deletedMain'/>";
-                    document.getElementById("noMains").innerHTML += hi;
-                    var id = "mainName_" + oldName;
-                    var newValue = this.value;
-                    var newName = trimElementName("\\", newValue);
-                    document.getElementById(id).innerHTML = newName;
-                    $('#mainFileDescription').val('');
+                $('input[id^=mainFileDescription]').change(function() {
+                    var parent = $(this).parent().parent();
+                    var content = parent.find("td:first").html();
+                    var span = $.parseHTML(content);
+                    var span = $(span)[1];
+                    if (existingMainFiles.length > 0) {
+                        var id = span.id;
+                        var fileName = "";
+                        if ($('#' + id).is("span")) {
+                            // case: there are existing main files either submission or update process
+                            fileName = $('#' + id).text();
+                        } else {
+                            // case: only happen in submission process
+                            fileName = $('input[id^=mainFile]')[0].files[0].name;
+                        }
+                        var description = $(this).val();
+                        if (fileName) {
+                            if (existingMainFiles.length > 0) {
+                                existingMainFiles.filter(function(v) {
+                                    return v.filename === fileName;
+                                })[0].description = description;
+                            } else if (fileName) {
+                                var newFile = {filename: fileName, description: fileName}
+                                existingMainFiles.push(newFile);
+                            }
+                        }
+                        updateMainFilesOnUI();
+                    } else {
+                        var flashDiv = $('.flashNotificationDiv');
+                        $(flashDiv).html("The main file cannot be empty");
+                        $(flashDiv).show();
+                    }
                 });
 
                 $("#addFile").click(function (evt) {
@@ -238,14 +386,18 @@
                     var input = "<input name='additionalFilesInWorking' value='";
                     input += JSON.stringify(descriptionMap) + "'/>";
                     document.getElementById("additionalsOnUI").innerHTML = input;
+
+                    input = "<input name='mainFilesInWorking' value='";
+                    input += JSON.stringify(descriptionMainMap) + "'/>";
+                    $('#mainsOnUI').innerHTML = input;
                 });
 
-                $("#uploadButton").click( function() {
-                    $("#fileUpload").submit();
+                $("#_eventId_Back").click( function() {
+                    clickBack = true;
                 });
 
-                $("#cancelButton").click( function() {
-                    $("#fileUpload").reset();
+                $("#_eventId_Cancel").click( function() {
+                    clickCancel = true;
                 });
             });
 
@@ -272,7 +424,7 @@
                         if (existingAdditionalFiles[index].filename == fileName) {
                             existingAdditionalFiles.splice(index, 1);
                         }
-                    populateDiv();
+                    updateAdditionalFilesOnUI();
                 }
                 $(tr).empty();
             });
@@ -293,7 +445,7 @@
                         $(this).attr('value', fileName);
                         var discardID = "discard" + $(this).attr('id');
                         $("#"+discardID).attr('download', fileName);
-                        populateDiv();
+                        updateAdditionalFilesOnUI();
                     }
                 }
             });
@@ -323,7 +475,7 @@
                         return v.filename === fileName;
                     })[0].description = $(this).val();
                 }
-                populateDiv();
+                updateAdditionalFilesOnUI();
             });
 
             $( "#dialog-confirm" ).dialog({
@@ -334,7 +486,7 @@
                         buttons: {
                             "Proceed Without Validation": function() {
                             	var eventID = '_eventId_ProceedWithoutValidation';
-                            	<g:if test='${showProceedAsUnknownFormat}'>
+                                <g:if test='${showProceedAsUnknownFormat}'>
                             		eventID = '_eventId_ProceedAsUnknown';
                             	</g:if>
                                 document.getElementById(eventID).click();

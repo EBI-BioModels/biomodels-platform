@@ -37,7 +37,8 @@ grails.project.dependency.resolver = "maven"
 customJvmArgs = ["-server", "-noverify", "-XX:+UseConcMarkSweepGC", "-XX:+UseParNewGC" ]
 grails.project.fork = [
     // configure settings for the test-app JVM, uses the daemon by default
-    test: [maxMemory: 2048, minMemory: 64, debug: false, maxPerm: 512, daemon:true],
+    //test: [maxMemory: 2048, minMemory: 64, debug: false, maxPerm: 512, daemon: true],
+    test: false,
     // configure settings for the run-app JVM
     run: [maxMemory: 2048, minMemory: 64, debug: false, maxPerm: 512, forkReserve:false, jvmArgs: customJvmArgs],
     // configure settings for the run-war JVM
@@ -74,11 +75,14 @@ grails.project.dependency.resolution = {
         mavenRepo "http://maven.mango-solutions.com/ddmore/"
         mavenRepo "http://repo.spring.io/milestone"
         mavenRepo "http://repo.grails.org/grails/core"
+
+        // for spock-reports
+        mavenRepo "http://jcenter.bintray.com"
     }
     dependencies {
         // required by OntologyLookupResolver
         compile "org.ccil.cowan.tagsoup:tagsoup:1.2"
-        compile 'org.codehaus.groovy:groovy-backports-compat23:2.3.11'
+        compile 'org.codehaus.groovy:groovy-backports-compat23:2.4.13'
         compile "com.googlecode.multithreadedtc:multithreadedtc:1.01"
         runtime 'mysql:mysql-connector-java:5.1.34'
         runtime "postgresql:postgresql:9.1-901.jdbc4"
@@ -128,12 +132,19 @@ grails.project.dependency.resolution = {
             excludes 'junit', 'commons-logging'
         }
         test "org.grails:grails-datastore-test-support:1.0-grails-2.3"
+
+        // for spock-reports
+        test "com.athaydes:spock-reports:1.3.0"
+//        build "com.athaydes:spock-reports:1.3.0"
+//        compile "com.athaydes:spock-reports:1.3.0"
+//        runtime "com.athaydes:spock-reports:1.3.0"
+
         runtime 'org.javassist:javassist:3.17.1-GA'
         runtime "org.apache.camel:camel-exec:2.13.0"
 
         // DDMoRe Metadata Information Service uses jena 2.13
         compile("org.mbine.co:libCombineArchive:0.1") {
-            excludes 'junit', 'slf4j-api', 'slf4j-log4j12', 'jmock-junit4', 'jena-core'
+            excludes 'junit', 'slf4j-api', 'slf4j-log4j12', 'slf4j-log4j12-impl', 'jmock-junit4', 'jena-core'
         }
         compile "de.unirostock.sems:CombineExt:1.2.4"
         // need to add this as an explicit dependency to configure exclusions
@@ -141,10 +152,14 @@ grails.project.dependency.resolution = {
         compile("eu.ddmore:lib-metadata:0.1.3-SNAPSHOT") {
             excludes 'apache-jena-libs'
         }
-        compile "org.apache.jena:jena-tdb:1.1.2"
-        compile "org.apache.jena:jena-core:2.13.0"
+        compile("org.apache.jena:jena-tdb:1.1.2") {
+            excludes 'slf4j-log4j12', 'slf4j-log4j12-impl'
+        }
+        compile("org.apache.jena:jena-core:2.13.0") {
+            excludes 'slf4j-log4j12'
+        }
         compile ("eu.ddmore.metadata:lib-metadata:1.5.2-SNAPSHOT") {
-            excludes 'spring-context','spring-core','spring-test', 'jena'
+            excludes 'spring-context','spring-core','spring-test', 'jena', 'slf4j-log4j12'
         }
     }
 

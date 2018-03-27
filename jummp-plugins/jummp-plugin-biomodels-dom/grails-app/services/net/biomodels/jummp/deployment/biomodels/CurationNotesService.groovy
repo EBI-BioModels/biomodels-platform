@@ -53,23 +53,12 @@ class CurationNotesService {
             model {
                 eq "id", modelId
             }
+            order("lastModified", "desc")
         }
         CurationNotesTransportCommand latestCurationNotes = null
-        if (!entries.isEmpty()) {
-            // assume the first element as the deliberately returned one
-            CurationNotes proposedCurationNotes = entries[0]
-            Date lastModifiedDate = proposedCurationNotes.lastModified
+        if (entries.size() > 0) {
             use(CurationNotesCategory) {
-                latestCurationNotes = proposedCurationNotes.toCommandObject()
-            }
-            // determine the latest curation notes
-            use(CurationNotesCategory) {
-                entries.each { CurationNotes e ->
-                    if (e.lastModified > lastModifiedDate) {
-                        lastModifiedDate = e.lastModified
-                        latestCurationNotes = e.toCommandObject()
-                    }
-                }
+                latestCurationNotes = entries.first()?.toCommandObject()
             }
         }
         return latestCurationNotes
@@ -80,42 +69,85 @@ class CurationNotesService {
      * @param modelSubmissionId A string represents model identifier
      * @param newCuraImg        A string represents the image encoded as Base64
      */
-    void updateCurationImage(String modelSubmissionId, String newCuraImg) {
+    boolean updateCurationImage(String modelSubmissionId, String newCuraImg) {
         Model model = Model.findBySubmissionIdOrPublicationId(modelSubmissionId, modelSubmissionId)
         Long modelId = model.id
         byte[] newCuraImgByteArr = Base64.decoder.decode(newCuraImg)
         updateCurationImage(modelId, newCuraImgByteArr)
     }
 
-    void updateCurationImage(Long modelId, byte[] newCuraImg) {
+    boolean updateCurationImage(Long modelId, byte[] newCuraImg) {
         CurationNotesTransportCommand cntc = fetchCurationNotesForModel(modelId)
+        CurationNotes cn
+        Model model = Model.get(modelId)
         if (cntc) {
-            Model model = Model.get(modelId)
-            CurationNotes cn = CurationNotes.findBySubmitterAndLastModifierAndModel(cntc.submitter, cntc.lastModifier, model)
+            cn = CurationNotes.findBySubmitterAndLastModifierAndModel(cntc.submitter, cntc.lastModifier, model)
             cn.curationImage = newCuraImg
-            cn.save(flush: true)
+        } else {
+            cn = new CurationNotes()
+            cn.curationImage = newCuraImg
         }
+        boolean success = cn.save(flush: true)
+        if (success) {
+            log.debug("""\
+The curation image associated with the simulation results of model $model.submissionId
+has been saved successfully into the database.""")
+        } else {
+            log.error("""\
+There is an error when trying to persist curate image into database: ${cn.errors.allErrors.inspect()}""")
+        }
+        success
     }
 
-    boolean updateCurationNotes(CurationNotesTransportCommand cntc) {
+    boolean updateCurationImage(CurationNotesTransportCommand command) {
+        CurationNotesTransportCommand cntc = fetchCurationNotesForModel(command.model.id)
+        CurationNotes cn
+        Model model = Model.get(command.model.id)
+        if (cntc) {
+            cn = CurationNotes.findBySubmitterAndLastModifierAndModel(cntc.submitter, cntc.lastModifier, model)
+        } else {
+            cn = new CurationNotes()
+        }
+        cn.curationImage = command.curationImage
+        cn.model = model
+        cn.submitter = command.submitter
+        cn.lastModifier = command.lastModifier
+        cn.dateAdded = command.dateAdded
+        cn.lastModified = command.lastModified
+        cn.comment = command.comment
+        boolean success = cn.save(flush: true)
+        if (success) {
+            log.debug("""\
+The curation image associated with the simulation results of model $model.submissionId
+has been saved successfully into the database.""")
+        } else {
+            log.error("""\
+There is an error when trying to persist curate image into database: ${cn.errors.allErrors.inspect()}""")
+        }
+        success
+    }
+
+    boolean doAddOrUpdateCurationNotes(CurationNotesTransportCommand cntc) {
         Model model = Model.get(cntc.model.id)
         Long id = cntc.id
         CurationNotes cn = CurationNotes.get(id)
-        if (cn) {
-            cn.comment = cntc.comment
-            cn.submitter = cntc.submitter
-            cn.lastModifier = cntc.lastModifier
-            cn.dateAdded = cntc.dateAdded
-            cn.lastModified = cntc.lastModified
-            if (cn.save(flush: true)) {
-                if (IS_DEBUG_ENABLED) {
-                    log.debug("The simulation results of the model $model.id have been saved!")
-                }
-                return true
-            } else {
-                throw new Exception("Failed to try persisting curation notes")
-            }
+        if (!cn) {
+            cn = new CurationNotes()
         }
-        false
+        cn.model = model
+        cn.comment = cntc.comment
+        cn.submitter = cntc.submitter
+        cn.lastModifier = cntc.lastModifier
+        cn.dateAdded = cntc.dateAdded
+        cn.lastModified = cntc.lastModified
+        cn.curationImage = cntc.curationImage
+        if (cn.save(flush: true)) {
+            log.debug("The simulation results of the model $model.id have been saved!")
+            return true
+        } else {
+            log.error("""\
+Failed to try to persist curation notes of the model $model.id into database: ${cn.errors.allErrors.inspect()}""")
+            return false
+        }
     }
 }
