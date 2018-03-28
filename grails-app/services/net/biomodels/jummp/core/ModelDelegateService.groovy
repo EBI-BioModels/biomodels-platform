@@ -290,7 +290,7 @@ class ModelDelegateService implements IModelService {
     }
 
     Boolean canSubmitForPublication(RevisionTransportCommand revision) {
-        if ((revision.state == ModelState.UNPUBLISHED) && (revision.state != ModelState.UNDER_CURATION)) {
+        if ((revision.state == ModelState.UNPUBLISHED)) {
             try {
                 return modelService.canSubmitForPublication(Revision.get(revision.id))
             } catch (Exception e) {
