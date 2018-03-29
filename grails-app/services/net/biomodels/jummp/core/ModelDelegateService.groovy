@@ -290,7 +290,7 @@ class ModelDelegateService implements IModelService {
     }
 
     Boolean canSubmitForPublication(RevisionTransportCommand revision) {
-        if ((revision.state == ModelState.UNPUBLISHED) && (revision.state != ModelState.UNDER_CURATION)) {
+        if ((revision.state == ModelState.UNPUBLISHED)) {
             try {
                 return modelService.canSubmitForPublication(Revision.get(revision.id))
             } catch (Exception e) {
@@ -398,6 +398,18 @@ class ModelDelegateService implements IModelService {
             return new ModelAdapter(model: model).toCommandObject()
         }
         return null
+    }
+
+    /**
+     * Update curation status of specific model revision
+     * @param modelId: submissionId of model
+     * @param revisionNumber: revision number
+     * @param curationState: curation status
+     */
+    void updateCurationStateRevision(String modelId, int revisionNumber, CurationState curationState) {
+        Revision revision = modelService.getRevision(ModelAdapter.findByPerennialIdentifier(modelId), revisionNumber)
+        revision.setCurationState(curationState)
+        revision.save(flush:true)
     }
 
     RevisionTransportCommand getRevisionFromParams(final String MODEL, String REVISION = null) {

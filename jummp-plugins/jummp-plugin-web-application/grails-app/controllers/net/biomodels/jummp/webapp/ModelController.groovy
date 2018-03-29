@@ -119,7 +119,7 @@ class ModelController {
      * The list of actions for which we should not automatically create an audit item.
      */
     final List<String> AUDIT_EXCEPTIONS = ['updateFlow', 'createFlow', 'uploadFlow',
-                'showWithMessage', 'share', 'getFileDetails', 'submitForPublication']
+                'showWithMessage', 'share', 'getFileDetails', 'submitForPublication', 'updateCurationState']
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
 
@@ -285,7 +285,8 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     modelDelegateService.getAllRevisions(PERENNIAL_ID)
                 CurationNotesTransportCommand curationNotes =
                     metadataDelegateService.fetchCurationNotes(rev)
-                String curationStatus = metadataDelegateService.fetchCurationStatus(rev)
+                String curationState = rev.curationState.name()
+                List<String> possibleCurationStates = CurationState.values()*.name()
                 List<String> originalModels = metadataDelegateService.fetchOriginalModels(rev)
                 Map<String, String> modellingApproaches =
                     metadataDelegateService.fetchModellingApproaches(rev)
@@ -309,7 +310,8 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                              validationLevel        : rev.getValidationLevelMessage(),
                              certComment            : rev.getCertificationMessage(),
                              flags                  : flags,
-                             curationStatus         : curationStatus,
+                             curationState          : curationState,
+                             possibleCurationStates : possibleCurationStates,
                              modellingApproaches    : modellingApproaches,
                              curationNotes          : curationNotes,
                              originalModels         : originalModels,
@@ -1285,6 +1287,31 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
             }
         }
     }
+
+    /**
+     * Update status of the curation
+     */
+    def updateCurationState() {
+        def requestObject = request.JSON
+        if (!requestObject['revisionNumber'] || !requestObject['modelId'] || !requestObject['curationState']) {
+            response.status = 400
+            render([message: 'Bad request'] as JSON)
+            return
+        }
+
+        int revision = Integer.parseInt(requestObject['revisionNumber'] as String)
+        String modelId = requestObject['modelId']
+        CurationState curationState = CurationState.valueOf(requestObject['curationState'] as String)
+
+        if (modelDelegateService.canAddRevision(modelId as String)) {
+            modelDelegateService.updateCurationStateRevision(modelId, revision, curationState)
+            render([message: "Curation status has been saved"] as JSON)
+            return
+        }
+        response.status = 401
+        render([message: "You don't have permission to change the curation status"] as JSON)
+    }
+
 
     /**
      * Display basic information about the model

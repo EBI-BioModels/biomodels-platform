@@ -113,6 +113,11 @@ class RevisionTransportCommand implements Serializable {
 
     QcInfoTransportCommand qcInfo
 
+    /**
+     * The curation state of this revision
+     */
+    CurationState curationState
+
     List<ElementAnnotationTransportCommand> getAnnotations() {
         if (!annotations) {
             annotations = context.metadataDelegateService.fetchAnnotations(this)

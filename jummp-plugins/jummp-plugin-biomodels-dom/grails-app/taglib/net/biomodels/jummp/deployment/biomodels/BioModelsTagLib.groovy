@@ -119,10 +119,6 @@ class BioModelsTagLib {
         out << "</div>" // for id = Curation
     }
 
-    def renderCurationStatus = { attrs ->
-        out << attrs.curationStatus
-    }
-
     def renderModellingApproaches = { attrs ->
         out << render(collection:  attrs.modellingApproaches,
             template: '/templates/modellingApproach',
