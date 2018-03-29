@@ -7,4 +7,14 @@ databaseChangeLog = {
 			}
 		}
 	}
+
+    changeSet(author: "tvu (generated)", id: "1522163825442-1") {
+        grailsChange {
+            change {
+                query = "UPDATE revision, model SET revision.curation_state = 'CURATED' " +
+                    "WHERE revision.model_id = model.id AND model.perennialPublicationIdentifier IS NOT NULL "
+                sql.executeUpdate(query)
+            }
+        }
+    }
 }
