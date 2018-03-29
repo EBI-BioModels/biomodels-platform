@@ -116,7 +116,7 @@ class ModelController {
      * The list of actions for which we should not automatically create an audit item.
      */
     final List<String> AUDIT_EXCEPTIONS = ['updateFlow', 'createFlow', 'uploadFlow',
-                'showWithMessage', 'share', 'getFileDetails', 'submitForPublication', 'updateCurationStatus']
+                'showWithMessage', 'share', 'getFileDetails', 'submitForPublication', 'updateCurationState']
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
 
@@ -282,7 +282,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     modelDelegateService.getAllRevisions(PERENNIAL_ID)
                 CurationNotesTransportCommand curationNotes =
                     metadataDelegateService.fetchCurationNotes(rev)
-                String curationStatus = rev.curationState.name()
+                String curationState = rev.curationState.name()
                 List<String> possibleCurationStates = CurationState.values()*.name()
                 List<String> originalModels = metadataDelegateService.fetchOriginalModels(rev)
                 Map<String, String> modellingApproaches =
@@ -300,7 +300,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                              validationLevel        : rev.getValidationLevelMessage(),
                              certComment            : rev.getCertificationMessage(),
                              flags                  : flags,
-                             curationStatus         : curationStatus,
+                             curationState          : curationState,
                              possibleCurationStates : possibleCurationStates,
                              modellingApproaches    : modellingApproaches,
                              curationNotes          : curationNotes,
@@ -1278,7 +1278,7 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
     /**
      * Update status of the curation
      */
-    def updateCurationStatus() {
+    def updateCurationState() {
         def requestObject = request.JSON
         if (!requestObject['revisionNumber'] || !requestObject['modelId'] || !requestObject['curationState']) {
             response.status = 400

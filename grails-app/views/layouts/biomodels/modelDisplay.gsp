@@ -519,7 +519,7 @@
                 var curationState = this.value;
                 $.ajax({
                     type: "PUT",
-                    url: $.jummp.createLink("model", "updateCurationStatus"),
+                    url: $.jummp.createLink("model", "updateCurationState"),
                     cache: false,
                     dataType: 'json',
                     headers: {
@@ -781,14 +781,14 @@
                         <div class="small-12 medium-4 large-4 columns">
                             <div class="rounded-header"><h4 style="color: #ffffee">Metadata information</h4></div>
                             <g:pageProperty name="page.genericAnnotations"/>
-                            <g:if test="${curationStatus}">
+                            <g:if test="${curationState}">
                             <div class='row'>
                                 <div class="small-12 medium-6 large-4 columns">Curation status</div>
                                 <div class="small-12 medium-6 large-8 columns">
                                 <g:if test="${canUpdate}">
                                     <select id="curation_state_change">
                                         <g:each in="${possibleCurationStates}" var="possibleCurationState">
-                                            <g:if test="${possibleCurationState.equals(curationStatus)}">
+                                            <g:if test="${possibleCurationState.equals(curationState)}">
                                                 <option value="${possibleCurationState}" selected>
                                                     <jummp:camelCase message="${possibleCurationState}" />
                                                 </option>
@@ -802,7 +802,7 @@
                                     </select>
                                 </g:if>
                                 <g:else>
-                                    <jummp:camelCase message="${curationStatus}" />
+                                    <jummp:camelCase message="${curationState}" />
                                 </g:else>
                                 </div>
                             </div></g:if>
