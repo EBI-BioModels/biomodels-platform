@@ -53,6 +53,9 @@
     <script type='text/javascript'
             src="${grailsApplication.config.grails.serverURL}/js/MathJax-2.6.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
     </script>
+    <g:javascript>
+	    var canUpdate = ${canUpdate};
+    </g:javascript>
         <g:javascript src="jstree/jquery.jstree.js"/>
         <g:javascript src="equalize.js"/>
         <g:javascript src="syntax/shCore.js"/>
@@ -248,8 +251,12 @@
                             for (var prop in fileProps) {
                                 if (prop!="isInternal" && prop!="Name" && fileProps[prop]
                                     && fileProps[prop]!="null" && prop!="mime" && prop!="showPreview") {
-                                    tcontent.push("<tr><td><b>",prop.replace("_"," "),"</b></td><td>",fileProps[prop])
-                                    tcontent.push("</td></tr>");
+                                    tcontent.push("<tr><td><b>",prop.replace("_"," "),"</b></td>");
+                                    if (prop === "Description") {
+                                        tcontent.push("<td id='fileProp'><div id='fileDescription'><span id='fileDescVal'>", fileProps[prop], "</span><span>&nbsp;</span><span id='fileDesc' class='icon icon-functional' data-icon='e'>&nbsp;</span></div></td></tr>");
+                                    } else {
+                                        tcontent.push("<td>", fileProps[prop], "</td></tr>");
+                                    }
                                 }
                             }
                             tcontent.push("<tr><td><b>Submitted</b></td><td>", new Date(data[0].commit))
@@ -260,6 +267,26 @@
                             tcontent.push("</table>");
                             $("#tableGoesHere").html(tcontent.join(""));
                             $("#Files").equalize({reset: true});
+			                if (canUpdate) {
+				                console.log("The model can be updated");
+                                $('#fileProp').hover(
+                                    function() {
+                                        $('#fileDesc').css("display", "inline");
+                                    },
+                                    function () {
+                                        $('#fileDesc').css("display", "none");
+                                    }
+                                    //console.log("you're hovering me!");
+                                );
+                                $('#fileDesc').click(function () {
+                                   var currentValue = $('#fileDescVal').html();
+                                   var size = $('#fileProp').width();
+                                   console.log(size);
+                                   var input = '<input id="editFileDescription" value="' + currentValue + '"/>'
+                                   $('#fileDescription').html(input);
+                                   $('#editFileDescription').css("width", "100%");
+                                });
+			                }
                         },
                         error: function(jq, status, errorThrown) {
                             alert(status+".."+errorThrown);
@@ -270,7 +297,12 @@
                     content.push("<table cellpadding='2' cellspacing='5'>")
                     for (var prop in fileProps) {
                         if (prop!="isInternal" && prop!="Name" && fileProps[prop] && fileProps[prop]!="null" && prop!="mime") {
-                            content.push("<tr><td><b>",prop.replace("_"," "),"</b></td><td>",fileProps[prop])
+                            content.push("<tr><td><b>",prop.replace("_"," "),"</b></td>")
+                            if (prop === "Description") {
+                                content.push("<td id='fileProp'><span>&nbsp;</span><span id='fileDesc' class='icon icon-functional' data-icon='e'>&nbsp;</span>");
+                            } else {
+                                content.push("<td>", fileProps[prop]);
+                            }
                             content.push("</td></tr>");
                         }
                     }
