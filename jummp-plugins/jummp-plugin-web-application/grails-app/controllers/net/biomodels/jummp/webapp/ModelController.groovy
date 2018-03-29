@@ -1288,7 +1288,7 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
 
         int revision = Integer.parseInt(requestObject['revisionNumber'] as String)
         String modelId = requestObject['modelId']
-        CurationState curationState = CurationState.convertToEnum(requestObject['curationState'] as String)
+        CurationState curationState = CurationState.valueOf(requestObject['curationState'] as String)
 
         if (modelDelegateService.canAddRevision(modelId as String)) {
             modelDelegateService.updateCurationStateRevision(modelId, revision, curationState)
