@@ -2403,7 +2403,6 @@ Try to connect with Conversion service to export the model ${cmd.model.submissio
      * @return  a boolean   true if the revision was marked CURATED
      */
     private boolean isCurated(Revision revision) {
-        // TODO: revision.curationStatus == CurationState.CURATED
-        return false
+        revision.curationState == CurationState.CURATED
     }
 }
