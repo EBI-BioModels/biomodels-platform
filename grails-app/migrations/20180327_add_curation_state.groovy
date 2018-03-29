@@ -21,8 +21,8 @@ databaseChangeLog = {
     changeSet(author: "tvu (generated)", id: "1522163825443-1") {
         grailsChange {
             change {
-                query = "UPDATE revision SET revision.curation_state = 'UNPUBLISHED' " +
-                    "WHERE revision.state = 'UNDER_CURATION' "
+                query = "UPDATE revision SET revision.curation_state = 'NON_CURATED' " +
+                    "WHERE revision.state = 'UNDER_CURATION'"
                 sql.executeUpdate(query)
             }
         }
