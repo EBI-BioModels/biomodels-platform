@@ -789,16 +789,20 @@
                                     <select id="curation_state_change">
                                         <g:each in="${possibleCurationStates}" var="possibleCurationState">
                                             <g:if test="${possibleCurationState.equals(curationStatus)}">
-                                                <option value="${possibleCurationState}" selected>${possibleCurationState}</option>
+                                                <option value="${possibleCurationState}" selected>
+                                                    <jummp:camelCase message="${possibleCurationState}" />
+                                                </option>
                                             </g:if>
                                             <g:else>
-                                                <option value="${possibleCurationState}">${possibleCurationState}</option>
+                                                <option value="${possibleCurationState}">
+                                                    <jummp:camelCase message="${possibleCurationState}" />
+                                                </option>
                                             </g:else>
                                         </g:each>
                                     </select>
                                 </g:if>
                                 <g:else>
-                                    ${curationStatus}
+                                    <jummp:camelCase message="${curationStatus}" />
                                 </g:else>
                                 </div>
                             </div></g:if>
