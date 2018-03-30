@@ -24,6 +24,7 @@
 
 package net.biomodels.jummp.webapp
 
+import com.google.common.base.CaseFormat
 import net.biomodels.jummp.qcinfo.FlagLevel
 
 import javax.xml.transform.stream.StreamSource
@@ -404,6 +405,16 @@ class JummpTagLib {
         <input id="rateStar" name="rateStar" hidden required="true" />
         ''')
         out << result.toString()
+    }
+
+    /*
+     * Convert Given String to Camel Case i.e.
+     * Capitalize first letter of every word to upper case
+     */
+    def camelCase = { attrs ->
+        String message = attrs.message
+        message = message.replace("_", '-')
+        out << CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, message)
     }
 
     def renderStarLevels = { attrs ->

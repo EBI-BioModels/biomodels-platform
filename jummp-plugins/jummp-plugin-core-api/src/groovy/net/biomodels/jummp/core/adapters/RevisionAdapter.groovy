@@ -74,6 +74,7 @@ public class RevisionAdapter {
         RevisionTransportCommand rev = new RevisionTransportCommand(
                 id: revision.id,
                 state: revision.state,
+                curationState: revision.curationState,
                 revisionNumber: revision.revisionNumber,
                 owner: submitterName,
                 minorRevision: revision.minorRevision,

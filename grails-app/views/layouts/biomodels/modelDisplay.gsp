@@ -61,12 +61,16 @@
         <g:javascript src="syntax/shCore.js"/>
         <g:javascript src="syntax/shBrushMdl.js"/>
         <g:javascript src="syntax/shBrushXml.js"/>
-        <g:javascript src="jquery.handsontable.full.js"></g:javascript>
+        <g:javascript src="toastr.min.js"/>
+        <g:javascript src="jquery.handsontable.full.js"/>
         <style>
             <%-- class for buttons on sticky left-hand-side menu --%>
             .ui-button {
                 border-left: none;
                 margin: 0;
+            }
+            .toast {
+                opacity: 1 !important;
             }
             .rounded-header {
                 background-color: rgb(0, 124, 150);
@@ -89,6 +93,7 @@
         <link rel="stylesheet" href="${resource(dir: 'css', file: 'filegrid.css')}" />
         <link rel="stylesheet" href="${resource(dir: 'css/syntax', file: 'shCore.css')}" />
         <link rel="stylesheet" href="${resource(dir: 'css/syntax', file: 'shThemeDefault.css')}" />
+        <link rel="stylesheet" href="${resource(dir: 'css', file: 'toastr.min.css')}"/>
 
         <Ziphandler:outputFileInfoAsJS repFiles="${revision.files.findAll{!it.hidden}}"
                                        loadedZips="${loadedZips}" zipSupported="${zipSupported}"/>
@@ -567,6 +572,35 @@
                         primary: "ui-icon-circle-arrow-e"
                     }
             }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px', 'float':'right'  });
+
+            $("#curation_state_change").on('change', function () {
+                var curationState = this.value;
+                $.ajax({
+                    type: "PUT",
+                    url: $.jummp.createLink("model", "updateCurationState"),
+                    cache: false,
+                    dataType: 'json',
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    data: JSON.stringify({
+                        curationState: curationState,
+                        modelId: "${revision.model.submissionId}",
+                        revisionNumber: "${revision.revisionNumber}"
+                    }),
+                    beforeSend: function() {
+                        toastr.info('Updating curation status...');
+                    },
+                    error: function(jqXHR) {
+                        toastr.clear();
+                        toastr.error(jqXHR.responseText.message);
+                    },
+                    success: function(response) {
+                        toastr.clear();
+                        toastr.success(response.message);
+                    }
+                });
+            });
         });
         displayToolbar(false, false);
 
@@ -711,6 +745,7 @@
                 </div>
             </g:if>
             <div id="topBar">
+                <div class="message" style="display: block"></div>
                 <div style="float:left;width:75%;">
                     <h2>${revision.name}</h2>
                     <biomd:renderModelOfMonth modelId="${revision.model.id}" />
@@ -818,11 +853,30 @@
                         <div class="small-12 medium-4 large-4 columns">
                             <div class="rounded-header"><h4 style="color: #ffffee">Metadata information</h4></div>
                             <g:pageProperty name="page.genericAnnotations"/>
-                            <g:if test="${curationStatus}">
+                            <g:if test="${curationState}">
                             <div class='row'>
                                 <div class="small-12 medium-6 large-4 columns">Curation status</div>
                                 <div class="small-12 medium-6 large-8 columns">
-                                    <biomd:renderCurationStatus curationStatus="${curationStatus}"/></div>
+                                <g:if test="${canUpdate}">
+                                    <select id="curation_state_change">
+                                        <g:each in="${possibleCurationStates}" var="possibleCurationState">
+                                            <g:if test="${possibleCurationState.equals(curationState)}">
+                                                <option value="${possibleCurationState}" selected>
+                                                    <jummp:camelCase message="${possibleCurationState}" />
+                                                </option>
+                                            </g:if>
+                                            <g:else>
+                                                <option value="${possibleCurationState}">
+                                                    <jummp:camelCase message="${possibleCurationState}" />
+                                                </option>
+                                            </g:else>
+                                        </g:each>
+                                    </select>
+                                </g:if>
+                                <g:else>
+                                    <jummp:camelCase message="${curationState}" />
+                                </g:else>
+                                </div>
                             </div></g:if>
                             <g:if test="${modellingApproaches}">
                             <div class='row'>
