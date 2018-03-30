@@ -66,6 +66,7 @@ class SubmissionService {
     // concrete strategies for the submission state machine
     private final NewModelStateMachine newModel = new NewModelStateMachine()
     private final NewRevisionStateMachine newRevision = new NewRevisionStateMachine()
+    private final InPlaceStateMachine inPlaceMachine = new InPlaceStateMachine()
     /**
      * Disable transactional behaviour for this service.
      */
@@ -569,6 +570,32 @@ class SubmissionService {
         }
     }
 
+    @CompileStatic
+    class InPlaceStateMachine extends StateMachineStrategy {
+        void initialise(Map<String, Object> workingMemory) {
+
+        }
+
+        void removeFromVCS(Map<String, Object> workingMemory, List<RFTC> filesToDelete) {
+            //nothing in VCS, need to do nothing
+        }
+
+        //Always process files in create mode. Possibly needs optimisation.
+        boolean processingRequired(Map<String, Object> workingMemory) {
+            return true;
+        }
+
+        @Profiled(tag = "submissionService.InPlaceStateMachine.createTransportObjects")
+        protected void createTransportObjects(Map<String,Object> workingMemory) {
+
+        }
+        @TypeChecked(TypeCheckingMode.SKIP)
+        @Profiled(tag = "submissionService.InPlaceStateMachine.completeSubmission")
+        HashSet<String> completeSubmission(Map<String, Object> workingMemory) {
+
+        }
+    }
+
     /**
      * Provides a concrete implementation of the @link{StateMachineStrategy} that is responsible
      * for handling the submission of new models to JUMMP.
@@ -930,8 +957,13 @@ class SubmissionService {
      * @param workingMemory a Map containing all objects exchanged throughout the flow.
      */
     private StateMachineStrategy getStrategyFromContext(Map<String, Object> workingMemory) {
-        Boolean isUpdateOnExistingModel = (Boolean) workingMemory.get("isUpdateOnExistingModel");
+        Boolean isUpdateOnExistingModel = (Boolean) workingMemory.get("isUpdateOnExistingModel")
+        Boolean shouldCreateNewRevision = (Boolean) workingMemory.get("shouldCreateNewRevision")
         if (isUpdateOnExistingModel) {
+            shouldCreateNewRevision = Boolean.TRUE
+            if (!shouldCreateNewRevision) {
+                inPlaceMachine
+            }
             return newRevision
         }
         return newModel

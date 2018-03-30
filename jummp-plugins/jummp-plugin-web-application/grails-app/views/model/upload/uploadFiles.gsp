@@ -27,7 +27,8 @@
 
 
 <%@page expressionCodec="none" %>
-<%@ page import="net.biomodels.jummp.core.model.RepositoryFileTransportCommand; grails.converters.JSON" contentType="text/html;charset=UTF-8" %>
+<%@ page import="net.biomodels.jummp.core.model.RepositoryFileTransportCommand; grails.converters.JSON"
+        contentType="text/html;charset=UTF-8" %>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="layout" content="${session['branding.style']}/main" />
@@ -187,18 +188,25 @@
                         message = "Creating the model process";
                     }
 
-                    // validate the upload form
+                    /* validate the upload form */
+                    // validate the descriptions of the additional files
                     var hasEmptyAddFileDesc = $("input[id^=description]").filter(function() {
                         var element = $(this);
                         return $.trim(this.value) === "";
                     });
+	                // validate the descriptions of the model/main files
                     var hasEmptyMainFileDesc = $("input[id^=mainFileDescription]").filter(function() {
                         var element = $(this);
                         return $.trim(this.value) === "";
                     });
+
                     var isFileDescValid = hasEmptyAddFileDesc.length == 0 && hasEmptyMainFileDesc.length == 0;
 	                var hasAtLeastMainFile = existingMainFiles.length > 0
-                    if (isFileDescValid && hasAtLeastMainFile) {
+
+                    // validate the descriptions of the main files in the main files map
+                    var containsEmptyMainDescInMap = existingMainFiles.filter(function(v) {
+                        return v.description === "";}).length > 0;
+                    if (isFileDescValid && hasAtLeastMainFile && !containsEmptyMainDescInMap) {
                         return true;
                     } else {
                         var flashDiv = $('.flashNotificationDiv');
@@ -226,7 +234,6 @@
                     var parent = $(tr).find("td:first").html();
                     var span = $($.parseHTML(parent))[1];
                     var id = span.id;
-                    // xoa span
                     if ($('#'+id).is("span")) {
                         var mainFileName = $('#'+id).text();
                         $('#'+id).text('');
@@ -249,12 +256,13 @@
                 var formerMainFileName = "";
                 $('#mainFile').change(function(event) {
                     var newFileName = $(this)[0].files[0].name;
+	                var mainFileDescription = $('input[name=mainFileDescription]').val();
                     if (existingMainFiles.length === 0) {
                         // new submission or update but all the main files has been removed
                         // so retain the working main file
                         formerMainFileName = newFileName;
                         // add the new file to existingMainFiles
-                        var newFile = {filename: newFileName, description: ""}
+                        var newFile = {filename: newFileName, description: mainFileDescription}
                         existingMainFiles.push(newFile);
                         // display it on the page
                         $(this).attr("value", newFileName);
@@ -281,36 +289,32 @@
                             var message = "The file named " + newFileName + " already exists. " +
                              "Please rename it or select another file.";
                             showNotification(message);
-                        } else if (isMainFileReplaced) { // update process
-                            /* remove the old/current one */
-                            for (index in existingMainFiles)
-                            if (existingMainFiles[index].filename === formerMainFileName) {
-                                existingMainFiles.splice(index, 1);
-                                // update the former main on GUI
-                            }
+                        } else {
 
-                            isMainFileReplaced = false;
-                            /* update the new file */
-                            // display the new file to gui
-                            span = $(span)[0].id;
-                            $('#' + span).text(newFileName);
-                            // add the new file to existingMainFiles
-                            var newFile = {filename: newFileName, description: ""}
-                            existingMainFiles.push(newFile);
-                            $(this).attr('value', newFileName);
-                            $('#mainFileDescription').val('');
-                        } else { // submission process
-                            for (index in existingMainFiles)
+                            if (isMainFileReplaced) { // update process
+                                /* remove the old/current one */
+                                for (index in existingMainFiles)
                                 if (existingMainFiles[index].filename === formerMainFileName) {
                                     existingMainFiles.splice(index, 1);
                                     // update the former main on GUI
-
                                 }
 
-                            var newFile = {filename: newFileName, description: ""}
+                                isMainFileReplaced = false;
+                                /* update the new file */
+                                // display the new file to gui
+                                span = $(span)[0].id;
+                                $('#' + span).text(newFileName);
+                            } else { // submission process
+                                for (index in existingMainFiles)
+                                    if (existingMainFiles[index].filename === formerMainFileName) {
+                                        existingMainFiles.splice(index, 1);
+                                        // update the former main on GUI
+                                    }
+                            }
+                            // add the new file to existingMainFiles
+                            var newFile = {filename: newFileName, description: mainFileDescription}
                             existingMainFiles.push(newFile);
                             $(this).attr('value', newFileName);
-                            $('#mainFileDescription').val('');
                         }
                     }
                     updateMainFilesOnUI();
