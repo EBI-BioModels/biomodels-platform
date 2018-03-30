@@ -2174,9 +2174,10 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         }
 */
 
-        /*if (MAKE_PUBLICATION_ID) {
+        boolean curatedModel = isCurated(revision)
+        if (MAKE_PUBLICATION_ID && curatedModel) {
             model.publicationId = model.publicationId ?: publicationIdGenerator.generate()
-        }*/
+        }
         model.firstPublished = new Date()
         aclUtilService.addPermission(revision, "ROLE_USER", BasePermission.READ)
         aclUtilService.addPermission(revision, "ROLE_ANONYMOUS", BasePermission.READ)
@@ -2235,15 +2236,15 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             throw new IllegalArgumentException("Revision may not be deleted")
         }
         Model model = revision.model
-        // grant read access this model revision to all existing curators
+        // grant write access this model revision to all existing curators
         List<User> curators = userService.getUsersByRole("ROLE_CURATOR")
         curators.each { curator ->
-            grantReadAccess(model, curator)
+            grantWriteAccess(model, curator)
         }
         // grant read access and administrative privilege to future curators
         aclUtilService.addPermission(revision, "ROLE_CURATOR", BasePermission.ADMINISTRATION)
         aclUtilService.addPermission(revision, "ROLE_CURATOR", BasePermission.READ)
-        revision.state = ModelState.UNDER_CURATION
+        revision.state = ModelState.UNPUBLISHED
         revision.save(flush: true)
     }
 
@@ -2387,5 +2388,16 @@ WHERE
         log.info("""\
 Try to connect with Conversion service to export the model ${cmd.model.submissionId} under the other formats""")
         modelConversionService.generateExports(cmd)
+    }
+
+    /**
+     * Checking the curation status of a given revision
+     *
+     * @param   a revision  A given revision for checking its curation status
+     * @return  a boolean   true if the revision was marked CURATED
+     */
+    private boolean isCurated(Revision revision) {
+        // TODO: revision.curationStatus == CurationState.CURATED
+        return false
     }
 }
