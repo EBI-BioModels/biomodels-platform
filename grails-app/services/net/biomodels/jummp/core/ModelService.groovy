@@ -166,6 +166,13 @@ class ModelService {
     @Profiled(tag="modelService.getAllModels")
     public List<Model> getAllModels(int offset, int count, boolean sortOrder, ModelListSorting sortColumn,
                 String filter = null, boolean deletedOnly=false) {
+
+        return getAllModelWithDetails(offset, count, sortOrder, sortColumn, filter, deletedOnly).collect{ it.first() }
+    }
+
+    @Profiled(tag = "modelService.getAllModelWithDetails")
+    List getAllModelWithDetails(int offset, int count,
+                 boolean sortOrder, ModelListSorting sortColumn, String filter = null, boolean deletedOnly=false) {
         Map metaParams
         if (offset < 0 || count <= 0) {
             // safety check
@@ -206,8 +213,7 @@ class ModelService {
             ]
         }
 
-        List<List<Model, String, Date, String, Long, String>> resultSet = Model.executeQuery(query, namedParams, metaParams)
-        return resultSet.collect{ it.first() }
+        return Model.executeQuery(query, namedParams, metaParams)
     }
 
     private String getQueryForUser(ModelListSorting sortColumn, boolean deletedOnly, boolean filterIsValid, String sortingDirection) {
@@ -2397,7 +2403,6 @@ Try to connect with Conversion service to export the model ${cmd.model.submissio
      * @return  a boolean   true if the revision was marked CURATED
      */
     private boolean isCurated(Revision revision) {
-        // TODO: revision.curationStatus == CurationState.CURATED
-        return false
+        revision.curationState == CurationState.CURATED
     }
 }
