@@ -290,11 +290,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                 List<String> originalModels = metadataDelegateService.fetchOriginalModels(rev)
                 Map<String, String> modellingApproaches =
                     metadataDelegateService.fetchModellingApproaches(rev)
-		        Collection<GrantedAuthority> grantedAuthorities = springSecurityService.getPrincipal().getAuthorities()
-                Set<String> roleNames = grantedAuthorities.collect {
-                    it.getAuthority()
-                }
-                boolean hasCuratorRole = "ROLE_CURATOR" in roleNames
+                boolean hasCuratorRole = hasCuratorRole()
                 boolean supportedForConversion = modelConversionService.isSupportedForConversion(rev)
 		        List<RFTC> convertedFilesTC = modelConversionService.getConvertedFiles(rev)
                 def model = [revision               : rev,
@@ -1420,5 +1416,13 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
             }
         }
         return true
+    }
+
+    private boolean hasCuratorRole() {
+        Collection<GrantedAuthority> grantedAuthorities = springSecurityService.getPrincipal().getAuthorities()
+        Set<String> roleNames = grantedAuthorities.collect {
+            it.getAuthority()
+        }
+        "ROLE_CURATOR" in roleNames
     }
 }
