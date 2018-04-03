@@ -1297,9 +1297,10 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
 
         int revision = Integer.parseInt(requestObject['revisionNumber'] as String)
         String modelId = requestObject['modelId']
-        CurationState curationState = CurationState.valueOf(requestObject['curationState'] as String)
-
-        if (modelDelegateService.canAddRevision(modelId as String)) {
+        boolean canUpdate = modelDelegateService.canAddRevision(modelId as String)
+        boolean hasCuratorRole = hasCuratorRole()
+        if (canUpdate && hasCuratorRole) {
+            CurationState curationState = CurationState.valueOf(requestObject['curationState'] as String)
             modelDelegateService.updateCurationStateRevision(modelId, revision, curationState)
             render([message: "Curation status has been saved"] as JSON)
             return

@@ -857,7 +857,7 @@
                             <div class='row'>
                                 <div class="small-12 medium-6 large-4 columns">Curation status</div>
                                 <div class="small-12 medium-6 large-8 columns">
-                                <g:if test="${canUpdate}">
+                                <g:if test="${canUpdate && hasCuratorRole}">
                                     <select id="curation_state_change">
                                         <g:each in="${possibleCurationStates}" var="possibleCurationState">
                                             <g:if test="${possibleCurationState.equals(curationState)}">
