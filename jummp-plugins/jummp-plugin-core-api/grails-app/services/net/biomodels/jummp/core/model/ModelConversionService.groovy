@@ -197,15 +197,10 @@ There is an error while converting the model ${revisionTC.model.submissionId} to
      * @return a list       The list of files converted from the revision's format to the others
      */
     List<RFTC> getConvertedFiles(RTC revisionTC) {
-        log.info("""\
-Getting all converted files of the model ${revisionTC.model.submissionId}, revision ${revisionTC.revisionNumber}""")
         final String MODEL_FOLDER = revisionTC.model?.submissionId
         String modelFolder = "${EXPORT_FOLDER}${File.separator}${MODEL_FOLDER}"
         File revisionFolder = new File(modelFolder, revisionTC.revisionNumber.toString())
-        if (!revisionFolder.exists()) {
-            log.error("""\
-Oops, the model ${MODEL_FOLDER} doesn't exist because the conversion might either be unfinished or not has been launch yet""")
-        } else {
+        if (revisionFolder.exists()) {
             List<File> files = revisionFolder.listFiles()
             List<RFTC> fileTCs = repositoryFileService.asRFTCList(files)
             // The RFTC objects have been already initialised three attributes.
