@@ -312,12 +312,24 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
     @Override
     @Profiled(tag="sbmlService.updateName")
     boolean updateName(RevisionTransportCommand revision, final String name) {
-        //TODO update file contents
         if (revision && name.trim()) {
+            // update the name of the revision
             revision.name = name.trim()
+
+            // update the name of SBML model file of the revision
+            SBMLDocument sbmlDocument = getFromCache(revision)
+            Model sbmlModel = sbmlDocument.getModel()
+            sbmlModel.setName(name)
+            File sbmlFile = fetchMainFileFromRevision(revision)
+            SBMLWriter sbmlWriter = new SBMLWriter()
+            sbmlWriter.writeSBML(sbmlDocument, sbmlFile)
             return true
+        } else {
+            log.warn("""\
+Revision ${revision.id} of the model ${revision.model.submissionId} is null or 
+the user has attempted to update an blank value for the name attribute.""")
+            return false
         }
-        return false
     }
 
     /**
@@ -382,9 +394,17 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
     @Override
     @Profiled(tag="sbmlService.updateDescription")
     boolean updateDescription(RevisionTransportCommand revision, final String DESC) {
-        //TODO update file contents
         if (revision && DESC.trim()) {
+            // update the description of SBML model file of the revision
             revision.description = DESC.trim()
+
+            // update the description of SBML model file of the revision
+            SBMLDocument sbmlDocument = getFromCache(revision)
+            Model sbmlModel = sbmlDocument.getModel()
+            sbmlModel.setNotes(DESC)
+            File sbmlFile = fetchMainFileFromRevision(revision)
+            SBMLWriter sbmlWriter = new SBMLWriter()
+            sbmlWriter.writeSBML(sbmlDocument, sbmlFile)
             return true
         }
         return false
