@@ -94,7 +94,7 @@ grails.project.dependency.resolution = {
         compile "com.fasterxml.jackson.core:jackson-databind:2.5.2"
 
         // remember to update this setting in jummp-plugin-configuration, jummp-plugin-core-api
-        compile "net.biomodels.jummp:AnnotationStore:0.3.2-SNAPSHOT"
+        compile "net.biomodels.jummp:AnnotationStore:0.3.3-SNAPSHOT"
         compile "org.apache.solr:solr-solrj:5.4.1"
         //required by both JSBML and SolrJ
         compile "org.codehaus.woodstox:woodstox-core-lgpl:4.4.1"
