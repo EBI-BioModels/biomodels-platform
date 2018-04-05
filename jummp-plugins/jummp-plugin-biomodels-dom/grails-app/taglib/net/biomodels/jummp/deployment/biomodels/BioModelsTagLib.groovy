@@ -96,13 +96,13 @@ class BioModelsTagLib {
             out << render(collection: base64CurationNotes, template: '/templates/curationNotes',
                     plugin: 'jummp-plugin-biomodels-dom', var: 'curaRec')
 	    } else {
-            out << "<h3>This model is currently not curated</h3>"
+            out << "<h3>This model has not been uploaded curation notes yet</h3>"
         }
         boolean hasCuratorRole = attrs.hasCuratorRole
         boolean havePublicationId = attrs.model?.publicationId != null
         def model =  havePublicationId ? attrs.model.publicationId : attrs.model.submissionId
         if (hasCuratorRole) {
-            def btnLabel = attrs.curationNotes ? "Edit" : "Change curation status"
+            def btnLabel = attrs.curationNotes ? "Edit" : "Add curation notes"
             def actionName = attrs.curationNotes ? "edit" : "add"
             def href = g.link(controller: "curationNotes",
                 action: actionName, class: "button",

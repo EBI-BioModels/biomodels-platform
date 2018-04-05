@@ -111,7 +111,7 @@ class CurationNotesController {
         boolean status = curationNotesService.doAddOrUpdateCurationNotes(command)
         String message
         if (status) {
-            message = "Simulation results have been updated successfully"
+            message = "Curation notes have been updated successfully"
             render message
             log.debug(message)
         } else {
