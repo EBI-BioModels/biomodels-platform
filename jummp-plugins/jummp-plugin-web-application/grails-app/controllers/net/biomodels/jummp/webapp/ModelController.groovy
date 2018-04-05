@@ -1285,7 +1285,7 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
     }
 
     /**
-     * Update status of the curation
+     * Update the curation status of the model
      */
     def updateCurationState() {
         def requestObject = request.JSON
@@ -1302,11 +1302,11 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
         if (canUpdate && hasCuratorRole) {
             CurationState curationState = CurationState.valueOf(requestObject['curationState'] as String)
             modelDelegateService.updateCurationStateRevision(modelId, revision, curationState)
-            render([message: "Curation status has been saved"] as JSON)
+            render([message: "Curation status has been saved successfully"] as JSON)
             return
         }
         response.status = 401
-        render([message: "You don't have permission to change the curation status"] as JSON)
+        render([message: "You do not have right permissions to change the curation status"] as JSON)
     }
 
 
