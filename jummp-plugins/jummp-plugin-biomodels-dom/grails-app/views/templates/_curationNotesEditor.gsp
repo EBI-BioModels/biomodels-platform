@@ -1,81 +1,86 @@
 <div id="txtStatus" style="color: #ED0000; font-weight: 600; font-size: larger"></div>
 <form id="curationNotesForm">
-    <div class="small-12 medium-6 large-6 columns">
-        <div class="grid-container">
-            <div class="grid-x grid-padding-x">
-                <div class="small-12 medium-12 large-12 cell">
-                    <label>Simulation results<br/>
-                        <g:if test="${curationImage}">
-                            <img src="data:image/jpeg;base64,${curationImage}"
-                                 id="curaImageHolder"
-                                 title="Click on the thumbnail to view the result(s)" />
-                        </g:if>
-                        <g:else>
-                            <img src="${grailsApplication.config.grails.serverURL}/images/biomodels/No-Image-Available.jpg"
-                                 id="curaImageHolder"
-                                 title="The curation images are not available" />
-                        </g:else><br/>
-                    </label>
-                    <label for="uploadCurationImage" class="button">Upload an image</label>
-                    <input type="file" id="uploadCurationImage" class="show-for-sr"
-                           style="text-align: right; direction: ltr">
+    <div class="row">
+        <div class="small-12 medium-6 large-6 columns">
+            <div class="grid-container">
+                <div class="grid-x grid-padding-x">
+                    <div class="small-12 medium-12 large-12 cell">
+                        <label>Simulation results<br/>
+                            <g:if test="${curationImage}">
+                                <img src="data:image/jpeg;base64,${curationImage}"
+                                     id="curaImageHolder"
+                                     title="Click on the thumbnail to view the result(s)" />
+                            </g:if>
+                            <g:else>
+                                <img src="${grailsApplication.config.grails.serverURL}/images/biomodels/No-Image-Available.jpg"
+                                     id="curaImageHolder"
+                                     title="The curation images are not available" />
+                            </g:else><br/>
+                        </label>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="small-12 medium-6 large-6 columns">
-        <div class="grid-container">
-            <div class="grid-x grid-padding-x">
-                <div class="medium-12 large-12 cell">
-                    <label>Comments
-                        <textarea id="comment" placeholder="Enter your curation comments here"
-                                  aria-multiline="true" rows="5"
-                                  style="white-space: pre-wrap">${curationNotesTC.comment}</textarea>
-                        <textarea id="tmpComment"
-                                  aria-multiline="true"
-                                  rows="5" style="display: none">${curationNotesTC.comment}</textarea>
-                    </label>
-                </div>
+        <div class="small-12 medium-6 large-6 columns">
+            <div class="grid-container">
+                <div class="grid-x grid-padding-x">
+                    <div class="medium-12 large-12 cell">
+                        <label>Comments
+                            <textarea id="comment" placeholder="Enter your curation comments here"
+                                      aria-multiline="true" rows="5"
+                                      style="white-space: pre-wrap">${curationNotesTC.comment}</textarea>
+                            <textarea id="tmpComment"
+                                      aria-multiline="true"
+                                      rows="5" style="display: none">${curationNotesTC.comment}</textarea>
+                        </label>
+                    </div>
 
-                <div class="medium-12  large-12 cell">
-                    <label>Submitter <small style="color: red">required</small>
-                        <input type="text" id="submitter" required
-                               placeholder="the submitter who had deposited the simulation results"
-                               value="${curationNotesTC.submitter?.username}">
-                    </label>
-                </div>
-                <div class="medium-12 large-12 large-12 cell">
-                    <label>Last modifier <small style="color: red">required</small>
-                        <input type="text" id="lastModifier" required
-                               placeholder="the last modifier who is updating the simulation results"
-                               value="${curationNotesTC.lastModifier?.username}">
-                    </label>
-                </div>
-                <div class="row">
-                    <div class="small-12 medium-6 large-6 columns">
-                        <label>Date added <small style="color: red">required</small>
-                            <input type="text" id="txtDateAdded" required
-                                   placeholder="enter the date when the simulation results were added"
-                                   value="${dateFormat.format(curationNotesTC.dateAdded)}">
+                    <div class="medium-12  large-12 cell">
+                        <label>Submitter <small style="color: red">required</small>
+                            <input type="text" id="submitter" required
+                                   placeholder="the submitter who had deposited the simulation results"
+                                   value="${curationNotesTC.submitter?.username}">
                         </label>
                     </div>
-                    <div class="small-12 medium-6 large-6 columns">
-                        <label>Last modified <small style="color: red">required</small>
-                            <input type="text" id="txtLastModified" required
-                                   placeholder="enter the latest date when the simulation results have been updated"
-                                   value="${dateFormat.format(curationNotesTC.lastModified)}">
+                    <div class="medium-12 large-12 large-12 cell">
+                        <label>Last modifier <small style="color: red">required</small>
+                            <input type="text" id="lastModifier" required
+                                   placeholder="the last modifier who is updating the simulation results"
+                                   value="${curationNotesTC.lastModifier?.username}">
                         </label>
+                    </div>
+                    <div class="row">
+                        <div class="small-12 medium-6 large-6 columns">
+                            <label>Date added <small style="color: red">required</small>
+                                <input type="text" id="txtDateAdded" required
+                                       placeholder="enter the date when the simulation results were added"
+                                       value="${dateFormat.format(curationNotesTC.dateAdded)}">
+                            </label>
+                        </div>
+                        <div class="small-12 medium-6 large-6 columns">
+                            <label>Last modified <small style="color: red">required</small>
+                                <input type="text" id="txtLastModified" required
+                                       placeholder="enter the latest date when the simulation results have been updated"
+                                       value="${dateFormat.format(curationNotesTC.lastModified)}">
+                            </label>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="small-12 medium-12 columns" style="text-align: right">
-        <button type="button" class="button" id="btnSave">Save</button>
-        <button type="button" class="button" id="btnReset">Reset</button>
+    <div class="row">
+        <div class="small-12 medium-6 large-6 columns">
+            <label for="uploadCurationImage" class="button">Upload an image</label>
+            <input type="file" id="uploadCurationImage" class="show-for-sr"
+                   style="text-align: right; direction: ltr">
+        </div>
+        <div class="small-12 medium-6 large-6 columns" style="text-align: right">
+            <button type="button" class="button" id="btnSave">Save</button>
+            <button type="button" class="button" id="btnReset">Reset</button>
+        </div>
     </div>
 </form>
-</div>
 <g:javascript>
     var imgUploadedStream;
     $('#submitter, #lastModifier').on('keydown', function() {
