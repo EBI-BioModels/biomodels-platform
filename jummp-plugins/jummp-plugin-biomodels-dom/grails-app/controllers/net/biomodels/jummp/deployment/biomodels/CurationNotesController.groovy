@@ -40,6 +40,7 @@ import java.text.SimpleDateFormat
 @Secured(['ROLE_CURATOR'])
 class CurationNotesController {
     def curationNotesService
+    def userService
 
     def index() {
 
@@ -50,14 +51,18 @@ class CurationNotesController {
         Model model = Model.findByPublicationIdOrSubmissionId(modelPerennialOrSubmissionId, modelPerennialOrSubmissionId)
         CurationNotesTransportCommand curationNotesTC = curationNotesService.fetchCurationNotesForModel(model.id)
         if (!curationNotesTC) {
+            // this case is the adding a new curation notes
             curationNotesTC = new CurationNotesTransportCommand()
             curationNotesTC.id = -1
             curationNotesTC.comment = null
             curationNotesTC.dateAdded = new Date()
             curationNotesTC.lastModified = new Date()
             curationNotesTC.curationImage = null
-            curationNotesTC.lastModifier = null
-            curationNotesTC.submitter = null
+            curationNotesTC.submitter = userService.getCurrentUser()
+            curationNotesTC.lastModifier = curationNotesTC.submitter
+        } else {
+            curationNotesTC.lastModifier = userService.getCurrentUser()
+            curationNotesTC.lastModified = new Date()
         }
         String curationImage
         curationImage = curationNotesTC.curationImage ? Base64.encoder.encodeToString(curationNotesTC.curationImage) : null
@@ -108,6 +113,11 @@ class CurationNotesController {
 
     def doAddOrUpdate() {
         CurationNotesTransportCommand command = parseCuratioNotes()
+        // get the latest timestamp
+        command.lastModified = new Date()
+        if (command.id < 0) {
+            command.dateAdded = command.lastModified
+        }
         boolean status = curationNotesService.doAddOrUpdateCurationNotes(command)
         String message
         if (status) {
