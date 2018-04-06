@@ -37,9 +37,15 @@
 
                     <div class="medium-12  large-12 cell">
                         <label>Initially curated by <small style="color: red">required</small>
+                            <g:if test="${curationNotesTC.submitter}">
                             <input type="text" id="submitter" required
                                    placeholder="the submitter who had deposited the simulation results"
-                                   value="${curationNotesTC.submitter?.username}">
+                                   value="${curationNotesTC.submitter?.username}" readonly>
+                            </g:if>
+                            <g:else>
+                                <input type="text" id="submitter" required
+                                   placeholder="the submitter who had deposited the simulation results">
+                            </g:else>
                         </label>
                     </div>
                     <div class="medium-12 large-12 large-12 cell">
