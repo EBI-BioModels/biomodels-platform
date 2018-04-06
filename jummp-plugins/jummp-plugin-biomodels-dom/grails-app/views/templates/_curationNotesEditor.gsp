@@ -36,14 +36,14 @@
                     </div>
 
                     <div class="medium-12  large-12 cell">
-                        <label>Submitter <small style="color: red">required</small>
+                        <label>Initially curated by <small style="color: red">required</small>
                             <input type="text" id="submitter" required
                                    placeholder="the submitter who had deposited the simulation results"
                                    value="${curationNotesTC.submitter?.username}">
                         </label>
                     </div>
                     <div class="medium-12 large-12 large-12 cell">
-                        <label>Last modifier <small style="color: red">required</small>
+                        <label>Last modified by <small style="color: red">required</small>
                             <input type="text" id="lastModifier" required
                                    placeholder="the last modifier who is updating the simulation results"
                                    value="${curationNotesTC.lastModifier?.username}">
