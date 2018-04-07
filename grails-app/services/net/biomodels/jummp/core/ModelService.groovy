@@ -2081,7 +2081,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         if (SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
             return true
         }
-        if (SpringSecurityUtils.ifAnyGranted("ROLE_CURATOR")) {
+        if (SpringSecurityUtils.ifAnyGranted("ROLE_CURATOR,ROLE_REVIEWER")) {
             return canAddRevision(revision.model)
         }
         return false
