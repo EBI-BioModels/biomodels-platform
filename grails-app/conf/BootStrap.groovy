@@ -133,17 +133,10 @@ class BootStrap {
                 pattern: "\\A\\z" /* i.e. start of input then end of input -- ignored */))
 
         if (Environment.getCurrent() != Environment.TEST) {
-             if (!Role.findByAuthority("ROLE_USER")) {
-                new Role(authority: "ROLE_USER").save(flush: true)
-            }
-            if (!Role.findByAuthority("ROLE_CURATOR")) {
-                new Role(authority: "ROLE_CURATOR").save(flush: true)
-            }
-            if (!Role.findByAuthority("ROLE_ADMIN")) {
-                new Role(authority: "ROLE_ADMIN").save(flush: true)
-            }
-            if (!Role.findByAuthority("ROLE_QC_PROVIDER")) {
-                new Role(authority: "ROLE_QC_PROVIDER").save(flush: true)
+            ["ROLE_USER", "ROLE_CURATOR", "ROLE_ADMIN", "ROLE_QC_PROVIDER", "ROLE_REVIEWER"].each {
+                if (!Role.findByAuthority(it)) {
+                    new Role(authority: it).save(flush: true)
+                }
             }
             if (!User.findByUsername("administrator")) {
                 def person = new Person(userRealName: "administrator")
