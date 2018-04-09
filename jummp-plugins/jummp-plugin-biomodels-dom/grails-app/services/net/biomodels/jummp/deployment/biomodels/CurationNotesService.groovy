@@ -99,34 +99,6 @@ There is an error when trying to persist curate image into database: ${cn.errors
         success
     }
 
-    boolean updateCurationImage(CurationNotesTransportCommand command) {
-        CurationNotesTransportCommand cntc = fetchCurationNotesForModel(command.model.id)
-        CurationNotes cn
-        Model model = Model.get(command.model.id)
-        if (cntc) {
-            cn = CurationNotes.findBySubmitterAndLastModifierAndModel(cntc.submitter, cntc.lastModifier, model)
-        } else {
-            cn = new CurationNotes()
-        }
-        cn.curationImage = command.curationImage
-        cn.model = model
-        cn.submitter = command.submitter
-        cn.lastModifier = command.lastModifier
-        cn.dateAdded = command.dateAdded
-        cn.lastModified = command.lastModified
-        cn.comment = command.comment
-        boolean success = cn.save(flush: true)
-        if (success) {
-            log.debug("""\
-The curation image associated with the simulation results of model $model.submissionId
-has been saved successfully into the database.""")
-        } else {
-            log.error("""\
-There is an error when trying to persist curate image into database: ${cn.errors.allErrors.inspect()}""")
-        }
-        success
-    }
-
     boolean doAddOrUpdateCurationNotes(CurationNotesTransportCommand cntc) {
         Model model = Model.get(cntc.model.id)
         Long id = cntc.id
