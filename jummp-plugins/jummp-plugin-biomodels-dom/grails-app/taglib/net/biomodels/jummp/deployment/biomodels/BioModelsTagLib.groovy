@@ -101,12 +101,13 @@ class BioModelsTagLib {
         boolean hasCuratorRole = attrs.hasCuratorRole
         boolean havePublicationId = attrs.model?.publicationId != null
         def model =  havePublicationId ? attrs.model.publicationId : attrs.model.submissionId
+        def modelName = attrs.modelName
         if (hasCuratorRole) {
             def btnLabel = attrs.curationNotes ? "Edit" : "Add curation notes"
             def actionName = attrs.curationNotes ? "edit" : "add"
             def href = g.link(controller: "curationNotes",
                 action: actionName, class: "button",
-                params: ["model": model]) {
+                params: ["model": model, "modelName": modelName]) {
                 btnLabel
             }
             String view = """\

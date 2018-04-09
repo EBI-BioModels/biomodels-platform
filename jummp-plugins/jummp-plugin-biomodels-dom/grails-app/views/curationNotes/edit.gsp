@@ -21,9 +21,9 @@
 
 <body>
     <div class="row">
-        <h2>Update curation notes of the model
+        <h3>Update curation notes of the model
             <a href="${createLink(controller: "model", action: "show", id: id)}"
-               title="Back to the model display page">${id}</a></h2>
+               title="Back to the model display page">[${modelName}]</a></h3>
         <g:render template="/templates/curationNotesEditor"
                   plugin="jummp-plugin-biomodels-dom"
                   model="['curationNotesTC': curationNotesTC,

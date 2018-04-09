@@ -69,7 +69,7 @@ class CurationNotesController {
         curationImage = curationNotesTC.curationImage ? Base64.encoder.encodeToString(curationNotesTC.curationImage) : null
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
         ['curationNotesTC': curationNotesTC, 'curationImage': curationImage,
-         'dateFormat': dateFormat, 'id': modelPerennialOrSubmissionId]
+         'dateFormat': dateFormat, 'id': modelPerennialOrSubmissionId, 'modelName': params.modelName]
     }
 
     private parseCuratioNotes() {
