@@ -120,17 +120,24 @@ class CurationNotesController {
             // this case means to add a new curation notes
             command.dateAdded = command.lastModified
         }
-        boolean status = curationNotesService.doAddOrUpdateCurationNotes(command)
         String message
-        if (status) {
-            message = "Curation notes have been updated successfully"
-            render message
-            log.debug(message)
+        if (command.validate()) {
+            boolean status = curationNotesService.doAddOrUpdateCurationNotes(command)
+            if (status) {
+                message = "Curation notes have been updated successfully"
+            } else {
+                message = "There is an error while trying to persist the curation notes into the database"
+            }
         } else {
-            message = "There is an error while trying to persist the curation notes into the database"
-            render message
-            log.error(message)
+            String defaultMessage = command.errors.getFieldError("comment")?.defaultMessage
+            if (defaultMessage?.contains("cannot be blank")) {
+                message = "The comment cannot be blank"
+            } else {
+                message = command.errors.allErrors.inspect()
+            }
         }
+        log.debug(message)
+        render message
     }
 
     def reset() {
