@@ -26,6 +26,7 @@ package net.biomodels.jummp.deployment.biomodels
 
 import grails.transaction.Transactional
 import net.biomodels.jummp.model.Model
+import net.biomodels.jummp.plugins.security.User
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 
@@ -101,10 +102,9 @@ There is an error when trying to persist curate image into database: ${cn.errors
 
     boolean doAddOrUpdateCurationNotes(CurationNotesTransportCommand cntc) {
         Model model = Model.get(cntc.model.id)
-        CurationNotes cn = CurationNotes.get(id)
-        if (!cn) {
-            cn = new CurationNotes()
-        }
+        User submitter = cntc.submitter
+        Date dateAdded = cntc.dateAdded
+        CurationNotes cn = CurationNotes.findOrCreateByModelAndSubmitterAndDateAdded(model, submitter, dateAdded)
         cn.model = model
         cn.comment = cntc.comment
         cn.submitter = cntc.submitter
