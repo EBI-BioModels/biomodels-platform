@@ -170,8 +170,15 @@ function buildCurationNotesTC() {
         'lastModified': lastModified,
         'updated': ${curationNotesTC.updated}
     };
+    if (imgUploadedStream) {
+        curationNotes['curationImage'] = imgUploadedStream;
+    } else {
+        var base64ImgStr = $('img#curaImageHolder').attr('src');
+        if (base64ImgStr.indexOf('base64,')) {
+            base64ImgStr = base64ImgStr.substring(base64ImgStr.indexOf('base64,') + 'base64,'.length);
+            curationNotes['curationImage'] = base64ImgStr;
+        }
     }
-    curationNotes['curationImage'] = imgUploadedStream;
     curationNotes = JSON.stringify(curationNotes);
     return curationNotes;
 }
@@ -185,6 +192,7 @@ function previewImage(input) {
             var imgSrc = event.target.result;
             imgUploadedStream = event.target.result.replace("data:"+ image.type +";base64,", '');
             $('#curaImageHolder').attr('src', imgSrc);
+            $('#curaImageHolder').attr('title', 'This image has been uploaded or replaced');
         }
         reader.readAsDataURL(image);
     }
@@ -217,6 +225,7 @@ $('#btnSave').on("click", function(event) {
                 $('#txtStatus').text(data);
             },
             error: function(jqXHR, textStatus, errorThrown) {
+                // TODO: the error message doesn't show properly
                 $('#txtStatus').text("Error: ", jqXHR.responseText + textStatus + errorThrown + JSON.stringify(jqXHR));
             }
         });

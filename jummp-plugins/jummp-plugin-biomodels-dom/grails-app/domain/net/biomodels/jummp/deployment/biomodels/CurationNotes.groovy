@@ -29,7 +29,7 @@ import net.biomodels.jummp.plugins.security.User
 
 /**
  * @short Domain class for storing model of the month information
- * 
+ *
  *
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  */
