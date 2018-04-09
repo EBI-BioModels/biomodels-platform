@@ -51,9 +51,9 @@ class CurationNotesController {
         Model model = Model.findByPublicationIdOrSubmissionId(modelPerennialOrSubmissionId, modelPerennialOrSubmissionId)
         CurationNotesTransportCommand curationNotesTC = curationNotesService.fetchCurationNotesForModel(model.id)
         if (!curationNotesTC) {
-            // this case is the adding a new curation notes
+            // this case is to add a new curation notes
             curationNotesTC = new CurationNotesTransportCommand()
-            curationNotesTC.id = -1
+            curationNotesTC.updated = false
             curationNotesTC.comment = null
             curationNotesTC.dateAdded = new Date()
             curationNotesTC.lastModified = new Date()
@@ -61,6 +61,7 @@ class CurationNotesController {
             curationNotesTC.submitter = userService.getCurrentUser()
             curationNotesTC.lastModifier = curationNotesTC.submitter
         } else {
+            curationNotesTC.updated = true
             curationNotesTC.lastModifier = userService.getCurrentUser()
             curationNotesTC.lastModified = new Date()
         }
@@ -73,7 +74,6 @@ class CurationNotesController {
 
     private parseCuratioNotes() {
         def curationNotes = new JsonSlurper().parseText(params.curationNotes)
-        Long id = curationNotes["id"]
         String modelId = params.model
         String comment = curationNotes["comment"]
         String submitterUsername = curationNotes["submitter"]
@@ -87,13 +87,14 @@ class CurationNotesController {
         Date lastModified = dateFormat.parse(newLastModified)
         Model model = Model.findByPublicationIdOrSubmissionId(modelId, modelId)
         ModelTransportCommand modeltc = new ModelAdapter(model: model).toCommandObject()
-        def bindingMap = [id: id,
-                          model: modeltc,
+        boolean updated = curationNotes["updated"]
+        def bindingMap = [model: modeltc,
                           comment: comment,
                           submitter: submitter,
                           lastModifier: lastModifier,
                           dateAdded: dateAdded,
-                          lastModified: lastModified]
+                          lastModified: lastModified,
+                          updated: updated]
         CurationNotesTransportCommand command = new CurationNotesTransportCommand(bindingMap)
         if (curationNotes["curationImage"]) {
             command.curationImage = Base64.decoder.decode(curationNotes["curationImage"])
@@ -115,7 +116,8 @@ class CurationNotesController {
         CurationNotesTransportCommand command = parseCuratioNotes()
         // get the latest timestamp
         command.lastModified = new Date()
-        if (command.id < 0) {
+        if (!command.updated) {
+            // this case means to add a new curation notes
             command.dateAdded = command.lastModified
         }
         boolean status = curationNotesService.doAddOrUpdateCurationNotes(command)

@@ -167,11 +167,9 @@ function buildCurationNotesTC() {
         'submitter': submitter,
         'lastModifier': lastModifier,
         'dateAdded': dateAdded,
-        'lastModified': lastModified
+        'lastModified': lastModified,
+        'updated': ${curationNotesTC.updated}
     };
-    // this case means to update
-    if (${curationNotesTC.id != -1}) {
-        curationNotes['id'] = ${curationNotesTC.id};
     }
     curationNotes['curationImage'] = imgUploadedStream;
     curationNotes = JSON.stringify(curationNotes);

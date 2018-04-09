@@ -101,7 +101,6 @@ There is an error when trying to persist curate image into database: ${cn.errors
 
     boolean doAddOrUpdateCurationNotes(CurationNotesTransportCommand cntc) {
         Model model = Model.get(cntc.model.id)
-        Long id = cntc.id
         CurationNotes cn = CurationNotes.get(id)
         if (!cn) {
             cn = new CurationNotes()
