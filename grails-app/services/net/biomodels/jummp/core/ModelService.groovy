@@ -2054,7 +2054,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         if (revision.model.deleted) {
             return false
         }
-        if (!SpringSecurityUtils.ifAnyGranted("ROLE_CURATOR")) {
+        if (!SpringSecurityUtils.ifAnyGranted("ROLE_CURATOR,ROLE_REVIEWER")) {
             return true
         }
         return false
@@ -2081,7 +2081,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         if (SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
             return true
         }
-        if (SpringSecurityUtils.ifAnyGranted("ROLE_CURATOR,ROLE_REVIEWER")) {
+        if (SpringSecurityUtils.ifAnyGranted("ROLE_CURATOR")) {
             return canAddRevision(revision.model)
         }
         return false
