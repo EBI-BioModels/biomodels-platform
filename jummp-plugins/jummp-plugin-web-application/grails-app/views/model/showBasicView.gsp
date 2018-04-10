@@ -44,7 +44,7 @@
 
 <body>
     <h2>${id}</h2>
-    <p>A model with this identifier has been submitted to BioModels, but has not yet been released.</p>
+    <p>${description}</p>
 </body>
 </html>
 </g:applyLayout>

@@ -255,7 +255,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                 model.publication = null
                 rev.format = new ModelFormatTransportCommand()
                 rev.files = new ArrayList<>()
-                rev.description = "A model with this identifier exists in the system, but you do not have the necessary permissions to access it"
+                rev.description = g.message(code: "net.biomodels.jummp.core.model.show.MessageForPrivateModel")
                 isPrivateModel = true
             }
         }
@@ -265,7 +265,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                 return
             }
             if (isPrivateModel) {
-                render(view: "showBasicView", model: [id: rev.model.submissionId])
+                render(view: "showBasicView", model: [id: rev.model.submissionId, description: rev.description])
                 return
             } else {
                 final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
