@@ -28,7 +28,7 @@ import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.plugins.security.User
 
 /**
- * @short Domain class for storing model of the month information
+ * @short Domain class for storing the curation notes of a given model revision
  *
  * @author
  *  Raza Ali <raza.ali@ebi.ac.uk>

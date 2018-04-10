@@ -55,7 +55,8 @@ class CurationNotesController {
             curationNotesTC = new CurationNotesTransportCommand()
             curationNotesTC.updated = false
             curationNotesTC.comment = null
-            curationNotesTC.internalComment = null            curationNotesTC.dateAdded = new Date()
+            curationNotesTC.internalComment = null
+            curationNotesTC.dateAdded = new Date()
             curationNotesTC.lastModified = new Date()
             curationNotesTC.curationImage = null
             curationNotesTC.submitter = userService.getCurrentUser()
