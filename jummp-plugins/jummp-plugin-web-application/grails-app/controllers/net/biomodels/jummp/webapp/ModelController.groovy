@@ -238,14 +238,14 @@ class ModelController {
             rev = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
         } catch (AccessDeniedException e) {
             if (e instanceof AccessDeniedException) {
-                Model model = Model.findBySubmissionId(params.id)
+                Model model = Model.findByPublicationIdOrSubmissionId(params.id, params.id)
                 log.warn("""\
 An anonymous or restricted access user is trying to retrieve this model: ${model.submissionId}""")
-                int revisionNumber = model.revisions.size() - 1 // get the latest revision
+                int revisionNumber = -1
                 if (params.revisionId) {
-                   revisionNumber = Integer.parseInt(params.revisionId)
+                    revisionNumber = Integer.parseInt(params.revisionId)
                 }
-                Revision revision = revisionNumber >= 0 ? model.revisions.getAt(revisionNumber) : model.revisions.last()
+                Revision revision = revisionNumber >= 0 ? model.revisions.getAt(revisionNumber-1) : model.revisions.last()
                 if (!revision) {
                     forward(controller: 'errors', action: 'error404')
                     return
