@@ -298,6 +298,7 @@ grails.plugin.springsecurity.userLookup.userDomainClassName = 'net.biomodels.jum
 grails.plugin.springsecurity.userLookup.authorityJoinClassName = 'net.biomodels.jummp.plugins.security.UserRole'
 grails.plugin.springsecurity.authority.className = 'net.biomodels.jummp.plugins.security.Role'
 grails.plugin.springsecurity.securityConfigType = "Annotation" // "Annotation", "InterceptUrlMap", "Requestmap"
+grails.plugin.springsecurity.successHandler.alwaysUseDefaultTargetUrl = false
 
 jummp.controllerAnnotations = [
     // /model/create and /model/create?execution=e.*s1 show the display the submission guidelines, which should be visible without logging in
