@@ -55,7 +55,7 @@ class CurationNotesController {
             curationNotesTC = new CurationNotesTransportCommand()
             curationNotesTC.updated = false
             curationNotesTC.comment = null
-            curationNotesTC.dateAdded = new Date()
+            curationNotesTC.internalComment = null            curationNotesTC.dateAdded = new Date()
             curationNotesTC.lastModified = new Date()
             curationNotesTC.curationImage = null
             curationNotesTC.submitter = userService.getCurrentUser()
@@ -76,6 +76,7 @@ class CurationNotesController {
         def curationNotes = new JsonSlurper().parseText(params.curationNotes)
         String modelId = params.model
         String comment = curationNotes["comment"]
+	    String internalComment = curationNotes["internalComment"]
         String submitterUsername = curationNotes["submitter"]
         User submitter = User.findByUsername(submitterUsername)
         String lastModifierUsername = curationNotes["lastModifier"]
@@ -90,6 +91,7 @@ class CurationNotesController {
         boolean updated = curationNotes["updated"]
         def bindingMap = [model: modeltc,
                           comment: comment,
+                          internalComment: internalComment,
                           submitter: submitter,
                           lastModifier: lastModifier,
                           dateAdded: dateAdded,

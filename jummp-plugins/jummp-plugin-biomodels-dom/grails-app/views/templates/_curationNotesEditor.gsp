@@ -33,6 +33,14 @@
                                       aria-multiline="true"
                                       rows="5" style="display: none">${curationNotesTC.comment}</textarea>
                         </label>
+                        <label>Internal comments used for curators
+                            <textarea id="internalComment" placeholder="Enter your additional curation comments here"
+                                      aria-multiline="true" rows="5"
+                                      style="white-space: pre-wrap">${curationNotesTC.internalComment}</textarea>
+                            <textarea id="tmpInternalComment"
+                                      aria-multiline="true"
+                                      rows="5" style="display: none">${curationNotesTC.internalComment}</textarea>
+                        </label>
                     </div>
 
                     <div class="medium-12  large-12 cell">
@@ -158,12 +166,14 @@ function updateOnSelect() {
 
 function buildCurationNotesTC() {
     var comment = $('#comment').val();
+    var internalComment = $('#internalComment').val();
     var submitter = $('#submitter').val();
     var lastModifier = $('#lastModifier').val();
     var dateAdded = $('#txtDateAdded').val();
     var lastModified = $('#txtLastModified').val();
     var curationNotes = {
         'comment': comment,
+        'internalComment': internalComment,
         'submitter': submitter,
         'lastModifier': lastModifier,
         'dateAdded': dateAdded,
@@ -237,6 +247,8 @@ $('#btnSave').on("click", function(event) {
 $('#btnReset').on('click', function(event) {
     var orgComment = $('#tmpComment').val();
     $('#comment').val(orgComment);
+    orgComment = $('#tmpInternalComment').val();
+    $('#internalComment').val(orgComment);
     $('#submitter').val("${curationNotesTC.submitter?.username}");
     $('#lastModifier').val("${curationNotesTC.lastModifier?.username}");
     $('#txtDateAdded').val("${dateFormat.format(curationNotesTC.dateAdded)}");
