@@ -42,6 +42,7 @@ class CurationNotesCategory {
             model: new ModelAdapter(model: model).toCommandObject(),
             submitter: this.submitter, lastModifier: this.lastModifier,
             dateAdded: this.dateAdded, lastModified: this.lastModified,
-            comment: this.comment, curationImage: this.curationImage)
+            comment: this.comment, internalComment: this.internalComment,
+            curationImage: this.curationImage)
     }
 }

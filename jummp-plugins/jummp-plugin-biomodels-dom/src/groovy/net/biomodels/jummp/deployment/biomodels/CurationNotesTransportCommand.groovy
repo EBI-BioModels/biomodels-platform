@@ -37,6 +37,7 @@ class CurationNotesTransportCommand implements Serializable {
     Date dateAdded
     Date lastModified
     String comment
+    String internalComment
     byte[] curationImage
     boolean updated
 

@@ -107,6 +107,7 @@ There is an error when trying to persist curate image into database: ${cn.errors
         CurationNotes cn = CurationNotes.findOrCreateByModelAndSubmitterAndDateAdded(model, submitter, dateAdded)
         cn.model = model
         cn.comment = cntc.comment
+	    cn.internalComment = cntc.internalComment
         cn.submitter = cntc.submitter
         cn.lastModifier = cntc.lastModifier
         cn.dateAdded = cntc.dateAdded
