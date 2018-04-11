@@ -154,7 +154,7 @@ The model ${revisionTC?.model?.submissionId} with the format ${revisionTC.format
                                  RTC revisionTC, File revisionFolder) {
         String fromFile = new File(mainFile.path).toURI()
         String params = "to=${toFormat.toLowerCase()}&file=${fromFile}"
-        String command = "${CONVERSION_SERVICE_URL}${revisionTC.revisionNumber}?${params}"
+        String command = "${CONVERSION_SERVICE_URL}converter/convert/${revisionTC.revisionNumber}?${params}"
         URL url = new URL(command)
         try {
             url = new URL(command)
@@ -205,7 +205,11 @@ There is an error while converting the model ${revisionTC.model.submissionId} to
             List<RFTC> fileTCs = repositoryFileService.asRFTCList(files)
             // The RFTC objects have been already initialised three attributes.
             // We just need to update the remaining attributes
+            Map<String, String> mapFormats = getSupportedFormats()
             fileTCs.each {
+                String fileExtension = extractFileExtension(it.path)
+                String fileFormatIdentifier = mapFormats.get(fileExtension)
+                it.mimeType = fileFormatIdentifier
                 it.mainFile = false
                 it.hidden = false
                 it.userSubmitted = false
@@ -214,5 +218,37 @@ There is an error while converting the model ${revisionTC.model.submissionId} to
             return fileTCs
         }
         return null
+    }
+
+    private Map<String, String> getSupportedFormats() {
+        String command = "${CONVERSION_SERVICE_URL}info/mapSupportedFormats"
+        URL url = new URL(command)
+        try {
+            url = new URL(command)
+        } catch (MalformedURLException e) {
+            // TODO: throw a specific exception
+            throw new JummpException("URL is malformed", e)
+        } finally {
+            log.info(url)
+        }
+
+        Object slurper = new JsonSlurper()
+        try {
+            slurper = new JsonSlurper().parse(url)
+        } catch (JsonException e) {
+            throw new JummpException("Could not parse model conversion information", e)
+        } catch (Exception e) {
+            throw new JummpException("Error retrieving model conversion information", e)
+        } finally {
+            Map result = new HashMap()
+            slurper.each {
+                result.put(it.key.substring(1), it.value)
+            }
+            return result
+        }
+    }
+
+    private String extractFileExtension(String fileName) {
+        fileName.substring(fileName.lastIndexOf(".")+1)
     }
 }
