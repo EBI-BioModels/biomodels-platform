@@ -10,15 +10,15 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="layout" content="${grailsApplication.config.jummp.branding.style}/main"/>
-    <title>Add simulation results</title>
+    <title><g:if test="${curationNotesTC.updated}">Update</g:if><g:else>Add</g:else>curation notes</title>
 </head>
 
 <body>
     <div class="row">
-        <h3>Add curation notes of the model
-            <a href="${createLink(controller: "model", action: "show", id: id)}"
-               title="Back to the model display page">[${modelName}]</a></h3>
-        <g:render template="/templates/curationNotesEditor"
+        <g:render template="/templates/curationNotesEditorHeadingLine"
+                  plugin="jummp-plugin-biomodels-dom"
+                  model="['curationNotesTC': curationNotesTC, 'model': id]" />
+        <g:render template="/templates/curationNotesEditorForm"
             plugin="jummp-plugin-biomodels-dom"
             model="['curationNotesTC': curationNotesTC, 'curationImage': curationImage,
                     'dateFormat': dateFormat, 'id': id]" />

@@ -104,18 +104,14 @@ class BioModelsTagLib {
         def modelName = attrs.modelName
         if (hasCuratorRole) {
             def btnLabel = attrs.curationNotes ? "Edit" : "Add curation notes"
-            def actionName = attrs.curationNotes ? "edit" : "add"
+            def actionName = "addOrUpdate"
             def href = g.link(controller: "curationNotes",
                 action: actionName, class: "button",
                 params: ["model": model, "modelName": modelName]) {
                 btnLabel
             }
-            String view = """\
-                <div class="small-12 medium-12 large-12 columns" id="btnEditCurationNotes">
-                        ${href}
-                    </div>
-                """
-            out << view
+            out << render(template: '/templates/curationNotesAddOrUpdateButton',
+                plugin: 'jummp-plugin-biomodels-dom', model: ['href': href])
         }
         out << "</div>" // for id = Curation
     }

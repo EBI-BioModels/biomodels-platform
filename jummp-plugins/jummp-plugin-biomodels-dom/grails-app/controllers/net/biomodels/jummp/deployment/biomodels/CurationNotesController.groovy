@@ -105,15 +105,10 @@ class CurationNotesController {
         command
     }
 
-    def edit() {
+    def addOrUpdate() {
         def data = sanitiseParams()
-        render(view: "edit", model: data)
+        render(view: "curationNotesEditor", model: data)
     }
-
-	def add() {
-        def data = sanitiseParams()
-		render(view: "add", model: data)
-	}
 
     def doAddOrUpdate() {
         CurationNotesTransportCommand command = parseCuratioNotes()
