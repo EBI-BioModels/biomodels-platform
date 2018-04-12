@@ -154,28 +154,12 @@ The model ${revisionTC?.model?.submissionId} with the format ${revisionTC.format
                                  RTC revisionTC, File revisionFolder) {
         String fromFile = new File(mainFile.path).toURI()
         String params = "to=${toFormat.toLowerCase()}&file=${fromFile}"
-        String command = "${CONVERSION_SERVICE_URL}converter/convert/${revisionTC.revisionNumber}?${params}"
-        URL url = new URL(command)
-        try {
-            url = new URL(command)
-        } catch (MalformedURLException e) {
-            // TODO: throw a specific exception
-            throw new JummpException("URL is malformed", e)
-        } finally {
-            log.info(url)
-        }
-
-        Object slurper = new JsonSlurper()
-        try {
-            slurper = new JsonSlurper().parse(url)
-        } catch (JsonException e) {
-            throw new JummpException("Could not parse model conversion information", e)
-        } catch (Exception e) {
-            throw new JummpException("Error retrieving model conversion information", e)
-        } finally {
-            log.info("Result: ${slurper["result"]}")
+        String request = "${CONVERSION_SERVICE_URL}converter/convert/${revisionTC.revisionNumber}?${params}"
+        Object data = fetchDataFromConversionService(request)
+        if (data) {
+            log.info("Result: ${data["result"]}")
             // Copy the result (i.e. the file) to the model revision folder
-            String filePath = slurper["result"]
+            String filePath = data["result"]
             if (!filePath) {
                 log.error("""\
 There is an error while converting the model ${revisionTC.model.submissionId} to the format ${toFormat}""")
@@ -221,10 +205,19 @@ There is an error while converting the model ${revisionTC.model.submissionId} to
     }
 
     private Map<String, String> getSupportedFormats() {
-        String command = "${CONVERSION_SERVICE_URL}info/mapSupportedFormats"
-        URL url = new URL(command)
+        String request = "${CONVERSION_SERVICE_URL}info/mapSupportedFormats"
+        Object data = fetchDataFromConversionService(request)
+        Map result = new HashMap()
+        data.each {
+            result.put(it.key.substring(1), it.value)
+        }
+        return result
+    }
+
+    private fetchDataFromConversionService(String request) {
+        URL url
         try {
-            url = new URL(command)
+            url = new URL(request)
         } catch (MalformedURLException e) {
             // TODO: throw a specific exception
             throw new JummpException("URL is malformed", e)
@@ -240,11 +233,7 @@ There is an error while converting the model ${revisionTC.model.submissionId} to
         } catch (Exception e) {
             throw new JummpException("Error retrieving model conversion information", e)
         } finally {
-            Map result = new HashMap()
-            slurper.each {
-                result.put(it.key.substring(1), it.value)
-            }
-            return result
+            return slurper
         }
     }
 
