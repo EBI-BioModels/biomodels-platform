@@ -122,7 +122,7 @@ class CurationNotesController {
             command.dateAdded = command.lastModified
         }
         String message
-        if (command.validate()) {
+        if (command) {
             boolean status = curationNotesService.doAddOrUpdateCurationNotes(command)
             if (status) {
                 message = "Curation notes have been updated successfully"
