@@ -184,7 +184,7 @@ function buildCurationNotesTC() {
         curationNotes['curationImage'] = imgUploadedStream;
     } else {
         var base64ImgStr = $('img#curaImageHolder').attr('src');
-        if (base64ImgStr.indexOf('base64,')) {
+        if (base64ImgStr.indexOf('base64,')>=0) {
             base64ImgStr = base64ImgStr.substring(base64ImgStr.indexOf('base64,') + 'base64,'.length);
             curationNotes['curationImage'] = base64ImgStr;
         }
