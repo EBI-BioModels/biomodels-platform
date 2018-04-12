@@ -223,17 +223,16 @@ There is an error while converting the model ${revisionTC.model.submissionId} to
             throw new JummpException("URL is malformed", e)
         } finally {
             log.info(url)
-        }
-
-        Object slurper = new JsonSlurper()
-        try {
-            slurper = new JsonSlurper().parse(url)
-        } catch (JsonException e) {
-            throw new JummpException("Could not parse model conversion information", e)
-        } catch (Exception e) {
-            throw new JummpException("Error retrieving model conversion information", e)
-        } finally {
-            return slurper
+            Object slurper = new JsonSlurper()
+            try {
+                slurper = new JsonSlurper().parse(url)
+            } catch (JsonException e) {
+                throw new JummpException("Could not parse model conversion information", e)
+            } catch (Exception e) {
+                throw new JummpException("Error retrieving model conversion information", e)
+            } finally {
+                return slurper
+            }
         }
     }
 
