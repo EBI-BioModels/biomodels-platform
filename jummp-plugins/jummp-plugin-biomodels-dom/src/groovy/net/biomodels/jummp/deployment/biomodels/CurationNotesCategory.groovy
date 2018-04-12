@@ -38,7 +38,7 @@ class CurationNotesCategory {
      * @return the CurationNotesTransportCommand representation of a CurationNotes object.
      */
     CurationNotesTransportCommand toCommandObject() {
-        new CurationNotesTransportCommand(
+        new CurationNotesTransportCommand(id: this.id,
             model: new ModelAdapter(model: model).toCommandObject(),
             submitter: this.submitter, lastModifier: this.lastModifier,
             dateAdded: this.dateAdded, lastModified: this.lastModified,
