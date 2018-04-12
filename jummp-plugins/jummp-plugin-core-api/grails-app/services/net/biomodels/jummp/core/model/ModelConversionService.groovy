@@ -193,7 +193,7 @@ There is an error while converting the model ${revisionTC.model.submissionId} to
             fileTCs.each {
                 String fileExtension = extractFileExtension(it.path)
                 String fileFormatIdentifier = mapFormats.get(fileExtension)
-                it.mimeType = fileFormatIdentifier
+                it.mimeType = fileFormatIdentifier ?: "UNKNOWN"
                 it.mainFile = false
                 it.hidden = false
                 it.userSubmitted = false
