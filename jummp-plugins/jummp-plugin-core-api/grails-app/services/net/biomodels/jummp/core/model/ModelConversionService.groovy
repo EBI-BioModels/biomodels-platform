@@ -121,9 +121,9 @@ class ModelConversionService implements IModelConversionService {
             }
             log.info("""\
 Connecting conversion service to generate exports of the model ${revisionTC?.model?.submissionId}""")
-            def mainFile = revisionTC.files.findAll {it.mainFile}
+            List mainFiles = revisionTC.files.findAll {it.mainFile}
             // TODO: Make sure that the main file always presents and the model has only a main file
-            mainFile = mainFile?.first()
+            RFTC mainFile = mainFiles?.first()
             String format = revisionTC.format.identifier
             Set<String> supportedFormats = listOfFormatsSupportedForExport(format)
             List<Path> result = new ArrayList<Path>()
