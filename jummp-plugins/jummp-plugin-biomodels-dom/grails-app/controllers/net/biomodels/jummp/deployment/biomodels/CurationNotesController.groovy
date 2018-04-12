@@ -99,6 +99,9 @@ class CurationNotesController {
                           lastModified: lastModified,
                           updated: updated]
         CurationNotesTransportCommand command = new CurationNotesTransportCommand(bindingMap)
+        if (params?.cnId) {
+            command.id = curationNotes["id"]
+        }
         if (curationNotes["curationImage"]) {
             command.curationImage = Base64.decoder.decode(curationNotes["curationImage"])
         }
