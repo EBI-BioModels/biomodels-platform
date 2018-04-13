@@ -143,7 +143,7 @@ There is an error when trying to persist curate image into database: ${cn.errors
         success
     }
 
-    boolean doAddOrUpdateCurationNotes(CurationNotesTransportCommand cntc) {
+    CurationNotes doAddOrUpdateCurationNotes(CurationNotesTransportCommand cntc) {
         Model model = Model.get(cntc.model.id)
         User submitter = cntc.submitter
         User lastModifier = cntc.lastModifier
@@ -160,11 +160,11 @@ There is an error when trying to persist curate image into database: ${cn.errors
         String modelId = model.publicationId ?: model.submissionId
         if (cn.save(flush: true)) {
             log.debug("The simulation results of the model $modelId have been saved!")
-            return true
+            return cn
         } else {
             log.error("""\
 There are errors when trying to persist curation notes of the model $modelId into database: ${cn.errors.allErrors.inspect()}""")
-            return false
+            return null
         }
     }
 }

@@ -21,6 +21,7 @@
 
 package net.biomodels.jummp.deployment.biomodels
 
+import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import groovy.json.JsonSlurper
 import net.biomodels.jummp.core.adapters.ModelAdapter
@@ -72,7 +73,7 @@ class CurationNotesController {
                           updated: updated]
         CurationNotesTransportCommand command = new CurationNotesTransportCommand(bindingMap)
         if (params?.cnId) {
-            command.id = curationNotes["id"]
+            command.id = params.long(params.cnId)
         }
         if (curationNotes["curationImage"]) {
             command.curationImage = Base64.decoder.decode(curationNotes["curationImage"])
@@ -93,24 +94,23 @@ class CurationNotesController {
             // this case means to add a new curation notes
             command.dateAdded = command.lastModified
         }
-        String message
-        if (command) {
-            boolean status = curationNotesService.doAddOrUpdateCurationNotes(command)
-            if (status) {
-                message = "Curation notes have been updated successfully"
+        Map response = [:]
+            CurationNotes update = curationNotesService.doAddOrUpdateCurationNotes(command)
+            if (update) {
+                response['message'] = "Curation notes have been updated successfully"
+                response['cnId'] = update.id
             } else {
-                message = "There is an error while trying to persist the curation notes into the database"
+                response['message'] = "There is an error while trying to persist the curation notes into the database"
             }
         } else {
             String defaultMessage = command.errors.getFieldError("comment")?.defaultMessage
             if (defaultMessage?.contains("cannot be blank")) {
-                message = "The comment cannot be blank"
+                response['message'] = "The comment cannot be blank"
             } else {
-                message = command.errors.allErrors.inspect()
+                response['message'] = command.errors.allErrors.inspect()
             }
         }
-        log.debug(message)
-        render message
+        render(response as JSON)
     }
 
     def reset() {

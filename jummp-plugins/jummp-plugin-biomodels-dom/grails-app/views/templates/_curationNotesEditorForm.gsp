@@ -226,7 +226,13 @@ $('#btnSave').on("click", function(event) {
                 $('#txtStatus').text("The curation notes are being saved. Please wait...");
             },
             success: function(data) {
-                $('#txtStatus').text(data);
+                var response = JSON.parse(data);
+                var href = window.location.href;
+                if (href.indexOf("&cnId=") < 0) {
+                    var newHref = window.location.href + "&cnId=" + response['cnId'];
+                    history.pushState({}, null, newHref);
+                }
+                $('#txtStatus').text(response['message']);
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 // TODO: the error message doesn't show properly
