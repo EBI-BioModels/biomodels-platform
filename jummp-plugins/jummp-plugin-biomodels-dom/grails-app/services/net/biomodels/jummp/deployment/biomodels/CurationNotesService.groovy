@@ -63,7 +63,7 @@ class CurationNotesService {
         CurationNotesTransportCommand latestCurationNotes = null
         if (entries.size() > 0) {
             use(CurationNotesCategory) {
-                latestCurationNotes = entries.first()?.toCommandObject()
+                latestCurationNotes = entries.first().toCommandObject()
             }
         }
         return latestCurationNotes
