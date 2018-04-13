@@ -10,7 +10,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="layout" content="${grailsApplication.config.jummp.branding.style}/main"/>
-    <title><g:if test="${curationNotesTC.updated}">Update</g:if><g:else>Add</g:else>curation notes</title>
+    <title><g:if test="${curationNotesTC.updated}">Update</g:if><g:else>Add</g:else> curation notes</title>
 </head>
 
 <body>
