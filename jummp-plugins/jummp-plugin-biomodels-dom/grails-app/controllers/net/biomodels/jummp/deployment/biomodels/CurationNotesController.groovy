@@ -108,6 +108,7 @@ class CurationNotesController {
         command
     }
 
+    def show() {
     def addOrUpdate() {
         def data = sanitiseParams()
         render(view: "curationNotesEditor", model: data)

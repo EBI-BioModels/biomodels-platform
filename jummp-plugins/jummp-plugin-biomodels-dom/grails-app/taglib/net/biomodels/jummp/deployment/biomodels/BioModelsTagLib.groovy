@@ -107,7 +107,7 @@ class BioModelsTagLib {
         }
         if (hasCuratorRole) {
             def btnLabel = attrs.curationNotes ? "Edit" : "Add curation notes"
-            def actionName = "addOrUpdate"
+            def actionName = "show"
             def href = g.link(controller: "curationNotes",
                 action: actionName, class: "button",
                 params: requiredParams) {
