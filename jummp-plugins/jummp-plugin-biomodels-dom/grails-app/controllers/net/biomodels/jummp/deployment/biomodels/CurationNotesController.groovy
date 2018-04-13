@@ -81,9 +81,7 @@ class CurationNotesController {
     }
 
     def show() {
-        Map<String, String> args = new HashMap<>()
-        args.putAll(params)
-        def data = curationNotesService.loadOrInitialise(args)
+        def data = curationNotesService.loadOrInitialise(params)
         render(view: "curationNotesEditor", model: data)
     }
 
