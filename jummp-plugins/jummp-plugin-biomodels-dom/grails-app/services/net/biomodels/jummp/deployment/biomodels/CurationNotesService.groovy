@@ -152,11 +152,13 @@ There is an error when trying to persist curate image into database: ${cn.errors
         String comment = cntc.comment
 	    String internalComment = cntc.internalComment
         byte[] curationImage = cntc.curationImage
-        Map criteria = [model: model, curationImage: curationImage,
-                        comment: comment, internalComment: internalComment,
-                        submitter: submitter, lastModifier: lastModifier,
-                        dateAdded: dateAdded, lastModified: lastModified]
+        Map criteria = [model: model, submitter: submitter, dateAdded: dateAdded, ]
         CurationNotes cn = CurationNotes.findOrSaveWhere(criteria)
+        cn.lastModifier = lastModifier
+        cn.lastModified = lastModified
+        cn.comment = comment
+        cn.internalComment = internalComment
+        cn.curationImage = curationImage
         String modelId = model.publicationId ?: model.submissionId
         if (cn.save(flush: true)) {
             log.debug("The simulation results of the model $modelId have been saved!")
