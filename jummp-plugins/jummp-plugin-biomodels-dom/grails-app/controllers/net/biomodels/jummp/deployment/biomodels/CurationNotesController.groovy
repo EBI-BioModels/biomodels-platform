@@ -95,6 +95,7 @@ class CurationNotesController {
             command.dateAdded = command.lastModified
         }
         Map response = [:]
+        if (command.validate()) {
             CurationNotes update = curationNotesService.doAddOrUpdateCurationNotes(command)
             if (update) {
                 response['message'] = "Curation notes have been updated successfully"
