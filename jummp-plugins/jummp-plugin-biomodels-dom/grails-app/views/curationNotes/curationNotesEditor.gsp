@@ -14,14 +14,12 @@
 </head>
 
 <body>
-    <div class="row">
-        <g:render template="/templates/curationNotesEditorHeadingLine"
-                  plugin="jummp-plugin-biomodels-dom"
-                  model="['curationNotesTC': curationNotesTC, 'model': id]" />
-        <g:render template="/templates/curationNotesEditorForm"
-            plugin="jummp-plugin-biomodels-dom"
-            model="['curationNotesTC': curationNotesTC, 'curationImage': curationImage,
-                    'dateFormat': dateFormat, 'id': id]" />
-    </div>
+    <g:render template="/templates/curationNotesEditorHeadingLine"
+              plugin="jummp-plugin-biomodels-dom"
+              model="['curationNotesTC': curationNotesTC, 'model': id]" />
+    <g:render template="/templates/curationNotesEditorForm"
+        plugin="jummp-plugin-biomodels-dom"
+        model="['curationNotesTC': curationNotesTC, 'curationImage': curationImage,
+                'dateFormat': dateFormat, 'id': id]" />
 </body>
 </html>
