@@ -227,7 +227,7 @@ $('#btnSave').on("click", function(event) {
             },
             success: function(response) {
                 var href = window.location.href;
-                if (href.indexOf("&cnId=") < 0) {
+                if (href.indexOf("&cnId=") < 0 && typeof(response['cnId']) != 'undefined') {
                     var newHref = href + "&cnId=" + response['cnId'];
                     if (window.history.pushState) {
                         window.history.pushState({}, null, newHref);

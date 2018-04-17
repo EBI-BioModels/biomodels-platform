@@ -27,6 +27,7 @@ package net.biomodels.jummp.deployment.biomodels
 import grails.transaction.Transactional
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.plugins.security.User
+import org.apache.commons.lang.math.NumberUtils
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 
@@ -79,7 +80,7 @@ class CurationNotesService {
      */
     Map loadOrInitialise(Map args) {
         CurationNotesTransportCommand curationNotesTC = null
-        if (args.containsKey("cnId")) {
+        if (args.containsKey("cnId") && NumberUtils.isNumber(args.get("cnId"))) {
             Long cnId = Long.parseLong(args.get("cnId"))
             use(CurationNotesCategory) {
                 curationNotesTC = CurationNotes.get(cnId).toCommandObject()
