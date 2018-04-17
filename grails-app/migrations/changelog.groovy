@@ -1259,5 +1259,7 @@ databaseChangeLog = {
     include file: '20180327_add_curation_state.groovy'
 
     include file: '20180409_addInternalComment_CurationNotes.groovy'
+
+	include file: '20180417_change_DataTypes_Constraints_CurationNotes.groovy'
 }
 
