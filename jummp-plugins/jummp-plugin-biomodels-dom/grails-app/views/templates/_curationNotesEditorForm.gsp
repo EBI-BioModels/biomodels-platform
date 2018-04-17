@@ -225,12 +225,15 @@ $('#btnSave').on("click", function(event) {
             beforeSend: function() {
                 $('#txtStatus').text("The curation notes are being saved. Please wait...");
             },
-            success: function(data) {
-                var response = JSON.parse(data);
+            success: function(response) {
                 var href = window.location.href;
                 if (href.indexOf("&cnId=") < 0) {
-                    var newHref = window.location.href + "&cnId=" + response['cnId'];
-                    history.pushState({}, null, newHref);
+                    var newHref = href + "&cnId=" + response['cnId'];
+                    if (window.history.pushState) {
+                        window.history.pushState({}, null, newHref);
+                    } else {
+                        document.location.hash = newHref;
+                    }
                 }
                 $('#txtStatus').text(response['message']);
             },
