@@ -46,9 +46,8 @@ class CurationNotesController {
 
     }
 
-    private parseCuratioNotes() {
-        def curationNotes = new JsonSlurper().parseText(params.curationNotes)
-        String modelId = params.model
+    private parseCuratioNotes(def curationNotes, def modelId) {
+        curationNotes = new JsonSlurper().parseText(curationNotes)
         String comment = curationNotes["comment"]
 	    String internalComment = curationNotes["internalComment"]
         String submitterUsername = curationNotes["submitter"]
@@ -87,7 +86,9 @@ class CurationNotesController {
     }
 
     def doAddOrUpdate() {
-        CurationNotesTransportCommand command = parseCuratioNotes()
+        def curationNotes = params.curationNotes
+        def model = params.model
+        CurationNotesTransportCommand command = parseCuratioNotes(curationNotes, model)
         // get the latest timestamp
         command.lastModified = new Date()
         if (!command.updated) {
