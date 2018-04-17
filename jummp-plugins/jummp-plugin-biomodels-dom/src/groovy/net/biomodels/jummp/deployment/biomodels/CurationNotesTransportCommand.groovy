@@ -43,9 +43,7 @@ class CurationNotesTransportCommand implements Serializable {
     boolean updated
 
     static constraints = {
+        importFrom(CurationNotes)
         id nullable: true
-        internalComment nullable: true, blank: true
-        curationImage(nullable: false, maxSize: 5242880) // max of 5MB file
-        //importFrom([exclude: 'id'], CurationNotes)
     }
 }
