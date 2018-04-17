@@ -212,7 +212,7 @@ $('#btnSave').on("click", function(event) {
         "use strict";
         event.preventDefault();
         $.ajax({
-            dataType: "text",
+            dataType: "json",
             type: "POST",
             url: $.jummp.createLink("curationNotes", "doAddOrUpdate"),
             cache: true,
