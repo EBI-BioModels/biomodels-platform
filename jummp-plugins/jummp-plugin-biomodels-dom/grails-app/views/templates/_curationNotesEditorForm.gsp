@@ -27,7 +27,7 @@
                     <div class="medium-12 large-12 cell">
                         <label>Comments
                             <textarea id="comment" placeholder="Enter your curation comments here"
-                                      aria-multiline="true" rows="5"
+                                      aria-multiline="true" rows="5" required
                                       style="white-space: pre-wrap">${curationNotesTC.comment}</textarea>
                             <textarea id="tmpComment"
                                       aria-multiline="true"
@@ -81,7 +81,7 @@
         <div class="small-12 medium-6 large-6 columns">
             <label for="uploadCurationImage" class="button">Upload an image</label>
             <input type="file" id="uploadCurationImage" class="show-for-sr" accept="image/*"
-                   style="text-align: right; direction: ltr">
+                   style="text-align: right; direction: ltr" required>
         </div>
         <div class="small-12 medium-6 large-6 columns" style="text-align: right">
             <button type="button" class="button" id="btnSave">Save</button>
