@@ -91,6 +91,7 @@
 </form>
 <g:javascript>
     var imgUploadedStream;
+    var mimeType = 'unknown';
     $('#submitter, #lastModifier').on('keydown', function() {
     $(this).autocomplete({
         source: function(request, response) {
@@ -176,11 +177,15 @@ function buildCurationNotesTC() {
     };
     if (imgUploadedStream) {
         curationNotes['curationImage'] = imgUploadedStream;
+        curationNotes['mimeType'] = mimeType;
     } else {
         var base64ImgStr = $('img#curaImageHolder').attr('src');
         if (base64ImgStr.indexOf('base64,')>=0) {
+            mimeType = base64ImgStr.substring(5, base64ImgStr.indexOf(";"));
             base64ImgStr = base64ImgStr.substring(base64ImgStr.indexOf('base64,') + 'base64,'.length);
             curationNotes['curationImage'] = base64ImgStr;
+        } else {
+            console.log("The curation notes is not uploaded the curation image");
         }
     }
     curationNotes = JSON.stringify(curationNotes);
@@ -204,8 +209,12 @@ function previewImage(input) {
 
 $("#uploadCurationImage").change(function(){
     var re = new RegExp('image\/');
+    //var re = new RegExp('(.*?)'); accept everything
     if (this.files && this.files[0]) {
-        if (re.exec(this.files[0].type)) {
+        /* validate file type */
+        var imageFile = this.files[0];
+        mimeType = imageFile.type;
+        if (re.exec(mimeType)) {
             previewImage(this);
             $('#txtStatus').text("");
         } else {

@@ -76,6 +76,7 @@ class CurationNotesController {
         }
         if (curationNotes["curationImage"]) {
             command.curationImage = Base64.decoder.decode(curationNotes["curationImage"])
+            command.mimeType = curationNotes["mimeType"]
         }
         command
     }
