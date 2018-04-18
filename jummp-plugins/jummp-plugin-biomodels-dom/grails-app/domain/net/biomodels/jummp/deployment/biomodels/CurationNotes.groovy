@@ -53,7 +53,7 @@ class CurationNotes implements Serializable {
     }
 
     static constraints = {
-        curationImage(nullable: false, maxSize: 5242880) // max of 5MB file
+        curationImage(nullable: false, maxSize: 1_500_000) // approximately 1.44 MB
         comment(nullable: false, blank: false)
         internalComment(nullable: true, blank: true)
     }

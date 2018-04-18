@@ -210,6 +210,12 @@ $("#uploadCurationImage").change(function(){
             $('#txtStatus').text("");
         } else {
             $('#txtStatus').text("${g.message(code: "model.biomodels.curationNotes.editor.onlyAcceptImages")}");
+        }
+
+        /* validate file size */
+        var MAX_SIZE = 1.44 * 1024 * 1024; // 1.44 MB ~ 1_500_000 is the allowed maximum size of the uploading image file
+        if (imageFile.size > MAX_SIZE) {
+            $('#txtStatus').text("${g.message(code: "curationNotesTransportCommand.curationImage.curationImageTooBig")}");
             "${g.message()}"
         }
     }

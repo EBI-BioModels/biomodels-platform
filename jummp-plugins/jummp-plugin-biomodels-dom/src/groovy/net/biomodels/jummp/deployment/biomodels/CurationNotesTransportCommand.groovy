@@ -31,6 +31,8 @@ import net.biomodels.jummp.plugins.security.User
 @grails.validation.Validateable
 class CurationNotesTransportCommand implements Serializable {
     private static final long serialVersionUID = 1L
+    private static final long MAX_IMG_SIZE =  1_500_000 // bytes ~ 1.44MB = 1024*1024*1.44
+
     Long id
     ModelTransportCommand model
     User submitter
