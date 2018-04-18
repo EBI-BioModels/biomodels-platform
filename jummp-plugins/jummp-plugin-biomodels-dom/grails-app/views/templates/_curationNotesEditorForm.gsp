@@ -203,7 +203,16 @@ function previewImage(input) {
 }
 
 $("#uploadCurationImage").change(function(){
-    previewImage(this);
+    var re = new RegExp('image\/');
+    if (this.files && this.files[0]) {
+        if (re.exec(this.files[0].type)) {
+            previewImage(this);
+            $('#txtStatus').text("");
+        } else {
+            $('#txtStatus').text("${g.message(code: "model.biomodels.curationNotes.editor.onlyAcceptImages")}");
+            "${g.message()}"
+        }
+    }
 });
 
 $('#btnSave').on("click", function(event) {
@@ -243,7 +252,7 @@ $('#btnSave').on("click", function(event) {
             }
         });
     } else {
-        $('#txtStatus').text("Please check required fields and click Save button again...");
+        $('#txtStatus').text("${g.message(code: "model.biomodels.curationNotes.editor.invalidForm")}");
     }
 });
 
