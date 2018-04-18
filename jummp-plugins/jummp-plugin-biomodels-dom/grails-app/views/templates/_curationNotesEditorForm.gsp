@@ -5,7 +5,7 @@
             <div class="grid-container">
                 <div class="grid-x grid-padding-x">
                     <div class="small-12 medium-12 large-12 cell">
-                        <label>Simulation results<br/>
+                        <label>Simulation results <small style="color: red">required</small><br/>
                             <g:if test="${curationImage}">
                                 <img src="data:image/jpeg;base64,${curationImage}"
                                      id="curaImageHolder"
@@ -25,7 +25,7 @@
             <div class="grid-container">
                 <div class="grid-x grid-padding-x">
                     <div class="medium-12 large-12 cell">
-                        <label>Comments
+                        <label>Comments <small style="color: red">required</small>
                             <textarea id="comment" placeholder="Enter your curation comments here"
                                       aria-multiline="true" rows="5" required
                                       style="white-space: pre-wrap">${curationNotesTC.comment}</textarea>
