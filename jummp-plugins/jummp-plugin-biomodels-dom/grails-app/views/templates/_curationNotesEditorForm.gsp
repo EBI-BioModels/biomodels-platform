@@ -1,4 +1,4 @@
-<div id="txtStatus" style="color: #ED0000; font-weight: 600; font-size: larger"></div>
+<div id="txtStatus" style="color: #ED0000; font-weight: 420; font-size: larger"></div>
 <form id="curationNotesForm">
     <div class="row">
         <div class="small-12 medium-6 large-6 columns">
@@ -299,7 +299,7 @@ $('#btnSave').on("click", function(event) {
             processData: true,
             async: true,
             beforeSend: function() {
-                $('#txtStatus').text("The curation notes are being saved. Please wait...");
+                $('#txtStatus').html("The curation notes are being saved. Please wait...");
             },
             success: function(response) {
                 var href = window.location.href;
@@ -311,15 +311,15 @@ $('#btnSave').on("click", function(event) {
                         document.location.hash = newHref;
                     }
                 }
-                $('#txtStatus').text(response['message']);
+                $('#txtStatus').html(response['message']);
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 // TODO: the error message doesn't show properly
-                $('#txtStatus').text("Error: ", jqXHR.responseText + textStatus + errorThrown + JSON.stringify(jqXHR));
+                $('#txtStatus').html("Error: ", jqXHR.responseText + textStatus + errorThrown + JSON.stringify(jqXHR));
             }
         });
     } else {
-        $('#txtStatus').text("${g.message(code: "model.biomodels.curationNotes.editor.invalidForm")}");
+        $('#txtStatus').html(values().join("<br/>"));
     }
 });
 
