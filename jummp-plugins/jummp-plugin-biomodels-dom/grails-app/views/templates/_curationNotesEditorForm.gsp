@@ -199,7 +199,6 @@ function buildCurationNotesTC() {
     };
     if (imgUploadedStream) {
         curationNotes['curationImage'] = imgUploadedStream;
-        curationNotes['mimeType'] = mimeType;
     } else {
         var base64ImgStr = $('img#curaImageHolder').attr('src');
         if (base64ImgStr.indexOf('base64,')>=0) {
@@ -210,6 +209,7 @@ function buildCurationNotesTC() {
             console.log("The curation notes is not uploaded the curation image");
         }
     }
+    curationNotes['mimeType'] = mimeType;
     curationNotes = JSON.stringify(curationNotes);
     return curationNotes;
 }
