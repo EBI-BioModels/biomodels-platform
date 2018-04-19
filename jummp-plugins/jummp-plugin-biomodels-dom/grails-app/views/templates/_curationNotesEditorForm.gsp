@@ -81,7 +81,7 @@
         <div class="small-12 medium-6 large-6 columns">
             <label for="uploadCurationImage" class="button">Upload an image</label>
             <input type="file" id="uploadCurationImage" class="show-for-sr" accept="image/*"
-                   style="text-align: right; direction: ltr" required>
+                   style="text-align: right; direction: ltr">
         </div>
         <div class="small-12 medium-6 large-6 columns" style="text-align: right">
             <button type="button" class="button" id="btnSave">Save</button>
@@ -272,6 +272,7 @@ $("#uploadCurationImage").change(function(){
         var curationImage = $('#curaImageHolder').attr('src');
         var re = new RegExp('data:image\/');
         var isCurationImageAvailable = re.exec(curationImage);
+        /* combine with the built-in validation check */
         var isValid = $('#curationNotesForm')[0].checkValidity() && isCurationImageAvailable;
         if (isValid) {
             delete messages["invalidForm"];
