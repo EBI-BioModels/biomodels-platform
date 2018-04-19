@@ -60,5 +60,7 @@ class CurationNotesTransportCommand implements Serializable {
                 if (m.count <= 0) {
                     return ['curationNotesTransportCommand.curationImage.curationImageWrongFileType']
                 }
+            }
+        }
     }
 }
