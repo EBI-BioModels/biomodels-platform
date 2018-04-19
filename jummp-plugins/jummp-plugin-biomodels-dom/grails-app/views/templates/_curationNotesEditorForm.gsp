@@ -115,117 +115,118 @@
     }
 
     $('#submitter, #lastModifier').on('keydown', function() {
-    $(this).autocomplete({
-        source: function(request, response) {
-            $.ajax({
-                url: $.jummp.createLink('usermanagement', 'fetchUsers'),
-                type: 'POST',
-                dataType: 'json',
-                data: {
-                    search: request.term,
-                    request: 1
-                },
-                success: function(data) {
-                    response(data);
-                }
-            });
-        },
-        select: function(event, ui) {
-            $(this).val(ui.item.username);   // display the selected text
-            var username = ui.item.username; // selected value
-            $.ajax({
-                url: $.jummp.createLink('usermanagement', 'fetchUsers'),
-                type: 'POST',
-                data: {
-                    username: username,
-                    request: 2
-                },
-                dataType: 'json',
-                success: function(response) {
-                    var len = response.length;
-                    if(len > 0){
-                        var id = response[0]['id'];
-                        var username = response[0]['username'];
-                        var email = response[0]['email'];
+        $(this).autocomplete({
+            source: function(request, response) {
+                $.ajax({
+                    url: $.jummp.createLink('usermanagement', 'fetchUsers'),
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        search: request.term,
+                        request: 1
+                    },
+                    success: function(data) {
+                        response(data);
                     }
-                }
-            });
-            return false;
+                });
+            },
+            select: function(event, ui) {
+                $(this).val(ui.item.username);   // display the selected text
+                var username = ui.item.username; // selected value
+                $.ajax({
+                    url: $.jummp.createLink('usermanagement', 'fetchUsers'),
+                    type: 'POST',
+                    data: {
+                        username: username,
+                        request: 2
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        var len = response.length;
+                        if(len > 0){
+                            var id = response[0]['id'];
+                            var username = response[0]['username'];
+                            var email = response[0]['email'];
+                        }
+                    }
+                });
+                return false;
+            }
+        });
+    });
+
+    $('#txtDateAdded').datepicker({
+        dateFormat: 'yy-mm-dd',
+        onSelect: function(datetext) {
+            datetext = datetext + updateOnSelect();
+            $('#datepicker').val(datetext);
+            $(this).val(datetext);
         }
     });
-});
 
-$('#txtDateAdded').datepicker({
-    dateFormat: 'yy-mm-dd',
-    onSelect: function(datetext) {
-        datetext = datetext + updateOnSelect();
-        $('#datepicker').val(datetext);
-        $(this).val(datetext);
+    $('#txtLastModified').datepicker({
+        dateFormat: 'yy-mm-dd',
+        onSelect: function(datetext) {
+            datetext = datetext + updateOnSelect();
+            $('#datepicker').val(datetext);
+            $(this).val(datetext);
+        }
+    });
+
+    function updateOnSelect() {
+        var d = new Date(); // for now
+        var hour = d.getHours() < 10 ? "0" + d.getHours().toString() : d.getHours();
+        var minute = d.getMinutes() < 10 ? "0" + d.getMinutes().toString() : d.getMinutes();
+        var second = d.getSeconds() < 10 ? "0" + d.getSeconds().toString() : d.getSeconds();
+        return "T" + hour + ":" + minute + ":"+ second;
     }
-});
 
-$('#txtLastModified').datepicker({
-    dateFormat: 'yy-mm-dd',
-    onSelect: function(datetext) {
-        datetext = datetext + updateOnSelect();
-        $('#datepicker').val(datetext);
-        $(this).val(datetext);
-    }
-});
-
-function updateOnSelect() {
-    var d = new Date(); // for now
-    var hour = d.getHours() < 10 ? "0" + d.getHours().toString() : d.getHours();
-    var minute = d.getMinutes() < 10 ? "0" + d.getMinutes().toString() : d.getMinutes();
-    var second = d.getSeconds() < 10 ? "0" + d.getSeconds().toString() : d.getSeconds();
-    return "T" + hour + ":" + minute + ":"+ second;
-}
-
-function buildCurationNotesTC() {
-    var comment = $('#comment').val();
-    var internalComment = $('#internalComment').val();
-    var submitter = $('#submitter').val();
-    var lastModifier = $('#lastModifier').val();
-    var dateAdded = $('#txtDateAdded').val();
-    var lastModified = $('#txtLastModified').val();
-    var curationNotes = {
-        'comment': comment,
-        'internalComment': internalComment,
-        'submitter': submitter,
-        'lastModifier': lastModifier,
-        'dateAdded': dateAdded,
-        'lastModified': lastModified,
-        'updated': ${curationNotesTC.updated}
-    };
-    if (imgUploadedStream) {
-        curationNotes['curationImage'] = imgUploadedStream;
-    } else {
-        var base64ImgStr = $('img#curaImageHolder').attr('src');
-        if (base64ImgStr.indexOf('base64,')>=0) {
-            mimeType = base64ImgStr.substring(5, base64ImgStr.indexOf(";"));
-            base64ImgStr = base64ImgStr.substring(base64ImgStr.indexOf('base64,') + 'base64,'.length);
-            curationNotes['curationImage'] = base64ImgStr;
+    function buildCurationNotesTC() {
+        var comment = $('#comment').val();
+        var internalComment = $('#internalComment').val();
+        var submitter = $('#submitter').val();
+        var lastModifier = $('#lastModifier').val();
+        var dateAdded = $('#txtDateAdded').val();
+        var lastModified = $('#txtLastModified').val();
+        var curationNotes = {
+            'comment': comment,
+            'internalComment': internalComment,
+            'submitter': submitter,
+            'lastModifier': lastModifier,
+            'dateAdded': dateAdded,
+            'lastModified': lastModified,
+            'updated': ${curationNotesTC.updated}
+        };
+        if (imgUploadedStream) {
+            curationNotes['curationImage'] = imgUploadedStream;
         } else {
-            console.log("The curation notes is not uploaded the curation image");
+            var base64ImgStr = $('img#curaImageHolder').attr('src');
+            if (base64ImgStr.indexOf('base64,')>=0) {
+                mimeType = base64ImgStr.substring(5, base64ImgStr.indexOf(";"));
+                base64ImgStr = base64ImgStr.substring(base64ImgStr.indexOf('base64,') + 'base64,'.length);
+                curationNotes['curationImage'] = base64ImgStr;
+            } else {
+                console.log("The curation notes is not uploaded the curation image");
+            }
         }
+        curationNotes['mimeType'] = mimeType;
+        curationNotes = JSON.stringify(curationNotes);
+        return curationNotes;
     }
-    curationNotes['mimeType'] = mimeType;
-    curationNotes = JSON.stringify(curationNotes);
-    return curationNotes;
-}
 
-function previewImage(input) {
-    // reused sample codes from https://stackoverflow.com/a/4459419/865603
-    if (input.files && input.files[0]) {
-        var reader = new FileReader();
-        var image = input.files[0];
-        reader.onload = function (event) {
-            var imgSrc = event.target.result;
-            imgUploadedStream = event.target.result.replace("data:"+ image.type +";base64,", '');
-            $('#curaImageHolder').attr('src', imgSrc);
-            $('#curaImageHolder').attr('title', 'This image has been uploaded or replaced');
+    function previewImage(input) {
+        // reused sample codes from https://stackoverflow.com/a/4459419/865603
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            var image = input.files[0];
+            reader.onload = function (event) {
+                var imgSrc = event.target.result;
+                imgUploadedStream = event.target.result.replace("data:"+ image.type +";base64,", '');
+                $('#curaImageHolder').attr('src', imgSrc);
+                $('#curaImageHolder').attr('title', 'This image has been uploaded or replaced');
+            }
+            reader.readAsDataURL(image);
         }
-        reader.readAsDataURL(image);
     }
 
     function showWarningMessage() {
@@ -233,35 +234,34 @@ function previewImage(input) {
         $('#curaImageHolder').attr('src', imgSrc);
         $('#curaImageHolder').attr('title', 'This format is not acceptable');
     }
-}
 
-$("#uploadCurationImage").change(function(){
-    var re = new RegExp('image\/');
-    //var re = new RegExp('(.*?)'); accept everything
-    if (this.files && this.files[0]) {
-        /* validate file type */
-        var imageFile = this.files[0];
-        mimeType = imageFile.type;
-        if (re.exec(mimeType)) {
-            previewImage(this);
-            delete messages["onlyAcceptImages"];
-        } else {
-            set("onlyAcceptImages",
-                    "${g.message(code: "model.biomodels.curationNotes.editor.onlyAcceptImages")}");
-            showWarningMessage();
-        }
+    $("#uploadCurationImage").change(function(){
+        var re = new RegExp('image\/');
+        //var re = new RegExp('(.*?)'); accept everything
+        if (this.files && this.files[0]) {
+            /* validate file type */
+            var imageFile = this.files[0];
+            mimeType = imageFile.type;
+            if (re.exec(mimeType)) {
+                previewImage(this);
+                delete messages["onlyAcceptImages"];
+            } else {
+                set("onlyAcceptImages",
+                        "${g.message(code: "model.biomodels.curationNotes.editor.onlyAcceptImages")}");
+                showWarningMessage();
+            }
 
-        /* validate file size */
-        var MAX_SIZE = 1.44 * 1024 * 1024; // 1.44 MB ~ 1_500_000 is the allowed maximum size of the uploading image file
-        if (imageFile.size > MAX_SIZE) {
-            set("curationImageTooBig",
-                    "${g.message(code: "curationNotesTransportCommand.curationImage.curationImageTooBig")}");
-        } else {
-            delete messages["curationImageTooBig"];
+            /* validate file size */
+            var MAX_SIZE = 1.44 * 1024 * 1024; // 1.44 MB ~ 1_500_000 is the allowed maximum size of the uploading image file
+            if (imageFile.size > MAX_SIZE) {
+                set("curationImageTooBig",
+                        "${g.message(code: "curationNotesTransportCommand.curationImage.curationImageTooBig")}");
+            } else {
+                delete messages["curationImageTooBig"];
+            }
+            $('#txtStatus').html(values().join("<br/>"));
         }
-        $('#txtStatus').html(values().join("<br/>"));
-    }
-});
+    });
 
     function checkCustomValidity() {
         return Object.keys(messages).length === 0;
@@ -282,56 +282,56 @@ $("#uploadCurationImage").change(function(){
         return isValid;
     }
 
-$('#btnSave').on("click", function(event) {
-    var shouldSubmit =  checkRequiredValidity() && checkCustomValidity();
-    if (shouldSubmit) {
-        var curationNotes = buildCurationNotesTC();
-        "use strict";
-        event.preventDefault();
-        $.ajax({
-            dataType: "json",
-            type: "POST",
-            url: $.jummp.createLink("curationNotes", "doAddOrUpdate"),
-            cache: true,
-            data: {
-                curationNotes: curationNotes,
-                model: "${id}"
-            },
-            processData: true,
-            async: true,
-            beforeSend: function() {
-                $('#txtStatus').html("The curation notes are being saved. Please wait...");
-            },
-            success: function(response) {
-                var href = window.location.href;
-                if (href.indexOf("&cnId=") < 0 && typeof(response['cnId']) != 'undefined') {
-                    var newHref = href + "&cnId=" + response['cnId'];
-                    if (window.history.pushState) {
-                        window.history.pushState({}, null, newHref);
-                    } else {
-                        document.location.hash = newHref;
+    $('#btnSave').on("click", function(event) {
+        var shouldSubmit =  checkRequiredValidity() && checkCustomValidity();
+        if (shouldSubmit) {
+            var curationNotes = buildCurationNotesTC();
+            "use strict";
+            event.preventDefault();
+            $.ajax({
+                dataType: "json",
+                type: "POST",
+                url: $.jummp.createLink("curationNotes", "doAddOrUpdate"),
+                cache: true,
+                data: {
+                    curationNotes: curationNotes,
+                    model: "${id}"
+                },
+                processData: true,
+                async: true,
+                beforeSend: function() {
+                    $('#txtStatus').html("The curation notes are being saved. Please wait...");
+                },
+                success: function(response) {
+                    var href = window.location.href;
+                    if (href.indexOf("&cnId=") < 0 && typeof(response['cnId']) != 'undefined') {
+                        var newHref = href + "&cnId=" + response['cnId'];
+                        if (window.history.pushState) {
+                            window.history.pushState({}, null, newHref);
+                        } else {
+                            document.location.hash = newHref;
+                        }
                     }
+                    $('#txtStatus').html(response['message']);
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    // TODO: the error message doesn't show properly
+                    $('#txtStatus').html("Error: ", jqXHR.responseText + textStatus + errorThrown + JSON.stringify(jqXHR));
                 }
-                $('#txtStatus').html(response['message']);
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                // TODO: the error message doesn't show properly
-                $('#txtStatus').html("Error: ", jqXHR.responseText + textStatus + errorThrown + JSON.stringify(jqXHR));
-            }
-        });
-    } else {
-        $('#txtStatus').html(values().join("<br/>"));
-    }
-});
+            });
+        } else {
+            $('#txtStatus').html(values().join("<br/>"));
+        }
+    });
 
-$('#btnReset').on('click', function(event) {
-    var orgComment = $('#tmpComment').val();
-    $('#comment').val(orgComment);
-    orgComment = $('#tmpInternalComment').val();
-    $('#internalComment').val(orgComment);
-    $('#submitter').val("${curationNotesTC.submitter?.username}");
-    $('#lastModifier').val("${curationNotesTC.lastModifier?.username}");
-    $('#txtDateAdded').val("${dateFormat.format(curationNotesTC.dateAdded)}");
-    $('#txtLastModified').val("${dateFormat.format(curationNotesTC.lastModified)}");
-});
+    $('#btnReset').on('click', function(event) {
+        var orgComment = $('#tmpComment').val();
+        $('#comment').val(orgComment);
+        orgComment = $('#tmpInternalComment').val();
+        $('#internalComment').val(orgComment);
+        $('#submitter').val("${curationNotesTC.submitter?.username}");
+        $('#lastModifier').val("${curationNotesTC.lastModifier?.username}");
+        $('#txtDateAdded').val("${dateFormat.format(curationNotesTC.dateAdded)}");
+        $('#txtLastModified').val("${dateFormat.format(curationNotesTC.lastModified)}");
+    });
 </g:javascript>
