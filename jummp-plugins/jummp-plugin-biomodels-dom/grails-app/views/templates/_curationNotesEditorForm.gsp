@@ -92,6 +92,28 @@
 <g:javascript>
     var imgUploadedStream;
     var mimeType = 'unknown';
+    var messages = {}; // or: new Object(); or: new Map(); but not supported in IE
+
+    function get(k) {
+        return messages[k];
+    }
+
+    function set(k, v) {
+        messages[k] = v;
+    }
+
+    function remove(k) {
+        delete messages[k];
+    }
+
+    function values() {
+        var values = [];
+        for (var k in messages) {
+            values.push(messages[k]);
+        }
+        return values;
+    }
+
     $('#submitter, #lastModifier').on('keydown', function() {
     $(this).autocomplete({
         source: function(request, response) {
@@ -205,6 +227,12 @@ function previewImage(input) {
         }
         reader.readAsDataURL(image);
     }
+
+    function showWarningMessage() {
+        var imgSrc = "${grailsApplication.config.grails.serverURL}/images/biomodels/unacceptable.png";
+        $('#curaImageHolder').attr('src', imgSrc);
+        $('#curaImageHolder').attr('title', 'This format is not acceptable');
+    }
 }
 
 $("#uploadCurationImage").change(function(){
@@ -216,22 +244,46 @@ $("#uploadCurationImage").change(function(){
         mimeType = imageFile.type;
         if (re.exec(mimeType)) {
             previewImage(this);
-            $('#txtStatus').text("");
+            delete messages["onlyAcceptImages"];
         } else {
-            $('#txtStatus').text("${g.message(code: "model.biomodels.curationNotes.editor.onlyAcceptImages")}");
+            set("onlyAcceptImages",
+                    "${g.message(code: "model.biomodels.curationNotes.editor.onlyAcceptImages")}");
+            showWarningMessage();
         }
 
         /* validate file size */
         var MAX_SIZE = 1.44 * 1024 * 1024; // 1.44 MB ~ 1_500_000 is the allowed maximum size of the uploading image file
         if (imageFile.size > MAX_SIZE) {
-            $('#txtStatus').text("${g.message(code: "curationNotesTransportCommand.curationImage.curationImageTooBig")}");
-            "${g.message()}"
+            set("curationImageTooBig",
+                    "${g.message(code: "curationNotesTransportCommand.curationImage.curationImageTooBig")}");
+        } else {
+            delete messages["curationImageTooBig"];
         }
+        $('#txtStatus').html(values().join("<br/>"));
     }
 });
 
+    function checkCustomValidity() {
+        return Object.keys(messages).length === 0;
+    }
+
+    function checkRequiredValidity() {
+        /* check whether the curation image is available or not */
+        var curationImage = $('#curaImageHolder').attr('src');
+        var re = new RegExp('data:image\/');
+        var isCurationImageAvailable = re.exec(curationImage);
+        var isValid = $('#curationNotesForm')[0].checkValidity() && isCurationImageAvailable;
+        if (isValid) {
+            delete messages["invalidForm"];
+        } else {
+            set("invalidForm", "${g.message(code: "model.biomodels.curationNotes.editor.invalidForm")}");
+        }
+        return isValid;
+    }
+
 $('#btnSave').on("click", function(event) {
-    if ($('#curationNotesForm')[0].checkValidity()) {
+    var shouldSubmit =  checkRequiredValidity() && checkCustomValidity();
+    if (shouldSubmit) {
         var curationNotes = buildCurationNotesTC();
         "use strict";
         event.preventDefault();
