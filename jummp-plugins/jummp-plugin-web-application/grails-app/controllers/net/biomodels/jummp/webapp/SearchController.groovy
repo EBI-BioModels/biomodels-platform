@@ -257,35 +257,6 @@ class SearchController {
         }
         JsonBuilder builder = new JsonBuilder(facets)
 
-        /*int sortDir = 1
-        if (sortDirection && sortDirection == "asc") {
-            sortDir = -1
-        }
-        switch (sortBy) {
-            case "name":
-                models = models.sort{ m1, m2 -> sortDir * m2.name.compareTo(m1.name) }
-                break
-            case "format":
-                models = models.sort{ m1, m2 -> sortDir * m2.format.name.compareTo(m1.format.name) }
-                break
-            case "submitter":
-                models = models.sort{ m1, m2 -> sortDir * m2.submitter.compareTo(m1.submitter) }
-                break
-            case "submitted":
-                models = models.sort{ m1, m2 ->
-                    sortDir * m2.submissionDate.getTime() - m1.submissionDate.getTime()
-                }
-                break
-            case "modified":
-                models = models.sort{ m1, m2 ->
-                    sortDir * m2.lastModifiedDate.getTime() - m1.lastModifiedDate.getTime()
-                }
-                break
-            default:
-                models = models.sort{ m1, m2 -> sortDir * m2.name.compareTo(m1.name) }
-                break
-        }*/
-
         if (offset > 0 && offset < models.size()) {
             models = models[offset..-1]
         } else {

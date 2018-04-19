@@ -22,6 +22,9 @@
                 <g:if test="${action == "search"}">
                     <g:render template="/templates/sorting" />
                 </g:if>
+                <g:else>
+                    <g:render template="/templates/filtering" />
+                </g:else>
             </div>
             <div class="small-12 medium-12 large-6 columns">
                 <g:render template="/templates/pageSize"
