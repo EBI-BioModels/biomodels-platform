@@ -48,8 +48,8 @@ class CurationNotesController {
 
     private parseCuratioNotes(def curationNotes, def modelId) {
         curationNotes = new JsonSlurper().parseText(curationNotes)
-        String comment = curationNotes["comment"]
-	    String internalComment = curationNotes["internalComment"]
+        String comment = curationNotes["comment"].encodeAsHTML()
+	    String internalComment = curationNotes["internalComment"].encodeAsHTML()
         String submitterUsername = curationNotes["submitter"]
         User submitter = User.findByUsername(submitterUsername)
         String lastModifierUsername = curationNotes["lastModifier"]
@@ -88,7 +88,8 @@ class CurationNotesController {
 
     def doAddOrUpdate() {
         def curationNotes = params.curationNotes
-        def model = params.model
+        String model = params.model
+        model = model.encodeAsHTML()
         CurationNotesTransportCommand command = parseCuratioNotes(curationNotes, model)
         // get the latest timestamp
         command.lastModified = new Date()
