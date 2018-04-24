@@ -10,4 +10,5 @@
     <li><a href="${createLink(action: 'changePassword')}">Change/Reset Password</a></li>--}%
     <li><a href="${createLink(action: 'branding')}">Select Branding</a></li>
     <li><a href="${createLink(action: 'cms')}">Content Management System</a></li>
+    <li><a href="${createLink(action: 'classifier', controller: 'classifierConfigure')}">Model Classifier System</a></li>
 </ul>
