@@ -30,6 +30,7 @@ import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.events.LoggingEventType
 import net.biomodels.jummp.core.events.PostLogging
+import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.search.OmicsdiBasedSearch
@@ -41,6 +42,8 @@ import org.apache.commons.logging.LogFactory
 import org.perf4j.aop.Profiled
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
+import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Facet
+import uk.ac.ebi.ddi.ebe.ws.dao.model.common.FacetValue
 
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -201,6 +204,72 @@ class SearchService {
 
     String[] getSearchFields() {
         strategy.getSortFields()
+    }
+
+    List<Facet> buildBasicFacets(List<ModelTransportCommand> models) {
+        List<Facet> facets = []
+        def formats = models.collect(
+            new HashSet(), {
+            [it.format.identifier, it.format.name, 0]
+        })
+        def submitters = models.collect(
+            new HashSet(), {
+            [it.submitter, 0]
+        })
+        def types = new HashSet([["Private", 1], ["Shared", 2], ["Public", 3]])
+        models.each {
+            String format = it.format.identifier
+            formats.each {
+                if (it[0] == format) {
+                    it[2] += 1
+                }
+            }
+
+            String submitter = it.submitter
+            submitters.each {
+                if (it[0] == submitter) {
+                    it[1] += 1
+                }
+            }
+        }
+        // Format
+        def facet = new Facet()
+        List<FacetValue> fvs = []
+        facet.id = "Format"
+        facet.label = "Format"
+        facet.facetValues = []
+        formats.each {
+            FacetValue fv = new FacetValue(label: it[1], value: it[0], count: it[2])
+            fvs << fv
+        }
+        facet.facetValues = fvs
+        facets << facet
+        // Submitter
+        facet = new Facet()
+        fvs = []
+        facet.id = "Submitter"
+        facet.label = "Collaborator"
+        facet.facetValues = []
+        submitters.each {
+            FacetValue fv = new FacetValue(label: it[0], value: it[0], count: it[1])
+            fvs << fv
+        }
+        facet.facetValues = fvs
+        facets << facet
+        // Model Types: Private, Shared, Public
+        facet = new Facet()
+        fvs = []
+        facet.id = "type"
+        facet.label = "Type"
+        facet.facetValues = []
+        types.each {
+            FacetValue fv = new FacetValue(label: it[0], value: it[0], count: it[1])
+            fvs << fv
+        }
+        facet.facetValues = fvs
+        facets << facet
+
+        facets
     }
 }
 

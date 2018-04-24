@@ -152,7 +152,7 @@ class SearchController {
     }
 
     /**
-     * Default action showing a list view
+     * Default action showing a archive view
      */
     def archive() {
         sanitiseParams()
@@ -340,76 +340,10 @@ class SearchController {
         modelsDomain.each {
             models.add(new ModelAdapter(model: it).toCommandObject())
         }
-        List<Facet> basicFacets = buildBasicFacets(models)
+        List<Facet> basicFacets = searchService.buildBasicFacets(models)
         int totalCount = modelService.getModelCount(filter, false)
         return [models: models, facets: basicFacets, modelsAvailable: totalCount, sortBy: sortBy,
                 sortDirection: sortDirection, offset: offset, length: length]
-    }
-
-    private List<Facet> buildBasicFacets(List<ModelTransportCommand> models) {
-        List<Facet> facets = []
-        def formats = models.collect(
-            new HashSet(), {
-            [it.format.identifier, it.format.name, 0]
-        })
-        def submitters = models.collect(
-            new HashSet(), {
-            [it.submitter, 0]
-        })
-	    def types = new HashSet([["Private", 1], ["Shared", 2], ["Public", 3]])
-	    models.each {
-            String format = it.format.identifier
-            formats.each {
-                if (it[0] == format) {
-                    it[2] += 1
-                }
-            }
-
-            String submitter = it.submitter
-            submitters.each {
-                if (it[0] == submitter) {
-                    it[1] += 1
-                }
-            }
-        }
-	    // Format
-        def facet = new Facet()
-        List<FacetValue> fvs = []
-        facet.id = "Format"
-        facet.label = "Format"
-        facet.facetValues = []
-        formats.each {
-            FacetValue fv = new FacetValue(label: it[1], value: it[0], count: it[2])
-            fvs << fv
-        }
-        facet.facetValues = fvs
-        facets << facet
-	    // Submitter
-        facet = new Facet()
-        fvs = []
-        facet.id = "Submitter"
-        facet.label = "Collaborator"
-        facet.facetValues = []
-        submitters.each {
-            FacetValue fv = new FacetValue(label: it[0], value: it[0], count: it[1])
-            fvs << fv
-        }
-        facet.facetValues = fvs
-        facets << facet
-	    // Model Types: Private, Shared, Public
-	    facet = new Facet()
-        fvs = []
-        facet.id = "type"
-        facet.label = "Type"
-        facet.facetValues = []
-        types.each {
-            FacetValue fv = new FacetValue(label: it[0], value: it[0], count: it[1])
-            fvs << fv
-        }
-        facet.facetValues = fvs
-        facets << facet
-
-        facets
     }
 
     private String getSortColumn(int sc) {
