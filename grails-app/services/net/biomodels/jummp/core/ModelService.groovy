@@ -305,13 +305,10 @@ lower(u.person.userRealName) like :filter
             if (type) {
                 String currentUsername = springSecurityService.currentUser.username
                 if (type.equalsIgnoreCase("private")) {
-                    println "private models"
                     query = "$query AND u.username = '${currentUsername}'"
                 } else if (type.equalsIgnoreCase("shared")) {
-                    println "shared models"
                     query = "$query AND u.username != '${currentUsername}' AND r.state = '${ModelState.UNPUBLISHED}'"
                 } else if (type.equalsIgnoreCase("public")) {
-                    println "published models"
                     query = "$query AND r.state = '${ModelState.PUBLISHED}'"
                 } else {
                     // private
