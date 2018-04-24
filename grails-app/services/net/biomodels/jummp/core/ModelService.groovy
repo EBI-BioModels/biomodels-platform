@@ -185,8 +185,8 @@ class ModelService {
 
         String sortingDirection = sortOrder ? 'asc' : 'desc'
 
-        boolean filterIsValid = filterValid(filter)
-
+        boolean filterIsValid = filterValid(filter) && !filter.substring(0,4).equals("type")
+        String type
         Map namedParams = [:]
         if (filterIsValid) {
             if (filter.take(6) == "Format") {
@@ -195,20 +195,24 @@ class ModelService {
             if (filter.take(9) == "Submitter") {
                 namedParams.put("filter", "%${filter.drop(10).toLowerCase()}%")
             }
+        } else {
+            if (filterValid(filter)) {
+                type = filter.drop(5).toLowerCase()
+            }
         }
-
+        boolean isAdmin = SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")
         String query
         // for Admin - sees all (not deleted) models
-        if (SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
-            query = getQueryForAdmin(sortColumn, deletedOnly, filterIsValid, sortingDirection)
+        if (isAdmin) {
+            query = getQueryForAdmin(sortColumn, deletedOnly, filterIsValid, type, sortingDirection)
 
         } else {
             Set<String> roles = getSpringDatabaseRoles()
-
-            query = getQueryForUser(sortColumn, deletedOnly, filterIsValid, sortingDirection)
+            query = getQueryForUser(sortColumn, deletedOnly, filterIsValid, type, sortingDirection)
+            List permissions = new ArrayList([BasePermission.READ.getMask(), BasePermission.ADMINISTRATION.getMask()])
             namedParams += [
                 className  :  Revision.class.getName(),
-                permissions: [BasePermission.READ.getMask(), BasePermission.ADMINISTRATION.getMask()],
+                permissions:  permissions,
                 roles      :  roles
             ]
         }
@@ -216,7 +220,8 @@ class ModelService {
         return Model.executeQuery(query, namedParams, metaParams)
     }
 
-    private String getQueryForUser(ModelListSorting sortColumn, boolean deletedOnly, boolean filterIsValid, String sortingDirection) {
+    private String getQueryForUser(ModelListSorting sortColumn, boolean deletedOnly,
+                                   boolean filterIsValid, String type, String sortingDirection) {
         String query = '''
 SELECT DISTINCT m, r.name, r.description, r.uploadDate, r.format.name, m.id, u.person.userRealName
 FROM Revision AS r
@@ -224,7 +229,7 @@ JOIN r.model AS m
 JOIN r.owner as u
 WHERE r.deleted = false
 '''
-//do we want to show information from the latest revision?
+        // do we want to show information from the latest revision?
         if (sortColumn == ModelListSorting.LAST_MODIFIED || sortColumn == ModelListSorting.FORMAT || sortColumn == ModelListSorting.NAME) {
             query += '''AND r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2,
                         AclEntry ace2  where r.model=r2.model
@@ -251,19 +256,33 @@ lower(r.format.identifier) like :filter OR
 lower(u.person.userRealName) like :filter
 )
 '''
+        } else {
+            if (type) {
+                String currentUsername = springSecurityService.currentUser.username
+                if (type.equalsIgnoreCase("private")) {
+                    query = "$query AND u.username = '${currentUsername}'"
+                } else if (type.equalsIgnoreCase("shared")) {
+                    query = "$query AND u.username != '${currentUsername}' AND r.state = '${ModelState.UNPUBLISHED}'"
+                } else if (type.equalsIgnoreCase("public")) {
+                    query = "$query AND r.state = '${ModelState.PUBLISHED}'"
+                } else {
+                    // private
+                }
+            } else {
+
+            }
         }
-        query += '''
-ORDER BY
-'''
-        query += " " + getSortColumnAsString(sortColumn) + " " + sortingDirection
+
+        query = "$query ORDER BY ${getSortColumnAsString(sortColumn)} ${sortingDirection}"
         return query
     }
 
-    private String getQueryForAdmin(ModelListSorting sortColumn, boolean deletedOnly, boolean filterIsValid, String sortingDirection) {
+    private String getQueryForAdmin(ModelListSorting sortColumn, boolean deletedOnly, boolean filterIsValid, String type, String sortingDirection) {
         String query = '''
 SELECT DISTINCT m, r.name, r.description, r.uploadDate, r.format.name, m.id, u.person.userRealName
 FROM Revision AS r
-JOIN r.model AS m JOIN r.owner as u
+JOIN r.model AS m 
+JOIN r.owner as u
 WHERE
 '''
         if (sortColumn == ModelListSorting.LAST_MODIFIED || sortColumn == ModelListSorting.FORMAT ||
@@ -274,7 +293,7 @@ WHERE
         } else {
             query += '''r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2 where r.model=r2.model) AND '''
         }
-        query += "m.deleted = ${deletedOnly} AND r.deleted = false"
+        query = "$query m.deleted = ${deletedOnly} AND r.deleted = false"
         if (filterIsValid) {
             query +='''
 AND(
@@ -282,6 +301,24 @@ lower(r.format.identifier) like :filter OR
 lower(u.person.userRealName) like :filter
 )
 '''
+        } else {
+            if (type) {
+                String currentUsername = springSecurityService.currentUser.username
+                if (type.equalsIgnoreCase("private")) {
+                    println "private models"
+                    query = "$query AND u.username = '${currentUsername}'"
+                } else if (type.equalsIgnoreCase("shared")) {
+                    println "shared models"
+                    query = "$query AND u.username != '${currentUsername}' AND r.state = '${ModelState.UNPUBLISHED}'"
+                } else if (type.equalsIgnoreCase("public")) {
+                    println "published models"
+                    query = "$query AND r.state = '${ModelState.PUBLISHED}'"
+                } else {
+                    // private
+                }
+            } else {
+
+            }
         }
         query += '''
 ORDER BY
