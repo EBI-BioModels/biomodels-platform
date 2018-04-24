@@ -30,6 +30,7 @@ import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.events.LoggingEventType
 import net.biomodels.jummp.core.events.PostLogging
+import net.biomodels.jummp.core.model.ModelState
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.model.Revision
@@ -216,7 +217,7 @@ class SearchService {
             new HashSet(), {
             [it.submitter, 0]
         })
-        def types = new HashSet([["Private", 1], ["Shared", 2], ["Public", 3]])
+        def types = new HashSet([["Private", 0], ["Shared", 0], ["Public", 0]])
         models.each {
             String format = it.format.identifier
             formats.each {
@@ -230,6 +231,19 @@ class SearchService {
                 if (it[0] == submitter) {
                     it[1] += 1
                 }
+            }
+
+            String currentLoggedInUsername = springSecurityService.currentUser.username
+            String submitterUsername = it.submitterUsername
+            if (currentLoggedInUsername.equalsIgnoreCase(submitterUsername)) {
+                types[0][1] += 1
+            }
+            boolean shared = !currentLoggedInUsername.equalsIgnoreCase(submitterUsername) && it.state == ModelState.UNPUBLISHED
+            if (shared) {
+                types[1][1] += 1
+            }
+            if (it.state == ModelState.PUBLISHED) {
+                types[2][1] += 1
             }
         }
         // Format
