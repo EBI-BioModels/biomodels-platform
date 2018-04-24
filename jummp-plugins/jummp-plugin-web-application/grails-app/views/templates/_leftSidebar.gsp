@@ -47,6 +47,7 @@
                     String escapedFacetValue = fv.value?.replaceAll("${specialCharacters}", '\\\\$1')
                     boolean isAsked
                     String selectedFacet
+                    String jsMethod = "runFacetList"
                     if (actionName.equalsIgnoreCase('search')) {
                         selectedFacet = "${facet.id}:${fv.value}"
                         boolean isNeededDQ = facet.id in FACETS_WRAPPED_DOUBLE_QUOTE
@@ -54,16 +55,18 @@
                             selectedFacet = "${facet.id}:\"${fv.value}\""
                         }
                         isAsked = query.contains(selectedFacet)
+                        jsMethod = "runFacetSearch"
                     } else {
-                        selectedFacet = "${facet.id}=${fv.value}"
+                        selectedFacet = "${facet.id}:${fv.value}"
                         isAsked = params.query?.contains("${facet.id}:${escapedFacetValue}")
                     }
 
                 %>
                 <g:if test="${isAsked}">
-                    <input type="checkbox" id="facetValue_${fv.value}" value="${fv.value}" checked title="${fv.value}"
-                        onchange="runFacetSearch($(this), '${facet.id}' ,'${escapedFacetValue}')">
-                    <span class="facetLabel" onclick="runFacetSearch($(this), '${facet.id}' ,'${escapedFacetValue}')">
+                    <input type="checkbox" id="facetValue_${fv.value}"
+                           value="${fv.value}" checked title="${fv.value}"
+                           onchange="${jsMethod}($(this), '${facet.id}' ,'${escapedFacetValue}')">
+                    <span class="facetLabel" onclick="${jsMethod}($(this), '${facet.id}' ,'${escapedFacetValue}')">
                         ${fv.label} (${fv.count})</span>
                 </g:if>
                 <g:else>
@@ -86,7 +89,7 @@
                         }
                     %>
                     <input type="checkbox" value="${fv.value}" id="choosenFacetValue" title="${fv.value}"
-                        onchange="runFacetSearch($(this), '${facet.id}' ,'${escapedFacetValue}')">
+                        onchange="${jsMethod}($(this), '${facet.id}' ,'${escapedFacetValue}')">
                     <g:link controller="search" action="${actionName}" params="${newParams}" class="facetLabel">
                         <span class="facetLabel">${fv.label} (${fv.count})</span></g:link>
                 </g:else>
