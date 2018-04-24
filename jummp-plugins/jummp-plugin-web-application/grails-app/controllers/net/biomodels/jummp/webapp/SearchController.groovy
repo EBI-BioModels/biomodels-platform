@@ -356,8 +356,8 @@ class SearchController {
             new HashSet(), {
             [it.submitter, 0]
         })
-
-        models.each {
+	    def types = new HashSet([["Private", 1], ["Shared", 2], ["Public", 3]])
+	    models.each {
             String format = it.format.identifier
             formats.each {
                 if (it[0] == format) {
@@ -372,7 +372,7 @@ class SearchController {
                 }
             }
         }
-
+	    // Format
         def facet = new Facet()
         List<FacetValue> fvs = []
         facet.id = "Format"
@@ -384,13 +384,25 @@ class SearchController {
         }
         facet.facetValues = fvs
         facets << facet
-
+	    // Submitter
         facet = new Facet()
         fvs = []
         facet.id = "Submitter"
         facet.label = "Collaborator"
         facet.facetValues = []
         submitters.each {
+            FacetValue fv = new FacetValue(label: it[0], value: it[0], count: it[1])
+            fvs << fv
+        }
+        facet.facetValues = fvs
+        facets << facet
+	    // Model Types: Private, Shared, Public
+	    facet = new Facet()
+        fvs = []
+        facet.id = "type"
+        facet.label = "Type"
+        facet.facetValues = []
+        types.each {
             FacetValue fv = new FacetValue(label: it[0], value: it[0], count: it[1])
             fvs << fv
         }
