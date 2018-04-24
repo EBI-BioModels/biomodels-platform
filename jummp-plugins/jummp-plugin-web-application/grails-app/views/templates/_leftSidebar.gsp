@@ -71,7 +71,7 @@
                 </g:if>
                 <g:else>
                     <%
-                        String newQuery = "${query} AND ${selectedFacet}"
+                        String newQuery = query ? "${query} AND ${selectedFacet}" : "${selectedFacet}"
                         def newParams = [:]
                         if (params.query) {
                             newParams["query"] = newQuery
