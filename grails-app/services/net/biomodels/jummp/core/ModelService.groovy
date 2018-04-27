@@ -222,40 +222,39 @@ class ModelService {
 
     private String getQueryForUser(ModelListSorting sortColumn, boolean deletedOnly,
                                    boolean filterIsValid, String type, String sortingDirection) {
-        String query = '''
+        String query = """\
 SELECT DISTINCT m, r.name, r.description, r.uploadDate, r.format.name, m.id, u.person.userRealName
 FROM Revision AS r
 JOIN r.model AS m
 JOIN r.owner as u
-WHERE r.deleted = false
-'''
+WHERE r.deleted = false"""
         // do we want to show information from the latest revision?
         if (sortColumn == ModelListSorting.LAST_MODIFIED || sortColumn == ModelListSorting.FORMAT || sortColumn == ModelListSorting.NAME) {
-            query += '''AND r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2,
+            query = """\
+$query AND r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2,
                         AclEntry ace2  where r.model=r2.model
                         AND r2.id=ace2.aclObjectIdentity.objectId
                         AND ace2.aclObjectIdentity.aclClass.className = :className
                         AND ace2.sid.sid IN (:roles) AND ace2.mask IN (:permissions)
-                        AND ace2.granting = true)'''
+                        AND ace2.granting = true)"""
         } else {
             // otherwise sortColumn must be the following .. ie we want to sort by the first revision
             // (sortColumn==ModelListSorting.SUBMITTER || sortColumn==ModelListSorting.SUBMISSION_DATE)
-            query += '''AND r.revisionNumber=(SELECT MIN(r2.revisionNumber) from Revision r2,
-                        AclEntry ace2  where r.model=r2.model
-                        AND r2.id=ace2.aclObjectIdentity.objectId
-                        AND ace2.aclObjectIdentity.aclClass.className = :className
-                        AND ace2.sid.sid IN (:roles) AND ace2.mask IN (:permissions)
-                        AND ace2.granting = true)'''
+            query = """\
+$query AND r.revisionNumber=(SELECT MIN(r2.revisionNumber) from Revision r2,
+    AclEntry ace2  where r.model=r2.model
+    AND r2.id=ace2.aclObjectIdentity.objectId
+    AND ace2.aclObjectIdentity.aclClass.className = :className
+    AND ace2.sid.sid IN (:roles) AND ace2.mask IN (:permissions)
+    AND ace2.granting = true)"""
         }
-
-        query += " AND m.deleted = ${deletedOnly} "
+        query = "$query AND m.deleted = ${deletedOnly} "
         if (filterIsValid) {
-            query +='''
-AND(
+            query +="""\
+$query AND(
 lower(r.format.identifier) like :filter OR
 lower(u.person.userRealName) like :filter
-)
-'''
+)"""
         } else {
             if (type) {
                 String currentUsername = springSecurityService.currentUser.username
@@ -317,10 +316,7 @@ lower(u.person.userRealName) like :filter
 
             }
         }
-        query += '''
-ORDER BY
-'''
-        query += " " + getSortColumnAsString(sortColumn) + " " + sortingDirection
+        query = "$query ORDER BY ${getSortColumnAsString(sortColumn)} $sortingDirection"
         return query
     }
 
