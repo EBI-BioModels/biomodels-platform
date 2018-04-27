@@ -92,8 +92,15 @@
                         </div>
                         <div class="small-1 medium-1 large-1 columns" id="download">
                             <g:if test="${action == 'search'}">
+                                <g:if test="${model.state == net.biomodels.jummp.core.model.ModelState.PUBLISHED}">
                                 <input id="chkDownload" type="checkbox" value="${id}"
                                        style="float: right; margin-top: 10px">
+                                </g:if>
+                                <g:else>
+                                    <span class="icon icon-functional" data-icon="L"
+                                          title="This is a private model"
+                                          style="float: right; margin-top: 10px"></span>
+                                </g:else>
                             </g:if>
                         </div>
                     </div>
