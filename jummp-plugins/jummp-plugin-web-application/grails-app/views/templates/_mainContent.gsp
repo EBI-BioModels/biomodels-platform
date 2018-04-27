@@ -107,6 +107,24 @@
                     </g:each>
                     </div>
                     <g:javascript>
+                        function flashHtmlMessageBuilder(message) {
+                            return "<div class='alert info'><span class='closebtn'>&times;</span> " +
+                                                "<h5 style='color: #ffffff'>" + message + "</h5> </div>"
+                        }
+
+                        function showFlashMessage(message) {
+                            var shouldShown = typeof $('.alert').val() === "undefined" || $('.alert').val() === "";
+                            if (shouldShown) {
+                                $(message).insertBefore('#flashMessage');
+                            }
+                            $('.closetbn').click(function() {
+                                $(this).slideUp();
+                            });
+                            $('.alert').click(function() {
+                                $(this).slideUp();
+                            });
+                        }
+
                         // reduce font-size of model's notes (i.e. model description)
                         $('[class*="dc:"]').css("font-size", "90%");
                         // show the query string on local search box and string query division
@@ -151,11 +169,19 @@
                                 selectedModels = [];
                                 var operation = $(this).text();
                                 if (operation === "Select all") {
-                                    $('#download > input').prop('checked', true);
-                                    $(this).text("Deselect all");
-                                    $('#download > input').each(function() {
-                                        selectedModels.push($(this).val());
-                                    });
+                                    var downloadCheckbox = $('#download > input');
+                                    if (downloadCheckbox.length > 0) {
+                                        console.log(downloadCheckbox.length);
+                                        downloadCheckbox.prop('checked', true);
+                                        $(this).text("Deselect all");
+                                        downloadCheckbox.each(function() {
+                                            console.log($(this).val());
+                                            selectedModels.push($(this).val());
+                                        });
+                                    } else {
+                                        var htmlMessage = flashHtmlMessageBuilder("No available public models could be downloaded.");
+                                        showFlashMessage(htmlMessage);
+                                    }
                                 } else {
                                     $('#download > input').prop('checked', false);
                                     $(this).text("Select all");
@@ -171,18 +197,8 @@
                                     // the controller method
                                     window.location = link;
                                 } else {
-                                    var strHtml ="<div class='alert info'><span class='closebtn'>&times;</span> " +
-                                                "<h5 style='color: #ffffff'>Please select at least one model.</h5> </div>";
-                                    var shouldShown = typeof $('.alert').val() === "undefined" || $('.alert').val() === "";
-                                    if (shouldShown) {
-                                        $(strHtml).insertBefore('#flashMessage');
-                                    }
-                                    $('.closetbn').click(function() {
-                                        $(this).slideUp();
-                                    })
-                                    $('.alert').click(function() {
-                                        $(this).slideUp();
-                                    })
+                                    var htmlMessage = flashHtmlMessageBuilder("Please select at least one model.");
+                                    showFlashMessage(htmlMessage);
                                 }
                             });
                         }
