@@ -169,8 +169,8 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
         String sortField = sortOrder.getField()
         String sortDir = sortOrder.direction == SortOrder.SortDirection.ASC ? "ascending" : "descending"
         String sort = sortField ? String.format("%s:%s", sortField, sortDir) : ""
-        /* By defaut, we put the private models at the last pages if they are available */
-        sort = sort ? "isprivate:ascending, $sort" : "isprivate:ascending"
+        /* By default, we put the private models at the last pages if they are available */
+        sort = sort ? "isprivate:ascending,$sort" : "isprivate:ascending"
         QueryResult result
         try {
             result = datasetWsClient.getDatasets("biomodels", query, fields,
