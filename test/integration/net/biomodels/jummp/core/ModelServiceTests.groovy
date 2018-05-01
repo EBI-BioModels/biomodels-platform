@@ -897,7 +897,7 @@ class ModelServiceTests extends JummpIntegrationTest {
         assertEquals(false, model.deleted)
         // let's change the model state
         Revision savedRev=modelService.getLatestRevision(model)
-        savedRev.state = ModelState.UNDER_CURATION
+        savedRev.state = ModelState.UNPUBLISHED
         savedRev.save(flush:true)
         shouldFail(AccessDeniedException) {
         	modelService.deleteModel(model)

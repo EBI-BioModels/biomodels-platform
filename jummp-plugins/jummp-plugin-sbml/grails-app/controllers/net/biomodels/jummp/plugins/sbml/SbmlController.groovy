@@ -85,7 +85,7 @@ class SbmlController {
                 id: rev.identifier(),
                 params: [
                     flashMessage: """\
-Model has not been checked consistency because there is a problem with this version of the model. Sorry!"""
+There is a problem with this version of the model while trying to check its consistency."""
                 ])
         }
     }

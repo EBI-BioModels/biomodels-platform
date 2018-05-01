@@ -119,7 +119,7 @@ class ModelController {
      * The list of actions for which we should not automatically create an audit item.
      */
     final List<String> AUDIT_EXCEPTIONS = ['updateFlow', 'createFlow', 'uploadFlow',
-                'showWithMessage', 'share', 'getFileDetails', 'submitForPublication']
+                'showWithMessage', 'share', 'getFileDetails', 'submitForPublication', 'updateCurationState']
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
 
@@ -238,14 +238,14 @@ class ModelController {
             rev = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
         } catch (AccessDeniedException e) {
             if (e instanceof AccessDeniedException) {
-                Model model = Model.findBySubmissionId(params.id)
+                Model model = Model.findByPublicationIdOrSubmissionId(params.id, params.id)
                 log.warn("""\
 An anonymous or restricted access user is trying to retrieve this model: ${model.submissionId}""")
-                int revisionNumber = model.revisions.size() - 1 // get the latest revision
+                int revisionNumber = -1
                 if (params.revisionId) {
-                   revisionNumber = Integer.parseInt(params.revisionId)
+                    revisionNumber = Integer.parseInt(params.revisionId)
                 }
-                Revision revision = revisionNumber >= 0 ? model.revisions.getAt(revisionNumber) : model.revisions.last()
+                Revision revision = revisionNumber >= 0 ? model.revisions.getAt(revisionNumber-1) : model.revisions.last()
                 if (!revision) {
                     forward(controller: 'errors', action: 'error404')
                     return
@@ -255,7 +255,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                 model.publication = null
                 rev.format = new ModelFormatTransportCommand()
                 rev.files = new ArrayList<>()
-                rev.description = "A model with this identifier exists in the system, but you do not have the necessary permissions to access it"
+                rev.description = g.message(code: "net.biomodels.jummp.core.model.show.MessageForPrivateModel")
                 isPrivateModel = true
             }
         }
@@ -265,7 +265,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                 return
             }
             if (isPrivateModel) {
-                render(view: "showBasicView", model: [id: rev.model.submissionId])
+                render(view: "showBasicView", model: [id: rev.model.submissionId, description: rev.description])
                 return
             } else {
                 final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
@@ -285,15 +285,12 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     modelDelegateService.getAllRevisions(PERENNIAL_ID)
                 CurationNotesTransportCommand curationNotes =
                     metadataDelegateService.fetchCurationNotes(rev)
-                String curationStatus = metadataDelegateService.fetchCurationStatus(rev)
+                String curationState = rev.curationState.name()
+                List<String> possibleCurationStates = CurationState.values()*.name()
                 List<String> originalModels = metadataDelegateService.fetchOriginalModels(rev)
                 Map<String, String> modellingApproaches =
                     metadataDelegateService.fetchModellingApproaches(rev)
-		        Collection<GrantedAuthority> grantedAuthorities = springSecurityService.getPrincipal().getAuthorities()
-                Set<String> roleNames = grantedAuthorities.collect {
-                    it.getAuthority()
-                }
-                boolean hasCuratorRole = "ROLE_CURATOR" in roleNames
+                boolean hasCuratorRole = hasCuratorRole()
                 boolean supportedForConversion = modelConversionService.isSupportedForConversion(rev)
 		        List<RFTC> convertedFilesTC = modelConversionService.getConvertedFiles(rev)
                 def model = [revision               : rev,
@@ -309,7 +306,8 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                              validationLevel        : rev.getValidationLevelMessage(),
                              certComment            : rev.getCertificationMessage(),
                              flags                  : flags,
-                             curationStatus         : curationStatus,
+                             curationState          : curationState,
+                             possibleCurationStates : possibleCurationStates,
                              modellingApproaches    : modellingApproaches,
                              curationNotes          : curationNotes,
                              originalModels         : originalModels,
@@ -1287,6 +1285,32 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
     }
 
     /**
+     * Update the curation status of the model
+     */
+    def updateCurationState() {
+        def requestObject = request.JSON
+        if (!requestObject['revisionNumber'] || !requestObject['modelId'] || !requestObject['curationState']) {
+            response.status = 400
+            render([message: 'Bad request'] as JSON)
+            return
+        }
+
+        int revision = Integer.parseInt(requestObject['revisionNumber'] as String)
+        String modelId = requestObject['modelId']
+        boolean canUpdate = modelDelegateService.canAddRevision(modelId as String)
+        boolean hasCuratorRole = hasCuratorRole()
+        if (canUpdate && hasCuratorRole) {
+            CurationState curationState = CurationState.valueOf(requestObject['curationState'] as String)
+            modelDelegateService.updateCurationStateRevision(modelId, revision, curationState)
+            render([message: "Curation status has been saved successfully"] as JSON)
+            return
+        }
+        response.status = 401
+        render([message: "You do not have right permissions to change the curation status"] as JSON)
+    }
+
+
+    /**
      * Display basic information about the model
      */
     def summary = {
@@ -1393,5 +1417,13 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
             }
         }
         return true
+    }
+
+    private boolean hasCuratorRole() {
+        Collection<GrantedAuthority> grantedAuthorities = springSecurityService.getPrincipal().getAuthorities()
+        Set<String> roleNames = grantedAuthorities.collect {
+            it.getAuthority()
+        }
+        "ROLE_CURATOR" in roleNames
     }
 }

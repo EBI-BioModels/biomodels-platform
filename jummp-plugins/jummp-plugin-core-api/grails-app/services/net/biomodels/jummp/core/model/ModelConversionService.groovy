@@ -48,6 +48,7 @@ import org.apache.commons.logging.LogFactory
 
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 
 class ModelConversionService implements IModelConversionService {
@@ -60,11 +61,14 @@ class ModelConversionService implements IModelConversionService {
 
     def repositoryFileService
 
-    Set<String> listOfFormatsSupportedExport() {
-        // TODO: should retrieve from the external conversion service
-        return ["SBML", "PharmML"]
-    }
-
+    /**
+     * This method returns the list of model formats that Conversion Service
+     * currently supports for converting the model under to a given format to
+     * these supported formats.
+     *
+     * @param   fromFormat A string representing a specific model format
+     * @return  a set      The list of strings which are formats supported by Conversion Service
+     */
     Set<String> listOfFormatsSupportedForExport(String fromFormat) {
         // TODO: invoke the external service
         Set<String> formats
@@ -82,12 +86,30 @@ class ModelConversionService implements IModelConversionService {
         formats
     }
 
+    /**
+     * This methods determines whether a given model revision will be supported
+     * for the conversion or not
+     *
+     * @param revisionTC    A revision transport command objects representing
+     *                      the model which will be converted
+     * @return a boolean    True/False
+     */
     boolean isSupportedForConversion(RTC revisionTC) {
         String format = revisionTC.format.identifier
         Set<String> supportedFormats = listOfFormatsSupportedForExport(format)
         supportedFormats.size() > 0
     }
 
+    /**
+     * This method allows to generate exports of a given model revision to all supported formats.
+     * Based on the list of supported formats by Conversion Service, this method will try to convert
+     * the model to each formats and store the converted file into the location externalised in the
+     * application settings.
+     *
+     * @param revisionTC    A revision transport command objects representing
+     *                      the model which will be converted
+     * @return a list       The list of Paths which files are converted ones
+     */
     List<Path> generateExports(RTC revisionTC) {
         if (isSupportedForConversion(revisionTC)) {
             // Create the subfolder named revision_number under the model submission id folder
@@ -99,9 +121,9 @@ class ModelConversionService implements IModelConversionService {
             }
             log.info("""\
 Connecting conversion service to generate exports of the model ${revisionTC?.model?.submissionId}""")
-            def mainFile = revisionTC.files.findAll {it.mainFile}
+            List mainFiles = revisionTC.files.findAll {it.mainFile}
             // TODO: Make sure that the main file always presents and the model has only a main file
-            mainFile = mainFile?.first()
+            RFTC mainFile = mainFiles?.first()
             String format = revisionTC.format.identifier
             Set<String> supportedFormats = listOfFormatsSupportedForExport(format)
             List<Path> result = new ArrayList<Path>()
@@ -119,42 +141,34 @@ The model ${revisionTC?.model?.submissionId} with the format ${revisionTC.format
         }
     }
 
+    /**
+     * This method aims to convert and store the result in the externalised location
+     *
+     * @param mainFile      A repository file transport command representing the main file
+     * @param toFormat      A string representing the output format
+     * @param revisionTC    A revision transport command representing the model revision
+     * @param revisionFolder A file object denoting the location whereby the converted will be stored
+     * @return a Path object A Path object showing the location where the file presents.
+     */
     private Path convertAndCache(RFTC mainFile, String toFormat,
                                  RTC revisionTC, File revisionFolder) {
         String fromFile = new File(mainFile.path).toURI()
         String params = "to=${toFormat.toLowerCase()}&file=${fromFile}"
-        String command = "${CONVERSION_SERVICE_URL}${revisionTC.revisionNumber}?${params}"
-        URL url = new URL(command)
-        try {
-            url = new URL(command)
-        } catch (MalformedURLException e) {
-            // TODO: throw a specific exception
-            throw new JummpException("URL is malformed", e)
-        } finally {
-            log.info(url)
-        }
-
-        Object slurper = new JsonSlurper()
-        try {
-            slurper = new JsonSlurper().parse(url)
-        } catch (JsonException e) {
-            throw new JummpException("Could not parse model conversion information", e)
-        } catch (Exception e) {
-            throw new JummpException("Error retrieving model conversion information", e)
-        } finally {
-            log.info("Result: ${slurper["result"]}")
+        String request = "${CONVERSION_SERVICE_URL}converter/convert/${revisionTC.revisionNumber}?${params}"
+        Object data = fetchDataFromConversionService(request)
+        if (data) {
+            log.info("Result: ${data["result"]}")
             // Copy the result (i.e. the file) to the model revision folder
-            String filePath = slurper["result"]
+            String filePath = data["result"]
             if (!filePath) {
                 log.error("""\
 There is an error while converting the model ${revisionTC.model.submissionId} to the format ${toFormat}""")
                 return null
             }
-            filePath = filePath.substring(5) // get rid of the prefix 'file:'
-            File source = new File(filePath)
-            String sourceFileName = filePath.substring(filePath.lastIndexOf(File.separator)+1)
-            File target = new File(revisionFolder, sourceFileName)
-            Path result = Files.copy(source.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING)
+            Path source = Paths.get(new URI(filePath))
+            String fileName = source.getFileName()
+            Path target = Paths.get(revisionFolder.getAbsolutePath(), fileName)
+            Path result = Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING)
             return result
         }
         return null
@@ -167,20 +181,19 @@ There is an error while converting the model ${revisionTC.model.submissionId} to
      * @return a list       The list of files converted from the revision's format to the others
      */
     List<RFTC> getConvertedFiles(RTC revisionTC) {
-        log.info("""\
-Getting all converted files of the model ${revisionTC.model.submissionId}, revision ${revisionTC.revisionNumber}""")
         final String MODEL_FOLDER = revisionTC.model?.submissionId
         String modelFolder = "${EXPORT_FOLDER}${File.separator}${MODEL_FOLDER}"
         File revisionFolder = new File(modelFolder, revisionTC.revisionNumber.toString())
-        if (!revisionFolder.exists()) {
-            log.error("""\
-Oops, the model ${MODEL_FOLDER} doesn't exist because the conversion might either be unfinished or not has been launch yet""")
-        } else {
+        if (revisionFolder.exists()) {
             List<File> files = revisionFolder.listFiles()
             List<RFTC> fileTCs = repositoryFileService.asRFTCList(files)
             // The RFTC objects have been already initialised three attributes.
             // We just need to update the remaining attributes
+            Map<String, String> mapFormats = getSupportedFormats()
             fileTCs.each {
+                String fileExtension = extractFileExtension(it.path)
+                String fileFormatIdentifier = mapFormats.get(fileExtension)
+                it.mimeType = fileFormatIdentifier ?: "UNKNOWN"
                 it.mainFile = false
                 it.hidden = false
                 it.userSubmitted = false
@@ -189,5 +202,41 @@ Oops, the model ${MODEL_FOLDER} doesn't exist because the conversion might eithe
             return fileTCs
         }
         return null
+    }
+
+    private Map<String, String> getSupportedFormats() {
+        String request = "${CONVERSION_SERVICE_URL}info/mapSupportedFormats"
+        Object data = fetchDataFromConversionService(request)
+        Map result = new HashMap()
+        data.each {
+            result.put(it.key.substring(1), it.value)
+        }
+        return result
+    }
+
+    private fetchDataFromConversionService(String request) {
+        URL url
+        try {
+            url = new URL(request)
+        } catch (MalformedURLException e) {
+            // TODO: throw a specific exception
+            throw new JummpException("URL is malformed", e)
+        } finally {
+            log.info(url)
+            Object slurper = new JsonSlurper()
+            try {
+                slurper = new JsonSlurper().parse(url)
+            } catch (JsonException e) {
+                throw new JummpException("Could not parse model conversion information", e)
+            } catch (Exception e) {
+                throw new JummpException("Error retrieving model conversion information", e)
+            } finally {
+                return slurper
+            }
+        }
+    }
+
+    private String extractFileExtension(String fileName) {
+        fileName.substring(fileName.lastIndexOf(".")+1)
     }
 }

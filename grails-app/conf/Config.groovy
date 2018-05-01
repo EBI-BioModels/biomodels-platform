@@ -298,6 +298,7 @@ grails.plugin.springsecurity.userLookup.userDomainClassName = 'net.biomodels.jum
 grails.plugin.springsecurity.userLookup.authorityJoinClassName = 'net.biomodels.jummp.plugins.security.UserRole'
 grails.plugin.springsecurity.authority.className = 'net.biomodels.jummp.plugins.security.Role'
 grails.plugin.springsecurity.securityConfigType = "Annotation" // "Annotation", "InterceptUrlMap", "Requestmap"
+grails.plugin.springsecurity.successHandler.alwaysUseDefaultTargetUrl = false
 
 jummp.controllerAnnotations = [
     // /model/create and /model/create?execution=e.*s1 show the display the submission guidelines, which should be visible without logging in
@@ -399,6 +400,14 @@ if (!(jummpConfig.jummp.search.strategy instanceof ConfigObject)) {
 
 if (jummpConfig.jummp.model.curators.mailinglist) {
     jummp.model.curators.mailinglist = jummpConfig.jummp.model.curators.mailinglist
+}
+
+if (jummpConfig.jummp.cache.dir) {
+    jummp.cache.dir = jummpConfig.jummp.cache.dir
+}
+
+if (jummpConfig.jummp.classification.endpoint) {
+    jummp.classification.endpoint = jummpConfig.jummp.classification.endpoint
 }
 
 if (jummp.search.strategy == "solr") {

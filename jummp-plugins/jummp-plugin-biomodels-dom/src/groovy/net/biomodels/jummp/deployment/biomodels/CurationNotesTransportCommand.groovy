@@ -28,6 +28,7 @@ import net.biomodels.jummp.plugins.security.User
  *
  * @author  Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
+@grails.validation.Validateable
 class CurationNotesTransportCommand implements Serializable {
     private static final long serialVersionUID = 1L
     Long id
@@ -37,5 +38,11 @@ class CurationNotesTransportCommand implements Serializable {
     Date dateAdded
     Date lastModified
     String comment
+    String internalComment
     byte[] curationImage
+    boolean updated
+
+    static constraints = {
+        importFrom(CurationNotes)
+    }
 }

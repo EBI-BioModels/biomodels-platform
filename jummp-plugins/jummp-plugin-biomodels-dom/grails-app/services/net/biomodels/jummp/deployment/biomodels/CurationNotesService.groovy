@@ -26,8 +26,11 @@ package net.biomodels.jummp.deployment.biomodels
 
 import grails.transaction.Transactional
 import net.biomodels.jummp.model.Model
+import net.biomodels.jummp.plugins.security.User
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+
+import java.text.SimpleDateFormat
 
 /**
  * @short Service responsible for retrieving CurationNotes entries.
@@ -42,6 +45,8 @@ class CurationNotesService {
      * Flag indicating the logger's verbosity threshold.
      */
     static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
+
+    def userService
     /**
      * Retrieve the latest modified curation notes based on given model id
      *
@@ -62,6 +67,45 @@ class CurationNotesService {
             }
         }
         return latestCurationNotes
+    }
+
+    /**
+     * Build up a map of essential parameters for the update and add operation, etc.
+     * Depending on the operation in operating, the map could be or populated against an
+     * existing curation notes or initialised a few attributes with the defaults values.
+     *
+     * @param a map   A map containing model identifier and curation notes identifier
+     * @return a map  A map of the necessary parameters will be used in the other operations.
+     */
+    Map loadOrInitialise(Map args) {
+        CurationNotesTransportCommand curationNotesTC = null
+        if (args.containsKey("cnId")) {
+            Long cnId = Long.parseLong(args.get("cnId"))
+            use(CurationNotesCategory) {
+                curationNotesTC = CurationNotes.get(cnId).toCommandObject()
+            }
+        }
+
+        if (!curationNotesTC) {
+            // this case is to add a new curation notes
+            curationNotesTC = new CurationNotesTransportCommand()
+            curationNotesTC.updated = false
+            curationNotesTC.comment = null
+            curationNotesTC.internalComment = null
+            curationNotesTC.dateAdded = new Date()
+            curationNotesTC.curationImage = null
+            curationNotesTC.submitter = userService.getCurrentUser()
+        } else {
+            curationNotesTC.updated = true
+        }
+        curationNotesTC.lastModifier = userService.getCurrentUser()
+        curationNotesTC.lastModified = new Date()
+        String modelId = args.get("model")
+        String curationImage
+        curationImage = curationNotesTC.curationImage ? Base64.encoder.encodeToString(curationNotesTC.curationImage) : null
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+        ['curationNotesTC': curationNotesTC, 'curationImage': curationImage,
+         'dateFormat': dateFormat, 'id': modelId]
     }
 
     /**
@@ -99,54 +143,27 @@ There is an error when trying to persist curate image into database: ${cn.errors
         success
     }
 
-    boolean updateCurationImage(CurationNotesTransportCommand command) {
-        CurationNotesTransportCommand cntc = fetchCurationNotesForModel(command.model.id)
-        CurationNotes cn
-        Model model = Model.get(command.model.id)
-        if (cntc) {
-            cn = CurationNotes.findBySubmitterAndLastModifierAndModel(cntc.submitter, cntc.lastModifier, model)
-        } else {
-            cn = new CurationNotes()
-        }
-        cn.curationImage = command.curationImage
-        cn.model = model
-        cn.submitter = command.submitter
-        cn.lastModifier = command.lastModifier
-        cn.dateAdded = command.dateAdded
-        cn.lastModified = command.lastModified
-        cn.comment = command.comment
-        boolean success = cn.save(flush: true)
-        if (success) {
-            log.debug("""\
-The curation image associated with the simulation results of model $model.submissionId
-has been saved successfully into the database.""")
-        } else {
-            log.error("""\
-There is an error when trying to persist curate image into database: ${cn.errors.allErrors.inspect()}""")
-        }
-        success
-    }
-
     boolean doAddOrUpdateCurationNotes(CurationNotesTransportCommand cntc) {
         Model model = Model.get(cntc.model.id)
-        Long id = cntc.id
-        CurationNotes cn = CurationNotes.get(id)
-        if (!cn) {
-            cn = new CurationNotes()
-        }
-        cn.model = model
-        cn.comment = cntc.comment
-        cn.submitter = cntc.submitter
-        cn.lastModifier = cntc.lastModifier
-        cn.dateAdded = cntc.dateAdded
-        cn.lastModified = cntc.lastModified
-        cn.curationImage = cntc.curationImage
+        User submitter = cntc.submitter
+        User lastModifier = cntc.lastModifier
+        Date dateAdded = cntc.dateAdded
+        Date lastModified = cntc.lastModified
+        String comment = cntc.comment
+	    String internalComment = cntc.internalComment
+        byte[] curationImage = cntc.curationImage
+        Map criteria = [model: model, curationImage: curationImage,
+                        comment: comment, internalComment: internalComment,
+                        submitter: submitter, lastModifier: lastModifier,
+                        dateAdded: dateAdded, lastModified: lastModified]
+        CurationNotes cn = CurationNotes.findOrSaveWhere(criteria)
+        String modelId = model.publicationId ?: model.submissionId
         if (cn.save(flush: true)) {
-            log.debug("The simulation results of the model $model.id have been saved!")
+            log.debug("The simulation results of the model $modelId have been saved!")
             return true
         } else {
             log.error("""\
-Failed to try to persist curation notes of the model $model.id into database: ${cn.errors.allErrors.inspect()}""")
+There are errors when trying to persist curation notes of the model $modelId into database: ${cn.errors.allErrors.inspect()}""")
             return false
         }
     }

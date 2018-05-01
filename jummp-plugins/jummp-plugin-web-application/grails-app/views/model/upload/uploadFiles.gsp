@@ -290,7 +290,6 @@
                              "Please rename it or select another file.";
                             showNotification(message);
                         } else {
-
                             if (isMainFileReplaced) { // update process
                                 /* remove the old/current one */
                                 for (index in existingMainFiles)
