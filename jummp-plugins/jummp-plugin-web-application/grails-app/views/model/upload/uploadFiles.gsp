@@ -237,7 +237,7 @@
                     if ($('#'+id).is("span")) {
                         var mainFileName = $('#'+id).text();
                         $('#'+id).text('');
-                        for (index in existingMainFiles)
+                        for (var index = 0; index < existingMainFiles.length; index++)
                             if (existingMainFiles[index].filename === mainFileName) {
                                 existingMainFiles.splice(index, 1);
                             }
@@ -286,7 +286,7 @@
 
                         if (isMainFileReplaced) { // update process
                             /* remove the old/current one */
-                            for (index in existingMainFiles)
+                            for (var index = 0; index < existingMainFiles.length; index++)
                             if (existingMainFiles[index].filename === formerMainFileName) {
                                 existingMainFiles.splice(index, 1);
                                 // update the former main on GUI
@@ -298,7 +298,7 @@
                             span = $(span)[0].id;
                             $('#' + span).text(newFileName);
                         } else { // submission process
-                            for (index in existingMainFiles)
+                            for (var index = 0; index < existingMainFiles.length; index++)
                                 if (existingMainFiles[index].filename === formerMainFileName) {
                                     existingMainFiles.splice(index, 1);
                                     // update the former main on GUI
@@ -416,8 +416,8 @@
                         fileName = fileNameAbsolutePath.substr(12);
                     }
                     // find and delete the object having the filename property equals to fileName
-                    for (index in existingAdditionalFiles)
-                        if (existingAdditionalFiles[index].filename == fileName) {
+                    for (var index = 0; index < existingAdditionalFiles.length; index++)
+                        if (existingAdditionalFiles[index].filename === fileName.trim()) {
                             existingAdditionalFiles.splice(index, 1);
                         }
                     updateAdditionalFilesOnUI();
