@@ -54,7 +54,7 @@
                         <label>Last modified by <small style="color: red">required</small>
                             <input type="text" id="lastModifier" required
                                    placeholder="the last modifier who is updating the simulation results"
-                                   value="${curationNotesTC.lastModifier?.username}">
+                                   value="${curationNotesTC.lastModifier?.username}" readonly>
                         </label>
                     </div>
                     <div class="row">
