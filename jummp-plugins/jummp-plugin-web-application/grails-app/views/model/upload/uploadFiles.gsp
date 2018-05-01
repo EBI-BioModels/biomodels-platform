@@ -46,7 +46,6 @@
                                 [ filename: key, description: value ]
                         } as JSON}
             };
-
             var existingMainFiles = descriptionMainMap["files"];
             var descriptionMap = { "files": ${workingMemory['additional_files'].collect {
                             RepositoryFileTransportCommand rf ->
@@ -402,13 +401,13 @@
                 var tr = $(this).parent().parent().get(0);
                 var td = tr.getElementsByClassName("name")[0];
                 if (td) {
-                    // collect the additional files existing we want to delete
-                    var hi = "<input type='hidden' value='" + td.innerHTML + "' name='deletedAdditional'/>";
+                    // collect the additional files that the user has just discarded
+                    var fileName = td.innerHTML.substring(0,td.innerHTML.indexOf("<")).trim();
+                    var hi = "<input type='text' value='" + fileName + "' name='deletedAdditional'/>";
                     document.getElementById("noAdditionals").innerHTML += hi;
-
                     // update the map
                     var fileName = td.innerHTML.substring(0,td.innerHTML.indexOf("<"));
-                    if (fileName == '') { // this file has just added in extraFiles division
+                    if (fileName === '') { // this file has just added in extraFiles division
                         var id = $(this).attr('id');
                         var idFileUpload = id.substr('discard'.length);
                         fileNameAbsolutePath = $("#"+idFileUpload).val();

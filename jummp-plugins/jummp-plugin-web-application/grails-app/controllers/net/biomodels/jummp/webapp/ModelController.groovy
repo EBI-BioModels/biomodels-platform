@@ -671,6 +671,8 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                         int posLessThan = filename.indexOf("<")
                         if (posLessThan > 0) {
                             additionalFilesToBeDeleted.add(filename.substring(0, posLessThan))
+                        } else {
+                            additionalFilesToBeDeleted.add(filename)
                         }
                     }
                     if (IS_DEBUG_ENABLED) {
