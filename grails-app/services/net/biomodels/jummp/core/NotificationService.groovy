@@ -126,6 +126,8 @@ class NotificationService {
 
     void modelCreated(def body) {
         ModelTransportCommand model = body.model
+        String serverURL = grailsApplication.config.grails.serverURL
+        String modelLink = "${serverURL}/${model.submissionId}"
         User submitter = body.user
         String submitterRealName = submitter.person.userRealName
         String submitterEmail = submitter.email
@@ -147,7 +149,7 @@ class NotificationService {
             GregorianCalendar cal = new GregorianCalendar()
             String submissionTime = cal.getTime().toGMTString()
             String[] args = [model.id.toString(), model.name, model.submissionId, format,
-                             submitterInfo, pubData, submissionTime]
+                             submitterInfo, pubData, submissionTime, modelLink]
             emailBody = messageSource.getMessage("notification.model.created.emailToCurator.body", args, null)
             mailService.sendMail {
                 async true
@@ -173,7 +175,7 @@ class NotificationService {
             String withPublicationProvided = messageSource.getMessage(withPubMsgCode, [] as String[],  null)
             String noPublicationProvided = messageSource.getMessage(noPubMsgCode, [] as String[], null)
             String askAcknowledgement = model.publication ? withPublicationProvided : noPublicationProvided
-            String[] args = [salutation, model.name, model.submissionId, askAcknowledgement]
+            String[] args = [salutation, model.name, model.submissionId, askAcknowledgement, modelLink]
             emailBody = messageSource.getMessage("notification.model.created.emailToSubmitter.body", args, null)
             mailService.sendMail {
                 async true
