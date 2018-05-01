@@ -54,7 +54,7 @@
                         <label>Last modified by <small style="color: red">required</small>
                             <input type="text" id="lastModifier" required
                                    placeholder="the last modifier who is updating the simulation results"
-                                   value="${curationNotesTC.lastModifier?.username}">
+                                   value="${curationNotesTC.lastModifier?.username}" readonly>
                         </label>
                     </div>
                     <div class="row">
@@ -84,6 +84,8 @@
                    style="text-align: right; direction: ltr">
         </div>
         <div class="small-12 medium-6 large-6 columns" style="text-align: right">
+            <a href="${createLink(controller: "model", action: "show", id: id)}" class="button"
+               title="Back to the model display page">Back</a>
             <button type="button" class="button" id="btnSave">Save</button>
             <button type="button" class="button" id="btnReset">Reset</button>
         </div>
