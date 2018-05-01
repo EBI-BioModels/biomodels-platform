@@ -283,38 +283,30 @@
                         var hi = "<input value='" + formerMainFileName + "' name='deletedMain'>";
                         document.getElementById("noMains").innerHTML += hi;
 
-                        if (existingMainFiles.filter(function(v) {
-                            return v.filename === newFileName;
-                        })[0]) {
-                            var message = "The file named " + newFileName + " already exists. " +
-                             "Please rename it or select another file.";
-                            showNotification(message);
-                        } else {
-                            if (isMainFileReplaced) { // update process
-                                /* remove the old/current one */
-                                for (index in existingMainFiles)
+                        if (isMainFileReplaced) { // update process
+                            /* remove the old/current one */
+                            for (index in existingMainFiles)
+                            if (existingMainFiles[index].filename === formerMainFileName) {
+                                existingMainFiles.splice(index, 1);
+                                // update the former main on GUI
+                            }
+
+                            isMainFileReplaced = false;
+                            /* update the new file */
+                            // display the new file to gui
+                            span = $(span)[0].id;
+                            $('#' + span).text(newFileName);
+                        } else { // submission process
+                            for (index in existingMainFiles)
                                 if (existingMainFiles[index].filename === formerMainFileName) {
                                     existingMainFiles.splice(index, 1);
                                     // update the former main on GUI
                                 }
-
-                                isMainFileReplaced = false;
-                                /* update the new file */
-                                // display the new file to gui
-                                span = $(span)[0].id;
-                                $('#' + span).text(newFileName);
-                            } else { // submission process
-                                for (index in existingMainFiles)
-                                    if (existingMainFiles[index].filename === formerMainFileName) {
-                                        existingMainFiles.splice(index, 1);
-                                        // update the former main on GUI
-                                    }
-                            }
-                            // add the new file to existingMainFiles
-                            var newFile = {filename: newFileName, description: mainFileDescription}
-                            existingMainFiles.push(newFile);
-                            $(this).attr('value', newFileName);
                         }
+                        // add the new file to existingMainFiles
+                        var newFile = {filename: newFileName, description: mainFileDescription}
+                        existingMainFiles.push(newFile);
+                        $(this).attr('value', newFileName);
                     }
                     updateMainFilesOnUI();
                 });
