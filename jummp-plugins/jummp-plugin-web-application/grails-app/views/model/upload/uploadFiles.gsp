@@ -255,7 +255,8 @@
                 });
                 var formerMainFileName = "";
                 $('#mainFile').change(function(event) {
-                    var newFileName = $(this)[0].files[0].name;
+                    var newModelFile = $(this)[0].files[0];
+                    var newFileName = newModelFile.name;
 	                var mainFileDescription = $('input[name=mainFileDescription]').val();
                     if (existingMainFiles.length === 0) {
                         // new submission or update but all the main files has been removed
@@ -320,10 +321,10 @@
                         var id = span.id;
                         var fileName = "";
                         if ($('#' + id).is("span")) {
-                            // case: there are existing main files either submission or update process
+                            // case: there are existing main files in the submission or update process
                             fileName = $('#' + id).text();
                         } else {
-                            // case: only happen in submission process
+                            // case: only happen in the submission process
                             fileName = $('input[id^=mainFile]')[0].files[0].name;
                         }
                         var description = $(this).val();
@@ -474,44 +475,24 @@
             });
 
             $( "#dialog-confirm" ).dialog({
-                        resizable: false,
-                        height:300,
-                        width:500,
-                        modal: true,
-                        buttons: {
-                            "Proceed Without Validation": function() {
-                            	var eventID = '_eventId_ProceedWithoutValidation';
-                                <g:if test='${showProceedAsUnknownFormat}'>
-                            		eventID = '_eventId_ProceedAsUnknown';
-                            	</g:if>
-                                document.getElementById(eventID).click();
-                                $( this ).dialog( "close" );
-                            },
-                            Cancel: function() {
-                                $( this ).dialog( "close" );
-                       }
+                resizable: false,
+                height:300,
+                width:500,
+                modal: true,
+                buttons: {
+                    "Proceed Without Validation": function() {
+                        var eventID = '_eventId_ProceedWithoutValidation';
+                        <g:if test='${showProceedAsUnknownFormat}'>
+                            eventID = '_eventId_ProceedAsUnknown';
+                        </g:if>
+                        document.getElementById(eventID).click();
+                        $( this ).dialog( "close" );
+                    },
+                    Cancel: function() {
+                        $( this ).dialog( "close" );
                     }
-                });
-            /*
-             * Greedy removal of a string's prefix.
-             *
-             * This method does not change the original string. If it contains the supplied
-             * separator, this method will return a new string that starts from the character
-             * that follows the last occurrence of the separator. Otherwise, the string is returned
-             * as-is.
-             * @param sep The character that marks the end of the prefix to be removed.
-             * @param elemName The string that should be trimmed
-             * @return a new string stripped of the specified prefix.
-             */
-            function trimElementName(sep, elemName) {
-                if (elemName.indexOf(sep) > -1) {
-                    var idx = elemName.lastIndexOf(sep) + 1;
-                    var stopIdx = elemName.length;
-                    var trimmedName = elemName.substring(idx, stopIdx);
-                    return trimmedName;
                 }
-                return elemName;
-            }
+            });
         </g:javascript>
     </body>
    <g:render template="/templates/decorateSubmission" />
