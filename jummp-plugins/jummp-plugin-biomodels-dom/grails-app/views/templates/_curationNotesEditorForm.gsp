@@ -84,6 +84,8 @@
                    style="text-align: right; direction: ltr">
         </div>
         <div class="small-12 medium-6 large-6 columns" style="text-align: right">
+            <a href="${createLink(controller: "model", action: "show", id: id)}" class="button"
+               title="Back to the model display page">Back</a>
             <button type="button" class="button" id="btnSave">Save</button>
             <button type="button" class="button" id="btnReset">Reset</button>
         </div>
