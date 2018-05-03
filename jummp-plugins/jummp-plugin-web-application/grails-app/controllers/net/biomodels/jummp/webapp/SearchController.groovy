@@ -343,7 +343,7 @@ class SearchController {
         List<Facet> basicFacets = searchService.buildBasicFacets(models)
         int totalCount = modelService.getModelCount(filter, false)
         return [models: models, facets: basicFacets, modelsAvailable: totalCount, sortBy: sortBy,
-                sortDirection: sortDirection, offset: offset, length: length]
+                sortDirection: sortDirection, offset: offset, length: length, query: filter]
     }
 
     private String getSortColumn(int sc) {
