@@ -13,22 +13,6 @@
     def FACETS_WRAPPED_DOUBLE_QUOTE = ["curationstatus", "modelformat", "disease", "modellingapproach", "modelflag"]
     String queryString = params.query?.replaceAll('"', '\\\\"')
 %>
-<g:javascript>
-    function escapeSpecialLuceneCharacters(facet_value) {
-        facet_value = facet_value.replace(/\+/g, '\\+');
-        facet_value = facet_value.replace(/\?/g, '\\?');
-        facet_value = facet_value.replace(/\*/g, '\\*');
-        facet_value = facet_value.replace(/\(/g, '\\(');
-        facet_value = facet_value.replace(/\)/g, '\\)');
-        facet_value = facet_value.replace(/\[/g, '\\[');
-        facet_value = facet_value.replace(/\]/g, '\\]');
-        facet_value = facet_value.replace(/\{/g, '\\{');
-        facet_value = facet_value.replace(/\}/g, '\\}');
-        facet_value = facet_value.replace(/\:/g, '\\:');
-        facet_value = facet_value.replace(/\//g, '\\/');
-        return facet_value;
-    }
-</g:javascript>
 <g:if test="${models}">
     <h4>Filter your results</h4>
     <g:if test="${actionName == 'list'}">
@@ -154,6 +138,7 @@
     function runFacetList(e, facetGroupId, facetValue) {
         var entireQueryString = $("#filterModel").val();
         facetValue = escapeSpecialLuceneCharacters(facetValue);
+        /* the above function is defined in common.js which is included in the footer section */
 	    var lastQueryString = encodeURIComponent(facetGroupId + ":" + facetValue);
         if (e[0].checked) {
             if (entireQueryString == "") {
