@@ -168,10 +168,6 @@ class ModelService {
                                     String filter = null, boolean deletedOnly = false) {
         getAllModelWithDetails(offset, count, sortOrder, sortColumn, filter, deletedOnly).collect{ it.first() }
     }
-                String filter = null, boolean deletedOnly=false) {
-
-        return getAllModelWithDetails(offset, count, sortOrder, sortColumn, filter, deletedOnly).collect{ it.first() }
-    }
 
     @Profiled(tag = "modelService.getAllModelWithDetails")
     private List getAllModelWithDetails(int offset, int count,
