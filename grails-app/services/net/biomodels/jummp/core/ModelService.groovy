@@ -231,16 +231,13 @@ WHERE r.deleted = false
     AclEntry ace2  where r.model=r2.model
     AND r2.id=ace2.aclObjectIdentity.objectId
     AND ace2.aclObjectIdentity.aclClass.className = :className
-    AND ace2.sid.sid IN (:roles) AND ace2.mask IN (:permissions)
-    AND ace2.granting = true)"""
-        }
-        query = "$query AND m.deleted = ${deletedOnly} "
+    AND ace2.sid.sid IN (:roles) AND ace2.mask IN (:permissions)) AND m.deleted = ${deletedOnly}"""
+
         if (filterIsValid) {
-            query +="""\
+            query ="""\
 $query AND(
 lower(r.format.identifier) like :filter OR
-lower(u.person.userRealName) like :filter
-)"""
+lower(u.person.userRealName) like :filter)"""
         } else {
             if (type) {
                 String currentUsername = springSecurityService.currentUser.username
@@ -262,7 +259,8 @@ lower(u.person.userRealName) like :filter
         return query
     }
 
-    private String getQueryForAdmin(ModelListSorting sortColumn, boolean deletedOnly, boolean filterIsValid, String type, String sortingDirection) {
+    private String getQueryForAdmin(ModelListSorting sortColumn, boolean deletedOnly,
+                                    boolean filterIsValid, String type, String sortingDirection) {
         String query = '''
 SELECT DISTINCT m, r.name, r.description, r.uploadDate, r.format.name, m.id, u.person.userRealName
 FROM Revision AS r
