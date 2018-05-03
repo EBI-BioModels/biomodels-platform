@@ -164,14 +164,17 @@ class ModelService {
     **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getAllModels")
-    public List<Model> getAllModels(int offset, int count, boolean sortOrder, ModelListSorting sortColumn,
+    List<Model> getAllModels(int offset, int count, boolean sortOrder, ModelListSorting sortColumn,
+                                    String filter = null, boolean deletedOnly = false) {
+        getAllModelWithDetails(offset, count, sortOrder, sortColumn, filter, deletedOnly).collect{ it.first() }
+    }
                 String filter = null, boolean deletedOnly=false) {
 
         return getAllModelWithDetails(offset, count, sortOrder, sortColumn, filter, deletedOnly).collect{ it.first() }
     }
 
     @Profiled(tag = "modelService.getAllModelWithDetails")
-    List getAllModelWithDetails(int offset, int count,
+    private List getAllModelWithDetails(int offset, int count,
                  boolean sortOrder, ModelListSorting sortColumn, String filter = null, boolean deletedOnly=false) {
         Map metaParams
         if (offset < 0 || count <= 0) {
