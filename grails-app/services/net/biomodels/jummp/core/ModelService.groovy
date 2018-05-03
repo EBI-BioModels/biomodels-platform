@@ -230,21 +230,8 @@ SELECT DISTINCT m, r.name, r.description, r.uploadDate, r.format.name, m.id, u.p
 FROM Revision AS r
 JOIN r.model AS m
 JOIN r.owner as u
-WHERE r.deleted = false"""
-        // do we want to show information from the latest revision?
-        if (sortColumn == ModelListSorting.LAST_MODIFIED || sortColumn == ModelListSorting.FORMAT || sortColumn == ModelListSorting.NAME) {
-            query = """\
-$query AND r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2,
-                        AclEntry ace2  where r.model=r2.model
-                        AND r2.id=ace2.aclObjectIdentity.objectId
-                        AND ace2.aclObjectIdentity.aclClass.className = :className
-                        AND ace2.sid.sid IN (:roles) AND ace2.mask IN (:permissions)
-                        AND ace2.granting = true)"""
-        } else {
-            // otherwise sortColumn must be the following .. ie we want to sort by the first revision
-            // (sortColumn==ModelListSorting.SUBMITTER || sortColumn==ModelListSorting.SUBMISSION_DATE)
-            query = """\
-$query AND r.revisionNumber=(SELECT MIN(r2.revisionNumber) from Revision r2,
+WHERE r.deleted = false
+    AND r.revisionNumber=(SELECT MIN(r2.revisionNumber) from Revision r2,
     AclEntry ace2  where r.model=r2.model
     AND r2.id=ace2.aclObjectIdentity.objectId
     AND ace2.aclObjectIdentity.aclClass.className = :className
