@@ -47,14 +47,14 @@
                         } as JSON}
             };
             var existingMainFiles = descriptionMainMap["files"];
-            var descriptionMap = { "files": ${workingMemory['additional_files'].collect {
+            var descriptionAdditionalMap = { "files": ${workingMemory['additional_files'].collect {
                             RepositoryFileTransportCommand rf ->
                                 String key = new File(rf.path).name
                                 String value = rf.description
                                 [ filename: key, description: value ]
                         } as JSON}
             };
-            var existingAdditionalFiles = descriptionMap["files"];
+            var existingAdditionalFiles = descriptionAdditionalMap["files"];
         </script>
     </head>
     <body>
@@ -142,17 +142,17 @@
             var numberOfAdditionalsAtLoadingPage = $('input[id^=description]').size();
 
             function updateAdditionalFilesOnUI() {
-                descriptionMap.files = [];
+                descriptionAdditionalMap.files = [];
                 $.each(existingAdditionalFiles, function(index, fileEntry) {
                     // key here is the index, value is the actual value we are interested in
                     var fileName = fileEntry["filename"];
                     var fileDescription  = fileEntry["description"];
-                    descriptionMap.files.push({'filename': fileName, 'description': fileDescription});
+                    descriptionAdditionalMap.files.push({'filename': fileName, 'description': fileDescription});
                 });
                 // update the hidden input element containing the latest additional files
                 // the map should be converted to json string that will be transferred to controller
                 var input = "<input name='additionalFilesInWorking' size='220' value='";
-                    input += JSON.stringify(descriptionMap) + "'/>";
+                    input += JSON.stringify(descriptionAdditionalMap) + "'/>";
                 document.getElementById("additionalsOnUI").innerHTML = input;
             }
 
@@ -379,7 +379,7 @@
 
                 $("#_eventId_Upload").click(function() {
                     var input = "<input name='additionalFilesInWorking' value='";
-                    input += JSON.stringify(descriptionMap) + "'/>";
+                    input += JSON.stringify(descriptionAdditionalMap) + "'/>";
                     document.getElementById("additionalsOnUI").innerHTML = input;
 
                     input = "<input name='mainFilesInWorking' value='";
