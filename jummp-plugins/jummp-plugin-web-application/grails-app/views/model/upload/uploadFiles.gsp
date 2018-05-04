@@ -56,7 +56,6 @@
                                 [ filename: key, description: value ]
                         } as JSON}
             };
-
             var existingMainFiles = descriptionMainMap["files"];
             var descriptionMap = { "files": ${workingMemory['additional_files'].collect {
                             RepositoryFileTransportCommand rf ->
@@ -247,7 +246,7 @@
                     if ($('#'+id).is("span")) {
                         var mainFileName = $('#'+id).text();
                         $('#'+id).text('');
-                        for (index in existingMainFiles)
+                        for (var index = 0; index < existingMainFiles.length; index++)
                             if (existingMainFiles[index].filename === mainFileName) {
                                 existingMainFiles.splice(index, 1);
                             }
@@ -265,7 +264,8 @@
                 });
                 var formerMainFileName = "";
                 $('#mainFile').change(function(event) {
-                    var newFileName = $(this)[0].files[0].name;
+                    var newModelFile = $(this)[0].files[0];
+                    var newFileName = newModelFile.name;
 	                var mainFileDescription = $('input[name=mainFileDescription]').val();
                     if (existingMainFiles.length === 0) {
                         // new submission or update but all the main files has been removed
@@ -293,38 +293,30 @@
                         var hi = "<input value='" + formerMainFileName + "' name='deletedMain'>";
                         document.getElementById("noMains").innerHTML += hi;
 
-                        if (existingMainFiles.filter(function(v) {
-                            return v.filename === newFileName;
-                        })[0]) {
-                            var message = "The file named " + newFileName + " already exists. " +
-                             "Please rename it or select another file.";
-                            showNotification(message);
-                        } else {
-                            if (isMainFileReplaced) { // update process
-                                /* remove the old/current one */
-                                for (index in existingMainFiles)
+                        if (isMainFileReplaced) { // update process
+                            /* remove the old/current one */
+                            for (var index = 0; index < existingMainFiles.length; index++)
+                            if (existingMainFiles[index].filename === formerMainFileName) {
+                                existingMainFiles.splice(index, 1);
+                                // update the former main on GUI
+                            }
+
+                            isMainFileReplaced = false;
+                            /* update the new file */
+                            // display the new file to gui
+                            span = $(span)[0].id;
+                            $('#' + span).text(newFileName);
+                        } else { // submission process
+                            for (var index = 0; index < existingMainFiles.length; index++)
                                 if (existingMainFiles[index].filename === formerMainFileName) {
                                     existingMainFiles.splice(index, 1);
                                     // update the former main on GUI
                                 }
-
-                                isMainFileReplaced = false;
-                                /* update the new file */
-                                // display the new file to gui
-                                span = $(span)[0].id;
-                                $('#' + span).text(newFileName);
-                            } else { // submission process
-                                for (index in existingMainFiles)
-                                    if (existingMainFiles[index].filename === formerMainFileName) {
-                                        existingMainFiles.splice(index, 1);
-                                        // update the former main on GUI
-                                    }
-                            }
-                            // add the new file to existingMainFiles
-                            var newFile = {filename: newFileName, description: mainFileDescription}
-                            existingMainFiles.push(newFile);
-                            $(this).attr('value', newFileName);
                         }
+                        // add the new file to existingMainFiles
+                        var newFile = {filename: newFileName, description: mainFileDescription}
+                        existingMainFiles.push(newFile);
+                        $(this).attr('value', newFileName);
                     }
                     updateMainFilesOnUI();
                 });
@@ -338,10 +330,10 @@
                         var id = span.id;
                         var fileName = "";
                         if ($('#' + id).is("span")) {
-                            // case: there are existing main files either submission or update process
+                            // case: there are existing main files in the submission or update process
                             fileName = $('#' + id).text();
                         } else {
-                            // case: only happen in submission process
+                            // case: only happen in the submission process
                             fileName = $('input[id^=mainFile]')[0].files[0].name;
                         }
                         var description = $(this).val();
@@ -419,13 +411,13 @@
                 var tr = $(this).parent().parent().get(0);
                 var td = tr.getElementsByClassName("name")[0];
                 if (td) {
-                    // collect the additional files existing we want to delete
-                    var hi = "<input type='hidden' value='" + td.innerHTML + "' name='deletedAdditional'/>";
+                    // collect the additional files that the user has just discarded
+                    var fileName = td.innerHTML.substring(0,td.innerHTML.indexOf("<")).trim();
+                    var hi = "<input type='text' value='" + fileName + "' name='deletedAdditional'/>";
                     document.getElementById("noAdditionals").innerHTML += hi;
-
                     // update the map
                     var fileName = td.innerHTML.substring(0,td.innerHTML.indexOf("<"));
-                    if (fileName == '') { // this file has just added in extraFiles division
+                    if (fileName === '') { // this file has just added in extraFiles division
                         var id = $(this).attr('id');
                         var idFileUpload = id.substr('discard'.length);
                         fileNameAbsolutePath = $("#"+idFileUpload).val();
@@ -433,8 +425,8 @@
                         fileName = fileNameAbsolutePath.substr(12);
                     }
                     // find and delete the object having the filename property equals to fileName
-                    for (index in existingAdditionalFiles)
-                        if (existingAdditionalFiles[index].filename == fileName) {
+                    for (var index = 0; index < existingAdditionalFiles.length; index++)
+                        if (existingAdditionalFiles[index].filename === fileName.trim()) {
                             existingAdditionalFiles.splice(index, 1);
                         }
                     updateAdditionalFilesOnUI();
@@ -492,44 +484,24 @@
             });
 
             $( "#dialog-confirm" ).dialog({
-                        resizable: false,
-                        height:300,
-                        width:500,
-                        modal: true,
-                        buttons: {
-                            "Proceed Without Validation": function() {
-                            	var eventID = '_eventId_ProceedWithoutValidation';
-                                <g:if test='${showProceedAsUnknownFormat}'>
-                            		eventID = '_eventId_ProceedAsUnknown';
-                            	</g:if>
-                                document.getElementById(eventID).click();
-                                $( this ).dialog( "close" );
-                            },
-                            Cancel: function() {
-                                $( this ).dialog( "close" );
-                       }
+                resizable: false,
+                height:300,
+                width:500,
+                modal: true,
+                buttons: {
+                    "Proceed Without Validation": function() {
+                        var eventID = '_eventId_ProceedWithoutValidation';
+                        <g:if test='${showProceedAsUnknownFormat}'>
+                            eventID = '_eventId_ProceedAsUnknown';
+                        </g:if>
+                        document.getElementById(eventID).click();
+                        $( this ).dialog( "close" );
+                    },
+                    Cancel: function() {
+                        $( this ).dialog( "close" );
                     }
-                });
-            /*
-             * Greedy removal of a string's prefix.
-             *
-             * This method does not change the original string. If it contains the supplied
-             * separator, this method will return a new string that starts from the character
-             * that follows the last occurrence of the separator. Otherwise, the string is returned
-             * as-is.
-             * @param sep The character that marks the end of the prefix to be removed.
-             * @param elemName The string that should be trimmed
-             * @return a new string stripped of the specified prefix.
-             */
-            function trimElementName(sep, elemName) {
-                if (elemName.indexOf(sep) > -1) {
-                    var idx = elemName.lastIndexOf(sep) + 1;
-                    var stopIdx = elemName.length;
-                    var trimmedName = elemName.substring(idx, stopIdx);
-                    return trimmedName;
                 }
-                return elemName;
-            }
+            });
         </g:javascript>
     </body>
    <g:render template="/templates/decorateSubmission" />
