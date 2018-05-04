@@ -205,12 +205,13 @@ class ModelService {
         Set<String> roles = getSpringDatabaseRoles()
         query = getQueryStringForUser(sortColumn, deletedOnly, filterIsValid, type, sortingDirection, isAdmin)
         List permissions = new ArrayList([BasePermission.READ.getMask(), BasePermission.ADMINISTRATION.getMask()])
-        namedParams += [
-            className  :  Revision.class.getName(),
-            permissions:  permissions,
-            roles      :  roles
-        ]
-
+        if (!isAdmin) {
+            namedParams += [
+                className  : Revision.class.getName(),
+                permissions: permissions,
+                roles      : roles
+            ]
+        }
         return Model.executeQuery(query, namedParams, metaParams)
     }
 
