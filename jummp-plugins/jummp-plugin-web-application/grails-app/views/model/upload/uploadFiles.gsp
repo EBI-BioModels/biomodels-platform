@@ -426,23 +426,18 @@
             });
 
             $(document).on("change", 'input[type=file]', function (e) {
+                // this copes with the additional files
                 var id = $(this).attr('id');
                 if (id != 'mainFile') {
                     var fileName = $(this)[0].files[0].name;
-                    if (existingAdditionalFiles.filter(function(v) {
-                        return v.filename === fileName;
-                    })[0]) {
-                        alert("The file named " + fileName + " already exists. Please rename it or select another file.");
-                    } else {
-                        // add the new file to existingAdditionalFiles
-                        var newFile = {filename: fileName, description: ""}
-                        existingAdditionalFiles.push(newFile);
-                        // display it on the page
-                        $(this).attr('value', fileName);
-                        var discardID = "discard" + $(this).attr('id');
-                        $("#"+discardID).attr('download', fileName);
-                        updateAdditionalFilesOnUI();
-                    }
+                    // add the new file to the map existingAdditionalFiles
+                    var newFile = {filename: fileName, description: ""}
+                    existingAdditionalFiles.push(newFile);
+                    // display it on the page
+                    $(this).attr('value', fileName);
+                    var discardID = "discard" + $(this).attr('id');
+                    $("#"+discardID).attr('download', fileName);
+                    updateAdditionalFilesOnUI();
                 }
             });
 
