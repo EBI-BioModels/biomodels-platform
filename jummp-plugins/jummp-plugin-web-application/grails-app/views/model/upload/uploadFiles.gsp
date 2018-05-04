@@ -452,6 +452,7 @@
                     // update Files Existing on UI
                     // there is an input tag set hidden to store RFTC object. We need only the file name.
                     var posLessThan = hi.indexOf("<");
+                    var fileName = "";
                     if (posLessThan > 0) {
                         // this case is the existing file on database
                         fileName = hi.substring(0,posLessThan);
