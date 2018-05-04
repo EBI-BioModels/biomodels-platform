@@ -138,8 +138,8 @@
             $('.flashNotificationDiv').click(function() {
                 $(this).hide();
             });
-            var nbExtraFiles = 0;
-            var numberOfAdditionalsAtLoadingPage = $('input[id^=description]').size();
+
+            var nbExtraFiles = $('input[id^=description]').size();
 
             function updateAdditionalFilesOnUI() {
                 descriptionAdditionalMap.files = [];
@@ -346,6 +346,7 @@
                 });
 
                 $("#addFile").click(function (evt) {
+                    var index = ++nbExtraFiles;
                     evt.preventDefault();
                     $('<tr>', {
                         class: 'fileEntry'
@@ -353,25 +354,25 @@
                         $('<td class="name" style="width: 20%">').append(
                             $('<input/>', {
                                 type: 'file',
-                                id: 'extraFiles' + nbExtraFiles,
+                                id: 'extraFiles' + index,
                                 name: 'extraFiles'
                             })
                         ),
                         $('</td><td style="width: 70%">').append(
                             $('<input/>', {
                                 type: 'text',
-                                id: 'description' + ++numberOfAdditionalsAtLoadingPage,
+                                id: 'description' + index,
                                 name: 'description',
                                 style: "width: 100%; box-sizing: border-box; -webkit-box-sizing: border-box; -moz-box-sizing: border-box;",
                                 placeholder: 'Please enter a description'
                             }).prop('required', true)
                         ),
-                        $('</td><td style="width: 10%; display: table-cell; vertical-align: middle; text-align: right">&nbsp;').append(
+                        $('</td><td style="width: 10%; display: table-cell; vertical-align: middle; text-align: center">&nbsp;').append(
                             $('<a>', {
                                 href: "#",
                                 class: 'killer',
                                 text: 'Discard',
-                                id: 'discardextraFiles' + nbExtraFiles++
+                                id: 'discardExtraFiles' + index
                             })
                         ).append("</a>")
                     ).appendTo('table#additionalFiles');
