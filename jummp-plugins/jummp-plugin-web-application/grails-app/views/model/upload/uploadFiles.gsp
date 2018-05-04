@@ -433,10 +433,6 @@
                     // add the new file to the map existingAdditionalFiles
                     var newFile = {filename: fileName, description: ""}
                     existingAdditionalFiles.push(newFile);
-                    // display it on the page
-                    $(this).attr('value', fileName);
-                    var discardID = "discard" + $(this).attr('id');
-                    $("#"+discardID).attr('download', fileName);
                     updateAdditionalFilesOnUI();
                 }
             });
