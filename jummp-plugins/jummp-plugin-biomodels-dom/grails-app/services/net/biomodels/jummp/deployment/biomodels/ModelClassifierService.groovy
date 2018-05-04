@@ -99,18 +99,14 @@ class ModelClassifierService implements InitializingBean {
      * Check if we already have cached, then return the cache instead of classify it again
      * @param model: Model to classify
      * @param date: The date that the model has been updated
+     * @param forceUpdateCache: Alway update cache
      * @return the HashMap represent the response from the Classification API
      */
-    private Map<String, String> classifyModel(Model model, Date date) {
-        JummpEntry<Long, Serializable> cache =
-            cacheService.getCache(model.getSubmissionId()) as JummpEntry<Long, Serializable>
-        if (cache != null) {
-            /**
-             * Check whether the model is updated or not
-             */
-            if (cache.key == TimeUtils.getTimestamp(date)) {
-                return cache.getValue() as Map<String, String>
-            }
+    private Map<String, String> classifyModel(Model model, Date date, boolean forceUpdateCache) {
+        KV<Long, Serializable> cache =
+            cacheService.getCache(model.getSubmissionId()) as KV<Long, Serializable>
+        if (!forceUpdateCache && cache != null) {
+            return cache.getValue() as Map<String, String>
         }
 
         Map<String, String> result = classifyModel(model)
