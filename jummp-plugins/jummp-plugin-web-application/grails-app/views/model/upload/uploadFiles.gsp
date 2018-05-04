@@ -462,9 +462,13 @@
                         var elements = tempDiv.childNodes;
                         fileName = elements[0].getAttribute("value");
                     }
-                    existingAdditionalFiles.filter(function(v) {
+                    fileName = fileName.trim();
+                    var extraFile = existingAdditionalFiles.filter(function(v) {
                         return v.filename === fileName;
-                    })[0].description = $(this).val();
+                    })[0];
+                    if (extraFile) {
+                        extraFile.description = $(this).val();
+                    }
                 }
                 updateAdditionalFilesOnUI();
             });
