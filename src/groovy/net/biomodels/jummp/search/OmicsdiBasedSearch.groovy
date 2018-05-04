@@ -165,13 +165,16 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
         SearchResponse searchResponse = new SearchResponse()
         String[] fields = ["name", "description", "submitter", "curationstatus",
                            "last_modification_date", "submission_date",
-                           "modelformat", "levelversion", "first_author", "publication_year"]
+                           "modelformat", "levelversion", "first_author", "publication_year", "isprivate"]
         String sortField = sortOrder.getField()
         String sortDir = sortOrder.direction == SortOrder.SortDirection.ASC ? "ascending" : "descending"
+        String sort = sortField ? String.format("%s:%s", sortField, sortDir) : ""
+        /* By default, we put the private models at the last pages if they are available */
+        sort = sort ? "isprivate:ascending,$sort" : "isprivate:ascending"
         QueryResult result
         try {
-            result = datasetWsClient.getDatasets("biomodels", query, fields, sortField, sortDir,
-                paginationCriteria['start'], paginationCriteria['length'], paginationCriteria['facetCount'])
+            result = datasetWsClient.getDatasets("biomodels", query, fields,
+                paginationCriteria['start'], paginationCriteria['length'], paginationCriteria['facetCount'], sort)
         } catch (HttpClientErrorException e) {
             log.debug("""\
 There was a problem obtaining search result from EBI search server. The root cause is ${e.toString()}""")
@@ -248,7 +251,7 @@ There was a problem obtaining search result from EBI search server. The root cau
                 results.add(mtc)
             }
             // facets
-            Set<String> hiddenFacets = ["PUBLICATION DATE", "OMICS TYPE", "REPOSITORY", "SOURCE"]
+            Set<String> hiddenFacets = ["PUBLICATION DATE", "OMICS TYPE", "REPOSITORY", "SOURCE", "ISPRIVATE"]
             boolean shouldBeHidden = false
             result.facets?.each { Facet facet ->
                 // deal with two fields due to camel case in the field names

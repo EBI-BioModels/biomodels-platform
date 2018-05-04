@@ -677,7 +677,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             def revisionAdapter = new RevisionAdapter(revision: attachedRevision)
             RevisionTransportCommand cmd = revisionAdapter.toCommandObject()
             indexModelRevision(cmd)
-            convertModelToOtherFormats(cmd)
+            //convertModelToOtherFormats(cmd)
             return attachedRevision
         }
         revision
@@ -950,7 +950,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             Revision r = attachedModel.revisions.first()
             RevisionTransportCommand cmd = new RevisionAdapter(revision: r).toCommandObject()
             indexModelRevision(cmd)
-            convertModelToOtherFormats(cmd)
+            //convertModelToOtherFormats(cmd)
             return attachedModel
         }
         model

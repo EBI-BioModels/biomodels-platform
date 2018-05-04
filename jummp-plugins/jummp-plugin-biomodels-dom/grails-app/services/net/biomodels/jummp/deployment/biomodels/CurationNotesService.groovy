@@ -27,6 +27,7 @@ package net.biomodels.jummp.deployment.biomodels
 import grails.transaction.Transactional
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.plugins.security.User
+import org.apache.commons.lang.math.NumberUtils
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 
@@ -63,7 +64,7 @@ class CurationNotesService {
         CurationNotesTransportCommand latestCurationNotes = null
         if (entries.size() > 0) {
             use(CurationNotesCategory) {
-                latestCurationNotes = entries.first()?.toCommandObject()
+                latestCurationNotes = entries.first().toCommandObject()
             }
         }
         return latestCurationNotes
@@ -79,7 +80,7 @@ class CurationNotesService {
      */
     Map loadOrInitialise(Map args) {
         CurationNotesTransportCommand curationNotesTC = null
-        if (args.containsKey("cnId")) {
+        if (args.containsKey("cnId") && NumberUtils.isNumber(args.get("cnId"))) {
             Long cnId = Long.parseLong(args.get("cnId"))
             use(CurationNotesCategory) {
                 curationNotesTC = CurationNotes.get(cnId).toCommandObject()
@@ -143,7 +144,7 @@ There is an error when trying to persist curate image into database: ${cn.errors
         success
     }
 
-    boolean doAddOrUpdateCurationNotes(CurationNotesTransportCommand cntc) {
+    CurationNotes doAddOrUpdateCurationNotes(CurationNotesTransportCommand cntc) {
         Model model = Model.get(cntc.model.id)
         User submitter = cntc.submitter
         User lastModifier = cntc.lastModifier
@@ -152,19 +153,21 @@ There is an error when trying to persist curate image into database: ${cn.errors
         String comment = cntc.comment
 	    String internalComment = cntc.internalComment
         byte[] curationImage = cntc.curationImage
-        Map criteria = [model: model, curationImage: curationImage,
-                        comment: comment, internalComment: internalComment,
-                        submitter: submitter, lastModifier: lastModifier,
-                        dateAdded: dateAdded, lastModified: lastModified]
+        Map criteria = [model: model, submitter: submitter, dateAdded: dateAdded]
         CurationNotes cn = CurationNotes.findOrSaveWhere(criteria)
+        cn.lastModifier = lastModifier
+        cn.lastModified = lastModified
+        cn.comment = comment
+        cn.internalComment = internalComment
+        cn.curationImage = curationImage
         String modelId = model.publicationId ?: model.submissionId
         if (cn.save(flush: true)) {
             log.debug("The simulation results of the model $modelId have been saved!")
-            return true
+            return cn
         } else {
             log.error("""\
 There are errors when trying to persist curation notes of the model $modelId into database: ${cn.errors.allErrors.inspect()}""")
-            return false
+            return null
         }
     }
 }
