@@ -913,7 +913,7 @@ About to submit ${mainFileList.inspect()} and ${additionalFilesMap.inspect()}.""
                 flash.modelFormatDetectedAs = flow.workingMemory.get("model_type").identifier
             }.to "uploadFiles"
             on("FilesNotValid") {
-                flash.flashMessage = "submission.upload.error.fileerror"
+                flash.flashMessage = "submission.upload.error.filesnotvalid"
             }.to "uploadFiles"
             on(Exception).to "handleException"
         }
