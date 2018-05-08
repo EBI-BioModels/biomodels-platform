@@ -25,7 +25,7 @@ import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import net.biomodels.jummp.model.Model
-import net.biomodels.jummp.models.JummpEntry
+import net.biomodels.jummp.models.KV
 import net.biomodels.jummp.models.ModelDetails
 import net.biomodels.jummp.utils.MathUtils
 import net.biomodels.jummp.utils.RestUtils
@@ -111,7 +111,7 @@ class ModelClassifierService implements InitializingBean {
 
         Map<String, String> result = classifyModel(model)
         int expired = MathUtils.rand(TimeUtils.ONE_YEAR, TimeUtils.TWO_YEAR)
-        cache = new JummpEntry<>(TimeUtils.getTimestamp(date), result as Serializable)
+        cache = new KV<>(TimeUtils.getTimestamp(date), result as Serializable)
         cacheService.setCache(model.getSubmissionId(), cache, expired)
         return result
     }
@@ -141,10 +141,10 @@ class ModelClassifierService implements InitializingBean {
             if (classified == null || classified.get("code") != "200") {
                 continue
             }
-            List<JummpEntry<String, String>> entries = new ArrayList<>()
-            entries.add(new JummpEntry<>(classified.get("root_class"), classified.get("root_class_name")))
-            entries.add(new JummpEntry<>(classified.get("parent_class"), classified.get("parent_class_name")))
-            entries.add(new JummpEntry<>(classified.get("class"), classified.get("class_name")))
+            List<KV<String, String>> entries = new ArrayList<>()
+            entries.add(new KV<>(classified.get("root_class"), classified.get("root_class_name")))
+            entries.add(new KV<>(classified.get("parent_class"), classified.get("parent_class_name")))
+            entries.add(new KV<>(classified.get("class"), classified.get("class_name")))
             classifyModels(results, entries.iterator(), model)
         }
         LOGGER.info("Finished classify models")
@@ -157,9 +157,9 @@ class ModelClassifierService implements InitializingBean {
      * @param iterator: The List that represent each level of the classified model [root, parent, class]
      * @param model: The Model need to add
      */
-    private Map<?, ?> classifyModels(Map<?, ?> classified, Iterator<JummpEntry<String, String>> iterator,
+    private Map<?, ?> classifyModels(Map<?, ?> classified, Iterator<KV<String, String>> iterator,
                                      Object model) {
-        JummpEntry<String, String> entry = iterator.next()
+        KV<String, String> entry = iterator.next()
         if (!iterator.hasNext()) {
             if (classified.containsKey(entry)) {
                 (classified.get(entry) as List<Object>).add(model)
@@ -198,7 +198,7 @@ class ModelClassifierService implements InitializingBean {
      */
     private ArrayNode convertToJson(Map<?, ?> classified, AtomicInteger totalCount) {
         ArrayNode arrayNode = objectMapper.createArrayNode()
-        classified.each { JummpEntry<String, String> key, value ->
+        classified.each { KV<String, String> key, value ->
             AtomicInteger total = new AtomicInteger(0)
             ObjectNode node = objectMapper.createObjectNode()
             if (key.value != null) {
