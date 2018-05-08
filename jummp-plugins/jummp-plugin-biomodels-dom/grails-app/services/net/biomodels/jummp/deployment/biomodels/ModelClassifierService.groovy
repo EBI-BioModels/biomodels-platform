@@ -27,14 +27,16 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.models.KV
 import net.biomodels.jummp.models.ModelDetails
+import net.biomodels.jummp.models.Progress
 import net.biomodels.jummp.utils.MathUtils
-import net.biomodels.jummp.utils.RestUtils
+import net.biomodels.jummp.core.util.RestUtils
 import net.biomodels.jummp.utils.TimeUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.http.HttpMethod
 import org.springframework.web.util.UriComponentsBuilder
+import static grails.async.Promises.*
 
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -65,7 +67,16 @@ class ModelClassifierService implements InitializingBean {
      * Number of times that we will retry to call Classification API when it got an error
      * Out of this times, the service will raise that error
      */
-    static final int RETRY_CLASSIFY_TIMES = 3
+    static final int RETRY_CLASSIFY_TIMES = 1
+
+    private Progress trainProgress
+
+    /**
+     * Check if we are in rebuild cache process
+     */
+    private boolean inRebuildCacheProcess = false
+
+    private static final String PROGRESS_CACHE_NAME = "ProgressCache"
 
     /**
      * Endpoint of the Classification API
@@ -74,6 +85,8 @@ class ModelClassifierService implements InitializingBean {
 
     void afterPropertiesSet() throws Exception {
         classificationEndpoint = grailsApplication.config.jummp.classification.endpoint
+        trainProgress = cacheService.getCache(PROGRESS_CACHE_NAME)
+        trainProgress = (trainProgress == null) ? new Progress(1, 0) : trainProgress
     }
 
     /**
@@ -87,9 +100,9 @@ class ModelClassifierService implements InitializingBean {
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(classificationEndpoint)
         uriComponentsBuilder.path("/predict")
         uriComponentsBuilder.queryParam("model_id", model.getSubmissionId())
-        URI request = uriComponentsBuilder.build().encode().toUri()
+        URI request = uriComponentsBuilder.build().toUri()
         Map<String, String> result = RestUtils.exchange(request, HttpMethod.GET,
-            new TypeReference<HashMap<String, String>>(){}, RETRY_CLASSIFY_TIMES)
+            new TypeReference<HashMap<String, String>>(){}, null, RETRY_CLASSIFY_TIMES, true)
         LOGGER.debug("Model {} classified result: {}", model.submissionId, result)
         return result
     }
@@ -133,11 +146,16 @@ class ModelClassifierService implements InitializingBean {
      *  ---------------Model 4
      *  ---------------Model 5
      */
-    private Map<?, ?> classifyModels(List<ModelDetails> models) {
+    private Map<?, ?> classifyModels(List<ModelDetails> models, boolean forceUpdateCache=false) {
         LOGGER.info("Starting to classify models")
         Map<?, ?> results = new HashMap<>()
         for (ModelDetails model : models) {
-            Map<String, String> classified = classifyModel(model.model, model.updateDate)
+            Map<String, String> classified = classifyModel(model.model, model.updateDate, forceUpdateCache)
+            if (forceUpdateCache) {
+                trainProgress.increaseProgress()
+                LOGGER.info("Rebuilding classify cache {}/{}", trainProgress.current, trainProgress.total)
+                cacheService.setCache(PROGRESS_CACHE_NAME, trainProgress, TimeUtils.ONE_YEAR)
+            }
             if (classified == null || classified.get("code") != "200") {
                 continue
             }
@@ -149,6 +167,24 @@ class ModelClassifierService implements InitializingBean {
         }
         LOGGER.info("Finished classify models")
         return results
+    }
+
+    List<Map<String, String>> classifyAllModels(List<ModelDetails> modelDetails, List<ModelClass> groundTruth) {
+        List<Map<String, String>> result = new ArrayList<>()
+        for (ModelDetails model : modelDetails) {
+            ModelClass modelClass = groundTruth.find{it.model == model.model}
+            Map<String, String> classified = classifyModel(model.model, model.updateDate, false)
+            if (classified == null || classified.get("code") != "200") {
+                continue
+            }
+            Map<String, String> modelData = objectMapper.convertValue(model.model, Map.class)
+            modelData.putAll(objectMapper.convertValue(model, Map.class))
+            modelData.putAll(classified)
+            modelData.put("groundTruth", modelClass == null ? "0": "1")
+            modelData.put("realClass", modelClass == null ? "": modelClass.className)
+            result.add(modelData)
+        }
+        return result
     }
 
     /**
@@ -184,9 +220,41 @@ class ModelClassifierService implements InitializingBean {
      * @param models: List of models to classify
      * @return ArrayNode: object json represent the classified result tree
      */
-    ArrayNode classify(List<ModelDetails> models) {
-        Map<?, ?> classified = classifyModels(models)
+    ArrayNode classify(List<ModelDetails> models, boolean forceUpdateCache=false) {
+        Map<?, ?> classified = classifyModels(models, forceUpdateCache)
         convertToJson(classified, new AtomicInteger(0))
+    }
+
+    /**
+     * Rebuild cache for classifier service
+     * @param models: list of model to be rebuild
+     */
+    void rebuildClassifyCache(List<ModelDetails> models) {
+        trainProgress = new Progress(models.size(), 0)
+        inRebuildCacheProcess = true
+        cacheService.setCache(PROGRESS_CACHE_NAME, trainProgress, TimeUtils.ONE_YEAR)
+        def p = task {
+            classifyModels(models, true)
+        }
+        p.onError {Throwable err ->
+            LOGGER.error("Exception occurred during rebuild classify cache {}", err)
+            inRebuildCacheProcess = false
+        }
+        p.onComplete {
+            inRebuildCacheProcess = false
+        }
+    }
+
+    /**
+     * Check whether we are in rebuild cache process
+     * @return
+     */
+    boolean isRebuildingCache() {
+        return inRebuildCacheProcess
+    }
+
+    Progress getCurrentTrainProgress() {
+        return trainProgress
     }
 
     /**
@@ -208,7 +276,7 @@ class ModelClassifierService implements InitializingBean {
             }
             node.put("code", key.key)
             if (value instanceof Map) {
-                AtomicInteger count = new AtomicInteger(0);
+                AtomicInteger count = new AtomicInteger(0)
                 node.putArray("children").addAll(convertToJson(value as Map<?, ?>, count))
                 total.set(total.get() + count.get())
             } else {

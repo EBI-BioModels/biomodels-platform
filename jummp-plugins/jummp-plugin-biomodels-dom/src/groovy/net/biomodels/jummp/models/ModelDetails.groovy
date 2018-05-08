@@ -1,8 +1,10 @@
 package net.biomodels.jummp.models
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import net.biomodels.jummp.model.Model
 
 class ModelDetails implements Serializable {
+    @JsonIgnore
     Model model
     String name
     Date updateDate
