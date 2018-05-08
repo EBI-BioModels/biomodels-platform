@@ -21,13 +21,13 @@
 <head>
     <title>Model GO Categories</title>
     <meta name="layout" content="${session['branding.style']}/main" />
-    <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.dataTables.min.css')}" type="text/css">
-    <link rel="stylesheet" href="${resource(dir: 'css', file: 'buttons.dataTables.min.css')}" type="text/css">
-    <link rel="stylesheet" href="${resource(dir: 'css', file: 'select.dataTables.min.css')}" type="text/css">
+    <link rel="stylesheet" href="${resource(dir: 'css/datatable', file: 'jquery.dataTables.min.css', contextPath: "${grailsApplication.config.grails.serverURL}")}")}" type="text/css">
+    <link rel="stylesheet" href="${resource(dir: 'css/datatable', file: 'buttons.dataTables.min.css', contextPath: "${grailsApplication.config.grails.serverURL}")}")}" type="text/css">
+    <link rel="stylesheet" href="${resource(dir: 'css/datatable', file: 'select.dataTables.min.css', contextPath: "${grailsApplication.config.grails.serverURL}")}")}" type="text/css">
     <style>
     path {
         stroke: #000;
-        stroke-width: .5;
+        stroke-width: 0.5;
         cursor: pointer;
     }
 
@@ -88,16 +88,16 @@
 </div>
 <div style="clear: both"></div>
 
-<g:javascript src="d3.v3.js"/>
-<g:javascript src="jquery.dataTables.min.js"/>
-<g:javascript src="dataTables.buttons.min.js"/>
-<g:javascript src="buttons.flash.min.js"/>
-<g:javascript src="jszip.min.js"/>
-<g:javascript src="pdfmake.min.js"/>
-<g:javascript src="vfs_fonts.js"/>
-<g:javascript src="buttons.html5.min.js"/>
-<g:javascript src="buttons.print.min.js"/>
-<g:javascript src="dataTables.select.min.js"/>
+<g:javascript src="d3.v3.js" contextPath=""/>
+<g:javascript src="datatable/jquery.dataTables.min.js" contextPath=""/>
+<g:javascript src="datatable/dataTables.buttons.min.js" contextPath=""/>
+<g:javascript src="datatable/buttons.flash.min.js" contextPath=""/>
+<g:javascript src="datatable/jszip.min.js" contextPath=""/>
+<g:javascript src="datatable/pdfmake.min.js" contextPath=""/>
+<g:javascript src="datatable/vfs_fonts.js" contextPath=""/>
+<g:javascript src="datatable/buttons.html5.min.js" contextPath=""/>
+<g:javascript src="datatable/buttons.print.min.js" contextPath=""/>
+<g:javascript src="datatable/dataTables.select.min.js" contextPath=""/>
 
 <g:javascript>
     var json = $.parseJSON('${classifiedModels.toString().replace('\'', '\\\'')}');
