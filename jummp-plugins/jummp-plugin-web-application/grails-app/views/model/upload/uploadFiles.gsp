@@ -54,7 +54,14 @@
                                 [ filename: key, description: value ]
                         } as JSON}
             };
-            var existingAdditionalFiles = descriptionAdditionalMap["files"];
+            var extraFiles = descriptionAdditionalMap["files"];
+            var existingAdditionalFiles = [];
+            $.each(extraFiles, function (index) {
+                var filename = extraFiles[index].filename;
+                var description = extraFiles[index].description;
+                var element = {'inputId': 'extraFiles'.concat(index), 'filename': filename, 'description': description}
+                existingAdditionalFiles.push(element);
+            });
         </script>
     </head>
     <body>
@@ -429,11 +436,24 @@
             $(document).on("change", 'input[type=file]', function (e) {
                 // this copes with the additional files
                 var id = $(this).attr('id');
-                if (id != 'mainFile') {
+                if (id != 'mainFile' && $(this)[0].files[0]) {
+                    var inputId = $(this).attr("id").trim();
                     var fileName = $(this)[0].files[0].name;
+                    var regex = new RegExp(/[0-9]+$/g);
+                    var id = regex.exec(inputId);
+                    var description = $('#description'+id).val();
+                    var element = {inputId: inputId, filename: fileName, description: description}
                     // add the new file to the map existingAdditionalFiles
-                    var newFile = {filename: fileName, description: ""}
-                    existingAdditionalFiles.push(newFile);
+                    /* allow to change additional files flexibly */
+                    var existed = false;
+                    for (var index = 0; index < existingAdditionalFiles.length; index++)
+                    if (existingAdditionalFiles[index].inputId === inputId) {
+                        existingAdditionalFiles[index].filename = fileName;
+                        existed = true;
+                    }
+                    if (!existed) {
+                        existingAdditionalFiles.push(element);
+                    }
                     updateAdditionalFilesOnUI();
                 }
             });
