@@ -346,7 +346,7 @@
                 });
 
                 $("#addFile").click(function (evt) {
-                    var index = ++nbExtraFiles;
+                    var index = nbExtraFiles;
                     evt.preventDefault();
                     $('<tr>', {
                         class: 'fileEntry'
@@ -376,6 +376,7 @@
                             })
                         ).append("</a>")
                     ).appendTo('table#additionalFiles');
+                    nbExtraFiles++;
                 });
 
                 $("#_eventId_Upload").click(function() {
