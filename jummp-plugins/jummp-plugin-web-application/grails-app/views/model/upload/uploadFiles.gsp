@@ -381,7 +381,7 @@
                                 href: "#",
                                 class: 'killer',
                                 text: 'Discard',
-                                id: 'discardExtraFiles' + index
+                                id: 'discardextraFiles' + index
                             })
                         ).append("</a>")
                     ).appendTo('table#additionalFiles');
@@ -413,14 +413,18 @@
                         var idFileUpload = id.substr('discard'.length);
                         fileNameAbsolutePath = $("#"+idFileUpload).val();
                         // 12 = ('C:\fakepath\').length
-                        fileName = fileNameAbsolutePath.substr(12);
+                        if (fileNameAbsolutePath) {
+                            fileName = fileNameAbsolutePath.substr(12);
+                        }
                     }
                     // find and delete the object having the filename property equals to fileName
-                    for (var index = 0; index < existingAdditionalFiles.length; index++)
-                        if (existingAdditionalFiles[index].filename === fileName.trim()) {
-                            existingAdditionalFiles.splice(index, 1);
-                        }
-                    updateAdditionalFilesOnUI();
+                    if (fileName) {
+                        for (var index = 0; index < existingAdditionalFiles.length; index++)
+                            if (existingAdditionalFiles[index].filename === fileName.trim()) {
+                                existingAdditionalFiles.splice(index, 1);
+                            }
+                        updateAdditionalFilesOnUI();
+                    }
                 }
                 $(tr).empty();
             });
