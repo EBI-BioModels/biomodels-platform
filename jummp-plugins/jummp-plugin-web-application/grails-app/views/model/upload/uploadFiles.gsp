@@ -388,16 +388,6 @@
                     nbExtraFiles++;
                 });
 
-                $("#_eventId_Upload").click(function() {
-                    var input = "<input name='additionalFilesInWorking' value='";
-                    input += JSON.stringify(descriptionAdditionalMap) + "'/>";
-                    document.getElementById("additionalsOnUI").innerHTML = input;
-
-                    input = "<input name='mainFilesInWorking' value='";
-                    input += JSON.stringify(descriptionMainMap) + "'/>";
-                    $('#mainsOnUI').innerHTML = input;
-                });
-
                 $("#_eventId_Back").click( function() {
                     clickBack = true;
                 });
@@ -435,10 +425,9 @@
                 $(tr).empty();
             });
 
-            $(document).on("change", 'input[type=file]', function (e) {
-                // this copes with the additional files
-                var id = $(this).attr('id');
-                if (id != 'mainFile' && $(this)[0].files[0]) {
+            $(document).on("change", 'input[id^=extraFiles]', function (e) {
+                // this copes with amending the additional files back and forth
+                if ($(this)[0].files[0]) {
                     var inputId = $(this).attr("id").trim();
                     var fileName = $(this)[0].files[0].name;
                     var regex = new RegExp(/[0-9]+$/g);
