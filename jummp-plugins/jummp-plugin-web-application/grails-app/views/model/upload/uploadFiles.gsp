@@ -381,21 +381,11 @@
                                 href: "#",
                                 class: 'killer',
                                 text: 'Discard',
-                                id: 'discardExtraFiles' + index
+                                id: 'discardextraFiles' + index
                             })
                         ).append("</a>")
                     ).appendTo('table#additionalFiles');
                     nbExtraFiles++;
-                });
-
-                $("#_eventId_Upload").click(function() {
-                    var input = "<input name='additionalFilesInWorking' value='";
-                    input += JSON.stringify(descriptionAdditionalMap) + "'/>";
-                    document.getElementById("additionalsOnUI").innerHTML = input;
-
-                    input = "<input name='mainFilesInWorking' value='";
-                    input += JSON.stringify(descriptionMainMap) + "'/>";
-                    $('#mainsOnUI').innerHTML = input;
                 });
 
                 $("#_eventId_Back").click( function() {
@@ -423,22 +413,25 @@
                         var idFileUpload = id.substr('discard'.length);
                         fileNameAbsolutePath = $("#"+idFileUpload).val();
                         // 12 = ('C:\fakepath\').length
-                        fileName = fileNameAbsolutePath.substr(12);
+                        if (fileNameAbsolutePath) {
+                            fileName = fileNameAbsolutePath.substr(12);
+                        }
                     }
                     // find and delete the object having the filename property equals to fileName
-                    for (var index = 0; index < existingAdditionalFiles.length; index++)
-                        if (existingAdditionalFiles[index].filename === fileName.trim()) {
-                            existingAdditionalFiles.splice(index, 1);
-                        }
-                    updateAdditionalFilesOnUI();
+                    if (fileName) {
+                        for (var index = 0; index < existingAdditionalFiles.length; index++)
+                            if (existingAdditionalFiles[index].filename === fileName.trim()) {
+                                existingAdditionalFiles.splice(index, 1);
+                            }
+                        updateAdditionalFilesOnUI();
+                    }
                 }
                 $(tr).empty();
             });
 
-            $(document).on("change", 'input[type=file]', function (e) {
-                // this copes with the additional files
-                var id = $(this).attr('id');
-                if (id != 'mainFile' && $(this)[0].files[0]) {
+            $(document).on("change", 'input[id^=extraFiles]', function (e) {
+                // this copes with amending the additional files back and forth
+                if ($(this)[0].files[0]) {
                     var inputId = $(this).attr("id").trim();
                     var fileName = $(this)[0].files[0].name;
                     var regex = new RegExp(/[0-9]+$/g);
