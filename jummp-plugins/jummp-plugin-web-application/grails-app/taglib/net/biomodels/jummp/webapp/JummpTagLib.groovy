@@ -94,7 +94,7 @@ class JummpTagLib {
     def displayExistingAdditionalFiles = { attrs ->
         out << "<table class='formtable responsive-table' id='additionalFiles'><tbody>"
         if (attrs.additionals) {
-            int counter = 1
+            int counter = 0
             attrs.additionals.each { f ->
                 RepositoryFileTransportCommand command = f as RepositoryFileTransportCommand
                 String name = new File(command.path).name
