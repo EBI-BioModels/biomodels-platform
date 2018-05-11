@@ -201,13 +201,13 @@
                                     showFlashMessage(htmlMessage);
                                 }
                             });
-                        }
-                        // show all models ~ reset the current search ==> start a new search
-                        var query = "${queryString}";
-                        if (query !== "*:*") {
-                            var url = "${createLink(controller: 'search', action: "${action}",
-                                        params: [query: "*:*"])}";
-                            $('#resetSearch').html('<a href="' + url + '" title="Clear the current search">Reset</a>');
+                            // show all models ~ reset the current search ==> start a new search
+                            var query = "${queryString}";
+                            if (query !== "*:*") {
+                                var url = "${createLink(controller: 'search', action: "${action}",
+                                                    params: [query: "*:*"])}";
+                                $('#resetSearch').html('<a href="' + url + '" title="Clear the current search">Reset</a>');
+                            }
                         }
                     </g:javascript>
                 </div>

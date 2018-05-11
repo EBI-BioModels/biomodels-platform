@@ -164,14 +164,13 @@ class ModelService {
     **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getAllModels")
-    public List<Model> getAllModels(int offset, int count, boolean sortOrder, ModelListSorting sortColumn,
-                String filter = null, boolean deletedOnly=false) {
-
-        return getAllModelWithDetails(offset, count, sortOrder, sortColumn, filter, deletedOnly).collect{ it.first() }
+    List<Model> getAllModels(int offset, int count, boolean sortOrder, ModelListSorting sortColumn,
+                                    String filter = null, boolean deletedOnly = false) {
+        getAllModelWithDetails(offset, count, sortOrder, sortColumn, filter, deletedOnly).collect{ it.first() }
     }
 
     @Profiled(tag = "modelService.getAllModelWithDetails")
-    List getAllModelWithDetails(int offset, int count,
+    private List getAllModelWithDetails(int offset, int count,
                  boolean sortOrder, ModelListSorting sortColumn, String filter = null, boolean deletedOnly=false) {
         Map metaParams
         if (offset < 0 || count <= 0) {
@@ -185,8 +184,8 @@ class ModelService {
 
         String sortingDirection = sortOrder ? 'asc' : 'desc'
 
-        boolean filterIsValid = filterValid(filter)
-
+        boolean filterIsValid = filterValid(filter) && !filter.substring(0,4).equals("type")
+        String type
         Map namedParams = [:]
         if (filterIsValid) {
             if (filter.take(6) == "Format") {
@@ -195,98 +194,74 @@ class ModelService {
             if (filter.take(9) == "Submitter") {
                 namedParams.put("filter", "%${filter.drop(10).toLowerCase()}%")
             }
+        } else {
+            if (filterValid(filter)) {
+                type = filter.drop(5).toLowerCase()
+            }
         }
-
         String query
         // for Admin - sees all (not deleted) models
-        if (SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
-            query = getQueryForAdmin(sortColumn, deletedOnly, filterIsValid, sortingDirection)
-
-        } else {
-            Set<String> roles = getSpringDatabaseRoles()
-
-            query = getQueryForUser(sortColumn, deletedOnly, filterIsValid, sortingDirection)
+        boolean isAdmin = SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")
+        Set<String> roles = getSpringDatabaseRoles()
+        query = getQueryStringForUser(sortColumn, deletedOnly, filterIsValid, type, sortingDirection, isAdmin)
+        List permissions = new ArrayList([BasePermission.READ.getMask(), BasePermission.ADMINISTRATION.getMask()])
+        if (!isAdmin) {
             namedParams += [
-                className  :  Revision.class.getName(),
-                permissions: [BasePermission.READ.getMask(), BasePermission.ADMINISTRATION.getMask()],
-                roles      :  roles
+                className  : Revision.class.getName(),
+                permissions: permissions,
+                roles      : roles
             ]
         }
-
         return Model.executeQuery(query, namedParams, metaParams)
     }
 
-    private String getQueryForUser(ModelListSorting sortColumn, boolean deletedOnly, boolean filterIsValid, String sortingDirection) {
-        String query = '''
+    private String getQueryStringForUser(ModelListSorting sortColumn, boolean deletedOnly,
+                                         boolean filterIsValid, String type,
+                                         String sortingDirection, boolean isAdmin = false) {
+        String query = """\
 SELECT DISTINCT m, r.name, r.description, r.uploadDate, r.format.name, m.id, u.person.userRealName
 FROM Revision AS r
 JOIN r.model AS m
 JOIN r.owner as u
-WHERE r.deleted = false
-'''
-//do we want to show information from the latest revision?
-        if (sortColumn == ModelListSorting.LAST_MODIFIED || sortColumn == ModelListSorting.FORMAT || sortColumn == ModelListSorting.NAME) {
-            query += '''AND r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2,
-                        AclEntry ace2  where r.model=r2.model
-                        AND r2.id=ace2.aclObjectIdentity.objectId
-                        AND ace2.aclObjectIdentity.aclClass.className = :className
-                        AND ace2.sid.sid IN (:roles) AND ace2.mask IN (:permissions)
-                        AND ace2.granting = true)'''
+WHERE r.deleted = false 
+AND m.deleted = ${deletedOnly}
+"""
+        if (isAdmin) {
+            query = """\
+$query AND r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2 where r.model=r2.model)"""
         } else {
-            // otherwise sortColumn must be the following .. ie we want to sort by the first revision
-            // (sortColumn==ModelListSorting.SUBMITTER || sortColumn==ModelListSorting.SUBMISSION_DATE)
-            query += '''AND r.revisionNumber=(SELECT MIN(r2.revisionNumber) from Revision r2,
-                        AclEntry ace2  where r.model=r2.model
-                        AND r2.id=ace2.aclObjectIdentity.objectId
-                        AND ace2.aclObjectIdentity.aclClass.className = :className
-                        AND ace2.sid.sid IN (:roles) AND ace2.mask IN (:permissions)
-                        AND ace2.granting = true)'''
+            query = """\
+$query AND r.revisionNumber=(SELECT MIN(r2.revisionNumber) from Revision r2, AclEntry ace2  
+WHERE r.model=r2.model
+    AND r2.id=ace2.aclObjectIdentity.objectId
+    AND ace2.aclObjectIdentity.aclClass.className = :className
+    AND ace2.sid.sid IN (:roles) 
+    AND ace2.mask IN (:permissions))"""
+        }
+        if (filterIsValid) {
+            query ="""\
+$query AND(
+lower(r.format.identifier) like :filter OR
+lower(u.person.userRealName) like :filter)"""
+        } else {
+            if (type) {
+                String currentUsername = springSecurityService.currentUser.username
+                if (type.equalsIgnoreCase("private")) {
+                    query = "$query AND u.username = '${currentUsername}'"
+                } else if (type.equalsIgnoreCase("shared")) {
+                    query = "$query AND u.username != '${currentUsername}' AND r.state = '${ModelState.UNPUBLISHED}'"
+                } else if (type.equalsIgnoreCase("public")) {
+                    query = "$query AND r.state = '${ModelState.PUBLISHED}'"
+                } else {
+                    // private
+                }
+            } else {
+
+            }
         }
 
-        query += " AND m.deleted = ${deletedOnly} "
-        if (filterIsValid) {
-            query +='''
-AND(
-lower(r.format.identifier) like :filter OR
-lower(u.person.userRealName) like :filter
-)
-'''
-        }
-        query += '''
-ORDER BY
-'''
-        query += " " + getSortColumnAsString(sortColumn) + " " + sortingDirection
-        return query
-    }
-
-    private String getQueryForAdmin(ModelListSorting sortColumn, boolean deletedOnly, boolean filterIsValid, String sortingDirection) {
-        String query = '''
-SELECT DISTINCT m, r.name, r.description, r.uploadDate, r.format.name, m.id, u.person.userRealName
-FROM Revision AS r
-JOIN r.model AS m JOIN r.owner as u
-WHERE
-'''
-        if (sortColumn == ModelListSorting.LAST_MODIFIED || sortColumn == ModelListSorting.FORMAT ||
-            sortColumn == ModelListSorting.NAME) {
-            query += '''r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2 where r.model=r2.model) AND '''
-        } else if (sortColumn == ModelListSorting.SUBMITTER || sortColumn == ModelListSorting.SUBMISSION_DATE) {
-            query += '''r.revisionNumber=(SELECT MIN(r2.revisionNumber) from Revision r2 where r.model=r2.model) AND '''
-        } else {
-            query += '''r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2 where r.model=r2.model) AND '''
-        }
-        query += "m.deleted = ${deletedOnly} AND r.deleted = false"
-        if (filterIsValid) {
-            query +='''
-AND(
-lower(r.format.identifier) like :filter OR
-lower(u.person.userRealName) like :filter
-)
-'''
-        }
-        query += '''
-ORDER BY
-'''
-        query += " " + getSortColumnAsString(sortColumn) + " " + sortingDirection
+        query = """$query
+ ORDER BY ${getSortColumnAsString(sortColumn)} ${sortingDirection}"""
         return query
     }
 
