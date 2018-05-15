@@ -43,6 +43,7 @@ import org.springframework.web.multipart.MultipartFile
  * model submission.
  *
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  * @date 20130701
  */
 @grails.validation.Validateable
@@ -52,7 +53,14 @@ class UploadFilesCommand implements Serializable {
     private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
     private static final boolean IS_INFO_ENABLED  = log.isInfoEnabled()
 
+    /**
+     * The main files of the model
+     */
     List<MultipartFile> mainFile
+    /**
+     * The descriptions associated with the main files
+     */
+    List<String> mainFileDescription
     /**
      * The additional files belonging to a model.
      */
@@ -202,7 +210,8 @@ class UploadFilesCommand implements Serializable {
                 return true
             }
         )
-        description(nullable: true)
+        mainFileDescription(nullable: false)
+        description(nullable: false)
         mainDeletes(nullable: true)
         extraDeletes(nullable: true)
     }

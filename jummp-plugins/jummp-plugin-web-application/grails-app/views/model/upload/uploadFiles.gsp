@@ -108,8 +108,6 @@
                 </g:else>
                 <jummp:displayExistingMainFile main="${mainfiles}"/>
                 <div id="noMains" style="display: none;"></div>
-                <!-- This div stores input element which value is assigned to JSON string -->
-                <div id="mainsOnUI" style="display: none"></div>
 
                 <jummp:renderAdditionalFilesLegend/>
                 <div id="additionalFilesExplanation"><jummp:renderAdditionalFilesExplanation/></div>
@@ -125,8 +123,6 @@
                 </g:else>
                 <jummp:displayExistingAdditionalFiles additionals="${resource}"/>
                 <div id="noAdditionals" style="display: none"></div>
-                <!-- This div stores input element which value is assigned to JSON string -->
-                <div id="additionalsOnUI" style="display: none;"></div>
 
                 <div class="buttons">
                     <g:submitButton name="Cancel" class="button" value="${g.message(code: 'submission.common.cancelButton')}" />
@@ -157,37 +153,6 @@
             });
 
             var nbExtraFiles = $('input[id^=description]').size();
-
-            function updateAdditionalFilesOnUI() {
-                descriptionAdditionalMap.files = [];
-                $.each(existingAdditionalFiles, function(index, fileEntry) {
-                    // key here is the index, value is the actual value we are interested in
-                    var fileName = fileEntry["filename"];
-                    var fileDescription  = fileEntry["description"];
-                    descriptionAdditionalMap.files.push({'filename': fileName, 'description': fileDescription});
-                });
-                // update the hidden input element containing the latest additional files
-                // the map should be converted to json string that will be transferred to controller
-                var input = "<input name='additionalFilesInWorking' size='220' value='";
-                    input += JSON.stringify(descriptionAdditionalMap) + "'/>";
-                document.getElementById("additionalsOnUI").innerHTML = input;
-            }
-
-            function updateMainFilesOnUI() {
-                descriptionMainMap.files = [];
-                $.each(existingMainFiles, function(index, fileEntry) {
-                    // key here is the index, value is the actual value we are interested in
-                    var fileName = fileEntry["filename"];
-                    var fileDescription  = fileEntry["description"];
-                    descriptionMainMap.files.push({'filename': fileName, 'description': fileDescription});
-                });
-                // update the hidden input element containing the latest additional files
-                // the map should be converted to json string that will be transferred to controller
-                var input = "<input name='mainFilesInWorking' size='220' value='";
-                    input += JSON.stringify(descriptionMainMap) + "'/>";
-                document.getElementById("mainsOnUI").innerHTML = input;
-            }
-
             var clickBack = false;
             var clickCancel = false;
 
@@ -234,8 +199,6 @@
             }
 
             $(document).ready(function () {
-                updateMainFilesOnUI();
-                updateAdditionalFilesOnUI();
                 var isMainFileReplaced = false;
                 $('.replaceMain').click(function(e) {
                     e.preventDefault();
@@ -262,12 +225,15 @@
                         var hi = "<input value='" + mainFileName + "' name='deletedMain'>";
                         document.getElementById("noMains").innerHTML += hi;
 	                }
-                    // update UI
-	                updateMainFilesOnUI();
                     // hidden Replace button to avoid being confused
                     $(td).text("");
+
                     // reshow the file upload
-                    $('#mainFile').show();
+                    if (existingMainFiles.length === 0) {
+                        $('#mainFile').show();
+                    } else {
+                        $(tr).remove();
+                    }
                 });
                 var formerMainFileName = "";
                 $('#mainFile').change(function(event) {
@@ -326,7 +292,6 @@
                             existingMainFiles.push(newFile);
                             $(this).attr('value', newFileName);
                         }
-                        updateMainFilesOnUI();
                     }
                 });
 
@@ -356,7 +321,6 @@
                                 existingMainFiles.push(newFile);
                             }
                         }
-                        updateMainFilesOnUI();
                     } else {
                         var flashDiv = $('.flashNotificationDiv');
                         $(flashDiv).html("The main file cannot be empty");
@@ -433,7 +397,6 @@
                             if (existingAdditionalFiles[index].filename === fileName.trim()) {
                                 existingAdditionalFiles.splice(index, 1);
                             }
-                        updateAdditionalFilesOnUI();
                     }
                 }
                 $(tr).empty();
@@ -459,7 +422,6 @@
                     if (!existed) {
                         existingAdditionalFiles.push(element);
                     }
-                    updateAdditionalFilesOnUI();
                 }
             });
 
@@ -497,7 +459,6 @@
                         }
                     }
                 }
-                updateAdditionalFilesOnUI();
             });
 
             $( "#dialog-confirm" ).dialog({
