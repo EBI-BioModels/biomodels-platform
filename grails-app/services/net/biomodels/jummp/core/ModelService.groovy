@@ -184,42 +184,42 @@ class ModelService {
 
         String sortingDirection = sortOrder ? 'asc' : 'desc'
 
-
-        boolean isTypeQuery = filter?.substring(0,4)?.equals("type")
-        boolean filterIsValid = filterValid(filter) && !isTypeQuery
+        boolean filterIsValid = filterValid(filter)
         String type
         Map namedParams = [:]
         // use object IDs here to minimise the number SQL queries and JOINS Hibernate uses.
         List filteredFormats, filteredUsers
         if (filterIsValid) {
-            if (filter.take(6) == "Format") {
-                String formatId = filter.drop(7)
-                filteredFormats = ModelFormat.executeQuery(
-                    "SELECT id FROM ModelFormat WHERE identifier = :p", [p: formatId]
-                )
-                namedParams.put("formats", filteredFormats)
-            }
-            if (filter.take(9) == "Submitter") {
-                String personName = filter.drop(10)
-                filteredUsers = User.executeQuery(
-                    "SELECT u.id FROM User u JOIN u.person p WHERE p.userRealName = :n",
-                    [n: personName]
-                )
-                namedParams.put("users", filteredUsers)
-            }
-        } else {
-            if (isTypeQuery) { // type := < private | shared | public >
+            boolean isTypeQuery = filter?.substring(0,4)?.equals("type")
+            if (!isTypeQuery) {
+                if (filter.take(6) == "Format") {
+                    String formatId = filter.drop(7)
+                    filteredFormats = ModelFormat.executeQuery(
+                        "SELECT id FROM ModelFormat WHERE identifier = :p", [p: formatId]
+                    )
+                    namedParams.put("formats", filteredFormats)
+                }
+                if (filter.take(9) == "Submitter") {
+                    String personName = filter.drop(10)
+                    filteredUsers = User.executeQuery(
+                        "SELECT u.id FROM User u JOIN u.person p WHERE p.userRealName = :n",
+                        [n: personName]
+                    )
+                    namedParams.put("users", filteredUsers)
+                }
+            } else {
+                // type := < private | shared | public >
                 type = filter.drop(5).toLowerCase()
             }
         }
         String query
         // for Admin - sees all (not deleted) models
         boolean isAdmin = SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")
-        Set<String> roles = getSpringDatabaseRoles()
         query = getQueryStringForUser(sortColumn, deletedOnly, filterIsValid, type,
             filteredFormats, filteredUsers, sortingDirection, isAdmin)
-        List permissions = new ArrayList([BasePermission.READ.getMask(), BasePermission.ADMINISTRATION.getMask()])
         if (!isAdmin) {
+            List permissions = new ArrayList([BasePermission.READ.getMask(), BasePermission.ADMINISTRATION.getMask()])
+            Set<String> roles = getSpringDatabaseRoles()
             namedParams += [
                 className  : Revision.class.getName(),
                 permissions: permissions,
