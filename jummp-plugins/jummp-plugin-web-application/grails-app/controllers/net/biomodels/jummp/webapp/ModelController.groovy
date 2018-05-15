@@ -115,6 +115,8 @@ class ModelController {
 
     def modelConversionService
 
+    def messageSource
+
     /**
      * The list of actions for which we should not automatically create an audit item.
      */
@@ -894,7 +896,7 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
 
             }
             on("MainFileMissingError") {
-                flash.flashMessage = "submission.upload.error.fileerror"
+                flash.flashMessage = "submission.upload.error.file.missing"
             }.to "uploadFiles"
             on("AdditionalReplacingMainError") {
                 flash.flashMessage = "submission.upload.error.additional_replacing_main"
@@ -943,7 +945,10 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                 flash.modelFormatDetectedAs = flow.workingMemory.get("model_type").identifier
             }.to "uploadFiles"
             on("FilesNotValid") {
-                flash.flashMessage = "submission.upload.error.filesnotvalid"
+                String actuallErrorMessage = flow.workingMemory.remove("validation_error") as String
+                String[] args = [actuallErrorMessage]
+                flash.flashMessage = messageSource.getMessage("submission.upload.error.file.invalid",
+                    args, Locale.getDefault())
             }.to "uploadFiles"
             on(Exception).to "handleException"
         }
