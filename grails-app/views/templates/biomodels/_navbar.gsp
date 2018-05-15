@@ -83,7 +83,7 @@
                 <li><a href="${grailsApplication.config.grails.serverURL}/user" class="icon icon-functional" data-icon="5">
                     ${sec.username()}'s Profile</a></li>
                 <li class="divider"></li>
-                <li><a href="${g.createLink(controller: 'search', action: 'list')}">
+                <li><a href="${g.createLink(controller: 'search', action: 'list', params: [query: 'type:Private'])}">
                     <img width="20" height="auto" title="Click here to see your models"
                          src="${grailsApplication.config.grails.serverURL}/images/biomodels/mymodels.png"/>&nbsp;My Models</a></li>
                 <li><a href="${g.createLink(controller: 'team', action: 'index')}">
