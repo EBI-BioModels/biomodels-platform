@@ -197,13 +197,13 @@ There was a problem obtaining search result from EBI search server. The root cau
                 String submissionId = entry.id
                 String modelName = entry.getFields().get('name')[0]
                 String description = ""
-                boolean haveDescription = entry.getFields().get('description').length > 0
+                boolean haveDescription = entry.getFields().get('description')?.length > 0
                 if (haveDescription) {
                     description = entry.getFields().get('description')[0]
                 }
-                boolean haveSubmissionDate = entry.getFields().get('submission_date').length > 0
-                boolean haveModifiedDate = entry.getFields().get('last_modification_date').length > 0
-                boolean haveSubmitter = entry.getFields().get('submitter').length > 0
+                boolean haveSubmissionDate = entry.getFields().get('submission_date')?.length > 0
+                boolean haveModifiedDate = entry.getFields().get('last_modification_date')?.length > 0
+                boolean haveSubmitter = entry.getFields().get('submitter')?.length > 0
                 ModelState state
                 if (!haveSubmissionDate && !haveModifiedDate && !haveSubmitter) {
                     // TODO: make the condition of a private model stronger
@@ -225,7 +225,7 @@ There was a problem obtaining search result from EBI search server. The root cau
                     Date modifiedDate = simpleDateFormat.parse(modifiedDateString)
                     String formatName = entry.getFields().get('modelformat')[0]
                     String formatVersion = entry.getFields().get('levelversion')[0]
-                    boolean havePublicationYear = entry.getFields().get('publication_year').length > 0
+                    boolean havePublicationYear = entry.getFields().get('publication_year')?.length > 0
                     String publicationYear = ""
                     if (havePublicationYear) {
                         publicationYear = entry.getFields().get('publication_year')[0]
