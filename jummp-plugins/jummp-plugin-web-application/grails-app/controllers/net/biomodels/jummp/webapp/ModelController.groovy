@@ -671,6 +671,8 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                         int posLessThan = filename.indexOf("<")
                         if (posLessThan > 0) {
                             additionalFilesToBeDeleted.add(filename.substring(0, posLessThan))
+                        } else {
+                            additionalFilesToBeDeleted.add(filename)
                         }
                     }
                     if (IS_DEBUG_ENABLED) {
@@ -709,19 +711,27 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                         log.debug("There is an error while loading the latest changes on the main files")
                     }
 
-                    // store additional files existing on UI, i.e. the files are in updated process
-                    // data stored are a map of file names and corresponding descriptions.
+                    // retrieve the additional files in the upload process.
+                    // The result is the map of file names and corresponding descriptions.
                     // For instance, manual.pdf: guidelines and help, readme.txt: introduction and preface, ...
                     Map<String, String> additionalFiles = new HashMap<String, String>()
-                    def slurper = new JsonSlurper()
-                    def result = slurper.parseText(params.additionalFilesInWorking)
-                    if (result["files"]) {
-                        def workingFiles = result["files"]
-                        workingFiles.each { f ->
-                            additionalFiles.put(f["filename"], f["description"])
+                    // add the existing files that were already uploaded
+                    if (params.existedExtraFiles && params.existedExtraFileDescriptions) {
+                        def paramFile = params.existedExtraFiles
+                        def paramDesc = params.existedExtraFileDescriptions
+                        List fileNames = paramFile instanceof String ? [paramFile] : paramFile
+                        List descriptions = paramDesc instanceof String ? [paramDesc] : paramDesc
+                        fileNames.eachWithIndex { fileName, index ->
+                            additionalFiles.put(fileName, descriptions[index])
                         }
-                        flow.workingMemory.put("additionals_in_working", additionalFiles)
                     }
+                    // add the recently uploaded files
+                    if (cmd.extraFiles && cmd.description) {
+                        cmd.extraFiles.eachWithIndex { MultipartFile f, int index ->
+                            additionalFiles.put(f.originalFilename, cmd.description[index])
+                        }
+                    }
+                    flow.workingMemory.put("additionals_in_working", additionalFiles)
                 }
                 catch(Exception e) {
                     e.printStackTrace();
@@ -911,7 +921,7 @@ About to submit ${mainFileList.inspect()} and ${additionalFilesMap.inspect()}.""
                 flash.modelFormatDetectedAs = flow.workingMemory.get("model_type").identifier
             }.to "uploadFiles"
             on("FilesNotValid") {
-                flash.flashMessage = "submission.upload.error.fileerror"
+                flash.flashMessage = "submission.upload.error.filesnotvalid"
             }.to "uploadFiles"
             on(Exception).to "handleException"
         }
