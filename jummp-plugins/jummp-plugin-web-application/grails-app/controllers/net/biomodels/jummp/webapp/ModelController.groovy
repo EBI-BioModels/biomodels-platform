@@ -634,6 +634,10 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                 try {
                     def mainMultipartList = request.getMultiFileMap().mainFile
                     def extraFileField = request.getMultiFileMap().extraFiles
+                    def mainFileDescription = params?.mainFileDescription ?: [""]
+                    if (mainFileDescription instanceof String) {
+                        mainFileDescription = [mainFileDescription]
+                    }
                     List<MultipartFile> extraMultipartList = []
                     if (extraFileField instanceof MultipartFile) {
                         extraMultipartList = [extraFileField]
@@ -688,6 +692,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
 
                     def cmd = new UploadFilesCommand()
                     cmd.mainFile = mainMultipartList
+                    cmd.mainFileDescription = mainFileDescription
                     cmd.extraFiles = extraMultipartList
                     cmd.mainDeletes = mainsToBeDeleted
                     cmd.extraDeletes = additionalFilesToBeDeleted
@@ -696,22 +701,34 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                         log.debug "Data binding done: ${cmd.properties}"
                     }
                     flow.workingMemory.put("UploadCommand", cmd)
-                    // parse JSON string of the main files populated on GUI
-                    // store them into the working memory in mains_in_working variable
+                    // store the main files uploaded from the upload flow
+                    // into the working memory variable named mains_in_working
                     Map<String, String> mainFiles = new HashMap<String, String>()
-                    def slurper0 = new JsonSlurper()
-                    def res = slurper0.parseText(params.mainFilesInWorking)
-                    if (res["files"]) {
-                        def workingFiles = res["files"]
-                        workingFiles.each { f ->
-                            mainFiles.put(f["filename"], f["description"])
+                    // submit new models, add new main file
+                    if (params.mainFileUpload && params.mainFileDescription) {
+                        // the main file has not been updated any more when
+                        // the user goes back and forth between the file upload screen
+                        // and the model information during the upload flow
+                        def paramFile = params.mainFileUpload
+                        def paramDesc = params.mainFileDescription
+                        List fileNames = paramFile instanceof String ? [paramFile] : paramFile
+                        List descriptions = paramDesc instanceof String ? [paramDesc] : paramDesc
+                        fileNames.eachWithIndex { String fileName, int index ->
+                            mainFiles.put(fileName, descriptions[index].encodeAsHTML())
                         }
-                        flow.workingMemory.put("mains_in_working", mainFiles)
                     } else {
-                        log.debug("There is an error while loading the latest changes on the main files")
+                        // add the main files when
+                        // - the submission flow has just started
+                        // - the main files have been removed and added again
+                        cmd.mainFile.eachWithIndex{ MultipartFile entry, int index ->
+                            String originalFilename = entry.originalFilename
+                            String description = cmd.mainFileDescription[index].encodeAsHTML()
+                            mainFiles.put(originalFilename, description)
+                        }
                     }
+                    flow.workingMemory.put("mains_in_working", mainFiles)
 
-                    // retrieve the additional files in the upload process.
+                    // retrieve the additional files from the upload process.
                     // The result is the map of file names and corresponding descriptions.
                     // For instance, manual.pdf: guidelines and help, readme.txt: introduction and preface, ...
                     Map<String, String> additionalFiles = new HashMap<String, String>()
@@ -721,14 +738,14 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                         def paramDesc = params.existedExtraFileDescriptions
                         List fileNames = paramFile instanceof String ? [paramFile] : paramFile
                         List descriptions = paramDesc instanceof String ? [paramDesc] : paramDesc
-                        fileNames.eachWithIndex { fileName, index ->
-                            additionalFiles.put(fileName, descriptions[index])
+                        fileNames.eachWithIndex { String fileName, int index ->
+                            additionalFiles.put(fileName, descriptions[index].encodeAsHTML())
                         }
                     }
                     // add the recently uploaded files
                     if (cmd.extraFiles && cmd.description) {
                         cmd.extraFiles.eachWithIndex { MultipartFile f, int index ->
-                            additionalFiles.put(f.originalFilename, cmd.description[index])
+                            additionalFiles.put(f.originalFilename, cmd.description[index].encodeAsHTML())
                         }
                     }
                     flow.workingMemory.put("additionals_in_working", additionalFiles)
@@ -818,14 +835,19 @@ Error in uploading files. Cmd did not validate: ${cmd.getProperties()}""")
                     */
 
                     // FOR THE MAIN FILES
-                    // Transfer uploaded files to File objects
+                    // Copy the recently uploaded files to the exchanged folder if they are available
                     List<File> mainFileList
                     if (cmd.mainFile) {
-                        // main files might be just uploaded
+                        // the main files might be just uploaded
                         mainFileList = transferFiles(parent, cmd.mainFile)
+                        if (mainFileList.size() == 0) {
+                            log.debug("""\
+There is an error while attempting to copy the main files
+wrapped in ${cmd.mainFile.inspect()} to the exchanged folder""")
+                        }
                     }
-                    // Build a map of main file objects from the working main files
-                    Map<File, String> mainFilesMap = new HashMap<File, String>()
+                    // Build a map of the main file objects from the working main files
+                    Map<File, String> mainFilesMap = new LinkedHashMap<File, String>()
                     if (flow.workingMemory.containsKey("mains_in_working")) {
                         def mains_in_working = flow.workingMemory.get("mains_in_working") as HashMap<String, String>
                         mains_in_working.each {String keyAsFilename, String valueAsDescription ->
@@ -833,19 +855,20 @@ Error in uploading files. Cmd did not validate: ${cmd.getProperties()}""")
                         }
                         flow.workingMemory["submitted_mains"] = mainFilesMap
                     }
+
                     // FOR THE ADDITIONAL FILES
-                    // Transfer uploaded files to File objects
+                    // Copy the recently uploaded files to the exchanged folder if they are available
                     List<File> extraFileList
                     if (!cmd.extraFiles?.isEmpty()) {
                         extraFileList = transferFiles(parent, cmd.extraFiles)
                         if (extraFileList.size() == 0) {
                             log.debug("""\
 There is an error while attempting to copy the supplemental files
-wrapped in ${cmd.extraFiles.inspect()} to exchanged folder""")
+wrapped in ${cmd.extraFiles.inspect()} to the exchanged folder""")
                         }
                     }
-                    // Build a map of additional file objects from the working additional files
-                    Map<File, String> additionalFilesMap = new HashMap<File, String>()
+                    // Build a map of the additional file objects from the working additional files
+                    Map<File, String> additionalFilesMap = new LinkedHashMap<File, String>()
                     if (flow.workingMemory.containsKey("additionals_in_working")) {
                         def additionals_in_working =
                             flow.workingMemory.get("additionals_in_working") as HashMap<String, String>
@@ -857,7 +880,7 @@ wrapped in ${cmd.extraFiles.inspect()} to exchanged folder""")
 
                     if (IS_DEBUG_ENABLED) {
                         log.debug """\
-About to submit ${mainFileList.inspect()} and ${additionalFilesMap.inspect()}."""
+About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}."""
                     }
 
                     // FOR THE DELETED FILES
