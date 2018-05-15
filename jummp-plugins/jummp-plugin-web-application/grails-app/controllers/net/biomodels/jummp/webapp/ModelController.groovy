@@ -840,7 +840,7 @@ Error in uploading files. Cmd did not validate: ${cmd.getProperties()}""")
                         // the main files might be just uploaded
                         mainFileList = transferFiles(parent, cmd.mainFile)
                         if (mainFileList.size() == 0) {
-                            log.debug("""\
+                            log.error("""\
 There is an error while attempting to copy the main files
 wrapped in ${cmd.mainFile.inspect()} to the exchanged folder""")
                         }
@@ -861,7 +861,7 @@ wrapped in ${cmd.mainFile.inspect()} to the exchanged folder""")
                     if (cmd.extraFiles) {
                         extraFileList = transferFiles(parent, cmd.extraFiles)
                         if (extraFileList.size() == 0) {
-                            log.debug("""\
+                            log.error("""\
 There is an error while attempting to copy the supplemental files
 wrapped in ${cmd.extraFiles.inspect()} to the exchanged folder""")
                         }
