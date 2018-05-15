@@ -633,16 +633,15 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                 // this object persists the latest changes on the upload file page
                 try {
                     def mainMultipartList = request.getMultiFileMap().mainFile
-                    def extraFileField = request.getMultiFileMap().extraFiles
                     def mainFileDescription = params?.mainFileDescription ?: [""]
                     if (mainFileDescription instanceof String) {
                         mainFileDescription = [mainFileDescription]
                     }
+                    def extraFileField = request.getMultiFileMap().extraFiles
                     List<MultipartFile> extraMultipartList = []
                     if (extraFileField instanceof MultipartFile) {
                         extraMultipartList = [extraFileField]
-                    }
-                    else {
+                    } else {
                         extraMultipartList = extraFileField
                     }
                     def descriptionFields = params?.description ?: [""]
@@ -837,7 +836,7 @@ Error in uploading files. Cmd did not validate: ${cmd.getProperties()}""")
                     // FOR THE MAIN FILES
                     // Copy the recently uploaded files to the exchanged folder if they are available
                     List<File> mainFileList
-                    if (cmd.mainFile) {
+                    if (cmd.mainFile?.first().size > 0) {
                         // the main files might be just uploaded
                         mainFileList = transferFiles(parent, cmd.mainFile)
                         if (mainFileList.size() == 0) {
@@ -859,7 +858,7 @@ wrapped in ${cmd.mainFile.inspect()} to the exchanged folder""")
                     // FOR THE ADDITIONAL FILES
                     // Copy the recently uploaded files to the exchanged folder if they are available
                     List<File> extraFileList
-                    if (!cmd.extraFiles?.isEmpty()) {
+                    if (cmd.extraFiles) {
                         extraFileList = transferFiles(parent, cmd.extraFiles)
                         if (extraFileList.size() == 0) {
                             log.debug("""\
