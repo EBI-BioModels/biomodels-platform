@@ -1262,6 +1262,6 @@ databaseChangeLog = {
 
 	include file: '20180417_change_DataTypes_Constraints_CurationNotes.groovy'
 
-    include file: 'grails-app/migrations/20180515_modelDeleted_personName_idx.groovy'
+    include file: '20180515_modelDeleted_personName_idx.groovy'
 }
 
