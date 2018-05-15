@@ -240,7 +240,7 @@ class ModelService {
                                          List filteredFormats, List filteredUsers,
                                          String sortingDirection, boolean isAdmin = false) {
         String query = """\
-SELECT m.id
+SELECT DISTINCT m.id
 FROM Revision AS r
     JOIN r.model AS m
 WHERE
