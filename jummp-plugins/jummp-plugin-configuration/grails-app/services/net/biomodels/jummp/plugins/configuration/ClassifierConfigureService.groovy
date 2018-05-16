@@ -146,6 +146,11 @@ class ClassifierConfigureService implements InitializingBean {
         return workspaces
     }
 
+    /**
+     * Get deep learning model details
+     * @param modelName
+     * @return
+     */
     DLModelCommand getDLModel(String modelName) {
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(classificationEndpoint)
         uriComponentsBuilder.path("/workspace")
@@ -163,6 +168,11 @@ class ClassifierConfigureService implements InitializingBean {
         return dlModelCommand
     }
 
+    /**
+     * Get deep learning model train status
+     * @param modelName
+     * @return
+     */
     List<Map<String, String>> getDLModelTrainStatus(String modelName) {
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(classificationEndpoint)
         uriComponentsBuilder.path("/train")
@@ -172,10 +182,43 @@ class ClassifierConfigureService implements InitializingBean {
             new TypeReference<List<HashMap<String, String>>>(){}, null, RETRY_CLASSIFY_TIMES)
     }
 
+    /**
+     * Get deep learning model train logs
+     * @param modelName
+     * @return
+     */
     List<Map<String, String>> getDLModelTrainLogs(String modelName) {
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(classificationEndpoint)
         uriComponentsBuilder.path("/dl")
         uriComponentsBuilder.queryParam("workspace", modelName)
+        URI request = uriComponentsBuilder.build().toUri()
+        return RestUtils.exchange(request, HttpMethod.GET,
+            new TypeReference<List<HashMap<String, String>>>(){}, null, RETRY_CLASSIFY_TIMES)
+    }
+
+    /**
+     * Get possible category for specific model
+     * @param submissionId
+     * @return
+     */
+    List<Map<String, String>> getPossibleCategory(String submissionId) {
+        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(classificationEndpoint)
+        uriComponentsBuilder.path("/possible")
+        uriComponentsBuilder.queryParam("model_id", submissionId)
+        URI request = uriComponentsBuilder.build().toUri()
+        return RestUtils.exchange(request, HttpMethod.GET,
+            new TypeReference<List<HashMap<String, String>>>(){}, null, RETRY_CLASSIFY_TIMES)
+    }
+
+    /**
+     * Search ontology based on GO tree
+     * @param keyword
+     * @return
+     */
+    List<Map<String, String>> searchCategory(String keyword) {
+        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(classificationEndpoint)
+        uriComponentsBuilder.path("/ontology/search")
+        uriComponentsBuilder.queryParam("keyword", keyword)
         URI request = uriComponentsBuilder.build().toUri()
         return RestUtils.exchange(request, HttpMethod.GET,
             new TypeReference<List<HashMap<String, String>>>(){}, null, RETRY_CLASSIFY_TIMES)

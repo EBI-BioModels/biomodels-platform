@@ -169,16 +169,18 @@ class ModelClassifierService implements InitializingBean {
         return results
     }
 
-    List<Map<String, String>> classifyAllModels(List<ModelDetails> modelDetails, List<ModelClass> groundTruth) {
-        List<Map<String, String>> result = new ArrayList<>()
+    List<Map<String, Object>> classifyAllModels(List<ModelDetails> modelDetails, List<ModelClass> groundTruth) {
+        Map<Model, ModelClass> groundTruthMap = groundTruth.collectEntries {
+            [(it.model):it]
+        }
+        List<Map<String, Object>> result = new ArrayList<>()
         for (ModelDetails model : modelDetails) {
-            ModelClass modelClass = groundTruth.find{it.model == model.model}
-            Map<String, String> classified = classifyModel(model.model, model.updateDate, false)
+            ModelClass modelClass = groundTruthMap.containsKey(model.model) ? groundTruthMap.get(model.model) : null
+            Map<String, Object> classified = classifyModel(model.model, model.updateDate, false)
             if (classified == null || classified.get("code") != "200") {
                 continue
             }
-            Map<String, String> modelData = objectMapper.convertValue(model.model, Map.class)
-            modelData.putAll(objectMapper.convertValue(model, Map.class))
+            Map<String, Object> modelData = model.asMap()
             modelData.putAll(classified)
             modelData.put("groundTruth", modelClass == null ? "0": "1")
             modelData.put("realClass", modelClass == null ? "": modelClass.className)

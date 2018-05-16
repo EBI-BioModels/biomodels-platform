@@ -34,11 +34,12 @@ package net.biomodels.jummp.plugins.configuration
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.model.ModelListSorting
+import net.biomodels.jummp.core.util.RequestUtils
 import net.biomodels.jummp.deployment.biomodels.ModelClass
 import net.biomodels.jummp.model.Model
-import net.biomodels.jummp.models.KV
 import net.biomodels.jummp.models.ModelDetails
 import net.biomodels.jummp.models.Progress
+import net.biomodels.jummp.plugins.security.User
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.web.client.HttpStatusCodeException
@@ -61,16 +62,67 @@ class ClassifierConfigureController {
      */
     def modelService
 
+    /**
+     * Dependency Injection of ModelClassService
+     */
+    def modelClassService
+
+    /**
+     * Dependency Injection of SpringSercurityService
+     */
+    def springSecurityService
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ClassifierConfigureController.class)
 
     @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
     def index() {
         List data = modelService.getAllModelWithDetails(0, 0, true, ModelListSorting.ID)
         List<ModelDetails> modelDetailsList = data.collect{new ModelDetails(it[0] as Model, it[1] as String, it[3] as Date)}
-        List<ModelClass> groundTruth = ModelClass.findAll()
-        List<Map<String, String>> models = modelClassifierService.classifyAllModels(modelDetailsList, groundTruth)
-        render(view: '/configuration/configuration',
-            model: [title: "Model Classification", action: "switchModel", template: "classifierGroundTruth", models: models])
+        List<ModelClass> groundTruth = modelClassService.getModelClasses()
+        List<Map<String, Object>> models = modelClassifierService.classifyAllModels(modelDetailsList, groundTruth)
+            render(view: '/configuration/curator/configuration', model: [title: "Model Classification",
+                 action: "saveGroundTruth", template: "classifierGroundTruth", models: models])
+    }
+
+    @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
+    def saveGroundTruth() {
+        List<String> realCategories = RequestUtils.paramAsList(params, "realCategory[]")
+        List<String> originalRealCategories = RequestUtils.paramAsList(params, "originalRealCategory[]")
+        List<String> modelSubmissionIds = RequestUtils.paramAsList(params, "modelSubmissionId[]")
+        for (int i = 0; i < modelSubmissionIds.size(); i++) {
+            if (realCategories.get(i) != originalRealCategories.get(i)) {
+                Model model = modelService.getModelBySubmissionId(modelSubmissionIds.get(i))
+                User user = (User)springSecurityService.getCurrentUser()
+                modelClassService.saveGroundTruth(realCategories.get(i), model, user)
+            }
+        }
+        redirect(action: "index")
+    }
+
+    @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
+    def getPossibleCategories() {
+        String submissionId = params.get("submission_id")
+        response.status = 200
+        try {
+            List<Map<String, String>> possible = classifierConfigureService.getPossibleCategory(submissionId)
+            render(new JSON(possible))
+        } catch (HttpStatusCodeException e) {
+            response.status = e.getStatusCode().value()
+            render e.getResponseBodyAsString()
+        }
+    }
+
+    @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
+    def searchCategories() {
+        String keyword = params.get("keyword")
+        response.status = 200
+        try {
+            List<Map<String, String>> possible = classifierConfigureService.searchCategory(keyword)
+            render(new JSON(possible))
+        } catch (HttpStatusCodeException e) {
+            response.status = e.getStatusCode().value()
+            render e.getResponseBodyAsString()
+        }
     }
 
     def classifier = {
@@ -80,8 +132,8 @@ class ClassifierConfigureController {
     }
 
     def classifierCreator = {
-        render(view: '/configuration/configuration',
-            model: [title: "Model Classification Creator", action: "classifierCreatorSave", template: "classifierCreator"])
+        render(view: '/configuration/configuration', model: [title: "Model Classification Creator",
+                 action: "classifierCreatorSave", template: "classifierCreator"])
     }
 
     def classifierCreatorSave = { DLModelCommand cmd ->
@@ -94,14 +146,10 @@ class ClassifierConfigureController {
             }
             try {
                 classifierConfigureService.createDLModel(
-                    cmd.dlname,
-                    cmd.totalEpoch,
-                    cmd.valPerEpoch,
-                    cmd.batchSize,
-                    hiddenLayers
-                )
+                    cmd.dlname, cmd.totalEpoch, cmd.valPerEpoch, cmd.batchSize, hiddenLayers)
                 redirect(action: "classifier")
             } catch (HttpStatusCodeException e) {
+                LOGGER.error("An exception occurred when create a new DL model, {}", e)
                 flash.message = e.responseBodyAsString
             }
         }
@@ -161,8 +209,8 @@ class ClassifierConfigureController {
         String modelName = params.get("model_name")
         DLModelCommand cmd = classifierConfigureService.getDLModel(modelName)
 
-        render(view: '/configuration/configuration',
-            model: [title: "Model Classification Details", action: "retrainDLModel", template: "classifierDetails", classifierCreator: cmd])
+        render(view: '/configuration/configuration', model: [title: "Model Classification Details",
+             action: "retrainDLModel", template: "classifierDetails", classifierCreator: cmd])
     }
 
     def trainModelStatus = {
@@ -188,18 +236,14 @@ class ClassifierConfigureController {
             try {
                 classifierConfigureService.deleteDLModel(cmd.dlname)
                 classifierConfigureService.createDLModel(
-                    cmd.dlname,
-                    cmd.totalEpoch,
-                    cmd.valPerEpoch,
-                    cmd.batchSize,
-                    hiddenLayers
-                )
+                    cmd.dlname, cmd.totalEpoch, cmd.valPerEpoch, cmd.batchSize, hiddenLayers)
                 redirect(action: "classifier")
             } catch (HttpStatusCodeException e) {
+                LOGGER.error("An exception occurred when create a new DL model, {}", e)
                 flash.message = e.responseBodyAsString
             }
         }
         render(view: '/configuration/configuration', model: [classifierCreator: cmd,
-                                     title: "Model Classification Creator", action: "retrainDLModel", template: "classifierDetails"])
+             title: "Model Classification Creator", action: "retrainDLModel", template: "classifierDetails"])
     }
 }
