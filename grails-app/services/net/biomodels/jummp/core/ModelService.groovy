@@ -166,12 +166,6 @@ class ModelService {
     @Profiled(tag="modelService.getAllModels")
     List<Model> getAllModels(int offset, int count, boolean sortOrder, ModelListSorting sortColumn,
                                     String filter = null, boolean deletedOnly = false) {
-        getAllModelWithDetails(offset, count, sortOrder, sortColumn, filter, deletedOnly)
-    }
-
-    @Profiled(tag = "modelService.getAllModelWithDetails")
-    private List getAllModelWithDetails(int offset, int count,
-                 boolean sortOrder, ModelListSorting sortColumn, String filter = null, boolean deletedOnly=false) {
         Map metaParams
         if (offset < 0 || count <= 0) {
             // safety check
@@ -281,8 +275,42 @@ WHERE r.id = r2.id
         }
 
         query = """$query
- ORDER BY ${getSortColumnAsString(sortColumn)} ${sortingDirection}"""
+ORDER BY ${getSortColumnAsString(sortColumn)} ${sortingDirection}"""
         return query
+    }
+
+    /**
+     * Returns list of Models with other essential information the user has access to.
+     *
+     * Searches for all Models the current user has access to, then return the model, the model name and
+     * the date when the model was uploaded
+     * @param deletedOnly   false by default
+     * @return List of composite objects
+     **/
+    @Profiled(tag = "modelService.getAllModelWithDetails")
+    List getAllModelWithDetails(boolean deletedOnly = false) {
+        String query = """\
+SELECT DISTINCT m, r.name, r.uploadDate
+FROM Revision AS r
+    JOIN r.model AS m
+WHERE
+    r.deleted = false
+    AND m.deleted = ${deletedOnly}
+    AND r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2, AclEntry ace
+                            WHERE r.id = r2.id
+                                AND r2.id = ace.aclObjectIdentity.objectId
+                                AND ace.aclObjectIdentity.aclClass.className = :className
+                                AND ace.sid.sid IN (:roles)
+                                AND ace.mask IN (:permissions))"""
+
+        List permissions = new ArrayList([BasePermission.READ.getMask(), BasePermission.ADMINISTRATION.getMask()])
+        Set<String> roles = getSpringDatabaseRoles()
+        Map namedParams = [
+            className  : Revision.class.getName(),
+            permissions: permissions,
+            roles      : roles
+        ]
+        Model.executeQuery(query, namedParams, [:])
     }
 
     /**
