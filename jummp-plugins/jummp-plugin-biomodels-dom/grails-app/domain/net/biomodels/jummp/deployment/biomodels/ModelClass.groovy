@@ -54,30 +54,37 @@ class ModelClass {
     /**
      * Who create this mapping
      */
-    User createBy
+    User createdBy
+
+    /**
+     * Who update this mapping
+     */
+    User updatedBy
 
     /**
      * When it changed
      */
-    Date updateTime
+    Date updatedDate
 
     /**
      * When it created
      */
-    Date createTime
+    Date createdDate
 
     static constraints = {
         model(nullable: false)
         className(nullable: false)
         status(nullable: false)
-        createBy(nullable: false)
-        updateTime(nullable: false)
-        createTime(nullable: false)
+        createdBy(nullable: false)
+        updatedDate(nullable: false)
+        createdDate(nullable: false)
+        updatedBy(nullable: false)
     }
 
     static mapping = {
         className column: "class", sqlType: "varchar", length: 15
-        createBy column: "create_by"
+        createdBy column: "created_by"
+        updatedBy column: "updated_by"
         status enumType:"ordinal"
     }
 }
