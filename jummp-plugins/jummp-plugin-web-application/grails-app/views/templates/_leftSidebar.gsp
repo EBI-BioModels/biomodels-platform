@@ -52,7 +52,12 @@
                 </g:if>
                 <g:else>
                     <%
-                        String newQuery = query ? "${query} AND ${selectedFacet}" : "${selectedFacet}"
+                        String newQuery = ""
+                        if (actionName.equalsIgnoreCase("search")) {
+                            newQuery = query? "${query} AND ${selectedFacet}" : "${selectedFacet}"
+                        } else {
+                            newQuery = selectedFacet
+                        }
                         def newParams = [:]
                         if (params.query) {
                             newParams["query"] = newQuery
