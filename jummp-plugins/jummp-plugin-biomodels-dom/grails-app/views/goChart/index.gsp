@@ -21,9 +21,9 @@
 <head>
     <title>Model GO Categories</title>
     <meta name="layout" content="${session['branding.style']}/main" />
-    <link rel="stylesheet" href="${resource(dir: 'css/datatable', file: 'jquery.dataTables.min.css', contextPath: "${grailsApplication.config.grails.serverURL}")}")}" type="text/css">
-    <link rel="stylesheet" href="${resource(dir: 'css/datatable', file: 'buttons.dataTables.min.css', contextPath: "${grailsApplication.config.grails.serverURL}")}")}" type="text/css">
-    <link rel="stylesheet" href="${resource(dir: 'css/datatable', file: 'select.dataTables.min.css', contextPath: "${grailsApplication.config.grails.serverURL}")}")}" type="text/css">
+    <link rel="stylesheet" href="${resource(dir: 'css/datatable', file: 'jquery.dataTables.min.css', contextPath: "${grailsApplication.config.grails.serverURL}")}" type="text/css">
+    <link rel="stylesheet" href="${resource(dir: 'css/datatable', file: 'buttons.dataTables.min.css', contextPath: "${grailsApplication.config.grails.serverURL}")}" type="text/css">
+    <link rel="stylesheet" href="${resource(dir: 'css/datatable', file: 'select.dataTables.min.css', contextPath: "${grailsApplication.config.grails.serverURL}")}" type="text/css">
     <style>
     path {
         stroke: #000;
