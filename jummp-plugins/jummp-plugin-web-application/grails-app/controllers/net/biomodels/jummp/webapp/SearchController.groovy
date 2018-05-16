@@ -152,7 +152,7 @@ class SearchController {
     }
 
     /**
-     * Default action showing a list view
+     * Default action showing a archive view
      */
     def archive() {
         sanitiseParams()
@@ -257,35 +257,6 @@ class SearchController {
         }
         JsonBuilder builder = new JsonBuilder(facets)
 
-        /*int sortDir = 1
-        if (sortDirection && sortDirection == "asc") {
-            sortDir = -1
-        }
-        switch (sortBy) {
-            case "name":
-                models = models.sort{ m1, m2 -> sortDir * m2.name.compareTo(m1.name) }
-                break
-            case "format":
-                models = models.sort{ m1, m2 -> sortDir * m2.format.name.compareTo(m1.format.name) }
-                break
-            case "submitter":
-                models = models.sort{ m1, m2 -> sortDir * m2.submitter.compareTo(m1.submitter) }
-                break
-            case "submitted":
-                models = models.sort{ m1, m2 ->
-                    sortDir * m2.submissionDate.getTime() - m1.submissionDate.getTime()
-                }
-                break
-            case "modified":
-                models = models.sort{ m1, m2 ->
-                    sortDir * m2.lastModifiedDate.getTime() - m1.lastModifiedDate.getTime()
-                }
-                break
-            default:
-                models = models.sort{ m1, m2 -> sortDir * m2.name.compareTo(m1.name) }
-                break
-        }*/
-
         if (offset > 0 && offset < models.size()) {
             models = models[offset..-1]
         } else {
@@ -369,64 +340,10 @@ class SearchController {
         modelsDomain.each {
             models.add(new ModelAdapter(model: it).toCommandObject())
         }
-        List<Facet> basicFacets = buildBasicFacets(models)
+        List<Facet> basicFacets = searchService.buildBasicFacets(models)
         int totalCount = modelService.getModelCount(filter, false)
         return [models: models, facets: basicFacets, modelsAvailable: totalCount, sortBy: sortBy,
-                sortDirection: sortDirection, offset: offset, length: length]
-    }
-
-    private List<Facet> buildBasicFacets(List<ModelTransportCommand> models) {
-        List<Facet> facets = []
-        def formats = models.collect(
-            new HashSet(), {
-            [it.format.identifier, it.format.name, 0]
-        })
-        def submitters = models.collect(
-            new HashSet(), {
-            [it.submitter, 0]
-        })
-
-        models.each {
-            String format = it.format.identifier
-            formats.each {
-                if (it[0] == format) {
-                    it[2] += 1
-                }
-            }
-
-            String submitter = it.submitter
-            submitters.each {
-                if (it[0] == submitter) {
-                    it[1] += 1
-                }
-            }
-        }
-
-        def facet = new Facet()
-        List<FacetValue> fvs = []
-        facet.id = "Format"
-        facet.label = "Format"
-        facet.facetValues = []
-        formats.each {
-            FacetValue fv = new FacetValue(label: it[1], value: it[0], count: it[2])
-            fvs << fv
-        }
-        facet.facetValues = fvs
-        facets << facet
-
-        facet = new Facet()
-        fvs = []
-        facet.id = "Submitter"
-        facet.label = "Collaborator"
-        facet.facetValues = []
-        submitters.each {
-            FacetValue fv = new FacetValue(label: it[0], value: it[0], count: it[1])
-            fvs << fv
-        }
-        facet.facetValues = fvs
-        facets << facet
-
-        facets
+                sortDirection: sortDirection, offset: offset, length: length, query: filter]
     }
 
     private String getSortColumn(int sc) {

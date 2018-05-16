@@ -288,7 +288,7 @@ class ModelClassifierService implements InitializingBean {
                     total.incrementAndGet()
                     ObjectNode child = objectMapper.createObjectNode()
                     String modelId = model.model.getPublicationId()
-                    if (modelId == null) {
+                    if (modelId == null || modelId == "") {
                         modelId = model.model.submissionId
                     }
                     child.put("modelId", modelId)

@@ -76,8 +76,10 @@ class ClassifierConfigureController {
 
     @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
     def index() {
-        List data = modelService.getAllModelWithDetails(0, 0, true, ModelListSorting.ID)
-        List<ModelDetails> modelDetailsList = data.collect{new ModelDetails(it[0] as Model, it[1] as String, it[3] as Date)}
+        List data = modelService.getAllModelWithDetails(false)
+        List<ModelDetails> modelDetailsList = data.collect {
+            new ModelDetails(it[0] as Model, it[1] as String, it[2] as Date)
+        }
         List<ModelClass> groundTruth = modelClassService.getModelClasses()
         List<Map<String, Object>> models = modelClassifierService.classifyAllModels(modelDetailsList, groundTruth)
             render(view: '/configuration/curator/configuration', model: [title: "Model Classification",
@@ -192,9 +194,11 @@ class ClassifierConfigureController {
             response.status = 400
             render([message: 'Please wait until the previous rebuild finished'] as JSON)
         } else {
-            List data = modelService.getAllModelWithDetails(0, 0, true, ModelListSorting.ID)
-            List<ModelDetails> models = data.collect{new ModelDetails(it[0] as Model, it[1] as String, it[3] as Date)}
-            modelClassifierService.rebuildClassifyCache(models)
+            List data = modelService.getAllModelWithDetails(false)
+            List<ModelDetails> modelDetailsList = data.collect {
+                new ModelDetails(it[0] as Model, it[1] as String, it[2] as Date)
+            }
+            modelClassifierService.rebuildClassifyCache(modelDetailsList)
             render([message: 'Operation success'] as JSON)
         }
     }

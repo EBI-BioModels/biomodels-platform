@@ -5,8 +5,14 @@
                 ${it}
             </g:if>
             <g:else>
+                <%
+                    Map customParams = [offset: 0, numResults: it, sort: params.sort]
+                    if (action == 'search') {
+                        customParams['query'] = query
+                    }
+                %>
                 <a href="${createLink(controller: 'search', action: action,
-                    params: [query: query, offset: 0, numResults: it, sort: params.sort])}">
+                    params: customParams)}">
                     ${it}
                 </a>
             </g:else>

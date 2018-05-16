@@ -31,6 +31,8 @@ import net.biomodels.jummp.plugins.security.User
 @grails.validation.Validateable
 class CurationNotesTransportCommand implements Serializable {
     private static final long serialVersionUID = 1L
+    private static final long MAX_IMG_SIZE =  1_500_000 // bytes ~ 1.44MB = 1024*1024*1.44
+
     Long id
     ModelTransportCommand model
     User submitter
@@ -40,9 +42,25 @@ class CurationNotesTransportCommand implements Serializable {
     String comment
     String internalComment
     byte[] curationImage
+    String mimeType
     boolean updated
 
     static constraints = {
         importFrom(CurationNotes)
+        id nullable: true
+        mimeType nullable: true
+        curationImage validator: { byte[] val, CurationNotesTransportCommand command ->
+            String curationImgBase64Str
+            curationImgBase64Str = val ? Base64.encoder.encodeToString(val) : null
+            if (curationImgBase64Str == null) {
+                return ['curationImageMissing']
+            } else {
+                def mimeTypePattern = /^image\//
+                def m = command.mimeType =~ mimeTypePattern
+                if (m.count <= 0) {
+                    return ['curationNotesTransportCommand.curationImage.curationImageWrongFileType']
+                }
+            }
+        }
     }
 }
