@@ -427,6 +427,10 @@ ORDER BY
         return model
     }
 
+    Model getModelBySubmissionId(String submissionId) {
+        Model.findBySubmissionId(submissionId)
+    }
+
     /**
     * Queries the @p model for the latest available revision the user has read access to.
     * @param model The Model for which the latest revision should be retrieved.
