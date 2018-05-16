@@ -249,7 +249,7 @@ $query AND r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2 wher
         } else {
             query = """\
 $query AND r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2, AclEntry ace
-WHERE r.id = r2.id
+WHERE r.model = r2.model
     AND r2.id = ace.aclObjectIdentity.objectId
     AND ace.aclObjectIdentity.aclClass.className = :className
     AND ace.sid.sid IN (:roles)
@@ -297,7 +297,7 @@ WHERE
     r.deleted = false
     AND m.deleted = ${deletedOnly}
     AND r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2, AclEntry ace
-                            WHERE r.id = r2.id
+                            WHERE r.model = r2.model
                                 AND r2.id = ace.aclObjectIdentity.objectId
                                 AND ace.aclObjectIdentity.aclClass.className = :className
                                 AND ace.sid.sid IN (:roles)
