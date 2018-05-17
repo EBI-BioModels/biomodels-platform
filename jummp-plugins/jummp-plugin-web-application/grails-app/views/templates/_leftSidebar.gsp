@@ -134,7 +134,7 @@
     }
 
     function runFacetList(e, facetGroupId, facetValue) {
-        var currentQueryString = "${params.query}";
+        var currentQueryString = "${params.query?.replaceAll('"', '\\\\"')}";
         facetValue = escapeSpecialLuceneCharacters(facetValue);
         /* the above utility function is defined in common.js which is already included in the footer section */
 	    var latestQueryString = facetGroupId + ":" + facetValue;
