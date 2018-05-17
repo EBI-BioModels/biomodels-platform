@@ -415,10 +415,23 @@ WHERE
     **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getModelCount")
-    public Integer getModelCount(String filter = null, boolean deletedOnly = false) {
+    Integer getModelCount(String filter = null, boolean deletedOnly = false) {
         ModelListSorting sorting
         List<Model> resultSet = getAllModels(-1, 0, false, sorting, filter, false)
-        return resultSet.size()
+        resultSet.size()
+    }
+
+    /**
+     * Returns the list of Models the user has access to. These models only include private and shared ones.
+     *
+     * @param filter Optional filter for search
+     * @see ModelService#getAllModels()
+     **/
+    @PostLogging(LoggingEventType.RETRIEVAL)
+    @Profiled(tag="modelService.getMyModels")
+    List<Model> getMyModels(String filter = null, boolean deletedOnly = false) {
+        ModelListSorting sorting
+        getAllModels(-1, 0, false, sorting, filter, false)
     }
 
     /** convenience method to check if our filter is OK */
