@@ -234,9 +234,8 @@ class ModelService {
                                          List filteredFormats, List filteredUsers,
                                          String sortingDirection, boolean isAdmin = false) {
         String query = """\
-SELECT DISTINCT m.id
-FROM Revision AS r
-    JOIN r.model AS m
+SELECT m.id
+FROM Revision AS r RIGHT OUTER JOIN r.model AS m
 WHERE
     r.deleted = false
     AND m.deleted = ${deletedOnly}
@@ -290,9 +289,8 @@ ORDER BY ${getSortColumnAsString(sortColumn)} ${sortingDirection}"""
     @Profiled(tag = "modelService.getAllModelWithDetails")
     List getAllModelWithDetails(boolean deletedOnly = false) {
         String query = """\
-SELECT DISTINCT m, r.name, r.uploadDate
-FROM Revision AS r
-    JOIN r.model AS m
+SELECT m, r.name, r.uploadDate
+FROM Revision AS r RIGHT OUTER JOIN r.model AS m
 WHERE
     r.deleted = false
     AND m.deleted = ${deletedOnly}
