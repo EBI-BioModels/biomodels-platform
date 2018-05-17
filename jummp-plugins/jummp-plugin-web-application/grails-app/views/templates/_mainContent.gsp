@@ -179,7 +179,7 @@
                                             selectedModels.push($(this).val());
                                         });
                                     } else {
-                                        var htmlMessage = flashHtmlMessageBuilder("No available public models could be downloaded.");
+                                        var htmlMessage = flashHtmlMessageBuilder("${g.message(code: "jummp.search.download.model.unavailable")}");
                                         showFlashMessage(htmlMessage);
                                     }
                                 } else {
@@ -197,7 +197,7 @@
                                     // the controller method
                                     window.location = link;
                                 } else {
-                                    var htmlMessage = flashHtmlMessageBuilder("Please select at least one model.");
+                                    var htmlMessage = flashHtmlMessageBuilder("${g.message(code: "jummp.search.download.model.checkOne")}");
                                     showFlashMessage(htmlMessage);
                                 }
                             });

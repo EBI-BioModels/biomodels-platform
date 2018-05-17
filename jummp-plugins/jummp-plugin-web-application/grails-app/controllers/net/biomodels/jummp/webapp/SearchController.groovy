@@ -225,7 +225,7 @@ class SearchController {
             response.setHeader("Content-disposition", "attachment;filename=\"${filename}\"")
             response.outputStream << new ByteArrayInputStream(data)
         } else {
-            def params = [query: "*:*", flashMessage: g.message(code: "jummp.search.download.unavailable.warningMessage")]
+            def params = [query: "*:*", flashMessage: g.message(code: "jummp.search.download.model.unavailable.warningMessage")]
             forward(action: 'search', params: params)
             return [query: "*:*"]
         }
