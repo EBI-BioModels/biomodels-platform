@@ -261,10 +261,7 @@ WHERE r.model = r2.model
                 query = "$query AND r.owner.id = ${u.id}"
                 break
             case "shared":
-                query = "$query AND r.owner.id != ${u.id} AND r.state = '${ModelState.UNPUBLISHED}'"
-                break
-            case "public":
-                query = "$query AND r.state = '${ModelState.PUBLISHED}'"
+                query = "$query AND r.owner.id != ${u.id}"
                 break
             default:
                 if (type) {
@@ -273,7 +270,7 @@ WHERE r.model = r2.model
                 break
         }
 
-        query = """$query
+        query = """$query AND r.state = '${ModelState.UNPUBLISHED}' 
 ORDER BY ${getSortColumnAsString(sortColumn)} ${sortingDirection}"""
         return query
     }
