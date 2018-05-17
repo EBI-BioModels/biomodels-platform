@@ -77,4 +77,11 @@ class ModelClassService {
                 modelClass.errors.allErrors.inspect())
         }
     }
+
+    void deleteGroundTruth(Model model) {
+        ModelClass modelClass = ModelClass.findByModel(model)
+        if (modelClass) {
+            modelClass.delete(flush: true)
+        }
+    }
 }

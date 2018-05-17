@@ -82,7 +82,7 @@ class ClassifierConfigureController {
         }
         List<ModelClass> groundTruth = modelClassService.getModelClasses()
         List<Map<String, Object>> models = modelClassifierService.classifyAllModels(modelDetailsList, groundTruth)
-            render(view: '/configuration/curator/configuration', model: [title: "Model Classification",
+        render(view: '/configuration/curator/configuration', model: [title: "Model Classification",
                  action: "saveGroundTruth", template: "classifierGroundTruth", models: models])
     }
 
@@ -94,8 +94,12 @@ class ClassifierConfigureController {
         for (int i = 0; i < modelSubmissionIds.size(); i++) {
             if (realCategories.get(i) != originalRealCategories.get(i)) {
                 Model model = modelService.getModelBySubmissionId(modelSubmissionIds.get(i))
-                User user = (User)springSecurityService.getCurrentUser()
-                modelClassService.saveGroundTruth(realCategories.get(i), model, user)
+                if (realCategories.get(i) == "") {
+                    modelClassService.deleteGroundTruth(model)
+                } else {
+                    User user = (User)springSecurityService.getCurrentUser()
+                    modelClassService.saveGroundTruth(realCategories.get(i), model, user)
+                }
             }
         }
         redirect(action: "index")
