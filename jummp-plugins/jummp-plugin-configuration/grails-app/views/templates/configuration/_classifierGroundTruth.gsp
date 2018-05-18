@@ -82,6 +82,7 @@
             submissionId: "${item['model'].submissionId}",
             publicationId: "${item['model'].publicationId}",
             realCategory: "${item['realClass']}",
+            categoryName: "${item['class_name']}",
             groundTruth: parseInt("${item['groundTruth']}"),
             hasChange: 0
         });
@@ -196,7 +197,16 @@
                 }
             },
             {"title": "Model Name", "data": "name"},
-            {"title": "Category Predicted", "data": "category", "className": "dt-center"},
+            {"title": "Category Predicted",
+                "data": "category",
+                "className": "dt-center",
+                "render": function (data, type, row, meta) {
+                    if (type === 'display') {
+                        return '<span title="' + row.categoryName + '">' + data + '</span>'
+                    }
+                    return data
+                }
+            },
             {
                 "title": "Actual Category",
                 "data": "realCategory",
