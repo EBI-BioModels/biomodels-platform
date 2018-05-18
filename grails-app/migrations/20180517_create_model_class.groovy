@@ -10,7 +10,7 @@ databaseChangeLog = {
 				constraints(nullable: "false")
 			}
 
-			column(name: "class", type: "varchar") {
+			column(name: "class", type: "varchar(63)") {
 				constraints(nullable: "false")
 			}
 
