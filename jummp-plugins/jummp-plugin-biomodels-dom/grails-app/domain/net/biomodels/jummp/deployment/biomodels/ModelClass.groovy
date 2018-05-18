@@ -37,37 +37,37 @@ import net.biomodels.jummp.plugins.security.User
  */
 class ModelClass {
     /**
-     * Which model was accessed
+     * The model which is being classified
      */
     Model model
 
     /**
-     * What is the class of this model
+     * The class name based on GO term, which is classified by hand
      */
     String className
 
     /**
-     * Indicate whether the model trained or not
+     * Indicate whether the model was already trained or not
      */
     ModelClassStatus status
 
     /**
-     * Who create this mapping
+     * The user who mapped/assigned the class and model manually
      */
     User createdBy
 
     /**
-     * Who update this mapping
+     * The user who update this mapping
      */
     User updatedBy
 
     /**
-     * When it changed
+     * The date time when the mapping is updated.
      */
     Date updatedDate
 
     /**
-     * When it created
+     * The date time when the mapping is created.
      */
     Date createdDate
 
