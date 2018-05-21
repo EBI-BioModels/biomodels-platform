@@ -45,6 +45,11 @@
         <g:renderErrors/>
     </div>
 </g:hasErrors>
+<g:if test="${flash.message}">
+    <div class="warning">
+        ${flash.message}
+    </div>
+</g:if>
 <div id="remote" class="body">
     <h2>Configuration - ${title}</h2>
     <g:form name="configurationForm" action="${action}">

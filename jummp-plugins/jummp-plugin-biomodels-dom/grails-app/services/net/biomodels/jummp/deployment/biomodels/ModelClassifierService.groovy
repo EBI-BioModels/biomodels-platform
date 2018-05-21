@@ -109,10 +109,11 @@ class ModelClassifierService implements InitializingBean {
 
     /**
      * Classify a model
-     * Check if we already have cached, then return the cache instead of classify it again
+     * Check whether the model in question has been classified or not by looking at the cache.
+     * If the model has already classified, instead of classify it again, the class should be returned from the cache.
      * @param model: Model to classify
      * @param date: The date that the model has been updated
-     * @param forceUpdateCache: Alway update cache
+     * @param forceUpdateCache: Force to update model cache whether it had had cache or not
      * @return the HashMap represent the response from the Classification API
      */
     private Map<String, String> classifyModel(Model model, Date date, boolean forceUpdateCache) {

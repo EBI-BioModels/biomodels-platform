@@ -329,7 +329,7 @@ body {
         <li class="classifier-item">
 
             <span class="classifier-country list-only">
-                Name
+                ${message(code: 'modelclassifier.dllmodel.details.name')}
             </span>
 
             <span class="classifier-name" onclick="viewModel('${it['name']}')">
@@ -366,7 +366,7 @@ body {
                             <input type="radio" name="activated" value="${it['name']}" />
                         </g:else>
                         <div class="state p-success">
-                            <label>Active</label>
+                            <label>${message(code: 'modelclassifier.dllmodel.switch.active')}</label>
                         </div>
                     </div>
                 </span>
@@ -384,7 +384,7 @@ body {
     }
 
     function deleteModel(modelName, event) {
-        if (!confirm("Are you sure you want to delete DL model '" + modelName + "'? This can't be undone!")) {
+        if (!confirm("${message(code: 'modelclassifier.dllmodel.delete.confirm')}")) {
             return;
         }
         var currentElement = $(event.target);
@@ -396,7 +396,7 @@ body {
                 toastr.error(jqXHR.responseJSON.message);
             },
             success: function() {
-                toastr.success("Delete DL model success");
+                toastr.success("${message(code: 'modelclassifier.dllmodel.delete.success')}");
                 currentElement.parents(".classifier-item").remove()
             }
         });
@@ -423,8 +423,7 @@ body {
         getRebuildStatus();
         $('#configurationForm').submit(function (e) {
             e.preventDefault();
-            if (!confirm("Are you sure you want to switch DL Model?, by doing this, " +
-                                            "you will clean up the cached from previous DL Model also!")) {
+            if (!confirm("${message(code: 'modelclassifier.dllmodel.switch')}")) {
                 return;
             }
             $.ajax({
@@ -436,7 +435,7 @@ body {
                     toastr.error(jqXHR.responseJSON.message);
                 },
                 success: function(data) {
-                    toastr.success("DL model switched");
+                    toastr.success("${message(code: 'modelclassifier.dllmodel.switch.success')}");
                 }
             });
         });
@@ -446,7 +445,7 @@ body {
         });
 
         $("#rebuild-now").click(function () {
-            if (!confirm("Are you sure you want to rebuild? all exists cache for classification will be override")) {
+            if (!confirm("${message(code: 'modelclassifier.cache.rebuild.confirm')}")) {
                 return;
             }
             $.ajax({
@@ -458,7 +457,7 @@ body {
                     toastr.error(jqXHR.responseJSON.message);
                 },
                 success: function(data) {
-                    toastr.success("Started to rebuild model");
+                    toastr.success("${message(code: 'modelclassifier.cache.rebuild.started')}");
                 }
             });
         })

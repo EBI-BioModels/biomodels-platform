@@ -33,7 +33,6 @@ package net.biomodels.jummp.plugins.configuration
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
-import net.biomodels.jummp.core.model.ModelListSorting
 import net.biomodels.jummp.core.util.RequestUtils
 import net.biomodels.jummp.deployment.biomodels.ModelClass
 import net.biomodels.jummp.model.Model
@@ -155,7 +154,7 @@ class ClassifierConfigureController {
                     cmd.dlname, cmd.totalEpoch, cmd.valPerEpoch, cmd.batchSize, hiddenLayers)
                 redirect(action: "classifier")
             } catch (HttpStatusCodeException e) {
-                LOGGER.error("An exception occurred when create a new DL model, {}", e)
+                LOGGER.error("An exception occurred when creating a new deep learning model, {}", e)
                 flash.message = e.responseBodyAsString
             }
         }
@@ -169,7 +168,7 @@ class ClassifierConfigureController {
         response.status = 200
         try {
             classifierConfigureService.deleteDLModel(modelName)
-            render([message: 'Operation success'] as JSON)
+            render([message: message(code: 'modelclassifier.dllmodel.delete.success')] as JSON)
         } catch (HttpStatusCodeException e) {
             response.status = e.getStatusCode().value()
             render e.getResponseBodyAsString()
@@ -179,7 +178,7 @@ class ClassifierConfigureController {
     def switchModel = {
         if (modelClassifierService.isRebuildingCache()) {
             response.status = 400
-            render([message: 'Please wait until the previous rebuild finished'] as JSON)
+            render([message: message(code: "modelclassifier.cache.rebuild.message")] as JSON)
         } else {
             String modelName = params.get("activated")
             LOGGER.info("Switching DL model {}", modelName)
@@ -196,7 +195,7 @@ class ClassifierConfigureController {
     def rebuildCache = {
         if (modelClassifierService.isRebuildingCache()) {
             response.status = 400
-            render([message: 'Please wait until the previous rebuild finished'] as JSON)
+            render([message: message(code: "modelclassifier.cache.rebuild.message")] as JSON)
         } else {
             List data = modelService.getAllModelWithDetails(false)
             List<ModelDetails> modelDetailsList = data.collect {
@@ -247,7 +246,7 @@ class ClassifierConfigureController {
                     cmd.dlname, cmd.totalEpoch, cmd.valPerEpoch, cmd.batchSize, hiddenLayers)
                 redirect(action: "classifier")
             } catch (HttpStatusCodeException e) {
-                LOGGER.error("An exception occurred when create a new DL model, {}", e)
+                LOGGER.error("An exception occurred when creating a new deep learning model, {}", e)
                 flash.message = e.responseBodyAsString
             }
         }

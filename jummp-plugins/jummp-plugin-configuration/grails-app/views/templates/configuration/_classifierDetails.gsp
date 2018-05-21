@@ -317,7 +317,7 @@ body {
     <li class="classifier-item">
 
         <span class="classifier-country list-only">
-            Name
+            ${message(code: 'modelclassifier.dllmodel.details.name')}
         </span>
 
         <span class="classifier-name">
@@ -325,7 +325,7 @@ body {
         </span>
 
         <span class="classifier-country list-only">
-            Train progress
+            ${message(code: 'modelclassifier.dllmodel.details.progress')}
         </span>
 
         <span>
@@ -333,7 +333,7 @@ body {
                 <span class="determinate" id="dlmodel-progress-val" style="width: 70%"></span>
             </span>
             <span class="classifier-progress-label" id="dlmodel-val">
-                80%
+                0%
             </span>
         </span>
 
@@ -343,7 +343,7 @@ body {
             </span>
             <span>
                 <button class="btn" type="submit" id="dlmodel-now">
-                    <span>Retrain now</span>
+                    <span>${message(code: 'modelclassifier.dllmodel.details.retrain')}</span>
                 </button>
             </span>
         </div>
@@ -353,25 +353,29 @@ body {
         <table>
             <tbody>
             <tr>
-                <td class="name"><label for="totalEpoch">Total train epoch:</label></td>
-                <td class="value ${hasErrors(bean: classifierCreator, field: 'totalEpoch', 'errors')}">
-                    <input type="number" name="totalEpoch" id="totalEpoch"
-                           value="${classifierCreator.totalEpoch}"
-                    />
+                <td class="name">
+                    <label for="totalEpoch">${message(code: 'modelclassifier.dllmodel.creator.totalEpoch')}:</label>
                 </td>
-                <td class="name"><label for="valPerEpoch">Validate per epoch:</label></td>
+                <td class="value ${hasErrors(bean: classifierCreator, field: 'totalEpoch', 'errors')}">
+                    <input type="number" name="totalEpoch" id="totalEpoch" value="${classifierCreator.totalEpoch}"/>
+                </td>
+                <td class="name">
+                    <label for="valPerEpoch">${message(code: 'modelclassifier.dllmodel.creator.valPerEpoch')}:</label>
+                </td>
                 <td class="value ${hasErrors(bean: classifierCreator, field: 'valPerEpoch', 'errors')}">
-                    <input type="number" name="valPerEpoch" id="valPerEpoch"
-                           value="${classifierCreator.valPerEpoch}"/>
+                    <input type="number" name="valPerEpoch" id="valPerEpoch" value="${classifierCreator.valPerEpoch}"/>
                 </td>
             </tr>
             <tr>
-                <td class="name"><label for="batchSize">Batch size:</label></td>
-                <td class="value ${hasErrors(bean: classifierCreator, field: 'batchSize', 'errors')}">
-                    <input type="number" name="batchSize" id="batchSize"
-                           value="${classifierCreator.batchSize}"/>
+                <td class="name">
+                    <label for="batchSize">${message(code: 'modelclassifier.dllmodel.creator.batchSize')}:</label>
                 </td>
-                <td class="name"><label for="hiddenLayer">Hidden layer:</label></td>
+                <td class="value ${hasErrors(bean: classifierCreator, field: 'batchSize', 'errors')}">
+                    <input type="number" name="batchSize" id="batchSize" value="${classifierCreator.batchSize}"/>
+                </td>
+                <td class="name">
+                    <label for="hiddenLayer">${message(code: 'modelclassifier.dllmodel.creator.hiddenLayer')}:</label>
+                </td>
                 <td class="value ${hasErrors(bean: classifierCreator, field: 'hiddenLayer', 'errors')}">
                     <input type="text" name="hiddenLayer" id="hiddenLayer" value="${classifierCreator.hiddenLayer}"/>
                 </td>
@@ -386,7 +390,7 @@ body {
     var svg;
 
     $('#configurationForm').submit(function (e) {
-            if (!confirm("Are you sure you want to retrain this model?")) {
+            if (!confirm("${message(code: 'modelclassifier.dllmodel.retrain.confirm')}")) {
                 return;
             }
         });

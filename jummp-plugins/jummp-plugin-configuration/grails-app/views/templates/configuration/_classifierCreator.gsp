@@ -22,7 +22,9 @@
     <table class="formtable">
         <tbody>
         <tr class="prop">
-            <td class="name" width="25%"><label for="dlname">DL Model name:</label></td>
+            <td class="name" width="25%">
+                <label for="dlname">${message(code: 'modelclassifier.dllmodel.details.name')}:</label>
+            </td>
             <td class="value ${hasErrors(bean: classifierCreator, field: 'dlname', 'errors')}">
                 <input type="text" name="dlname" id="dlname"
                        style="width: 350px;"
@@ -30,7 +32,9 @@
             </td>
         </tr>
         <tr class="prop">
-            <td class="name"><label for="totalEpoch">Total train epoch:</label></td>
+            <td class="name">
+                <label for="totalEpoch">${message(code: 'modelclassifier.dllmodel.creator.totalEpoch')}:</label>
+            </td>
             <td class="value ${hasErrors(bean: classifierCreator, field: 'totalEpoch', 'errors')}">
                 <input type="number" name="totalEpoch" id="totalEpoch"
                        value="1000"
@@ -39,21 +43,27 @@
             </td>
         </tr>
         <tr class="prop">
-            <td class="name"><label for="valPerEpoch">Validate per epoch:</label></td>
+            <td class="name">
+                <label for="valPerEpoch">${message(code: 'modelclassifier.dllmodel.creator.valPerEpoch')}:</label>
+            </td>
             <td class="value ${hasErrors(bean: classifierCreator, field: 'valPerEpoch', 'errors')}">
                 <input type="number" name="valPerEpoch" id="valPerEpoch"
                        value="2" style="width: 350px;"/>
             </td>
         </tr>
         <tr class="prop">
-            <td class="name"><label for="batchSize">Batch size:</label></td>
+            <td class="name">
+                <label for="batchSize">${message(code: 'modelclassifier.dllmodel.creator.batchSize')}:</label>
+            </td>
             <td class="value ${hasErrors(bean: classifierCreator, field: 'batchSize', 'errors')}">
                 <input type="number" name="batchSize" id="batchSize"
                        value="32" style="width: 350px;"/>
             </td>
         </tr>
         <tr class="prop">
-            <td class="name"><label for="hiddenLayer">Hidden layer:</label></td>
+            <td class="name">
+                <label for="hiddenLayer">${message(code: 'modelclassifier.dllmodel.creator.hiddenLayer')}:</label>
+            </td>
             <td class="value ${hasErrors(bean: classifierCreator, field: 'hiddenLayer', 'errors')}">
                 <input type="text" name="hiddenLayer" id="hiddenLayer" value="Auto" style="width: 350px;"/>
             </td>

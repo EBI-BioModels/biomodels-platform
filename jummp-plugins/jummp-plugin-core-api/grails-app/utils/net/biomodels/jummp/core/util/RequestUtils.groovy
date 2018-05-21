@@ -37,9 +37,9 @@ import org.codehaus.groovy.grails.web.servlet.mvc.GrailsParameterMap
 class RequestUtils {
 
     /**
-     * Cast request param value into list
-     * Because if the request param in array form (<name>[]) and it has only one value
-     * Then it will me cast as String
+     * Cast the request param value into list type
+     * Because if the request param is array(<name>[]) and it has only one value
+     * Then Grails will cast it as String type instead of array
      * This function will make sure the result always is array
      *
      * @param params

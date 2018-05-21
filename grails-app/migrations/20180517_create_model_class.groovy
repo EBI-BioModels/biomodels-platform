@@ -59,14 +59,20 @@ databaseChangeLog = {
 	}
 
 	changeSet(author: "tvu (generated)", id: "1526563584160-12") {
-		addForeignKeyConstraint(baseColumnNames: "created_by", baseTableName: "model_class", constraintName: "FK_sqhs6s0tutircsu77h1hab39w", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "user", referencesUniqueColumn: "false")
+		addForeignKeyConstraint(baseColumnNames: "created_by", baseTableName: "model_class",
+            constraintName: "FK_sqhs6s0tutircsu77h1hab39w", deferrable: "false", initiallyDeferred: "false",
+            referencedColumnNames: "id", referencedTableName: "user", referencesUniqueColumn: "false")
 	}
 
 	changeSet(author: "tvu (generated)", id: "1526563584160-13") {
-		addForeignKeyConstraint(baseColumnNames: "model_id", baseTableName: "model_class", constraintName: "FK_o8u5yobwtt1sldukqi03svodo", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "model", referencesUniqueColumn: "false")
+		addForeignKeyConstraint(baseColumnNames: "model_id", baseTableName: "model_class",
+            constraintName: "FK_o8u5yobwtt1sldukqi03svodo", deferrable: "false", initiallyDeferred: "false",
+            referencedColumnNames: "id", referencedTableName: "model", referencesUniqueColumn: "false")
 	}
 
 	changeSet(author: "tvu (generated)", id: "1526563584160-14") {
-		addForeignKeyConstraint(baseColumnNames: "updated_by", baseTableName: "model_class", constraintName: "FK_8syufqgqbw4gi81cemj9tpmt5", deferrable: "false", initiallyDeferred: "false", referencedColumnNames: "id", referencedTableName: "user", referencesUniqueColumn: "false")
+		addForeignKeyConstraint(baseColumnNames: "updated_by", baseTableName: "model_class",
+            constraintName: "FK_8syufqgqbw4gi81cemj9tpmt5", deferrable: "false", initiallyDeferred: "false",
+            referencedColumnNames: "id", referencedTableName: "user", referencesUniqueColumn: "false")
 	}
 }
