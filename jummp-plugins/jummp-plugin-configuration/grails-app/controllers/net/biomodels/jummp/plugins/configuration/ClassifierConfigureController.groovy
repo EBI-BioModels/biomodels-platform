@@ -87,9 +87,9 @@ class ClassifierConfigureController {
 
     @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
     def saveGroundTruth() {
-        List<String> realCategories = RequestUtils.paramAsList(params, "realCategory[]")
-        List<String> originalRealCategories = RequestUtils.paramAsList(params, "originalRealCategory[]")
-        List<String> modelSubmissionIds = RequestUtils.paramAsList(params, "modelSubmissionId[]")
+        List<String> realCategories = params.list("realCategory[]")
+        List<String> originalRealCategories = params.list("originalRealCategory[]")
+        List<String> modelSubmissionIds = params.list("modelSubmissionId[]")
         for (int i = 0; i < modelSubmissionIds.size(); i++) {
             if (realCategories.get(i) != originalRealCategories.get(i)) {
                 Model model = modelService.getModelBySubmissionId(modelSubmissionIds.get(i))
