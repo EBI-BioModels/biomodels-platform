@@ -33,7 +33,6 @@ package net.biomodels.jummp.plugins.configuration
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
-import net.biomodels.jummp.core.util.RequestUtils
 import net.biomodels.jummp.deployment.biomodels.ModelClass
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.models.ModelDetails
