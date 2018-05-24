@@ -370,7 +370,8 @@ body {
                         </div>
                     </div>
                 </span>
-                <span class="delete-deep-model" onclick="deleteModel('${it['name']}', event)">
+                <span class="delete-deep-model"
+                      onclick="deleteModel('${it['name']}', event, '${message(code: 'modelclassifier.dllmodel.delete.confirm', args: [it['name']])}')">
                     <div class="x-close hairline"></div>
                 </span>
             </div>
@@ -383,8 +384,8 @@ body {
         window.location = $.jummp.createLink("classifierConfigure", "classifierDetails?model_name=" + encodeURIComponent(modelName))
     }
 
-    function deleteModel(modelName, event) {
-        if (!confirm("${message(code: 'modelclassifier.dllmodel.delete.confirm')}")) {
+    function deleteModel(modelName, event, confirm_message) {
+        if (!confirm(confirm_message)) {
             return;
         }
         var currentElement = $(event.target);
