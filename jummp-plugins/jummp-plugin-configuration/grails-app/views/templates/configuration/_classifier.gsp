@@ -407,7 +407,7 @@ body {
         $.ajax({
             dataType:'json',
             type: "GET",
-            url: $.jummp.createLink("classifierConfigure", "rebuildCacheStatus"),
+            url: $.jummp.createLink("classifierConfigure", "rebuildCacheStatus?time=" + Date.now()),
             error: function(jqXHR) {
                 toastr.error(jqXHR.responseJSON.message);
             },
