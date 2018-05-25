@@ -399,7 +399,11 @@ body {
       $.ajax({
             dataType:'json',
             type: "GET",
-            url: $.jummp.createLink("classifierConfigure", "trainModelStatus?model_name=" + encodeURIComponent("${classifierCreator.dlname}")),
+            url: $.jummp.createLink("classifierConfigure", "trainModelStatus"),
+            data: {
+                  model_name: encodeURIComponent("${classifierCreator.dlname}"),
+                  time: Date.now()
+            },
             error: function(jqXHR) {
                 toastr.error(jqXHR.responseJSON.message);
             },
@@ -415,7 +419,11 @@ body {
         $.ajax({
             dataType:'json',
             type: "GET",
-            url: $.jummp.createLink("classifierConfigure", "trainModelLogs?model_name=" + encodeURIComponent("${classifierCreator.dlname}")),
+            url: $.jummp.createLink("classifierConfigure", "trainModelLogs"),
+            data: {
+                  model_name: encodeURIComponent("${classifierCreator.dlname}"),
+                  time: Date.now()
+            },
             error: function(jqXHR) {
                 toastr.error(jqXHR.responseJSON.message);
             },
