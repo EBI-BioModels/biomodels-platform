@@ -217,7 +217,7 @@ class SearchService {
             new HashSet(), {
             [it.submitter, 0]
         })
-        def types = new HashSet([["Private", 0], ["Shared", 0]])
+        def types = new HashSet([["Private", 0], ["Shared", 0], ["Public", 0]])
         models.each {
             String format = it.format.identifier
             formats.each {
@@ -241,6 +241,9 @@ class SearchService {
             boolean shared = !currentLoggedInUsername.equalsIgnoreCase(submitterUsername) && it.state == ModelState.UNPUBLISHED
             if (shared) {
                 types[1][1] += 1
+            }
+            if (it.state == ModelState.PUBLISHED) {
+                types[2][1] += 1
             }
         }
         // Format
