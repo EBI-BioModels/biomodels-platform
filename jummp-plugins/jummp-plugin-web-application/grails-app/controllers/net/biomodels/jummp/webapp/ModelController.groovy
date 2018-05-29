@@ -706,7 +706,16 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     // into the working memory variable named mains_in_working
                     Map<String, String> mainFiles = new HashMap<String, String>()
                     // submit new models, add new main file
-                    if (params.mainFileUpload && params.mainFileDescription) {
+                    if (cmd.mainFile?.first().size > 0) {
+                        // add the main files when
+                        // - the submission flow has just started
+                        // - the main files have been removed and added again
+                        cmd.mainFile.eachWithIndex{ MultipartFile entry, int index ->
+                            String originalFilename = entry.originalFilename
+                            String description = cmd.mainFileDescription[index].encodeAsHTML()
+                            mainFiles.put(originalFilename, description)
+                        }
+                    } else if (params.mainFileUpload && params.mainFileDescription) {
                         // the main file has not been updated any more when
                         // the user goes back and forth between the file upload screen
                         // and the model information during the upload flow
@@ -716,15 +725,6 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                         List descriptions = paramDesc instanceof String ? [paramDesc] : paramDesc
                         fileNames.eachWithIndex { String fileName, int index ->
                             mainFiles.put(fileName, descriptions[index].encodeAsHTML())
-                        }
-                    } else {
-                        // add the main files when
-                        // - the submission flow has just started
-                        // - the main files have been removed and added again
-                        cmd.mainFile.eachWithIndex{ MultipartFile entry, int index ->
-                            String originalFilename = entry.originalFilename
-                            String description = cmd.mainFileDescription[index].encodeAsHTML()
-                            mainFiles.put(originalFilename, description)
                         }
                     }
                     flow.workingMemory.put("mains_in_working", mainFiles)
