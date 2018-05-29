@@ -1,8 +1,12 @@
 package net.biomodels.jummp.models
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import net.biomodels.jummp.model.Model
 
+import java.lang.reflect.Modifier
+
 class ModelDetails implements Serializable {
+    @JsonIgnore
     Model model
     String name
     Date updateDate
@@ -11,6 +15,12 @@ class ModelDetails implements Serializable {
         this.model = model
         this.name = name
         this.updateDate = updateDate
+    }
+
+    Map<String, Object> asMap() {
+        this.class.declaredFields.findAll { !it.synthetic }.collectEntries {
+            [ (it.name):this."$it.name" ]
+        }
     }
 
     boolean equals(o) {

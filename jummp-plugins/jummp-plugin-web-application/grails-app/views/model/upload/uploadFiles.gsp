@@ -29,10 +29,20 @@
 <%@page expressionCodec="none" %>
 <%@ page import="net.biomodels.jummp.core.model.RepositoryFileTransportCommand; grails.converters.JSON"
         contentType="text/html;charset=UTF-8" %>
+<%
+    def uploadedFiles = workingMemory['main_files']
+    def titlePage = g.message(code: "submission.upload.header")
+    def uploadButtonLabel = g.message(code: 'submission.upload.uploadButton')
+    if (uploadedFiles) {
+        titlePage = g.message(code: "submission.upload.review.titlePage")
+        uploadButtonLabel = "Next"
+    }
+    def headerTitle = titlePage
+%>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="layout" content="${session['branding.style']}/main" />
-        <title><g:message code="submission.upload.header"/></title>
+        <title>${titlePage}</title>
         <g:javascript contextPath="" src="jquery/jquery-ui-v1.10.3.js"/>
         <g:if test ="${showProceedWithoutValidationDialog || showProceedAsUnknownFormat}">
             <link rel="stylesheet" href="${resource(contextPath: "${grailsApplication.config.grails.serverURL}",
@@ -82,7 +92,7 @@
             </div>
         </g:if>
         <g:render template="/templates/errorMessage"/>
-        <h2><g:message code="submission.upload.header"/></h2>
+        <h2>${headerTitle}</h2>
         <p style="padding-bottom:1em"><g:message code="submission.upload.explanation"/></p>
         <g:uploadForm id="fileUpload" novalidate="false" autocomplete="false" name="fileUploadForm"
                       onsubmit="return validate()">
@@ -119,7 +129,7 @@
                     <g:if test="${!isUpdate}">
                         <g:submitButton name="Back" class="button" value="${g.message(code: 'submission.common.backButton')}" />
                     </g:if>
-                    <g:submitButton name="Upload" class="button" value="${g.message(code: 'submission.upload.uploadButton')}" />
+                    <g:submitButton name="Upload" class="button" value="${uploadButtonLabel}" />
                     <g:if test="${showProceedWithoutValidationDialog || showProceedAsUnknownFormat}">
                         <g:submitButton name="ProceedWithoutValidation" class="button" value="ProceedWithoutValidation" hidden="true"/>
                     </g:if>

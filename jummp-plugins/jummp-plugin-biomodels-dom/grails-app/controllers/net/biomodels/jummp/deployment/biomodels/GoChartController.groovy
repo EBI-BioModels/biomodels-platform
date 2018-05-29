@@ -53,8 +53,10 @@ class GoChartController {
 
     def index() {
         try {
-            List data = modelService.getAllModelWithDetails(0, 0, true, ModelListSorting.ID)
-            List<ModelDetails> models = data.collect{new ModelDetails(it[0] as Model, it[1] as String, it[3] as Date)}
+            List data = modelService.getAllModelWithDetails(false)
+            List<ModelDetails> models = data.collect {
+                new ModelDetails(it[0] as Model, it[1] as String, it[2] as Date)
+            }
             ['classifiedModels': modelClassifierService.classify(models)]
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e)

@@ -1,16 +1,16 @@
 package net.biomodels.jummp.models
 
-class JummpEntry<K extends Serializable, V extends Serializable> implements Map.Entry<K,V>, Serializable {
+class KV<K extends Serializable, V extends Serializable> implements Map.Entry<K,V>, Serializable {
 
     K key
     V value
 
-    JummpEntry(K key, V value) {
+    KV(K key, V value) {
         this.key = key
         this.value = value
     }
 
-    JummpEntry() {
+    KV() {
     }
 
     V setValue(V value) {
@@ -21,7 +21,7 @@ class JummpEntry<K extends Serializable, V extends Serializable> implements Map.
         if (this.is(o)) return true
         if (getClass() != o.class) return false
 
-        JummpEntry jEntry = (JummpEntry) o
+        KV jEntry = (KV) o
 
         if (key != jEntry.key) return false
         if (value != jEntry.value) return false

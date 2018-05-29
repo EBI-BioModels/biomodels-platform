@@ -54,7 +54,7 @@ class ConfigurationService implements InitializingBean {
      */
     private final ReentrantLock lock = new ReentrantLock()
 
-    static transactional = true
+    static transactional = false
     /**
      * The configuration file is set in after properties set to a default value if not already set.
      * Primary purpose of this property is for integration tests to not overwrite the real configuration.

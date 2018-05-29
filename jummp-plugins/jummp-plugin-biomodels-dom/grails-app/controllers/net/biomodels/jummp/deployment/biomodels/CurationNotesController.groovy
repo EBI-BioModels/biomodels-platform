@@ -21,6 +21,7 @@
 
 package net.biomodels.jummp.deployment.biomodels
 
+import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import groovy.json.JsonSlurper
 import net.biomodels.jummp.core.adapters.ModelAdapter
@@ -45,11 +46,10 @@ class CurationNotesController {
 
     }
 
-    private parseCuratioNotes() {
-        def curationNotes = new JsonSlurper().parseText(params.curationNotes)
-        String modelId = params.model
-        String comment = curationNotes["comment"]
-	    String internalComment = curationNotes["internalComment"]
+    private parseCuratioNotes(def curationNotes, def modelId) {
+        curationNotes = new JsonSlurper().parseText(curationNotes)
+        String comment = curationNotes["comment"].encodeAsHTML()
+	    String internalComment = curationNotes["internalComment"].encodeAsHTML()
         String submitterUsername = curationNotes["submitter"]
         User submitter = User.findByUsername(submitterUsername)
         String lastModifierUsername = curationNotes["lastModifier"]
@@ -72,10 +72,11 @@ class CurationNotesController {
                           updated: updated]
         CurationNotesTransportCommand command = new CurationNotesTransportCommand(bindingMap)
         if (params?.cnId) {
-            command.id = curationNotes["id"]
+            command.id = params.long(params.cnId)
         }
         if (curationNotes["curationImage"]) {
             command.curationImage = Base64.decoder.decode(curationNotes["curationImage"])
+            command.mimeType = curationNotes["mimeType"]
         }
         command
     }
@@ -86,31 +87,34 @@ class CurationNotesController {
     }
 
     def doAddOrUpdate() {
-        CurationNotesTransportCommand command = parseCuratioNotes()
+        def curationNotes = params.curationNotes
+        String model = params.model
+        model = model.encodeAsHTML()
+        CurationNotesTransportCommand command = parseCuratioNotes(curationNotes, model)
         // get the latest timestamp
         command.lastModified = new Date()
         if (!command.updated) {
             // this case means to add a new curation notes
             command.dateAdded = command.lastModified
         }
-        String message
-        if (command) {
-            boolean status = curationNotesService.doAddOrUpdateCurationNotes(command)
-            if (status) {
-                message = "Curation notes have been updated successfully"
+        Map response = [:]
+        if (command.validate()) {
+            CurationNotes update = curationNotesService.doAddOrUpdateCurationNotes(command)
+            if (update) {
+                response['message'] = "Curation notes have been updated successfully"
+                response['cnId'] = update.id
             } else {
-                message = "There is an error while trying to persist the curation notes into the database"
+                response['message'] = "There is an error while trying to persist the curation notes into the database"
             }
         } else {
             String defaultMessage = command.errors.getFieldError("comment")?.defaultMessage
             if (defaultMessage?.contains("cannot be blank")) {
-                message = "The comment cannot be blank"
+                response['message'] = "The comment cannot be blank"
             } else {
-                message = command.errors.allErrors.inspect()
+                response['message'] = command.errors.allErrors.inspect()
             }
         }
-        log.debug(message)
-        render message
+        render(response as JSON)
     }
 
     def reset() {
