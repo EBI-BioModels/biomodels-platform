@@ -98,7 +98,7 @@ class SearchController {
         }
         params.numResults = numResults()
         if (integerCheck(params.offset, true, -1)) {
-            params.offset = params.offset ? Integer.parseInt(params.offset) : 0
+            params.offset = params.offset ? params.int("offset") : 0
         }
         else {
             params.offset = 0
@@ -120,7 +120,7 @@ class SearchController {
             prefs = Preferences.getDefaults()
         }
         if (integerCheck(params.numResults, true, -1)) {
-            prefs.numResults = params.numResults as Integer
+            prefs.numResults = params.int("numResults")
             if (prefs.numResults > MAXRESULTS ) {
                 prefs.numResults = MAXRESULTS
             }

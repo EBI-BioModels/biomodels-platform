@@ -245,7 +245,7 @@ class ModelController {
 An anonymous or restricted access user is trying to retrieve this model: ${model.submissionId}""")
                 int revisionNumber = -1
                 if (params.revisionId) {
-                    revisionNumber = Integer.parseInt(params.revisionId)
+                    revisionNumber = params.int("revisionId")
                 }
                 Revision revision = revisionNumber >= 0 ? model.revisions.getAt(revisionNumber-1) : model.revisions.last()
                 if (!revision) {
@@ -635,10 +635,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                 // this object persists the latest changes on the upload file page
                 try {
                     def mainMultipartList = request.getMultiFileMap().mainFile
-                    def mainFileDescription = params?.mainFileDescription ?: [""]
-                    if (mainFileDescription instanceof String) {
-                        mainFileDescription = [mainFileDescription]
-                    }
+                    List<String> mainFileDescription = params.list("mainFileDescription")
                     def extraFileField = request.getMultiFileMap().extraFiles
                     List<MultipartFile> extraMultipartList = []
                     if (extraFileField instanceof MultipartFile) {
@@ -646,28 +643,9 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     } else {
                         extraMultipartList = extraFileField
                     }
-                    def descriptionFields = params?.description ?: [""]
-                    if (descriptionFields instanceof String) {
-                        descriptionFields = [descriptionFields]
-                    }
-                    def noMains = params.deletedMain
-                    List<String> mainsToBeDeleted = []
-                    if (noMains) {
-                        if (!(noMains instanceof CharSequence)) {
-                            mainsToBeDeleted.addAll(Arrays.asList(noMains))
-                        } else {
-                            mainsToBeDeleted.add(noMains)
-                        }
-                    }
-                    def noAdditionals = params.deletedAdditional
-                    List<String> additionalsToBeDeleted = []
-                    if (noAdditionals) {
-                        if (noAdditionals.getClass().isArray()) {
-                            additionalsToBeDeleted.addAll(Arrays.asList(noAdditionals))
-                        } else {
-                            additionalsToBeDeleted.add(noAdditionals)
-                        }
-                    }
+                    List<String> descriptionFields = params.list("description")
+                    List<String> mainsToBeDeleted = params.list("deletedMain")
+                    List<String> additionalsToBeDeleted = params.list("deletedAdditional")
                     // Because of using an input element to store deleted files,
                     // we need to reprocess the list of them for getting the list of file name
                     // before sending the result to Submission Service
@@ -719,10 +697,8 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                         // the main file has not been updated any more when
                         // the user goes back and forth between the file upload screen
                         // and the model information during the upload flow
-                        def paramFile = params.mainFileUpload
-                        def paramDesc = params.mainFileDescription
-                        List fileNames = paramFile instanceof String ? [paramFile] : paramFile
-                        List descriptions = paramDesc instanceof String ? [paramDesc] : paramDesc
+                        List fileNames = params.list("mainFileUpload")
+                        List descriptions = params.list("mainFileDescription")
                         fileNames.eachWithIndex { String fileName, int index ->
                             mainFiles.put(fileName, descriptions[index].encodeAsHTML())
                         }
@@ -735,10 +711,8 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     Map<String, String> additionalFiles = new HashMap<String, String>()
                     // add the existing files that were already uploaded
                     if (params.existedExtraFiles && params.existedExtraFileDescriptions) {
-                        def paramFile = params.existedExtraFiles
-                        def paramDesc = params.existedExtraFileDescriptions
-                        List fileNames = paramFile instanceof String ? [paramFile] : paramFile
-                        List descriptions = paramDesc instanceof String ? [paramDesc] : paramDesc
+                        List fileNames = params.list("existedExtraFiles")
+                        List descriptions = params.list("existedExtraFileDescriptions")
                         fileNames.eachWithIndex { String fileName, int index ->
                             additionalFiles.put(fileName, descriptions[index].encodeAsHTML())
                         }
