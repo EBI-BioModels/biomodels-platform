@@ -264,11 +264,17 @@ WHERE r.model = r2.model
                 query = "$query AND r.owner.id != ${u.id} AND r.state = '${ModelState.UNPUBLISHED}'"
                 break
             case "public":
-                query = "$query AND r.state = '${ModelState.PUBLISHED}'"
+                query = "$query AND r.owner.id = ${u.id} AND r.state = '${ModelState.PUBLISHED}'"
                 break
             default:
                 if (type) {
                     log.warn("Ignoring unsupported permission level '$type'.")
+                } else if (!isAdmin) {
+                    query = """\
+$query AND ((r.owner.id = ${u.id} AND r.state = '${ModelState.UNPUBLISHED}') 
+OR (r.owner.id != ${u.id} AND r.state = '${ModelState.UNPUBLISHED}') 
+OR (r.owner.id = ${u.id} AND r.state = '${ModelState.PUBLISHED}'))
+"""
                 }
                 break
         }
