@@ -648,10 +648,12 @@ target(main: "Puts everything together to import models from a given folder") {
 
         boolean exists = modelsImported.contains(f.name)
         if (f.isDirectory() && f.name ==~ modelFolderPattern && tobeProcessed && !exists) {
-            processModelFolder f
-        }
+		    processModelFolder f
+        } else {
+		    log("The model ${f.name} cannot be imported!")
+	    }
         if (exists) {
-            addModelError(f.name, "The model was already imported!")
+		    log("The model ${f.name} was already imported!")
         }
     }
 
