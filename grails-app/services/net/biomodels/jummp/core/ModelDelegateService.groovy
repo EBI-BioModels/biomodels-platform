@@ -34,27 +34,25 @@
 
 package net.biomodels.jummp.core
 
-import net.biomodels.jummp.core.adapters.DomainAdapter
 import net.biomodels.jummp.core.adapters.ModelAdapter
-import net.biomodels.jummp.core.model.ModelAuditTransportCommand
-import net.biomodels.jummp.core.model.ModelFormatTransportCommand
-import net.biomodels.jummp.core.model.ModelListSorting
-import net.biomodels.jummp.core.model.ModelState
-import net.biomodels.jummp.core.model.ModelTransportCommand
-import net.biomodels.jummp.core.model.PermissionTransportCommand
-import net.biomodels.jummp.core.model.PublicationTransportCommand
-import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
-import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.core.adapters.PublicationAdapter
+import net.biomodels.jummp.core.adapters.RevisionAdapter
+import net.biomodels.jummp.core.model.*
+import net.biomodels.jummp.core.model.identifier.generator.AbstractModelIdentifierGenerator
+import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import net.biomodels.jummp.core.vcs.VcsFileDetails
+import net.biomodels.jummp.model.Flag
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.User
-import net.biomodels.jummp.core.model.identifier.generator.AbstractModelIdentifierGenerator
-import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.springframework.security.access.AccessDeniedException
+
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
+
 /**
  * @short Service delegating methods to ModelService.
  *
@@ -65,24 +63,27 @@ import org.springframework.security.access.AccessDeniedException
  * ModelService should be used directly.
  * @author Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
  * @author Raza Ali <raza.ali@ebi.ac.uk>
+ * @author Sarala Wimalaratne <sarala@ebi.ac.uk>
  */
 class ModelDelegateService implements IModelService {
     static transactional = false
-    private static final Log log = LogFactory.getLog(this)
+    private static final Log log = LogFactory.getLog(ModelDelegateService.class)
 
     def modelService
     def modelFileFormatService
+    def qcInfoDelegateService
+    def modelFlagService
     def referenceTracker
     def publicationIdGenerator
 
     String getPluginForFormat(ModelFormatTransportCommand format) {
         return modelFileFormatService.getPluginForFormat(format)
     }
-    
+
     List<ModelTransportCommand> getAllModels(int offset, int count, boolean sortOrder, ModelListSorting sortColumn) {
         List<ModelTransportCommand> models = []
         modelService.getAllModels(offset, count, sortOrder, sortColumn).each {
-            models << DomainAdapter.getAdapter(it).toCommandObject()
+            models << new ModelAdapter(model: it).toCommandObject(false)
         }
         return models
     }
@@ -90,7 +91,7 @@ class ModelDelegateService implements IModelService {
     List<ModelTransportCommand> getAllModels(int offset, int count, boolean sortOrder) {
         List<ModelTransportCommand> models = []
         modelService.getAllModels(offset, count, sortOrder).each {
-            models << DomainAdapter.getAdapter(it).toCommandObject()
+            models << new ModelAdapter(model: it).toCommandObject(false)
         }
         return models
     }
@@ -98,7 +99,7 @@ class ModelDelegateService implements IModelService {
     List<ModelTransportCommand> getAllModels(int offset, int count, ModelListSorting sortColumn) {
         List<ModelTransportCommand> models = []
         modelService.getAllModels(offset, count, sortColumn).each {
-            models << DomainAdapter.getAdapter(it).toCommandObject()
+            models << new ModelAdapter(model: it).toCommandObject(false)
         }
         return models
     }
@@ -106,7 +107,7 @@ class ModelDelegateService implements IModelService {
     List<ModelTransportCommand> getAllModels(int offset, int count) {
         List<ModelTransportCommand> models = []
         modelService.getAllModels(offset, count).each {
-            models << DomainAdapter.getAdapter(it).toCommandObject()
+            models << new ModelAdapter(model: it).toCommandObject(false)
         }
         return models
     }
@@ -114,7 +115,7 @@ class ModelDelegateService implements IModelService {
     List<ModelTransportCommand> getAllModels(ModelListSorting sortColumn) {
         List<ModelTransportCommand> models = []
         modelService.getAllModels(sortColumn).each {
-            models << DomainAdapter.getAdapter(it).toCommandObject()
+            models << new ModelAdapter(model: it).toCommandObject(false)
         }
         return models
     }
@@ -122,7 +123,7 @@ class ModelDelegateService implements IModelService {
     List<ModelTransportCommand> getAllModels() {
         List<ModelTransportCommand> models = []
         modelService.getAllModels().each {
-            models << DomainAdapter.getAdapter(it).toCommandObject()
+            models << new ModelAdapter(model: it).toCommandObject(false)
         }
         return models
     }
@@ -144,7 +145,7 @@ class ModelDelegateService implements IModelService {
     }
 
     ModelTransportCommand getModel(String modelId) {
-        return DomainAdapter.getAdapter(modelService.getModel(modelId)).toCommandObject()
+        return new ModelAdapter(model: modelService.getModel(modelId)).toCommandObject()
     }
 
     RevisionTransportCommand getLatestRevision(String modelId, boolean addToHistory = true) {
@@ -154,7 +155,7 @@ class ModelDelegateService implements IModelService {
         }
         Revision rev = modelService.getLatestRevision(model, addToHistory)
         if (rev) {
-            return DomainAdapter.getAdapter(rev).toCommandObject()
+            return new RevisionAdapter(revision: rev).toCommandObject()
         } else {
             throw new AccessDeniedException("No access to any revision of Model ${modelId}")
         }
@@ -163,17 +164,17 @@ class ModelDelegateService implements IModelService {
     List<RevisionTransportCommand> getAllRevisions(String modelId) {
         List<RevisionTransportCommand> revisions = []
         modelService.getAllRevisions(ModelAdapter.findByPerennialIdentifier(modelId)).each {
-            revisions << DomainAdapter.getAdapter(it).toCommandObject()
+            revisions << new RevisionAdapter(revision: it).toCommandObject()
         }
         return revisions
     }
 
     RevisionTransportCommand getRevision(String identifier) {
-        return DomainAdapter.getAdapter(modelService.getRevision(identifier)).toCommandObject()
+        return new RevisionAdapter(revision: modelService.getRevision(identifier)).toCommandObject()
     }
 
     RevisionTransportCommand getRevision(String modelId, int revisionNumber) {
-        return DomainAdapter.getAdapter(modelService.getRevision(
+        return new RevisionAdapter(revision: modelService.getRevision(
                     ModelAdapter.findByPerennialIdentifier(modelId), revisionNumber)).toCommandObject()
     }
 
@@ -182,21 +183,63 @@ class ModelDelegateService implements IModelService {
         def publication = modelService.getPublication(
                                ModelAdapter.findByPerennialIdentifier(modelId))
         if (publication) {
-            return DomainAdapter.getAdapter(publication).toCommandObject()
+            return new PublicationAdapter(publication: publication).toCommandObject()
         }
         return null
     }
 
     ModelTransportCommand uploadModel(List<File> modelFiles, ModelTransportCommand meta) throws
                 ModelException {
-        return DomainAdapter.getAdapter(modelService.uploadModelAsList(modelFiles, meta)).toCommandObject()
+        return new ModelAdapter(model: modelService.uploadModelAsList(modelFiles, meta)).toCommandObject()
     }
 
     RevisionTransportCommand addRevision(String modelId, File file,
                 ModelFormatTransportCommand format, String comment) throws ModelException {
-        return DomainAdapter.getAdapter(modelService.addRevision(ModelAdapter.findByPerennialIdentifier(modelId), file,
-                    ModelFormat.findByIdentifierAndFormatVersion(format.identifier,
-                                    format.formatVersion), comment)).toCommandObject()
+        Model model = ModelAdapter.findByPerennialIdentifier(modelId)
+        ModelFormat modelFormat = ModelFormat.findByIdentifierAndFormatVersion(format.identifier,
+            format.formatVersion)
+        Revision revision = modelService.addRevisionAsFile(model, file, modelFormat, comment)
+        return new RevisionAdapter(revision: revision).toCommandObject()
+    }
+
+    Byte[] serveModelFilesAsZip(List<RepositoryFileTransportCommand> files) {
+        ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream()
+        ZipOutputStream zipFile = new ZipOutputStream(byteBuffer)
+        files.each {
+            File file = new File(it.path)
+            zipFile.putNextEntry(new ZipEntry(file.getName()))
+            byte[] fileData = file.getBytes()
+            zipFile.write(fileData, 0, fileData.length)
+            zipFile.closeEntry()
+        }
+        zipFile.close()
+        byte[] response = byteBuffer.toByteArray()
+        response
+    }
+
+    Byte[] serveModelFilesAsZip(String[] modelIDs) {
+        List<RepositoryFileTransportCommand> files = modelService.fetchMainFileForModels(modelIDs)
+        if (files) {
+            return serveModelFilesAsZip(files)
+        } else
+        return null
+    }
+
+    List<FlagTransportCommand> getFlags(String modelId) {
+        Model model = modelService.getModel(modelId)
+        List<FlagTransportCommand> results = new ArrayList<FlagTransportCommand>()
+        if (model != null) {
+            List<Flag> flags = modelFlagService.getFlags(model)
+            if (!flags.empty) {
+                use(FlagCategory) {
+                    results = flags.collect { Flag flag ->
+                        flag.toCommandObject()
+                    }
+                }
+                return results
+            }
+        }
+        return Collections.emptyList()
     }
 
     Boolean canAddRevision(String modelId) {
@@ -211,8 +254,7 @@ class ModelDelegateService implements IModelService {
         return modelService.canShare(ModelAdapter.findByPerennialIdentifier(modelId))
     }
 
-    Boolean canPublish(String modelId) {
-        def revision = getLatestRevision(modelId)
+    Boolean canPublish(RevisionTransportCommand revision) {
         if (revision.state == ModelState.UNPUBLISHED) {
             try {
                 return modelService.canPublish(Revision.get(revision.id))
@@ -222,6 +264,45 @@ class ModelDelegateService implements IModelService {
             }
         }
         return false
+    }
+
+    Boolean canPublish(String modelId) {
+        def revision = getLatestRevision(modelId)
+        canPublish(revision)
+    }
+
+    Boolean canCertify(RevisionTransportCommand revision) {
+        if(!revision.qcInfo) {
+            String modelId = revision.model.publicationId ?: revision.model.submissionId
+            return qcInfoDelegateService.canCertify(ModelAdapter.findByPerennialIdentifier(modelId))
+        } else
+            return false
+    }
+
+    Boolean canCertify(String modelId) {
+        def revision = getLatestRevision(modelId)
+        canCertify(revision)
+    }
+
+    Boolean canCheckConsistency(RevisionTransportCommand revision) {
+        Revision actualRevision = Revision.get(revision.id)
+        modelService.canCheckConsistency(actualRevision)
+    }
+
+    Boolean canSubmitForPublication(RevisionTransportCommand revision) {
+        if ((revision.state == ModelState.UNPUBLISHED)) {
+            try {
+                return modelService.canSubmitForPublication(Revision.get(revision.id))
+            } catch (Exception e) {
+                return false
+            }
+        }
+        return false
+    }
+
+    Boolean canSubmitForPublication(String modelId) {
+        def revision = getLatestRevision(modelId)
+        canSubmitForPublication(revision)
     }
 
     List<RepositoryFileTransportCommand> retrieveModelFiles(RevisionTransportCommand revision)
@@ -248,10 +329,6 @@ class ModelDelegateService implements IModelService {
                     User.get(collaborator.id))
     }
 
-    Map<String, List<String>> getSearchIndexingContent(RevisionTransportCommand revision) {
-        modelService.getSearchIndexingContent(revision)
-    }
-
     void grantWriteAccess(String modelId, User collaborator) {
         modelService.grantWriteAccess(ModelAdapter.findByPerennialIdentifier(modelId),
                     User.get(collaborator.id))
@@ -273,7 +350,8 @@ class ModelDelegateService implements IModelService {
     }
 
     boolean deleteModel(String modelId) {
-        return modelService.deleteModel(ModelAdapter.findByPerennialIdentifier(modelId))
+        def model = ModelAdapter.findByPerennialIdentifier(modelId)
+        modelService.deleteModel(model)
     }
 
     boolean restoreModel(String modelId) {
@@ -299,7 +377,7 @@ class ModelDelegateService implements IModelService {
         if (!REV) {
             throw new IllegalArgumentException("Revision with id $REV_ID does not exist")
         }
-        return DomainAdapter.getAdapter(REV).toCommandObject()
+        return new ModelAdapter(model: REV).toCommandObject()
     }
 
     void publishModelRevision(RevisionTransportCommand revision) {
@@ -310,12 +388,28 @@ class ModelDelegateService implements IModelService {
         modelService.unpublishModelRevision(Revision.get(revision.id))
     }
 
+    void submitModelRevisionForPublication(RevisionTransportCommand revision) {
+        modelService.submitModelRevisionForPublication(Revision.get(revision.id))
+    }
+
     ModelTransportCommand findByPerennialIdentifier(String perennialId) {
         def model = ModelAdapter.findByPerennialIdentifier(perennialId)
         if (model) {
-            return DomainAdapter.getAdapter(model).toCommandObject()
+            return new ModelAdapter(model: model).toCommandObject()
         }
         return null
+    }
+
+    /**
+     * Update curation status of specific model revision
+     * @param modelId: submissionId of model
+     * @param revisionNumber: revision number
+     * @param curationState: curation status
+     */
+    void updateCurationStateRevision(String modelId, int revisionNumber, CurationState curationState) {
+        Revision revision = modelService.getRevision(ModelAdapter.findByPerennialIdentifier(modelId), revisionNumber)
+        revision.setCurationState(curationState)
+        revision.save(flush:true)
     }
 
     RevisionTransportCommand getRevisionFromParams(final String MODEL, String REVISION = null) {

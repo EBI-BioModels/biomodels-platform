@@ -46,12 +46,10 @@ import static org.junit.Assert.*
 @TestMixin(IntegrationTestMixin)
 class CreateAdminTests extends JummpIntegrationTest {
     def userService
-    @Override
     @Before
     void setUp() {
     }
 
-    @Override
     @After
     void tearDown() {
     }

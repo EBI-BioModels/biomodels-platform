@@ -20,16 +20,28 @@
 
 package net.biomodels.jummp.search
 
-import org.apache.camel.builder.RouteBuilder
+import grails.util.Environment
 import org.apache.camel.Exchange
 import org.apache.camel.Processor
+import org.apache.camel.ShutdownRunningTask
+import org.apache.camel.builder.RouteBuilder
 
 class IndexingRoute extends RouteBuilder {
+    final String JAR_ARGS = '-jar ${body[jarPath]} ${body[jsonPath]}'
 
     @Override
     void configure() {
-        from("seda:exec")
-        .setHeader("CamelExecCommandArgs", simple('-jar ${body[jarPath]} ${body[jsonPath]} -Xmx1G'))
+        from("seda:exec?concurrentConsumers=15")
+        .shutdownRunningTask(ShutdownRunningTask.CompleteAllTasks)
+        .setHeader("CamelExecCommandArgs", simple(JAR_ARGS))
         .to("exec:java")
+        .process(new Processor() {
+            void process(Exchange exchange) {
+                def msg = exchange.in
+                def headers = msg.headers
+                String content = msg.getBody(String.class)
+                println "${Thread.currentThread().name} -- Indexing of $headers produced $content"
+            }
+        })
     }
 }

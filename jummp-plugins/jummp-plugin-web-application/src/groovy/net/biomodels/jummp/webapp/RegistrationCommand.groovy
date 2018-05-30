@@ -40,21 +40,22 @@ class RegistrationCommand {
     String orcid
 
     static constraints = {
-        username(nullable: false, blank: false)
-        email(nullable: false, email: true, blank: false)
+        username(nullable: false, blank: false, unique: true)
+        email(nullable: false, email: true, blank: false, unique: true)
         userRealName(nullable: false, blank: false)
         institution(nullable:true)
-        orcid nullable: true, validator: {
+        orcid(nullable: true, unique: true, validator: {
         	if (it) {
-        		Pattern p = Pattern.compile("^\\d{4}-\\d{4}-\\d{4}-\\d{3}(\\d|X)\$");
-        		Matcher m = p.matcher(it);
+        		Pattern p = Pattern.compile("^\\d{4}-\\d{4}-\\d{4}-\\d{3}(\\d|X)\$")
+        		Matcher m = p.matcher(it)
         		return m.matches()
         	}
         	return true
-        }
+        })
     }
 
     User toUser() {
-        return new User(username: this.username, email: this.email, person: new Person(userRealName: this.userRealName, institution:this.institution, orcid:this.orcid))
+        return new User(username: this.username, email: this.email,
+            person: new Person(userRealName: this.userRealName, institution:this.institution, orcid:this.orcid))
     }
 }

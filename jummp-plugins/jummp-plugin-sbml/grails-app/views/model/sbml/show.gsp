@@ -27,11 +27,9 @@
 
 
 
-<meta name="layout" content="modelDisplay"/>
+<meta name="layout" content="${session['branding.style']}/modelDisplay"/>
 <content tag="genericAnnotations">
-<table>
-    <g:render template="/templates/statements" collection="${genericAnnotations}" var="s"/>
-</table>
+    <anno:renderGenericAnnotations annotations="${genericAnnotations}"/>
 </content>
 <content tag="modelspecifictabs"/>
 <content tag="modelspecifictabscontent"/>

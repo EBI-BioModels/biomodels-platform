@@ -21,40 +21,42 @@
 
 package net.biomodels.jummp.core.model.audit
 
-enum AccessType { 
-   CREATE (1, "Create"), 
-   UPDATE (2, "Update"), 
-   READ (3, "Read"), 
-   PUBLISH (4, "Publish"), 
-   ARCHIVE (5, "Archive"), 
+enum AccessType {
+   CREATE (1, "Create"),
+   UPDATE (2, "Update"),
+   READ (3, "Read"),
+   PUBLISH (4, "Publish"),
+   ARCHIVE (5, "Archive"),
    DOWNLOAD (6, "Download"),
    SHARE (7, "Share"),
-   FILES (8, "Files");
+   FILES (8, "Files"),
+   VALIDATE(9, "Validate");
 
 
-   final int id 
-   final String name 
+   final int id
+   final String name
 
-   private AccessType(int id, String name) { 
-      this.id = id 
-      this.name = name 
-   } 
-   
+   private AccessType(int id, String name) {
+      this.id = id
+      this.name = name
+   }
+
    static AccessType fromAction(String action) {
-   	   action=action.toLowerCase();
+   	   action = action.toLowerCase()
    	   switch(action) {
-   	   	   case "create": return CREATE;
-   	   	   case "update": return UPDATE;
-   	   	   case "show": return READ;
-   	   	   case "publish": return PUBLISH;
-   	   	   case "delete": return ARCHIVE;
-   	   	   case "download": return DOWNLOAD; 
-   	   	   case "shareupdate": return SHARE;
-   	   	   case "files": return FILES;
+   	   	   case "create": return CREATE
+   	   	   case "update": return UPDATE
+   	   	   case "show": return READ
+   	   	   case "publish": return PUBLISH
+   	   	   case "delete": return ARCHIVE
+   	   	   case "download": return DOWNLOAD
+   	   	   case "shareupdate": return SHARE
+   	   	   case "files": return FILES
+           case "validate": return VALIDATE
    	   }
-   	   return null;
+   	   return null
    }
 
 
-   String toString() { name } 
-} 
+   String toString() { name }
+}

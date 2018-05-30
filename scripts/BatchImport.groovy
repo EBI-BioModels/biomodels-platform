@@ -29,10 +29,7 @@
 **/
 
 import grails.converters.*
-import org.apache.commons.io.FileUtils
-import org.codehaus.groovy.grails.web.json.*
-import org.springframework.orm.hibernate3.SessionFactoryUtils
-import org.springframework.orm.hibernate3.SessionHolder
+import org.springframework.orm.hibernate4.SessionHolder
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.transaction.support.TransactionSynchronizationManager
@@ -99,8 +96,8 @@ working or exchange folders do not exist?""", configIssues)
 giving up. Sorry about that.""", vcsIssues)
     }
     // bind a Hibernate Session to avoid lazy initialization exceptions
-    TransactionSynchronizationManager.bindResource(appCtx.sessionFactory,
-        new SessionHolder(SessionFactoryUtils.getSession(appCtx.sessionFactory, true)))
+    def session = appCtx.sessionFactory.openSession()
+    TransactionSynchronizationManager.bindResource(appCtx.sessionFactory, new SessionHolder(session))
 
     int authIssues = authenticate()
     if (authIssues) {

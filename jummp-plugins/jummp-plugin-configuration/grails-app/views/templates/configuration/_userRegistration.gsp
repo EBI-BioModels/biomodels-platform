@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -28,7 +28,7 @@
 
 
 <div class="dialog">
-    <table class="formtable">
+    <table class="responsive-table center">
         <tbody>
             <tr class="prop">
                 <td class="name"><label for="registration">Registration of new Users:</label></td>
@@ -51,7 +51,7 @@
             <tr class="prop">
                 <td class="name"><label for="sendToAdmin">Send Email to Admin User instead of new user:</label></td>
                 <td class="value ${hasErrors(bean: userRegistration, field: 'sendToAdmin', 'errors')}">
-                    <input type="checkbox" name="sendEmail" id="sendToAdmin" ${userRegistration && userRegistration.sendToAdmin ? 'checked="checked"' : ''} title="Send Email to Admin User instead of new user"/>
+                    <input type="checkbox" name="sendToAdmin" id="sendToAdmin" ${userRegistration && userRegistration.sendToAdmin ? 'checked="checked"' : ''} title="Send Email to Admin User instead of new user"/>
                 </td>
             </tr>
             <tr class="prop">

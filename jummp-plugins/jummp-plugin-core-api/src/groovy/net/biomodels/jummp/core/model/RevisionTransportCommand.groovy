@@ -35,6 +35,7 @@
 package net.biomodels.jummp.core.model
 
 import net.biomodels.jummp.core.annotation.ElementAnnotationTransportCommand
+import net.biomodels.jummp.core.certification.QcInfoTransportCommand
 import org.springframework.context.ApplicationContext
 
 /**
@@ -100,11 +101,29 @@ class RevisionTransportCommand implements Serializable {
     /**
      * The list of files associated with this revision
      */
-     List<RepositoryFileTransportCommand> files = null;
+    List<RepositoryFileTransportCommand> files = null
     /**
      * The list of annotations for this revision.
      */
-    List<ElementAnnotationTransportCommand> annotations
+    List<ElementAnnotationTransportCommand> annotations = null
+
+    ValidationState validationLevel
+
+    String validationReport
+
+    QcInfoTransportCommand qcInfo
+
+    /**
+     * The curation state of this revision
+     */
+    CurationState curationState
+
+    List<ElementAnnotationTransportCommand> getAnnotations() {
+        if (!annotations) {
+            annotations = context.metadataDelegateService.fetchAnnotations(this)
+        }
+        return annotations
+    }
 
      List<RepositoryFileTransportCommand> getFiles() {
          if (!files) {
@@ -117,4 +136,35 @@ class RevisionTransportCommand implements Serializable {
          final PERENNIAL_ID = model.publicationId ?: model.submissionId
          return new StringBuffer(PERENNIAL_ID).append(".").append(revisionNumber).toString()
      }
+
+/*    String [] getValidationStatementList(){
+        if(validationReport == null){
+            return null;
+        }
+        return validationReport.split("     ");
+    }*/
+
+    String getCertificationMessage(){
+        if(qcInfo){
+            return qcInfo.comment
+        }else
+            return "This model is not certified."
+    }
+
+    String getValidationLevelMessage(){
+        getValidationLevelMessage(validationLevel)
+    }
+
+    String getValidationLevelMessage(ValidationState validationLevel){
+        switch (validationLevel) {
+            case ValidationState.APPROVE:
+                return "Annotations have not been checked."
+            case ValidationState.CONDITIONALLY_APPROVED:
+                return "Annotations have been checked. There are some errors."
+            case ValidationState.APPROVED:
+                return "Annotations are correct."
+            case ValidationState.REJECTED:
+                return "Annotations are incorrect"
+        }
+    }
 }

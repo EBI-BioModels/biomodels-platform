@@ -17,8 +17,7 @@
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
-<head>
-    <meta name="layout" content="modelDisplay"/>
+<meta name="layout" content="${session['branding.style']}/modelDisplay" />
     <style>
         td, th {
             padding: 5px;
@@ -37,9 +36,8 @@
             font-style: italic;
         }
     </style>
-</head>
 <content tag="genericAnnotations">
-    <pharmml:renderGenericAnnotations revision="${revision}"/>
+    <anno:renderGenericAnnotations annotations="${genericAnnotations}"/>
 </content>
 <content tag="modelspecifictabs">
     <pharmml:decideTabs iv="${independentVar}" fd="${functionDefs}" md="${modelDefinition}"

@@ -77,4 +77,6 @@ interface IMetadataService {
      */
     List<StatementTransportCommand> findAllStatementsForSubject(RevisionTransportCommand
             revision, String subject)
+
+    List<String> getMetadataNamespaces()
 }

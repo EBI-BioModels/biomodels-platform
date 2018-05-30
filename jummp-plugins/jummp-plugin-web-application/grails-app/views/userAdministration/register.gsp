@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -31,47 +31,49 @@
 <html>
     <head>
         <title><g:message code="user.administration.ui.heading.register"/></title>
-        <meta name="layout" content="main" />
+        <meta name="layout" content="${session['branding.style']}/main" />
         <g:javascript contextPath="" src="useradministration.js"/>
-        
     </head>
     <body>
-        <div>
+        <div id="userAdministrationRegister" class="row">
+            <div class="medium-6 medium-centered large-6 large-centered columns">
             <form id="registerForm">
-                <table>
-                    <tbody>
-                    <tr>
-                        <td><label for="register-form-username"><g:message code="user.administration.ui.username"/>:</label></td>
-                        <td><span><input type="text" id="register-form-username" name="username"/></span></td>
-                    </tr>
-                    <tr>
-                        <td><label for="register-form-name"><g:message code="user.administration.ui.realname"/>:</label></td>
-                        <td><span><input type="text" id="register-form-name" name="userRealName"/></span></td>
-                    </tr>
-                    <tr>
-                        <td><label for="register-form-email"><g:message code="user.administration.ui.email"/>:</label></td>
-                        <td><span><input type="text" id="register-form-email" name="email"/></span></td>
-                    </tr>
-                    <tr>
-                        <td><label for="register-form-institution"><g:message code="user.administration.ui.institution"/>:</label></td>
-                        <td><span><input type="text" id="register-form-institution" name="institution"/></span></td>
-                    </tr>
-                    <tr>
-                        <td><label for="register-form-orcid"><g:message code="user.administration.ui.orcid"/>:</label></td>
-                        <td><span><input type="text" id="register-form-orcid" name="orcid"/></span></td>
-                    </tr>
-                    </tbody>
-                </table>
-                <div class="buttons">
-                    <input type="reset" value="${g.message(code: 'user.administration.cancel')}"/>
-                    <input type="submit" value="${g.message(code: 'user.administration.register')}"/>
+                <div class="row column register-form">
+                    <label for="register-form-username" class="required">
+                        <g:message code="user.administration.ui.username"/></label>
+                    <input type="text" id="register-form-username" name="username"
+                           placeholder="Choose an username" />
+
+                    <label for="register-form-name" class="required">
+                        <g:message code="user.administration.ui.realname"/></label>
+                    <input type="text" id="register-form-name" name="email"
+                           placeholder="Enter your real name"/>
+
+                    <label for="register-form-email" class="required">
+                        <g:message code="user.administration.ui.email"/></label>
+                    <input type="text" id="register-form-email" name="email"
+                           placeholder="Enter your email address"/>
+
+                    <label for="register-form-institution" class="label-floating-left">
+                        <g:message code="user.administration.ui.institution"/></label>
+                    <input type="text" id="register-form-institution" name="institution"
+                           placeholder="Enter an institution name where you are working with"/>
+
+                    <label for="register-form-orcid"  class="label-floating-left">
+                        <g:message code="user.administration.ui.orcid"/></label>
+                    <input type="text" id="register-form-orcid" name="orcid"
+                           placeholder="For example, 0000-0002-2876-6046"/>
+                    <p>
+                    <input type="reset" class="button" value="${g.message(code: 'user.administration.cancel')}"/>
+                    <input type="submit" class="button" value="${g.message(code: 'user.administration.register')}"/></p>
                 </div>
             </form>
+            </div>
         </div>
         <g:javascript>
-$(function() {
-    $.jummp.userAdministration.register();
-});
+            $(function() {
+                $.jummp.userAdministration.register();
+            });
         </g:javascript>
     </body>
 </html>

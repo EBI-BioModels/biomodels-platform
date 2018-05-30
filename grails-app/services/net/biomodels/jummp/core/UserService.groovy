@@ -30,33 +30,26 @@
 
 package net.biomodels.jummp.core
 
-import net.biomodels.jummp.plugins.security.Role
-import net.biomodels.jummp.plugins.security.User
-import net.biomodels.jummp.plugins.security.Person
-import net.biomodels.jummp.plugins.security.UserRole
-import net.biomodels.jummp.plugins.security.Team
-import net.biomodels.jummp.plugins.security.UserTeam
-import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
-import org.perf4j.aop.Profiled
-import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.security.access.AccessDeniedException
-import org.springframework.security.authentication.AnonymousAuthenticationToken
-import org.springframework.security.authentication.BadCredentialsException
-import net.biomodels.jummp.model.PublicationPerson
 import net.biomodels.jummp.core.events.LoggingEventType
 import net.biomodels.jummp.core.events.PostLogging
-import net.biomodels.jummp.core.user.UserNotFoundException
-import net.biomodels.jummp.core.user.UserInvalidException
-import net.biomodels.jummp.core.user.UserCodeInvalidException
-import net.biomodels.jummp.core.user.UserCodeExpiredException
-import net.biomodels.jummp.core.user.RegistrationException
-import net.biomodels.jummp.core.user.RoleNotFoundException
-import net.biomodels.jummp.core.user.UserManagementException
-import org.springframework.transaction.TransactionStatus
+import net.biomodels.jummp.core.user.*
+import grails.plugin.springsecurity.SpringSecurityUtils
+import grails.plugin.springsecurity.acl.AclSid
+import net.biomodels.jummp.plugins.security.Person
+import net.biomodels.jummp.plugins.security.Role
+import net.biomodels.jummp.plugins.security.User
+import net.biomodels.jummp.plugins.security.UserRole
+import org.apache.commons.logging.Log
+import org.apache.commons.logging.LogFactory
+import org.perf4j.aop.Profiled
+import org.springframework.security.access.AccessDeniedException
+import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.authentication.AnonymousAuthenticationToken
+import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.security.access.AccessDeniedException
-import org.codehaus.groovy.grails.web.mapping.LinkGenerator
+import org.springframework.transaction.TransactionStatus
+
 /**
  * @short Service for User administration.
  *
@@ -67,6 +60,7 @@ import org.codehaus.groovy.grails.web.mapping.LinkGenerator
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  */
 class UserService implements IUserService {
+    private static final Log log = LogFactory.getLog(this.getClass())
     /**
      * Dependency injection of springSecurityService
      */
@@ -114,6 +108,17 @@ class UserService implements IUserService {
         return null
     }
 
+    Integer getTotalUserCount() {
+        User.count()
+    }
+
+    List<User> getUsersByRole(String role) {
+        def users =
+            UserRole.findAllByRole(Role.findByAuthority(role)).collect {
+                it.user }
+        return users
+    }
+
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag = "userService.changePassword")
     void changePassword(String oldPassword, String newPassword) throws BadCredentialsException {
@@ -128,49 +133,39 @@ class UserService implements IUserService {
         springSecurityService.reauthenticate(user.username, newPassword)
     }
 
+    void handleOrcidModification(User newUserData, User existing) {
+        UpdateOrcid updateOrcid = new UpdateOrcid()
+        String oldOrcid = existing.person.orcid
+        String newOrcid = newUserData.person.orcid
+        UpdateOrcidStrategy updateStrategy
+        if (newOrcid) {         /* add/modify ORCID */
+            updateStrategy = new AddOrModifyOrcidStrategy()
+        } else if (oldOrcid) {  /* remove ORCID */
+            updateStrategy =  new RemoveOrcidUserEdit()
+        }
+        if (updateStrategy) {
+            updateOrcid.setStrategy(updateStrategy)
+            updateOrcid.oldUser = existing
+            updateOrcid.newUser = newUserData
+            updateOrcid.update()
+        }
+    }
+
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag = "userService.editUser")
     @PreAuthorize("hasRole('ROLE_ADMIN') or isAuthenticated()") //used to be: authentication.name==#username
-    void editUser(User user) throws UserInvalidException {
+    User editUser(User user) throws UserInvalidException {
         checkUserValid(user.username)
         User origUser = User.findByUsername(user.username)
-        if (origUser.person.orcid != user.person.orcid) {
-            Person sameOrcid = Person.findByOrcid(user.person.orcid)
-            if (sameOrcid) {
-                if (User.findByPerson(sameOrcid)) {
-                    log.warn("User ${user.username} tried to register orcid ${user.person.orcid} which is already in use by ${sameOrcid.userRealName}")
-                    throw new UserInvalidException("Someone with this ORCID is already registered in the repository", origUser.id)
-                }
-                else {
-                    Person possiblyNoLongerNeeded = origUser.person
-                    origUser.person = sameOrcid
-                    def anyPublications = PublicationPerson.findByPerson(possiblyNoLongerNeeded)
-                    if (!anyPublications) {
-                        possiblyNoLongerNeeded.delete()
-                    }
-                }
-            }
-            else {
-                def anyPublications = PublicationPerson.findByPerson(origUser.person)
-                if (!anyPublications) {
-                    origUser.person.orcid = user.person.orcid
-                }
-                else {
-                    origUser.person = new Person(orcid: user.person.orcid)
-                }
-            }
-        }
+        handleOrcidModification(user, origUser)
         origUser.person.userRealName = user.person.userRealName
         origUser.person.institution = user.person.institution
         origUser.email = user.email
-        if (!origUser.person.validate()) {
-        	throw new UserInvalidException(user.username)
+        if (!origUser.save(flush: true)) {
+            throw new UserUpdateException("""\
+Cannot persist the user data ${origUser.id} into the database due to ${origUser.errors.allErrors.inspect()}""", origUser.id)
         }
-        if (!origUser.validate()) {
-            throw new UserInvalidException(user.username)
-        }
-        origUser.person.save(flush: true, failOnError: true)
-        origUser.save(flush: true)
+        origUser
     }
 
     @PostLogging(LoggingEventType.RETRIEVAL)
@@ -184,7 +179,7 @@ class UserService implements IUserService {
     @Profiled(tag="userService.getUser")
     @PreAuthorize("hasRole('ROLE_ADMIN') or isAuthenticated()") //used to be: authentication.name==#username
     User getUser(String username) throws UserNotFoundException {
-        //checkUserValid(username)  -> dont need to be admin to get a user by their username anymore, legitimate use case -> model sharing
+        //checkUserValid(username)  -> don't need to be admin to get a user by their username anymore, legitimate use case -> model sharing
         User user = User.findByUsername(username)
         if (!user) {
             throw new UserNotFoundException(username)
@@ -192,19 +187,42 @@ class UserService implements IUserService {
         return user.sanitizedUser()
     }
 
-    @PostLogging(LoggingEventType.RETRIEVAL)
+    /**
+     * This method is being served for the registration process. It is used for looking up the
+     * being typed values by a potential user whether they exist/are being used by someone else
+     * into our database or not.
+     *
+     * @param query The username, email or ORCID identifier which is looked up against the database
+     * @return A user if it matches the query, or null in the otherwise case
+     */
+    @PreAuthorize("isAnonymous() or isAuthenticated()")
+    User lookupUser(String query, int column) {
+        if (column == 1) {
+            return User.findByUsername(query)
+        } else if (column == 2) {
+            return User.findByEmail(query)
+        } else {
+            // column == 3 --> search Person by ORCID identifier
+            Person person = Person.findByOrcid(query)
+            User user = User.findByPerson(person)
+            return user
+        }
+    }
+
     @Profiled(tag="userService.hasRole")
-    @PreAuthorize("hasRole('ROLE_ADMIN') or isAuthenticated()") //used to be: authentication.name==#username
-    boolean hasRole(String username, String role) throws UserNotFoundException {
-        User potentialCurator = User.findByUsername(username)
-        if (!potentialCurator) {
-            throw new UserNotFoundException(username)
+    @PreAuthorize("isAuthenticated()")
+    boolean hasRole(User user, Role role) {
+        UserRole.get(user.id, role.id)
+    }
+
+    @Profiled(tag="userService.isCurator")
+    @PreAuthorize("isAuthenticated()")
+    boolean isCurator(User u) throws RoleNotFoundException {
+        Role curator = Role.findByAuthority('ROLE_CURATOR')
+        if (!curator) {
+            throw new RoleNotFoundException("Authority ROLE_CURATOR is not defined.")
         }
-        Set<Role> roles = potentialCurator.getAuthorities()
-        def isCurator = roles.find {
-            it.authority == role
-        }
-        return isCurator
+        hasRole(u, curator)
     }
 
     @PostLogging(LoggingEventType.RETRIEVAL)
@@ -229,6 +247,7 @@ class UserService implements IUserService {
                 person {
                     property('userRealName')
                 }
+                property('id')
             }
             or {
                 ilike 'email', "%"+term + '%'
@@ -334,6 +353,7 @@ class UserService implements IUserService {
             throw new RegistrationException("User with same name already exists", user.username)
         }
         User newUser = user.sanitizedUser()
+
         if (newUser.person.orcid) {
             def existing = Person.findByOrcid(newUser.person.orcid)
             if (existing) {
@@ -347,10 +367,13 @@ class UserService implements IUserService {
                     newUser.person = existing
                 }
             } else {
-                newUser.person.save(flush:true, failOnError:true)
+                if (!newUser.person.save(flush: true)) {
+                    log.error("Cannot save user ${newUser.properties} - ${newUser.errors.allErrors.inspect()}. oops")
+                } else {
+                    log.debug(newUser)
+                }
             }
-        }
-        else {
+        } else {
             newUser.person.save(flush:true, failOnError:true)
         }
         boolean adminRegistration = false
@@ -392,6 +415,7 @@ class UserService implements IUserService {
         registrationInvalidation.add(GregorianCalendar.DAY_OF_MONTH, 1)
         newUser.registrationInvalidation = registrationInvalidation.getTime()
         newUser.save(flush: true, failOnError:true)
+        new AclSid(sid: newUser.username, principal: true).save(flush: true)
         UserRole.create(newUser, Role.findByAuthority("ROLE_USER"), true)
         if (grailsApplication.config.jummp.security.curatorByDefault) {
         	UserRole.create(newUser, Role.findByAuthority("ROLE_CURATOR"), true)
@@ -407,6 +431,11 @@ class UserService implements IUserService {
             emailBody = emailBody.replace("{{USERNAME}}", newUser.username)
             emailBody = emailBody.replace("{{PASSWORD}}", p)
             emailBody = emailBody.replace("{{REALNAME}}", newUser.person.userRealName)
+            String webURL = grailsApplication.config.jummp.server.url
+            if (webURL) {
+                webURL = "http://localhost:8080/${grails.util.Metadata.current.'app.name'}"
+            }
+            emailBody.replace("{{WEBURL}}", webURL)
             mailService.sendMail {
                 to recipient
                 from grailsApplication.config.jummp.security.registration.email.sender
@@ -490,7 +519,7 @@ class UserService implements IUserService {
         user.save(flush: true)
         // send out notification mail
         String recipient = user.email
-        String url = grailsLinkGenerator.link(controller: 'usermanagement', action: 'passwordreset', id: user.passwordForgottenCode, absolute: true)
+        String url = grailsLinkGenerator.link(controller: 'usermanagement', action: 'resetPassword', id: user.passwordForgottenCode, absolute: true)
         String emailBody = grailsApplication.config.jummp.security.resetPassword.email.body
         emailBody = emailBody.replace("{{REALNAME}}", user.person.userRealName)
         emailBody = emailBody.replace("{{URL}}", url)
@@ -637,5 +666,45 @@ class UserService implements IUserService {
         }
         addRoleToUser(user.id, userRole.id)
         return true
+    }
+
+    static interface UpdateOrcidStrategy {
+        void updateUser(User oldUser, User newUser)
+    }
+
+    static class AddOrModifyOrcidStrategy implements UpdateOrcidStrategy {
+        @Override
+        void updateUser(User oldUser, User newUser) {
+            String orcid4NewUser = newUser.person.orcid
+            Person potential = Person.findByOrcid(orcid4NewUser)
+            if (potential) {
+                User user = User.findByPerson(potential)
+                if (user && user != oldUser) {
+                    log.warn("""\
+User ${newUser.username} tried to register orcid ${orcid4NewUser} which is already in use by ${potential.userRealName}""")
+                    throw new UserInvalidException("Someone with this ORCID (${orcid4NewUser}) is already registered in the repository", oldUser.id)
+                } else {
+                    oldUser.person = potential
+                }
+            } else {
+                oldUser.person.orcid = orcid4NewUser
+            }
+        }
+    }
+
+    static class RemoveOrcidUserEdit implements UpdateOrcidStrategy {
+        void updateUser(User oldUser, User newUser) {
+            oldUser.person.orcid = null
+        }
+    }
+
+    class UpdateOrcid {
+        UpdateOrcidStrategy strategy
+        User oldUser
+        User newUser
+
+        void update() {
+            this.strategy.updateUser(oldUser, newUser)
+        }
     }
 }

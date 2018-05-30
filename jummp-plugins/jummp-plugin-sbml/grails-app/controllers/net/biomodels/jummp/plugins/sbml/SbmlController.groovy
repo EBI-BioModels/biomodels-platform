@@ -24,22 +24,69 @@
 
 package net.biomodels.jummp.plugins.sbml
 
-import net.biomodels.jummp.core.annotation.StatementTransportCommand
+import grails.plugin.springsecurity.annotation.Secured
+import net.biomodels.jummp.core.annotation.QualifierTransportCommand
+import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
+import org.springframework.security.access.AccessDeniedException
 
 /**
  * Controller for handling Model files in the SBML format.
- * @author  Raza Ali <raza.ali@ebi.ac.uk>
+ * @author Raza Ali <raza.ali@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
+ * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
 class SbmlController {
+    def modelDelegateService
+    def metadataDelegateService
     def sbmlService
 
     def show = {
-        RevisionTransportCommand r = flash.genericModel.revision
-        List<StatementTransportCommand> genericAnno = sbmlService.fetchGenericAnnotations(r)
+        Map model = flash.genericModel
+        RevisionTransportCommand r = model.revision
+        Map<QualifierTransportCommand, List<ResourceReferenceTransportCommand>> genericAnno =
+                metadataDelegateService.fetchGenericAnnotations r
         if (genericAnno) {
-            flash.genericModel["genericAnnotations"] = genericAnno
+            model["genericAnnotations"] = genericAnno
         }
-        render(view: "/model/sbml/show", model: flash.genericModel)
+        boolean canCheckConsistency = modelDelegateService.canCheckConsistency(r)
+        model["canCheckConsistency"] = canCheckConsistency
+        render(view: "/model/sbml/show", model: model)
+    }
+
+    @Secured(['IS_AUTHENTICATED_FULLY'])
+    def checkConsistency() {
+        RevisionTransportCommand rev
+        try {
+            rev = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
+            List<String> errors = new ArrayList<String>()
+            sbmlService.checkConsistency(rev, errors)
+            String message = errors.size() > 0 ? ">> with ${errors.size()} error(s):" : ">> no error"
+            log.info("checking consistency $message")
+            String report = message
+            if (errors.size()) {
+                report = report.concat("<ul>")
+                errors.each {
+                    log.error(it)
+                    println(it)
+                    report = report.concat("<li>").concat(it).concat("</li>")
+                }
+                report = report.concat("</ul>")
+            }
+            redirect(controller: "model", action: "showWithMessage",
+                id: rev.identifier(),
+                params: [flashMessage: "Model has been checked consistency with the report: <br/>".concat(report)])
+        } catch(AccessDeniedException e) {
+            log.error(e.message, e)
+            forward(plugin: "jummp-plugin-web-application", controller: "errors", action: "error403")
+        } catch(IllegalArgumentException e) {
+            log.error(e.message)
+            redirect(controller: "model", action: "showWithMessage",
+                id: rev.identifier(),
+                params: [
+                    flashMessage: """\
+There is a problem with this version of the model while trying to check its consistency."""
+                ])
+        }
     }
 }

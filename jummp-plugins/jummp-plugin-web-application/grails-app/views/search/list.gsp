@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -30,33 +30,23 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
     <head>
         <title>Model Listing</title>
-        <meta name="layout" content="main" />
+        <meta name="layout" content="${grailsApplication.config.jummp.branding.style}/main" />
         <link rel="stylesheet" href="${resource(contextPath: "${grailsApplication.config.grails.serverURL}", dir: '/css', file: 'datatablestyle.css')}" />
         <g:javascript contextPath="" src="jquery/jquery-ui-v1.10.3.js"/>
     </head>
     <body activetab="search">
-        <g:render template="/templates/datatable" model="['action': 'list']"/>
+        <g:render template="/templates/mainContent" model="['action': 'list']"/>
+        <!-- TODO: could use other view for list action -->
     </body>
     <content tag="sidebar">
-        <g:if test="${history}">
-            <div class="element" id="sidebar-element-last-accessed-models">
-                <h2><g:message code="model.history.title"/></h2>
-                <ul>
-                <g:each in="${history}">
-                    <li><a href="${createLink(controller: "model", action: "show", id: it.publicationId ?: it.submissionId)}">${it.name}</a><br/><g:message code="model.history.submitter"/>${it.submitter}</li>
-                </g:each>
-                </ul>
-            </div>
-        </g:if>
-        <%--  GoTree code, disabled until it is useful again.
-        <div class="element">
-            <h2>Gene Ontology Tree</h2>
-            <h3>Browse models using GO Tree</h3>
-            <p>This is a tree view of the models in this Database based on <a href="http://www.geneontology.org/">Gene Ontology</a>.</p>
-            <p><g:link controller="gotree">link</g:link></p>
-        </div> --%>
+        <!-- show the recently accessed models, the most accessed models, etc. -->
+        <g:render template="/templates/rightSidebar" model="['action': 'list']"/>
     </content>
-    <content tag="browse">
+    <content tag="facetsearch">
+        <!-- show facets search on the left side bar -->
+        <g:render template="/templates/leftSidebar" />
+    </content>
+    <content tag="mymodels">
         selected
     </content>
     <content tag="title">

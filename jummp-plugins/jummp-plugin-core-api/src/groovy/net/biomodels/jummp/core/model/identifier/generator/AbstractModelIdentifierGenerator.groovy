@@ -20,6 +20,7 @@
 
 package net.biomodels.jummp.core.model.identifier.generator
 
+import net.biomodels.jummp.core.model.identifier.ModelIdentifier
 import net.biomodels.jummp.core.events.DateModelIdentifierDecoratorUpdatedEvent
 import net.biomodels.jummp.core.events.ModelIdentifierDecoratorUpdatedEvent
 import net.biomodels.jummp.core.model.identifier.decorator.OrderedModelIdentifierDecorator
@@ -40,7 +41,7 @@ abstract class AbstractModelIdentifierGenerator implements ModelIdentifierGenera
             ApplicationListener {
     /** the class logger. */
     private static final Log log = LogFactory.getLog(this)
-    private static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
+    private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
     /**
      * The registry of decorators which an implementation may use to generate model identifiers.
      */
@@ -50,26 +51,27 @@ abstract class AbstractModelIdentifierGenerator implements ModelIdentifierGenera
 
     abstract void update()
 
-    @Override
     void onApplicationEvent(ApplicationEvent decoratorUpdatedEvent) {
         if (!(decoratorUpdatedEvent instanceof ModelIdentifierDecoratorUpdatedEvent)) {
             return
         }
-        if (IS_INFO_ENABLED) {
-            log.info "Processing event ${decoratorUpdatedEvent.inspect()}"
+        if (IS_DEBUG_ENABLED) {
+            log.debug "Processing event ${decoratorUpdatedEvent.inspect()}"
         }
-        if (decoratorUpdatedEvent instanceof DateModelIdentifierDecoratorUpdatedEvent) {
-            // finds the first variable digit decorator and reset its value.
-            VariableDigitAppendingDecorator d = DECORATOR_REGISTRY.find { d ->
-                d instanceof VariableDigitAppendingDecorator
-            }
-            if (d) {
-                final String NEW_VALUE = "1".padLeft(d.WIDTH, '0')
-                d.nextValue = NEW_VALUE
-                d.nextSuffix = 1
-                d.lastUsedSuffix = -1
-                if (IS_INFO_ENABLED) {
-                    log.info "Attribute 'nextValue' of $d has been reset to $NEW_VALUE."
+        synchronized(ModelIdentifier.class) {
+            if (decoratorUpdatedEvent instanceof DateModelIdentifierDecoratorUpdatedEvent) {
+                // finds the first variable digit decorator and reset its value.
+                VariableDigitAppendingDecorator d = DECORATOR_REGISTRY.find { d ->
+                    d instanceof VariableDigitAppendingDecorator
+                }
+                if (d) {
+                    final String NEW_VALUE = "1".padLeft(d.WIDTH, '0')
+                    d.nextValue.set(NEW_VALUE)
+                    d.nextSuffix.set(1)
+                    d.lastUsedSuffix.set(-1)
+                    if (IS_DEBUG_ENABLED) {
+                        log.debug "Attribute 'nextValue' of $d has been reset to $NEW_VALUE."
+                    }
                 }
             }
         }

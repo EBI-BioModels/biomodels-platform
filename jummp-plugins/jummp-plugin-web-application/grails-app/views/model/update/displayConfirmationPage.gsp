@@ -30,7 +30,7 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <meta name="layout" content="main"/>
+    <meta name="layout" content="${session['branding.style']}/main" />
     <title><g:message code="submission.confirmation.common.title"/></title>
 </head>
 <body>

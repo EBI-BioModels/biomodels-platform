@@ -29,7 +29,7 @@
 
 <%@ page contentType="text/html;charset=UTF-8" %>
     <head>
-        <meta name="layout" content="main" />
+        <meta name="layout" content="${session['branding.style']}/main" />
     </head>
     <body activetab="search">
     	<div class="content">

@@ -35,6 +35,7 @@
 package net.biomodels.jummp.core
 
 import eu.ddmore.libpharmml.dom.commontypes.CommonVariableDefinition
+import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.PKMacroList
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import eu.ddmore.libpharmml.dom.maths.Equation
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateModel
@@ -184,5 +185,7 @@ interface IPharmMlRenderer {
      * @param dependencies a list of {@link eu.ddmore.libpharmml.dom.modellingsteps.StepDependency}s.
      */
     String renderStepDependencies(StepDependency dependencies)
+
+    String renderPKMacros(PKMacroList pkMacroList)
 }
 

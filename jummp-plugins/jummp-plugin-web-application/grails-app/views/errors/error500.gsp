@@ -30,7 +30,7 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <html>
     <head>
-        <meta name="layout" content="main" />
+        <meta name="layout" content="${session['branding.style']}/main" />
         <title><g:message code="error.500.title"/></title>
     </head>
     <body>

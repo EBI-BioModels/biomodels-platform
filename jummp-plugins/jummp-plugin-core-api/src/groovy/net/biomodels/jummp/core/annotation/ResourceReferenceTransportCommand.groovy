@@ -31,7 +31,7 @@ import groovy.transform.Immutable
  * @see net.biomodels.jummp.annotationstore.ResourceReference
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
-@Immutable
+//@Immutable
 class ResourceReferenceTransportCommand implements Serializable {
     static final long serialVersionUID = 1L
     String datatype

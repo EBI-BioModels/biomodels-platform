@@ -23,7 +23,7 @@
 
 
 quartz {
-    println 'executing the JUMMP quartz closure'
+    println 'INFO\tExecuting the JUMMP quartz closure'
     autoStartup = true
     jdbcStore = false
     waitForJobsToCompleteOnShutdown = true

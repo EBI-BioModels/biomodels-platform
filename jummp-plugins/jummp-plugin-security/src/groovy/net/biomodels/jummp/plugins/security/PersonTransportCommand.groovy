@@ -18,32 +18,27 @@
 * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 **/
 
-
-
-
-
 package net.biomodels.jummp.plugins.security
-import java.util.regex.Pattern
-import java.util.regex.Matcher
-import org.codehaus.groovy.grails.validation.Validateable
+
+import grails.validation.Validateable
+
 /**
  * @short Representation of a Person. Should be subclassed to help understand what type of person
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  */
- @grails.validation.Validateable	
+@Validateable
 class PersonTransportCommand implements Serializable {
     private static final long serialVersionUID = 1L
     long id
     String userRealName
     String institution
     String orcid
-    
+
     static constraints = {
-    	importFrom Person
+        importFrom Person
     }
-    
+
     public String toString() {
-    	return userRealName
+        userRealName
     }
-    
 }

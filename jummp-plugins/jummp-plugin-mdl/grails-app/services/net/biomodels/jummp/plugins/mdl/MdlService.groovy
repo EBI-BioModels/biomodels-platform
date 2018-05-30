@@ -71,7 +71,7 @@ class MdlService implements FileFormatService {
      */
     @Override
     @Profiled(tag="mdlService.getFormatVersion")
-    public String getFormatVersion(RevisionTransportCommand revision) { return "5.0.8" }
+    public String getFormatVersion(RevisionTransportCommand revision) { return "7.0" }
 
     /**
      * {@inheritDoc}
@@ -244,5 +244,9 @@ class MdlService implements FileFormatService {
     private boolean isDataFile(final File FILE) {
         final String FORMAT = detectMimeType(FILE)
         return ("text/csv" == FORMAT || "text/plain" == FORMAT) && FILE.name.endsWith(".csv")
+    }
+
+    boolean doBeforeSavingAnnotations(File annoFile, RevisionTransportCommand rev) {
+        return true
     }
 }

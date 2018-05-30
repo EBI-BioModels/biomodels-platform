@@ -133,22 +133,9 @@ Brief summary/description of the plugin.
         XML.registerObjectMarshaller(new ModelXmlMarshaller())
         JSON.registerObjectMarshaller(Model) { Model M ->
             Map result = [:]
-            result['identifier'] = M.submissionId
-            IModelService modelDelegateService =
-                        applicationContext.getBean("modelDelegateService")
-            final boolean MANY_IDENTIFIERS =
-                        modelDelegateService.haveMultiplePerennialIdentifierTypes()
-            if (MANY_IDENTIFIERS) {
-                final Set<String> ID_TYPES = modelDelegateService.getPerennialIdentifierTypes()
-                ID_TYPES.each {
-                    if (it == 'submissionId') {
-                        return
-                    }
-                    final String ID = M."$it"
-                    if (ID) {
-                        result[it.endsWith('Id') ? it.append("entifier") : it] = ID
-                    }
-                }
+            result['submissionIdentifier'] = M.submissionId
+            if (M.publicationId) {
+                result['publicationIdentifier'] = M.publicationId
             }
 
             ['name', 'description', 'publication', 'format', 'files', 'history'].each { field ->

@@ -34,6 +34,8 @@
 
 package net.biomodels.jummp.core
 
+import net.biomodels.jummp.core.adapters.RevisionAdapter
+
 import static org.junit.Assert.*
 import grails.test.mixin.Mock
 import grails.test.mixin.TestMixin
@@ -61,7 +63,7 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.junit.*
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.acls.domain.BasePermission
-import net.biomodels.jummp.core.adapters.DomainAdapter
+import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 
 @TestMixin(IntegrationTestMixin)
 class ModelServiceTests extends JummpIntegrationTest {
@@ -70,6 +72,7 @@ class ModelServiceTests extends JummpIntegrationTest {
     def modelFileFormatService
     def fileSystemService
     def grailsApplication
+    def searchService
 
     @Before
     void setUp() {
@@ -83,7 +86,7 @@ class ModelServiceTests extends JummpIntegrationTest {
         grailsApplication.config.jummp.vcs.workingDirectory = rootPath
         grailsApplication.config.jummp.vcs.exchangeDirectory = exchange.path
         assertTrue exchange.exists()
-        fileSystemService.currentModelContainer = currentContainer
+        fileSystemService.currentModelContainer.set(currentContainer)
         fileSystemService.root = container.getParentFile()
         modelService.vcsService.modelContainerRoot = rootPath
         def gitFactory = grailsApplication.mainContext.getBean("gitManagerFactory")
@@ -103,7 +106,7 @@ class ModelServiceTests extends JummpIntegrationTest {
         modelService.vcsService.vcsManager = null
         modelService.modelFileFormatService = modelFileFormatService
         modelService.vcsService.modelContainerRoot = null
-        fileSystemService.currentModelContainer = null
+        fileSystemService.currentModelContainer.set(null)
     }
 
     @Test
@@ -894,7 +897,7 @@ class ModelServiceTests extends JummpIntegrationTest {
         assertEquals(false, model.deleted)
         // let's change the model state
         Revision savedRev=modelService.getLatestRevision(model)
-        savedRev.state = ModelState.UNDER_CURATION
+        savedRev.state = ModelState.UNPUBLISHED
         savedRev.save(flush:true)
         shouldFail(AccessDeniedException) {
         	modelService.deleteModel(model)
@@ -971,7 +974,7 @@ class ModelServiceTests extends JummpIntegrationTest {
         // complete name cannot be tested, as it uses a generated date and we do not know the date
         assertTrue(model.vcsIdentifier.endsWith("${model.submissionId}/"))
         File parent = new File(grailsApplication.config.jummp.vcs.workingDirectory, model.vcsIdentifier)
-        
+
         File gitFile = new File(parent, importFile.getName())
         List<String> lines = gitFile.readLines()
         assertEquals(1, lines.size())
@@ -1007,7 +1010,7 @@ class ModelServiceTests extends JummpIntegrationTest {
         assertTrue((modelService.uploadModelAsFile(rf2, meta)).validate())
         // an invalid submission should yield a model with validated flag set to false
         meta.name = "test2"
-        meta.format = DomainAdapter.getAdapter(ModelFormat.findByIdentifierAndFormatVersion("SBML", "*")).toCommandObject()
+        meta.format = new ModelFormatAdapter(format: ModelFormat.findByIdentifierAndFormatVersion("SBML", "*")).toCommandObject()
         File sbmlFile = new File("target/sbml/sbmlTestFile")
         FileUtils.deleteQuietly(sbmlFile)
         FileUtils.touch(sbmlFile)
@@ -1126,7 +1129,7 @@ class ModelServiceTests extends JummpIntegrationTest {
         shouldFail(ModelException) {
             modelService.retrieveModelFiles(rev)
         }
-        // retrieving the proper uploaded revision should 
+        // retrieving the proper uploaded revision should
         List<RepositoryFileTransportCommand> files = modelService.retrieveModelFiles(rev4)
         assertEquals(1, files.size())
         bytes = (new File(files.first().path)).getBytes()
@@ -1348,40 +1351,80 @@ class ModelServiceTests extends JummpIntegrationTest {
 
     @Test
     void testDeleteModel() {
-        Model model = new Model(vcsIdentifier: "test.xml", submissionId: "m1234")
-        Revision revision = new Revision(model: model, vcsId: "1", revisionNumber: 1, owner: User.findByUsername("username"), minorRevision: false, name:"", description: "", comment: "", uploadDate: new Date(), format: ModelFormat.findByIdentifierAndFormatVersion("UNKNOWN", "*"))
-        assertTrue(revision.validate())
-        model.addToRevisions(revision)
-        assertTrue(model.validate())
-        model.save()
-        // testUser should not get access to the method
-        authenticateAsTestUser()
-        shouldFail(AccessDeniedException) {
-            modelService.deleteModel(model)
+        Model upped = null
+        shouldFail(IllegalArgumentException) {
+            modelService.deleteModel(upped)
         }
+        upped = new Model(deleted: true)
+        shouldFail(AccessDeniedException) {
+            modelService.deleteModel(upped)
+        }
+
+        def exchg = "target/vcs/exchange"
+        def wd ="target/vcs/git"
+        GitManagerFactory gitService = new GitManagerFactory()
+        gitService.grailsApplication = grailsApplication
+        grailsApplication.config.jummp.plugins.git.enabled = true
+        grailsApplication.config.jummp.vcs.exchangeDirectory = exchg
+        grailsApplication.config.jummp.vcs.workingDirectory = wd
+        modelService.vcsService.vcsManager = gitService.getInstance()
+        modelService.vcsService.vcsManager.exchangeDirectory = new File(exchg)
+        def modelPath = "test/files/JUM-84/pharmml/testPharmML.xml"
+        def modelFile = new File(modelPath)
+        assertTrue modelFile.exists()
+        // upload the model
+        def model = new RepositoryFileTransportCommand(path: modelFile.absolutePath,
+                mainFile: true, description: "")
+        authenticateAsTestUser()
+        def fmt = new ModelFormatTransportCommand(identifier: "PharmML", formatVersion: "0.3.1")
+        def rtc = new RevisionTransportCommand(format: fmt, name: "Test model", validated: true,
+                comment: "initial commit", description: "Test model description",
+                model: new ModelTransportCommand())
+        def count = Revision.count()
+        upped = modelService.uploadValidatedModel([model], rtc)
+        assertNotNull upped
+        assertFalse upped.hasErrors()
+        assertEquals count + 1, Revision.count()
+        def firstRevision = Revision.last()
+        assertEquals "Test model", firstRevision.name
+        println "first revision: ${firstRevision.dump()}"
+        def secondRevision = new RevisionAdapter(revision: firstRevision).toCommandObject()
+        secondRevision.name = "Some other name"
+        secondRevision.description = "Some other description"
+        secondRevision.comment = "Some important change"
+        def r2 = modelService.addValidatedRevision([model], [], secondRevision)
+        assertNotNull r2
+        assertFalse r2.hasErrors()
+
+        //wait a bit for the model to be indexed
+        Thread.sleep(30000)
+
+        assertTrue modelService.deleteModel(upped)
+        assertTrue upped.deleted
+        upped = Model.read(upped.id)
+        assertTrue upped.deleted
+        assertTrue searchService.isDeleted(upped)
+
+        // set model state back to initial state
+        upped.deleted = false
+        upped.save(flush: true)
+        searchService.setDeleted(upped, false)
+        assertFalse searchService.isDeleted(upped)
+
+        firstRevision.state = ModelState.PUBLISHED
+        firstRevision.save(flush: true)
+        // can't delete once a revision is public
+        assertFalse modelService.canDelete(upped)
+        firstRevision.state = ModelState.UNPUBLISHED
+        firstRevision.save(flush: true)
+
         // user should not get access to the method
         authenticateAsUser()
-        shouldFail(AccessDeniedException) {
-            modelService.deleteModel(model)
-        }
-        // now user should get access to the method
-        final String username = revision.owner.username
-        aclUtilService.addPermission(model, username, BasePermission.DELETE)
-        assertTrue(modelService.deleteModel(model))
-        // set model state back to initial tate
-        model.deleted = false
+        assertFalse modelService.canDelete(upped)
+
         // admin should get access to the method
         authenticateAsAdmin()
-        assertTrue(modelService.deleteModel(model))
-        revision.state=ModelState.PUBLISHED
-        revision.save(flush:true)
-        shouldFail(AccessDeniedException) {
-        	modelService.deleteModel(model)
-        }
-        model = null
-        shouldFail(IllegalArgumentException) {
-            modelService.deleteModel(model)
-        }
+        assertTrue modelService.deleteModel(upped)
     }
 
     @Test
@@ -1540,7 +1583,7 @@ class ModelServiceTests extends JummpIntegrationTest {
         assertNotNull checkout
         assertTrue checkout.model.vcsIdentifier.endsWith("$submissionId/")
         assertEquals name, checkout.name
-        File vcsFolder = new File(fileSystemService.currentModelContainer).listFiles().find {
+        File vcsFolder = new File(fileSystemService.currentModelContainer.get()).listFiles().find {
             it.isDirectory() && it.name.endsWith("$submissionId")
         }
         assertNotNull vcsFolder
@@ -1572,7 +1615,7 @@ class ModelServiceTests extends JummpIntegrationTest {
             assertNotNull checkout
             assertTrue checkout.model.vcsIdentifier.endsWith("$submissionId/")
             assertEquals name, checkout.name
-            def vcsRoot = new File(fileSystemService.currentModelContainer)
+            def vcsRoot = new File(fileSystemService.currentModelContainer.get())
             File vcsFolder = vcsRoot.listFiles().find {
                 it.isDirectory() && it.name.endsWith("$submissionId")
             }

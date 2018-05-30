@@ -1,53 +1,55 @@
+#nameSearch {
+
+}
+
+#teamSearch {
+
+}
+
 .formElement {
-	float: left;
-	padding: 10px;
+
 }
+
 .formElements {
-	width: 400px;
-	float: left;
+
 }
+
 .containUI {
-	margin-left: 13%;
-	position:static;
-	width:100%
+
 }
-#AddButton {
-	margin-left: 12px;
+
+#AddButton, #TeamAddButton {
+
 }
+
 #collabCreate {
-	float: left;
-	width: 40%;
-	border-style:solid;
-	border-left:none;
-	border-top:none;
-	border-bottom:none;
+
 }
+
 .hideRightBorder {
 	border-right: none !important;
 }
+
 .hideLeftBorder {
 	border-left:none !important;
 }
+
 #currentCollabs {
-	padding-left: 40px;
-	left:40%;
-	width:40%;
-	float: left;
-	border-style:solid;
-	border-top:none;
-	border-bottom:none;
-	border-right: none;
+
 }
+
 .tableEL {
-	padding: 10px;
+
 }
+
 .bold {
 	font-weight: bold;
 }
+
 #collabUI {
-	width: 100%;
+
 }
+
 #ui {
-	margin-left:12%;
-	left:-12%;
+
 }

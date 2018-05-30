@@ -25,14 +25,114 @@
 package net.biomodels.jummp.webapp
 
 import grails.converters.JSON
+import grails.plugin.springsecurity.annotation.Secured
 
+@Secured(["IS_AUTHENTICATED_FULLY"])
 class JummpController {
-
+    def springSecurityService
     def userService
-    
+    def grailsApplication
     def teamService
+    def feedbackService
 
-    def feedback = { }
+    final List<String> AUDIT_EXCEPTIONS = ['support', 'aboutus', 'contactus', 'lookupUser',
+                                           'autoCompleteUser', 'teamLookup']
+    String theme
+
+    //def beforeInterceptor = [action: this.&detectTheme, except: AUDIT_EXCEPTIONS]
+
+    private void detectTheme() {
+        theme = grailsApplication.config.jummp.branding.style
+        if (!theme)
+            theme = 'default'
+    }
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def support() {
+        detectTheme()
+        [messageCode: "jummp.support.${theme}.message",
+         titleCode: "jummp.support.${theme}.title"]
+    }
+
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def faq() {
+        detectTheme()
+        render(view: "faq", model: [titleCode: "jummp.faq.${theme}.title"])
+    }
+
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def courses() {
+        detectTheme()
+        render(view: "courses", model: [titleCode: "jummp.courses.${theme}.title"])
+    }
+
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def aboutus() {
+        detectTheme()
+        [messageCode: "jummp.aboutus.${theme}.message",
+         titleCode: "jummp.aboutus.${theme}.title"]
+    }
+
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def contactus() {
+        detectTheme()
+        [messageCode: "jummp.contactus.${theme}.message",
+         titleCode: "jummp.contactus.${theme}.title"]
+    }
+
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def termsOfUse() {
+        detectTheme()
+        [messageCode: "jummp.termsOfUse.${theme}.message",
+         titleCode: "jummp.termsOfUse.${theme}.title"]
+    }
+
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def howToCiteBioModelsDatabase() {
+        detectTheme()
+        render(view: "howToCite", model: [titleCode: "jummp.howToCite.${theme}.title"])
+    }
+
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def acknowledgements() {
+        detectTheme()
+        render(view: "acknowledgements", model: [titleCode: "jummp.acknowledgements.${theme}.title"])
+    }
+
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def jobs() {
+        detectTheme()
+        render(view: "jobs", model: [titleCode: "jummp.jobs.${theme}.title"])
+    }
+
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def feedback() {
+        if (params.star) {
+            byte star = Byte.parseByte(params.star)
+            String email = params.email
+            String comment = params.comment
+            if (star < 1 && star > 5) {
+                render([status: '500', message: "Please rate between 1 and 5 stars."] as JSON)
+            } else {
+                // save the data to the database
+                comment = comment.encodeAsHTML()
+                boolean result = feedbackService.persist(star, email, comment)
+                if (result) {
+                    def notification = [
+                        star: star,
+                        email: email,
+                        comment: comment,
+                        user: springSecurityService.currentUser
+                    ]
+                    sendMessage("seda:jummp.feedback", notification)
+                    render([status: '200', message: "Thank you for your feedback."] as JSON)
+                } else {
+                    render([status: '500', message: "It looks like you provided that feedback before. Please try again with a different message."] as JSON)
+                }
+            }
+        } else {
+            println "This operation does not support."
+        }
+    }
 
     def lookupUser = {
         if (params.name) {
@@ -48,7 +148,7 @@ class JummpController {
         def usersFound = userService.searchUsers(params.term)
         render (usersFound as JSON)
     }
-    
+
     def teamLookup = {
 		if (params.teamID) {
 			long teamID;

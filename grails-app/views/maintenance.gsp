@@ -30,7 +30,7 @@
 <!doctype html>
 <html>
     <head>
-        <meta name="layout" content="main"/>
+        <meta name="layout" content="${session['branding.style']}/main" />
         <script>
         	$(function() {
         		$( "#dialog" ).dialog({

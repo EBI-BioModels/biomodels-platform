@@ -34,8 +34,8 @@
 
 package net.biomodels.jummp.plugins
 
-import net.biomodels.jummp.core.adapters.DomainAdapter 
 import net.biomodels.jummp.core.JummpIntegrationTest
+import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
@@ -105,7 +105,7 @@ class OmexServiceTests extends JummpIntegrationTest {
         def defaultFormat = new ModelFormatTransportCommand(identifier: "OMEX")
         def modelCommand = new ModelTransportCommand(format: defaultFormat, comment: "First commit", name: "Foo")
         Model model = modelService.uploadModelAsFile(rf, modelCommand)
-        def revision = DomainAdapter.getAdapter(modelService.getLatestRevision(model)).toCommandObject()
+        def revision = new RevisionAdapter(revision: modelService.getLatestRevision(model)).toCommandObject()
         assertEquals "0.1", omexService.getFormatVersion(revision)
     }
 

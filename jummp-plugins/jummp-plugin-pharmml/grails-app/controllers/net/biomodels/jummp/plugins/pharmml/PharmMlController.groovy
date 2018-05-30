@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -46,14 +46,14 @@ import eu.ddmore.libpharmml.dom.trialdesign.TrialDesign
  * @author  Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
 class PharmMlController {
-
-    def modelDelegateService
+    def metadataDelegateService
     def pharmMlService
 
     def show = {
         def model = flash.genericModel
         final RevisionTransportCommand REVISION = model.revision
-        PharmML dom = AbstractPharmMlHandler.getDomFromRevision(model.revision)
+        model["genericAnnotations"] = metadataDelegateService.fetchGenericAnnotations REVISION
+        PharmML dom = AbstractPharmMlHandler.getDomFromRevision(REVISION)
         final String VERSION = dom?.writtenVersion
         if (dom) {
             model["independentVar"] = pharmMlService.getIndependentVariable(dom, VERSION)

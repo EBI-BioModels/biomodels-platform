@@ -35,12 +35,12 @@ public class ModelIdentifier {
     /* the class logger */
     private static final Log log = LogFactory.getLog(this)
     /* semaphore for the log threshold */
-    private static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
+    private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
     /* the value of this model identifier */
-    private StringBuilder id
+    private final StringBuffer id
 
     ModelIdentifier() {
-        id = new StringBuilder()
+        id = new StringBuffer()
     }
 
     ModelIdentifier decorate(ModelIdentifierDecorator decorator) {
@@ -48,8 +48,8 @@ public class ModelIdentifier {
             log.warn "Undefined decorator asked to append $this"
             return this
         }
-        if (IS_INFO_ENABLED) {
-            log.info "Asking $decorator to decorate $this."
+        if (IS_DEBUG_ENABLED) {
+            log.debug "Asking $decorator to decorate $this."
         }
         decorator.decorate(this)
     }
@@ -58,8 +58,8 @@ public class ModelIdentifier {
         if (!snippet) {
             log.warn "Ignoring request to add null/empty snippet to $this"
         } else {
-            if (IS_INFO_ENABLED) {
-                log.info "Appending $snippet to $this"
+            if (IS_DEBUG_ENABLED) {
+                log.debug "Appending $snippet to $this"
             }
             id.append(snippet)
         }
@@ -75,6 +75,6 @@ public class ModelIdentifier {
         return id.toString()
     }
 
-    private void setId(StringBuilder ignored) {
+    private void setId(StringBuffer ignored) {
     }
 }

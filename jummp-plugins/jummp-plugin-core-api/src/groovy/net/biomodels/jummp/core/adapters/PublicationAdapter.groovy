@@ -29,13 +29,13 @@ import grails.util.Holders
  *
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  */
-public class PublicationAdapter extends DomainAdapter {
+public class PublicationAdapter {
     Publication publication
-    
-    def publicationService = Holders.getGrailsApplication().mainContext.pubMedService
-    
+
+    def publicationService = Holders.getGrailsApplication().mainContext.publicationService
+
     PublicationTransportCommand toCommandObject() {
-       PublicationTransportCommand pubTC = new PublicationTransportCommand(journal: publication.journal,
+        PublicationTransportCommand pubTC = new PublicationTransportCommand(journal: publication.journal,
                 title: publication.title,
                 affiliation: publication.affiliation,
                 synopsis: publication.synopsis,
@@ -45,12 +45,12 @@ public class PublicationAdapter extends DomainAdapter {
                 volume: publication.volume,
                 issue: publication.issue,
                 pages: publication.pages,
-                linkProvider: getAdapter(publication.linkProvider).toCommandObject(),
+                linkProvider: new PublicationLinkProviderAdapter(linkProvider:  publication.linkProvider).toCommandObject(),
                 link: publication.link,
                 authors: new LinkedList<PersonTransportCommand>())
         def authors = publicationService.getPersons(publication)
         authors.each {
-            PersonTransportCommand personAlias = getAdapter(it.person).toCommandObject()
+            PersonTransportCommand personAlias = new PersonAdapter(person: it.person).toCommandObject()
             personAlias.userRealName = it.pubAlias
             pubTC.authors.add(personAlias)
         }

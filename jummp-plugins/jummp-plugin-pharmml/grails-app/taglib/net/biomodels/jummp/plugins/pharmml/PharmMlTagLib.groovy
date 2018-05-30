@@ -98,11 +98,11 @@ class PharmMlTagLib {
         Map<String, Equation> continuousCovariateTransformations = [:]
         if (attrs.cm) {
             pharmMlRenderingService.renderCovariateModel(attrs.cm,
-                    continuousCovariateTransformations, attrs.version, out)
+                continuousCovariateTransformations, attrs.version, out)
         }
         if (attrs.pm) {
             pharmMlRenderingService.renderParameterModel(attrs.pm, attrs.cm,
-                        continuousCovariateTransformations, attrs.version, out)
+                continuousCovariateTransformations, attrs.version, out)
         }
         if (attrs.om) {
             pharmMlRenderingService.renderObservationModel(attrs.om, attrs.cm, attrs.version, out)
@@ -141,7 +141,7 @@ class PharmMlTagLib {
 
         if (attrs.estimation) {
             out << "<div id='${pageScope.tabsMap["est"]}'>"
-            String link=g.createLink(controller: 'model', 
+            String link = g.createLink(controller: 'model',
             						 action: 'download',
             						 id: attrs.rev.identifier()).replace("%3A",".");
             pharmMlRenderingService.renderEstimationSteps(attrs.estimation, attrs.version, out, attrs.rev, link)
@@ -204,13 +204,11 @@ class PharmMlTagLib {
         pharmMlRenderingService.renderInitialConditions(attrs.initialConditions, attrs.version, out)
     }
 
-    /**
-     * Renders model-level annotations on the 'Overview' tab of the model display.
-     *
-     * @attr revision REQUIRED the revision for which to display the annotatations.
-     */
-    def renderGenericAnnotations = { attrs ->
-        pharmMlMetadataRenderingService.renderGenericAnnotations(attrs.revision, out)
+    def pkMacros = { attrs ->
+        if (!(attrs.vars)) {
+            return
+        }
+        pharmMlRenderingService.renderPKMacros(attrs.vars, attrs.version, out)
     }
 }
 

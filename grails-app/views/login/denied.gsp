@@ -28,7 +28,7 @@
 
 
 <head>
-<meta name='layout' content='main' />
+<meta name='layout' content='${session['branding.style']}/main' />
 <title>Denied</title>
 </head>
 

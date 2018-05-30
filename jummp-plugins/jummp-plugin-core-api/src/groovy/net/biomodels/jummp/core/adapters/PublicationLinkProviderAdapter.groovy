@@ -26,23 +26,23 @@ import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand
  *
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  */
-public class PublicationLinkProviderAdapter extends DomainAdapter {
+public class PublicationLinkProviderAdapter {
     PublicationLinkProvider linkProvider
-    
+
     PublicationLinkProviderTransportCommand toCommandObject() {
-        return new PublicationLinkProviderTransportCommand(linkType:linkProvider.linkType.toString(),
-                pattern: linkProvider.pattern,
-                identifiersPrefix: linkProvider.identifiersPrefix
-                )
+        final String publicationLinkLabel = linkProvider.linkType.label
+        return new PublicationLinkProviderTransportCommand(linkType: publicationLinkLabel,
+                pattern: linkProvider.pattern, identifiersPrefix: linkProvider.identifiersPrefix)
     }
-    
+
     static PublicationLinkProvider fromCommandObject(PublicationLinkProviderTransportCommand cmd) {
- 	    PublicationLinkProvider link=PublicationLinkProvider.findByLinkType(cmd.linkType)
- 	    if (link) {
- 	    	return link
- 	    }
-    	return new PublicationLinkProvider(linkType:PublicationLinkProvider.LinkType.valueOf(cmd.linkType),
-    									   pattern:cmd.pattern,
-    									   identifiersPrefix:cmd.identifiersPrefix)
+        PublicationLinkProvider.LinkType pubLinkProviderType =
+                PublicationLinkProvider.LinkType.findLinkTypeByLabel(cmd.linkType)
+        if (pubLinkProviderType) {
+            def result = PublicationLinkProvider.findByLinkTypeAndPatternAndIdentifiersPrefix(
+                    pubLinkProviderType, cmd.pattern, cmd.identifiersPrefix)
+            return result
+        }
+        return null
     }
 }

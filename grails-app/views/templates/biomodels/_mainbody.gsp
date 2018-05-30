@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -27,32 +27,67 @@
 
 
 
-<%
-  	def sidebarContent=g.pageProperty(name:'page.sidebar')
-  	if (sidebarContent) {
-  		sidebarContent=sidebarContent.trim()
-  	}
-%>
-<div id="content" role="main" class="grid_24 clearfix">
-	
-	<g:if test="${sidebarContent}">
-		<section class="grid_18 alpha"> 
-				<g:render template="/templates/notification/showNotificationDiv"/>
-				<g:pageProperty name="page.main-content" />
-		        <g:layoutBody/>
-	        </section>  
-    
-	        <section class="grid_6 omega">
-				${sidebarContent}
-			</section>
-	</g:if>
-	<g:else>
-		<section> 
-		        <g:render template="/templates/notification/showNotificationDiv"/>
-				<g:pageProperty name="page.main-content" />
-		        <g:layoutBody/>
-	        </section>  
-	</g:else>
-    
-</div>
+    <%
+        def sidebarContent = g.pageProperty(name: 'page.sidebar')
+        if (sidebarContent) {
+            sidebarContent = sidebarContent.trim()
+        }
+        def facetSearchContent = g.pageProperty(name: 'page.facetsearch')
+        if (facetSearchContent) {
+            facetSearchContent = facetSearchContent.stripMargin()
+        } else {
+            facetSearchContent = ""
+        }
+    %>
 
+    <div id="content" role="main" class="row">
+        <div data-sticky-container class="sticky-container">
+            <section>
+                <div id="main-content-area">
+                <g:if test="${facetSearchContent}">
+                    <div class="small-4 medium-2 large-2 columns show-for-medium">
+                        ${raw(facetSearchContent)}
+                    </div>
+                    <g:if test="${sidebarContent}">
+                        <div class="small-12 medium-7 large-7 columns">
+                            <g:render template="/templates/notification/showNotificationDiv"/>
+                            <g:pageProperty name="page.main-content" />
+                            <g:layoutBody/>
+                        </div>
+                        <div class="small-2 medium-3 large-3 columns sidebar sticky-container
+                        show-for-medium hide-for-small-only" data-sticky-container>
+                            ${raw(sidebarContent)}
+                        </div>
+                    </g:if>
+                    <g:else>
+                        <div class="small-12 medium-10 large-10 columns">
+                            <g:render template="/templates/notification/showNotificationDiv"/>
+                            <g:pageProperty name="page.main-content" />
+                            <g:layoutBody/>
+                        </div>
+                    </g:else>
+                </g:if>
+                <g:else>
+                    <!-- Facets search is unavailable -->
+                    <g:if test="${sidebarContent}">
+                        <div class="small-12 medium-8 large-9 columns">
+                            <g:render template="/templates/notification/showNotificationDiv"/>
+                            <g:pageProperty name="page.main-content" />
+                            <g:layoutBody/>
+                        </div>
+                        <div class="small-12 medium-4 large-3 columns sticky-container" data-sticky-container>
+                            ${raw(sidebarContent)}
+                        </div>
+                    </g:if>
+                    <g:else>
+                        <div class="small-12 medium-12 large-12 columns">
+                            <g:render template="/templates/notification/showNotificationDiv"/>
+                            <g:pageProperty name="page.main-content" />
+                            <g:layoutBody/>
+                        </div>
+                    </g:else>
+                </g:else>
+                </div>
+            </section>
+        </div>
+    </div>

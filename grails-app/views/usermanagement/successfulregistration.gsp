@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -30,16 +30,15 @@
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <meta name="layout" content="main"/>
+        <meta name="layout" content="${session['branding.style']}/main" />
         <title>Registration Successful</title>
-        
     </head>
      <body>
         <div>
-        	<g:message code="user.signup.ui.register.success.message"/>
+            <g:message code="user.signup.ui.register.success.message" args="${[email]}"/>
         </div>
         </body>
-</html
+</html>
 <content tag="title">
-	<g:message code="user.signup.ui.heading.register.success"/>
+    <g:message code="user.signup.ui.heading.register.success"/>
 </content>

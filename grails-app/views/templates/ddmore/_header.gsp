@@ -33,7 +33,7 @@
   <div id="header-full">
       <div id="header"><div class="section clearfix">
 
-          <a href="${createLink(uri: '/', absolute: true)}" title="Home" rel="home" id="logo"><g:img dir="images/ddmore" file="logo.png" alt="DDMoRe Logo"/></a>
+          <a href="${createLink(uri: '/', absolute: true)}" title="Home" rel="home" id="logo"><g:img dir="images/ddmore" file="logo.png" alt="DDMoRe Model Repository Logo"/></a>
 
       <div class="region region-header">
       	<div id="block-system-user-menu" class="block block-system user-menu block-menu first odd">      
@@ -47,7 +47,7 @@
       				</li>
       				<li class="leaf" id="notificationCount">
       					<a title="View ${sec.username()}'s Notifications" href='<g:createLink controller="notification" action="list"/>'>
-                            <img width="20" height="auto" title="notifications" src="http://www.ebi.ac.uk/web_guidelines/images/icons/EBI-Generic/Generic%20icons/email.png"/>
+                            <img width="20" height="auto" title="notifications" src="${grailsApplication.config.grails.serverURL}/images/email.png"/>
       						<span id="notificationLink" style="display: none;"></span>
       					</a>
       				</li>
@@ -58,12 +58,17 @@
       				</li>
       			</sec:ifLoggedIn>
       			<sec:ifNotLoggedIn>
+                    <g:if test="${grailsApplication.config.jummp.security.anonymousRegistration}">
       				<li class="first leaf">
       					<a href="${grailsApplication.config.grails.serverURL}/registration">
       						<g:message code="jummp.main.register"/>
       					</a>
       				</li>
-      				<li class="last leaf">
+                    <li class="last leaf">
+                    </g:if>
+                    <g:else>
+                    <li class="first leaf">
+                    </g:else>
       					<a href="${grailsApplication.config.grails.serverURL}/login">
       						<g:message code="jummp.main.login"/>
       					</a>
@@ -113,20 +118,25 @@
                 title="view my teams">My Teams</a>
             </li>
         </sec:ifLoggedIn>
-    	<li class="expanded">
-    		<a href="${g.createLink(controller: 'jummp', action: 'feedback')}" 
-    		<g:if test="${g.pageProperty(name:'page.feedback')?.length()}">
-	    		class="active-trail active"
-	    	</g:if>
-    		title="give feedback">Feedback</a>
-    	</li>
-    </ul>  
+        <li class="expanded">
+          <a href="${g.createLink(controller: 'jummp', action: 'contactus')}"
+            <g:if test="${g.pageProperty(name:'page.contactus')?.length()}">
+            class="active-trail active"
+            </g:if>>
+            <g:message code="jummp.feedback.ddmore.title"/></a>
+        </li>
+        <li class="expanded">
+            <g:if test="${grailsApplication.config.jummp.security.certificationAllowed}">
+                <a href="http://www.ddmore.eu/projects/request-model-certification" target="_blank" title="Request DDMoRe certification of your model -- link opens in a new window">Request Certification</a>
+            </g:if>
+        </li>
+    </ul>
 </div>
 <p>${g.pageProperty(name:'page.selectedtab')}</p>
 </div><!-- /.block -->
   </div><!-- /.region -->
 
   </div></div><!-- /.section, /#header -->
-  
+
 </div>
 

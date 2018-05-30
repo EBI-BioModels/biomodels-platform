@@ -28,10 +28,13 @@
 * that of the covered work.}
 **/
 
+
+import grails.plugin.springsecurity.acl.AclSid
 import grails.util.Environment
+import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PubLinkProvTC
-import net.biomodels.jummp.core.model.identifier.decorator.AbstractAppendingDecorator
 import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.core.model.identifier.decorator.AbstractAppendingDecorator
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.plugins.security.Person
@@ -39,15 +42,14 @@ import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.plugins.security.UserRole
 import org.codehaus.groovy.grails.commons.ApplicationAttributes
-import org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid
 import org.codehaus.groovy.grails.commons.GrailsClass
 import org.codehaus.groovy.grails.plugins.DomainClassGrailsPlugin
 
 class BootStrap {
     def springSecurityService
     def wcmSecurityService
-    def searchableService
     def grailsApplication
+    def modelFileFormatService
 
     void addPublicationLinkProvider(PubLinkProvTC cmd) {
         def publinkType=PublicationLinkProvider.LinkType.valueOf(cmd.linkType)
@@ -58,18 +60,32 @@ class BootStrap {
         }
     }
 
+    void registerDefaultModelElementTypes() {
+        def modelFormats = ModelFormat.list().each { ModelFormat fmt ->
+            def fmtCmd = new ModelFormatAdapter(format: fmt).toCommandObject()
+            try {
+                modelFileFormatService.registerModelElementType(fmtCmd, "model")
+            } catch (IllegalStateException e) {
+                String id = fmt.identifier
+                String v = fmt.formatVersion
+                println "Cannot register default model element type for $id $v"
+            }
+        }
+    }
+
     def init = { servletContext ->
         ModelFormat format = ModelFormat.findByIdentifierAndFormatVersion("UNKNOWN", "*")
         if (!format) {
-            format = new ModelFormat(identifier: "UNKNOWN", name: "Unknown format", formatVersion: "*")
+            format = new ModelFormat(identifier: "UNKNOWN", name: "Original code", formatVersion: "*")
             format.save(flush: true)
         }
         def ctx = servletContext.getAttribute(ApplicationAttributes.APPLICATION_CONTEXT)
-        def service = ctx.getBean("modelFileFormatService")
-        def modelFormat = service.registerModelFormat("UNKNOWN", "UNKNOWN")
-        service.handleModelFormat(modelFormat, "unknownFormatService", "unknown")
+        def modelFormat = modelFileFormatService.registerModelFormat("UNKNOWN", "UNKNOWN")
 
-         grailsApplication.domainClasses.each { GrailsClass gc ->
+        modelFileFormatService.handleModelFormat(modelFormat, "unknownFormatService", "unknown")
+        registerDefaultModelElementTypes()
+
+        grailsApplication.domainClasses.each { GrailsClass gc ->
              DomainClassGrailsPlugin.addValidationMethods(grailsApplication, gc,
                     grailsApplication.mainContext)
         }
@@ -82,6 +98,7 @@ class BootStrap {
                          pattern:"^(doi\\:)?\\d{2}\\.\\d{4}.*",
                          identifiersPrefix:"http://identifiers.org/doi/"))
 
+        /* ignore until we fix the integration with the annotation UI.
         addPublicationLinkProvider(new PubLinkProvTC(linkType:PublicationLinkProvider.LinkType.ARXIV,
                          pattern:"^(\\w+(\\-\\w+)?(\\.\\w+)?/)?\\d{4,7}(\\.\\d{4}(v\\d+)?)?",
                          identifiersPrefix:"http://identifiers.org/arxiv/"))
@@ -109,9 +126,12 @@ class BootStrap {
         addPublicationLinkProvider(new PubLinkProvTC(linkType:PublicationLinkProvider.LinkType.PMC,
                          pattern:"PMC\\d+",
                          identifiersPrefix:"http://identifiers.org/pmc/"))
+        */
+        addPublicationLinkProvider(new PubLinkProvTC(linkType: PublicationLinkProvider.LinkType.CUSTOM,
+                pattern: "^(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]"))
+        addPublicationLinkProvider(new PubLinkProvTC(linkType: PublicationLinkProvider.LinkType.MANUAL_ENTRY,
+                pattern: "\\A\\z" /* i.e. start of input then end of input -- ignored */))
 
-        addPublicationLinkProvider(new PubLinkProvTC(linkType:PublicationLinkProvider.LinkType.CUSTOM,
-                         pattern:"^(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]",))
         if (Environment.getCurrent() != Environment.TEST) {
              if (!Role.findByAuthority("ROLE_USER")) {
                 new Role(authority: "ROLE_USER").save(flush: true)
@@ -121,6 +141,9 @@ class BootStrap {
             }
             if (!Role.findByAuthority("ROLE_ADMIN")) {
                 new Role(authority: "ROLE_ADMIN").save(flush: true)
+            }
+            if (!Role.findByAuthority("ROLE_QC_PROVIDER")) {
+                new Role(authority: "ROLE_QC_PROVIDER").save(flush: true)
             }
             if (!User.findByUsername("administrator")) {
                 def person = new Person(userRealName: "administrator")
@@ -137,75 +160,49 @@ class BootStrap {
                 new AclSid(sid: user.username, principal: true).save(flush: true)
                 Role userRole = Role.findByAuthority("ROLE_USER")
                 UserRole.create(user, userRole, true)
-                if (!Role.findByAuthority("ROLE_ADMIN")) {
-                    new Role(authority: "ROLE_ADMIN").save(flush: true)
-                }
                 userRole = Role.findByAuthority("ROLE_ADMIN")
                 UserRole.create(user, userRole, true)
             }
-            // Manually start Searchable's mirroring process to ensure that it comes after the automated migrations.
-            //searchableService.reindex()
-            searchableService.startMirroring()
+
+            if (!User.findByUsername("anonymous")) {
+                def person = new Person(userRealName: "anonymous")
+                person.save(flush: true)
+                def user = new User(username: "anonymous",
+                        password: springSecurityService.encodePassword("anonymous"),
+                        email: "user@anoymous.com",
+                        person: person,
+                        enabled: false,
+                        accountExpired: true,
+                        accountLocked: true,
+                        passwordExpired: true)
+                user.save(flush: true)
+            }
         }
 
         // custom mapping for weceem as it fails to work with an LDAPUserDetailsImpl
         wcmSecurityService.securityDelegate = [
             getUserName : { ->
-                if (springSecurityService.isLoggedIn()) {
-                    return springSecurityService.principal.username
-                } else {
+                def principal = springSecurityService.getPrincipal()
+                if (principal instanceof String) {
                     return null
+                } else {
+                    return principal?.username
                 }
             },
             getUserEmail : { ->
-                return null
+                def principal = springSecurityService.getPrincipal()
+                if (principal instanceof String) {
+                    return null
+                } else {
+                    return principal?.username
+                }
             },
             getUserRoles : { ->
-                if (springSecurityService.isLoggedIn()) {
-                    return springSecurityService.principal.authorities
-                } else {
-                    return ['ROLE_GUEST']
-                }
+                springSecurityService.authentication.authorities*.authority ?: ['ROLE_ANONYMOUS']
             },
             getUserPrincipal : { ->
-                def principal = springSecurityService.getPrincipal()
-                if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
-                    return new org.springframework.security.core.userdetails.UserDetails() {
-                        Collection<org.springframework.security.core.GrantedAuthority> getAuthorities() {
-                            return principal.authorities
-                        }
-                        String getPassword() {
-                            return principal.password
-                        }
-                        String getUsername() {
-                            return principal.username
-                        }
-                        boolean isAccountNonExpired() {
-                            return principal.isAccountNonExpired()
-                        }
-                        boolean isAccountNonLocked() {
-                            return principal.isAccountNonLocked()
-                        }
-                        boolean isCredentialsNonExpired() {
-                            return principal.isCredentialsNonExpired()
-                        }
-                        boolean isEnabled() {
-                            return principal.isEnabled()
-                        }
-                        String getEmail() {
-                            return null
-                        }
-                        String getFirstName() {
-                            return null
-                        }
-                        String getLastName() {
-                            return null
-                        }
-                    }
-                } else {
-                    return principal
-                }
-            }
+                springSecurityService.principal
+	        }
         ]
         AbstractAppendingDecorator.context = ctx
         RevisionTransportCommand.context = ctx

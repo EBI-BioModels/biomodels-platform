@@ -51,7 +51,7 @@ grails.project.dependency.resolution = {
         // excludes 'ehcache'
     }
     log "warn" // log level of Ivy resolver, either 'error', 'warn', 'info', 'debug' or 'verbose'
-    legacyResolve true
+    legacyResolve false
     repositories {
         if (System.getenv("JUMMP_ARTIFACTORY_URL")) {
             mavenRepo "${System.getenv('JUMMP_ARTIFACTORY_URL')}"
@@ -97,13 +97,13 @@ grails.project.dependency.resolution = {
 
     }
     plugins {
-        build ":tomcat:7.0.54"
+        build ":tomcat:7.0.55.3"
 
-        compile ":spring-security-core:1.2.7.3"
-        compile ":perf4j:0.1.1"
+        compile ":spring-security-core:2.0.0"
+        compile ":perf4j:0.2"
         compile ":jms:1.2"
 
-        runtime ":hibernate:3.6.10.16"
+        runtime ":hibernate4:4.3.10"
         runtime ":jquery:1.11.1"
     }
 }

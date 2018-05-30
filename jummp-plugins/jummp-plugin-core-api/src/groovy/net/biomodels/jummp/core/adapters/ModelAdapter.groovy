@@ -19,25 +19,29 @@
  **/
 
 package net.biomodels.jummp.core.adapters
-import net.biomodels.jummp.model.Model
-import net.biomodels.jummp.model.Publication
-import net.biomodels.jummp.core.model.ModelTransportCommand
-import net.biomodels.jummp.core.model.identifier.*
+
+import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.util.Holders
+import groovy.transform.CompileStatic
+import net.biomodels.jummp.core.model.ModelTransportCommand
+import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
+import net.biomodels.jummp.model.Model
+import net.biomodels.jummp.model.Revision
+
 /**
  * @short Adapter class for the Model domain class
  *
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  */
-public class ModelAdapter extends DomainAdapter {
+public class ModelAdapter {
     Model model
-    
+
     static final Set<String> PERENNIAL_IDENTIFIER_TYPES = ModelIdentifierUtils.perennialFields
     static final Set<String> FIND_BY_PERENNIAL_ID_CRITERIA = populateFindByCriteria()
-    
+
     def modelService = Holders.getGrailsApplication().mainContext.modelService
-    
-    
+
+    //@CompileStatic
     ModelTransportCommand toCommandObject(boolean saveHistory = true) {
         // TODO: is it correct to show the latest upload date as the lastModifiedDate or does it need ACL restrictions?
         Set<String> creators = []
@@ -48,59 +52,64 @@ public class ModelAdapter extends DomainAdapter {
                 creatorUsernames.add(revision.owner.username)
             }
         }
-        def latestRev;
-        
-        try 
-        { 
-        	latestRev = modelService?.getLatestRevision(model, saveHistory)
+        Revision latestRev
+        Revision firstRev
+        Long modelId = model.id
+        boolean modelIsSaved = null != modelId
+        if (modelIsSaved) {
+            if (SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
+                latestRev = model.revisions.last()
+                firstRev = model.revisions.first()
+            } else {
+                latestRev = modelService.getLatestRevision(model, saveHistory)
+                firstRev = model.revisions.first()
+            }
+        } else {
+            // if the model is not saved, there can only be at most one revision
+            latestRev = model.revisions?.first()
+            firstRev = latestRev
         }
-        catch(Exception ignore) {
-        	//Can happen if the model isnt saved yet
-        }
-        if (!latestRev) {
-        	latestRev = model.revisions? model.revisions.sort{ it.revisionNumber }.last() : null
-        }
-        
+
         return new ModelTransportCommand(
-                id: model.id,
-                submissionId: model.submissionId,
-                publicationId: model.publicationId,
-                firstPublished: model.firstPublished,
-                name: latestRev ? latestRev.name : null,
-                state: latestRev ? latestRev.state: null,
-                lastModifiedDate: latestRev ? latestRev.uploadDate : null,
-                format: latestRev ? getAdapter(latestRev.format).toCommandObject() : null,
-                publication: model.publication ? getAdapter(model.publication).toCommandObject() : null,
-                deleted: model.deleted,
-                submitter: model.revisions ? model.revisions.sort{ it.revisionNumber }.first().owner.person.userRealName : null,
-                submitterUsername: model.revisions ? model.revisions.sort{ it.revisionNumber }.first().owner.username : null,
-                submissionDate: model.revisions ? model.revisions.sort{ it.revisionNumber }.first().uploadDate : null,
-                creators: creators,
-                creatorUsernames: creatorUsernames
+            id: modelId,
+            submissionId: model.submissionId,
+            publicationId: model.publicationId,
+            firstPublished: model.firstPublished,
+            name: latestRev?.name,
+            description: latestRev?.description,
+            state: latestRev?.state,
+            lastModifiedDate: latestRev?.uploadDate,
+            format: latestRev ? new ModelFormatAdapter(format: latestRev.format).toCommandObject() : null,
+            publication: model.publication ? new PublicationAdapter(publication:  model.publication).toCommandObject() : null,
+            deleted: model.deleted,
+            submitter: firstRev?.owner?.person?.userRealName,
+            submitterUsername: firstRev?.owner?.username,
+            submissionDate: firstRev?.uploadDate,
+            creators: creators,
+            creatorUsernames: creatorUsernames,
+            flagLevel: latestRev?.qcInfo?.flag
         )
     }
-    
+
+    /**
+     * Convenience method for finding a model based on its externally-defined identifiers.
+     *
+     * @param perennialId The externally-defined ID by which to look up the model.
+     * @return  the model corresponding to the given id, or null if there was no match
+     */
      static Model findByPerennialIdentifier(String perennialId) {
-        if (!perennialId) {
-            return null
-        }
-        perennialId = perennialId.contains("\\.") ? perennialId : perennialId.split("\\.")[0]
-        List<Model> modelList = Model.withCriteria {
-            or {
-                FIND_BY_PERENNIAL_ID_CRITERIA.each {
-                    eq(it, perennialId)
-                }
-            }
-            maxResults(1)
-        }
-        if (!modelList.isEmpty()) {
-            Model model = modelList.first()
-            /*if (IS_INFO_ENABLED) {
-                log.info "Model $model has perennial identifier $perennialId."
-            }*/
-            return model
-        }
-        return null
+         if (!perennialId) {
+             return null
+         }
+         perennialId = perennialId.contains("\\.") ? perennialId : perennialId.split("\\.")[0]
+         def results = Model.withCriteria {
+             or {
+                 FIND_BY_PERENNIAL_ID_CRITERIA.each {
+                     eq(it, perennialId)
+                 }
+             }
+         }
+         results[0]
     }
 
     static Set<String> populateFindByCriteria() {

@@ -32,7 +32,7 @@ final class NullModelIdentifierGenerator implements ModelIdentifierGenerator {
     /* the class logger */
     private static final Log log = LogFactory.getLog(this)
     /* semaphore for the log threshold */
-    private static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
+    private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
 
     public NullModelIdentifierGenerator() {
     }
@@ -41,8 +41,8 @@ final class NullModelIdentifierGenerator implements ModelIdentifierGenerator {
      * Always returns null.
      */
     String generate() {
-        if (IS_INFO_ENABLED) {
-            log.info "Producing a new null model identifier."
+        if (IS_DEBUG_ENABLED) {
+            log.debug "Producing a new null model identifier."
         }
         return null
     }

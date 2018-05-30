@@ -13,18 +13,16 @@
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
 
- You should have received a copy of the GNU Affero General Public License along 
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
-<head>
-    <meta name="layout" content="modelDisplay"/>
-    <g:javascript>
-        function hideQuestionMark() {
-            $('.toolbar').remove();
-        }
-    </g:javascript>
-</head>
+<meta name="layout" content="${session['branding.style']}/modelDisplay"/>
+<g:javascript>
+    function hideQuestionMark() {
+        $('.toolbar').remove();
+    }
+</g:javascript>
 <content tag="modelspecifictabs">
     <g:each var="mdlFile" in="${mdlFiles}">
         <mdl:addMenuItem file="${mdlFile}" >
@@ -47,4 +45,7 @@
     <script type="text/javascript">
         SyntaxHighlighter.all();
     </script>
+</content>
+<content tag="genericAnnotations">
+    <anno:renderGenericAnnotations annotations="${genericAnnotations}"/>
 </content>

@@ -20,13 +20,13 @@
 * Additional permission under GNU Affero GPL version 3 section 7
 *
 * If you modify Jummp, or any covered work, by linking or combining it with
-* JSBML, groovy, Apache Commons, JDOM, XStream, Spring Framework, Perf4j, Grails, 
+* JSBML, groovy, Apache Commons, JDOM, XStream, Spring Framework, Perf4j, Grails,
 * SBFC Converter (or a modified version of that library), containing parts
-* covered by the terms of GNU GPL v2.0, BSD license, Apache License v2.0, 
+* covered by the terms of GNU GPL v2.0, BSD license, Apache License v2.0,
 * JDOM license, GNU LGPL v2.1, the licensors of this
 * Program grant you additional permission to convey the resulting work.
 * {Corresponding Source for a non-source form of such a combination shall
-* include the source code for the parts of JSBML, groovy, Apache Commons, 
+* include the source code for the parts of JSBML, groovy, Apache Commons,
 * JDOM, XStream, Spring Framework, Perf4j, Grails, SBFC Converter used as well as
 * that of the covered work.}
 **/
@@ -62,12 +62,12 @@ import org.jdom.input.SAXBuilder
 import org.jdom.output.XMLOutputter
 import org.jdom.xpath.XPath
 import org.perf4j.aop.Profiled
-import org.sbfc.converter.models.BioPaxModel
-import org.sbfc.converter.models.OctaveModel
-import org.sbfc.converter.models.SBMLModel
-import org.sbfc.converter.sbml2biopax.SBML2BioPAX_l3
-import org.sbfc.converter.sbml2dot.SBML2Dot
-import org.sbfc.converter.sbml2octave.SBML2Octave
+//import org.sbfc.converter.models.BioPaxModel
+//import org.sbfc.converter.models.OctaveModel
+//import org.sbfc.converter.models.SBMLModel
+//import org.sbfc.converter.sbml2biopax.SBML2BioPAX_l3
+//import org.sbfc.converter.sbml2dot.SBML2Dot
+//import org.sbfc.converter.sbml2octave.SBML2Octave
 import org.sbml.jsbml.AlgebraicRule
 import org.sbml.jsbml.Annotation
 import org.sbml.jsbml.AssignmentRule
@@ -102,6 +102,7 @@ import org.springframework.beans.factory.InitializingBean
  * @author  Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
  * @author  Raza Ali <raza.ali@ebi.ac.uk>
  * @author  Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author  Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
     static transactional = true
@@ -136,14 +137,29 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
     @SuppressWarnings("GrailsStatelessService")
     SbmlCache<RevisionTransportCommand, SBMLDocument> cache = new SbmlCache(100)
 
-    public void afterPropertiesSet() {
+    void afterPropertiesSet() {
         if (Environment.current == Environment.PRODUCTION) {
             // only initialize the SBML2* Converters during startup in production mode
             // FIXME: fails the startup of Tomcat server
 //             sbml2dotConverter()
-            sbml2OctaveConverter()
+            //sbml2OctaveConverter()
             // FIXME: fails the startup of Tomcat server
             //sbml2BioPaxConverter()
+        }
+    }
+
+    void checkConsistency(RevisionTransportCommand revision, final List<String> errors) {
+        RepositoryFileTransportCommand mainFileTC = revision.files.find {
+            it.mainFile
+        }
+        if (!mainFileTC) {
+            String modelSubmissionId = revision.model.submissionId
+            String error = "SBMLModel with the identifier ${modelSubmissionId} has no a main file"
+            log.debug(error)
+            errors.add(error)
+        } else {
+            File sbmlFile = new File(mainFileTC.path)
+            getFileAsValidatedSBMLDocument(sbmlFile, errors)
         }
     }
 
@@ -198,7 +214,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
      *
      * @param files The files comprising a potential model of this format
      */
-    public boolean areFilesThisFormat(final List<File> files) {
+    boolean areFilesThisFormat(final List<File> files) {
         if (files == null || files.size() == 0) {
             return false
         }
@@ -211,7 +227,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
         final int DEPTH_LIMIT = 15
         BufferedReader reader = null
         String currentLine
-        final def p = Pattern.compile(".*<sbml xmlns=\"http://www\\.sbml\\.org/sbml/level.*\".*")
+        final def p = Pattern.compile(".*\\<sbml.*xmlns=\"http://www\\.sbml\\.org/sbml/level.*\".*")
 
         while (areAllSbml && iFiles < fileCount) {
             try {
@@ -262,7 +278,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
     }
 
     @Profiled(tag="SbmlService.validate")
-    public boolean validate(final List<File> model, final List<String> errors) {
+    boolean validate(final List<File> model, final List<String> errors) {
         if (!grailsApplication.config.jummp.plugins.sbml.validation) {
             log.info("Validation for ${model.inspect()} skipped due to configuration option")
             return true
@@ -281,7 +297,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
      * @return the name of the model or an empty string if no file is supplied.
      */
     @Profiled(tag="SbmlService.extractName")
-    public String extractName(List<File> model) {
+    String extractName(List<File> model) {
         model = model.findAll{it && it.exists() && it.canRead()}
         if (!model) {
             return ""
@@ -295,13 +311,25 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
      */
     @Override
     @Profiled(tag="sbmlService.updateName")
-    public boolean updateName(RevisionTransportCommand revision, final String name) {
-        //TODO update file contents
+    boolean updateName(RevisionTransportCommand revision, final String name) {
         if (revision && name.trim()) {
+            // update the name of the revision
             revision.name = name.trim()
+
+            // update the name of SBML model file of the revision
+            SBMLDocument sbmlDocument = getFromCache(revision)
+            Model sbmlModel = sbmlDocument.getModel()
+            sbmlModel.setName(name)
+            File sbmlFile = fetchMainFileFromRevision(revision)
+            SBMLWriter sbmlWriter = new SBMLWriter()
+            sbmlWriter.writeSBML(sbmlDocument, sbmlFile)
             return true
+        } else {
+            log.warn("""\
+Revision ${revision.id} of the model ${revision.model.submissionId} is null or 
+the user has attempted to update an blank value for the name attribute.""")
+            return false
         }
-        return false
     }
 
     /**
@@ -312,7 +340,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
      * @return the description of the model or an empty string if no file is supplied.
      */
     @Profiled(tag="SbmlService.extractDescription")
-    public String extractDescription(final List<File> model) {
+    String extractDescription(final List<File> model) {
         if (!model) {
             def errMsg = new StringBuffer("Cannot extract the description from undefined file ${model.properties}")
             log.warn errMsg.toString()
@@ -365,51 +393,59 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
      */
     @Override
     @Profiled(tag="sbmlService.updateDescription")
-    public boolean updateDescription(RevisionTransportCommand revision, final String DESC) {
-        //TODO update file contents
+    boolean updateDescription(RevisionTransportCommand revision, final String DESC) {
         if (revision && DESC.trim()) {
+            // update the description of SBML model file of the revision
             revision.description = DESC.trim()
+
+            // update the description of SBML model file of the revision
+            SBMLDocument sbmlDocument = getFromCache(revision)
+            Model sbmlModel = sbmlDocument.getModel()
+            sbmlModel.setNotes(DESC)
+            File sbmlFile = fetchMainFileFromRevision(revision)
+            SBMLWriter sbmlWriter = new SBMLWriter()
+            sbmlWriter.writeSBML(sbmlDocument, sbmlFile)
             return true
         }
         return false
     }
 
     @Profiled(tag="SbmlService.getMetaId")
-    public String getMetaId(RevisionTransportCommand revision) {
+    String getMetaId(RevisionTransportCommand revision) {
         return getFromCache(revision)?.model?.metaId
     }
 
     @Profiled(tag="SbmlService.getVersion")
-    public long getVersion(RevisionTransportCommand revision) {
+    long getVersion(RevisionTransportCommand revision) {
         return fetchModelAttributeFromRevision(revision, "version")
     }
 
     @Profiled(tag="SbmlService.getLevel")
-    public long getLevel(RevisionTransportCommand revision) {
+    long getLevel(RevisionTransportCommand revision) {
         return fetchModelAttributeFromRevision(revision, "level")
     }
 
     @Profiled(tag="SbmlService.getFormatVersion")
-    public String getFormatVersion(RevisionTransportCommand revision) {
+    String getFormatVersion(RevisionTransportCommand revision) {
         final long LEVEL = getLevel(revision)
         final long VERSION = getVersion(revision)
         return "L${LEVEL}V${VERSION}"
     }
 
     @Profiled(tag="SbmlService.getNotes")
-    public String getNotes(RevisionTransportCommand revision) {
+    String getNotes(RevisionTransportCommand revision) {
         String notesString = getFromCache(revision)?.model?.notesString ?: ""
         return notesString
     }
 
     @Profiled(tag="SbmlService.getAnnotations")
-    public List<Map> getAnnotations(RevisionTransportCommand revision) {
+    List<Map> getAnnotations(RevisionTransportCommand revision) {
         Model model = getFromCache(revision).model
         return convertCVTerms(model.annotation)
     }
 
     @Profiled(tag="SbmlService.getParameters")
-    public List<Map> getParameters(RevisionTransportCommand revision) {
+    List<Map> getParameters(RevisionTransportCommand revision) {
         Model model = getFromCache(revision).model
         ListOf<Parameter> parameters = model.getListOfParameters()
         List<Map> list = []
@@ -420,7 +456,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
     }
 
     @Profiled(tag="SbmlService.getParameter")
-    public Map getParameter(RevisionTransportCommand revision, String id) {
+    Map getParameter(RevisionTransportCommand revision, String id) {
         Model model = getFromCache(revision).model
         QuantityWithUnit param = model.getParameter(id)
         if (!param) {
@@ -436,7 +472,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
     }
 
     @Profiled(tag="SbmlService.getLocalParameters")
-    public List<Map> getLocalParameters(RevisionTransportCommand revision) {
+    List<Map> getLocalParameters(RevisionTransportCommand revision) {
         Model model = getFromCache(revision).model
         List<Map> reactions = []
         model.listOfReactions.each { reaction ->
@@ -451,7 +487,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
     }
 
     @Profiled(tag="SbmlService.getReactions")
-    public List<Map> getReactions(RevisionTransportCommand revision) {
+    List<Map> getReactions(RevisionTransportCommand revision) {
         Model model = getFromCache(revision).model
         List<Map> reactions = []
         model.listOfReactions.each { reaction ->
@@ -461,7 +497,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
     }
 
     @Profiled(tag="SbmlService.getReaction")
-    public Map getReaction(RevisionTransportCommand revision, String id) {
+    Map getReaction(RevisionTransportCommand revision, String id) {
         Model model = getFromCache(revision).model
         Reaction reaction = model.getReaction(id)
         if (!reaction) {
@@ -475,7 +511,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
     }
 
     @Profiled(tag="SbmlService.getEvents")
-    public List<Map> getEvents(RevisionTransportCommand revision) {
+    List<Map> getEvents(RevisionTransportCommand revision) {
         Model model = getFromCache(revision).model
         List<Map> events = []
         model.listOfEvents.each { event ->
@@ -485,7 +521,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
     }
 
     @Profiled(tag="SbmlService.getEvent")
-    public Map getEvent(RevisionTransportCommand revision, String id) {
+    Map getEvent(RevisionTransportCommand revision, String id) {
         Model model = getFromCache(revision).model
         Event event = model.getEvent(id)
         Map eventMap = eventToMap(event)
@@ -498,7 +534,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
     }
 
     @Profiled(tag="SbmlService.getRules")
-    public List<Map> getRules(RevisionTransportCommand revision) {
+    List<Map> getRules(RevisionTransportCommand revision) {
         Model model = getFromCache(revision).model
         List<Map> rules = []
         model.listOfRules.each { rule ->
@@ -508,7 +544,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
     }
 
     @Profiled(tag="SbmlService.getRule")
-    public Map getRule(RevisionTransportCommand revision, String variable) {
+    Map getRule(RevisionTransportCommand revision, String variable) {
         Model model = getFromCache(revision).model
         ExplicitRule rule = model.getRule(variable)
         if (!rule) {
@@ -520,7 +556,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
         return ruleMap
     }
 
-    public List<Map> getFunctionDefinitions(RevisionTransportCommand revision) {
+    List<Map> getFunctionDefinitions(RevisionTransportCommand revision) {
         Model model = getFromCache(revision).model
         List<Map> functions = []
         model.listOfFunctionDefinitions.each { function ->
@@ -529,7 +565,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
         return functions
     }
 
-    public Map getFunctionDefinition(RevisionTransportCommand revision, String id) {
+    Map getFunctionDefinition(RevisionTransportCommand revision, String id) {
         Model model = getFromCache(revision).model
         FunctionDefinition function = model.getFunctionDefinition(id)
         if (!function) {
@@ -543,7 +579,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
     }
 
     @Profiled(tag="SbmlService.getCompartments")
-    public List<Map> getCompartments(RevisionTransportCommand revision) {
+    List<Map> getCompartments(RevisionTransportCommand revision) {
         Model model = getFromCache(revision).model
         List<Map> compartments = []
         model.listOfCompartments.each { compartment ->
@@ -553,7 +589,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
     }
 
     @Profiled(tag="SbmlService.getCompartment")
-    public Map getCompartment(RevisionTransportCommand revision, String id) {
+    Map getCompartment(RevisionTransportCommand revision, String id) {
         Model model = getFromCache(revision).model
         Compartment compartment = model.getCompartment(id)
         if(!compartment) {
@@ -566,7 +602,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
     }
 
     @Profiled(tag="SbmlService.getAllSpecies")
-    public List<Map> getAllSpecies(RevisionTransportCommand revision) {
+    List<Map> getAllSpecies(RevisionTransportCommand revision) {
         Model model = getFromCache(revision).model
         List<Map> allSpecies = []
         model.listOfSpecies.each { species ->
@@ -588,7 +624,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
     }
 
      @Profiled(tag="SbmlService.getSpecies")
-     public Map getSpecies(RevisionTransportCommand revision, String id) {
+     Map getSpecies(RevisionTransportCommand revision, String id) {
          Model model =getFromCache(revision).model
          Species species = model.getSpecies(id)
          if(!species) {
@@ -601,7 +637,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
      }
 
     @Profiled(tag="SbmlService.generateSvg")
-    public byte[] generateSvg(RevisionTransportCommand revision) {
+    byte[] generateSvg(RevisionTransportCommand revision) {
         File dotFile = File.createTempFile("jummp", "dot")
         PrintWriter writer = new PrintWriter(dotFile)
         sbml2dotConverter().dotExport(getFromCache(revision), writer)
@@ -619,21 +655,23 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
     }
 
     @Profiled(tag="SbmlService.generateOctave")
-    public String generateOctave(RevisionTransportCommand revision) {
-        SBMLModel sbmlModel = resolveSbmlModel(revision)
-        OctaveModel octaveModel = sbml2OctaveConverter().octaveExport(sbmlModel)
-        return octaveModel.modelToString()
+    String generateOctave(RevisionTransportCommand revision) {
+//        SBMLModel sbmlModel = resolveSbmlModel(revision)
+//        OctaveModel octaveModel = sbml2OctaveConverter().octaveExport(sbmlModel)
+//        return octaveModel.modelToString()
+        return ""
     }
 
     @Profiled(tag="SbmlService.generateBioPax")
-    public String generateBioPax(RevisionTransportCommand revision) {
-        SBMLModel sbmlModel = resolveSbmlModel(revision)
-        BioPaxModel bioPaxModel = sbml2BioPaxConverter().biopaxexport(sbmlModel)
-        return bioPaxModel.modelToString()
+    String generateBioPax(RevisionTransportCommand revision) {
+//        SBMLModel sbmlModel = resolveSbmlModel(revision)
+//        BioPaxModel bioPaxModel = sbml2BioPaxConverter().biopaxexport(sbmlModel)
+//        return bioPaxModel.modelToString()
+        return ""
     }
 
     @Profiled(tag="SbmlService.getAllAnnotationURNs")
-    public List<String> getAllAnnotationURNs(RevisionTransportCommand revision) {
+    List<String> getAllAnnotationURNs(RevisionTransportCommand revision) {
         SBMLDocument document = getFromCache(revision)
         List<String> urns = []
         List<SBase> sbases = []
@@ -659,7 +697,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
     }
 
     @Profiled(tag="SbmlService.getPubMedAnnotation")
-    public List<List<String>> getPubMedAnnotation(RevisionTransportCommand revision) {
+    List<List<String>> getPubMedAnnotation(RevisionTransportCommand revision) {
         Model model = getFromCache(revision)?.model
         Annotation annotation = model?.annotation
         if(!annotation) {
@@ -672,26 +710,6 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
             pubMedAnnotation.add(cvTerm.filterResources("pubmed"))
         }
         return pubMedAnnotation
-    }
-
-    /**
-     * Retrieves model-level annotations for a given revision.
-     *
-     * @param revision the TransportCommand wrapper for the revision for which
-     *      to find annotations.
-     * @return a list of TransportCommand wrappers of Statements associated with
-     *      the model element.
-     */
-    @Profiled(tag = "SbmlService.fetchGenericAnnotations")
-    List<StatementTransportCommand> fetchGenericAnnotations(
-            RevisionTransportCommand revision) {
-        String subject = getMetaId(revision)
-        if (!subject) {
-            return []
-        }
-        List<StatementTransportCommand> statements = metadataDelegateService.
-                findAllStatementsForSubject(revision, subject)
-        return statements
     }
 
     /**
@@ -907,26 +925,26 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
         }
     }
 
-    private SBML2Dot sbml2dotConverter() {
-        if (!dotConverter) {
-            dotConverter = new SBML2Dot()
-        }
-        return dotConverter
-    }
-
-    private SBML2Octave sbml2OctaveConverter() {
-        if (!octaveConverter) {
-            octaveConverter = new SBML2Octave()
-        }
-        return octaveConverter
-    }
-
-    private SBML2BioPAX_l3 sbml2BioPaxConverter() {
-        if (!biopaxConverter) {
-            biopaxConverter = new SBML2BioPAX_l3()
-        }
-        return biopaxConverter
-    }
+//    private SBML2Dot sbml2dotConverter() {
+//        if (!dotConverter) {
+//            dotConverter = new SBML2Dot()
+//        }
+//        return dotConverter
+//    }
+//
+//    private SBML2Octave sbml2OctaveConverter() {
+//        if (!octaveConverter) {
+//            octaveConverter = new SBML2Octave()
+//        }
+//        return octaveConverter
+//    }
+//
+//    private SBML2BioPAX_l3 sbml2BioPaxConverter() {
+//        if (!biopaxConverter) {
+//            biopaxConverter = new SBML2BioPAX_l3()
+//        }
+//        return biopaxConverter
+//    }
 
     private long fetchModelAttributeFromRevision(RevisionTransportCommand revision, String attributeName) {
         File mainFile = fetchMainFileFromRevision(revision)
@@ -1030,31 +1048,35 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
      * @param revision The RevisionTransportCommand from which to extract the SBMLModel.
      * @return The SBMLModel to be found or an empty array if the model could not be found.
      */
-    private SBMLModel resolveSbmlModel(RevisionTransportCommand revision) {
-        try {
-        Model model = getFromCache(revision).model
-        SBMLWriter sbmlWriter = new SBMLWriter()
-        String sbmlString = sbmlWriter.writeSBMLToString(model.getSBMLDocument())
-        SBMLModel sbmlModel = new SBMLModel()
-        sbmlModel.setModelFromString(sbmlString)
-        return sbmlModel
-        } catch (Exception e) {
-            e.printStackTrace()
-            return [:]
-        }
-    }
+//    private SBMLModel resolveSbmlModel(RevisionTransportCommand revision) {
+//        try {
+//        Model model = getFromCache(revision).model
+//        SBMLWriter sbmlWriter = new SBMLWriter()
+//        String sbmlString = sbmlWriter.writeSBMLToString(model.getSBMLDocument())
+//        SBMLModel sbmlModel = new SBMLModel()
+//        sbmlModel.setModelFromString(sbmlString)
+//        return sbmlModel
+//        } catch (Exception e) {
+//            e.printStackTrace()
+//            return [:]
+//        }
+//    }
 
     /**
      * Triggers the generation of a sub model for an existing model encoded in SBML.
      *
      * @return A String representation of the new model encoded in SBML.
      */
-    public String triggerSubmodelGeneration(
-            RevisionTransportCommand revision, String subModelId, String metaId, 
+    String triggerSubmodelGeneration(
+            RevisionTransportCommand revision, String subModelId, String metaId,
             List<String> compartmentIds, List<String> speciesIds, List<String> reactionIds,
             List<String> ruleIds, List<String> eventIds) {
         Model model = getFromCache(revision).model
         return new SubmodelGenerator().generateSubModel(
                 model, subModelId, metaId, compartmentIds, speciesIds, reactionIds, ruleIds, eventIds)
+    }
+
+    boolean doBeforeSavingAnnotations(File annoFile, RevisionTransportCommand rev) {
+        return true
     }
 }

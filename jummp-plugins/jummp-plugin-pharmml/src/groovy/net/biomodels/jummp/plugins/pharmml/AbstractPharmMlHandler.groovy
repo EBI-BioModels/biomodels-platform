@@ -139,4 +139,19 @@ abstract class AbstractPharmMlHandler implements IPharmMlService {
             return resource
         }
     }
+
+    static boolean savePharmML(File f, IPharmMLResource resource) {
+        def api = PharmMlFactory.getInstance().createLibPharmML()
+        def bos = new BufferedOutputStream(new FileOutputStream(f))
+        boolean result = false
+        try {
+            api.save(bos, resource)
+            result = true
+        } catch(IOException e) {
+            log.error "Cannot set metadataFile attribute for file $f.name"
+        } finally {
+            bos?.close()
+            return result
+        }
+    }
 }
