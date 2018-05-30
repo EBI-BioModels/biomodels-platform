@@ -706,7 +706,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     // into the working memory variable named mains_in_working
                     Map<String, String> mainFiles = new HashMap<String, String>()
                     // submit new models, add new main file
-                    if (cmd.mainFile?.first().size > 0) {
+                    if (cmd.mainFile?.first()?.size > 0) {
                         // add the main files when
                         // - the submission flow has just started
                         // - the main files have been removed and added again
@@ -838,7 +838,7 @@ Error in uploading files. Cmd did not validate: ${cmd.getProperties()}""")
                     // FOR THE MAIN FILES
                     // Copy the recently uploaded files to the exchanged folder if they are available
                     List<File> mainFileList
-                    if (cmd.mainFile?.first().size > 0) {
+                    if (cmd.mainFile?.first()?.size > 0) {
                         // the main files might be just uploaded
                         mainFileList = transferFiles(parent, cmd.mainFile)
                         if (mainFileList.size() == 0) {
