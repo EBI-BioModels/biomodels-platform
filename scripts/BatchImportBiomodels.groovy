@@ -21,6 +21,7 @@
 
 import grails.converters.JSON
 import groovy.sql.Sql
+import net.biomodels.jummp.core.model.CurationState
 import net.biomodels.jummp.core.model.ModelState
 import net.biomodels.jummp.core.model.ValidationState
 import net.biomodels.jummp.model.Flag
@@ -626,8 +627,9 @@ target(main: "Puts everything together to import models from a given folder") {
     /* fetch all the records of additional files once */
     String query = "select model_id, name, description, mime_type, file, date_creation from additional_files"
     additionalFilesMap = biomodelsConnection.rows(query)
-    modelsImported = Model.list().collect {
-      it.submissionId
+    Model.list().each {
+	    if (it.submissionId) {modelsImported.add(it.submissionId)}
+	    if (it.publicationId) {modelsImported.add(it.publicationId)}
     }
     log("${new Date()} -- commencing batch import")
     long duration = System.currentTimeMillis()
@@ -731,7 +733,6 @@ processModelFolder = { File folder ->
         addModelError MODEL_ID, "Entry found both in $BRANCH branch and also in publ."
         return
     }
-    processedCount.incrementAndGet()
     // check symlink
     boolean haveSymlink = haveSymlinkToUrlFile folder, MODEL_ID
     if (!haveSymlink && BRANCH != "pdgsm_models") {
@@ -757,6 +758,31 @@ processModelFolder = { File folder ->
         addModelError(MODEL_ID, "Error retrieving model details from BioModels DB")
         failureCount.incrementAndGet()
         return
+    } else {
+        // we come here before entering the following try... catch block because
+        // we would want to process the model if the model does exist
+        // (i.e. it was already imported from the uncurated branch).
+        String submissionId = modelDetails['model_id']
+        if (BRANCH == "publ" && modelsImported.contains(submissionId)) {
+            // update the set of successfully imported models
+            modelsImported.add(MODEL_ID)
+            log("The model $MODEL_ID (aka. $submissionId) was already imported!")
+            // update the publication identifier and the published date of this model
+            def model = Model.findBySubmissionId(submissionId)
+            if (model) {
+                model.publicationId = MODEL_ID
+                model.firstPublished = modelDetails['publicationDate']
+                def latestRev = modelService.getLatestRevision(model, false)
+                if (latestRev) {
+                    latestRev.curationState = CurationState.CURATED
+                }
+                model.save(flush: true)
+                // TODO: implement the updating strategy detector to update the other properties associated with the latest revision
+            } else {
+                addModelError(submissionId, "Error retrieving model from BioModels' the destination database")
+            }
+            return
+        }
     }
 
     try {
@@ -813,8 +839,12 @@ processModelFolder = { File folder ->
                 insertedRevisions.offer(r.id)
             }
         }
-	// append the model submission id to the imported models
-	modelsImported.add(MODEL_ID)
+        // append the model submission id to the imported models
+        modelsImported.add(MODEL_ID)
+        if (BRANCH == 'publ') {
+            modelsImported.add(modelDetails['model_id'])
+        }
+        processedCount.incrementAndGet()
     } catch (Throwable t) {
         addModelError(MODEL_ID, "Something went wrong with ${MODEL_ID} - ${t}")
         t.printStackTrace()
