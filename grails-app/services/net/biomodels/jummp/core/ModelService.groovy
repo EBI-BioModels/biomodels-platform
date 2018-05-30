@@ -258,10 +258,13 @@ WHERE r.model = r2.model
         User u = springSecurityService.currentUser
         switch(type?.toLowerCase()) {
             case "private":
-                query = "$query AND r.owner.id = ${u.id}"
+                query = "$query AND r.owner.id = ${u.id} AND r.state = '${ModelState.UNPUBLISHED}'"
                 break
             case "shared":
-                query = "$query AND r.owner.id != ${u.id}"
+                query = "$query AND r.owner.id != ${u.id} AND r.state = '${ModelState.UNPUBLISHED}'"
+                break
+            case "public":
+                query = "$query AND r.state = '${ModelState.PUBLISHED}'"
                 break
             default:
                 if (type) {
@@ -269,9 +272,7 @@ WHERE r.model = r2.model
                 }
                 break
         }
-
-        query = """$query AND r.state = '${ModelState.UNPUBLISHED}' 
-ORDER BY ${getSortColumnAsString(sortColumn)} ${sortingDirection}"""
+        query = """$query ORDER BY ${getSortColumnAsString(sortColumn)} ${sortingDirection}"""
         return query
     }
 
