@@ -234,9 +234,8 @@ class ModelService {
                                          List filteredFormats, List filteredUsers,
                                          String sortingDirection, boolean isAdmin = false) {
         String query = """\
-SELECT DISTINCT m.id
-FROM Revision AS r
-    JOIN r.model AS m
+SELECT m.id
+FROM Revision AS r RIGHT OUTER JOIN r.model AS m
 WHERE
     r.deleted = false
     AND m.deleted = ${deletedOnly}
@@ -259,23 +258,27 @@ WHERE r.model = r2.model
         User u = springSecurityService.currentUser
         switch(type?.toLowerCase()) {
             case "private":
-                query = "$query AND r.owner.id = ${u.id}"
+                query = "$query AND r.owner.id = ${u.id} AND r.state = '${ModelState.UNPUBLISHED}'"
                 break
             case "shared":
                 query = "$query AND r.owner.id != ${u.id} AND r.state = '${ModelState.UNPUBLISHED}'"
                 break
             case "public":
-                query = "$query AND r.state = '${ModelState.PUBLISHED}'"
+                query = "$query AND r.owner.id = ${u.id} AND r.state = '${ModelState.PUBLISHED}'"
                 break
             default:
                 if (type) {
                     log.warn("Ignoring unsupported permission level '$type'.")
+                } else if (!isAdmin) {
+                    query = """\
+$query AND ((r.owner.id = ${u.id} AND r.state = '${ModelState.UNPUBLISHED}') 
+OR (r.owner.id != ${u.id} AND r.state = '${ModelState.UNPUBLISHED}') 
+OR (r.owner.id = ${u.id} AND r.state = '${ModelState.PUBLISHED}'))
+"""
                 }
                 break
         }
-
-        query = """$query
-ORDER BY ${getSortColumnAsString(sortColumn)} ${sortingDirection}"""
+        query = """$query ORDER BY ${getSortColumnAsString(sortColumn)} ${sortingDirection}"""
         return query
     }
 
@@ -290,9 +293,8 @@ ORDER BY ${getSortColumnAsString(sortColumn)} ${sortingDirection}"""
     @Profiled(tag = "modelService.getAllModelWithDetails")
     List getAllModelWithDetails(boolean deletedOnly = false) {
         String query = """\
-SELECT DISTINCT m, r.name, r.uploadDate
-FROM Revision AS r
-    JOIN r.model AS m
+SELECT m, r.name, r.uploadDate
+FROM Revision AS r RIGHT OUTER JOIN r.model AS m
 WHERE
     r.deleted = false
     AND m.deleted = ${deletedOnly}
@@ -420,10 +422,23 @@ WHERE
     **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getModelCount")
-    public Integer getModelCount(String filter = null, boolean deletedOnly = false) {
+    Integer getModelCount(String filter = null, boolean deletedOnly = false) {
         ModelListSorting sorting
         List<Model> resultSet = getAllModels(-1, 0, false, sorting, filter, false)
-        return resultSet.size()
+        resultSet.size()
+    }
+
+    /**
+     * Returns the list of Models the user has access to. These models only include private and shared ones.
+     *
+     * @param filter Optional filter for search
+     * @see ModelService#getAllModels()
+     **/
+    @PostLogging(LoggingEventType.RETRIEVAL)
+    @Profiled(tag="modelService.getMyModels")
+    List<Model> getMyModels(String filter = null, boolean deletedOnly = false) {
+        ModelListSorting sorting
+        getAllModels(-1, 0, false, sorting, filter, false)
     }
 
     /** convenience method to check if our filter is OK */

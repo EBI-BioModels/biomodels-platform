@@ -36,8 +36,8 @@ import grails.plugin.springsecurity.authentication.GrailsAnonymousAuthentication
 import groovy.json.JsonBuilder
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.model.ModelListSorting
-import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
+import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.search.OrderedFacet
 import net.biomodels.jummp.search.SearchResponse
@@ -45,7 +45,6 @@ import net.biomodels.jummp.search.SortOrder
 import net.biomodels.jummp.webapp.rest.search.BrowseResults
 import net.biomodels.jummp.webapp.rest.search.SearchResults
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Facet
-import uk.ac.ebi.ddi.ebe.ws.dao.model.common.FacetValue
 
 @Secured(['IS_AUTHENTICATED_FULLY'])
 class SearchController {
@@ -99,7 +98,7 @@ class SearchController {
         }
         params.numResults = numResults()
         if (integerCheck(params.offset, true, -1)) {
-            params.offset = params.offset ? Integer.parseInt(params.offset) : 0
+            params.offset = params.offset ? params.int("offset") : 0
         }
         else {
             params.offset = 0
@@ -121,7 +120,7 @@ class SearchController {
             prefs = Preferences.getDefaults()
         }
         if (integerCheck(params.numResults, true, -1)) {
-            prefs.numResults = params.numResults as Integer
+            prefs.numResults = params.int("numResults")
             if (prefs.numResults > MAXRESULTS ) {
                 prefs.numResults = MAXRESULTS
             }
@@ -225,7 +224,7 @@ class SearchController {
             response.setHeader("Content-disposition", "attachment;filename=\"${filename}\"")
             response.outputStream << new ByteArrayInputStream(data)
         } else {
-            def params = [query: "*:*", flashMessage: g.message(code: "jummp.search.download.unavailable.warningMessage")]
+            def params = [query: "*:*", flashMessage: g.message(code: "jummp.search.download.model.unavailable.warningMessage")]
             forward(action: 'search', params: params)
             return [query: "*:*"]
         }
@@ -239,7 +238,7 @@ class SearchController {
         int totalCount
         if (query?.trim()) {
             SearchResponse response = searchService.searchModels(query, sortOrder, paginationCriteria)
-            ArrayList<ModelTransportCommand> res = response.results
+            ArrayList<MTC> res = response.results
             totalCount = response.totalCount
             if (res.size() > 0) {
                 println "Found(s): ${res.size()} records."
@@ -338,7 +337,7 @@ class SearchController {
         List modelsDomain = modelService.getAllModels(offset, length, sortDirection == "asc", sort, filter)
         List models = []
         modelsDomain.each {
-            models.add(new ModelAdapter(model: it).toCommandObject())
+            models.add(new ModelAdapter(model: it).toCommandObject(false))
         }
         List<Facet> basicFacets = searchService.buildBasicFacets(models)
         int totalCount = modelService.getModelCount(filter, false)

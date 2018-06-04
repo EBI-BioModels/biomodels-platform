@@ -179,7 +179,7 @@
                                             selectedModels.push($(this).val());
                                         });
                                     } else {
-                                        var htmlMessage = flashHtmlMessageBuilder("No available public models could be downloaded.");
+                                        var htmlMessage = flashHtmlMessageBuilder("${g.message(code: "jummp.search.download.model.unavailable")}");
                                         showFlashMessage(htmlMessage);
                                     }
                                 } else {
@@ -197,7 +197,7 @@
                                     // the controller method
                                     window.location = link;
                                 } else {
-                                    var htmlMessage = flashHtmlMessageBuilder("Please select at least one model.");
+                                    var htmlMessage = flashHtmlMessageBuilder("${g.message(code: "jummp.search.download.model.checkOne")}");
                                     showFlashMessage(htmlMessage);
                                 }
                             });
@@ -238,9 +238,17 @@
             Showing ${modelStart} to ${modelEnd} of ${totalCount} models
         </div>
         <div class="dataTables_paginate">
+            <%
+                Map pagedParams = [:]
+            %>
             <g:if test="${currentPage != 1 && numPages > stepPagination}">
-                <a href="${createLink(controller: 'search', action: action,
-                    params: [query: query, offset: 0, numResults: length, sort: params.sort])}">First</a>
+                <%
+                    pagedParams = [offset: 0, numResults: length, sort: params.sort]
+                    if (query) {
+                        pagedParams["query"] = query
+                    }
+                %>
+                <a href="${createLink(controller: 'search', action: action, params: pagedParams)}">First</a>
             </g:if>
             <g:else>
                 First
@@ -250,8 +258,13 @@
                        file="arrow-previous-disable.gif" alt="Previous"/>
             </g:if>
             <g:else>
-                <a href="${createLink(controller: 'search', action: action,
-                    params: [query: query, offset: modelStart - length - 1, numResults: length, sort: params.sort])}">
+                <%
+                    pagedParams = [offset: modelStart - length - 1, numResults: length, sort: params.sort]
+                    if (query) {
+                        pagedParams["query"] = query
+                    }
+                %>
+                <a href="${createLink(controller: 'search', action: action, params: pagedParams)}">
                     <g:img dir="${imagePath}/pagination" absolute="true"  contextPath=""
                            file="arrow-previous.gif" alt="Previous"/>
                 </a>
@@ -269,8 +282,13 @@
                         ${i}
                     </g:if>
                     <g:else>
-                        <a href="${createLink(controller: 'search', action: action,
-                            params: [query: query, offset: (i - 1) * length, numResults: length, sort: params.sort])}">
+                        <%
+                            pagedParams = [offset: (i - 1) * length, numResults: length, sort: params.sort]
+                            if (query) {
+                                pagedParams["query"] = query
+                            }
+                        %>
+                        <a href="${createLink(controller: 'search', action: action, params: pagedParams)}">
                             ${i}
                         </a>
                     </g:else>
@@ -281,15 +299,25 @@
                        file="arrow-next-disable.gif" alt="Next"/>
             </g:if>
             <g:else>
-                <a href="${createLink(controller: 'search', action: action,
-                    params: [query: query, offset: modelStart + length - 1, numResults: length, sort: params.sort])}">
+                <%
+                    pagedParams = [offset: modelStart + length - 1, numResults: length, sort: params.sort]
+                    if (query) {
+                        pagedParams["query"] = query
+                    }
+                %>
+                <a href="${createLink(controller: 'search', action: action, params: pagedParams)}">
                     <g:img dir="${imagePath}/pagination" absolute="true"  contextPath=""
                            file="arrow-next.gif" alt="Next"/>
                 </a>
             </g:else>
             <g:if test="${currentPage != numPages && numPages > stepPagination}">
-                <a href="${createLink(controller: 'search', action: action,
-                    params: [query: query, offset: length * (numPages - 1), numResults: length, sort: params.sort])}">Last</a>
+                <%
+                    pagedParams = [offset: length * (numPages - 1), numResults: length, sort: params.sort]
+                    if (query) {
+                        pagedParams["query"] = query
+                    }
+                %>
+                <a href="${createLink(controller: 'search', action: action, params: pagedParams)}">Last</a>
             </g:if>
             <g:else>
                 Last
