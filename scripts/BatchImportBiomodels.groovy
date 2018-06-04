@@ -208,6 +208,14 @@ def ModelElementType
 def PublicationLinkProvider
 def LinkType
 
+def BioModelsIdChangeDetector
+def ModelChangeDetector
+def ModelChangeDetectors
+def ModelLastModifiedChangeDetector
+def ModelNameChangeDetector
+def ModelComparisonContext
+def ModelComparisonContextFactory
+
 /**
  * The Hibernate SessionFactory
  */
@@ -597,6 +605,15 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
     // BioModels-specific domain classes
     CurationNotes = loadClass("net.biomodels.jummp.deployment.biomodels.CurationNotes")
     ModelOfTheMonth = loadClass("net.biomodels.jummp.deployment.biomodels.ModelOfTheMonth")
+
+    BioModelsIdChangeDetector = loadClass("net.biomodels.jummp.importer.support.biomodels.BioModelsIdChangeDetector")
+    ModelChangeDetector = loadClass("net.biomodels.jummp.importer.support.biomodels.ModelChangeDetector")
+    ModelChangeDetectors = loadClass("net.biomodels.jummp.importer.support.biomodels.ModelChangeDetectors")
+    ModelComparisonContext = loadClass("net.biomodels.jummp.importer.support.biomodels.ModelComparisonContext")
+    ModelComparisonContextFactory = loadClass("net.biomodels.jummp.importer.support.biomodels.ModelComparisonContextFactory")
+    ModelLastModifiedChangeDetector = loadClass("net.biomodels.jummp.importer.support.biomodels.ModelLastModifiedChangeDetector")
+    ModelNameChangeDetector = loadClass("net.biomodels.jummp.importer.support.biomodels.ModelNameChangeDetector")
+
 
     // inject applicationContext in POGOs that expect it
     decorator.context = appCtx

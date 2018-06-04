@@ -21,7 +21,7 @@
 package net.biomodels.jummp.importer.support.biomodels
 
 /**
- * This class is used to detect models that the model names were recently updated.
+ * This class is used to detect models that their name were recently updated.
  *
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
@@ -29,11 +29,18 @@ package net.biomodels.jummp.importer.support.biomodels
  * Created by Mihai Glonț on 08/02/18.
  * Updated by Tung nguyen on 04/06/18.
  */
-final class ModelNameChangeDetector extends AbstractModelChangeDetector {
+final class ModelChangeDetectors {
+    static final ModelChangeDetector joinDetectors(List<ModelNameChangeDetector> detectors) {
+        if (!detectors)
+            return null
+        return joinDetectorsRecursively(detectors, null, detectors.size() - 1)
+    }
 
-    boolean hasChanged(ModelComparisonContext comparison) {
-        Objects.requireNonNull(comparison)
-        if (comparison.name != comparison.imported.name) return true
-        super.hasChanged(comparison)
+    private static ModelChangeDetector joinDetectorsRecursively(List<ModelNameChangeDetector> detectors, ModelChangeDetector partialResult, int idx) {
+        if (idx < 0)
+            return partialResult
+        def outerDetector = detectors[idx]
+        outerDetector.next = partialResult
+        return joinDetectorsRecursively(detectors, outerDetector, --idx)
     }
 }
