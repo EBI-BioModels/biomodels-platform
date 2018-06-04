@@ -227,6 +227,7 @@ def sessionFactory
 def pubMedService
 def publicationService
 def modelService
+def modelDelegateService
 def modelFlagService
 def modelFileFormatService
 def userService
@@ -622,6 +623,7 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
     // obtain references to singleton services
     sessionFactory          = appCtx.sessionFactory
     modelService            = appCtx.modelService
+    modelDelegateService    = appCtx.modelDelegateService
     modelFlagService        = appCtx.modelFlagService
     publicationService      = appCtx.publicationService
     pubMedService           = appCtx.pubMedService
@@ -666,11 +668,18 @@ target(main: "Puts everything together to import models from a given folder") {
         boolean exists = modelsImported.contains(f.name)
         if (f.isDirectory() && f.name ==~ modelFolderPattern && tobeProcessed && !exists) {
 		    processModelFolder f
-        } else {
-		    log("The model ${f.name} cannot be imported!")
-	    }
-        if (exists) {
-		    log("The model ${f.name} was already imported!")
+        } else if (exists) {
+            // regardless of branch, this will check whether the model should be updated
+            log("The model ${f.name} was already imported!")
+            if (f.name == "BIOMD0000000660") {
+            final String BRANCH = getBranch f.name
+            def modelDetails = getModelDetails f.name, BRANCH
+            def submitter = User.findByUsername("administrator")//findRightSubmitter f.name, BRANCH
+            def commitMessage = null // extractCommitMessage
+            updateWithRecentChanges f.name, f.name, BRANCH, f, modelDetails, submitter, commitMessage
+            }
+	    } else {
+            log("The model ${f.name} cannot be imported!")
         }
     }
 
@@ -720,6 +729,43 @@ target(main: "Puts everything together to import models from a given folder") {
     log("Imported ${processedCount.get()} models (${failureCount.get()} failures) in $formattedDuration")
     cleanup()
     return 0
+}
+
+updateWithRecentChanges = { submissionId, publicationId, branch, folder, modelDetails, submitter, commitMessage ->
+    def model = Model.findBySubmissionIdOrPublicationId(submissionId, publicationId)
+    if (model) {
+        def latestRev = modelService.getLatestRevision(model, false) //TODO: check a faster way to get the revision without checking ACL
+        if (branch == "publ") {
+            model.publicationId = publicationId
+            model.firstPublished = modelDetails['publicationDate']
+            if (latestRev) {
+                latestRev.curationState = CurationState.CURATED
+            }
+        }
+        def availDetectors = [ModelNameChangeDetector.newInstance(), BioModelsIdChangeDetector.newInstance(),  ModelLastModifiedChangeDetector.newInstance()]
+		def detector = ModelChangeDetectors.newInstance().joinDetectors(availDetectors)
+        def context = ModelComparisonContext.newInstance()
+        context = ModelComparisonContextFactory.newInstance().fromModelDetails(modelDetails, latestRev)
+        boolean hasChanged = detector.hasChanged(context)
+        if (hasChanged) {
+            // create and import the latest revision with the recent changes
+            log("We should add a new revision for the model $submissionId ($publicationId)")
+            def MODEL_ID = folder.name
+            def revision = addTheLatestRevision branch, MODEL_ID, folder, model, modelDetails, submitter, commitMessage
+            if (revision) {
+                if (branch == "publ") {
+                    setCurationNotes(revision.model)
+                    def curationState = CurationState.CURATED
+                    modelDelegateService.updateCurationStateRevision(MODEL_ID, revision.id, curationState)
+                }
+                publishModelRevision MODEL_ID, revision
+            }
+        } else {
+            log("No need to update the model $submissionId ($publicationId)")
+        }
+    } else {
+        addModelError(submissionId, "Error retrieving model from BioModels' the destination database")
+    }
 }
 
 printModelLog = {
@@ -778,28 +824,18 @@ processModelFolder = { File folder ->
         failureCount.incrementAndGet()
         return
     } else {
-        // we come here before entering the following try... catch block because
+        // we come into the situation before entering the following try... catch block because
         // we would want to process the model if the model does exist
-        // (i.e. it was already imported from the uncurated branch).
+        // (i.e. the model in the uncurated publ branch was already imported).
         String submissionId = modelDetails['model_id']
         if (BRANCH == "publ" && modelsImported.contains(submissionId)) {
+            log("The model $MODEL_ID (aka. $submissionId) was already imported!")
             // update the set of successfully imported models
             modelsImported.add(MODEL_ID)
-            log("The model $MODEL_ID (aka. $submissionId) was already imported!")
             // update the publication identifier and the published date of this model
-            def model = Model.findBySubmissionId(submissionId)
-            if (model) {
-                model.publicationId = MODEL_ID
-                model.firstPublished = modelDetails['publicationDate']
-                def latestRev = modelService.getLatestRevision(model, false)
-                if (latestRev) {
-                    latestRev.curationState = CurationState.CURATED
-                }
-                model.save(flush: true)
-                // TODO: implement the updating strategy detector to update the other properties associated with the latest revision
-            } else {
-                addModelError(submissionId, "Error retrieving model from BioModels' the destination database")
-            }
+            def submitter = User.findByUsername("administrator") // findRightSubmitter
+            def commitMessage = null // extractCommitMessage
+            updateWithRecentChanges submissionId, MODEL_ID, "publ", folder, modelDetails, submitter, commitMessage
             return
         }
     }
