@@ -664,20 +664,19 @@ target(main: "Puts everything together to import models from a given folder") {
             // process the model folder regardless of its size
             tobeProcessed = true
         }
-
+	    //log("$f.name : tobeProcessed? $tobeProcessed")
         boolean exists = modelsImported.contains(f.name)
+	    //log("$f.name : exists? $exists")
         if (f.isDirectory() && f.name ==~ modelFolderPattern && tobeProcessed && !exists) {
 		    processModelFolder f
         } else if (exists) {
             // regardless of branch, this will check whether the model should be updated
             log("The model ${f.name} was already imported!")
-            if (f.name == "BIOMD0000000660") {
             final String BRANCH = getBranch f.name
             def modelDetails = getModelDetails f.name, BRANCH
             def submitter = User.findByUsername("administrator")//findRightSubmitter f.name, BRANCH
             def commitMessage = null // extractCommitMessage
             updateWithRecentChanges f.name, f.name, BRANCH, f, modelDetails, submitter, commitMessage
-            }
 	    } else {
             log("The model ${f.name} cannot be imported!")
         }
@@ -708,7 +707,7 @@ target(main: "Puts everything together to import models from a given folder") {
     */
 
     // import MoM entries if they have not been imported
-    processModelOfTheMonth()
+    //processModelOfTheMonth()
 
     // wait for pending indexing jobs to complete before stopping
     def indexRequestDispatcher = camelContext.routes.find {
@@ -1862,9 +1861,9 @@ addFlagType = { def cmd ->
 }
 // add model flag types such as Non Kinetic, Non Miriam, Sbml Extended
 populateModelFlagTypes = {
-    def iconFiles = ["http://www.ebi.ac.uk/biomodels//icons/nonkineticFlag.png",
-                     "http://www.ebi.ac.uk/biomodels//icons/nonMiriamFlag.png",
-                     "http://www.ebi.ac.uk/biomodels//icons/sbmlExtendedFlag.png"]
+    def iconFiles = ["https://www.ebi.ac.uk/biomodels/icons/nonkineticFlag.png",
+                     "https://www.ebi.ac.uk/biomodels/icons/nonMiriamFlag.png",
+                     "https://www.ebi.ac.uk/biomodels/icons/sbmlExtendedFlag.png"]
     def icons = []
     iconFiles.each {
         def urlImage = new URL(it)
@@ -2114,7 +2113,6 @@ getModelDetails = { modelId, modelBranch ->
         } else {
             modelDetails['publicationDate'] = row.creation_date
         }
-        modelDetails['originalModel'] = row.original_model
         if ("auto_gen_models" == modelBranch || "pdgsm_models" == modelBranch) {
             modelDetails['model_id'] = row.id
         } else {
