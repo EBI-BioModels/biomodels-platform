@@ -805,23 +805,7 @@ processModelFolder = { File folder ->
     }
 
     try {
-        def submitter
-        authenticate(username, password)
-        // create a Jummp account for submitter
-        try {
-            submitter = getUser MODEL_ID, BRANCH
-        } catch (Exception e) {
-            addModelError(MODEL_ID, "Can't get submitter account for MODEL $MODEL_ID ($BRANCH) :: $e")
-        } finally {
-            logOut()
-        }
-
-        if (!submitter) {
-            addModelError(MODEL_ID, "No user found, please check details in BioModels DB")
-            failureCount.incrementAndGet()
-            return
-        }
-        authenticateAsUser(submitter)
+        def submitter = findRightSubmitter MODEL_ID, BRANCH
         // submit first revision as *.origin or the non SBML models as the original files
         def submittedModel = submitOriginalFile(BRANCH, MODEL_ID, originalFile, modelDetails)
         if (!submittedModel) {
@@ -832,21 +816,9 @@ processModelFolder = { File folder ->
         if (isNonSBMLModel) {
             annotateModellingApproaches(submittedModel.revisions.first(), BRANCH, modelDetails, submitter)
         } else {
-            // submit second revision as * without original file
-            def revision = addRevision(BRANCH, MODEL_ID, folder, submittedModel)
-            if (!revision || revision?.hasErrors()) {
-                def err = revision?.errors?.allErrors
-                addModelError(MODEL_ID, "Could not update original submission: $err")
-                failureCount.incrementAndGet()
-                return
-            }
-
-            // we cleared the session before adding the second revision
-            // submittedModel is now stale -- it still thinks there's only 1 revision
-            // need to manually update
+            def commitMessage = null
+            def revision = addTheLatestRevision BRANCH, MODEL_ID, folder, submittedModel, modelDetails, submitter, commitMessage
             submittedModel = revision.model
-            addRevisionAnnotations(revision, BRANCH, modelDetails, submitter)
-            annotateModellingApproaches(revision, BRANCH, modelDetails, submitter)
         }
         // persist model flags
         persistModelFlags(modelDetails, submittedModel)
@@ -869,6 +841,46 @@ processModelFolder = { File folder ->
         t.printStackTrace()
         failureCount.incrementAndGet()
     }
+}
+
+findRightSubmitter = {MODEL_ID, BRANCH ->
+    def submitter
+    authenticate(username, password)
+    // create a Jummp account for submitter
+    try {
+        submitter = getUser MODEL_ID, BRANCH
+    } catch (Exception e) {
+        addModelError(MODEL_ID, "Can't get submitter account for MODEL $MODEL_ID ($BRANCH) :: $e")
+    } finally {
+        logOut()
+    }
+
+    if (!submitter) {
+        addModelError(MODEL_ID, "No user found, please check details in BioModels DB")
+        failureCount.incrementAndGet()
+        return
+    }
+    authenticateAsUser(submitter)
+    return submitter
+}
+
+addTheLatestRevision = { BRANCH, MODEL_ID, folder, submittedModel, modelDetails, submitter, commitMessage ->
+    // submit second revision as * without original file
+    def revision = addRevision(BRANCH, MODEL_ID, folder, submittedModel, commitMessage)
+    if (!revision || revision?.hasErrors()) {
+        def err = revision?.errors?.allErrors
+        addModelError(MODEL_ID, "Could not update original submission: $err")
+        failureCount.incrementAndGet()
+        return
+    }
+
+    // we cleared the session before adding the second revision
+    // submittedModel is now stale -- it still thinks there's only 1 revision
+    // need to manually update
+    submittedModel = revision.model
+    addRevisionAnnotations(revision, BRANCH, modelDetails, submitter)
+    annotateModellingApproaches(revision, BRANCH, modelDetails, submitter)
+    return revision
 }
 
 /**
@@ -974,13 +986,13 @@ isNotCuratedAndPublished = { branch ->
     UNCURA_PUBL == branch
 }
 
-addRevision = { branch, modelId, parent, model ->
+addRevision = { branch, modelId, parent, model, commitMessage ->
     if (!model.validate()) {
         def err = model.errors.allErrors
         addModelError(modelId, "Refusing to update invalid model $modelId: $err")
         return null
     }
-    def revisionInfo = prepareRevision(branch, modelId, parent, model)
+    def revisionInfo = prepareRevision(branch, modelId, parent, model, commitMessage)
     def revision
     try {
         // clear current persistence context -- it will be stale after adding second revision
@@ -1262,12 +1274,15 @@ findNewestRevisionFiles = { branch, parent, id ->
     result
 }
 
-prepareRevision = { branch, modelId, parent, model ->
+prepareRevision = { branch, modelId, parent, model, commitMessage ->
     assert !(model.hasErrors())
     def fileMap = findNewestRevisionFiles(branch, parent, modelId)
     def main = fileMap['mainFile']
     def additionals = fileMap['additionals']
-    def revisionData = getSubmissionData(modelId, main, additionals, UPDATE_COMMENT_TPL)
+    if (!commitMessage) {
+        commitMessage = UPDATE_COMMENT_TPL
+    }
+    def revisionData = getSubmissionData(modelId, main, additionals, commitMessage)
     def fileTCs = getFilesFromSubmissionData(revisionData)
 
     def revisionTC = revisionData.get("revision")
