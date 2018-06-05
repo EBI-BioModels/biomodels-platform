@@ -146,7 +146,7 @@ class LFSService implements InitializingBean {
      * Stop the application running under LFS Cluster, which have the given job ID
      * @param jobId
      */
-    void stopLFSClusterJob(String jobId) {
+    synchronized void stopLFSClusterJob(String jobId) {
 
     }
 
