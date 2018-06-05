@@ -754,7 +754,7 @@ updateWithRecentChanges = { submissionId, publicationId, branch, folder, modelDe
                 if (branch == "publ") {
                     setCurationNotes(revision.model)
                     def curationState = CurationState.CURATED
-                    modelDelegateService.updateCurationStateRevision(MODEL_ID, revision.id, curationState)
+                    modelDelegateService.updateCurationStateRevision(MODEL_ID, revision.revisionNumber, curationState)
                 }
                 publishModelRevision MODEL_ID, revision
             }
