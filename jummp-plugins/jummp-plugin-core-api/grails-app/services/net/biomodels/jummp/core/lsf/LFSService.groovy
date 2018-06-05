@@ -43,14 +43,55 @@ import java.util.regex.Pattern
  *
  * @author  Tu Vu <tvu@ebi.ac.uk>
  */
-class LFSService {
+class LFSService implements InitializingBean {
 
     static transactional = false
+    private static final int SESSION_TIMEOUT = 60 * 60 * 1000
+
     private static final int CHUNK_SIZE = 1024
 
     private static final int READ_TIMEOUT = 1000
 
+    private static final int WAIT_FOR_CLUSTER_READY = 5000
+
     private static final Logger LOGGER = LoggerFactory.getLogger(LFSService.class)
+
+    /**
+     * SSH Manager
+     */
+    private JSch jSch = new JSch()
+
+    private String lfsMiddlewareHost
+
+    private String lfsMiddlewareUsername
+
+    private String lfsMiddlewarePassword
+
+    private String lfsDefaultQueue
+
+    /**
+     * Location of the application folder
+     */
+    private String lfsApplicationPath
+
+    /**
+     * LFS Cluster machine connections
+     */
+    private Map<String, Session> connections = new ConcurrentHashMap<>()
+
+    /**
+     * Dependency Injection of GrailsApplication
+     */
+    def grailsApplication
+
+    void afterPropertiesSet() throws Exception {
+        lfsMiddlewareHost = grailsApplication.config.jummp.lfs.middleware.host
+        lfsMiddlewareUsername = grailsApplication.config.jummp.lfs.middleware.username
+        lfsMiddlewarePassword = grailsApplication.config.jummp.lfs.middleware.password
+        lfsApplicationPath = grailsApplication.config.jummp.lfs.application.path
+        lfsDefaultQueue = grailsApplication.config.jummp.lfs.queue.default
+    }
+
     /**
      * Create a connect to LFS cluster and wait until job started
      * @param application Application need to be deployed
