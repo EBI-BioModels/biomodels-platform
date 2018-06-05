@@ -22,16 +22,47 @@
 
 package net.biomodels.jummp.core.model
 
+/**
+ * All our external applications have to be declared here
+ */
 enum LFSApplication {
     MODEL_CLASSIFIER("model_classifier", "start.sh", "stop.sh")
 
+    /**
+     * Folder name of the external application
+     * This folder must be placed in lfs.application.path
+     */
     private String name
+
+    /**
+     * Start script name
+     * This script use to start the application
+     * And it must be placed in the folder name of the application
+     */
     private String startScript
+
+    /**
+     * Stop script name
+     * This script use to terminate the application
+     * And it must be placed in the folder name of the application
+     */
     private String stopScript
 
     LFSApplication(String name, String startScript, String stopScript) {
         this.name = name
         this.startScript = startScript
         this.stopScript = stopScript
+    }
+
+    String getName() {
+        return name
+    }
+
+    String getStartScript() {
+        return startScript
+    }
+
+    String getStopScript() {
+        return stopScript
     }
 }
