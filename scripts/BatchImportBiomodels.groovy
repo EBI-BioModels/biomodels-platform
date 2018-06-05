@@ -743,8 +743,7 @@ updateWithRecentChanges = { submissionId, publicationId, branch, folder, modelDe
         }
         def availDetectors = [ModelNameChangeDetector.newInstance(), BioModelsIdChangeDetector.newInstance(),  ModelLastModifiedChangeDetector.newInstance()]
 		def detector = ModelChangeDetectors.newInstance().joinDetectors(availDetectors)
-        def context = ModelComparisonContext.newInstance()
-        context = ModelComparisonContextFactory.newInstance().fromModelDetails(modelDetails, latestRev)
+        def context = ModelComparisonContextFactory.newInstance().fromModelDetails(modelDetails, latestRev)
         boolean hasChanged = detector.hasChanged(context)
         if (hasChanged) {
             // create and import the latest revision with the recent changes
