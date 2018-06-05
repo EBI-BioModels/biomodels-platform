@@ -22,7 +22,19 @@
 
 package net.biomodels.jummp.core.lsf
 
+import com.jcraft.jsch.Channel
+import com.jcraft.jsch.ChannelExec
+import com.jcraft.jsch.JSch
+import com.jcraft.jsch.Session
 import net.biomodels.jummp.core.model.LFSApplication
+import net.biomodels.jummp.utils.JummpUtils
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
+
+import java.util.concurrent.ConcurrentHashMap
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 
 /**
@@ -34,7 +46,11 @@ import net.biomodels.jummp.core.model.LFSApplication
 class LFSService {
 
     static transactional = false
+    private static final int CHUNK_SIZE = 1024
 
+    private static final int READ_TIMEOUT = 1000
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(LFSService.class)
     /**
      * Create a connect to LFS cluster and wait until job started
      * @param application Application need to be deployed
@@ -44,6 +60,36 @@ class LFSService {
      */
     String startLFSClusterJob(LFSApplication application, int nRam, int nCpu) {
         return null
+    private String executeCommand(Session session, String command) {
+        Channel channel=session.openChannel("exec")
+        ((ChannelExec)channel).setCommand(String.join(" ", command))
+        channel.setInputStream(null)
+        ((ChannelExec)channel).setErrStream(System.err)
+        InputStream inputStream = channel.getInputStream()
+        byte[] tmp = new byte[CHUNK_SIZE]
+        StringBuilder stringBuilder = new StringBuilder()
+        while(true) {
+            while(inputStream.available() > 0) {
+                int i = inputStream.read(tmp, 0, CHUNK_SIZE)
+                if (i < 0) {
+                    break
+                }
+                stringBuilder.append(new String(tmp, 0, i))
+            }
+            if (channel.isClosed()) {
+                if(inputStream.available() > 0) {
+                    continue
+                }
+                if (channel.getExitStatus() != 0) {
+                    LOGGER.error("Exception during execute command {}, {}", command, stringBuilder)
+                    throw RuntimeException("Exception occurred during execute command")
+                }
+                break
+            }
+            JummpUtils.sleep(READ_TIMEOUT)
+        }
+        channel.disconnect()
+        return stringBuilder.toString()
     }
 
     /**
