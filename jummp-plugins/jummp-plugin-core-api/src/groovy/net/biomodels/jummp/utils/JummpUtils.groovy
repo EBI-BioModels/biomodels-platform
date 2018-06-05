@@ -41,7 +41,8 @@ class JummpUtils {
     static void sleep(int duration) {
         try{
             Thread.sleep(duration)
-        } catch(Exception ee) {
+        } catch(InterruptedException ee) {
+            Thread.currentThread().interrupt()
             LOGGER.error("Exception occurred during sleep, {}", ee)
             throw new RuntimeException("Exception occurred during sleep")
         }
