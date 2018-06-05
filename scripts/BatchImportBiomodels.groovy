@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2018 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -647,8 +647,8 @@ target(main: "Puts everything together to import models from a given folder") {
     String query = "select model_id, name, description, mime_type, file, date_creation from additional_files"
     additionalFilesMap = biomodelsConnection.rows(query)
     Model.list().each {
-	    if (it.submissionId) {modelsImported.add(it.submissionId)}
-	    if (it.publicationId) {modelsImported.add(it.publicationId)}
+        if (it.submissionId) {modelsImported.add(it.submissionId)}
+        if (it.publicationId) {modelsImported.add(it.publicationId)}
     }
     log("${new Date()} -- commencing batch import")
     long duration = System.currentTimeMillis()
@@ -664,11 +664,11 @@ target(main: "Puts everything together to import models from a given folder") {
             // process the model folder regardless of its size
             tobeProcessed = true
         }
-	    //log("$f.name : tobeProcessed? $tobeProcessed")
+        //log("$f.name : tobeProcessed? $tobeProcessed")
         boolean exists = modelsImported.contains(f.name)
-	    //log("$f.name : exists? $exists")
+        //log("$f.name : exists? $exists")
         if (f.isDirectory() && f.name ==~ modelFolderPattern && tobeProcessed && !exists) {
-		    processModelFolder f
+            processModelFolder f
         } else if (exists) {
             // regardless of branch, this will check whether the model should be updated
             log("The model ${f.name} was already imported!")
@@ -677,7 +677,7 @@ target(main: "Puts everything together to import models from a given folder") {
             def submitter = User.findByUsername("administrator")//findRightSubmitter f.name, BRANCH
             def commitMessage = null // extractCommitMessage
             updateWithRecentChanges f.name, f.name, BRANCH, f, modelDetails, submitter, commitMessage
-	    } else {
+        } else {
             log("The model ${f.name} cannot be imported!")
         }
     }
@@ -742,9 +742,8 @@ updateWithRecentChanges = { submissionId, publicationId, branch, folder, modelDe
             }
         }
         def availDetectors = [ModelNameChangeDetector.newInstance(), BioModelsIdChangeDetector.newInstance(),  ModelLastModifiedChangeDetector.newInstance()]
-		def detector = ModelChangeDetectors.newInstance().joinDetectors(availDetectors)
-        def context = ModelComparisonContext.newInstance()
-        context = ModelComparisonContextFactory.newInstance().fromModelDetails(modelDetails, latestRev)
+        def detector = ModelChangeDetectors.newInstance().joinDetectors(availDetectors)
+        def context = ModelComparisonContextFactory.newInstance().fromModelDetails(modelDetails, latestRev)
         boolean hasChanged = detector.hasChanged(context)
         if (hasChanged) {
             // create and import the latest revision with the recent changes
@@ -851,8 +850,9 @@ processModelFolder = { File folder ->
         if (isNonSBMLModel) {
             annotateModellingApproaches(submittedModel.revisions.first(), BRANCH, modelDetails, submitter)
         } else {
-            def commitMessage = null
-            def revision = addTheLatestRevision BRANCH, MODEL_ID, folder, submittedModel, modelDetails, submitter, commitMessage
+            def commitMessage = UPDATE_COMMENT_TPL + MODEL_ID
+            def revision = addTheLatestRevision(BRANCH, MODEL_ID, folder, submittedModel,
+                    modelDetails, submitter, commitMessage)
             submittedModel = revision.model
         }
         // persist model flags
@@ -876,6 +876,151 @@ processModelFolder = { File folder ->
         t.printStackTrace()
         failureCount.incrementAndGet()
     }
+}
+
+/**
+ * Looks up the curation comments for a model.
+ *
+ * @param modelId a submission identifier (MODEL*) or a BioModels identifier (BIOMD*).
+ */
+getInternalCommentForModelId = { modelId ->
+    if (!modelId?.trim())
+        return null
+
+    def commentInfo = null
+    // non-curated models, exclude PDGSMM branch
+    if (modelId.startsWith("MODEL") && !modelId.startsWith("MODEL170711")) {
+        commentInfo = biomodelsConnection.firstRow(
+            "select comments from uncura_anno where model_id = ? and status != 2", [modelId])
+        // find comments for curated models for which we have the submission ID
+        if (!commentInfo) {
+            commentInfo = biomodelsConnection.firstRow("""SELECT comments
+FROM anno JOIN cura ON cura.biomodels_id = anno.model_id WHERE cura.model_id = ?""", [modelId])
+        }
+    } else if (modelId.startsWith("BIOMD")) {
+        commentInfo = biomodelsConnection.firstRow(
+            "select comments from anno where model_id = ?", [modelId])
+    } else {
+        addModelMsg(modelId, "Only literature models can have curation comments.")
+        return null
+    }
+    if (!commentInfo?.comments) {
+        addModelError(modelId, "No curation comments found for the given model id")
+        return null
+    }
+    commentInfo.comments
+}
+
+/**
+ * Tokenises the internal curation comments for a model and returns the last entry.
+ *
+ * @param modelId the model identifier
+ * @param comments the curation comments, as stored in the old system.
+ */
+String getLatestCurationComment = { modelId, comments ->
+    final String SEP = '</dl>\\n'
+    def entries = comments?.split(SEP)
+    if (!entries) {
+        addModelError(modelId, "Curation comments do not match the expected format")
+        return null
+    }
+    entries.last()
+}
+
+/**
+ * Extracts the date, author and 'commit message' of the most recent curation comment for a model.
+ *
+ * @param modelId the model identifier
+ * @param comments the curation comments, as stored in the old system
+ * @return a map with the following keys: date, user, comment
+ */
+Map parseCurationCommentsForModel = { modelId, comments ->
+    if (!comments?.trim()) return [:]
+    String latest = getLatestCurationComment modelId, comments
+    if (!latest) {
+        return [:] // we've already logged the error
+    }
+
+    def err = new StringBuilder()
+    Date date = extractDateFromComment(latest)
+    if (!date) {
+        err.append("Could not parse the date.")
+    }
+    String curator = extractCuratorFromComment(latest)
+    if (!curator) {
+        err.append("Could not extract the curator.")
+    }
+    String comment = extractCommentTextFromComment(latest)
+    if (!comment) {
+        err.append("Could not extract the comment body.")
+    }
+    String errorMessage = err.toString()
+    if (errorMessage) {
+        addModelError modelId, errorMessage
+        return null
+    }
+    [ date: date, user: curator, comment: comment ]
+}
+
+/**
+ * Convenience method for parsing the date from a curation comment.
+ *
+ * @param comment a curation comment entry
+ * @return the Date corresponding to the string representation from the entry or null if it
+ *         could not be extracted due to the comment not following the expected structure.
+ */
+Date extractDateFromComment = { comment ->
+    def d = extractCurationCommentAttribute comment, '<dt class="comment_date">', "</dt>"
+    Date result = null
+    if (d) {
+        result = new Date(d)
+    }
+    result
+}
+
+/**
+ * Convenience method for parsing the date from a curation comment.
+ *
+ * @param comment a curation comment entry
+ * @return the curator name of the entry or null if it could not be extracted due to the comment
+ *         not following the expected structure.
+ */
+String extractCuratorFromComment = { comment ->
+    extractCurationCommentAttribute(comment, '<dd class="comment_submitter">', "</dd>")
+}
+
+/**
+ * Convenience method for parsing the comment body from a curation comment.
+ *
+ * @param comment a curation comment entry
+ * @return the message of the entry or null if it could not be extracted due to the comment not
+ *         following the expected structure.
+ */
+String extractCommentTextFromComment = { comment ->
+    // TODO: decode HTML
+    extractCurationCommentAttribute(comment, '<dd class="comment_body">', "</dd>")
+}
+
+/**
+ * Returns the part of the given curation comment delimited by the start and end markers.
+ *
+ * @param comment an individual curation comment entry
+ * @param start the marker that delimits the start of the substring of interest.
+ * @param end   the end marker for the substring of interest
+ * @return the substring between the given markers or null if either marker could not be found in
+ *         the given curation comment entry.
+ */
+String extractCurationCommentAttribute = { comment, start, end ->
+    int startMarkerSize = start.length()
+    int startIdx = comment.indexOf(start) + startMarkerSize
+    if (startIdx < startMarkerSize)
+        return null
+
+    def endIdx = comment.indexOf(end, startIdx)
+    if (-1 == endIdx) {
+        return null
+    }
+    comment.substring(startIdx, endIdx)
 }
 
 findRightSubmitter = {MODEL_ID, BRANCH ->
@@ -939,7 +1084,7 @@ submitOriginalFile = { branch, modelId, originalFile, infoMap ->
     if (nonStandardSBMLModels.containsKey(modelId)) {
         additionals = getAdditionalFilesForNonSBMLModel(modelId)
     }
-    def originInfo = getSubmissionData(modelId, originalFile, additionals, ORIG_COMMENT_TPL)
+    def originInfo = getSubmissionData(modelId, originalFile, additionals, ORIG_COMMENT_TPL + modelId)
     def files = getFilesFromSubmissionData originInfo
 
     // Add the originally additional files provided by submitter
@@ -1078,8 +1223,8 @@ addPublicationDetails = { model, accession, type ->
             publication = publicationService.fromCommandObject publicationCmd
         } else {
             // Save the publication if it's not already in the database
-	        def linkProvider = PublicationLinkProvider.findByLinkType(LinkType.PUBMED)
-	        publication = Publication.findOrCreateWhere(linkProvider: linkProvider,
+            def linkProvider = PublicationLinkProvider.findByLinkType(LinkType.PUBMED)
+            publication = Publication.findOrCreateWhere(linkProvider: linkProvider,
                 link: accession,
                 title: publicationCmd.title,
                 journal: publicationCmd.journal,
@@ -1126,7 +1271,7 @@ Cannot save author #$i ${person.userRealName} for publication $accession: ${pers
         }
     } catch (Exception e) {
         addModelError id, "Could not extract details for publication with identifier $accession: $e"
-	    e.printStackTrace()
+        e.printStackTrace()
     }
 }
 
@@ -1314,9 +1459,6 @@ prepareRevision = { branch, modelId, parent, model, commitMessage ->
     def fileMap = findNewestRevisionFiles(branch, parent, modelId)
     def main = fileMap['mainFile']
     def additionals = fileMap['additionals']
-    if (!commitMessage) {
-        commitMessage = UPDATE_COMMENT_TPL
-    }
     def revisionData = getSubmissionData(modelId, main, additionals, commitMessage)
     def fileTCs = getFilesFromSubmissionData(revisionData)
 
@@ -1588,7 +1730,7 @@ getSubmissionData = { modelId, file, additional, comment ->
 
     def revision = rtc.newInstance(model: model, files: files, format: formatCommand,
             validated: isValid, name: MODEL_NAME, description: DESCRIPTION,
-            validationLevel: ValidationState.APPROVED, comment: "${comment}${MODEL_NAME}")
+            validationLevel: ValidationState.APPROVED, comment: comment)
     return [files: files, revision: revision]
 }
 
