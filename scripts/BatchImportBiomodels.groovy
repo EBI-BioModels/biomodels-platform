@@ -878,6 +878,146 @@ processModelFolder = { File folder ->
     }
 }
 
+/**
+ * Looks up the curation comments for a model.
+ *
+ * @param modelId a submission identifier (MODEL*) or a BioModels identifier (BIOMD*).
+ */
+getInternalCommentForModelId = { modelId ->
+    if (!modelId?.trim())
+        return null
+
+    def commentInfo = null
+    // non-curated models, exclude PDGSMM branch
+    if (modelId.startsWith("MODEL") && !modelId.startsWith("MODEL170711")) {
+        commentInfo = biomodelsConnection.firstRow(
+            "select comments from uncura_anno where model_id = ? and status != 2", [modelId])
+    } else if (modelId.startsWith("BIOMD")) {
+        commentInfo = biomodelsConnection.firstRow(
+            "select comments from anno where model_id = ?", [modelId])
+    } else {
+        addModelMsg(modelId, "Only literature models can have curation comments.")
+        return null
+    }
+    if (!commentInfo?.comments) {
+        addModelError(modelId, "No curation comments found for the given model id")
+        return null
+    }
+    commentInfo.comments
+}
+
+/**
+ * Tokenises the internal curation comments for a model and returns the last entry.
+ *
+ * @param modelId the model identifier
+ * @param comments the curation comments, as stored in the old system.
+ */
+String getLatestCurationComment = { modelId, comments ->
+    final String SEP = '</dl>\\n'
+    def entries = comments?.split(SEP)
+    if (!entries) {
+        addModelError(modelId, "Curation comments do not match the expected format")
+        return null
+    }
+    entries.last()
+}
+
+/**
+ * Extracts the date, author and 'commit message' of the most recent curation comment for a model.
+ *
+ * @param modelId the model identifier
+ * @param comments the curation comments, as stored in the old system
+ * @return a map with the following keys: date, user, comment
+ */
+Map parseCurationCommentsForModel = { modelId, comments ->
+    if (!comments?.trim()) return [:]
+    String latest = getLatestCurationComment modelId, comments
+    if (!latest) {
+        return [:] // we've already logged the error
+    }
+
+    def err = new StringBuilder()
+    Date date = extractDateFromComment(latest)
+    if (!date) {
+        err.append("Could not parse the date.")
+    }
+    String curator = extractCuratorFromComment(latest)
+    if (!curator) {
+        err.append("Could not extract the curator.")
+    }
+    String comment = extractCommentTextFromComment(latest)
+    if (!comment) {
+        err.append("Could not extract the comment body.")
+    }
+    String errorMessage = err.toString()
+    if (errorMessage) {
+        addModelError modelId, errorMessage
+        return null
+    }
+    [ date: date, user: curator, comment: comment ]
+}
+
+/**
+ * Convenience method for parsing the date from a curation comment.
+ *
+ * @param comment a curation comment entry
+ * @return the Date corresponding to the string representation from the entry or null if it
+ *         could not be extracted due to the comment not following the expected structure.
+ */
+Date extractDateFromComment = { comment ->
+    def d = extractCurationCommentAttribute comment, '<dt class="comment_date">', "</dt>"
+    Date result = null
+    if (d) {
+        result = new Date(d)
+    }
+    result
+}
+
+/**
+ * Convenience method for parsing the date from a curation comment.
+ *
+ * @param comment a curation comment entry
+ * @return the curator name of the entry or null if it could not be extracted due to the comment
+ *         not following the expected structure.
+ */
+String extractCuratorFromComment = { comment ->
+    extractCurationCommentAttribute(comment, '<dd class="comment_submitter">', "</dd>")
+}
+
+/**
+ * Convenience method for parsing the comment body from a curation comment.
+ *
+ * @param comment a curation comment entry
+ * @return the message of the entry or null if it could not be extracted due to the comment not
+ *         following the expected structure.
+ */
+String extractCommentTextFromComment = { comment ->
+    // TODO: decode HTML
+    extractCurationCommentAttribute(comment, '<dd class="comment_body">', "</dd>")
+}
+
+/**
+ * Returns the part of the given curation comment delimited by the start and end markers.
+ *
+ * @param comment an individual curation comment entry
+ * @param start the marker that delimits the start of the substring of interest.
+ * @param end   the end marker for the substring of interest
+ * @return the substring between the given markers or null if either marker could not be found in
+ *         the given curation comment entry.
+ */
+String extractCurationCommentAttribute = { comment, start, end ->
+    int startMarkerSize = start.length()
+    int startIdx = comment.indexOf(start) + startMarkerSize
+    if (startIdx < startMarkerSize)
+        return null
+
+    def endIdx = comment.indexOf(end, startIdx)
+    if (-1 == endIdx) {
+        return null
+    }
+    comment.substring(startIdx, endIdx)
+}
+
 findRightSubmitter = {MODEL_ID, BRANCH ->
     def submitter
     authenticate(username, password)
