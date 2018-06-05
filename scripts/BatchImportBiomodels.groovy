@@ -647,8 +647,8 @@ target(main: "Puts everything together to import models from a given folder") {
     String query = "select model_id, name, description, mime_type, file, date_creation from additional_files"
     additionalFilesMap = biomodelsConnection.rows(query)
     Model.list().each {
-	    if (it.submissionId) {modelsImported.add(it.submissionId)}
-	    if (it.publicationId) {modelsImported.add(it.publicationId)}
+        if (it.submissionId) {modelsImported.add(it.submissionId)}
+        if (it.publicationId) {modelsImported.add(it.publicationId)}
     }
     log("${new Date()} -- commencing batch import")
     long duration = System.currentTimeMillis()
@@ -664,11 +664,11 @@ target(main: "Puts everything together to import models from a given folder") {
             // process the model folder regardless of its size
             tobeProcessed = true
         }
-	    //log("$f.name : tobeProcessed? $tobeProcessed")
+        //log("$f.name : tobeProcessed? $tobeProcessed")
         boolean exists = modelsImported.contains(f.name)
-	    //log("$f.name : exists? $exists")
+        //log("$f.name : exists? $exists")
         if (f.isDirectory() && f.name ==~ modelFolderPattern && tobeProcessed && !exists) {
-		    processModelFolder f
+            processModelFolder f
         } else if (exists) {
             // regardless of branch, this will check whether the model should be updated
             log("The model ${f.name} was already imported!")
@@ -677,7 +677,7 @@ target(main: "Puts everything together to import models from a given folder") {
             def submitter = User.findByUsername("administrator")//findRightSubmitter f.name, BRANCH
             def commitMessage = null // extractCommitMessage
             updateWithRecentChanges f.name, f.name, BRANCH, f, modelDetails, submitter, commitMessage
-	    } else {
+        } else {
             log("The model ${f.name} cannot be imported!")
         }
     }
@@ -742,7 +742,7 @@ updateWithRecentChanges = { submissionId, publicationId, branch, folder, modelDe
             }
         }
         def availDetectors = [ModelNameChangeDetector.newInstance(), BioModelsIdChangeDetector.newInstance(),  ModelLastModifiedChangeDetector.newInstance()]
-		def detector = ModelChangeDetectors.newInstance().joinDetectors(availDetectors)
+        def detector = ModelChangeDetectors.newInstance().joinDetectors(availDetectors)
         def context = ModelComparisonContextFactory.newInstance().fromModelDetails(modelDetails, latestRev)
         boolean hasChanged = detector.hasChanged(context)
         if (hasChanged) {
@@ -1217,8 +1217,8 @@ addPublicationDetails = { model, accession, type ->
             publication = publicationService.fromCommandObject publicationCmd
         } else {
             // Save the publication if it's not already in the database
-	        def linkProvider = PublicationLinkProvider.findByLinkType(LinkType.PUBMED)
-	        publication = Publication.findOrCreateWhere(linkProvider: linkProvider,
+            def linkProvider = PublicationLinkProvider.findByLinkType(LinkType.PUBMED)
+            publication = Publication.findOrCreateWhere(linkProvider: linkProvider,
                 link: accession,
                 title: publicationCmd.title,
                 journal: publicationCmd.journal,
@@ -1265,7 +1265,7 @@ Cannot save author #$i ${person.userRealName} for publication $accession: ${pers
         }
     } catch (Exception e) {
         addModelError id, "Could not extract details for publication with identifier $accession: $e"
-	    e.printStackTrace()
+        e.printStackTrace()
     }
 }
 
