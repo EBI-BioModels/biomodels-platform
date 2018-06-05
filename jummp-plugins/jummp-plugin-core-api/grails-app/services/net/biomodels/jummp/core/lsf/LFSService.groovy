@@ -99,8 +99,43 @@ class LFSService implements InitializingBean {
      * @param nCpu number of CPU required
      * @return String job id
      */
-    String startLFSClusterJob(LFSApplication application, int nRam, int nCpu) {
-        return null
+    synchronized String startLFSClusterJob(LFSApplication application, int nRam, int nCpu) {
+        Session session = jSch.getSession(lfsMiddlewareUsername, lfsMiddlewareHost)
+        session.setPassword(lfsMiddlewarePassword)
+        session.setConfig("StrictHostKeyChecking", "no")
+        session.connect(SESSION_TIMEOUT)
+        List<String> command = new ArrayList<>()
+        command.add("bsub")
+        command.add(String.format("-q %s", lfsDefaultQueue))
+        command.add(String.format("-M %d", nRam))
+        command.add(String.format("-R \"rusage[mem=%d]\"", nRam))
+        command.add(String.format("-n %d", nCpu))
+        command.add(lfsApplicationPath + "/" + application.getStartScript())
+        String response = executeCommand(session, String.join(" ", command))
+        Pattern pattern = Pattern.compile("Job\\s+<(\\d+)>")
+        Matcher matcher = pattern.matcher(response)
+        String jobId = matcher.group(1)
+        command.clear()
+        command.add("bjobs")
+        command.add(String.format("-o \"stat: exec_host\""))
+        command.add(jobId)
+        command.add("-noheader")
+        while (true) {
+            response = executeCommand(session, String.join(" ", command)).split(" ")
+            if (response[0] == "RUN") {
+                Session machineSession = jSch.getSession(lfsMiddlewareUsername, response[1])
+                session.setPassword(lfsMiddlewarePassword)
+                session.setConfig("StrictHostKeyChecking", "no")
+                session.connect(SESSION_TIMEOUT)
+                connections.put(jobId, machineSession)
+                break
+            }
+            JummpUtils.sleep(WAIT_FOR_CLUSTER_READY)
+        }
+        session.disconnect()
+        return jobId
+    }
+
     private String executeCommand(Session session, String command) {
         Channel channel=session.openChannel("exec")
         ((ChannelExec)channel).setCommand(String.join(" ", command))
@@ -139,7 +174,7 @@ class LFSService implements InitializingBean {
      * @return IP of the machine
      */
     String getIPByJobId(String jobId) {
-        return null
+        return connections.get(jobId).getHost()
     }
 
     /**
