@@ -85,6 +85,7 @@ grails.project.dependency.resolution = {
         //      https://github.com/BD2K-DDI/ddi-ebeye-ws-dao/blob/8bd08f/pom.xml
         compile "com.fasterxml.jackson.core:jackson-databind:2.5.2"
         compile "org.apache.commons:commons-lang3:3.3.2"
+        compile "com.jcraft:jsch:0.1.54"
     }
     plugins {
         build ":tomcat:7.0.55.3"
