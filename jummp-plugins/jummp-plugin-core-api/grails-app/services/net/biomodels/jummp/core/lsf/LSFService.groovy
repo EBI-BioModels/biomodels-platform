@@ -26,7 +26,7 @@ import com.jcraft.jsch.Channel
 import com.jcraft.jsch.ChannelExec
 import com.jcraft.jsch.JSch
 import com.jcraft.jsch.Session
-import net.biomodels.jummp.core.model.LFSApplication
+import net.biomodels.jummp.core.model.LSFApplication
 import net.biomodels.jummp.utils.JummpUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -43,7 +43,7 @@ import java.util.regex.Pattern
  *
  * @author  Tu Vu <tvu@ebi.ac.uk>
  */
-class LFSService implements InitializingBean {
+class LSFService implements InitializingBean {
 
     static transactional = false
     private static final int SESSION_TIMEOUT = 60 * 60 * 1000
@@ -54,25 +54,25 @@ class LFSService implements InitializingBean {
 
     private static final int WAIT_FOR_CLUSTER_READY = 5000
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(LFSService.class)
+    private static final Logger LOGGER = LoggerFactory.getLogger(LSFService.class)
 
     /**
      * SSH Manager
      */
     private JSch jSch = new JSch()
 
-    private String lfsMiddlewareHost
+    private String lsfMiddlewareHost
 
-    private String lfsMiddlewareUsername
+    private String lsfMiddlewareUsername
 
-    private String lfsMiddlewarePassword
+    private String lsfMiddlewarePassword
 
-    private String lfsDefaultQueue
+    private String lsfDefaultQueue
 
     /**
      * Location of the application folder
      */
-    private String lfsApplicationPath
+    private String lsfApplicationPath
 
     /**
      * LFS Cluster machine connections
@@ -85,11 +85,11 @@ class LFSService implements InitializingBean {
     def grailsApplication
 
     void afterPropertiesSet() throws Exception {
-        lfsMiddlewareHost = grailsApplication.config.jummp.lfs.middleware.host
-        lfsMiddlewareUsername = grailsApplication.config.jummp.lfs.middleware.username
-        lfsMiddlewarePassword = grailsApplication.config.jummp.lfs.middleware.password
-        lfsApplicationPath = grailsApplication.config.jummp.lfs.application.path
-        lfsDefaultQueue = grailsApplication.config.jummp.lfs.queue.default
+        lsfMiddlewareHost = grailsApplication.config.jummp.lsf.middleware.host
+        lsfMiddlewareUsername = grailsApplication.config.jummp.lsf.middleware.username
+        lsfMiddlewarePassword = grailsApplication.config.jummp.lsf.middleware.password
+        lsfApplicationPath = grailsApplication.config.jummp.lsf.application.path
+        lsfDefaultQueue = grailsApplication.config.jummp.lsf.queue.default
     }
 
     /**
@@ -99,18 +99,18 @@ class LFSService implements InitializingBean {
      * @param nCpu number of CPU required
      * @return String job id
      */
-    synchronized String startLFSClusterJob(LFSApplication application, int nRam, int nCpu) {
-        Session session = jSch.getSession(lfsMiddlewareUsername, lfsMiddlewareHost)
-        session.setPassword(lfsMiddlewarePassword)
+    synchronized String startLFSClusterJob(LSFApplication application, int nRam, int nCpu) {
+        Session session = jSch.getSession(lsfMiddlewareUsername, lsfMiddlewareHost)
+        session.setPassword(lsfMiddlewarePassword)
         session.setConfig("StrictHostKeyChecking", "no")
         session.connect(SESSION_TIMEOUT)
         List<String> command = new ArrayList<>()
         command.add("bsub")
-        command.add(String.format("-q %s", lfsDefaultQueue))
+        command.add(String.format("-q %s", lsfDefaultQueue))
         command.add(String.format("-M %d", nRam))
         command.add(String.format("-R \"rusage[mem=%d]\"", nRam))
         command.add(String.format("-n %d", nCpu))
-        command.add(lfsApplicationPath + "/" + application.getStartScript())
+        command.add(lsfApplicationPath + "/" + application.getStartScript())
         String response = executeCommand(session, String.join(" ", command))
         Pattern pattern = Pattern.compile("Job\\s+<(\\d+)>")
         Matcher matcher = pattern.matcher(response)
@@ -123,8 +123,8 @@ class LFSService implements InitializingBean {
         while (true) {
             response = executeCommand(session, String.join(" ", command)).split(" ")
             if (response[0] == "RUN") {
-                Session machineSession = jSch.getSession(lfsMiddlewareUsername, response[1])
-                session.setPassword(lfsMiddlewarePassword)
+                Session machineSession = jSch.getSession(lsfMiddlewareUsername, response[1])
+                session.setPassword(lsfMiddlewarePassword)
                 session.setConfig("StrictHostKeyChecking", "no")
                 session.connect(SESSION_TIMEOUT)
                 connections.put(jobId, machineSession)

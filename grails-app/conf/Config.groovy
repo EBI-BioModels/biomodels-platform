@@ -410,6 +410,26 @@ if (jummpConfig.jummp.classification.endpoint) {
     jummp.classification.endpoint = jummpConfig.jummp.classification.endpoint
 }
 
+if (jummpConfig.jummp.lsf.middleware.host) {
+    jummp.lsf.middleware.host = jummpConfig.jummp.lsf.middleware.host
+}
+
+if (jummpConfig.jummp.lsf.middleware.username) {
+    jummp.lsf.middleware.username = jummpConfig.jummp.lsf.middleware.username
+}
+
+if (jummpConfig.jummp.lsf.middleware.password) {
+    jummp.lsf.middleware.password = jummpConfig.jummp.lsf.middleware.password
+}
+
+if (jummpConfig.jummp.lsf.application.path) {
+    jummp.lsf.application.path = jummpConfig.jummp.lsf.application.path
+}
+
+if (jummpConfig.jummp.lsf.queue.default) {
+    jummp.lsf.queue.default = jummpConfig.jummp.lsf.queue.default
+}
+
 if (jummp.search.strategy == "solr") {
     if (!(jummpConfig.jummp.search.url instanceof ConfigObject)) {
         final Pattern URL_PATTERN = ~/http:\/\/[a-zA-Z0-9\.\-_]+(:[0-9]+)?(\/[a-zA-Z0-9\-\._]+)*/
