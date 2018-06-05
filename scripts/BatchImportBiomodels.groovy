@@ -892,6 +892,11 @@ getInternalCommentForModelId = { modelId ->
     if (modelId.startsWith("MODEL") && !modelId.startsWith("MODEL170711")) {
         commentInfo = biomodelsConnection.firstRow(
             "select comments from uncura_anno where model_id = ? and status != 2", [modelId])
+        // find comments for curated models for which we have the submission ID
+        if (!commentInfo) {
+            commentInfo = biomodelsConnection.firstRow("""SELECT comments
+FROM anno JOIN cura ON cura.biomodels_id = anno.model_id WHERE cura.model_id = ?""", [modelId])
+        }
     } else if (modelId.startsWith("BIOMD")) {
         commentInfo = biomodelsConnection.firstRow(
             "select comments from anno where model_id = ?", [modelId])
