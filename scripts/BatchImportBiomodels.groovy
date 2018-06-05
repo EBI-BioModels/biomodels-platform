@@ -850,8 +850,9 @@ processModelFolder = { File folder ->
         if (isNonSBMLModel) {
             annotateModellingApproaches(submittedModel.revisions.first(), BRANCH, modelDetails, submitter)
         } else {
-            def commitMessage = null
-            def revision = addTheLatestRevision BRANCH, MODEL_ID, folder, submittedModel, modelDetails, submitter, commitMessage
+            def commitMessage = UPDATE_COMMENT_TPL + MODEL_ID
+            def revision = addTheLatestRevision(BRANCH, MODEL_ID, folder, submittedModel,
+                    modelDetails, submitter, commitMessage)
             submittedModel = revision.model
         }
         // persist model flags
@@ -1078,7 +1079,7 @@ submitOriginalFile = { branch, modelId, originalFile, infoMap ->
     if (nonStandardSBMLModels.containsKey(modelId)) {
         additionals = getAdditionalFilesForNonSBMLModel(modelId)
     }
-    def originInfo = getSubmissionData(modelId, originalFile, additionals, ORIG_COMMENT_TPL)
+    def originInfo = getSubmissionData(modelId, originalFile, additionals, ORIG_COMMENT_TPL + modelId)
     def files = getFilesFromSubmissionData originInfo
 
     // Add the originally additional files provided by submitter
@@ -1453,9 +1454,6 @@ prepareRevision = { branch, modelId, parent, model, commitMessage ->
     def fileMap = findNewestRevisionFiles(branch, parent, modelId)
     def main = fileMap['mainFile']
     def additionals = fileMap['additionals']
-    if (!commitMessage) {
-        commitMessage = UPDATE_COMMENT_TPL
-    }
     def revisionData = getSubmissionData(modelId, main, additionals, commitMessage)
     def fileTCs = getFilesFromSubmissionData(revisionData)
 
@@ -1727,7 +1725,7 @@ getSubmissionData = { modelId, file, additional, comment ->
 
     def revision = rtc.newInstance(model: model, files: files, format: formatCommand,
             validated: isValid, name: MODEL_NAME, description: DESCRIPTION,
-            validationLevel: ValidationState.APPROVED, comment: "${comment}${MODEL_NAME}")
+            validationLevel: ValidationState.APPROVED, comment: comment)
     return [files: files, revision: revision]
 }
 
