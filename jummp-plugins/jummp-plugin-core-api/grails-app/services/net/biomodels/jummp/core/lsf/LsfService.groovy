@@ -54,6 +54,8 @@ class LsfService implements InitializingBean {
 
     private static final int WAIT_FOR_CLUSTER_READY = 5000
 
+    private static final int JOB_PID_LENGTH = 10
+
     private static final Logger LOGGER = LoggerFactory.getLogger(LsfService.class)
 
     /**
@@ -80,6 +82,16 @@ class LsfService implements InitializingBean {
     private Map<String, Session> connections = new ConcurrentHashMap<>()
 
     /**
+     * Mapping between jobId and PID
+     */
+    private Map<String, String> jobPids = new ConcurrentHashMap<>()
+
+    /**
+     * Mapping between job and Application
+     */
+    private Map<String, LSFApplication> jobApplication = new HashMap<>()
+
+    /**
      * Dependency Injection of GrailsApplication
      */
     def grailsApplication
@@ -98,9 +110,11 @@ class LsfService implements InitializingBean {
      * @param application Application need to be deployed
      * @param nRam number of RAM required
      * @param nCpu number of CPU required
+     * @param maxTime maximum time allowed to run the application
      * @return String job id
      */
-    synchronized String startLFSClusterJob(LSFApplication application, int nRam, int nCpu) {
+    synchronized String startLFSClusterJob(LSFApplication application, int nRam, int nCpu, int maxTime) {
+        String jobPid = "JOB_" + JummpUtils.randStr(JOB_PID_LENGTH)
         Session session = jSch.getSession(lsfMiddlewareUsername, lsfMiddlewareHost)
         session.setConfig("StrictHostKeyChecking", "no")
         session.connect(SESSION_TIMEOUT)
@@ -110,30 +124,45 @@ class LsfService implements InitializingBean {
         command.add(String.format("-M %d", nRam))
         command.add(String.format("-R \"rusage[mem=%d]\"", nRam))
         command.add(String.format("-n %d", nCpu))
-        command.add(lsfApplicationPath + "/" + application.getStartScript())
+        command.add(lsfApplicationPath + "/" + application.getName() + "/" + application.getStartScript())
+        command.add(jobPid)
+        command.add(Integer.toString(maxTime))
         String response = executeCommand(session, String.join(" ", command))
         Pattern pattern = Pattern.compile("Job\\s+<(\\d+)>")
         Matcher matcher = pattern.matcher(response)
-        String jobId = matcher.group(1)
-        command.clear()
-        command.add("bjobs")
-        command.add(String.format("-o \"stat: exec_host\""))
-        command.add(jobId)
-        command.add("-noheader")
-        while (true) {
-            response = executeCommand(session, String.join(" ", command)).split(" ")
-            if (response[0] == "RUN") {
-                Session machineSession = jSch.getSession(lsfMiddlewareUsername, response[1])
-                session.setPassword(lsfMiddlewarePassword)
-                session.setConfig("StrictHostKeyChecking", "no")
-                session.connect(SESSION_TIMEOUT)
-                connections.put(jobId, machineSession)
-                break
+        if (matcher.find()) {
+            String jobId = matcher.group(1)
+            command.clear()
+            command.add("bjobs")
+            command.add(String.format("-o \"stat: exec_host\""))
+            command.add(jobId)
+            command.add("-noheader")
+            while (true) {
+                response = executeCommand(session, String.join(" ", command))
+                if (response.split(" ")[0] == "RUN") {
+                    String host = response.split("\\s+")[1]
+                    if (host.contains("*")) {
+                        host = host.split('\\*')[1]
+                    }
+                    Session machineSession = jSch.getSession(lsfMiddlewareUsername, host)
+                    machineSession.setConfig("StrictHostKeyChecking", "no")
+                    machineSession.connect(SESSION_TIMEOUT)
+                    connections.put(jobId, machineSession)
+                    jobPids.put(jobId, jobPid)
+                    jobApplication.put(jobId, application)
+                    break
+                } else if (response.split(" ")[0] == "PEND" || response.split(" ")[0] == "WAIT") {
+                    JummpUtils.sleep(WAIT_FOR_CLUSTER_READY)
+                } else {
+                    LOGGER.error("An exception occurred when run job, command {}, status {}", command, response)
+                    throw new RuntimeException("An exception occurred when run job")
+                }
             }
-            JummpUtils.sleep(WAIT_FOR_CLUSTER_READY)
+            session.disconnect()
+            return jobId
         }
-        session.disconnect()
-        return jobId
+        LOGGER.error("Can't submit job to LSF Cluster, command {}, output {}", command, response)
+        throw new RuntimeException("Can't submit job to LSF Cluster")
     }
 
     private String executeCommand(Session session, String command) {
