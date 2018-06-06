@@ -83,7 +83,7 @@ class ModelDelegateService implements IModelService {
     List<ModelTransportCommand> getAllModels(int offset, int count, boolean sortOrder, ModelListSorting sortColumn) {
         List<ModelTransportCommand> models = []
         modelService.getAllModels(offset, count, sortOrder, sortColumn).each {
-            models << new ModelAdapter(model: it).toCommandObject()
+            models << new ModelAdapter(model: it).toCommandObject(false)
         }
         return models
     }
@@ -91,7 +91,7 @@ class ModelDelegateService implements IModelService {
     List<ModelTransportCommand> getAllModels(int offset, int count, boolean sortOrder) {
         List<ModelTransportCommand> models = []
         modelService.getAllModels(offset, count, sortOrder).each {
-            models << new ModelAdapter(model: it).toCommandObject()
+            models << new ModelAdapter(model: it).toCommandObject(false)
         }
         return models
     }
@@ -99,7 +99,7 @@ class ModelDelegateService implements IModelService {
     List<ModelTransportCommand> getAllModels(int offset, int count, ModelListSorting sortColumn) {
         List<ModelTransportCommand> models = []
         modelService.getAllModels(offset, count, sortColumn).each {
-            models << new ModelAdapter(model: it).toCommandObject()
+            models << new ModelAdapter(model: it).toCommandObject(false)
         }
         return models
     }
@@ -107,7 +107,7 @@ class ModelDelegateService implements IModelService {
     List<ModelTransportCommand> getAllModels(int offset, int count) {
         List<ModelTransportCommand> models = []
         modelService.getAllModels(offset, count).each {
-            models << new ModelAdapter(model: it).toCommandObject()
+            models << new ModelAdapter(model: it).toCommandObject(false)
         }
         return models
     }
@@ -115,7 +115,7 @@ class ModelDelegateService implements IModelService {
     List<ModelTransportCommand> getAllModels(ModelListSorting sortColumn) {
         List<ModelTransportCommand> models = []
         modelService.getAllModels(sortColumn).each {
-            models << new ModelAdapter(model: it).toCommandObject()
+            models << new ModelAdapter(model: it).toCommandObject(false)
         }
         return models
     }
@@ -123,7 +123,7 @@ class ModelDelegateService implements IModelService {
     List<ModelTransportCommand> getAllModels() {
         List<ModelTransportCommand> models = []
         modelService.getAllModels().each {
-            models << new ModelAdapter(model: it).toCommandObject()
+            models << new ModelAdapter(model: it).toCommandObject(false)
         }
         return models
     }
@@ -290,7 +290,7 @@ class ModelDelegateService implements IModelService {
     }
 
     Boolean canSubmitForPublication(RevisionTransportCommand revision) {
-        if ((revision.state == ModelState.UNPUBLISHED) && (revision.state != ModelState.UNDER_CURATION)) {
+        if ((revision.state == ModelState.UNPUBLISHED)) {
             try {
                 return modelService.canSubmitForPublication(Revision.get(revision.id))
             } catch (Exception e) {
@@ -398,6 +398,18 @@ class ModelDelegateService implements IModelService {
             return new ModelAdapter(model: model).toCommandObject()
         }
         return null
+    }
+
+    /**
+     * Update curation status of specific model revision
+     * @param modelId: submissionId of model
+     * @param revisionNumber: revision number
+     * @param curationState: curation status
+     */
+    void updateCurationStateRevision(String modelId, int revisionNumber, CurationState curationState) {
+        Revision revision = modelService.getRevision(ModelAdapter.findByPerennialIdentifier(modelId), revisionNumber)
+        revision.setCurationState(curationState)
+        revision.save(flush:true)
     }
 
     RevisionTransportCommand getRevisionFromParams(final String MODEL, String REVISION = null) {

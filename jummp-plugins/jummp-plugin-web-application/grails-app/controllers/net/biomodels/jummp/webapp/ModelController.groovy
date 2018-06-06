@@ -113,11 +113,15 @@ class ModelController {
      */
     def omexService
 
+    def modelConversionService
+
+    def messageSource
+
     /**
      * The list of actions for which we should not automatically create an audit item.
      */
     final List<String> AUDIT_EXCEPTIONS = ['updateFlow', 'createFlow', 'uploadFlow',
-                'showWithMessage', 'share', 'getFileDetails', 'submitForPublication']
+                'showWithMessage', 'share', 'getFileDetails', 'submitForPublication', 'updateCurationState']
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
 
@@ -236,14 +240,14 @@ class ModelController {
             rev = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
         } catch (AccessDeniedException e) {
             if (e instanceof AccessDeniedException) {
-                Model model = Model.findBySubmissionId(params.id)
+                Model model = Model.findByPublicationIdOrSubmissionId(params.id, params.id)
                 log.warn("""\
 An anonymous or restricted access user is trying to retrieve this model: ${model.submissionId}""")
-                int revisionNumber = model.revisions.size() - 1 // get the latest revision
+                int revisionNumber = -1
                 if (params.revisionId) {
-                   revisionNumber = Integer.parseInt(params.revisionId)
+                    revisionNumber = Integer.parseInt(params.revisionId)
                 }
-                Revision revision = revisionNumber >= 0 ? model.revisions.getAt(revisionNumber) : model.revisions.last()
+                Revision revision = revisionNumber >= 0 ? model.revisions.getAt(revisionNumber-1) : model.revisions.last()
                 if (!revision) {
                     forward(controller: 'errors', action: 'error404')
                     return
@@ -253,7 +257,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                 model.publication = null
                 rev.format = new ModelFormatTransportCommand()
                 rev.files = new ArrayList<>()
-                rev.description = "A model with this identifier exists in the system, but you do not have the necessary permissions to access it"
+                rev.description = g.message(code: "net.biomodels.jummp.core.model.show.MessageForPrivateModel")
                 isPrivateModel = true
             }
         }
@@ -263,7 +267,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                 return
             }
             if (isPrivateModel) {
-                render(view: "showBasicView", model: [id: rev.model.submissionId])
+                render(view: "showBasicView", model: [id: rev.model.submissionId, description: rev.description])
                 return
             } else {
                 final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
@@ -283,15 +287,14 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     modelDelegateService.getAllRevisions(PERENNIAL_ID)
                 CurationNotesTransportCommand curationNotes =
                     metadataDelegateService.fetchCurationNotes(rev)
-                String curationStatus = metadataDelegateService.fetchCurationStatus(rev)
+                String curationState = rev.curationState.name()
+                List<String> possibleCurationStates = CurationState.values()*.name()
                 List<String> originalModels = metadataDelegateService.fetchOriginalModels(rev)
                 Map<String, String> modellingApproaches =
                     metadataDelegateService.fetchModellingApproaches(rev)
-		        Collection<GrantedAuthority> grantedAuthorities = springSecurityService.getPrincipal().getAuthorities()
-                Set<String> roleNames = grantedAuthorities.collect {
-                    it.getAuthority()
-                }
-                boolean hasCuratorRole = "ROLE_CURATOR" in roleNames
+                boolean hasCuratorRole = hasCuratorRole()
+                boolean supportedForConversion = modelConversionService.isSupportedForConversion(rev)
+		        List<RFTC> convertedFilesTC = modelConversionService.getConvertedFiles(rev)
                 def model = [revision               : rev,
                              authors                : rev.model.creators,
                              allRevs                : revs,
@@ -305,11 +308,14 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                              validationLevel        : rev.getValidationLevelMessage(),
                              certComment            : rev.getCertificationMessage(),
                              flags                  : flags,
-                             curationStatus         : curationStatus,
+                             curationState          : curationState,
+                             possibleCurationStates : possibleCurationStates,
                              modellingApproaches    : modellingApproaches,
                              curationNotes          : curationNotes,
                              originalModels         : originalModels,
-                             hasCuratorRole         : hasCuratorRole
+                             hasCuratorRole         : hasCuratorRole,
+                             supportedForConversion : supportedForConversion,
+                             convertedFilesTC       : convertedFilesTC
                 ]
                 if (rev.id == revision.id) {
                     flash.genericModel = model
@@ -629,12 +635,15 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                 // this object persists the latest changes on the upload file page
                 try {
                     def mainMultipartList = request.getMultiFileMap().mainFile
+                    def mainFileDescription = params?.mainFileDescription ?: [""]
+                    if (mainFileDescription instanceof String) {
+                        mainFileDescription = [mainFileDescription]
+                    }
                     def extraFileField = request.getMultiFileMap().extraFiles
                     List<MultipartFile> extraMultipartList = []
                     if (extraFileField instanceof MultipartFile) {
                         extraMultipartList = [extraFileField]
-                    }
-                    else {
+                    } else {
                         extraMultipartList = extraFileField
                     }
                     def descriptionFields = params?.description ?: [""]
@@ -667,6 +676,8 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                         int posLessThan = filename.indexOf("<")
                         if (posLessThan > 0) {
                             additionalFilesToBeDeleted.add(filename.substring(0, posLessThan))
+                        } else {
+                            additionalFilesToBeDeleted.add(filename)
                         }
                     }
                     if (IS_DEBUG_ENABLED) {
@@ -682,6 +693,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
 
                     def cmd = new UploadFilesCommand()
                     cmd.mainFile = mainMultipartList
+                    cmd.mainFileDescription = mainFileDescription
                     cmd.extraFiles = extraMultipartList
                     cmd.mainDeletes = mainsToBeDeleted
                     cmd.extraDeletes = additionalFilesToBeDeleted
@@ -690,34 +702,54 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                         log.debug "Data binding done: ${cmd.properties}"
                     }
                     flow.workingMemory.put("UploadCommand", cmd)
-                    // parse JSON string of the main files populated on GUI
-                    // store them into the working memory in mains_in_working variable
+                    // store the main files uploaded from the upload flow
+                    // into the working memory variable named mains_in_working
                     Map<String, String> mainFiles = new HashMap<String, String>()
-                    def slurper0 = new JsonSlurper()
-                    def res = slurper0.parseText(params.mainFilesInWorking)
-                    if (res["files"]) {
-                        def workingFiles = res["files"]
-                        workingFiles.each { f ->
-                            mainFiles.put(f["filename"], f["description"])
+                    // submit new models, add new main file
+                    if (params.mainFileUpload && params.mainFileDescription) {
+                        // the main file has not been updated any more when
+                        // the user goes back and forth between the file upload screen
+                        // and the model information during the upload flow
+                        def paramFile = params.mainFileUpload
+                        def paramDesc = params.mainFileDescription
+                        List fileNames = paramFile instanceof String ? [paramFile] : paramFile
+                        List descriptions = paramDesc instanceof String ? [paramDesc] : paramDesc
+                        fileNames.eachWithIndex { String fileName, int index ->
+                            mainFiles.put(fileName, descriptions[index].encodeAsHTML())
                         }
-                        flow.workingMemory.put("mains_in_working", mainFiles)
                     } else {
-                        log.debug("There is an error while loading the latest changes on the main files")
+                        // add the main files when
+                        // - the submission flow has just started
+                        // - the main files have been removed and added again
+                        cmd.mainFile.eachWithIndex{ MultipartFile entry, int index ->
+                            String originalFilename = entry.originalFilename
+                            String description = cmd.mainFileDescription[index].encodeAsHTML()
+                            mainFiles.put(originalFilename, description)
+                        }
                     }
+                    flow.workingMemory.put("mains_in_working", mainFiles)
 
-                    // store additional files existing on UI, i.e. the files are in updated process
-                    // data stored are a map of file names and corresponding descriptions.
+                    // retrieve the additional files from the upload process.
+                    // The result is the map of file names and corresponding descriptions.
                     // For instance, manual.pdf: guidelines and help, readme.txt: introduction and preface, ...
                     Map<String, String> additionalFiles = new HashMap<String, String>()
-                    def slurper = new JsonSlurper()
-                    def result = slurper.parseText(params.additionalFilesInWorking)
-                    if (result["files"]) {
-                        def workingFiles = result["files"]
-                        workingFiles.each { f ->
-                            additionalFiles.put(f["filename"], f["description"])
+                    // add the existing files that were already uploaded
+                    if (params.existedExtraFiles && params.existedExtraFileDescriptions) {
+                        def paramFile = params.existedExtraFiles
+                        def paramDesc = params.existedExtraFileDescriptions
+                        List fileNames = paramFile instanceof String ? [paramFile] : paramFile
+                        List descriptions = paramDesc instanceof String ? [paramDesc] : paramDesc
+                        fileNames.eachWithIndex { String fileName, int index ->
+                            additionalFiles.put(fileName, descriptions[index].encodeAsHTML())
                         }
-                        flow.workingMemory.put("additionals_in_working", additionalFiles)
                     }
+                    // add the recently uploaded files
+                    if (cmd.extraFiles && cmd.description) {
+                        cmd.extraFiles.eachWithIndex { MultipartFile f, int index ->
+                            additionalFiles.put(f.originalFilename, cmd.description[index].encodeAsHTML())
+                        }
+                    }
+                    flow.workingMemory.put("additionals_in_working", additionalFiles)
                 }
                 catch(Exception e) {
                     e.printStackTrace();
@@ -804,14 +836,19 @@ Error in uploading files. Cmd did not validate: ${cmd.getProperties()}""")
                     */
 
                     // FOR THE MAIN FILES
-                    // Transfer uploaded files to File objects
+                    // Copy the recently uploaded files to the exchanged folder if they are available
                     List<File> mainFileList
-                    if (cmd.mainFile) {
-                        // main files might be just uploaded
+                    if (cmd.mainFile?.first().size > 0) {
+                        // the main files might be just uploaded
                         mainFileList = transferFiles(parent, cmd.mainFile)
+                        if (mainFileList.size() == 0) {
+                            log.error("""\
+There is an error while attempting to copy the main files
+wrapped in ${cmd.mainFile.inspect()} to the exchanged folder""")
+                        }
                     }
-                    // Build a map of main file objects from the working main files
-                    Map<File, String> mainFilesMap = new HashMap<File, String>()
+                    // Build a map of the main file objects from the working main files
+                    Map<File, String> mainFilesMap = new LinkedHashMap<File, String>()
                     if (flow.workingMemory.containsKey("mains_in_working")) {
                         def mains_in_working = flow.workingMemory.get("mains_in_working") as HashMap<String, String>
                         mains_in_working.each {String keyAsFilename, String valueAsDescription ->
@@ -819,19 +856,20 @@ Error in uploading files. Cmd did not validate: ${cmd.getProperties()}""")
                         }
                         flow.workingMemory["submitted_mains"] = mainFilesMap
                     }
+
                     // FOR THE ADDITIONAL FILES
-                    // Transfer uploaded files to File objects
+                    // Copy the recently uploaded files to the exchanged folder if they are available
                     List<File> extraFileList
-                    if (!cmd.extraFiles?.isEmpty()) {
+                    if (cmd.extraFiles) {
                         extraFileList = transferFiles(parent, cmd.extraFiles)
                         if (extraFileList.size() == 0) {
-                            log.debug("""\
+                            log.error("""\
 There is an error while attempting to copy the supplemental files
-wrapped in ${cmd.extraFiles.inspect()} to exchanged folder""")
+wrapped in ${cmd.extraFiles.inspect()} to the exchanged folder""")
                         }
                     }
-                    // Build a map of additional file objects from the working additional files
-                    Map<File, String> additionalFilesMap = new HashMap<File, String>()
+                    // Build a map of the additional file objects from the working additional files
+                    Map<File, String> additionalFilesMap = new LinkedHashMap<File, String>()
                     if (flow.workingMemory.containsKey("additionals_in_working")) {
                         def additionals_in_working =
                             flow.workingMemory.get("additionals_in_working") as HashMap<String, String>
@@ -843,7 +881,7 @@ wrapped in ${cmd.extraFiles.inspect()} to exchanged folder""")
 
                     if (IS_DEBUG_ENABLED) {
                         log.debug """\
-About to submit ${mainFileList.inspect()} and ${additionalFilesMap.inspect()}."""
+About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}."""
                     }
 
                     // FOR THE DELETED FILES
@@ -858,7 +896,7 @@ About to submit ${mainFileList.inspect()} and ${additionalFilesMap.inspect()}.""
 
             }
             on("MainFileMissingError") {
-                flash.flashMessage = "submission.upload.error.fileerror"
+                flash.flashMessage = "submission.upload.error.file.missing"
             }.to "uploadFiles"
             on("AdditionalReplacingMainError") {
                 flash.flashMessage = "submission.upload.error.additional_replacing_main"
@@ -907,7 +945,10 @@ About to submit ${mainFileList.inspect()} and ${additionalFilesMap.inspect()}.""
                 flash.modelFormatDetectedAs = flow.workingMemory.get("model_type").identifier
             }.to "uploadFiles"
             on("FilesNotValid") {
-                flash.flashMessage = "submission.upload.error.fileerror"
+                String actuallErrorMessage = flow.workingMemory.remove("validation_error") as String
+                String[] args = [actuallErrorMessage]
+                flash.flashMessage = messageSource.getMessage("submission.upload.error.file.invalid",
+                    args, Locale.getDefault())
             }.to "uploadFiles"
             on(Exception).to "handleException"
         }
@@ -1281,6 +1322,32 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
     }
 
     /**
+     * Update the curation status of the model
+     */
+    def updateCurationState() {
+        def requestObject = request.JSON
+        if (!requestObject['revisionNumber'] || !requestObject['modelId'] || !requestObject['curationState']) {
+            response.status = 400
+            render([message: 'Bad request'] as JSON)
+            return
+        }
+
+        int revision = Integer.parseInt(requestObject['revisionNumber'] as String)
+        String modelId = requestObject['modelId']
+        boolean canUpdate = modelDelegateService.canAddRevision(modelId as String)
+        boolean hasCuratorRole = hasCuratorRole()
+        if (canUpdate && hasCuratorRole) {
+            CurationState curationState = CurationState.valueOf(requestObject['curationState'] as String)
+            modelDelegateService.updateCurationStateRevision(modelId, revision, curationState)
+            render([message: "Curation status has been saved successfully"] as JSON)
+            return
+        }
+        response.status = 401
+        render([message: "You do not have right permissions to change the curation status"] as JSON)
+    }
+
+
+    /**
      * Display basic information about the model
      */
     def summary = {
@@ -1387,5 +1454,13 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
             }
         }
         return true
+    }
+
+    private boolean hasCuratorRole() {
+        Collection<GrantedAuthority> grantedAuthorities = springSecurityService.getPrincipal().getAuthorities()
+        Set<String> roleNames = grantedAuthorities.collect {
+            it.getAuthority()
+        }
+        "ROLE_CURATOR" in roleNames
     }
 }

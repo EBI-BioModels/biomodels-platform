@@ -36,8 +36,8 @@ import grails.plugin.springsecurity.authentication.GrailsAnonymousAuthentication
 import groovy.json.JsonBuilder
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.model.ModelListSorting
-import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
+import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.search.OrderedFacet
 import net.biomodels.jummp.search.SearchResponse
@@ -45,7 +45,6 @@ import net.biomodels.jummp.search.SortOrder
 import net.biomodels.jummp.webapp.rest.search.BrowseResults
 import net.biomodels.jummp.webapp.rest.search.SearchResults
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Facet
-import uk.ac.ebi.ddi.ebe.ws.dao.model.common.FacetValue
 
 @Secured(['IS_AUTHENTICATED_FULLY'])
 class SearchController {
@@ -152,7 +151,7 @@ class SearchController {
     }
 
     /**
-     * Default action showing a list view
+     * Default action showing a archive view
      */
     def archive() {
         sanitiseParams()
@@ -225,7 +224,7 @@ class SearchController {
             response.setHeader("Content-disposition", "attachment;filename=\"${filename}\"")
             response.outputStream << new ByteArrayInputStream(data)
         } else {
-            def params = [query: "*:*", flashMessage: g.message(code: "jummp.search.download.unavailable.warningMessage")]
+            def params = [query: "*:*", flashMessage: g.message(code: "jummp.search.download.model.unavailable.warningMessage")]
             forward(action: 'search', params: params)
             return [query: "*:*"]
         }
@@ -239,7 +238,7 @@ class SearchController {
         int totalCount
         if (query?.trim()) {
             SearchResponse response = searchService.searchModels(query, sortOrder, paginationCriteria)
-            ArrayList<ModelTransportCommand> res = response.results
+            ArrayList<MTC> res = response.results
             totalCount = response.totalCount
             if (res.size() > 0) {
                 println "Found(s): ${res.size()} records."
@@ -256,35 +255,6 @@ class SearchController {
             }
         }
         JsonBuilder builder = new JsonBuilder(facets)
-
-        /*int sortDir = 1
-        if (sortDirection && sortDirection == "asc") {
-            sortDir = -1
-        }
-        switch (sortBy) {
-            case "name":
-                models = models.sort{ m1, m2 -> sortDir * m2.name.compareTo(m1.name) }
-                break
-            case "format":
-                models = models.sort{ m1, m2 -> sortDir * m2.format.name.compareTo(m1.format.name) }
-                break
-            case "submitter":
-                models = models.sort{ m1, m2 -> sortDir * m2.submitter.compareTo(m1.submitter) }
-                break
-            case "submitted":
-                models = models.sort{ m1, m2 ->
-                    sortDir * m2.submissionDate.getTime() - m1.submissionDate.getTime()
-                }
-                break
-            case "modified":
-                models = models.sort{ m1, m2 ->
-                    sortDir * m2.lastModifiedDate.getTime() - m1.lastModifiedDate.getTime()
-                }
-                break
-            default:
-                models = models.sort{ m1, m2 -> sortDir * m2.name.compareTo(m1.name) }
-                break
-        }*/
 
         if (offset > 0 && offset < models.size()) {
             models = models[offset..-1]
@@ -369,64 +339,15 @@ class SearchController {
         modelsDomain.each {
             models.add(new ModelAdapter(model: it).toCommandObject())
         }
-        List<Facet> basicFacets = buildBasicFacets(models)
+        List<Model> myModels = modelService.getMyModels(null, false)
+        List<MTC> myMTCs  = myModels.collect {
+            new ModelAdapter(model: it).toCommandObject()
+        }
+
+        List<Facet> basicFacets = searchService.buildBasicFacets(myMTCs)
         int totalCount = modelService.getModelCount(filter, false)
         return [models: models, facets: basicFacets, modelsAvailable: totalCount, sortBy: sortBy,
-                sortDirection: sortDirection, offset: offset, length: length]
-    }
-
-    private List<Facet> buildBasicFacets(List<ModelTransportCommand> models) {
-        List<Facet> facets = []
-        def formats = models.collect(
-            new HashSet(), {
-            [it.format.identifier, it.format.name, 0]
-        })
-        def submitters = models.collect(
-            new HashSet(), {
-            [it.submitter, 0]
-        })
-
-        models.each {
-            String format = it.format.identifier
-            formats.each {
-                if (it[0] == format) {
-                    it[2] += 1
-                }
-            }
-
-            String submitter = it.submitter
-            submitters.each {
-                if (it[0] == submitter) {
-                    it[1] += 1
-                }
-            }
-        }
-
-        def facet = new Facet()
-        List<FacetValue> fvs = []
-        facet.id = "Format"
-        facet.label = "Format"
-        facet.facetValues = []
-        formats.each {
-            FacetValue fv = new FacetValue(label: it[1], value: it[0], count: it[2])
-            fvs << fv
-        }
-        facet.facetValues = fvs
-        facets << facet
-
-        facet = new Facet()
-        fvs = []
-        facet.id = "Submitter"
-        facet.label = "Collaborator"
-        facet.facetValues = []
-        submitters.each {
-            FacetValue fv = new FacetValue(label: it[0], value: it[0], count: it[1])
-            fvs << fv
-        }
-        facet.facetValues = fvs
-        facets << facet
-
-        facets
+                sortDirection: sortDirection, offset: offset, length: length, query: filter]
     }
 
     private String getSortColumn(int sc) {

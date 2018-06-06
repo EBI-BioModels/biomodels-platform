@@ -1255,5 +1255,15 @@ databaseChangeLog = {
     include file: '20171009_changeConstraints_Notification.groovy'
 
     include file: '20171124_setRepositoryFileDescriptionNotNull.groovy'
+
+    include file: '20180327_add_curation_state.groovy'
+
+    include file: '20180409_addInternalComment_CurationNotes.groovy'
+
+	include file: '20180417_change_DataTypes_Constraints_CurationNotes.groovy'
+
+    include file: '20180515_modelDeleted_personName_idx.groovy'
+
+    include file: '20180517_create_model_class.groovy'
 }
 

@@ -164,8 +164,8 @@ class ModelService {
     **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getAllModels")
-    public List<Model> getAllModels(int offset, int count, boolean sortOrder, ModelListSorting sortColumn,
-                String filter = null, boolean deletedOnly=false) {
+    List<Model> getAllModels(int offset, int count, boolean sortOrder, ModelListSorting sortColumn,
+                                    String filter = null, boolean deletedOnly = false) {
         Map metaParams
         if (offset < 0 || count <= 0) {
             // safety check
@@ -179,109 +179,133 @@ class ModelService {
         String sortingDirection = sortOrder ? 'asc' : 'desc'
 
         boolean filterIsValid = filterValid(filter)
-
+        String type
         Map namedParams = [:]
+        // use object IDs here to minimise the number SQL queries and JOINS Hibernate uses.
+        List filteredFormats, filteredUsers
         if (filterIsValid) {
-            if (filter.take(6) == "Format") {
-                namedParams.put("filter", "%${filter.drop(7).toLowerCase()}%")
-            }
-            if (filter.take(9) == "Submitter") {
-                namedParams.put("filter", "%${filter.drop(10).toLowerCase()}%")
+            boolean isTypeQuery = filter?.substring(0,4)?.equals("type")
+            if (!isTypeQuery) {
+                if (filter.take(6) == "Format") {
+                    String formatId = filter.drop(7)
+                    filteredFormats = ModelFormat.executeQuery(
+                        "SELECT id FROM ModelFormat WHERE identifier = :p", [p: formatId]
+                    )
+                    namedParams.put("formats", filteredFormats)
+                }
+                if (filter.take(9) == "Submitter") {
+                    String personName = filter.drop(10)
+                    filteredUsers = User.executeQuery(
+                        "SELECT u.id FROM User u JOIN u.person p WHERE p.userRealName = :n",
+                        [n: personName]
+                    )
+                    namedParams.put("users", filteredUsers)
+                }
+            } else {
+                // type := < private | shared | public >
+                type = filter.drop(5).toLowerCase()
             }
         }
-
         String query
         // for Admin - sees all (not deleted) models
-        if (SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
-            query = getQueryForAdmin(sortColumn, deletedOnly, filterIsValid, sortingDirection)
-
-        } else {
+        boolean isAdmin = SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")
+        query = getQueryStringForUser(sortColumn, deletedOnly, filterIsValid, type,
+            filteredFormats, filteredUsers, sortingDirection, isAdmin)
+        if (!isAdmin) {
+            List permissions = new ArrayList([BasePermission.READ.getMask(), BasePermission.ADMINISTRATION.getMask()])
             Set<String> roles = getSpringDatabaseRoles()
-
-            query = getQueryForUser(sortColumn, deletedOnly, filterIsValid, sortingDirection)
             namedParams += [
-                className  :  Revision.class.getName(),
-                permissions: [BasePermission.READ.getMask(), BasePermission.ADMINISTRATION.getMask()],
-                roles      :  roles
+                className  : Revision.class.getName(),
+                permissions: permissions,
+                roles      : roles
             ]
         }
-
-        List<List<Model, String, Date, String, Long, String>> resultSet = Model.executeQuery(query, namedParams, metaParams)
-        return resultSet.collect{ it.first() }
+        def results = []
+        try {
+            results = Model.getAll(Model.executeQuery(query, namedParams, metaParams))
+        } catch (Exception e) {
+            log.error("Exception $e while executing $query with '$namedParams' (page '$metaParams')")
+        }
+        results
     }
 
-    private String getQueryForUser(ModelListSorting sortColumn, boolean deletedOnly, boolean filterIsValid, String sortingDirection) {
-        String query = '''
-SELECT DISTINCT m, r.name, r.description, r.uploadDate, r.format.name, m.id, u.person.userRealName
-FROM Revision AS r
-JOIN r.model AS m
-JOIN r.owner as u
-WHERE r.deleted = false
-'''
-//do we want to show information from the latest revision?
-        if (sortColumn == ModelListSorting.LAST_MODIFIED || sortColumn == ModelListSorting.FORMAT || sortColumn == ModelListSorting.NAME) {
-            query += '''AND r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2,
-                        AclEntry ace2  where r.model=r2.model
-                        AND r2.id=ace2.aclObjectIdentity.objectId
-                        AND ace2.aclObjectIdentity.aclClass.className = :className
-                        AND ace2.sid.sid IN (:roles) AND ace2.mask IN (:permissions)
-                        AND ace2.granting = true)'''
-        } else {
-            // otherwise sortColumn must be the following .. ie we want to sort by the first revision
-            // (sortColumn==ModelListSorting.SUBMITTER || sortColumn==ModelListSorting.SUBMISSION_DATE)
-            query += '''AND r.revisionNumber=(SELECT MIN(r2.revisionNumber) from Revision r2,
-                        AclEntry ace2  where r.model=r2.model
-                        AND r2.id=ace2.aclObjectIdentity.objectId
-                        AND ace2.aclObjectIdentity.aclClass.className = :className
-                        AND ace2.sid.sid IN (:roles) AND ace2.mask IN (:permissions)
-                        AND ace2.granting = true)'''
-        }
-
-        query += " AND m.deleted = ${deletedOnly} "
-        if (filterIsValid) {
-            query +='''
-AND(
-lower(r.format.identifier) like :filter OR
-lower(u.person.userRealName) like :filter
-)
-'''
-        }
-        query += '''
-ORDER BY
-'''
-        query += " " + getSortColumnAsString(sortColumn) + " " + sortingDirection
-        return query
-    }
-
-    private String getQueryForAdmin(ModelListSorting sortColumn, boolean deletedOnly, boolean filterIsValid, String sortingDirection) {
-        String query = '''
-SELECT DISTINCT m, r.name, r.description, r.uploadDate, r.format.name, m.id, u.person.userRealName
-FROM Revision AS r
-JOIN r.model AS m JOIN r.owner as u
+    private String getQueryStringForUser(ModelListSorting sortColumn, boolean deletedOnly,
+                                         boolean filterIsValid, String type,
+                                         List filteredFormats, List filteredUsers,
+                                         String sortingDirection, boolean isAdmin = false) {
+        String query = """\
+SELECT m.id
+FROM Revision AS r RIGHT OUTER JOIN r.model AS m
 WHERE
-'''
-        if (sortColumn == ModelListSorting.LAST_MODIFIED || sortColumn == ModelListSorting.FORMAT ||
-            sortColumn == ModelListSorting.NAME) {
-            query += '''r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2 where r.model=r2.model) AND '''
-        } else if (sortColumn == ModelListSorting.SUBMITTER || sortColumn == ModelListSorting.SUBMISSION_DATE) {
-            query += '''r.revisionNumber=(SELECT MIN(r2.revisionNumber) from Revision r2 where r.model=r2.model) AND '''
+    r.deleted = false
+    AND m.deleted = ${deletedOnly}
+    ${return filteredFormats ? "AND r.format.id IN (:formats)" : ""}
+    ${return filteredUsers ? "AND r.owner.id IN (:users)" : ""}
+"""
+        if (isAdmin) {
+            query = """\
+$query AND r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2 where r.model=r2.model)"""
         } else {
-            query += '''r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2 where r.model=r2.model) AND '''
+            query = """\
+$query AND r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2, AclEntry ace
+WHERE r.model = r2.model
+    AND r2.id = ace.aclObjectIdentity.objectId
+    AND ace.aclObjectIdentity.aclClass.className = :className
+    AND ace.sid.sid IN (:roles)
+    AND ace.mask IN (:permissions))"""
         }
-        query += "m.deleted = ${deletedOnly} AND r.deleted = false"
-        if (filterIsValid) {
-            query +='''
-AND(
-lower(r.format.identifier) like :filter OR
-lower(u.person.userRealName) like :filter
-)
-'''
+
+        User u = springSecurityService.currentUser
+        switch(type?.toLowerCase()) {
+            case "private":
+                query = "$query AND r.owner.id = ${u.id}"
+                break
+            case "shared":
+                query = "$query AND r.owner.id != ${u.id}"
+                break
+            default:
+                if (type) {
+                    log.warn("Ignoring unsupported permission level '$type'.")
+                }
+                break
         }
-        query += '''
-ORDER BY
-'''
-        query += " " + getSortColumnAsString(sortColumn) + " " + sortingDirection
+
+        query = """$query AND r.state = '${ModelState.UNPUBLISHED}' 
+ORDER BY ${getSortColumnAsString(sortColumn)} ${sortingDirection}"""
         return query
+    }
+
+    /**
+     * Returns list of Models with other essential information the user has access to.
+     *
+     * Searches for all Models the current user has access to, then return the model, the model name and
+     * the date when the model was uploaded
+     * @param deletedOnly   false by default
+     * @return List of composite objects
+     **/
+    @Profiled(tag = "modelService.getAllModelWithDetails")
+    List getAllModelWithDetails(boolean deletedOnly = false) {
+        String query = """\
+SELECT m, r.name, r.uploadDate
+FROM Revision AS r RIGHT OUTER JOIN r.model AS m
+WHERE
+    r.deleted = false
+    AND m.deleted = ${deletedOnly}
+    AND r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2, AclEntry ace
+                            WHERE r.model = r2.model
+                                AND r2.id = ace.aclObjectIdentity.objectId
+                                AND ace.aclObjectIdentity.aclClass.className = :className
+                                AND ace.sid.sid IN (:roles)
+                                AND ace.mask IN (:permissions))"""
+
+        List permissions = new ArrayList([BasePermission.READ.getMask(), BasePermission.ADMINISTRATION.getMask()])
+        Set<String> roles = getSpringDatabaseRoles()
+        Map namedParams = [
+            className  : Revision.class.getName(),
+            permissions: permissions,
+            roles      : roles
+        ]
+        Model.executeQuery(query, namedParams, [:])
     }
 
     /**
@@ -290,7 +314,7 @@ ORDER BY
      * @return
      */
     // ToDo: this should really be enum-properties in the ModelListSorting enum itself.
-    private java.lang.String getSortColumnAsString(ModelListSorting sortColumn) {
+    private String getSortColumnAsString(ModelListSorting sortColumn) {
         String result
         switch (sortColumn) {
             case ModelListSorting.NAME:
@@ -391,14 +415,27 @@ ORDER BY
     **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getModelCount")
-    public Integer getModelCount(String filter = null, boolean deletedOnly = false) {
+    Integer getModelCount(String filter = null, boolean deletedOnly = false) {
         ModelListSorting sorting
         List<Model> resultSet = getAllModels(-1, 0, false, sorting, filter, false)
-        return resultSet.size()
+        resultSet.size()
+    }
+
+    /**
+     * Returns the list of Models the user has access to. These models only include private and shared ones.
+     *
+     * @param filter Optional filter for search
+     * @see ModelService#getAllModels()
+     **/
+    @PostLogging(LoggingEventType.RETRIEVAL)
+    @Profiled(tag="modelService.getMyModels")
+    List<Model> getMyModels(String filter = null, boolean deletedOnly = false) {
+        ModelListSorting sorting
+        getAllModels(-1, 0, false, sorting, filter, false)
     }
 
     /** convenience method to check if our filter is OK */
-    private java.lang.Boolean filterValid(String filter) {
+    private boolean filterValid(String filter) {
         return filter && filter.length() >= 3
     }
 
@@ -419,6 +456,10 @@ ORDER BY
             throw new AccessDeniedException("No access to Model with Id ${id}".toString())
         }
         return model
+    }
+
+    Model getModelBySubmissionId(String submissionId) {
+        Model.findBySubmissionId(submissionId)
     }
 
     /**
@@ -671,7 +712,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             def revisionAdapter = new RevisionAdapter(revision: attachedRevision)
             RevisionTransportCommand cmd = revisionAdapter.toCommandObject()
             indexModelRevision(cmd)
-            convertModelToOtherFormats(cmd)
+            //convertModelToOtherFormats(cmd)
             return attachedRevision
         }
         revision
@@ -944,7 +985,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             Revision r = attachedModel.revisions.first()
             RevisionTransportCommand cmd = new RevisionAdapter(revision: r).toCommandObject()
             indexModelRevision(cmd)
-            convertModelToOtherFormats(cmd)
+            //convertModelToOtherFormats(cmd)
             return attachedModel
         }
         model
@@ -2174,9 +2215,10 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         }
 */
 
-        /*if (MAKE_PUBLICATION_ID) {
+        boolean curatedModel = isCurated(revision)
+        if (MAKE_PUBLICATION_ID && curatedModel) {
             model.publicationId = model.publicationId ?: publicationIdGenerator.generate()
-        }*/
+        }
         model.firstPublished = new Date()
         aclUtilService.addPermission(revision, "ROLE_USER", BasePermission.READ)
         aclUtilService.addPermission(revision, "ROLE_ANONYMOUS", BasePermission.READ)
@@ -2235,15 +2277,15 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             throw new IllegalArgumentException("Revision may not be deleted")
         }
         Model model = revision.model
-        // grant read access this model revision to all existing curators
+        // grant write access this model revision to all existing curators
         List<User> curators = userService.getUsersByRole("ROLE_CURATOR")
         curators.each { curator ->
-            grantReadAccess(model, curator)
+            grantWriteAccess(model, curator)
         }
         // grant read access and administrative privilege to future curators
         aclUtilService.addPermission(revision, "ROLE_CURATOR", BasePermission.ADMINISTRATION)
         aclUtilService.addPermission(revision, "ROLE_CURATOR", BasePermission.READ)
-        revision.state = ModelState.UNDER_CURATION
+        revision.state = ModelState.UNPUBLISHED
         revision.save(flush: true)
     }
 
@@ -2387,5 +2429,15 @@ WHERE
         log.info("""\
 Try to connect with Conversion service to export the model ${cmd.model.submissionId} under the other formats""")
         modelConversionService.generateExports(cmd)
+    }
+
+    /**
+     * Checking the curation status of a given revision
+     *
+     * @param   a revision  A given revision for checking its curation status
+     * @return  a boolean   true if the revision was marked CURATED
+     */
+    private boolean isCurated(Revision revision) {
+        revision.curationState == CurationState.CURATED
     }
 }

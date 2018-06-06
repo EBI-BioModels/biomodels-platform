@@ -298,6 +298,7 @@ grails.plugin.springsecurity.userLookup.userDomainClassName = 'net.biomodels.jum
 grails.plugin.springsecurity.userLookup.authorityJoinClassName = 'net.biomodels.jummp.plugins.security.UserRole'
 grails.plugin.springsecurity.authority.className = 'net.biomodels.jummp.plugins.security.Role'
 grails.plugin.springsecurity.securityConfigType = "Annotation" // "Annotation", "InterceptUrlMap", "Requestmap"
+grails.plugin.springsecurity.successHandler.alwaysUseDefaultTargetUrl = false
 
 jummp.controllerAnnotations = [
     // /model/create and /model/create?execution=e.*s1 show the display the submission guidelines, which should be visible without logging in
@@ -401,6 +402,14 @@ if (jummpConfig.jummp.model.curators.mailinglist) {
     jummp.model.curators.mailinglist = jummpConfig.jummp.model.curators.mailinglist
 }
 
+if (jummpConfig.jummp.cache.dir) {
+    jummp.cache.dir = jummpConfig.jummp.cache.dir
+}
+
+if (jummpConfig.jummp.classification.endpoint) {
+    jummp.classification.endpoint = jummpConfig.jummp.classification.endpoint
+}
+
 if (jummp.search.strategy == "solr") {
     if (!(jummpConfig.jummp.search.url instanceof ConfigObject)) {
         final Pattern URL_PATTERN = ~/http:\/\/[a-zA-Z0-9\.\-_]+(:[0-9]+)?(\/[a-zA-Z0-9\-\._]+)*/
@@ -434,6 +443,21 @@ Please add the setting 'jummp.search.url', pointing to a Solr instance, to your 
     if (!(jummpConfig.jummp.search.exportFolder instanceof ConfigObject)) {
         jummp.search.exportFolder = jummpConfig.jummp.search.exportFolder
     }
+}
+
+// folder containing the exports
+if (!(jummpConfig.jummp.model.exportFolder instanceof ConfigObject)) {
+    jummp.model.exportFolder = jummpConfig.jummp.model.exportFolder
+}
+else {
+    jummp.model.exportFolder = jummp.search.exportFolder
+}
+// external conversion service url
+if (!(jummpConfig.jummp.model.converter.url instanceof ConfigObject)) {
+    jummp.model.converter.url = jummpConfig.jummp.model.converter.url
+}
+else {
+    println "ERROR\tSetting jummp.model.converter.url is undefined. The conversion of the model will be failed."
 }
 
 if (!(jummpConfig.jummp.search.pathToIndexerExecutable instanceof ConfigObject)) {

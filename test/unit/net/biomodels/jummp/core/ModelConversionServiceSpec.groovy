@@ -28,13 +28,13 @@
 * that of the covered work.}
 **/
 
-
-
-
-
+/**
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
+ */
 package net.biomodels.jummp.core
 
 import grails.test.mixin.TestFor
+import net.biomodels.jummp.core.model.ModelConversionService
 import spock.lang.Specification
 
 /**
@@ -50,5 +50,7 @@ class ModelConversionServiceSpec extends Specification {
     }
 
     void "test something"() {
+        expect: "service is already loaded properly"
+        service != null
     }
 }

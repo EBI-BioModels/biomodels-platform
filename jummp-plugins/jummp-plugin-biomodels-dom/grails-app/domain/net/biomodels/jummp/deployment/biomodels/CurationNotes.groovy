@@ -28,10 +28,11 @@ import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.plugins.security.User
 
 /**
- * @short Domain class for storing model of the month information
- * 
+ * @short Domain class for storing the curation notes of a given model revision
  *
- * @author Raza Ali <raza.ali@ebi.ac.uk>
+ * @author
+ *  Raza Ali <raza.ali@ebi.ac.uk>
+ *  Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 class CurationNotes implements Serializable {
     Model model
@@ -40,14 +41,20 @@ class CurationNotes implements Serializable {
     Date dateAdded
     Date lastModified
     String comment
+    /**
+     * The internal comment allows curators to add private comments
+     */
+    String internalComment
     byte[] curationImage
 
     static mapping = {
         comment type: 'text'
+        internalComment type: 'text'
     }
 
     static constraints = {
-        curationImage(nullable: true, maxSize: 5242880) // max of 5MB file
-        comment nullable: true, blank: false
+        curationImage(nullable: false, maxSize: 1_500_000) // approximately 1.44 MB
+        comment(nullable: false, blank: false)
+        internalComment(nullable: true, blank: true)
     }
 }

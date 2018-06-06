@@ -44,8 +44,7 @@
 
 <body>
     <h2>${id}</h2>
-    <p>A model with this identifier exists in the system, but you do not have the necessary
-    permissions to access it.</p>
+    <p>${description}</p>
 </body>
 </html>
 </g:applyLayout>

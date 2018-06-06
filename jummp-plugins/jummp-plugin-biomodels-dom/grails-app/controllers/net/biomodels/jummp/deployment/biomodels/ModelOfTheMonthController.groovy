@@ -32,7 +32,7 @@ package net.biomodels.jummp.deployment.biomodels
 
 import grails.plugin.springsecurity.annotation.Secured
 
-@Secured(['ROLE_ADMIN'])
+@Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
 class ModelOfTheMonthController {
     def modelOfTheMonthService
 

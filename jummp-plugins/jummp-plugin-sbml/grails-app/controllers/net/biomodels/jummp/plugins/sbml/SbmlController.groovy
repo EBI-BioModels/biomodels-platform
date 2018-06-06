@@ -63,7 +63,6 @@ class SbmlController {
             sbmlService.checkConsistency(rev, errors)
             String message = errors.size() > 0 ? ">> with ${errors.size()} error(s):" : ">> no error"
             log.info("checking consistency $message")
-            println("checking consistency $message")
             String report = message
             if (errors.size()) {
                 report = report.concat("<ul>")
@@ -74,7 +73,7 @@ class SbmlController {
                 }
                 report = report.concat("</ul>")
             }
-            redirect(action: "showWithMessage",
+            redirect(controller: "model", action: "showWithMessage",
                 id: rev.identifier(),
                 params: [flashMessage: "Model has been checked consistency with the report: <br/>".concat(report)])
         } catch(AccessDeniedException e) {
@@ -82,23 +81,12 @@ class SbmlController {
             forward(plugin: "jummp-plugin-web-application", controller: "errors", action: "error403")
         } catch(IllegalArgumentException e) {
             log.error(e.message)
-            redirect(action: "showWithMessage",
+            redirect(controller: "model", action: "showWithMessage",
                 id: rev.identifier(),
                 params: [
                     flashMessage: """\
-Model has not been checked consistency because there is a problem with this version of the model. Sorry!"""
+There is a problem with this version of the model while trying to check its consistency."""
                 ])
         }
-    }
-
-    @Secured(['IS_AUTHENTICATED_FULLY'])
-    def showWithMessage() {
-        flash["giveMessage"] = params.flashMessage
-        StringBuilder modelId = new StringBuilder(params.id)
-        if (params.revisionId) {
-            modelId.append('.').append(params.revisionId)
-        }
-        //redirect(plugin: "jummp-plugin-web-application", controller: "model", action: "show", id: modelId.toString())
-        redirect(url: "${grailsApplication.config.grails.serverURL}/${modelId.toString()}")
     }
 }

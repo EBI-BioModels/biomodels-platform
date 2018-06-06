@@ -34,7 +34,7 @@
 <%@ page import="net.biomodels.jummp.qcinfo.*"%>
 
 <%
-    def loadedZips=new HashMap();
+    def loadedZips=new HashMap()
     def zipSupported=[:]
 %>
 <head xmlns="http://www.w3.org/1999/html">
@@ -53,17 +53,24 @@
     <script type='text/javascript'
             src="${grailsApplication.config.grails.serverURL}/js/MathJax-2.6.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
     </script>
+    <g:javascript>
+	    var canUpdate = ${canUpdate};
+    </g:javascript>
         <g:javascript src="jstree/jquery.jstree.js"/>
         <g:javascript src="equalize.js"/>
         <g:javascript src="syntax/shCore.js"/>
         <g:javascript src="syntax/shBrushMdl.js"/>
         <g:javascript src="syntax/shBrushXml.js"/>
-        <g:javascript src="jquery.handsontable.full.js"></g:javascript>
+        <g:javascript src="toastr.min.js"/>
+        <g:javascript src="jquery.handsontable.full.js"/>
         <style>
             <%-- class for buttons on sticky left-hand-side menu --%>
             .ui-button {
                 border-left: none;
                 margin: 0;
+            }
+            .toast {
+                opacity: 1 !important;
             }
             .rounded-header {
                 background-color: rgb(0, 124, 150);
@@ -86,6 +93,7 @@
         <link rel="stylesheet" href="${resource(dir: 'css', file: 'filegrid.css')}" />
         <link rel="stylesheet" href="${resource(dir: 'css/syntax', file: 'shCore.css')}" />
         <link rel="stylesheet" href="${resource(dir: 'css/syntax', file: 'shThemeDefault.css')}" />
+        <link rel="stylesheet" href="${resource(dir: 'css', file: 'toastr.min.css')}"/>
 
         <Ziphandler:outputFileInfoAsJS repFiles="${revision.files.findAll{!it.hidden}}"
                                        loadedZips="${loadedZips}" zipSupported="${zipSupported}"/>
@@ -243,18 +251,42 @@
                             for (var prop in fileProps) {
                                 if (prop!="isInternal" && prop!="Name" && fileProps[prop]
                                     && fileProps[prop]!="null" && prop!="mime" && prop!="showPreview") {
-                                    tcontent.push("<tr><td><b>",prop.replace("_"," "),"</b></td><td>",fileProps[prop])
-                                    tcontent.push("</td></tr>");
+                                    tcontent.push("<tr><td><b>",prop.replace("_"," "),"</b></td>");
+                                    if (prop === "Description") {
+                                        tcontent.push("<td id='fileProp'><div id='fileDescription'><span id='fileDescVal'>", fileProps[prop], "</span><span>&nbsp;</span><span id='fileDesc' class='icon icon-functional' data-icon='e'>&nbsp;</span></div></td></tr>");
+                                    } else {
+                                        tcontent.push("<td>", fileProps[prop], "</td></tr>");
+                                    }
                                 }
                             }
-                            tcontent.push("<tr><td><b>Submitted</b></td><td>",new Date(data[0].commit))
+                            tcontent.push("<tr><td><b>Submitted</b></td><td>", new Date(data[0].commit))
                             tcontent.push("</td></tr>")
-                            tcontent.push("<tr><td><b>Last Modified</b></td><td>",new Date(data[data.length-1].commit))
+                            tcontent.push("<tr><td><b>Last Modified</b></td><td>", new Date(data[data.length-1].commit))
                             tcontent.push("</td></tr>")
 
                             tcontent.push("</table>");
                             $("#tableGoesHere").html(tcontent.join(""));
                             $("#Files").equalize({reset: true});
+			                if (canUpdate) {
+				                console.log("The model can be updated");
+                                $('#fileProp').hover(
+                                    function() {
+                                        $('#fileDesc').css("display", "inline");
+                                    },
+                                    function () {
+                                        $('#fileDesc').css("display", "none");
+                                    }
+                                    //console.log("you're hovering me!");
+                                );
+                                $('#fileDesc').click(function () {
+                                   var currentValue = $('#fileDescVal').html();
+                                   var size = $('#fileProp').width();
+                                   console.log(size);
+                                   var input = '<input id="editFileDescription" value="' + currentValue + '"/>'
+                                   $('#fileDescription').html(input);
+                                   $('#editFileDescription').css("width", "100%");
+                                });
+			                }
                         },
                         error: function(jq, status, errorThrown) {
                             alert(status+".."+errorThrown);
@@ -265,7 +297,12 @@
                     content.push("<table cellpadding='2' cellspacing='5'>")
                     for (var prop in fileProps) {
                         if (prop!="isInternal" && prop!="Name" && fileProps[prop] && fileProps[prop]!="null" && prop!="mime") {
-                            content.push("<tr><td><b>",prop.replace("_"," "),"</b></td><td>",fileProps[prop])
+                            content.push("<tr><td><b>",prop.replace("_"," "),"</b></td>")
+                            if (prop === "Description") {
+                                content.push("<td id='fileProp'><span>&nbsp;</span><span id='fileDesc' class='icon icon-functional' data-icon='e'>&nbsp;</span>");
+                            } else {
+                                content.push("<td>", fileProps[prop]);
+                            }
                             content.push("</td></tr>");
                         }
                     }
@@ -400,6 +437,25 @@
                     }
                 }
             });
+            $('#confirm-model-conversion').dialog({
+                resizable: false,
+                autoOpen: false,
+                height: 250,
+                width: 500,
+                modal: true,
+                buttons: {
+                    Confirm: function() {
+                        var url = "${g.createLink(controller: 'conversion', action: 'convert')}";
+                        url += "?id=${revision.model.submissionId}&revisionId=${revision.revisionNumber}"
+                        $.jummp.openPage(url);
+                        $(this).dialog("close");
+                    },
+                    Cancel: function() {
+                        $(this).dialog("close");
+                    }
+                }
+            });
+
             $('#confirm-model-publish').dialog({
                 resizable: false,
                 autoOpen: false,
@@ -503,12 +559,48 @@
                     primary: "ui-icon-star"
                 }
             }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
+            $("#convert").button({
+                text: false,
+                icons: {
+                    primary: "ui-icon-transferthick-e-w"
+                }
+            }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
+
             $("#panelToggle").button({
                     text:false,
                     icons: {
                         primary: "ui-icon-circle-arrow-e"
                     }
             }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px', 'float':'right'  });
+
+            $("#curation_state_change").on('change', function () {
+                var curationState = this.value;
+                $.ajax({
+                    type: "PUT",
+                    url: $.jummp.createLink("model", "updateCurationState"),
+                    cache: false,
+                    dataType: 'json',
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    data: JSON.stringify({
+                        curationState: curationState,
+                        modelId: "${revision.model.submissionId}",
+                        revisionNumber: "${revision.revisionNumber}"
+                    }),
+                    beforeSend: function() {
+                        toastr.info('Updating curation status...');
+                    },
+                    error: function(jqXHR) {
+                        toastr.clear();
+                        toastr.error(jqXHR.responseText.message);
+                    },
+                    success: function(response) {
+                        toastr.clear();
+                        toastr.success(response.message);
+                    }
+                });
+            });
         });
         displayToolbar(false, false);
 
@@ -623,6 +715,19 @@
                             </button>
                         </li>
                     </g:if>
+                    <g:if test="${hasCuratorRole && supportedForConversion}">
+                        <div id="confirm-model-conversion" title="Model Conversion" style="display:none;">
+                            <p>Exporting this model to other formats uses an online service. This might take time for
+                            uploading and exporting the model. Do you want to proceed the model conversion?</p>
+                        </div>
+                        <li>
+                            <button id="convert"
+                                    class="toolbutton"
+                                    onclick="return $('#confirm-model-conversion').dialog('open');">
+                                Convert This Model To The Other Formats
+                            </button>
+                        </li>
+                    </g:if>
                 </ul>
          </div>
         <div class="ebiLayout_reduceWidth">
@@ -640,6 +745,7 @@
                 </div>
             </g:if>
             <div id="topBar">
+                <div class="message" style="display: block"></div>
                 <div style="float:left;width:75%;">
                     <h2>${revision.name}</h2>
                     <biomd:renderModelOfMonth modelId="${revision.model.id}" />
@@ -670,6 +776,8 @@
                     <li><a href="#Overview">Overview</a></li>
                     <li><a href="#Files">Files</a></li>
                     <li><a href="#History">History</a></li>
+                    <g:if test="${convertedFilesTC}">
+                    <li><a href="#Exports">Exports</a></li></g:if>
                     <!--
                         These specific tabs would be shown based on specific model format. Every tab is deliberately designed
                         for each part/section in the content of model file.
@@ -745,11 +853,30 @@
                         <div class="small-12 medium-4 large-4 columns">
                             <div class="rounded-header"><h4 style="color: #ffffee">Metadata information</h4></div>
                             <g:pageProperty name="page.genericAnnotations"/>
-                            <g:if test="${curationStatus}">
+                            <g:if test="${curationState}">
                             <div class='row'>
                                 <div class="small-12 medium-6 large-4 columns">Curation status</div>
                                 <div class="small-12 medium-6 large-8 columns">
-                                    <biomd:renderCurationStatus curationStatus="${curationStatus}"/></div>
+                                <g:if test="${canUpdate && hasCuratorRole}">
+                                    <select id="curation_state_change">
+                                        <g:each in="${possibleCurationStates}" var="possibleCurationState">
+                                            <g:if test="${possibleCurationState.equals(curationState)}">
+                                                <option value="${possibleCurationState}" selected>
+                                                    <jummp:camelCase message="${possibleCurationState}" />
+                                                </option>
+                                            </g:if>
+                                            <g:else>
+                                                <option value="${possibleCurationState}">
+                                                    <jummp:camelCase message="${possibleCurationState}" />
+                                                </option>
+                                            </g:else>
+                                        </g:each>
+                                    </select>
+                                </g:if>
+                                <g:else>
+                                    <jummp:camelCase message="${curationState}" />
+                                </g:else>
+                                </div>
                             </div></g:if>
                             <g:if test="${modellingApproaches}">
                             <div class='row'>
@@ -783,8 +910,10 @@
                                         <a>${mainFile}</a>
                                     </jummp:findMainFileLabel>
                                     <ul>
-                                        <Ziphandler:outputFileInfoAsHtml repFiles="${revision.files}" loadedZips="${loadedZips}"
-                                                                         zipSupported="${zipSupported}" mainFile="${true}"/>
+                                        <Ziphandler:outputFileInfoAsHtml repFiles="${revision.files}"
+                                                 loadedZips="${loadedZips}"
+                                                 zipSupported="${zipSupported}"
+                                                 mainFile="${true}"/>
                                     </ul>
                                     </li>
                                 </ul>
@@ -793,8 +922,9 @@
                                     <li><a>Additional Files</a>
                                         <ul>
                                             <Ziphandler:outputFileInfoAsHtml repFiles="${revision.files.findAll{!it.hidden}}"
-                                                                 loadedZips="${loadedZips}" zipSupported="${zipSupported}"
-                                                                 mainFile="${false}"/>
+                                                 loadedZips="${loadedZips}"
+                                                 zipSupported="${zipSupported}"
+                                                 mainFile="${false}"/>
                                         </ul>
                                     </li>
                                     </g:if>
@@ -848,10 +978,16 @@
                             </g:each>
                         </ul>
                     </div>
+                    <g:if test="${convertedFilesTC}">
+                    <div id="Exports">
+                        <h3>Below are the converted model files where you could download</h3>
+                        <Ziphandler:renderConvertedFiles convertedFilesTC="${convertedFilesTC}"/>
+                    </div>
+                    </g:if>
                     <g:pageProperty name="page.modelspecifictabscontent" />
                     <g:if test="${curationNotes != null || hasCuratorRole}">
                         <biomd:renderCurationNotesTab curationNotes="${curationNotes}"
-                                                      model="${revision.model}"
+                                                      model="${revision.model}" modelName="${revision.name}"
                                                       hasCuratorRole="${hasCuratorRole}"/>
                     </g:if>
                 </div>

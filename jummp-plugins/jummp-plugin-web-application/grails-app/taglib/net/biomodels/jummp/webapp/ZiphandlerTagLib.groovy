@@ -34,15 +34,11 @@
 
 package net.biomodels.jummp.webapp
 
-import java.nio.file.Files
-import java.nio.file.attribute.BasicFileAttributes
-import java.nio.file.FileSystem
-import java.nio.file.FileSystems
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.nio.file.SimpleFileVisitor
-import java.nio.file.FileVisitResult
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import org.apache.commons.io.FilenameUtils
+
+import java.nio.file.*
+import java.nio.file.attribute.BasicFileAttributes
 
 class ZiphandlerTagLib {
 	static namespace="Ziphandler"
@@ -185,24 +181,40 @@ class ZiphandlerTagLib {
 	}
 
 	def outputFileInfoAsHtml = { attrs ->
-		StringBuilder builder=new StringBuilder()
-		try {
-			if (!attrs.repFiles || attrs.loadedZips==null || attrs.zipSupported==null || attrs.mainFile==null) {
-        		return
-        	}
-        	def loadedZips = attrs.loadedZips
-        	def zipSupported = attrs.zipSupported
-        	attrs.repFiles.each {
-        		if (attrs.mainFile == it.mainFile) {
-        			File f = new File(it.path)
-        			builder.append('''<li rel="file"><a title="''')
-        			builder.append(f.name)
-        			builder.append('''"><span class="pointerhere">''')
-        			String filename = f.name
-        			if (filename.length()>64) {
-        				filename = filename.substring(0,63) + "..."
-        			}
-        			builder.append(filename).append("</span></a>")
+		out << outputFiles(attrs.repFiles, attrs.loadedZips, attrs.zipSupported, attrs.mainFile)
+	}
+
+    def outputConvertedFiles = { attrs ->
+        List<RFTC> convertedFilesTC = attrs.convertedFilesTC
+        out << outputFiles(convertedFilesTC, [:], [:] , false)
+    }
+
+    def renderConvertedFiles = { attrs ->
+        List<RFTC> convertedFilesTC = attrs.convertedFilesTC
+        out << "<ul>"
+        out << render(plugin: "jummp-plugin-web-application",
+            template: "/templates/model/convert/convertedFileShow",
+            collection: convertedFilesTC, var: "fileTC")
+        out << "</ul>"
+    }
+
+    private String outputFiles(List<RFTC> repFiles, HashMap loadedZips, Map zipSupported, boolean mainFile) {
+        StringBuilder builder = new StringBuilder()
+        try {
+            if (!repFiles || loadedZips == null || zipSupported == null || mainFile == null) {
+                return
+            }
+            repFiles.each {
+                if (mainFile == it.mainFile) {
+                    File f = new File(it.path)
+                    builder.append('''<li rel="file"><a title="''')
+                    builder.append(f.name)
+                    builder.append('''"><span class="pointerhere">''')
+                    String filename = f.name
+                    if (filename.length()>64) {
+                        filename = filename.substring(0,63) + "..."
+                    }
+                    builder.append(filename).append("</span></a>")
                     if (it.mimeType != null) {
                         if (it.mimeType.contains('zip')) {
                             builder.append("<ul>")
@@ -210,13 +222,12 @@ class ZiphandlerTagLib {
                             builder.append("</ul>")
                         }
                     }
-	 			    builder.append("</li>")
-        		}
-        	}
-		}
-		catch(Exception e) {
-			e.printStackTrace()
-		}
-		out<<builder.toString()
-	}
+                    builder.append("</li>")
+                }
+            }
+        } catch(Exception e) {
+            e.printStackTrace()
+        }
+        builder.toString()
+    }
 }

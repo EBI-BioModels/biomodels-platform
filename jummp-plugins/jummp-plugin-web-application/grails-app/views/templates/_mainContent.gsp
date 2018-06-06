@@ -92,14 +92,39 @@
                         </div>
                         <div class="small-1 medium-1 large-1 columns" id="download">
                             <g:if test="${action == 'search'}">
+                                <g:if test="${model.state == net.biomodels.jummp.core.model.ModelState.PUBLISHED}">
                                 <input id="chkDownload" type="checkbox" value="${id}"
                                        style="float: right; margin-top: 10px">
+                                </g:if>
+                                <g:else>
+                                    <span class="icon icon-functional" data-icon="L"
+                                          title="This is a private model"
+                                          style="float: right; margin-top: 10px"></span>
+                                </g:else>
                             </g:if>
                         </div>
                     </div>
                     </g:each>
                     </div>
                     <g:javascript>
+                        function flashHtmlMessageBuilder(message) {
+                            return "<div class='alert info'><span class='closebtn'>&times;</span> " +
+                                                "<h5 style='color: #ffffff'>" + message + "</h5> </div>"
+                        }
+
+                        function showFlashMessage(message) {
+                            var shouldShown = typeof $('.alert').val() === "undefined" || $('.alert').val() === "";
+                            if (shouldShown) {
+                                $(message).insertBefore('#flashMessage');
+                            }
+                            $('.closetbn').click(function() {
+                                $(this).slideUp();
+                            });
+                            $('.alert').click(function() {
+                                $(this).slideUp();
+                            });
+                        }
+
                         // reduce font-size of model's notes (i.e. model description)
                         $('[class*="dc:"]').css("font-size", "90%");
                         // show the query string on local search box and string query division
@@ -144,11 +169,19 @@
                                 selectedModels = [];
                                 var operation = $(this).text();
                                 if (operation === "Select all") {
-                                    $('#download > input').prop('checked', true);
-                                    $(this).text("Deselect all");
-                                    $('#download > input').each(function() {
-                                        selectedModels.push($(this).val());
-                                    });
+                                    var downloadCheckbox = $('#download > input');
+                                    if (downloadCheckbox.length > 0) {
+                                        console.log(downloadCheckbox.length);
+                                        downloadCheckbox.prop('checked', true);
+                                        $(this).text("Deselect all");
+                                        downloadCheckbox.each(function() {
+                                            console.log($(this).val());
+                                            selectedModels.push($(this).val());
+                                        });
+                                    } else {
+                                        var htmlMessage = flashHtmlMessageBuilder("${g.message(code: "jummp.search.download.model.unavailable")}");
+                                        showFlashMessage(htmlMessage);
+                                    }
                                 } else {
                                     $('#download > input').prop('checked', false);
                                     $(this).text("Select all");
@@ -164,27 +197,17 @@
                                     // the controller method
                                     window.location = link;
                                 } else {
-                                    var strHtml ="<div class='alert info'><span class='closebtn'>&times;</span> " +
-                                                "<h5 style='color: #ffffff'>Please select at least one model.</h5> </div>";
-                                    var shouldShown = typeof $('.alert').val() === "undefined" || $('.alert').val() === "";
-                                    if (shouldShown) {
-                                        $(strHtml).insertBefore('#flashMessage');
-                                    }
-                                    $('.closetbn').click(function() {
-                                        $(this).slideUp();
-                                    })
-                                    $('.alert').click(function() {
-                                        $(this).slideUp();
-                                    })
+                                    var htmlMessage = flashHtmlMessageBuilder("${g.message(code: "jummp.search.download.model.checkOne")}");
+                                    showFlashMessage(htmlMessage);
                                 }
                             });
-                        }
-                        // show all models ~ reset the current search ==> start a new search
-                        var query = "${queryString}";
-                        if (query !== "*:*") {
-                            var url = "${createLink(controller: 'search', action: "${action}",
-                                        params: [query: "*:*"])}";
-                            $('#resetSearch').html('<a href="' + url + '" title="Clear the current search">Reset</a>');
+                            // show all models ~ reset the current search ==> start a new search
+                            var query = "${queryString}";
+                            if (query !== "*:*") {
+                                var url = "${createLink(controller: 'search', action: "${action}",
+                                                    params: [query: "*:*"])}";
+                                $('#resetSearch').html('<a href="' + url + '" title="Clear the current search">Reset</a>');
+                            }
                         }
                     </g:javascript>
                 </div>
@@ -215,9 +238,17 @@
             Showing ${modelStart} to ${modelEnd} of ${totalCount} models
         </div>
         <div class="dataTables_paginate">
+            <%
+                Map pagedParams = [:]
+            %>
             <g:if test="${currentPage != 1 && numPages > stepPagination}">
-                <a href="${createLink(controller: 'search', action: action,
-                    params: [query: query, offset: 0, numResults: length, sort: params.sort])}">First</a>
+                <%
+                    pagedParams = [offset: 0, numResults: length, sort: params.sort]
+                    if (query) {
+                        pagedParams["query"] = query
+                    }
+                %>
+                <a href="${createLink(controller: 'search', action: action, params: pagedParams)}">First</a>
             </g:if>
             <g:else>
                 First
@@ -227,8 +258,13 @@
                        file="arrow-previous-disable.gif" alt="Previous"/>
             </g:if>
             <g:else>
-                <a href="${createLink(controller: 'search', action: action,
-                    params: [query: query, offset: modelStart - length - 1, numResults: length, sort: params.sort])}">
+                <%
+                    pagedParams = [offset: modelStart - length - 1, numResults: length, sort: params.sort]
+                    if (query) {
+                        pagedParams["query"] = query
+                    }
+                %>
+                <a href="${createLink(controller: 'search', action: action, params: pagedParams)}">
                     <g:img dir="${imagePath}/pagination" absolute="true"  contextPath=""
                            file="arrow-previous.gif" alt="Previous"/>
                 </a>
@@ -246,8 +282,13 @@
                         ${i}
                     </g:if>
                     <g:else>
-                        <a href="${createLink(controller: 'search', action: action,
-                            params: [query: query, offset: (i - 1) * length, numResults: length, sort: params.sort])}">
+                        <%
+                            pagedParams = [offset: (i - 1) * length, numResults: length, sort: params.sort]
+                            if (query) {
+                                pagedParams["query"] = query
+                            }
+                        %>
+                        <a href="${createLink(controller: 'search', action: action, params: pagedParams)}">
                             ${i}
                         </a>
                     </g:else>
@@ -258,15 +299,25 @@
                        file="arrow-next-disable.gif" alt="Next"/>
             </g:if>
             <g:else>
-                <a href="${createLink(controller: 'search', action: action,
-                    params: [query: query, offset: modelStart + length - 1, numResults: length, sort: params.sort])}">
+                <%
+                    pagedParams = [offset: modelStart + length - 1, numResults: length, sort: params.sort]
+                    if (query) {
+                        pagedParams["query"] = query
+                    }
+                %>
+                <a href="${createLink(controller: 'search', action: action, params: pagedParams)}">
                     <g:img dir="${imagePath}/pagination" absolute="true"  contextPath=""
                            file="arrow-next.gif" alt="Next"/>
                 </a>
             </g:else>
             <g:if test="${currentPage != numPages && numPages > stepPagination}">
-                <a href="${createLink(controller: 'search', action: action,
-                    params: [query: query, offset: length * (numPages - 1), numResults: length, sort: params.sort])}">Last</a>
+                <%
+                    pagedParams = [offset: length * (numPages - 1), numResults: length, sort: params.sort]
+                    if (query) {
+                        pagedParams["query"] = query
+                    }
+                %>
+                <a href="${createLink(controller: 'search', action: action, params: pagedParams)}">Last</a>
             </g:if>
             <g:else>
                 Last

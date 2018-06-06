@@ -171,7 +171,7 @@ class DDMoReMetadataInputSource implements MetadataInputSource {
                 ValueContainer thisValueContainer = visit(child)
                 orderedValues.put(child, thisValueContainer)
             }
-            vVertex.children.addAll orderedValues.values()
+            (vVertex as CompositeValueContainer).children.addAll orderedValues.values()
         } else {
             vVertex = new ValueContainer(value: name, uri: uri)
         }

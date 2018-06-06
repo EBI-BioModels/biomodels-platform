@@ -142,6 +142,7 @@ where id = (
     where upload_date = (
         select max(upload_date) from revision where revision_number = 1
     )
+    LIMIT 1
 )
 """)
                 def lastPublished = sql.firstRow "select max(perennialPublicationIdentifier) as pId from model"

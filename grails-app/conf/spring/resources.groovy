@@ -152,4 +152,11 @@ beans = {
     importBeans('classpath:/metadatalib-spring-config.xml')
     // override definition to use the one from the annotation-source-ddmore plugin
     springConfig.addAlias("metadataInfoService", "metadataInformationService")
+
+    jf(com.fasterxml.jackson.core.JsonFactory)
+
+    objectMapper(com.fasterxml.jackson.databind.ObjectMapper, jf) {
+        visibility(com.fasterxml.jackson.annotation.PropertyAccessor.ALL, com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY)
+        configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    }
 }

@@ -87,14 +87,14 @@ grails.project.dependency.resolution = {
         runtime 'mysql:mysql-connector-java:5.1.34'
         runtime "postgresql:postgresql:9.1-901.jdbc4"
 
-        compile "uk.ac.ebi.ddi:ddi-ebe-ws-dao:1.0-SNAPSHOT"
+        compile "uk.ac.ebi.ddi:ddi-ebe-ws-dao:1.0"
         // Jackson DataBinder has 'provided' scope in DDI: See
         //      https://github.com/BD2K-DDI/ddi-base-master/blob/2326b4/pom.xml
         //      https://github.com/BD2K-DDI/ddi-ebeye-ws-dao/blob/8bd08f/pom.xml
         compile "com.fasterxml.jackson.core:jackson-databind:2.5.2"
 
         // remember to update this setting in jummp-plugin-configuration, jummp-plugin-core-api
-        compile "net.biomodels.jummp:AnnotationStore:0.3.2"
+        compile "net.biomodels.jummp:AnnotationStore:0.3.3-SNAPSHOT"
         compile "org.apache.solr:solr-solrj:5.4.1"
         //required by both JSBML and SolrJ
         compile "org.codehaus.woodstox:woodstox-core-lgpl:4.4.1"

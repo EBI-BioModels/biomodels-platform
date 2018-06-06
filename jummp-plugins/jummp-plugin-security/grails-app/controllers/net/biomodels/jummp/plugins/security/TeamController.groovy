@@ -19,9 +19,10 @@
  */
 
 package net.biomodels.jummp.plugins.security
+
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
-import net.biomodels.jummp.core.adapters.PersonAdapter
+import net.biomodels.jummp.core.user.PersonCategory
 
 /**
  * @short Controller class for interacting with user teams.
@@ -186,8 +187,13 @@ class TeamController {
             showStandardErrorMessage()
         }
         else {
-        	def usersInTeam = UserTeam.findAllByTeam(team)
-        	[team: team, users: usersInTeam.collect { new PersonAdapter(person: it.user.person).toCommandObject()}]
+        	List<UserTeam> usersInTeam = UserTeam.findAllByTeam(team)
+        	[team: team, users: usersInTeam.collect { UserTeam ut ->
+                use(PersonCategory) {
+                    ut.user.person.toCommandObject()
+                }
+                //new PersonAdapter(person: it.user.person).toCommandObject()
+            }]
         }
     }
 }

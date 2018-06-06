@@ -188,3 +188,18 @@ $('input[name=orcid]').blur(function() {
         hideNow();
     }
 });
+
+function escapeSpecialLuceneCharacters(facet_value) {
+    facet_value = facet_value.replace(/\+/g, '\\+');
+    facet_value = facet_value.replace(/\?/g, '\\?');
+    facet_value = facet_value.replace(/\*/g, '\\*');
+    facet_value = facet_value.replace(/\(/g, '\\(');
+    facet_value = facet_value.replace(/\)/g, '\\)');
+    facet_value = facet_value.replace(/\[/g, '\\[');
+    facet_value = facet_value.replace(/\]/g, '\\]');
+    facet_value = facet_value.replace(/\{/g, '\\{');
+    facet_value = facet_value.replace(/\}/g, '\\}');
+    facet_value = facet_value.replace(/\:/g, '\\:');
+    facet_value = facet_value.replace(/\//g, '\\/');
+    return facet_value;
+}
