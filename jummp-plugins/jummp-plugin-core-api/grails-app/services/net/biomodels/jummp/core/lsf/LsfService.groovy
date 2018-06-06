@@ -90,6 +90,7 @@ class LsfService implements InitializingBean {
         lsfMiddlewarePassword = grailsApplication.config.jummp.lsf.middleware.password
         lsfApplicationPath = grailsApplication.config.jummp.lsf.application.path
         lsfDefaultQueue = grailsApplication.config.jummp.lsf.queue.default
+        jSch.addIdentity(grailsApplication.config.jummp.lsf.privatekey)
     }
 
     /**
@@ -101,7 +102,6 @@ class LsfService implements InitializingBean {
      */
     synchronized String startLFSClusterJob(LSFApplication application, int nRam, int nCpu) {
         Session session = jSch.getSession(lsfMiddlewareUsername, lsfMiddlewareHost)
-        session.setPassword(lsfMiddlewarePassword)
         session.setConfig("StrictHostKeyChecking", "no")
         session.connect(SESSION_TIMEOUT)
         List<String> command = new ArrayList<>()
