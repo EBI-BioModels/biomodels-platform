@@ -1082,10 +1082,12 @@ submitOriginalFile = { branch, modelId, originalFile, infoMap ->
         def msg = "Cannot submit original version of $modelId -- missing security context"
         throw new IllegalStateException(msg.toString())
     }
+    def originInfo = getSubmissionData(modelId, originalFile, [], [], ORIG_COMMENT_TPL + modelId)
+    def fileTCs = getFilesFromSubmissionData originInfo
     def rftcObjects = getFilesFromAdditionalFolder(modelId, originalFile)
-    def originInfo = rftcObjects["originInfo"]
-    def fileTCs = rftcObjects["fileTCs"]
+    fileTCs.addAll(rftcObjects["fileTCs"])
     def revisionCmd = originInfo.get("revision")
+    revisionCmd.files = fileTCs
     revisionCmd.name = infoMap['name']
 
     def model = modelService.uploadValidatedModel(fileTCs, revisionCmd)
@@ -1402,27 +1404,17 @@ findOriginalFile = { folder, id ->
 /**
  * Returns the list of Repository File Transport Command objects which are handlers of the additional files
  * in the old system. These files could be submitted by the submitter or added by curators (i.e. COPASI file).
- *
- * Notes: the returned list includes the original file as the model/main one.
- *
  */
 getFilesFromAdditionalFolder = { modelId, originalFile ->
-    def additionals = []
-    if (nonStandardSBMLModels.containsKey(modelId)) {
-        additionals = getAdditionalFilesForNonSBMLModel(modelId)
-    }
-    def originInfo = getSubmissionData(modelId, originalFile, additionals, [], ORIG_COMMENT_TPL + modelId)
-    def fileTCs = getFilesFromSubmissionData originInfo
-
     // Add the originally additional files provided by submitter, for example, sbml or sedml, COPASI file
     def originalAdditionalFiles = additionalFilesFolder.listFiles().find {
         it.name == modelId
     }
-
     def theseFilesFetchedFromDB = additionalFilesMap.findAll {
         it['model_id'] == modelId
     }
-
+    def files = []
+    def fileTCs = []
     if (originalAdditionalFiles && theseFilesFetchedFromDB) {
         def parentFolder = new File(additionalFilesFolder, modelId)
         if (parentFolder) {
@@ -1438,7 +1430,7 @@ getFilesFromAdditionalFolder = { modelId, originalFile ->
                         description = theFile['description']
                         mimeType = theFile['mime_type']
                     }
-                    additionals.push(it)
+                    files.push(it)
                     fileTCs.push(rftc.newInstance(path: it.absolutePath,
                         description: description, mimeType: mimeType,
                         mainFile: false, userSubmitted: true, hidden: false))
@@ -1446,7 +1438,7 @@ getFilesFromAdditionalFolder = { modelId, originalFile ->
             }
         }
     }
-    [files: additionals, fileTCs: fileTCs, originInfo: originInfo]
+    [files: files, fileTCs: fileTCs]
 }
 
 // called after we ensured the original file is present in the folder
@@ -1470,10 +1462,8 @@ findNewestRevisionFiles = { branch, parent, id ->
     // the additional files consist of the auto-generated formats and the ones submitted
     // by the submitter or added/created by curators (i.e. COPASI/SED-ML file)
     def rftcObjects = getFilesFromAdditionalFolder(id, originalFile)
-    def originInfo = rftcObjects["originInfo"]
     def files = rftcObjects["files"]
     def fileTCs = rftcObjects["fileTCs"]
-    result['originInfo'] = originInfo
     result['filesFromAdditionalFolder'] = files
     result['fileTCsFromAdditionalFolder'] = fileTCs
     result
@@ -1727,6 +1717,7 @@ getSubmissionData = { modelId, file, additional, filesFromAdditionalFolder, comm
     boolean isNonSBMLModel = nonStandardSBMLModels.containsKey(modelId)
     if (isNonSBMLModel) {
         modelWrapper.description = nonStandardSBMLModels.get(modelId).get(file.name)
+        additional = getAdditionalFilesForNonSBMLModel(modelId)
         additional.each { additionalFile ->
             String path = additionalFile.absolutePath
             String description = nonStandardSBMLModels.get(modelId).get(additionalFile.name)
