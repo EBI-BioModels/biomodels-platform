@@ -710,8 +710,9 @@
                         <li>
                             <button id="checkConsistency"
                                     class="toolbutton"
+                                    title="Check consistency"
                                     onclick="return $('#confirm-model-consistency-check').dialog('open');">
-                                Check Consistency
+                                Check
                             </button>
                         </li>
                     </g:if>
@@ -723,8 +724,9 @@
                         <li>
                             <button id="convert"
                                     class="toolbutton"
+                                    title="Convert This Model To The Other Formats"
                                     onclick="return $('#confirm-model-conversion').dialog('open');">
-                                Convert This Model To The Other Formats
+                                Convert
                             </button>
                         </li>
                     </g:if>
