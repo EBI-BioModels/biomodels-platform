@@ -430,6 +430,14 @@ if (jummpConfig.jummp.lsf.queue.default) {
     jummp.lsf.queue.default = jummpConfig.jummp.lsf.queue.default
 }
 
+if (jummpConfig.jummp.lsf.privatekey) {
+    jummp.lsf.privatekey = jummpConfig.jummp.lsf.privatekey
+}
+
+if (jummpConfig.jummp.lsf.output.dir) {
+    jummp.lsf.output.dir = jummpConfig.jummp.lsf.output.dir
+}
+
 if (jummp.search.strategy == "solr") {
     if (!(jummpConfig.jummp.search.url instanceof ConfigObject)) {
         final Pattern URL_PATTERN = ~/http:\/\/[a-zA-Z0-9\.\-_]+(:[0-9]+)?(\/[a-zA-Z0-9\-\._]+)*/
