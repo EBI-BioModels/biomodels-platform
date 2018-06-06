@@ -691,6 +691,12 @@ target(main: "Puts everything together to import models from a given folder") {
 
             def submitter = User.findByUsername("administrator")//findRightSubmitter f.name, BRANCH
             def commitMessage = null // extractCommitMessage
+            def comments = getInternalCommentForModelId(submissionId)
+            if (comments) {
+                def curationCommentInfo = parseCurationCommentsForModel(modelId, comments)
+                if (curationCommentInfo.user) submitter = curationCommentInfo.user
+                if (curationCommentInfo.comment) commitMessage = curationCommentInfo.comment
+            }
             def modelDetails = getModelDetails modelId, BRANCH
 
             updateWithRecentChanges submissionId, modelId, BRANCH, f, modelDetails, submitter, commitMessage
