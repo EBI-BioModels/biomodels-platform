@@ -919,7 +919,7 @@ FROM anno JOIN cura ON cura.biomodels_id = anno.model_id WHERE cura.model_id = ?
  * @param modelId the model identifier
  * @param comments the curation comments, as stored in the old system.
  */
-String getLatestCurationComment = { modelId, comments ->
+getLatestCurationComment = { modelId, comments ->
     final String SEP = '</dl>\\n'
     def entries = comments?.split(SEP)
     if (!entries) {
@@ -936,7 +936,7 @@ String getLatestCurationComment = { modelId, comments ->
  * @param comments the curation comments, as stored in the old system
  * @return a map with the following keys: date, user, comment
  */
-Map parseCurationCommentsForModel = { modelId, comments ->
+parseCurationCommentsForModel = { modelId, comments ->
     if (!comments?.trim()) return [:]
     String latest = getLatestCurationComment modelId, comments
     if (!latest) {
@@ -961,7 +961,7 @@ Map parseCurationCommentsForModel = { modelId, comments ->
         addModelError modelId, errorMessage
         return null
     }
-    [ date: date, user: curator, comment: comment ]
+    [date: date, user: curator, comment: comment]
 }
 
 /**
@@ -971,7 +971,7 @@ Map parseCurationCommentsForModel = { modelId, comments ->
  * @return the Date corresponding to the string representation from the entry or null if it
  *         could not be extracted due to the comment not following the expected structure.
  */
-Date extractDateFromComment = { comment ->
+extractDateFromComment = { comment ->
     def d = extractCurationCommentAttribute comment, '<dt class="comment_date">', "</dt>"
     Date result = null
     if (d) {
@@ -987,7 +987,7 @@ Date extractDateFromComment = { comment ->
  * @return the curator name of the entry or null if it could not be extracted due to the comment
  *         not following the expected structure.
  */
-String extractCuratorFromComment = { comment ->
+extractCuratorFromComment = { comment ->
     extractCurationCommentAttribute(comment, '<dd class="comment_submitter">', "</dd>")
 }
 
@@ -998,7 +998,7 @@ String extractCuratorFromComment = { comment ->
  * @return the message of the entry or null if it could not be extracted due to the comment not
  *         following the expected structure.
  */
-String extractCommentTextFromComment = { comment ->
+extractCommentTextFromComment = { comment ->
     // TODO: decode HTML
     extractCurationCommentAttribute(comment, '<dd class="comment_body">', "</dd>")
 }
@@ -1012,7 +1012,7 @@ String extractCommentTextFromComment = { comment ->
  * @return the substring between the given markers or null if either marker could not be found in
  *         the given curation comment entry.
  */
-String extractCurationCommentAttribute = { comment, start, end ->
+extractCurationCommentAttribute = { comment, start, end ->
     int startMarkerSize = start.length()
     int startIdx = comment.indexOf(start) + startMarkerSize
     if (startIdx < startMarkerSize)
