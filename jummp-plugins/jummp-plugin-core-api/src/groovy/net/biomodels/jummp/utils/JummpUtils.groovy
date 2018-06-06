@@ -31,8 +31,11 @@
 
 package net.biomodels.jummp.utils
 
+import org.apache.commons.lang.RandomStringUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+
+import java.util.concurrent.ThreadLocalRandom
 
 class JummpUtils {
 
@@ -46,5 +49,25 @@ class JummpUtils {
             LOGGER.error("Exception occurred during sleep, {}", ee)
             throw new RuntimeException("Exception occurred during sleep")
         }
+    }
+
+    /**
+     * Random a sequence of string (include A-Z and 0-9) with a given length
+     * @param length
+     * @return
+     */
+    static String randStr(int length) {
+        String charset = (('A'..'Z') + ('0'..'9')).join()
+        return RandomStringUtils.random(length, charset.toCharArray())
+    }
+
+    /**
+     * Random a number within a specific range
+     * @param min
+     * @param max
+     * @return
+     */
+    static int randInt(int min, int max) {
+        return ThreadLocalRandom.current().nextInt(min, max + 1);
     }
 }
