@@ -27,6 +27,7 @@ import com.jcraft.jsch.ChannelExec
 import com.jcraft.jsch.JSch
 import com.jcraft.jsch.Session
 import net.biomodels.jummp.core.model.LSFApplication
+import net.biomodels.jummp.utils.FileUtils
 import net.biomodels.jummp.utils.JummpUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -56,6 +57,10 @@ class LsfService implements InitializingBean {
 
     private static final int JOB_PID_LENGTH = 10
 
+    private static final int MIN_PORT = 10000
+
+    private static final int MAX_PORT = 99999
+
     private static final Logger LOGGER = LoggerFactory.getLogger(LsfService.class)
 
     /**
@@ -70,6 +75,8 @@ class LsfService implements InitializingBean {
     private String lsfMiddlewarePassword
 
     private String lsfDefaultQueue
+
+    private String lsfOutputDir
 
     /**
      * Location of the application folder
@@ -102,8 +109,11 @@ class LsfService implements InitializingBean {
         lsfMiddlewarePassword = grailsApplication.config.jummp.lsf.middleware.password
         lsfApplicationPath = grailsApplication.config.jummp.lsf.application.path
         lsfDefaultQueue = grailsApplication.config.jummp.lsf.queue.default
+        lsfOutputDir = grailsApplication.config.jummp.lsf.output.dir
         jSch.addIdentity(grailsApplication.config.jummp.lsf.privatekey)
     }
+
+
 
     /**
      * Create a connect to LFS cluster and wait until job started
@@ -115,6 +125,7 @@ class LsfService implements InitializingBean {
      */
     synchronized String startLFSClusterJob(LSFApplication application, int nRam, int nCpu, int maxTime) {
         String jobPid = "JOB_" + JummpUtils.randStr(JOB_PID_LENGTH)
+        int port = JummpUtils.randInt(MIN_PORT, MAX_PORT)
         Session session = jSch.getSession(lsfMiddlewareUsername, lsfMiddlewareHost)
         session.setConfig("StrictHostKeyChecking", "no")
         session.connect(SESSION_TIMEOUT)
@@ -124,9 +135,11 @@ class LsfService implements InitializingBean {
         command.add(String.format("-M %d", nRam))
         command.add(String.format("-R \"rusage[mem=%d]\"", nRam))
         command.add(String.format("-n %d", nCpu))
+        command.add(String.format("-o %s/%%J.log", lsfOutputDir))
         command.add(lsfApplicationPath + "/" + application.getName() + "/" + application.getStartScript())
         command.add(jobPid)
         command.add(Integer.toString(maxTime))
+        command.add(Integer.toString(port))
         String response = executeCommand(session, String.join(" ", command))
         Pattern pattern = Pattern.compile("Job\\s+<(\\d+)>")
         Matcher matcher = pattern.matcher(response)
@@ -154,6 +167,13 @@ class LsfService implements InitializingBean {
                 } else if (response.split(" ")[0] == "PEND" || response.split(" ")[0] == "WAIT") {
                     JummpUtils.sleep(WAIT_FOR_CLUSTER_READY)
                 } else {
+                    String logPath = String.format("%s/%s.log", lsfOutputDir, jobId)
+                    String logOutput = FileUtils.readLSFOutput(logPath)
+                    if (logOutput != null && logOutput == "Port unavailable!") {
+                        session.disconnect()
+                        // Try again with different port
+                        return startLFSClusterJob(application, nRam, nCpu, maxTime)
+                    }
                     LOGGER.error("An exception occurred when run job, command {}, status {}", command, response)
                     throw new RuntimeException("An exception occurred when run job")
                 }
@@ -165,6 +185,12 @@ class LsfService implements InitializingBean {
         throw new RuntimeException("Can't submit job to LSF Cluster")
     }
 
+    /**
+     * Run the command on LSF Cluster machine
+     * @param session
+     * @param command
+     * @return
+     */
     private String executeCommand(Session session, String command) {
         Channel channel=session.openChannel("exec")
         ((ChannelExec)channel).setCommand(String.join(" ", command))
@@ -173,6 +199,7 @@ class LsfService implements InitializingBean {
         InputStream inputStream = channel.getInputStream()
         byte[] tmp = new byte[CHUNK_SIZE]
         StringBuilder stringBuilder = new StringBuilder()
+        channel.connect()
         while(true) {
             while(inputStream.available() > 0) {
                 int i = inputStream.read(tmp, 0, CHUNK_SIZE)
@@ -187,7 +214,7 @@ class LsfService implements InitializingBean {
                 }
                 if (channel.getExitStatus() != 0) {
                     LOGGER.error("Exception during execute command {}, {}", command, stringBuilder)
-                    throw RuntimeException("Exception occurred during execute command")
+                    throw new RuntimeException("Exception occurred during execute command")
                 }
                 break
             }
@@ -207,10 +234,21 @@ class LsfService implements InitializingBean {
     }
 
     /**
+     * Get port of the application that running in the LSF Cluster and have the given job ID
+     * @param jobId
+     * @return
+     */
+    int getPortByJobId(String jobId) {
+        return connections.get(jobId).getPort()
+    }
+
+    /**
      * Stop the application running under LFS Cluster, which have the given job ID
      * @param jobId
      */
     synchronized void stopLFSClusterJob(String jobId) {
+        Session session = connections.get(jobId)
+        List<String> command = new ArrayList<>()
 
     }
 
