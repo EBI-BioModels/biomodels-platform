@@ -43,7 +43,7 @@ import java.util.regex.Pattern
  *
  * @author  Tu Vu <tvu@ebi.ac.uk>
  */
-class LSFService implements InitializingBean {
+class LsfService implements InitializingBean {
 
     static transactional = false
     private static final int SESSION_TIMEOUT = 60 * 60 * 1000
@@ -54,7 +54,7 @@ class LSFService implements InitializingBean {
 
     private static final int WAIT_FOR_CLUSTER_READY = 5000
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(LSFService.class)
+    private static final Logger LOGGER = LoggerFactory.getLogger(LsfService.class)
 
     /**
      * SSH Manager
