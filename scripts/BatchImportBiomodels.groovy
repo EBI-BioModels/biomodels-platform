@@ -300,6 +300,16 @@ def NON_SBML_MODEL_FOLDER
 def bigModelsIgnored = []
 boolean excludeBigModels = true
 TreeSet<String> modelsImported = []
+
+final Map userMappingForInternalCurationComments = [
+        // the name should match the one from the old system, but the username should be from JUMMP
+        "Vijayalakshmi Chelliah": User.findByUsername("viji"),
+        "Nick Juty": User.findByUsername("juty"),
+        "Rahuman Sheriff": User.findByUsername("sheriff"),
+        "Matthew Grant Roberts": User.findByUsername("matthew"),
+        "Matthieu Maire": User.findByUsername("mmaire")
+]
+
 /**
  * Returns a User corresponding to the submitter of the model in BioModels.
  */
@@ -917,7 +927,7 @@ FROM anno JOIN cura ON cura.biomodels_id = anno.model_id WHERE cura.model_id = ?
  * @param modelId the model identifier
  * @param comments the curation comments, as stored in the old system.
  */
-String getLatestCurationComment = { modelId, comments ->
+getLatestCurationComment = { modelId, comments ->
     final String SEP = '</dl>\\n'
     def entries = comments?.split(SEP)
     if (!entries) {
@@ -934,7 +944,7 @@ String getLatestCurationComment = { modelId, comments ->
  * @param comments the curation comments, as stored in the old system
  * @return a map with the following keys: date, user, comment
  */
-Map parseCurationCommentsForModel = { modelId, comments ->
+parseCurationCommentsForModel = { modelId, comments ->
     if (!comments?.trim()) return [:]
     String latest = getLatestCurationComment modelId, comments
     if (!latest) {
@@ -982,11 +992,25 @@ Date extractDateFromComment = { comment ->
  * Convenience method for parsing the date from a curation comment.
  *
  * @param comment a curation comment entry
- * @return the curator name of the entry or null if it could not be extracted due to the comment
- *         not following the expected structure.
+ * @return the User account corresponding to the author of the entry or null if it could not be
+ *         extracted due to the comment not following the expected structure.
  */
-String extractCuratorFromComment = { comment ->
-    extractCurationCommentAttribute(comment, '<dd class="comment_submitter">', "</dd>")
+extractCuratorFromComment = { comment ->
+    String value = extractCurationCommentAttribute(comment, '<dd class="comment_submitter">',
+            "</dd>")
+    if (!value) return null
+    def curator
+    if (value.contains(',')) {
+        curator = value.split(',').first()
+    } else {
+        curator = value
+    }
+    def user = userMappingForInternalCurationComments[curator]
+    if (!user) {
+        throw new IllegalStateException(
+"Cannot find an account for '$curator', please update userMappingForInternalCurationComments")
+    }
+    user
 }
 
 /**
@@ -996,7 +1020,7 @@ String extractCuratorFromComment = { comment ->
  * @return the message of the entry or null if it could not be extracted due to the comment not
  *         following the expected structure.
  */
-String extractCommentTextFromComment = { comment ->
+extractCommentTextFromComment = { comment ->
     // TODO: decode HTML
     extractCurationCommentAttribute(comment, '<dd class="comment_body">', "</dd>")
 }
