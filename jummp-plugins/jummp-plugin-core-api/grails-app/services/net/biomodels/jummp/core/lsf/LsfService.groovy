@@ -28,7 +28,9 @@ import com.jcraft.jsch.JSch
 import com.jcraft.jsch.JSchException
 import com.jcraft.jsch.Session
 import net.biomodels.jummp.core.model.LSFApplication
+import net.biomodels.jummp.exception.lsf.LSFJobNotExistException
 import net.biomodels.jummp.exception.lsf.LSFClusterCommandException
+import net.biomodels.jummp.exception.lsf.LSFJobUnableToStopException
 import net.biomodels.jummp.utils.FileUtils
 import net.biomodels.jummp.utils.JummpUtils
 import org.slf4j.Logger
@@ -253,13 +255,29 @@ class LsfService implements InitializingBean {
     }
 
     /**
-     * Stop the application running under LFS Cluster, which have the given job ID
+     * Stop the application running under LSF Cluster, which have the given job ID
      * @param jobId
      */
-    synchronized void stopLFSClusterJob(String jobId) {
+    synchronized void stopLSFClusterJob(String jobId) {
+        if (!connections.containsKey(jobId)) {
+            throw new LSFJobNotExistException("Job " + jobId + " not exists")
+        }
         Session session = connections.get(jobId)
         List<String> command = new ArrayList<>()
-
+        LSFApplication application = jobApplication.get(jobId)
+        String jobPid = jobPids.get(jobId)
+        command.add(lsfApplicationPath + "/" + application.getName() + "/" + application.getStopScript())
+        command.add(jobPid)
+        String response = executeCommand(session, String.join(" ", command))
+        if (response == "Stopped") {
+            session.disconnect()
+            connections.remove(jobId)
+            jobApplication.remove(jobId)
+            jobPids.remove(jobId)
+        } else {
+            LOGGER.error("Exception when stop LSF Cluster {}, {}", response, command)
+            throw new LSFJobUnableToStopException("Exception occurred when stop LSF Cluster")
+        }
     }
 
     /**
