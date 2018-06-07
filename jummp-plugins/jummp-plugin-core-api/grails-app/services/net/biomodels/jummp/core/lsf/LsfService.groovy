@@ -25,8 +25,10 @@ package net.biomodels.jummp.core.lsf
 import com.jcraft.jsch.Channel
 import com.jcraft.jsch.ChannelExec
 import com.jcraft.jsch.JSch
+import com.jcraft.jsch.JSchException
 import com.jcraft.jsch.Session
 import net.biomodels.jummp.core.model.LSFApplication
+import net.biomodels.jummp.exception.lsf.LSFClusterCommandException
 import net.biomodels.jummp.utils.FileUtils
 import net.biomodels.jummp.utils.JummpUtils
 import org.slf4j.Logger
@@ -192,36 +194,44 @@ class LsfService implements InitializingBean {
      * @return
      */
     private String executeCommand(Session session, String command) {
-        Channel channel=session.openChannel("exec")
-        ((ChannelExec)channel).setCommand(String.join(" ", command))
-        channel.setInputStream(null)
-        ((ChannelExec)channel).setErrStream(System.err)
-        InputStream inputStream = channel.getInputStream()
-        byte[] tmp = new byte[CHUNK_SIZE]
-        StringBuilder stringBuilder = new StringBuilder()
-        channel.connect()
-        while(true) {
-            while(inputStream.available() > 0) {
-                int i = inputStream.read(tmp, 0, CHUNK_SIZE)
-                if (i < 0) {
+        Channel channel = null
+        try {
+            channel = session.openChannel("exec")
+            ((ChannelExec)channel).setCommand(String.join(" ", command))
+            channel.setInputStream(null)
+            InputStream inputStream = channel.getInputStream()
+            byte[] tmp = new byte[CHUNK_SIZE]
+            StringBuilder stringBuilder = new StringBuilder()
+            channel.connect(CONNECT_TIMEOUT)
+            while(true) {
+                while(inputStream.available() > 0) {
+                    int i = inputStream.read(tmp, 0, CHUNK_SIZE)
+                    if (i < 0) {
+                        break
+                    }
+                    stringBuilder.append(new String(tmp, 0, i))
+                }
+                if (channel.isClosed()) {
+                    if(inputStream.available() > 0) {
+                        continue
+                    }
+                    if (channel.getExitStatus() != 0) {
+                        LOGGER.error("Exception occurred during execute command {}, {}", command, stringBuilder)
+                        throw new LSFClusterCommandException("Exception occurred during execute command")
+                    }
                     break
                 }
-                stringBuilder.append(new String(tmp, 0, i))
+                JummpUtils.sleep(READ_TIMEOUT)
             }
-            if (channel.isClosed()) {
-                if(inputStream.available() > 0) {
-                    continue
-                }
-                if (channel.getExitStatus() != 0) {
-                    LOGGER.error("Exception during execute command {}, {}", command, stringBuilder)
-                    throw new RuntimeException("Exception occurred during execute command")
-                }
-                break
+            return stringBuilder.toString().trim()
+        } catch (JSchException e) {
+            LOGGER.error("Exception occurred with SSH command {}", e)
+            throw new LSFClusterCommandException("Exception occurred during execute command")
+        } finally {
+            if (channel != null) {
+                channel.disconnect()
             }
-            JummpUtils.sleep(READ_TIMEOUT)
         }
-        channel.disconnect()
-        return stringBuilder.toString()
     }
 
     /**
