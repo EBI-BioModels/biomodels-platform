@@ -676,8 +676,9 @@
                     </div>
                     <li>
                     <button class='toolbutton' id="peer-review"
+                            title="Submit for publication"
                             onclick='return $( "#confirm-model-notify" ).dialog( "open");'>
-                        Submit for publication</button></li>
+                        Submit</button></li>
                 </g:if>
                 <g:if test="${showPublishOption}">
                     <div id="confirm-model-publish" title="You are about to publish this model version"
