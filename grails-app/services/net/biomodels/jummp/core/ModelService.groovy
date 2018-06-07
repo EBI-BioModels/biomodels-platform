@@ -2164,7 +2164,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
     @PreAuthorize("hasRole('ROLE_CURATOR') or hasRole('ROLE_ADMIN')") //used to be: (hasRole('ROLE_CURATOR') and hasPermission(#revision, admin))
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.publishModelRevision")
-    public void publishModelRevision(Revision revision) {
+    void publishModelRevision(Revision revision) {
         if (!SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
             if (!aclUtilService.hasPermission(springSecurityService.authentication, revision,
                         BasePermission.ADMINISTRATION)) {
@@ -2261,6 +2261,8 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         aclUtilService.deletePermission(revision, "ROLE_USER", BasePermission.READ)
         aclUtilService.deletePermission(revision, "ROLE_ANONYMOUS", BasePermission.READ)
         revision.state=ModelState.UNPUBLISHED
+        revision.model.firstPublished = null
+        revision.model.publicationId = null
         revision.save(flush:true)
     }
 
