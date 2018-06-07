@@ -242,18 +242,26 @@ class LsfService implements InitializingBean {
      * Get Host name of the machine in LSF Cluster, which running the given job ID
      * @param jobId
      * @return IP of the machine
+     * @thrown LSFJobNotExistException when job not exists
      */
     String getHostByJobId(String jobId) {
-        return connections.get(jobId).getHost()
+        if (connections.containsKey(jobId)) {
+            return connections.get(jobId).getHost()
+        }
+        throw new LSFJobNotExistException("Job " + jobId + " not exists")
     }
 
     /**
      * Get port of the application that running in the LSF Cluster and have the given job ID
      * @param jobId
      * @return
+     * @thrown LSFJobNotExistException when job not exists
      */
     int getPortByJobId(String jobId) {
-        return connections.get(jobId).getPort()
+        if (connections.containsKey(jobId)) {
+            return connections.get(jobId).getPort()
+        }
+        throw new LSFJobNotExistException("Job " + jobId + " not exists")
     }
 
     /**
