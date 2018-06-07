@@ -57,7 +57,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONObject
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.multipart.MultipartFile
-import net.biomodels.jummp.plugins.security.Role
 import org.springframework.security.core.GrantedAuthority
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -366,7 +365,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
         RevisionTransportCommand rev
         try {
             rev = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
-            modelDelegateService.publishModelRevision(rev)
+            rev = modelDelegateService.publishModelRevision(rev)
             def currentUser = springSecurityService.currentUser
             if (currentUser) {
                 def notification = [
@@ -375,10 +374,10 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     perms: modelDelegateService.getPermissionsMap(rev.model.submissionId)]
                 sendMessage("seda:model.publish", notification)
             }
-
-            redirect(action: "showWithMessage",
-                        id: rev.identifier(),
-                        params: [flashMessage: "Model has been published."])
+            String extraMsg = rev.state == ModelState.PUBLISHED ?
+                " with the publication identifier ${rev.modelIdentifier()}." : "."
+            redirect(action: "showWithMessage", id: rev.identifier(),
+                        params: [flashMessage: "Model has been published${extraMsg}"])
         } catch(AccessDeniedException e) {
             log.error(e.message, e)
             forward(controller: "errors", action: "error403")

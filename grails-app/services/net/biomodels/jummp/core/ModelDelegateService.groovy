@@ -380,8 +380,10 @@ class ModelDelegateService implements IModelService {
         return new ModelAdapter(model: REV).toCommandObject()
     }
 
-    void publishModelRevision(RevisionTransportCommand revision) {
-        modelService.publishModelRevision(Revision.get(revision.id))
+    RevisionTransportCommand publishModelRevision(RevisionTransportCommand cmd) {
+        Revision revision = Revision.get(cmd.id)
+        modelService.publishModelRevision(revision)
+        new RevisionAdapter(revision: revision).toCommandObject()
     }
 
     void unpublishModelRevision(RevisionTransportCommand revision) {

@@ -137,6 +137,10 @@ class RevisionTransportCommand implements Serializable {
          return new StringBuffer(PERENNIAL_ID).append(".").append(revisionNumber).toString()
      }
 
+    String modelIdentifier() {
+        model.publicationId ?: model.submissionId
+    }
+
 /*    String [] getValidationStatementList(){
         if(validationReport == null){
             return null;
