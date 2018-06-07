@@ -649,6 +649,7 @@ target(main: "Puts everything together to import models from a given folder") {
         // the name should match the one from the old system, but the username should be from JUMMP
         "Vijayalakshmi Chelliah": User.findByUsername("viji"),
         "Nick Juty": User.findByUsername("juty"),
+        "Varun Kothamachu": User.findByUsername("Varun"),
         "Rahuman Sheriff": User.findByUsername("sheriff"),
         "Matthew Grant Roberts": User.findByUsername("matthew"),
         "Matthieu Maire": User.findByUsername("mmaire")
