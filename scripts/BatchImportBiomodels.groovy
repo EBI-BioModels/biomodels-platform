@@ -301,14 +301,7 @@ def bigModelsIgnored = []
 boolean excludeBigModels = true
 TreeSet<String> modelsImported = []
 
-final Map userMappingForInternalCurationComments = [
-        // the name should match the one from the old system, but the username should be from JUMMP
-        "Vijayalakshmi Chelliah": User.findByUsername("viji"),
-        "Nick Juty": User.findByUsername("juty"),
-        "Rahuman Sheriff": User.findByUsername("sheriff"),
-        "Matthew Grant Roberts": User.findByUsername("matthew"),
-        "Matthieu Maire": User.findByUsername("mmaire")
-]
+Map userMappingForInternalCurationComments
 
 /**
  * Returns a User corresponding to the submitter of the model in BioModels.
@@ -652,6 +645,8 @@ def failureCount = new AtomicLong()
 target(main: "Puts everything together to import models from a given folder") {
     bootstrapJummp()
 
+    populateInternalCommentUserMapping()
+
     def modelFolderPattern = ~/(MODEL|BIOMD)\d{10}|BMID\d{12}/
     /* fetch all the records of additional files once */
     String query = "select model_id, name, description, mime_type, file, date_creation from additional_files"
@@ -803,6 +798,17 @@ printModelLog = {
             errorMessages.each { m -> error("$modelId: $m") }
         }
     }
+}
+
+void populateInternalCommentUserMapping() {
+    userMappingForInternalCurationComments = [
+        // the name should match the one from the old system, but the username should be from JUMMP
+        "Vijayalakshmi Chelliah": User.findByUsername("viji"),
+        "Nick Juty": User.findByUsername("juty"),
+        "Rahuman Sheriff": User.findByUsername("sheriff"),
+        "Matthew Grant Roberts": User.findByUsername("matthew"),
+        "Matthieu Maire": User.findByUsername("mmaire")
+    ]
 }
 
 processModelFolder = { File folder ->
@@ -992,7 +998,7 @@ parseCurationCommentsForModel = { modelId, comments ->
  * @return the Date corresponding to the string representation from the entry or null if it
  *         could not be extracted due to the comment not following the expected structure.
  */
-Date extractDateFromComment = { comment ->
+extractDateFromComment = { comment ->
     def d = extractCurationCommentAttribute comment, '<dt class="comment_date">', "</dt>"
     Date result = null
     if (d) {
