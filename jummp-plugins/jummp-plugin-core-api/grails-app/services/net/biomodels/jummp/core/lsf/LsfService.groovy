@@ -57,6 +57,8 @@ class LsfService implements InitializingBean {
 
     private static final int READ_TIMEOUT = 1000
 
+    private static final int CONNECT_TIMEOUT = 60000
+
     private static final int WAIT_FOR_CLUSTER_READY = 5000
 
     private static final int JOB_PID_LENGTH = 10
@@ -100,7 +102,7 @@ class LsfService implements InitializingBean {
     /**
      * Mapping between job and Application
      */
-    private Map<String, LSFApplication> jobApplication = new HashMap<>()
+    private Map<String, LSFApplication> jobApplication = new ConcurrentHashMap<>()
 
     /**
      * Dependency Injection of GrailsApplication
@@ -237,11 +239,11 @@ class LsfService implements InitializingBean {
     }
 
     /**
-     * Get IP of the machine in LFS Cluster, which running the given job ID
+     * Get Host name of the machine in LSF Cluster, which running the given job ID
      * @param jobId
      * @return IP of the machine
      */
-    String getIPByJobId(String jobId) {
+    String getHostByJobId(String jobId) {
         return connections.get(jobId).getHost()
     }
 
@@ -257,6 +259,8 @@ class LsfService implements InitializingBean {
     /**
      * Stop the application running under LSF Cluster, which have the given job ID
      * @param jobId
+     * @throw LSFJobNotExistException when the job not exist
+     * @throw LSFJobUnableToStopException when we can't stop the job
      */
     synchronized void stopLSFClusterJob(String jobId) {
         if (!connections.containsKey(jobId)) {
@@ -283,10 +287,11 @@ class LsfService implements InitializingBean {
     /**
      * Move the data of the application from the LFS Cluster machine to the server
      * @param jobId
-     * @param lfsClusterDataPathFrom
+     * @param lsfClusterDataPathFrom
      * @param serverPathTo
      */
-    void moveData(String jobId, String lfsClusterDataPathFrom, String serverPathTo) {
-
+    void moveData(String jobId, String lsfClusterDataPathFrom, String serverPathTo) {
+        //Unnecessary yet
+        //Take a look at http://www.jcraft.com/jsch/examples/ScpFrom.java.html for implementation
     }
 }
