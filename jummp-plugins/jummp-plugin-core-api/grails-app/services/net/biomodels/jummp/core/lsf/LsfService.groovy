@@ -29,6 +29,7 @@ import com.jcraft.jsch.JSchException
 import com.jcraft.jsch.Session
 import net.biomodels.jummp.core.model.LSFApplication
 import net.biomodels.jummp.core.model.LSFClusterJob
+import net.biomodels.jummp.core.model.LSFClusterServer
 import net.biomodels.jummp.exception.lsf.LSFJobNotExistException
 import net.biomodels.jummp.exception.lsf.LSFClusterCommandException
 import net.biomodels.jummp.exception.lsf.LSFJobUnableToStopException
@@ -110,10 +111,23 @@ class LsfService implements InitializingBean {
         jSch.addIdentity(grailsApplication.config.jummp.lsf.privatekey)
     }
 
-
+    /**
+     * Create an service that always available on LSF cluster
+     *
+     * Because we have got a delay time when start an job on cluster
+     * In some situations, user can't wait too long for a request
+     * This function will create/terminate the service every half day to make sure it always available
+     * @param application
+     * @param nRam
+     * @param nCpu
+     * @return
+     */
+    synchronized LSFClusterServer startAlwayAvailableLSFClusterJob(LSFApplication application, int nRam, int nCpu) {
+        return null
+    }
 
     /**
-     * Create a connect to LFS cluster and wait until job started
+     * Create a connect to LSF cluster and wait until job started
      * @param application Application need to be deployed
      * @param nRam number of RAM required
      * @param nCpu number of CPU required

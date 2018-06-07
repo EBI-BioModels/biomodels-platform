@@ -4,16 +4,16 @@ import com.jcraft.jsch.Session
 
 class LSFClusterJob {
     private String jobId
-    private String hostName
-    private int port
+    private LSFClusterServer server
     private LSFApplication application
     private String pidFile
     private Session session
 
     LSFClusterJob(String jobId, String hostName, int port, LSFApplication application, String pidFile, Session session) {
         this.jobId = jobId
-        this.hostName = hostName
-        this.port = port
+        server = new LSFClusterServer()
+        server.port = port
+        server.hostName = hostName
         this.application = application
         this.pidFile = pidFile
         this.session = session
@@ -24,11 +24,11 @@ class LSFClusterJob {
     }
 
     String getHostName() {
-        return hostName
+        return server.hostName
     }
 
     int getPort() {
-        return port
+        return server.port
     }
 
     LSFApplication getApplication() {
