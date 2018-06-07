@@ -780,14 +780,16 @@ updateWithRecentChanges = { submissionId, publicationId, branch, folder, modelDe
                 if (branch == "publ") {
                     setCurationNotes(revision.model)
                     def curationState = CurationState.CURATED
-                    modelDelegateService.updateCurationStateRevision(MODEL_ID, revision.id, curationState)
+                    modelDelegateService.updateCurationStateRevision(MODEL_ID, revision.revisionNumber, curationState)
                 }
                 publishModelRevision MODEL_ID, revision
             }
+            processedCount.incrementAndGet()
         } else {
             log("No need to update the model $submissionId ($publicationId)")
         }
     } else {
+        failureCount.incrementAndGet()
         addModelError(submissionId, "Error retrieving model from BioModels' the destination database")
     }
 }
@@ -876,7 +878,7 @@ processModelFolder = { File folder ->
         if (isNonSBMLModel) {
             annotateModellingApproaches(submittedModel.revisions.first(), BRANCH, modelDetails, submitter)
         } else {
-            def commitMessage = UPDATE_COMMENT_TPL + MODEL_ID
+            def commitMessage = "$UPDATE_COMMENT_TPL $MODEL_ID"
             def revision = addTheLatestRevision(BRANCH, MODEL_ID, folder, submittedModel,
                     modelDetails, submitter, commitMessage)
             submittedModel = revision.model
@@ -985,7 +987,7 @@ parseCurationCommentsForModel = { modelId, comments ->
         addModelError modelId, errorMessage
         return null
     }
-    [ date: date, user: curator, comment: comment ]
+    [date: date, user: curator, comment: comment]
 }
 
 /**
@@ -1120,48 +1122,15 @@ submitOriginalFile = { branch, modelId, originalFile, infoMap ->
         def msg = "Cannot submit original version of $modelId -- missing security context"
         throw new IllegalStateException(msg.toString())
     }
-    def additionals = []
-    if (nonStandardSBMLModels.containsKey(modelId)) {
-        additionals = getAdditionalFilesForNonSBMLModel(modelId)
-    }
-    def originInfo = getSubmissionData(modelId, originalFile, additionals, ORIG_COMMENT_TPL + modelId)
-    def files = getFilesFromSubmissionData originInfo
-
-    // Add the originally additional files provided by submitter
-    def originalAdditionalFiles = additionalFilesFolder.listFiles().find {
-        it.name == modelId
-    }
-
-    def theseFilesFetchedFromDB = additionalFilesMap.findAll {
-        it['model_id'] == modelId
-    }
-
-    if (originalAdditionalFiles && theseFilesFetchedFromDB) {
-        def parentFolder = new File(additionalFilesFolder, modelId)
-        if (parentFolder) {
-            parentFolder.listFiles().each {
-                String fileName = it.name
-                if (fileName != "index.html") {
-                    String description = "The originally additional file provided by the submitter"
-                    String mimeType = "Unknown"
-                    def theFile = theseFilesFetchedFromDB.find {
-                        it['file'] == fileName
-                    }
-                    if (theFile) {
-                        description = theFile['description']
-                        mimeType = theFile['mime_type']
-                    }
-                    files.push(rftc.newInstance(path: it.absolutePath,
-                        description: description, mimeType: mimeType,
-                        mainFile: false, userSubmitted: true, hidden: false))
-                }
-            }
-        }
-    }
-
+    def originInfo = getSubmissionData(modelId, originalFile, [], [], ORIG_COMMENT_TPL + modelId)
+    def fileTCs = getFilesFromSubmissionData originInfo
+    def rftcObjects = getFilesFromAdditionalFolder(modelId, originalFile)
+    fileTCs.addAll(rftcObjects["fileTCs"])
     def revisionCmd = originInfo.get("revision")
+    revisionCmd.files = fileTCs
     revisionCmd.name = infoMap['name']
-    def model = modelService.uploadValidatedModel(files, revisionCmd)
+
+    def model = modelService.uploadValidatedModel(fileTCs, revisionCmd)
     if (model?.hasErrors()) {
         def e = model?.errors?.allErrors
         addModelError modelId, "Submission of original file with $infoMap failed -- ${e}"
@@ -1472,6 +1441,45 @@ findOriginalFile = { folder, id ->
     origin.exists() ? origin : null
 }
 
+/**
+ * Returns the list of Repository File Transport Command objects which are handlers of the additional files
+ * in the old system. These files could be submitted by the submitter or added by curators (i.e. COPASI file).
+ */
+getFilesFromAdditionalFolder = { modelId, originalFile ->
+    // Add the originally additional files provided by submitter, for example, sbml or sedml, COPASI file
+    def originalAdditionalFiles = additionalFilesFolder.listFiles().find {
+        it.name == modelId
+    }
+    def theseFilesFetchedFromDB = additionalFilesMap.findAll {
+        it['model_id'] == modelId
+    }
+    def files = []
+    def fileTCs = []
+    if (originalAdditionalFiles && theseFilesFetchedFromDB) {
+        def parentFolder = new File(additionalFilesFolder, modelId)
+        if (parentFolder) {
+            parentFolder.listFiles().each {
+                String fileName = it.name
+                if (fileName != "index.html") {
+                    String description = "The originally additional file provided by the submitter"
+                    String mimeType = "Unknown"
+                    def theFile = theseFilesFetchedFromDB.find {
+                        it['file'] == fileName
+                    }
+                    if (theFile) {
+                        description = theFile['description']
+                        mimeType = theFile['mime_type']
+                    }
+                    files.push(it)
+                    fileTCs.push(rftc.newInstance(path: it.absolutePath,
+                        description: description, mimeType: mimeType,
+                        mainFile: false, userSubmitted: true, hidden: false))
+                }
+            }
+        }
+    }
+    [files: files, fileTCs: fileTCs]
+}
 
 // called after we ensured the original file is present in the folder
 findNewestRevisionFiles = { branch, parent, id ->
@@ -1491,6 +1499,13 @@ findNewestRevisionFiles = { branch, parent, id ->
         !(f in [mainFile, originalFile, symlinkFile] )
     }
     result['additionals'] = additionalFiles
+    // the additional files consist of the auto-generated formats and the ones submitted
+    // by the submitter or added/created by curators (i.e. COPASI/SED-ML file)
+    def rftcObjects = getFilesFromAdditionalFolder(id, originalFile)
+    def files = rftcObjects["files"]
+    def fileTCs = rftcObjects["fileTCs"]
+    result['filesFromAdditionalFolder'] = files
+    result['fileTCsFromAdditionalFolder'] = fileTCs
     result
 }
 
@@ -1499,7 +1514,11 @@ prepareRevision = { branch, modelId, parent, model, commitMessage ->
     def fileMap = findNewestRevisionFiles(branch, parent, modelId)
     def main = fileMap['mainFile']
     def additionals = fileMap['additionals']
-    def revisionData = getSubmissionData(modelId, main, additionals, commitMessage)
+    def fileTCsFromAdditionalFolder = fileMap['fileTCsFromAdditionalFolder']
+    fileTCsFromAdditionalFolder = fileTCsFromAdditionalFolder.findAll {
+        !it.mainFile
+    }
+    def revisionData = getSubmissionData(modelId, main, additionals, fileTCsFromAdditionalFolder, commitMessage)
     def fileTCs = getFilesFromSubmissionData(revisionData)
 
     def revisionTC = revisionData.get("revision")
@@ -1710,7 +1729,7 @@ log = { msg ->
  * RevisionTransportCommand corresponding to this submission. The map's keys
  * are 'files' and 'revision'.
  */
-getSubmissionData = { modelId, file, additional, comment ->
+getSubmissionData = { modelId, file, additional, filesFromAdditionalFolder, comment ->
     def modelWrapper = rftc.newInstance(path: file.absolutePath, description: "",
             mainFile: true, userSubmitted: true, hidden: false)
     // infer model format
@@ -1738,6 +1757,7 @@ getSubmissionData = { modelId, file, additional, comment ->
     boolean isNonSBMLModel = nonStandardSBMLModels.containsKey(modelId)
     if (isNonSBMLModel) {
         modelWrapper.description = nonStandardSBMLModels.get(modelId).get(file.name)
+        additional = getAdditionalFilesForNonSBMLModel(modelId)
         additional.each { additionalFile ->
             String path = additionalFile.absolutePath
             String description = nonStandardSBMLModels.get(modelId).get(additionalFile.name)
@@ -1762,6 +1782,8 @@ getSubmissionData = { modelId, file, additional, comment ->
                 mainFile: false, userSubmitted: false, hidden: hidden))
         }
     }
+    // add the other additional files in 'additional' folder
+    files.addAll(filesFromAdditionalFolder)
     if (fileTrack.isEmpty()) {
         String errorMessage = "Could not find some expected files for ${it}: ${fileTrack}"
         error(errorMessage)
