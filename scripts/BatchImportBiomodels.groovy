@@ -645,7 +645,14 @@ def failureCount = new AtomicLong()
 target(main: "Puts everything together to import models from a given folder") {
     bootstrapJummp()
 
-    populateInternalCommentUserMapping()
+    userMappingForInternalCurationComments = [
+        // the name should match the one from the old system, but the username should be from JUMMP
+        "Vijayalakshmi Chelliah": User.findByUsername("viji"),
+        "Nick Juty": User.findByUsername("juty"),
+        "Rahuman Sheriff": User.findByUsername("sheriff"),
+        "Matthew Grant Roberts": User.findByUsername("matthew"),
+        "Matthieu Maire": User.findByUsername("mmaire")
+    ]
 
     def modelFolderPattern = ~/(MODEL|BIOMD)\d{10}|BMID\d{12}/
     /* fetch all the records of additional files once */
@@ -798,17 +805,6 @@ printModelLog = {
             errorMessages.each { m -> error("$modelId: $m") }
         }
     }
-}
-
-void populateInternalCommentUserMapping() {
-    userMappingForInternalCurationComments = [
-        // the name should match the one from the old system, but the username should be from JUMMP
-        "Vijayalakshmi Chelliah": User.findByUsername("viji"),
-        "Nick Juty": User.findByUsername("juty"),
-        "Rahuman Sheriff": User.findByUsername("sheriff"),
-        "Matthew Grant Roberts": User.findByUsername("matthew"),
-        "Matthieu Maire": User.findByUsername("mmaire")
-    ]
 }
 
 processModelFolder = { File folder ->
@@ -1053,7 +1049,7 @@ extractCommentTextFromComment = { comment ->
  * @return the substring between the given markers or null if either marker could not be found in
  *         the given curation comment entry.
  */
-String extractCurationCommentAttribute = { comment, start, end ->
+extractCurationCommentAttribute = { comment, start, end ->
     int startMarkerSize = start.length()
     int startIdx = comment.indexOf(start) + startMarkerSize
     if (startIdx < startMarkerSize)
