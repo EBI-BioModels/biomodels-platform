@@ -28,6 +28,7 @@ import com.jcraft.jsch.JSch
 import com.jcraft.jsch.JSchException
 import com.jcraft.jsch.Session
 import net.biomodels.jummp.core.model.LSFApplication
+import net.biomodels.jummp.core.model.LSFClusterJob
 import net.biomodels.jummp.exception.lsf.LSFJobNotExistException
 import net.biomodels.jummp.exception.lsf.LSFClusterCommandException
 import net.biomodels.jummp.exception.lsf.LSFJobUnableToStopException
@@ -65,7 +66,7 @@ class LsfService implements InitializingBean {
 
     private static final int MIN_PORT = 10000
 
-    private static final int MAX_PORT = 99999
+    private static final int MAX_PORT = 65530
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LsfService.class)
 
@@ -92,17 +93,7 @@ class LsfService implements InitializingBean {
     /**
      * LFS Cluster machine connections
      */
-    private Map<String, Session> connections = new ConcurrentHashMap<>()
-
-    /**
-     * Mapping between jobId and PID
-     */
-    private Map<String, String> jobPids = new ConcurrentHashMap<>()
-
-    /**
-     * Mapping between job and Application
-     */
-    private Map<String, LSFApplication> jobApplication = new ConcurrentHashMap<>()
+    private Map<String, LSFClusterJob> connections = new ConcurrentHashMap<>()
 
     /**
      * Dependency Injection of GrailsApplication
@@ -166,9 +157,8 @@ class LsfService implements InitializingBean {
                     Session machineSession = jSch.getSession(lsfMiddlewareUsername, host)
                     machineSession.setConfig("StrictHostKeyChecking", "no")
                     machineSession.connect(SESSION_TIMEOUT)
-                    connections.put(jobId, machineSession)
-                    jobPids.put(jobId, jobPid)
-                    jobApplication.put(jobId, application)
+                    LSFClusterJob job = new LSFClusterJob(jobId, host, port, application, jobPid, machineSession)
+                    connections.put(jobId, job)
                     break
                 } else if (response.split(" ")[0] == "PEND" || response.split(" ")[0] == "WAIT") {
                     JummpUtils.sleep(WAIT_FOR_CLUSTER_READY)
@@ -246,7 +236,7 @@ class LsfService implements InitializingBean {
      */
     String getHostByJobId(String jobId) {
         if (connections.containsKey(jobId)) {
-            return connections.get(jobId).getHost()
+            return connections.get(jobId).getHostName()
         }
         throw new LSFJobNotExistException("Job " + jobId + " not exists")
     }
@@ -274,18 +264,14 @@ class LsfService implements InitializingBean {
         if (!connections.containsKey(jobId)) {
             throw new LSFJobNotExistException("Job " + jobId + " not exists")
         }
-        Session session = connections.get(jobId)
         List<String> command = new ArrayList<>()
-        LSFApplication application = jobApplication.get(jobId)
-        String jobPid = jobPids.get(jobId)
-        command.add(lsfApplicationPath + "/" + application.getName() + "/" + application.getStopScript())
-        command.add(jobPid)
-        String response = executeCommand(session, String.join(" ", command))
+        LSFClusterJob job = connections.get(jobId)
+        command.add(lsfApplicationPath + "/" + job.getApplication().getName() + "/" + job.getApplication().getStopScript())
+        command.add(job.getPidFile())
+        String response = executeCommand(job.getSession(), String.join(" ", command))
         if (response == "Stopped") {
-            session.disconnect()
+            job.getSession().disconnect()
             connections.remove(jobId)
-            jobApplication.remove(jobId)
-            jobPids.remove(jobId)
         } else {
             LOGGER.error("Exception when stop LSF Cluster {}, {}", response, command)
             throw new LSFJobUnableToStopException("Exception occurred when stop LSF Cluster")
