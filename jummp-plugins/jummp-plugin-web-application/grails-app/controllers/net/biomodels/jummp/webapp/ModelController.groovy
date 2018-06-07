@@ -48,6 +48,7 @@ import net.biomodels.jummp.core.model.audit.AccessFormat
 import net.biomodels.jummp.core.model.audit.AccessType
 import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
 import net.biomodels.jummp.model.Model
+import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PLPTC
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.PersonTransportCommand
 import net.biomodels.jummp.plugins.security.Team
@@ -1006,7 +1007,13 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                         if (flow.workingMemory.containsKey("publication_objects_in_working")) {
                             def publicationMap = flow.workingMemory.get("publication_objects_in_working") as Map<Object, PublicationDetailExtractionContext>
                             publicationContext = publicationMap.get(params.PubLinkProvider)
-                            if (publicationContext.publication) {
+                            PLPTC previousPubLinkProvider = flow.workingMemory.get("previousPubLinkProvider") as PLPTC
+                            String previousPubLink = flow.workingMemory.get("previousPubLink")
+                            PLPTC updatedPubLinkProvider = publicationContext.publication.linkProvider
+                            boolean changedPubLinkProvider = previousPubLinkProvider.linkType != updatedPubLinkProvider.linkType
+                            boolean changedPubLink = previousPubLink != publicationContext.publication.link
+                            boolean changed =  changedPubLinkProvider || changedPubLink
+                            if (publicationContext.publication && !changed) {
                                 // reload the publication from cache
                                 retrieved = publicationContext.publication
                                 if (publicationContext.comesFromDatabase) {
