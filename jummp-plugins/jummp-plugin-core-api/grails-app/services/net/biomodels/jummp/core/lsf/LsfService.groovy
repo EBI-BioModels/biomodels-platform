@@ -27,6 +27,7 @@ import com.jcraft.jsch.ChannelExec
 import com.jcraft.jsch.JSch
 import com.jcraft.jsch.JSchException
 import com.jcraft.jsch.Session
+import grails.async.Promise
 import net.biomodels.jummp.core.model.LSFApplication
 import net.biomodels.jummp.core.model.LSFClusterJob
 import net.biomodels.jummp.core.model.LSFClusterServer
@@ -35,11 +36,15 @@ import net.biomodels.jummp.exception.lsf.LSFClusterCommandException
 import net.biomodels.jummp.exception.lsf.LSFJobUnableToStopException
 import net.biomodels.jummp.utils.FileUtils
 import net.biomodels.jummp.utils.JummpUtils
+import net.biomodels.jummp.utils.NetworkUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
+import static grails.async.Promises.*
 
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -68,6 +73,12 @@ class LsfService implements InitializingBean {
     private static final int MIN_PORT = 10000
 
     private static final int MAX_PORT = 65530
+
+    private static final int MILISECONDS_PER_SECOND = 1000
+
+    private static final int ALWAYS_AVAILABLE_MAX_TIME = 2 * 24 * 60 * 60
+
+    private static final int ALWAYS_AVAILABLE_RECREATE_TIME = (int) (ALWAYS_AVAILABLE_MAX_TIME / 3)
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LsfService.class)
 
@@ -123,7 +134,26 @@ class LsfService implements InitializingBean {
      * @return
      */
     synchronized LSFClusterServer startAlwayAvailableLSFClusterJob(LSFApplication application, int nRam, int nCpu) {
-        return null
+        String jobId = startLFSClusterJob(application, nRam, nCpu, ALWAYS_AVAILABLE_MAX_TIME)
+        LSFClusterServer lsfClusterServer = new LSFClusterServer()
+        lsfClusterServer.setHostName(getHost(jobId))
+        lsfClusterServer.setPort(getPort(jobId))
+        Promise p = task {
+            while (true) {
+                Thread.sleep(ALWAYS_AVAILABLE_RECREATE_TIME * MILISECONDS_PER_SECOND)
+                String newJob = startLFSClusterJob(application, nRam, nCpu, ALWAYS_AVAILABLE_MAX_TIME)
+                NetworkUtils.waitUntilServiceReady(getHost(newJob), getPort(newJob), application.getMaxTimeStart())
+                lsfClusterServer.setHostName(getHost(newJob))
+                lsfClusterServer.setPort(getPort(newJob))
+                stopLSFClusterJob(jobId)
+                jobId = newJob
+            }
+        }
+        p.onError { Throwable err ->
+            LOGGER.error("An error occurred with AlwayAvailable LSF Cluster ${err.message}")
+        }
+        NetworkUtils.waitUntilServiceReady(getHost(jobId), getPort(jobId), application.getMaxTimeStart())
+        return lsfClusterServer
     }
 
     /**
@@ -131,7 +161,7 @@ class LsfService implements InitializingBean {
      * @param application Application need to be deployed
      * @param nRam number of RAM required
      * @param nCpu number of CPU required
-     * @param maxTime maximum time allowed to run the application
+     * @param maxTime maximum time allowed to run the application (in second)
      * @return String job id
      */
     synchronized String startLFSClusterJob(LSFApplication application, int nRam, int nCpu, int maxTime) {
@@ -248,7 +278,7 @@ class LsfService implements InitializingBean {
      * @return IP of the machine
      * @thrown LSFJobNotExistException when job not exists
      */
-    String getHostByJobId(String jobId) {
+    String getHost(String jobId) {
         if (connections.containsKey(jobId)) {
             return connections.get(jobId).getHostName()
         }
@@ -261,7 +291,7 @@ class LsfService implements InitializingBean {
      * @return
      * @thrown LSFJobNotExistException when job not exists
      */
-    int getPortByJobId(String jobId) {
+    int getPort(String jobId) {
         if (connections.containsKey(jobId)) {
             return connections.get(jobId).getPort()
         }

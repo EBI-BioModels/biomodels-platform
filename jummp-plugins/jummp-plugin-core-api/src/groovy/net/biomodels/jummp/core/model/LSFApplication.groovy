@@ -26,7 +26,7 @@ package net.biomodels.jummp.core.model
  * All our external applications have to be declared here
  */
 enum LSFApplication {
-    MODEL_CLASSIFIER("model_classifier", "start.sh", "stop.sh")
+    MODEL_CLASSIFIER("model_classifier", "start.sh", "stop.sh", 10 * 60 * 60)
 
     /**
      * Folder name of the external application
@@ -48,10 +48,17 @@ enum LSFApplication {
      */
     private String stopScript
 
-    LSFApplication(String name, String startScript, String stopScript) {
+    /**
+     * Maximum time to start this application (in second)
+     * beyond this time, the application consider as failed
+     */
+    private int maxTimeStart
+
+    LSFApplication(String name, String startScript, String stopScript, int maxTimeStart) {
         this.name = name
         this.startScript = startScript
         this.stopScript = stopScript
+        this.maxTimeStart = maxTimeStart
     }
 
     String getName() {
@@ -64,5 +71,9 @@ enum LSFApplication {
 
     String getStopScript() {
         return stopScript
+    }
+
+    int getMaxTimeStart() {
+        return maxTimeStart
     }
 }
