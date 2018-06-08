@@ -650,6 +650,7 @@ target(main: "Puts everything together to import models from a given folder") {
         "Vijayalakshmi Chelliah": User.findByUsername("viji"),
         "Nick Juty": User.findByUsername("juty"),
         "Varun Kothamachu": User.findByUsername("Varun"),
+        "Camille Laibe": User.findByUsername("camille"),
         "Rahuman Sheriff": User.findByUsername("sheriff"),
         "Matthew Grant Roberts": User.findByUsername("matthew"),
         "Matthieu Maire": User.findByUsername("mmaire")
@@ -692,13 +693,19 @@ target(main: "Puts everything together to import models from a given folder") {
                 submissionId = getSubmissionIdForBioModelsId(modelId)
             }
 
-            def submitter = User.findByUsername("administrator")//findRightSubmitter f.name, BRANCH
-            def commitMessage = null // extractCommitMessage
+            def submitter = User.findByUsername("administrator")
+            def commitMessage = "" // commit messages cannot be null
             def comments = getInternalCommentForModelId(submissionId)
             if (comments) {
                 def curationCommentInfo = parseCurationCommentsForModel(modelId, comments)
-                if (curationCommentInfo.user) submitter = curationCommentInfo.user
-                if (curationCommentInfo.comment) commitMessage = curationCommentInfo.comment
+                if (curationCommentInfo) {
+                    // we may well be missing the user because userMappingForInternalCurationComments
+                    // only deals with the curators of recent models
+                    if (curationCommentInfo.user) submitter = curationCommentInfo.user
+                    if (curationCommentInfo.comment) commitMessage = curationCommentInfo.comment
+                } else {
+                    addModelMsg modelId, "No curation comment info could be extracted from $comments"
+                }
             }
             def modelDetails = getModelDetails modelId, BRANCH
 
@@ -984,8 +991,7 @@ parseCurationCommentsForModel = { modelId, comments ->
     }
     String errorMessage = err.toString()
     if (errorMessage) {
-        addModelError modelId, errorMessage
-        return null
+        addModelMsg modelId, errorMessage
     }
     [date: date, user: curator, comment: comment]
 }
@@ -1023,12 +1029,7 @@ extractCuratorFromComment = { comment ->
     } else {
         curator = value
     }
-    def user = userMappingForInternalCurationComments[curator]
-    if (!user) {
-        throw new IllegalStateException(
-"Cannot find an account for '$curator', please update userMappingForInternalCurationComments")
-    }
-    user
+    userMappingForInternalCurationComments[curator]
 }
 
 /**
