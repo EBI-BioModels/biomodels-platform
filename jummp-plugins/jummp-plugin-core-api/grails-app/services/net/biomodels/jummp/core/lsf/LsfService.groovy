@@ -43,8 +43,6 @@ import org.springframework.beans.factory.InitializingBean
 import static grails.async.Promises.*
 
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -133,7 +131,7 @@ class LsfService implements InitializingBean {
      * @param nCpu
      * @return
      */
-    synchronized LSFClusterServer startAlwayAvailableLSFClusterJob(LSFApplication application, int nRam, int nCpu) {
+    synchronized LSFClusterServer startAlwaysAvailableLSFClusterJob(LSFApplication application, int nRam, int nCpu) {
         String jobId = startLFSClusterJob(application, nRam, nCpu, ALWAYS_AVAILABLE_MAX_TIME)
         LSFClusterServer lsfClusterServer = new LSFClusterServer()
         lsfClusterServer.setHostName(getHost(jobId))
@@ -150,7 +148,7 @@ class LsfService implements InitializingBean {
             }
         }
         p.onError { Throwable err ->
-            LOGGER.error("An error occurred with AlwayAvailable LSF Cluster ${err.message}")
+            LOGGER.error("An error occurred with AlwaysAvailable LSF Cluster {}", err)
         }
         NetworkUtils.waitUntilServiceReady(getHost(jobId), getPort(jobId), application.getMaxTimeStart())
         return lsfClusterServer
@@ -177,6 +175,7 @@ class LsfService implements InitializingBean {
         command.add(String.format("-R \"rusage[mem=%d]\"", nRam))
         command.add(String.format("-n %d", nCpu))
         command.add(String.format("-o %s/%%J.log", lsfOutputDir))
+        command.add(String.format("-J jummp-biomodel-name-%s-pid-%s", application.name, jobPid))
         command.add(lsfApplicationPath + "/" + application.getName() + "/" + application.getStartScript())
         command.add(jobPid)
         command.add(Integer.toString(maxTime))

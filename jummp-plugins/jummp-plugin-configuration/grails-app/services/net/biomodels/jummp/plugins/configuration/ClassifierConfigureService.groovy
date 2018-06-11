@@ -34,6 +34,9 @@ package net.biomodels.jummp.plugins.configuration
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.google.common.base.Joiner
+import net.biomodels.jummp.core.model.LSFApplication
+import net.biomodels.jummp.core.model.LSFClusterServer
+import net.biomodels.jummp.utils.NetworkUtils
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
@@ -60,21 +63,35 @@ class ClassifierConfigureService implements InitializingBean {
     def grailsApplication
 
     /**
-     * Endpoint of the Classification API
-     */
-    private String classificationEndpoint
-
-    /**
      * Number of times that we will retry to call Classification API when it got an error
      * Out of this times, the service will raise that error
      */
     static final int RETRY_CLASSIFY_TIMES = 3
 
     void afterPropertiesSet() throws Exception {
-        classificationEndpoint = grailsApplication.config.jummp.classification.endpoint
     }
 
+    private static final int NRAM_TRAIN = 8000
+
+    private static final int NCPU_TRAIN = 8
+
+    private static final int MAX_TIME_TRAIN = 24 * 60 * 60
+
     /**
+     * This is the lightweight service for classification
+     * Only use to predict / rebuild cache
+     */
+    private LSFClusterServer alwaysAvailableService
+
+    /**
+     * Dependency Injection of LSF Service
+     */
+    def lsfService
+
+    void setAlwaysAvailableService(LSFClusterServer alwaysAvailableService) {
+        this.alwaysAvailableService = alwaysAvailableService
+    }
+/**
      * Create a new Deep learning model
      * @param name: the name of this deep learning model, must be unique
      * @param totalEpoch: total number of epoch to train
@@ -97,7 +114,14 @@ class ClassifierConfigureService implements InitializingBean {
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<MultiValueMap<String, String>>(map, headers)
 
-        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(classificationEndpoint)
+        String jobId =
+            lsfService.startLFSClusterJob(LSFApplication.MODEL_CLASSIFIER, NRAM_TRAIN, NCPU_TRAIN, MAX_TIME_TRAIN)
+        int maxTimeWait = LSFApplication.MODEL_CLASSIFIER.maxTimeStart
+        NetworkUtils.waitUntilServiceReady(lsfService.getHost(jobId), lsfService.getPort(jobId), maxTimeWait)
+        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance()
+        uriComponentsBuilder.scheme("http")
+            .host(lsfService.getHost(jobId))
+            .port(lsfService.getPort(jobId))
         uriComponentsBuilder.path("/train")
         URI uri = uriComponentsBuilder.build().toUri()
         RestUtils.exchange(uri, HttpMethod.POST, new TypeReference<String>() {}, request, 1)
@@ -108,7 +132,10 @@ class ClassifierConfigureService implements InitializingBean {
      * @param modelName: The name of the DL model to switch
      */
     void switchDLModel(String modelName) {
-        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(classificationEndpoint)
+        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance()
+        uriComponentsBuilder.scheme("http")
+            .host(alwaysAvailableService.hostName)
+            .port(alwaysAvailableService.port)
         uriComponentsBuilder.path("/workspace")
         uriComponentsBuilder.queryParam("workspace", modelName)
         URI uri = uriComponentsBuilder.build().toUri()
@@ -120,7 +147,10 @@ class ClassifierConfigureService implements InitializingBean {
      * @param modelName: The name of the DL model to delete
      */
     void deleteDLModel(String modelName) {
-        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(classificationEndpoint)
+        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance()
+        uriComponentsBuilder.scheme("http")
+            .host(alwaysAvailableService.hostName)
+            .port(alwaysAvailableService.port)
         uriComponentsBuilder.path("/workspace")
         uriComponentsBuilder.queryParam("workspace", modelName)
         URI uri = uriComponentsBuilder.build().toUri()
@@ -132,7 +162,10 @@ class ClassifierConfigureService implements InitializingBean {
      * @return List models
      */
     List<Map<String, String>> getDLModels() {
-        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(classificationEndpoint)
+        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance()
+        uriComponentsBuilder.scheme("http")
+            .host(alwaysAvailableService.hostName)
+            .port(alwaysAvailableService.port)
         uriComponentsBuilder.path("/workspace")
         URI request = uriComponentsBuilder.build().toUri()
         List<Map<String, String>> workspaces = RestUtils.exchange(request, HttpMethod.GET,
@@ -152,7 +185,10 @@ class ClassifierConfigureService implements InitializingBean {
      * @return
      */
     DLModelCommand getDLModel(String modelName) {
-        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(classificationEndpoint)
+        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance()
+        uriComponentsBuilder.scheme("http")
+            .host(alwaysAvailableService.hostName)
+            .port(alwaysAvailableService.port)
         uriComponentsBuilder.path("/workspace")
         uriComponentsBuilder.queryParam("workspace", modelName)
         URI request = uriComponentsBuilder.build().toUri()
@@ -174,7 +210,10 @@ class ClassifierConfigureService implements InitializingBean {
      * @return
      */
     List<Map<String, String>> getDLModelTrainStatus(String modelName) {
-        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(classificationEndpoint)
+        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance()
+        uriComponentsBuilder.scheme("http")
+            .host(alwaysAvailableService.hostName)
+            .port(alwaysAvailableService.port)
         uriComponentsBuilder.path("/train")
         uriComponentsBuilder.queryParam("workspace", modelName)
         URI request = uriComponentsBuilder.build().toUri()
@@ -188,7 +227,10 @@ class ClassifierConfigureService implements InitializingBean {
      * @return
      */
     List<Map<String, String>> getDLModelTrainLogs(String modelName) {
-        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(classificationEndpoint)
+        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance()
+        uriComponentsBuilder.scheme("http")
+            .host(alwaysAvailableService.hostName)
+            .port(alwaysAvailableService.port)
         uriComponentsBuilder.path("/dl")
         uriComponentsBuilder.queryParam("workspace", modelName)
         URI request = uriComponentsBuilder.build().toUri()
@@ -202,7 +244,10 @@ class ClassifierConfigureService implements InitializingBean {
      * @return
      */
     List<Map<String, String>> getPossibleCategory(String submissionId) {
-        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(classificationEndpoint)
+        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance()
+        uriComponentsBuilder.scheme("http")
+            .host(alwaysAvailableService.hostName)
+            .port(alwaysAvailableService.port)
         uriComponentsBuilder.path("/possible")
         uriComponentsBuilder.queryParam("model_id", submissionId)
         URI request = uriComponentsBuilder.build().toUri()
@@ -216,7 +261,10 @@ class ClassifierConfigureService implements InitializingBean {
      * @return
      */
     List<Map<String, String>> searchCategory(String keyword) {
-        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(classificationEndpoint)
+        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance()
+        uriComponentsBuilder.scheme("http")
+            .host(alwaysAvailableService.hostName)
+            .port(alwaysAvailableService.port)
         uriComponentsBuilder.path("/ontology/search")
         uriComponentsBuilder.queryParam("keyword", keyword)
         URI request = uriComponentsBuilder.build().toUri()

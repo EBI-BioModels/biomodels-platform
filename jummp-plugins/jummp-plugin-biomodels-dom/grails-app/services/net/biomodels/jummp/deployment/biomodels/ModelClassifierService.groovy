@@ -24,6 +24,8 @@ package net.biomodels.jummp.deployment.biomodels
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.ObjectNode
+import net.biomodels.jummp.core.model.LSFApplication
+import net.biomodels.jummp.core.model.LSFClusterServer
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.models.KV
 import net.biomodels.jummp.models.ModelDetails
@@ -83,12 +85,27 @@ class ModelClassifierService implements InitializingBean {
      */
     private String classificationEndpoint
 
+    /**
+     * Dependency Injection of LsfService
+     */
+    def lsfService
+
+    /**
+     * This is the lightweight service for classification
+     * Only use to predict / rebuild cache
+     */
+    private LSFClusterServer alwaysAvailableService
+
     void afterPropertiesSet() throws Exception {
         classificationEndpoint = grailsApplication.config.jummp.classification.endpoint
         trainProgress = cacheService.getCache(PROGRESS_CACHE_NAME)
         trainProgress = (trainProgress == null) ? new Progress(1, 0) : trainProgress
+        alwaysAvailableService = lsfService.startAlwaysAvailableLSFClusterJob(LSFApplication.MODEL_CLASSIFIER, 6000, 2)
     }
 
+    LSFClusterServer getAlwaysAvailableService() {
+        return alwaysAvailableService
+    }
     /**
      * Classify a model by make a request to Classification API
      * This method will raise an exception when it can't perform the request more than RETRY_CLASSIFY_TIMES
@@ -97,7 +114,10 @@ class ModelClassifierService implements InitializingBean {
      */
     private Map<String, String> classifyModel(Model model) {
         LOGGER.debug("Starting classify model {}", model.submissionId)
-        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(classificationEndpoint)
+        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance()
+        uriComponentsBuilder.scheme("http")
+        uriComponentsBuilder.host(alwaysAvailableService.hostName)
+        uriComponentsBuilder.port(alwaysAvailableService.port)
         uriComponentsBuilder.path("/predict")
         uriComponentsBuilder.queryParam("model_id", model.getSubmissionId())
         URI request = uriComponentsBuilder.build().toUri()

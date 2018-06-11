@@ -40,10 +40,11 @@ import net.biomodels.jummp.models.Progress
 import net.biomodels.jummp.plugins.security.User
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.web.client.HttpStatusCodeException
 
 @Secured(['ROLE_ADMIN'])
-class ClassifierConfigureController {
+class ClassifierConfigureController implements InitializingBean {
 
     /**
      * Dependency Injection of ClassifierConfigureService
@@ -71,6 +72,10 @@ class ClassifierConfigureController {
     def springSecurityService
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClassifierConfigureController.class)
+
+    void afterPropertiesSet() throws Exception {
+        classifierConfigureService.setAlwaysAvailableService(modelClassifierService.getAlwaysAvailableService())
+    }
 
     @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
     def index() {
