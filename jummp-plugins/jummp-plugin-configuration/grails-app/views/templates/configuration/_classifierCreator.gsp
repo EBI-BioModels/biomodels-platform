@@ -57,7 +57,7 @@
             </td>
             <td class="value ${hasErrors(bean: classifierCreator, field: 'batchSize', 'errors')}">
                 <input type="number" name="batchSize" id="batchSize"
-                       value="32" style="width: 350px;"/>
+                       value="16" style="width: 350px;"/>
             </td>
         </tr>
         <tr class="prop">
