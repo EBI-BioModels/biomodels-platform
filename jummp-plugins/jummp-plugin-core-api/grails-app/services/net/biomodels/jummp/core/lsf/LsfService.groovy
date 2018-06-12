@@ -72,7 +72,7 @@ class LsfService implements InitializingBean {
 
     private static final int MAX_PORT = 65530
 
-    private static final int MILISECONDS_PER_SECOND = 1000
+    private static final int MILLISECONDS = 1000
 
     private static final int ALWAYS_AVAILABLE_MAX_TIME = 2 * 24 * 60 * 60
 
@@ -138,7 +138,7 @@ class LsfService implements InitializingBean {
         lsfClusterServer.setPort(getPort(jobId))
         Promise p = task {
             while (true) {
-                Thread.sleep(ALWAYS_AVAILABLE_RECREATE_TIME * MILISECONDS_PER_SECOND)
+                Thread.sleep(ALWAYS_AVAILABLE_RECREATE_TIME * MILLISECONDS)
                 String newJob = startLFSClusterJob(application, nRam, nCpu, ALWAYS_AVAILABLE_MAX_TIME)
                 NetworkUtils.waitUntilServiceReady(getHost(newJob), getPort(newJob), application.getMaxTimeStart())
                 lsfClusterServer.setHostName(getHost(newJob))
@@ -218,6 +218,13 @@ class LsfService implements InitializingBean {
                 }
             }
             session.disconnect()
+            Promise p = task {
+                Thread.sleep(maxTime * MILLISECONDS)
+                stopLSFClusterJob(jobId)
+            }
+            p.onError { Throwable err ->
+                LOGGER.error("An error occurred with LSF Cluster service {}", err)
+            }
             return jobId
         }
         LOGGER.error("Can't submit job to LSF Cluster, command {}, output {}", command, response)
