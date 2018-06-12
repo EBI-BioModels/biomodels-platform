@@ -52,9 +52,14 @@
         display: inline-block;
     }
 
-    #ground_truth_filter {
+    #ground_truth_filter, #ground_truth_search {
         width: 200px;
-        float: left;
+        float: right;
+        margin-left: 10px;
+    }
+
+    .dt-buttons {
+        width: 100%;
     }
 
     .has_change {
@@ -232,14 +237,30 @@
             {"title": "groundTruth", "data": "groundTruth", "visible": false},
             {"title": "hasChange", "data": "hasChange", "visible": false}
         ],
-        "dom": 'Bfrtip',
+        "dom": 'Brtip',
         "buttons": [
-            'copy', 'csv', 'excel', 'pdf', 'print'
+            {
+                extend: 'copy',
+                exportOptions: { orthogonal: 'export' }
+            },
+            {
+                extend: 'csv',
+                exportOptions: { orthogonal: 'export' }
+            },
+            {
+                extend: 'excel',
+                exportOptions: { orthogonal: 'export' }
+            },
+            {
+                extend: 'pdf',
+                exportOptions: { orthogonal: 'export' }
+            },
+            {
+                extend: 'print',
+                exportOptions: { orthogonal: 'export' }
+            }
         ],
         "language": {
-            "lengthMenu": '_MENU_ search',
-            "search": '<i class="fa fa-search"></i>',
-            "searchPlaceholder": "Search",
             "paginate": {
                 "previous": '<i class="fa fa-angle-left"></i>',
                 "next": '<i class="fa fa-angle-right"></i>'
@@ -248,7 +269,8 @@
         "order": [[ 1, 'asc' ]],
         "data": models,
         "initComplete": function () {
-            $("#model_data_filter").prepend('<select id="ground_truth_filter">\n' +
+            $(".dt-buttons").append('<input id="ground_truth_search" type="text" placeholder="Search..."/>');
+            $(".dt-buttons").append('<select id="ground_truth_filter">\n' +
                 '    <option value="all" selected>All models</option>\n' +
                 '    <option value="other">Only other category</option>\n' +
                 '    <option value="new">Only new models</option>\n' +
@@ -276,6 +298,10 @@
         });
         $('#cancelButton').click(function() {
             $("input").trigger('change');
+        });
+        $("#ground_truth_search").keyup(function () {
+            var keyword = $(this).val();
+            table.search(keyword).draw();
         });
     });
 </script>
