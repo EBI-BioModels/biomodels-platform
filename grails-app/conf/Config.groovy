@@ -274,6 +274,7 @@ log4j.main = {
     debug debugAppender: [
         'net.biomodels.jummp',
         'net.biomodels.jummp.core',
+        'net.biomodels.jummp.core.lsf',
         'net.biomodels.jummp.model',
         'net.biomodels.jummp.core.model',
         'net.biomodels.jummp.core.model.identifier',

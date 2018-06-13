@@ -6,7 +6,7 @@ class NetworkUtils {
 
     private static int WAIT_TIME = 2000
 
-    private static int MILISECONDS = 1000
+    private static int MILLISECONDS = 1000
 
     static boolean isReachable(String host, int port) {
         SocketAddress sockaddr = new InetSocketAddress(host, port)
@@ -36,13 +36,13 @@ class NetworkUtils {
      * @param maxtime maximum time to wait (in seconds). Beyond this time the service consider as unreachable
      */
     static void waitUntilServiceReady(String host, int port, int maxtime) {
-        int nTries = (int) Math.ceil(maxtime * MILISECONDS / (double)WAIT_TIME)
+        int nTries = (int) Math.ceil(maxtime * MILLISECONDS / (double)WAIT_TIME)
         int current = 0
         while (!isReachable(host, port)) {
             if (current++ > nTries) {
                 throw new NetworkUnreachableException(String.format("Can't connect %s:%d", host, port))
             }
-            Thread.sleep(WAIT_TIME)
+            JummpUtils.sleep(WAIT_TIME)
         }
     }
 }

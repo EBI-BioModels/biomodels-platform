@@ -34,6 +34,7 @@ import net.biomodels.jummp.core.model.LSFClusterServer
 import net.biomodels.jummp.exception.lsf.LSFJobNotExistException
 import net.biomodels.jummp.exception.lsf.LSFClusterCommandException
 import net.biomodels.jummp.exception.lsf.LSFJobUnableToStopException
+import net.biomodels.jummp.exception.network.NetworkUnreachableException
 import net.biomodels.jummp.utils.FileUtils
 import net.biomodels.jummp.utils.JummpUtils
 import net.biomodels.jummp.utils.NetworkUtils
@@ -56,7 +57,7 @@ import java.util.regex.Pattern
 class LsfService implements InitializingBean {
 
     static transactional = false
-    private static final int SESSION_TIMEOUT = 60 * 60 * 1000
+    private static final int SESSION_TIMEOUT = 60 * 60
 
     private static final int CHUNK_SIZE = 1024
 
@@ -176,10 +177,11 @@ class LsfService implements InitializingBean {
      */
     synchronized String startLFSClusterJob(LSFApplication application, int nRam, int nCpu, int maxTime) {
         String jobPid = "JOB_" + JummpUtils.randStr(JOB_PID_LENGTH)
+        LOGGER.debug("Starting JOB {} with {} RAM, {} CPU, maxTime {}", application, nRam, nCpu, maxTime)
         int port = JummpUtils.randInt(MIN_PORT, MAX_PORT)
         Session session = jSch.getSession(lsfMiddlewareUsername, lsfMiddlewareHost)
         session.setConfig("StrictHostKeyChecking", "no")
-        session.connect(SESSION_TIMEOUT)
+        session.connect(SESSION_TIMEOUT * MILLISECONDS)
         List<String> command = new ArrayList<>()
         command.add("bsub")
         command.add(String.format("-q %s", lsfDefaultQueue))
@@ -192,16 +194,20 @@ class LsfService implements InitializingBean {
         command.add(jobPid)
         command.add(Integer.toString(maxTime))
         command.add(Integer.toString(port))
+        LOGGER.debug("Submitting job {}", command)
         String response = executeCommand(session, String.join(" ", command))
         Pattern pattern = Pattern.compile("Job\\s+<(\\d+)>")
         Matcher matcher = pattern.matcher(response)
         if (matcher.find()) {
             String jobId = matcher.group(1)
+            LOGGER.debug("Job {} submitted successfully", jobId)
             command.clear()
             command.add("bjobs")
             command.add(String.format("-o \"stat: exec_host\""))
             command.add(jobId)
             command.add("-noheader")
+            LOGGER.debug("Starting to check the job status")
+            LOGGER.debug("Command: {}", command)
             while (true) {
                 response = executeCommand(session, String.join(" ", command))
                 if (response.split(" ")[0] == "RUN") {
@@ -209,6 +215,7 @@ class LsfService implements InitializingBean {
                     if (host.contains("*")) {
                         host = host.split('\\*')[1]
                     }
+                    LOGGER.debug("Application running at {}", host)
                     Session machineSession = jSch.getSession(lsfMiddlewareUsername, host)
                     machineSession.setConfig("StrictHostKeyChecking", "no")
                     machineSession.connect(SESSION_TIMEOUT)
@@ -216,11 +223,13 @@ class LsfService implements InitializingBean {
                     connections.put(jobId, job)
                     break
                 } else if (response.split(" ")[0] == "PEND" || response.split(" ")[0] == "WAIT") {
+                    LOGGER.debug("Waiting for depart...")
                     JummpUtils.sleep(WAIT_FOR_CLUSTER_READY)
                 } else {
                     String logPath = String.format("%s/%s.log", lsfOutputDir, jobId)
                     String logOutput = FileUtils.readLSFOutput(logPath)
                     if (logOutput != null && logOutput == "Port unavailable!") {
+                        LOGGER.debug("Port unavailable detected, try again with different port...")
                         session.disconnect()
                         // Try again with different port
                         return startLFSClusterJob(application, nRam, nCpu, maxTime)

@@ -26,7 +26,7 @@ package net.biomodels.jummp.core.model
  * All our external applications have to be declared here
  */
 enum LSFApplication {
-    MODEL_CLASSIFIER("model_classifier", "start.sh", "stop.sh", 10 * 60 * 60)
+    MODEL_CLASSIFIER("model_classifier", "start.sh", "stop.sh", 10 * 60)
 
     /**
      * Folder name of the external application
