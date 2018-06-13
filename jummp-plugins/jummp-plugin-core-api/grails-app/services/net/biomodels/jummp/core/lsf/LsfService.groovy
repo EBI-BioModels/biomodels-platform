@@ -137,14 +137,26 @@ class LsfService implements InitializingBean {
         lsfClusterServer.setHostName(getHost(jobId))
         lsfClusterServer.setPort(getPort(jobId))
         Promise p = task {
+            int retryTimes = 0
+            String newJob = ""
             while (true) {
-                Thread.sleep(ALWAYS_AVAILABLE_RECREATE_TIME * MILLISECONDS)
-                String newJob = startLFSClusterJob(application, nRam, nCpu, ALWAYS_AVAILABLE_MAX_TIME)
-                NetworkUtils.waitUntilServiceReady(getHost(newJob), getPort(newJob), application.getMaxTimeStart())
-                lsfClusterServer.setHostName(getHost(newJob))
-                lsfClusterServer.setPort(getPort(newJob))
-                stopLSFClusterJob(jobId)
-                jobId = newJob
+                JummpUtils.sleep(ALWAYS_AVAILABLE_RECREATE_TIME * MILLISECONDS)
+                try {
+                    LOGGER.debug("Renewing AlwaysAvailable LSF Cluster Job")
+                    newJob = startLFSClusterJob(application, nRam, nCpu, ALWAYS_AVAILABLE_MAX_TIME)
+                    NetworkUtils.waitUntilServiceReady(getHost(newJob), getPort(newJob), application.getMaxTimeStart())
+                    lsfClusterServer.setHostName(getHost(newJob))
+                    lsfClusterServer.setPort(getPort(newJob))
+                    stopLSFClusterJob(jobId)
+                    jobId = newJob
+                    retryTimes = 0
+                } catch (NetworkUnreachableException e) {
+                    LOGGER.error("Exception occurred {}. Retrying...", e.getMessage())
+                    stopLSFClusterJob(newJob)
+                    if (retryTimes++ >= 3) {
+                        throw new RuntimeException("Unable to renew Always Available LSF Cluster Job")
+                    }
+                }
             }
         }
         p.onError { Throwable err ->
