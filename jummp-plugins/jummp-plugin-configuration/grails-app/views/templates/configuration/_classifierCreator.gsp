@@ -37,7 +37,7 @@
             </td>
             <td class="value ${hasErrors(bean: classifierCreator, field: 'totalEpoch', 'errors')}">
                 <input type="number" name="totalEpoch" id="totalEpoch"
-                       value="1000"
+                       value="300"
                        style="width: 350px;"
                 />
             </td>

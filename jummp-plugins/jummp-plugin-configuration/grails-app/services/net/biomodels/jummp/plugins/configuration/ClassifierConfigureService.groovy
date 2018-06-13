@@ -75,7 +75,7 @@ class ClassifierConfigureService implements InitializingBean {
 
     private static final int NCPU_TRAIN = 8
 
-    private static final int MAX_TIME_TRAIN = 8 * 60 * 60
+    private static final int MAX_TIME_TRAIN = 4 * 60 * 60
 
     /**
      * This is the lightweight service for classification
