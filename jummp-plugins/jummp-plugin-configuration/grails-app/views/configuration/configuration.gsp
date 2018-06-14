@@ -33,17 +33,61 @@
 
         <title>Configuration - ${title}</title>
         <link rel="stylesheet" href="${resource(dir: 'css', file: 'toastr.min.css', contextPath: "${grailsApplication.config.grails.serverURL}")}"/>
+        <style>
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+        }
+        .alert h4 {
+            margin-top: 0;
+            color: inherit;
+        }
+        .alert .alert-link {
+            font-weight: bold;
+        }
+        .alert > p,
+        .alert > ul {
+            margin-bottom: 0;
+        }
+        .alert > p + p {
+            margin-top: 5px;
+        }
+        .alert-success {
+            background-color: #dff0d8;
+            border-color: #d6e9c6;
+            color: #468847;
+        }
+        .alert-success hr {
+            border-top-color: #c9e2b3;
+        }
+        .alert-success .alert-link {
+            color: #356635;
+        }
+        .alert-danger {
+            background-color: #f2dede;
+            border-color: #eed3d7;
+            color: #b94a48;
+        }
+        .alert-danger hr {
+            border-top-color: #e6c1c7;
+        }
+        .alert-danger .alert-link {
+            color: #953b39;
+        }
+        </style>
     </head>
     <body>
         <g:javascript contextPath="" src="toastr.min.js"/>
         <g:hasErrors>
-            <div class="errors">
+            <div class="alert alert-danger">
                 <g:renderErrors/>
             </div>
         </g:hasErrors>
         <g:if test="${flash.message}">
-            <div class="warning">
-                ${flash.message}
+            <div class="alert alert-success">
+                <strong>${flash.message}</strong>
             </div>
         </g:if>
         <div id="remote" class="body">

@@ -34,9 +34,12 @@ package net.biomodels.jummp.plugins.configuration
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.google.common.base.Joiner
+import grails.async.Promise
 import net.biomodels.jummp.core.model.LSFApplication
 import net.biomodels.jummp.core.model.LSFClusterServer
 import net.biomodels.jummp.utils.NetworkUtils
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
@@ -46,6 +49,8 @@ import org.springframework.http.MediaType
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
 import org.springframework.web.util.UriComponentsBuilder
+
+import static grails.async.Promises.task
 
 
 /**
@@ -88,10 +93,13 @@ class ClassifierConfigureService implements InitializingBean {
      */
     def lsfService
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClassifierConfigureService.class)
+
     void setAlwaysAvailableService(LSFClusterServer alwaysAvailableService) {
         this.alwaysAvailableService = alwaysAvailableService
     }
-/**
+
+    /**
      * Create a new Deep learning model
      * @param name: the name of this deep learning model, must be unique
      * @param totalEpoch: total number of epoch to train
@@ -112,19 +120,25 @@ class ClassifierConfigureService implements InitializingBean {
             map.add("hidden_layer", Joiner.on(",").join(hiddenLayers))
         }
 
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<MultiValueMap<String, String>>(map, headers)
+        Promise p = task {
+            HttpEntity<MultiValueMap<String, String>> request =
+                new HttpEntity<MultiValueMap<String, String>>(map, headers)
 
-        String jobId =
-            lsfService.startLFSClusterJob(LSFApplication.MODEL_CLASSIFIER, NRAM_TRAIN, NCPU_TRAIN, MAX_TIME_TRAIN)
-        int maxTimeWait = LSFApplication.MODEL_CLASSIFIER.maxTimeStart
-        NetworkUtils.waitUntilServiceReady(lsfService.getHost(jobId), lsfService.getPort(jobId), maxTimeWait)
-        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance()
-        uriComponentsBuilder.scheme("http")
-            .host(lsfService.getHost(jobId))
-            .port(lsfService.getPort(jobId))
-        uriComponentsBuilder.path("/train")
-        URI uri = uriComponentsBuilder.build().toUri()
-        RestUtils.exchange(uri, HttpMethod.POST, new TypeReference<String>() {}, request, 1)
+            String jobId =
+                lsfService.startLFSClusterJob(LSFApplication.MODEL_CLASSIFIER, NRAM_TRAIN, NCPU_TRAIN, MAX_TIME_TRAIN)
+            int maxTimeWait = LSFApplication.MODEL_CLASSIFIER.maxTimeStart
+            NetworkUtils.waitUntilServiceReady(lsfService.getHost(jobId), lsfService.getPort(jobId), maxTimeWait)
+            UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance()
+            uriComponentsBuilder.scheme("http")
+                .host(lsfService.getHost(jobId))
+                .port(lsfService.getPort(jobId))
+            uriComponentsBuilder.path("/train")
+            URI uri = uriComponentsBuilder.build().toUri()
+            RestUtils.exchange(uri, HttpMethod.POST, new TypeReference<String>() {}, request, 1)
+        }
+        p.onError { Throwable err ->
+            LOGGER.error("An error occurred with LSF Cluster service {}", err)
+        }
     }
 
     /**

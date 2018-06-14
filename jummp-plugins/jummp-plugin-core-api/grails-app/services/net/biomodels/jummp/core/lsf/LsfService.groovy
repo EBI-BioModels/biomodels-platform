@@ -240,7 +240,7 @@ class LsfService implements InitializingBean {
             }
             session.disconnect()
             Promise p = task {
-                Thread.sleep(maxTime * MILLISECONDS)
+                JummpUtils.sleep(maxTime * MILLISECONDS)
                 stopLSFClusterJob(jobId)
             }
             p.onError { Throwable err ->

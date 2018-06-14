@@ -156,6 +156,7 @@ class ClassifierConfigureController implements InitializingBean {
             try {
                 classifierConfigureService.createDLModel(
                     cmd.dlname, cmd.totalEpoch, cmd.valPerEpoch, cmd.batchSize, hiddenLayers)
+                flash.message = message(code: "modelclassifier.dllmodel.creator.submitted")
                 redirect(action: "classifier")
             } catch (HttpStatusCodeException e) {
                 LOGGER.error("An exception occurred when creating a new deep learning model, {}", e)
@@ -248,6 +249,7 @@ class ClassifierConfigureController implements InitializingBean {
                 classifierConfigureService.deleteDLModel(cmd.dlname)
                 classifierConfigureService.createDLModel(
                     cmd.dlname, cmd.totalEpoch, cmd.valPerEpoch, cmd.batchSize, hiddenLayers)
+                flash.message = message(code: "modelclassifier.dllmodel.creator.submitted")
                 redirect(action: "classifier")
             } catch (HttpStatusCodeException e) {
                 LOGGER.error("An exception occurred when creating a new deep learning model, {}", e)
