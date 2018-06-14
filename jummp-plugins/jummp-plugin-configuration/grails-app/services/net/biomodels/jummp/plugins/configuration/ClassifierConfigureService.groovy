@@ -80,7 +80,7 @@ class ClassifierConfigureService implements InitializingBean {
 
     private static final int NCPU_TRAIN = 8
 
-    private static final int MAX_TIME_TRAIN = 4 * 60 * 60
+    private static final int MAX_TIME_TRAIN_FOR_ONE_EPOCH = 36
 
     /**
      * This is the lightweight service for classification
@@ -123,9 +123,9 @@ class ClassifierConfigureService implements InitializingBean {
         Promise p = task {
             HttpEntity<MultiValueMap<String, String>> request =
                 new HttpEntity<MultiValueMap<String, String>>(map, headers)
-
+            int maxTimeTrain = totalEpoch * MAX_TIME_TRAIN_FOR_ONE_EPOCH
             String jobId =
-                lsfService.startLFSClusterJob(LSFApplication.MODEL_CLASSIFIER, NRAM_TRAIN, NCPU_TRAIN, MAX_TIME_TRAIN)
+                lsfService.startLFSClusterJob(LSFApplication.MODEL_CLASSIFIER, NRAM_TRAIN, NCPU_TRAIN, maxTimeTrain)
             int maxTimeWait = LSFApplication.MODEL_CLASSIFIER.maxTimeStart
             NetworkUtils.waitUntilServiceReady(lsfService.getHost(jobId), lsfService.getPort(jobId), maxTimeWait)
             UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance()
