@@ -1,7 +1,15 @@
 {
   "swagger": "2.0",
   "info": {
-    "description": "TODO",
+    "description": "
+  BioModels is a repository of mathematical models of biological and biomedical systems.
+  It hosts a vast selection of existing literature-based physiologically and pharmaceutically
+  relevant mechanistic models in standard formats. Our mission  is to provide the systems
+  modelling community with reproducible, high-quality, 
+  <a href='http://creativecommons.org/publicdomain/zero/1.0/' target='_blank'>freely-accessible</a>
+  models published in the scientific literature. More information about BioModels can be found
+  in the <a href='faq'>FAQ</a>.
+ ",
     "version": "beta2",
     "title": "BioModels",
     "termsOfService": "https://www.ebi.ac.uk/data-protection/privacy-notice/embl-ebi-public-website",
