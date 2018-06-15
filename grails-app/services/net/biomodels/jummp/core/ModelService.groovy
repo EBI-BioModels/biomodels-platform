@@ -258,20 +258,27 @@ WHERE r.model = r2.model
         User u = springSecurityService.currentUser
         switch(type?.toLowerCase()) {
             case "private":
-                query = "$query AND r.owner.id = ${u.id}"
+                query = "$query AND r.owner.id = ${u.id} AND r.state = '${ModelState.UNPUBLISHED}'"
                 break
             case "shared":
-                query = "$query AND r.owner.id != ${u.id}"
+                query = "$query AND r.owner.id != ${u.id} AND r.state = '${ModelState.UNPUBLISHED}'"
+                break
+            case "public":
+                query = "$query AND r.owner.id = ${u.id} AND r.state = '${ModelState.PUBLISHED}'"
                 break
             default:
                 if (type) {
                     log.warn("Ignoring unsupported permission level '$type'.")
+                } else if (!isAdmin) {
+                    query = """\
+$query AND ((r.owner.id = ${u.id} AND r.state = '${ModelState.UNPUBLISHED}') 
+OR (r.owner.id != ${u.id} AND r.state = '${ModelState.UNPUBLISHED}') 
+OR (r.owner.id = ${u.id} AND r.state = '${ModelState.PUBLISHED}'))
+"""
                 }
                 break
         }
-
-        query = """$query AND r.state = '${ModelState.UNPUBLISHED}' 
-ORDER BY ${getSortColumnAsString(sortColumn)} ${sortingDirection}"""
+        query = """$query ORDER BY ${getSortColumnAsString(sortColumn)} ${sortingDirection}"""
         return query
     }
 
@@ -2157,7 +2164,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
     @PreAuthorize("hasRole('ROLE_CURATOR') or hasRole('ROLE_ADMIN')") //used to be: (hasRole('ROLE_CURATOR') and hasPermission(#revision, admin))
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.publishModelRevision")
-    public void publishModelRevision(Revision revision) {
+    void publishModelRevision(Revision revision) {
         if (!SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
             if (!aclUtilService.hasPermission(springSecurityService.authentication, revision,
                         BasePermission.ADMINISTRATION)) {
@@ -2254,6 +2261,8 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         aclUtilService.deletePermission(revision, "ROLE_USER", BasePermission.READ)
         aclUtilService.deletePermission(revision, "ROLE_ANONYMOUS", BasePermission.READ)
         revision.state=ModelState.UNPUBLISHED
+        revision.model.firstPublished = null
+        revision.model.publicationId = null
         revision.save(flush:true)
     }
 

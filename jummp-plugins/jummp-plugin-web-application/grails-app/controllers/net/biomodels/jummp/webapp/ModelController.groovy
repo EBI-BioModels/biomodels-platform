@@ -48,6 +48,7 @@ import net.biomodels.jummp.core.model.audit.AccessFormat
 import net.biomodels.jummp.core.model.audit.AccessType
 import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
 import net.biomodels.jummp.model.Model
+import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PLPTC
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.PersonTransportCommand
 import net.biomodels.jummp.plugins.security.Team
@@ -56,7 +57,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONObject
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.multipart.MultipartFile
-import net.biomodels.jummp.plugins.security.Role
 import org.springframework.security.core.GrantedAuthority
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -245,7 +245,7 @@ class ModelController {
 An anonymous or restricted access user is trying to retrieve this model: ${model.submissionId}""")
                 int revisionNumber = -1
                 if (params.revisionId) {
-                    revisionNumber = Integer.parseInt(params.revisionId)
+                    revisionNumber = params.int("revisionId")
                 }
                 Revision revision = revisionNumber >= 0 ? model.revisions.getAt(revisionNumber-1) : model.revisions.last()
                 if (!revision) {
@@ -365,7 +365,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
         RevisionTransportCommand rev
         try {
             rev = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
-            modelDelegateService.publishModelRevision(rev)
+            rev = modelDelegateService.publishModelRevision(rev)
             def currentUser = springSecurityService.currentUser
             if (currentUser) {
                 def notification = [
@@ -374,10 +374,10 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     perms: modelDelegateService.getPermissionsMap(rev.model.submissionId)]
                 sendMessage("seda:model.publish", notification)
             }
-
-            redirect(action: "showWithMessage",
-                        id: rev.identifier(),
-                        params: [flashMessage: "Model has been published."])
+            String extraMsg = rev.state == ModelState.PUBLISHED ?
+                " with the publication identifier ${rev.modelIdentifier()}." : "."
+            redirect(action: "showWithMessage", id: rev.identifier(),
+                        params: [flashMessage: "Model has been published${extraMsg}"])
         } catch(AccessDeniedException e) {
             log.error(e.message, e)
             forward(controller: "errors", action: "error403")
@@ -635,10 +635,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                 // this object persists the latest changes on the upload file page
                 try {
                     def mainMultipartList = request.getMultiFileMap().mainFile
-                    def mainFileDescription = params?.mainFileDescription ?: [""]
-                    if (mainFileDescription instanceof String) {
-                        mainFileDescription = [mainFileDescription]
-                    }
+                    List<String> mainFileDescription = params.list("mainFileDescription")
                     def extraFileField = request.getMultiFileMap().extraFiles
                     List<MultipartFile> extraMultipartList = []
                     if (extraFileField instanceof MultipartFile) {
@@ -646,28 +643,9 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     } else {
                         extraMultipartList = extraFileField
                     }
-                    def descriptionFields = params?.description ?: [""]
-                    if (descriptionFields instanceof String) {
-                        descriptionFields = [descriptionFields]
-                    }
-                    def noMains = params.deletedMain
-                    List<String> mainsToBeDeleted = []
-                    if (noMains) {
-                        if (!(noMains instanceof CharSequence)) {
-                            mainsToBeDeleted.addAll(Arrays.asList(noMains))
-                        } else {
-                            mainsToBeDeleted.add(noMains)
-                        }
-                    }
-                    def noAdditionals = params.deletedAdditional
-                    List<String> additionalsToBeDeleted = []
-                    if (noAdditionals) {
-                        if (noAdditionals.getClass().isArray()) {
-                            additionalsToBeDeleted.addAll(Arrays.asList(noAdditionals))
-                        } else {
-                            additionalsToBeDeleted.add(noAdditionals)
-                        }
-                    }
+                    List<String> descriptionFields = params.list("description")
+                    List<String> mainsToBeDeleted = params.list("deletedMain")
+                    List<String> additionalsToBeDeleted = params.list("deletedAdditional")
                     // Because of using an input element to store deleted files,
                     // we need to reprocess the list of them for getting the list of file name
                     // before sending the result to Submission Service
@@ -706,18 +684,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     // into the working memory variable named mains_in_working
                     Map<String, String> mainFiles = new HashMap<String, String>()
                     // submit new models, add new main file
-                    if (params.mainFileUpload && params.mainFileDescription) {
-                        // the main file has not been updated any more when
-                        // the user goes back and forth between the file upload screen
-                        // and the model information during the upload flow
-                        def paramFile = params.mainFileUpload
-                        def paramDesc = params.mainFileDescription
-                        List fileNames = paramFile instanceof String ? [paramFile] : paramFile
-                        List descriptions = paramDesc instanceof String ? [paramDesc] : paramDesc
-                        fileNames.eachWithIndex { String fileName, int index ->
-                            mainFiles.put(fileName, descriptions[index].encodeAsHTML())
-                        }
-                    } else {
+                    if (cmd.mainFile?.first()?.size > 0) {
                         // add the main files when
                         // - the submission flow has just started
                         // - the main files have been removed and added again
@@ -725,6 +692,15 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                             String originalFilename = entry.originalFilename
                             String description = cmd.mainFileDescription[index].encodeAsHTML()
                             mainFiles.put(originalFilename, description)
+                        }
+                    } else if (params.mainFileUpload && params.mainFileDescription) {
+                        // the main file has not been updated any more when
+                        // the user goes back and forth between the file upload screen
+                        // and the model information during the upload flow
+                        List fileNames = params.list("mainFileUpload")
+                        List descriptions = params.list("mainFileDescription")
+                        fileNames.eachWithIndex { String fileName, int index ->
+                            mainFiles.put(fileName, descriptions[index].encodeAsHTML())
                         }
                     }
                     flow.workingMemory.put("mains_in_working", mainFiles)
@@ -735,10 +711,8 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     Map<String, String> additionalFiles = new HashMap<String, String>()
                     // add the existing files that were already uploaded
                     if (params.existedExtraFiles && params.existedExtraFileDescriptions) {
-                        def paramFile = params.existedExtraFiles
-                        def paramDesc = params.existedExtraFileDescriptions
-                        List fileNames = paramFile instanceof String ? [paramFile] : paramFile
-                        List descriptions = paramDesc instanceof String ? [paramDesc] : paramDesc
+                        List fileNames = params.list("existedExtraFiles")
+                        List descriptions = params.list("existedExtraFileDescriptions")
                         fileNames.eachWithIndex { String fileName, int index ->
                             additionalFiles.put(fileName, descriptions[index].encodeAsHTML())
                         }
@@ -838,7 +812,7 @@ Error in uploading files. Cmd did not validate: ${cmd.getProperties()}""")
                     // FOR THE MAIN FILES
                     // Copy the recently uploaded files to the exchanged folder if they are available
                     List<File> mainFileList
-                    if (cmd.mainFile?.first().size > 0) {
+                    if (cmd.mainFile?.first()?.size > 0) {
                         // the main files might be just uploaded
                         mainFileList = transferFiles(parent, cmd.mainFile)
                         if (mainFileList.size() == 0) {
@@ -1032,7 +1006,13 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                         if (flow.workingMemory.containsKey("publication_objects_in_working")) {
                             def publicationMap = flow.workingMemory.get("publication_objects_in_working") as Map<Object, PublicationDetailExtractionContext>
                             publicationContext = publicationMap.get(params.PubLinkProvider)
-                            if (publicationContext.publication) {
+                            PLPTC previousPubLinkProvider = flow.workingMemory.get("previousPubLinkProvider") as PLPTC
+                            String previousPubLink = flow.workingMemory.get("previousPubLink")
+                            PLPTC updatedPubLinkProvider = publicationContext.publication.linkProvider
+                            boolean changedPubLinkProvider = previousPubLinkProvider.linkType != updatedPubLinkProvider.linkType
+                            boolean changedPubLink = previousPubLink != publicationContext.publication.link
+                            boolean changed =  changedPubLinkProvider || changedPubLink
+                            if (publicationContext.publication && !changed) {
                                 // reload the publication from cache
                                 retrieved = publicationContext.publication
                                 if (publicationContext.comesFromDatabase) {

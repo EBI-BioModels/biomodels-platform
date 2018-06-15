@@ -345,6 +345,7 @@ jummp.controllerAnnotations = [
     "/plugins/*/css/*":         ['permitAll'],
     "/plugins/*/images/*":      ['permitAll'],
     "/simpleCaptcha/captcha":   ['permitAll'],
+    "/docs/**":                 ['permitAll'],
     "/omicsdi/**":              ["hasRole('ROLE_ADMIN')"]
 ]
 
