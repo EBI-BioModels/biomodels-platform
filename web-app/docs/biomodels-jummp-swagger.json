@@ -25,16 +25,12 @@
   "basePath": "/biomodels",
   "tags": [
     {
-      "name": "Model related Web Services",
-      "description": "Extract information about a particular model"
+      "name": "Model-related operations",
+      "description": "Retrieve information about a particular submission."
     },
     {
-      "name": "Searching Models related Web Services",
-      "description": "Search models of interest"
-    },
-    {
-      "name": "Browsing Models related Web Services",
-      "description": "Browse models of interest in My Models page"
+      "name": "Search models",
+      "description": "Find models of interest"
     }
   ],
   "schemes": [
@@ -44,7 +40,7 @@
     "/{modelId}": {
       "get": {
         "tags": [
-          "Model related Web Services"
+          "Model-related operations"
         ],
         "summary": "Fetch information about a given model",
         "parameters": [
@@ -80,7 +76,7 @@
     "/model/files/{modelId}": {
       "get": {
         "tags": [
-          "Model related Web Services"
+          "Model-related operations"
         ],
         "summary": "Extract metadata information of model files of a particular model",
           "parameters": [
@@ -117,7 +113,7 @@
     "/model/download/{modelId}": {
       "get": {
         "tags": [
-          "Model related Web Services"
+          "Model-related operations"
         ],
         "summary": "Download a particular file associated with a given model",
           "parameters": [
@@ -152,7 +148,7 @@
     "/search": {
       "get": {
         "tags": [
-          "Searching Models related Web Services"
+          "Search models"
         ],
         "summary": "Download search results",
         "parameters": [
@@ -161,7 +157,7 @@
               "name": "query",
               "required": true,
               "type": "string",
-              "description": "Search key words/terms"
+              "description": "Search query"
           },
           {
               "in": "query",
