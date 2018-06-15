@@ -204,60 +204,6 @@
               }
           }
       }
-    },
-    "/models": {
-      "get": {
-        "tags": [
-          "Browsing Models related Web Services"
-        ],
-        "summary": "Download models of interest that a logged in user can access",
-        "parameters": [
-          {
-              "in": "query",
-              "name": "query",
-              "required": false,
-              "type": "string",
-              "description": "Filter key words/terms"
-          },
-          {
-              "in": "query",
-              "name": "offset",
-              "type": "integer",
-              "required": false,
-              "description": "The number of items to skip before starting to collect the result set"
-          },
-          {
-              "in": "query",
-              "name": "numResults",
-              "type": "integer",
-              "required": false,
-              "description": "The number of items to return"
-          },
-              {
-                  "in": "query",
-                  "name": "format",
-                  "type": "string",
-                  "required": false,
-                  "description": "Format that the response should return",
-                  "default": "html"
-              }
-	  
-        ],
-          "produces": [
-              "application/json",
-              "application/xml",
-		"text/html"
-          ],
-          "responses": {
-	      "200": {
-	        "description": "successful operation" 
-	      },	
-              "404": {
-                  "description": "Invalid Model Id Supplied"
-              }
-          }
-	
-      }
     }
   },
   "externalDocs": {
