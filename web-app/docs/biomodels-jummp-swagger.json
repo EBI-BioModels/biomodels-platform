@@ -93,7 +93,7 @@
                   "type": "string",
                   "required": false,
                   "description": "Format that the response should return",
-                  "default": "json"
+                  "default": "html"
               }
           ],
           "produces": [
