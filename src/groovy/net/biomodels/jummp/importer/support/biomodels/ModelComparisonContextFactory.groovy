@@ -20,8 +20,10 @@
 
 package net.biomodels.jummp.importer.support.biomodels
 
+import net.biomodels.jummp.model.Revision
+
 /**
- * This class is used to detect models that the model names were recently updated.
+ * This class is used to build a model comparison context from model details and revision.
  *
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
@@ -29,11 +31,14 @@ package net.biomodels.jummp.importer.support.biomodels
  * Created by Mihai Glonț on 08/02/18.
  * Updated by Tung nguyen on 04/06/18.
  */
-final class ModelNameChangeDetector extends AbstractModelChangeDetector {
-
-    boolean hasChanged(ModelComparisonContext comparison) {
-        Objects.requireNonNull(comparison)
-        if (comparison.name != comparison.imported.name) return true
-        super.hasChanged(comparison)
+class ModelComparisonContextFactory {
+    static ModelComparisonContext fromModelDetails(Map modelDetails, Revision revision) {
+        ModelComparisonContext context = new ModelComparisonContext()
+        context.name = modelDetails['name']
+        context.biomodelsId = modelDetails['biomodels_id']
+        context.lastModified = modelDetails['lastModified']
+        context.originalModel = modelDetails['originalModel']
+        context.imported = revision
+        context
     }
 }
