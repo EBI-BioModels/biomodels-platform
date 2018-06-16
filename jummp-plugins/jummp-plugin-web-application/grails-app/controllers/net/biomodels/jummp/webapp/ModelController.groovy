@@ -52,6 +52,7 @@ import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.PersonTransportCommand
 import net.biomodels.jummp.plugins.security.Team
+import net.biomodels.jummp.webapp.rest.model.show.ModelFiles
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONObject
@@ -350,14 +351,29 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
 
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def files() {
+        // PageFragmentCachingFilter throws a NPE for unsupported format parameter values
+        if (!(params?.format in ['json', 'xml'])) {
+            render view: '/errors/error415', status: 415
+            return
+        }
         try {
             def revisionFiles = modelDelegateService.getRevisionFromParams(params.id, params.revisionId).files
             def responseFiles = revisionFiles.findAll { !it.hidden }
-            respond new net.biomodels.jummp.webapp.rest.model.show.ModelFiles(responseFiles)
+            def modelFiles = new ModelFiles(responseFiles)
+            withFormat {
+                json { respond modelFiles }
+                xml { respond modelFiles }
+                '*' { render status: 415, view: "/errors/error415" }
+            }
         } catch(Exception err) {
             log.error err.message, err
-            respond net.biomodels.jummp.webapp.rest.errors.Error("Invalid Id",
-            "An invalid model id was specified")
+            def response =  net.biomodels.jummp.webapp.rest.errors.Error("Invalid Id",
+                "An invalid model id was specified")
+            withFormat {
+                json { respond response, [status: 404] }
+                xml { respond response, [status: 404] }
+                '*' { forward controller: 'errors', action: 'error404' }
+            }
         }
     }
 
