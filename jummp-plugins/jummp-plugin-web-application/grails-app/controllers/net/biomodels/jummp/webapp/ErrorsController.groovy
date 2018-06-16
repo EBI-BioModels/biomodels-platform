@@ -47,6 +47,7 @@ class ErrorsController {
     }
 
     def error404 = {
+        response.status = HttpServletResponse.SC_NOT_FOUND
         if (params.format && params.format!="html") {
             respond getError("404", [request.forwardURI])
         } else {
