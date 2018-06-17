@@ -35,7 +35,7 @@
         "tags": [
           "Model-related operations"
         ],
-        "summary": "Fetch information about a given model",
+        "summary": "Fetch information about a given model at a particular revision.",
         "parameters": [
           {
             "in": "path",
@@ -59,7 +59,7 @@
         ],
         "responses": {
           "200": {
-            "description": "successful operation"
+            "description": "Successful operation"
           },
           "404": {
             "description": "Invalid model id"
@@ -76,35 +76,37 @@
           "Model-related operations"
         ],
         "summary": "Extract metadata information of model files of a particular model",
-          "parameters": [
-              {
-                  "in": "path",
-                  "name": "modelId",
-                  "required": true,
-                  "type": "string",
-                  "description": "Model identifier that needs to be extracted"
-              },
-              {
-                  "in": "query",
-                  "name": "format",
-                  "type": "string",
-                  "required": false,
-                  "description": "Format that the response should return",
-                  "default": "html"
-              }
-          ],
-          "produces": [
-              "application/json",
-              "application/xml"
-          ],
-          "responses": {
-              "200": {
-	    	"description": "successful operation"
-	       },
-              "404": {
-                  "description": "Invalid Model Id Supplied"
-              }
+        "parameters": [
+          {
+            "in": "path",
+            "name": "modelId",
+            "required": true,
+            "type": "string",
+            "description": "The identifier of the model for which to retrieve the files."
+          },
+          {
+            "in": "query",
+            "name": "format",
+            "type": "string",
+            "required": false,
+            "description": "The format that the response should return"
           }
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "404": {
+            "description": "Invalid model id supplied"
+          },
+          "415": {
+            "description": "Unsupported media type. Please see the <a href='#contentNegotiation'>content negotiation</a> section."
+          }
+        }
       }
     },
     "/model/download/{modelId}": {
@@ -112,34 +114,37 @@
         "tags": [
           "Model-related operations"
         ],
-        "summary": "Download a particular file associated with a given model",
-          "parameters": [
-              {
-                  "in": "path",
-                  "name": "modelId",
-                  "required": true,
-                  "description": "Model identifier that the file in question is associated with",
-                  "type": "string"
-              },
-              {
-                  "in": "query",
-                  "name": "filename",
-                  "type": "string",
-                  "description": "File name that needs to be downloaded",
-                  "required": true
-              }
-          ],
-          "responses": {
-              "200": {
-	    	"description": "successful operation"
-	       },
-              "404": {
-                  "description": "File Not Found"
-              },
-              "403": {
-                  "description": "Invalid Model ID Supplied"
-              }
+        "summary": "Download a particular file associated with a given model or all its files as a COMBINE archive. The Content disposition and MIME type response headers contain the file name and type.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "modelId",
+            "required": true,
+            "description": "The model identifier that the file in question is associated with",
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "filename",
+            "type": "string",
+            "description": "The name of the file that needs to be downloaded. If not provided, all model files are returned as a <a href='https://co.mbine.org/standards/omex' target='_blank'>COMBINE archive</a>. If the file name is set, then the file contents will be served.",
+            "required": false
           }
+        ],
+        "produces": [
+          "application/octet-stream"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "400": {
+            "description": "File Not Found"
+          },
+          "404": {
+            "description": "Invalid Model ID Supplied"
+          }
+        }
       }
     },
     "/search": {
@@ -154,7 +159,7 @@
             "name": "query",
             "required": true,
             "type": "string",
-            "description": "Search query"
+            "description": "Search query. Please note that the colon character in ontology terms must be escaped."
           },
           {
             "in": "query",
@@ -182,8 +187,7 @@
             "name": "format",
             "type": "string",
             "required": false,
-            "description": "Format that the response should return",
-            "default": "html"
+            "description": "The format that the response should return"
           }
         ],
         "produces": [
