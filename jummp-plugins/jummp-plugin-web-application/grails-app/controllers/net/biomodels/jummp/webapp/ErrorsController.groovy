@@ -56,6 +56,7 @@ class ErrorsController {
     }
 
     def error500 = {
+        response.status = HttpServletResponse.SC_INTERNAL_SERVER_ERROR
         def exception = request.getAttribute('exception')
         String digest = ''
         if (exception) {
