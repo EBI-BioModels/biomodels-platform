@@ -25,6 +25,6 @@
     </head>
     <body>
         <h2><g:message code="error.415.title"/></h2>
-        <p><g:message code="error.415.explanation"/>
+        <g:message code="error.415.explanation"/>
     </body>
 </html>
