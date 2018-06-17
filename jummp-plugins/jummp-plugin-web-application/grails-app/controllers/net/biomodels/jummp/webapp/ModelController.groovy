@@ -52,6 +52,7 @@ import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.PersonTransportCommand
 import net.biomodels.jummp.plugins.security.Team
+import net.biomodels.jummp.webapp.rest.errors.Error
 import net.biomodels.jummp.webapp.rest.model.show.ModelFiles
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
@@ -59,6 +60,8 @@ import org.codehaus.groovy.grails.web.json.JSONObject
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.security.core.GrantedAuthority
+
+import javax.servlet.http.HttpServletResponse
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -1295,24 +1298,36 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
      */
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def download() {
-        if (!params.filename) {
+        def modelId = params.id
+        def revisionId = params.revisionId
+        String fileName = params.filename
+        if (!fileName) {
             final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(
-                            modelDelegateService.getRevisionFromParams(params.id, params.revisionId))
+                            modelDelegateService.getRevisionFromParams(modelId, revisionId))
             serveModelAsCombineArchive(FILES, response)
         } else {
             final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(
-                            modelDelegateService.getRevisionFromParams(params.id, params.revisionId))
+                            modelDelegateService.getRevisionFromParams(modelId, revisionId))
             RFTC requested = FILES.find {
                 if (it.hidden) {
                     return false
                 }
                 File file = new File(it.path)
-                file.getName() == params.filename
+                file.getName() == fileName
             }
             boolean inline = params.inline == "true"
             boolean preview  = params.preview == "true"
             if (requested) {
                 serveModelAsFile(requested, response, inline, preview)
+            } else {
+                response.status = HttpServletResponse.SC_BAD_REQUEST
+                def err = new Error("Invalid file name",
+                    "Cannot find file ${fileName} belonging to model $modelId")
+                withFormat {
+                    json { respond err }
+                    xml { respond err }
+                    // for all else we send a 404
+                }
             }
         }
     }
