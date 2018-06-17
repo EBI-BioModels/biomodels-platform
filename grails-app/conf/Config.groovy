@@ -62,6 +62,8 @@ try {
 def jummpConfig = new ConfigSlurper().parse(jummpProperties)
 List pluginsToExclude = []
 
+// The Accept header set by older versions of IE and Opera may be unreliable, ignore it
+grails.mime.disable.accept.header.userAgents = ['Presto', 'Trident']
 grails.mime.file.extensions = false // enables the parsing of file extensions from URLs into the request format
 grails.mime.use.accept.header = true
 grails.mime.types = [ html: ['text/html','application/xhtml+xml'],
