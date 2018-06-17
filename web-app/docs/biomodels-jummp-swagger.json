@@ -40,15 +40,16 @@
           {
             "in": "path",
             "name": "modelId",
+            "description": "The identifier of a public model in BioModels.",
             "required": true,
             "type": "string"
           },
           {
             "in": "query",
             "name": "format",
+            "description": "The response format, one of <b>xml</b>, <b>json</b> or <b>html</b>",
             "type": "string",
-            "required": false,
-            "default": "html"
+            "required": false
           }
         ],
         "produces": [
@@ -62,6 +63,9 @@
           },
           "404": {
             "description": "Invalid model id"
+          },
+          "415": {
+            "description": "Unsupported media type. Please see the <a href='#contentNegotiation'>content negotiation</a> section. "
           }
         }
       }
@@ -173,6 +177,9 @@
             "required": false,
             "description": "Sort criteria"
           },
+              {
+                  "in": "query",
+                  "name": "format",
           {
             "in": "query",
             "name": "format",
