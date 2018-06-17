@@ -20,23 +20,15 @@
 
 package net.biomodels.jummp.webapp.rest.model.show
 
-import com.wordnik.swagger.annotations.*
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.core.model.ModelTransportCommand
 
-@ApiModel(value = "Model")
 class Model {
-    @ApiModelProperty(value = "model name", required = true)
     String name
-    @ApiModelProperty(value = "model description", required = true)
     String description
-    @ApiModelProperty(value = "the format of the model")
     Format format
-    @ApiModelProperty(value = "the scientific publication which describes this model.", required = false)
     String publication
-    @ApiModelProperty(value = "the files that this model comprises")
     ModelFiles files
-    @ApiModelProperty(value = "the version history of this model")
     History history
     Date firstPublished
     /** perennial model identifiers */

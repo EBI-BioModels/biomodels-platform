@@ -34,9 +34,6 @@
 
 package net.biomodels.jummp.webapp
 
-import com.wordnik.swagger.annotations.Api
-import com.wordnik.swagger.annotations.ApiImplicitParam
-import com.wordnik.swagger.annotations.ApiOperation
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import groovy.json.JsonSlurper
@@ -65,7 +62,6 @@ import javax.servlet.http.HttpServletResponse
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-@Api(value = "/model", description = "Operations related to models", produces = "application/json")
 @Secured(['IS_AUTHENTICATED_FULLY'])
 class ModelController {
     /**
@@ -232,10 +228,6 @@ class ModelController {
         redirect(action: "show", id: modelId.toString())
     }
 
-    @ApiOperation(value = "Show a model.", httpMethod = "GET",
-                response = net.biomodels.jummp.webapp.rest.model.show.Model.class,
-                notes = "Pass the expected media type of the request as a parameter e.g. /model/id?format=json")
-    @ApiImplicitParam(name = "modelId", value = "The model identifier", required = true, allowMultiple = false)
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def show() {
         RevisionTransportCommand rev
