@@ -91,9 +91,8 @@
                   "in": "query",
                   "name": "format",
                   "type": "string",
-                  "required": false,
+                  "required": true,
                   "description": "Format that the response should return",
-                  "default": "html"
               }
           ],
           "produces": [
