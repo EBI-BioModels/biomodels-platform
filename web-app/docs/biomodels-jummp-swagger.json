@@ -1,35 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "description": "
-  <p>BioModels is a repository of mathematical models of biological and biomedical systems.
-  It hosts a vast selection of existing literature-based physiologically and
-  pharmaceutically relevant mechanistic models in standard formats. Our mission is to provide the systems modelling community with reproducible, high-quality, 
-  <a href='http://creativecommons.org/publicdomain/zero/1.0/' target='_blank'>freely-accessible</a>
-  models published in the scientific literature. More information about BioModels can be
-  found in the <a href='../faq'>FAQ</a></p>.
-
-  <h3>Notes about this API</h3>
-
-  <h4 id='contentNegotiation'>Content negotiation</h4>
-  <p>Both XML and JSON MIME types are supported. Clients have two ways of specifying the
-  content type:
-  <ul>
-	<li>an explicit format request parameter (e.g. format=xml)</li>
-	<li>the Accept request header (e.g. Accept: application/xml).</li>
-  </ul>
-  If both are specified, the format parameter has priority.
-  </p>
-
-  <h4>BioModels content</h4>
-  <p>Model information is retrieved based on the a submission identifier, such as
-  MODEL1707110000, or a BioModels identifier, like BIOMD0000000123. BioModels content
-  is versioned and model revision numbers are assigned incrementally starting from 1.
-  If a particular model revision is public, it can be accessed by appending a dot ('.')
-  and its number to the model identifier (e.g. BIOMD0000000123.1).
-  </p>
-  <p>The <a href='https://www.ebi.ac.uk/biomodels-main/path2models' target='_blank' title='find out more about Path2Models -- link opens in a new window'>Path2Models</a> branch of models is not available through this API at this time.</p>
- ",
+    "description": "<p>BioModels is a repository of mathematical models of biological and biomedical systems. It hosts a vast selection of existing literature-based physiologically and pharmaceutically relevant mechanistic models in standard formats. Our mission is to provide the systems modelling community with reproducible, high-quality, <a href='http://creativecommons.org/publicdomain/zero/1.0/' target='_blank'>freely-accessible</a> models published in the scientific literature. More information about BioModels can be found in the <a href='../faq'>FAQ</a>.</p> <h3>Notes about this API</h3> <h4 id='contentNegotiation'>Content negotiation</h4> <p>Both XML and JSON MIME types are supported. Clients have two ways of specifying the content type: <ul> <li>an explicit format request parameter (e.g. format=xml)</li> <li>the Accept request header (e.g. Accept: application/xml).</li> </ul> If both are specified, the format parameter has priority. </p> <h4>BioModels content</h4> <p>Model information is retrieved based on the a submission identifier, such as MODEL1707110000, or a BioModels identifier, like BIOMD0000000123. BioModels content is versioned and model revision numbers are assigned incrementally starting from 1. If a particular model revision is public, it can be accessed by appending a dot ('.') and its number to the model identifier (e.g. BIOMD0000000123.1). </p> <p>The <a href='https://www.ebi.ac.uk/biomodels-main/path2models' target='_blank' title='find out more about Path2Models -- link opens in a new window'>Path2Models</a> branch of models is not available through this API at this time.</p> ",
     "version": "beta2",
     "title": "BioModels",
     "termsOfService": "https://www.ebi.ac.uk/data-protection/privacy-notice/embl-ebi-public-website",
@@ -54,7 +26,8 @@
     }
   ],
   "schemes": [
-    "http", "https"
+    "http",
+    "https"
   ],
   "paths": {
     "/{modelId}": {
@@ -85,9 +58,9 @@
         ],
         "responses": {
           "200": {
-	    "description": "successful operation"
-	  },
-	  "404": {
+            "description": "successful operation"
+          },
+          "404": {
             "description": "Invalid model id"
           }
         }
@@ -173,56 +146,55 @@
         "summary": "Download search results",
         "parameters": [
           {
-              "in": "query",
-              "name": "query",
-              "required": true,
-              "type": "string",
-              "description": "Search query"
+            "in": "query",
+            "name": "query",
+            "required": true,
+            "type": "string",
+            "description": "Search query"
           },
           {
-              "in": "query",
-              "name": "offset",
-              "type": "integer",
-              "required": false,
-              "description": "The number of items to skip before starting to collect the result set"
+            "in": "query",
+            "name": "offset",
+            "type": "integer",
+            "required": false,
+            "description": "The number of items to skip before starting to collect the result set"
           },
           {
-              "in": "query",
-              "name": "numResults",
-              "type": "integer",
-              "required": false,
-              "description": "The number of items to return"
+            "in": "query",
+            "name": "numResults",
+            "type": "integer",
+            "required": false,
+            "description": "The number of items to return"
           },
           {
-              "in": "query",
-              "name": "sort",
-              "type": "string",
-              "required": false,
-              "description": "Sort criteria"
+            "in": "query",
+            "name": "sort",
+            "type": "string",
+            "required": false,
+            "description": "Sort criteria"
           },
-              {
-                  "in": "query",
-                  "name": "format",
-                  "type": "string",
-                  "required": false,
-                  "description": "Format that the response should return",
-                  "default": "html"
-              }
-	  
-        ],
-          "produces": [
-              "application/json",
-              "application/xml",
-	 	"text/html"		
-          ],
-          "responses": {
-              "200": {
-	    	"description": "successful operation"
-	       },
-              "404": {
-                  "description": "Invalid Model Id Supplied"
-              }
+          {
+            "in": "query",
+            "name": "format",
+            "type": "string",
+            "required": false,
+            "description": "Format that the response should return",
+            "default": "html"
           }
+        ],
+        "produces": [
+          "application/json",
+          "application/xml",
+          "text/html"
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation"
+          },
+          "404": {
+            "description": "Invalid Model Id Supplied"
+          }
+        }
       }
     }
   },
