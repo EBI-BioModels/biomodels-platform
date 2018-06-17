@@ -1,0 +1,212 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "
+  BioModels is a repository of mathematical models of biological and biomedical systems.
+  It hosts a vast selection of existing literature-based physiologically and pharmaceutically
+  relevant mechanistic models in standard formats. Our mission  is to provide the systems
+  modelling community with reproducible, high-quality, 
+  <a href='http://creativecommons.org/publicdomain/zero/1.0/' target='_blank'>freely-accessible</a>
+  models published in the scientific literature. More information about BioModels can be found
+  in the <a href='faq'>FAQ</a>.
+ ",
+    "version": "beta2",
+    "title": "BioModels",
+    "termsOfService": "https://www.ebi.ac.uk/data-protection/privacy-notice/embl-ebi-public-website",
+    "contact": {
+      "email": "biomodels-developers@lists.sourceforge.net"
+    },
+    "license": {
+      "name": "AGPL v3",
+      "url": "https://www.gnu.org/licenses/agpl-3.0.en.html"
+    }
+  },
+  "host": "wwwdev.ebi.ac.uk",
+  "basePath": "/biomodels",
+  "tags": [
+    {
+      "name": "Model-related operations",
+      "description": "Retrieve information about a particular submission."
+    },
+    {
+      "name": "Search models",
+      "description": "Find models of interest"
+    }
+  ],
+  "schemes": [
+    "http", "https"
+  ],
+  "paths": {
+    "/{modelId}": {
+      "get": {
+        "tags": [
+          "Model-related operations"
+        ],
+        "summary": "Fetch information about a given model",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "modelId",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "in": "query",
+            "name": "format",
+            "type": "string",
+            "required": false,
+            "default": "html"
+          }
+        ],
+        "produces": [
+          "application/json",
+          "application/xml",
+          "text/html"
+        ],
+        "responses": {
+          "200": {
+	    "description": "successful operation"
+	  },
+	  "404": {
+            "description": "Invalid model id"
+          }
+        }
+      }
+    },
+    "/model/files/{modelId}": {
+      "get": {
+        "tags": [
+          "Model-related operations"
+        ],
+        "summary": "Extract metadata information of model files of a particular model",
+          "parameters": [
+              {
+                  "in": "path",
+                  "name": "modelId",
+                  "required": true,
+                  "type": "string",
+                  "description": "Model identifier that needs to be extracted"
+              },
+              {
+                  "in": "query",
+                  "name": "format",
+                  "type": "string",
+                  "required": true,
+                  "description": "Format that the response should return",
+              }
+          ],
+          "produces": [
+              "application/json",
+              "application/xml"
+          ],
+          "responses": {
+              "200": {
+	    	"description": "successful operation"
+	       },
+              "404": {
+                  "description": "Invalid Model Id Supplied"
+              }
+          }
+      }
+    },
+    "/model/download/{modelId}": {
+      "get": {
+        "tags": [
+          "Model-related operations"
+        ],
+        "summary": "Download a particular file associated with a given model",
+          "parameters": [
+              {
+                  "in": "path",
+                  "name": "modelId",
+                  "required": true,
+                  "description": "Model identifier that the file in question is associated with",
+                  "type": "string"
+              },
+              {
+                  "in": "query",
+                  "name": "filename",
+                  "type": "string",
+                  "description": "File name that needs to be downloaded",
+                  "required": true
+              }
+          ],
+          "responses": {
+              "200": {
+	    	"description": "successful operation"
+	       },
+              "404": {
+                  "description": "File Not Found"
+              },
+              "403": {
+                  "description": "Invalid Model ID Supplied"
+              }
+          }
+      }
+    },
+    "/search": {
+      "get": {
+        "tags": [
+          "Search models"
+        ],
+        "summary": "Download search results",
+        "parameters": [
+          {
+              "in": "query",
+              "name": "query",
+              "required": true,
+              "type": "string",
+              "description": "Search query"
+          },
+          {
+              "in": "query",
+              "name": "offset",
+              "type": "integer",
+              "required": false,
+              "description": "The number of items to skip before starting to collect the result set"
+          },
+          {
+              "in": "query",
+              "name": "numResults",
+              "type": "integer",
+              "required": false,
+              "description": "The number of items to return"
+          },
+          {
+              "in": "query",
+              "name": "sort",
+              "type": "string",
+              "required": false,
+              "description": "Sort criteria"
+          },
+              {
+                  "in": "query",
+                  "name": "format",
+                  "type": "string",
+                  "required": false,
+                  "description": "Format that the response should return",
+                  "default": "html"
+              }
+	  
+        ],
+          "produces": [
+              "application/json",
+              "application/xml",
+	 	"text/html"		
+          ],
+          "responses": {
+              "200": {
+	    	"description": "successful operation"
+	       },
+              "404": {
+                  "description": "Invalid Model Id Supplied"
+              }
+          }
+      }
+    }
+  },
+  "externalDocs": {
+    "description": "Find out more about BioModels",
+    "url": "https://www.ebi.ac.uk/biomodels"
+  }
+}

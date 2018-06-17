@@ -302,7 +302,7 @@
                 processData: true,
                 async: true,
                 beforeSend: function() {
-                    $('#txtStatus').html("The curation notes are being saved. Please wait...");
+                    toastr.info("The curation notes are being saved. Please wait...");
                 },
                 success: function(response) {
                     var href = window.location.href;
@@ -314,11 +314,13 @@
                             document.location.hash = newHref;
                         }
                     }
-                    $('#txtStatus').html(response['message']);
+                    toastr.clear();
+                    toastr.success(response['message']);
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
                     // TODO: the error message doesn't show properly
-                    $('#txtStatus').html("Error: ", jqXHR.responseText + textStatus + errorThrown + JSON.stringify(jqXHR));
+                    toastr.clear();
+                    toastr.error("Error: ", jqXHR.responseText + textStatus + errorThrown + JSON.stringify(jqXHR));
                 }
             });
         } else {

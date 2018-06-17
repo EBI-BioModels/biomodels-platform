@@ -48,15 +48,16 @@ import net.biomodels.jummp.core.model.audit.AccessFormat
 import net.biomodels.jummp.core.model.audit.AccessType
 import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
 import net.biomodels.jummp.model.Model
+import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PLPTC
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.PersonTransportCommand
 import net.biomodels.jummp.plugins.security.Team
+import net.biomodels.jummp.webapp.rest.model.show.ModelFiles
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONObject
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.multipart.MultipartFile
-import net.biomodels.jummp.plugins.security.Role
 import org.springframework.security.core.GrantedAuthority
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -350,14 +351,29 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
 
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def files() {
+        // PageFragmentCachingFilter throws a NPE for unsupported format parameter values
+        if (!(params?.format in ['json', 'xml'])) {
+            render view: '/errors/error415', status: 415
+            return
+        }
         try {
             def revisionFiles = modelDelegateService.getRevisionFromParams(params.id, params.revisionId).files
             def responseFiles = revisionFiles.findAll { !it.hidden }
-            respond new net.biomodels.jummp.webapp.rest.model.show.ModelFiles(responseFiles)
+            def modelFiles = new ModelFiles(responseFiles)
+            withFormat {
+                json { respond modelFiles }
+                xml { respond modelFiles }
+                '*' { render status: 415, view: "/errors/error415" }
+            }
         } catch(Exception err) {
             log.error err.message, err
-            respond net.biomodels.jummp.webapp.rest.errors.Error("Invalid Id",
-            "An invalid model id was specified")
+            def response =  net.biomodels.jummp.webapp.rest.errors.Error("Invalid Id",
+                "An invalid model id was specified")
+            withFormat {
+                json { respond response, [status: 404] }
+                xml { respond response, [status: 404] }
+                '*' { forward controller: 'errors', action: 'error404' }
+            }
         }
     }
 
@@ -365,7 +381,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
         RevisionTransportCommand rev
         try {
             rev = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
-            modelDelegateService.publishModelRevision(rev)
+            rev = modelDelegateService.publishModelRevision(rev)
             def currentUser = springSecurityService.currentUser
             if (currentUser) {
                 def notification = [
@@ -374,10 +390,10 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     perms: modelDelegateService.getPermissionsMap(rev.model.submissionId)]
                 sendMessage("seda:model.publish", notification)
             }
-
-            redirect(action: "showWithMessage",
-                        id: rev.identifier(),
-                        params: [flashMessage: "Model has been published."])
+            String extraMsg = rev.state == ModelState.PUBLISHED ?
+                " with the publication identifier ${rev.modelIdentifier()}." : "."
+            redirect(action: "showWithMessage", id: rev.identifier(),
+                        params: [flashMessage: "Model has been published${extraMsg}"])
         } catch(AccessDeniedException e) {
             log.error(e.message, e)
             forward(controller: "errors", action: "error403")
@@ -1006,7 +1022,13 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                         if (flow.workingMemory.containsKey("publication_objects_in_working")) {
                             def publicationMap = flow.workingMemory.get("publication_objects_in_working") as Map<Object, PublicationDetailExtractionContext>
                             publicationContext = publicationMap.get(params.PubLinkProvider)
-                            if (publicationContext.publication) {
+                            PLPTC previousPubLinkProvider = flow.workingMemory.get("previousPubLinkProvider") as PLPTC
+                            String previousPubLink = flow.workingMemory.get("previousPubLink")
+                            PLPTC updatedPubLinkProvider = publicationContext.publication.linkProvider
+                            boolean changedPubLinkProvider = previousPubLinkProvider.linkType != updatedPubLinkProvider.linkType
+                            boolean changedPubLink = previousPubLink != publicationContext.publication.link
+                            boolean changed =  changedPubLinkProvider || changedPubLink
+                            if (publicationContext.publication && !changed) {
                                 // reload the publication from cache
                                 retrieved = publicationContext.publication
                                 if (publicationContext.comesFromDatabase) {

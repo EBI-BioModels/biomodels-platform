@@ -94,7 +94,11 @@
         <link rel="stylesheet" href="${resource(dir: 'css/syntax', file: 'shCore.css')}" />
         <link rel="stylesheet" href="${resource(dir: 'css/syntax', file: 'shThemeDefault.css')}" />
         <link rel="stylesheet" href="${resource(dir: 'css', file: 'toastr.min.css')}"/>
-
+        <style>
+            #toolbarList li .ui-button-text {
+                font-size: 0.75em;
+            }
+        </style>
         <Ziphandler:outputFileInfoAsJS repFiles="${revision.files.findAll{!it.hidden}}"
                                        loadedZips="${loadedZips}" zipSupported="${zipSupported}"/>
         <script>
@@ -605,19 +609,24 @@
         displayToolbar(false, false);
 
         function displayToolbar(show, firstTime) {
+            var mainContentAreaWidth = $('#main-content-area').width();
             if (show) {
+                $('#main-content-area').width((mainContentAreaWidth - 110)+'px');
+                $('#main-content-area').css({'margin-left': '80px'});
                     $("#panelToggle").data("showing", '1');
                     $(".pagecontent").width("95%");
                     $(".pagecontent").css('margin-left', '80px');
                     $(".buttonLabel").show();
-                    $("#modelToolbar").width("120px");
+                    $("#modelToolbar").width("110px");
                     $( "#panelToggle" ).button("option", {
                             icons: { primary: "ui-icon-circle-arrow-w" }
                     });
                     $( ".toolbutton" ).button("option", "text", true);
-                    $( ".toolbutton" ).css({ width: '120px', 'padding-top': '10px', 'padding-bottom': '10px' });
+                    $( ".toolbutton" ).css({ width: '110px', 'padding-top': '10px', 'padding-bottom': '10px' });
             }
             else {
+                $('#main-content-area').width((mainContentAreaWidth + 110)+'px');
+                $('#main-content-area').css({'margin-left': 0});
                     $("#panelToggle").data("showing", '0');
                     $(".pagecontent").width("100%");
                     $(".pagecontent").css('margin-left', '5px');
@@ -667,8 +676,9 @@
                     </div>
                     <li>
                     <button class='toolbutton' id="peer-review"
+                            title="Submit for publication"
                             onclick='return $( "#confirm-model-notify" ).dialog( "open");'>
-                        Submit for publication</button></li>
+                        Submit</button></li>
                 </g:if>
                 <g:if test="${showPublishOption}">
                     <div id="confirm-model-publish" title="You are about to publish this model version"
@@ -710,8 +720,9 @@
                         <li>
                             <button id="checkConsistency"
                                     class="toolbutton"
+                                    title="Check consistency"
                                     onclick="return $('#confirm-model-consistency-check').dialog('open');">
-                                Check Consistency
+                                Check
                             </button>
                         </li>
                     </g:if>
@@ -723,8 +734,9 @@
                         <li>
                             <button id="convert"
                                     class="toolbutton"
+                                    title="Convert This Model To The Other Formats"
                                     onclick="return $('#confirm-model-conversion').dialog('open');">
-                                Convert This Model To The Other Formats
+                                Convert
                             </button>
                         </li>
                     </g:if>

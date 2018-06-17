@@ -23,8 +23,13 @@ package net.biomodels.jummp.importer.support.biomodels
 import net.biomodels.jummp.model.Revision
 
 /**
+ * This class is used to create a wrapper which is capturing the key attributes for the model change detector.
  *
- * Created by mglont on 08/02/18.
+ * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
+ *
+ * Created by Mihai Glonț on 08/02/18.
+ * Updated by Tung nguyen on 04/06/18.
  */
 class ModelComparisonContext {
     String name
@@ -32,7 +37,6 @@ class ModelComparisonContext {
     String originalModel
     String biomodelsId
     Date lastModified
-    Date published
     String pathToCurationImage
     String curationComment
     Revision imported

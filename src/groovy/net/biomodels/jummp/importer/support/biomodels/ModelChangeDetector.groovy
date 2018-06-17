@@ -23,7 +23,11 @@ package net.biomodels.jummp.importer.support.biomodels
 /**
  * Contract for components used to detect changes to models that are processed by the batch importer.
  *
- * Created by mglont on 08/02/18.
+ * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
+ *
+ * Created by Mihai Glonț on 08/02/18.
+ * Updated by Tung nguyen on 04/06/18.
  */
 interface ModelChangeDetector {
     boolean hasChanged(ModelComparisonContext comparison)
