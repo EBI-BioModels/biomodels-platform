@@ -177,9 +177,6 @@
             "required": false,
             "description": "Sort criteria"
           },
-              {
-                  "in": "query",
-                  "name": "format",
           {
             "in": "query",
             "name": "format",
