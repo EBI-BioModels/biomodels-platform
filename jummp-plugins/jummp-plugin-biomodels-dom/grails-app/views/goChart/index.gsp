@@ -21,9 +21,8 @@
 <head>
     <title>Model GO Categories</title>
     <meta name="layout" content="${session['branding.style']}/main" />
-    <link rel="stylesheet" href="${resource(dir: 'css/datatable', file: 'jquery.dataTables.min.css', contextPath: "${grailsApplication.config.grails.serverURL}")}" type="text/css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.12/css/jquery.dataTables.min.css" type="text/css">
     <link rel="stylesheet" href="${resource(dir: 'css/datatable', file: 'buttons.dataTables.min.css', contextPath: "${grailsApplication.config.grails.serverURL}")}" type="text/css">
-    <link rel="stylesheet" href="${resource(dir: 'css/datatable', file: 'select.dataTables.min.css', contextPath: "${grailsApplication.config.grails.serverURL}")}" type="text/css">
     <style>
     path {
         stroke: #000;
@@ -53,19 +52,26 @@
             width: 100%;
         }
         .container #vis {
-            width: 48%;
-            float: left;
+            width: 100%;
+            display: inline-block;
         }
         .container #model_data_wrapper {
-            width: 50%;
-            padding: 40px 10px;
-            float: right;
-            clear: inherit;
+            width: 100%;
+            display: inline-block;
         }
         .container #model_data {
             visibility: hidden;
         }
-
+    @media only screen and (min-width: 1920px) {
+        .container #vis {
+            width: 48%;
+        }
+        .container #model_data_wrapper {
+            width: 48%;
+            margin-left: 2%;
+            display: inline-block;
+        }
+    }
     th.dt-center, td.dt-center { text-align: center; }
 
         #model_data thead {
@@ -91,13 +97,9 @@
 <g:javascript src="d3.v3.js" contextPath=""/>
 <g:javascript src="datatable/jquery.dataTables.min.js" contextPath=""/>
 <g:javascript src="datatable/dataTables.buttons.min.js" contextPath=""/>
-<g:javascript src="datatable/buttons.flash.min.js" contextPath=""/>
 <g:javascript src="datatable/jszip.min.js" contextPath=""/>
-<g:javascript src="datatable/pdfmake.min.js" contextPath=""/>
 <g:javascript src="datatable/vfs_fonts.js" contextPath=""/>
 <g:javascript src="datatable/buttons.html5.min.js" contextPath=""/>
-<g:javascript src="datatable/buttons.print.min.js" contextPath=""/>
-<g:javascript src="datatable/dataTables.select.min.js" contextPath=""/>
 
 <g:javascript>
     var json = $.parseJSON('${classifiedModels.toString().replace('\'', '\\\'')}');
@@ -164,7 +166,7 @@
                 ],
                 "dom": 'Bfrtip',
                 "buttons": [
-                    'copy', 'csv', 'excel', 'pdf', 'print',
+                    'csv', 'excel',
                      {
                         text: 'Download',
                         className : 'download-button',
