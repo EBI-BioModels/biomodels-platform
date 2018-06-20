@@ -180,6 +180,17 @@
             "name": "sort",
             "type": "string",
             "required": false,
+            "enum": [
+                "relevance-desc",
+                "first_author-asc",
+                "first_author-desc",
+                "id-asc",
+                "id-desc",
+                "name-asc",
+                "name-desc",
+                "publication_year-asc",
+                "publication_year-desc"
+            ],
             "description": "Sort criteria"
           },
           {
