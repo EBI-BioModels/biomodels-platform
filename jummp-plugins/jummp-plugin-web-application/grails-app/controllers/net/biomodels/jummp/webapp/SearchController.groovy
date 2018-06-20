@@ -143,7 +143,7 @@ class SearchController {
         sanitiseParams()
         def results = browseCore(params.sortBy, params.sortDir, params.offset, params.numResults, params.query)
 
-        if (!params.format || params.format=="html") {
+        if (response.format=="html") {
             results["history"] = modelHistoryService.history()
             return results
         }
@@ -178,9 +178,9 @@ class SearchController {
                 params.flashMessage = "Please use *:* to browse all models."
             }
         }
-        println "Search terms: ${params.query}, requested from: ${request.getRemoteAddr()} under the format: ${params.format}"
+        println "Search terms: ${params.query}, requested from: ${request.getRemoteAddr()} under the format: ${response.format}"
         def results = searchCore(params.query, params.sortBy, params.sortDir, params.offset, params.numResults)
-        if (!params.format || params.format=="html") {
+        if (response.format=="html") {
             return results
         }
         respond new SearchResults(results)

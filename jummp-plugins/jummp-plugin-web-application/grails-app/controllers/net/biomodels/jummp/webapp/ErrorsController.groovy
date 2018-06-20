@@ -36,19 +36,17 @@ class ErrorsController {
 
     def error403 = {
         response.setStatus HttpServletResponse.SC_FORBIDDEN
-        if (params.format && params.format!="html") {
-            respond getError("403")
-        } else {
-            [authenticated: springSecurityService.isLoggedIn()]
+        withFormat {
+            html { [authenticated: springSecurityService.isLoggedIn()] }
+            '*' { respond getError("403") }
         }
     }
 
     def error404 = {
         response.status = HttpServletResponse.SC_NOT_FOUND
-        if (params.format && params.format!="html") {
-            respond getError("404", [request.forwardURI])
-        } else {
-            [resource: request.forwardURI]
+        withFormat {
+            html { [resource: request.forwardURI] }
+            '*' { respond getError("404", [request.forwardURI]) }
         }
     }
 
@@ -65,10 +63,9 @@ class ErrorsController {
             }
         }
         digest = digest.encodeAsMD5()
-        if (params.format && params.format!="html") {
-            respond new Error("Internal Server Error", digest)
-        } else {
-            [code: digest]
+        withFormat {
+            html { [code: digest] }
+            '*' { respond new Error("Internal Server Error", digest)}
         }
     }
 }
