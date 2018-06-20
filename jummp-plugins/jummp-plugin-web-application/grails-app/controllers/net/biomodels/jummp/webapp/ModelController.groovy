@@ -152,7 +152,7 @@ class ModelController {
             String modelId = null
             String username = getUsername()
             String accessType = actionUri
-            String formatType = params.format ?: "html"
+            String formatType = response.format
             String changesMade = null
 
             final boolean HAS_ONLY_DIGITS = isPositiveNumber(modelIdParam)
@@ -257,97 +257,110 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                 isPrivateModel = true
             }
         }
-        if (!params.format || (params.format != "json" && params.format != "xml") ) {
-            if (!rev) {
-                forward(controller: 'errors', action: 'error403')
-                return
-            }
-            if (isPrivateModel) {
-                render(view: "showBasicView", model: [id: rev.model.submissionId, description: rev.description])
-                return
-            } else {
-                final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
-                RevisionTransportCommand revision = modelDelegateService.getLatestRevision(PERENNIAL_ID)
-                boolean showPublishOption = modelDelegateService.canPublish(revision)
-                boolean canSubmitForPublication = modelDelegateService.canSubmitForPublication(revision)
-                boolean canCertify = modelDelegateService.canCertify(revision)
-                boolean canUpdate = modelDelegateService.canAddRevision(PERENNIAL_ID)
-                boolean canDelete = modelDelegateService.canDelete(PERENNIAL_ID)
-                boolean canShare = modelDelegateService.canShare(PERENNIAL_ID)
-                List<FlagTransportCommand> flags = modelDelegateService.getFlags(PERENNIAL_ID)
-                String flashMessage = ""
-                if (flash.now["giveMessage"]) {
-                    flashMessage = flash.now["giveMessage"]
+        withFormat {
+            html {
+                if (!rev) {
+                    forward(controller: 'errors', action: 'error404')
+                    return
                 }
-                List<RevisionTransportCommand> revs =
-                    modelDelegateService.getAllRevisions(PERENNIAL_ID)
-                CurationNotesTransportCommand curationNotes =
-                    metadataDelegateService.fetchCurationNotes(rev)
-                String curationState = rev.curationState.name()
-                List<String> possibleCurationStates = CurationState.values()*.name()
-                List<String> originalModels = metadataDelegateService.fetchOriginalModels(rev)
-                Map<String, String> modellingApproaches =
-                    metadataDelegateService.fetchModellingApproaches(rev)
-                boolean hasCuratorRole = hasCuratorRole()
-                boolean supportedForConversion = modelConversionService.isSupportedForConversion(rev)
-		        List<RFTC> convertedFilesTC = modelConversionService.getConvertedFiles(rev)
-                def model = [revision               : rev,
-                             authors                : rev.model.creators,
-                             allRevs                : revs,
-                             flashMessage           : flashMessage,
-                             canUpdate              : canUpdate,
-                             canDelete              : canDelete,
-                             canShare               : canShare,
-                             showPublishOption      : showPublishOption,
-                             canSubmitForPublication: canSubmitForPublication,
-                             canCertify             : canCertify,
-                             validationLevel        : rev.getValidationLevelMessage(),
-                             certComment            : rev.getCertificationMessage(),
-                             flags                  : flags,
-                             curationState          : curationState,
-                             possibleCurationStates : possibleCurationStates,
-                             modellingApproaches    : modellingApproaches,
-                             curationNotes          : curationNotes,
-                             originalModels         : originalModels,
-                             hasCuratorRole         : hasCuratorRole,
-                             supportedForConversion : supportedForConversion,
-                             convertedFilesTC       : convertedFilesTC
-                ]
-                if (rev.id == revision.id) {
-                    flash.genericModel = model
-                    ModelFormatTransportCommand format = revision.format
-                    String formatController = modelFileFormatService.getPluginForFormat(format)
-                    if (formatController) {
-                        forward controller: formatController, action: "show", id: PERENNIAL_ID
-                    } else {
-                        final String fmtId = format.identifier
-                        log.error "Could not find a controller for format $fmtId of $PERENNIAL_ID"
+                if (isPrivateModel) {
+                    render(view: "showBasicView", model: [id: rev.model.submissionId, description: rev.description])
+                    return
+                } else {
+                    final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
+                    RevisionTransportCommand revision = modelDelegateService.getLatestRevision(PERENNIAL_ID)
+                    boolean showPublishOption = modelDelegateService.canPublish(revision)
+                    boolean canSubmitForPublication = modelDelegateService.canSubmitForPublication(revision)
+                    boolean canCertify = modelDelegateService.canCertify(revision)
+                    boolean canUpdate = modelDelegateService.canAddRevision(PERENNIAL_ID)
+                    boolean canDelete = modelDelegateService.canDelete(PERENNIAL_ID)
+                    boolean canShare = modelDelegateService.canShare(PERENNIAL_ID)
+                    List<FlagTransportCommand> flags = modelDelegateService.getFlags(PERENNIAL_ID)
+                    String flashMessage = ""
+                    if (flash.now["giveMessage"]) {
+                        flashMessage = flash.now["giveMessage"]
                     }
-                } else { //showing an old version, with the default page. Do not allow updates.
-                    model["canUpdate"] = false
-                    model["showPublishOption"] = false
-                    model["oldVersion"] = true
-                    model["canDelete"] = false
-                    model["canShare"] = false
-                    model["canCertify"] = false
-                    model["flags"] = flags
-                    return model
+                    List<RevisionTransportCommand> revs =
+                        modelDelegateService.getAllRevisions(PERENNIAL_ID)
+                    CurationNotesTransportCommand curationNotes =
+                        metadataDelegateService.fetchCurationNotes(rev)
+                    String curationState = rev.curationState.name()
+                    List<String> possibleCurationStates = CurationState.values()*.name()
+                    List<String> originalModels = metadataDelegateService.fetchOriginalModels(rev)
+                    Map<String, String> modellingApproaches =
+                        metadataDelegateService.fetchModellingApproaches(rev)
+                    boolean hasCuratorRole = hasCuratorRole()
+                    boolean supportedForConversion = modelConversionService.isSupportedForConversion(rev)
+                    List<RFTC> convertedFilesTC = modelConversionService.getConvertedFiles(rev)
+                    def model = [revision               : rev,
+                                 authors                : rev.model.creators,
+                                 allRevs                : revs,
+                                 flashMessage           : flashMessage,
+                                 canUpdate              : canUpdate,
+                                 canDelete              : canDelete,
+                                 canShare               : canShare,
+                                 showPublishOption      : showPublishOption,
+                                 canSubmitForPublication: canSubmitForPublication,
+                                 canCertify             : canCertify,
+                                 validationLevel        : rev.getValidationLevelMessage(),
+                                 certComment            : rev.getCertificationMessage(),
+                                 flags                  : flags,
+                                 curationState          : curationState,
+                                 possibleCurationStates : possibleCurationStates,
+                                 modellingApproaches    : modellingApproaches,
+                                 curationNotes          : curationNotes,
+                                 originalModels         : originalModels,
+                                 hasCuratorRole         : hasCuratorRole,
+                                 supportedForConversion : supportedForConversion,
+                                 convertedFilesTC       : convertedFilesTC
+                    ]
+                    if (rev.id == revision.id) {
+                        flash.genericModel = model
+                        ModelFormatTransportCommand format = revision.format
+                        String formatController = modelFileFormatService.getPluginForFormat(format)
+                        if (formatController) {
+                            forward controller: formatController, action: "show", id: PERENNIAL_ID
+                        } else {
+                            final String fmtId = format.identifier
+                            log.error "Could not find a controller for format $fmtId of $PERENNIAL_ID"
+                        }
+                    } else { //showing an old version, with the default page. Do not allow updates.
+                        model["canUpdate"] = false
+                        model["showPublishOption"] = false
+                        model["oldVersion"] = true
+                        model["canDelete"] = false
+                        model["canShare"] = false
+                        model["canCertify"] = false
+                        model["flags"] = flags
+                        return model
+                    }
                 }
             }
-        } else {
-            if (!rev) {
-                respond net.biomodels.jummp.webapp.rest.errors.Error("Invalid Id",
+            json {
+                if (!rev) {
+                    respond net.biomodels.jummp.webapp.rest.errors.Error("Invalid Id",
                         "An invalid model id was specified")
-            } else {
-                respond new net.biomodels.jummp.webapp.rest.model.show.Model(rev, isPrivateModel)
+                } else {
+                    respond new net.biomodels.jummp.webapp.rest.model.show.Model(rev, isPrivateModel)
+                }
             }
+            xml {
+                if (!rev) {
+                    respond net.biomodels.jummp.webapp.rest.errors.Error("Invalid Id",
+                        "An invalid model id was specified")
+                } else {
+                    respond new net.biomodels.jummp.webapp.rest.model.show.Model(rev, isPrivateModel)
+                }
+            }
+            '*' {
+                render view: '/errors/error415', status: 415 }
         }
     }
 
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def files() {
         // PageFragmentCachingFilter throws a NPE for unsupported format parameter values
-        if (!(params?.format in ['json', 'xml'])) {
+        if (!(response.format in ['json', 'xml'])) {
             render view: '/errors/error415', status: 415
             return
         }
@@ -362,13 +375,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
             }
         } catch(Exception err) {
             log.error err.message, err
-            def response =  net.biomodels.jummp.webapp.rest.errors.Error("Invalid Id",
-                "An invalid model id was specified")
-            withFormat {
-                json { respond response, [status: 404] }
-                xml { respond response, [status: 404] }
-                '*' { forward controller: 'errors', action: 'error404' }
-            }
+            forward controller: 'errors', action: 'error404'
         }
     }
 
