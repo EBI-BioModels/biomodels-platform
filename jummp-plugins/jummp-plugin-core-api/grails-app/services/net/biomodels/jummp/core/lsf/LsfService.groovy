@@ -333,7 +333,8 @@ class LsfService implements InitializingBean {
      */
     synchronized void stopLSFClusterJob(String jobId) {
         if (!connections.containsKey(jobId)) {
-            throw new LSFJobNotExistException("Job " + jobId + " not exists")
+            //This job is already stopped
+            return
         }
         List<String> command = new ArrayList<>()
         LSFClusterJob job = connections.get(jobId)
