@@ -24,12 +24,12 @@ class RequestParameters {
     String sortBy
     String sortDirection
     int offset
-    int maxResults
+    int numResults
 
     RequestParameters(def results) {
         sortBy = results.sortBy
         sortDirection = results.sortDirection
         offset = results.offset
-        maxResults = results.length
+        numResults = results.length
     }
 }
