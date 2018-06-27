@@ -26,7 +26,6 @@
     }
   ],
   "schemes": [
-    "http",
     "https"
   ],
   "paths": {
@@ -47,9 +46,14 @@
           {
             "in": "query",
             "name": "format",
-            "description": "The response format, one of <b>xml</b>, <b>json</b> or <b>html</b>",
+            "description": "The response format",
             "type": "string",
-            "required": false
+            "required": false,
+            "enum": [
+               "json",
+               "xml",
+               "html"
+            ]
           }
         ],
         "produces": [
@@ -59,7 +63,10 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful operation"
+            "description": "Successful operation",
+            "schema": {
+                "$ref": "#/definitions/Model"
+            }
           },
           "404": {
             "description": "Invalid model id"
@@ -180,6 +187,17 @@
             "name": "sort",
             "type": "string",
             "required": false,
+            "enum": [
+                "relevance-desc",
+                "first_author-asc",
+                "first_author-desc",
+                "id-asc",
+                "id-desc",
+                "name-asc",
+                "name-desc",
+                "publication_year-asc",
+                "publication_year-desc"
+            ],
             "description": "Sort criteria"
           },
           {
@@ -203,6 +221,43 @@
             "description": "Invalid Model Id Supplied"
           }
         }
+      }
+    }
+  },
+  "definitions": {
+    "Model": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the model."
+        },
+        "description": {
+          "type": "string",
+          "description": "The description of the model."
+        },
+        "publication": {
+          "type": "string",
+          "description": "An identifiers.org URI to the model's publication."
+        },
+        "submissionId": {
+          "type": "string",
+          "description": "The identifier assigned to the model when it was submitted to BioModels",
+          "example": "MODEL1707111234"
+        },
+        "publicationId": {
+          "type": "string",
+          "description": "The identifier assigned to the model when it was published in the curated branch of BioModels.",
+          "example": "BIOMD0000000001"
+        },
+        "firstPublished": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The date when the model first became publicly available in BioModels",
+          "example": "BIOMD0000000001"
+        },},
+      "xml": {
+        "name": "Model",
       }
     }
   },
