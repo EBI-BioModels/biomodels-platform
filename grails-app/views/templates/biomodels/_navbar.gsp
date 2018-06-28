@@ -62,6 +62,11 @@
             <li><a href="${g.createLink(controller: 'jummp', action: 'jobs')}">Jobs</a></li>
         </ul>
     </li>
+    <li style="border-right: none" id="menuItemSwitchToClassicBioModels" data-open="switchToClassicBioModels">
+        <!-- switchToClassicBioModels is the identifier of the modal switchToClassicBioModels form defined in the footer.
+             This form is rendered using the switchClassicBioModels template of the web plugin -->
+        <a><g:message code="jummp.switchClassicBioModels.default.title"/></a>
+    </li>
     <li <g:if test="${g.pageProperty(name:'page.contactus')?.length()}"> class="active" </g:if> role="menuitem">
         <a href="${g.createLink(controller: 'jummp', action: 'contactus')}">
             <g:message code="jummp.contactus.biomodels.title"/>
