@@ -62,7 +62,7 @@
             <li><a href="${g.createLink(controller: 'jummp', action: 'jobs')}">Jobs</a></li>
         </ul>
     </li>
-    <li style="border-right: none" id="menuItemSwitchToClassicBioModels" data-open="switchToClassicBioModels">
+    <li style="border-right: none" id="menuItemSwitchToClassicBioModels" data-open="switchToClassicBioModels" role="menuitem">
         <!-- switchToClassicBioModels is the identifier of the modal switchToClassicBioModels form defined in the footer.
              This form is rendered using the switchClassicBioModels template of the web plugin -->
         <a><g:message code="jummp.switchClassicBioModels.default.title"/></a>
@@ -72,7 +72,7 @@
             <g:message code="jummp.contactus.biomodels.title"/>
         </a>
     </li>
-    <li style="border-right: none" id="menuItemFeedback" data-open="rate_review_form">
+    <li style="border-right: none" id="menuItemFeedback" data-open="rate_review_form" role="menuitem">
         <!-- rate_review_form is the identifier of the modal feedback form defined in the footer.
              This form is rendered using the feedback template of the web plugin -->
         <a><g:message code="jummp.feedback.default.title"/></a>
