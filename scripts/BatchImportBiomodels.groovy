@@ -300,6 +300,9 @@ def NON_SBML_MODEL_FOLDER
 def bigModelsIgnored = []
 boolean excludeBigModels = true
 TreeSet<String> modelsImported = []
+
+Map userMappingForInternalCurationComments
+
 /**
  * Returns a User corresponding to the submitter of the model in BioModels.
  */
@@ -642,6 +645,17 @@ def failureCount = new AtomicLong()
 target(main: "Puts everything together to import models from a given folder") {
     bootstrapJummp()
 
+    userMappingForInternalCurationComments = [
+        // the name should match the one from the old system, but the username should be from JUMMP
+        "Vijayalakshmi Chelliah": User.findByUsername("viji"),
+        "Nick Juty": User.findByUsername("juty"),
+        "Varun Kothamachu": User.findByUsername("Varun"),
+        "Camille Laibe": User.findByUsername("camille"),
+        "Rahuman Sheriff": User.findByUsername("sheriff"),
+        "Matthew Grant Roberts": User.findByUsername("matthew"),
+        "Matthieu Maire": User.findByUsername("mmaire")
+    ]
+
     def modelFolderPattern = ~/(MODEL|BIOMD)\d{10}|BMID\d{12}/
     /* fetch all the records of additional files once */
     String query = "select model_id, name, description, mime_type, file, date_creation from additional_files"
@@ -654,9 +668,10 @@ target(main: "Puts everything together to import models from a given folder") {
     long duration = System.currentTimeMillis()
     /* run batch importer sequentially */
     for (File f: modelFolder.listFiles()) {
+        final String modelId = f.name
         boolean tobeProcessed
         if (excludeBigModels) {
-            boolean isBigModel = !bigModelsIgnored?.isEmpty() && bigModelsIgnored.contains(f.name)
+            boolean isBigModel = !bigModelsIgnored?.isEmpty() && bigModelsIgnored.contains(modelId)
             if (isBigModel) {
                 tobeProcessed = false
             }
@@ -667,18 +682,36 @@ target(main: "Puts everything together to import models from a given folder") {
         //log("$f.name : tobeProcessed? $tobeProcessed")
         boolean exists = modelsImported.contains(f.name)
         //log("$f.name : exists? $exists")
-        if (f.isDirectory() && f.name ==~ modelFolderPattern && tobeProcessed && !exists) {
+        if (f.isDirectory() && modelId ==~ modelFolderPattern && tobeProcessed && !exists) {
             processModelFolder f
         } else if (exists) {
             // regardless of branch, this will check whether the model should be updated
-            log("The model ${f.name} was already imported!")
-            final String BRANCH = getBranch f.name
-            def modelDetails = getModelDetails f.name, BRANCH
-            def submitter = User.findByUsername("administrator")//findRightSubmitter f.name, BRANCH
-            def commitMessage = null // extractCommitMessage
-            updateWithRecentChanges f.name, f.name, BRANCH, f, modelDetails, submitter, commitMessage
+            log("The model ${modelId} was already imported!")
+            String submissionId = modelId
+            final String BRANCH = getBranch modelId
+            if (isCuratedAndPublished(BRANCH)) {
+                submissionId = getSubmissionIdForBioModelsId(modelId)
+            }
+
+            def submitter = User.findByUsername("administrator")
+            def commitMessage = "" // commit messages cannot be null
+            def comments = getInternalCommentForModelId(submissionId)
+            if (comments) {
+                def curationCommentInfo = parseCurationCommentsForModel(modelId, comments)
+                if (curationCommentInfo) {
+                    // we may well be missing the user because userMappingForInternalCurationComments
+                    // only deals with the curators of recent models
+                    if (curationCommentInfo.user) submitter = curationCommentInfo.user
+                    if (curationCommentInfo.comment) commitMessage = curationCommentInfo.comment
+                } else {
+                    addModelMsg modelId, "No curation comment info could be extracted from $comments"
+                }
+            }
+            def modelDetails = getModelDetails modelId, BRANCH
+
+            updateWithRecentChanges submissionId, modelId, BRANCH, f, modelDetails, submitter, commitMessage
         } else {
-            log("The model ${f.name} cannot be imported!")
+            log("The model ${modelId} cannot be imported!")
         }
     }
 
@@ -731,7 +764,7 @@ target(main: "Puts everything together to import models from a given folder") {
 }
 
 updateWithRecentChanges = { submissionId, publicationId, branch, folder, modelDetails, submitter, commitMessage ->
-    def model = Model.findBySubmissionIdOrPublicationId(submissionId, publicationId)
+    def model = Model.findBySubmissionId(submissionId)
     if (model) {
         def latestRev = modelService.getLatestRevision(model, false) //TODO: check a faster way to get the revision without checking ACL
         if (branch == "publ") {
@@ -896,7 +929,7 @@ getInternalCommentForModelId = { modelId ->
             "select comments from uncura_anno where model_id = ? and status != 2", [modelId])
         // find comments for curated models for which we have the submission ID
         if (!commentInfo) {
-            commentInfo = biomodelsConnection.firstRow("""SELECT comments
+            commentInfo = biomodelsConnection.firstRow("""SELECT anno.comments
 FROM anno JOIN cura ON cura.biomodels_id = anno.model_id WHERE cura.model_id = ?""", [modelId])
         }
     } else if (modelId.startsWith("BIOMD")) {
@@ -958,8 +991,7 @@ parseCurationCommentsForModel = { modelId, comments ->
     }
     String errorMessage = err.toString()
     if (errorMessage) {
-        addModelError modelId, errorMessage
-        return null
+        addModelMsg modelId, errorMessage
     }
     [date: date, user: curator, comment: comment]
 }
@@ -984,11 +1016,20 @@ extractDateFromComment = { comment ->
  * Convenience method for parsing the date from a curation comment.
  *
  * @param comment a curation comment entry
- * @return the curator name of the entry or null if it could not be extracted due to the comment
- *         not following the expected structure.
+ * @return the User account corresponding to the author of the entry or null if it could not be
+ *         extracted due to the comment not following the expected structure.
  */
 extractCuratorFromComment = { comment ->
-    extractCurationCommentAttribute(comment, '<dd class="comment_submitter">', "</dd>")
+    String value = extractCurationCommentAttribute(comment, '<dd class="comment_submitter">',
+            "</dd>")
+    if (!value) return null
+    def curator
+    if (value.contains(',')) {
+        curator = value.split(',').first()
+    } else {
+        curator = value
+    }
+    userMappingForInternalCurationComments[curator]
 }
 
 /**
