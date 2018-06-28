@@ -32,11 +32,11 @@ package net.biomodels.jummp.webapp
 
 class BuildFormatTagLib {
 	static namespace="BuildFormat"
-	
+
 	def formatter = { attrs ->
 		String buildString=attrs.build
 		def parts=buildString.tokenize('|')
-		StringBuilder builder=new StringBuilder("<a href='https://bitbucket.org/jummp/jummp/commits/all?search=")
+		StringBuilder builder=new StringBuilder("<a href='//bitbucket.org/biomodels/jummp-biomodels/commits/all?search=")
 		builder.append(parts.get(0))
 		builder.append("'>")
 		builder.append(parts.get(0))
