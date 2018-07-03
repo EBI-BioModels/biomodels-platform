@@ -981,7 +981,7 @@ parseCurationCommentsForModel = { modelId, comments ->
     if (!date) {
         err.append("Could not parse the date.")
     }
-    String curator = extractCuratorFromComment(latest)
+    def curator = extractCuratorFromComment(latest)
     if (!curator) {
         err.append("Could not extract the curator.")
     }
@@ -1029,6 +1029,7 @@ extractCuratorFromComment = { comment ->
     } else {
         curator = value
     }
+    println "looking up $curator in userMappingForInternalCurationComments"
     userMappingForInternalCurationComments[curator]
 }
 
