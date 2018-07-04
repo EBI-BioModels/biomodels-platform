@@ -153,7 +153,7 @@
                         "data": "modelId",
                         "render": function(data, type, row, meta){
                             if(type === 'display'){
-                                data = '<a target="_blank" href="https://wwwdev.ebi.ac.uk/biomodels/' + data + '">' + data + '</a>';
+                                data = '<a target="_blank" href="' + $.jummp.createURI(data) + '">' + data + '</a>';
                             }
 
                             return data;
@@ -178,7 +178,7 @@
                                 alert("You have to select at least one model to download");
                                 return
                             }
-                            var url = '/jummp-biomodels/search/download?models=' + modelDownload.join(",");
+                            var url = $.jummp.createURI('search/download?models=' + modelDownload.join(","));
                             var win = window.open(url, '_blank');
                             win.focus();
                         }
