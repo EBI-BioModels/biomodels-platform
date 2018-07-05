@@ -35,60 +35,110 @@
 
 <h2>Acknowledgements</h2>
 
-BioModels Database is developed by the <a href="http://biomodels.net/" title="BioModels.net team">BioModels.net team</a> (part of the <a href="http://www.ebi.ac.uk/proteomics/" title="Proteomics Services Team">PST</a> at <a href="http://www.ebi.ac.uk/" title="European Bioinformatics Institute">EMBL-EBI</a>, UK), the <a href="http://lenoverelab.org/" title="Le Novère lab">Le Novère lab</a> (<a href="http://www.babraham.ac.uk/" title="Babraham Institute">Babraham Institute</a>, UK) and the <a href="http://www.sbml.org/" title="Systems Biology Markup Language (SBML)" class="external">SBML Team</a> (<a href="http://www.caltech.edu/" title="California Institute of Technology">Caltech</a>, USA).
+BioModels is developed by the <a href="https://www.ebi.ac.uk/about/people/henning-hermjakob" title="Molecular Networks team">Molecular Networks team</a> (<a href="//www.ebi.ac.uk/" title="European Bioinformatics Institute">EMBL-EBI</a>, UK), the <a href="//lenoverelab.org/" title="Le Novère lab">Le Novère lab</a> (<a href="//www.babraham.ac.uk/" title="Babraham Institute">Babraham Institute</a>, UK) and the <a href="http://www.sbml.org/" title="Systems Biology Markup Language (SBML)" class="external">SBML Team</a> (<a href="//www.caltech.edu/" title="California Institute of Technology">Caltech</a>, USA).
 
 <div style="text-align:center; padding-top: 8px;">
-  <a href="http://www.ebi.ac.uk/" title="EMBL - European Bioinformatics Institute (EBI)"><img border="0" title="EMBL-EBI" alt="EMBL-EBI logo" src="//www.ebi.ac.uk/biomodels/GRAPHICS/EMBL_EBI_logo-small.png" style="vertical-align:middle;" /></a>
-  <a href="http://www.babraham.ac.uk/" title="Babraham Institute" style="padding-left:60px;"><img border="0" title="Babraham Institute" alt="Babraham Institute logo" src="//www.ebi.ac.uk/biomodels/GRAPHICS/BI_logo-small.png" style="vertical-align:middle;" /></a>
-  <a href="http://sbml.org/" title="SBML" style="padding-left:60px;"><img border="0" title="SBML" alt="SBML logo" src="//www.ebi.ac.uk/biomodels/icons/SBML.png" style="vertical-align:middle;" /></a>
+  <a href="//www.ebi.ac.uk/" title="EMBL - European Bioinformatics Institute (EBI)"><img border="0" title="EMBL-EBI" alt="EMBL-EBI logo" src="//www.ebi.ac.uk/biomodels-static/GRAPHICS/EMBL_EBI_logo-small.png" style="vertical-align:middle;" /></a>
+  <a href="www.babraham.ac.uk/" title="Babraham Institute" style="padding-left:60px;">
+      <img border="0" title="Babraham Institute" alt="Babraham Institute logo" src="//www.ebi.ac.uk/biomodels-static/GRAPHICS/BI_logo-small.png" style="vertical-align:middle;" /></a>
+  <a href="http://sbml.org/" title="SBML" style="padding-left:60px;"><img border="0" title="SBML" alt="SBML logo" src="//www.ebi.ac.uk/biomodels-static/icons/SBML.png" style="vertical-align:middle;" /></a>
 </div>
 
 
-<h3 class="underline">BioModels Database funders</h3>
+<h3 class="underline">BioModels funders</h3>
 
 <p>
-  BioModels Database is supported by the <a href="http://www.embl.org/" class="external">European Molecular Biology Laboratory</a>, the <a href="http://www.bbsrc.ac.uk/" class="external">Biotechnology and Biological Sciences Research Council</a>, the <a href="http://www.imi.europa.eu/" title="Innovative Medicines Initiative (IMI)">Innovative Medicines Initiative</a> (<a href="http://ddmore.eu/" title="Drug Disease Model Resources (DDMoRe)">DDMoRe</a>) and the <a href="http://cordis.europa.eu/fp7/" title="Seventh Framework Programme (FP7)">Seventh Framework Programme</a> (<a href="http://agedbrainsysbio.eu/" title="AgedBrainSYSBIO: Systems biology of pathways involved in brain ageing">AgedBrainSYSBIO</a>, <a href="http://community.isbe.eu/" title="Infrastructure for Systems Biology – Europe' (ISBE)">ISBE</a>).
+  BioModels is supported by the <a href="//www.embl.org/" class="external">European Molecular Biology Laboratory</a>,
+the <a href="http://www.bbsrc.ac.uk/" class="external">Biotechnology and Biological Sciences Research Council</a> (Multimod, BB/N019482/1) and
+the <a href="//www.imi.europa.eu/" title="Innovative Medicines Initiative (IMI)">Innovative Medicines Initiative</a>
+    (<a href="http://transqst.org/" title="This project has received funding from the Innovative Medicines Initiative 2 Joint Undertaking under grant agreement No 116030. This Joint Undertaking receives support from the European Union’s Horizon 2020 research and innovation programme and EFPIA.">TransQST, 116030</a>).
 </p>
 
 <div style="text-align:center; padding-top: 8px;">
-  <a href="http://www.embl.org/" title="European Molecular Biology Laboratory (EMBL)"><img src="//www.ebi.ac.uk/biomodels/GRAPHICS/embl_logo.png" title="European Molecular Biology Laboratory (EMBL)" alt="EMBL logo" style="vertical-align:middle;" /></a>
-  <a href="http://www.bbsrc.ac.uk/" title="Biotechnology and Biological Sciences Research Council (BBSRC)"><img src="//www.ebi.ac.uk/biomodels/GRAPHICS/bbsrc_logo.png" title="Biotechnology and Biological Sciences Research Council (BBSRC)" alt="BBSRC logo" style="padding-left:60px; vertical-align:middle;" /></a>
-  <a href="http://www.imi.europa.eu/" title="Innovative Medicines Initiative (IMI)"><img src="//www.ebi.ac.uk/biomodels/GRAPHICS/IMI_logo-small.png" title="Innovative Medicines Initiative (IMI)" alt="IMI logo" style="padding-left:60px; vertical-align:middle;" /></a>
-  <a href="http://cordis.europa.eu/fp7/" title="Seventh Framework Programme (FP7)"><img src="//www.ebi.ac.uk/biomodels/GRAPHICS/FP7_logo-small.png" title="Seventh Framework Programme (FP7)" alt="FP7 logo" style="padding-left:60px; vertical-align:middle;" /></a>
+  <a href="//www.embl.org/"
+     title="European Molecular Biology Laboratory (EMBL)">
+      <img src="//www.ebi.ac.uk/biomodels-static/GRAPHICS/embl_logo.png"
+           title="European Molecular Biology Laboratory (EMBL)"
+           alt="EMBL logo" style="vertical-align: middle;" /></a>
+  <a href="//www.bbsrc.ac.uk/"
+     title="Biotechnology and Biological Sciences Research Council (BBSRC)">
+      <img src="//www.ebi.ac.uk/biomodels-static/GRAPHICS/bbsrc_logo.png"
+           title="Biotechnology and Biological Sciences Research Council (BBSRC)"
+           alt="BBSRC logo" style="padding-left:60px; vertical-align: middle;" /></a>
+  <a href="//www.imi.europa.eu/"
+     title="Innovative Medicines Initiative (IMI)">
+      <img src="//www.ebi.ac.uk/biomodels-static/GRAPHICS/IMI_logo-small.png"
+           title="Innovative Medicines Initiative (IMI)"
+           alt="IMI logo" style="padding-left:60px; vertical-align: middle;" /></a>
+  <a href="//cordis.europa.eu/fp7/"
+     title="Seventh Framework Programme (FP7)">
+      <img src="//www.ebi.ac.uk/biomodels-static/GRAPHICS/FP7_logo-small.png"
+           title="Seventh Framework Programme (FP7)"
+           alt="FP7 logo" style="padding-left:60px; vertical-align: middle;" /></a>
 </div>
 
 <h4>Former funders</h4>
 
 <p>
-  BioModels Database also benefited from the help of the <a href="http://www.nigms.nih.gov/" class="external">National Institute of General Medical Sciences</a> (USA), the <a href="http://www.sys-bio.org/" class="external">Sauro Lab</a> (University of Washington, USA), the <a href="http://sbi.jp/" class="external">Systems Biology Institute</a> (Tokyo, JP), and from funds of the <a href="http://www.darpa.mil/" class="external">DARPA</a> (USA).
+  BioModels also benefited from the help of the <a href="//www.imi.europa.eu/" title="Innovative Medicines Initiative (IMI)">Innovative Medicines Initiative</a> (<a href="http://www.ddmore.eu/" title="Drug Disease Model Resources (DDMoRe)">DDMoRe</a>), the <a href="//cordis.europa.eu/fp7/" title="Seventh Framework Programme (FP7)">Seventh Framework Programme</a> (<a href="http://agedbrainsysbio.eu/" title="AgedBrainSYSBIO: Systems biology of pathways involved in brain ageing">AgedBrainSYSBIO</a>, <a href="http://community.isbe.eu/" title="Infrastructure for Systems Biology – Europe' (ISBE)">ISBE</a>), the <a href="http://www.nigms.nih.gov/" class="external">National Institute of General Medical Sciences</a> (USA), the <a href="http://www.sys-bio.org/" class="external">Sauro Lab</a> (University of Washington, USA), the <a href="http://sbi.jp/" class="external">Systems Biology Institute</a> (Tokyo, JP), and from funds of the <a href="http://www.darpa.mil/" class="external">DARPA</a> (USA).
 </p>
 
 
-<h3 class="underline">BioModels Database collaboration</h3>
+<h3 class="underline">BioModels collaboration</h3>
 
 <!--
 <p>
-   BioModels Database is developed in collaboration with (by alphabetical order): Andreas Dräger (<a href="http://www.uni-tuebingen.de/fakultaeten/mathematisch-naturwissenschaftliche-fakultaet/fachbereiche/zentren/zentrum-fuer-bioinformatik-tuebingen.html" title="Center for Bioinformatics (Zentrum für Bioinformatik - ZBIT) Tübingen" class="external">Center for Bioinformatics (ZBIT)</a>, University of Tübingen, DE), Jürgen Eils (<a href="www.dkfz.de/" title="German Cancer Research Center" class="external">DKFZ</a>, DE), Jacky Snoep (<a href="http://jjj.biochem.sun.ac.za/" title="JWS Online" class="external">JWS Online</a>, Stellenbosch University, ZA) and Neil Swainston (<a href="http://www.mcisb.org/" title="Manchester Centre for Integrative Systems Biology (MCISB)" class="external">Manchester Centre for Integrative Systems Biology</a>, University of Manchester, UK).
+   BioModels is developed in collaboration with (by alphabetical order): Andreas Dräger (<a href="http://www.uni-tuebingen.de/fakultaeten/mathematisch-naturwissenschaftliche-fakultaet/fachbereiche/zentren/zentrum-fuer-bioinformatik-tuebingen.html" title="Center for Bioinformatics (Zentrum für Bioinformatik - ZBIT) Tübingen" class="external">Center for Bioinformatics (ZBIT)</a>, University of Tübingen, DE), Jürgen Eils (<a href="www.dkfz.de/" title="German Cancer Research Center" class="external">DKFZ</a>, DE), Jacky Snoep (<a href="http://jjj.biochem.sun.ac.za/" title="JWS Online" class="external">JWS Online</a>, Stellenbosch University, ZA) and Neil Swainston (<a href="http://www.mcisb.org/" title="Manchester Centre for Integrative Systems Biology (MCISB)" class="external">Manchester Centre for Integrative Systems Biology</a>, University of Manchester, UK).
 </p>
 -->
 
 <div style="text-align:center; padding-top: 8px;">
-  <a href="http://www.uni-tuebingen.de/fakultaeten/mathematisch-naturwissenschaftliche-fakultaet/fachbereiche/zentren/zentrum-fuer-bioinformatik-tuebingen.html" title="Center for Bioinformatics (Zentrum für Bioinformatik - ZBIT) Tübingen"><img border="0" title="Center for Bioinformatics (Zentrum für Bioinformatik - ZBIT) Tübingen" alt="Center for Bioinformatics (Zentrum für Bioinformatik - ZBIT) Tübingen logo" src="//www.ebi.ac.uk/biomodels/icons/ZBIT_logo.png" style="vertical-align:middle;" /></a>
-  <a href="http://www.dkfz.de/" title="DKFZ" style="padding-left:20px;"><img border="0" title="German Cancer Research Center (DKFZ)" alt="DKFZ logo" src="//www.ebi.ac.uk/biomodels/icons/dkfz_logo.png" style="vertical-align:middle;" /></a>
-  <a href="http://jjj.biochem.sun.ac.za/" title="JWS online" style="padding-left:20px;"><img border="0" title="JWS Online" alt="JWS online logo" src="//www.ebi.ac.uk/biomodels/icons/JWS.png" style="vertical-align:middle;" /></a>
+  <a href="http://www.uni-tuebingen.de/fakultaeten/mathematisch-naturwissenschaftliche-fakultaet/fachbereiche/zentren/zentrum-fuer-bioinformatik-tuebingen.html"
+     title="Center for Bioinformatics (Zentrum für Bioinformatik - ZBIT) Tübingen">
+      <img border="0"
+           title="Center for Bioinformatics (Zentrum für Bioinformatik - ZBIT) Tübingen"
+           alt="Center for Bioinformatics (Zentrum für Bioinformatik - ZBIT) Tübingen logo"
+           src="//www.ebi.ac.uk/biomodels-static/icons/ZBIT_logo.png"
+           style="vertical-align:middle;" /></a>
+  <a href="http://www.dkfz.de/"
+     title="DKFZ"
+     style="padding-left:20px;">
+      <img border="0"
+           title="German Cancer Research Center (DKFZ)"
+           alt="DKFZ logo" src="//www.ebi.ac.uk/biomodels-static/icons/dkfz_logo.png"
+           style="vertical-align:middle;" /></a>
+  <a href="http://jjj.biochem.sun.ac.za/"
+     title="JWS online"
+     style="padding-left:20px;">
+      <img title="JWS Online"
+           alt="JWS online logo"
+           src="//www.ebi.ac.uk/biomodels-static/icons/JWS.png"
+           style="vertical-align: middle; border: 0" /></a>
   <!--<a href="http://www.manchester.ac.uk/" title="University of Manchester" style="padding-left:20px;"><img border="0" title="University of Manchester" alt="University of Manchester logo" src="//www.ebi.ac.uk/biomodels/icons/Manchester-University_logo.png" style="vertical-align:middle;" /></a>-->
-  <a href="http://www.mcisb.org/" title="MCISB" style="padding-left:20px;"><img border="0" title="Manchester Centre for Integrative Systems Biology (MCISB)" alt="MCISB logo" src="//www.ebi.ac.uk/biomodels/icons/MCISB_logo.png" style="vertical-align:middle;" /></a>
-  <a href="http://sems.uni-rostock.de/" title="Simulation Experiment Management for Systems Biology, Systems Biology and Bioinformatics, University of Rostock" style="padding-left:20px;"><img border="0" title="Simulation Experiment Management for Systems Biology" alt="SEMS logo" src="//www.ebi.ac.uk/biomodels/GRAPHICS/SEMS_logo.png" style="vertical-align:middle;" /></a>
+  <a href="http://www.mcisb.org/"
+     title="MCISB"
+     style="padding-left:20px;">
+        <img title="Manchester Centre for Integrative Systems Biology (MCISB)"
+             alt="MCISB logo"
+             src="//www.ebi.ac.uk/biomodels-static/icons/MCISB_logo.png"
+             style="vertical-align: middle; border: 0" /></a>
+  <a href="//sems.uni-rostock.de/"
+     title="Simulation Experiment Management for Systems Biology, Systems Biology and Bioinformatics, University of Rostock"
+     style="padding-left:20px;">
+      <img border="0" title="Simulation Experiment Management for Systems Biology"
+           alt="SEMS logo"
+           src="//www.ebi.ac.uk/biomodels-static/GRAPHICS/SEMS_logo.png"
+           style="vertical-align:middle;" /></a>
 </div>
 
 <h4>Former collaborators</h4>
 
 <p>
-  BioModels Database collaborated with <a href="http://doqcs.ncbs.res.in/" class="external">DOQCS</a> (National Center for Biological Sciences, India), <a href="http://www.ccam.uchc.edu/" class="external">the Virtual Cell</a> (University of Connecticut Health Center, USA) and the <a href="http://www.cellml.org" class="external">CellML Team</a> (Auckland Bioengineering Institute, NZ).
+  BioModels collaborated with <a href="//doqcs.ncbs.res.in/" class="external">DOQCS</a> (National Center for Biological Sciences, India), <a href="//www.ccam.uchc.edu/" class="external">the Virtual Cell</a> (University of Connecticut Health Center, USA) and the <a href="//www.cellml.org" class="external">CellML Team</a> (Auckland Bioengineering Institute, NZ).
 </p>
 
 <p>
-  BioModels Database would not exists without the continuous support of many people, whether by their contribution of models, of software, or by their constructive comments and criticisms. It is unfortunately impossible to acknowledge all of them here, without risking to be unfair. Therefore, a big collective thank-you all!
+  BioModels would not exists without the continuous support of many people, whether by their contribution of models, of software, or by their constructive comments and criticisms. It is unfortunately impossible to acknowledge all of them here, without risking to be unfair. Therefore, a big collective thank-you all!
 </p>
 
 <!--
