@@ -232,6 +232,7 @@ def modelFlagService
 def modelFileFormatService
 def userService
 def springSecurityService
+def userDetailsService
 def aclUtilService
 def camelContext
 
@@ -633,6 +634,7 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
     modelFileFormatService  = appCtx.modelFileFormatService
     userService             = appCtx.userService
     springSecurityService   = appCtx.springSecurityService
+    userDetailsService      = appCtx.userDetailsService
     aclUtilService          = appCtx.aclUtilService
     camelContext            = appCtx.camelContext
     // wait for the indexing jobs to complete before stopping Camel
@@ -692,24 +694,8 @@ target(main: "Puts everything together to import models from a given folder") {
             if (isCuratedAndPublished(BRANCH)) {
                 submissionId = getSubmissionIdForBioModelsId(modelId)
             }
-
-            def submitter = User.findByUsername("administrator")
-            def commitMessage = "" // commit messages cannot be null
-            def comments = getInternalCommentForModelId(submissionId)
-            if (comments) {
-                def curationCommentInfo = parseCurationCommentsForModel(modelId, comments)
-                if (curationCommentInfo) {
-                    // we may well be missing the user because userMappingForInternalCurationComments
-                    // only deals with the curators of recent models
-                    if (curationCommentInfo.user) submitter = curationCommentInfo.user
-                    if (curationCommentInfo.comment) commitMessage = curationCommentInfo.comment
-                } else {
-                    addModelMsg modelId, "No curation comment info could be extracted from $comments"
-                }
-            }
             def modelDetails = getModelDetails modelId, BRANCH
-
-            updateWithRecentChanges submissionId, modelId, BRANCH, f, modelDetails, submitter, commitMessage
+            updateWithRecentChanges submissionId, modelId, BRANCH, f, modelDetails
         } else {
             log("The model ${modelId} cannot be imported!")
         }
@@ -763,41 +749,55 @@ target(main: "Puts everything together to import models from a given folder") {
     return 0
 }
 
-updateWithRecentChanges = { submissionId, publicationId, branch, folder, modelDetails, submitter, commitMessage ->
-    def model = Model.findBySubmissionId(submissionId)
-    if (model) {
-        def latestRev = modelService.getLatestRevision(model, false) //TODO: check a faster way to get the revision without checking ACL
-        if (branch == "publ") {
-            model.publicationId = publicationId
-            model.firstPublished = modelDetails['publicationDate']
-            if (latestRev) {
-                latestRev.curationState = CurationState.CURATED
-            }
-        }
-        def availDetectors = [ModelNameChangeDetector.newInstance(), BioModelsIdChangeDetector.newInstance(),  ModelLastModifiedChangeDetector.newInstance()]
-        def detector = ModelChangeDetectors.newInstance().joinDetectors(availDetectors)
-        def context = ModelComparisonContextFactory.newInstance().fromModelDetails(modelDetails, latestRev)
-        boolean hasChanged = detector.hasChanged(context)
-        if (hasChanged) {
-            // create and import the latest revision with the recent changes
-            log("We should add a new revision for the model $submissionId ($publicationId)")
-            def MODEL_ID = folder.name
-            def revision = addTheLatestRevision branch, MODEL_ID, folder, model, modelDetails, submitter, commitMessage
-            if (revision) {
-                if (branch == "publ") {
-                    setCurationNotes(revision.model)
-                    def curationState = CurationState.CURATED
-                    modelDelegateService.updateCurationStateRevision(MODEL_ID, revision.revisionNumber, curationState)
-                }
-                publishModelRevision MODEL_ID, revision
-            }
-            processedCount.incrementAndGet()
-        } else {
-            log("No need to update the model $submissionId ($publicationId)")
-        }
-    } else {
+updateWithRecentChanges = { submissionId, publicationId, branch, folder, modelDetails ->
+    def submissionInfo = findSubmissionInfoToAddToNewRevision(submissionId)
+    def submitter = submissionInfo["submitter"]
+    def commitMessage = submissionInfo["commitMessage"]
+    // log in as the submitter; can't use authenticateAsUser because we do not know the unencrypted password
+    def userDetails = userDetailsService.loadUserByUsername(submitter.username)
+    SecurityContextHolder.context.authentication = new UsernamePasswordAuthenticationToken(
+        userDetails, userDetails.password, userDetails.authorities)
+
+    def id = Model.executeQuery("select id from Model m where m.submissionId = ?", [submissionId])
+    def model = Model.get(id)
+    if (!model) {
         failureCount.incrementAndGet()
         addModelError(submissionId, "Error retrieving model from BioModels' the destination database")
+        return
+    }
+    def latestRev = modelService.getLatestRevision(model, false)
+    //TODO: replace the above call by a faster way to get the revision without checking ACL
+    if (branch == "publ") {
+        model.publicationId = publicationId
+        model.firstPublished = modelDetails['publicationDate']
+        if (latestRev) {
+            latestRev.curationState = CurationState.CURATED
+        }
+    }
+    def availDetectors = [
+        ModelNameChangeDetector.newInstance(),
+        BioModelsIdChangeDetector.newInstance(),
+        ModelLastModifiedChangeDetector.newInstance()
+    ]
+    def detector = ModelChangeDetectors.newInstance().joinDetectors(availDetectors)
+    def context = ModelComparisonContextFactory.newInstance().fromModelDetails(modelDetails, latestRev)
+    boolean hasChanged = detector.hasChanged(context)
+    if (hasChanged) {
+        // create and import the latest revision with the recent changes
+        log("We should add a new revision for the model $submissionId ($publicationId)")
+        def MODEL_ID = folder.name
+        def revision = addTheLatestRevision branch, MODEL_ID, folder, model, modelDetails, submitter, commitMessage
+        if (revision) {
+            if (branch == "publ") {
+                setCurationNotes(revision.model)
+                def curationState = CurationState.CURATED
+                modelDelegateService.updateCurationStateRevision(MODEL_ID, revision.revisionNumber, curationState)
+            }
+            publishModelRevision MODEL_ID, revision
+        }
+        processedCount.incrementAndGet()
+    } else {
+        log("No need to update the model $submissionId ($publicationId)")
     }
 }
 
@@ -857,18 +857,18 @@ processModelFolder = { File folder ->
         failureCount.incrementAndGet()
         return
     } else {
-        // we come into the situation before entering the following try... catch block because
-        // we would want to process the model if the model does exist
-        // (i.e. the model in the uncurated publ branch was already imported).
+        // We run into this situation when the model was historically published in the uncurated_publ
+        // branch which has been curated and moved to the publ branch. At the nearly beginning of this method,
+        // such a model would be deferred and the importer won't import it as a new model. In this case, the batch
+        // importer is only going to add a new revision with the newly generated publication identifier
+        // and other updated information to the model in question.
         String submissionId = modelDetails['model_id']
         if (BRANCH == "publ" && modelsImported.contains(submissionId)) {
             log("The model $MODEL_ID (aka. $submissionId) was already imported!")
             // update the set of successfully imported models
             modelsImported.add(MODEL_ID)
-            // update the publication identifier and the published date of this model
-            def submitter = User.findByUsername("administrator") // findRightSubmitter
-            def commitMessage = null // extractCommitMessage
-            updateWithRecentChanges submissionId, MODEL_ID, "publ", folder, modelDetails, submitter, commitMessage
+            // update the model if the updated information is available
+            updateWithRecentChanges submissionId, MODEL_ID, "publ", folder, modelDetails
             return
         }
     }
@@ -911,6 +911,30 @@ processModelFolder = { File folder ->
         t.printStackTrace()
         failureCount.incrementAndGet()
     }
+}
+
+/**
+ * Looks up basic information for adding a new revision. For example, who is the right submitter and
+ * what is the commit message.
+ *
+ * @param   modelId     a submission identifier (MODEL*) or a BioModels identifier (BIOMD*)
+ */
+findSubmissionInfoToAddToNewRevision = { modelId ->
+    def submitter = User.findByUsername("administrator") // as the default submitter if it cannot find any suitable
+    def commitMessage = "make updates on the model" // as the default commit message if it cannot find any suitable
+    def comments = getInternalCommentForModelId(modelId)
+    if (comments) {
+        def curationCommentInfo = parseCurationCommentsForModel(modelId, comments)
+        if (curationCommentInfo) {
+            // we may well be missing the user because userMappingForInternalCurationComments
+            // only deals with the curators of recent models
+            if (curationCommentInfo.user) submitter = curationCommentInfo.user
+            if (curationCommentInfo.comment) commitMessage = curationCommentInfo.comment
+        } else {
+            addModelMsg modelId, "No curation comment info could be extracted from $comments"
+        }
+    }
+    [submitter: submitter, commitMessage: commitMessage]
 }
 
 /**
