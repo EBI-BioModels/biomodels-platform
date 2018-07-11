@@ -25,38 +25,40 @@
 
 
 
-
-
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
         <meta name="layout" content="${session['branding.style']}/main" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretty-checkbox@3.0/dist/pretty-checkbox.min.css"/>
+
         <title>Configuration - ${title}</title>
+        <link rel="stylesheet" href="${resource(dir: 'css', file: 'toastr.min.css', contextPath: "${grailsApplication.config.grails.serverURL}")}"/>
     </head>
     <body>
+        <g:javascript contextPath="" src="toastr.min.js"/>
         <g:hasErrors>
             <div class="errors">
                 <g:renderErrors/>
             </div>
         </g:hasErrors>
+        <g:if test="${flash.message}">
+            <div class="warning">
+                ${flash.message}
+            </div>
+        </g:if>
         <div id="remote" class="body">
-            <h1>Configuration - ${title}</h1>
+            <h2>Configuration - ${title}</h2>
             <g:form name="configurationForm" action="${action}">
                 <g:render template="/templates/configuration/${template}"/>
                 <div class="buttons">
-                    <button id="cancelButton" class="button">Cancel</button>
-                    <button id="submitButton" class="button">Save</button>
+                    <button type="reset" id="cancelButton" class="button">Cancel</button>
+                    <button type="submit" id="submitButton" class="button">Save</button>
+                    <g:if test="${controllerName == 'classifierConfigure' && actionName == 'classifier'}">
+                        <button type="button" id="createButton" class="button">New train</button>
+                    </g:if>
                 </div>
             </g:form>
         </div>
-        <g:javascript>
-            $("#configurationForm #cancelButton").click(function() {
-                $("#configurationForm")[0].reset();
-            });
-            $("#configurationForm #submitButton").click(function() {
-                $("#configurationForm")[0].submit();
-            });
-        </g:javascript>
     </body>
     <g:render template="/templates/configuration/configurationSidebar"/>
 </html>

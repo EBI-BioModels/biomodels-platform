@@ -3,6 +3,8 @@
         <span id="mainFile${index}" class="mainFile${index}">${name}</span>
         <input style="display: none;" type="file" id="mainFile"
                name="mainFile" class="mainFile${index}"/>
+        <input style="display: none;" type="text" id="mainFileUpload"
+               name="mainFileUpload" class="mainFile${index}" value="${name}"/>
     </td>
     <td style="width: 70%">
         <input type="text" id="mainFileDescription${index}"
@@ -10,7 +12,7 @@
                name="mainFileDescription" value="${description}"
                placeholder="Please enter a description" required>
     </td>
-    <td style="width: 10%; text-align: right">
+    <td style="width: 10%; text-align: center; vertical-align: middle">
         <a href="#" class="replaceMain">Replace</a> | <a href="#" class="removeMain">Remove</a>
     </td>
 </tr>

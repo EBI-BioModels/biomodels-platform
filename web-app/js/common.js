@@ -10,9 +10,6 @@
  * attention once you want to customise it.
  */
 $('#submitButtonRate').prop('disabled', true);
-$('#menuItemFeedback').on('click', function() {
-    $(this).addClass("active");
-});
 var allStars = ["star1", "star2", "star3", "star4", "star5"];
 var stackOfStars = [];
 var currentStar;
@@ -188,3 +185,18 @@ $('input[name=orcid]').blur(function() {
         hideNow();
     }
 });
+
+function escapeSpecialLuceneCharacters(facet_value) {
+    facet_value = facet_value.replace(/\+/g, '\\+');
+    facet_value = facet_value.replace(/\?/g, '\\?');
+    facet_value = facet_value.replace(/\*/g, '\\*');
+    facet_value = facet_value.replace(/\(/g, '\\(');
+    facet_value = facet_value.replace(/\)/g, '\\)');
+    facet_value = facet_value.replace(/\[/g, '\\[');
+    facet_value = facet_value.replace(/\]/g, '\\]');
+    facet_value = facet_value.replace(/\{/g, '\\{');
+    facet_value = facet_value.replace(/\}/g, '\\}');
+    facet_value = facet_value.replace(/\:/g, '\\:');
+    facet_value = facet_value.replace(/\//g, '\\/');
+    return facet_value;
+}

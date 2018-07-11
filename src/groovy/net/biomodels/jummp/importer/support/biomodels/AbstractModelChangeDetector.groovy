@@ -20,6 +20,30 @@
 
 package net.biomodels.jummp.importer.support.biomodels
 
+/**
+ * This abstract class aims to generalising model change detector. It is extended by concrete classes
+ * which handle a single updated attribute such as model name, publication identifiers.
+ *
+ * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
+ *
+ * Created by Mihai Glonț on 08/02/18.
+ * Updated by Tung nguyen on 04/06/18.
+ */
 abstract class AbstractModelChangeDetector implements ModelChangeDetector {
     ModelChangeDetector next
+
+    @Override
+    /**
+     * Default implementation of {@link ModelChangeDetector#hasChanged(net.biomodels.jummp.importer.support.biomodels.ModelComparisonContext)}.
+     *
+     * Concrete subclasses are expected to return true if they find a change.
+     * Otherwise, they should not return false directly but should invoke
+     * this method (i.e. return super.hasChanged(context)), so that subsequent
+     * detectors' hasChanged method can be called. If there are no further
+     * detectors to delegate to, this method will return false.
+     */
+    boolean hasChanged(ModelComparisonContext comparison) {
+        next?.hasChanged(comparison) ?: false
+    }
 }

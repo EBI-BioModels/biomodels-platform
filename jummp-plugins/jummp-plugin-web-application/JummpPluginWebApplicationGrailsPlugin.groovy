@@ -64,61 +64,8 @@ Brief summary/description of the plugin.
     // Online location of the plugin's browseable source code.
 //    def scm = [ url: "http://svn.grails-plugins.codehaus.org/browse/grails-plugins/" ]
 
-    def doWithWebDescriptor = { xml ->
-        def servlets = xml.'servlet'
-        def lastServlet = servlets[servlets.size() - 1]
-        lastServlet + {
-            'servlet' {
-                'servlet-name'('DefaultServletReaderConfig')
-                'servlet-class'('com.wordnik.swagger.servlet.config.DefaultServletReaderConfig')
-                'init-param' {
-                    'param-name'('swagger.resource.package')
-                    'param-value'('net.biomodels.jummp.webapp.rest')
-                }
-                'init-param' {
-                    'param-name'('swagger.api.basepath')
-                    'param-value'(application.config.grails.serverURL)
-                }
-                'init-param' {
-                    'param-name'('api.version')
-                    'param-value'('0.1')
-                }
-                'init-param' {
-                    'param-name'('title')
-                    'param-value'(application.metadata['app.name'].toUpperCase().replace("-", " "))
-                }
-                'init-param' {
-                    'param-name'('description')
-                    'param-value'('A repository of computational models encoded in standard formats.')
-                }
-                'init-param' {
-                    'param-name'('contact')
-                    'param-value'('mihai.glont@ebi.ac.uk')
-                }
-                'init-param' {
-                    'param-name'('licence')
-                    'param-value'('AGPL3')
-                }
-                'init-param' {
-                    'param-name'('licence-url')
-                    'param-value'('https://www.gnu.org/licenses/agpl-3.0.html')
-                }
-                'load-on-startup'(2)
-            }
-            'servlet' {
-                'servlet-name'('ApiDeclarationServlet')
-                'servlet-class'('com.wordnik.swagger.servlet.listing.ApiDeclarationServlet')
-            }
-        }
+    def doWithWebDescriptor = {
 
-        def mappings = xml.'servlet-mapping'
-        def lastMapping = mappings[mappings.size() - 1]
-        lastMapping + {
-            'servlet-mapping' {
-                'servlet-name'('ApiDeclarationServlet')
-                'url-pattern'('/api-docs/*')
-            }
-        }
     }
 
     def doWithSpring = {
