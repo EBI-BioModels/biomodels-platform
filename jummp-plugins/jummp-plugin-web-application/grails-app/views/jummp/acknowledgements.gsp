@@ -138,7 +138,7 @@ the <a href="//www.imi.europa.eu/" title="Innovative Medicines Initiative (IMI)"
 </p>
 
 <p>
-  BioModels would not exists without the continuous support of many people, whether by their contribution of models, of software, or by their constructive comments and criticisms. It is unfortunately impossible to acknowledge all of them here, without risking to be unfair. Therefore, a big collective thank-you all!
+  BioModels would not exist without the continuous support of many people, whether by their contribution of models, of software, or by their constructive comments and criticisms. It is unfortunately impossible to acknowledge all of them here, without risking to be unfair. Therefore, a big collective thank-you all!
 </p>
 
 <!--

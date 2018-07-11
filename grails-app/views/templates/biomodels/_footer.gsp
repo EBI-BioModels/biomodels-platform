@@ -31,10 +31,9 @@
     <!-- Optional local footer (insert citation / project-specific copyright / etc here -->
     <div id="local-footer">
         <div class="row">
-            <div class="float-right" style="font-weight: bold;">
-
+            <div id="footer" class="float-left">
+                Build: <g:render template="/templates/version"/>
             </div>
-            <div class="float-left"><wcm:render path="footer"/></div>
             <div class="clear"></div>
         </div>
     </div>

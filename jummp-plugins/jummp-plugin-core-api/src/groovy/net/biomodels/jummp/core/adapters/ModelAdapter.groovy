@@ -46,7 +46,7 @@ public class ModelAdapter {
         // TODO: is it correct to show the latest upload date as the lastModifiedDate or does it need ACL restrictions?
         Set<String> creators = []
         Set<String> creatorUsernames = []
-        if (model.revisions) {
+        if (model.revisions?.size() > 0) {
             model.revisions.each { revision ->
                 creators.add(revision.owner.person.userRealName)
                 creatorUsernames.add(revision.owner.username)
