@@ -116,6 +116,8 @@ class ModelController {
 
     def modelConversionService
 
+    def userService
+
     def messageSource
 
     /**
@@ -1359,7 +1361,7 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
         int revision = Integer.parseInt(requestObject['revisionNumber'] as String)
         String modelId = requestObject['modelId']
         boolean canUpdate = modelDelegateService.canAddRevision(modelId as String)
-        boolean hasCuratorRole = hasCuratorRole()
+        boolean hasCuratorRole = userService.isLoggedInUserACurator()
         if (canUpdate && hasCuratorRole) {
             CurationState curationState = CurationState.valueOf(requestObject['curationState'] as String)
             modelDelegateService.updateCurationStateRevision(modelId, revision, curationState)
@@ -1478,13 +1480,5 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
             }
         }
         return true
-    }
-
-    private boolean hasCuratorRole() {
-        Collection<GrantedAuthority> grantedAuthorities = springSecurityService.getPrincipal().getAuthorities()
-        Set<String> roleNames = grantedAuthorities.collect {
-            it.getAuthority()
-        }
-        "ROLE_CURATOR" in roleNames
     }
 }

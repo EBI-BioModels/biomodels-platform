@@ -98,6 +98,12 @@ public interface IUserService {
      */
     User getUser(String username) throws UserNotFoundException
     /**
+     * Indicates whether the current user is a curator.
+     *
+     * @return false if the user is not logged in or if they don't have ROLE_CURATOR. true otherwise
+     */
+    boolean isLoggedInUserACurator()
+    /**
      * Retrieves list of users.
      * This method is only for administrative purpose. It does not sanitize the
      * returned Users, that is it includes all (also security relevant) elements.
