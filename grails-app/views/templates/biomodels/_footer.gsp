@@ -32,8 +32,7 @@
     <div id="local-footer">
         <div class="row">
             <div class="float-right" style="font-weight: bold;">
-                <a href="//www.ebi.ac.uk/biomodels-main/" style="color: orange;"
-                   title="Switch to the previous version of the BioModels platform">Back to classic BioModels</a>
+
             </div>
             <div class="float-left"><wcm:render path="footer"/></div>
             <div class="clear"></div>
@@ -100,6 +99,7 @@
         </section>
     </div>
      <g:render template="/templates/feedback" plugin="jummp-plugin-web-application"/>
+     <g:render template="/templates/switchClassicBioModels" plugin="jummp-plugin-web-application"/>
  </footer>
 </div> <!--! end of #wrapper -->
 

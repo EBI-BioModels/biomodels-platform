@@ -326,20 +326,24 @@
         </div>
     </g:if>
     <g:else>
-        <g:if test="${matches != null}">
-            <p>No available models matched your query. Please try logging in to
-            access more models, or another search query.</p>
-        </g:if>
-        <g:else>
-            <p>No available models matched your query. Please try logging in to
-            access more models, or another search query.</p>
-        </g:else>
-        <div class="alert info">
-            <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
-            <h5 style="color: #ffffff">Please also check the syntax of your search terms.</h5>
+        <div class="row">
+            <div class="small-2 medium-2 large-2 columns">
+                <img src="https://cdn1.iconfinder.com/data/icons/ui-colored-3-of-3/100/UI_3_-38-512.png"
+                     width="50%"
+                     class="float-center"></div>
+            <div class="small-10 medium-10 large-10 columns">
+                <h3 style="border-bottom: 2px solid #007c82;">Sorry, we couldn't find any matches.</h3>
+                <p>You might need to:</p>
+                <ul>
+                    <g:if test="${action == "search"}">
+                    <li><a href="${g.createLink(controller: "login", action: "auth")}">Log in</a> with your username
+                        and password if you're trying to access an unpublished model.</li></g:if>
+                    <li>Check the syntax of your query.</li>
+                    <li><a onclick="window.history.back()">Go back to the previous page.</a></li></ul>
+                <script>
+                    $('#clearsearch').hide();
+                </script>
+            </div>
         </div>
-        <script>
-            $('#clearsearch').hide();
-        </script>
     </g:else>
 </div>

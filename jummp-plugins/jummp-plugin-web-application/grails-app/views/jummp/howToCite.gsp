@@ -66,7 +66,7 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
         CPT: Pharmacometrics &amp; Systems Pharmacology</a>]
     [<a href="javascript:toggleDisplayById('bib_ALVillas2017');"
         title="Display/hide the BibTeX entry for this publication">
-        <img src="//www.ebi.ac.uk/biomodels/icons/plus.gif" alt="+ icon"
+        <img src="//www.ebi.ac.uk/biomodels-static/icons/plus.gif" alt="+ icon"
              style="padding-right: 5px;" />BibTeX entry</a>]
 <pre id="bib_ALVillas2017" class="hidden">
 @ARTICLE{BioModels2017a,
@@ -99,7 +99,7 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
             title="Publication on Nucl. Acids Res. (Open Access)">Nucl. Acids Res.</a>]
     [<a href="javascript:toggleDisplayById('bib_Glont2017');"
         title="Display/hide the BibTeX entry for this publication">
-        <img src="//www.ebi.ac.uk/biomodels/icons/plus.gif" alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
+        <img src="//www.ebi.ac.uk/biomodels-static/icons/plus.gif" alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
 <pre id="bib_Glont2017" class="hidden">
 @ARTICLE{BioModels2017b,
     author  = {Glont, Mihai and Nguyen, Tung V. N. and Graesslin, Martin and Hälke, Robert
@@ -135,7 +135,7 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
             title="Publication on Nucl. Acids Res. (Open Access)">Nucl. Acids Res.</a>]
         [<a href="javascript:toggleDisplayById('bib_Chelliah2015');"
             title="Display/hide the BibTeX entry for this publication">
-        <img src="//www.ebi.ac.uk/biomodels/icons/plus.gif" alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
+        <img src="//www.ebi.ac.uk/biomodels-static/icons/plus.gif" alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
 <pre id="bib_Chelliah2015" class="hidden">
 @ARTICLE{BioModels2015a,
   author  = {Chelliah, Vijayalakshmi and Juty, Nick and Ajmera, Ishan and Ali, Raza and Dumousseau, Marine and Glont, Mihai
@@ -163,7 +163,7 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
           title="Publication on CPT:PSP (Open Access)">CPT: Pharmacometrics &amp; Systems Pharmacology</a>]
       [<a href="javascript:toggleDisplayById('bib_Juty2015');"
           title="Display/hide the BibTeX entry for this publication">
-      <img src="//www.ebi.ac.uk/biomodels/icons/plus.gif"
+      <img src="//www.ebi.ac.uk/biomodels-static/icons/plus.gif"
            alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
 <pre id="bib_Juty2015" class="hidden">
 @ARTICLE{BioModels2015b,
@@ -193,7 +193,7 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
           title="Publication on BMC Systems Biology (Open Access)">BMC Sys Bio</a>]
       [<a href="javascript:toggleDisplayById('bib_Li2010b');"
           title="Display/hide the BibTeX entry for this publication">
-          <img src="//www.ebi.ac.uk/biomodels/icons/plus.gif"
+          <img src="//www.ebi.ac.uk/biomodels-static/icons/plus.gif"
                alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
 <pre id="bib_Li2010b" class="hidden">
 @ARTICLE{BioModels2010,
@@ -228,7 +228,7 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
           title="Publication on Nucleic Acids Research">Nucleic Acids Res</a>]
       [<a href="javascript:toggleDisplayById('bib_lenovere2006');"
           title="Display/hide the BibTeX entry for this publication">
-          <img src="//www.ebi.ac.uk/biomodels/icons/plus.gif"
+          <img src="//www.ebi.ac.uk/biomodels-static/icons/plus.gif"
                alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
 <pre id="bib_lenovere2006" class="hidden">
 @ARTICLE{BioModels2006,
@@ -269,7 +269,7 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
           title="Publication on BMC Systems Biology (Open Access)">BMC Sys Bio</a>]
       [<a href="javascript:toggleDisplayById('bib_Buchel2013');"
           title="Display/hide the BibTeX entry for this publication">
-          <img src="//www.ebi.ac.uk/biomodels/icons/plus.gif"
+          <img src="//www.ebi.ac.uk/biomodels-static/icons/plus.gif"
                alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
 <pre id="bib_Buchel2013" class="hidden">
 @ARTICLE{BioModels2010,
@@ -304,7 +304,7 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
           title="Publication on BMC Systems Biology (Open Access)">BMC Sys Bio</a>]
       [<a href="javascript:toggleDisplayById('bib_Wimalaratne2014');"
           title="Display/hide the BibTeX entry for this publication">
-          <img src="//www.ebi.ac.uk/biomodels/icons/plus.gif"
+          <img src="//www.ebi.ac.uk/biomodels-static/icons/plus.gif"
                alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
 <pre id="bib_Wimalaratne2014" class="hidden">
 @ARTICLE{Wimalaratne2014,
@@ -337,7 +337,7 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
           title="Publication on Briefings in Bioinformatics (Open Access)">Brief Bioinform</a>]
       [<a href="javascript:toggleDisplayById('bib_Li2010a');"
           title="Display/hide the BibTeX entry for this publication">
-          <img src="//www.ebi.ac.uk/biomodels/icons/plus.gif"
+          <img src="//www.ebi.ac.uk/biomodels-static/icons/plus.gif"
                alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
 <pre id="bib_Li2010a" class="hidden">
 @ARTICLE{BioModelsWebServices2010,
@@ -369,7 +369,7 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
           title="Publication on Springer (Open Access)">Springer</a>]
       [<a href="javascript:toggleDisplayById('bib_Chelliah2013');"
           title="Display/hide the BibTeX entry for this publication">
-          <img src="//www.ebi.ac.uk/biomodels/icons/plus.gif"
+          <img src="//www.ebi.ac.uk/biomodels-static/icons/plus.gif"
                alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
 
 <pre id="bib_Chelliah2013" class="hidden">

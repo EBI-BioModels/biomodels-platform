@@ -98,7 +98,7 @@ class SearchController {
         }
         params.numResults = numResults()
         if (integerCheck(params.offset, true, -1)) {
-            params.offset = params.offset ? Integer.parseInt(params.offset) : 0
+            params.offset = params.offset ? params.int("offset") : 0
         }
         else {
             params.offset = 0
@@ -120,7 +120,7 @@ class SearchController {
             prefs = Preferences.getDefaults()
         }
         if (integerCheck(params.numResults, true, -1)) {
-            prefs.numResults = params.numResults as Integer
+            prefs.numResults = params.int("numResults")
             if (prefs.numResults > MAXRESULTS ) {
                 prefs.numResults = MAXRESULTS
             }
@@ -143,7 +143,7 @@ class SearchController {
         sanitiseParams()
         def results = browseCore(params.sortBy, params.sortDir, params.offset, params.numResults, params.query)
 
-        if (!params.format || params.format=="html") {
+        if (response.format=="html") {
             results["history"] = modelHistoryService.history()
             return results
         }
@@ -178,9 +178,9 @@ class SearchController {
                 params.flashMessage = "Please use *:* to browse all models."
             }
         }
-        println "Search terms: ${params.query}, requested from: ${request.getRemoteAddr()} under the format: ${params.format}"
+        println "Search terms: ${params.query}, requested from: ${request.getRemoteAddr()} under the format: ${response.format}"
         def results = searchCore(params.query, params.sortBy, params.sortDir, params.offset, params.numResults)
-        if (!params.format || params.format=="html") {
+        if (response.format=="html") {
             return results
         }
         respond new SearchResults(results)
@@ -337,14 +337,9 @@ class SearchController {
         List modelsDomain = modelService.getAllModels(offset, length, sortDirection == "asc", sort, filter)
         List models = []
         modelsDomain.each {
-            models.add(new ModelAdapter(model: it).toCommandObject())
+            models.add(new ModelAdapter(model: it).toCommandObject(false))
         }
-        List<Model> myModels = modelService.getMyModels(null, false)
-        List<MTC> myMTCs  = myModels.collect {
-            new ModelAdapter(model: it).toCommandObject()
-        }
-
-        List<Facet> basicFacets = searchService.buildBasicFacets(myMTCs)
+        List<Facet> basicFacets = searchService.buildBasicFacets(models)
         int totalCount = modelService.getModelCount(filter, false)
         return [models: models, facets: basicFacets, modelsAvailable: totalCount, sortBy: sortBy,
                 sortDirection: sortDirection, offset: offset, length: length, query: filter]

@@ -253,8 +253,6 @@
                             $(this).css("display", "inline");
                             //var discardID = "discard" + $(this).attr('id');
                             //$("#"+discardID).attr('download', fileName);
-                            $('#mainFileDescription').val('');
-
                         } else {
                             var td = $(this).parent().get(0);
                             var span = $($.parseHTML($(td).html()))[1];
@@ -320,11 +318,11 @@
                                 var newFile = {filename: fileName, description: fileName}
                                 existingMainFiles.push(newFile);
                             }
+                        } else {
+                            var flashDiv = $('.flashNotificationDiv');
+                            $(flashDiv).html("The main file cannot be empty");
+                            $(flashDiv).show();
                         }
-                    } else {
-                        var flashDiv = $('.flashNotificationDiv');
-                        $(flashDiv).html("The main file cannot be empty");
-                        $(flashDiv).show();
                     }
                 });
 

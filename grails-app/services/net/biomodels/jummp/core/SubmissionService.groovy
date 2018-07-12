@@ -448,8 +448,11 @@ class SubmissionService {
 
         void updatePublicationLink(Map<String, Object> workingMemory, Map<String, String> modifications) {
             if (modifications.containsKey("PubLinkProvider")) {
+                MTC mtc = workingMemory.get("ModelTC") as MTC
+                workingMemory.put("previousPubLinkProvider", mtc.publication?.linkProvider)
+                workingMemory.put("previousPubLink", mtc.publication?.link)
                 workingMemory.put("RetrievePubDetails",
-                    updatePubs(workingMemory.get("ModelTC") as MTC,
+                    updatePubs(mtc,
                         modifications.get("PubLinkProvider"),
                         modifications.get("PubLink")))
                 if (workingMemory.containsKey("Authors")) {
