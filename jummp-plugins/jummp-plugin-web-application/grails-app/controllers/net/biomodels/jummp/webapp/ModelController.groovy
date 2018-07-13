@@ -178,7 +178,7 @@ class ModelController {
             if (model) {
                 modelId = (model.publicationId) ?: model.submissionId
                 int historyItem = updateHistory(modelId, username, accessType, formatType, changesMade)
-                session.lastHistory = historyItem
+                request.lastHistory = historyItem
                 return true
             } else {
                 log.error "Ignoring invalid request for $actionUri with params $params."
@@ -194,9 +194,9 @@ class ModelController {
 
     private void auditAfter(def model) {
         try {
-            if (session.lastHistory) {
+            if (request.lastHistory) {
                 modelDelegateService.updateAuditSuccess(session.lastHistory, true)
-                session.removeAttribute("lastHistory")
+                request.removeAttribute("lastHistory")
             }
         } catch(Exception e) {
             log.error e.message, e
