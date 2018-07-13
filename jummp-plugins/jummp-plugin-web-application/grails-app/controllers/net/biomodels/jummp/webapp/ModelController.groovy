@@ -195,7 +195,7 @@ class ModelController {
     private void auditAfter(def model) {
         try {
             if (request.lastHistory) {
-                modelDelegateService.updateAuditSuccess(session.lastHistory, true)
+                modelDelegateService.updateAuditSuccess(request.lastHistory, true)
                 request.removeAttribute("lastHistory")
             }
         } catch(Exception e) {
