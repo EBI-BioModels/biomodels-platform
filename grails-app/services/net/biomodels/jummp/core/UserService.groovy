@@ -215,7 +215,6 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
         UserRole.get(user.id, role.id)
     }
 
-    @PreAuthorize("isAuthenticated()")
     boolean isLoggedInUserACurator() {
         def userId = springSecurityService.getCurrentUserId()
         if (!userId) return false
