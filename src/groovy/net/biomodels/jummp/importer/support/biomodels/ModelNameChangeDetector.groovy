@@ -20,6 +20,8 @@
 
 package net.biomodels.jummp.importer.support.biomodels
 
+import groovy.transform.CompileStatic
+
 /**
  * This class is used to detect models that the model names were recently updated.
  *
@@ -29,10 +31,12 @@ package net.biomodels.jummp.importer.support.biomodels
  * Created by Mihai Glonț on 08/02/18.
  * Updated by Tung nguyen on 04/06/18.
  */
+@CompileStatic
 final class ModelNameChangeDetector extends AbstractModelChangeDetector {
 
     boolean hasChanged(ModelComparisonContext comparison) {
         Objects.requireNonNull(comparison)
+        Objects.requireNonNull(comparison.imported)
         if (comparison.name != comparison.imported.name) return true
         super.hasChanged(comparison)
     }

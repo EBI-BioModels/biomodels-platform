@@ -695,7 +695,11 @@ target(main: "Puts everything together to import models from a given folder") {
                 submissionId = getSubmissionIdForBioModelsId(modelId)
             }
             def modelDetails = getModelDetails modelId, BRANCH
-            updateWithRecentChanges submissionId, modelId, BRANCH, f, modelDetails
+            try {
+                updateWithRecentChanges submissionId, modelId, BRANCH, f, modelDetails
+            } catch(Throwable t) {
+                addModelError modelId, "Unable to pull the latest changes: $t"
+            }
         } else {
             log("The model ${modelId} cannot be imported!")
         }
@@ -864,11 +868,16 @@ processModelFolder = { File folder ->
         // and other updated information to the model in question.
         String submissionId = modelDetails['model_id']
         if (BRANCH == "publ" && modelsImported.contains(submissionId)) {
+
             log("The model $MODEL_ID (aka. $submissionId) was already imported!")
             // update the set of successfully imported models
             modelsImported.add(MODEL_ID)
             // update the model if the updated information is available
-            updateWithRecentChanges submissionId, MODEL_ID, "publ", folder, modelDetails
+            try {
+                updateWithRecentChanges submissionId, MODEL_ID, "publ", folder, modelDetails
+            } catch(Throwable t) {
+                addModelError modelId, "Unable to port model from uncura_publ to publ: $t"
+            }
             return
         }
     }
