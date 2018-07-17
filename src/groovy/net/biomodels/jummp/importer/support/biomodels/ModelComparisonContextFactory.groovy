@@ -32,7 +32,6 @@ import net.biomodels.jummp.model.Revision
  * Created by Mihai Glonț on 08/02/18.
  * Updated by Tung nguyen on 04/06/18.
  */
-@CompileStatic
 class ModelComparisonContextFactory {
     static ModelComparisonContext fromModelDetails(Map modelDetails, Revision revision) {
         ModelComparisonContext context = new ModelComparisonContext()

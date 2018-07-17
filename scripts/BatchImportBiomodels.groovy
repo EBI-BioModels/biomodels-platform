@@ -681,16 +681,17 @@ target(main: "Puts everything together to import models from a given folder") {
             // process the model folder regardless of its size
             tobeProcessed = true
         }
-        //log("$f.name : tobeProcessed? $tobeProcessed")
         boolean exists = modelsImported.contains(f.name)
-        //log("$f.name : exists? $exists")
-        if (f.isDirectory() && modelId ==~ modelFolderPattern && tobeProcessed && !exists) {
+        final String BRANCH = getBranch modelId
+        boolean shouldDefer = isModelInUncuraPublAndPubl(modelId, BRANCH)
+        if (shouldDefer) {
+            addModelError modelId, "Entry found both in $BRANCH branch and also in publ."
+        } else if (f.isDirectory() && modelId ==~ modelFolderPattern && tobeProcessed && !exists) {
             processModelFolder f
         } else if (exists) {
             // regardless of branch, this will check whether the model should be updated
             log("The model ${modelId} was already imported!")
             String submissionId = modelId
-            final String BRANCH = getBranch modelId
             if (isCuratedAndPublished(BRANCH)) {
                 submissionId = getSubmissionIdForBioModelsId(modelId)
             }
@@ -828,11 +829,6 @@ processModelFolder = { File folder ->
     if (!BRANCH) {
         addModelError(MODEL_ID, "Can not find $MODEL_ID in any of $bioModelsBranches")
         failureCount.incrementAndGet()
-        return
-    }
-    boolean shouldDefer = isModelInUncuraPublAndPubl(MODEL_ID, BRANCH)
-    if (shouldDefer) {
-        addModelError MODEL_ID, "Entry found both in $BRANCH branch and also in publ."
         return
     }
     // check symlink
