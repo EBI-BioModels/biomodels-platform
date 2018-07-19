@@ -20,6 +20,7 @@
 
 package net.biomodels.jummp.importer.support.biomodels
 
+import groovy.transform.CompileStatic
 import net.biomodels.jummp.model.Revision
 
 /**
