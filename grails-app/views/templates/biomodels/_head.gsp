@@ -98,4 +98,4 @@
        Modernizr enables HTML5 elements & feature detects; Respond is a polyfill for min/max-width CSS3 Media Queries
        For optimal performance, use a custom Modernizr build: www.modernizr.com/download/ -->
   <script src="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/libraries/modernizr/modernizr.custom.49274.js"></script>
-  <title><g:layoutTitle default="BioModels Database"/></title>
+  <title><g:layoutTitle default="BioModels"/></title>

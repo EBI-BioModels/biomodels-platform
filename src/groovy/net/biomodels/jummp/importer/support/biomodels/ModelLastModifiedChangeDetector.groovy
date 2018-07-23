@@ -34,7 +34,8 @@ class ModelLastModifiedChangeDetector extends AbstractModelChangeDetector {
     @Override
     boolean hasChanged(ModelComparisonContext comparison) {
         Objects.requireNonNull(comparison)
-        if (comparison.imported?.uploadDate != comparison.lastModified) {
+        Objects.requireNonNull(comparison.imported)
+        if (comparison.imported.uploadDate != comparison.lastModified) {
             return true
         }
         super.hasChanged(comparison)

@@ -20,6 +20,8 @@
 
 package net.biomodels.jummp.importer.support.biomodels
 
+import groovy.transform.CompileStatic
+
 /**
  * This abstract class aims to generalising model change detector. It is extended by concrete classes
  * which handle a single updated attribute such as model name, publication identifiers.
@@ -30,6 +32,7 @@ package net.biomodels.jummp.importer.support.biomodels
  * Created by Mihai Glonț on 08/02/18.
  * Updated by Tung nguyen on 04/06/18.
  */
+@CompileStatic
 abstract class AbstractModelChangeDetector implements ModelChangeDetector {
     ModelChangeDetector next
 

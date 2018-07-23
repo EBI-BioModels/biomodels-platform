@@ -49,7 +49,7 @@
             <li><a href="${g.createLink(controller: 'jummp', action: 'courses')}">Courses</a></li>
             <li><a href="//www.ebi.ac.uk/biomodels/tools/converters/" target="_blank">Online converters</a></li>
             <li><a href="//www.ebi.ac.uk/rdf/services/biomodels/sparql" target="_blank">SPARQL Endpoint</a></li>
-            <li><a href="//bitbucket.org/jummp/jummp">Technical corner</a></li>
+            <li><a href="${createLink(uri: '/docs', absolute: true)}">Technical corner</a></li>
         </ul>
     </li>
     <li <g:if test="${selectedAboutusItems}"> class="active" </g:if> role="menuitem">
@@ -62,12 +62,17 @@
             <li><a href="${g.createLink(controller: 'jummp', action: 'jobs')}">Jobs</a></li>
         </ul>
     </li>
+    <li id="menuItemSwitchToClassicBioModels" data-open="switchToClassicBioModels" role="menuitem">
+        <!-- switchToClassicBioModels is the identifier of the modal switchToClassicBioModels form defined in the footer.
+             This form is rendered using the switchClassicBioModels template of the web plugin -->
+        <a><g:message code="jummp.switchClassicBioModels.default.title"/></a>
+    </li>
     <li <g:if test="${g.pageProperty(name:'page.contactus')?.length()}"> class="active" </g:if> role="menuitem">
         <a href="${g.createLink(controller: 'jummp', action: 'contactus')}">
             <g:message code="jummp.contactus.biomodels.title"/>
         </a>
     </li>
-    <li style="border-right: none" id="menuItemFeedback" data-open="rate_review_form">
+    <li style="border-right: none" id="menuItemFeedback" data-open="rate_review_form" role="menuitem">
         <!-- rate_review_form is the identifier of the modal feedback form defined in the footer.
              This form is rendered using the feedback template of the web plugin -->
         <a><g:message code="jummp.feedback.default.title"/></a>
