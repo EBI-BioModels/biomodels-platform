@@ -1237,7 +1237,7 @@ addRevisionAnnotations = { revision, branch, modelDetails, user ->
     String original_model = modelDetails['original_model']
     if (original_model) {
         createBMAnnotation(revision, original_model, "source",
-            "http://purl.org/dc/elements/1.1/",
+            "http://biomodels.net/model-qualifiers/",
             "http://purl.org/dc/elements/1.1/", author)
     }
 
