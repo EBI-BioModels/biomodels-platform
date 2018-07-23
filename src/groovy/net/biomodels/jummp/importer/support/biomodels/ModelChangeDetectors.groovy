@@ -31,15 +31,15 @@ import groovy.transform.CompileStatic
  * Created by Mihai Glonț on 08/02/18.
  * Updated by Tung nguyen on 04/06/18.
  */
-//@CompileStatic
+@CompileStatic
 final class ModelChangeDetectors {
-    static final ModelChangeDetector joinDetectors(List<ModelNameChangeDetector> detectors) {
+    static final ModelChangeDetector joinDetectors(List<? extends ModelChangeDetector> detectors) {
         if (!detectors)
             return null
         return joinDetectorsRecursively(detectors, null, detectors.size() - 1)
     }
 
-    private static ModelChangeDetector joinDetectorsRecursively(List<ModelNameChangeDetector> detectors, ModelChangeDetector partialResult, int idx) {
+    private static ModelChangeDetector joinDetectorsRecursively(List<? extends ModelChangeDetector> detectors, ModelChangeDetector partialResult, int idx) {
         if (idx < 0)
             return partialResult
         def outerDetector = detectors[idx]
