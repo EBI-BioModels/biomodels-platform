@@ -25,16 +25,18 @@ import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import net.biomodels.jummp.model.Model
-import net.biomodels.jummp.models.JummpEntry
+import net.biomodels.jummp.models.KV
 import net.biomodels.jummp.models.ModelDetails
+import net.biomodels.jummp.models.Progress
 import net.biomodels.jummp.utils.MathUtils
-import net.biomodels.jummp.utils.RestUtils
+import net.biomodels.jummp.core.util.RestUtils
 import net.biomodels.jummp.utils.TimeUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.http.HttpMethod
 import org.springframework.web.util.UriComponentsBuilder
+import static grails.async.Promises.*
 
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -65,7 +67,16 @@ class ModelClassifierService implements InitializingBean {
      * Number of times that we will retry to call Classification API when it got an error
      * Out of this times, the service will raise that error
      */
-    static final int RETRY_CLASSIFY_TIMES = 3
+    static final int RETRY_CLASSIFY_TIMES = 1
+
+    private Progress trainProgress
+
+    /**
+     * Check if we are in rebuild cache process
+     */
+    private boolean inRebuildCacheProcess = false
+
+    private static final String PROGRESS_CACHE_NAME = "ProgressCache"
 
     /**
      * Endpoint of the Classification API
@@ -74,6 +85,8 @@ class ModelClassifierService implements InitializingBean {
 
     void afterPropertiesSet() throws Exception {
         classificationEndpoint = grailsApplication.config.jummp.classification.endpoint
+        trainProgress = cacheService.getCache(PROGRESS_CACHE_NAME)
+        trainProgress = (trainProgress == null) ? new Progress(1, 0) : trainProgress
     }
 
     /**
@@ -87,35 +100,32 @@ class ModelClassifierService implements InitializingBean {
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(classificationEndpoint)
         uriComponentsBuilder.path("/predict")
         uriComponentsBuilder.queryParam("model_id", model.getSubmissionId())
-        URI request = uriComponentsBuilder.build().encode().toUri()
+        URI request = uriComponentsBuilder.build().toUri()
         Map<String, String> result = RestUtils.exchange(request, HttpMethod.GET,
-            new TypeReference<HashMap<String, String>>(){}, RETRY_CLASSIFY_TIMES)
+            new TypeReference<HashMap<String, String>>(){}, null, RETRY_CLASSIFY_TIMES, true)
         LOGGER.debug("Model {} classified result: {}", model.submissionId, result)
         return result
     }
 
     /**
      * Classify a model
-     * Check if we already have cached, then return the cache instead of classify it again
+     * Check whether the model in question has been classified or not by looking at the cache.
+     * If the model has already classified, instead of classify it again, the class should be returned from the cache.
      * @param model: Model to classify
      * @param date: The date that the model has been updated
+     * @param forceUpdateCache: Force to update model cache whether it had had cache or not
      * @return the HashMap represent the response from the Classification API
      */
-    private Map<String, String> classifyModel(Model model, Date date) {
-        JummpEntry<Long, Serializable> cache =
-            cacheService.getCache(model.getSubmissionId()) as JummpEntry<Long, Serializable>
-        if (cache != null) {
-            /**
-             * Check whether the model is updated or not
-             */
-            if (cache.key == TimeUtils.getTimestamp(date)) {
-                return cache.getValue() as Map<String, String>
-            }
+    private Map<String, String> classifyModel(Model model, Date date, boolean forceUpdateCache) {
+        KV<Long, Serializable> cache =
+            cacheService.getCache(model.getSubmissionId()) as KV<Long, Serializable>
+        if (!forceUpdateCache && cache != null) {
+            return cache.getValue() as Map<String, String>
         }
 
         Map<String, String> result = classifyModel(model)
         int expired = MathUtils.rand(TimeUtils.ONE_YEAR, TimeUtils.TWO_YEAR)
-        cache = new JummpEntry<>(TimeUtils.getTimestamp(date), result as Serializable)
+        cache = new KV<>(TimeUtils.getTimestamp(date), result as Serializable)
         cacheService.setCache(model.getSubmissionId(), cache, expired)
         return result
     }
@@ -137,22 +147,47 @@ class ModelClassifierService implements InitializingBean {
      *  ---------------Model 4
      *  ---------------Model 5
      */
-    private Map<?, ?> classifyModels(List<ModelDetails> models) {
+    private Map<?, ?> classifyModels(List<ModelDetails> models, boolean forceUpdateCache=false) {
         LOGGER.info("Starting to classify models")
         Map<?, ?> results = new HashMap<>()
         for (ModelDetails model : models) {
-            Map<String, String> classified = classifyModel(model.model, model.updateDate)
+            Map<String, String> classified = classifyModel(model.model, model.updateDate, forceUpdateCache)
+            if (forceUpdateCache) {
+                trainProgress.increaseProgress()
+                LOGGER.info("Rebuilding classify cache {}/{}", trainProgress.current, trainProgress.total)
+                cacheService.setCache(PROGRESS_CACHE_NAME, trainProgress, TimeUtils.ONE_YEAR)
+            }
             if (classified == null || classified.get("code") != "200") {
                 continue
             }
-            List<JummpEntry<String, String>> entries = new ArrayList<>()
-            entries.add(new JummpEntry<>(classified.get("root_class"), classified.get("root_class_name")))
-            entries.add(new JummpEntry<>(classified.get("parent_class"), classified.get("parent_class_name")))
-            entries.add(new JummpEntry<>(classified.get("class"), classified.get("class_name")))
+            List<KV<String, String>> entries = new ArrayList<>()
+            entries.add(new KV<>(classified.get("root_class"), classified.get("root_class_name")))
+            entries.add(new KV<>(classified.get("parent_class"), classified.get("parent_class_name")))
+            entries.add(new KV<>(classified.get("class"), classified.get("class_name")))
             classifyModels(results, entries.iterator(), model)
         }
         LOGGER.info("Finished classify models")
         return results
+    }
+
+    List<Map<String, Object>> classifyAllModels(List<ModelDetails> modelDetails, List<ModelClass> groundTruth) {
+        Map<Model, ModelClass> groundTruthMap = groundTruth.collectEntries {
+            [(it.model):it]
+        }
+        List<Map<String, Object>> result = new ArrayList<>()
+        for (ModelDetails model : modelDetails) {
+            ModelClass modelClass = groundTruthMap.containsKey(model.model) ? groundTruthMap.get(model.model) : null
+            Map<String, Object> classified = classifyModel(model.model, model.updateDate, false)
+            if (classified == null || classified.get("code") != "200") {
+                continue
+            }
+            Map<String, Object> modelData = model.asMap()
+            modelData.putAll(classified)
+            modelData.put("groundTruth", modelClass == null ? "0": "1")
+            modelData.put("realClass", modelClass == null ? "": modelClass.className)
+            result.add(modelData)
+        }
+        return result
     }
 
     /**
@@ -161,9 +196,9 @@ class ModelClassifierService implements InitializingBean {
      * @param iterator: The List that represent each level of the classified model [root, parent, class]
      * @param model: The Model need to add
      */
-    private Map<?, ?> classifyModels(Map<?, ?> classified, Iterator<JummpEntry<String, String>> iterator,
+    private Map<?, ?> classifyModels(Map<?, ?> classified, Iterator<KV<String, String>> iterator,
                                      Object model) {
-        JummpEntry<String, String> entry = iterator.next()
+        KV<String, String> entry = iterator.next()
         if (!iterator.hasNext()) {
             if (classified.containsKey(entry)) {
                 (classified.get(entry) as List<Object>).add(model)
@@ -188,9 +223,41 @@ class ModelClassifierService implements InitializingBean {
      * @param models: List of models to classify
      * @return ArrayNode: object json represent the classified result tree
      */
-    ArrayNode classify(List<ModelDetails> models) {
-        Map<?, ?> classified = classifyModels(models)
+    ArrayNode classify(List<ModelDetails> models, boolean forceUpdateCache=false) {
+        Map<?, ?> classified = classifyModels(models, forceUpdateCache)
         convertToJson(classified, new AtomicInteger(0))
+    }
+
+    /**
+     * Rebuild cache for classifier service
+     * @param models: list of model to be rebuild
+     */
+    void rebuildClassifyCache(List<ModelDetails> models) {
+        trainProgress = new Progress(models.size(), 0)
+        inRebuildCacheProcess = true
+        cacheService.setCache(PROGRESS_CACHE_NAME, trainProgress, TimeUtils.ONE_YEAR)
+        def p = task {
+            classifyModels(models, true)
+        }
+        p.onError {Throwable err ->
+            LOGGER.error("Exception occurred during rebuild classify cache {}", err)
+            inRebuildCacheProcess = false
+        }
+        p.onComplete {
+            inRebuildCacheProcess = false
+        }
+    }
+
+    /**
+     * Check whether we are in rebuild cache process
+     * @return
+     */
+    boolean isRebuildingCache() {
+        return inRebuildCacheProcess
+    }
+
+    Progress getCurrentTrainProgress() {
+        return trainProgress
     }
 
     /**
@@ -202,7 +269,7 @@ class ModelClassifierService implements InitializingBean {
      */
     private ArrayNode convertToJson(Map<?, ?> classified, AtomicInteger totalCount) {
         ArrayNode arrayNode = objectMapper.createArrayNode()
-        classified.each { JummpEntry<String, String> key, value ->
+        classified.each { KV<String, String> key, value ->
             AtomicInteger total = new AtomicInteger(0)
             ObjectNode node = objectMapper.createObjectNode()
             if (key.value != null) {
@@ -212,7 +279,7 @@ class ModelClassifierService implements InitializingBean {
             }
             node.put("code", key.key)
             if (value instanceof Map) {
-                AtomicInteger count = new AtomicInteger(0);
+                AtomicInteger count = new AtomicInteger(0)
                 node.putArray("children").addAll(convertToJson(value as Map<?, ?>, count))
                 total.set(total.get() + count.get())
             } else {
@@ -222,7 +289,7 @@ class ModelClassifierService implements InitializingBean {
                     total.incrementAndGet()
                     ObjectNode child = objectMapper.createObjectNode()
                     String modelId = model.model.getPublicationId()
-                    if (modelId == null) {
+                    if (modelId == null || modelId == "") {
                         modelId = model.model.submissionId
                     }
                     child.put("modelId", modelId)

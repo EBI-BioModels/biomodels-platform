@@ -21,6 +21,7 @@
 
 import grails.converters.JSON
 import groovy.sql.Sql
+import net.biomodels.jummp.core.model.CurationState
 import net.biomodels.jummp.core.model.ModelState
 import net.biomodels.jummp.core.model.ValidationState
 import net.biomodels.jummp.model.Flag
@@ -207,6 +208,14 @@ def ModelElementType
 def PublicationLinkProvider
 def LinkType
 
+def BioModelsIdChangeDetector
+def ModelChangeDetector
+def ModelChangeDetectors
+def ModelLastModifiedChangeDetector
+def ModelNameChangeDetector
+def ModelComparisonContext
+def ModelComparisonContextFactory
+
 /**
  * The Hibernate SessionFactory
  */
@@ -218,6 +227,7 @@ def sessionFactory
 def pubMedService
 def publicationService
 def modelService
+def modelDelegateService
 def modelFlagService
 def modelFileFormatService
 def userService
@@ -597,6 +607,15 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
     CurationNotes = loadClass("net.biomodels.jummp.deployment.biomodels.CurationNotes")
     ModelOfTheMonth = loadClass("net.biomodels.jummp.deployment.biomodels.ModelOfTheMonth")
 
+    BioModelsIdChangeDetector = loadClass("net.biomodels.jummp.importer.support.biomodels.BioModelsIdChangeDetector")
+    ModelChangeDetector = loadClass("net.biomodels.jummp.importer.support.biomodels.ModelChangeDetector")
+    ModelChangeDetectors = loadClass("net.biomodels.jummp.importer.support.biomodels.ModelChangeDetectors")
+    ModelComparisonContext = loadClass("net.biomodels.jummp.importer.support.biomodels.ModelComparisonContext")
+    ModelComparisonContextFactory = loadClass("net.biomodels.jummp.importer.support.biomodels.ModelComparisonContextFactory")
+    ModelLastModifiedChangeDetector = loadClass("net.biomodels.jummp.importer.support.biomodels.ModelLastModifiedChangeDetector")
+    ModelNameChangeDetector = loadClass("net.biomodels.jummp.importer.support.biomodels.ModelNameChangeDetector")
+
+
     // inject applicationContext in POGOs that expect it
     decorator.context = appCtx
     rtc.context = appCtx
@@ -604,6 +623,7 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
     // obtain references to singleton services
     sessionFactory          = appCtx.sessionFactory
     modelService            = appCtx.modelService
+    modelDelegateService    = appCtx.modelDelegateService
     modelFlagService        = appCtx.modelFlagService
     publicationService      = appCtx.publicationService
     pubMedService           = appCtx.pubMedService
@@ -626,8 +646,9 @@ target(main: "Puts everything together to import models from a given folder") {
     /* fetch all the records of additional files once */
     String query = "select model_id, name, description, mime_type, file, date_creation from additional_files"
     additionalFilesMap = biomodelsConnection.rows(query)
-    modelsImported = Model.list().collect {
-      it.submissionId
+    Model.list().each {
+	    if (it.submissionId) {modelsImported.add(it.submissionId)}
+	    if (it.publicationId) {modelsImported.add(it.publicationId)}
     }
     log("${new Date()} -- commencing batch import")
     long duration = System.currentTimeMillis()
@@ -643,13 +664,21 @@ target(main: "Puts everything together to import models from a given folder") {
             // process the model folder regardless of its size
             tobeProcessed = true
         }
-
+	    //log("$f.name : tobeProcessed? $tobeProcessed")
         boolean exists = modelsImported.contains(f.name)
+	    //log("$f.name : exists? $exists")
         if (f.isDirectory() && f.name ==~ modelFolderPattern && tobeProcessed && !exists) {
-            processModelFolder f
-        }
-        if (exists) {
-            addModelError(f.name, "The model was already imported!")
+		    processModelFolder f
+        } else if (exists) {
+            // regardless of branch, this will check whether the model should be updated
+            log("The model ${f.name} was already imported!")
+            final String BRANCH = getBranch f.name
+            def modelDetails = getModelDetails f.name, BRANCH
+            def submitter = User.findByUsername("administrator")//findRightSubmitter f.name, BRANCH
+            def commitMessage = null // extractCommitMessage
+            updateWithRecentChanges f.name, f.name, BRANCH, f, modelDetails, submitter, commitMessage
+	    } else {
+            log("The model ${f.name} cannot be imported!")
         }
     }
 
@@ -678,7 +707,7 @@ target(main: "Puts everything together to import models from a given folder") {
     */
 
     // import MoM entries if they have not been imported
-    processModelOfTheMonth()
+    //processModelOfTheMonth()
 
     // wait for pending indexing jobs to complete before stopping
     def indexRequestDispatcher = camelContext.routes.find {
@@ -699,6 +728,43 @@ target(main: "Puts everything together to import models from a given folder") {
     log("Imported ${processedCount.get()} models (${failureCount.get()} failures) in $formattedDuration")
     cleanup()
     return 0
+}
+
+updateWithRecentChanges = { submissionId, publicationId, branch, folder, modelDetails, submitter, commitMessage ->
+    def model = Model.findBySubmissionIdOrPublicationId(submissionId, publicationId)
+    if (model) {
+        def latestRev = modelService.getLatestRevision(model, false) //TODO: check a faster way to get the revision without checking ACL
+        if (branch == "publ") {
+            model.publicationId = publicationId
+            model.firstPublished = modelDetails['publicationDate']
+            if (latestRev) {
+                latestRev.curationState = CurationState.CURATED
+            }
+        }
+        def availDetectors = [ModelNameChangeDetector.newInstance(), BioModelsIdChangeDetector.newInstance(),  ModelLastModifiedChangeDetector.newInstance()]
+		def detector = ModelChangeDetectors.newInstance().joinDetectors(availDetectors)
+        def context = ModelComparisonContext.newInstance()
+        context = ModelComparisonContextFactory.newInstance().fromModelDetails(modelDetails, latestRev)
+        boolean hasChanged = detector.hasChanged(context)
+        if (hasChanged) {
+            // create and import the latest revision with the recent changes
+            log("We should add a new revision for the model $submissionId ($publicationId)")
+            def MODEL_ID = folder.name
+            def revision = addTheLatestRevision branch, MODEL_ID, folder, model, modelDetails, submitter, commitMessage
+            if (revision) {
+                if (branch == "publ") {
+                    setCurationNotes(revision.model)
+                    def curationState = CurationState.CURATED
+                    modelDelegateService.updateCurationStateRevision(MODEL_ID, revision.id, curationState)
+                }
+                publishModelRevision MODEL_ID, revision
+            }
+        } else {
+            log("No need to update the model $submissionId ($publicationId)")
+        }
+    } else {
+        addModelError(submissionId, "Error retrieving model from BioModels' the destination database")
+    }
 }
 
 printModelLog = {
@@ -731,7 +797,6 @@ processModelFolder = { File folder ->
         addModelError MODEL_ID, "Entry found both in $BRANCH branch and also in publ."
         return
     }
-    processedCount.incrementAndGet()
     // check symlink
     boolean haveSymlink = haveSymlinkToUrlFile folder, MODEL_ID
     if (!haveSymlink && BRANCH != "pdgsm_models") {
@@ -757,26 +822,25 @@ processModelFolder = { File folder ->
         addModelError(MODEL_ID, "Error retrieving model details from BioModels DB")
         failureCount.incrementAndGet()
         return
+    } else {
+        // we come into the situation before entering the following try... catch block because
+        // we would want to process the model if the model does exist
+        // (i.e. the model in the uncurated publ branch was already imported).
+        String submissionId = modelDetails['model_id']
+        if (BRANCH == "publ" && modelsImported.contains(submissionId)) {
+            log("The model $MODEL_ID (aka. $submissionId) was already imported!")
+            // update the set of successfully imported models
+            modelsImported.add(MODEL_ID)
+            // update the publication identifier and the published date of this model
+            def submitter = User.findByUsername("administrator") // findRightSubmitter
+            def commitMessage = null // extractCommitMessage
+            updateWithRecentChanges submissionId, MODEL_ID, "publ", folder, modelDetails, submitter, commitMessage
+            return
+        }
     }
 
     try {
-        def submitter
-        authenticate(username, password)
-        // create a Jummp account for submitter
-        try {
-            submitter = getUser MODEL_ID, BRANCH
-        } catch (Exception e) {
-            addModelError(MODEL_ID, "Can't get submitter account for MODEL $MODEL_ID ($BRANCH) :: $e")
-        } finally {
-            logOut()
-        }
-
-        if (!submitter) {
-            addModelError(MODEL_ID, "No user found, please check details in BioModels DB")
-            failureCount.incrementAndGet()
-            return
-        }
-        authenticateAsUser(submitter)
+        def submitter = findRightSubmitter MODEL_ID, BRANCH
         // submit first revision as *.origin or the non SBML models as the original files
         def submittedModel = submitOriginalFile(BRANCH, MODEL_ID, originalFile, modelDetails)
         if (!submittedModel) {
@@ -787,21 +851,9 @@ processModelFolder = { File folder ->
         if (isNonSBMLModel) {
             annotateModellingApproaches(submittedModel.revisions.first(), BRANCH, modelDetails, submitter)
         } else {
-            // submit second revision as * without original file
-            def revision = addRevision(BRANCH, MODEL_ID, folder, submittedModel)
-            if (!revision || revision?.hasErrors()) {
-                def err = revision?.errors?.allErrors
-                addModelError(MODEL_ID, "Could not update original submission: $err")
-                failureCount.incrementAndGet()
-                return
-            }
-
-            // we cleared the session before adding the second revision
-            // submittedModel is now stale -- it still thinks there's only 1 revision
-            // need to manually update
+            def commitMessage = null
+            def revision = addTheLatestRevision BRANCH, MODEL_ID, folder, submittedModel, modelDetails, submitter, commitMessage
             submittedModel = revision.model
-            addRevisionAnnotations(revision, BRANCH, modelDetails, submitter)
-            annotateModellingApproaches(revision, BRANCH, modelDetails, submitter)
         }
         // persist model flags
         persistModelFlags(modelDetails, submittedModel)
@@ -813,13 +865,197 @@ processModelFolder = { File folder ->
                 insertedRevisions.offer(r.id)
             }
         }
-	// append the model submission id to the imported models
-	modelsImported.add(MODEL_ID)
+        // append the model submission id to the imported models
+        modelsImported.add(MODEL_ID)
+        if (BRANCH == 'publ') {
+            modelsImported.add(modelDetails['model_id'])
+        }
+        processedCount.incrementAndGet()
     } catch (Throwable t) {
         addModelError(MODEL_ID, "Something went wrong with ${MODEL_ID} - ${t}")
         t.printStackTrace()
         failureCount.incrementAndGet()
     }
+}
+
+/**
+ * Looks up the curation comments for a model.
+ *
+ * @param modelId a submission identifier (MODEL*) or a BioModels identifier (BIOMD*).
+ */
+getInternalCommentForModelId = { modelId ->
+    if (!modelId?.trim())
+        return null
+
+    def commentInfo = null
+    // non-curated models, exclude PDGSMM branch
+    if (modelId.startsWith("MODEL") && !modelId.startsWith("MODEL170711")) {
+        commentInfo = biomodelsConnection.firstRow(
+            "select comments from uncura_anno where model_id = ? and status != 2", [modelId])
+    } else if (modelId.startsWith("BIOMD")) {
+        commentInfo = biomodelsConnection.firstRow(
+            "select comments from anno where model_id = ?", [modelId])
+    } else {
+        addModelMsg(modelId, "Only literature models can have curation comments.")
+        return null
+    }
+    if (!commentInfo?.comments) {
+        addModelError(modelId, "No curation comments found for the given model id")
+        return null
+    }
+    commentInfo.comments
+}
+
+/**
+ * Tokenises the internal curation comments for a model and returns the last entry.
+ *
+ * @param modelId the model identifier
+ * @param comments the curation comments, as stored in the old system.
+ */
+String getLatestCurationComment = { modelId, comments ->
+    final String SEP = '</dl>\\n'
+    def entries = comments?.split(SEP)
+    if (!entries) {
+        addModelError(modelId, "Curation comments do not match the expected format")
+        return null
+    }
+    entries.last()
+}
+
+/**
+ * Extracts the date, author and 'commit message' of the most recent curation comment for a model.
+ *
+ * @param modelId the model identifier
+ * @param comments the curation comments, as stored in the old system
+ * @return a map with the following keys: date, user, comment
+ */
+Map parseCurationCommentsForModel = { modelId, comments ->
+    if (!comments?.trim()) return [:]
+    String latest = getLatestCurationComment modelId, comments
+    if (!latest) {
+        return [:] // we've already logged the error
+    }
+
+    def err = new StringBuilder()
+    Date date = extractDateFromComment(latest)
+    if (!date) {
+        err.append("Could not parse the date.")
+    }
+    String curator = extractCuratorFromComment(latest)
+    if (!curator) {
+        err.append("Could not extract the curator.")
+    }
+    String comment = extractCommentTextFromComment(latest)
+    if (!comment) {
+        err.append("Could not extract the comment body.")
+    }
+    String errorMessage = err.toString()
+    if (errorMessage) {
+        addModelError modelId, errorMessage
+        return null
+    }
+    [ date: date, user: curator, comment: comment ]
+}
+
+/**
+ * Convenience method for parsing the date from a curation comment.
+ *
+ * @param comment a curation comment entry
+ * @return the Date corresponding to the string representation from the entry or null if it
+ *         could not be extracted due to the comment not following the expected structure.
+ */
+Date extractDateFromComment = { comment ->
+    def d = extractCurationCommentAttribute comment, '<dt class="comment_date">', "</dt>"
+    Date result = null
+    if (d) {
+        result = new Date(d)
+    }
+    result
+}
+
+/**
+ * Convenience method for parsing the date from a curation comment.
+ *
+ * @param comment a curation comment entry
+ * @return the curator name of the entry or null if it could not be extracted due to the comment
+ *         not following the expected structure.
+ */
+String extractCuratorFromComment = { comment ->
+    extractCurationCommentAttribute(comment, '<dd class="comment_submitter">', "</dd>")
+}
+
+/**
+ * Convenience method for parsing the comment body from a curation comment.
+ *
+ * @param comment a curation comment entry
+ * @return the message of the entry or null if it could not be extracted due to the comment not
+ *         following the expected structure.
+ */
+String extractCommentTextFromComment = { comment ->
+    // TODO: decode HTML
+    extractCurationCommentAttribute(comment, '<dd class="comment_body">', "</dd>")
+}
+
+/**
+ * Returns the part of the given curation comment delimited by the start and end markers.
+ *
+ * @param comment an individual curation comment entry
+ * @param start the marker that delimits the start of the substring of interest.
+ * @param end   the end marker for the substring of interest
+ * @return the substring between the given markers or null if either marker could not be found in
+ *         the given curation comment entry.
+ */
+String extractCurationCommentAttribute = { comment, start, end ->
+    int startMarkerSize = start.length()
+    int startIdx = comment.indexOf(start) + startMarkerSize
+    if (startIdx < startMarkerSize)
+        return null
+
+    def endIdx = comment.indexOf(end, startIdx)
+    if (-1 == endIdx) {
+        return null
+    }
+    comment.substring(startIdx, endIdx)
+}
+
+findRightSubmitter = {MODEL_ID, BRANCH ->
+    def submitter
+    authenticate(username, password)
+    // create a Jummp account for submitter
+    try {
+        submitter = getUser MODEL_ID, BRANCH
+    } catch (Exception e) {
+        addModelError(MODEL_ID, "Can't get submitter account for MODEL $MODEL_ID ($BRANCH) :: $e")
+    } finally {
+        logOut()
+    }
+
+    if (!submitter) {
+        addModelError(MODEL_ID, "No user found, please check details in BioModels DB")
+        failureCount.incrementAndGet()
+        return
+    }
+    authenticateAsUser(submitter)
+    return submitter
+}
+
+addTheLatestRevision = { BRANCH, MODEL_ID, folder, submittedModel, modelDetails, submitter, commitMessage ->
+    // submit second revision as * without original file
+    def revision = addRevision(BRANCH, MODEL_ID, folder, submittedModel, commitMessage)
+    if (!revision || revision?.hasErrors()) {
+        def err = revision?.errors?.allErrors
+        addModelError(MODEL_ID, "Could not update original submission: $err")
+        failureCount.incrementAndGet()
+        return
+    }
+
+    // we cleared the session before adding the second revision
+    // submittedModel is now stale -- it still thinks there's only 1 revision
+    // need to manually update
+    submittedModel = revision.model
+    addRevisionAnnotations(revision, BRANCH, modelDetails, submitter)
+    annotateModellingApproaches(revision, BRANCH, modelDetails, submitter)
+    return revision
 }
 
 /**
@@ -925,13 +1161,13 @@ isNotCuratedAndPublished = { branch ->
     UNCURA_PUBL == branch
 }
 
-addRevision = { branch, modelId, parent, model ->
+addRevision = { branch, modelId, parent, model, commitMessage ->
     if (!model.validate()) {
         def err = model.errors.allErrors
         addModelError(modelId, "Refusing to update invalid model $modelId: $err")
         return null
     }
-    def revisionInfo = prepareRevision(branch, modelId, parent, model)
+    def revisionInfo = prepareRevision(branch, modelId, parent, model, commitMessage)
     def revision
     try {
         // clear current persistence context -- it will be stale after adding second revision
@@ -1213,12 +1449,15 @@ findNewestRevisionFiles = { branch, parent, id ->
     result
 }
 
-prepareRevision = { branch, modelId, parent, model ->
+prepareRevision = { branch, modelId, parent, model, commitMessage ->
     assert !(model.hasErrors())
     def fileMap = findNewestRevisionFiles(branch, parent, modelId)
     def main = fileMap['mainFile']
     def additionals = fileMap['additionals']
-    def revisionData = getSubmissionData(modelId, main, additionals, UPDATE_COMMENT_TPL)
+    if (!commitMessage) {
+        commitMessage = UPDATE_COMMENT_TPL
+    }
+    def revisionData = getSubmissionData(modelId, main, additionals, commitMessage)
     def fileTCs = getFilesFromSubmissionData(revisionData)
 
     def revisionTC = revisionData.get("revision")
@@ -1762,9 +2001,9 @@ addFlagType = { def cmd ->
 }
 // add model flag types such as Non Kinetic, Non Miriam, Sbml Extended
 populateModelFlagTypes = {
-    def iconFiles = ["http://www.ebi.ac.uk/biomodels//icons/nonkineticFlag.png",
-                     "http://www.ebi.ac.uk/biomodels//icons/nonMiriamFlag.png",
-                     "http://www.ebi.ac.uk/biomodels//icons/sbmlExtendedFlag.png"]
+    def iconFiles = ["https://www.ebi.ac.uk/biomodels/icons/nonkineticFlag.png",
+                     "https://www.ebi.ac.uk/biomodels/icons/nonMiriamFlag.png",
+                     "https://www.ebi.ac.uk/biomodels/icons/sbmlExtendedFlag.png"]
     def icons = []
     iconFiles.each {
         def urlImage = new URL(it)
@@ -2014,7 +2253,6 @@ getModelDetails = { modelId, modelBranch ->
         } else {
             modelDetails['publicationDate'] = row.creation_date
         }
-        modelDetails['originalModel'] = row.original_model
         if ("auto_gen_models" == modelBranch || "pdgsm_models" == modelBranch) {
             modelDetails['model_id'] = row.id
         } else {

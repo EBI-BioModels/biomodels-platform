@@ -21,7 +21,7 @@
 
 package net.biomodels.jummp.deployment.biomodels
 
-import net.biomodels.jummp.models.JummpEntry
+import net.biomodels.jummp.models.KV
 import net.biomodels.jummp.utils.FileUtils
 import net.biomodels.jummp.utils.TimeUtils
 import org.apache.commons.lang.NullArgumentException
@@ -50,7 +50,7 @@ class CacheService {
     /**
      * The map that keep the cached object
      */
-    private Map<String, SoftReference<JummpEntry<Long, ? extends Serializable>>> cached = new ConcurrentHashMap<>()
+    private Map<String, SoftReference<KV<Long, ? extends Serializable>>> cached = new ConcurrentHashMap<>()
 
     /**
      * Dependency Injection of GrailsApplication
@@ -88,8 +88,8 @@ class CacheService {
      */
     private synchronized void reloadCachedFile(File file) {
         if (file.isFile()) {
-            JummpEntry<Long, ? extends Serializable> cache =
-                FileUtils.loadObjectFromFile(file, JummpEntry.class) as JummpEntry<Long, ? extends Serializable>
+            KV<Long, ? extends Serializable> cache =
+                FileUtils.loadObjectFromFile(file, KV.class) as KV<Long, ? extends Serializable>
             cached.put(file.getName(), new SoftReference<>(cache))
         }
     }
@@ -143,7 +143,7 @@ class CacheService {
      */
     def <T extends Serializable> T getCache(String name) {
         if (hasCache(name)) {
-            JummpEntry<Long, ? extends Serializable> cache = cached.get(name).get()
+            KV<Long, ? extends Serializable> cache = cached.get(name).get()
             if (cache != null) {
                 return cache.value as T
             }
@@ -161,14 +161,13 @@ class CacheService {
         if (name == null) {
             throw new NullArgumentException("name")
         }
-        if (!hasCache(name)) {
-            if (value == null) {
-                throw new NullArgumentException("value")
-            }
-            JummpEntry<Long, ? extends Serializable> cache = new JummpEntry<Long, ? extends Serializable>(
-                TimeUtils.currentTimestamp + expired, value)
-            cached.put(name, new SoftReference<>(cache))
-            FileUtils.writeObjectToFile(new File(getCacheDir(), name), cache)
+
+        if (value == null) {
+            throw new NullArgumentException("value")
         }
+        KV<Long, ? extends Serializable> cache = new KV<Long, ? extends Serializable>(
+            TimeUtils.currentTimestamp + expired, value)
+        cached.put(name, new SoftReference<>(cache))
+        FileUtils.writeObjectToFile(new File(getCacheDir(), name), cache)
     }
 }

@@ -48,11 +48,16 @@
                            value="${fv.value}" title="${fv.value}"
                            onchange="${jsMethod}($(this), '${facet.id}' ,'${escapedFacetValue}')">
                     <span class="facetLabel" onclick="${jsMethod}($(this), '${facet.id}' ,'${escapedFacetValue}')">
-                        ${fv.label} (${fv.count})</span>
+                        <g:render template="/templates/singleFacetShow" model="[fv: fv, method: jsMethod]" /></span>
                 </g:if>
                 <g:else>
                     <%
-                        String newQuery = query ? "${query} AND ${selectedFacet}" : "${selectedFacet}"
+                        String newQuery = ""
+                        if (actionName.equalsIgnoreCase("search")) {
+                            newQuery = query? "${query} AND ${selectedFacet}" : "${selectedFacet}"
+                        } else {
+                            newQuery = selectedFacet
+                        }
                         def newParams = [:]
                         if (params.query) {
                             newParams["query"] = newQuery
@@ -73,7 +78,10 @@
                            value="${fv.value}" title="${fv.value}"
                            onchange="${jsMethod}($(this), '${facet.id}' ,'${escapedFacetValue}')">
                     <g:link controller="search" action="${actionName}" params="${newParams}" class="facetLabel">
-                        <span class="facetLabel">${fv.label} (${fv.count})</span></g:link>
+                        <span class="facetLabel">
+                            <g:render template="/templates/singleFacetShow" model="[fv: fv, method: jsMethod]" />
+                        </span>
+                    </g:link>
                 </g:else>
                 </li>
             </g:each>
@@ -134,7 +142,7 @@
     }
 
     function runFacetList(e, facetGroupId, facetValue) {
-        var currentQueryString = "${params.query}";
+        var currentQueryString = "${params.query?.replaceAll('"', '\\\\"')}";
         facetValue = escapeSpecialLuceneCharacters(facetValue);
         /* the above utility function is defined in common.js which is already included in the footer section */
 	    var latestQueryString = facetGroupId + ":" + facetValue;

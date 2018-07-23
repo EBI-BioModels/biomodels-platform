@@ -166,12 +166,6 @@ class ModelService {
     @Profiled(tag="modelService.getAllModels")
     List<Model> getAllModels(int offset, int count, boolean sortOrder, ModelListSorting sortColumn,
                                     String filter = null, boolean deletedOnly = false) {
-        getAllModelWithDetails(offset, count, sortOrder, sortColumn, filter, deletedOnly)
-    }
-
-    @Profiled(tag = "modelService.getAllModelWithDetails")
-    private List getAllModelWithDetails(int offset, int count,
-                 boolean sortOrder, ModelListSorting sortColumn, String filter = null, boolean deletedOnly=false) {
         Map metaParams
         if (offset < 0 || count <= 0) {
             // safety check
@@ -184,42 +178,42 @@ class ModelService {
 
         String sortingDirection = sortOrder ? 'asc' : 'desc'
 
-
-        boolean isTypeQuery = filter?.substring(0,4)?.equals("type")
-        boolean filterIsValid = filterValid(filter) && !isTypeQuery
+        boolean filterIsValid = filterValid(filter)
         String type
         Map namedParams = [:]
         // use object IDs here to minimise the number SQL queries and JOINS Hibernate uses.
         List filteredFormats, filteredUsers
         if (filterIsValid) {
-            if (filter.take(6) == "Format") {
-                String formatId = filter.drop(7)
-                filteredFormats = ModelFormat.executeQuery(
-                    "SELECT id FROM ModelFormat WHERE identifier = :p", [p: formatId]
-                )
-                namedParams.put("formats", filteredFormats)
-            }
-            if (filter.take(9) == "Submitter") {
-                String personName = filter.drop(10)
-                filteredUsers = User.executeQuery(
-                    "SELECT u.id FROM User u JOIN u.person p WHERE p.userRealName = :n",
-                    [n: personName]
-                )
-                namedParams.put("users", filteredUsers)
-            }
-        } else {
-            if (isTypeQuery) { // type := < private | shared | public >
+            boolean isTypeQuery = filter?.substring(0,4)?.equals("type")
+            if (!isTypeQuery) {
+                if (filter.take(6) == "Format") {
+                    String formatId = filter.drop(7)
+                    filteredFormats = ModelFormat.executeQuery(
+                        "SELECT id FROM ModelFormat WHERE identifier = :p", [p: formatId]
+                    )
+                    namedParams.put("formats", filteredFormats)
+                }
+                if (filter.take(9) == "Submitter") {
+                    String personName = filter.drop(10)
+                    filteredUsers = User.executeQuery(
+                        "SELECT u.id FROM User u JOIN u.person p WHERE p.userRealName = :n",
+                        [n: personName]
+                    )
+                    namedParams.put("users", filteredUsers)
+                }
+            } else {
+                // type := < private | shared | public >
                 type = filter.drop(5).toLowerCase()
             }
         }
         String query
         // for Admin - sees all (not deleted) models
         boolean isAdmin = SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")
-        Set<String> roles = getSpringDatabaseRoles()
         query = getQueryStringForUser(sortColumn, deletedOnly, filterIsValid, type,
             filteredFormats, filteredUsers, sortingDirection, isAdmin)
-        List permissions = new ArrayList([BasePermission.READ.getMask(), BasePermission.ADMINISTRATION.getMask()])
         if (!isAdmin) {
+            List permissions = new ArrayList([BasePermission.READ.getMask(), BasePermission.ADMINISTRATION.getMask()])
+            Set<String> roles = getSpringDatabaseRoles()
             namedParams += [
                 className  : Revision.class.getName(),
                 permissions: permissions,
@@ -241,8 +235,7 @@ class ModelService {
                                          String sortingDirection, boolean isAdmin = false) {
         String query = """\
 SELECT m.id
-FROM Revision AS r
-    JOIN r.model AS m
+FROM Revision AS r RIGHT OUTER JOIN r.model AS m
 WHERE
     r.deleted = false
     AND m.deleted = ${deletedOnly}
@@ -255,7 +248,7 @@ $query AND r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2 wher
         } else {
             query = """\
 $query AND r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2, AclEntry ace
-WHERE r.id = r2.id
+WHERE r.model = r2.model
     AND r2.id = ace.aclObjectIdentity.objectId
     AND ace.aclObjectIdentity.aclClass.className = :className
     AND ace.sid.sid IN (:roles)
@@ -265,24 +258,61 @@ WHERE r.id = r2.id
         User u = springSecurityService.currentUser
         switch(type?.toLowerCase()) {
             case "private":
-                query = "$query AND r.owner.id = ${u.id}"
+                query = "$query AND r.owner.id = ${u.id} AND r.state = '${ModelState.UNPUBLISHED}'"
                 break
             case "shared":
                 query = "$query AND r.owner.id != ${u.id} AND r.state = '${ModelState.UNPUBLISHED}'"
                 break
             case "public":
-                query = "$query AND r.state = '${ModelState.PUBLISHED}'"
+                query = "$query AND r.owner.id = ${u.id} AND r.state = '${ModelState.PUBLISHED}'"
                 break
             default:
                 if (type) {
                     log.warn("Ignoring unsupported permission level '$type'.")
+                } else if (!isAdmin) {
+                    query = """\
+$query AND ((r.owner.id = ${u.id} AND r.state = '${ModelState.UNPUBLISHED}') 
+OR (r.owner.id != ${u.id} AND r.state = '${ModelState.UNPUBLISHED}') 
+OR (r.owner.id = ${u.id} AND r.state = '${ModelState.PUBLISHED}'))
+"""
                 }
                 break
         }
-
-        query = """$query
- ORDER BY ${getSortColumnAsString(sortColumn)} ${sortingDirection}"""
+        query = """$query ORDER BY ${getSortColumnAsString(sortColumn)} ${sortingDirection}"""
         return query
+    }
+
+    /**
+     * Returns list of Models with other essential information the user has access to.
+     *
+     * Searches for all Models the current user has access to, then return the model, the model name and
+     * the date when the model was uploaded
+     * @param deletedOnly   false by default
+     * @return List of composite objects
+     **/
+    @Profiled(tag = "modelService.getAllModelWithDetails")
+    List getAllModelWithDetails(boolean deletedOnly = false) {
+        String query = """\
+SELECT m, r.name, r.uploadDate
+FROM Revision AS r RIGHT OUTER JOIN r.model AS m
+WHERE
+    r.deleted = false
+    AND m.deleted = ${deletedOnly}
+    AND r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2, AclEntry ace
+                            WHERE r.model = r2.model
+                                AND r2.id = ace.aclObjectIdentity.objectId
+                                AND ace.aclObjectIdentity.aclClass.className = :className
+                                AND ace.sid.sid IN (:roles)
+                                AND ace.mask IN (:permissions))"""
+
+        List permissions = new ArrayList([BasePermission.READ.getMask(), BasePermission.ADMINISTRATION.getMask()])
+        Set<String> roles = getSpringDatabaseRoles()
+        Map namedParams = [
+            className  : Revision.class.getName(),
+            permissions: permissions,
+            roles      : roles
+        ]
+        Model.executeQuery(query, namedParams, [:])
     }
 
     /**
@@ -392,10 +422,23 @@ WHERE r.id = r2.id
     **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getModelCount")
-    public Integer getModelCount(String filter = null, boolean deletedOnly = false) {
+    Integer getModelCount(String filter = null, boolean deletedOnly = false) {
         ModelListSorting sorting
         List<Model> resultSet = getAllModels(-1, 0, false, sorting, filter, false)
-        return resultSet.size()
+        resultSet.size()
+    }
+
+    /**
+     * Returns the list of Models the user has access to. These models only include private and shared ones.
+     *
+     * @param filter Optional filter for search
+     * @see ModelService#getAllModels()
+     **/
+    @PostLogging(LoggingEventType.RETRIEVAL)
+    @Profiled(tag="modelService.getMyModels")
+    List<Model> getMyModels(String filter = null, boolean deletedOnly = false) {
+        ModelListSorting sorting
+        getAllModels(-1, 0, false, sorting, filter, false)
     }
 
     /** convenience method to check if our filter is OK */
@@ -420,6 +463,10 @@ WHERE r.id = r2.id
             throw new AccessDeniedException("No access to Model with Id ${id}".toString())
         }
         return model
+    }
+
+    Model getModelBySubmissionId(String submissionId) {
+        Model.findBySubmissionId(submissionId)
     }
 
     /**
@@ -2117,7 +2164,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
     @PreAuthorize("hasRole('ROLE_CURATOR') or hasRole('ROLE_ADMIN')") //used to be: (hasRole('ROLE_CURATOR') and hasPermission(#revision, admin))
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.publishModelRevision")
-    public void publishModelRevision(Revision revision) {
+    void publishModelRevision(Revision revision) {
         if (!SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
             if (!aclUtilService.hasPermission(springSecurityService.authentication, revision,
                         BasePermission.ADMINISTRATION)) {
@@ -2214,6 +2261,8 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         aclUtilService.deletePermission(revision, "ROLE_USER", BasePermission.READ)
         aclUtilService.deletePermission(revision, "ROLE_ANONYMOUS", BasePermission.READ)
         revision.state=ModelState.UNPUBLISHED
+        revision.model.firstPublished = null
+        revision.model.publicationId = null
         revision.save(flush:true)
     }
 

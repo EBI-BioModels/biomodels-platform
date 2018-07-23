@@ -286,7 +286,7 @@ public interface IModelService {
     **/
     public boolean restoreModel(String modelId)
     public boolean deleteRevision(RevisionTransportCommand revision)
-    void publishModelRevision(RevisionTransportCommand revision)
+    RevisionTransportCommand publishModelRevision(RevisionTransportCommand revision)
 
 //    public void validateModelRevision(RevisionTransportCommand revision)
     /**
