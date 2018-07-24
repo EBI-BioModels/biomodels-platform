@@ -52,7 +52,9 @@ import org.springframework.security.access.prepost.PostAuthorize
 import org.springframework.security.access.prepost.PostFilter
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.acls.domain.BasePermission
+import org.springframework.security.acls.domain.GrantedAuthoritySid
 import org.springframework.security.acls.domain.PrincipalSid
+import org.springframework.security.acls.model.AccessControlEntry
 import org.springframework.security.acls.model.Acl
 import org.springframework.security.authentication.AnonymousAuthenticationToken
 import org.springframework.security.core.Authentication
@@ -1603,8 +1605,12 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         if (!authenticated || aclUtilService.hasPermission(springSecurityService.authentication, model,
                     BasePermission.ADMINISTRATION ) || SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')) {
             def permissions = aclUtilService.readAcl(model).getEntries()
-            permissions.each {
+            for (AccessControlEntry it: permissions) {
                 String permission = getPermissionString(it.getPermission().getMask())
+                // TODO refactor permission code to handle both GrantedAuthoritySid and PrincipalSid
+                if (it.sid instanceof GrantedAuthoritySid) {
+                    continue // skip to the next one
+                }
                 String principal = it.getSid().principal
                 if (permission) {
                     User user = User.findByUsername(principal)
