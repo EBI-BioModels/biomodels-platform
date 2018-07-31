@@ -236,27 +236,26 @@ class ModelController {
         try {
             rev = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
         } catch (AccessDeniedException e) {
-            if (e instanceof AccessDeniedException) {
-                Model model = Model.findByPublicationIdOrSubmissionId(params.id, params.id)
-                log.warn("""\
+            Model model = Model.findByPublicationIdOrSubmissionId(params.id, params.id)
+            log.warn("""\
 An anonymous or restricted access user is trying to retrieve this model: ${model.submissionId}""")
-                int revisionNumber = -1
-                if (params.revisionId) {
-                    revisionNumber = params.int("revisionId")
-                }
-                Revision revision = revisionNumber >= 0 ? model.revisions.getAt(revisionNumber-1) : model.revisions.last()
-                if (!revision) {
-                    forward(controller: 'errors', action: 'error404')
-                    return
-                }
-                rev = new RevisionAdapter(revision: revision).toCommandObject()
-                rev.name = rev.model.submissionId
-                model.publication = null
-                rev.format = new ModelFormatTransportCommand()
-                rev.files = new ArrayList<>()
-                rev.description = g.message(code: "net.biomodels.jummp.core.model.show.MessageForPrivateModel")
-                isPrivateModel = true
+            int revisionNumber = -1
+            if (params.revisionId) {
+                revisionNumber = params.int("revisionId")
             }
+            Revision revision = revisionNumber >= 0 ?
+                    model.revisions.getAt(revisionNumber-1) : model.revisions.last()
+            if (!revision) {
+                forward(controller: 'errors', action: 'error404')
+                return
+            }
+            rev = new RevisionAdapter(revision: revision).toCommandObject()
+            rev.name = rev.model.submissionId
+            model.publication = null
+            rev.format = new ModelFormatTransportCommand()
+            rev.files = new ArrayList<>()
+            rev.description = g.message(code: "net.biomodels.jummp.core.model.show.MessageForPrivateModel")
+            isPrivateModel = true
         }
         withFormat {
             html {
