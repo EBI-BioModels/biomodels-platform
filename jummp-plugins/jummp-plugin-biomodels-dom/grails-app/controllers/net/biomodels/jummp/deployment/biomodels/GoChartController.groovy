@@ -60,7 +60,7 @@ class GoChartController {
             ['classifiedModels': modelClassifierService.classify(models)]
         } catch (Exception e) {
             LOGGER.error(e.getMessage(), e)
-            render(controller: "errors", action: "error500", plugin: "jummp-plugin-web-application")
+            forward(controller: "errors", action: "error500", plugin: "jummp-plugin-web-application")
         }
     }
 }
