@@ -37,7 +37,6 @@ import groovy.json.JsonBuilder
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.model.ModelListSorting
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
-import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.search.OrderedFacet
 import net.biomodels.jummp.search.SearchResponse
