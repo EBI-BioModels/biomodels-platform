@@ -50,6 +50,8 @@ import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Facet
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.FacetValue
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.QueryResult
 
+import java.text.SimpleDateFormat
+
 /**
  * @short Singleton-scoped facade for interacting with a OmicsdiHolder's instance.
  *
@@ -74,6 +76,7 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
      * Flag indicating the logger's verbosity threshold.
      */
     static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
+    public static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd")
 
     private final java.util.regex.Pattern pattern = ~/(\p{Alnum}+:)(\p{Alnum}+):(\d+)/
     private final String replacement = '$1$2\\\\:$3' // note the single quotes to avoid Groovy string interpolation
@@ -195,15 +198,12 @@ There was a problem obtaining search result from EBI search server. The root cau
             entries?.eachWithIndex { Entry entry, int i ->
                 ModelTransportCommand mtc
                 String submissionId = entry.id
-                String modelName = entry.getFields().get('name')[0]
-                String description = ""
-                boolean haveDescription = entry.getFields().get('description')?.length > 0
-                if (haveDescription) {
-                    description = entry.getFields().get('description')[0]
-                }
-                boolean haveSubmissionDate = entry.getFields().get('submission_date')?.length > 0
-                boolean haveModifiedDate = entry.getFields().get('last_modification_date')?.length > 0
-                boolean haveSubmitter = entry.getFields().get('submitter')?.length > 0
+                String modelName = getSingleValueForEntryField(entry, 'name')
+                String description = getSingleValueForEntryField(entry, 'description')
+
+                boolean haveSubmissionDate = getValueArrayForEntryField(entry, 'submission_date').length > 0
+                boolean haveModifiedDate = getValueArrayForEntryField(entry, 'last_modification_date').length > 0
+                boolean haveSubmitter = getValueArrayForEntryField(entry, 'submitter').length > 0
                 ModelState state
                 if (!haveSubmissionDate && !haveModifiedDate && !haveSubmitter) {
                     // TODO: make the condition of a private model stronger
@@ -216,20 +216,16 @@ There was a problem obtaining search result from EBI search server. The root cau
                     )
                 } else {
                     state = ModelState.PUBLISHED
-                    String submissionDateString = entry.getFields().get('submission_date')[0]
-                    java.text.SimpleDateFormat simpleDateFormat = new java.text.SimpleDateFormat("yyyyMMdd")
-                    Date submissionDate = simpleDateFormat.parse(submissionDateString)
-                    String submitterName = entry.getFields().get('submitter')[0]
-                    String modifiedDateString = entry.getFields().get('last_modification_date')[0]
-                    simpleDateFormat = new java.text.SimpleDateFormat("yyyyMMdd")
-                    Date modifiedDate = simpleDateFormat.parse(modifiedDateString)
-                    String formatName = entry.getFields().get('modelformat')[0]
-                    String formatVersion = entry.getFields().get('levelversion')[0]
-                    boolean havePublicationYear = entry.getFields().get('publication_year')?.length > 0
-                    String publicationYear = ""
-                    if (havePublicationYear) {
-                        publicationYear = entry.getFields().get('publication_year')[0]
-                    }
+                    String submissionDateString = getSingleValueForEntryField(  entry,
+                            'submission_date')
+                    Date submissionDate = formatParsedDateString(submissionDateString)
+                    String submitterName = getSingleValueForEntryField(entry, 'submitter')
+                    String modifiedDateString = getSingleValueForEntryField(entry,
+                            'last_modification_date')
+                    Date modifiedDate = formatParsedDateString(modifiedDateString)
+                    String formatName = getSingleValueForEntryField(entry, 'modelformat')
+                    String formatVersion = getSingleValueForEntryField(entry, 'levelversion')
+                    String publicationYear = getSingleValueForEntryField(entry, 'publication_year')
                     ModelFormatTransportCommand format =
                         new ModelFormatTransportCommand(name: formatName, formatVersion: formatVersion)
                     PublicationTransportCommand ptc = null
@@ -312,6 +308,32 @@ There was a problem obtaining search result from EBI search server. The root cau
             log.debug("Results processed in ${System.currentTimeMillis() - start}")
         }
         return searchResponse
+    }
+
+    private Date formatParsedDateString(String dateString) {
+        Date date = null
+        if (!dateString.isEmpty()) {
+            date = dateFormat.parse(dateString)
+        }
+        date
+    }
+
+    private String getSingleValueForEntryField(Entry entry, String field) {
+        String[] values = getValueArrayForEntryField(entry, field)
+        if (values.length > 0) {
+            return values[0]
+        }
+        ""
+    }
+
+    private String[] getValueArrayForEntryField(Entry entry, String field) {
+        Objects.requireNonNull(entry)
+        final String[] defaultResult = new String[0]
+        String[] values = entry.getFields().get(field)
+        if (!values) {
+            return defaultResult // save client from testing for null
+        }
+        values
     }
 
     void updateIndex(RevisionTransportCommand revision) {
