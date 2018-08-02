@@ -22,7 +22,7 @@
 
 
 
-grails.servlet.version = "2.5"
+grails.servlet.version = "3.0" // needed to allow httpOnly cookies
 grails.reload.enable = true
 grails.project.class.dir = "target/classes"
 grails.project.test.class.dir = "target/test-classes"
