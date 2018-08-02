@@ -186,6 +186,8 @@ There was a problem obtaining search result from EBI search server. The root cau
                 log.debug("The querying string might be wrong syntax or contains restricted characters.")
             }
             result = null
+        } catch (UnknownHostException ignored ) {
+            result = null
         }
         List<Facet> facets = []
         int totalCount
