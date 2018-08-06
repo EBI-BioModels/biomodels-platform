@@ -31,6 +31,7 @@
     <head>
         <title>Model Search</title>
         <meta name="layout" content="${session['branding.style']}/main" />
+        <meta name="robots" content="nofollow" />
          <link rel="stylesheet" href="${resource(contextPath: "${grailsApplication.config.grails.serverURL}", dir: '/css', file: 'datatablestyle.css')}" />
          <g:javascript contextPath="" src="jquery/jquery-ui-v1.10.3.js"/>
     </head>

@@ -28,10 +28,11 @@
   <!-- Not yet implemented -->
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
   <!-- Describe what this page is about -->
-  <meta name="description" content="EMBL-EBI"/>
-  <!-- A few keywords that relate to the content of THIS PAGE (not the whole project) -->
-  <meta name="keywords" content="bioinformatics, europe, institute">
-  <meta name="jummp" content="EMBL-EBI"/><!-- Your [project-name] here -->
+  <meta name="description" content="BioModels is a repository of freely-available mathematical models of biological and biomedical systems. It hosts a vast selection of physiologically and pharmaceutically relevant mechanistic models in standard formats.
+"/>
+  <meta name="keywords" content="BioModels Database, biomodels, systems biology, bioinformatics, computational modelling, systems modelling, model repository, model database, SBML, PharML, COMBINE Archive, OMEX, public domain">
+  <meta name="author" content="BioModels"/>
+  <meta name="google" content="notranslate" />
   <meta name="ebi:localmasthead-color" content="#254146">
   <meta name="ebi:localmasthead-image"
         content="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/images/backgrounds/embl-ebi-background.jpg"/>
