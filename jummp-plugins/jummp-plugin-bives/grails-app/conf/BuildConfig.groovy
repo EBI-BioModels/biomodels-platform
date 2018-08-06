@@ -51,7 +51,7 @@ grails.project.dependency.resolution = {
         // excludes 'ehcache'
     }
     log "warn" // log level of Ivy resolver, either 'error', 'warn', 'info', 'debug' or 'verbose'
-    legacyResolve true
+    legacyResolve false
     repositories {
         if (System.getenv("JUMMP_ARTIFACTORY_URL")) {
             mavenRepo "${System.getenv('JUMMP_ARTIFACTORY_URL')}"
@@ -64,6 +64,8 @@ grails.project.dependency.resolution = {
         mavenCentral()
         mavenRepo "http://mvn.sems.uni-rostock.de/snapshots/"
         mavenRepo "http://mvn.sems.uni-rostock.de/releases/"
+        mavenRepo "http://www.ebi.ac.uk/~maven/m2repo/"
+        mavenRepo "http://www.ebi.ac.uk/~maven/m2repo_snapshots/"
         //mavenRepo "http://snapshots.repository.codehaus.org"
         //mavenRepo "http://repository.codehaus.org"
         //mavenRepo "http://download.java.net/maven/2/"
@@ -73,12 +75,12 @@ grails.project.dependency.resolution = {
         // specify dependencies here under either 'build', 'compile', 'runtime', 'test' or 'provided' scopes eg.
 
         // runtime 'mysql:mysql-connector-java:5.1.13'
-        compile "de.unirostock.sems:BiVeS:1.1-SNAPSHOT"
+        compile "de.unirostock.sems:BiVeS:1.11.1"
     }
     plugins {
-        build ":tomcat:7.0.54"
+        build ":tomcat:7.0.55.3"
 
-        compile ":perf4j:0.1.1"
+        compile ":perf4j:0.2.1"
     }
 }
 grails.plugin.location.'jummp-plugin-security'="../jummp-plugin-security"

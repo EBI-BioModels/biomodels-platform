@@ -52,7 +52,7 @@ grails.project.dependency.resolution = {
         // excludes 'ehcache'
     }
     log "warn" // log level of Ivy resolver, either 'error', 'warn', 'info', 'debug' or 'verbose'
-    legacyResolve true
+    legacyResolve false
     repositories {
         if (System.getenv("JUMMP_ARTIFACTORY_URL")) {
             mavenRepo "${System.getenv('JUMMP_ARTIFACTORY_URL')}"
@@ -70,21 +70,15 @@ grails.project.dependency.resolution = {
         //mavenRepo "http://repository.jboss.com/maven2/"
         //flatDir name: "jummpLibs", dirs: "../../lib/"
     }
-    dependencies {
-        // swagger
-        compile 'com.wordnik:swagger-servlet_2.10:1.3.1'
-    }
 
     plugins {
-        build ":tomcat:7.0.54"
+        build ":tomcat:7.0.55.3"
 
-        runtime(":weceem:1.2") {
-            excludes 'ckeditor'
-        }
-        runtime ":ckeditor:3.6.6.1.1"
+        runtime ":weceem:1.4"
         runtime ":jquery:1.11.1"
         runtime ":jquery-datatables:1.7.5"
     }
 }
 grails.plugin.location.'jummp-plugin-security'="../jummp-plugin-security"
 grails.plugin.location.'jummp-plugin-core-api'="../jummp-plugin-core-api"
+grails.plugin.location.'jummp-plugin-biomodels-dom'="../jummp-plugin-biomodels-dom"

@@ -38,7 +38,7 @@ import net.biomodels.jummp.core.model.RevisionTransportCommand
  * @author Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
-class RevisionCreatedEvent extends JummpEvent {
+class RevisionCreatedEvent extends ModelOperationEvent {
     /**
      * The newly create Revision
      */

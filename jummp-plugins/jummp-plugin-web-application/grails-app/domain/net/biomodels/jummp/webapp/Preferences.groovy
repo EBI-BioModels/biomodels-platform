@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -29,21 +29,23 @@ import net.biomodels.jummp.plugins.security.User
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  */
 class Preferences implements Serializable {
-    int numResults;
+    int numResults
     static belongsTo = [user:User]
-	
+
     static constraints = {
         numResults(nullable: false)
     }
-    
+
     public static Preferences getDefaults() {
     	return new Preferences([numResults: 10])
     }
-    
+
 	public static List getOptions(String preference) {
-		if (preference=="numResults") {
-			return [10, 20, 50]
+		if (preference == "numResults") {
+            // remember to change places referring to these values, for instance, SearchController
+            // the minimum or maximum value in the following list must comply with the one used for the references
+			return [10, 20, 50, 75, 100]
 		}
-		return null;
+		return null
 	}
 }

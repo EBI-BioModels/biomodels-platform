@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -19,14 +19,16 @@
  */
 
 package net.biomodels.jummp.plugins.security
+
 import grails.converters.JSON
-import grails.plugins.springsecurity.Secured
-import net.biomodels.jummp.core.adapters.DomainAdapter
+import grails.plugin.springsecurity.annotation.Secured
+import net.biomodels.jummp.core.user.PersonCategory
 
 /**
  * @short Controller class for interacting with user teams.
  *
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 @Secured(["isAuthenticated()"])
 class TeamController {
@@ -44,35 +46,40 @@ class TeamController {
      * Renders the form to create new teams.
      */
     def create() {
-        render view: "create"
+        render view: "create", model: [teamOwner: springSecurityService.getCurrentUser()]
     }
 
     def save() {
-    	String name="";
-    	String description="";
-    	Set<User> users=new HashSet<User>();
+    	String name = ""
+    	String description = ""
+    	Set<User> users=new HashSet<User>()
     	try {
-    		def map = JSON.parse(params.teamData);
-    		name = map.getString("name");
-    		description = map.getString("description");
-    		def collabs = map.getJSONArray("members");
+    		def map = JSON.parse(params.teamData)
+    		name = map.getString("name")
+    		description = map.getString("description")
+    		def collabs = map.getJSONArray("members")
     		for (int i = 0; i < collabs.length(); i++) {
-    			users.add(User.findByUsername(collabs.getJSONObject(i).getString("userId")));
+    			users.add(User.findByUsername(collabs.getJSONObject(i).getString("userId")))
     		}
     	}
     	catch(Exception e) {
-    		render "Error processing parameters: "+e.getMessage();
-    		return;
+    		render "Error processing parameters: ${e.getMessage()}"
+    		return
     	}
     	def team = new Team(name: name, description: description)
-    	team.owner=springSecurityService.getCurrentUser();
+    	team.owner=springSecurityService.getCurrentUser()
+        User currentUser = users.find { it.getId() == team.owner.id }
+        if (!currentUser) {
+            // By default, the owner/creator/current user should be added to the team automatically
+            users.add(team.owner)
+        }
     	if (!team.validate()) {
             render "Error creating team. Team could not be validated."
         }
         else {
         	team.save(flush: true)
         	users.each {
-        		UserTeam.create(it, team)
+        		UserTeam.create(it, team, true)
         	}
         	render team.id
         }
@@ -82,7 +89,7 @@ class TeamController {
     	flash.message = "Could not find that team. Please select one from the list below."
         redirect(action: 'index')
     }
-    
+
     /**
      * Lists the teams belonging to the current user.
      */
@@ -102,12 +109,31 @@ class TeamController {
     			showStandardErrorMessage()
     		}
     		else {
-    			def usersInTeam = UserTeam.findAllByTeam(team);
-    			[team: team, users: usersInTeam.collect { [name: it.user.person.userRealName, userId: it.user.username] } as JSON]
+    			def usersInTeam = UserTeam.findAllByTeam(team)
+    			[team: team, users: usersInTeam.collect { [name: it.user.person.userRealName, userId: it.user.username, id: it.user.id] } as JSON]
     		}
     	}
     }
-    
+
+    def delete(Long id) {
+        if (id <= 0 || id == null) {
+            showStandardErrorMessage()
+        } else {
+            try {
+                log.info("Team existing.")
+                boolean deleted = teamService.deleteTeam(id)
+                if (deleted) {
+                    flash.message = "The team has been deleted successfully."
+                } else {
+                    flash.message = "There is an error to delete the team."
+                }
+            } catch (Exception e) {
+                flash.message = "Cannot delete the team ${id}"
+            }
+            redirect(action: "index")
+        }
+    }
+
     def update(Long id) {
     	if (!id) {
     		showStandardErrorMessage()
@@ -116,36 +142,34 @@ class TeamController {
     		Team team = Team.get(id)
     		def user = springSecurityService.getCurrentUser()
     		if (team && user == team.owner) {
-    			String name="";
-    			String description="";
-    			Set<User> users=new HashSet<User>();
+    			Set<User> users=new HashSet<User>()
     			try {
-    				def map = JSON.parse(params.teamData);
-    				team.name = map.getString("name");
-    				team.description = map.getString("description");
-    				def collabs = map.getJSONArray("members");
+    				def map = JSON.parse(params.teamData)
+    				team.name = map.getString("name")
+    				team.description = map.getString("description")
+    				def collabs = map.getJSONArray("members")
     				for (int i = 0; i < collabs.length(); i++) {
-    					users.add(User.findByUsername(collabs.getJSONObject(i).getString("userId")));
+    					users.add(User.findByUsername(collabs.getJSONObject(i).getString("userId")))
     				}
     			}
     			catch(Exception e) {
-    				render "Error processing parameters: "+e.getMessage();
-    				return;
+    				render "Error processing parameters: ${e.getMessage()}"
+    				return
     			}
     			if (!team.validate()) {
     				render "Error updating team. Team could not be validated."
     			}
     			else {
     				team.save(flush: true)
-    				Set<User> existingUsers = UserTeam.findAllByTeam(team).collect{ it.user };
-    				Set<User> newUsers = users - existingUsers;
+    				Set<User> existingUsers = UserTeam.findAllByTeam(team).collect{ it.user }
+    				Set<User> newUsers = users - existingUsers
     				newUsers.each {
-    					UserTeam.create(it, team)
+    					UserTeam.create(it, team, true)
     				}
-    				Set<User> removeThese = existingUsers - users;
+    				Set<User> removeThese = existingUsers - users
     				removeThese.each {
     					UserTeam userTeam = UserTeam.findByUserAndTeam(it, team)
-    					userTeam.delete();
+    					userTeam.remove(it, team, true)
     				}
     				render team.id
     			}
@@ -160,11 +184,16 @@ class TeamController {
     def show(Long id) {
         Team team = Team.get(id)
         if (!team) {
-            showStandardErrorMessage();
+            showStandardErrorMessage()
         }
         else {
-        	def usersInTeam = UserTeam.findAllByTeam(team);
-        	[team: team, users: usersInTeam.collect { DomainAdapter.getAdapter(it.user.person).toCommandObject()}]
+        	List<UserTeam> usersInTeam = UserTeam.findAllByTeam(team)
+        	[team: team, users: usersInTeam.collect { UserTeam ut ->
+                use(PersonCategory) {
+                    ut.user.person.toCommandObject()
+                }
+                //new PersonAdapter(person: it.user.person).toCommandObject()
+            }]
         }
     }
 }

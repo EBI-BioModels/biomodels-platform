@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -32,14 +32,17 @@
     <!-- TODO: integrate social media button or use area for other part -->
     </div>
     <div id="content">
-	<div id="main">
-	    <g:pageProperty name="page.main-content" />
-	    <div id="infoBox"></div>
-	    <g:layoutBody/>
-	</div>
-	<div id="sideBar">
-	    <g:pageProperty name="page.sidebar"/>
-	</div>
+        <div id="facetSearch">
+            <g:pageProperty name="page.facetsearch"/>
+        </div>
+        <div id="main">
+            <g:pageProperty name="page.main-content" />
+            <div id="infoBox"></div>
+            <g:layoutBody/>
+        </div>
+        <div id="sideBar">
+            <g:pageProperty name="page.sidebar"/>
+        </div>
     </div>
     <wcm:render path="links"/>
 </div>

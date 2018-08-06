@@ -21,8 +21,6 @@
 package net.biomodels.jummp.webapp.rest.marshaller
 
 import grails.converters.XML
-import grails.util.Holders as H
-import net.biomodels.jummp.core.IModelService
 import net.biomodels.jummp.webapp.rest.model.show.Model
 import org.codehaus.groovy.grails.web.converters.marshaller.ObjectMarshaller
 
@@ -31,7 +29,9 @@ import org.codehaus.groovy.grails.web.converters.marshaller.ObjectMarshaller
  *
  * This class overrides the default XML renderer for a Model to ensure that its perennial
  * identifier or identifiers.
+ *
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 class ModelXmlMarshaller implements ObjectMarshaller<XML> {
     /* use a formatted output. */
@@ -46,27 +46,15 @@ class ModelXmlMarshaller implements ObjectMarshaller<XML> {
     void marshalObject(Object o, XML converter) {
         final Model M = (Model) o
 
-        converter.startNode 'identifier'
+        converter.startNode 'submissionIdentifier'
         converter.chars M.submissionId
         converter.end()
-        def ctx = H.grailsApplication.mainContext
-        IModelService modelDelegateService = ctx.getBean("modelDelegateService")
-        final boolean MANY_IDENTIFIERS = modelDelegateService.haveMultiplePerennialIdentifierTypes()
-        if (MANY_IDENTIFIERS) {
-            ID_TYPES.each { String t ->
-                if (t == 'submissionId') {
-                    return // have already dealt with this one.
-                }
-                final String VALUE = M."$t"
-                if (VALUE) {
-                    converter.startNode(t.endsWith('Id') ? t.append('entifier') : t)
-                    converter.chars VALUE
-                    converter.end()
-                }
-            }
+        if (M.publicationId) {
+            converter.startNode("publicationIdentifier")
+            converter.chars(M.publicationId)
+            converter.end()
         }
-
-        ['name', 'description', 'firstPublished', 'publication', "format", "files", "history" ].each { String f ->
+        ['name', 'description', 'firstPublished', 'publication', 'format', 'files', 'history' ].each { String f ->
             final def VALUE = M."$f"
             if (VALUE) {
                 converter.startNode f

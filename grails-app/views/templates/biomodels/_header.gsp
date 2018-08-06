@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -22,80 +22,98 @@
 
 
 
-
-
 <div id="skip-to">
-<ul>
-<li><a href="#content">Skip to main content</a></li>
-<li><a href="#local-nav">Skip to local navigation</a></li>
-<li><a href="#global-nav">Skip to EBI global navigation menu</a></li>
-<li><a href="#global-nav-expanded">Skip to expanded EBI global navigation menu (includes all sub-sections)</a></li>
-</ul>
+    <ul>
+    <li><a href="#content">Skip to main content</a></li>
+    <li><a href="#local-nav">Skip to local navigation</a></li>
+    <li><a href="#global-nav">Skip to EBI global navigation menu</a></li>
+    <li><a href="#global-nav-expanded">Skip to expanded EBI global navigation menu (includes all sub-sections)</a></li>
+    </ul>
 </div>
+<div data-sticky-container class="sticky-container" >
+    <div id="local-masthead" data-sticky data-sticky-on="large" data-top-anchor="165.75" data-btm-anchor="300000"
+         class="sticky meta-background-color meta-background-image" data-resize="local-masthead" data-events="resize">
+        <header>
+        <div id="global-masthead" class="clearfix">
+	      <!--This has to be one line and no newline characters-->
+	      <a href="//www.ebi.ac.uk/" title="Go to the EMBL-EBI homepage"><span class="ebi-logo"></span></a>
+            <nav>
+                <div class="row">
+                    <ul id="global-nav" class="menu">
+                        <!-- set active class as appropriate -->
+                        <li id="home-mobile" class=""><a href="//www.ebi.ac.uk"></a></li>
+                        <li id="home" class="active"><a href="//www.ebi.ac.uk"><i class="icon icon-generic"
+                                                                                  data-icon="H"></i> EMBL-EBI</a></li>
+                        <li id="services"><a href="//www.ebi.ac.uk/services"><i class="icon icon-generic"
+                                                                                data-icon="("></i> Services</a></li>
+                        <li id="research"><a href="//www.ebi.ac.uk/research"><i class="icon icon-generic"
+                                                                                data-icon=")"></i> Research</a></li>
+                        <li id="training"><a href="//www.ebi.ac.uk/training"><i class="icon icon-generic"
+                                                                                data-icon="t"></i> Training</a></li>
+                        <li id="about"><a href="//www.ebi.ac.uk/about"><i class="icon icon-generic"
+                                                                          data-icon="i"></i> About us</a></li>
+                        <li id="search">
+                            <a href="#" data-toggle="search-global-dropdown" aria-controls="search-global-dropdown"
+                               data-is-focus="false" data-yeti-box="search-global-dropdown" aria-haspopup="true"
+                               aria-expanded="false"><i class="icon icon-functional" data-icon="1"></i> <span
+                                class="show-for-small-only">Search</span></a>
 
-<div id="wrapper" class="container_24">
-<header>
-<div id="global-masthead" class="masthead grid_24">
-<!--This has to be one line and no newline characters-->
-<a href="//www.ebi.ac.uk/" title="Go to the EMBL-EBI homepage"><img src="//www.ebi.ac.uk/web_guidelines/images/logos/EMBL-EBI/EMBL_EBI_Logo_white.png" alt="EMBL European Bioinformatics Institute"></a>
+                            <div id="search-global-dropdown" class="dropdown-pane" data-dropdown="zq3ej2-dropdown"
+                                 data-options="closeOnClick:true;" aria-hidden="true"
+                                 data-yeti-box="search-global-dropdown" data-resize="search-global-dropdown"
+                                 aria-labelledby="ehvmx4-dd-anchor">
+                                <form id="global-search" name="global-search" action="/ebisearch/search"
+                                      method="GET">
+                                    <fieldset>
+                                        <div class="input-group">
+                                            <input type="text" name="query" id="global-searchbox"
+                                                   class="input-group-field" placeholder="Search all of EMBL-EBI">
 
-<nav>
-<ul id="global-nav">
-  <!-- set active class as appropriate -->
-  <li class="first active" id="services"><a href="//www.ebi.ac.uk/services">Services</a></li>
-  <li id="research"><a href="//www.ebi.ac.uk/research">Research</a></li>
-  <li id="training"><a href="//www.ebi.ac.uk/training">Training</a></li>
-  <li id="industry"><a href="//www.ebi.ac.uk/industry">Industry</a></li>
-  <li id="about" class="last"><a href="//www.ebi.ac.uk/about">About us</a></li>
-</ul>
-</nav>
+                                            <div class="input-group-button">
+                                                <input type="submit" name="submit" value="Search" class="button">
+                                                <input type="hidden" name="db" value="allebi" checked="checked">
+                                                <input type="hidden" name="requestFrom" value="global-masthead"
+                                                       checked="checked">
+                                            </div>
+                                        </div>
+                                    </fieldset>
+                                </form>
+                            </div>
+                        </li>
+                        <li class="float-right show-for-medium embl-selector">
+                            <button class="button" type="button" data-toggle="embl-dropdown"
+                                    aria-controls="embl-dropdown" data-is-focus="false" data-yeti-box="embl-dropdown"
+                                    aria-haspopup="true" aria-expanded="false">Hinxton</button>
+                            <!-- The dropdown menu will be programmatically added by script.js -->
 
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+        <div class="masthead row">
+            <!-- local-title -->
+            <div id="local-title" class="columns medium-12">
+                <div class="row" style="margin-top: -25px">
+                    <div class="column small-2 medium-7 large-8">
+                        <h1>
+                            <a href="${createLink(uri: '/', absolute: true)}" title="Back to BioModels homepage"
+                            style="text-decoration: none; border-bottom-style: none">
+                                <img src="${grailsApplication.config.grails.serverURL}/images/biomodels/logo_small.png"
+                                     title="BioModels Homepage"/>
+                                <span class="hide-for-small-only">BioModels</span></a>
+                        </h1>
+                    </div>
+                    <!-- local-search -->
+                    <div id="localsearch" class="column small-10 medium-5 large-4 float-right">
+                        <g:render template="/templates/${grailsApplication.config.jummp.branding.style}/searchBox"/>
+                    </div>
+                </div>
+            </div>
+            <!-- /local-title -->
+            <!-- local navigation bar -->
+            <g:render template="/templates/${grailsApplication.config.jummp.branding.style}/navbar"/>
+        </div>
+    </header>
+    </div>
 </div>
-
-<div id="local-masthead" class="masthead grid_24 nomenu">
-
-<!-- local-title -->
-<!-- NB: for additional title style patterns, see http://frontier.ebi.ac.uk/web/style/patterns -->
-<div id="local-title" class="grid_12 alpha logo-title"> 
-	<span>
-	<a href="${createLink(uri: '/', absolute: true)}" title="Back to BioModels homepage">
-		<h1>BioModels</h1>
-		<%-- <r:img uri="/images/biomodels/logo_small.png"/>
-		<img src="[service-logo]" alt="[service-name] logo" width="x" height="y"> --%>
-	</a> 
-	</span> 
-</div>
-
-<!-- /local-title -->
-
-<!-- local-search -->
-<!-- NB: if you do not have a local-search, delete the following div, and drop the class="grid_12 alpha" class from local-title above -->
-
-<div class="grid_12 omega">
-        <form id="local-search" name="local-search" action="${createLink(controller: 'search', action: 'searchRedir')}" method="post">
-                
-          <fieldset>
-          
-          <div class="left">
-            <label>
-            <input type="text" name="search_block_form" id="local-searchbox">
-            </label>
-          </div>
-          
-          <div class="right">
-            <input type="submit" name="submit" value="Search" class="submit">          
-            <!-- If your search is more complex than just a keyword search, you can link to an Advanced Search,
-                 with whatever features you want available 
-            <span class="adv"><a href="../search" id="adv-search" title="Advanced">Advanced</a></span>-->
-          </div>                  
-          
-          </fieldset>
-          
-        </form>
-      </div>
-
-
-
-<g:render template="/templates/${grailsApplication.config.jummp.branding.style}/navbar"/>
-</div>
-</header>

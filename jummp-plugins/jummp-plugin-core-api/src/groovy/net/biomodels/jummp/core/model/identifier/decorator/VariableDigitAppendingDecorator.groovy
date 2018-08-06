@@ -20,6 +20,7 @@
 
 package net.biomodels.jummp.core.model.identifier.decorator
 
+import java.util.concurrent.atomic.AtomicLong
 import net.biomodels.jummp.core.events.ModelIdentifierDecoratorUpdatedEvent
 import net.biomodels.jummp.core.model.identifier.ModelIdentifier
 import org.apache.commons.logging.Log
@@ -33,19 +34,19 @@ public class VariableDigitAppendingDecorator extends AbstractAppendingDecorator 
     /* the width of the suffix used to decorate model identifiers. */
     final Integer WIDTH
     /* the number used in the last model id, without padding. */
-    private long lastUsedSuffix = -1
+    private final AtomicLong lastUsedSuffix = new AtomicLong(-1)
     /* the value to use in the next id, without padding. Effectively, the dual of nextValue */
-    private long nextSuffix
+    private final AtomicLong nextSuffix = new AtomicLong()
     /* the class logger */
     private static final Log log = LogFactory.getLog(this)
     /* semaphore for the log threshold */
-    private static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
+    private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
 
     /**
      * Throws an IllegalArgumentException if @p seed is below 1 or @p width is narrower than
      * the width of @p seed.
      */
-    public VariableDigitAppendingDecorator(Integer order, int seed, int width)
+    public VariableDigitAppendingDecorator(Integer order, long seed, int width)
                 throws IllegalArgumentException {
         boolean orderOk = validateOrderValue(order)
         if (!orderOk) {
@@ -63,11 +64,11 @@ public class VariableDigitAppendingDecorator extends AbstractAppendingDecorator 
             log.warn("Minimum padding for fixed decorator '$seed' is $SUFFIX_WIDTH, not $width")
             width = SUFFIX_WIDTH
         }
-        nextSuffix = seed
-        nextValue = "$seed".padLeft(width, '0')
+        nextSuffix.compareAndSet(0, seed)
+        nextValue.compareAndSet(null, "$seed".padLeft(width, '0'))
         WIDTH = width
-        if (IS_INFO_ENABLED) {
-            log.info "Creating ${WIDTH}-digit $this"
+        if (IS_DEBUG_ENABLED) {
+            log.debug "Creating ${WIDTH}-digit $this"
         }
     }
 
@@ -78,17 +79,18 @@ public class VariableDigitAppendingDecorator extends AbstractAppendingDecorator 
         updateNextValueIfNeeded()
         if (modelIdentifier) {
             String currentId = modelIdentifier.getCurrentId()
-            if (IS_INFO_ENABLED) {
-                log.info "Decorating $currentId with $nextValue."
+            final String next = nextValue.get()
+            if (IS_DEBUG_ENABLED) {
+                log.debug "Decorating $currentId with $next."
             }
-            modelIdentifier.append(nextValue)
-            lastUsedSuffix = nextSuffix
+            modelIdentifier.append(next)
+            lastUsedSuffix.set(nextSuffix.get())
             return modelIdentifier
         } else {
             log.warn "Undefined model identifier encountered - decorating a new one instead."
             ModelIdentifier result = new ModelIdentifier()
-            result.append(nextValue)
-            lastUsedSuffix = nextSuffix
+            result.append(nextValue.get())
+            lastUsedSuffix.set(nextSuffix.get())
             return result
         }
     }
@@ -109,13 +111,14 @@ public class VariableDigitAppendingDecorator extends AbstractAppendingDecorator 
     }
 
     private void updateNextValueIfNeeded() {
-        if (lastUsedSuffix == nextSuffix) {
-            ++nextSuffix
-            nextValue = "$nextSuffix".padLeft(WIDTH, '0')
-            if (IS_INFO_ENABLED) {
-                log.info "Incremented nextValue to $nextValue"
+        if (lastUsedSuffix.get() == nextSuffix.get()) {
+            long newSuffix = nextSuffix.incrementAndGet()
+            String newValue = "${newSuffix}".padLeft(WIDTH, '0')
+            nextValue.set(newValue)
+            if (IS_DEBUG_ENABLED) {
+                log.debug "Incremented nextValue to ${newValue}"
             }
-            super.publishEvent(new ModelIdentifierDecoratorUpdatedEvent(this, nextValue))
+            super.publishEvent(new ModelIdentifierDecoratorUpdatedEvent(this, newValue))
         }
     }
 }

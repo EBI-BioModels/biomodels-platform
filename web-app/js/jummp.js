@@ -83,3 +83,11 @@ $(function () {
         window.location.pathname = $.jummp.createLink("login", "auth");
     });
 });
+
+/**
+ * Redirects the browser to the given location.
+ * @param location the page to which to navigate.
+ */
+$.jummp.openPage = function(location) {
+    window.location.href = location;
+}

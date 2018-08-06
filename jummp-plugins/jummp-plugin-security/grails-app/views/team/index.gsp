@@ -21,7 +21,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <meta name="layout" content="main"/>
+        <meta name="layout" content="${session['branding.style']}/main" />
     </head>
     <body>
         <g:if test="${flash.message}">
@@ -29,28 +29,77 @@
         </g:if>
         <p>If you find yourself repeatedly sharing your models with the same people,
         you should consider grouping them into a team. </p>
+        <script type="text/javascript">
+            $(document).ready(function() {
+                $("#dialog-confirm").dialog({
+                    modal: true,
+                    resizable: false,
+                    autoOpen: false,
+                    title: "Confirmation",
+                    width: 424,
+                    height: 200
+                });
+
+                $("button[id^=btnDelete]").click(function (e) {
+                    e.preventDefault();
+                    var thisValue = $(this).attr("value");
+                    $('#dialog-confirm').dialog({
+                        buttons: [
+                            {
+                                id: "Yes",
+                                text: "Yes",
+                                click: function () {
+                                    window.Jummp = window.Jummp || {};
+                                    window.Jummp.clicked = $(this);
+                                    var location = '${g.createLink(controller: 'team', action: 'delete')}';
+                                    location = location.concat("/" + thisValue);
+                                    $.jummp.openPage(location);
+                                    $(this).dialog('close');
+                                }
+                            },
+                            {
+                                id: "No",
+                                text: "No",
+                                click: function () {
+                                    $(this).dialog('close');
+                                }
+                            }
+
+                        ]
+                    });
+                    $('#dialog-confirm').dialog('open');
+                    return false;
+                });
+            });
+        </script>
         <g:if test="${teams}">
-            <table>
+            <div id="dialog-confirm" title="Confirm Delete" style="display:none;">
+                <p>Are you sure you want to delete this team?</p>
+            </div>
+            <table class="responsive-table">
                 <thead>
                     <tr>
-                        <th class='spaced'>Name</th>
-                        <th class='spaced'>Description</th>
-                        <th class='spaced'>Creator</th>
+                        <th class="spaced">Name</th>
+                        <th class="spaced">Description</th>
+                        <th class="spaced">Creator</th>
+                        <th class="spaced">&nbsp;</th>
                     </tr>
                 </thead>
                 <tbody>
                     <g:each in="${teams}" var="t" status="i">
                         <tr class="${ (i % 2) == 0 ? 'even' : 'odd'}">
-                            <td class='spaced'><g:link action="show" id="${t.id}">${t.name}</g:link></td>
-                            <td class='spaced'>${t.description}</td>
-                            <td class='spaced'>${t.owner.person.userRealName}</td>
+                            <td class="spaced"><g:link action="show" id="${t.id}">${t.name}</g:link></td>
+                            <td class="spaced">${t.description}</td>
+                            <td class="spaced">${t.owner.person.userRealName}</td>
+                            <td class="spaced">
+                                <button id="btnDelete${t.id.toString()}" value="${t.id}">Delete</button></td>
                         </tr>
                     </g:each>
                 </tbody>
             </table>
         </g:if>
         <span class='spaced'>
-            <g:link controller="team" action="create">Create a team</g:link>
+            <g:link controller="team" action="create" class="button">Create a team</g:link>
         </span>
     </body>
 </html>

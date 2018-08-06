@@ -94,7 +94,8 @@ class VcsServiceTests extends JummpIntegrationTest implements ApplicationContext
     void setUp() {
         createUserAndRoles()
         vcsService.vcsManager = null
-        assertTrue(new File("target/vcs/exchange/").mkdirs())
+        def exchangeDir = new File("target/vcs/exchange/")
+        assertTrue(exchangeDir.mkdirs())
     }
 
     @After
@@ -194,6 +195,7 @@ class VcsServiceTests extends JummpIntegrationTest implements ApplicationContext
         grailsApplication.config.jummp.vcs.workingDirectory = "target/vcs/git"
         grailsApplication.config.jummp.vcs.exchangeDirectory = "target/vcs/exchange"
         vcsService.vcsManager = gitService.getInstance()
+        vcsService.vcsManager.exchangeDirectory = new File("target/vcs/exchange")
         vcsService.modelContainerRoot = grailsApplication.config.jummp.vcs.workingDirectory
         assertTrue(vcsService.isValid())
         // now as user we should be able to import

@@ -34,190 +34,200 @@
 
 package net.biomodels.jummp.webapp
 
-import java.nio.file.Files
-import java.nio.file.attribute.BasicFileAttributes
-import java.nio.file.FileSystem
-import java.nio.file.FileSystems
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.nio.file.SimpleFileVisitor
-import java.nio.file.FileVisitResult
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import org.apache.commons.io.FilenameUtils
-import java.text.DateFormat
+
+import java.nio.file.*
+import java.nio.file.attribute.BasicFileAttributes
 
 class ZiphandlerTagLib {
 	static namespace="Ziphandler"
 	def grailsApplication
-	 
+
 	class ZipVisitor extends SimpleFileVisitor<Path> {
-		boolean jsOutput=true;
-		StringBuilder builder;
-		Path zipfile;
-		
+		boolean jsOutput=true
+		StringBuilder builder
+		Path zipfile
+
 		public ZipVisitor(boolean js, StringBuilder b, Path zip) {
 			jsOutput=js
-			builder=b;
-			zipfile=zip;
+			builder=b
+			zipfile=zip
 		}
-		
-		
-		
+
 		@Override
 		public FileVisitResult visitFile(Path visiting, BasicFileAttributes attrs) throws IOException {
 			try
 			{
 				if (jsOutput) {
-					visitFileJS(visiting, attrs);
+					visitFileJS(visiting, attrs)
 				}
-				return FileVisitResult.CONTINUE;
+				return FileVisitResult.CONTINUE
 			}
 			catch(Exception e) {
 				e.printStackTrace()
 			}
 		}
-	
 	}
-	
+
 	private void visitFileJS(StringBuilder builder, Path zipfile, Path visiting, BasicFileAttributes attrs) {
 			builder.append("fileData[\"")
 			builder.append(zipfile.getFileName().toString())
 			builder.append(visiting.toString())
 			builder.append("\"]=new Object();")
-			addFileAttributesJS(builder, zipfile.getFileName().toString()+visiting.toString(), "isInternal", "true", false); 
-			addFileAttributesJS(builder, zipfile.getFileName().toString()+visiting.toString(), "Name", FilenameUtils.getName(visiting.toString()), true); 
-			addFileAttributesJS(builder, zipfile.getFileName().toString()+visiting.toString(), "Size", "window.readablizeBytes(${attrs.size()});", false); 
+			addFileAttributesJS(builder, zipfile.getFileName().toString()+visiting.toString(),
+                "isInternal", "true", false)
+			addFileAttributesJS(builder, zipfile.getFileName().toString()+visiting.toString(),
+                "Name", FilenameUtils.getName(visiting.toString()), true)
+			addFileAttributesJS(builder, zipfile.getFileName().toString()+visiting.toString(),
+                "Size", "window.readablizeBytes(${attrs.size()});", false)
 			if (attrs.lastModifiedTime()) {
-				addFileAttributesJS(builder, zipfile.getFileName().toString()+visiting.toString(), "Last_Modified", "${new Date(attrs.lastModifiedTime().toMillis())}".toString(), true); 
+				addFileAttributesJS(builder, zipfile.getFileName().toString()+visiting.toString(),
+                    "Last_Modified", "${new Date(attrs.lastModifiedTime().toMillis())}".toString(), true)
 			}
 	}
-	
+
 	private void addFileAttributesJS(StringBuilder builder, String filename,String prop, String value, boolean quotes) {
 		builder.append("fileData[\"").append(filename).
-				append("\"].").append(prop).append("=");
+				append("\"].").append(prop).append("=")
 		if (quotes) {
 			builder.append("'")
 		}
-		builder.append(value);
+		builder.append(value)
 		if (quotes) {
 			builder.append("'")
 		}
 		builder.append(";")
 	}
-	
+
 	private void handleZip(StringBuilder builder, boolean JS, String filePath, def loadedZips, def zipSupported) {
 		 try {
-  				Path zipfile = Paths.get(filePath);
+  				Path zipfile = Paths.get(filePath)
 		 	 	FileSystem fs = null;
 	 			if (!loadedZips.containsKey(zipfile.toString())) {
-	 				fs=FileSystems.newFileSystem(zipfile, null);
+	 				fs=FileSystems.newFileSystem(zipfile, null)
 	 				loadedZips.put(zipfile.toString(), fs)
 	 			}
 	 			else {
 	 				fs=loadedZips.get(zipfile.toString())
 	 			}
-  	 			final Path root = fs.getPath("/");
+  	 			final Path root = fs.getPath("/")
   	 			Files.walkFileTree(root, new SimpleFileVisitor<Path>(){
                     @Override
                     public FileVisitResult visitFile(Path visiting, BasicFileAttributes attrs) throws IOException {
                     	if (JS) {
                     		visitFileJS(builder, zipfile, visiting, attrs)
-                    		return FileVisitResult.CONTINUE;
+                    		return FileVisitResult.CONTINUE
                     	}
                     	else {
                     		builder.append('''<li><a><span class="pointerhere">''')
                     		builder.append(zipfile.getFileName().toString())
                     		builder.append(visiting.toString())
-                    		builder.append("</span></a></li>");
-                    		return FileVisitResult.CONTINUE;
+                    		builder.append("</span></a></li>")
+                    		return FileVisitResult.CONTINUE
                     	}
                     }
-                });
+                })
   	 			zipSupported[filePath]=true
   	 	 }
   	 	 catch(Exception e) {
   	 	 	 e.printStackTrace()
-  	 	 	 zipSupported[filePath]=false;
+  	 	 	 zipSupported[filePath]=false
   	 	 }
 	}
-	
+
 	private void processFilesJS(def repFiles, StringBuilder builder, def loadedZips, def zipSupported) {
 		try
         {
             repFiles.each {
 				File file=new File(it.path)
 				BasicFileAttributes attr = Files.readAttributes(file.toPath(), BasicFileAttributes.class)
-				builder.append("fileData[\"").append(file.name).append("\"]=new Object();");
-				addFileAttributesJS(builder, file.name, "Name", FilenameUtils.getName(it.path), true); 
-				addFileAttributesJS(builder, file.name, "Size", "window.readablizeBytes(${attr.size()})", false); 
-				addFileAttributesJS(builder, file.name, "showPreview", "${attr.size() > grailsApplication.config.jummp.web.file.preview};", false); 
-				if (!it.mainFile) {
-					addFileAttributesJS(builder, file.name, "Description",
-                            it.description.encodeAsJavaScript(), true)
-				}
-				addFileAttributesJS(builder, file.name, "mime", it.mimeType, true); 
-				addFileAttributesJS(builder,file.name,"isInternal","false", false) 
-				
-				if (it.mimeType.contains('zip')) {
-						 handleZip(builder, true, it.path, loadedZips, zipSupported)
-				}
+				builder.append("fileData[\"").append(file.name).append("\"]=new Object();")
+				addFileAttributesJS(builder, file.name, "Name", FilenameUtils.getName(it.path), true)
+				addFileAttributesJS(builder, file.name, "Size", "window.readablizeBytes(${attr.size()})", false)
+				addFileAttributesJS(builder, file.name, "showPreview",
+                    "${attr.size() > grailsApplication.config.jummp.web.file.preview};", false)
+                addFileAttributesJS(builder, file.name, "Description", it.description.encodeAsJavaScript(), true)
+				addFileAttributesJS(builder, file.name, "mime", it.mimeType, true)
+				addFileAttributesJS(builder,file.name,"isInternal","false", false)
+
+				if (it.mimeType != null ){
+                    if (it.mimeType.contains('zip')) {
+                        handleZip(builder, true, it.path, loadedZips, zipSupported)
+                    }
+                }
      		}
-     		builder.append("</script>")
         }
         catch(Exception e) {
-        	e.printStackTrace()
+            log.error e.message, e
+        } finally {
+            builder.append("</script>")
         }
-	
 	}
-	
+
 	def outputFileInfoAsJS = { attrs ->
         StringBuilder builder=new StringBuilder('''<script>function readablizeBytes(bytes) {
 			var s = ['bytes', 'kB', 'MB', 'GB', 'TB', 'PB'];
 			var e = Math.floor(Math.log(bytes) / Math.log(1024));
-			return (bytes / Math.pow(1024, e)).toFixed(2) + " " + s[e]; 
+			return (bytes / Math.pow(1024, e)).toFixed(2) + " " + s[e];
 		}var fileData=new Array();''')
 		if (!attrs.repFiles || attrs.loadedZips==null || attrs.zipSupported==null) {
         	return
         }
-        def loadedZips=attrs.loadedZips;
-        def zipSupported=attrs.zipSupported;
-        processFilesJS(attrs.repFiles, builder, loadedZips, zipSupported)	
-		out<<builder.toString()
+        def loadedZips = attrs.loadedZips
+        def zipSupported = attrs.zipSupported
+        processFilesJS(attrs.repFiles, builder, loadedZips, zipSupported)
+		out << builder.toString()
 	}
-	
-	
+
 	def outputFileInfoAsHtml = { attrs ->
-		StringBuilder builder=new StringBuilder()
-		try {
-			if (!attrs.repFiles || attrs.loadedZips==null || attrs.zipSupported==null || attrs.mainFile==null) {
-        		return
-        	}
-        	def loadedZips=attrs.loadedZips;
-        	def zipSupported=attrs.zipSupported;
-        	attrs.repFiles.each {
-        		if (attrs.mainFile==it.mainFile) {
-        			File f=new File(it.path);
-        			builder.append('''<li rel="file"><a title="''')
-        			builder.append(f.name)
-        			builder.append('''"><span class="pointerhere">''')
-        			String filename=f.name
-        			if (filename.length()>20) {
-        				filename=filename.substring(0,20)+"..."
-        			}
-        			builder.append(filename).append("</span></a>")
-        			if (it.mimeType.contains('zip')) {
-        				builder.append("<ul>")
-        				handleZip(builder, false, it.path, loadedZips, zipSupported)
-        				builder.append("</ul>")
-	 			    }
-	 			    builder.append("</li>")
-        		}
-        	}
-		}
-		catch(Exception e) {
-			e.printStackTrace()
-		}
-		out<<builder.toString();
+		out << outputFiles(attrs.repFiles, attrs.loadedZips, attrs.zipSupported, attrs.mainFile)
 	}
-	
-	
+
+    def outputConvertedFiles = { attrs ->
+        List<RFTC> convertedFilesTC = attrs.convertedFilesTC
+        out << outputFiles(convertedFilesTC, [:], [:] , false)
+    }
+
+    def renderConvertedFiles = { attrs ->
+        List<RFTC> convertedFilesTC = attrs.convertedFilesTC
+        out << "<ul>"
+        out << render(plugin: "jummp-plugin-web-application",
+            template: "/templates/model/convert/convertedFileShow",
+            collection: convertedFilesTC, var: "fileTC")
+        out << "</ul>"
+    }
+
+    private String outputFiles(List<RFTC> repFiles, HashMap loadedZips, Map zipSupported, boolean mainFile) {
+        StringBuilder builder = new StringBuilder()
+        try {
+            if (!repFiles || loadedZips == null || zipSupported == null || mainFile == null) {
+                return
+            }
+            repFiles.each {
+                if (mainFile == it.mainFile) {
+                    File f = new File(it.path)
+                    builder.append('''<li rel="file"><a title="''')
+                    builder.append(f.name)
+                    builder.append('''"><span class="pointerhere">''')
+                    String filename = f.name
+                    if (filename.length()>64) {
+                        filename = filename.substring(0,63) + "..."
+                    }
+                    builder.append(filename).append("</span></a>")
+                    if (it.mimeType != null) {
+                        if (it.mimeType.contains('zip')) {
+                            builder.append("<ul>")
+                            handleZip(builder, false, it.path, loadedZips, zipSupported)
+                            builder.append("</ul>")
+                        }
+                    }
+                    builder.append("</li>")
+                }
+            }
+        } catch(Exception e) {
+            e.printStackTrace()
+        }
+        builder.toString()
+    }
 }

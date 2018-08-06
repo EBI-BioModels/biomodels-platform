@@ -33,6 +33,11 @@ package net.biomodels.jummp.plugins.pharmml
 
 import eu.ddmore.libpharmml.dom.maths.Binoperator
 import eu.ddmore.libpharmml.dom.maths.Unioperator
+import eu.ddmore.libpharmml.dom.modeldefn.CountPMF
+import eu.ddmore.libpharmml.dom.uncertml.BinomialDistribution
+import eu.ddmore.libpharmml.dom.uncertml.BinomialDistributionType
+import eu.ddmore.libpharmml.dom.uncertml.PoissonDistribution
+import eu.ddmore.libpharmml.dom.uncertml.PoissonDistributionType
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable
 import eu.ddmore.libpharmml.dom.commontypes.FalseBoolean
@@ -48,21 +53,24 @@ import eu.ddmore.libpharmml.dom.commontypes.TrueBoolean
 import eu.ddmore.libpharmml.dom.commontypes.VariableAssignment
 import eu.ddmore.libpharmml.dom.commontypes.Vector as CTVector
 import eu.ddmore.libpharmml.dom.dataset.ColumnDefinition
+import eu.ddmore.libpharmml.dom.dataset.DataSet
 import eu.ddmore.libpharmml.dom.dataset.DataSetTableDefnType
 import eu.ddmore.libpharmml.dom.dataset.DataSetTableType
-import eu.ddmore.libpharmml.dom.dataset.DataSet
 import eu.ddmore.libpharmml.dom.maths.Binop
+import eu.ddmore.libpharmml.dom.maths.Binoperator
 import eu.ddmore.libpharmml.dom.maths.Constant
 import eu.ddmore.libpharmml.dom.maths.Equation
 import eu.ddmore.libpharmml.dom.maths.EquationType
 import eu.ddmore.libpharmml.dom.maths.FunctionCallType
 import eu.ddmore.libpharmml.dom.maths.Uniop
+import eu.ddmore.libpharmml.dom.maths.Unioperator
 import eu.ddmore.libpharmml.dom.modeldefn.CovariateDefinition
 import eu.ddmore.libpharmml.dom.modeldefn.GaussianObsError
 import eu.ddmore.libpharmml.dom.modeldefn.GeneralObsError
 import eu.ddmore.libpharmml.dom.modeldefn.IndividualParameter
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable
 import eu.ddmore.libpharmml.dom.modeldefn.SimpleParameter
+import eu.ddmore.libpharmml.dom.modeldefn.VariabilityDefnBlock
 import eu.ddmore.libpharmml.dom.modellingsteps.DatasetMapping
 import eu.ddmore.libpharmml.dom.modellingsteps.OperationProperty
 import eu.ddmore.libpharmml.dom.modellingsteps.ParameterEstimate
@@ -72,9 +80,11 @@ import eu.ddmore.libpharmml.dom.trialdesign.Activity
 import eu.ddmore.libpharmml.dom.trialdesign.Bolus
 import eu.ddmore.libpharmml.dom.trialdesign.Infusion
 import eu.ddmore.libpharmml.dom.uncertml.NormalDistribution
+import grails.util.Holders
 import javax.xml.bind.JAXBElement
 import javax.xml.namespace.QName
 import net.biomodels.jummp.core.IPharmMlRenderer
+import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.plugins.pharmml.maths.FunctionSymbol
 import net.biomodels.jummp.plugins.pharmml.maths.MathsSymbol
 import net.biomodels.jummp.plugins.pharmml.maths.MathsUtil
@@ -84,12 +94,45 @@ import net.biomodels.jummp.plugins.pharmml.maths.PiecewiseSymbol
 import net.biomodels.jummp.plugins.pharmml.util.correlation.CorrelationMatrix
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+import org.perf4j.aop.Profiled
 
 abstract class AbstractPharmMlRenderer implements IPharmMlRenderer {
     /* the class logger */
     private static final Log log = LogFactory.getLog(this)
     private static final String IS_DEBUG_ENABLED = log.isDebugEnabled()
     private static final String IS_INFO_ENABLED = log.isInfoEnabled()
+    /* the groovyPageRenderer */
+    def groovyPageRenderer = Holders.applicationContext.getBean("groovyPageRenderer")
+
+    /**
+     * @param variabilityModels a list of
+     * {@link eu.ddmore.libpharmml.dom.modeldefn.VariabilityDefnBlock}s.
+     */
+    @Profiled(tag = "abstractPharmMlRenderer.renderVariabilityModel")
+    String renderVariabilityModel(List<VariabilityDefnBlock> variabilityModels) {
+        def models = []
+        variabilityModels.each { m ->
+            def thisModel = [:]
+            thisModel["levels"] = formatVariabilityLevels(m.level)
+            thisModel["type"] = m.type.value()
+            models.add thisModel
+        }
+        return groovyPageRenderer.render(template: "/templates/0.2/variabilityModel",
+                    model: [variabilityModels: models])
+    }
+
+    List<String> formatVariabilityLevels(List variabilityLevels) {
+        def result = []
+        variabilityLevels.inject(result){ r, l ->
+            StringBuilder sb = new StringBuilder()
+            sb.append((l.name) ? l.name.value : l.symbId)
+            if (l.parentLevel) {
+                sb.append(", parent level: ").append(l.parentLevel.symbRef.symbIdRef)
+            }
+            result.add sb.toString()
+        }
+        return result
+    }
 
     /*
      * Parses an activity and writes it to a StringBuilder.
@@ -392,17 +435,23 @@ abstract class AbstractPharmMlRenderer implements IPharmMlRenderer {
 
     //TODO REMOVE THIS
     protected StringBuilder simpleParams(List<SimpleParameter> parameters,
-                Map<String, Equation> transfMap = [:]) {
+                Map<String, Equation> transfMap = [:], boolean  shownBlk = false) {
         def outcome = new StringBuilder()
         if (!parameters) {
             return outcome
         }
         outcome.append("<div class='spaced-top-bottom'>")
         try {
-            parameters.inject(outcome) { o, p ->
+            parameters.inject(outcome) { StringBuilder o, SimpleParameter p ->
                 String thisParam
                 if (p.assign) {
                     thisParam = convertToMathML(p.symbId, p.assign, transfMap)
+                    if (p.assign.equation.symbRef && shownBlk) {
+                        String blockIdAsMathML = """\
+<mfenced><mi>${p.assign.equation.symbRef.blkIdRef}</mi></mfenced>"""
+                        thisParam = """\
+${thisParam}<math display='inline'><mstyle>${blockIdAsMathML}</mstyle></math>"""
+                    }
                 } else {
                     thisParam = ["<math display='inline'><mstyle>", "</mstyle></math>"].join(op(p.symbId))
                 }
@@ -410,6 +459,7 @@ abstract class AbstractPharmMlRenderer implements IPharmMlRenderer {
                 o.append(thisParam).append(";&nbsp;")
                 o.append("</span>\n")
             }
+
         } catch(Exception e) {
             outcome.append("<p>Cannot display simple parameters.<p>")
             log.error("Error encountered while rendering simple params ${parameters.inspect()}: ${e.message}", e)
@@ -664,7 +714,7 @@ abstract class AbstractPharmMlRenderer implements IPharmMlRenderer {
     }
 
     protected StringBuilder distributionAssignment(String l, def d) {
-        StringBuilder builder=new StringBuilder("<math display='inline'><mstyle>")
+        StringBuilder builder = new StringBuilder("<math display='inline'><mstyle>")
         builder.append(oprand(l))
         builder.append(op("&sim;"))
         builder.append(distribution(d))
@@ -686,6 +736,12 @@ abstract class AbstractPharmMlRenderer implements IPharmMlRenderer {
         return result
     }
 
+    protected String binomialDistribution(def dist) {
+        StringBuilder result = new StringBuilder()
+        BinomialDistribution d = dist.value
+        return result.toString()
+    }
+
     protected String normalDistribution(def dist) {
         StringBuilder result = new StringBuilder()
         NormalDistribution d = dist.value
@@ -703,12 +759,31 @@ abstract class AbstractPharmMlRenderer implements IPharmMlRenderer {
         return result.toString()
     }
 
+    protected String poissonDistribution(def dist) {
+        StringBuilder result = new StringBuilder()
+        PoissonDistribution d = dist.value
+
+        return result.toString()
+    }
+
     protected StringBuilder scalarRhs(def r) {
         StringBuilder text = new StringBuilder()
         if (r.scalar) {
             text.append(scalar(r.scalar.value))
         } else if (r.equation) {
             text.append(convertToMathML(r.equation))
+        } else if (r.symbRef) {
+            text.append(r.symbRef.symbIdRef)
+        }
+        return text
+    }
+
+    protected StringBuilder scalarRhsInline(def r) {
+        StringBuilder text = new StringBuilder()
+        if (r.scalar) {
+            text.append(scalar(r.scalar.value))
+        } else if (r.equation) {
+            convertEquation(r.equation, text)
         } else if (r.symbRef) {
             text.append(r.symbRef.symbIdRef)
         }
@@ -1241,9 +1316,14 @@ abstract class AbstractPharmMlRenderer implements IPharmMlRenderer {
         for (int i = 0; i < N; i++) {
             output.append("<mtr>")
             for (int j = 0; j < N; j++) {
-                output.append("<mtd><mi>")
-                output.append(matrix[i][j])
-                output.append("</mi></mtd>\n")
+                output.append("<mtd>")
+                String v = matrix[i][j]
+                if (v.contains("<mi>")) {
+                    output.append(matrix[i][j])
+                } else {
+                    output.append("<mi>$v</mi>")
+                }
+                output.append("</mtd>\n")
             }
             output.append("</mtr>\n")
         }

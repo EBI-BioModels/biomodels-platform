@@ -34,7 +34,7 @@ class FixedDigitAppendingDecorator extends AbstractAppendingDecorator {
     /* the class logger */
     private static final Log log = LogFactory.getLog(this)
     /* semaphore for the log threshold */
-    private static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
+    private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
 
     protected FixedDigitAppendingDecorator() {
     }
@@ -42,7 +42,7 @@ class FixedDigitAppendingDecorator extends AbstractAppendingDecorator {
     /**
      * Don't pass a suffix below 1 to avoid an IllegalArgumentException.
      */
-    public FixedDigitAppendingDecorator(Integer order, int suffix, int width)
+    public FixedDigitAppendingDecorator(Integer order, long suffix, int width)
                 throws IllegalArgumentException {
         boolean orderOk = validateOrderValue(order)
         if (!orderOk) {
@@ -60,10 +60,10 @@ class FixedDigitAppendingDecorator extends AbstractAppendingDecorator {
             log.warn("Minimum padding for fixed decorator '$suffix' is $SUFFIX_WIDTH, not $width")
             width = SUFFIX_WIDTH
         }
-        nextValue = "$suffix".padLeft(width, '0')
+        nextValue.compareAndSet(null, "$suffix".padLeft(width, '0'))
         WIDTH = width
-        if (IS_INFO_ENABLED) {
-            log.info "Creating ${WIDTH}-digit $this"
+        if (IS_DEBUG_ENABLED) {
+            log.debug "Creating ${WIDTH}-digit $this"
         }
     }
 
@@ -73,15 +73,16 @@ class FixedDigitAppendingDecorator extends AbstractAppendingDecorator {
     ModelIdentifier decorate(ModelIdentifier modelIdentifier) {
         if (modelIdentifier) {
             String currentId = modelIdentifier.getCurrentId()
-            if (IS_INFO_ENABLED) {
-                log.info "Decorating $currentId with $nextValue."
+            final String next = nextValue.get()
+            if (IS_DEBUG_ENABLED) {
+                log.debug "Decorating $currentId with $nextValue "
             }
             modelIdentifier.append(nextValue)
             return modelIdentifier
         } else {
             log.warn "Undefined model identifier encountered - decorating a new one instead."
             ModelIdentifier result = new ModelIdentifier()
-            result.append(nextValue)
+            result.append(nextValue.get())
             return result
         }
     }

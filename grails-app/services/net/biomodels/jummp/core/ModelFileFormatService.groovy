@@ -34,6 +34,9 @@
 
 package net.biomodels.jummp.core
 
+import net.biomodels.jummp.core.model.ModelElementTypeCategory
+import net.biomodels.jummp.core.model.ModelElementTypeTransportCommand
+import net.biomodels.jummp.model.ModelElementType
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.core.model.FileFormatService
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand
@@ -41,7 +44,8 @@ import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.model.Revision
 import org.perf4j.aop.Profiled
-import net.biomodels.jummp.core.adapters.DomainAdapter
+import net.biomodels.jummp.core.adapters.ModelFormatAdapter
+
 /**
  * @short Service to handle Model files.
  *
@@ -49,11 +53,17 @@ import net.biomodels.jummp.core.adapters.DomainAdapter
  * It does not provide own methods but delegates the calls to the concrete service for
  * the specific ModelFormat.
  *
+ * It is essential to note that this service plays the role of the factory which methods are used
+ * to return a concrete object of the specific ModelFormat. This is determined by using the first
+ * factory method, named 'serviceFormat'.
+ *
  * Additionally the service provides methods to allow a plugin to register a new ModelFormat
  * and to tell the application which service is responsible for a format.
  * @author Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
+ * Last modified date: 14/04/2016
  */
 class ModelFileFormatService {
 
@@ -74,10 +84,10 @@ class ModelFileFormatService {
 
     /**
      * Extracts the format of the supplied @p modelFiles.
-     * Returns the default ModelFormat representation with an empty formatVersion, since this is expected to exist 
+     * Returns the default ModelFormat representation with an empty formatVersion, since this is expected to exist
      * for every format that is handled.
      * @param modelFiles the list of files corresponding to a model
-     * @returns the corresponding model format, or unknown if this cannot be inferred. 
+     * @returns the corresponding model format, or unknown if this cannot be inferred.
      */
     @Profiled(tag = "modelFileFormatService.inferModelFormat")
     ModelFormatTransportCommand inferModelFormat(List<RFTC> modelFiles) {
@@ -95,20 +105,22 @@ class ModelFileFormatService {
         String match = services.keySet().find {
             if (it == "UNKNOWN") return false
             String serviceName = services.getAt(it)
-            def ffs = grailsApplication.mainContext.getBean(serviceName)
+            def ffs = grailsApplication.mainContext.getBean(serviceName, FileFormatService)
             return ffs.areFilesThisFormat(fileList)
         }
         if (!match) {
-            return DomainAdapter.getAdapter(ModelFormat.findByIdentifierAndFormatVersion("UNKNOWN", "*")).toCommandObject()
+            return new ModelFormatAdapter(format:
+                ModelFormat.findByIdentifierAndFormatVersion("UNKNOWN", "*")).toCommandObject()
         } else {
-        	ModelFormatTransportCommand unknownVersionFormat = DomainAdapter.getAdapter(
-        	                                                       ModelFormat.findByIdentifierAndFormatVersion(match, "*"))
-        	                                                       .toCommandObject()
-        	RevisionTransportCommand rev = new RevisionTransportCommand(files: modelFiles, format: unknownVersionFormat)
+            ModelFormatTransportCommand unknownVersionFormat =
+                    new ModelFormatAdapter(format:ModelFormat.findByIdentifierAndFormatVersion(match, "*"))
+                                                        .toCommandObject()
+            RevisionTransportCommand rev = new RevisionTransportCommand(files: modelFiles,
+                                                                        format: unknownVersionFormat)
             String formatVersion = getFormatVersion(rev)
             ModelFormat knownVersionFormat = ModelFormat.findByIdentifierAndFormatVersion(match, formatVersion);
             if (knownVersionFormat) {
-            	return DomainAdapter.getAdapter(knownVersionFormat).toCommandObject()
+                return new ModelFormatAdapter(format:knownVersionFormat).toCommandObject()
             }
             return unknownVersionFormat
         }
@@ -128,16 +140,40 @@ class ModelFileFormatService {
     ModelFormatTransportCommand registerModelFormat(final String identifier, final String name, String version) {
         ModelFormat modelFormat = ModelFormat.findByIdentifierAndFormatVersion(identifier, version)
         if (modelFormat) {
-            return DomainAdapter.getAdapter(modelFormat).toCommandObject()
+            return new ModelFormatAdapter(format:modelFormat).toCommandObject()
         } else {
             modelFormat = new ModelFormat(identifier: identifier, name: name, formatVersion: version)
             modelFormat.save(flush: true)
-            return DomainAdapter.getAdapter(modelFormat).toCommandObject()
+            return new ModelFormatAdapter(format:modelFormat).toCommandObject()
         }
     }
 
     ModelFormatTransportCommand registerModelFormat(final String identifier, final String name) {
         return registerModelFormat(identifier, name, "*")
+    }
+
+    ModelElementTypeTransportCommand registerModelElementType(final ModelFormatTransportCommand modelFormatTC, final String name) {
+        ModelFormat modelFormat = ModelFormat.findByIdentifierAndFormatVersion(modelFormatTC.identifier, modelFormatTC.formatVersion)
+        try {
+            ModelElementType modelElementType = ModelElementType.findByModelFormatAndName(modelFormat, name)
+            if (modelElementType) {
+                use(ModelElementTypeCategory) {
+                    return modelElementType.toCommandObject()
+                }
+            } else {
+                modelElementType = new ModelElementType(modelFormat: modelFormat, name: name)
+                if (!modelElementType.save(flush: true)) {
+                    def err = modelElementType.errors.allErrors()
+                    String msg = "Illegal element type $name for fmt ${modelFormat.id}: ${err}"
+                    throw new IllegalArgumentException(msg)
+                }
+                use(ModelElementTypeCategory) {
+                    return modelElementType.toCommandObject()
+                }
+            }
+        } catch (org.springframework.jdbc.BadSqlGrammarException exception) {
+            throw new IllegalStateException("Model element type table does not exist")
+        }
     }
 
     /**
@@ -246,18 +282,6 @@ class ModelFileFormatService {
     }
 
     /**
-     * Retrieves the content of a revision transport command to be indexed by the search
-     * engine
-     * @param revision the revision from which content to be indexed is extracted
-     * @return The content to be indexed by Solr: returns a map with field as key, and a list
-     * of values for each field
-     */
-    Map<String, List<String>> getSearchIndexingContent(RevisionTransportCommand revision) {
-        FileFormatService service = serviceForFormat(revision?.format)
-        return service ? service.getSearchIndexingContent(revision) : [:]
-    }
-
-    /**
      * Retrieves all annotation URNs through the service responsible for the format used
      * by the @p revision.
      * @param rev The Revision for which all URNs should be retrieved
@@ -266,7 +290,7 @@ class ModelFileFormatService {
     List<String> getAllAnnotationURNs(Revision rev) {
         FileFormatService service = serviceForFormat(rev.format)
         if (service) {
-            return service.getAllAnnotationURNs(DomainAdapter.getAdapter(rev).toCommandObject())
+            return service.getAllAnnotationURNs(new ModelFormatAdapter(format:rev).toCommandObject())
         } else {
             return []
         }
@@ -281,7 +305,7 @@ class ModelFileFormatService {
     List<String> getPubMedAnnotation(Revision rev) {
         FileFormatService service = serviceForFormat(rev.format)
         if (service) {
-            return service.getPubMedAnnotation(DomainAdapter.getAdapter(rev).toCommandObject())
+            return service.getPubMedAnnotation(new ModelFormatAdapter(format:rev).toCommandObject())
         } else {
             return []
         }
@@ -296,6 +320,21 @@ class ModelFileFormatService {
      */
     String getPluginForFormat(final ModelFormatTransportCommand format) {
         return getControllers().get(format.identifier)
+    }
+
+    /**
+     * Used to select the appropriate method to do postprocessing annotations before saving them into database.
+     * This selection is performed dynamically at run time thank to using Factory Method Pattern 'serviceForFormat'
+     */
+    @Profiled(tag = "modelFileFormatService.doBeforeSavingAnnotations")
+    boolean doBeforeSavingAnnotations(File annoFile, RevisionTransportCommand newRevision) {
+        FileFormatService service = serviceForFormat(newRevision.format)
+        assert service
+        if (service) {
+            return service.doBeforeSavingAnnotations(annoFile, newRevision)
+        } else {
+            return false
+        }
     }
 
     /**

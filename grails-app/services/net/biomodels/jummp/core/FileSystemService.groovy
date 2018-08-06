@@ -1,40 +1,38 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
-* Deutsches Krebsforschungszentrum (DKFZ)
-*
-* This file is part of Jummp.
-*
-* Jummp is free software; you can redistribute it and/or modify it under the
-* terms of the GNU Affero General Public License as published by the Free
-* Software Foundation; either version 3 of the License, or (at your option) any
-* later version.
-*
-* Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
-* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-* A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
-* details.
-*
-* You should have received a copy of the GNU Affero General Public License along
-* with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
-*
-* Additional permission under GNU Affero GPL version 3 section 7
-*
-* If you modify Jummp, or any covered work, by linking or combining it with
-* Apache Commons, Spring Framework, Perf4j, Grails (or a modified version of that library), 
-* containing parts covered by the terms of Apache License v2.0, the licensors of this
-* Program grant you additional permission to convey the resulting work.
-* {Corresponding Source for a non-source form of such a combination shall
-* include the source code for the parts of Apache Commons, Spring Framework, Perf4j, Grails used as well as
-* that of the covered work.}
-**/
-
-
-
-
+ * Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Deutsches Krebsforschungszentrum (DKFZ)
+ *
+ * This file is part of Jummp.
+ *
+ * Jummp is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation; either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along
+ * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
+ *
+ * Additional permission under GNU Affero GPL version 3 section 7
+ *
+ * If you modify Jummp, or any covered work, by linking or combining it with
+ * Apache Commons, Spring Framework, Perf4j, Grails (or a modified version of that library), 
+ * containing parts covered by the terms of Apache License v2.0, the licensors of this
+ * Program grant you additional permission to convey the resulting work.
+ * {Corresponding Source for a non-source form of such a combination shall
+ * include the source code for the parts of Apache Commons, Spring Framework, Perf4j, Grails used as well as
+ * that of the covered work.}
+ **/
 
 package net.biomodels.jummp.core
 
 import java.io.FilenameFilter
+import java.util.concurrent.locks.ReentrantLock
+import java.util.concurrent.atomic.AtomicReference
 import org.apache.commons.logging.LogFactory
 import org.apache.commons.logging.Log
 import org.perf4j.aop.Profiled
@@ -48,6 +46,10 @@ import org.springframework.beans.factory.InitializingBean
  */
 class FileSystemService implements IFileSystemService, InitializingBean {
     static transactional = false
+    /**
+     * Monitor used to prevent concurrent requests from seeing inconsistent data.
+     */
+    final ReentrantLock lock = new ReentrantLock()
     /*
      * Dependency Injection for Grails Application
      */
@@ -68,7 +70,7 @@ class FileSystemService implements IFileSystemService, InitializingBean {
      * Ideally, this should be a symlink that just changes its target as needed.
      * The path of the current container is absolute.
      */
-    String currentModelContainer
+    final AtomicReference<String> currentModelContainer = new AtomicReference()
     /**
      * The maximum number of repositories stored in the current container before a new one is
      * created.
@@ -77,7 +79,7 @@ class FileSystemService implements IFileSystemService, InitializingBean {
     /**
      * This class' log
      */
-    private static final Log log = LogFactory.getLog(this.getClass())
+    private static final Log log = LogFactory.getLog(this)
 
     /**
      * Override org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
@@ -88,10 +90,10 @@ class FileSystemService implements IFileSystemService, InitializingBean {
         if (root) {
             File[] containers = getFolders(root)
             if (containers.length == 0) {
-                StringBuffer currentModelContainerPath = new StringBuffer(root.absolutePath)
-                currentModelContainerPath.append(File.separator).append(CONTAINER_PATTERN_SEED)
-                currentModelContainer = currentModelContainerPath.toString()
-                ensureFolderExists(currentModelContainer)
+                def containerFile = new File(root, CONTAINER_PATTERN_SEED)
+                String path = containerFile.absolutePath
+                assert ensureFolderExists(path)
+                currentModelContainer.set(path)
             } else {
                 /*
                  * String comparator that looks first at the length of the string
@@ -114,10 +116,10 @@ class FileSystemService implements IFileSystemService, InitializingBean {
                 }] as Comparator
                 String lastContainerName = Collections.max(containers.collect{ it.name }, cmp)
                 File lastContainer = new File(root, lastContainerName)
-                currentModelContainer = lastContainer.absolutePath
+                currentModelContainer.set(lastContainer.absolutePath)
                 findCurrentModelContainer()
             }
-            log.debug("New model to be deposited in $currentModelContainer")
+            log.debug("New model to be deposited in ${currentModelContainer.get()}")
         }
         else {
             log.error("Root for FileSystemService was not configured!")
@@ -132,18 +134,25 @@ class FileSystemService implements IFileSystemService, InitializingBean {
      */
     @Profiled(tag = "fileSystemService.findCurrentModelContainer")
     public String findCurrentModelContainer() {
-        final int MODEL_COUNT
-        File[] dirs = getFolders(new File(currentModelContainer))
-        if (dirs == null) {
-            MODEL_COUNT = 0
-        } else {
-            MODEL_COUNT = dirs.length
+        lock.lock()
+        try {
+            String current = currentModelContainer.get()
+            final int MODEL_COUNT
+            File[] dirs = getFolders(new File(current))
+            if (dirs == null) {
+                MODEL_COUNT = 0
+            } else {
+                MODEL_COUNT = dirs.length
+            }
+            if (MODEL_COUNT == maxContainerSize) {
+                current = incrementModelContainer(current)
+                assert ensureFolderExists(current)
+                currentModelContainer.set(current)
+            }
+            return currentModelContainer.get()
+        } finally {
+            lock.unlock()
         }
-        if (MODEL_COUNT == maxContainerSize) {
-            currentModelContainer = incrementModelContainer(currentModelContainer)
-            ensureFolderExists(currentModelContainer)
-        }
-        return currentModelContainer
     }
 
     /*
@@ -154,6 +163,7 @@ class FileSystemService implements IFileSystemService, InitializingBean {
      * @return the updated model container name.
      */
     String incrementModelContainer(String current) {
+        StringBuilder result = new StringBuilder()
         current = new File(current).name
         ArrayDeque<Character> resultStack = new ArrayDeque()
         boolean mustIncrementNext = true
@@ -178,7 +188,7 @@ class FileSystemService implements IFileSystemService, InitializingBean {
             resultStack.addFirst('a')
         }
         int len = root.absolutePath.length() + 1 + resultStack.size()
-        StringBuilder result = new StringBuilder(len)
+        result = new StringBuilder(len)
         result.append(root.absolutePath).append(File.separator)
         resultStack.inject(result) { r, c -> r.append(c) }
         return result.toString()
@@ -190,15 +200,19 @@ class FileSystemService implements IFileSystemService, InitializingBean {
      * @return          an array of model folders
      */
     private File[] getFolders(File parent) {
-        def existingContainers = parent.listFiles( new FilenameFilter() {
-            boolean accept(File root, String name) {
-                StringBuffer currentLocation = new StringBuffer(root.absolutePath)
-                currentLocation.append(File.separator).append(name)
-                final File currentEntry = new File(currentLocation.toString())
-                return (currentEntry.exists() && currentEntry.isDirectory())
-            }
-        })
-        return existingContainers
+        lock.lock()
+        def existingContainers
+        try {
+            existingContainers = parent.listFiles(new FilenameFilter() {
+                boolean accept(File root, String name) {
+                    final File currentEntry = new File(root, name)
+                    return currentEntry.isDirectory()
+                }
+            })
+            return existingContainers
+        } finally {
+            lock.unlock()
+        }
     }
 
     /*

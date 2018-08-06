@@ -19,26 +19,24 @@
 **/
 
 
-
-
-
-import net.biomodels.jummp.webapp.RegistrationCommand
+import grails.converters.JSON
+import grails.plugin.springsecurity.annotation.Secured
+import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.webapp.EditUserCommand
-import net.biomodels.jummp.webapp.UpdatePasswordCommand
+import net.biomodels.jummp.webapp.RegistrationCommand
 import net.biomodels.jummp.webapp.ResetPasswordCommand
-import grails.plugins.springsecurity.Secured
-import net.biomodels.jummp.plugins.security.Person
+import net.biomodels.jummp.webapp.UpdatePasswordCommand
 
 /*
 * @short Controller for managing user registrations
 * @author Raza Ali <raza.ali@ebi.ac.uk>
+* @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
 */
 
 
 
 class UsermanagementController {
-
-	/**
+    /**
      * Dependency injection for the springSecurityService.
      */
     //def springSecurityService
@@ -47,7 +45,7 @@ class UsermanagementController {
     def springSecurityService
     def messageSource
     def notificationService
-    			
+
     private String checkForMessage() {
         String flashMessage=""
         if (flash.message) {
@@ -55,70 +53,73 @@ class UsermanagementController {
         }
         return flashMessage
     }
-    
+
     private Object checkForErrorBean() {
     	if (flash.validationError) {
     		return flash.validationError
     	}
     	return null
     }
-    
+
      /**
      * Passes on any info messages needed to be displayed and renders the register gsp
      */
     @Secured(["isAnonymous()"])
-    def create = {
-    	render view: "register", model: [postUrl: "", flashMessage:checkForMessage(), 
+    def create() {
+        render view: "register", model: [postUrl: "", flashMessage: checkForMessage(),
     									validationErrorOn: checkForErrorBean()]
     }
-    
+
     @Secured(["isAuthenticated()"])
-    def edit = {
-    	String user = springSecurityService.principal.username
-    	render view: "edit", model: [postUrl: "", flashMessage:checkForMessage(), 
-    								validationErrorOn: checkForErrorBean(), 
-    								user: userService.getUser(user),
-    								notificationPermissions: notificationService.getNotificationPermissions(user)]
-    }
-    
-    @Secured(["isAuthenticated()"])
-    def editPassword = {
-    	render view: "editPassword", model: [postUrl: "", flashMessage:checkForMessage(), 
-    										validationErrorOn: checkForErrorBean(), 
-    										user: userService.getUser(springSecurityService.principal.username)]
-    }
-    
-    @Secured(["isAuthenticated()"])
-    def show = {
-    	String user = springSecurityService.principal.username
-    	render view: "show", model: [postUrl: "", flashMessage:checkForMessage(), 
-    								validationErrorOn: checkForErrorBean(), 
-    								user: userService.getUser(user),
-    								notificationPermissions: notificationService.getNotificationPermissions(user)]
-    }
-    
-    @Secured(["isAnonymous()"])
-    def forgot = {
-    	render view: "forgot", model: [postUrl: "", flashMessage:checkForMessage(), 
-    								validationErrorOn: checkForErrorBean()]
+    def edit() {
+        User currentUser = springSecurityService.currentUser
+        render  view: "edit",
+                model: [postUrl: "", flashMessage: checkForMessage(),
+                        validationErrorOn: checkForErrorBean(),
+                        user: currentUser,
+                        notificationPermissions: notificationService.getNotificationPermissions(currentUser.username)]
     }
 
-    @Secured(["isAnonymous()"])
-    def passwordreset = {
-    	if (params.id) {
-    		flash.hashCode=params.id
-    		redirect action: reset
-    	}
-    	else {
-    		redirect action: forgot;
-    	}
+    @Secured(["isAuthenticated()"])
+    def editPassword() {
+        render  view: "editPassword",
+                model: [postUrl: "", flashMessage: checkForMessage(),
+                        validationErrorOn: checkForErrorBean(),
+                        user: userService.getUser(springSecurityService.principal.username)]
     }
-    
+
+    @Secured(["isAuthenticated()"])
+    def show() {
+        User currentUser = userService.getCurrentUser()
+        render  view: "show",
+                model: [postUrl: "", flashMessage: checkForMessage(),
+                        validationErrorOn: checkForErrorBean(),
+                        user: currentUser,
+                        notificationPermissions: notificationService.getNotificationPermissions(currentUser.username)]
+    }
+
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def forgot() {
+        render  view: "forgot",
+                model: [postUrl: "", flashMessage: checkForMessage(),
+                        validationErrorOn: checkForErrorBean()]
+    }
+
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def resetPassword() {
+        if (params.id) {
+            flash.hashCode = params.id
+            redirect action: 'reset'
+        } else {
+            redirect action: 'forgot'
+        }
+    }
+
     /**
     * Password reset based on the unique code sent to the user
     **/
     @Secured(["isAnonymous()"])
-    def reset = {
+    def reset() {
     	render view: "reset", model: [postUrl: "", flashMessage:checkForMessage(),
     								validationErrorOn: checkForErrorBean(),
     								hashCode: flash.hashCode]
@@ -139,19 +140,20 @@ class UsermanagementController {
 
 
     /**
-     * Validates the command object and then uses the user service to 
+     * Validates the command object and then uses the user service to
      * edit a user. If an error occurs at any point, the method redirects
      * to edit action and sends the user a helpful message.
      */
-    def editUser = {
+    @Secured(["IS_AUTHENTICATED_FULLY"])
+    def editUser() {
         EditUserCommand cmd = new EditUserCommand()
         if (!validateUserData(cmd, params)) {
             return redirect(action:"edit")
         }
         try {
             def user = cmd.toUser()
-        	userService.editUser(user)
-        	notificationService.updatePreferences(cmd.getPreferences(user))
+        	User user1 = userService.editUser(user)
+        	notificationService.updatePreferences(cmd.getPreferences(user1))
         }
         catch(Exception e) {
             flash.message = e.getMessage()
@@ -163,17 +165,18 @@ class UsermanagementController {
     }
 
     /**
-     * Validates the command object and then uses the user service to 
+     * Validates the command object and then uses the user service to
      * edit a user. If an error occurs at any point, the method redirects
      * to edit action and sends the user a helpful message.
      */
-    def newPassword = {
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def newPassword() {
     	ResetPasswordCommand cmd=new ResetPasswordCommand()
     	if (!validateUserData(cmd, params)) {
     		flash.hashCode=params.hashCode
     		return redirect(action:"reset")
     	}
-    	try 
+        try
     	{
     		userService.resetPassword(cmd.hashCode, cmd.username, cmd.newPassword)
     	}
@@ -185,19 +188,18 @@ class UsermanagementController {
     	redirect(controller: "login", action:"auth")
     }
 
-    
-    
     /**
-     * Validates the command object and then uses the user service to 
+     * Validates the command object and then uses the user service to
      * edit a user. If an error occurs at any point, the method redirects
      * to edit action and sends the user a helpful message.
      */
-    def updatePassword = {
+    @Secured(["IS_AUTHENTICATED_FULLY"])
+    def updatePassword() {
     	UpdatePasswordCommand cmd=new UpdatePasswordCommand()
     	if (!validateUserData(cmd, params)) {
     		return redirect(action:"editPassword")
     	}
-    	try 
+        try
     	{
     		userService.changePassword(cmd.oldPassword, cmd.newPassword)
     	}
@@ -208,12 +210,13 @@ class UsermanagementController {
     	flash.message="Password was updated successfully"
     	redirect(action:"show")
     }
-    
+
     /**
     * Requests a password link from the user service, hiding the exception thrown
     * if the username provided does not exist.
     **/
-    def requestPassword = {
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def requestPassword() {
         String username = params.username
         boolean usernameExists = true
         if (username) {
@@ -231,7 +234,7 @@ class UsermanagementController {
             }
         }
         else {
-            flash.message = "Please provide a username.";
+            flash.message = "Please provide a username."
         }
         redirect(action:"forgot")
     }
@@ -242,28 +245,82 @@ class UsermanagementController {
      * the user service to create a user. If an error occurs at any point, the method redirects
      * to create action and sends the user a helpful message.
      */
-    def signUp = {
-    	boolean captchaValid = simpleCaptchaService.validateCaptcha(params.captcha)
-    	if (!captchaValid) {
-    		flash.message="The text entered did not match the image. Please try again"
-    		return redirect(action:"create")
-    	}
-    	if (params.verysecure) {
-    		flash.message="I hope you are a robot. Otherwise something has gone wrong."
-    		return redirect(action:"create")
-    	}
-    	RegistrationCommand cmd=new RegistrationCommand()
-    	if (!validateUserData(cmd, params)) {
-    		return redirect(action:"create")
-    	}
-    	try 
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def signUp() {
+        RegistrationCommand cmd = new RegistrationCommand()
+        if (!validateUserData(cmd, params)) {
+            return redirect(action:"create")
+        }
+        boolean captchaValid = simpleCaptchaService.validateCaptcha(params.captcha)
+        if (!captchaValid) {
+            flash.message="The text entered did not match the image. Please try again"
+            return redirect(action:"create")
+        }
+        if (params.verysecure) {
+            flash.message="I hope you are a robot. Otherwise something has gone wrong."
+            return redirect(action:"create")
+        }
+        try
     	{
     		userService.register(cmd.toUser())
     	}
     	catch(Exception e) {
     		flash.message=e.getMessage()
+            log.error e.message, e
    			return redirect(action:"create")
     	}
-    	render view: "successfulregistration"
+    	render(view: "successfulregistration", model: [email: cmd.email])
+    }
+
+    /**
+     * Fetch users' data based what customers are typing. The data populate the source of
+     * Autocomplete widgets. The data can be customised but they have to include two mandatory
+     * fields as label and value. The two fields are formed from the other ones. For example:
+     * label = userRealName (username<email>)
+     */
+    @Secured(["IS_AUTHENTICATED_FULLY"])
+    def fetchUsers() {
+        def request = params.request
+        def searchTerm = params.search
+        if (Integer.parseInt(request) == 1) {
+            List users = userService.searchUsers(searchTerm)
+            def usersMap = []
+            users.each {user ->
+                def email = user[0]
+                def username = user[1]
+                def userRealName = user[2]
+                def id = user[3]
+                usersMap << [label: "${userRealName} (${username}<${email}>)",
+                             value: id,
+                             username: username,
+                             email: email,
+                             userRealname: userRealName]
+            }
+            render(usersMap as JSON)
+        } else {
+            def username = params.username
+            User user = userService.getUser(username)
+            render([user] as JSON)
+        }
+    }
+
+    /**
+     * This controller tries to query the database to get the user who is potentially associated
+     * with the fields provided by new users. It is called in the register view where we parse
+     * the input values and come up with a Ajax call to UserService in order to look up them
+     * into the database.
+     *
+     * @return JSON string  the query if an user matches with, or an empty string in otherwise.
+     */
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY", "IS_AUTHENTICATED_FULLY"])
+    def lookupUser() {
+        String query = params?.query
+        int column = Integer.parseInt(params?.column)
+        User user = userService.lookupUser(query, column)
+        String response = ""
+        if (user) {
+            response = query
+        }
+        render([response] as JSON)
     }
 }

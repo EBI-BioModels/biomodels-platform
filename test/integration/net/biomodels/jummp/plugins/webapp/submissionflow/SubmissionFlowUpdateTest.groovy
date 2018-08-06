@@ -66,7 +66,8 @@ public class SubmissionFlowUpdateTest extends SubmissionFlowTestBase {
         File importFile = new File("target/vcs/exchange/import.xml")
         FileUtils.touch(importFile)
         importFile.append("Test\n")
-        def rf = new RepositoryFileTransportCommand(path: importFile.absolutePath, description: "")
+        def rf = new RepositoryFileTransportCommand(path: importFile.absolutePath, description: "",
+                mainFile: true)
         Model uploadedModel = modelService.uploadModelAsFile(rf, meta)
         assertTrue(uploadedModel.validate())
     	testSetup(uploadedModel.submissionId)

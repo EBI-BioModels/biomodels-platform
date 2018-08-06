@@ -1166,13 +1166,13 @@ databaseChangeLog = {
    include file: "20140804_make_repoFile_path_relative.groovy"
 
 
-	include file: 'notifications.groovy'
+   include file: 'notifications.groovy'
 
-	include file: 'addSenderToNotification.groovy'
+   include file: 'addSenderToNotification.groovy'
 
-	include file: 'trackNotificationSeenByUser.groovy'
+   include file: 'trackNotificationSeenByUser.groovy'
 
-	include file: 'removeFromFieldFromNotification.groovy'
+   include file: 'removeFromFieldFromNotification.groovy'
 
     include file: '20150409dropMiriamAnnotationTables.groovy'
 
@@ -1185,4 +1185,85 @@ databaseChangeLog = {
     include file: '20150608_make_wcm_space_alias_uri_nullable.groovy'
 
     include file: '20150610-DropResourceReferenceConstraints.groovy'
+
+    include file: '20150611-widenResourceReferenceName.groovy'
+
+    include file: '20150618_createBiomodelsDOM.groovy'
+
+    include file: '20150626_addCollectionNameToResourceReference.groovy'
+
+    include file: '20150820_widen_curation_comments.groovy'
+
+	include file: '20151012_addMetadataValidationToRevision.groovy'
+
+    include file: '20151105_populate_revision_validation_level.groovy'
+
+	include file: '20151207_nullable_xref_uri.groovy'
+
+    include file: '20160114-makeResourceReferenceNameText.groovy'
+
+    include file: '20160229-updateModelFormatName-Unknown2Original.groovy'
+
+    include file: "20160511_updateRDFdescription.groovy"
+
+	include file: '20160713_createTableQcInfo.groovy'
+
+    include file: '20160718_addQcInfoToRevision.groovy'
+
+    include file: '20160718_addCertificationConstraints.groovy'
+
+    include file: '20161011_createIndexingPlanTable.groovy'
+
+    include file: '20161207_createFlagTable.groovy'
+
+    include file: '20161207_createModelFlagTable.groovy'
+
+    include file: '20161217_createModelElementType.groovy'
+
+    include file: '20161217_addModelElementType_ElementAnnotation.groovy'
+
+    include file: '20161212_publicationPropertiesAsString.groovy'
+
+    include file: '2017-02-01_make_publication_details_nullable.groovy'
+
+    include file: '20170206_fixRevisionAnnotationAssociations.groovy'
+
+    include file: '20170217_makeResourceReferenceSynonymsText.groovy'
+
+    include file: '20170223_makeCurationNotesCommentText.groovy'
+
+    include file: 'delta.groovy'
+
+    include file: '20170316_makeURIsUnique.groovy'
+
+    include file: '20170320_index_annotation_qualifier_uri.groovy'
+
+    include file: '20170322_add_statement_index.groovy'
+
+    include file: '20170410_addShortDescription_PreviewImage_MOM.groovy'
+
+    include file: '20170615_add_resource_reference_accession_index.groovy'
+
+    include file: '20170720_widenRepositoryFileDescription.groovy'
+
+    include file: '20170914_changePK_PublicationPerson.groovy'
+
+    include file: '20170914_createtable_Feedback.groovy'
+
+    include file: '20170915_changeConstraints_Feedback.groovy'
+
+    include file: '20171009_changeConstraints_Notification.groovy'
+
+    include file: '20171124_setRepositoryFileDescriptionNotNull.groovy'
+
+    include file: '20180327_add_curation_state.groovy'
+
+    include file: '20180409_addInternalComment_CurationNotes.groovy'
+
+	include file: '20180417_change_DataTypes_Constraints_CurationNotes.groovy'
+
+    include file: '20180515_modelDeleted_personName_idx.groovy'
+
+    include file: '20180517_create_model_class.groovy'
 }
+

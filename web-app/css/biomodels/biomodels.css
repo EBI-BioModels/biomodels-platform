@@ -1,0 +1,438 @@
+h1 {
+    color: #0a0a0a;
+}
+.sectionHeight {
+    height: 25%;
+}
+
+table.center {
+    max-width: 95%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.forlabelintable {
+    text-align: right;
+}
+.tableLabels {
+    float: right;
+}
+
+.label-floating-left {
+    float: left;
+}
+
+.label-floating-right {
+    float: right;
+}
+
+.required:after {
+    content: " (*)";
+    color: red;
+}
+
+pre {
+    /*overflow: auto;*/
+    white-space: pre-wrap;       /* Since CSS 2.1 */
+    white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+    white-space: pre-wrap;       /* Opera 4-6 */
+    white-space: -o-pre-wrap;    /* Opera 7 */
+    word-wrap: break-word;       /* Internet Explorer 5.5+ */
+}
+
+/* styling for entries on the news index page /content/news */
+.news-summary-block {
+    margin: 1em;
+    border: 1px solid #FFF;
+    border-radius: 5px;
+    box-shadow: 2px 2px 5px #888888;
+    padding-left: 1em;
+    padding-top: 0.25em;
+    padding-bottom: 0.5em;
+}
+
+.modelPlaceHolder {
+    border-radius: 5px;
+    border: 1px solid rgb(0, 124, 130);
+    width: 100%;
+    box-shadow: 1px 1px 1px grey;
+    margin-top: 7px;
+}
+
+.facetContainer {
+    padding-top: 5px;
+    border:2px solid #ccc;
+    width: 100%;
+    height: 125px;
+    overflow-x: scroll;
+    overflow-y: scroll;
+    font-size: 12px;
+}
+
+.facetContainer ul {
+    list-style-type: none;
+}
+
+.facetContainer ul > li {
+    text-indent: -1.6em;
+    padding-left: 0.45em;
+    white-space: nowrap;
+    margin: -3px 0;
+}
+
+.searchEachFacet {
+    font-size: 14px;
+    width: 100%;
+    margin-bottom: 2px;
+}
+
+span.result-number,
+span.result-total {
+    font-weight: bold;
+    color: #111111;
+}
+
+div#search-results {}
+
+div#search-results h2 {
+    font-size: 182%;
+}
+
+div#search-results h3 {
+    padding-top: 9px;
+
+    font-size: 138.5%;
+    margin-bottom: 0;
+    color: #666;
+    border-bottom: 0 none;
+
+    text-shadow: 1px 1px 3px #ffffff;
+
+    background-color: #eeeeee;
+    background-image: -moz-linear-gradient(top, #eeeeee, #d8d8d8);
+    background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #eeeeee),color-stop(1, #d8d8d8));
+    background-image: -webkit-linear-gradient(#eeeeee, #d8d8d8);
+    background-image: linear-gradient(top, #eeeeee, #d8d8d8);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorStr='#eeeeee', EndColorStr='#d8d8d8');
+
+
+    -moz-border-radius-topleft: 5px;
+    -moz-border-radius-topright: 5px;
+    -khtml-border-radius-topleft: 5px;
+    -khtml-border-radius-topright: 5px;
+    -webkit-border-top-left-radius: 5px;
+    -webkit-border-top-right-radius: 5px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+
+    margin-top: 0;
+}
+
+div#search-results h3 span { font-size: 66.7%; }
+
+div#search-results h4 {
+    font-size: 108%;	/* 14px */
+    margin: 5px 0;	/* Need to pull the result description up a bit */
+    display: inline-block;
+}
+
+div#search-results h4 a {
+}
+
+div#search-results h4 a:link {
+    color: #207a7a;
+    text-decoration: underline;
+}
+
+div#search-results h4 a:visited {
+    text-decoration: underline;
+}
+
+div#search-results h4 a:hover,
+div#search-results h4 a:focus,
+div#search-results h4 a:active
+{
+    background-color: #71b360;
+    background-color: rgba(113, 179, 96, 0.5);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorStr='#71b360',EndColorStr='#71b360');
+    text-decoration: none;
+    color: #111111;
+}
+
+div#search-results h4 a.icon-bg:link {
+    background-repeat: no-repeat;
+    background-position: right;
+    border-right: 5px solid transparent;
+    padding-right: 35px;
+}
+
+div.result {
+    clear: left;
+    height: 100%;
+    border-top: 1px dotted #CCC;
+    min-height: 95px;
+}
+
+/* Local master Head */
+div#local-masthead {
+    background-color: #70bdbd;
+    background-image:-webkit-linear-gradient(left, #207a7a, #70bdbd);
+    background-image: -moz-linear-gradient(left, #207a7a, #70bdbd);
+    background-image: -ms-linear-gradient(left, #207a7a, #70bdbd);
+    background-image: -o-linear-gradient(left, #207a7a, #70bdbd);
+    background-image: linear-gradient(left,#207a7a,#70bdbd);
+    filter: progid:DXImageTransform.Microsoft.gradient(gradientType='1', startColorStr='#207a7a', EndColorStr='#70bdbd'); /* IE6/7 */
+    -ms-filter: "progid:DXImageTransform.Microsoft.gradient(gradientType='1', startColorStr='#207a7a', EndColorStr='#70bdbd')"; /* IE8*/
+}
+
+.caret {
+    position: relative;
+    top: -1px;
+    border-style: solid dashed dashed;
+    border-color: transparent;
+    border-top-color: #0F2559;
+    display: -moz-inline-box;
+    display: inline-block;
+    font-size: 0;
+    height: 0;
+    line-height: 0;
+    width: 0;
+    border-width: 3px 3px 0;
+    padding-top: 1px;
+    left: 4px;
+}
+
+.links {
+    padding: 10px 10px 5px 10px;
+    font-style: italic;
+    color: #5F5F5F;
+    border: 1px solid #CCC;
+    background-color: #ffffee;
+    background: -moz-linear-gradient(top, #ffffee, #eeeeee);
+    background: -webkit-gradient(linear,left top,left bottom,color-stop(0, #ffffee),color-stop(1, #eeeeee));
+    background: -webkit-linear-gradient(#ffffee, #eeeeee);
+    background: linear-gradient(top, #ffffee, #eeeeee);
+    background: -ms-linear-gradient(top, #ffffee,#eeeeee); /* IE 10 */
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorStr='#ffffee', EndColorStr='#eeeeee');
+    box-shadow: 0 2px 4px #ccc;
+    position: absolute;
+    top: 27px;
+    width: 300px;
+    /* right: 10px; */
+    display: block;
+    z-index: 9;
+}
+
+.links span {
+    background-image: url("../images/indicator.gif");
+    background-repeat : no-repeat;
+    background-position : center left;
+    padding: 3px 3px 3px 20px;
+}
+
+.links ul {
+    list-style: none;
+    padding-left: 9px;
+}
+
+.crossRefLinks {
+    border-top: 1px dotted #CCC;
+    color: #5F5F5F;
+    padding: 8px;
+    font-style: italic;
+    font-size: 90%;
+}
+
+.additionalLinks {
+    list-style: none;
+    display: block;
+    position: relative;
+    margin: 0 0 10px 2px;
+    width: 100%;
+    font-size: 8pt;
+    color: #999999;
+}
+
+/* *************************************************
+    new classes indicating mimetype content content
+   ************************************************* */
+
+.application_xml_content {
+    background-image: url("../images/mimeTypes/application_xml.png");
+}
+.application_pdf_content {
+    background-image: url("../images/mimeTypes/application_pdf.png");
+}
+.application_msword_content {
+    background-image: url("../images/mimeTypes/application_msword.png");
+}
+.application_msword_content {
+    background-image: url("../images/mimeTypes/application_msword.png");
+}
+.application_powerpoint_content {
+    background-image: url("../images/mimeTypes/application_powerpoint.png");
+}
+.application_powerpoint_content {
+    background-image: url("../images/mimeTypes/application_powerpoint.png");
+}
+.application_excel_content {
+    background-image: url("../images/mimeTypes/application_excel.png");
+}
+.application_excel_content {
+    background-image: url("../images/mimeTypes/application_excel.png");
+}
+.application_powerpoint_content {
+    background-image: url("../images/mimeTypes/application_powerpoint.png");
+}
+.application_msword_content {
+    background-image: url("../images/mimeTypes/application_msword.png");
+}
+.application_excel_content {
+    background-image: url("../images/mimeTypes/application_excel.png");
+}
+.unknown_type_content {
+    background-image: url("../images/mimeTypes/unknown_type.png");
+}
+.application_powerpoint_content {
+    background-image: url("../images/mimeTypes/application_powerpoint.png");
+}
+.application_msword_content {
+    background-image: url("../images/mimeTypes/application_msword.png");
+}
+.application_excel_content {
+    background-image: url("../images/mimeTypes/application_excel.png");
+}
+.unknown_type_content {
+    background-image: url("../images/mimeTypes/unknown_type.png");
+}
+.text_plain_content {
+    background-image: url("../images/mimeTypes/text_plain.png");
+}
+
+/**
+TODO remove when in general CSS
+**/
+a#logo {
+    border: none;
+}
+
+#local-search {
+    padding-top: 7px;
+}
+
+span.hl_term, span.HL_TERM {
+    background-color: #ddd;
+    border-radius: 2px;
+    font-weight: bold;
+}
+
+form#form_facets {
+    font-size: 100%;
+}
+
+.additional_content {
+    color:#73B360;
+}
+
+div#wizzard_main_panel {
+    display: block;
+}
+
+div#wizzard_main_panel label {
+    display: inline-block;
+    min-width: 200px;
+}
+
+div#wizzard_main_panel input[type=text] {
+    display: inline-block;
+    min-width: 300px;
+}
+
+table#stats-table {
+    font-size: 90%;
+}
+
+form.resource_search input.resource_query {
+    width: 80%;
+    float: left;
+}
+
+form.resource_search input.submit{
+    background: url("../images/searchicon.png") no-repeat scroll 0 0 rgba(0, 0, 0, 0);
+    border: 0 none;
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+    float: right;
+    filter: none;
+}
+
+.nbOfEntries {
+    text-align: right;
+}
+
+.lastModificationDate {
+    text-align: center;
+}
+
+/* The alert message box */
+.alert {
+    padding: 7px;
+    background-color: #f44336; /* Red */
+    color: white;
+    margin-bottom: 3px;
+}
+
+.alert.success {
+    background-color: #00aaaa;}
+.alert.info {
+    background-color: rgb(0, 128, 128);
+}
+.alert.warning {
+    background-color: #00aaaa;
+}
+
+/* The close button */
+.closebtn {
+    margin-left: 15px;
+    color: white;
+    font-weight: bold;
+    float: right;
+    font-size: 22px;
+    line-height: 20px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+/* When moving the mouse over the close button */
+.closebtn:hover {
+    color: black;
+}
+
+/* chart */
+.arc text {
+    font: 10px sans-serif;
+    text-anchor: middle;
+}
+
+.arc path {
+    stroke: #fff;
+}
+
+#globalchart {
+    margin: 0 auto;
+    text-align: center;
+}
+
+/* external links opened in a popup (displayed with an arrow) */
+a.external:link, a.external:visited {
+    background: transparent url(../../images/biomodels/external_link.gif) no-repeat scroll right center;
+    padding-right: 13px !important;
+}
+a.external:hover, a.external:active {
+    background: transparent url(../../images/biomodels/external_active.gif) no-repeat scroll right center;
+    padding-right: 13px !important;
+}
+
+#fileDesc {
+    display: none;
+    cursor: pointer;
+}

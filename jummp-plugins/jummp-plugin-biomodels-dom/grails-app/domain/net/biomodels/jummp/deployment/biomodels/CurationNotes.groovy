@@ -1,0 +1,60 @@
+/**
+* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Deutsches Krebsforschungszentrum (DKFZ)
+*
+* This file is part of Jummp.
+*
+* Jummp is free software; you can redistribute it and/or modify it under the
+* terms of the GNU Affero General Public License as published by the Free
+* Software Foundation; either version 3 of the License, or (at your option) any
+* later version.
+*
+* Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
+* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+* A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+* details.
+*
+* You should have received a copy of the GNU Affero General Public License along
+* with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
+**/
+
+
+
+
+
+package net.biomodels.jummp.deployment.biomodels
+
+import net.biomodels.jummp.model.Model
+import net.biomodels.jummp.plugins.security.User
+
+/**
+ * @short Domain class for storing the curation notes of a given model revision
+ *
+ * @author
+ *  Raza Ali <raza.ali@ebi.ac.uk>
+ *  Tung Nguyen <tung.nguyen@ebi.ac.uk>
+ */
+class CurationNotes implements Serializable {
+    Model model
+    User submitter
+    User lastModifier
+    Date dateAdded
+    Date lastModified
+    String comment
+    /**
+     * The internal comment allows curators to add private comments
+     */
+    String internalComment
+    byte[] curationImage
+
+    static mapping = {
+        comment type: 'text'
+        internalComment type: 'text'
+    }
+
+    static constraints = {
+        curationImage(nullable: false, maxSize: 1_500_000) // approximately 1.44 MB
+        comment(nullable: false, blank: false)
+        internalComment(nullable: true, blank: true)
+    }
+}

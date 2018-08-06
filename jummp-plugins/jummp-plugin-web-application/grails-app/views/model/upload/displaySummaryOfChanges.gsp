@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -33,7 +33,7 @@
 
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <meta name="layout" content="main"/>
+        <meta name="layout" content="${session['branding.style']}/main" />
         <title><g:message code="submission.summary.header"/></title>
     </head>
     <body>
@@ -44,7 +44,7 @@
         %>
         <g:form>
             <div class="dialog">
-                <table class="formtable">
+                <table class="formtable responsive-table">
                     <tbody>
                         <tr class="prop">
                             <td class="name" style="vertical-align:top;">
@@ -63,9 +63,11 @@
                         </tr>
                         <tr class="prop">
                             <td class="name" style="vertical-align:top;">
-                                <label for="${g.message(code: 'submission.summary.descriptionLabel')}">
-                                    <g:message code="submission.summary.descriptionLabel"/>
+                                <jummp:displayModelDescriptionLabel>
+                                <label for="${description}">
+                                    ${description}
                                 </label>
+                                </jummp:displayModelDescriptionLabel>
                             </td>
                             <td class="value" style="vertical-align:top;">
                                 <div class="displayDescription">
@@ -78,7 +80,7 @@
                                 </div>
                             </td>
                         </tr>
-                        <g:if test="${revision.model.publication}">
+                        <g:if test="${revision.model.publication?.validate()}">
                             <tr class="prop">
                                 <td class="name" style="vertical-align:top;">
                                     <label for="${g.message(code: 'submission.summary.publication')}">
@@ -92,6 +94,20 @@
                                 </td>
                             </tr>
                         </g:if>
+                        <g:else>
+                            <tr class="prop">
+                                <td class="name" style="vertical-align:top;">
+                                    <label for="${g.message(code: 'submission.summary.publication')}">
+                                        <g:message code="submission.summary.publication"/>
+                                    </label>
+                                </td>
+                                <td class="value" style="vertical-align:top;">
+                                    <div class="displayDescription">
+                                        No publication provided
+                                    </div>
+                                </td>
+                            </tr>
+                        </g:else>
                         <g:if test="${workingMemory.get("isUpdateOnExistingModel") as Boolean}">
                             <tr class="prop">
                                 <td class="name">
@@ -107,13 +123,17 @@
                     </tbody>
                 </table>
                 <div class="buttons">
-                    <g:submitButton name="Cancel" value="${g.message(code: 'submission.common.cancelButton')}" />
-                    <g:submitButton name="Back" value="${g.message(code: 'submission.common.backButton')}" />
+                    <g:submitButton name="Cancel" class="button"
+                                    value="${g.message(code: 'submission.common.cancelButton')}" />
+                    <g:submitButton name="Back" class="button"
+                                    value="${g.message(code: 'submission.common.backButton')}" />
                     <g:if test="${workingMemory.get("isUpdateOnExistingModel") as Boolean}">
-                    	<g:submitButton name="Continue" value="${g.message(code: 'submission.summary.update.submitButton')}"/>
+                    	<g:submitButton name="Continue" class="button"
+                                        value="${g.message(code: 'submission.summary.update.submitButton')}"/>
                     </g:if>
                     <g:else>
-                    	<g:submitButton name="Continue" value="${g.message(code: 'submission.summary.create.submitButton')}"/>
+                    	<g:submitButton name="Continue" class="button"
+                                        value="${g.message(code: 'submission.summary.create.submitButton')}"/>
                     </g:else>
                 </div>
             </div>

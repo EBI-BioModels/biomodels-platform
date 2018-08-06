@@ -24,6 +24,9 @@
 
 package net.biomodels.jummp.core.model
 
+import net.biomodels.jummp.qcinfo.FlagLevel
+import net.biomodels.jummp.qcinfo.QcInfo
+
 /**
  * @short Wrapper for a Model to be transported through JMS.
  *
@@ -56,6 +59,10 @@ class ModelTransportCommand implements Serializable {
      * The name of this model
      */
     String name
+    /**
+     * The description of this model
+     */
+    String description
     /**
      * Whether this model has been deleted.
      */
@@ -104,5 +111,6 @@ class ModelTransportCommand implements Serializable {
      * The username of the original submitter.
      */
     String submitterUsername
-    
+
+    FlagLevel flagLevel
 }

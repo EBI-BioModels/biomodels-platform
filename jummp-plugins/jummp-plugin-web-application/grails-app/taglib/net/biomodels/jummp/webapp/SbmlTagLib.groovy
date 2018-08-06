@@ -98,7 +98,10 @@ class SbmlTagLib {
      */
     def renderReactionOverview = { attrs ->
         Map reaction = attrs.reaction
-        String metaLink = g.createLink(controller: 'sbml', action: 'reactionMetaOverview', params: [id: params.id, reactionId: reaction.id, revision: params.revision, reversible: reaction.reversible, products: reaction.products, modifiers: reaction.modifiers,           reactants: reaction.reactants])
+        String metaLink = g.createLink(controller: 'sbml', action: 'reactionMetaOverview',
+            params: [id: params.id, reactionId: reaction.id, revision: params.revision,
+                     reversible: reaction.reversible, products: reaction.products,
+                     modifiers: reaction.modifiers, reactants: reaction.reactants])
         String name = reaction.name ? reaction.name : reaction.id
         out << render(template: "/templates/sbml/reactionOverview", model: [title: name, metaLink: metaLink])
     }
@@ -155,9 +158,13 @@ class SbmlTagLib {
      */
     def renderCompartmentOverview = { attrs ->
         Map compartment = attrs.compartment
-        String metaLink = g.createLink(controller: 'sbml', action: 'compartmentMetaOverview', params: [id: params.id, compartmentId: compartment.id, revision: params.revision, size: compartment.size, spatialDimensions: compartment.spatialDimensions, units: compartment. units, notes: compartment.notes, allSpecies: compartment.allSpecies])
+        String metaLink = g.createLink(controller: 'sbml', action: 'compartmentMetaOverview',
+            params: [id: params.id, compartmentId: compartment.id, revision: params.revision,
+                     size: compartment.size, spatialDimensions: compartment.spatialDimensions,
+                     units: compartment. units, notes: compartment.notes, allSpecies: compartment.allSpecies])
         String name = compartment.name ? compartment.name : compartment.id
-        out << render(template: "/templates/sbml/compartmentOverview", model:[title: name, metaLink: metaLink, allSpecies: compartment.allSpecies])
+        out << render(template: "/templates/sbml/compartmentOverview",
+            model:[title: name, metaLink: metaLink, allSpecies: compartment.allSpecies])
     }
 
     /**
@@ -188,7 +195,8 @@ class SbmlTagLib {
     def renderParameterOverview = { attrs ->
         Map param = attrs.parameter
         String name = param.name ? param.name : param.id
-        String metaLink = g.createLink(controller: 'sbml', action: 'parameterMetaOverview', params: [id: params.id, parameterId: param.id, revision: params.revision])
+        String metaLink = g.createLink(controller: 'sbml', action: 'parameterMetaOverview',
+            params: [id: params.id, parameterId: param.id, revision: params.revision])
         out << render(template: "/templates/sbml/parameter", model: [title: name, metaLink: metaLink])
     }
 
@@ -211,8 +219,10 @@ class SbmlTagLib {
    def renderParameter = { attrs ->
        Map param = attrs.parameter
        String name = param.name ? param.name : param.id
-       String metaLink = g.createLink(controller: 'sbml', action: 'parameterMeta', params: [id: params.id, parameterId: param.id, revision: params.revision])
-       out << render(template: "/templates/sbml/parameter", model: [title: name, metaLink: metaLink, value: param.value, unit: param.unit, constant: param.constant])
+       String metaLink = g.createLink(controller: 'sbml', action: 'parameterMeta',
+           params: [id: params.id, parameterId: param.id, revision: params.revision])
+       out << render(template: "/templates/sbml/parameter",
+           model: [title: name, metaLink: metaLink, value: param.value, unit: param.unit, constant: param.constant])
    }
 
     /**
@@ -232,9 +242,13 @@ class SbmlTagLib {
      */
     def renderReaction = { attrs ->
         Map reaction = attrs.reaction
-        String metaLink = g.createLink(controller: 'sbml', action: 'reactionMeta', params: [id: params.id, reactionId: reaction.id, revision: params.revision])
+        String metaLink = g.createLink(controller: 'sbml', action: 'reactionMeta',
+            params: [id: params.id, reactionId: reaction.id, revision: params.revision])
         String name = reaction.name ? reaction.name : reaction.id
-        out << render(template: "/templates/sbml/reaction", model: [title: name, metaLink: metaLink, reversible: reaction.reversible, products: reaction.products, modifiers: reaction.modifiers, reactants: reaction.reactants])
+        out << render(template: "/templates/sbml/reaction",
+            model: [title: name, metaLink: metaLink, reversible: reaction.reversible,
+                    products: reaction.products, modifiers: reaction.modifiers,
+                    reactants: reaction.reactants])
     }
     /**
      * Renders a list of SBML events.
@@ -253,9 +267,11 @@ class SbmlTagLib {
      */
     def renderEvent = { attrs ->
         Map event = attrs.event
-        String metaLink = g.createLink(controller: 'sbml', action: 'eventMeta', params: [id: params.id, eventId: event.id, revision: params.revision])
+        String metaLink = g.createLink(controller: 'sbml', action: 'eventMeta',
+            params: [id: params.id, eventId: event.id, revision: params.revision])
         String name = (event.name && event.name != "") ? event.name : event.id
-        out << render(template: "/templates/sbml/event", model: [title: name, metaLink: metaLink, assignments: event.assignments])
+        out << render(template: "/templates/sbml/event",
+            model: [title: name, metaLink: metaLink, assignments: event.assignments])
     }
 
     /**
@@ -406,9 +422,11 @@ class SbmlTagLib {
      */
     def renderFunctionDefinition = { attrs ->
         Map function = attrs.function
-        String metaLink = g.createLink(controller: 'sbml', action: 'functionDefinitionMeta', params: [id: params.id, functionDefinitionId: function.id, revision: params.revision])
+        String metaLink = g.createLink(controller: 'sbml', action: 'functionDefinitionMeta',
+            params: [id: params.id, functionDefinitionId: function.id, revision: params.revision])
         String name = (function.name && function.name != "") ? function.name : function.id
-        out << render(template: "/templates/sbml/functionDefinition", model: [title: name, metaLink: metaLink, math: function.math])
+        out << render(template: "/templates/sbml/functionDefinition",
+            model: [title: name, metaLink: metaLink, math: function.math])
     }
 
     /**
@@ -431,9 +449,13 @@ class SbmlTagLib {
      */
     def renderCompartment = { attrs ->
         Map compartment = attrs.compartment
-        String metaLink = g.createLink(controller: 'sbml', action: 'compartmentMeta', params: [id: params.id, compartmentId: compartment.id, revision: params.revision])
+        String metaLink = g.createLink(controller: 'sbml', action: 'compartmentMeta',
+            params: [id: params.id, compartmentId: compartment.id, revision: params.revision])
         String name = compartment.name ? compartment.name : compartment.id
-        out << render(template: "/templates/sbml/compartment", model:[title: name, metaLink: metaLink, size: compartment.size, spatialDimensions: compartment.spatialDimensions, units: compartment.units, notes: compartment.notes, allSpecies: compartment.allSpecies])
+        out << render(template: "/templates/sbml/compartment",
+            model:[title: name, metaLink: metaLink, size: compartment.size,
+                   spatialDimensions: compartment.spatialDimensions, units: compartment.units,
+                   notes: compartment.notes, allSpecies: compartment.allSpecies])
     }
 
     /**
@@ -442,8 +464,12 @@ class SbmlTagLib {
      */
     def renderSpecies = { attrs ->
         Map species = attrs.species
-        String metaLink = g.createLink(controller: 'sbml', action: 'speciesMeta', params: [id: params.id, speciesId: species.id, revision: params.revision])
-        out << render(template: "/templates/sbml/species", model: [title: species.id, initialAmount: species.initialAmount, initialConcentration: species.initialConcentration, substanceUnits: species.substanceUnits, metaLink: metaLink])
+        String metaLink = g.createLink(controller: 'sbml', action: 'speciesMeta',
+            params: [id: params.id, speciesId: species.id, revision: params.revision])
+        out << render(template: "/templates/sbml/species",
+            model: [title: species.id, initialAmount: species.initialAmount,
+                    initialConcentration: species.initialConcentration,
+                    substanceUnits: species.substanceUnits, metaLink: metaLink])
     }
 
    /**
@@ -453,6 +479,7 @@ class SbmlTagLib {
    def renderEventAssignment = { attrs ->
        Map assignment = attrs.assignment
        String name = (assignment.variableName && assignment.variableName != "") ? assignment.variableName : assignment.variableId
-       out << render(template: "/templates/sbml/eventAssignment", model: [variable: name, math: assignment.math, type: assignment.variableType])
+       out << render(template: "/templates/sbml/eventAssignment",
+           model: [variable: name, math: assignment.math, type: assignment.variableType])
    }
 }

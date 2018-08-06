@@ -48,7 +48,6 @@ class MiriamServiceTests {
     File exportFile
     final String exportName = "export.xml"
 
-    @Override
     @Before
     void setUp() {
         wd  = new File("target/miriam/")
@@ -63,7 +62,6 @@ class MiriamServiceTests {
         miriamService.registryExport = exportFile
     }
 
-    @Override
     @After
     void tearDown() {
         FileUtils.deleteDirectory(wd)

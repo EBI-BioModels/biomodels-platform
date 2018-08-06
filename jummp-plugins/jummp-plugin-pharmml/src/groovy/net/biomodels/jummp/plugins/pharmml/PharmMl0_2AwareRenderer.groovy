@@ -30,6 +30,8 @@
 **/
 
 package net.biomodels.jummp.plugins.pharmml
+
+import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.PKMacroList
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import eu.ddmore.libpharmml.dom.commontypes.DerivativeVariable
 import eu.ddmore.libpharmml.dom.commontypes.FunctionParameter
@@ -47,7 +49,6 @@ import eu.ddmore.libpharmml.dom.modeldefn.ObservationModel
 import eu.ddmore.libpharmml.dom.modeldefn.ParameterRandomVariable
 import eu.ddmore.libpharmml.dom.modeldefn.SimpleParameter
 import eu.ddmore.libpharmml.dom.modeldefn.StructuralModel
-import eu.ddmore.libpharmml.dom.modeldefn.VariabilityDefnBlock
 import eu.ddmore.libpharmml.dom.modellingsteps.CommonModellingStep
 import eu.ddmore.libpharmml.dom.modellingsteps.Estimation
 import eu.ddmore.libpharmml.dom.modellingsteps.ModellingSteps
@@ -235,38 +236,6 @@ class PharmMl0_2AwareRenderer extends AbstractPharmMlRenderer {
             model["transfMap"] = transfMap
             return groovyPageRenderer.render(template: "/templates/0.2/covariates", model: model)
         }
-    }
-
-    /**
-     * @param variabilityModels a list of
-     * {@link eu.ddmore.libpharmml.dom.modeldefn.VariabilityDefnBlock}s.
-     */
-    @Profiled(tag = "pharmMl0_2AwareRenderer.renderIndependentVariable")
-    String renderVariabilityModel(List<VariabilityDefnBlock> variabilityModels) {
-        def models = []
-        variabilityModels.each { m ->
-            def thisModel = [:]
-            thisModel["blkId"] = m.blkId
-            thisModel["name"] = m.name ?: "&nbsp;"
-            thisModel["levels"] = formatVariabilityLevels(m.level)
-            thisModel["type"] = m.type.value()
-            models.add thisModel
-        }
-        return groovyPageRenderer.render(template: "/templates/0.2/variabilityModel",
-                    model: [variabilityModels: models])
-    }
-
-    List<String> formatVariabilityLevels(List variabilityLevels) {
-        def result = []
-        variabilityLevels.inject(result){ r, l ->
-            StringBuilder sb = new StringBuilder()
-            sb.append((l.name) ? l.name.value : l.symbId)
-            if (l.parentLevel) {
-                sb.append(", parent level: ").append(l.parentLevel.symbRef.symbIdRef)
-            }
-            result.add sb.toString()
-        }
-        return result
     }
 
     /**
@@ -815,4 +784,7 @@ class PharmMl0_2AwareRenderer extends AbstractPharmMlRenderer {
         }
         return result.append("</ul>").toString()
     }
+
+    @Profiled(tag = "pharmMl0_2AwareRenderer.renderPKMacros")
+    String renderPKMacros(PKMacroList pkMacroList) {}
 }

@@ -38,7 +38,7 @@ grails.project.dependency.resolution = {
     inherits("global") {
     }
     log "warn"
-    legacyResolve true
+    legacyResolve false
     repositories {
         if (System.getenv("JUMMP_ARTIFACTORY_URL")) {
             mavenRepo "${System.getenv('JUMMP_ARTIFACTORY_URL')}"
@@ -57,7 +57,7 @@ grails.project.dependency.resolution = {
     }
 
     plugins {
-        build ":tomcat:7.0.54"
+        build ":tomcat:7.0.55.3"
     }
 }
 grails.plugin.location.'jummp-plugin-security' = "../jummp-plugin-security"

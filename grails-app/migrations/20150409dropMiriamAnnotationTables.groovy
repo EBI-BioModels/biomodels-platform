@@ -21,26 +21,45 @@ databaseChangeLog = {
 
     changeSet(author: "mglont (generated)", id: "1428594869002-6") {
         dropForeignKeyConstraint(baseTableName: "miriam_datatype", constraintName: "FK229D59E41FE7B37C")
+        preConditions(onFail: "MARK_RAN") {
+            tableExists(tableName: "miriam_datatype")
+        }
     }
 
     changeSet(author: "mglont (generated)", id: "1428594869002-7") {
         dropForeignKeyConstraint(baseTableName: "miriam_identifier", constraintName: "FKB846CA93E20DD0F")
+        preConditions(onFail: "MARK_RAN") {
+            tableExists(tableName: "miriam_identifier")
+        }
     }
 
     changeSet(author: "mglont (generated)", id: "1428594869002-8") {
         dropForeignKeyConstraint(baseTableName: "miriam_resource", constraintName: "FKA397840E3E20DD0F")
+        preConditions(onFail: "MARK_RAN") {
+            tableExists(tableName: "miriam_resource")
+        }
     }
 
     changeSet(author: "mglont (generated)", id: "1428594869002-12") {
         dropIndex(indexName: "identifier", tableName: "miriam_datatype")
+        preConditions(onFail: "MARK_RAN") {
+            tableExists(tableName: "miriam_datatype")
+        }
     }
 
     changeSet(author: "mglont (generated)", id: "1428594869002-13") {
         dropIndex(indexName: "identifier", tableName: "miriam_identifier")
+        preConditions(onFail: "MARK_RAN") {
+            tableExists(tableName: "miriam_identifier")
+        }
     }
 
     changeSet(author: "mglont (generated)", id: "1428594869002-14") {
         dropIndex(indexName: "identifier", tableName: "miriam_resource")
+        preConditions(onFail: "MARK_RAN") {
+            tableExists(tableName: "miriam_resource")
+        }
+
     }
 
     changeSet(author: "mglont (generated)", id: "1428594869002-15") {
@@ -57,14 +76,23 @@ databaseChangeLog = {
 
     changeSet(author: "mglont (generated)", id: "1428594869002-18") {
         dropTable(tableName: "miriam_datatype")
+        preConditions(onFail: "MARK_RAN") {
+            tableExists(tableName: "miriam_datatype")
+        }
     }
 
     changeSet(author: "mglont (generated)", id: "1428594869002-19") {
         dropTable(tableName: "miriam_identifier")
+        preConditions(onFail: "MARK_RAN") {
+            tableExists(tableName: "miriam_identifier")
+        }
     }
 
     changeSet(author: "mglont (generated)", id: "1428594869002-20") {
         dropTable(tableName: "miriam_resource")
+        preConditions(onFail: "MARK_RAN") {
+            tableExists(tableName: "miriam_resource")
+        }
     }
 }
 

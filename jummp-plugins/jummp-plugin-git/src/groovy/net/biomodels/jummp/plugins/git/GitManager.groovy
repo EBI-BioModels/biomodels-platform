@@ -83,7 +83,7 @@ class GitManager implements VcsManager {
     private final ConcurrentHashMap<String, ReentrantLock> locks = new ConcurrentHashMap<String, ReentrantLock>()
     private final ConcurrentHashMap<String, FileLock> diskLocks = new ConcurrentHashMap<String, FileLock>()
     // cache of initialised repositories
-    private final Map<File, Git>  initedRepositories = Collections.synchronizedMap(new LruCache<File, Git>(20))
+    private final Map<File, Git>  initedRepositories = Collections.synchronizedMap(new LruCache<File, Git>(1000))
     // exchange directory
     private File exchangeDirectory
     // legacy parameter specifying remoteness. Probably useless.
@@ -311,29 +311,29 @@ class GitManager implements VcsManager {
     	List<VcsFileDetails> fileDetails = new ArrayList<VcsFileDetails>()
     	try {
     		FileRepositoryBuilder builder = new FileRepositoryBuilder()
-    		Repository repository;
+    		Repository repository
             repository = builder.setGitDir(new File(".git", modelDirectory)).readEnvironment()
-                                                  .findGitDir().build();
+                                                  .findGitDir().build()
 
             Git git = new Git(repository)
-            RevWalk walk = new RevWalk(repository,100);
-            RevCommit commit = null;
-			LogCommand cmd = git.log();
-			cmd.addPath(path);
-			Iterable<RevCommit> logs = cmd.call();
-			Iterator<RevCommit> i = logs.iterator();
-			
+            RevWalk walk = new RevWalk(repository,100)
+            RevCommit commit = null
+			LogCommand cmd = git.log()
+			cmd.addPath(path)
+			Iterable<RevCommit> logs = cmd.call()
+			Iterator<RevCommit> i = logs.iterator()
+
 			while (i.hasNext()) {
 				def iterated = i.next()
-				commit = walk.parseCommit( iterated );
-				long timestamp = commit.getCommitTime();
-				VcsFileDetails detail = new VcsFileDetails();
+				commit = walk.parseCommit( iterated )
+				long timestamp = commit.getCommitTime()
+				VcsFileDetails detail = new VcsFileDetails()
 				detail.revisionId=iterated.getName()
 				detail.commit=timestamp * 1000
 				detail.msg=commit.getFullMessage()
-				fileDetails.add(detail);
-			}   
-		} 
+				fileDetails.add(detail)
+			}
+		}
 		catch (Exception ex) {
 				throw new IOException("Git command could not be executed", ex)	
 		}

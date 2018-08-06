@@ -35,7 +35,7 @@ class SearchIndexOptimiserJob {
         if (IS_DEBUG_ENABLED) {
             log.debug "Started optimising the search index..."
         }
-        solrServerHolder.server.optimize()
+        solrServerHolder.solrClient.optimize()
         if (IS_DEBUG_ENABLED) {
             log.debug "... finished optimising the search index."
         }

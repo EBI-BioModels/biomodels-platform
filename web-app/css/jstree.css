@@ -4,7 +4,7 @@
         float: top;
         }
         #tablewrapper {
-            margin-top: 60px;
+            clear: both;
         }
         .submit {
 	    background-color: #5CAD85;
@@ -26,7 +26,7 @@
 	    border: none;
 	    background:#339966;
 	    box-shadow: 0px 0px 1px #777;
-	
+
 	}
 	.centeringContainer {
 	    display: block;
@@ -50,7 +50,7 @@
 	    border: none;
 	    background:#339966;
 	    box-shadow: 0px 0px 1px #777;
-	
+
 	}
 /* 	#Files {
 	    display: inline-block;
@@ -66,15 +66,15 @@
 	.pointerhere {
 		cursor: pointer;
 	}
-	#resizable { 
-	    height: 100%; padding: 0.5em; border=none; margin-left:30px;	  
+	#resizable {
+	    height: 100%; padding: 0.5em; border: none; margin-left:30px;
 	    float:left;
 	 }
 
 
 .arrow-down {
-	width: 0; 
-	height: 0; 
+	width: 0;
+	height: 0;
 	border-left: 12px solid transparent;
 	border-right: 12px solid transparent;
 	float: right;
@@ -84,7 +84,7 @@
 .spacedMargin {
     margin:10px;
 }
-#optionsList 
+#optionsList
 {
 	list-style: none;
 	padding:0px;

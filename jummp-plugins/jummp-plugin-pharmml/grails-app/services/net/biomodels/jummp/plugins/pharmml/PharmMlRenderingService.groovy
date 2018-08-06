@@ -30,6 +30,8 @@
 **/
 
 package net.biomodels.jummp.plugins.pharmml
+
+import eu.ddmore.libpharmml.dom.modeldefn.pkmacro.PKMacroList
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import eu.ddmore.libpharmml.dom.modellingsteps.Estimation
 import eu.ddmore.libpharmml.dom.modellingsteps.Simulation
@@ -155,5 +157,11 @@ class PharmMlRenderingService {
     void renderStepDependencies(StepDependency deps, String version, Writer out) {
         IPharmMlRenderer renderer = PharmMlVersionAwareRendererFactory.getRenderer(version)
         out << renderer.renderStepDependencies(deps)
+    }
+
+    @Profiled(tag = "pharmMlRenderingService.renderPKMacros")
+    void renderPKMacros(PKMacroList vars, String version, Writer out) {
+        IPharmMlRenderer renderer = PharmMlVersionAwareRendererFactory.getRenderer(version)
+        out << renderer.renderPKMacros(vars)
     }
 }

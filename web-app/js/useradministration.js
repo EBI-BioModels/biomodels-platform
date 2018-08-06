@@ -29,10 +29,19 @@ $.jummp.userAdministration.loadUserList = function () {
     };
     $('#userTable').dataTable({
         // TODO: in future it might be interesting to allow filtering
+        responsive: true,
         bFilter: false,
+        columnDefs: [{
+            targets: 2, /* For real name column */
+            width: "12%"
+        },{
+            targets: 5, /* For ORCID Identifier column */
+            width: "12%"
+        }],
+        aLengthMenu: [[5, 10, 15, 20, 25, 50, 100, -1], [5, 10, 15, 20, 25, 50, 100, "All"]],
         bProcessing: true,
         bServerSide: true,
-        bJQueryUI: true,
+        bJQueryUI: false,
         sPaginationType: "full_numbers",
         sAjaxSource: 'dataTableSource',
         "fnServerData": function (sSource, aoData, fnCallback) {
@@ -61,6 +70,9 @@ $.jummp.userAdministration.loadUserList = function () {
             });
         }
     });
+    $('.dataTables_filter input[type="search"]').
+        attr('placeholder','Type in username, email or real name...').
+        css({'width':'250px','display':'inline-block'});
 };
 
 $.jummp.userAdministration.editUser = function () {

@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -29,85 +29,106 @@
 
  <footer>
     <!-- Optional local footer (insert citation / project-specific copyright / etc here -->
-      <div id="local-footer" class="grid_24 clearfix">
-        <wcm:render path="footer"/>
-      </div>
-    <!-- End optional local footer -->
-    
-    <div id="global-footer" class="grid_24">
-            
-      <nav id="global-nav-expanded">
-        
-        <div class="grid_4 alpha">
-          <h3 class="embl-ebi"><a href="//www.ebi.ac.uk/" title="EMBL-EBI">EMBL-EBI</a></h3>
+    <div id="local-footer">
+        <div class="row">
+            <div id="footer" class="float-left">
+                Build: <g:render template="/templates/version"/>
+            </div>
+            <div class="clear"></div>
         </div>
-        
-        <div class="grid_4">
-          <h3 class="services"><a href="//www.ebi.ac.uk/services">Services</a></h3>
-        </div>
-        
-        <div class="grid_4">
-          <h3 class="research"><a href="//www.ebi.ac.uk/research">Research</a></h3>
-        </div>
-        
-        <div class="grid_4">
-          <h3 class="training"><a href="//www.ebi.ac.uk/training">Training</a></h3>
-        </div>
-        
-        <div class="grid_4">
-          <h3 class="industry"><a href="//www.ebi.ac.uk/industry">Industry</a></h3>
-        </div>
-        
-        <div class="grid_4 omega">
-          <h3 class="about"><a href="//www.ebi.ac.uk/about">About us</a></h3>
-        </div>
-
-      </nav>
-      
-      <section id="ebi-footer-meta">
-        <p class="address">EMBL-EBI, Wellcome Trust Genome Campus, Hinxton, Cambridgeshire, CB10 1SD, UK &nbsp; &nbsp; +44 (0)1223 49 44 44</p>
-        <p class="legal">Copyright &copy; EMBL-EBI 2013 | EBI is an outstation of the <a href="http://www.embl.org">European Molecular Biology Laboratory</a> | <a href="/about/privacy">Privacy</a> | <a href="/about/cookies">Cookies</a> | <a href="/about/terms-of-use">Terms of use</a></p>  
-      </section>
-
     </div>
-</footer>
-  </div> <!--! end of #wrapper -->
+     <div id="elixir-banner" data-color="grey" data-name="This service"
+          data-description="BioModels is an ELIXIR Deposition Database"
+          data-more-information-link="//www.elixir-europe.org/platforms/data/elixir-deposition-databases"
+          data-use-basic-styles="true"></div>
+     <script defer="defer"
+             src="//ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/js/elixirBanner.js"></script>
+     <style>
+         .elixir-ribbon {
+             padding: 1rem 0;
+             /*background-color: rgb(79,138,156);*/
+             background-color: rgb(0, 124, 130);
+             /*background-color:#008080;*/
+             vertical-align: middle;
+         }
 
+         .elixir-ribbon,
+         .elixir-ribbon h5,
+         .elixir-ribbon a,
+         .elixir-ribbon a:active,
+         .elixir-ribbon a:visited,
+         .elixir-ribbon a:hover {
+             color: #fff;
+             text-decoration: none;
+         }
+         .elixir-ribbon a:hover {
+             opacity: .8;
+         }
+         .elixir-ribbon .readmore {
+             border-bottom: 1px dotted #fff;
+         }
+         .elixir-ribbon h5 {
+             margin: 0;
+         }
+         .elixir-ribbon .elixir-logo-kite {
+             background: 80% 58% url("https://ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.2/images/logos/assorted/elixir_kitemark-60px.png") no-repeat;
+             position: relative;
+             /*top: -5px;*/
+             /*margin: 0 1rem -.5rem 0;*/
+             margin-left: 1.25rem;
+             height: 60px;
+             width: 60px;
+             display: inline-block;
+             float: left;
+             background-size: 60px;
+             vertical-align: middle;
+         }
+         .elixir-ribbon .row {
+             margin: 0 !important;
+         }
+     </style>
+    <!-- End optional local footer -->
+
+    <div id="global-footer">
+        <nav id="global-nav-expanded" class="row">
+            <!-- Footer will be automatically inserted by footer.js -->
+        </nav>
+        <section id="ebi-footer-meta" class="row">
+            <!-- Footer meta will be automatically inserted by footer.js -->
+        </section>
+    </div>
+     <g:render template="/templates/feedback" plugin="jummp-plugin-web-application"/>
+     <g:render template="/templates/switchClassicBioModels" plugin="jummp-plugin-web-application"/>
+ </footer>
+</div> <!--! end of #wrapper -->
 
   <!-- JavaScript at the bottom for fast page loading -->
-
   <!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if offline -->
-  <!--
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
-  <script>window.jQuery || document.write('<script src="../js/libs/jquery-1.6.2.min.js"><\/script>')</script>
-  -->
 
+  <script defer="defer" src="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/js/cookiebanner.js"></script>
+  <script defer="defer" src="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/js/foot.js"></script>
+  <script defer="defer" src="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/js/script.js"></script>
 
-  <!-- Your custom JavaScript file scan go here... change names accordingly -->
-  <!--
-  <script defer="defer" src="//www.ebi.ac.uk/web_guidelines/js/plugins.js"></script>
-  <script defer="defer" src="//www.ebi.ac.uk/web_guidelines/js/script.js"></script>
-  -->
-  <script defer="defer" src="//www.ebi.ac.uk/web_guidelines/js/cookiebanner.js"></script>  
-  <script defer="defer" src="//www.ebi.ac.uk/web_guidelines/js/foot.js"></script>
+  <!-- The Foundation theme JavaScript -->
+  <script src="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/libraries/foundation-6/js/foundation.js"></script>
+  <script src="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/js/foundationExtendEBI.js"></script>
+  <script type="text/JavaScript">$(document).foundation();</script>
+  <script type="text/JavaScript">$(document).foundationExtendEBI();</script>
+
+  <!-- customised scripts -->
+  <g:javascript src="common.js"></g:javascript>
   <!-- end scripts-->
 
-  <!-- Google Analytics details... -->    
-  <!-- Change UA-XXXXX-X to be your site's ID -->
-  <!--
+  <!-- Google Analytics details... -->
   <script>
-    window._gaq = [['_setAccount','UAXXXXXXXX1'],['_trackPageview'],['_trackPageLoadTime']];
+    window._gaq = [['_setAccount','UA-106769759-1'],['_trackPageview'],['_trackPageLoadTime']];
     Modernizr.load({
       load: ('https:' == location.protocol ? '//ssl' : '//www') + '.google-analytics.com/ga.js'
     });
   </script>
-  -->
-
 
   <!-- Prompt IE 6 users to install Chrome Frame. Remove this if you want to support IE 6.
        chromium.org/developers/how-tos/chrome-frame-getting-started -->
   <!--[if lt IE 7 ]>
-    <script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script>
-    <script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script>
-  <![endif]-->
-</body>
+  <!--<script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script>-->
+  <!--<script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script>-->

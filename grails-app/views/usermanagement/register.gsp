@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -30,61 +30,46 @@
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <meta name="layout" content="main"/>
+        <meta name="layout" content="${session['branding.style']}/main" />
         <title>Register</title>
         <style>
         	.verysecure {
         		visibility:hidden;
         	}
         </style>
-        <link rel="stylesheet" href="${resource(dir: 'css', file: 'jstree.css')}" /> 
+        <link rel="stylesheet" href="${resource(dir: 'css', file: 'jstree.css')}" />
     </head>
-     <body>
-        <div>
-            <g:form name="registerForm" action="signUp">
-                <table>
-                    <tbody>
-                    <tr>
-                        <td class='tableLabels'><label class="required" for="register-form-username"><g:message code="user.signup.ui.username"/>:</label></td>
-                        <td><span><g:textField name="username"/></span></td>
-                    </tr>
-                    <tr>
-                        <td class='tableLabels'><label class="required" for="register-form-name"><g:message code="user.signup.ui.realname"/>:</label></td>
-                        <td><span><g:textField name="userRealName"/></span></td>
-                    </tr>
-                    <tr>
-                        <td class='tableLabels'><label class="required" for="register-form-email"><g:message code="user.signup.ui.email"/>:</label></td>
-                        <td><span><g:textField name="email"/></span></td>
-                    </tr>
-                    <tr>
-                        <td class='tableLabels'><label for="register-form-institution"><g:message code="user.signup.ui.institution"/>:</label></td>
-                        <td><span><g:textField name="institution"/></span></td>
-                    </tr>
-                    <tr>
-                        <td class='tableLabels'><label for="register-form-orcid"><g:message code="user.signup.ui.orcid"/>:</label></td>
-                        <td><span><g:textField name="orcid"/></span></td>
-                    </tr>
-                    <tr>
-                        <td class='tableLabels'><label class="required" for="register-form-captcha"><g:message code="user.signup.ui.captcha"/>:</label></td>
-                        <td>
-                        	<ul style="list-style-type: none;">
-                        		<li><img style="margin-top:0;float:none" src="${createLink(controller: 'simpleCaptcha', action: 'captcha')}"/></li>
-                        		<li><g:textField name="captcha"/></li>
-                        	</ul>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-                <div class="buttons">
-                    <input type="submit" value="${g.message(code: 'user.signup.register')}"/>
-                </div>
-                <label class="verysecure">You shouldnt see me</label>
-                <input class="verysecure" name="securityfeature" value=""/>
-                 
-            </g:form>
+    <body>
+        <div id="register" class="row">
+            <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
+                <g:form name="registerForm" action="signUp" onkeypress="return event.keyCode != 13;">
+                    <div class="row column register-form">
+                        <g:render template="userInforInput" model="[user: null]"/>
+
+                        <label class="required" for="captcha"><g:message code="user.signup.ui.captcha"/></label>
+                        <img style="margin-top:0;float:none" src="${createLink(controller: 'simpleCaptcha', action: 'captcha')}"/>
+                        <br/>
+                        <g:textField name="captcha" required="true"/>
+
+                        <p><input type="submit" class="button" value="${g.message(code: 'user.signup.register')}"/>
+                        <input type="reset" class="button" id="resetFormButton" value="${g.message(code: 'user.signup.reset')}"/>
+                        </p>
+                    </div>
+                    <label class="verysecure">You shouldn't see me.</label>
+                    <input class="verysecure" name="securityfeature" value=""/>
+                </g:form>
+            </div>
         </div>
-        </body>
+        <g:javascript>
+            // define the variables tighted on the working user for later usages in common.js
+            var currentUsername = "";
+            var currentEmail = "";
+            var currentRealName = "";
+            var currentOrcid = "";
+        </g:javascript>
+        <script type="application/javascript" src="${resource(dir: 'js', file: 'common.js')}"></script>
+    </body>
 </html>
 <content tag="title">
-	<g:message code="user.signup.ui.heading.register"/>
+    <g:message code="user.signup.ui.heading.register"/>
 </content>

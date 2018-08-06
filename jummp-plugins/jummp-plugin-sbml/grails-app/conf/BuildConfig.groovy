@@ -51,7 +51,7 @@ grails.project.dependency.resolution = {
         // excludes 'javassist'
     }
     log "warn" // log level of Ivy resolver, either 'error', 'warn', 'info', 'debug' or 'verbose'
-    legacyResolve true
+    legacyResolve false
     repositories {
         if (System.getenv("JUMMP_ARTIFACTORY_URL")) {
             mavenRepo "${System.getenv('JUMMP_ARTIFACTORY_URL')}"
@@ -78,9 +78,9 @@ grails.project.dependency.resolution = {
         // runtime 'mysql:mysql-connector-java:5.1.13'
         // miriam lib required by sbml converters
         runtime('uk.ac.ebi.miriam:miriam-lib:1.1.3')// { transitive = false }
-        compile("org.sbml.jsbml:jsbml:1.0") {
+        compile("org.sbml.jsbml:jsbml:1.3.1") {
             // Java 1.6+ already has these classes
-            excludes 'stax-api'
+            excludes 'stax-api', 'slf4j-log4j12', 'log4j-slf4j-impl', 'log4j-core', 'log4j-api', 'log4j-1.2-api'
         }
         compile "org.sbfc:converter:1.1"
         // XML parsing APIs
@@ -90,9 +90,9 @@ grails.project.dependency.resolution = {
     }
 
     plugins {
-        build ":tomcat:7.0.54"
+        build ":tomcat:7.0.55.3"
 
-        compile ":perf4j:0.1.1"
+        compile ":perf4j:0.2.1"
     }
 }
 grails.plugin.location.'jummp-plugin-security'="../jummp-plugin-security"

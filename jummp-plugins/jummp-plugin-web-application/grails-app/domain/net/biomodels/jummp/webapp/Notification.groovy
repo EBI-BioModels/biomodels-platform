@@ -26,22 +26,23 @@ package net.biomodels.jummp.webapp
 import net.biomodels.jummp.plugins.security.User
 /**
  * @short Representation of one Notification.
- * This class is the representation of one Notification. 
+ * This class is the representation of one Notification.
  * @author Raza Ali <raza.ali@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 class Notification implements Serializable {
     private static final long serialVersionUID = 1L
-    
-    String title;
-    String body;
-    Date dateCreated;
-    NotificationType notificationType;
-    User sender;
-    
-    
+
+    String title
+    String body
+    Date dateCreated
+    NotificationType notificationType
+    User sender
+
+
     static constraints = {
         title(nullable: false, blank: false, unique: false)
-        body(nullable: false, blank: false, unique: false)
+        body(nullable: false, blank: false, unique: false, maxSize: 1024)
         notificationType(nullable: false, blank: false, unique: false)
         sender(nullable: false, blank: false, unique: false)
     }

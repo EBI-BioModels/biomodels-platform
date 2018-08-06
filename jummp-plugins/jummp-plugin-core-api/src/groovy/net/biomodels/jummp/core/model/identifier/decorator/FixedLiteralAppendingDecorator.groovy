@@ -34,7 +34,7 @@ class FixedLiteralAppendingDecorator extends AbstractAppendingDecorator {
     /* the class logger */
     private static final Log log = LogFactory.getLog(this)
     /* semaphore for the log threshold */
-    private static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
+    private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
 
     protected FixedLiteralAppendingDecorator(int order) throws IllegalArgumentException {
         boolean orderOk = validateOrderValue(order)
@@ -56,10 +56,10 @@ class FixedLiteralAppendingDecorator extends AbstractAppendingDecorator {
             log.error("Cowardly refusing to create a string decorator for suffix $suffix")
             throw new IllegalArgumentException("Please use non-empty string suffixes in model ids.")
         }
-        if (IS_INFO_ENABLED) {
-            log.info "Creating $this with suffix $suffix"
+        if (IS_DEBUG_ENABLED) {
+            log.debug "Creating $this with suffix $suffix"
         }
-        nextValue = suffix
+        nextValue.set(suffix)
         SUFFIX = suffix
     }
 
@@ -69,16 +69,15 @@ class FixedLiteralAppendingDecorator extends AbstractAppendingDecorator {
     ModelIdentifier decorate(ModelIdentifier modelIdentifier) {
         if (modelIdentifier) {
             String currentId = modelIdentifier.getCurrentId()
-            if (IS_INFO_ENABLED) {
-                log.info "Decorating $currentId with $nextValue."
+            final String next = nextValue.get()
+            if (IS_DEBUG_ENABLED) {
+                log.debug "Decorating $currentId with $next"
             }
-            modelIdentifier.append(nextValue)
-            return modelIdentifier
+            return modelIdentifier.append(next)
         } else {
             log.warn "Undefined model identifier encountered - decorating a new one instead."
             ModelIdentifier result = new ModelIdentifier()
-            result.append(nextValue)
-            return result
+            return result.append(nextValue.get())
         }
     }
 

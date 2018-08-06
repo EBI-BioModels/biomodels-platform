@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -24,6 +24,9 @@
 
 package net.biomodels.jummp.webapp
 
+import com.google.common.base.CaseFormat
+import net.biomodels.jummp.qcinfo.FlagLevel
+
 import javax.xml.transform.stream.StreamSource
 import javax.xml.transform.stream.StreamResult
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
@@ -31,42 +34,108 @@ import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
 class JummpTagLib {
     static namespace = "jummp"
 
-    def displayExistingMainFile = { attrs ->
-        def result = new StringBuilder()
-        if (!attrs.main) {
-            result.append("<tr class='prop'>\n\t<td class='name'>\n\t\t<label for='mainFile'>\n\t\t\t")
-            result.append(message(code: "submission.upload.mainFile.label"))
-            result.append("\n\t\t</label>\n\t</td>\n\t<td class='value'>\n\t\t")
-            result.append("<input type='file' id='mainFile' name='mainFile'/>\n\t</td>\n</tr>")
-            out << result.toString()
-            return
+    def grailsApplication
+
+    private boolean isDDMoReDeployment() {
+        String deploymentEnvironment = grailsApplication.config.jummp.branding.deployment
+        return deploymentEnvironment.equalsIgnoreCase("ddmore")
+    }
+
+    private boolean isBioModelsDeployment() {
+        String deploymentEnvironment = grailsApplication.config.jummp.branding.deployment
+        return deploymentEnvironment.equalsIgnoreCase("biomodels")
+    }
+
+    def detectDeploymentEnvironment() {
+        String de = ""
+        if (isDDMoReDeployment()) {
+            de = ".ddmore"
+        } else if (isBioModelsDeployment()) {
+            de = ".biomodels"
         }
-        attrs.main.each { m ->
+        de
+    }
+
+    def findMainFileLabel = { attrs, body ->
+        String de = detectDeploymentEnvironment()
+        String msg = "submission.upload.mainFile${de}.label"
+        out << body(mainFile: g.message(code: msg))
+    }
+
+    def displayModelDescriptionLabel = { attrs, body ->
+        String de = detectDeploymentEnvironment()
+        String msg = "submission.summary.descriptionLabel${de}"
+        out << body(description: g.message(code: msg))
+    }
+
+    def renderRowInMainFileTable = {
+        out << render(plugin: "jummp-plugin-web-application", template: "/templates/model/upload/mainFileInput")
+    }
+
+    def displayExistingMainFile = { attrs ->
+        String de = detectDeploymentEnvironment()
+        String mainFileLabel = "submission.upload.mainFile${de}.label"
+        String mainFileSectionHeading = "<h3>${message(code: mainFileLabel)}</h3>"
+        out << mainFileSectionHeading
+        out << "<table class='formtable responsive-table'><tbody>"
+        if (!attrs.main) {
+            out << renderRowInMainFileTable()
+        } else attrs.main.eachWithIndex { m, index ->
             RepositoryFileTransportCommand command = m as RepositoryFileTransportCommand
             String name = new File(command.path).name
-
-            result.append("<tr class='prop'>\n\t<td class='name'>\n\t\t<label for='mainFile'>\n\t\t\t")
-            result.append(message(code: "submission.upload.mainFile.label"))
-            result.append("\n\t\t</label>\n\t</td>\n\t<td class='value'>\n\t\t")
-            result.append("<span id='mainName_").append(name).append("'>").append(name).append("</span>\n\t\t")
-            result.append("<input style='display:none;' type='file' id='mainFile' data-labelname='${name}' name='mainFile' class='mainFile'/>\n\t")
-            result.append("<a href='#' class='replaceMain'>Replace</a> | <a href='#' class='removeMain'>Remove</a></td>\n</tr>\n")
+            String description = command.description
+            out << render(plugin: "jummp-plugin-web-application",
+                template: "/templates/model/upload/mainFileShow",
+                model: [index: index, name: name, description: description])
         }
-        out << result.toString()
+        out << "</tbody></table>"
     }
 
     def displayExistingAdditionalFiles = { attrs ->
-        if (!attrs.additionals) {
-            return
+        out << "<table class='formtable responsive-table' id='additionalFiles'><tbody>"
+        if (attrs.additionals) {
+            int counter = 0
+            attrs.additionals.each { f ->
+                RepositoryFileTransportCommand command = f as RepositoryFileTransportCommand
+                String name = new File(command.path).name
+                String description = command.description ?: ""
+                out << render(plugin: "jummp-plugin-web-application",
+                    template: "/templates/model/upload/additionalFileShow",
+                    model: [counter: counter, name: name, description: description])
+                counter++
+            }
         }
-        attrs.additionals.each { f ->
-            RepositoryFileTransportCommand command = f as RepositoryFileTransportCommand
-            String name = new File(command.path).name
-            out << "<tr class='fileEntry'>\n\t<td class='name'>"
-            out << name
-            out << "</td>\n\t<td></td>\n\t<td>"
-            out << "<a href='#' class='killer' title='Discard file'>Discard</a></td>\n</tr>\n"
-        }
+        out << "</tbody></table>"
+    }
+
+    def renderAdditionalFilesLegend = {
+        String de = detectDeploymentEnvironment()
+        String additionalFilesLegend = "submission.upload.additionalFiles${de}.legend"
+        out << "<h3>${message(code: additionalFilesLegend)}<sup><abbr id='howAboutThis' title='How about this'>?</abbr></sup></h3>"
+    }
+
+    def renderAdditionalFilesExplanation = {
+        String de = detectDeploymentEnvironment()
+        String additionalFilesExplanation = "submission.upload.additionalFiles${de}.explanation"
+        out << message(code: additionalFilesExplanation)
+    }
+
+    def renderAdditionalFilesAddButton = {
+        String de = detectDeploymentEnvironment()
+        String additionalFilesAddButton = "submission.upload.additionalFiles${de}.addButton"
+        out << message(code: additionalFilesAddButton)
+    }
+
+    def renderSubmitForPublicationConfirmDialogMessage = {
+        String de = detectDeploymentEnvironment()
+        String submitForPublicationConfirmDialogMessage = "model.toolbar.submit-for-publication${de}.message"
+        out << message(code: submitForPublicationConfirmDialogMessage)
+    }
+
+    def renderSubmitForPublicationConfirmDialogTitle = {
+        String de = detectDeploymentEnvironment()
+        String submitForPublicationConfirmDialogMessage = "model.toolbar.submit-for-publication${de}.title"
+        out << message(code: submitForPublicationConfirmDialogMessage)
     }
 
     /**
@@ -298,4 +367,113 @@ class JummpTagLib {
        }
        out << render(template: "/templates/annotationsTableRow", model: [annotations: attrs.annotations])
    }
+
+    def renderCertificationForm = { attrs ->
+        def result = new StringBuilder()
+        if (isDDMoReDeployment()) {
+            result.append("""
+                 <input id="certifyLevel" name="certifyLevel" value = "1" hidden/>
+                """)
+        }
+        else {
+            result.append('''
+            <tr>
+            <td style="width: 25%; text-align: right; vertical-align: middle"><label>''')
+            result.append(g.message(code: "jummp.certification.biomodels.flagLevel.label"))
+            result.append('''</label></td>
+            <td><div class="rating">
+                        <span id="star1" class="star-icon">&#9734;</span>
+                        <span id="star2" class="star-icon">&#9734;</span>
+                        <span id="star3" class="star-icon">&#9734;</span>
+                    </div>
+                <input id="certifyLevel" name="certifyLevel" hidden/></td>
+            </tr>
+            ''')
+        }
+        out << result.toString()
+    }
+
+    def renderRatingStars = {
+        def result = new StringBuilder()
+        result.append('''
+        <div class="rating">
+            <span id="star5" class="star-icon">&#9734;</span>
+            <span id="star4" class="star-icon">&#9734;</span>
+            <span id="star3" class="star-icon">&#9734;</span>
+            <span id="star2" class="star-icon">&#9734;</span>
+            <span id="star1" class="star-icon">&#9734;</span></div>
+        <input id="rateStar" name="rateStar" hidden required="true" />
+        ''')
+        out << result.toString()
+    }
+
+    /*
+     * Convert Given String to Camel Case i.e.
+     * Capitalize first letter of every word to upper case
+     */
+    def camelCase = { attrs ->
+        String message = attrs.message
+        message = message.replace("_", '-')
+        out << CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, message)
+    }
+
+    def renderStarLevels = { attrs ->
+        def result = new StringBuilder()
+        def yellowStar = "${grailsApplication.config.grails.serverURL}/images/star.svg"
+        def emptyStar = "${grailsApplication.config.grails.serverURL}/images/star_empty.svg"
+        def certifiedTitle = "This version of the model is certified"
+        def unCertifiedTitle = "This version of the model is not certified"
+        def certifiedStar = """
+                         <img style="margin-top:0;" title="${certifiedTitle}"
+                         alt="certified model"
+                         src="${yellowStar}"/>
+                        """
+        def unCertifiedStar = """
+                         <img style="margin-top:0;" title="${unCertifiedTitle}"
+                         alt="uncertified model"
+                         src="${emptyStar}"/>
+                        """
+        if (isDDMoReDeployment()) {
+            if (attrs.flag == null){
+                result.append(unCertifiedStar)
+            }
+            else {
+                result.append(certifiedStar)
+            }
+        } else {
+            if (attrs.flag == FlagLevel.FLAG_1){
+                result.append(certifiedStar)
+                result.append("""
+                         <img style="margin-top:0;" title="${certifiedTitle}"
+                         alt="certified model"
+                         src="${emptyStar}"/>
+                        """)
+                result.append("""
+                         <img style="margin-top:0;" title="${certifiedTitle}"
+                         alt="certified model"
+                         src="${emptyStar}"/>
+                        """)
+            }
+            else if (attrs.flag == FlagLevel.FLAG_2){
+                result.append(certifiedStar)
+                result.append(certifiedStar)
+                result.append("""
+                         <img style="margin-top:0;" title="${certifiedTitle}"
+                         alt="certified model"
+                         src="${emptyStar}"/>
+                        """)
+            }
+            else if (attrs.flag == FlagLevel.FLAG_3){
+                result.append(certifiedStar)
+                result.append(certifiedStar)
+                result.append(certifiedStar)
+            }
+            else if (attrs.flag == null){
+                result.append(unCertifiedStar)
+                result.append(unCertifiedStar)
+                result.append(unCertifiedStar)
+            }
+        }
+        out << result.toString()
+    }
 }

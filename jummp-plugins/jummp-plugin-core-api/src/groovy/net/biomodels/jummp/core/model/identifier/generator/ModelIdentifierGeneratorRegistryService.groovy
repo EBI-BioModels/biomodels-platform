@@ -33,7 +33,7 @@ class ModelIdentifierGeneratorRegistryService {
     /* the class logger */
     private static final Log log = LogFactory.getLog(this)
     /* semaphore for the log threshold */
-    private static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
+    private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
     /* association between a model id generator and its corresponding name */
     Map<String, ModelIdentifierGenerator> registry = [:]
 
@@ -53,8 +53,8 @@ class ModelIdentifierGeneratorRegistryService {
             log.warn(e)
             return false
         }
-        if (IS_INFO_ENABLED) {
-            log.info "Registering ${generator.getClass().getName()} as $name"
+        if (IS_DEBUG_ENABLED) {
+            log.debug "Registering ${generator.getClass().getName()} as $name"
         }
         registry[name] = generator
         return true
@@ -64,12 +64,14 @@ class ModelIdentifierGeneratorRegistryService {
      * Asks generators in the registry to prepare for providing a new model identifier.
      */
     void updateGenerators() {
-        if (IS_INFO_ENABLED) {
-            log.info("Triggering an update of all generators: ${registry.inspect()}")
+        if (IS_DEBUG_ENABLED) {
+            log.debug("Triggering an update of all generators: ${registry.inspect()}")
         }
-        registry.each { g -> g.updateDecorators() }
-        if (IS_INFO_ENABLED) {
-            log.info("Generators have been updated.")
+        synchronized(ModelIdentifierGeneratorRegistryService.class) {
+            registry.each { g -> g.updateDecorators() }
+        }
+        if (IS_DEBUG_ENABLED) {
+            log.debug("Generators have been updated.")
         }
     }
 
@@ -78,8 +80,8 @@ class ModelIdentifierGeneratorRegistryService {
      */
     ModelIdentifierGenerator findByName(String name) {
         ModelIdentifierGenerator result = registry[name]
-        if (IS_INFO_ENABLED) {
-            log.info("Searched for a generator named $name and found ${result ?: 'nothing'}.")
+        if (IS_DEBUG_ENABLED) {
+            log.debug("Searched for a generator named $name and found ${result ?: 'nothing'}.")
         }
         return result
     }

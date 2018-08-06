@@ -68,6 +68,7 @@ when threads are accessing different models (which should occur concurrently)
 and when threads are accessing the same model (which should result in sequential access)
 */
 
+@Ignore
 class ConcurrencyTests extends JummpIntegrationTest {
 
     def vcsService=Holders.applicationContext.getBean("vcsService")

@@ -18,9 +18,9 @@
 --%>
 
 <%
-    def sidebarContent=g.pageProperty(name:'page.sidebar')
+    def sidebarContent = g.pageProperty(name:'page.sidebar')
     if (sidebarContent) {
-        sidebarContent=sidebarContent.trim()
+        sidebarContent = sidebarContent.trim()
     }
 %>
-<body>
+<body class="level2 full-width">

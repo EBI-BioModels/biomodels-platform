@@ -37,12 +37,12 @@ package net.biomodels.jummp.core
 import static org.junit.Assert.*
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.plugins.security.Person
-import org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid
+import grails.plugin.springsecurity.acl.AclSid
 import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.UserRole
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
-import org.codehaus.groovy.grails.plugins.springsecurity.SpringSecurityUtils
+import grails.plugin.springsecurity.SpringSecurityUtils
 import org.springframework.security.authentication.AnonymousAuthenticationToken
 import org.springframework.security.core.authority.GrantedAuthorityImpl
 import grails.util.Holders
@@ -72,7 +72,7 @@ class JummpIntegrationTest {
      * @li user with password verysecret and role ROLE_USER
      * @li admin with password 1234 and ROLE_ADMIN and ROLE_USER
      */
-    protected void createUserAndRoles() {
+    public void createUserAndRoles() {
         User user, user2, admin, curator
         Person person
         if (!User.findByUsername("testuser")) {
@@ -85,7 +85,7 @@ class JummpIntegrationTest {
                     accountExpired: false,
                     accountLocked: false,
                     passwordExpired: false)
-            assertNotNull(person.save(flush:true, failOnError:true)) 
+            assertNotNull(person.save(flush:true, failOnError:true))
             assertNotNull(user.save())
             assertNotNull(new AclSid(sid: user.username, principal: true).save(flush: true))
         } else {
@@ -101,7 +101,7 @@ class JummpIntegrationTest {
                     accountExpired: false,
                     accountLocked: false,
                     passwordExpired: false)
-            assertNotNull(person.save(flush:true, failOnError:true)) 
+            assertNotNull(person.save(flush:true, failOnError:true))
             assertNotNull(user2.save())
             assertNotNull(new AclSid(sid: user2.username, principal: true).save(flush: true))
         } else {
@@ -117,7 +117,7 @@ class JummpIntegrationTest {
                     accountExpired: false,
                     accountLocked: false,
                     passwordExpired: false)
-            assertNotNull(person.save(flush:true, failOnError:true)) 
+            assertNotNull(person.save(flush:true, failOnError:true))
             assertNotNull(admin.save())
             assertNotNull(new AclSid(sid: admin.username, principal: true).save(flush: true))
         } else {
@@ -125,7 +125,7 @@ class JummpIntegrationTest {
         }
         if (!User.findByUsername("curator")) {
             person = new Person(userRealName: "Curator")
-        	assertNotNull(person.save(flush:true, failOnError:true)) 
+        	assertNotNull(person.save(flush:true, failOnError:true))
             curator = new User(username: "curator",
                     password: springSecurityService.encodePassword("extremelysecret"),
                     person: person,
@@ -152,7 +152,7 @@ class JummpIntegrationTest {
         Role curatorRole = Role.findByAuthority("ROLE_CURATOR")
         createUserRoleIfNeeded(curator, curatorRole)
     }
-    
+
     private void createUserRoleIfNeeded(User user, Role role) {
     	if (!UserRole.findByUserAndRole(user, role)) {
     		UserRole.create(user, role, false)
@@ -192,7 +192,7 @@ class JummpIntegrationTest {
      * Sets the current authentication to testuser and does not model as admin user.
      * @return The testusers authentication
      */
-    protected def authenticateAsTestUser() {
+    public def authenticateAsTestUser() {
         modelAdminUser(false)
         return authenticate("testuser", "secret")
     }

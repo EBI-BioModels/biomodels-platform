@@ -41,7 +41,7 @@ import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.plugins.security.UserRole
 import net.biomodels.jummp.webapp.SearchController
-import org.codehaus.groovy.grails.plugins.springsecurity.acl.AclSid
+import grails.plugin.springsecurity.acl.AclSid
 import org.apache.commons.io.FileUtils
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.Repository
@@ -350,6 +350,7 @@ class SearchControllerSpec extends IntegrationSpec {
         exchangeDir.mkdirs()
         grailsApplication.config.jummp.vcs.exchangeDirectory = exchangeDir.path
         modelService.vcsService.vcsManager = gitService.getInstance()
+        modelService.vcsService.vcsManager.exchangeDirectory = exchangeDir
     }
 
     def createModel(String formatId, String submitter, String filePath, def auth = null) {

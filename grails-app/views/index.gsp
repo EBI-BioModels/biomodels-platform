@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -27,10 +27,14 @@
 
 
 
+<%
+    def styleName = grailsApplication.config.jummp.branding.style
+%>
+
 <!doctype html>
 <html>
     <head>
-        <meta name="layout" content="main"/>
+        <meta name="layout" content="${styleName}/main"/>
     </head>
     <body activetab="about">
         <wcm:render path="index"/>
@@ -40,5 +44,5 @@
     </content>
 </html>
 <content tag="title">
-	DDMoRe Model Repository
+	JummpBioModels Database
 </content>

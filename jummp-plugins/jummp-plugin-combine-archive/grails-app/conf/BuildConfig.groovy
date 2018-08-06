@@ -49,21 +49,24 @@ grails.project.dependency.resolution = {
     }
     log "warn"
     // circumvent http://jira.grails.org/browse/GRAILS-9984
-    legacyResolve true
+    legacyResolve false
     repositories {
         if (System.getenv("JUMMP_ARTIFACTORY_URL")) {
             mavenRepo "${System.getenv('JUMMP_ARTIFACTORY_URL')}"
         }
         grailsCentral()
+        mavenRepo("http://mvn.sems.uni-rostock.de/releases/")
         mavenCentral()
         mavenRepo "http://www.ebi.ac.uk/~maven/m2repo"
         mavenRepo "http://www.ebi.ac.uk/~maven/m2repo_snapshots/"
     }
     dependencies {
-        compile("org.mbine.co:libCombineArchive:0.1-SNAPSHOT") { 
-            excludes 'junit', 'slf4j-api', 'slf4j-log4j12', 'jmock-junit4'
+        compile("org.mbine.co:libCombineArchive:0.1") {
+            excludes 'junit', 'slf4j-api', 'slf4j-log4j12', 'slf4j-log4j12-impl', 'jmock-junit4', 'jena-core'
         }
-        runtime("commons-jexl:commons-jexl:1.1") { excludes 'junit', 'commons-logging' }
+        compile "de.unirostock.sems:CombineExt:1.2.4"
+
+        runtime("commons-jexl:commons-jexl:1.1") { excludes 'junit', 'commons-logging', 'slf4j-log4j12' }
         compile "commons-io:commons-io:2.1"
         compile 'xml-apis:xml-apis:1.4.01'
         // mime-type detection
@@ -71,9 +74,8 @@ grails.project.dependency.resolution = {
     }
 
     plugins {
-        build ":tomcat:7.0.54"
-        provided(":codenarc:0.21")
-        test ":gmetrics:0.3.1"
+        build ":tomcat:7.0.55.3"
+        build(":codenarc:1.2")
     }
 }
 grails.plugin.location.'jummp-plugin-core-api' = "../jummp-plugin-core-api"

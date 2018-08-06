@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2017 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -286,7 +286,9 @@ public interface IModelService {
     **/
     public boolean restoreModel(String modelId)
     public boolean deleteRevision(RevisionTransportCommand revision)
-    public void publishModelRevision(RevisionTransportCommand revision)
+    RevisionTransportCommand publishModelRevision(RevisionTransportCommand revision)
+
+//    public void validateModelRevision(RevisionTransportCommand revision)
     /**
      * Finds the model with the specified perennial identifier.
      *

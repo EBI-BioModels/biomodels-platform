@@ -51,7 +51,7 @@ grails.project.dependency.resolution = {
         // excludes 'ehcache'
     }
     log "warn" // log level of Ivy resolver, either 'error', 'warn', 'info', 'debug' or 'verbose'
-    legacyResolve true
+    legacyResolve false
     repositories {
         if (System.getenv("JUMMP_ARTIFACTORY_URL")) {
             mavenRepo "${System.getenv('JUMMP_ARTIFACTORY_URL')}"
@@ -73,7 +73,7 @@ grails.project.dependency.resolution = {
         compile 'org.eclipse.jgit:org.eclipse.jgit:1.2.0.201112221803-r'
     }
     plugins {
-        build ":tomcat:7.0.54"
+        build ":tomcat:7.0.55.3"
     }
 }
 grails.plugin.location.'jummp-plugin-configuration'="../jummp-plugin-configuration"

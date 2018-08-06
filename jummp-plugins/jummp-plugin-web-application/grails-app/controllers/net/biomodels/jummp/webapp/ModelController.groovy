@@ -34,30 +34,36 @@
 
 package net.biomodels.jummp.webapp
 
-import com.wordnik.swagger.annotations.*
 import grails.converters.JSON
-import grails.plugins.springsecurity.Secured
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
-import net.biomodels.jummp.core.model.ModelAuditTransportCommand
-import net.biomodels.jummp.core.model.ModelTransportCommand
-import net.biomodels.jummp.core.model.PermissionTransportCommand
-import net.biomodels.jummp.core.model.PublicationTransportCommand
-import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
+import grails.plugin.springsecurity.annotation.Secured
+import groovy.json.JsonSlurper
+import net.biomodels.jummp.core.adapters.RevisionAdapter
+import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
-import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.core.model.audit.*
+import net.biomodels.jummp.core.model.PublicationDetailExtractionContext as PDEC
+import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PLPTC
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
+import net.biomodels.jummp.core.model.audit.AccessFormat
+import net.biomodels.jummp.core.model.audit.AccessType
+import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
+import net.biomodels.jummp.model.Model
+import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.PersonTransportCommand
+import net.biomodels.jummp.plugins.security.Team
+import net.biomodels.jummp.webapp.rest.errors.Error
+import net.biomodels.jummp.webapp.rest.model.show.ModelFiles
 import org.apache.commons.io.FileUtils
-import org.apache.commons.lang.exception.ExceptionUtils
+import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONObject
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.multipart.MultipartFile
-import java.util.Arrays
-import net.biomodels.jummp.plugins.security.Team
-import net.biomodels.jummp.annotationstorage.*
+import org.springframework.security.core.GrantedAuthority
 
-@Api(value = "/model", description = "Operations related to models")
+import javax.servlet.http.HttpServletResponse
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
+
+@Secured(['IS_AUTHENTICATED_FULLY'])
 class ModelController {
     /**
      * Flag that checks whether the dynamically-inserted logger is set to DEBUG or higher.
@@ -92,33 +98,51 @@ class ModelController {
      */
     def grailsApplication
     /**
-    * Dependency injection of pubMedService
-    */
-    def pubMedService
+     * Dependency injection of PublicationService
+     */
+    def publicationService
     /*
     * Dependency injection of mailService
     */
     def mailService
     /**
+     * Dependency injection of MetadataDelegateService
+     */
+    def metadataDelegateService
+    /**
+     * Dependency injection of OmexService
+     */
+    def omexService
+
+    def modelConversionService
+
+    def messageSource
+
+    /**
      * The list of actions for which we should not automatically create an audit item.
      */
     final List<String> AUDIT_EXCEPTIONS = ['updateFlow', 'createFlow', 'uploadFlow',
-                'showWithMessage', 'share', 'getFileDetails']
+                'showWithMessage', 'share', 'getFileDetails', 'submitForPublication', 'updateCurationState']
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
 
-    def afterInterceptor = [ action: this.&auditAfter, except: AUDIT_EXCEPTIONS]
+    def afterInterceptor = [action: this.&auditAfter, except: AUDIT_EXCEPTIONS]
 
     private String getUsername() {
-        String username="anonymous"
+        String username = "anonymous"
         def principal = springSecurityService.principal
         if (principal instanceof String) {
             username = principal
         }
-        else if (principal) {
-            username = principal.username
-        }
         return username
+    }
+
+    private String getUserEmailAddress() {
+        def principal = springSecurityService.getCurrentUser()
+        if (principal) {
+            return principal.email
+        }
+        return null
     }
 
     // if this method returns false, the controller method is no longer called.
@@ -129,7 +153,7 @@ class ModelController {
             String modelId = null
             String username = getUsername()
             String accessType = actionUri
-            String formatType = params.format ?: "html"
+            String formatType = response.format
             String changesMade = null
 
             final boolean HAS_ONLY_DIGITS = isPositiveNumber(modelIdParam)
@@ -153,9 +177,10 @@ class ModelController {
                 modelId = (model.publicationId) ?: model.submissionId
                 int historyItem = updateHistory(modelId, username, accessType, formatType, changesMade)
                 session.lastHistory = historyItem
+                return true
             } else {
                 log.error "Ignoring invalid request for $actionUri with params $params."
-                forward(controller: "errors", action: "error403")
+                forward(controller: "errors", action: "error404")
                 return false
             }
         } catch(Exception e) {
@@ -163,7 +188,6 @@ class ModelController {
             forward(controller: "errors", action: "error403")
             return false
         }
-        return true
     }
 
     private void auditAfter(def model) {
@@ -183,8 +207,7 @@ class ModelController {
         AccessFormat format = AccessFormat.HTML
         try {
             format = AccessFormat.valueOf(formatType.toUpperCase())
-        }
-        catch(Exception ignore) {
+        } catch(Exception ignore) {
         }
         ModelTransportCommand model = modelDelegateService.findByPerennialIdentifier(modelId)
         ModelAuditTransportCommand audit = new ModelAuditTransportCommand(
@@ -194,8 +217,7 @@ class ModelController {
                     type: AccessType.fromAction(accessType),
                     changesMade: changesMade,
                     success: success)
-        long returned = modelDelegateService.createAuditItem(audit)
-        return returned
+        return modelDelegateService.createAuditItem(audit)
     }
 
     def showWithMessage = {
@@ -207,84 +229,173 @@ class ModelController {
         redirect(action: "show", id: modelId.toString())
     }
 
-    @ApiOperation(value = "Show a model.", httpMethod = "GET",
-                response = net.biomodels.jummp.webapp.rest.model.show.Model.class,
-                notes = "Pass the expected media type of the request as a parameter e.g. /model/id?format=json")
-    @ApiImplicitParam(name = "modelId", value = "The model identifier", required = true, allowMultiple = false)
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def show() {
-        RevisionTransportCommand rev = modelDelegateService.getRevisionFromParams(params.id,
-                    params.revisionId)
-        if (!params.format || (params.format != "json" && params.format != "xml") ) {
-            if (!rev) {
-                forward(controller: 'errors', action: 'error403')
+        RevisionTransportCommand rev
+        boolean isPrivateModel = false
+        try {
+            rev = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
+        } catch (AccessDeniedException e) {
+            Model model = Model.findByPublicationIdOrSubmissionId(params.id, params.id)
+            log.warn("""\
+An anonymous or restricted access user is trying to retrieve this model: ${model.submissionId}""")
+            int revisionNumber = -1
+            if (params.revisionId) {
+                revisionNumber = params.int("revisionId")
+            }
+            Revision revision = revisionNumber >= 0 ?
+                    model.revisions.getAt(revisionNumber-1) : model.revisions.last()
+            if (!revision) {
+                forward(controller: 'errors', action: 'error404')
                 return
             }
-            final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
-            boolean showPublishOption = modelDelegateService.canPublish(PERENNIAL_ID)
-            boolean canUpdate = modelDelegateService.canAddRevision(PERENNIAL_ID)
-            boolean canDelete = modelDelegateService.canDelete(PERENNIAL_ID)
-            boolean canShare = modelDelegateService.canShare(PERENNIAL_ID)
-            String flashMessage = ""
-            if (flash.now["giveMessage"]) {
-                flashMessage = flash.now["giveMessage"]
-            }
-            List<RevisionTransportCommand> revs =
+            rev = new RevisionAdapter(revision: revision).toCommandObject()
+            rev.name = rev.model.submissionId
+            model.publication = null
+            rev.format = new ModelFormatTransportCommand()
+            rev.files = new ArrayList<>()
+            rev.description = g.message(code: "net.biomodels.jummp.core.model.show.MessageForPrivateModel")
+            isPrivateModel = true
+        }
+        withFormat {
+            html {
+                if (!rev) {
+                    forward(controller: 'errors', action: 'error404')
+                    return
+                }
+                if (isPrivateModel) {
+                    render(view: "showBasicView", model: [id: rev.model.submissionId, description: rev.description])
+                    return
+                } else {
+                    final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
+                    RevisionTransportCommand revision = modelDelegateService.getLatestRevision(PERENNIAL_ID)
+                    boolean showPublishOption = modelDelegateService.canPublish(revision)
+                    boolean canSubmitForPublication = modelDelegateService.canSubmitForPublication(revision)
+                    boolean canCertify = modelDelegateService.canCertify(revision)
+                    boolean canUpdate = modelDelegateService.canAddRevision(PERENNIAL_ID)
+                    boolean canDelete = modelDelegateService.canDelete(PERENNIAL_ID)
+                    boolean canShare = modelDelegateService.canShare(PERENNIAL_ID)
+                    List<FlagTransportCommand> flags = modelDelegateService.getFlags(PERENNIAL_ID)
+                    String flashMessage = ""
+                    if (flash.now["giveMessage"]) {
+                        flashMessage = flash.now["giveMessage"]
+                    }
+                    List<RevisionTransportCommand> revs =
                         modelDelegateService.getAllRevisions(PERENNIAL_ID)
-            def model = [revision: rev,
-                        authors: rev.model.creators,
-                        allRevs: revs,
-                        flashMessage: flashMessage,
-                        canUpdate: canUpdate,
-                        canDelete: canDelete,
-                        canShare: canShare,
-                        showPublishOption: showPublishOption
-            ]
-            if (rev.id == modelDelegateService.getLatestRevision(PERENNIAL_ID).id) {
-                flash.genericModel = model
-                forward controller: modelFileFormatService.getPluginForFormat(rev.model.format),
-                            action: "show", id: PERENNIAL_ID
-            } else { //showing an old version, with the default page. Do not allow updates.
-                model["canUpdate"] = false
-                model["showPublishOption"] = false
-                model["oldVersion"] = true
-                model["canDelete"] = false
-                model["canShare"] = false
-                return model
+                    CurationNotesTransportCommand curationNotes =
+                        metadataDelegateService.fetchCurationNotes(rev)
+                    String curationState = rev.curationState.name()
+                    List<String> possibleCurationStates = CurationState.values()*.name()
+                    List<String> originalModels = metadataDelegateService.fetchOriginalModels(rev)
+                    Map<String, String> modellingApproaches =
+                        metadataDelegateService.fetchModellingApproaches(rev)
+                    boolean hasCuratorRole = hasCuratorRole()
+                    boolean supportedForConversion = modelConversionService.isSupportedForConversion(rev)
+                    List<RFTC> convertedFilesTC = modelConversionService.getConvertedFiles(rev)
+                    def model = [revision               : rev,
+                                 authors                : rev.model.creators,
+                                 allRevs                : revs,
+                                 flashMessage           : flashMessage,
+                                 canUpdate              : canUpdate,
+                                 canDelete              : canDelete,
+                                 canShare               : canShare,
+                                 showPublishOption      : showPublishOption,
+                                 canSubmitForPublication: canSubmitForPublication,
+                                 canCertify             : canCertify,
+                                 validationLevel        : rev.getValidationLevelMessage(),
+                                 certComment            : rev.getCertificationMessage(),
+                                 flags                  : flags,
+                                 curationState          : curationState,
+                                 possibleCurationStates : possibleCurationStates,
+                                 modellingApproaches    : modellingApproaches,
+                                 curationNotes          : curationNotes,
+                                 originalModels         : originalModels,
+                                 hasCuratorRole         : hasCuratorRole,
+                                 supportedForConversion : supportedForConversion,
+                                 convertedFilesTC       : convertedFilesTC
+                    ]
+                    if (rev.id == revision.id) {
+                        flash.genericModel = model
+                        ModelFormatTransportCommand format = revision.format
+                        String formatController = modelFileFormatService.getPluginForFormat(format)
+                        if (formatController) {
+                            forward controller: formatController, action: "show", id: PERENNIAL_ID
+                        } else {
+                            final String fmtId = format.identifier
+                            log.error "Could not find a controller for format $fmtId of $PERENNIAL_ID"
+                        }
+                    } else { //showing an old version, with the default page. Do not allow updates.
+                        model["canUpdate"] = false
+                        model["showPublishOption"] = false
+                        model["oldVersion"] = true
+                        model["canDelete"] = false
+                        model["canShare"] = false
+                        model["canCertify"] = false
+                        model["flags"] = flags
+                        return model
+                    }
+                }
             }
-        } else {
-            if (!rev) {
-                respond net.biomodels.jummp.webapp.rest.error.Error("Invalid Id",
+            json {
+                if (!rev) {
+                    respond net.biomodels.jummp.webapp.rest.errors.Error("Invalid Id",
                         "An invalid model id was specified")
-            } else {
-                respond new net.biomodels.jummp.webapp.rest.model.show.Model(rev)
+                } else {
+                    respond new net.biomodels.jummp.webapp.rest.model.show.Model(rev, isPrivateModel)
+                }
             }
+            xml {
+                if (!rev) {
+                    respond net.biomodels.jummp.webapp.rest.errors.Error("Invalid Id",
+                        "An invalid model id was specified")
+                } else {
+                    respond new net.biomodels.jummp.webapp.rest.model.show.Model(rev, isPrivateModel)
+                }
+            }
+            '*' {
+                render view: '/errors/error415', status: 415 }
         }
     }
 
-    def files = {
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def files() {
+        // PageFragmentCachingFilter throws a NPE for unsupported format parameter values
+        if (!(response.format in ['json', 'xml'])) {
+            render view: '/errors/error415', status: 415
+            return
+        }
         try {
-            def revisionFiles = modelDelegateService.getRevisionFromParams(params.id,
-                        params.revisionId).files
+            def revisionFiles = modelDelegateService.getRevisionFromParams(params.id, params.revisionId).files
             def responseFiles = revisionFiles.findAll { !it.hidden }
-            respond new net.biomodels.jummp.webapp.rest.model.show.ModelFiles(responseFiles)
+            def modelFiles = new ModelFiles(responseFiles)
+            withFormat {
+                json { respond modelFiles }
+                xml { respond modelFiles }
+                '*' { render status: 415, view: "/errors/error415" }
+            }
         } catch(Exception err) {
             log.error err.message, err
-            respond net.biomodels.jummp.webapp.rest.error.Error("Invalid Id",
-            "An invalid model id was specified")
+            forward controller: 'errors', action: 'error404'
         }
     }
 
-    def publish = {
+    def publish() {
         RevisionTransportCommand rev
         try {
             rev = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
-            modelDelegateService.publishModelRevision(rev)
-            def notification = [revision:rev, user:getUsername(), perms: modelDelegateService.getPermissionsMap(rev.model.submissionId)]
-            sendMessage("seda:model.publish", notification)
-
-            redirect(action: "showWithMessage",
-                        id: rev.identifier(),
-                        params: [flashMessage: "Model has been published."])
+            rev = modelDelegateService.publishModelRevision(rev)
+            def currentUser = springSecurityService.currentUser
+            if (currentUser) {
+                def notification = [
+                    revision: rev,
+                    user: currentUser,
+                    perms: modelDelegateService.getPermissionsMap(rev.model.submissionId)]
+                sendMessage("seda:model.publish", notification)
+            }
+            String extraMsg = rev.state == ModelState.PUBLISHED ?
+                " with the publication identifier ${rev.modelIdentifier()}." : "."
+            redirect(action: "showWithMessage", id: rev.identifier(),
+                        params: [flashMessage: "Model has been published${extraMsg}"])
         } catch(AccessDeniedException e) {
             log.error(e.message, e)
             forward(controller: "errors", action: "error403")
@@ -297,13 +408,37 @@ class ModelController {
         }
     }
 
-    def delete = {
+    def submitForPublication() {
+        try {
+            def rev = modelDelegateService.getRevisionFromParams(params.id)
+            modelDelegateService.submitModelRevisionForPublication(rev)
+
+            def notification = [revision:rev, user:getUsername(), perms: modelDelegateService.getPermissionsMap(rev.model.submissionId)]
+            sendMessage("seda:model.submitForPublication", notification)
+
+            redirect(action: "showWithMessage",
+                id: rev.identifier(),
+                params: [flashMessage: "Model has been submitted to the curators for publication."])
+        } catch (Exception e) {
+            log.error(e.message, e)
+            String message = "Sorry, there was a problem. Please try again later."
+            redirect(action: "showWithMessage",
+                id: modelDelegateService.getRevisionFromParams(params.id).identifier(),
+                params: [flashMessage: message])
+        }
+    }
+
+    def delete() {
         try {
             boolean deleted = modelDelegateService.deleteModel(params.id)
-            def notification = [model:modelDelegateService.getModel(params.id),
-            					user:getUsername(),
-            					perms: modelDelegateService.getPermissionsMap(params.id)]
-            sendMessage("seda:model.delete", notification)
+            def currentUser = springSecurityService.currentUser
+            if (currentUser) {
+                def notification = [
+                    model: modelDelegateService.getModel(params.id),
+                    user: currentUser,
+                    perms: modelDelegateService.getPermissionsMap(params.id)]
+                sendMessage("seda:model.delete", notification)
+            }
             redirect(action: "showWithMessage", id: params.id,
                         params: [ flashMessage: deleted ?
                                     "Model has been deleted, and moved into archives." :
@@ -315,7 +450,8 @@ class ModelController {
     }
 
     // uses revision id and filename
-    def getFileDetails = {
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def getFileDetails() {
         try {
             final RevisionTransportCommand REVISION =
                         modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
@@ -330,7 +466,7 @@ class ModelController {
         }
     }
 
-    def share = {
+    def share() {
         try {
             def rev = modelDelegateService.getRevisionFromParams(params.id)
             def perms = modelDelegateService.getPermissionsMap(rev.model.submissionId)
@@ -350,7 +486,7 @@ class ModelController {
         return []
     }
 
-    def shareUpdate = {
+    def shareUpdate() {
         boolean valid = params.collabMap
         if (valid) {
             try {
@@ -359,7 +495,8 @@ class ModelController {
                 for (int i = 0; i < map.length(); i++) {
                     JSONObject perm = map.getJSONObject(i)
                     PermissionTransportCommand ptc = new PermissionTransportCommand(
-                                id: perm.getString("id"),
+                                id: perm.getInt("id"),
+                                username: perm.getString("username"),
                                 name: perm.getString("name"),
                                 read: perm.getBoolean("read"),
                                 write: perm.getBoolean("write"))
@@ -379,7 +516,6 @@ class ModelController {
         }
     }
 
-    @Secured(["isAuthenticated()"])
     def updateFlow = {
         start {
             action {
@@ -411,13 +547,17 @@ class ModelController {
             on("displayConfirmationPage"){
                 String update = conversation.changesMade.join(". ")
                 String model = conversation.model_id
-                String user = getUsername()
-                updateHistory(session.result_submission, user, "update", "html", update, true)
-                def notification = [model:modelDelegateService.getModel(conversation.model_id),
-                        user:user,
-                        update: conversation.changesMade,
-                        perms: modelDelegateService.getPermissionsMap(conversation.model_id, false)]
-                sendMessage("seda:model.update", notification)
+                def currentUser = springSecurityService.currentUser
+                String username = currentUser?.username ?: 'anonymous'
+                updateHistory(session.result_submission, username, "update", "html", update, true)
+                if (!currentUser) {
+                    def notification = [
+                            model: modelDelegateService.getModel(model),
+                            user: currentUser,
+                            update: conversation.changesMade,
+                            perms : modelDelegateService.getPermissionsMap(model, false)]
+                    sendMessage("seda:model.update", notification)
+                }
             }.to "displayConfirmationPage"
             on("displayErrorPage").to "displayErrorPage"
         }
@@ -427,7 +567,6 @@ class ModelController {
         displayAccessDenied()
    }
 
-    @Secured(["isAuthenticated()"])
     def createFlow = {
         uploadPipeline {
             subflow(controller: "model", action: "upload", input: [isUpdate:false])
@@ -436,6 +575,16 @@ class ModelController {
                 final String USERNAME = getUsername()
                 final String AUDIT_ID = session.result_submission
                 updateHistory(AUDIT_ID, USERNAME, "create", "html", null, true)
+                final String biomodelsCuraMailingList = grailsApplication.config.jummp.model.curators.mailinglist
+                final String submitterEmail = getUserEmailAddress()
+                if (submitterEmail && USERNAME) {
+                    String model = session.result_submission
+                    def notification = [
+                            model: modelDelegateService.getModel(model),
+                            user: springSecurityService.currentUser,
+                            emails: [biomodelsCuraMailingList, submitterEmail]]
+                    sendMessage("seda:model.create", notification)
+                }
             }.to "displayConfirmationPage"
             on("displayErrorPage").to "displayErrorPage"
         }
@@ -453,7 +602,6 @@ class ModelController {
      * end of the session using <tt>flow.persistenceContext.evict(it)</tt>.
      * See http://grails.org/grails/latest/doc/guide/theWebLayer.html#flowScopes
      */
-    @Secured(["isAuthenticated()"])
     def uploadFlow = {
         input {
             isUpdate(required: true)
@@ -462,7 +610,7 @@ class ModelController {
             action {
                 Map<String, Object> workingMemory = new HashMap<String,Object>()
                 flow.workingMemory = workingMemory
-                flow.workingMemory.put("isUpdateOnExistingModel",flow.isUpdate)
+                flow.workingMemory.put("isUpdateOnExistingModel", flow.isUpdate)
                 conversation.changesMade = new TreeSet<String>()
                 if (flow.isUpdate) {
                     String model_id = conversation.model_id
@@ -499,69 +647,111 @@ class ModelController {
         }
         uploadFiles {
             on("Upload") {
-            	try {
-                def mainMultipartList = request.getMultiFileMap().mainFile
-                def extraFileField = request.getMultiFileMap().extraFiles
-                List<MultipartFile> extraMultipartList = []
-                if (extraFileField instanceof MultipartFile) {
-                    extraMultipartList = [extraFileField]
-                }
-                else {
-                    extraMultipartList = extraFileField
-                }
-                def descriptionFields = params?.description ?: [""]
-                if (descriptionFields instanceof String) {
-                    descriptionFields = [descriptionFields]
-                }
-                def noMains = params.deletedMain
-                List<String> mainsToBeDeleted = []
-                if (noMains) {
-                    if (!(noMains instanceof CharSequence)) {
-                        mainsToBeDeleted.addAll(Arrays.asList(noMains))
+                // get the main and the additional files just added and their descriptions
+                // these operations are based on params
+                // the principal purpose of this step is to store an UploadCommand object to workingMemory
+                // this object persists the latest changes on the upload file page
+                try {
+                    def mainMultipartList = request.getMultiFileMap().mainFile
+                    List<String> mainFileDescription = params.list("mainFileDescription")
+                    def extraFileField = request.getMultiFileMap().extraFiles
+                    List<MultipartFile> extraMultipartList = []
+                    if (extraFileField instanceof MultipartFile) {
+                        extraMultipartList = [extraFileField]
                     } else {
-                        mainsToBeDeleted.add(noMains)
+                        extraMultipartList = extraFileField
                     }
-                }
-                def noAdditionals = params.deletedAdditional
-                List<String> additionalsToBeDeleted = []
-                if (noAdditionals) {
-                    if (noAdditionals.getClass().isArray()) {
-                        additionalsToBeDeleted.addAll(Arrays.asList(noAdditionals))
-                    } else {
-                        additionalsToBeDeleted.add(noAdditionals)
+                    List<String> descriptionFields = params.list("description")
+                    List<String> mainsToBeDeleted = params.list("deletedMain")
+                    List<String> additionalsToBeDeleted = params.list("deletedAdditional")
+                    // Because of using an input element to store deleted files,
+                    // we need to reprocess the list of them for getting the list of file name
+                    // before sending the result to Submission Service
+                    List<String> additionalFilesToBeDeleted = new LinkedList<String>()
+                    additionalsToBeDeleted.each {String filename ->
+                        int posLessThan = filename.indexOf("<")
+                        if (posLessThan > 0) {
+                            additionalFilesToBeDeleted.add(filename.substring(0, posLessThan))
+                        } else {
+                            additionalFilesToBeDeleted.add(filename)
+                        }
                     }
-                }
-                if (IS_DEBUG_ENABLED) {
-                    if (mainMultipartList?.size() == 1) {
-                        log.debug("""\
-New submission started.The main file supplied is ${mainMultipartList.properties}.""")
-                    } else {
-                        log.debug("""\
-New submission started. Main files: ${mainMultipartList.inspect()}.""")
+                    if (IS_DEBUG_ENABLED) {
+                        if (mainMultipartList?.size() == 1) {
+                            log.debug("""\
+    New submission started. The main file supplied is ${mainMultipartList.properties}.""")
+                        } else {
+                            log.debug("""\
+    New submission started. Main files: ${mainMultipartList.inspect()}.""")
+                        }
+                        log.debug("Additional files supplied: ${extraMultipartList.inspect()}.\n")
                     }
-                    log.debug("Additional files supplied: ${extraMultipartList.inspect()}.\n")
-                }
 
-                def cmd = new UploadFilesCommand()
-                cmd.mainFile = mainMultipartList
-                cmd.extraFiles = extraMultipartList
-                cmd.mainDeletes = mainsToBeDeleted
-                cmd.extraDeletes = additionalsToBeDeleted
-                cmd.description = descriptionFields
-                if (IS_DEBUG_ENABLED) {
-                    log.debug "Data binding done :${cmd.properties}"
-                }
-                flow.workingMemory.put("UploadCommand", cmd)
+                    def cmd = new UploadFilesCommand()
+                    cmd.mainFile = mainMultipartList
+                    cmd.mainFileDescription = mainFileDescription
+                    cmd.extraFiles = extraMultipartList
+                    cmd.mainDeletes = mainsToBeDeleted
+                    cmd.extraDeletes = additionalFilesToBeDeleted
+                    cmd.description = descriptionFields.toList()
+                    if (IS_DEBUG_ENABLED) {
+                        log.debug "Data binding done: ${cmd.properties}"
+                    }
+                    flow.workingMemory.put("UploadCommand", cmd)
+                    // store the main files uploaded from the upload flow
+                    // into the working memory variable named mains_in_working
+                    Map<String, String> mainFiles = new HashMap<String, String>()
+                    // submit new models, add new main file
+                    if (cmd.mainFile?.first()?.size > 0) {
+                        // add the main files when
+                        // - the submission flow has just started
+                        // - the main files have been removed and added again
+                        cmd.mainFile.eachWithIndex{ MultipartFile entry, int index ->
+                            String originalFilename = entry.originalFilename
+                            String description = cmd.mainFileDescription[index].encodeAsHTML()
+                            mainFiles.put(originalFilename, description)
+                        }
+                    } else if (params.mainFileUpload && params.mainFileDescription) {
+                        // the main file has not been updated any more when
+                        // the user goes back and forth between the file upload screen
+                        // and the model information during the upload flow
+                        List fileNames = params.list("mainFileUpload")
+                        List descriptions = params.list("mainFileDescription")
+                        fileNames.eachWithIndex { String fileName, int index ->
+                            mainFiles.put(fileName, descriptions[index].encodeAsHTML())
+                        }
+                    }
+                    flow.workingMemory.put("mains_in_working", mainFiles)
+
+                    // retrieve the additional files from the upload process.
+                    // The result is the map of file names and corresponding descriptions.
+                    // For instance, manual.pdf: guidelines and help, readme.txt: introduction and preface, ...
+                    Map<String, String> additionalFiles = new HashMap<String, String>()
+                    // add the existing files that were already uploaded
+                    if (params.existedExtraFiles && params.existedExtraFileDescriptions) {
+                        List fileNames = params.list("existedExtraFiles")
+                        List descriptions = params.list("existedExtraFileDescriptions")
+                        fileNames.eachWithIndex { String fileName, int index ->
+                            additionalFiles.put(fileName, descriptions[index].encodeAsHTML())
+                        }
+                    }
+                    // add the recently uploaded files
+                    if (cmd.extraFiles && cmd.description) {
+                        cmd.extraFiles.eachWithIndex { MultipartFile f, int index ->
+                            additionalFiles.put(f.originalFilename, cmd.description[index].encodeAsHTML())
+                        }
+                    }
+                    flow.workingMemory.put("additionals_in_working", additionalFiles)
                 }
                 catch(Exception e) {
-                	e.printStackTrace();
+                    e.printStackTrace();
                 }
             }.to "transferFilesToService"
             on("ProceedWithoutValidation"){
 
             }.to "inferModelInfo"
             on("ProceedAsUnknown"){
-            	flow.workingMemory.get("model_type").identifier = "UNKNOWN"
+                flow.workingMemory.get("model_type").identifier = "UNKNOWN"
             }.to "inferModelInfo"
             on("Cancel").to "cleanUpAndTerminate"
             on("Back"){}.to "displayDisclaimer"
@@ -573,7 +763,7 @@ New submission started. Main files: ${mainMultipartList.inspect()}.""")
                 boolean fileValidationError = false
                 boolean furtherProcessingRequired = true
                 def deletedMains = cmd.mainDeletes
-                List mainFiles = flow.workingMemory.get("repository_files").findAll { it.mainFile }
+                List mainFiles = getMainFiles(flow.workingMemory)
                 boolean mainFileDeleted = mainFileDeleted(mainFiles, cmd.mainFile, deletedMains)
                 if (mainFileDeleted) {
                     return MainFileMissingError()
@@ -609,12 +799,12 @@ Error in uploading files. Cmd did not validate: ${cmd.getProperties()}""")
                     }
                 }
                 if (!fileValidationError && furtherProcessingRequired) {
-                    //should this be in a separate action state?
+                    // should this be in a separate action state?
                     def uuid = UUID.randomUUID().toString()
                     if (IS_DEBUG_ENABLED) {
                         log.debug "Generated submission UUID: ${uuid}"
                     }
-                    //pray that exchangeDirectory has been defined
+                    // pray that exchangeDirectory has been defined
                     File submission_folder = null
                     def sep = File.separator
                     if (!flow.workingMemory.containsKey("repository_files")) {
@@ -627,25 +817,67 @@ Error in uploading files. Cmd did not validate: ${cmd.getProperties()}""")
                         submission_folder = (new File(existing.path)).getParentFile()
                     }
                     def parent = submission_folder.canonicalPath + sep
+
+                    /**
+                     Transfer HashMap<String, String> to HashMap<File, String>
+                     We know that a map of file names with their descriptions
+                     is built at the end of uploadFiles step. This map maintains the newly-updated files
+                     which do not contain the deleted ones. Why do we need to transfer?
+                     we can get the submission folder at this step and
+                     this operation repairs the data for handling file upload afterward.
+                    */
+
+                    // FOR THE MAIN FILES
+                    // Copy the recently uploaded files to the exchanged folder if they are available
                     List<File> mainFileList
-                    if (cmd.mainFile) {
+                    if (cmd.mainFile?.first()?.size > 0) {
+                        // the main files might be just uploaded
                         mainFileList = transferFiles(parent, cmd.mainFile)
+                        if (mainFileList.size() == 0) {
+                            log.error("""\
+There is an error while attempting to copy the main files
+wrapped in ${cmd.mainFile.inspect()} to the exchanged folder""")
+                        }
                     }
-                    else {
-                        mainFileList = new LinkedList<File>()
+                    // Build a map of the main file objects from the working main files
+                    Map<File, String> mainFilesMap = new LinkedHashMap<File, String>()
+                    if (flow.workingMemory.containsKey("mains_in_working")) {
+                        def mains_in_working = flow.workingMemory.get("mains_in_working") as HashMap<String, String>
+                        mains_in_working.each {String keyAsFilename, String valueAsDescription ->
+                            mainFilesMap.put(new File(parent, keyAsFilename), valueAsDescription)
+                        }
+                        flow.workingMemory["submitted_mains"] = mainFilesMap
                     }
-                    List<File> extraFileList = transferFiles(parent, cmd.extraFiles)
-                    List<String> descriptionList = cmd.description
-                    def additionalsMap = [:]
-                    extraFileList.eachWithIndex{ file, i ->
-                        additionalsMap[file] = descriptionList[i]
+
+                    // FOR THE ADDITIONAL FILES
+                    // Copy the recently uploaded files to the exchanged folder if they are available
+                    List<File> extraFileList
+                    if (cmd.extraFiles) {
+                        extraFileList = transferFiles(parent, cmd.extraFiles)
+                        if (extraFileList.size() == 0) {
+                            log.error("""\
+There is an error while attempting to copy the supplemental files
+wrapped in ${cmd.extraFiles.inspect()} to the exchanged folder""")
+                        }
                     }
+                    // Build a map of the additional file objects from the working additional files
+                    Map<File, String> additionalFilesMap = new LinkedHashMap<File, String>()
+                    if (flow.workingMemory.containsKey("additionals_in_working")) {
+                        def additionals_in_working =
+                            flow.workingMemory.get("additionals_in_working") as HashMap<String, String>
+                        additionals_in_working.each {String keyAsFilename, String valueAsDescription ->
+                            additionalFilesMap.put(new File(parent, keyAsFilename), valueAsDescription)
+                        }
+                        flow.workingMemory["submitted_additionals"] = additionalFilesMap
+                    }
+
                     if (IS_DEBUG_ENABLED) {
                         log.debug """\
-About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
+About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}."""
                     }
-                    flow.workingMemory["submitted_mains"] = mainFileList
-                    flow.workingMemory["submitted_additionals"] = additionalsMap
+
+                    // FOR THE DELETED FILES
+                    // store the deleted file names into working memory
                     List<String> deletedFileNames = []
                     deletedFileNames.addAll(deletedMains)
                     deletedFileNames.addAll(cmd.extraDeletes)
@@ -656,7 +888,7 @@ About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
 
             }
             on("MainFileMissingError") {
-                flash.flashMessage = "submission.upload.error.fileerror"
+                flash.flashMessage = "submission.upload.error.file.missing"
             }.to "uploadFiles"
             on("AdditionalReplacingMainError") {
                 flash.flashMessage = "submission.upload.error.additional_replacing_main"
@@ -664,27 +896,26 @@ About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
             on("success").to "performValidation"
             on(Exception).to "handleException"
         }
-
         performValidation {
             action {
-                if (!flow.workingMemory.containsKey("model_type")) {
+                final boolean SHOULD_DETECT_FORMAT = flow.workingMemory["changedMainFiles"] ||
+                    !flow.workingMemory.containsKey("model_type")
+                if (SHOULD_DETECT_FORMAT) {
                     submissionService.inferModelFormatType(flow.workingMemory)
                 }
+                // clear changedMainFiles in case the user clicks back from displayModelInfo
+                flow.workingMemory.remove("changedMainFiles")
                 submissionService.performValidation(flow.workingMemory)
                 MFTC format = flow.workingMemory.get("model_type")
-                if (format && format.identifier !="UNKNOWN" && format.formatVersion == "*") {
+                if (format && format.identifier !="UNKNOWN" && format.identifier != "matlab" && format.formatVersion == "*") {
                     UnknownFormatVersion()
-                }
-                else if (!flow.workingMemory.containsKey("validation_error")) {
+                } else if (!flow.workingMemory.containsKey("validation_error")) {
                     Valid()
-                }
-                else
-                {
+                } else {
                     String errorAsString = flow.workingMemory.remove("validation_error") as String
                     if (errorAsString.contains("ModelValidationError")) {
                         ModelNotValid()
-                    }
-                    else {
+                    } else {
                         FilesNotValid()
                     }
                 }
@@ -706,7 +937,10 @@ About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
                 flash.modelFormatDetectedAs = flow.workingMemory.get("model_type").identifier
             }.to "uploadFiles"
             on("FilesNotValid") {
-                flash.error = "submission.upload.error.fileerror"
+                String actuallErrorMessage = flow.workingMemory.remove("validation_error") as String
+                String[] args = [actuallErrorMessage]
+                flash.flashMessage = messageSource.getMessage("submission.upload.error.file.invalid",
+                    args, Locale.getDefault())
             }.to "uploadFiles"
             on(Exception).to "handleException"
         }
@@ -732,6 +966,8 @@ About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
                 }
                 modifications.put("changeStatus", changeStatus);
                 submissionService.refineModelInfo(flow.workingMemory, modifications)
+                //ModelTransportCommand model = flow.workingMemory.get('ModelTC') as ModelTransportCommand
+                //RevisionTransportCommand revision = flow.workingMemory.get("RevisionTC") as RevisionTransportCommand
             }.to "enterPublicationLink"
             on("Cancel").to "cleanUpAndTerminate"
             on("Back"){}.to "uploadFiles"
@@ -741,26 +977,42 @@ About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
                 if (!params.PubLinkProvider && params.PublicationLink) {
                     flash.flashMessage = "Please select a publication link type."
                     return error()
-                }
-                Map<String,String> modifications = new HashMap<String,String>()
-                    if (params.PubLinkProvider && params.PublicationLink) {
-                        if (!pubMedService.verifyLink(params.PubLinkProvider,params.PublicationLink)) {
+                } else {
+                    String pubLinkProvider = params.list("PubLinkProvider")[0]
+                    String pubLink = params.list("PublicationLink")[0]
+                    if (pubLinkProvider) { // one of the publication link providers has been selected
+                        if (!publicationService.verifyLink(pubLinkProvider, pubLink)) {
                             flash.flashMessage = "The link is not a valid ${params.PubLinkProvider}"
                             return error()
                         }
                         ModelTransportCommand model = flow.workingMemory.get("ModelTC") as ModelTransportCommand
-                        if (params.PubLinkProvider !=model.publication?.linkProvider ||
-                                        params.PublicationLink != model.publication?.link) {
+                        boolean providerHasChanged = params.PubLinkProvider !=
+                            model.publication?.linkProvider?.linkType
+                        boolean linkHasChanged = params.PublicationLink != model.publication?.link
+                        if (providerHasChanged || linkHasChanged) {
+                            Map<String,String> modifications = new HashMap<String,String>()
                             modifications.put("PubLinkProvider", params.PubLinkProvider)
                             modifications.put("PubLink", params.PublicationLink)
-                            submissionService.updatePublicationLink(flow.workingMemory,
-                                        modifications)
+                            submissionService.updatePublicationLink(flow.workingMemory, modifications)
                         } else {
-                            flow.workingMemory.put("RetrievePubDetails", false)
+                            // go through publication editor in any case
+                            flow.workingMemory.put("previousPubLinkProvider", model.publication?.linkProvider)
+                            flow.workingMemory.put("previousPubLink", model.publication?.link)
+                            flow.workingMemory.put("RetrievePubDetails", true)
                         }
-                    } else {
+                        flow.workingMemory.put("SelectedPubLinkProvider", params.PubLinkProvider)
+                    } else { // 'No publication available' has been chosen
+                        RevisionTransportCommand revision = flow.workingMemory.get("RevisionTC") as RevisionTransportCommand
+                        PublicationTransportCommand publication = revision.model.publication
+                        if (publication) {
+                            revision.model.publication = null
+                            if (flow.workingMemory.containsKey("Authors")) {
+                                flow.workingMemory.remove("Authors")
+                            }
+                        }
                         flow.workingMemory.put("RetrievePubDetails", false)
                     }
+                }
             }.to "getPublicationDataIfPossible"
             on("Cancel").to "cleanUpAndTerminate"
             on("Back").to "displayModelInfo"
@@ -768,26 +1020,56 @@ About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
         getPublicationDataIfPossible {
             action {
                 if (flow.workingMemory.remove("RetrievePubDetails") as Boolean) {
-                    ModelTransportCommand model =
-                                flow.workingMemory.get("ModelTC") as ModelTransportCommand
-                    if (model.publication.link && model.publication.linkProvider) {
-                        def retrieved
-                        try {
-                            retrieved = pubMedService.
-                            getPublication(model.publication)
+                    ModelTransportCommand model = flow.workingMemory.get("ModelTC") as ModelTransportCommand
+                    if (model.publication.linkProvider) {
+                        PublicationTransportCommand retrieved
+                        PDEC publicationContext
+                        // Case: PUBMED, DOI, CUSTOM, MANUAL_ENTRY
+                        if (flow.workingMemory.containsKey("publication_objects_in_working")) {
+                            def publicationMap = flow.workingMemory.get("publication_objects_in_working") as Map<Object, PDEC>
+                            publicationContext = publicationMap.get(params.PubLinkProvider)
+                            if (publicationContext.publication) {
+                                PLPTC previousPubLinkProvider = flow.workingMemory.get("previousPubLinkProvider") as PLPTC
+                                String previousPubLink = flow.workingMemory.get("previousPubLink")
+                                PLPTC updatedPubLinkProvider = publicationContext.publication?.linkProvider
+                                boolean changedPubLinkProvider = previousPubLinkProvider?.linkType != updatedPubLinkProvider?.linkType
+                                boolean changedPubLink = previousPubLink != publicationContext?.publication?.link
+                                boolean changed =  changedPubLinkProvider || changedPubLink
+                                if (!changed) {
+                                    // reload the publication from cache
+                                    retrieved = publicationContext.publication
+                                    if (publicationContext.comesFromDatabase) {
+                                        flash.flashMessage = g.message(code: "publication.editor.duplicateEntry.message")
+                                    }
+                                } else { // load from database, external call or create a default PTC
+                                    publicationContext = loadOrFetchOrCreatePublication(model)
+                                    retrieved = publicationContext.publication
+                                }
+                            } else { // load from database, external call or create a default PTC
+                                publicationContext = loadOrFetchOrCreatePublication(model)
+                                retrieved = publicationContext.publication
+                            }
+                        } else {
+                            log.error("Expected publication objects initialised in workingMemory.")
                         }
-                        catch(Exception e) {
-                            log.error(e.message, e)
-                        }
+
                         if (retrieved) {
                             model.publication = retrieved
                             flow.workingMemory.put("Authors", model.publication.authors)
+
+                            // Update the publication objects in working
+                            def publicationMap = flow.workingMemory.get("publication_objects_in_working") as Map<Object, PDEC>
+                            publicationContext.publication = retrieved
+                            publicationMap.put(params.PubLinkProvider, publicationContext)
                         }
+                    }
+                    // use authors of the existing publication if available
+                    if (model.publication) {
+                        flow.workingMemory.put("Authors", model.publication.authors)
                     }
                     conversation.changesMade.add("Amended publication details")
                     publicationInfoPage()
-                }
-                else {
+                } else {
                     displaySummaryOfChanges()
                 }
             }
@@ -799,49 +1081,64 @@ About to submit ${mainFileList.inspect()} and ${additionalsMap.inspect()}."""
             on("Continue"){
                 ModelTransportCommand model =
                             flow.workingMemory.get("ModelTC") as ModelTransportCommand
+                def publicationMap = flow.workingMemory.get("publication_objects_in_working") as Map<Object, PDEC>
+                PDEC pubContext = publicationMap.get(flow.workingMemory.get("SelectedPubLinkProvider"))
+                PublicationTransportCommand tempPTC = pubContext.publication
+                bindData(tempPTC, params, [exclude: ['authors']])
                 bindData(model.publication, params, [exclude: ['authors']])
-                String[] authorList = params.authorFieldTotal.split("!!author!!")
                 List<PersonTransportCommand> validatedAuthors = new LinkedList<PersonTransportCommand>()
-                authorList.each {
-                    if (it) {
-                        String[] parts = it.split("<init>")
-                        String name = parts[0]
-                        String orcid = parts[1]
-                        String institution = parts[2]
-                        def authorListSrc = model.publication.authors
-                        if (!authorListSrc) {
-                            authorListSrc = new LinkedList<PersonTransportCommand>()
-                        }
-                        def author = authorListSrc.find { auth ->
-                            if (orcid != "no_orcid") {
-                                return orcid == auth.orcid
+                def slurper = new JsonSlurper()
+                def result = slurper.parseText(params.authorListContainer)
+                if (result['authors']) {
+                    def authorList = result['authors']
+                    authorList.each {
+                        if (it) {
+                            String name = it["userRealName"]
+                            String institution = it["institution"]
+                            String orcid = it["orcid"]
+                            def authorListSrc = model.publication.authors
+                            if (!authorListSrc) {
+                                authorListSrc = new LinkedList<PersonTransportCommand>()
+                            }
+                            def author = authorListSrc.find { auth ->
+                                if (orcid != "") {
+                                    return orcid == auth.orcid
+                                } else {
+                                    return name == auth.userRealName
+                                }
+                                return false
+                            }
+                            if (!author) {
+                                author = new PersonTransportCommand(userRealName: name,
+                                    orcid: orcid, institution: institution)
+                                if (!model.publication.authors) {
+                                    model.publication.authors = new LinkedList<PersonTransportCommand>()
+                                }
+                                model.publication.authors.add(author)
                             } else {
-                                return name == auth.userRealName
+                                if (author.userRealName != name) {
+                                    author.userRealName = name
+                                }
+                                if (author.orcid != orcid) {
+                                    author.orcid = orcid
+                                }
+                                if (author.institution != institution) {
+                                    author.institution = institution
+                                }
                             }
-                            return false
-                        }
-                        if (!author) {
-                            author = new PersonTransportCommand(userRealName: parts[0],
-                                        orcid: orcid != "no_orcid" ? orcid : null,
-                                        institution: institution != "no_institution_provided" ?
-                                                    institution : null)
-                            if (!model.publication.authors) {
-                                model.publication.authors=new LinkedList<PersonTransportCommand>()
+                            if (author.validate()) {
+                                validatedAuthors.add(author)
+                            } else {
+                                log.error """\
+                            Submission did not validate: ${author.properties}.
+                            Errors: ${author.errors.allErrors.inspect()}."""
+                                flash.validationErrorOn = author
+                                return error()
                             }
-                            model.publication.authors.add(author)
-                        }
-                        if (author.validate()) {
-                            validatedAuthors.add(author)
-                        } else {
-                            log.error """\
-Submission did not validate: ${author.properties}.
-Errors: ${author.errors.allErrors.inspect()}."""
-                            flash.validationErrorOn = author
-                            return error()
                         }
                     }
                 }
-                model.publication.authors = validatedAuthors
+                    model.publication.authors = validatedAuthors
                 if (!model.publication.validate()) {
                     log.error """\
 Submission did not validate: ${model.publication.properties}.
@@ -849,6 +1146,10 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
                     flash.validationErrorOn = model.publication
                     return error()
                 }
+                // Update the publication objects in working
+                tempPTC.authors = validatedAuthors
+                pubContext.publication = tempPTC
+                publicationMap.put(flow.workingMemory.get("SelectedPubLinkProvider"), pubContext)
             }.to "displaySummaryOfChanges"
             on("Cancel").to "cleanUpAndTerminate"
             on("Back").to "enterPublicationLink"
@@ -928,7 +1229,7 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
                     to grailsApplication.config.jummp.security.registration.email.adminAddress
                     from grailsApplication.config.jummp.security.registration.email.sender
                     subject "Bug in submission: ${ticket}"
-                    body stackTrace
+                    body "MESSAGE: ${ExceptionUtils.getStackTrace(t)}"
                 }
                 session.messageForError = ticket
             }
@@ -937,6 +1238,40 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
         abort()
         displayConfirmationPage()
         displayErrorPage()
+    }
+
+    private PDEC loadOrFetchOrCreatePublication(ModelTransportCommand modelTC) {
+        try {
+            PDEC publicationContext = publicationService.getPublicationExtractionContext(modelTC.publication)
+            if (publicationContext.publication) {
+                if (publicationContext.comesFromDatabase) {
+                    flash.flashMessage = g.message(code: "publication.editor.duplicateEntry.message")
+                }
+            } else {
+                PublicationTransportCommand retrieved
+                retrieved = publicationService.createPTCWithMinimalInformation(params.PubLinkProvider, params.PublicationLink, [])
+                publicationContext.publication = retrieved
+                publicationContext.comesFromDatabase = false
+            }
+            return publicationContext
+        } catch (Exception e) {
+            log.error(e.message, e)
+            return null
+        }
+    }
+
+    private void serveModelAsCombineArchive(List<RFTC> files, def resp) {
+        String omexFileName = omexService.createCombineArchive(files, params.id)
+        File omexFile = new File(omexFileName)
+        String name = omexFile.name
+        resp.setContentType("application/zip")
+        resp.setHeader("Content-disposition", "attachment;filename=\"${name}\"")
+        resp.outputStream << new ByteArrayInputStream(omexFile.readBytes())
+        if (omexFile.delete()) {
+            log.info("The temporary file was deleted successfully.")
+        } else {
+            log.info("Cannot delete the temporary file.")
+        }
     }
 
     private void serveModelAsZip(List<RFTC> files, def resp) {
@@ -951,8 +1286,7 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
         }
         zipFile.close()
         resp.setContentType("application/zip")
-        // TODO: set a proper name for the model
-        resp.setHeader("Content-disposition", "attachment;filename=\"model.zip\"")
+        resp.setHeader("Content-disposition", "attachment;filename=\"${params.id}.zip\"")
         resp.outputStream << new ByteArrayInputStream(byteBuffer.toByteArray())
     }
 
@@ -975,35 +1309,67 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
     /**
      * File download of the model file for a model by id
      */
-    def download = {
-        if (!params.filename) {
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def download() {
+        def modelId = params.id
+        def revisionId = params.revisionId
+        String fileName = params.filename
+        if (!fileName) {
             final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(
-                            modelDelegateService.getRevisionFromParams(params.id, params.revisionId))
-            List<RFTC> mainFiles = FILES.findAll { it.mainFile }
-            if (FILES.size() == 1) {
-                serveModelAsFile(FILES.first(), response, false)
-            } else if (mainFiles.size() == 1) {
-                serveModelAsFile(mainFiles.first(), response, false)
-            } else {
-                serveModelAsZip(FILES, response)
-            }
+                            modelDelegateService.getRevisionFromParams(modelId, revisionId))
+            serveModelAsCombineArchive(FILES, response)
         } else {
             final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(
-                            modelDelegateService.getRevisionFromParams(params.id, params.revisionId))
+                            modelDelegateService.getRevisionFromParams(modelId, revisionId))
             RFTC requested = FILES.find {
                 if (it.hidden) {
                     return false
                 }
                 File file = new File(it.path)
-                file.getName() == params.filename
+                file.getName() == fileName
             }
             boolean inline = params.inline == "true"
             boolean preview  = params.preview == "true"
             if (requested) {
                 serveModelAsFile(requested, response, inline, preview)
+            } else {
+                response.status = HttpServletResponse.SC_BAD_REQUEST
+                def err = new Error("Invalid file name",
+                    "Cannot find file ${fileName} belonging to model $modelId")
+                withFormat {
+                    json { respond err }
+                    xml { respond err }
+                    // for all else we send a 404
+                }
             }
         }
     }
+
+    /**
+     * Update the curation status of the model
+     */
+    def updateCurationState() {
+        def requestObject = request.JSON
+        if (!requestObject['revisionNumber'] || !requestObject['modelId'] || !requestObject['curationState']) {
+            response.status = 400
+            render([message: 'Bad request'] as JSON)
+            return
+        }
+
+        int revision = Integer.parseInt(requestObject['revisionNumber'] as String)
+        String modelId = requestObject['modelId']
+        boolean canUpdate = modelDelegateService.canAddRevision(modelId as String)
+        boolean hasCuratorRole = hasCuratorRole()
+        if (canUpdate && hasCuratorRole) {
+            CurationState curationState = CurationState.valueOf(requestObject['curationState'] as String)
+            modelDelegateService.updateCurationStateRevision(modelId, revision, curationState)
+            render([message: "Curation status has been saved successfully"] as JSON)
+            return
+        }
+        response.status = 401
+        render([message: "You do not have right permissions to change the curation status"] as JSON)
+    }
+
 
     /**
      * Display basic information about the model
@@ -1112,5 +1478,13 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
             }
         }
         return true
+    }
+
+    private boolean hasCuratorRole() {
+        Collection<GrantedAuthority> grantedAuthorities = springSecurityService.getPrincipal().getAuthorities()
+        Set<String> roleNames = grantedAuthorities.collect {
+            it.getAuthority()
+        }
+        "ROLE_CURATOR" in roleNames
     }
 }

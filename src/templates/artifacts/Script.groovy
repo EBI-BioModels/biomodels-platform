@@ -24,8 +24,8 @@
 
 includeTargets << grailsScript("_GrailsInit")
 
-target(main: "The description of the script goes here!") {
+target(@gant.target.name@: "The description of the script goes here!") {
     // TODO: Implement script here
 }
 
-setDefaultTarget(main)
+setDefaultTarget(@gant.target.name@)

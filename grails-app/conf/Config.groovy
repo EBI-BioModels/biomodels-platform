@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -18,8 +18,12 @@
 * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 **/
 
-import java.util.regex.Pattern
+
+
+
+
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
+import java.util.regex.Pattern
 
 // locations to search for config files that get merged into the main config
 // config files can either be Java properties files or ConfigSlurper scripts
@@ -32,6 +36,14 @@ import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 // if(System.properties["${appName}.config.location"]) {
 //    grails.config.locations << "file:" + System.properties["${appName}.config.location"]
 // }
+
+grails.plugin.springsecurity.logout.postOnly = false
+grails.plugin.springsecurity.password.algorithm = 'SHA-256'
+grails.plugin.springsecurity.password.hash.iterations = 1
+grails.plugin.springsecurity.useSessionFixationPrevention = false
+grails.plugin.springsecurity.rejectIfNoRule = true
+grails.plugin.springsecurity.fii.rejectPublicInvocations = false
+
 Properties jummpProperties = new Properties()
 try {
 	def service = new net.biomodels.jummp.plugins.configuration.ConfigurationService()
@@ -50,7 +62,9 @@ try {
 def jummpConfig = new ConfigSlurper().parse(jummpProperties)
 List pluginsToExclude = []
 
-grails.mime.file.extensions = true // enables the parsing of file extensions from URLs into the request format
+// The Accept header set by older versions of IE and Opera may be unreliable, ignore it
+grails.mime.disable.accept.header.userAgents = ['Presto', 'Trident']
+grails.mime.file.extensions = false // enables the parsing of file extensions from URLs into the request format
 grails.mime.use.accept.header = true
 grails.mime.types = [ html: ['text/html','application/xhtml+xml'],
                       xml: ['text/xml', 'application/xml'],
@@ -72,14 +86,13 @@ grails.web.disable.multipart = false
 //grails.urlmapping.cache.maxsize = 1000
 
 // The default codec used to encode data with ${}
-grails.views.default.codec = "none" // none, html, base64
+grails.views.default.codec = "html" // none, html, base64
 grails.views.gsp.encoding = "UTF-8"
 grails.converters.encoding = "UTF-8"
 // enable Sitemesh preprocessing of GSP pages
 grails.views.gsp.sitemesh.preprocess = true
 // scaffolding templates configuration
 grails.scaffolding.templates.domainSuffix = 'Instance'
-
 // Set to false to use the new Grails 1.2 JSONBuilder in the render method
 grails.json.legacy.builder = false
 // enabled native2ascii conversion of i18n properties files
@@ -88,21 +101,26 @@ grails.enable.native2ascii = true
 grails.logging.jul.usebridge = true
 // packages to include in Spring bean scanning
 grails.spring.bean.packages = []
-
 // The default scope for controllers. May be prototype, session or singleton.
 // If unspecified, controllers are prototype scoped.
 grails.controllers.defaultScope = 'singleton'
-
 // configure auto-caching of queries by default (if false you can cache individual queries with 'cache: true')
 grails.hibernate.cache.queries = false
-
 // configure passing transaction's read-only attribute to Hibernate session, queries and criterias
 // set "singleSession = false" OSIV mode in hibernate configuration after enabling
 grails.hibernate.pass.readonly = false
 // configure passing read-only to OSIV session by default, requires "singleSession = false" OSIV mode
 grails.hibernate.osiv.readonly = false
-
 grails.views.javascript.library="jquery"
+// avoid ehcache duplicate CacheManager exception mess
+beans {
+    cacheManager {
+        shared = true
+    }
+}
+
+grails.cache.config.provider.name = "jummpCacheManager"
+grails.cache.ehcache.cacheManagerName = "jummpCacheManager"
 
 // set per-environment serverURL stem for creating absolute links
 environments {
@@ -110,19 +128,74 @@ environments {
         grails.serverURL = jummpConfig.jummp.server.url
     }
     development {
-        grails.serverURL = "http://localhost:8080/${appName}"
+        grails.serverURL = jummpConfig.jummp.server.url //"http://localhost:8080/${appName}"
     }
     test {
         grails.serverURL = "http://localhost:8080/${appName}"
     }
-
 }
+
+// enable/disable log security information based on DebugFilter class at the info level
+// and add the implementation class name in Log4j configuration
+environments {
+   development {
+      grails.logging.jul.usebridge = false
+      grails.plugin.springsecurity.debug.useFilter = false
+      // enable/disable web-based console plugin
+      grails.plugin.console.enabled = true
+   }
+   production {
+      grails.logging.jul.usebridge = false
+      grails.plugin.console.enabled = true
+   }
+}
+
+// database migrations
+environments {
+    development {
+        grails.plugin.databasemigration.updateOnStart = false
+        grails.plugin.databasemigration.updateOnStartFileNames = ['changelog.groovy']
+        grails.plugin.databasemigration.changelogFileName = 'changelog.groovy'
+    }
+    production {
+        grails.plugin.databasemigration.updateOnStart = false
+        grails.plugin.databasemigration.updateOnStartFileNames = ['changelog.groovy']
+        grails.plugin.databasemigration.changelogFileName = 'changelog.groovy'
+    }
+    test {
+        /*
+         * Due to GPDATABASEMIGRATION-160, migrations cannot be applied before
+         * integration tests. The suggested workaround was to use
+         *      grails.plugin.databasemigration.forceAutoMigrate = true
+         * but that does not work in Grails 2.3.4. Hence, we set dbCreate to
+         * create-drop in the test environment.
+         */
+        grails.plugin.databasemigration.updateOnStart = false
+        grails.plugin.databasemigration.autoMigrateScripts = []
+    }
+}
+
+environments {
+    test {
+        // need to disable the plugins or tests may fail
+        // if needed in the tests, mockConfig should be used
+        jummp.plugins.subversion.enabled = false
+        jummp.plugins.git.enabled = false
+        // disable registration mail sending
+        jummp.security.registration.email.send = false
+        jummp.security.resetPassword.email.send = false
+    }
+}
+
+jummp.metadata.strategy = "biomodels" // "ddmore", "biomodels" or "default"
 jummp.app.name=appName
 //branding
-jummp.branding.deployment="biomodels" //used to select messages,and style if jummp.branding.style is not specified 
-jummp.branding.style="ddmore" //used to specify any other name for the css file
+// This property is used to select messages,
+// and style if jummp.branding.style is not specified
+jummp.branding.deployment = "biomodels" // "ddmore", "biomodels" or "default"
+jummp.branding.style = "biomodels" // used to specify any other name for the css file
 // log4j configuration
-log4j = {
+log4j.main = {
     // Example of changing the log pattern for the default console
     // appender:
     //
@@ -190,9 +263,16 @@ log4j = {
 
     warn   jummpAppender: 'org.mortbay.log'
     // Simple Logging goes to its own file
-    info   eventsAppender: 'net.biomodels.jummp.plugins.simplelogging'
+    info   eventsAppender: [
+        'net.biomodels.jummp.plugins.simplelogging',
+        'net.biomodels.jummp.core.events',
+        'net.biomodels.jummp.plugins.bives',
+        'net.biomodels.jummp.search'
+    ]
 
     rollingFile name: "debugAppender", file: "logs/jummp-debug.log", threshold: org.apache.log4j.Level.DEBUG
+    rollingFile name: "hibernateAppender", file: "logs/jummp-hibernate.log", threshold: org.apache.log4j.Level.WARN
+
     debug debugAppender: [
         'net.biomodels.jummp',
         'net.biomodels.jummp.core',
@@ -202,68 +282,107 @@ log4j = {
         'net.biomodels.jummp.core.model.identifier.decorator',
         'net.biomodels.jummp.core.model.identifier.generator',
         'net.biomodels.jummp.core.model.identifier.support',
-        'net.biomodels.jummp.plugins.pharmml'
+        'net.biomodels.jummp.plugins.pharmml',
+        'net.biomodels.jummp.search'
     ]
+    warn hibernateAppender: [
+        'org.codehaus.groovy.grails.orm.hibernate',
+        'org.codehaus.groovy.grails.orm.support',
+        'org.hibernate.SQL',
+        'org.springframework.orm.hibernate4.support'
+
+    ]
+    info console: "net.biomodels.jummp.core"
 }
 
 // Added by the Spring Security Core plugin:
-grails.plugins.springsecurity.userLookup.userDomainClassName = 'net.biomodels.jummp.plugins.security.User'
-grails.plugins.springsecurity.userLookup.authorityJoinClassName = 'net.biomodels.jummp.plugins.security.UserRole'
-grails.plugins.springsecurity.authority.className = 'net.biomodels.jummp.plugins.security.Role'
+grails.plugin.springsecurity.userLookup.userDomainClassName = 'net.biomodels.jummp.plugins.security.User'
+grails.plugin.springsecurity.userLookup.authorityJoinClassName = 'net.biomodels.jummp.plugins.security.UserRole'
+grails.plugin.springsecurity.authority.className = 'net.biomodels.jummp.plugins.security.Role'
+grails.plugin.springsecurity.securityConfigType = "Annotation" // "Annotation", "InterceptUrlMap", "Requestmap"
+grails.plugin.springsecurity.successHandler.alwaysUseDefaultTargetUrl = false
 
 jummp.controllerAnnotations = [
-        // protect the springsecurity ui plugin controllers
-        '/aclclass/**':          ['ROLE_ADMIN'],
-        '/aclentry/**':          ['ROLE_ADMIN'],
-        '/aclobjectidentity/**': ['ROLE_ADMIN'],
-        '/aclsid/**':            ['ROLE_ADMIN'],
-        '/persistentlogin/**':   ['ROLE_ADMIN'],
-        '/register/**':          ['ROLE_ADMIN'],
-        '/registrationcode/**':  ['ROLE_ADMIN'],
-        '/requestmap/**':        ['ROLE_ADMIN'],
-        '/role/**':              ['ROLE_ADMIN'],
-        '/securityinfo/**':      ['ROLE_ADMIN'],
-        '/user/**':              ['ROLE_ADMIN'],
-        '/wcm-tools/**':         ['ROLE_ADMIN'],
-        '/searchable/**':        ['ROLE_ADMIN'],
-        '/ck/**':                ['ROLE_ADMIN'],
-        "/wcmEditor/**":         ["hasRole('ROLE_ADMIN')"],
-        "/wcmPortal/**":         ["hasRole('ROLE_ADMIN')"],
-        "/wcmRepository/**":     ["hasRole('ROLE_ADMIN')"],
-        "/wcmSpace/**":          ["hasRole('ROLE_ADMIN')"],
-        "/wcmSynchronization/**": ["hasRole('ROLE_ADMIN')"],
-        "/wcmVersion/**":        ["hasRole('ROLE_ADMIN')"],
-        "/wcm*/**":              ["permitAll"],
-        "/WeceemFiles/**":       ["permitAll"],
-        "/css/**":               ["permitAll"],
-        "/images/**":            ["permitAll"],
-        "/js/**":                ["permitAll"],
-        "/plugins/jquery*/**":   ["permitAll"],
-        "/plugins/navigation*/**": ["permitAll"],
-        "/plugins/blueprint*/**": ["permitAll"],
-        "/plugins/ckeditor*/**":  ["permitAll"],
-        "/plugins/weceem*/**":    ["permitAll"]
+    // /model/create and /model/create?execution=e.*s1 show the display the submission guidelines, which should be visible without logging in
+    '/model/create': ["request.getParameter('execution') == null ? permitAll : (request.getParameter('execution').matches('^e.*?s1\$') ? permitAll: fullyAuthenticated)"],
+
+    // request.getParameter('execution')) == null ? matches('^e.*?s1\$') ? permitAll: fullyAuthenticated
+    "/":                        ["permitAll"],
+    "/index":                   ["permitAll"],
+    '/index.gsp':               ['permitAll'],
+    // protect the spring security ui plugin controllers
+    '/aclclass/**':             ['ROLE_ADMIN'],
+    '/aclentry/**':             ['ROLE_ADMIN'],
+    '/aclobjectidentity/**':    ['ROLE_ADMIN'],
+    '/aclsid/**':               ['ROLE_ADMIN'],
+    '/persistentlogin/**':      ['ROLE_ADMIN'],
+    '/register/**':             ['ROLE_ADMIN'],
+    '/registrationcode/**':     ['ROLE_ADMIN'],
+    '/requestmap/**':           ['ROLE_ADMIN'],
+    '/role/**':                 ['ROLE_ADMIN'],
+    '/securityinfo/**':         ['ROLE_ADMIN'],
+    '/user/**':                 ['ROLE_ADMIN'],
+    '/wcm-tools/**':            ['ROLE_ADMIN'],
+    '/ck/**':                   ['ROLE_ADMIN'],
+    "/wcmEditor/**":            ["hasRole('ROLE_ADMIN')"],
+    "/wcmPortal/**":            ["hasRole('ROLE_ADMIN')"],
+    "/wcmRepository/**":        ["hasRole('ROLE_ADMIN')"],
+    "/wcmSpace/**":             ["hasRole('ROLE_ADMIN')"],
+    "/wcmSynchronization/**":   ["hasRole('ROLE_ADMIN')"],
+    "/wcmVersion/**":           ["hasRole('ROLE_ADMIN')"],
+    "/wcm*/**":                 ["permitAll"],
+    "/WeceemFiles/**":          ["permitAll"],
+    "/css/**":                  ["permitAll"],
+    "/images/**":               ["permitAll"],
+    "/js/**":                   ["permitAll"],
+    "/plugins/jquery*/**":      ["permitAll"],
+    "/plugins/navigation*/**":  ["permitAll"],
+    "/plugins/blueprint*/**":   ["permitAll"],
+    "/plugins/ckeditor*/**":    ["permitAll"],
+    "/plugins/weceem*/**":      ["permitAll"],
+    "/api-docs/**":             ["permitAll"],
+    "/console/**":              ["ROLE_ADMIN"],
+    "/plugins/console*/**":     ['ROLE_ADMIN'],
+    "/plugins/*/js/*":          ['permitAll'],
+    "/plugins/*/css/*":         ['permitAll'],
+    "/plugins/*/images/*":      ['permitAll'],
+    "/simpleCaptcha/captcha":   ['permitAll'],
+    "/docs/**":                 ['permitAll'],
+    "/omicsdi/**":              ["hasRole('ROLE_ADMIN')"]
 ]
 
 // ldap
 if ((jummpConfig.jummp.security.ldap.enabled instanceof ConfigObject) || !Boolean.parseBoolean(jummpConfig.jummp.security.ldap.enabled)) {
     jummp.security.ldap.enabled = false
-    println("Excluding ldap")
+    println("INFO\tExcluding ldap")
     pluginsToExclude << "springSecurityLdap"
 } else {
-    println("using ldap")
+    println("INFO\tUsing ldap")
     jummp.security.ldap.enabled = true
-    grails.plugins.springsecurity.ldap.context.managerDn         = jummpConfig.jummp.security.ldap.managerDn
-    grails.plugins.springsecurity.ldap.context.managerPassword   = jummpConfig.jummp.security.ldap.managerPw
-    grails.plugins.springsecurity.ldap.context.server            = jummpConfig.jummp.security.ldap.server
-    grails.plugins.springsecurity.ldap.search.base               = jummpConfig.jummp.security.ldap.search.base
-    grails.plugins.springsecurity.ldap.authorities.searchSubtree = jummpConfig.jummp.security.ldap.search.subTree
-    grails.plugins.springsecurity.ldap.search.filter             = jummpConfig.jummp.security.ldap.search.filter
+    /*grails.plugin.springsecurity.ldap.context.managerDn       = jummpConfig.jummp.security.ldap.managerDn
+    grails.plugin.springsecurity.ldap.context.managerPassword   = jummpConfig.jummp.security.ldap.managerPw
+    grails.plugin.springsecurity.ldap.context.server            = jummpConfig.jummp.security.ldap.server
+    grails.plugin.springsecurity.ldap.search.base               = jummpConfig.jummp.security.ldap.search.base
+    grails.plugin.springsecurity.ldap.authorities.searchSubtree = jummpConfig.jummp.security.ldap.search.subTree
+    grails.plugin.springsecurity.ldap.search.filter             = jummpConfig.jummp.security.ldap.search.filter*/
 
+    grails.plugin.springsecurity.ldap.context.managerDn         = ''
+    grails.plugin.springsecurity.ldap.context.managerPassword   = ''
+    grails.plugin.springsecurity.ldap.context.server              = 'ldaps://ldap.ebi.ac.uk'
+    grails.plugin.springsecurity.ldap.search.base                 = 'ou=people,dc=ebi,dc=ac,dc=uk'
+    grails.plugin.springsecurity.ldap.authorities.searchSubtree   = true
+    grails.plugin.springsecurity.ldap.authorities.groupSearchBase = 'ou=groups,dc=ebi,dc=ac,dc=uk'
+    grails.plugin.springsecurity.ldap.search.filter               = '(uid={0})'
+    grails.plugin.springsecurity.ldap.context.anonymousReadOnly   = true
     // static options
-    grails.plugins.springsecurity.ldap.authorities.ignorePartialResultException = true
-    grails.plugins.springsecurity.ldap.authorities.retrieveGroupRoles = true
-    grails.plugins.springsecurity.ldap.authorities.retrieveDatabaseRoles = true
+    grails.plugin.springsecurity.ldap.authorities.ignorePartialResultException = true
+    grails.plugin.springsecurity.ldap.authorities.retrieveGroupRoles = true
+    grails.plugin.springsecurity.ldap.authorities.retrieveDatabaseRoles = true
+    grails.plugin.springsecurity.providerNames = [
+        'ldapAuthProvider',
+        'anonymousAuthenticationProvider',
+        'rememberMeAuthenticationProvider'
+    ]
 }
 
 // version control backend
@@ -274,39 +393,83 @@ if (jummpConfig.jummp.vcs.workingDirectory) {
     jummp.vcs.workingDirectory = jummpConfig.jummp.vcs.workingDirectory
 }
 // search config
-if (!(jummpConfig.jummp.search.url instanceof ConfigObject)) {
-    final Pattern URL_PATTERN = ~/http:\/\/[a-zA-Z0-9\.\-_]+(:[0-9]+)?(\/[a-zA-Z0-9\-\._]+)*/
-    final String solrSetting = jummpConfig.jummp.search.url
-    final String solrUrl
-    if (solrSetting?.endsWith("/")) {
-        solrUrl = solrSetting.substring(0, solrSetting.length() - 1)
-    } else {
-        solrUrl = solrSetting
-    }
-    if (!solrUrl || ! (solrUrl ==~ URL_PATTERN)) {
-        throw new IllegalArgumentException("""The URL for the search server ($solrUrl) does \
+// model search strategy setting: "omicsdi" or "solr"
+if (!(jummpConfig.jummp.search.strategy instanceof ConfigObject)) {
+    jummp.search.strategy = jummpConfig.jummp.search.strategy
+} else {
+    // default to solr
+    jummp.search.strategy = "solr"
+}
+
+if (jummpConfig.jummp.model.curators.mailinglist) {
+    jummp.model.curators.mailinglist = jummpConfig.jummp.model.curators.mailinglist
+}
+
+if (jummpConfig.jummp.cache.dir) {
+    jummp.cache.dir = jummpConfig.jummp.cache.dir
+}
+
+if (jummpConfig.jummp.classification.endpoint) {
+    jummp.classification.endpoint = jummpConfig.jummp.classification.endpoint
+}
+
+if (jummp.search.strategy == "solr") {
+    if (!(jummpConfig.jummp.search.url instanceof ConfigObject)) {
+        final Pattern URL_PATTERN = ~/http:\/\/[a-zA-Z0-9\.\-_]+(:[0-9]+)?(\/[a-zA-Z0-9\-\._]+)*/
+        final String solrSetting = jummpConfig.jummp.search.url
+        final String solrUrl
+        if (solrSetting?.endsWith("/")) {
+            solrUrl = solrSetting.substring(0, solrSetting.length() - 1)
+        } else {
+            solrUrl = solrSetting
+        }
+        if (!solrUrl || !(solrUrl ==~ URL_PATTERN)) {
+            throw new IllegalArgumentException("""The URL for the search server ($solrUrl) does \
 not look right. Check the value of setting 'jummp.search.url'.""")
+        } else {
+            jummp.search.url = solrUrl
+            println "INFO\tUsing $solrUrl as the URL of the search server."
+        }
     } else {
-        jummp.search.url = solrUrl
-        println "INFO\tUsing $solrUrl as the URL of the search server."
+        throw new IllegalArgumentException("""\
+Please add the setting 'jummp.search.url', pointing to a Solr instance, to your configuration.""")
+    }
+    if (!(jummpConfig.jummp.search.folder instanceof ConfigObject)) {
+        final String searchFolder = jummpConfig.jummp.search.folder
+        jummp.search.folder = searchFolder
+        println "INFO\tSOLR_HOME is set to $searchFolder."
+    } else {
+        println "WARN\tSetting jummp.search.folder is undefined. Have you set \$SOLR_HOME?"
     }
 } else {
-    throw new IllegalArgumentException("""\
-Please add the setting 'jummp.search.url', pointing to a Solr instance, to your configuration.""")
+    // folder containing the exported OmicsDI entries
+    if (!(jummpConfig.jummp.search.exportFolder instanceof ConfigObject)) {
+        jummp.search.exportFolder = jummpConfig.jummp.search.exportFolder
+    }
 }
-if (!(jummpConfig.jummp.search.folder instanceof ConfigObject)) {
-    final String searchFolder = jummpConfig.jummp.search.folder
-    jummp.search.folder = searchFolder
-    println "INFO\tSOLR_HOME is set to $searchFolder."
-} else {
-    println "WARN\tSetting jummp.search.folder is undefined. Have you set \$SOLR_HOME?"
+
+// folder containing the exports
+if (!(jummpConfig.jummp.model.exportFolder instanceof ConfigObject)) {
+    jummp.model.exportFolder = jummpConfig.jummp.model.exportFolder
 }
+else {
+    jummp.model.exportFolder = jummp.search.exportFolder
+}
+// external conversion service url
+if (!(jummpConfig.jummp.model.converter.url instanceof ConfigObject)) {
+    jummp.model.converter.url = jummpConfig.jummp.model.converter.url
+}
+else {
+    println "ERROR\tSetting jummp.model.converter.url is undefined. The conversion of the model will be failed."
+}
+
 if (!(jummpConfig.jummp.search.pathToIndexerExecutable instanceof ConfigObject)) {
     jummp.search.pathToIndexerExecutable = jummpConfig.jummp.search.pathToIndexerExecutable
 }
 else {
 	println "WARN\tSetting jummp.search.pathToIndexerExecutable is undefined. Models will not be indexed correctly in the search engine."
-}	
+}
+
 // registration settings
 if (!(jummpConfig.jummp.security.registration.email.send instanceof ConfigObject) && Boolean.parseBoolean(jummpConfig.jummp.security.registration.email.send)) {
     jummp.security.registration.email.send         = Boolean.parseBoolean(jummpConfig.jummp.security.registration.email.send)
@@ -337,6 +500,26 @@ if (!(jummpConfig.jummp.security.curatorByDefault instanceof ConfigObject)) {
     // default to true
     jummp.security.curatorByDefault = true
 }
+
+if (!(jummpConfig.jummp.security.certificationRole instanceof ConfigObject)) {
+    jummp.security.certificationRole = jummpConfig.jummp.security.certificationRole
+} else {
+    jummp.security.certificationRole = 'ROLE_ADMIN' // either single value or comma-separated string
+}
+
+if (!(jummpConfig.jummp.feedback.receiver.roles instanceof ConfigObject)) {
+    jummp.feedback.receiver.roles = jummpConfig.jummp.feedback.receiver.roles
+} else {
+    jummp.feedback.receiver.roles = ["ROLE_ADMIN","ROLE_CURATOR"]
+}
+
+if (!(jummpConfig.jummp.security.certificationAllowed instanceof ConfigObject)) {
+    jummp.security.certificationAllowed = Boolean.parseBoolean(jummpConfig.jummp.security.certificationAllowed)
+} else {
+    // default to false
+    jummp.security.certificationAllowed = false
+}
+
 // whether sbml validation is turned on
 if (!(jummpConfig.jummp.plugins.sbml.validation instanceof ConfigObject)) {
 	jummp.plugins.sbml.validation = Boolean.parseBoolean(jummpConfig.jummp.plugins.sbml.validation)
@@ -455,32 +638,14 @@ if (!(jummpConfig.jummp.security.cms.policy instanceof ConfigObject)) {
 }
 
 if (jummp.security.cms.policy != null) {
-    println "Using ${jummp.security.cms.policy} to configure Weceem permissions."
+    println "INFO\tUsing ${jummp.security.cms.policy} to configure Weceem permissions."
 } else {
-    println "Using Weceem's default permissions."
+    println "WARN\tUsing Weceem's default permissions."
 }
 
-grails.plugins.springsecurity.controllerAnnotations.staticRules = jummp.controllerAnnotations
+grails.plugin.springsecurity.controllerAnnotations.staticRules = jummp.controllerAnnotations
 if (!"jms".equalsIgnoreCase(System.getenv("JUMMP_EXPORT"))) {
     jms.disabled = true
-}
-
-// tweak searchable configuration so that it plays nicely with database-migration
-searchable {
-    mirrorChanges = false
-    bulkIndexOnStartup = false
-}
-
-environments {
-    test {
-        // need to disable the plugins or tests may fail
-        // if needed in the tests, mockConfig should be used
-        jummp.plugins.subversion.enabled = false
-        jummp.plugins.git.enabled = false
-        // disable registration mail sending
-        jummp.security.registration.email.send = false
-        jummp.security.resetPassword.email.send = false
-    }
 }
 
 if (pluginsToExclude) {
@@ -497,32 +662,20 @@ weceem.admin.prefix = 'wcm-admin'
 weceem.create.default.space = true
 weceem.default.space.template = "classpath:/weceem-jummp-default-space.zip"
 weceem.security.policy.path = jummp.security.cms.policy
-grails.resources.adhoc.excludes=["/content/*"]
+//grails.resources.adhoc.excludes=["/content/*"]
 
-// database migrations
-environments {
-    development {
-        grails.plugin.databasemigration.updateOnStart = false
-        grails.plugin.databasemigration.updateOnStartFileNames = ['changelog.groovy']
-        grails.plugin.databasemigration.changelogFileName = 'changelog.groovy'
-    }
-    production {
-        grails.plugin.databasemigration.updateOnStart = false
-        grails.plugin.databasemigration.updateOnStartFileNames = ['changelog.groovy']
-        grails.plugin.databasemigration.changelogFileName = 'changelog.groovy'
-    }
-    test {
-        /*
-         * Due to GPDATABASEMIGRATION-160, migrations cannot be applied before
-         * integration tests. The suggested workaround was to use
-         *      grails.plugin.databasemigration.forceAutoMigrate = true
-         * but that does not work in Grails 2.3.4. Hence, we set dbCreate to
-         * create-drop in the test environment.
-         */
-        grails.plugin.databasemigration.updateOnStart = false
-        grails.plugin.databasemigration.autoMigrateScripts = []
-    }
-}
+//weceem.springsecurity.details.mapper = { ->
+//    [ // Stuff required by weceem spring security
+//      username: username,
+//      password: password,
+//      enabled: enabled,
+//      authorities: Holders.applicationContext.getBean("springSecurityService").authentication?.authorities ?: GrailsAnonymousAuthenticationToken.ROLES,
+//      // optional stuff we add
+//      email: email,
+//      firstName: person.userRealName,
+//      id: id
+//    ]
+//}
 
 grails.mails.props=[:]
 if (!(jummpConfig.jummp.security.mailer.host instanceof ConfigObject)) {
@@ -562,6 +715,7 @@ of the form MODEL0001, MODEL0002, MODEL0003 please use the following settings:
 \tjummp.model.id.submission.part2.width=4
 """)
 }
+jummp.ddmore.rdfstore.url = jummpConfig.jummp?.ddmore?.rdfstore?.url
 jummp.model.id = [:]
 modelIdentifierSettings?.entrySet().each {
     jummp.model.id."${it.key}" = it.value
@@ -569,7 +723,7 @@ modelIdentifierSettings?.entrySet().each {
 
 // Uncomment and edit the following lines to start using Grails encoding & escaping improvements
 
-/* remove this line 
+
 // GSP settings
 grails {
     views {
@@ -577,21 +731,19 @@ grails {
             encoding = 'UTF-8'
             htmlcodec = 'xml' // use xml escaping instead of HTML4 escaping
             codecs {
-                expression = 'html' // escapes values inside null
-                scriptlet = 'none' // escapes output from scriptlets in GSPs
+                expression = 'none' // escapes values inside null
+                scriptlet = 'html' // escapes output from scriptlets in GSPs
                 taglib = 'none' // escapes output from taglibs
-                staticparts = 'none' // escapes output from static template parts
+                staticparts = 'raw' // escapes output from static template parts
             }
         }
         // escapes all not-encoded output at final stage of outputting
-        filteringCodecForContentType {
-            //'text/html' = 'html'
-        }
+        filteringCodecForContentType.'text/html' = 'html'
     }
 }
-remove this line */
+
 if (!(jummpConfig.jummp.context.help.root instanceof ConfigObject)) {
-    def pages=["root", "browse", "search", "login", "display", "archives", "submission", "update", "profile", "sharing", "teams", "notifications"]
+    def pages=["root", "browse", "search", "login", "display", "archives", "submission", "update", "profile", "sharing", "teams", "notifications","annotate"]
     pages.each {
         if (!(jummpConfig.jummp.context.help."${it}" instanceof ConfigObject)) {
             jummp.context.help."${it}" = jummpConfig.jummp.context.help."${it}"
@@ -601,3 +753,25 @@ if (!(jummpConfig.jummp.context.help.root instanceof ConfigObject)) {
 jummp.config.maintenance = false
 
 jummp.id.generators = ModelIdentifierUtils.processGeneratorSettings(jummp)
+
+if (!(jummpConfig.jummp.metadata.officialDatabaseName instanceof ConfigObject)) {
+    jummp.metadata.officialDatabaseName = jummpConfig.jummp.metadata.officialDatabaseName
+} else {
+    jummp.metadata.officialDatabaseName = 'BioModels Database'
+}
+
+if (!(jummpConfig.jummp.metadata.officialDatabaseDescription instanceof ConfigObject)) {
+    jummp.metadata.officialDatabaseDescription = jummpConfig.jummp.metadata.officialDatabaseDescription
+} else {
+    jummp.metadata.officialDatabaseDescription = """\
+        BioModels Database is a repository of computational models of biological processes.
+        Models described from literature are manually curated and enriched with cross-references.
+        """
+}
+// elasticsearch settings for weceem
+elasticSearch.datastoreImpl = 'hibernateDatastore'
+elasticSearch.bulkIndexOnStartup = false
+elasticSearch.disableAutoIndex = true
+elasticSearch.client.mode = 'local'
+elasticSearch.index.store.type = 'simplefs' // store local node in memory and not on disk
+elasticSearch.maxBulkRequest = 10

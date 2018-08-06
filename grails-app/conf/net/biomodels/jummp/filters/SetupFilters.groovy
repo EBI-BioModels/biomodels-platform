@@ -35,7 +35,6 @@
 package net.biomodels.jummp.filters
 
 import org.springframework.beans.factory.InitializingBean
-import org.codehaus.groovy.grails.commons.ConfigurationHolder as CH
 
 /**
  * @short Filter to redirect to SetupController

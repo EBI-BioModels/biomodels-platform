@@ -31,7 +31,7 @@
 <html>
     <head>
         <title>Gene Ontology Tree</title>
-        <meta name="layout" content="main" />
+        <meta name="layout" content="${session['branding.style']}/main" />
         <link rel="stylesheet" href="${resource(dir:'css/dynatree', file:'ui.dynatree.css')}" type="text/css"/>
         <g:javascript src="js/showModels.js"/>
         <g:javascript src="js/gotree.js"/>

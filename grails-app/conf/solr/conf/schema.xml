@@ -107,27 +107,30 @@
    <field name="elementDescription" type="text_general" indexed="true" stored="false" multiValued="true"/>
    <field name="elementID" type="string" indexed="true" stored="false" multiValued="true"/>
    <field name="externalReferenceID" type="string" indexed="true" stored="false" multiValued="true"/>
-   <field name="externalReferenceName" type="string" indexed="true" stored="false" multiValued="true"/>
+   <field name="externalReferenceName" type="text_general" indexed="true" stored="false" multiValued="true"/>
    <field name="public" type="boolean" indexed="true" stored="true"/>
    <field name="deleted" type="boolean" indexed="true" stored="true"/>
+   <field name="certified" type="boolean" indexed="true" stored="true"/>
    <field name="uniqueId" type="string" indexed="true" stored="true"/>
    <!-- SBML-specific fields -->
    <field name="sbmlSBOTerm" type="string" indexed="true" stored="false" multiValued="true"/>
-   
+
    <!-- PharmML-specific fields -->
-   <field name="pharmmlPublicationSourceText" type="text_general" indexed="true" stored="false"/>
-   <field name="pharmmlModelIndication" type="text_general" indexed="true" stored="false" multiValued="true"/>
-   <field name="pharmmlModelRationale" type="text_general" indexed="true" stored="false" multiValued="true"/>
-   <field name="pharmmlLimitations" type="text_general" indexed="true" stored="false" multiValued="true"/>
-   <field name="pharmmlPopulation" type="text_general" indexed="true" stored="false" multiValued="true"/>
-   <field name="pharmmlModelDrug" type="text_general" indexed="true" stored="false" multiValued="true"/>
-   <field name="pharmmlTherapeuticArea" type="text_general" indexed="true" stored="false" multiValued="true"/>
-   <field name="pharmmlElementInterpretation" type="text_general" indexed="true" stored="false" multiValued="true"/>
-   <field name="pharmmlElementUnit" type="string" indexed="true" stored="false" multiValued="true"/>
-   <field name="pharmmlGenericType" type="text_general" indexed="true" stored="false" multiValued="true"/>
-   <field name="pharmmlModelFieldPurpose" type="string" indexed="true" stored="false" multiValued="true"/>
+   <field name="pharmmlTherapeuticArea" type="lowercase" indexed="true" stored="true" multiValued="true"/>
+   <field name="pharmmlModellingContextDescription" type="lowercase" indexed="true" stored="true" multiValued="false"/>
+   <field name="pharmmlLongTechnicalDescription" type="string" indexed="false" stored="true" multiValued="false"/>
+   <field name="pharmmlShortDescription" type="text_general" indexed="true" stored="true" multiValued="false"/>
+   <field name="pharmmlPublicationSource" type="lowercase" indexed="true" stored="true"/>
+   <field name="pharmmlImplementationConformsToLiterature" type="lowercase" indexed="true" stored="false" multiValued="false"/>
+   <field name="pharmmlImplementationDiscrepancies" type="text_general" indexed="true" stored="true" multiValued="false"/>
+   <field name="pharmmlModelDevelopmentContext" type="lowercase" indexed="true" stored="true" multiValued="true"/>
+   <field name="pharmmlCodeFromLiterature" type="lowercase" indexed="true" stored="true" multiValued="false"/>
+   <field name="pharmmlResearchStage" type="lowercase" indexed="true" stored="true" multiValued="true"/>
+   <field name="pharmmlTasks" type="lowercase" indexed="true" stored="true" multiValued="true"/>
+   <field name="pharmmlTypeOfData" type="lowercase" indexed="true" stored="true" multiValued="true"/>
+
    <!-- catch-all field -->
-   <dynamicField name="pharmml*" type="text_general" indexed="true"  stored="false" multiValued="true"/>
+   <dynamicField name="pharmml*" type="text_general" indexed="true"  stored="true" multiValued="true"/>
    <dynamicField name="vCard*" type="text_general" indexed="true"  stored="false" multiValued="true"/>
 
    <!-- catchall text field that indexes tokens both normally and in reverse for efficient
@@ -154,16 +157,7 @@
    <copyField source="externalReferenceID" dest="text_rev"/>
    <copyField source="externalReferenceName" dest="text_rev"/>
 
-   <copyField source="pharmmlModelIndication" dest="text_rev"/>
-   <copyField source="pharmmlModelRationale" dest="text_rev"/>
-   <copyField source="pharmmlLimitations" dest="text_rev"/>
-   <copyField source="pharmmlPopulation" dest="text_rev"/>
-   <copyField source="pharmmlModelDrug" dest="text_rev"/>
-   <copyField source="pharmmlTherapeuticArea" dest="text_rev"/>
-   <copyField source="pharmmlElementInterpretation" dest="text_rev"/>
-   <copyField source="pharmmlElementUnit" dest="text_rev"/>
-   <copyField source="pharmmlGenericType" dest="text_rev"/>
-   <copyField source="pharmmlModelFieldPurpose" dest="text_rev"/>
+   <copyField source="pharmml*" dest="text_rev"/>
 
    <copyField source="uniqueId" dest="text_rev"/>
 

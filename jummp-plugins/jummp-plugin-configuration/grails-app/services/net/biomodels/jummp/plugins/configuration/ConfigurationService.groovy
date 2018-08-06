@@ -54,7 +54,7 @@ class ConfigurationService implements InitializingBean {
      */
     private final ReentrantLock lock = new ReentrantLock()
 
-    static transactional = true
+    static transactional = false
     /**
      * The configuration file is set in after properties set to a default value if not already set.
      * Primary purpose of this property is for integration tests to not overwrite the real configuration.
@@ -359,6 +359,8 @@ class ConfigurationService implements InitializingBean {
         BrandingCommand branding = new BrandingCommand()
         branding.internalColor = properties.getProperty("jummp.branding.internalColor")
         branding.externalColor = properties.getProperty("jummp.branding.externalColor")
+        branding.deployment = properties.getProperty("jummp.branding.deployment")
+        branding.style = properties.getProperty("jummp.branding.style")
         return branding
     }
 

@@ -55,13 +55,22 @@ policy = {
   'ROLE_USER' {
     space '*'
     admin false
+    create true
+    edit true
+    view true
+    delete false
+  }
+
+  'ROLE_GUEST' {
+    space '*'
+    admin false
     create false
     edit false
     view true
     delete false
   }
 
-  'ROLE_GUEST' {
+  'ROLE_ANONYMOUS' {
     space '*'
     admin false
     create false

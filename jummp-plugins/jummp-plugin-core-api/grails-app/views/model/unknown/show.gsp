@@ -27,6 +27,7 @@
 
 
 
-<meta name="layout" content="modelDisplay"/>
-<content tag="modelspecifictabs"/>
-<content tag="modelspecifictabscontent"/>
+<meta name="layout" content="${session['branding.style']}/modelDisplay"/>
+<content tag="genericAnnotations">
+    <anno:renderGenericAnnotations annotations="${genericAnnotations}"/>
+</content>

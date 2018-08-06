@@ -28,6 +28,12 @@
                 version="${version}" />
     </div>
 </g:if>
+<g:if test="${pkMacroList}">
+    <p class='bold'>PK Macros</p>
+    <div>
+        <pharmml:pkMacros vars="${pkMacroList}" version="${version}" />
+    </div>
+</g:if>
 <g:if test="${error}">
     <p>${error}</p>
 </g:if>

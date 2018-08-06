@@ -34,12 +34,7 @@
 
 package net.biomodels.jummp.plugins.bives
 
-import java.util.concurrent.locks.Lock
-import java.util.concurrent.locks.ReentrantLock
-
-import net.biomodels.jummp.core.bives.DiffNotExistingException;
-
-import org.springframework.beans.factory.InitializingBean
+import net.biomodels.jummp.core.bives.DiffNotExistingException
 
 /**
  * Provides the data from the DiffDataProvider for the view and creates a new thread

@@ -1,4 +1,4 @@
-.*
+B.*
 !.editorconfig
 !.gitignore
 *.db
@@ -7,6 +7,7 @@
 *.iws
 *.log
 *.orig
+.slcache/
 */cobertura.ser
 */web-app/WEB-INF/classes/
 *~
@@ -16,8 +17,14 @@ activemq-data/*
 ast-build/*
 build/*
 cobertura.ser
+documentation/*
+html/*
+latex/*
+output/*
 grails-app/views/templates/_version.gsp
 grailswork/*
+jummp-plugins/*/.*
+jummp-plugins/*/*.iml
 jummp-plugins/*/build.number
 jummp-plugins/*/ast-build
 jummp-plugins/*/grails-app/i18n
@@ -38,8 +45,16 @@ logs/*
 out/*
 pluginlibs/grails-plugin-jummp-plugin-*.jar
 pluginlibs/jummp-ast-0.1.jar
-src/groovy/weceem-jummp-default-space.zip
+src/groovy/weceem-jummp-default-space.*
 target-eclipse/*
 target/*
 web-app/js/i18n/messages.properties
-web-app/WEB-INF/classes/ 
+web-app/WEB-INF/classes/
+## elastic search data folder -- used by weceem, not by us directly.
+data
+
+## help/documentation
+Doxyfile
+
+## patches
+*.patch

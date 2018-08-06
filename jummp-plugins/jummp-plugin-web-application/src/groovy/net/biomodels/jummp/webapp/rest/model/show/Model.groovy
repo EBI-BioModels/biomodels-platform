@@ -20,30 +20,22 @@
 
 package net.biomodels.jummp.webapp.rest.model.show
 
-import com.wordnik.swagger.annotations.*
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.core.model.ModelTransportCommand
 
-@ApiModel(value = "Model")
 class Model {
-    @ApiModelProperty(value = "model name", required = true)
     String name
-    @ApiModelProperty(value = "model description", required = true)
     String description
-    @ApiModelProperty(value = "the format of the model")
     Format format
-    @ApiModelProperty(value = "the scientific publication which describes this model.", required = false)
     String publication
-    @ApiModelProperty(value = "the files that this model comprises")
     ModelFiles files
-    @ApiModelProperty(value = "the version history of this model")
     History history
     Date firstPublished
     /** perennial model identifiers */
     String submissionId
     String publicationId
 
-    public Model(RevisionTransportCommand revision) {
+    public Model(RevisionTransportCommand revision, boolean isPrivate) {
         ModelTransportCommand model = revision.model
         name = revision.name
         description = revision.description
@@ -53,7 +45,11 @@ class Model {
                           model.publication.linkProvider.identifiersPrefix + model.publication.link :
                           model.publication.link
         }
-        files = new ModelFiles(revision.files.findAll{ !it.hidden })
+        if (isPrivate) {
+            files = new ModelFiles()
+        } else {
+            files = new ModelFiles(revision.files.findAll{ !it.hidden })
+        }
         history = new History(model.submissionId)
         submissionId = model.submissionId
         publicationId = model.publicationId

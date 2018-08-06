@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -22,28 +22,78 @@
 
 
 
+<style type="text/css">
+    #clearsearch {
+        display: block;
+        outline: none;
+        text-align: center;
+        padding-left: 10px;
+        padding-right: 8px;
+    }
+    .search_box_style {
+        background-color: white;
+        color: #0a0a0a;
+        cursor: pointer;
+        border: none;
+    }
+    .clearable {
+        position: relative;
+        text-align: center;
+    }
+</style>
+<form id="local-search" name="local-search"
+      action="${createLink(controller: 'search', action: 'searchRedir')}" method="post">
+    <fieldset>
+        <div class="input-group">
+            <input type="text" name="search_block_form" id="local-searchbox"
+                   placeholder="Search..." class="input-group-field search_box_style"
+                   tabindex="1" size="35" maxlength="2048">
+            <div class="input-group-button">
+                <input id="clearsearch" type="button" value="X" tabindex="3"
+                       class="clearable search_box_style">
+            </div>
+            <div class="input-group-button">
+                <input id="search_submit" class="button icon icon-functional" tabindex="2" type="submit" name="submit1" value="1" />
+            </div>
+        </div>
+        <p id="example">
+            Examples:
+            <g:link controller="search" action="search" params="${[query: "*:*"]}" class="secondary label" title="Search all">*:*</g:link>
+            <g:link controller="search" action="search" params="${[query: "MAPK cascade"]}" class="secondary label" title="Search by GO term">MAPK cascade</g:link>
+            <g:link controller="search" action="search" params="${[query: "homo sapiens"]}" class="secondary label" title="Search by Taxonomy term">homo sapiens</g:link>
+            <g:link controller="search" action="search" params="${[query: "lung cancer"]}" class="secondary label" title="Search by Disease term">lung cancer</g:link>
+        </p>
+    </fieldset>
+</form>
+<script>
+    function doShowOrHide(e) {
+        if ($(e).val() == '') {
+            $('#clearsearch').hide();
+        } else {
+            $('#clearsearch').show();
+        }
+    }
+    $('#local-searchbox').focus(function() {
+        doShowOrHide(this);
+    });
 
+    $('#local-searchbox').keyup(function() {
+        doShowOrHide(this);
+    });
 
+    $('#local-searchbox').change(function() {
+        doShowOrHide(this);
+    });
 
+    $('#local-searchbox').dblclick(function() {
+        doShowOrHide(this);
+    });
 
-
- <form id="local-search" name="local-search" action="${createLink(controller: 'search', action: 'searchRedir')}" method="post">
-                
-          <fieldset>
-          
-          <div class="left">
-            <label>
-            <input type="text" value="${query}" name="search_block_form" id="local-searchbox"></input>
-            </label>
-          </div>
-          
-          <div class="right">
-            <input type="submit" name="submit" value="Search" class="submit">          
-            <!-- If your search is more complex than just a keyword search, you can link to an Advanced Search,
-                 with whatever features you want available 
-            <span class="adv"><a href="../search" id="adv-search" title="Advanced">Advanced</a></span>-->
-          </div>                  
-          
-          </fieldset>
-          
-        </form>
+    $('#clearsearch').click(function () {
+        $('#local-searchbox').val('');
+        $(this).hide();
+    });
+    $(document).ready(function () {
+        doShowOrHide('#local-searchbox');
+    });
+</script>

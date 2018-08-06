@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -31,9 +31,11 @@
     <table class="formtable">
         <tbody>
             <tr class="prop">
-                <td class="name"><label for="cmsPolicyFile">CMS policy dir:</label></td>
+                <td class="name" style="width: 25%;">
+                    <label for="cmsPolicyFile">CMS policy dir:</label></td>
                 <td class="value ${hasErrors(bean: cms, field: 'policyFile', 'errors')}">
-                    <input type="text" name="policyFile" id="cmsPolicyFile" value="${cms?.policyFile}"/>
+                    <input type="text" name="policyFile" id="cmsPolicyFile"
+                           value="${cms?.policyFile}" style="width: 500px;"/>
                 </td>
             </tr>
         </tbody>

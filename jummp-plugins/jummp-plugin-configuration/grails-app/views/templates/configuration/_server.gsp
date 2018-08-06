@@ -12,8 +12,8 @@
  Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
  PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
- 
- You should have received a copy of the GNU Affero General Public License along 
+
+ You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
@@ -31,16 +31,23 @@
     <table class="formtable">
         <tbody>
             <tr class="prop">
-                <td class="name"><label for="url" title="The servers production URL">URL:</label></td>
+                <td class="name" style="width: 25%;">
+                    <label for="url" title="The server's production URL">URL:</label></td>
                 <td class="value ${hasErrors(bean: server, field: 'url', 'errors')}">
-                    <input type="text" name="url" id="url" value="${server ? server.url : 'http://127.0.0.1:8080/jummp/'}" title="The server's production URL"/>
+                    <input type="text" name="url" id="url"
+                           value="${server ? server.url : 'http://127.0.0.1:8080/jummp/'}"
+                           title="The server's production URL"
+                           style="width: 500px;"/>
                 </td>
             </tr>
             <tr class="prop">
-                <td class="name"><label for="protectEverything"
-                    title="Whether the complete application requires login">Protect all pages:</label></td>
+                <td class="name">
+                    <label for="protectEverything"
+                           title="Whether the complete application requires login">Protect all pages:</label></td>
                 <td class="value ${hasErrors(bean: server, field: 'protectEverything', 'errors')}">
-                    <g:checkBox name="protectEverything" id="protectEverything" value="${true}" checked="${server ? server.protectEverything : 'false'}" title="Whether the complete application requires login"/>
+                    <g:checkBox name="protectEverything" id="protectEverything"
+                                value="${true}" checked="${server ? server.protectEverything : 'false'}"
+                                title="Whether the complete application requires login"/>
                 </td>
             </tr>
         </tbody>
