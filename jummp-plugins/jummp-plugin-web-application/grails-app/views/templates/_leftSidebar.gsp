@@ -1,7 +1,7 @@
 <%@
     page import="grails.converters.JSON"
     contentType="text/html;charset=UTF-8"
-    expressionCodec="none"
+    expressionCodec="html"
 %>
 <%
     // create the list of indices using for the javascript at the bottom
@@ -41,7 +41,6 @@
                         selectedFacet = "${facet.id}:${fv.value}"
                         isAsked = params.query?.contains("${facet.id}:${escapedFacetValue}")
                     }
-
                 %>
                 <g:if test="${isAsked}">
                     <input type="checkbox" id="facetValue_${fv.value}" checked
@@ -119,8 +118,8 @@
         if (isNeededDQ) {
             facetValue = '"' + facetValue + '"';
         }
-	    var lastQueryString = " AND " + facetGroupId + ":" + facetValue;
-	    var currentQuery = "${queryString}";
+        var lastQueryString = " AND " + facetGroupId + ":" + facetValue;
+        var currentQuery = "${queryString}";
         if (e[0].checked) {
             currentQuery += lastQueryString;
         } else {
@@ -129,13 +128,13 @@
         }
         var otherParams = "";
         if ("${params.offset}") {
-            otherParams += "&offset=${params.offset}";
+            otherParams += "&amp;offset=${params.offset}";
         }
         if ("${params.numResults}") {
-            otherParams += "&numResults=${params.numResults}";
+            otherParams += "&amp;numResults=${params.numResults}";
         }
         if ("${params.sort}") {
-            otherParams += "&sort=${params.sort}";
+            otherParams += "&amp;sort=${params.sort}";
         }
         newSearchURI += encodeURIComponent(currentQuery) + otherParams;
         window.location.href = newSearchURI;
@@ -145,7 +144,7 @@
         var currentQueryString = "${params.query?.replaceAll('"', '\\\\"')}";
         facetValue = escapeSpecialLuceneCharacters(facetValue);
         /* the above utility function is defined in common.js which is already included in the footer section */
-	    var latestQueryString = facetGroupId + ":" + facetValue;
+        var latestQueryString = facetGroupId + ":" + facetValue;
         if (e[0].checked) {
             // choose and click on a single facet
             if (currentQueryString === "") {
@@ -166,15 +165,15 @@
             // why don't we need to check empty of the currentQueryString?
             currentQueryString = currentQueryString.replace(latestQueryString, "");
         }
-	    var otherParams = "";
+        var otherParams = "";
         if ("${params.offset}") {
-            otherParams += "&offset=${params.offset}";
+            otherParams += "&amp;offset=${params.offset}";
         }
         if ("${params.numResults}") {
-            otherParams += "&numResults=${params.numResults}";
+            otherParams += "&amp;numResults=${params.numResults}";
         }
         if ("${params.sort}") {
-            otherParams += "&sort=${params.sort}";
+            otherParams += "&amp;sort=${params.sort}";
         }
         var newSearchURL = "${grailsApplication.config.grails.serverURL}/models"
         currentQueryString = encodeURIComponent(currentQueryString);
@@ -182,8 +181,10 @@
         if (currentQueryString) {
             newParams += "query=" + currentQueryString + otherParams;
         } else {
-            newParams += otherParams.substr(1); // eliminate the first character '&'
+            // eliminate the first HTML-encoded '&' (&amp;)
+            newParams += otherParams.substr(5);
         }
         window.location.href = newSearchURL + newParams;
     }
+}
 </g:javascript>

@@ -161,8 +161,10 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
             ebeyeWsConfig = new EbeyeWsConfigProd()
         }
         DatasetWsClient datasetWsClient = new DatasetWsClient(ebeyeWsConfig)
+        // parse raw query to OmicsDI API to avoid double encoding issues.
+        final String rawQuery = query.decodeHTML()
         // escape special Lucene field separators in query string
-        query = escapeLuceneFieldSeparator(query)
+        query = escapeLuceneFieldSeparator(rawQuery)
         // TODO: should allow searching information of other fields
         // create the returned object
         SearchResponse searchResponse = new SearchResponse()

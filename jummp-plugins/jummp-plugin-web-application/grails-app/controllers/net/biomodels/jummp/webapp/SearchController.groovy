@@ -89,8 +89,8 @@ class SearchController {
     private void sanitiseParams() {
         if (params.sort) {
             def sortVal = params.sort.split("-")
-            params.sortBy = sortVal[0]
-            params.sortDir = sortVal[1]
+            params.sortBy = sortVal[0].encodeAsHTML()
+            params.sortDir = sortVal[1].encodeAsHTML()
         } else {
             params.sortBy = "relevance"
             params.sortDir = "desc"
