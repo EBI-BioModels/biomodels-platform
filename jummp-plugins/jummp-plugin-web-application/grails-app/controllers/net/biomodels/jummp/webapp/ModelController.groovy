@@ -392,7 +392,8 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     perms: modelDelegateService.getPermissionsMap(rev.model.submissionId)]
                 sendMessage("seda:model.publish", notification)
             }
-            String extraMsg = rev.state == ModelState.PUBLISHED ?
+            boolean havePublicationId = rev.model.publicationId != null
+            String extraMsg = havePublicationId ?
                 " with the publication identifier ${rev.modelIdentifier()}." : "."
             redirect(action: "showWithMessage", id: rev.identifier(),
                         params: [flashMessage: "Model has been published${extraMsg}"])
