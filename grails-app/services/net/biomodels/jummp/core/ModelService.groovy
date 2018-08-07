@@ -52,7 +52,9 @@ import org.springframework.security.access.prepost.PostAuthorize
 import org.springframework.security.access.prepost.PostFilter
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.acls.domain.BasePermission
+import org.springframework.security.acls.domain.GrantedAuthoritySid
 import org.springframework.security.acls.domain.PrincipalSid
+import org.springframework.security.acls.model.AccessControlEntry
 import org.springframework.security.acls.model.Acl
 import org.springframework.security.authentication.AnonymousAuthenticationToken
 import org.springframework.security.core.Authentication
@@ -1603,8 +1605,12 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         if (!authenticated || aclUtilService.hasPermission(springSecurityService.authentication, model,
                     BasePermission.ADMINISTRATION ) || SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')) {
             def permissions = aclUtilService.readAcl(model).getEntries()
-            permissions.each {
+            for (AccessControlEntry it: permissions) {
                 String permission = getPermissionString(it.getPermission().getMask())
+                // TODO refactor permission code to handle both GrantedAuthoritySid and PrincipalSid
+                if (it.sid instanceof GrantedAuthoritySid) {
+                    continue // skip to the next one
+                }
                 String principal = it.getSid().principal
                 if (permission) {
                     User user = User.findByUsername(principal)
@@ -1725,7 +1731,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
     @PreAuthorize("hasPermission(#model, admin) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.grantWriteAccess")
-    public void grantWriteAccess(Model model, User collaborator) {
+    void grantWriteAccess(Model model, User collaborator) {
         final String principal = collaborator.username
         aclUtilService.addPermission(model, principal, BasePermission.WRITE)
         boolean isCurator = userService.isCurator(collaborator)
@@ -1747,6 +1753,43 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
                 grantedTo: collaborator,
                 perms: getPermissionsMap(model)]
         sendMessage("seda:model.writeAccessGranted", notification)
+    }
+
+    /**
+    * Grants write access for @p model to all curators.
+    * All curators receive the right to add new revisions to the @p model.
+    * If the parameter @onlyPublishedRevision is true, the method only grants write access to
+    * the published revisions.
+    *
+    * @param model The Model for which write access should be granted
+    **/
+    @PreAuthorize("hasPermission(#model, admin) or hasRole('ROLE_ADMIN')")
+    @PostLogging(LoggingEventType.UPDATE)
+    @Profiled(tag="modelService.grantWriteAccessToCurators")
+    void grantWriteAccessToCurators(Model model, boolean onlyPublishedRevision = true) {
+        final String roleCurator = "ROLE_CURATOR"
+        String pubId = model.publicationId ? " aka. (${model.publicationId})" : ""
+        String modelId = "${model.submissionId}${pubId}"
+        aclUtilService.addPermission(model, roleCurator, BasePermission.READ)
+        aclUtilService.addPermission(model, roleCurator, BasePermission.WRITE)
+        log.info("${modelId}: grant read and write access for ROLE_CURATOR")
+        // check if admin rights have not already been granted to avoid duplication
+        if (!hasAdminPermission(model, roleCurator)) {
+            aclUtilService.addPermission(model, roleCurator, BasePermission.ADMINISTRATION)
+            log.info("${modelId}: grant admin access for ROLE_CURATOR")
+        }
+        Set<Revision> revisions = model.revisions
+        if (onlyPublishedRevision) {
+            revisions = revisions.findAll { it.state == ModelState.PUBLISHED }
+        }
+        revisions.each { Revision it ->
+            // may have been granted already through grantReadAccess for instance
+            if (!hasAdminPermission(it, roleCurator)) {
+                aclUtilService.addPermission(it, roleCurator, BasePermission.READ)
+                aclUtilService.addPermission(it, roleCurator, BasePermission.ADMINISTRATION)
+                log.info("${modelId}: grant read and admin access to all curators on the revision ${it.id}.${it.revisionNumber}")
+            }
+        }
     }
 
     /**
