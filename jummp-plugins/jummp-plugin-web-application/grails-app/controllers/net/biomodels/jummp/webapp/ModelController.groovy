@@ -148,6 +148,10 @@ class ModelController {
     // if this method returns false, the controller method is no longer called.
     private boolean auditBefore() {
         try {
+            // XSS guard for the actions from this controller (excluding submission)
+            params.id = params.id?.encodeAsHTML()
+            params.revisionId = params.revisionId?.encodeAsHTML()
+
             String modelIdParam = params.id
             String revisionIdParam = params.revisionId
             String modelId = null
@@ -1158,7 +1162,7 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
             on("Continue") {
                 Map<String,String> modifications = new HashMap<String,String>()
                 if (params.RevisionComments) {
-                    modifications.put("RevisionComments", params.RevisionComments)
+                    modifications.put("RevisionComments", params.RevisionComments?.encodeAsHTML())
                 } else {
                     modifications.put("RevisionComments", "Model revised without commit message")
                 }
@@ -1249,7 +1253,7 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
                 }
             } else {
                 PublicationTransportCommand retrieved
-                retrieved = publicationService.createPTCWithMinimalInformation(params.PubLinkProvider, params.PublicationLink, [])
+                retrieved = publicationService.createPTCWithMinimalInformation(params.PubLinkProvider?.encodeAsHTML(), params.PublicationLink?.encodeAsHTML(), [])
                 publicationContext.publication = retrieved
                 publicationContext.comesFromDatabase = false
             }
@@ -1313,7 +1317,7 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
     def download() {
         def modelId = params.id
         def revisionId = params.revisionId
-        String fileName = params.filename
+        String fileName = params.filename?.encodeAsHTML()
         if (!fileName) {
             final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(
                             modelDelegateService.getRevisionFromParams(modelId, revisionId))
