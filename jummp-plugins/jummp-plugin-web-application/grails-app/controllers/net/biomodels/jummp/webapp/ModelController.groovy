@@ -116,6 +116,8 @@ class ModelController {
 
     def modelConversionService
 
+    def userService
+
     def messageSource
 
     /**
@@ -180,7 +182,7 @@ class ModelController {
             if (model) {
                 modelId = (model.publicationId) ?: model.submissionId
                 int historyItem = updateHistory(modelId, username, accessType, formatType, changesMade)
-                session.lastHistory = historyItem
+                request.lastHistory = historyItem
                 return true
             } else {
                 log.error "Ignoring invalid request for $actionUri with params $params."
@@ -196,9 +198,9 @@ class ModelController {
 
     private void auditAfter(def model) {
         try {
-            if (session.lastHistory) {
-                modelDelegateService.updateAuditSuccess(session.lastHistory, true)
-                session.removeAttribute("lastHistory")
+            if (request.lastHistory) {
+                modelDelegateService.updateAuditSuccess(request.lastHistory, true)
+                request.removeAttribute("lastHistory")
             }
         } catch(Exception e) {
             log.error e.message, e
@@ -1363,7 +1365,7 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
         int revision = Integer.parseInt(requestObject['revisionNumber'] as String)
         String modelId = requestObject['modelId']
         boolean canUpdate = modelDelegateService.canAddRevision(modelId as String)
-        boolean hasCuratorRole = hasCuratorRole()
+        boolean hasCuratorRole = userService.isLoggedInUserACurator()
         if (canUpdate && hasCuratorRole) {
             CurationState curationState = CurationState.valueOf(requestObject['curationState'] as String)
             modelDelegateService.updateCurationStateRevision(modelId, revision, curationState)
@@ -1482,13 +1484,5 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
             }
         }
         return true
-    }
-
-    private boolean hasCuratorRole() {
-        Collection<GrantedAuthority> grantedAuthorities = springSecurityService.getPrincipal().getAuthorities()
-        Set<String> roleNames = grantedAuthorities.collect {
-            it.getAuthority()
-        }
-        "ROLE_CURATOR" in roleNames
     }
 }
