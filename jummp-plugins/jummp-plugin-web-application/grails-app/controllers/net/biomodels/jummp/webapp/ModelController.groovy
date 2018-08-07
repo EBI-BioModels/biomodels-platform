@@ -116,6 +116,8 @@ class ModelController {
 
     def modelConversionService
 
+    def userService
+
     def messageSource
 
     /**
@@ -148,6 +150,10 @@ class ModelController {
     // if this method returns false, the controller method is no longer called.
     private boolean auditBefore() {
         try {
+            // XSS guard for the actions from this controller (excluding submission)
+            params.id = params.id?.encodeAsHTML()
+            params.revisionId = params.revisionId?.encodeAsHTML()
+
             String modelIdParam = params.id
             String revisionIdParam = params.revisionId
             String modelId = null
@@ -176,7 +182,7 @@ class ModelController {
             if (model) {
                 modelId = (model.publicationId) ?: model.submissionId
                 int historyItem = updateHistory(modelId, username, accessType, formatType, changesMade)
-                session.lastHistory = historyItem
+                request.lastHistory = historyItem
                 return true
             } else {
                 log.error "Ignoring invalid request for $actionUri with params $params."
@@ -192,9 +198,9 @@ class ModelController {
 
     private void auditAfter(def model) {
         try {
-            if (session.lastHistory) {
-                modelDelegateService.updateAuditSuccess(session.lastHistory, true)
-                session.removeAttribute("lastHistory")
+            if (request.lastHistory) {
+                modelDelegateService.updateAuditSuccess(request.lastHistory, true)
+                request.removeAttribute("lastHistory")
             }
         } catch(Exception e) {
             log.error e.message, e
@@ -1159,7 +1165,7 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
             on("Continue") {
                 Map<String,String> modifications = new HashMap<String,String>()
                 if (params.RevisionComments) {
-                    modifications.put("RevisionComments", params.RevisionComments)
+                    modifications.put("RevisionComments", params.RevisionComments?.encodeAsHTML())
                 } else {
                     modifications.put("RevisionComments", "Model revised without commit message")
                 }
@@ -1250,7 +1256,7 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
                 }
             } else {
                 PublicationTransportCommand retrieved
-                retrieved = publicationService.createPTCWithMinimalInformation(params.PubLinkProvider, params.PublicationLink, [])
+                retrieved = publicationService.createPTCWithMinimalInformation(params.PubLinkProvider?.encodeAsHTML(), params.PublicationLink?.encodeAsHTML(), [])
                 publicationContext.publication = retrieved
                 publicationContext.comesFromDatabase = false
             }
@@ -1314,7 +1320,7 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
     def download() {
         def modelId = params.id
         def revisionId = params.revisionId
-        String fileName = params.filename
+        String fileName = params.filename?.encodeAsHTML()
         if (!fileName) {
             final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(
                             modelDelegateService.getRevisionFromParams(modelId, revisionId))
@@ -1360,7 +1366,7 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
         int revision = Integer.parseInt(requestObject['revisionNumber'] as String)
         String modelId = requestObject['modelId']
         boolean canUpdate = modelDelegateService.canAddRevision(modelId as String)
-        boolean hasCuratorRole = hasCuratorRole()
+        boolean hasCuratorRole = userService.isLoggedInUserACurator()
         if (canUpdate && hasCuratorRole) {
             CurationState curationState = CurationState.valueOf(requestObject['curationState'] as String)
             modelDelegateService.updateCurationStateRevision(modelId, revision, curationState)
@@ -1479,13 +1485,5 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
             }
         }
         return true
-    }
-
-    private boolean hasCuratorRole() {
-        Collection<GrantedAuthority> grantedAuthorities = springSecurityService.getPrincipal().getAuthorities()
-        Set<String> roleNames = grantedAuthorities.collect {
-            it.getAuthority()
-        }
-        "ROLE_CURATOR" in roleNames
     }
 }
