@@ -125,5 +125,6 @@ class ModelAdapter {
         for (String pit : PERENNIAL_IDENTIFIER_TYPES) {
             result.add(pit + "Id")
         }
+        result
     }
 }
