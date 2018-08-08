@@ -295,7 +295,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     List<String> originalModels = metadataDelegateService.fetchOriginalModels(rev)
                     Map<String, String> modellingApproaches =
                         metadataDelegateService.fetchModellingApproaches(rev)
-                    boolean hasCuratorRole = hasCuratorRole()
+                    boolean hasCuratorRole = userService.isLoggedInUserACurator()
                     boolean supportedForConversion = modelConversionService.isSupportedForConversion(rev)
                     List<RFTC> convertedFilesTC = modelConversionService.getConvertedFiles(rev)
                     def model = [revision               : rev,
