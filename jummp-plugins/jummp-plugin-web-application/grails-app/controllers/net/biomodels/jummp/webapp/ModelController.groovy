@@ -171,7 +171,7 @@ class ModelController {
                     def rev = modelDelegateService.getRevisionDetails(
                                 new RevisionTransportCommand(id: modelIdParam))
                     if (rev) {
-                        modelId = rev.model.publicationId ?: rev.model.submissionId
+                        modelId = rev.modelIdentifier()
                     }
                 }
             }
