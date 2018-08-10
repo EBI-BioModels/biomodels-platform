@@ -538,7 +538,7 @@ the user has attempted to update an blank value for the name attribute.""")
     @Profiled(tag="SbmlService.getRule")
     Map getRule(RevisionTransportCommand revision, String variable) {
         Model model = getFromCache(revision).model
-        ExplicitRule rule = model.getRule(variable)
+        ExplicitRule rule = model.getRuleByVariable(variable)
         if (!rule) {
             return [:]
         }
