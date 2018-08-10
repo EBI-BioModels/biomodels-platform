@@ -2211,7 +2211,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         if (!SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
             if (!aclUtilService.hasPermission(springSecurityService.authentication, revision,
                         BasePermission.ADMINISTRATION)) {
-                throw new AccessDeniedException("You cannot publish this model.");
+                throw new AccessDeniedException("You cannot publish this model.")
             }
         }
         if (!revision) {
