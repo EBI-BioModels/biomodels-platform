@@ -249,6 +249,8 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
             if (params.revisionId) {
                 revisionNumber = params.int("revisionId")
             }
+            // TODO need to establish if the requested model revision exists in a way that bypasses
+            // ACLs and that doesn't rely on accessing domain objects from the controller
             Revision revision = revisionNumber >= 0 ?
                     model.revisions.getAt(revisionNumber-1) : model.revisions.last()
             if (!revision) {
