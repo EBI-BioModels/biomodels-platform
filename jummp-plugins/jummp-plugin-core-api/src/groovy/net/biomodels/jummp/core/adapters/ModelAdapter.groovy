@@ -41,7 +41,7 @@ class ModelAdapter {
     static final Set<String> PERENNIAL_IDENTIFIER_TYPES = ModelIdentifierUtils.perennialFields
     static final Set<String> FIND_BY_PERENNIAL_ID_CRITERIA = populateFindByCriteria()
 
-    def modelService = Holders.applicationContext.getBean("modelService")
+    static def modelService = Holders.applicationContext.getBean("modelService")
 
     @CompileStatic
     ModelTransportCommand toCommandObject(boolean saveHistory = true) {
@@ -104,19 +104,26 @@ class ModelAdapter {
      * @return  the model corresponding to the given id, or null if there was no match
      */
     @CompileDynamic
-     static Model findByPerennialIdentifier(String perennialId) {
-         if (!perennialId) {
-             return null
-         }
-         perennialId = perennialId.contains("\\.") ? perennialId : perennialId.split("\\.")[0]
-         def results = Model.withCriteria {
-             or {
-                 FIND_BY_PERENNIAL_ID_CRITERIA.each {
-                     eq(it, perennialId)
-                 }
-             }
-         }
-         results[0]
+    static Model findByPerennialIdentifier(String perennialId) {
+        if (!perennialId) {
+            return null
+        }
+        int dot = perennialId.indexOf('.')
+        perennialId = -1 == dot ? perennialId : perennialId.substring(0, dot)
+        def results = Model.withCriteria {
+            or {
+                FIND_BY_PERENNIAL_ID_CRITERIA.each {
+                    eq(it, perennialId)
+                }
+            }
+            cache true
+        }
+        results[0]
+    }
+
+    static void printModelIdentifierCacheValue(String id, String method, String msg) {
+        def cached = grailsCacheManager.getCache('modelIdentifier').get(id)
+        println "${System.currentTimeMillis()}\t${Thread.currentThread().name}\t$method\t$msg: $cached"
     }
 
     static Set<String> populateFindByCriteria() {
