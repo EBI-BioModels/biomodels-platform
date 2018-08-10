@@ -128,7 +128,8 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
 
     // TODO: move initialization into afterPropertiesSet and make it configuration dependent
     @SuppressWarnings("GrailsStatelessService")
-    SbmlCache<RevisionTransportCommand, SBMLDocument> cache = new SbmlCache(100)
+    /** keys are {@link net.biomodels.jummp.core.model.RevisionTransportCommand#getId()}s*/
+    SbmlCache cache = new SbmlCache(100)
 
     void afterPropertiesSet() {
         if (Environment.current == Environment.PRODUCTION) {
@@ -712,7 +713,7 @@ the user has attempted to update an blank value for the name attribute.""")
      * @return The parsed SBMLDocument
      */
     private SBMLDocument getFromCache(RevisionTransportCommand revision) throws XMLStreamException {
-        SBMLDocument document = cache.get(revision)
+        SBMLDocument document = cache.get(revision.id)
         if (document) {
             return document
         }
@@ -731,7 +732,7 @@ the user has attempted to update an blank value for the name attribute.""")
                 def reader = new SBMLReader()
                 document = reader.readSBML(file)
                 if (document) {
-                  cache.put(revision, document)
+                  cache.put(revision.id, document)
                   //break
                 }
             } catch(Exception ignore) {
