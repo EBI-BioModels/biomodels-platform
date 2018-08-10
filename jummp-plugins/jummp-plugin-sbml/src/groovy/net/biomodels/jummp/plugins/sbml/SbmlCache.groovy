@@ -148,6 +148,7 @@ class SbmlCache<K, V> implements Map<K, V> {
             } finally {
                 lock.unlock()
             }
+            return value
         } else {
             return null
         }
