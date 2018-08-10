@@ -39,6 +39,7 @@ package net.biomodels.jummp.plugins.sbml
 
 import com.thoughtworks.xstream.converters.ConversionException
 import grails.util.Environment
+import net.biomodels.jummp.core.ModelException
 import java.util.regex.Pattern
 import javax.xml.stream.XMLInputFactory
 import javax.xml.stream.XMLStreamException
@@ -83,6 +84,7 @@ import org.sbml.jsbml.Reaction
 import org.sbml.jsbml.Rule
 import org.sbml.jsbml.SBMLDocument
 import org.sbml.jsbml.SBMLError
+import org.sbml.jsbml.SBMLException
 import org.sbml.jsbml.SBMLReader
 import org.sbml.jsbml.SBMLWriter
 import org.sbml.jsbml.SBO
@@ -154,6 +156,46 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
         } else {
             File sbmlFile = new File(mainFileTC.path)
             getFileAsValidatedSBMLDocument(sbmlFile, errors)
+        }
+    }
+
+    boolean addModelIdAsAnnotation(String id, RevisionTransportCommand revision) throws ModelException {
+        if (!revision || id?.isEmpty() || !"SBML".equals(revision.format.identifier)) {
+            throw new IllegalArgumentException("A revision whose main files are encoded in SBML and a model identifier are required")
+        }
+        SBMLDocument document = getFromCache(revision)
+        def rID = revision.identifier()
+        if (null == document) {
+            log.error("Cannot add $id to revision ${rID} as we could not parse its main files")
+            return false
+        }
+
+        Model model = document.model
+        List<CVTerm> bqmIsAnnotations = model.filterCVTerms(CVTerm.Qualifier.BQM_IS)
+        final String idXref = "http://identifiers.org/biomodels/$id".toString()
+        def existing = bqmIsAnnotations.find { t ->
+            t.resources.find { r ->
+                r.equals(idXref)
+            }
+        }
+        if (existing) { // nothing to do
+            return false
+        }
+        boolean xrefAdded = bqmIsAnnotations.first().addResourceURI(idXref)
+        if (!xrefAdded) {
+            log.error("We failed to add $idXref to  revision $rID")
+            return false
+        }
+        File sbmlFile = fetchMainFileFromRevision(revision)
+        SBMLWriter sbmlWriter = new SBMLWriter()
+        try {
+            sbmlWriter.writeSBML(document, sbmlFile)
+            return true
+        } catch (SBMLException | IOException | XMLStreamException e) {
+            def fn = sbmlFile.name
+            def msg = "Failed to add model annotation $id to file $fn of revision $rID due to an issue with JSBML"
+            log.error "$msg: $e"
+            throw new ModelException(revision.model, msg)
         }
     }
 
