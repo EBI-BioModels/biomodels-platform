@@ -37,6 +37,7 @@ package net.biomodels.jummp.webapp
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import groovy.json.JsonSlurper
+import net.biomodels.jummp.core.ModelException
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
@@ -171,7 +172,7 @@ class ModelController {
                     def rev = modelDelegateService.getRevisionDetails(
                                 new RevisionTransportCommand(id: modelIdParam))
                     if (rev) {
-                        modelId = rev.model.publicationId ?: rev.model.submissionId
+                        modelId = rev.modelIdentifier()
                     }
                 }
             }
@@ -249,6 +250,8 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
             if (params.revisionId) {
                 revisionNumber = params.int("revisionId")
             }
+            // TODO need to establish if the requested model revision exists in a way that bypasses
+            // ACLs and that doesn't rely on accessing domain objects from the controller
             Revision revision = revisionNumber >= 0 ?
                     model.revisions.getAt(revisionNumber-1) : model.revisions.last()
             if (!revision) {
@@ -387,9 +390,10 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
 
     def publish() {
         RevisionTransportCommand rev
+        RevisionTransportCommand published
         try {
             rev = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
-            rev = modelDelegateService.publishModelRevision(rev)
+            published = modelDelegateService.publishModelRevision(rev)
             def currentUser = springSecurityService.currentUser
             if (currentUser) {
                 def notification = [
@@ -398,9 +402,10 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     perms: modelDelegateService.getPermissionsMap(rev.model.submissionId)]
                 sendMessage("seda:model.publish", notification)
             }
-            String extraMsg = rev.state == ModelState.PUBLISHED ?
-                " with the publication identifier ${rev.modelIdentifier()}." : "."
-            redirect(action: "showWithMessage", id: rev.identifier(),
+            boolean havePublicationId = published.model.publicationId != null
+            String extraMsg = havePublicationId ?
+                " with the publication identifier ${published.modelIdentifier()}." : "."
+            redirect(action: "showWithMessage", id: published.identifier(),
                         params: [flashMessage: "Model has been published${extraMsg}"])
         } catch(AccessDeniedException e) {
             log.error(e.message, e)
@@ -411,6 +416,9 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     id: rev.identifier(),
                     params: [flashMessage: "Model has not been published because there is a " +
                             "problem with this version of the model. Sorry!"])
+        } catch(Exception e) {
+            log.error("General exception thrown while publishing ${rev.identifier()} (${published?.identifier()})", e)
+            redirect(action: "showWithMessage", id: rev.identifier(), params: [flashMessage: "An internal error prevented this model from being published"])
         }
     }
 

@@ -39,14 +39,12 @@ package net.biomodels.jummp.plugins.sbml
 
 import com.thoughtworks.xstream.converters.ConversionException
 import grails.util.Environment
+import net.biomodels.jummp.core.ModelException
 import java.util.regex.Pattern
 import javax.xml.stream.XMLInputFactory
 import javax.xml.stream.XMLStreamException
 import javax.xml.stream.XMLStreamReader
-import net.biomodels.jummp.core.IMetadataService
 import net.biomodels.jummp.core.ISbmlService
-import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand
-import net.biomodels.jummp.core.annotation.StatementTransportCommand
 import net.biomodels.jummp.core.model.FileFormatService
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
@@ -86,6 +84,7 @@ import org.sbml.jsbml.Reaction
 import org.sbml.jsbml.Rule
 import org.sbml.jsbml.SBMLDocument
 import org.sbml.jsbml.SBMLError
+import org.sbml.jsbml.SBMLException
 import org.sbml.jsbml.SBMLReader
 import org.sbml.jsbml.SBMLWriter
 import org.sbml.jsbml.SBO
@@ -113,10 +112,6 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
      */
     def miriamService
     /**
-     * Dependency Injection of metadata delegate service.
-     */
-    IMetadataService metadataDelegateService
-    /**
      * Dependency injection of grails application.
      */
     @SuppressWarnings("GrailsStatelessService")
@@ -135,7 +130,8 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
 
     // TODO: move initialization into afterPropertiesSet and make it configuration dependent
     @SuppressWarnings("GrailsStatelessService")
-    SbmlCache<RevisionTransportCommand, SBMLDocument> cache = new SbmlCache(100)
+    /** keys are {@link net.biomodels.jummp.core.model.RevisionTransportCommand#getId()}s*/
+    SbmlCache cache = new SbmlCache(100)
 
     void afterPropertiesSet() {
         if (Environment.current == Environment.PRODUCTION) {
@@ -160,6 +156,46 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
         } else {
             File sbmlFile = new File(mainFileTC.path)
             getFileAsValidatedSBMLDocument(sbmlFile, errors)
+        }
+    }
+
+    boolean addModelIdAsAnnotation(String id, RevisionTransportCommand revision) throws ModelException {
+        if (!revision || id?.isEmpty() || !"SBML".equals(revision.format.identifier)) {
+            throw new IllegalArgumentException("A revision whose main files are encoded in SBML and a model identifier are required")
+        }
+        SBMLDocument document = getFromCache(revision)
+        def rID = revision.identifier()
+        if (null == document) {
+            log.error("Cannot add $id to revision ${rID} as we could not parse its main files")
+            return false
+        }
+
+        Model model = document.model
+        List<CVTerm> bqmIsAnnotations = model.filterCVTerms(CVTerm.Qualifier.BQM_IS)
+        final String idXref = "http://identifiers.org/biomodels/$id".toString()
+        def existing = bqmIsAnnotations.find { t ->
+            t.resources.find { r ->
+                r.equals(idXref)
+            }
+        }
+        if (existing) { // nothing to do
+            return false
+        }
+        boolean xrefAdded = bqmIsAnnotations.first().addResourceURI(idXref)
+        if (!xrefAdded) {
+            log.error("We failed to add $idXref to  revision $rID")
+            return false
+        }
+        File sbmlFile = fetchMainFileFromRevision(revision)
+        SBMLWriter sbmlWriter = new SBMLWriter()
+        try {
+            sbmlWriter.writeSBML(document, sbmlFile)
+            return true
+        } catch (SBMLException | IOException | XMLStreamException e) {
+            def fn = sbmlFile.name
+            def msg = "Failed to add model annotation $id to file $fn of revision $rID due to an issue with JSBML"
+            log.error "$msg: $e"
+            throw new ModelException(revision.model, msg)
         }
     }
 
@@ -227,7 +263,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
         final int DEPTH_LIMIT = 15
         BufferedReader reader = null
         String currentLine
-        final def p = Pattern.compile(".*\\<sbml.*xmlns=\"http://www\\.sbml\\.org/sbml/level.*\".*")
+        final def p = Pattern.compile(".*<sbml.*xmlns=\"http://www\\.sbml\\.org/sbml/level.*\".*")
 
         while (areAllSbml && iFiles < fileCount) {
             try {
@@ -249,9 +285,8 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
                 }
                 areAllSbml &= foundSbmlDeclarationLine
             } catch(IOException ex) {
-                ex.printStackTrace();
-            	def msg = new StringBuffer("Could not check if files ${files.inspect()} are valid SBML.")
-                msg.append(" Encountered ${ex.message} while reading line $currentLine of file ${files[iFiles]}")
+                def msg = new StringBuffer("Could not check if files ${files.inspect()} are valid SBML.")
+                msg.append(" Encountered $ex while reading line $currentLine of file ${files[iFiles]}")
                 log.error(msg.toString())
                 return false
             } finally {
@@ -546,7 +581,7 @@ the user has attempted to update an blank value for the name attribute.""")
     @Profiled(tag="SbmlService.getRule")
     Map getRule(RevisionTransportCommand revision, String variable) {
         Model model = getFromCache(revision).model
-        ExplicitRule rule = model.getRule(variable)
+        ExplicitRule rule = model.getRuleByVariable(variable)
         if (!rule) {
             return [:]
         }
@@ -720,7 +755,7 @@ the user has attempted to update an blank value for the name attribute.""")
      * @return The parsed SBMLDocument
      */
     private SBMLDocument getFromCache(RevisionTransportCommand revision) throws XMLStreamException {
-        SBMLDocument document = cache.get(revision)
+        SBMLDocument document = cache.get(revision.id)
         if (document) {
             return document
         }
@@ -739,7 +774,7 @@ the user has attempted to update an blank value for the name attribute.""")
                 def reader = new SBMLReader()
                 document = reader.readSBML(file)
                 if (document) {
-                  cache.put(revision, document)
+                  cache.put(revision.id, document)
                   //break
                 }
             } catch(Exception ignore) {

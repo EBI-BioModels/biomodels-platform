@@ -147,7 +147,7 @@
                     buttons: {
                         "Confirm Delete": function() {
                             $.jummp.openPage('${g.createLink(controller: 'model', action: 'delete',
-                            id: (revision.model.publicationId) ?: (revision.model.submissionId))}');
+                            id: revision.modelIdentifier())}');
                             $( this ).dialog( "close" );
                         },
                         Cancel: function() {
@@ -656,7 +656,7 @@
                     <button class='toolbutton' id="update"
                             onclick="return $.jummp.openPage('${g.createLink(controller: 'model',
                             action: 'update',
-                            id: (revision.model.publicationId) ?: (revision.model.submissionId))}')">Update</button>
+                            id: revision.modelIdentifier())}')">Update</button>
                     </li>
                 </g:if>
                 <g:if test="${canDelete}">
@@ -702,7 +702,7 @@
                         <button class='toolbutton' id='annotate'
                                 onclick="return $.jummp.openPage('${g.createLink(controller: 'annotation',
                                 action: 'edit',
-                                id: (revision.model.publicationId) ?: (revision.model.submissionId))}')">Annotate</button>
+                                id: revision.modelIdentifier())}')">Annotate</button>
                     </li>
                 </g:if>--}%
                     <g:if test="${canCertify}">
@@ -710,7 +710,7 @@
                             <button class='toolbutton' id="certify"
                                     onclick="return $.jummp.openPage('${g.createLink(controller: 'qcInfo',
                                     action: 'edit',
-                            id: (revision.model.publicationId) ?: (revision.model.submissionId))}')">Certify</button>
+                            id: revision.modelIdentifier())}')">Certify</button>
                         </li>
                     </g:if>
                     <g:if test="${canCheckConsistency}">
@@ -753,7 +753,7 @@
                     You are viewing a version of a model that has been updated.
                     To access the latest version, and a more detailed display please
                     go <a href="${createLink(controller: "model", action: "show", id:
-                        (revision.model.publicationId) ?: (revision.model.submissionId))}">here</a>.
+                        revision.modelIdentifier())}">here</a>.
                 </div>
             </g:if>
             <div id="topBar">
