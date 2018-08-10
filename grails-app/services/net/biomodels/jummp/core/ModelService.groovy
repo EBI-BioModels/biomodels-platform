@@ -2306,7 +2306,9 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         revision.state=ModelState.UNPUBLISHED
         revision.model.firstPublished = null
         revision.model.publicationId = null
-        revision.save(flush:true)
+        if (!revision.save(flush:true)) {
+            log.error("Revision ${revision.id} was not made private: ${revision.errors.allErrors}")
+        }
     }
 
     /**
