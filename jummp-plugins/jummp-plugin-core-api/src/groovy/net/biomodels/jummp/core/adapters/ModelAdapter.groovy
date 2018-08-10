@@ -121,11 +121,6 @@ class ModelAdapter {
         results[0]
     }
 
-    static void printModelIdentifierCacheValue(String id, String method, String msg) {
-        def cached = grailsCacheManager.getCache('modelIdentifier').get(id)
-        println "${System.currentTimeMillis()}\t${Thread.currentThread().name}\t$method\t$msg: $cached"
-    }
-
     static Set<String> populateFindByCriteria() {
         Set<String> result = new LinkedHashSet<>()
         result.addAll(['submissionId', 'publicationId'])
