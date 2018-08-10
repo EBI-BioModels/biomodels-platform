@@ -43,10 +43,7 @@ import java.util.regex.Pattern
 import javax.xml.stream.XMLInputFactory
 import javax.xml.stream.XMLStreamException
 import javax.xml.stream.XMLStreamReader
-import net.biomodels.jummp.core.IMetadataService
 import net.biomodels.jummp.core.ISbmlService
-import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand
-import net.biomodels.jummp.core.annotation.StatementTransportCommand
 import net.biomodels.jummp.core.model.FileFormatService
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
@@ -112,10 +109,6 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
      * Dependency Injection of MiriamService
      */
     def miriamService
-    /**
-     * Dependency Injection of metadata delegate service.
-     */
-    IMetadataService metadataDelegateService
     /**
      * Dependency injection of grails application.
      */
@@ -227,7 +220,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
         final int DEPTH_LIMIT = 15
         BufferedReader reader = null
         String currentLine
-        final def p = Pattern.compile(".*\\<sbml.*xmlns=\"http://www\\.sbml\\.org/sbml/level.*\".*")
+        final def p = Pattern.compile(".*<sbml.*xmlns=\"http://www\\.sbml\\.org/sbml/level.*\".*")
 
         while (areAllSbml && iFiles < fileCount) {
             try {
@@ -249,9 +242,8 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
                 }
                 areAllSbml &= foundSbmlDeclarationLine
             } catch(IOException ex) {
-                ex.printStackTrace();
-            	def msg = new StringBuffer("Could not check if files ${files.inspect()} are valid SBML.")
-                msg.append(" Encountered ${ex.message} while reading line $currentLine of file ${files[iFiles]}")
+                def msg = new StringBuffer("Could not check if files ${files.inspect()} are valid SBML.")
+                msg.append(" Encountered $ex while reading line $currentLine of file ${files[iFiles]}")
                 log.error(msg.toString())
                 return false
             } finally {
