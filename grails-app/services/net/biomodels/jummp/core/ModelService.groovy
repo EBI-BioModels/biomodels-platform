@@ -761,8 +761,8 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         Model model = getModel(PERENNIAL_ID)
         final String formatVersion = modelFileFormatService.getFormatVersion(rev)
         Revision revision = new Revision(model: model, name: rev.name, description: rev.description,
-                    comment: rev.comment, uploadDate: new Date(), owner: currentUser, minorRevision: false,
-                    validated:rev.validated,
+                    comment: rev.comment, uploadDate: new Date(), owner: currentUser,
+                    validated: rev.validated, curationState: rev.curationState, minorRevision: rev.minorRevision,
                     format: ModelFormat.findByIdentifierAndFormatVersion(rev.format.identifier, formatVersion),
                     validationReport: rev.validationReport, validationLevel: rev.validationLevel)
         def stopWatch = new Log4JStopWatch("modelService.addValidatedRevision.rftcCreation")
