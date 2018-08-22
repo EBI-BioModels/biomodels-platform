@@ -171,20 +171,27 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
         }
 
         Model model = document.model
-        List<CVTerm> bqmIsAnnotations = model.filterCVTerms(CVTerm.Qualifier.BQM_IS)
+        CVTerm.Qualifier bqmIs = CVTerm.Qualifier.BQM_IS
+        List<CVTerm> bqmIsAnnotations = model.filterCVTerms(bqmIs)
         final String idXref = "http://identifiers.org/biomodels/$id".toString()
-        def existing = bqmIsAnnotations.find { t ->
-            t.resources.find { r ->
-                r.equals(idXref)
+
+        if (bqmIsAnnotations.isEmpty()) {
+            def cvTerm = new CVTerm(bqmIs, idXref)
+            model.addCVTerm(cvTerm)
+        } else {
+            def existing = bqmIsAnnotations.find { t ->
+                t.resources.find { r ->
+                    r.equals(idXref)
+                }
             }
-        }
-        if (existing) { // nothing to do
-            return false
-        }
-        boolean xrefAdded = bqmIsAnnotations.first().addResourceURI(idXref)
-        if (!xrefAdded) {
-            log.error("We failed to add $idXref to  revision $rID")
-            return false
+            if (existing) { // nothing to do
+                return false
+            }
+            boolean xrefAdded = bqmIsAnnotations.first().addResourceURI(idXref)
+            if (!xrefAdded) {
+                log.error("We failed to add $idXref to  revision $rID")
+                return false
+            }
         }
         File sbmlFile = fetchMainFileFromRevision(revision)
         SBMLWriter sbmlWriter = new SBMLWriter()
