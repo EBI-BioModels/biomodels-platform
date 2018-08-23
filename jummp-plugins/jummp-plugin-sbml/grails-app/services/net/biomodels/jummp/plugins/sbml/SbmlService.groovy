@@ -189,8 +189,8 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
             }
             boolean xrefAdded = bqmIsAnnotations.first().addResourceURI(idXref)
             if (!xrefAdded) {
-                log.error("We failed to add $idXref to  revision $rID")
-                return false
+                String msg = "We failed to add $idXref to  revision $rID"
+                throw new ModelException(revision.model, msg)
             }
         }
         File sbmlFile = fetchMainFileFromRevision(revision)
