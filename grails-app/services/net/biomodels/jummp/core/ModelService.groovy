@@ -2293,8 +2293,13 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         String format = revision.format.identifier
         if ("SBML".equals(format)) {
             RevisionTransportCommand revisionTC = new RevisionAdapter(revision: revision).toCommandObject()
-            def sbmlService = grailsApplication.mainContext.getBean("sbmlService")
-            boolean revisionUpdated = sbmlService.addModelIdAsAnnotation(publicationId, revisionTC)
+            def sbmlService = grailsApplication.mainContext.getBean("sbmlService", ISbmlService.class)
+            // TODO externalise generation of canonical model URIs?
+            String[] idXRefs = [revision.model.submissionId, publicationId].collect { String id ->
+                "http://identifiers.org/biomodels.db/$id".toString()
+            } as String[]
+            boolean revisionUpdated = sbmlService.addModelIdentifiersAsAnnotation(revisionTC,
+                 idXRefs)
 
             if (!revisionUpdated) {
                 return revision // nothing else to do
