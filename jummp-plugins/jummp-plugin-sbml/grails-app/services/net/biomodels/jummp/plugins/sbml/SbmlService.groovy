@@ -159,31 +159,24 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
         }
     }
 
-    boolean addModelIdAsAnnotation(String id, RevisionTransportCommand revision) throws ModelException {
-        if (!revision || id?.isEmpty() || !"SBML".equals(revision.format.identifier)) {
-            throw new IllegalArgumentException("A revision whose main files are encoded in SBML and a model identifier are required")
+    boolean addModelIdentifiersAsAnnotation(RevisionTransportCommand revision, String... identifiers)
+            throws ModelException {
+        boolean validRevision = revision && "SBML".equals(revision.format.identifier)
+        boolean validIdentifiers = null != identifiers && 0 != identifiers.length
+        if (!validIdentifiers || !validRevision) {
+            String msg = """A revision whose main files are encoded in SBML and at least one model \
+identifier are required"""
+            throw new IllegalArgumentException(msg)
         }
         SBMLDocument document = getFromCache(revision)
         def rID = revision.identifier()
         if (null == document) {
-            log.error("Cannot add $id to revision ${rID} as we could not parse its main files")
+            log.error("Cannot add $identifiers to revision $rID as we could not parse its main files")
             return false
         }
 
-        Model model = document.model
-        List<CVTerm> bqmIsAnnotations = model.filterCVTerms(CVTerm.Qualifier.BQM_IS)
-        final String idXref = "http://identifiers.org/biomodels/$id".toString()
-        def existing = bqmIsAnnotations.find { t ->
-            t.resources.find { r ->
-                r.equals(idXref)
-            }
-        }
-        if (existing) { // nothing to do
-            return false
-        }
-        boolean xrefAdded = bqmIsAnnotations.first().addResourceURI(idXref)
-        if (!xrefAdded) {
-            log.error("We failed to add $idXref to  revision $rID")
+        boolean needsUpdating = addModelIdAnnotationsIfNeeded(revision, document, identifiers)
+        if (!needsUpdating) {
             return false
         }
         File sbmlFile = fetchMainFileFromRevision(revision)
@@ -193,12 +186,49 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
             return true
         } catch (SBMLException | IOException | XMLStreamException e) {
             def fn = sbmlFile.name
-            def msg = "Failed to add model annotation $id to file $fn of revision $rID due to an issue with JSBML"
+            def msg = """Failed to add model annotations $identifiers to file $fn of revision $rID \
+due to an issue with JSBML"""
             log.error "$msg: $e"
             throw new ModelException(revision.model, msg)
         }
     }
 
+    private boolean addModelIdAnnotationsIfNeeded(RevisionTransportCommand revision,
+            SBMLDocument document, String... identifiers) throws ModelException {
+        def rID = Objects.requireNonNull(revision).identifier()
+        Model model = Objects.requireNonNull(document).model
+
+        final CVTerm.Qualifier bqmIs = CVTerm.Qualifier.BQM_IS
+        List<CVTerm> bqmIsAnnotations = model.filterCVTerms(bqmIs)
+
+        if (bqmIsAnnotations.isEmpty()) {
+            def cvTerm = new CVTerm(bqmIs, identifiers)
+            if (!model.addCVTerm(cvTerm)) {
+                throw new ModelException(revision.model, "Could not add a CVTerm for $identifiers")
+            }
+            return true
+        }
+        // annotations may be spread over several qualifiers, merge them before performing lookups
+        def currentResources = bqmIsAnnotations.collect { CVTerm t ->
+            t.getResources()
+        }.flatten()
+        def missing = []
+        for (String idURI : identifiers) {
+            if (!currentResources.contains(idURI)) {
+                missing << idURI
+            }
+        }
+
+        if (missing.isEmpty()) { // nothing to do
+            return false
+        }
+        String[] toAdd = missing as String[]
+        if (!bqmIsAnnotations.first().addResources(toAdd)) {
+            String msg = "We failed to add $missing to revision $rID"
+            throw new ModelException(revision.model, msg)
+        }
+        true
+    }
     private SBMLDocument getFileAsValidatedSBMLDocument(final File model, final List<String> errors) {
         // TODO: we should insert the parsed model into the cache
         SBMLDocument doc

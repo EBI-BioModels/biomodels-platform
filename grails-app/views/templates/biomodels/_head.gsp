@@ -30,7 +30,7 @@
   <!-- Describe what this page is about -->
   <meta name="description" content="BioModels is a repository of freely-available mathematical models of biological and biomedical systems. It hosts a vast selection of physiologically and pharmaceutically relevant mechanistic models in standard formats.
 "/>
-  <meta name="keywords" content="BioModels Database, biomodels, systems biology, bioinformatics, computational modelling, systems modelling, model repository, model database, SBML, PharML, COMBINE Archive, OMEX, public domain">
+  <meta name="keywords" content="BioModels Database, biomodels, systems biology, bioinformatics, computational modelling, systems modelling, model repository, model database, SBML, PharmML, COMBINE Archive, OMEX, public domain">
   <meta name="author" content="BioModels"/>
   <meta name="google" content="notranslate" />
   <meta name="ebi:localmasthead-color" content="#254146">
