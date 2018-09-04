@@ -65,6 +65,10 @@
     <session-config>
         <!-- 1 day in minutes -->
         <session-timeout>1440</session-timeout>
+        <!-- https://www.owasp.org/index.php/HttpOnly -->
+         <cookie-config>
+             <http-only>true</http-only>
+        </cookie-config>
     </session-config>
 
     <welcome-file-list>

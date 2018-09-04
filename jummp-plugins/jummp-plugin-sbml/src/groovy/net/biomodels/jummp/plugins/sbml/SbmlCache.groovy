@@ -36,7 +36,6 @@ package net.biomodels.jummp.plugins.sbml
 
 import org.sbml.jsbml.SBMLDocument
 import net.biomodels.jummp.core.model.RevisionTransportCommand
-import java.util.AbstractMap.SimpleEntry
 import java.util.concurrent.locks.ReentrantLock
 
 /**
@@ -45,27 +44,28 @@ import java.util.concurrent.locks.ReentrantLock
  * This class provides a last recently used cache for SBMLDocuments. Internally it uses a
  * LinkedHashMap mapping ids to the SBMLDocument. It is meant to keep the SBML documents
  * belonging to a specific Revision in memory. Because of that the actual class uses
- * RevisionTransportCommands as the key.
+ * RevisionTransportCommand IDs as the key.
  *
  * All access to the internal cache is protected by a reentrant lock, so that the cache can
  * be accessed from multiple threads.
  *
- * @autor Martin Gräßlin <m.graesslin@dkfz.de> 
+ * @autor Martin Gräßlin <m.graesslin@dkfz.de>
+ * @autor Mihai Glonț    <mihai.glont@ebi.ac.uk>
  */
-class SbmlCache<K, V> implements Map<K, V> {
+class SbmlCache implements Map<Long, SBMLDocument> {
 
     /**
      * Internal cache extending LinkedHashMap with the contract of a last recently used cache.
      */
-    private class InternalCache<A, B> extends LinkedHashMap<A, B> {
-        private Integer maxSize
+    private class InternalCache extends LinkedHashMap<Long, SBMLDocument> {
+        private final Integer maxSize
         InternalCache(int maxSize) {
-            super(0, 0.75, true)
+            super(0, 0.75f, true)
             this.maxSize = maxSize
         }
 
         @Override
-        protected boolean removeEldestEntry(Map.Entry<A,B> eldest) {
+        protected boolean removeEldestEntry(Map.Entry<Long, SBMLDocument> eldest) {
             return (size() > maxSize)
         }
     }
@@ -73,7 +73,7 @@ class SbmlCache<K, V> implements Map<K, V> {
     /**
      * The internal cache.
      */
-    private InternalCache<Long, SBMLDocument> cache
+    private InternalCache cache
     /**
      * Lock to protect access to the cache.
      */
@@ -83,8 +83,8 @@ class SbmlCache<K, V> implements Map<K, V> {
      * Constructor for the Cache taking the maximum cache size as argument.
      * @param maxSize
      */
-    public SbmlCache(int maxSize) {
-        this.cache = new InternalCache<Long, SBMLDocument>(maxSize)
+    SbmlCache(int maxSize) {
+        this.cache = new InternalCache(maxSize)
     }
 
     int size() {
@@ -139,50 +139,51 @@ class SbmlCache<K, V> implements Map<K, V> {
         }
     }
 
-    V get(Object key) {
-        if (key instanceof RevisionTransportCommand) {
-            V value = null
+    SBMLDocument get(Object key) {
+        if (key instanceof Long) {
+            SBMLDocument value = null
             lock.lock()
             try {
-                value = (V)cache.get(key.id)
+                value = cache.get(key)
             } finally {
                 lock.unlock()
             }
+            return value
         } else {
             return null
         }
     }
 
-    V put(K key, V value) {
-        V retValue = null
+    SBMLDocument put(Long key, SBMLDocument value) {
+        SBMLDocument retValue = null
         lock.lock()
         try {
-            retValue = (V)cache.put(key.id, value)
+            retValue = cache.put(key, value)
         } finally {
             lock.unlock()
         }
         return retValue
     }
 
-    V remove(Object key) {
-        if (key instanceof RevisionTransportCommand) {
-            V value = null
+    SBMLDocument remove(Object key) {
+        if (key instanceof Long) {
+            SBMLDocument value = null
             lock.lock()
             try {
-                value = (V)cache.remove(key.id)
+                value = cache.remove(key)
             } finally {
                 lock.unlock()
             }
             return value
         } else {
-            return null;
+            return null
         }
     }
 
-    void putAll(Map<? extends K, ? extends V> m) {
-        Map<Long, V> entries = [:]
+    void putAll(Map<? extends Long, ? extends SBMLDocument> m) {
+        Map<Long, SBMLDocument> entries = [:]
         m.each{ k, v ->
-            entries.put(k.id, v)
+            entries.put(k, v)
         }
         lock.lock()
         try {
@@ -201,23 +202,19 @@ class SbmlCache<K, V> implements Map<K, V> {
         }
     }
 
-    Set<K> keySet() {
-        Set<? extends Long> keys = []
+    Set<Long> keySet() {
+        Set<Long> keys = []
         lock.lock()
         try {
             keys = cache.keySet()
         } finally {
             lock.unlock()
         }
-        Set<K> revisions = []
-        keys.each {
-            revisions.add((K)(new RevisionTransportCommand(id: it)))
-        }
-        return revisions
+        return keys
     }
 
-    Collection<V> values() {
-        Collection<V> retVals = []
+    Collection<SBMLDocument> values() {
+        Collection<SBMLDocument> retVals = []
         lock.lock()
         try {
             retVals = cache.values()
@@ -227,13 +224,11 @@ class SbmlCache<K, V> implements Map<K, V> {
         return retVals
     }
 
-    Set<Map.Entry<K, V>> entrySet() {
-        Set<Map.Entry<K, V>> entries = []
+    Set<Map.Entry<Long, SBMLDocument>> entrySet() {
+        Set<Map.Entry<Long, SBMLDocument>> entries = []
         lock.lock()
         try {
-            cache.entrySet().each {
-                entries.add(new SimpleEntry<RevisionTransportCommand, SBMLDocument>(new RevisionTransportCommand(id: it.key), it.value))
-            }
+            entries = cache.entrySet()
         } finally {
             lock.unlock()
         }

@@ -28,16 +28,26 @@ package net.biomodels.jummp.deployment.biomodels
 @groovy.transform.CompileStatic
 class ModelOfTheMonthTransportCommand implements Serializable {
     static final String URL_SEED =
-            "http://www.ebi.ac.uk/biomodels-main/static-pages.do?page=ModelMonth%2F"
-    static final String FALLBACK_URL = "http://www.ebi.ac.uk/biomodels-main/modelmonth"
+            "content/model-of-the-month?year="
+    static final String FALLBACK_URL = "content/model-of-the-month?all=yes"
+    public static final String SEP = '-'
     String authors
     String date
 
     final String getFormattedURL() {
-        return date ? "$URL_SEED$date" : FALLBACK_URL
+        if (date?.isEmpty() || !date.contains(SEP)) return FALLBACK_URL
+        String[] yearAndMonth = date.split(SEP)
+        if (yearAndMonth.length > 2) {
+            return FALLBACK_URL
+        }
+
+        String year = yearAndMonth[0]
+        String month = yearAndMonth[1]
+
+        return "$URL_SEED$year&month=$month"
     }
 
     String toString() {
-        "$date"
+        date
     }
 }

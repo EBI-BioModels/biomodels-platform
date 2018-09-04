@@ -147,7 +147,7 @@
                     buttons: {
                         "Confirm Delete": function() {
                             $.jummp.openPage('${g.createLink(controller: 'model', action: 'delete',
-                            id: (revision.model.publicationId) ?: (revision.model.submissionId))}');
+                            id: revision.modelIdentifier())}');
                             $( this ).dialog( "close" );
                         },
                         Cancel: function() {
@@ -495,19 +495,12 @@
                 }
             });
 
-            var top = 225;  // the default value is set for Firefox.
-                            // This value is to be exact height of the header section plus 2px.
-
-            var browser = get_browser(); // find it in jquery.cookiebar.js
-            if (browser.name === 'Chrome'){
-                top = 225;
-            }
-
-            $("body").append("<div id='modelToolbar' style='top: " + top + "px' class='collapsibleContainer' title='Model Toolbar'>" +
+            $("body").append("<div id='modelToolbar' class='collapsibleContainer' title='Model Toolbar'>" +
                 "<button title='Expand Toolbar' data-showing='0' id='panelToggle'>Expand</button></div>	");
             $("#buttonContainer").prependTo("#modelToolbar");
-            $("#panelToggle").click(function (evt){
-                    displayToolbar($("#panelToggle").data("showing") == '0', true);
+            var panelToggle = $("#panelToggle");
+            panelToggle.click(function (evt){
+                displayToolbar(panelToggle.data("showing") === '0', true);
             });
             $( "#download" ).button({
                     text:false,
@@ -570,7 +563,7 @@
                 }
             }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
 
-            $("#panelToggle").button({
+            panelToggle.button({
                     text:false,
                     icons: {
                         primary: "ui-icon-circle-arrow-e"
@@ -606,7 +599,6 @@
                 });
             });
         });
-        displayToolbar(false, false);
 
         function displayToolbar(show, firstTime) {
             var mainContentAreaWidth = $('#main-content-area').width();
@@ -641,6 +633,10 @@
                     $( ".toolbutton" ).css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
             }
         }
+
+        $(function () {
+            displayToolbar(true, true);
+        });
     </script>
     <g:layoutHead/>
     </head>
@@ -656,7 +652,7 @@
                     <button class='toolbutton' id="update"
                             onclick="return $.jummp.openPage('${g.createLink(controller: 'model',
                             action: 'update',
-                            id: (revision.model.publicationId) ?: (revision.model.submissionId))}')">Update</button>
+                            id: revision.modelIdentifier())}')">Update</button>
                     </li>
                 </g:if>
                 <g:if test="${canDelete}">
@@ -702,7 +698,7 @@
                         <button class='toolbutton' id='annotate'
                                 onclick="return $.jummp.openPage('${g.createLink(controller: 'annotation',
                                 action: 'edit',
-                                id: (revision.model.publicationId) ?: (revision.model.submissionId))}')">Annotate</button>
+                                id: revision.modelIdentifier())}')">Annotate</button>
                     </li>
                 </g:if>--}%
                     <g:if test="${canCertify}">
@@ -710,7 +706,7 @@
                             <button class='toolbutton' id="certify"
                                     onclick="return $.jummp.openPage('${g.createLink(controller: 'qcInfo',
                                     action: 'edit',
-                            id: (revision.model.publicationId) ?: (revision.model.submissionId))}')">Certify</button>
+                            id: revision.modelIdentifier())}')">Certify</button>
                         </li>
                     </g:if>
                     <g:if test="${canCheckConsistency}">
@@ -753,7 +749,7 @@
                     You are viewing a version of a model that has been updated.
                     To access the latest version, and a more detailed display please
                     go <a href="${createLink(controller: "model", action: "show", id:
-                        (revision.model.publicationId) ?: (revision.model.submissionId))}">here</a>.
+                        revision.modelIdentifier())}">here</a>.
                 </div>
             </g:if>
             <div id="topBar">

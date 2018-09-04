@@ -19,10 +19,6 @@ class QcInfoService {
      * Dependency Injection of certificationAuthorisationService
      */
     def certificationAuthorisationService
-    /**
-     * Dependency Injection of SearchService
-     */
-    def searchService
 
     def grailsApplication = Holders.grailsApplication.mainContext.getBean('grailsApplication')
 
