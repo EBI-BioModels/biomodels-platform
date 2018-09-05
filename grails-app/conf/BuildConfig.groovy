@@ -22,7 +22,7 @@
 
 
 
-grails.servlet.version = "2.5"
+grails.servlet.version = "3.0" // needed to allow httpOnly cookies
 grails.reload.enable = true
 grails.project.class.dir = "target/classes"
 grails.project.test.class.dir = "target/test-classes"
@@ -165,11 +165,11 @@ grails.project.dependency.resolution = {
 
     plugins {
         build ":tomcat:7.0.55.3"
+        build ":codenarc:1.2"
 
         // plugins for the compile step
         compile ":cache:1.1.8"
         compile ":cache-ehcache:1.0.5"
-        compile ":codenarc:0.25.2"
         compile ":webxml:1.4.1"
         compile ":perf4j:0.2.1"
         compile ":routing:1.3.2" //1.4.0
@@ -193,8 +193,6 @@ grails.project.dependency.resolution = {
         runtime ":jquery-datatables:1.7.5"
         runtime ":jquery-ui:1.10.4"
         runtime ":console:1.5.8"
-
-        test ":gmetrics:0.3.1"
     }
 }
 
