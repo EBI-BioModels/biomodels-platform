@@ -31,7 +31,6 @@
 
 import grails.persistence.Entity
 import grails.util.Environment
-import grails.util.Holders
 import net.biomodels.jummp.core.WebflowAclBeanDefinitionProcessor
 import net.biomodels.jummp.core.model.identifier.generator.AbstractModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGeneratorRegistryService
@@ -45,7 +44,6 @@ import org.springframework.core.type.filter.AnnotationTypeFilter
 // Place your Spring DSL code here
 beans = {
     xmlns aop: "http://www.springframework.org/schema/aop"
-    def grailsApp = Holders.grailsApplication
 
     aop.config {
         // intercept all methods annotated with PostLogging annotation
@@ -68,12 +66,13 @@ beans = {
         bean.singleton = true
     }
 
-    if (Environment.getCurrent() == Environment.DEVELOPMENT) {
+    if (Environment.isDevelopmentMode()) {
         timingAspect(org.perf4j.log4j.aop.TimingAspect)
     }
 
-    println("INFO\tUsing $grailsApp.config.jummp.search.strategy as current model search strategy")
-    if (grailsApp.config.jummp.search.strategy == "solr") {
+    def searchStrategy = application.config.jummp.search.strategy
+    println("INFO\tUsing $searchStrategy as current model search strategy")
+    if (searchStrategy == "solr") {
         solrServerHolder(net.biomodels.jummp.search.SolrServerHolder) { bean ->
             bean.scope = "singleton"
             bean.autowire = "byName"
@@ -133,7 +132,7 @@ beans = {
             "$name"(clazz)
         }
     }
-    grailsApp.config.jummp.id.clear()
+    application.config.jummp.id.clear()
 
     //Add annotation store domain classes (defined externally) to the domain model
     //following: https://github.com/pongasoft/external-domain-classes-grails-plugin/blob/master/ExternalDomainClassesGrailsPlugin.groovy#L84
@@ -145,7 +144,7 @@ beans = {
     simpleRegistry?.beanDefinitionNames?.each { String beanName ->
         BeanDefinition bean = simpleRegistry.getBeanDefinition(beanName)
         String beanClassName = bean.beanClassName
-        grailsApp.addArtefact(DomainClassArtefactHandler.TYPE,
+        application.addArtefact(DomainClassArtefactHandler.TYPE,
                 Class.forName(beanClassName, true, Thread.currentThread().contextClassLoader))
     }
 
