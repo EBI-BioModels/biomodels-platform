@@ -30,10 +30,15 @@
 
 package net.biomodels.jummp.deployment.biomodels
 
+import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
+import groovy.json.JsonSlurper
+
+import java.text.SimpleDateFormat
 
 @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
 class ModelOfTheMonthController {
+    def modelDelegateService
     def modelOfTheMonthService
 
     def index() {
@@ -49,8 +54,105 @@ class ModelOfTheMonthController {
         render updateReport
     }
 
+    def create() {
+        respond new ModelOfTheMonth(params)
+    }
+
     List list() {
         List<ModelOfTheMonth> entries = modelOfTheMonthService.list()
         entries
+    }
+
+    def show() {
+        ModelOfTheMonthTransportCommand command
+        if (params?.id) {
+            int id = params.int("id")
+            command = modelOfTheMonthService.get(id)
+            command.id = id
+        } else {
+            Date currentDate = new Date()
+            String date = currentDate.format(ModelOfTheMonth.DATE_FORMAT_PATTERN)
+            command = new ModelOfTheMonthTransportCommand(date: date)
+            command.publicationDate = currentDate
+            command.lastUpdated = currentDate
+        }
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+        render(view: "show", model: [entry: command, dateFormat: dateFormat])
+    }
+
+    def save() {
+        // retrieve data from the parameters
+        def momEntryTC = params.momEntryTC
+        def id = params.long("id")
+        // sanitise the data feed by the end users
+        // then convert them into the transport command object
+        ModelOfTheMonthTransportCommand command = parseMoMEntryTC(momEntryTC, id)
+        // get the latest timestamp
+        command.lastUpdated = new Date()
+        command.updated = command?.id ? true : false
+        Map response = [:]
+        if (command?.validate()) {
+            ModelOfTheMonth updated = modelOfTheMonthService.doCreateOrUpdate(command)
+            if (updated) {
+                response['message'] = "The record has been updated successfully"
+                response['id'] = updated.id
+            } else {
+                response['message'] = "There is an error while trying to persist the entry into the database"
+            }
+        } else {
+            String defaultMessage = command.errors.getFieldError("title")?.defaultMessage
+            if (defaultMessage?.contains("cannot be blank")) {
+                response['message'] = "The title cannot be blank"
+            } else {
+                response['message'] = command.errors.allErrors.inspect()
+            }
+        }
+
+        render(response as JSON)
+    }
+
+    ModelOfTheMonthTransportCommand parseMoMEntryTC(def momEntryTC, def id) {
+        momEntryTC = new JsonSlurper().parseText(momEntryTC)
+        String authors = momEntryTC["authors"].encodeAsHTML()
+        String title = momEntryTC["title"].encodeAsHTML()
+        String shortDescription = momEntryTC["shortDescription"].encodeAsHTML()
+        def newPublicationDate = momEntryTC["publicationDate"]
+        def newLastUpdated = momEntryTC["lastUpdated"]
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+        Date publicationDate = dateFormat.parse(newPublicationDate)
+        Date lastUpdated = dateFormat.parse(newLastUpdated)
+        String date = publicationDate?.format(ModelOfTheMonth.DATE_FORMAT_PATTERN)
+        String mimeType = momEntryTC["mimeType"]
+        boolean updated = momEntryTC["updated"]
+        def models = momEntryTC["models"]
+        List<String> modelIds = models.split(", ")
+        Map<Long, String> associatedModels = modelDelegateService.findModelsBySubmissionOrPublicationId(modelIds)
+        def bindingMap = [id: id,
+                          authors: authors,
+                          title: title,
+                          models: associatedModels,
+                          shortDescription: shortDescription,
+                          publicationDate: publicationDate,
+                          lastUpdated: lastUpdated,
+                          date: date,
+                          mimeType: mimeType,
+                          updated: updated]
+        ModelOfTheMonthTransportCommand command = new ModelOfTheMonthTransportCommand(bindingMap)
+        if (params?.id) {
+            command.id = params.long("id")
+        }
+        if (momEntryTC["previewImage"]) {
+            command.previewImage = Base64.decoder.decode(momEntryTC["previewImage"])
+            command.mimeType = momEntryTC["mimeType"]
+        }
+        command
+    }
+
+    @Secured(["IS_AUTHENTICATED_FULLY"])
+    def fetchModels() {
+        def searchTerm = params.term
+        println searchTerm
+        def results = modelDelegateService.fetchModels()
+        println results
     }
 }

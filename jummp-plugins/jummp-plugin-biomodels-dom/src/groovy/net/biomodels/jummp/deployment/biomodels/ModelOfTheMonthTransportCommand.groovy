@@ -24,20 +24,37 @@ package net.biomodels.jummp.deployment.biomodels
  * @short Data transfer object (DTO) for ModelOfTheMonth domain class.
  *
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-@groovy.transform.CompileStatic
+@grails.validation.Validateable
 class ModelOfTheMonthTransportCommand implements Serializable {
     static final String URL_SEED =
             "content/model-of-the-month?year="
     static final String FALLBACK_URL = "content/model-of-the-month?all=yes"
     public static final String SEP = '-'
+
+    Long id
+    String title
     String authors
+    Date publicationDate
+    Date lastUpdated
     String date
+    String shortDescription
+    byte[] previewImage
+    String mimeType
+    boolean updated
+    Map<Long, String> models
+
+    static constraints = {
+        importFrom(ModelOfTheMonth)
+        id nullable: true
+        mimeType nullable: true
+    }
 
     final String getFormattedURL() {
-        if (date?.isEmpty() || !date.contains(SEP)) return FALLBACK_URL
-        String[] yearAndMonth = date.split(SEP)
-        if (yearAndMonth.length > 2) {
+        if (date?.isEmpty() || !date?.contains(SEP)) return FALLBACK_URL
+        String[] yearAndMonth = date?.split(SEP)
+        if (yearAndMonth?.length > 2) {
             return FALLBACK_URL
         }
 
@@ -47,7 +64,7 @@ class ModelOfTheMonthTransportCommand implements Serializable {
         return "$URL_SEED$year&month=$month"
     }
 
-    String toString() {
-        date
+    String getMonth() {
+        publicationDate?.format(ModelOfTheMonth.DATE_FORMAT_PATTERN)
     }
 }

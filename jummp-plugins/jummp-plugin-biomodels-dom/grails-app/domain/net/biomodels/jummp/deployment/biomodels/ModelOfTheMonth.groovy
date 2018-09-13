@@ -33,7 +33,7 @@ import net.biomodels.jummp.model.Model
 @Entity
 class ModelOfTheMonth implements Serializable {
     static hasMany = [models: Model]
-    final String DATE_FORMAT_PATTERN = 'yyyy-MM'
+    static final String DATE_FORMAT_PATTERN = 'yyyy-MM'
 
     String title
     String authors
@@ -43,12 +43,22 @@ class ModelOfTheMonth implements Serializable {
     byte[] previewImage
 
     static constraints = {
+        title nullable: false, blank: false
+        authors nullable: false, blank: false
         shortDescription nullable: true, blank: true, maxSize: 1024
         previewImage nullable: true, blank: true
     }
 
     ModelOfTheMonthTransportCommand toCommandObject() {
         String date = publicationDate?.format(DATE_FORMAT_PATTERN)
-        new ModelOfTheMonthTransportCommand(authors: authors, date: date)
+        Map modelsMap = [:]
+        models.each {
+            String perennialId = it.publicationId ?: it.submissionId
+            modelsMap[it.id] = perennialId
+        }
+        new ModelOfTheMonthTransportCommand(authors: authors,
+            date: date, title: title, publicationDate: publicationDate,
+            lastUpdated: lastUpdated, shortDescription: shortDescription,
+            previewImage: previewImage, models: modelsMap)
     }
 }

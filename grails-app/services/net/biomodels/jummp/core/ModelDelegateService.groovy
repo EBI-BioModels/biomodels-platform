@@ -453,4 +453,15 @@ class ModelDelegateService implements IModelService {
         final boolean MANY_IDENTIFIERS = HAVE_PERENNIAL_PUBLICATION_ID || ID_TYPES.size() >= 2
         return MANY_IDENTIFIERS
     }
+
+    Map<Long, String> findModelsBySubmissionOrPublicationId(List<String> identifiers) {
+        Map results = [:]
+        identifiers.each {
+            Model model = ModelAdapter.findByPerennialIdentifier(it)
+            if (model) {
+                results[model.id] = it
+            }
+        }
+        results
+    }
 }
