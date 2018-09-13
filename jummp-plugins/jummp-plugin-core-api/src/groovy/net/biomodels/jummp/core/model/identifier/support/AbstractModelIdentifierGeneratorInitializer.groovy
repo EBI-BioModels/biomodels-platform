@@ -1,6 +1,8 @@
 package net.biomodels.jummp.core.model.identifier.support
 
 import groovy.sql.Sql
+import org.codehaus.groovy.grails.exceptions.DefaultStackTraceFilterer
+
 import javax.sql.DataSource
 import java.sql.SQLException
 
@@ -11,8 +13,11 @@ abstract class AbstractModelIdentifierGeneratorInitializer implements ModelIdent
 
     protected AbstractModelIdentifierGeneratorInitializer() {}
 
-    AbstractModelIdentifierGeneratorInitializer(DataSource dataSource) {
-        this.dataSource = dataSource
+    AbstractModelIdentifierGeneratorInitializer(DataSource dataSource, String queryToRun,
+            String columnToSelect) {
+        this.dataSource     = dataSource
+        this.queryToRun     = queryToRun
+        this.columnToSelect = columnToSelect
     }
 
     def executeQuery() throws SQLException {
@@ -26,6 +31,9 @@ please initialise the dataSource bean prior to invoking this method""")
         try {
             def row = sql.firstRow(queryToRun)
             result = row?."$columnToSelect"
+        } catch (SQLException e) {
+            def filtered = new DefaultStackTraceFilterer().filter(e)
+            throw filtered
         } finally {
             sql.close()
         }

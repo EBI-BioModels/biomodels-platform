@@ -1,49 +1,35 @@
 package net.biomodels.jummp.core.model.identifier.support
 
-import groovy.sql.Sql
-import org.codehaus.groovy.grails.exceptions.DefaultStackTraceFilterer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import javax.sql.DataSource
 import java.sql.SQLException
 
-class SubmissionIdGeneratorInitializer implements ModelIdentifierGeneratorInitializer {
+class SubmissionIdGeneratorInitializer extends AbstractModelIdentifierGeneratorInitializer {
+    private static final String query = """select submission_id from model where id = (
+        select model_id 
+        from revision
+        where upload_date = (select max(upload_date) from revision where revision_number = 1)
+        limit 1
+    )"""
+    private static final String column = "submission_id"
     final Logger log = LoggerFactory.getLogger(getClass())
 
-    DataSource dataSource
+    SubmissionIdGeneratorInitializer(DataSource dataSource) {
+        super(dataSource, query, column)
+    }
 
     @Override
     String getLastUsedValue() {
-        if (!dataSource) {
-            throw new IllegalStateException("""Called outside of an application context, \
-please initialise the dataSource bean prior to invoking this method""")
-        }
-        Sql sql = new Sql(dataSource)
-        String result = null
+        String result
         try {
-            def row = sql.firstRow("""\
-select submission_id as id from model
-where id = (
-    select model_id from revision
-    where upload_date = (
-        select max(upload_date) from revision where revision_number = 1
-    )
-    LIMIT 1
-)
-""")
-            result = row?.id
-            // TODO ADD THE FOLLOWING DB INDICES
-            /*ALTER TABLE revision add index `revisionNumber` (`revision_number`);
-            ALTER TABLE revision add index `uploadDate` (`upload_date`);*/
+            result = executeQuery()
         } catch (SQLException e) {
-            def filtered = new DefaultStackTraceFilterer().filter(e)
-            throw new IllegalStateException('Unable to extract the latest submission id', filtered)
-        } finally {
-            sql.close()
+            throw new IllegalStateException('Unable to extract the latest submission id', e)
         }
 
-        log.debug("${toString()} Most recent submission id is $result")
+        log.debug("Most recent submission id is $result")
         result
     }
 }
