@@ -20,27 +20,31 @@
 
 package net.biomodels.jummp.core.model.identifier.decorator
 
+import net.biomodels.jummp.core.events.ModelIdentifierDecoratorUpdatedEvent
 import net.biomodels.jummp.core.model.identifier.ModelIdentifier
-import org.springframework.context.ApplicationEventPublisher
+import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGenerator
 
 /**
- * @short Interface for influencing the generation of model identifiers.
+ * Interface for influencing the generation of model identifiers.
  *
- * Implementations of this interface are expected to provide means of decorating model
- * identifiers according to user-defined configuration settings.
+ * <p>Implementations of this interface are expected to provide means of decorating model
+ * identifiers according to user-defined configuration settings.</p>
  *
- * Concrete implementations of this interface must also update on-demand the suffixes they use
+ * <p>Concrete implementations of this interface must also update on-demand the suffixes they use
  * to decorate a model identifier. Requests to do so will come from services which observe
  * relevant events in the application such as bootstrap, the start of the model submission
- * process, or its end.
+ * process, or its end.</p>
  *
- * Decorators can use {@link org.springframework.context.ApplicationEventPublisher}'s
- * publishEvent() method to issue events to denote changes to the decorator's suffix. Interested
- * parties, such as ModelIdentifierGenerator implementations, can respond to these events through
- * a callback defined by {@link org.springframework.context.event.ApplicationEventListener}.
+ * <p>Decorators can use
+ * {@link ModelIdentifierDecorator#informOfChange(net.biomodels.jummp.core.events.ModelIdentifierDecoratorUpdatedEvent)}
+ * to notify their corresponding generator of changes to the decorator's suffix. Interested
+ * ModelIdentifierGenerator implementations, can respond to these events through
+ * the {@link ModelIdentifierGenerator#respondTo(net.biomodels.jummp.core.events.ModelIdentifierDecoratorUpdatedEvent)}.
+ * callback.</p>
+ *
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
-interface ModelIdentifierDecorator extends ApplicationEventPublisher {
+interface ModelIdentifierDecorator {
     /**
      * Modify model identifier @p modelIdentifier.
      */
@@ -56,4 +60,16 @@ interface ModelIdentifierDecorator extends ApplicationEventPublisher {
      * the next time its decorate() method is called.
      */
     void refresh()
+    /**
+     * Sets the generator to which this decorator instance belongs.
+     *
+     * @param generator
+     */
+    void setGenerator(ModelIdentifierGenerator generator)
+    /**
+     * Informs the generator of a change to this model id decorator's value.
+     *
+     * @param event A description of the changes to this model id decorator's value.
+     */
+    void informOfChange(ModelIdentifierDecoratorUpdatedEvent event)
 }

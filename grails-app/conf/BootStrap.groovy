@@ -204,7 +204,6 @@ class BootStrap {
                 springSecurityService.principal
 	        }
         ]
-        AbstractAppendingDecorator.context = ctx
         RevisionTransportCommand.context = ctx
     }
 

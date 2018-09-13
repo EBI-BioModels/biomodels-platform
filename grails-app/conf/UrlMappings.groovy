@@ -55,9 +55,8 @@ class UrlMappings {
             constraints {
                 id(nullable: false, validator: { modelId ->
                     Set<String> modelIdRegexes = ModelIdentifierUtils.MODEL_ID_REGEXES
-                    if (!modelIdRegexes) {
-                        ModelIdentifierUtils.processGeneratorSettings(Holders.config.jummp)
-                    }
+                    if (modelIdRegexes.isEmpty()) throw new IllegalStateException()
+
                     String pattern = modelIdRegexes.join('|')
                     modelId.matches pattern
                 })

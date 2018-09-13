@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2018 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -32,14 +32,22 @@
 import grails.persistence.Entity
 import grails.util.Environment
 import net.biomodels.jummp.core.WebflowAclBeanDefinitionProcessor
-import net.biomodels.jummp.core.model.identifier.generator.AbstractModelIdentifierGenerator
+import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorFactoryBean
+import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGeneratorRegistryService
+import net.biomodels.jummp.core.model.identifier.support.NullModelIdentifierGeneratorInitializer
+import net.biomodels.jummp.core.model.identifier.support.PublicationIdGeneratorInitializer
+import net.biomodels.jummp.core.model.identifier.support.SubmissionIdGeneratorInitializer
 import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
+import org.codehaus.groovy.grails.commons.spring.GrailsApplicationContext
 import org.springframework.beans.factory.config.BeanDefinition
 import org.springframework.beans.factory.support.BeanDefinitionRegistry
 import org.springframework.beans.factory.support.SimpleBeanDefinitionRegistry
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner
 import org.springframework.core.type.filter.AnnotationTypeFilter
+
+import java.util.regex.Pattern
+import java.util.regex.PatternSyntaxException
 
 // Place your Spring DSL code here
 beans = {
@@ -119,11 +127,97 @@ beans = {
 
     //myBeanPostProcessor(net.biomodels.jummp.core.NosyBeanPostProcessor)
 
-    Map R = grailsApp.config.jummp.id.generators
-    identifierGeneratorRegistry(ModelIdentifierGeneratorRegistryService) {
-        registry = R
+    //Map R = ModelIdentifierUtils.processGeneratorSettings(Holders.config.jummp)
+
+    // This section defines model identifier related beans.
+    // Relevant docs:
+    //      https://grails.github.io/grails2-doc/2.5.5/guide/spring.html
+    //      https://grails.github.io/grails2-doc/2.5.5/api/grails/spring/BeanBuilder.html
+
+    // generator beans need a corresponding initializer
+    // using request scope helps us ensure that we always fetch the latest value from the db
+    submissionIdGeneratorInitializer(SubmissionIdGeneratorInitializer) { bean ->
+        dataSource = ref('dataSource')
+        bean.scope = 'prototype'
+    }
+    publicationIdGeneratorInitializer(PublicationIdGeneratorInitializer) { bean ->
+        dataSource = ref('dataSource')
+        bean.scope = 'prototype'
+    }
+    /*
+     * Use this for id generators that don't need to know about the values they generated before
+     * by convention, idGenerator foo's initializer is called fooIdGeneratorInitializer.
+     *
+     * To only define the initializer and let JUMMP create the bean definition for a generator
+     * put
+     *      springConfig.addAlias('fooIdGeneratorInitializer', 'nullModelIdGeneratorInitializer')
+     * or
+     *      fooIdGeneratorInitializer(NullModelIdentifierGeneratorInitializer) {
+     *          it.scope = 'prototype'
+     *      }
+     * in a plugin's doWithSpring() or any other place where a BeanBuilder is used.
+     */
+    nullModelIdGeneratorInitializer(NullModelIdentifierGeneratorInitializer) { bean ->
+        bean.scope = 'prototype' // for consistency, use the same scope for all initializers
     }
 
+    // turn identifier generator settings into corresponding bean definitions
+    ConfigObject idGeneratorSettings = application.config.jummp.model.id
+    if (idGeneratorSettings?.isEmpty() || !idGeneratorSettings?.isSet('submission'))
+        throw new IllegalStateException('Submission identifier settings not found in the config file')
+
+    def regexSetting = idGeneratorSettings.get('regex')
+    boolean regexPresent = regexSetting instanceof String && !regexSetting.trim().isEmpty()
+    if (regexPresent) {
+        try {
+            Pattern.compile(regexSetting as String)
+            ModelIdentifierUtils.MODEL_ID_REGEXES.add(regexSetting)
+        } catch (PatternSyntaxException ignore) {
+            throw new IllegalArgumentException("'$regexSetting' is not a valid Java regex pattern.")
+        }
+    }
+
+    // this is the only mandatory identifier generator, all others are optional
+    submissionIdGenerator(ModelIdentifierGeneratorFactoryBean) { bean ->
+        bean.scope  = 'prototype'
+        idSettings  = idGeneratorSettings.get('submission')
+        initializerBeanName = "submissionIdGeneratorInitializer"
+        shouldComputeRegex  = !regexPresent
+    }
+
+    Map<String, ConfigObject> optionalGeneratorBeanDefs = [:]
+    idGeneratorSettings.each { String name, ConfigObject cfg ->
+        String beanName = name + ModelIdentifierUtils.GENERATOR_BEAN_SUFFIX
+        if (name != 'submission')
+            optionalGeneratorBeanDefs.put(beanName, cfg)
+    }
+    // the publicationIdGenerator bean must exist, but will be NullModelIdentifierGenerator if
+    // jummp.model.id.publication.* settings are not defined
+    optionalGeneratorBeanDefs.putIfAbsent('publicationIdGenerator', null)
+
+    def parentContext = ((GrailsApplicationContext) getParentCtx())
+    optionalGeneratorBeanDefs.each { String name, ConfigObject c ->
+        // don't touch bean definitions from BeanDefinitionRegistryPostProcessors, doWithSpring etc
+        if (null == parentContext || !parentContext.containsBeanDefinition(name)) {
+            String initializerBean = "${name}Initializer"
+            "$name"(ModelIdentifierGeneratorFactoryBean) { bean ->
+                bean.scope = 'prototype'
+                idSettings = c
+                // the initializer bean should exist, even if it's a NullModelIdGeneratorInitializer
+                initializerBeanName = initializerBean
+                shouldComputeRegex  = !regexPresent
+            }
+        }
+    }
+    // TODO put into migRS
+    ModelIdentifierUtils.perennialFields = idGeneratorSettings.keySet()
+
+//
+//    identifierGeneratorRegistry(ModelIdentifierGeneratorRegistryService) {
+//        registry = R
+//    }
+
+/*
     R.each { name, generator ->
         def clazz = generator.getClass()
         if (generator instanceof AbstractModelIdentifierGenerator) {
@@ -132,7 +226,9 @@ beans = {
             "$name"(clazz)
         }
     }
+*/
     application.config.jummp.id.clear()
+    // end of id generator beans
 
     //Add annotation store domain classes (defined externally) to the domain model
     //following: https://github.com/pongasoft/external-domain-classes-grails-plugin/blob/master/ExternalDomainClassesGrailsPlugin.groovy#L84
