@@ -134,7 +134,7 @@ final class ModelIdentifierPartitionRegexFactory {
                 result = Pattern.quote(contents)
                 break
             case DateFormatRegionType.y: // 2 digits if range is y, yy or yyy
-                regexLength = regionLength > 3 ?: 2
+                regexLength = regionLength > 3 ? regionLength : 2
                 result = getRegexForNumericRegion(regexLength)
                 break
             case DateFormatRegionType.F:
