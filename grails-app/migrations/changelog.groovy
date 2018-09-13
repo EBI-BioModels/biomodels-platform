@@ -1265,5 +1265,7 @@ databaseChangeLog = {
     include file: '20180515_modelDeleted_personName_idx.groovy'
 
     include file: '20180517_create_model_class.groovy'
+
+    include file: '20180913_indexRevisionDateAndNumber.groovy'
 }
 
