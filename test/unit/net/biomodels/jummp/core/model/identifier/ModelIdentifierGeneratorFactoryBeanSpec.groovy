@@ -29,9 +29,6 @@ import net.biomodels.jummp.core.model.identifier.support.NullModelIdentifierGene
 import org.apache.tomcat.jdbc.pool.DataSource
 import spock.lang.Specification
 
-/**
- * See the API for {@link grails.test.mixin.support.GrailsUnitTestMixin} for usage instructions
- */
 @TestMixin(GrailsUnitTestMixin)
 class ModelIdentifierGeneratorFactoryBeanSpec extends Specification {
 
