@@ -200,3 +200,61 @@ function escapeSpecialLuceneCharacters(facet_value) {
     facet_value = facet_value.replace(/\//g, '\\/');
     return facet_value;
 }
+
+function getTimeStamp() {
+    var d = new Date(); // for now
+    var hour = d.getHours() < 10 ? "0" + d.getHours().toString() : d.getHours();
+    var minute = d.getMinutes() < 10 ? "0" + d.getMinutes().toString() : d.getMinutes();
+    var second = d.getSeconds() < 10 ? "0" + d.getSeconds().toString() : d.getSeconds();
+    return "T" + hour + ":" + minute + ":"+ second;
+}
+
+/**
+ * The following functions are used for manipulating data of an array.
+ * These functions do basic operations such get, set, remove or retrieve all values, etc.
+ * These operations are being used in handling data entered by the end users at working on
+ * Curation Notes and Model Of The Month pages.
+ */
+function get(array, k) {
+    return array[k];
+}
+
+function set(array, k, v) {
+    array[k] = v;
+}
+
+function remove(array, k) {
+    delete array[k];
+}
+
+function values(array) {
+    var values = [];
+    for (var k in array) {
+        values.push(array[k]);
+    }
+    return values;
+}
+
+/**
+ * This function helps display the image that has been uploaded into an image holder. It is being used
+ * for Curation Notes and Model of The Month editor form
+ * @param input         Input file
+ * @param imageHolder   An identifier of the email holder
+ * @returns {*}         Binary stream denoting the uploaded image
+ */
+function previewImage(input, imageHolder) {
+    // reused sample codes from https://stackoverflow.com/a/4459419/865603
+    var imgData;
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        var image = input.files[0];
+        reader.onload = function (event) {
+            var imgSrc = event.target.result;
+            imgData = event.target.result.replace("data:"+ image.type +";base64,", '');
+            $(imageHolder).attr('src', imgSrc);
+            $(imageHolder).attr('title', 'This image has been uploaded or replaced');
+        };
+        reader.readAsDataURL(image);
+    }
+    return imgData;
+}
