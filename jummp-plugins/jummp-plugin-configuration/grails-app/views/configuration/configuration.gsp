@@ -53,9 +53,6 @@
                 <div class="buttons">
                     <button type="reset" id="cancelButton" class="button">Cancel</button>
                     <button type="submit" id="submitButton" class="button">Save</button>
-                    <g:if test="${controllerName == 'classifierConfigure' && actionName == 'classifier'}">
-                        <button type="button" id="createButton" class="button">New train</button>
-                    </g:if>
                 </div>
             </g:form>
         </div>
