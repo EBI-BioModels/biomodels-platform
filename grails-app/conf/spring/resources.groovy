@@ -186,9 +186,9 @@ beans = {
     }
 
     Map<String, ConfigObject> optionalGeneratorBeanDefs = [:]
-    idGeneratorSettings.each { String name, ConfigObject cfg ->
+    idGeneratorSettings.each { String name, def /*ConfigObject or String*/ cfg ->
         String beanName = name + ModelIdentifierUtils.GENERATOR_BEAN_SUFFIX
-        if (name != 'submission')
+        if (name != 'submission' && name != 'regex')
             optionalGeneratorBeanDefs.put(beanName, cfg)
     }
     // the publicationIdGenerator bean must exist, but will be NullModelIdentifierGenerator if
