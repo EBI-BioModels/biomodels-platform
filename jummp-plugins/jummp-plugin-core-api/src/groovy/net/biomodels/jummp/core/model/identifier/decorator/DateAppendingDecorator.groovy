@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2018 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -20,16 +20,18 @@
 
 package net.biomodels.jummp.core.model.identifier.decorator
 
+import groovy.transform.CompileStatic
 import net.biomodels.jummp.core.events.DateModelIdentifierDecoratorUpdatedEvent
 import net.biomodels.jummp.core.model.identifier.ModelIdentifier
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 
 /**
- * @short ModelIdentifierDecorator implementation that appends a formatted date to a model id.
+ * ModelIdentifierDecorator implementation that appends a formatted date to a model id.
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
-public class DateAppendingDecorator extends AbstractAppendingDecorator {
+@CompileStatic
+class DateAppendingDecorator extends AbstractAppendingDecorator {
     /* the suffix used to decorate model identifiers. */
     final String FORMAT
     /* the class logger */
@@ -48,7 +50,7 @@ public class DateAppendingDecorator extends AbstractAppendingDecorator {
      * which will use the generated model identifiers containing these characters.
      * @see {@link net.biomodels.jummp.core.model.identifier.support.DateModelIdentifierPartition}
      */
-    public DateAppendingDecorator(Integer order, String format) throws IllegalArgumentException {
+    DateAppendingDecorator(Integer order, String format) throws IllegalArgumentException {
         boolean orderOk = validateOrderValue(order)
         if (!orderOk) {
             log.error "Invalid order $order for $this."
@@ -85,7 +87,7 @@ public class DateAppendingDecorator extends AbstractAppendingDecorator {
         } else {
             log.warn "Undefined model identifier encountered - decorating a new one instead."
             ModelIdentifier result = new ModelIdentifier()
-            result.id.append(nextValue.get())
+            result.append(nextValue.get())
             return result
         }
     }
@@ -114,7 +116,7 @@ public class DateAppendingDecorator extends AbstractAppendingDecorator {
                 log.debug "Updating nextValue from $currentDate to $expectedDate."
             }
             nextValue.compareAndSet(currentDate, expectedDate)
-            super.publishEvent(new DateModelIdentifierDecoratorUpdatedEvent(this, currentDate))
+            super.informOfChange(new DateModelIdentifierDecoratorUpdatedEvent(this, currentDate))
         }
     }
 }

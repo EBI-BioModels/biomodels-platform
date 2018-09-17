@@ -74,7 +74,6 @@ class ModelDelegateService implements IModelService {
     def qcInfoDelegateService
     def modelFlagService
     def referenceTracker
-    def publicationIdGenerator
 
     String getPluginForFormat(ModelFormatTransportCommand format) {
         return modelFileFormatService.getPluginForFormat(format)
@@ -445,8 +444,8 @@ class ModelDelegateService implements IModelService {
     }
 
     boolean haveMultiplePerennialIdentifierTypes() {
-        final boolean HAVE_PERENNIAL_PUBLICATION_ID = publicationIdGenerator instanceof
-                    AbstractModelIdentifierGenerator && !(publicationIdGenerator instanceof
+        def publicationIdGenerator = modelService.publicationIdGenerator
+        final boolean HAVE_PERENNIAL_PUBLICATION_ID = !(publicationIdGenerator instanceof
                     NullModelIdentifierGenerator)
 
         final Set<String> ID_TYPES = getPerennialIdentifierTypes()

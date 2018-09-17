@@ -20,6 +20,7 @@
 
 package net.biomodels.jummp.core.model.identifier.decorator
 
+import groovy.transform.CompileStatic
 import net.biomodels.jummp.core.model.identifier.ModelIdentifier
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
@@ -28,6 +29,7 @@ import org.apache.commons.logging.LogFactory
  * @short ModelIdentifierDecorator implementation that adds a fixed literal suffix to all model ids.
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
+@CompileStatic
 class FixedLiteralAppendingDecorator extends AbstractAppendingDecorator {
     /* the suffix used to decorate model identifiers. */
     final String SUFFIX
@@ -49,7 +51,7 @@ class FixedLiteralAppendingDecorator extends AbstractAppendingDecorator {
     /**
      * Don't pass an empty String or null to avoid an IllegalArgumentException.
      */
-    public FixedLiteralAppendingDecorator(int order, String suffix)
+    FixedLiteralAppendingDecorator(int order, String suffix)
                 throws IllegalArgumentException {
         this(order)
         if (!suffix) {

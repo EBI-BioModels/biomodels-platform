@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2018 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -20,6 +20,8 @@
 
 package net.biomodels.jummp.core.model.identifier.generator
 
+import net.biomodels.jummp.core.events.ModelIdentifierDecoratorUpdatedEvent
+
 /**
  * @short Interface defining the contract for components that wish to produce model identifiers.
  *
@@ -34,4 +36,12 @@ interface ModelIdentifierGenerator {
      * Asks its variable decorators to prepare the values they will use for the next identifier.
      */
     void update()
+
+    /**
+     * Callback for ModelIdentifierDecorator updates.
+     *
+     * @param event a description of the changes (the decorator that changed and its new value)
+     * @see {@link net.biomodels.jummp.core.model.identifier.decorator.ModelIdentifierDecorator#informOfChange(net.biomodels.jummp.core.events.ModelIdentifierDecoratorUpdatedEvent)}
+     */
+    void respondTo(ModelIdentifierDecoratorUpdatedEvent event)
 }

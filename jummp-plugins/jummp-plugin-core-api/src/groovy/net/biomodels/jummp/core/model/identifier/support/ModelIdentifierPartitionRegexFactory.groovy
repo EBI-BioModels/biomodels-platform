@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2017 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2018 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -17,8 +17,8 @@
  * You should have received a copy of the GNU Affero General Public License along
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
  **/
- 
- package net.biomodels.jummp.core.model.identifier.support
+
+package net.biomodels.jummp.core.model.identifier.support
 
 import net.biomodels.jummp.core.model.identifier.decorator.ChecksumAppendingDecorator
 import net.biomodels.jummp.core.model.identifier.support.date.DateFormatRegion
@@ -134,7 +134,7 @@ final class ModelIdentifierPartitionRegexFactory {
                 result = Pattern.quote(contents)
                 break
             case DateFormatRegionType.y: // 2 digits if range is y, yy or yyy
-                regexLength = regionLength > 3 ?: 2
+                regexLength = regionLength > 3 ? regionLength : 2
                 result = getRegexForNumericRegion(regexLength)
                 break
             case DateFormatRegionType.F:
