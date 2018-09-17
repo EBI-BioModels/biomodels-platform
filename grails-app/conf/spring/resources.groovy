@@ -210,7 +210,9 @@ beans = {
         }
     }
     // TODO put into migRS
-    ModelIdentifierUtils.perennialFields = idGeneratorSettings.keySet()
+    ModelIdentifierUtils.perennialFields = idGeneratorSettings.keySet().findAll {
+        it != 'regex'
+    }
 
 //
 //    identifierGeneratorRegistry(ModelIdentifierGeneratorRegistryService) {
