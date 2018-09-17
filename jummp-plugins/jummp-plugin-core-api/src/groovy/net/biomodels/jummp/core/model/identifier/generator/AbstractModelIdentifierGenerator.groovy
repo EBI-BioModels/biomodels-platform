@@ -24,6 +24,7 @@ import groovy.transform.CompileStatic
 import net.biomodels.jummp.core.model.identifier.ModelIdentifier
 import net.biomodels.jummp.core.events.DateModelIdentifierDecoratorUpdatedEvent
 import net.biomodels.jummp.core.events.ModelIdentifierDecoratorUpdatedEvent
+import net.biomodels.jummp.core.model.identifier.decorator.AbstractAppendingDecorator
 import net.biomodels.jummp.core.model.identifier.decorator.OrderedModelIdentifierDecorator
 import net.biomodels.jummp.core.model.identifier.decorator.VariableDigitAppendingDecorator
 import net.biomodels.jummp.core.model.identifier.support.GeneratorDetails
@@ -139,7 +140,10 @@ abstract class AbstractModelIdentifierGenerator implements ModelIdentifierGenera
         Iterator<? extends OrderedModelIdentifierDecorator> i = decoratorRegistry.iterator()
         while (i.hasNext()) {
             //noinspection ChangeToOperator
-            i.next().generator = this
+            OrderedModelIdentifierDecorator nextDecorator = i.next()
+            if (nextDecorator instanceof AbstractAppendingDecorator) {
+                nextDecorator.generator = this
+            }
         }
     }
 }
