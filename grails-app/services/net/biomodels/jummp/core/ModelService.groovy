@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2018 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -36,6 +36,7 @@ import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.events.*
 import net.biomodels.jummp.core.model.*
+import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import net.biomodels.jummp.core.vcs.VcsException
 import net.biomodels.jummp.core.vcs.VcsFileDetails
@@ -47,6 +48,7 @@ import org.apache.tika.detect.DefaultDetector
 import org.apache.tika.metadata.Metadata
 import org.perf4j.aop.Profiled
 import org.perf4j.log4j.Log4JStopWatch
+import org.springframework.beans.factory.annotation.Lookup
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.access.prepost.PostAuthorize
 import org.springframework.security.access.prepost.PostFilter
@@ -66,12 +68,28 @@ import org.springframework.transaction.annotation.Propagation
 import java.util.concurrent.locks.ReentrantLock
 
 /**
- * @short Service class for managing Models
+ * Service class for managing Models.
  *
- * This service provides the high-level API to access models and their revisions.
+ * <p>This service provides the high-level API to access models and their revisions.
  * It is recommended to use this service instead of accessing Models and Revisions
  * directly through GORM. The service methods respect the ACL on the objects and by
- * that ensures that no user can perform actions he is not allowed to.
+ * that ensures that no user can perform actions he is not allowed to.</p>
+
+ * <p>ModelService is a singleton, but the model ID generators are prototypes.
+ * We cannot directly inject the id generator beans because Spring caches a singleton's
+ * dependencies after creation, meaning modelService.submissionIdGenerator.lastUsedValue would
+ * always return the identifier generated before the modelService bean got instantiated (e.g.
+ * when the application started).</p>
+ *
+ * <p>The getters {@code getSubmissionIdGenerator} and {@code getPublicationIdGenerator} solve
+ * this reference problem by ensuring that the generators are always retrieved from the application
+ * context. Since these beans have prototype scope, every time we call these getters, or their
+ * Groovy short-hand equivalents ({@code submissionIdGenerator} and {@code publicationIdGenerator}
+ * respectively), we get a new instance of these generators that are initialised with the most
+ * recent identifier values generated in the past. See
+ * <a href='https://www.baeldung.com/spring-inject-prototype-bean-into-singleton'>this article<a>
+ * for a more in-depth discussion of the problem.</p>
+ *
  * @see Model
  * @see Revision
  * @author Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
@@ -80,7 +98,7 @@ import java.util.concurrent.locks.ReentrantLock
  * @author Sarala Wimalaratne <sarala@ebi.ac.uk>
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  *
- * @date 20151014
+ * @date 20180906
  */
 @SuppressWarnings("GroovyUnusedCatchParameter")
 @Transactional
@@ -132,14 +150,6 @@ class ModelService {
      * Dependency Injection of userService
      */
     def userService
-    /**
-     * Dependency injection of submissionIdGenerator
-     */
-    def submissionIdGenerator
-    /**
-     * Dependency injection of publicationIdGenerator
-     */
-    def publicationIdGenerator
 
     //def publishValidator
 
@@ -150,6 +160,20 @@ class ModelService {
      * Guard insertion of ACL entries from concurrent access.
      */
     final ReentrantLock aclInsertionLock = new ReentrantLock()
+
+    /**
+     * Provides a prototype-scoped submission id generator bean.
+     */
+    ModelIdentifierGenerator getSubmissionIdGenerator() {
+        grailsApplication?.mainContext?.submissionIdGenerator
+    }
+
+    /**
+     * Provides a prototype-scoped publication id generator bean.
+     */
+    ModelIdentifierGenerator getPublicationIdGenerator() {
+        grailsApplication?.mainContext?.publicationIdGenerator
+    }
 
     /**
     * Returns list of Models the user has access to.
@@ -1023,7 +1047,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
 
         // vcs identifier is container name + upload date + submissionId - this should by all means be unique
         String timestamp = new Date().format("yyyy-MM-dd'T'HH-mm-ss-SSS")
-        final String submissionId = submissionIdGenerator.generate()
+        final String submissionId = getSubmissionIdGenerator().generate()
         String modelPath = new StringBuilder(timestamp).append("_").append(submissionId).
                 append(File.separator).toString()
         String container = fileSystemService.findCurrentModelContainer()
@@ -2285,7 +2309,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
     private Revision doBeforePublishingCuratedRevision(Revision revision) throws ModelException {
         String publicationId
         if (null == revision.model.publicationId) {
-            revision.model.publicationId = publicationIdGenerator.generate()
+            revision.model.publicationId = getPublicationIdGenerator().generate()
         }
         publicationId = revision.model.publicationId
 
