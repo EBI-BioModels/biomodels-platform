@@ -29,7 +29,7 @@ package net.biomodels.jummp.deployment.biomodels
 @grails.validation.Validateable
 class ModelOfTheMonthTransportCommand implements Serializable {
     static final String URL_SEED =
-            "content/model-of-the-month?year="
+            "content/model-of-the-month?"
     static final String FALLBACK_URL = "content/model-of-the-month?all=yes"
     public static final String SEP = '-'
 
@@ -61,7 +61,7 @@ class ModelOfTheMonthTransportCommand implements Serializable {
         String year = yearAndMonth[0]
         String month = yearAndMonth[1]
 
-        return "$URL_SEED$year&month=$month"
+        return "${URL_SEED}year=$year&month=$month"
     }
 
     String getMonth() {
