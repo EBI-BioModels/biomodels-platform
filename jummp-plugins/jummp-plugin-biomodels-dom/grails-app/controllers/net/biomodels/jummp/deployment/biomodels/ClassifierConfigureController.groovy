@@ -29,11 +29,10 @@
  **/
 
 
-package net.biomodels.jummp.plugins.configuration
+package net.biomodels.jummp.deployment.biomodels
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
-import net.biomodels.jummp.deployment.biomodels.ModelClass
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.models.ModelDetails
 import net.biomodels.jummp.models.Progress
@@ -80,7 +79,7 @@ class ClassifierConfigureController {
         }
         List<ModelClass> groundTruth = modelClassService.getModelClasses()
         List<Map<String, Object>> models = modelClassifierService.classifyAllModels(modelDetailsList, groundTruth)
-        render(view: '/configuration/curator/configuration', model: [title: "Model Classification",
+        render(view: '/classifierConfiguration/configuration', model: [title: "Model Classification",
                  action: "saveGroundTruth", template: "classifierGroundTruth", models: models])
     }
 
@@ -131,12 +130,12 @@ class ClassifierConfigureController {
 
     def classifier = {
         List<Map<String, String>> dlModels = classifierConfigureService.getDLModels()
-        render(view: '/configuration/configuration',
+        render(view: '/classifierConfiguration/configuration',
             model: [title: "Model Classification", action: "switchModel", template: "classifier", dlModels: dlModels])
     }
 
     def classifierCreator = {
-        render(view: '/configuration/configuration', model: [title: "Model Classification Creator",
+        render(view: '/classifierConfiguration/configuration', model: [title: "Model Classification Creator",
                  action: "classifierCreatorSave", template: "classifierCreator"])
     }
 
@@ -157,7 +156,7 @@ class ClassifierConfigureController {
                 flash.message = e.responseBodyAsString
             }
         }
-        render(view: '/configuration/configuration', model: [classifierCreator: cmd,
+        render(view: '/classifierConfiguration/configuration', model: [classifierCreator: cmd,
              title: "Model Classification Creator", action: "classifierCreatorSave", template: "classifierCreator"])
     }
 
@@ -215,7 +214,7 @@ class ClassifierConfigureController {
         String modelName = params.get("model_name")
         DLModelCommand cmd = classifierConfigureService.getDLModel(modelName)
 
-        render(view: '/configuration/configuration', model: [title: "Model Classification Details",
+        render(view: '/classifierConfiguration/configuration', model: [title: "Model Classification Details",
              action: "retrainDLModel", template: "classifierDetails", classifierCreator: cmd])
     }
 
@@ -249,7 +248,7 @@ class ClassifierConfigureController {
                 flash.message = e.responseBodyAsString
             }
         }
-        render(view: '/configuration/configuration', model: [classifierCreator: cmd,
+        render(view: '/classifierConfiguration/configuration', model: [classifierCreator: cmd,
              title: "Model Classification Creator", action: "retrainDLModel", template: "classifierDetails"])
     }
 }

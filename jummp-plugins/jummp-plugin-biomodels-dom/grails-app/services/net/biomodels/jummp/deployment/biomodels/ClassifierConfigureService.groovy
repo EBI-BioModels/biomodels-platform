@@ -30,7 +30,7 @@
 
 
 
-package net.biomodels.jummp.plugins.configuration
+package net.biomodels.jummp.deployment.biomodels
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.google.common.base.Joiner
