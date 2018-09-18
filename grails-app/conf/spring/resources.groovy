@@ -41,6 +41,7 @@ import net.biomodels.jummp.core.model.identifier.support.SubmissionIdGeneratorIn
 import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
 import org.codehaus.groovy.grails.commons.spring.GrailsApplicationContext
 import org.springframework.beans.factory.config.BeanDefinition
+import org.springframework.beans.factory.config.ObjectFactoryCreatingFactoryBean
 import org.springframework.beans.factory.support.BeanDefinitionRegistry
 import org.springframework.beans.factory.support.SimpleBeanDefinitionRegistry
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner
@@ -220,6 +221,26 @@ beans = {
             explicitRegexValue = regex
         }
     }
+
+    /*
+     * Allows a singleton to use a prototype-scoped dependency without having to explicitly
+     * invoke applicationContext.getBean(). Instead, inject the factory into the singleton:
+     * <pre>
+     *     def idGeneratorRegistryFactoryBean // the factory itself is a singleton
+     *     ....
+     *     void doSomethingWithTheRegistry() {
+     *          ModelIdentifierGeneratorRegistryService registry =
+     *                  idGeneratorRegistryFactoryBean.getObject()
+*               // now do something with that registry ...
+     *     }
+     * </pre>
+     * @see org.springframework.beans.factory.config.ObjectFactoryCreatingFactoryBean
+     * @see net.biomodels.jummp.core.ModelDelegateService
+     */
+    idGeneratorRegistryFactoryBean(ObjectFactoryCreatingFactoryBean) {
+        targetBeanName = 'idGeneratorRegistry'
+    }
+
     // end of id generator beans
 
     //Add annotation store domain classes (defined externally) to the domain model
