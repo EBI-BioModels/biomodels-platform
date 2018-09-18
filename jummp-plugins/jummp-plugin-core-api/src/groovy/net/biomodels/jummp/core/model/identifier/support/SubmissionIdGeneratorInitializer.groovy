@@ -22,6 +22,7 @@ package net.biomodels.jummp.core.model.identifier.support
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 
 import javax.sql.DataSource
 import java.sql.SQLException
@@ -41,6 +42,7 @@ class SubmissionIdGeneratorInitializer extends AbstractModelIdentifierGeneratorI
     private static final String column = "submission_id"
     final Logger log = LoggerFactory.getLogger(getClass())
 
+    @Autowired
     SubmissionIdGeneratorInitializer(DataSource dataSource) {
         super(dataSource, query, column)
     }
