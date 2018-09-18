@@ -127,8 +127,6 @@ beans = {
 
     //myBeanPostProcessor(net.biomodels.jummp.core.NosyBeanPostProcessor)
 
-    //Map R = ModelIdentifierUtils.processGeneratorSettings(Holders.config.jummp)
-
     // This section defines model identifier related beans.
     // Relevant docs:
     //      https://grails.github.io/grails2-doc/2.5.5/guide/spring.html
@@ -214,22 +212,6 @@ beans = {
         it != 'regex'
     }
 
-//
-//    identifierGeneratorRegistry(ModelIdentifierGeneratorRegistryService) {
-//        registry = R
-//    }
-
-/*
-    R.each { name, generator ->
-        def clazz = generator.getClass()
-        if (generator instanceof AbstractModelIdentifierGenerator) {
-            "$name"(clazz, generator.DECORATOR_REGISTRY)
-        } else {
-            "$name"(clazz)
-        }
-    }
-*/
-    application.config.jummp.id.clear()
     // end of id generator beans
 
     //Add annotation store domain classes (defined externally) to the domain model
