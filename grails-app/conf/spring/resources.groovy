@@ -34,7 +34,7 @@ import grails.util.Environment
 import net.biomodels.jummp.core.WebflowAclBeanDefinitionProcessor
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorFactoryBean
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
-import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGeneratorRegistryService
+import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorRegistryFactory
 import net.biomodels.jummp.core.model.identifier.support.NullModelIdentifierGeneratorInitializer
 import net.biomodels.jummp.core.model.identifier.support.PublicationIdGeneratorInitializer
 import net.biomodels.jummp.core.model.identifier.support.SubmissionIdGeneratorInitializer
@@ -166,10 +166,10 @@ beans = {
 
     def regexSetting = idGeneratorSettings.get('regex')
     boolean regexPresent = regexSetting instanceof String && !regexSetting.trim().isEmpty()
+    String regex = regexSetting as String
     if (regexPresent) {
         try {
-            Pattern.compile(regexSetting as String)
-            ModelIdentifierUtils.MODEL_ID_REGEXES.add(regexSetting)
+            Pattern.compile(regex)
         } catch (PatternSyntaxException ignore) {
             throw new IllegalArgumentException("'$regexSetting' is not a valid Java regex pattern.")
         }
@@ -207,11 +207,19 @@ beans = {
             }
         }
     }
-    // TODO put into migRS
-    ModelIdentifierUtils.perennialFields = idGeneratorSettings.keySet().findAll {
+
+    Set<String> generatorTypes = idGeneratorSettings.keySet().findAll {
         it != 'regex'
     }
 
+    idGeneratorRegistry(ModelIdentifierGeneratorRegistryFactory,
+            ref('grailsApplication'), generatorTypes) { bean ->
+        bean.scope = 'prototype'
+        haveExplicitRegexSetting = regexPresent
+        if (regexPresent) {
+            explicitRegexValue = regex
+        }
+    }
     // end of id generator beans
 
     //Add annotation store domain classes (defined externally) to the domain model

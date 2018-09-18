@@ -19,10 +19,14 @@
 **/
 
 import grails.util.Holders
-import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
+import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorRegistryService
+
+import java.util.regex.Pattern
 
 
 class UrlMappings {
+
+    def grailsApplication
 
     static mappings = {
         "/model/create"(controller: "model", action: "create")
@@ -54,11 +58,11 @@ class UrlMappings {
             action = 'show'
             constraints {
                 id(nullable: false, validator: { modelId ->
-                    Set<String> modelIdRegexes = ModelIdentifierUtils.MODEL_ID_REGEXES
-                    if (modelIdRegexes.isEmpty()) throw new IllegalStateException()
+                    def generatorRegistry = (ModelIdentifierGeneratorRegistryService) grailsApplication
+                            ?.mainContext?.idGeneratorRegistry
+                    Pattern modelIdRegexes = generatorRegistry?.getRegexForAllModelIdentifiers()
 
-                    String pattern = modelIdRegexes.join('|')
-                    modelId.matches pattern
+                    modelIdRegexes.matcher(modelId).matches()
                 })
                 revisionId(matches: /\d+/)
             }

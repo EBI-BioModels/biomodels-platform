@@ -57,7 +57,6 @@ class ModelIdentifierUtils {
     /* semaphores for the log threshold */
     private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
     // Regular expressions for each model identifier generator scheme (submission, publication, ...)
-    static final Set<String> MODEL_ID_REGEXES = new LinkedHashSet<>()
 
     /*
      * The suffix to use in the bean reference corresponding to a generator.
@@ -69,7 +68,9 @@ class ModelIdentifierUtils {
      * there would be a corresponding fooIdGenerator bean reference that would
      * generate identifiers like 000000000001, 000000000002 etc.
      */
-    static final String GENERATOR_BEAN_SUFFIX = 'IdGenerator'
+    static final String GENERATOR_BEAN_SUFFIX  = 'IdGenerator'
+    static final String DEFAULT_GENERATOR_TYPE = 'submission'
+    static final String DEFAULT_GENERATOR_BEAN = 'submissionIdGenerator'
     static final String DEFAULT_URL =
                 "jdbc:h2:tempDb;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE"
     static final String DEFAULT_USERNAME = "sa"
@@ -237,7 +238,6 @@ Consider introducing variable digit patterns or dates into the identifier scheme
         }
         if (shouldComputeRegexes) {
             regex = regexForThisIdentifier.toString()
-            MODEL_ID_REGEXES.add regex
         }
 
         if (IS_DEBUG_ENABLED) {
