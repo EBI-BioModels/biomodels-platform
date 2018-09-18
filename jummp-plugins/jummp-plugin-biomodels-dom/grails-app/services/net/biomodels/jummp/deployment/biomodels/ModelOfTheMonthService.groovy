@@ -55,9 +55,7 @@ class ModelOfTheMonthService {
                 eq "id", id
             }
         }
-        use(ModelOfTheMonthCategory) {
-            entries*.toCommandObject()
-        }
+        entries*.toCommandObject()
     }
 
     List<ModelOfTheMonth> list() {

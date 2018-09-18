@@ -147,12 +147,4 @@ class ModelOfTheMonthController {
         }
         command
     }
-
-    @Secured(["IS_AUTHENTICATED_FULLY"])
-    def fetchModels() {
-        def searchTerm = params.term
-        println searchTerm
-        def results = modelDelegateService.fetchModels()
-        println results
-    }
 }
