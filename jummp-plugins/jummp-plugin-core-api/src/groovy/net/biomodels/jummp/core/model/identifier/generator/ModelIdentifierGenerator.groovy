@@ -44,4 +44,13 @@ interface ModelIdentifierGenerator {
      * @see {@link net.biomodels.jummp.core.model.identifier.decorator.ModelIdentifierDecorator#informOfChange(net.biomodels.jummp.core.events.ModelIdentifierDecoratorUpdatedEvent)}
      */
     void respondTo(ModelIdentifierDecoratorUpdatedEvent event)
+
+    /**
+     * Returns the regular expression pattern that matches identifiers created by this generator.
+     *
+     * @return the String representation of regex pattern or null if this generator did not have
+     *         its regex computed during instantiation.
+     * @see net.biomodels.jummp.core.model.identifier.support.ModelIdentifierPartitionRegexFactory
+     */
+    String getRegex()
 }
