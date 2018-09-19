@@ -69,7 +69,7 @@ class ModelClassifierService implements InitializingBean {
      */
     static final int RETRY_CLASSIFY_TIMES = 1
 
-    private Progress trainProgress
+    Progress trainProgress
 
     /**
      * Check if we are in rebuild cache process
@@ -81,7 +81,7 @@ class ModelClassifierService implements InitializingBean {
     /**
      * Endpoint of the Classification API
      */
-    private String classificationEndpoint
+    String classificationEndpoint
 
     void afterPropertiesSet() throws Exception {
         classificationEndpoint = grailsApplication.config.jummp.classification.endpoint
