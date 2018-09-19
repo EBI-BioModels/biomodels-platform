@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2018 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -24,8 +24,8 @@ import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.util.Holders
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import net.biomodels.jummp.core.IModelService
 import net.biomodels.jummp.core.model.ModelTransportCommand
-import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Revision
 
@@ -38,10 +38,8 @@ import net.biomodels.jummp.model.Revision
 class ModelAdapter {
     Model model
 
-    static final Set<String> PERENNIAL_IDENTIFIER_TYPES = ModelIdentifierUtils.perennialFields
+    static final Set<String> PERENNIAL_IDENTIFIER_TYPES = doGetPerennialIdTypes()
     static final Set<String> FIND_BY_PERENNIAL_ID_CRITERIA = populateFindByCriteria()
-
-    static def modelService = Holders.applicationContext.getBean("modelService")
 
     @CompileStatic
     ModelTransportCommand toCommandObject(boolean saveHistory = true) {
@@ -94,6 +92,7 @@ class ModelAdapter {
 
     @CompileDynamic
     private Revision getLatestRevisionForUser(boolean saveHistory) {
+        def modelService = Holders.applicationContext.getBean("modelService")
         modelService.getLatestRevision(model, saveHistory)
     }
 
@@ -128,5 +127,11 @@ class ModelAdapter {
             result.add(pit + "Id")
         }
         result
+    }
+
+    private static Set<String> doGetPerennialIdTypes() {
+        def modelDelegateService = Holders.applicationContext.getBean("modelDelegateService",
+                IModelService.class)
+        modelDelegateService.getPerennialIdentifierTypes()
     }
 }

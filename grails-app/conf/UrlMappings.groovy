@@ -58,9 +58,9 @@ class UrlMappings {
             action = 'show'
             constraints {
                 id(nullable: false, validator: { modelId ->
-                    def generatorRegistry = (ModelIdentifierGeneratorRegistryService) grailsApplication
-                            ?.mainContext?.idGeneratorRegistry
-                    Pattern modelIdRegexes = generatorRegistry?.getRegexForAllModelIdentifiers()
+                    def registryFactory = grailsApplication.mainContext.idGeneratorRegistryFactoryBean
+                    def registry = registryFactory.object
+                    Pattern modelIdRegexes = registry.getRegexForAllModelIdentifiers()
 
                     modelIdRegexes.matcher(modelId).matches()
                 })

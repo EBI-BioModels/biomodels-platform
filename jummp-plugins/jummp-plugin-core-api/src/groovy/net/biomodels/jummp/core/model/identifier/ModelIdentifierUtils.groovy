@@ -20,17 +20,12 @@
 
 package net.biomodels.jummp.core.model.identifier
 
-import groovy.sql.GroovyRowResult
-import groovy.sql.Sql
 import net.biomodels.jummp.core.model.identifier.decorator.ChecksumAppendingDecorator
 import net.biomodels.jummp.core.model.identifier.decorator.DateAppendingDecorator
 import net.biomodels.jummp.core.model.identifier.decorator.FixedDigitAppendingDecorator
 import net.biomodels.jummp.core.model.identifier.decorator.FixedLiteralAppendingDecorator
 import net.biomodels.jummp.core.model.identifier.decorator.OrderedModelIdentifierDecorator
 import net.biomodels.jummp.core.model.identifier.decorator.VariableDigitAppendingDecorator
-import net.biomodels.jummp.core.model.identifier.generator.DefaultModelIdentifierGenerator
-import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGenerator
-import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.support.ChecksumModelIdentifierPartition
 import net.biomodels.jummp.core.model.identifier.support.DateModelIdentifierPartition
 import net.biomodels.jummp.core.model.identifier.support.GeneratorDetails
@@ -41,10 +36,6 @@ import net.biomodels.jummp.core.model.identifier.support.ModelIdentifierPartitio
 import net.biomodels.jummp.core.model.identifier.support.NumericalModelIdentifierPartition
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
-import org.apache.tomcat.jdbc.pool.DataSource
-import org.apache.tomcat.jdbc.pool.PoolProperties
-
-import java.util.regex.Pattern
 
 /**
  * @short Helper class containing methods for interacting with model id scheme settings.
@@ -56,7 +47,6 @@ class ModelIdentifierUtils {
     private static final Log log = LogFactory.getLog(this)
     /* semaphores for the log threshold */
     private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
-    // Regular expressions for each model identifier generator scheme (submission, publication, ...)
 
     /*
      * The suffix to use in the bean reference corresponding to a generator.
@@ -83,9 +73,7 @@ class ModelIdentifierUtils {
      * characters support mode alongside the mandatory properties of database connection string
      */
     static final String UNICODE_OPTIONS = "useUnicode=yes&characterEncoding=UTF-8"
-    /* stores the patterns that are used to generate a model identifier */
-    static ConfigObject settings
-    static TreeSet perennialFields
+
 
     /* hide constructor - all non-private methods are static. */
     protected ModelIdentifierUtils() {}

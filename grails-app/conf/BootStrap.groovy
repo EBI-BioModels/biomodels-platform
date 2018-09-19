@@ -50,6 +50,7 @@ class BootStrap {
     def wcmSecurityService
     def grailsApplication
     def modelFileFormatService
+    def idGeneratorRegistryFactoryBean
 
     void addPublicationLinkProvider(PubLinkProvTC cmd) {
         def publinkType=PublicationLinkProvider.LinkType.valueOf(cmd.linkType)
@@ -132,8 +133,7 @@ class BootStrap {
         addPublicationLinkProvider(new PubLinkProvTC(linkType: PublicationLinkProvider.LinkType.MANUAL_ENTRY,
                 pattern: "\\A\\z" /* i.e. start of input then end of input -- ignored */))
 
-        def generatorRegistry = grailsApplication.mainContext.getBean("idGeneratorRegistry",
-                ModelIdentifierGeneratorRegistryService.class)
+        def generatorRegistry = idGeneratorRegistryFactoryBean.object
         println "Using model id generators ${generatorRegistry?.generatorMap}"
 
         if (Environment.getCurrent() != Environment.TEST) {
