@@ -34,13 +34,14 @@ import grails.util.Environment
 import net.biomodels.jummp.core.WebflowAclBeanDefinitionProcessor
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorFactoryBean
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
-import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGeneratorRegistryService
+import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorRegistryFactory
 import net.biomodels.jummp.core.model.identifier.support.NullModelIdentifierGeneratorInitializer
 import net.biomodels.jummp.core.model.identifier.support.PublicationIdGeneratorInitializer
 import net.biomodels.jummp.core.model.identifier.support.SubmissionIdGeneratorInitializer
 import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
 import org.codehaus.groovy.grails.commons.spring.GrailsApplicationContext
 import org.springframework.beans.factory.config.BeanDefinition
+import org.springframework.beans.factory.config.ObjectFactoryCreatingFactoryBean
 import org.springframework.beans.factory.support.BeanDefinitionRegistry
 import org.springframework.beans.factory.support.SimpleBeanDefinitionRegistry
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner
@@ -127,8 +128,6 @@ beans = {
 
     //myBeanPostProcessor(net.biomodels.jummp.core.NosyBeanPostProcessor)
 
-    //Map R = ModelIdentifierUtils.processGeneratorSettings(Holders.config.jummp)
-
     // This section defines model identifier related beans.
     // Relevant docs:
     //      https://grails.github.io/grails2-doc/2.5.5/guide/spring.html
@@ -168,10 +167,10 @@ beans = {
 
     def regexSetting = idGeneratorSettings.get('regex')
     boolean regexPresent = regexSetting instanceof String && !regexSetting.trim().isEmpty()
+    String regex = regexSetting as String
     if (regexPresent) {
         try {
-            Pattern.compile(regexSetting as String)
-            ModelIdentifierUtils.MODEL_ID_REGEXES.add(regexSetting)
+            Pattern.compile(regex)
         } catch (PatternSyntaxException ignore) {
             throw new IllegalArgumentException("'$regexSetting' is not a valid Java regex pattern.")
         }
@@ -209,27 +208,39 @@ beans = {
             }
         }
     }
-    // TODO put into migRS
-    ModelIdentifierUtils.perennialFields = idGeneratorSettings.keySet().findAll {
+
+    Set<String> generatorTypes = idGeneratorSettings.keySet().findAll {
         it != 'regex'
     }
 
-//
-//    identifierGeneratorRegistry(ModelIdentifierGeneratorRegistryService) {
-//        registry = R
-//    }
-
-/*
-    R.each { name, generator ->
-        def clazz = generator.getClass()
-        if (generator instanceof AbstractModelIdentifierGenerator) {
-            "$name"(clazz, generator.DECORATOR_REGISTRY)
-        } else {
-            "$name"(clazz)
+    idGeneratorRegistry(ModelIdentifierGeneratorRegistryFactory,
+            ref('grailsApplication'), generatorTypes) { bean ->
+        bean.scope = 'prototype'
+        haveExplicitRegexSetting = regexPresent
+        if (regexPresent) {
+            explicitRegexValue = regex
         }
     }
-*/
-    application.config.jummp.id.clear()
+
+    /*
+     * Allows a singleton to use a prototype-scoped dependency without having to explicitly
+     * invoke applicationContext.getBean(). Instead, inject the factory into the singleton:
+     * <pre>
+     *     def idGeneratorRegistryFactoryBean // the factory itself is a singleton
+     *     ....
+     *     void doSomethingWithTheRegistry() {
+     *          ModelIdentifierGeneratorRegistryService registry =
+     *                  idGeneratorRegistryFactoryBean.getObject()
+*               // now do something with that registry ...
+     *     }
+     * </pre>
+     * @see org.springframework.beans.factory.config.ObjectFactoryCreatingFactoryBean
+     * @see net.biomodels.jummp.core.ModelDelegateService
+     */
+    idGeneratorRegistryFactoryBean(ObjectFactoryCreatingFactoryBean) {
+        targetBeanName = 'idGeneratorRegistry'
+    }
+
     // end of id generator beans
 
     //Add annotation store domain classes (defined externally) to the domain model

@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2018 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -34,11 +34,12 @@
 
 package net.biomodels.jummp.core
 
+import grails.util.Holders
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.PublicationAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.*
-import net.biomodels.jummp.core.model.identifier.generator.AbstractModelIdentifierGenerator
+import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorRegistryFactory
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import net.biomodels.jummp.core.vcs.VcsFileDetails
 import net.biomodels.jummp.model.Flag
@@ -440,7 +441,9 @@ class ModelDelegateService implements IModelService {
     }
 
     Set<String> getPerennialIdentifierTypes() {
-        return ModelAdapter.PERENNIAL_IDENTIFIER_TYPES
+        def registryFactoryReference = Holders.applicationContext.getBean('&idGeneratorRegistry',
+                ModelIdentifierGeneratorRegistryFactory.class)
+        registryFactoryReference.types
     }
 
     boolean haveMultiplePerennialIdentifierTypes() {

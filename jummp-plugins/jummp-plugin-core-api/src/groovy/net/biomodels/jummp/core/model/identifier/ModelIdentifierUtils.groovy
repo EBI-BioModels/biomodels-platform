@@ -20,17 +20,12 @@
 
 package net.biomodels.jummp.core.model.identifier
 
-import groovy.sql.GroovyRowResult
-import groovy.sql.Sql
 import net.biomodels.jummp.core.model.identifier.decorator.ChecksumAppendingDecorator
 import net.biomodels.jummp.core.model.identifier.decorator.DateAppendingDecorator
 import net.biomodels.jummp.core.model.identifier.decorator.FixedDigitAppendingDecorator
 import net.biomodels.jummp.core.model.identifier.decorator.FixedLiteralAppendingDecorator
 import net.biomodels.jummp.core.model.identifier.decorator.OrderedModelIdentifierDecorator
 import net.biomodels.jummp.core.model.identifier.decorator.VariableDigitAppendingDecorator
-import net.biomodels.jummp.core.model.identifier.generator.DefaultModelIdentifierGenerator
-import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGenerator
-import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.support.ChecksumModelIdentifierPartition
 import net.biomodels.jummp.core.model.identifier.support.DateModelIdentifierPartition
 import net.biomodels.jummp.core.model.identifier.support.GeneratorDetails
@@ -41,10 +36,6 @@ import net.biomodels.jummp.core.model.identifier.support.ModelIdentifierPartitio
 import net.biomodels.jummp.core.model.identifier.support.NumericalModelIdentifierPartition
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
-import org.apache.tomcat.jdbc.pool.DataSource
-import org.apache.tomcat.jdbc.pool.PoolProperties
-
-import java.util.regex.Pattern
 
 /**
  * @short Helper class containing methods for interacting with model id scheme settings.
@@ -56,8 +47,6 @@ class ModelIdentifierUtils {
     private static final Log log = LogFactory.getLog(this)
     /* semaphores for the log threshold */
     private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
-    // Regular expressions for each model identifier generator scheme (submission, publication, ...)
-    static final Set<String> MODEL_ID_REGEXES = new LinkedHashSet<>()
 
     /*
      * The suffix to use in the bean reference corresponding to a generator.
@@ -69,7 +58,9 @@ class ModelIdentifierUtils {
      * there would be a corresponding fooIdGenerator bean reference that would
      * generate identifiers like 000000000001, 000000000002 etc.
      */
-    static final String GENERATOR_BEAN_SUFFIX = 'IdGenerator'
+    static final String GENERATOR_BEAN_SUFFIX  = 'IdGenerator'
+    static final String DEFAULT_GENERATOR_TYPE = 'submission'
+    static final String DEFAULT_GENERATOR_BEAN = 'submissionIdGenerator'
     static final String DEFAULT_URL =
                 "jdbc:h2:tempDb;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE"
     static final String DEFAULT_USERNAME = "sa"
@@ -82,9 +73,7 @@ class ModelIdentifierUtils {
      * characters support mode alongside the mandatory properties of database connection string
      */
     static final String UNICODE_OPTIONS = "useUnicode=yes&characterEncoding=UTF-8"
-    /* stores the patterns that are used to generate a model identifier */
-    static ConfigObject settings
-    static TreeSet perennialFields
+
 
     /* hide constructor - all non-private methods are static. */
     protected ModelIdentifierUtils() {}
@@ -237,7 +226,6 @@ Consider introducing variable digit patterns or dates into the identifier scheme
         }
         if (shouldComputeRegexes) {
             regex = regexForThisIdentifier.toString()
-            MODEL_ID_REGEXES.add regex
         }
 
         if (IS_DEBUG_ENABLED) {
