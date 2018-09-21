@@ -635,7 +635,12 @@
         }
 
         $(function () {
-            displayToolbar(true, true);
+            <sec:ifLoggedIn>
+                displayToolbar(true, true);
+            </sec:ifLoggedIn>
+            <sec:ifNotLoggedIn>
+                displayToolbar(false, true);
+            </sec:ifNotLoggedIn>
         });
     </script>
     <g:layoutHead/>
