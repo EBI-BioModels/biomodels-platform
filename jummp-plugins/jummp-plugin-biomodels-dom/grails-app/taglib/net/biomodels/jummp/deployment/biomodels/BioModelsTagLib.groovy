@@ -22,8 +22,7 @@ package net.biomodels.jummp.deployment.biomodels
 
 import net.biomodels.jummp.core.model.FlagTransportCommand
 import net.biomodels.jummp.core.model.ModelTransportCommand
-import net.biomodels.jummp.plugins.security.Role
-import org.springframework.security.core.GrantedAuthority
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 
 import java.text.SimpleDateFormat
 
@@ -163,5 +162,14 @@ class BioModelsTagLib {
         }
 	    result.append("</ul>")
         out << result.toString()
+    }
+
+    def renderConvertedFiles = { attrs ->
+        List<RFTC> convertedFilesTC = attrs.convertedFilesTC
+        out << "<ul>"
+        out << render(plugin: "jummp-plugin-web-application",
+            template: "/templates/model/convert/convertedFileShow",
+            collection: convertedFilesTC, var: "fileTC")
+        out << "</ul>"
     }
 }
