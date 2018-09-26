@@ -289,6 +289,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     if (flash.now["giveMessage"]) {
                         flashMessage = flash.now["giveMessage"]
                     }
+                    List<RFTC> repoFiles = modelDelegateService.retrieveModelFiles(rev)
                     List<RevisionTransportCommand> revs =
                         modelDelegateService.getAllRevisions(PERENNIAL_ID)
                     CurationNotesTransportCommand curationNotes =
@@ -311,6 +312,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                                  showPublishOption      : showPublishOption,
                                  canSubmitForPublication: canSubmitForPublication,
                                  canCertify             : canCertify,
+                                 repoFiles              : repoFiles,
                                  validationLevel        : rev.getValidationLevelMessage(),
                                  certComment            : rev.getCertificationMessage(),
                                  flags                  : flags,

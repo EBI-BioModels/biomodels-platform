@@ -39,6 +39,8 @@ import net.biomodels.jummp.model.Revision
 public class RevisionAdapter {
     Revision revision
 
+    def grailsApplication = Holders.getGrailsApplication().mainContext.grailsApplication
+
     def modelService = Holders.getGrailsApplication().mainContext.modelService
 
     List<RFTC> getRepositoryFilesForRevision() {
@@ -47,9 +49,15 @@ public class RevisionAdapter {
         revision.repoFiles.each { rf ->
             File tmpFile = files.find { it.getName() == (new File(rf.path)).getName() }
             if (tmpFile != null) {
+                long size = tmpFile.length()
+                long configPreviewSize = grailsApplication.config.jummp.web.file.preview
+                boolean showPreview = size > configPreviewSize ? true : false
                 RFTC rftc = new RFTC(
                     id: rf.id,
                     path: tmpFile.absolutePath,
+                    filename: rf.path,
+                    size: size,
+                    showPreview: showPreview,
                     description: rf.description,
                     hidden: rf.hidden,
                     mainFile: rf.mainFile,

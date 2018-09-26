@@ -646,7 +646,12 @@
                         </div>
                     </div>
                     <div id="Files" class="row">
-
+                        <%
+                            Map model = [:]
+                            model["repoFiles"] = repoFiles
+                        %>
+                        <g:render template="/templates/biomodels/modelDisplay/tabFiles"
+                                  model="${model}" />
                     </div>
                     <div id="History">
                         <% DateFormat dateFormat = DateFormat.getDateTimeInstance(); %>
