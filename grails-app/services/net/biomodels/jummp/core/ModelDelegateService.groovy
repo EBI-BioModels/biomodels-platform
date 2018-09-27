@@ -408,10 +408,12 @@ class ModelDelegateService implements IModelService {
      * @param revisionNumber: revision number
      * @param curationState: curation status
      */
-    void updateCurationStateRevision(String modelId, int revisionNumber, CurationState curationState) {
-        Revision revision = modelService.getRevision(ModelAdapter.findByPerennialIdentifier(modelId), revisionNumber)
-        revision.setCurationState(curationState)
-        revision.save(flush:true)
+    RevisionTransportCommand updateCurationStateRevision(String modelId, int revisionNumber,
+            CurationState curationState) {
+        Revision revision = modelService.getRevision(
+            ModelAdapter.findByPerennialIdentifier(modelId), revisionNumber)
+        revision = modelService.updateRevisionCurationState(revision, curationState)
+        new RevisionAdapter(revision: revision).toCommandObject()
     }
 
     RevisionTransportCommand getRevisionFromParams(final String MODEL, String REVISION = null) {
