@@ -595,6 +595,12 @@
                     success: function(response) {
                         toastr.clear();
                         toastr.success(response.message);
+                        var publicationId = response.publicationId;
+                        if (publicationId !== undefined) {
+                            var modelDisplayPage = $.jummp.createURI(publicationId);
+                            <%-- force a redirect if a publication identifier was generated  --%>
+                            $.jummp.openPage(modelDisplayPage);
+                        }
                     }
                 });
             });
