@@ -23,7 +23,7 @@
 
 /* author: Raza Ali: raza.ali@ebi.ac.uk */
 
-package net.biomodels.jummp.util.interprocess
+package net.biomodels.jummp.utils.interprocess
 
 /* Convenience class to allow the multi-process test components to have the same
 ** model update and verification mechanism. */ 
