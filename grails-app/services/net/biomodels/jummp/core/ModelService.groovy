@@ -2386,6 +2386,8 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             revisionTC.minorRevision = true
             revisionTC.comment = "Automatically added model identifier $publicationId"
             Revision toPublish = doAddValidatedRevision(revisionTC.files, [], revisionTC)
+            RevisionTransportCommand toPublishTC = new RevisionAdapter(revision: toPublish).toCommandObject()
+            indexModelRevision(toPublishTC)
             return toPublish
         } else {
             log.warn("""We are publishing $revision encoded in $format, but won't be able to add \
