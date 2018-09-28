@@ -21,10 +21,6 @@
 package net.biomodels.jummp.core.adapters
 
 import grails.util.Holders
-import net.biomodels.jummp.annotationstore.ElementAnnotation
-import net.biomodels.jummp.annotationstore.RevisionAnnotation
-import net.biomodels.jummp.core.annotation.ElementAnnotationCategory
-import net.biomodels.jummp.core.annotation.ElementAnnotationTransportCommand
 import net.biomodels.jummp.core.certification.QcInfoCategory
 import net.biomodels.jummp.core.certification.QcInfoTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
@@ -35,13 +31,14 @@ import net.biomodels.jummp.model.Revision
  * @short Adapter class for the Revision domain class
  *
  * @author Raza Ali <raza.ali@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 public class RevisionAdapter {
     Revision revision
 
-    def grailsApplication = Holders.getGrailsApplication().mainContext.grailsApplication
+    def grailsApplication = Holders.getGrailsApplication()
 
-    def modelService = Holders.getGrailsApplication().mainContext.modelService
+    def modelService = grailsApplication.mainContext.modelService
 
     List<RFTC> getRepositoryFilesForRevision() {
         List<RFTC> repFiles = new LinkedList<RFTC>()

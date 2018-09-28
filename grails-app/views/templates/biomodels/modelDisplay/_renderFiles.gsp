@@ -4,8 +4,7 @@
     <%
         String fileSize = DisplayFormat.format((double)file.size, 2)
         String downloadLink = createLink(controller: 'model',
-            action: 'download', id: revision.identifier())
-        downloadLink += "?filename=${file.filename}"
+            action: 'download', params: [id: revision.identifier(), filename: file.filename])
     %>
     <tr>
         <td>${file.filename}</td>

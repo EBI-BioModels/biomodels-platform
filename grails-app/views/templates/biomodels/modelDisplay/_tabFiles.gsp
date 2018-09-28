@@ -29,7 +29,7 @@
         padding-right: 20px;
     }
 </style>
-<table class="stack">
+<table class="responsive-card-table stack">
     <thead>
         <tr>
             <th width="30%">Name</th>
@@ -56,14 +56,14 @@
 </div>
 
 <script type="text/javascript">
-    var formats = ["text", "txt", "xml", "pdf", "jpg", "jpeg", "gif", "png", "bmp", "svg", "doc", "docx", "xls", "xlsx", "ppt", "pptx"];
+    var formats = ["text", "txt", "xml", "pdf", "jpg", "jpeg", "gif", "png",
+        "bmp", "svg", "doc", "docx", "xls", "xlsx", "ppt", "pptx"];
     $('[id^="previewButton"]').on('click', function (e) {
         e.preventDefault();
         var filename = $(this).attr("data-file-name");
         var mimeType = $(this).attr("data-file-mime-type");
         var downloadLink = $(this).attr("data-download-link");
         var showPreview = $(this).attr("data-preview");
-        var $modal = $('#filePreviewBox');
         $.ajax({
             url: downloadLink + "&preview=" + showPreview + "&inline=true",
             dataType: "text",
@@ -76,7 +76,7 @@
                     var mdlType = false;
                     var xmlType = false;
                     var csvType = false;
-                    var msDocument = false;
+                    // var msDocument = false;
                     var content = [];
                     for (var index in formats) {
                         var format = formats[index];
@@ -98,11 +98,12 @@
                                 }
                             } else if (format === "pdf") {
                                 pdfType = true;
-                            } else if (format === "doc" || format === "docx"
+                            } /* don't support Microsoft Document for now
+                            else if (format === "doc" || format === "docx"
                                 || format === "xls" || format === "xlsx"
                                 || format === "ppt" || format === "pptx") {
                                 msDocument = true;
-                            }
+                            }*/
                             content.push("<div id='notificationgoeshere' class='pad-left pad-bottom' style='font-size: 18px'></div>");
                             content.push("<div id='filegoeshere' class='pad-right pad-bottom");
                             if (!mdlType && !xmlType) {
@@ -148,26 +149,29 @@
                         $('#filegoeshere').append(frame);
                         $('#previewContentContainer').removeClass("forCode").addClass("forPdf");
                         addPreviewNotification(showPreview, downloadLink);
-                    } else if (mimeType.indexOf("txt") !== -1 || mimeType.indexOf("text") !== -1) {
-                        $("#filegoeshere").text(data);
-                        $("#filegoeshere").html($("#filegoeshere").html().replace(/(\r\n|\n|\r)/gm, '<br/>'));
+                    } else if (filename.indexOf('.csv') === -1 && (mimeType.indexOf("txt") !== -1 || mimeType.indexOf("text") !== -1)) {
+                        data = data.replace(/(\r\n|\n|\r)/gm, '<br/>');
+                        $("#filegoeshere").html(data);
                         $('#previewContentContainer').removeClass("forPdf").addClass("forCode");
                         addPreviewNotification(showPreview, downloadLink);
                     } else if (csvType) {
                         var plottingData = getCSVData(data);
-                        $("#filegoeshere").handsontable({
+                        var handsontable = $("<div id='handsontable' class='hot handsontable htRowHeaders htColumnHeaders'></div>");
+                        $('#filegoeshere').append(handsontable);
+                        $('#handsontable').handsontable({
                             data: plottingData,
-                            width: 625,
-                            height: 300,
                             stretchH: 'all',
                             readOnly: true,
-                            colHeaders: true,
+                            colHeaders: true, filters: true, columnSorting: true
                         });
                         $('#previewContentContainer').removeClass("forPdf").addClass("forCode");
                         addPreviewNotification(showPreview, downloadLink);
                     } else {
                         $("#notificationgoeshere").show();
-                        $("#notificationgoeshere").html("<h3>We have not supported the preview functionality for this kind of format yet. Sorry for inconvenience caused.</h3>");
+                        var message = "<h3>Files of this type cannot be displayed here. Please <a href='";
+                        message += downloadLink;
+                        message += "'>download</a> the file to your device to view it.</h3>"
+                        $("#notificationgoeshere").html(message);
                     }
                 }
             }, 
