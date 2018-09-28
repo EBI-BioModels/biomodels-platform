@@ -331,6 +331,19 @@
                     success: function(response) {
                         toastr.clear();
                         toastr.success(response.message);
+                        var publicationId = response.publicationId;
+                        if (publicationId !== undefined) {
+                            var message = response.message;
+                            message += ". Please wait a few seconds while the web page is being refreshed.";
+                            $('.flashNotificationDiv').html(message).show();
+                            var modelDisplayPage = $.jummp.createURI(publicationId);
+                            <%-- force a redirect if a publication identifier was generated  --%>
+                            <%-- Using setTimeout to fresh the web page with the newly-created publication identifier
+                             after 5 seconds. --%>
+                            setTimeout(function () {
+                                $.jummp.openPage(modelDisplayPage);
+                            }, 5000);
+                        }
                     }
                 });
             });
@@ -371,7 +384,12 @@
         }
 
         $(function () {
-            displayToolbar(true, true);
+            <sec:ifLoggedIn>
+                displayToolbar(true, true);
+            </sec:ifLoggedIn>
+            <sec:ifNotLoggedIn>
+                displayToolbar(false, true);
+            </sec:ifNotLoggedIn>
         });
     </script>
     <g:layoutHead/>

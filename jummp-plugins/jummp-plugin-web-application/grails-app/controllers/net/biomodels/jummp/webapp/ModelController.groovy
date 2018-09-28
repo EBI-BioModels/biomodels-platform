@@ -37,7 +37,6 @@ package net.biomodels.jummp.webapp
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import groovy.json.JsonSlurper
-import net.biomodels.jummp.core.ModelException
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
@@ -58,7 +57,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONObject
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.multipart.MultipartFile
-import org.springframework.security.core.GrantedAuthority
 
 import javax.servlet.http.HttpServletResponse
 import java.util.zip.ZipEntry
@@ -1378,8 +1376,11 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
         boolean hasCuratorRole = userService.isLoggedInUserACurator()
         if (canUpdate && hasCuratorRole) {
             CurationState curationState = CurationState.valueOf(requestObject['curationState'] as String)
-            modelDelegateService.updateCurationStateRevision(modelId, revision, curationState)
-            render([message: "Curation status has been saved successfully"] as JSON)
+            RevisionTransportCommand revisionTC = modelDelegateService.updateCurationStateRevision(modelId, revision, curationState)
+            Map result = [:]
+            result["message"] = "Curation status has been updated successfully"
+            result["publicationId"] = revisionTC.model.publicationId
+            render(result as JSON)
             return
         }
         response.status = 401
