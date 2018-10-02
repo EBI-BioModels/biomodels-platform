@@ -33,10 +33,6 @@
 <%@ page import="net.biomodels.jummp.core.model.ModelState"%>
 <%@ page import="net.biomodels.jummp.qcinfo.*"%>
 
-<%
-    def loadedZips=new HashMap()
-    def zipSupported=[:]
-%>
 <head xmlns="http://www.w3.org/1999/html">
     <title>${revision.name}</title>
     <script type="text/javascript">
@@ -56,52 +52,41 @@
     <g:javascript>
 	    var canUpdate = ${canUpdate};
     </g:javascript>
-        <g:javascript src="jstree/jquery.jstree.js"/>
-        <g:javascript src="equalize.js"/>
-        <g:javascript src="syntax/shCore.js"/>
-        <g:javascript src="syntax/shBrushMdl.js"/>
-        <g:javascript src="syntax/shBrushXml.js"/>
-        <g:javascript src="toastr.min.js"/>
-        <g:javascript src="jquery.handsontable.full.js"/>
-        <style>
-            <%-- class for buttons on sticky left-hand-side menu --%>
-            .ui-button {
-                border-left: none;
-                margin: 0;
-            }
-            .toast {
-                opacity: 1 !important;
-            }
-            .rounded-header {
-                background-color: rgb(0, 124, 150);
-                border-bottom: 0 none;
-                border-top-left-radius: 5px;
-                border-top-right-radius: 5px;
-                line-height: inherit;
-                margin: 0;
-                padding: 0;
-            }
-            /* word wrap the overlong file names */
-            #treeView a {
-                white-space: normal !important;
-                height: auto;
-                padding: 1px 2px;
-            }
-        </style>
-        <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.handsontable.full.min.css')}"/>
-        <link rel="stylesheet" href="${resource(dir: 'css', file: 'jstree.css')}" />
-        <link rel="stylesheet" href="${resource(dir: 'css', file: 'filegrid.css')}" />
-        <link rel="stylesheet" href="${resource(dir: 'css/syntax', file: 'shCore.css')}" />
-        <link rel="stylesheet" href="${resource(dir: 'css/syntax', file: 'shThemeDefault.css')}" />
-        <link rel="stylesheet" href="${resource(dir: 'css', file: 'toastr.min.css')}"/>
-        <style>
-            #toolbarList li .ui-button-text {
-                font-size: 0.75em;
-            }
-        </style>
-        <Ziphandler:outputFileInfoAsJS repFiles="${revision.files.findAll{!it.hidden}}"
-                                       loadedZips="${loadedZips}" zipSupported="${zipSupported}"/>
-        <script>
+    <g:javascript src="syntax/shCore.js"/>
+    <g:javascript src="syntax/shBrushMdl.js"/>
+    <g:javascript src="syntax/shBrushXml.js"/>
+    <g:javascript src="toastr.min.js"/>
+    <g:javascript src="jquery.handsontable.full.js"/>
+    <style>
+        <%-- class for buttons on sticky left-hand-side menu --%>
+        .ui-button {
+            border-left: none;
+            margin: 0;
+        }
+        .toast {
+            opacity: 1 !important;
+        }
+        .rounded-header {
+            background-color: rgb(0, 124, 150);
+            border-bottom: 0 none;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+            line-height: inherit;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.handsontable.full.min.css')}"/>
+    <link rel="stylesheet" href="${resource(dir: 'css/syntax', file: 'shCore.css')}" />
+    <link rel="stylesheet" href="${resource(dir: 'css/syntax', file: 'shThemeDefault.css')}" />
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'toastr.min.css')}"/>
+    <style>
+        #toolbarList li .ui-button-text {
+            font-size: 0.75em;
+        }
+    </style>
+
+    <script>
         $(function() {
             $( "#tabs" ).tabs({
                 fx: { opacity: 'toggle' },
@@ -147,7 +132,7 @@
                     buttons: {
                         "Confirm Delete": function() {
                             $.jummp.openPage('${g.createLink(controller: 'model', action: 'delete',
-                            id: (revision.model.publicationId) ?: (revision.model.submissionId))}');
+                            id: revision.modelIdentifier())}');
                             $( this ).dialog( "close" );
                         },
                         Cancel: function() {
@@ -171,257 +156,8 @@
             return data;
         }
 
-        function addPreviewNotification(showNotification, fileProps) {
-            if (showNotification) {
-                $("#notificationgoeshere").html("As this is a large file, only a part of it is loaded below. " +
-                    "<a id='loadFileCompletely' href=''>Click here</a> " +
-                    "to load the file completely. Please be warned that this may be slow.");
-                $("#loadFileCompletely").click( function(event) {
-                        event.preventDefault();
-                        fileProps.showPreview = false;
-                        updateFileDetailsPanel(fileProps);
-                });
-            }
-            else {
-                $("#notificationgoeshere").hide();
-            }
-        }
-
-        function updateFileDetailsPanel(fileProps) {
-            if (typeof(fileProps) != "undefined") {
-                var formats=["text","txt","xml","pdf", "jpg","jpeg", "gif", "png", "bmp"];
-                var mimeType=fileProps["mime"];
-                var content=[];
-                var makeAjaxCall=false;
-                var imageType=false;
-                var mdlType=false;
-                var xmlType=false;
-                var csvType=false;
-                content.push("<div class='ui-widget-content ui-corner-all'><div class='padleft padright padtop'><h3>")
-                content.push(fileProps["Name"])
-                var fileLink="${g.createLink(controller: 'model', action: 'download', id: revision.identifier())}"
-                                        +"?filename="+encodeURIComponent(fileProps.Name)
-                content.push("<a title='Download ",fileProps.Name, "'","href='",fileLink);
-                fileLink=fileLink+"&inline=true";
-                content.push("'><img style='width:20px;margin-left:10px;float:none' alt='Download' " +
-                    "src='${grailsApplication.config.grails.serverURL}/images/download.png'/></a></h3></div>");
-                if (mimeType!=null) {
-                    for (var format in formats) {
-                        var matching=formats[format];
-                        if (mimeType.indexOf(matching) !=-1) {
-                            makeAjaxCall=true
-                            if (matching=="jpg" || matching=="jpeg" || matching=="gif" || matching=="png" || matching=="bmp") {
-                                imageType=true;
-                            }
-                            if (matching=="txt" || matching=="text" || matching=="xml") {
-                                if (fileProps.Name.indexOf('.mdl') !=-1) {
-                                    mdlType=true;
-                                }
-                                if (fileProps.Name.indexOf('.xml')!=-1) {
-                                    xmlType=true;
-                                }
-                                if (fileProps.Name.indexOf('.csv')!=-1) {
-                                    csvType=true;
-                                }
-                            }
-                            content.push("<div id='notificationgoeshere' class='padleft padbottom'></div>" +
-                                "<div id='filegoeshere' class='padright padbottom")
-                            if (!mdlType && !xmlType) {
-                                content.push(" padleft")
-                            }
-                            content.push("'>")
-                            if (matching=="pdf") {
-                                content.push("<iframe width='100%' height='500' src='")
-                                content.push(fileLink)
-                                content.push("'/>")
-                            }
-                            content.push("</div>")
-                        }
-                    }
-                }
-                content.push("<div class='metapanel'><div id='tableGoesHere' class='padleft padright padbottom'>")
-                if (!fileProps.isInternal) {
-                    var detailsURL = "${g.createLink(controller: 'model', action: 'getFileDetails', id: revision.identifier())}"
-                                            +"?filename="+encodeURIComponent(fileProps.Name)
-                    //console.log(detailsURL);
-                    $.ajax({
-                        url: detailsURL,
-                        dataType: "text",
-                        success: function(data) {
-                            //console.log(data);
-                            data=JSON.parse(data);
-                            var tcontent=[];
-                            tcontent.push("<table cellpadding='2' cellspacing='5'>")
-                            for (var prop in fileProps) {
-                                if (prop!="isInternal" && prop!="Name" && fileProps[prop]
-                                    && fileProps[prop]!="null" && prop!="mime" && prop!="showPreview") {
-                                    tcontent.push("<tr><td><b>",prop.replace("_"," "),"</b></td>");
-                                    if (prop === "Description") {
-                                        tcontent.push("<td id='fileProp'><div id='fileDescription'><span id='fileDescVal'>", fileProps[prop], "</span><span>&nbsp;</span><span id='fileDesc' class='icon icon-functional' data-icon='e'>&nbsp;</span></div></td></tr>");
-                                    } else {
-                                        tcontent.push("<td>", fileProps[prop], "</td></tr>");
-                                    }
-                                }
-                            }
-                            tcontent.push("<tr><td><b>Submitted</b></td><td>", new Date(data[0].commit))
-                            tcontent.push("</td></tr>")
-                            tcontent.push("<tr><td><b>Last Modified</b></td><td>", new Date(data[data.length-1].commit))
-                            tcontent.push("</td></tr>")
-
-                            tcontent.push("</table>");
-                            $("#tableGoesHere").html(tcontent.join(""));
-                            $("#Files").equalize({reset: true});
-			                if (canUpdate) {
-				                console.log("The model can be updated");
-                                $('#fileProp').hover(
-                                    function() {
-                                        $('#fileDesc').css("display", "inline");
-                                    },
-                                    function () {
-                                        $('#fileDesc').css("display", "none");
-                                    }
-                                    //console.log("you're hovering me!");
-                                );
-                                $('#fileDesc').click(function () {
-                                   var currentValue = $('#fileDescVal').html();
-                                   var size = $('#fileProp').width();
-                                   console.log(size);
-                                   var input = '<input id="editFileDescription" value="' + currentValue + '"/>'
-                                   $('#fileDescription').html(input);
-                                   $('#editFileDescription').css("width", "100%");
-                                });
-			                }
-                        },
-                        error: function(jq, status, errorThrown) {
-                            alert(status+".."+errorThrown);
-                        }
-                    });
-                }
-                else {
-                    content.push("<table cellpadding='2' cellspacing='5'>")
-                    for (var prop in fileProps) {
-                        if (prop!="isInternal" && prop!="Name" && fileProps[prop] && fileProps[prop]!="null" && prop!="mime") {
-                            content.push("<tr><td><b>",prop.replace("_"," "),"</b></td>")
-                            if (prop === "Description") {
-                                content.push("<td id='fileProp'><span>&nbsp;</span><span id='fileDesc' class='icon icon-functional' data-icon='e'>&nbsp;</span>");
-                            } else {
-                                content.push("<td>", fileProps[prop]);
-                            }
-                            content.push("</td></tr>");
-                        }
-                    }
-                    content.push("</table>");
-                }
-                content.push("</div></div></div>");
-                $("#Files #detailsBox").html(content.join(""));
-                if (makeAjaxCall) {
-                    if (mdlType) {
-                        $.ajax({
-                            url : fileLink+"&preview="+encodeURIComponent(fileProps.showPreview),
-                            dataType: "text",
-                            success : function (data) {
-                                var brush=new SyntaxHighlighter.brushes.mdl()
-                                brush.init({ toolbar: false });
-                                var html=brush.getHtml(data)
-                                $("#filegoeshere").html(html);
-                                addPreviewNotification(fileProps.showPreview, fileProps);
-                                $("#Files").equalize({reset: true});
-                                $(".syntaxhighlighter").css({'max-height': (screen.height * 0.45)+'px'});
-                            }
-                        });
-                    }
-                    else if (xmlType) {
-                        $.ajax({
-                            url : fileLink+"&preview="+encodeURIComponent(fileProps.showPreview),
-                            dataType: "text",
-                            success : function (data) {
-                                var brush=new SyntaxHighlighter.brushes.Xml()
-                                brush.init({ toolbar: false });
-                                var html=brush.getHtml(data)
-                                $("#filegoeshere").html(html);
-                                addPreviewNotification(fileProps.showPreview, fileProps);
-                                $("#Files").equalize({reset: true});
-                                $(".syntaxhighlighter").css({'max-height': (screen.height * 0.45)+'px'});
-                            }
-                        });
-                    }
-                    else if (csvType) {
-                        $.ajax({
-                            url : fileLink+"&preview="+encodeURIComponent(fileProps.showPreview),
-                            dataType: "text",
-                            success : function (data) {
-                                var plottingData=getCSVData(data)
-                                //$("#filegoeshere").html(plottingData);
-                                $("#filegoeshere").handsontable({
-                                                        data: plottingData,
-                                                        width: 625,
-                                                        height: 300,
-                                                        stretchH: 'all',
-                                                        readOnly: true,
-                                                        colHeaders: true,
-                                });
-                                addPreviewNotification(fileProps.showPreview, fileProps);
-                                $("#Files").equalize({reset: true});
-                            }
-                        });
-                    }
-                    else if (mimeType.indexOf("txt") != -1 || mimeType.indexOf("text") != -1) {
-                        $.ajax({
-                            url : fileLink+"&preview="+encodeURIComponent(fileProps.showPreview),
-                            dataType: "text",
-                            success : function (data) {
-                                $("#filegoeshere").text(data);
-                                $("#filegoeshere").html($("#filegoeshere").html().replace(/(\r\n|\n|\r)/gm,'<br/>'));
-                                addPreviewNotification(fileProps.showPreview, fileProps);
-                                $("#Files").equalize({reset: true});
-                            }
-                        });
-                    }
-                    else if (imageType) {
-                        var img = $("<img style='width:100%;' />").attr('src', fileLink)
-                                    .load(function() {
-                                        if (!this.complete || typeof this.naturalWidth == "undefined" || this.naturalWidth == 0) {
-                                            $("#filegoeshere").text("Image could not be loaded")
-                                        } else {
-                                            $("#filegoeshere").append(img);
-                                            $("#Files").equalize({reset: true});
-                                        }
-                        });
-                    }
-                }
-            }
-            else {
-                $("#Files #detailsBox").html("");
-            }
-            $("#Files").equalize({reset: true});
-        }
-
         $(document).ready(function() {
             // Handler for .ready() called.
-            $("#Files #treeView").bind("select_node.jstree", function(event, data) {
-                    var clickedOn=$(data.args[0]).attr('title')
-                    if (clickedOn!=null) {
-                        clickedOn = clickedOn.replace(/^\s+|\s+$/g,'')
-                        var fileProps=fileData[clickedOn]
-                        updateFileDetailsPanel(fileProps)
-                    }
-                    else {
-                        $("#Files #detailsBox").html("");
-                    }
-                }).jstree({
-                "ui" : {
-                    "select_limit" : 1
-                },
-                "themes" : {
-                        "theme" : "classic",
-                        "icons" : false
-                },
-                "plugins" : [ "themes", "html_data", "ui"]
-            });
-            var tree = $("#Files #treeView");
-            tree.bind("loaded.jstree", function (event, data) {
-                tree.jstree("open_all");
-            });
             $('#confirm-model-consistency-check').dialog({
                 resizable: false,
                 autoOpen: false,
@@ -495,19 +231,12 @@
                 }
             });
 
-            var top = 225;  // the default value is set for Firefox.
-                            // This value is to be exact height of the header section plus 2px.
-
-            var browser = get_browser(); // find it in jquery.cookiebar.js
-            if (browser.name === 'Chrome'){
-                top = 225;
-            }
-
-            $("body").append("<div id='modelToolbar' style='top: " + top + "px' class='collapsibleContainer' title='Model Toolbar'>" +
+            $("body").append("<div id='modelToolbar' class='collapsibleContainer' title='Model Toolbar'>" +
                 "<button title='Expand Toolbar' data-showing='0' id='panelToggle'>Expand</button></div>	");
             $("#buttonContainer").prependTo("#modelToolbar");
-            $("#panelToggle").click(function (evt){
-                    displayToolbar($("#panelToggle").data("showing") == '0', true);
+            var panelToggle = $("#panelToggle");
+            panelToggle.click(function (evt){
+                displayToolbar(panelToggle.data("showing") === '0', true);
             });
             $( "#download" ).button({
                     text:false,
@@ -570,7 +299,7 @@
                 }
             }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
 
-            $("#panelToggle").button({
+            panelToggle.button({
                     text:false,
                     icons: {
                         primary: "ui-icon-circle-arrow-e"
@@ -606,7 +335,6 @@
                 });
             });
         });
-        displayToolbar(false, false);
 
         function displayToolbar(show, firstTime) {
             var mainContentAreaWidth = $('#main-content-area').width();
@@ -641,10 +369,14 @@
                     $( ".toolbutton" ).css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
             }
         }
+
+        $(function () {
+            displayToolbar(true, true);
+        });
     </script>
     <g:layoutHead/>
-    </head>
-    <body>
+</head>
+<body>
         <div id="buttonContainer" style="display:inline">
                 <ul id='toolbarList'><li>
                 <button class='toolbutton' id="download"
@@ -656,7 +388,7 @@
                     <button class='toolbutton' id="update"
                             onclick="return $.jummp.openPage('${g.createLink(controller: 'model',
                             action: 'update',
-                            id: (revision.model.publicationId) ?: (revision.model.submissionId))}')">Update</button>
+                            id: revision.modelIdentifier())}')">Update</button>
                     </li>
                 </g:if>
                 <g:if test="${canDelete}">
@@ -702,7 +434,7 @@
                         <button class='toolbutton' id='annotate'
                                 onclick="return $.jummp.openPage('${g.createLink(controller: 'annotation',
                                 action: 'edit',
-                                id: (revision.model.publicationId) ?: (revision.model.submissionId))}')">Annotate</button>
+                                id: revision.modelIdentifier())}')">Annotate</button>
                     </li>
                 </g:if>--}%
                     <g:if test="${canCertify}">
@@ -710,7 +442,7 @@
                             <button class='toolbutton' id="certify"
                                     onclick="return $.jummp.openPage('${g.createLink(controller: 'qcInfo',
                                     action: 'edit',
-                            id: (revision.model.publicationId) ?: (revision.model.submissionId))}')">Certify</button>
+                            id: revision.modelIdentifier())}')">Certify</button>
                         </li>
                     </g:if>
                     <g:if test="${canCheckConsistency}">
@@ -753,7 +485,7 @@
                     You are viewing a version of a model that has been updated.
                     To access the latest version, and a more detailed display please
                     go <a href="${createLink(controller: "model", action: "show", id:
-                        (revision.model.publicationId) ?: (revision.model.submissionId))}">here</a>.
+                        revision.modelIdentifier())}">here</a>.
                 </div>
             </g:if>
             <div id="topBar">
@@ -913,39 +645,13 @@
                             </div>--}%
                         </div>
                     </div>
-                    <div id="Files" class="row filegrid">
-                        <div class="small-12 medium-3 large-3 columns">
-                            <div id="treeView">
-                                <ul>
-                                    <li rel="folder">
-                                    <jummp:findMainFileLabel>
-                                        <a>${mainFile}</a>
-                                    </jummp:findMainFileLabel>
-                                    <ul>
-                                        <Ziphandler:outputFileInfoAsHtml repFiles="${revision.files}"
-                                                 loadedZips="${loadedZips}"
-                                                 zipSupported="${zipSupported}"
-                                                 mainFile="${true}"/>
-                                    </ul>
-                                    </li>
-                                </ul>
-                                <ul>
-                                    <g:if test="${revision.files.find{!it.hidden && !it.mainFile}}">
-                                    <li><a>Additional Files</a>
-                                        <ul>
-                                            <Ziphandler:outputFileInfoAsHtml repFiles="${revision.files.findAll{!it.hidden}}"
-                                                 loadedZips="${loadedZips}"
-                                                 zipSupported="${zipSupported}"
-                                                 mainFile="${false}"/>
-                                        </ul>
-                                    </li>
-                                    </g:if>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="small-12 medium-9 large-9 columns">
-                            <div id="detailsBox" class="detailsBox"></div>
-                        </div>
+                    <div id="Files" class="row">
+                        <%
+                            Map model = [:]
+                            model["repoFiles"] = repoFiles
+                        %>
+                        <g:render template="/templates/biomodels/modelDisplay/tabFiles"
+                                  model="${model}" />
                     </div>
                     <div id="History">
                         <% DateFormat dateFormat = DateFormat.getDateTimeInstance(); %>
@@ -993,7 +699,7 @@
                     <g:if test="${convertedFilesTC}">
                     <div id="Exports">
                         <h3>Below are the converted model files where you could download</h3>
-                        <Ziphandler:renderConvertedFiles convertedFilesTC="${convertedFilesTC}"/>
+                        <biomd:renderConvertedFiles convertedFilesTC="${convertedFilesTC}"/>
                     </div>
                     </g:if>
                     <g:pageProperty name="page.modelspecifictabscontent" />

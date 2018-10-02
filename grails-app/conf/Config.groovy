@@ -752,8 +752,6 @@ if (!(jummpConfig.jummp.context.help.root instanceof ConfigObject)) {
 }
 jummp.config.maintenance = false
 
-jummp.id.generators = ModelIdentifierUtils.processGeneratorSettings(jummp)
-
 if (!(jummpConfig.jummp.metadata.officialDatabaseName instanceof ConfigObject)) {
     jummp.metadata.officialDatabaseName = jummpConfig.jummp.metadata.officialDatabaseName
 } else {

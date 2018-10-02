@@ -20,6 +20,8 @@
 
 package net.biomodels.jummp.core.model.identifier.decorator
 
+import groovy.transform.CompileStatic
+
 import java.util.concurrent.atomic.AtomicLong
 import net.biomodels.jummp.core.events.ModelIdentifierDecoratorUpdatedEvent
 import net.biomodels.jummp.core.model.identifier.ModelIdentifier
@@ -27,12 +29,14 @@ import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 
 /**
- * @short ModelIdentifierDecorator implementation that adds a numerical suffix to a model id.
+ * ModelIdentifierDecorator implementation that adds a numerical suffix to a model id.
+ *
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
-public class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
+@CompileStatic
+class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
     /* the width of the suffix used to decorate model identifiers. */
-    final Integer WIDTH
+    Integer WIDTH
     /* the number used in the last model id, without padding. */
     private final AtomicLong lastUsedSuffix = new AtomicLong(-1)
     /* the value to use in the next id, without padding. Effectively, the dual of nextValue */
@@ -46,7 +50,7 @@ public class VariableDigitAppendingDecorator extends AbstractAppendingDecorator 
      * Throws an IllegalArgumentException if @p seed is below 1 or @p width is narrower than
      * the width of @p seed.
      */
-    public VariableDigitAppendingDecorator(Integer order, long seed, int width)
+    VariableDigitAppendingDecorator(Integer order, long seed, int width)
                 throws IllegalArgumentException {
         boolean orderOk = validateOrderValue(order)
         if (!orderOk) {
@@ -110,6 +114,16 @@ public class VariableDigitAppendingDecorator extends AbstractAppendingDecorator 
         updateNextValueIfNeeded()
     }
 
+    /**
+     * Resets this decorator's internal counter.
+     */
+    void reset() {
+        final String NEW_VALUE = "1".padLeft(WIDTH, '0')
+        nextValue.set(NEW_VALUE)
+        nextSuffix.set(1)
+        lastUsedSuffix.set(-1)
+    }
+
     private void updateNextValueIfNeeded() {
         if (lastUsedSuffix.get() == nextSuffix.get()) {
             long newSuffix = nextSuffix.incrementAndGet()
@@ -118,7 +132,7 @@ public class VariableDigitAppendingDecorator extends AbstractAppendingDecorator 
             if (IS_DEBUG_ENABLED) {
                 log.debug "Incremented nextValue to ${newValue}"
             }
-            super.publishEvent(new ModelIdentifierDecoratorUpdatedEvent(this, newValue))
+            super.informOfChange(new ModelIdentifierDecoratorUpdatedEvent(this, newValue))
         }
     }
 }

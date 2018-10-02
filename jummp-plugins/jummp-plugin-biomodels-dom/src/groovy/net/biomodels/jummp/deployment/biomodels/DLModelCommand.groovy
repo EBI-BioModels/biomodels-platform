@@ -29,7 +29,7 @@
  **/
 
 
-package net.biomodels.jummp.plugins.configuration
+package net.biomodels.jummp.deployment.biomodels
 
 import grails.validation.Validateable
 
