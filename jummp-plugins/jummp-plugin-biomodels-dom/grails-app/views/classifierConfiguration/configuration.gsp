@@ -31,12 +31,29 @@
     <meta name="layout" content="${session['branding.style']}/main" />
 
     <title>Configuration - ${title}</title>
-    <link rel="stylesheet" href="${resource(dir: 'css', file: 'toastr.min.css', contextPath: "${grailsApplication.config.grails.serverURL}")}"/>
-    <link rel="stylesheet" href="${resource(dir: 'css/datatable', file: 'jquery.dataTables.min.css', contextPath: "${grailsApplication.config.grails.serverURL}")}" type="text/css">
-    <link rel="stylesheet" href="${resource(dir: 'css/datatable', file: 'buttons.dataTables.min.css', contextPath: "${grailsApplication.config.grails.serverURL}")}" type="text/css">
-    <link rel="stylesheet" href="${resource(dir: 'css/datatable', file: 'select.dataTables.min.css', contextPath: "${grailsApplication.config.grails.serverURL}")}" type="text/css">
-    <link rel="stylesheet" href="${resource(dir: 'css', file: 'easy-autocomplete.min.css')}" type="text/css">
-    <link rel="stylesheet" href="${resource(dir: 'css', file: 'easy-autocomplete.themes.min.css')}" type="text/css">
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/pretty-checkbox@3.0/dist/pretty-checkbox.min.css"/>
+    <link rel="stylesheet"
+          href="${resource(dir: 'css', file: 'toastr.min.css',
+                        contextPath: "${grailsApplication.config.grails.serverURL}")}"/>
+    <link rel="stylesheet"
+          href="${resource(dir: 'css/datatable', file: 'jquery.dataTables.min.css',
+                        contextPath: "${grailsApplication.config.grails.serverURL}")}"
+          type="text/css">
+    <link rel="stylesheet"
+          href="${resource(dir: 'css/datatable', file: 'buttons.dataTables.min.css',
+                        contextPath: "${grailsApplication.config.grails.serverURL}")}"
+          type="text/css">
+    <link rel="stylesheet"
+          href="${resource(dir: 'css/datatable', file: 'select.dataTables.min.css',
+                contextPath: "${grailsApplication.config.grails.serverURL}")}"
+          type="text/css">
+    <link rel="stylesheet"
+          href="${resource(dir: 'css', file: 'easy-autocomplete.min.css')}"
+          type="text/css">
+    <link rel="stylesheet"
+          href="${resource(dir: 'css', file: 'easy-autocomplete.themes.min.css')}"
+          type="text/css">
 </head>
 <body>
 <g:javascript contextPath="" src="toastr.min.js"/>
@@ -53,10 +70,13 @@
 <div id="remote" class="body">
     <h2>Configuration - ${title}</h2>
     <g:form name="configurationForm" action="${action}">
-        <g:render template="/templates/configuration/${template}"/>
+        <g:render template="/templates/configuration/${template}" plugin="jummp-plugin-biomodels-dom"/>
         <div class="buttons">
             <button type="reset" id="cancelButton" class="button">Cancel</button>
             <button type="submit" id="submitButton" class="button">Save</button>
+            <g:if test="${controllerName == 'classifierConfigure' && actionName == 'classifier'}">
+                <button type="button" id="createButton" class="button">New train</button>
+            </g:if>
         </div>
     </g:form>
 </div>
