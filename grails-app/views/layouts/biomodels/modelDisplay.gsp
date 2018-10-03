@@ -331,8 +331,17 @@
                     success: function(response) {
                         toastr.clear();
                         toastr.success(response.message);
+                        // Updating the curation state feature allows us to change
+                        // back and forth non-curated and curated without any problem. On top of that,
+                        // the update procedure considers the situation where the curation state of
+                        // the public model has been changed to curated. We need to generate
+                        // the publication identifier for such a model. Hence the page is only refreshed if
+                        // we are changing the curation state of the non-curated public model from non-curated to
+                        // curated. The page will be redirected to itself with the newly-created publication
+                        // identifier that has been assigned to the model.
                         var publicationId = response.publicationId;
-                        if (publicationId !== undefined) {
+                        var criteria = publicationId !== null;
+                        if (criteria) {
                             var message = response.message;
                             message += ". Please wait a few seconds while the web page is being refreshed.";
                             $('.flashNotificationDiv').html(message).show();
