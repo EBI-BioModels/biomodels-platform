@@ -143,19 +143,6 @@
 
         });
 
-        function getCSVData(data) {
-            var lines = data.match(/[^\r\n]+/g);
-            /*var content=[];
-            content.push("<table>");*/
-            var data = [];
-            for (var id = 0; id < lines.length; id++) {
-                var line = lines[id];
-                var fields = line.split(",");
-                data.push(fields);
-            }
-            return data;
-        }
-
         $(document).ready(function() {
             // Handler for .ready() called.
             $('#confirm-model-consistency-check').dialog({
@@ -393,12 +380,13 @@
         }
 
         $(function () {
-            <sec:ifLoggedIn>
+            %{--<sec:ifLoggedIn>
                 displayToolbar(true, true);
             </sec:ifLoggedIn>
             <sec:ifNotLoggedIn>
                 displayToolbar(false, true);
-            </sec:ifNotLoggedIn>
+            </sec:ifNotLoggedIn>--}%
+            displayToolbar(true, true);
         });
     </script>
     <g:layoutHead/>
@@ -500,7 +488,7 @@
                         </li>
                     </g:if>
                 </ul>
-         </div>
+        </div>
         <div class="ebiLayout_reduceWidth">
             <g:if test="${revision.model.deleted}">
                 <div class='PermanentMessage'>
