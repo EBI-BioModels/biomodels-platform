@@ -143,19 +143,6 @@
 
         });
 
-        function getCSVData(data) {
-            var lines = data.match(/[^\r\n]+/g);
-            /*var content=[];
-            content.push("<table>");*/
-            var data = [];
-            for (var id = 0; id < lines.length; id++) {
-                var line = lines[id];
-                var fields = line.split(",");
-                data.push(fields);
-            }
-            return data;
-        }
-
         $(document).ready(function() {
             // Handler for .ready() called.
             $('#confirm-model-consistency-check').dialog({
