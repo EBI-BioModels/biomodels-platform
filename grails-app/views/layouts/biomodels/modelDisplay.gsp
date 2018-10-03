@@ -371,12 +371,13 @@
         }
 
         $(function () {
-            <sec:ifLoggedIn>
+            %{--<sec:ifLoggedIn>
                 displayToolbar(true, true);
             </sec:ifLoggedIn>
             <sec:ifNotLoggedIn>
                 displayToolbar(false, true);
-            </sec:ifNotLoggedIn>
+            </sec:ifNotLoggedIn>--}%
+            displayToolbar(true, true);
         });
     </script>
     <g:layoutHead/>
@@ -478,7 +479,7 @@
                         </li>
                     </g:if>
                 </ul>
-         </div>
+        </div>
         <div class="ebiLayout_reduceWidth">
             <g:if test="${revision.model.deleted}">
                 <div class='PermanentMessage'>
