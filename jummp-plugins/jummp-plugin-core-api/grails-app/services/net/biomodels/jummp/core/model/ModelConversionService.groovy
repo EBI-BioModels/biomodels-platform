@@ -51,15 +51,17 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 
-import net.biomodels.jummp.utils.JummpHttpService
+import net.biomodels.jummp.core.util.JummpHttpService
 
 class ModelConversionService implements IModelConversionService {
 
     private static final Log log = LogFactory.getLog(ModelConversionService.class)
 
-    static final String CONVERSION_SERVICE_URL = Holders.grailsApplication.config.jummp.model.converter.url
+    def grailsApplication = Holders.grailsApplication
 
-    static final String EXPORT_FOLDER = Holders.grailsApplication.config.jummp.model.exportFolder
+    final String CONVERSION_SERVICE_URL = grailsApplication.config.jummp.model.converter.url
+
+    final String EXPORT_FOLDER = grailsApplication.config.jummp.model.exportFolder
 
     def repositoryFileService
 
@@ -69,16 +71,16 @@ class ModelConversionService implements IModelConversionService {
      *
      * @return  true/false
      */
-    static boolean isAlive() {
+    boolean isAlive() {
         String infoFormat = "${CONVERSION_SERVICE_URL}info/mapSupportedFormats"
         isAlive(infoFormat)
     }
 
-    static boolean isAlive(String url) {
+    boolean isAlive(String url) {
         200 == JummpHttpService.getStatusCode(url)
     }
 
-    static String getConversionServiceEndpoint() {
+    String getConversionServiceEndpoint() {
         CONVERSION_SERVICE_URL
     }
     /**
