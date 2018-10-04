@@ -143,19 +143,6 @@
 
         });
 
-        function getCSVData(data) {
-            var lines = data.match(/[^\r\n]+/g);
-            /*var content=[];
-            content.push("<table>");*/
-            var data = [];
-            for (var id = 0; id < lines.length; id++) {
-                var line = lines[id];
-                var fields = line.split(",");
-                data.push(fields);
-            }
-            return data;
-        }
-
         $(document).ready(function() {
             // Handler for .ready() called.
             $('#confirm-model-consistency-check').dialog({
@@ -331,8 +318,17 @@
                     success: function(response) {
                         toastr.clear();
                         toastr.success(response.message);
+                        // Updating the curation state feature allows us to change
+                        // back and forth non-curated and curated without any problem. On top of that,
+                        // the update procedure considers the situation where the curation state of
+                        // the public model has been changed to curated. We need to generate
+                        // the publication identifier for such a model. Hence the page is only refreshed if
+                        // we are changing the curation state of the non-curated public model from non-curated to
+                        // curated. The page will be redirected to itself with the newly-created publication
+                        // identifier that has been assigned to the model.
                         var publicationId = response.publicationId;
-                        if (publicationId !== undefined) {
+                        var criteria = publicationId !== null;
+                        if (criteria) {
                             var message = response.message;
                             message += ". Please wait a few seconds while the web page is being refreshed.";
                             $('.flashNotificationDiv').html(message).show();
@@ -350,36 +346,26 @@
         });
 
         function displayToolbar(show, firstTime) {
-            var mainContentAreaWidth = $('#main-content-area').width();
             if (show) {
-                $('#main-content-area').width((mainContentAreaWidth - 110)+'px');
-                $('#main-content-area').css({'margin-left': '80px'});
-                    $("#panelToggle").data("showing", '1');
-                    $(".pagecontent").width("95%");
-                    $(".pagecontent").css('margin-left', '80px');
-                    $(".buttonLabel").show();
-                    $("#modelToolbar").width("110px");
-                    $( "#panelToggle" ).button("option", {
-                            icons: { primary: "ui-icon-circle-arrow-w" }
+                $("#panelToggle").data("showing", '1');
+                $(".buttonLabel").show();
+                $("#modelToolbar").width("110px");
+                $("#panelToggle").button("option", {
+                    icons: { primary: "ui-icon-circle-arrow-w" }
+                });
+                $(".toolbutton").button("option", "text", true);
+                $(".toolbutton").css({ width: '110px', 'padding-top': '10px', 'padding-bottom': '10px' });
+            } else {
+                $("#panelToggle").data("showing", '0');
+                $(".buttonLabel").hide();
+                $("#modelToolbar").width("45px");
+                $(".toolbutton").button("option", "text", false);
+                if (firstTime) {
+                    $("#panelToggle").button("option", {
+                        icons: { primary: "ui-icon-circle-arrow-e" }
                     });
-                    $( ".toolbutton" ).button("option", "text", true);
-                    $( ".toolbutton" ).css({ width: '110px', 'padding-top': '10px', 'padding-bottom': '10px' });
-            }
-            else {
-                $('#main-content-area').width((mainContentAreaWidth + 110)+'px');
-                $('#main-content-area').css({'margin-left': 0});
-                    $("#panelToggle").data("showing", '0');
-                    $(".pagecontent").width("100%");
-                    $(".pagecontent").css('margin-left', '5px');
-                    $(".buttonLabel").hide();
-                    $("#modelToolbar").width("45px");
-                    $( ".toolbutton" ).button("option", "text", false);
-                    if (firstTime) {
-                        $( "#panelToggle" ).button("option", {
-                            icons: { primary: "ui-icon-circle-arrow-e" }
-                        });
-                    }
-                    $( ".toolbutton" ).css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
+                }
+                $(".toolbutton").css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
             }
         }
 
@@ -390,6 +376,7 @@
             <sec:ifNotLoggedIn>
                 displayToolbar(false, true);
             </sec:ifNotLoggedIn>
+            // displayToolbar(true, true);
         });
     </script>
     <g:layoutHead/>
@@ -491,7 +478,7 @@
                         </li>
                     </g:if>
                 </ul>
-         </div>
+        </div>
         <div class="ebiLayout_reduceWidth">
             <g:if test="${revision.model.deleted}">
                 <div class='PermanentMessage'>
