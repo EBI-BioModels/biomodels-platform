@@ -43,7 +43,6 @@
     <div id="content" role="main" class="row">
         <div data-sticky-container class="sticky-container">
             <section>
-                <div id="main-content-area">
                 <g:if test="${facetSearchContent}">
                     <div class="small-4 medium-2 large-2 columns show-for-medium">
                         ${raw(facetSearchContent)}
@@ -80,14 +79,13 @@
                         </div>
                     </g:if>
                     <g:else>
-                        <div class="small-12 medium-12 large-12 columns">
+                        <div id="main-content" class="small-12 medium-12 large-12 columns">
                             <g:render template="/templates/notification/showNotificationDiv"/>
                             <g:pageProperty name="page.main-content" />
                             <g:layoutBody/>
                         </div>
                     </g:else>
                 </g:else>
-                </div>
             </section>
         </div>
     </div>
