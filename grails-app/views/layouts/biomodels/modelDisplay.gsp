@@ -346,47 +346,37 @@
         });
 
         function displayToolbar(show, firstTime) {
-            var mainContentAreaWidth = $('#main-content-area').width();
             if (show) {
-                $('#main-content-area').width((mainContentAreaWidth - 110)+'px');
-                $('#main-content-area').css({'margin-left': '80px'});
-                    $("#panelToggle").data("showing", '1');
-                    $(".pagecontent").width("95%");
-                    $(".pagecontent").css('margin-left', '80px');
-                    $(".buttonLabel").show();
-                    $("#modelToolbar").width("110px");
-                    $( "#panelToggle" ).button("option", {
-                            icons: { primary: "ui-icon-circle-arrow-w" }
+                $("#panelToggle").data("showing", '1');
+                $(".buttonLabel").show();
+                $("#modelToolbar").width("110px");
+                $("#panelToggle").button("option", {
+                    icons: { primary: "ui-icon-circle-arrow-w" }
+                });
+                $(".toolbutton").button("option", "text", true);
+                $(".toolbutton").css({ width: '110px', 'padding-top': '10px', 'padding-bottom': '10px' });
+            } else {
+                $("#panelToggle").data("showing", '0');
+                $(".buttonLabel").hide();
+                $("#modelToolbar").width("45px");
+                $(".toolbutton").button("option", "text", false);
+                if (firstTime) {
+                    $("#panelToggle").button("option", {
+                        icons: { primary: "ui-icon-circle-arrow-e" }
                     });
-                    $( ".toolbutton" ).button("option", "text", true);
-                    $( ".toolbutton" ).css({ width: '110px', 'padding-top': '10px', 'padding-bottom': '10px' });
-            }
-            else {
-                $('#main-content-area').width((mainContentAreaWidth + 110)+'px');
-                $('#main-content-area').css({'margin-left': 0});
-                    $("#panelToggle").data("showing", '0');
-                    $(".pagecontent").width("100%");
-                    $(".pagecontent").css('margin-left', '5px');
-                    $(".buttonLabel").hide();
-                    $("#modelToolbar").width("45px");
-                    $( ".toolbutton" ).button("option", "text", false);
-                    if (firstTime) {
-                        $( "#panelToggle" ).button("option", {
-                            icons: { primary: "ui-icon-circle-arrow-e" }
-                        });
-                    }
-                    $( ".toolbutton" ).css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
+                }
+                $(".toolbutton").css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
             }
         }
 
         $(function () {
-            %{--<sec:ifLoggedIn>
+            <sec:ifLoggedIn>
                 displayToolbar(true, true);
             </sec:ifLoggedIn>
             <sec:ifNotLoggedIn>
                 displayToolbar(false, true);
-            </sec:ifNotLoggedIn>--}%
-            displayToolbar(true, true);
+            </sec:ifNotLoggedIn>
+            // displayToolbar(true, true);
         });
     </script>
     <g:layoutHead/>
