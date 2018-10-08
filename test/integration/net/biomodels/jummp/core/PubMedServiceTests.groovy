@@ -56,6 +56,7 @@ class PubMedServiceTests extends JummpIntegrationTest {
     def fileSystemService
     def modelService
     def modelDelegateService
+    def publicationService
     def pubMedService
     def userService
     def vcsService
@@ -75,14 +76,13 @@ class PubMedServiceTests extends JummpIntegrationTest {
         userService.register(user)
         // publication: Science   (ISSN: 0036-8075)   (ESSN: 1095-9203)
         String id = "20488988"
-        Publication publication = pubMedService.fromCommandObject(pubMedService.fetchPublicationData(id))
+        Publication publication = publicationService.fromCommandObject(pubMedService.fetchPublicationData(id))
         assertTrue(publication.validate())
         assertEquals("Science (New York, N.Y.)", publication.journal)
         assertEquals(2010, publication.year)
         assertEquals("6", publication.month)
-        //assertEquals(11, publication.day) DONT ALWAYS GET BACK DAY FROM NEW PUBMED SERVICE
-        assertEquals(328, publication.volume)
-        assertEquals(5984, publication.issue)
+        assertEquals("328", publication.volume)
+        assertEquals("5984", publication.issue)
         assertEquals("1404-1408", publication.pages)
         assertEquals("Covering a broad dynamic range: information processing at the erythropoietin receptor.", publication.title)
         assertEquals("Division Systems Biology of Signal Transduction, DKFZ-ZMBH Alliance, German Cancer Research Center, 69120 Heidelberg, Germany.", publication.affiliation)
@@ -91,17 +91,17 @@ class PubMedServiceTests extends JummpIntegrationTest {
         def authorTest = PublicationPerson.findByPublicationAndPerson(publication, fakeAuthor)
         assertNotNull(authorTest)
         assertEquals(authorTest.person, fakeAuthor)
-        assertEquals(authorTest.person.userRealName, "Not Schilling")
+        assertNotEquals(authorTest.person.userRealName, "Not Schilling")
         assertEquals(authorTest.pubAlias, "Schilling M")
         assertEquals(authorTest.position, 1)
         // test for 12974500 - no day specified
-        publication = pubMedService.fromCommandObject(pubMedService.fetchPublicationData("12974500"))
+        publication = publicationService.fromCommandObject(pubMedService.fetchPublicationData("12974500"))
         assertNull(publication.day)
 
-        // test for 20955552 - no month and no issue
-        publication = pubMedService.fromCommandObject(pubMedService.fetchPublicationData("20955552"))
+        // test for 20955552 - month has been updated recently, but no issue
+        publication = publicationService.fromCommandObject(pubMedService.fetchPublicationData("20955552"))
         assertNull(publication.day)
-        assertEquals("0",publication.month)
+        assertEquals("10", publication.month)
         assertNull(publication.issue)
     }
 
@@ -110,7 +110,6 @@ class PubMedServiceTests extends JummpIntegrationTest {
         String rootPath = container.getParent()
         container.mkdirs()
         assertTrue container.exists()
-        String currentContainer = container.getCanonicalPath()
         def exchange = new File("target/vcs/ed/")
         exchange.mkdirs()
         assertTrue exchange.exists()
@@ -118,17 +117,18 @@ class PubMedServiceTests extends JummpIntegrationTest {
         grailsApplication.config.jummp.vcs.exchangeDirectory = exchange.path
         String REGISTRY_EXPORT_FILE_NAME = "testMiriam.xml"
         miriamService.registryExport = new File(exchange.path, REGISTRY_EXPORT_FILE_NAME)
-        fileSystemService.currentModelContainer = currentContainer
+        String currentContainer = container.getCanonicalPath()
+        fileSystemService.currentModelContainer.set(currentContainer)
         fileSystemService.root = container.getParentFile()
         vcsService.modelContainerRoot = rootPath
         def gitFactory = grailsApplication.mainContext.getBean("gitManagerFactory")
         vcsService.vcsManager = gitFactory.getInstance()
         vcsService.vcsManager.exchangeDirectory = exchange
         assertTrue(vcsService.isValid())
-        assertNotNull solrServerHolder
+        /*assertNotNull solrServerHolder*/
         createUserAndRoles()
         authenticateAsUser()
-
+        assertEquals(User.findByUsername("username").username, "username")
         File f = new File("test/files/BIOMD0000000272.xml")
         assertTrue f.exists()
         String name = JummpXmlUtils.findModelAttribute(f, "model", "name").trim()
@@ -142,7 +142,7 @@ class PubMedServiceTests extends JummpIntegrationTest {
         assertNotNull publication
         def mtc = new ModelTransportCommand(publication: publication)
         def rev = new RevisionTransportCommand(name: name, validated: true, format: fmt,
-                model: mtc)
+                model: mtc, owner: "username")
         Model m = modelService.uploadValidatedModel([rf], rev)
         assertNotNull m.publication
         Model.withSession { s ->
@@ -180,8 +180,8 @@ class PubMedServiceTests extends JummpIntegrationTest {
             assertEquals pages, ptc.pages
         }
 
-        solrServerHolder.server.deleteByQuery("*:*")
-        solrServerHolder.server.commit()
+        /*solrServerHolder.server.deleteByQuery("*:*")
+        solrServerHolder.server.commit()*/
         FileUtils.deleteDirectory(new File("target/vcs/wd"))
         FileUtils.deleteDirectory(new File("target/vcs/ed"))
     }
