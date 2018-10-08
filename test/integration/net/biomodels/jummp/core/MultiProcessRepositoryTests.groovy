@@ -34,14 +34,17 @@
 
 package net.biomodels.jummp.core
 
-import grails.test.mixin.TestMixin
-import grails.test.mixin.integration.IntegrationTestMixin
+
 import net.biomodels.jummp.plugins.git.GitManager
-import net.biomodels.jummp.util.interprocess.InterJummpSync
-import net.biomodels.jummp.util.interprocess.UpdateAndTest
+import net.biomodels.jummp.utils.interprocess.InterJummpSync
+import net.biomodels.jummp.utils.interprocess.UpdateAndTest
 import org.apache.commons.io.FileUtils
-import org.junit.*
-import static org.junit.Assert.*
+import org.junit.After
+import org.junit.Before
+import org.junit.Ignore
+import org.junit.Test
+
+import static org.junit.Assert.assertTrue
 
 /*
 * These tests ensure consistent multi-threaded and multi-process access to
