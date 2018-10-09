@@ -1051,17 +1051,17 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                                 boolean changed =  changedPubLinkProvider || changedPubLink
                                 if (!changed) {
                                     // reload the publication from cache
-                                    retrieved = publicationContext.publication
+                                    retrieved = publicationContext?.publication
                                     if (publicationContext.comesFromDatabase) {
                                         flash.flashMessage = g.message(code: "publication.editor.duplicateEntry.message")
                                     }
                                 } else { // load from database, external call or create a default PTC
                                     publicationContext = loadOrFetchOrCreatePublication(model)
-                                    retrieved = publicationContext.publication
+                                    retrieved = publicationContext?.publication
                                 }
                             } else { // load from database, external call or create a default PTC
                                 publicationContext = loadOrFetchOrCreatePublication(model)
-                                retrieved = publicationContext.publication
+                                retrieved = publicationContext?.publication
                             }
                         } else {
                             log.error("Expected publication objects initialised in workingMemory.")
