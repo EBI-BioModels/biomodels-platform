@@ -42,14 +42,12 @@ import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.git.GitManagerFactory
-import net.biomodels.jummp.plugins.security.Role
-import net.biomodels.jummp.plugins.security.User
 import org.apache.commons.io.FileUtils
-import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.lib.Repository
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder
-import org.junit.*
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
 import org.springframework.security.acls.domain.BasePermission
+
 import static org.junit.Assert.*
 
 @TestMixin(IntegrationTestMixin)
@@ -220,7 +218,7 @@ class ModelHistoryServiceTests extends JummpIntegrationTest {
         assertTrue exchangeDir.exists()
         grailsApplication.config.jummp.vcs.workingDirectory = root.parent
         grailsApplication.config.jummp.vcs.exchangeDirectory = exchangeDir.path
-        modelService.fileSystemService.currentModelContainer = containerPath
+        modelService.fileSystemService.currentModelContainer.set(containerPath)
         modelService.vcsService.modelContainerRoot = root.parentFile
         GitManagerFactory gitService = new GitManagerFactory()
         gitService.grailsApplication = grailsApplication
