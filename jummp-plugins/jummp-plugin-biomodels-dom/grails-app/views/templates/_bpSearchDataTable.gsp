@@ -41,7 +41,7 @@
                     if (data !== undefined && data.length !== 0) {
                         data = data[0].replace(/\\/g, "");
                         var lastIndexofSlash = data.lastIndexOf("/");
-                        data = "<a target='_blank' href='https://www.ebi.ac.uk/biomodels-main/" + data + "'>" + data.substring(lastIndexofSlash, data.length) + "</a>"
+                        data = "<a target='_blank' href='https://www.ebi.ac.uk/biomodels/" + data + "'>" + data.substring(lastIndexofSlash, data.length) + "</a>"
                     }
                     return data
                 }
@@ -53,7 +53,7 @@
                     if (data !== undefined && data.length !== 0) {
                         data = data[0].replace(/\\/g, "");
                         var lastIndexofSlash = data.lastIndexOf("/");
-                        lastIndexofSlash = data.lastIndexOf("/");
+                        lastIndexofSlash = data.lastIndexOf("/")+1;
                         data = "<a target='_blank' href='" + data + "'>" + data.substring(lastIndexofSlash, data.length) + "</a>"
                     }
                     return data
@@ -83,8 +83,8 @@
             // Global Flitering
             var query;
             if (!(urlParams.search.value)) {
-//              d.query = "domain_source:biomodels_parameters&size=100";
-                query = "BIOMD*";
+              query = "domain_source:biomodels_parameters";
+//                query = "BIOMD*";
             } else {
                 query = urlParams.search.value;
             }
