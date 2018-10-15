@@ -40,8 +40,8 @@
                 render: function (data, type, row) {
                     if (data !== undefined && data.length !== 0) {
                         data = data[0].replace(/\\/g, "");
-                        var lastIndexofSlash = data.lastIndexOf("/");
-                        data = "<a target='_blank' href='https://www.ebi.ac.uk/biomodels/" + data + "'>" + data.substring(lastIndexofSlash, data.length) + "</a>"
+                        var lastIndexOfSlash = data.lastIndexOf("/");
+                        data = "<a target='_blank' href='https://www.ebi.ac.uk/biomodels/" + data + "'>" + data.substring(lastIndexOfSlash, data.length) + "</a>"
                     }
                     return data
                 }
