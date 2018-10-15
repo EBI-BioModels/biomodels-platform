@@ -8,14 +8,11 @@
     <th>Rate</th>
     <th>Parameters</th>
     </thead>
-
 </table>
 
 <script>
-
     $(document).ready(function () {
-
-        const BASE_URL = "http://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters?format=json&";
+        const BASE_URL = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters?format=json&";
         const FIELDS = "fields=entity,entity_id,reaction,model,publication,rate,parameters&";
 
         var columnConfig = [
@@ -80,11 +77,11 @@
 
 
         function preProcessEbiSearchParams(urlParams) {
-            // Global Flitering
+            // Global Filtering
             var query;
             if (!(urlParams.search.value)) {
-              query = "domain_source:biomodels_parameters";
-//                query = "BIOMD*";
+                query = "domain_source:biomodels_parameters";
+                /*query = "BIOMD*";*/
             } else {
                 query = urlParams.search.value;
             }
@@ -144,4 +141,5 @@
                 }
             });
 
-    });</script>
+    });
+</script>
