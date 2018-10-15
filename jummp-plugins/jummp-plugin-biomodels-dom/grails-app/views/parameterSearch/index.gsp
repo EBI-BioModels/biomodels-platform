@@ -1,5 +1,5 @@
 <%--
- Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ Copyright (C) 2018 EMBL-European Bioinformatics Institute (EMBL-EBI),
  Deutsches Krebsforschungszentrum (DKFZ)
 
  This file is part of Jummp.
@@ -16,15 +16,6 @@
  You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
-
-
-
-
-
-
-
-
-
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
@@ -54,10 +45,6 @@
     <link rel="stylesheet"
           href="${resource(dir: 'css', file: 'easy-autocomplete.themes.min.css')}"
           type="text/css">
-
-    %{--<link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css" type="text/css">--}%
-    %{--<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>--}%
-
 </head>
 <body>
 <g:javascript contextPath="" src="toastr.min.js"/>
@@ -75,7 +62,7 @@
 </g:if>
 <div id="remote" class="body">
     <br/>
-   <h3 >BioModels Parameters Search</h3>
+     <h3 > <b>BioModels Parameters</b></h3>
 
     <g:render template="/templates/bpSearchContent"
               plugin="jummp-plugin-biomodels-dom"
