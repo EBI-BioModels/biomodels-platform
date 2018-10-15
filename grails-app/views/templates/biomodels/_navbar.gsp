@@ -37,7 +37,7 @@
         <ul class="menu">
             <li><a href="${g.createLink(controller: 'search', action: 'search', params: [query: '*:*'])}">Browse all models</a></li>
             <li><a href="${g.createLink(controller: 'goChart', action: 'index', plugin: 'jummp-plugin-biomodels-dom')}">Browse GO categories</a></li>
-            <li><a href="${g.createLink(controller: 'bpSearch', action: 'index', plugin: 'jummp-plugin-biomodels-dom')}">Browse BioModels Parameters</a></li>
+            <li><a href="${g.createLink(controller: 'parameterSearch', action: 'index', plugin: 'jummp-plugin-biomodels-dom')}">Parameter Search</a></li>
         </ul>
     </li>
     <li <g:if test="${g.pageProperty(name:'page.submit')?.length()}"> class="active" </g:if> role="menuitem">
