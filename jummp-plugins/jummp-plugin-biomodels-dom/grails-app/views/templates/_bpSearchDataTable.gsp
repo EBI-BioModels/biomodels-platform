@@ -68,6 +68,7 @@
             }
         ];
 
+        // Function called for showing the data pagination stats
         function infoCallback(settings, start, end, max, total, pre) {
             return (!isNaN(total))
                 ? "Showing " + start + " to " + end + " of " + total + " entries"
@@ -75,13 +76,12 @@
                 : "Showing " + start + " to " + (start + this.api().data().length - 1) + " entries";
         }
 
-
+        // Preprocess custom params before calling EbiSearch WS
         function preProcessEbiSearchParams(urlParams) {
             // Global Filtering
             var query;
             if (!(urlParams.search.value)) {
                 query = "domain_source:biomodels_parameters";
-                /*query = "BIOMD*";*/
             } else {
                 query = urlParams.search.value;
             }
@@ -93,9 +93,10 @@
                 var columnName = column.data.replace("fields.", "");
                 var sortDirection = obj.dir;
                 urlParams.sortfield = columnName;
-                if (sortDirection === "desc")
+                if (sortDirection === "desc") {
                     urlParams.order = "descending";
-                else {
+                }
+                else if(sortDirection === "asc"){
                     urlParams.order = "ascending";
                 }
             });
@@ -112,10 +113,19 @@
             return data
         }
 
+        // Function called when data is received
+        function postProcessEbiSearchParams(data){
+            var json = jQuery.parseJSON( data );
+            json.recordsTotal = json["hitCount"];
+            json.recordsFiltered = json["hitCount"];
+            json.data = json["entries"];
+            return JSON.stringify( json );
+        }
         ajaxConfig = {
             "url": BASE_URL + FIELDS,
             "dataSrc": "entries",
-            "data": preProcessEbiSearchParams
+            "data": preProcessEbiSearchParams,
+            "dataFilter":postProcessEbiSearchParams
         };
 
 
@@ -129,13 +139,13 @@
                 "ajax": ajaxConfig,
                 language: {
                     paginate: {
-                        previous: '‹',
-                        next: '.'
+                        previous: '<',
+                        next: '>'
                     },
                     aria: {
                         paginate: {
                             previous: 'Previous',
-                            next: '.'
+                            next: 'Next'
                         }
                     }
                 }
