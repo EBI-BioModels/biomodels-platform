@@ -758,10 +758,7 @@ updateWithRecentChanges = { submissionId, publicationId, branch, folder, modelDe
     def submissionInfo = findSubmissionInfoToAddToNewRevision(submissionId)
     def submitter = submissionInfo["submitter"]
     def commitMessage = submissionInfo["commitMessage"]
-    // log in as the submitter; can't use authenticateAsUser because we do not know the unencrypted password
-    def userDetails = userDetailsService.loadUserByUsername(submitter.username)
-    SecurityContextHolder.context.authentication = new UsernamePasswordAuthenticationToken(
-        userDetails, userDetails.password, userDetails.authorities)
+    createAuthTokenForExistingUser(submitter)
 
     def id = Model.executeQuery("select id from Model m where m.submissionId = ?", [submissionId])
     def model = Model.get(id)
@@ -1113,7 +1110,7 @@ findRightSubmitter = {MODEL_ID, BRANCH ->
         failureCount.incrementAndGet()
         return
     }
-    authenticateAsUser(submitter)
+    createAuthTokenForExistingUser(submitter)
     return submitter
 }
 
@@ -1240,7 +1237,7 @@ addRevisionAnnotations = { revision, branch, modelDetails, user ->
     String original_model = modelDetails['original_model']
     if (original_model) {
         createBMAnnotation(revision, original_model, "source",
-            "http://purl.org/dc/elements/1.1/",
+            "http://biomodels.net/model-qualifiers/",
             "http://purl.org/dc/elements/1.1/", author)
     }
 
@@ -1708,6 +1705,13 @@ target(inspectSession: 'Prints information about entities stored in a Hibernate 
     log(result.toString())
 }
 
+/**
+ * Logs in a user with the given credentials.
+ *
+ * The supplied password must not be encrypted.
+ *
+ * Only use for authenticating as the user from the JSON properties file.
+ */
 authenticate = { user, passwd ->
     def authToken = new UsernamePasswordAuthenticationToken(user, passwd)
     def auth = appCtx.getBean("authenticationManager").authenticate(authToken)
@@ -2054,8 +2058,16 @@ getModelById = { modelId, branch ->
     biomodelsConnection.firstRow("select * from $branch where $idColumnName = ?", [modelId])
 }
 
-authenticateAsUser = { user ->
-    authenticate(user.username, "autocreated")
+/**
+ * Populates the authentication object in the current thread's SecurityContext with
+ * the credentials of a given user.
+ *
+ * Bypasses the call to authenticationManager.authenticate() typically used during login.
+ */
+createAuthTokenForExistingUser = { user ->
+    def userDetails = userDetailsService.loadUserByUsername(user.username)
+    SecurityContextHolder.context.authentication = new UsernamePasswordAuthenticationToken(
+            userDetails, userDetails.password, userDetails.authorities)
 }
 
 addPublicationLinkProvider =  { def cmd ->
