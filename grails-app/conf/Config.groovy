@@ -271,7 +271,7 @@ log4j.main = {
     ]
 
     rollingFile name: "debugAppender", file: "logs/jummp-debug.log", threshold: org.apache.log4j.Level.DEBUG
-    rollingFile name: "hibernateAppender", file: "logs/jummp-hibernate.log", threshold: org.apache.log4j.Level.DEBUG
+    rollingFile name: "hibernateAppender", file: "logs/jummp-hibernate.log", threshold: org.apache.log4j.Level.WARN
 
     debug debugAppender: [
         'net.biomodels.jummp',
@@ -285,7 +285,7 @@ log4j.main = {
         'net.biomodels.jummp.plugins.pharmml',
         'net.biomodels.jummp.search'
     ]
-    debug hibernateAppender: [
+    warn hibernateAppender: [
         'org.codehaus.groovy.grails.orm.hibernate',
         'org.codehaus.groovy.grails.orm.support',
         'org.hibernate.SQL',
@@ -751,8 +751,6 @@ if (!(jummpConfig.jummp.context.help.root instanceof ConfigObject)) {
     }
 }
 jummp.config.maintenance = false
-
-jummp.id.generators = ModelIdentifierUtils.processGeneratorSettings(jummp)
 
 if (!(jummpConfig.jummp.metadata.officialDatabaseName instanceof ConfigObject)) {
     jummp.metadata.officialDatabaseName = jummpConfig.jummp.metadata.officialDatabaseName

@@ -27,10 +27,9 @@
  * and open the template in the editor.
  */
 
-package net.biomodels.jummp.util.interprocess
-import java.net.ServerSocket
-import java.net.Socket
-import java.net.SocketTimeoutException
+package net.biomodels.jummp.utils.interprocess
+
+
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit

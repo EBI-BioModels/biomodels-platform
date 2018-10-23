@@ -51,16 +51,38 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 
+import net.biomodels.jummp.core.util.JummpHttpService
+
 class ModelConversionService implements IModelConversionService {
 
     private static final Log log = LogFactory.getLog(ModelConversionService.class)
 
-    final String CONVERSION_SERVICE_URL = Holders.grailsApplication.config.jummp.model.converter.url
+    def grailsApplication = Holders.grailsApplication
 
-    final String EXPORT_FOLDER = Holders.grailsApplication.config.jummp.model.exportFolder
+    final String CONVERSION_SERVICE_URL = grailsApplication.config.jummp.model.converter.url
+
+    final String EXPORT_FOLDER = grailsApplication.config.jummp.model.exportFolder
 
     def repositoryFileService
 
+    /**
+     * This utility method aims to check the connection state of the external conversion service.
+     * It will return true if the service is till alive. Otherwise, the method returns false.
+     *
+     * @return  true/false
+     */
+    boolean isAlive() {
+        String infoFormat = "${CONVERSION_SERVICE_URL}info/mapSupportedFormats"
+        isAlive(infoFormat)
+    }
+
+    boolean isAlive(String url) {
+        200 == JummpHttpService.getStatusCode(url)
+    }
+
+    String getConversionServiceEndpoint() {
+        CONVERSION_SERVICE_URL
+    }
     /**
      * This method returns the list of model formats that Conversion Service
      * currently supports for converting the model under to a given format to
@@ -206,10 +228,18 @@ There is an error while converting the model ${revisionTC.model.submissionId} to
 
     private Map<String, String> getSupportedFormats() {
         String request = "${CONVERSION_SERVICE_URL}info/mapSupportedFormats"
+        isAlive(request as String)
         Object data = fetchDataFromConversionService(request)
         Map result = new HashMap()
-        data.each {
-            result.put(it.key.substring(1), it.value)
+        if (data != null) {
+            data.each {
+                result.put(it.key.substring(1), it.value)
+            }
+        } else {
+            // return the default values what are the current formats supported by Conversion Service
+            result.put("m", "Octave")
+            result.put("owl", "BioPAX")
+            result.put("xpp", "XPP")
         }
         return result
     }
@@ -218,21 +248,24 @@ There is an error while converting the model ${revisionTC.model.submissionId} to
         URL url
         try {
             url = new URL(request)
-        } catch (MalformedURLException e) {
-            // TODO: throw a specific exception
-            throw new JummpException("URL is malformed", e)
-        } finally {
             log.info(url)
             Object slurper = new JsonSlurper()
             try {
                 slurper = new JsonSlurper().parse(url)
             } catch (JsonException e) {
+                slurper = null
                 throw new JummpException("Could not parse model conversion information", e)
             } catch (Exception e) {
+                slurper = null
                 throw new JummpException("Error retrieving model conversion information", e)
             } finally {
                 return slurper
             }
+        } catch (MalformedURLException e) {
+            // TODO: throw a specific exception
+            throw new JummpException("URL is malformed", e)
+        } finally {
+            log.debug("The conversion request has been finished!")
         }
     }
 

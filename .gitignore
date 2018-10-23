@@ -5,6 +5,7 @@ B.*
 *.iml
 *.ipr
 *.iws
+.idea
 *.log
 *.orig
 .slcache/

@@ -1,5 +1,6 @@
+
 /**
- * Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2018 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -20,38 +21,23 @@
  * Additional permission under GNU Affero GPL version 3 section 7
  *
  * If you modify Jummp, or any covered work, by linking or combining it with
- * Grails (or a modified version of that library), containing parts
+ * Grails, Spring Security (or a modified version of that library), containing parts
  * covered by the terms of Apache License v2.0, the licensors of this
  * Program grant you additional permission to convey the resulting work.
  * {Corresponding Source for a non-source form of such a combination shall
- * include the source code for the parts of Grails used as well as
+ * include the source code for the parts of Grails, Spring Security used as well as
  * that of the covered work.}
  **/
+package net.biomodels.jummp.deployment.biomodels
 
-
-package net.biomodels.jummp.plugins.configuration
-
-import grails.validation.Validateable
+import grails.plugin.springsecurity.annotation.Secured
 
 /**
- * Command Object for validating Deep Learning Model Creator.
- * @author Vu Tu <tvu@ebi.ac.uk>
+ * Created by carankalle on 08/10/2018.
  */
-@Validateable
-class DLModelCommand implements Serializable {
-    private static final long serialVersionUID = 1L
-
-    String dlname
-    Integer totalEpoch
-    Integer valPerEpoch
-    Integer batchSize
-    String hiddenLayer
-
-    static constraints = {
-        dlname(nullable: false, blank: false)
-        totalEpoch(nullable: false, blank: false)
-        valPerEpoch(nullable: false, blank: false)
-        batchSize(nullable: false, blank: false)
-        hiddenLayer(nullable: false, blank: false)
+@Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+class ParameterSearchController {
+    def index = {
+        render(view: "index");
     }
 }

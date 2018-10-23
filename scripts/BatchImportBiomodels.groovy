@@ -681,16 +681,17 @@ target(main: "Puts everything together to import models from a given folder") {
             // process the model folder regardless of its size
             tobeProcessed = true
         }
-        //log("$f.name : tobeProcessed? $tobeProcessed")
         boolean exists = modelsImported.contains(f.name)
-        //log("$f.name : exists? $exists")
-        if (f.isDirectory() && modelId ==~ modelFolderPattern && tobeProcessed && !exists) {
+        final String BRANCH = getBranch modelId
+        boolean shouldDefer = isModelInUncuraPublAndPubl(modelId, BRANCH)
+        if (shouldDefer) {
+            addModelError modelId, "Entry found both in $BRANCH branch and also in publ."
+        } else if (f.isDirectory() && modelId ==~ modelFolderPattern && tobeProcessed && !exists) {
             processModelFolder f
         } else if (exists) {
             // regardless of branch, this will check whether the model should be updated
             log("The model ${modelId} was already imported!")
             String submissionId = modelId
-            final String BRANCH = getBranch modelId
             if (isCuratedAndPublished(BRANCH)) {
                 submissionId = getSubmissionIdForBioModelsId(modelId)
             }
@@ -757,10 +758,7 @@ updateWithRecentChanges = { submissionId, publicationId, branch, folder, modelDe
     def submissionInfo = findSubmissionInfoToAddToNewRevision(submissionId)
     def submitter = submissionInfo["submitter"]
     def commitMessage = submissionInfo["commitMessage"]
-    // log in as the submitter; can't use authenticateAsUser because we do not know the unencrypted password
-    def userDetails = userDetailsService.loadUserByUsername(submitter.username)
-    SecurityContextHolder.context.authentication = new UsernamePasswordAuthenticationToken(
-        userDetails, userDetails.password, userDetails.authorities)
+    createAuthTokenForExistingUser(submitter)
 
     def id = Model.executeQuery("select id from Model m where m.submissionId = ?", [submissionId])
     def model = Model.get(id)
@@ -828,11 +826,6 @@ processModelFolder = { File folder ->
     if (!BRANCH) {
         addModelError(MODEL_ID, "Can not find $MODEL_ID in any of $bioModelsBranches")
         failureCount.incrementAndGet()
-        return
-    }
-    boolean shouldDefer = isModelInUncuraPublAndPubl(MODEL_ID, BRANCH)
-    if (shouldDefer) {
-        addModelError MODEL_ID, "Entry found both in $BRANCH branch and also in publ."
         return
     }
     // check symlink
@@ -1117,7 +1110,7 @@ findRightSubmitter = {MODEL_ID, BRANCH ->
         failureCount.incrementAndGet()
         return
     }
-    authenticateAsUser(submitter)
+    createAuthTokenForExistingUser(submitter)
     return submitter
 }
 
@@ -1244,7 +1237,7 @@ addRevisionAnnotations = { revision, branch, modelDetails, user ->
     String original_model = modelDetails['original_model']
     if (original_model) {
         createBMAnnotation(revision, original_model, "source",
-            "http://purl.org/dc/elements/1.1/",
+            "http://biomodels.net/model-qualifiers/",
             "http://purl.org/dc/elements/1.1/", author)
     }
 
@@ -1712,6 +1705,13 @@ target(inspectSession: 'Prints information about entities stored in a Hibernate 
     log(result.toString())
 }
 
+/**
+ * Logs in a user with the given credentials.
+ *
+ * The supplied password must not be encrypted.
+ *
+ * Only use for authenticating as the user from the JSON properties file.
+ */
 authenticate = { user, passwd ->
     def authToken = new UsernamePasswordAuthenticationToken(user, passwd)
     def auth = appCtx.getBean("authenticationManager").authenticate(authToken)
@@ -2058,8 +2058,16 @@ getModelById = { modelId, branch ->
     biomodelsConnection.firstRow("select * from $branch where $idColumnName = ?", [modelId])
 }
 
-authenticateAsUser = { user ->
-    authenticate(user.username, "autocreated")
+/**
+ * Populates the authentication object in the current thread's SecurityContext with
+ * the credentials of a given user.
+ *
+ * Bypasses the call to authenticationManager.authenticate() typically used during login.
+ */
+createAuthTokenForExistingUser = { user ->
+    def userDetails = userDetailsService.loadUserByUsername(user.username)
+    SecurityContextHolder.context.authentication = new UsernamePasswordAuthenticationToken(
+            userDetails, userDetails.password, userDetails.authorities)
 }
 
 addPublicationLinkProvider =  { def cmd ->

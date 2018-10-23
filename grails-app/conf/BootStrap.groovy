@@ -34,7 +34,7 @@ import grails.util.Environment
 import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PubLinkProvTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.core.model.identifier.decorator.AbstractAppendingDecorator
+import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorRegistryService
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.plugins.security.Person
@@ -50,6 +50,7 @@ class BootStrap {
     def wcmSecurityService
     def grailsApplication
     def modelFileFormatService
+    def idGeneratorRegistryFactoryBean
 
     void addPublicationLinkProvider(PubLinkProvTC cmd) {
         def publinkType=PublicationLinkProvider.LinkType.valueOf(cmd.linkType)
@@ -132,18 +133,14 @@ class BootStrap {
         addPublicationLinkProvider(new PubLinkProvTC(linkType: PublicationLinkProvider.LinkType.MANUAL_ENTRY,
                 pattern: "\\A\\z" /* i.e. start of input then end of input -- ignored */))
 
+        def generatorRegistry = idGeneratorRegistryFactoryBean.object
+        println "Using model id generators ${generatorRegistry?.generatorMap}"
+
         if (Environment.getCurrent() != Environment.TEST) {
-             if (!Role.findByAuthority("ROLE_USER")) {
-                new Role(authority: "ROLE_USER").save(flush: true)
-            }
-            if (!Role.findByAuthority("ROLE_CURATOR")) {
-                new Role(authority: "ROLE_CURATOR").save(flush: true)
-            }
-            if (!Role.findByAuthority("ROLE_ADMIN")) {
-                new Role(authority: "ROLE_ADMIN").save(flush: true)
-            }
-            if (!Role.findByAuthority("ROLE_QC_PROVIDER")) {
-                new Role(authority: "ROLE_QC_PROVIDER").save(flush: true)
+            ["ROLE_USER", "ROLE_CURATOR", "ROLE_ADMIN", "ROLE_QC_PROVIDER", "ROLE_REVIEWER"].each {
+                if (!Role.findByAuthority(it)) {
+                    new Role(authority: it).save(flush: true)
+                }
             }
             if (!User.findByUsername("administrator")) {
                 def person = new Person(userRealName: "administrator")
@@ -204,7 +201,6 @@ class BootStrap {
                 springSecurityService.principal
 	        }
         ]
-        AbstractAppendingDecorator.context = ctx
         RevisionTransportCommand.context = ctx
     }
 
