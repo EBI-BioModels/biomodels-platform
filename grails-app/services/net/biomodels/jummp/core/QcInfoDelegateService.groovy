@@ -28,12 +28,14 @@ import net.biomodels.jummp.qcinfo.QcInfo
 
 class QcInfoDelegateService {
     def qcInfoService
+    def modelService
 
     Boolean addQcInfo(String revisionId, QcInfo qcInfo) {
         return qcInfoService.addQcInfo(Revision.get(revisionId), qcInfo)
     }
 
-    boolean canCertify(Model model) {
+    boolean canCertify(String modelId) {
+        Model model = modelService.findByPerennialIdentifier(modelId)
         qcInfoService.canCertify(model)
     }
 
