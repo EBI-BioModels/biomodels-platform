@@ -89,14 +89,8 @@ class ModelAdapter {
 
     @CompileDynamic
     private Revision getLatestRevisionForUser(boolean saveHistory) {
-        def modelService = Holders.applicationContext.getBean("modelService")
+        // Holders.applicationContext does not seem to work from Grails scripts
+        def modelService = Holders.grailsApplication.mainContext.modelService
         modelService.getLatestRevision(model, saveHistory)
     }
-
-    /**
-     * Convenience method for finding a model based on its externally-defined identifiers.
-     *
-     * @param perennialId The externally-defined ID by which to look up the model.
-     * @return  the model corresponding to the given id, or null if there was no match
-     */
 }
