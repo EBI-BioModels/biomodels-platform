@@ -30,13 +30,17 @@
 
 package net.biomodels.jummp.core
 
+import grails.plugin.cache.Cacheable
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.authentication.GrailsAnonymousAuthenticationToken
+import grails.transaction.NotTransactional
 import grails.transaction.Transactional
+import groovy.transform.CompileStatic
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.events.*
 import net.biomodels.jummp.core.model.*
+import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorRegistryService
 import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import net.biomodels.jummp.core.vcs.VcsException
@@ -49,7 +53,7 @@ import org.apache.tika.detect.DefaultDetector
 import org.apache.tika.metadata.Metadata
 import org.perf4j.aop.Profiled
 import org.perf4j.log4j.Log4JStopWatch
-import org.springframework.beans.factory.annotation.Lookup
+import org.springframework.beans.factory.ObjectFactory
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.access.prepost.PostAuthorize
 import org.springframework.security.access.prepost.PostFilter
@@ -97,7 +101,7 @@ import java.util.concurrent.locks.ReentrantLock
  * @author Sarala Wimalaratne <sarala@ebi.ac.uk>
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  *
- * @date 20180906
+ * @date 20181025
  */
 @SuppressWarnings("GroovyUnusedCatchParameter")
 @Transactional
@@ -151,6 +155,8 @@ class ModelService {
     //def publishValidator
 
     def modelConversionService
+
+    ObjectFactory<ModelIdentifierGeneratorRegistryService> idGeneratorRegistryFactoryBean
 
     final boolean MAKE_PUBLICATION_ID = !(publicationIdGenerator instanceof NullModelIdentifierGenerator)
     /**
@@ -476,8 +482,8 @@ WHERE
      */
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getModel")
-    public Model getModel(String id) {
-        Model model = ModelAdapter.findByPerennialIdentifier(id)
+    Model getModel(String id) {
+        Model model = findByPerennialIdentifier(id)
         if (model) {
             if (!getLatestRevision(model)) {
                 throw new AccessDeniedException("No access to the versions of the model with id ${id}".toString())
@@ -490,6 +496,45 @@ WHERE
 
     Model getModelBySubmissionId(String submissionId) {
         Model.findBySubmissionId(submissionId)
+    }
+
+
+    /**
+     * Convenience method for finding a model based on its externally-defined identifiers.
+     *
+     * @param perennialId The externally-defined ID by which to look up the model.
+     * @return  the model corresponding to the given id, or null if there was no match
+     */
+    @Cacheable('perennialModelIdentifier')
+    Model findByPerennialIdentifier(String perennialId) {
+        if (!perennialId) {
+            return null
+        }
+        int dot = perennialId.indexOf('.')
+        perennialId = -1 == dot ? perennialId : perennialId.substring(0, dot)
+
+        Set<String> idFields = getPerennialIdentifierTypes()
+        Model.withCriteria(uniqueResult: true) {
+            or {
+                for (String f : idFields) {
+                    eq(f, perennialId)
+                }
+            }
+            cache true
+        } as Model
+    }
+
+    /**
+     * Indicates the kinds of perennial identifiers present in the runtime configuration.
+     *
+     * @return the set of identifier types that are defined, e.g. submissionId, publicationId.
+     */
+    @Cacheable('perennialIdentifierTypes')
+    @CompileStatic
+    @NotTransactional
+    Set<String> getPerennialIdentifierTypes() {
+        ModelIdentifierGeneratorRegistryService registry = idGeneratorRegistryFactoryBean.object
+        registry.generatorTypes
     }
 
     /**
@@ -601,10 +646,10 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     //@PostAuthorize("hasPermission(returnObject, read) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getRevisionByIdentifier")
-    public Revision getRevision(String identifier) {
+    Revision getRevision(String identifier) {
         String[] parts = identifier.split("\\.")
         String modelId = parts[0]
-        Model model = ModelAdapter.findByPerennialIdentifier(modelId)
+        Model model = findByPerennialIdentifier(modelId)
         if (parts.length == 1) {
             Revision revision = getLatestRevision(model)
             if (!revision) {

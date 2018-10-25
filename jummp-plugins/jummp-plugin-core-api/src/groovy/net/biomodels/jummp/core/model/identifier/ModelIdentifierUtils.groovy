@@ -58,6 +58,7 @@ class ModelIdentifierUtils {
      * there would be a corresponding fooIdGenerator bean reference that would
      * generate identifiers like 000000000001, 000000000002 etc.
      */
+    static final String GENERATOR_FIELD_SUFFIX = 'Id'
     static final String GENERATOR_BEAN_SUFFIX  = 'IdGenerator'
     static final String DEFAULT_GENERATOR_TYPE = 'submission'
     static final String DEFAULT_GENERATOR_BEAN = 'submissionIdGenerator'

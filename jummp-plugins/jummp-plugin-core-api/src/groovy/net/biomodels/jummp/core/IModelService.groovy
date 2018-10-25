@@ -306,14 +306,6 @@ public interface IModelService {
      */
     public RevisionTransportCommand getRevisionFromParams(final String model, final String revision)
     /**
-     * @short Returns the types of perennial model identifiers that have been declared.
-     *
-     * This must include the submissionId field, but may contain others, such as publicationId.
-     * The set must be equivalent to the one which is constructed by ModelIdentifierUtils when
-     * parsing the externalised settings for perennial model identifier generators.
-     */
-    public Set<String> getPerennialIdentifierTypes()
-    /**
      * @short Specifies whether there are one or more kinds of perennial identifiers defined.
      *
      * In effect, this method returns false if the model identifier settings only cover
