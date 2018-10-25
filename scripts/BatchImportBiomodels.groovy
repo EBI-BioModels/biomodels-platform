@@ -192,7 +192,6 @@ def Publication
 def ptc
 def personTC
 def mf
-def decorator
 def Model
 def Revision
 
@@ -601,7 +600,6 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
     PublicationLinkProvider = loadClass("net.biomodels.jummp.model.PublicationLinkProvider")
     LinkType = PublicationLinkProvider.classes[0] // the only internal class...
     Model = loadClass("net.biomodels.jummp.model.Model")
-    decorator = loadClass("net.biomodels.jummp.core.model.identifier.decorator.AbstractAppendingDecorator")
 
     // annotation-related classes
     ResourceReference = loadClass("net.biomodels.jummp.annotationstore.ResourceReference")
@@ -624,7 +622,6 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
 
 
     // inject applicationContext in POGOs that expect it
-    decorator.context = appCtx
     rtc.context = appCtx
 
     // obtain references to singleton services
