@@ -171,7 +171,7 @@ LinkedBlockingQueue insertedRevisions = new LinkedBlockingQueue()
 /**
  * The branches of BioModels where we look for model information.
  */
-def bioModelsBranches = ["publ", "uncura_publ", "pdgsm_models"]//, "anno", "uncura_anno", "cura", "auto_gen_models"]
+def bioModelsBranches = ["publ", "uncura_publ", "pdgsm_models", "cura"]//, "anno", "uncura_anno", "auto_gen_models"]
 
 /*
  * Domain classes that will be needed in multiple closures, declared globally,
@@ -267,6 +267,7 @@ final String UPDATE_COMMENT_TPL = "Current version of "
 
 // BioModels branches
 final String AUTO_GEN = "auto_gen_models"
+final String CURA = "cura"
 final String PUBL = 'publ'
 final String UNCURA_PUBL = 'uncura_publ'
 
@@ -301,6 +302,8 @@ def NON_SBML_MODEL_FOLDER
 def bigModelsIgnored = []
 boolean excludeBigModels = true
 TreeSet<String> modelsImported = []
+TreeSet<String> curaModels = []
+def curaModelsId
 
 Map userMappingForInternalCurationComments
 
@@ -666,6 +669,13 @@ target(main: "Puts everything together to import models from a given folder") {
         if (it.submissionId) {modelsImported.add(it.submissionId)}
         if (it.publicationId) {modelsImported.add(it.publicationId)}
     }
+
+    /* populate all cura models (private and on hold models) */
+    query = "select model_id from cura where status < ? and (biomodels_id IS NULL OR biomodels_id = ?)"
+    curaModelsId = biomodelsConnection.rows(query, [5, ''])
+    curaModelsId.each {
+        curaModels.add(it["model_id"])
+    }
     log("${new Date()} -- commencing batch import")
     long duration = System.currentTimeMillis()
     /* run batch importer sequentially */
@@ -830,15 +840,18 @@ processModelFolder = { File folder ->
     }
     // check symlink
     boolean haveSymlink = haveSymlinkToUrlFile folder, MODEL_ID
-    if (!haveSymlink && BRANCH != "pdgsm_models") {
+    if (!haveSymlink && BRANCH != "pdgsm_models" && BRANCH != "cura") {
         addModelError MODEL_ID, "${folder} does not contain a symbolic link to the URL file"
     }
     // separate original file from the rest of the folder contents
     def originalFile
     boolean isNonSBMLModel = nonStandardSBMLModels.containsKey(MODEL_ID)
+    boolean isCuraModel = curaModels.contains(MODEL_ID)
     if (isNonSBMLModel) {
         folder = new File(NON_SBML_MODEL_FOLDER, MODEL_ID)
         originalFile = new File("$NON_SBML_MODEL_FOLDER/$MODEL_ID", nonStandardSBMLModels.get(MODEL_ID).keySet()[0])
+    } else if (isCuraModel) {
+        originalFile = new File(folder, "$MODEL_ID$DOT_XML")
     } else {
         originalFile = findOriginalFile(folder, MODEL_ID)
     }
@@ -884,7 +897,8 @@ processModelFolder = { File folder ->
             failureCount.incrementAndGet()
             return
         }
-        if (isNonSBMLModel) {
+        if (isNonSBMLModel || isCuraModel) {
+            // For such models, we create one revision
             annotateModellingApproaches(submittedModel.revisions.first(), BRANCH, modelDetails, submitter)
         } else {
             def commitMessage = "$UPDATE_COMMENT_TPL $MODEL_ID"
@@ -897,7 +911,7 @@ processModelFolder = { File folder ->
         def revisions = submittedModel.revisions
         revisions.each { r ->
             try {
-                publishModelRevision(MODEL_ID, r)
+                if (!isCuraModel) { publishModelRevision(MODEL_ID, r) }
             } finally {
                 insertedRevisions.offer(r.id)
             }
@@ -1170,7 +1184,7 @@ submitOriginalFile = { branch, modelId, originalFile, infoMap ->
     def publicationId = infoMap['biomodels_id']
     def submissionId = infoMap['model_id']
     def inPublBranch = isCuratedAndPublished(branch)
-    if ( inPublBranch && !publicationId) {
+    if (inPublBranch && !publicationId) {
         throw new IllegalStateException("No BIOMD* found for curated model $modelId".toString())
     }
     if (publicationId) {
@@ -1193,6 +1207,10 @@ submitOriginalFile = { branch, modelId, originalFile, infoMap ->
     }
     addModelMsg(modelId, "Original submission successfully imported")
     return model
+}
+
+isPrivateAndOnHold = { branch ->
+    CURA == branch
 }
 
 isCuratedAndPublished = { branch ->
@@ -1790,6 +1808,7 @@ getSubmissionData = { modelId, file, additional, filesFromAdditionalFolder, comm
     def fileTrack = []
     fileTrack.addAll(expectedFiles.keySet())
     boolean isNonSBMLModel = nonStandardSBMLModels.containsKey(modelId)
+    boolean isCuraModel = curaModels.contains(modelId)
     if (isNonSBMLModel) {
         modelWrapper.description = nonStandardSBMLModels.get(modelId).get(file.name)
         additional = getAdditionalFilesForNonSBMLModel(modelId)
@@ -2357,7 +2376,7 @@ getModelDetails = { modelId, modelBranch ->
         modelDetails['lastModified'] = row.last_modification_date
         if (modelBranch == "pdgsm_models") {
             modelDetails['publicationDate'] = row.publication_date
-        } else {
+        } else if (modelBranch != "cura" ) {
             modelDetails['publicationDate'] = row.creation_date
         }
         if ("auto_gen_models" == modelBranch || "pdgsm_models" == modelBranch) {
