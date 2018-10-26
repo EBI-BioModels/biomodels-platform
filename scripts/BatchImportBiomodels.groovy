@@ -242,7 +242,7 @@ def expectedFiles = [
         "[A-Z0-9]*_urn\\.xml": "Auto-generated SBML file with URNs",
         "[A-Z0-9]*-biopax2\\.owl": "Auto-generated BioPAX (Level 2)",
         "[A-Z0-9]*-biopax3\\.owl": "Auto-generated BioPAX (Level 3)",
-        "[A-Z0-9]*cellml": "Auto-generated CellML",
+        "[A-Z0-9]*\\.cellml": "Auto-generated CellML",
         "[A-Z0-9]*\\.m" : "Auto-generated Octave file",
         "[A-Z0-9]*\\.pdf" : "Auto-generated PDF file",
         "[A-Z0-9]*\\_manual.png" : "Manually generated Reaction graph (PNG)",
@@ -848,7 +848,7 @@ processModelFolder = { File folder ->
         folder = new File(NON_SBML_MODEL_FOLDER, MODEL_ID)
         originalFile = new File("$NON_SBML_MODEL_FOLDER/$MODEL_ID", nonStandardSBMLModels.get(MODEL_ID).keySet()[0])
     } else if (isCuraModel) {
-        originalFile = new File(folder, "$MODEL_ID$DOT_XML")
+        originalFile = getMainFileForCuraModel(folder, MODEL_ID)
     } else {
         originalFile = findOriginalFile(folder, MODEL_ID)
     }
@@ -1161,7 +1161,19 @@ submitOriginalFile = { branch, modelId, originalFile, infoMap ->
         def msg = "Cannot submit original version of $modelId -- missing security context"
         throw new IllegalStateException(msg.toString())
     }
-    def originInfo = getSubmissionData(modelId, originalFile, [], [], ORIG_COMMENT_TPL + modelId)
+    def additionals = []
+    if ("cura" == branch) {
+        additionals = []
+        def folder = new File(originalFile.parent)
+        def additionalFiles = folder.listFiles().findAll { f ->
+            !(f in [originalFile] )
+        }
+        additionals.addAll(additionalFiles)
+    }
+    def filesFromAdditionalFolder = []
+    def comment = ORIG_COMMENT_TPL + modelId
+    def originInfo = getSubmissionData(modelId, originalFile, additionals,
+        filesFromAdditionalFolder, comment)
     def fileTCs = getFilesFromSubmissionData originInfo
     def rftcObjects = getFilesFromAdditionalFolder(modelId, originalFile)
     fileTCs.addAll(rftcObjects["fileTCs"])
@@ -1417,6 +1429,10 @@ getMainFileForPDGSMModel = { folder, id ->
     new File(folder, "$id$DOT_XML")
 }
 
+getMainFileForCuraModel = { folder, id ->
+    new File(folder, "$id$DOT_XML")
+}
+
 getAdditionalFilesForNonSBMLModel = { modelId ->
     File model = new File(NON_SBML_MODEL_FOLDER, modelId)
     model.listFiles().findAll {File file ->
@@ -1529,7 +1545,9 @@ findNewestRevisionFiles = { branch, parent, id ->
     assert parent.exists()
     def result = [:]
     def mainFile
-    if (branch == "pdgsm_models") {
+    if (branch == "pdgsm_models" || branch == "cura") {
+        // also use getMainFileForCuraModel()
+        // because these branches behave the main file similarly
         mainFile = getMainFileForPDGSMModel(parent, id)
     } else {
         mainFile = getUrlFileForModel(parent, id)
@@ -1816,21 +1834,22 @@ getSubmissionData = { modelId, file, additional, filesFromAdditionalFolder, comm
             files.push(rftc.newInstance(path: path, description: description,
                 mainFile: false, userSubmitted: true, hidden: hidden))
         }
-    } else
-    additional.each { addFile ->
-        def pattern = expectedFiles.keySet().find {testPattern ->
-            Pattern.matches(testPattern, addFile.getName())
-        }
-        if (pattern) {
-            fileTrack.remove(pattern)
-            String path = addFile.absolutePath
-            boolean hidden = false
-            if (pattern.contains("_manual")) {
-                hidden = true
+    } else {
+        additional.each { addFile ->
+            def pattern = expectedFiles.keySet().find { testPattern ->
+                Pattern.matches(testPattern, addFile.getName())
             }
+            if (pattern) {
+                fileTrack.remove(pattern)
+                String path = addFile.absolutePath
+                boolean hidden = false
+                if (pattern.contains("_manual")) {
+                    hidden = true
+                }
 
-            files.push(rftc.newInstance(path: path, description: expectedFiles.get(pattern),
-                mainFile: false, userSubmitted: false, hidden: hidden))
+                files.push(rftc.newInstance(path: path, description: expectedFiles.get(pattern),
+                    mainFile: false, userSubmitted: false, hidden: hidden))
+            }
         }
     }
     // add the other additional files in 'additional' folder
