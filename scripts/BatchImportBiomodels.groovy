@@ -695,7 +695,7 @@ target(main: "Puts everything together to import models from a given folder") {
             addModelError modelId, "Entry found both in $BRANCH branch and also in publ."
         } else if (f.isDirectory() && modelId ==~ modelFolderPattern && tobeProcessed && !exists) {
             processModelFolder f
-        } else if (exists) {
+        } else if (exists && BRANCH != "cura") {
             // regardless of branch, this will check whether the model should be updated
             log("The model ${modelId} was already imported!")
             String submissionId = modelId
@@ -835,9 +835,14 @@ processModelFolder = { File folder ->
     final String MODEL_ID = folder.name
     // find branch
     final String BRANCH = getBranch MODEL_ID
+    boolean isCuraModel = curaModels.contains(MODEL_ID)
     if (!BRANCH) {
         addModelError(MODEL_ID, "Can not find $MODEL_ID in any of $bioModelsBranches")
         failureCount.incrementAndGet()
+        return
+    } else if (BRANCH == "cura" && !isCuraModel) {
+        // The cura branch has more than 119 private models what we need to import.
+        // This aims to avoid importing everything presenting in the cura folder
         return
     }
     // check symlink
@@ -848,7 +853,6 @@ processModelFolder = { File folder ->
     // separate original file from the rest of the folder contents
     def originalFile
     boolean isNonSBMLModel = nonStandardSBMLModels.containsKey(MODEL_ID)
-    boolean isCuraModel = curaModels.contains(MODEL_ID)
     if (isNonSBMLModel) {
         folder = new File(NON_SBML_MODEL_FOLDER, MODEL_ID)
         originalFile = new File("$NON_SBML_MODEL_FOLDER/$MODEL_ID", nonStandardSBMLModels.get(MODEL_ID).keySet()[0])
