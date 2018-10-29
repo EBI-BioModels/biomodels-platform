@@ -1807,9 +1807,11 @@ getSubmissionData = { modelId, file, additional, filesFromAdditionalFolder, comm
     // get name and description
     // if the model is non SBML, the original file will be submitted but getting name and
     // description from the dummy SBML file
+    String formatName = formatCommand?.name
+    String formatVersion = formatCommand?.formatVersion
     final String MODEL_NAME = modelFileFormatService.extractName([file], format)?:
             new File(file.absolutePath).getName()
-    modelWrapper.description = "${MODEL_NAME}"
+    modelWrapper.description = "${formatName} ${formatVersion} presentation of ${MODEL_NAME}"
     final String DESCRIPTION = modelFileFormatService.extractDescription([file], format)
     // validate model
     boolean isValid = modelFileFormatService.validate([file], format.identifier, [])
