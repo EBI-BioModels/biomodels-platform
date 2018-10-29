@@ -783,6 +783,11 @@ updateWithRecentChanges = { submissionId, publicationId, branch, folder, modelDe
             latestRev.curationState = CurationState.CURATED
         }
     }
+    if (branch == "cura") {
+        // HACK!!! for those models, we ignore the last modification date
+        // in order to avoid reimporting them
+        modelDetails['lastModified'] = latestRev.uploadDate
+    }
     def availDetectors = [
         ModelNameChangeDetector.newInstance(),
         BioModelsIdChangeDetector.newInstance(),
