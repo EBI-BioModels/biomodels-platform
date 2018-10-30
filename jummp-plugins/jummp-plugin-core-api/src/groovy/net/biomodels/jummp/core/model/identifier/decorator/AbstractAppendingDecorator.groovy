@@ -20,13 +20,14 @@
 
 package net.biomodels.jummp.core.model.identifier.decorator
 
+import groovy.transform.CompileStatic
+import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGenerator
+
 import java.util.concurrent.atomic.AtomicReference
 import net.biomodels.jummp.core.model.identifier.ModelIdentifier
 import net.biomodels.jummp.core.events.ModelIdentifierDecoratorUpdatedEvent
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
-import org.codehaus.groovy.grails.commons.spring.GrailsApplicationContext
-import org.springframework.context.ApplicationEvent
 
 /**
  * @short Abstract ModelIdentifierDecorator implementation defining the natural order.
@@ -35,6 +36,7 @@ import org.springframework.context.ApplicationEvent
  * ApplicationEventPublisher.
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
+@CompileStatic
 abstract class AbstractAppendingDecorator implements OrderedModelIdentifierDecorator {
     /**
      * Reference to the value used to decorate the next model identifier.
@@ -43,15 +45,15 @@ abstract class AbstractAppendingDecorator implements OrderedModelIdentifierDecor
     /**
      * The class logger
      */
-    private static final Log log = LogFactory.getLog(this)
-    /*
-     * The main application context, set during bootstrap.
-     */
-    protected static GrailsApplicationContext context
+    private final Log log = LogFactory.getLog(getClass())
     /**
      * The position of the decorator in the queue of a ModelIdentifierGenerator.
      */
     protected volatile int ORDER
+    /**
+     * The generator to which this decorator belongs.
+     */
+    ModelIdentifierGenerator generator
 
     abstract ModelIdentifier decorate(ModelIdentifier modelIdentifier)
 
@@ -60,29 +62,28 @@ abstract class AbstractAppendingDecorator implements OrderedModelIdentifierDecor
     abstract void refresh()
 
     /**
-     * Publishes @p evt if it is an instance of ModelIdentifierDecoratorUpdatedEvent.
+     * Informs the generator of a change to this decorator's value.
      */
-    void publishEvent(ApplicationEvent evt) {
-        if (!(evt instanceof ModelIdentifierDecoratorUpdatedEvent)) {
-            log.warn "Banned ${this.properties} from publishing ${evt.properties}."
-            return
+    void informOfChange(ModelIdentifierDecoratorUpdatedEvent evt) {
+        if (null != generator) {
+            if (log.isDebugEnabled()) {
+                log.debug("Asking ${generator.properties} to respond to ${evt.properties}")
+            }
+            generator.respondTo(evt)
         }
-        if (log.isDebugEnabled()) {
-            log.debug("Publishing event ${evt.properties}")
-        }
-        context.publishEvent(evt)
-    }
-
-    void publishEvent(Object ignored) {
-        throw new UnsupportedOperationException("Please use publishObject(ApplicationEvent e) instead")
     }
 
     /**
      * Defines the natural order for instances of OrderedModelIdentifierDecorator implementations.
+     *
+     * This base implementation arranges decorators in ascending order of their {@code ORDER} and
+     * assumes that @p other is also an instance of {@link AbstractAppendingDecorator}.
+     *
+     * Concrete subclasses may choose to relax these constraints.
      */
     @Override
     int compareTo(OrderedModelIdentifierDecorator other) {
-        this.ORDER <=> other.ORDER
+        this.ORDER <=> ((AbstractAppendingDecorator) other).ORDER
     }
 
     @Override

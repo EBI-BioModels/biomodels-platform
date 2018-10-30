@@ -55,6 +55,7 @@ import static org.junit.Assert.*
 @TestMixin(IntegrationTestMixin)
 class UserServiceTests extends JummpIntegrationTest {
     def userService
+    def publicationService
     def pubMedService
     def grailsApplication
 
@@ -273,7 +274,7 @@ class UserServiceTests extends JummpIntegrationTest {
         grailsApplication.config.jummp.security.anonymousRegistration = anonymousRegistration
         authenticateAnonymous()
         // publication: Science   (ISSN: 0036-8075)   (ESSN: 1095-9203)
-        Publication publication = pubMedService.fromCommandObject(pubMedService.fetchPublicationData("20488988"));
+        Publication publication = publicationService.fromCommandObject(pubMedService.fetchPublicationData("20488988"));
         Person fakeAuthor = new Person(userRealName: "Not Schilling",
         							   orcid: "0000-0002-9517-5166");
         User duplicateuser = new User(username: "fakeUser",

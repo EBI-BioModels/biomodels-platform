@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2018 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -34,11 +34,12 @@
 
 package net.biomodels.jummp.core
 
+import grails.util.Holders
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.PublicationAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.*
-import net.biomodels.jummp.core.model.identifier.generator.AbstractModelIdentifierGenerator
+import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorRegistryFactory
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import net.biomodels.jummp.core.vcs.VcsFileDetails
 import net.biomodels.jummp.model.Flag
@@ -74,7 +75,6 @@ class ModelDelegateService implements IModelService {
     def qcInfoDelegateService
     def modelFlagService
     def referenceTracker
-    def publicationIdGenerator
 
     String getPluginForFormat(ModelFormatTransportCommand format) {
         return modelFileFormatService.getPluginForFormat(format)
@@ -408,10 +408,12 @@ class ModelDelegateService implements IModelService {
      * @param revisionNumber: revision number
      * @param curationState: curation status
      */
-    void updateCurationStateRevision(String modelId, int revisionNumber, CurationState curationState) {
-        Revision revision = modelService.getRevision(ModelAdapter.findByPerennialIdentifier(modelId), revisionNumber)
-        revision.setCurationState(curationState)
-        revision.save(flush:true)
+    RevisionTransportCommand updateCurationStateRevision(String modelId, int revisionNumber,
+            CurationState curationState) {
+        Revision revision = modelService.getRevision(
+            ModelAdapter.findByPerennialIdentifier(modelId), revisionNumber)
+        revision = modelService.updateRevisionCurationState(revision, curationState)
+        new RevisionAdapter(revision: revision).toCommandObject()
     }
 
     RevisionTransportCommand getRevisionFromParams(final String MODEL, String REVISION = null) {
@@ -441,12 +443,14 @@ class ModelDelegateService implements IModelService {
     }
 
     Set<String> getPerennialIdentifierTypes() {
-        return ModelAdapter.PERENNIAL_IDENTIFIER_TYPES
+        def registryFactoryReference = Holders.applicationContext.getBean('&idGeneratorRegistry',
+                ModelIdentifierGeneratorRegistryFactory.class)
+        registryFactoryReference.types
     }
 
     boolean haveMultiplePerennialIdentifierTypes() {
-        final boolean HAVE_PERENNIAL_PUBLICATION_ID = publicationIdGenerator instanceof
-                    AbstractModelIdentifierGenerator && !(publicationIdGenerator instanceof
+        def publicationIdGenerator = modelService.publicationIdGenerator
+        final boolean HAVE_PERENNIAL_PUBLICATION_ID = !(publicationIdGenerator instanceof
                     NullModelIdentifierGenerator)
 
         final Set<String> ID_TYPES = getPerennialIdentifierTypes()
