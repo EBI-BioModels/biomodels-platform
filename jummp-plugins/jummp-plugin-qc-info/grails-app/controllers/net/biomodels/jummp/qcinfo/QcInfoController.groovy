@@ -16,9 +16,9 @@ class QcInfoController {
         }
 
         def revision = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
-        def modelId = (revision.model.publicationId) ?: (revision.model.submissionId)
+        def modelId = revision.modelIdentifier()
 
-        boolean canCertify = qcInfoDelegateService.canCertify(ModelAdapter.findByPerennialIdentifier(modelId))
+        boolean canCertify = qcInfoDelegateService.canCertify(modelId)
         if (!canCertify) {
             forward controller: 'errors', action: 'error403'
             return

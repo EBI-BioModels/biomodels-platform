@@ -298,7 +298,7 @@ public class SubmissionFlowTestBase extends WebFlowTestCase {
 
         //test that the model is infact saved in the database
         String model = mockRequest.session.result_submission as String
-        Model thisModel = ModelAdapter.findByPerennialIdentifier(model)
+        Model thisModel = modelService.findByPerennialIdentifier(model)
         assertNotNull thisModel
         Revision rev = modelService.getLatestRevision(thisModel)
         assertNotNull rev
