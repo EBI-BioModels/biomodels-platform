@@ -449,12 +449,12 @@ class ModelDelegateService implements IModelService {
         return MANY_IDENTIFIERS
     }
 
-    Map<Long, String> findModelsBySubmissionOrPublicationId(List<String> identifiers) {
+    Map<Long, String> findModelsByPerennialId(List<String> identifiers) {
         Map results = [:]
-        identifiers.each {
-            Model model = ModelAdapter.findByPerennialIdentifier(it)
+        for (String id : identifiers) {
+            Model model = modelService.findByPerennialIdentifier(id)
             if (model) {
-                results[model.id] = it
+                results[model.id] = id
             }
         }
         results
