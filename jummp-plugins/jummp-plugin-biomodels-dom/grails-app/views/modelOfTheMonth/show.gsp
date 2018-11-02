@@ -15,12 +15,17 @@
     <g:javascript src="toastr.min.js" contextPath=""/>
     <link rel="stylesheet"
           href="${resource(contextPath: "${grailsApplication.config.grails.serverURL}", dir: 'css', file: 'toastr.min.css')}"/>
-    <title>Show Entry of Model of The Month ${entry?.date}</title>
+    <script type="javascript">
+        toastr.options = {
+            "progressBar": true
+        }
+    </script>
+    <title>Show Entry of Model of The Month ${entry?.formattedEntryDate}</title>
 </head>
 
 <body>
     <g:if test="${entry}">
-    <h2>Entry of The Model of The Month: ${entry?.date}</h2>
+    <h2>Entry of The Model of The Month: ${entry?.formattedEntryDate}</h2>
     <div id="txtStatus" style="color: #ED0000; font-weight: 500; font-size: larger"></div>
     <g:render template="/templates/modelOfTheMonthForm" />
     </g:if>

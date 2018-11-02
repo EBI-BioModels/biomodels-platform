@@ -42,7 +42,8 @@ class ModelOfTheMonthController {
     def modelOfTheMonthService
 
     def index() {
-        render(view: "index", model: [entries: list()])
+        List<ModelOfTheMonthTransportCommand> entries = modelOfTheMonthService.list()
+        [entries: entries]
     }
 
     def updatePreviewImageAndShortDescription() {
@@ -55,57 +56,46 @@ class ModelOfTheMonthController {
     }
 
     def create() {
-        respond new ModelOfTheMonth(params)
-    }
-
-    List list() {
-        List<ModelOfTheMonth> entries = modelOfTheMonthService.list()
-        entries
-    }
-
-    def show() {
-        ModelOfTheMonthTransportCommand command
-        if (params?.id) {
-            int id = params.int("id")
-            command = modelOfTheMonthService.get(id)
-            command.id = id
-        } else {
-            Date currentDate = new Date()
-            String date = currentDate.format(ModelOfTheMonth.DATE_FORMAT_PATTERN)
-            command = new ModelOfTheMonthTransportCommand(date: date)
-            command.publicationDate = currentDate
-            command.lastUpdated = currentDate
-        }
+        Date current = new Date()
+        String yearDate = current.format(ModelOfTheMonth.DATE_FORMAT_PATTERN)
+        ModelOfTheMonthTransportCommand entry = new ModelOfTheMonthTransportCommand(formattedEntryDate: yearDate, lastUpdated: current, publicationDate: current)
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
-        render(view: "show", model: [entry: command, dateFormat: dateFormat])
+        [entry: entry, dateFormat: dateFormat]
     }
 
-    def save() {
-        // retrieve data from the parameters
-        def momEntryTC = params.momEntryTC
-        def id = params.long("id")
-        // sanitise the data feed by the end users
-        // then convert them into the transport command object
-        ModelOfTheMonthTransportCommand command = parseMoMEntryTC(momEntryTC, id)
-        // get the latest timestamp
-        command.lastUpdated = new Date()
+    def show(ModelOfTheMonth entry) {
+        if (!entry) {
+            // render out the error
+        }
+        ModelOfTheMonthTransportCommand command = entry.toCommandObject()
+        command.formattedEntryDate = command.publicationDate.format(ModelOfTheMonth.DATE_FORMAT_PATTERN)
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+        [entry: command, dateFormat: dateFormat]
+    }
+
+    def save(ModelOfTheMonthTransportCommand command) {
+        if (params?.id) {
+            command.id = params.long("id")
+        }
+        if (params["previewImage"]) {
+            command.previewImage = params["previewImage"]
+            command.mimeType = params["mimeType"]
+        }
         command.updated = command?.id ? true : false
         Map response = [:]
         if (command?.validate()) {
             ModelOfTheMonth updated = modelOfTheMonthService.doCreateOrUpdate(command)
             if (updated) {
-                response['message'] = "The record has been updated successfully"
+                response['entity'] = updated
                 response['id'] = updated.id
+                response['message'] = "The record has been updated successfully"
             } else {
                 response['message'] = "There is an error while trying to persist the entry into the database"
+                response['errors'] = updated.errors.getFieldErrors()
             }
         } else {
-            String defaultMessage = command.errors.getFieldError("title")?.defaultMessage
-            if (defaultMessage?.contains("cannot be blank")) {
-                response['message'] = "The title cannot be blank"
-            } else {
-                response['message'] = command.errors.allErrors.inspect()
-            }
+            response['errors'] = command.errors.allErrors.inspect()
+            response['message'] = "There are missing required fields. Please double-check the form and click Save button again!"
         }
 
         render(response as JSON)

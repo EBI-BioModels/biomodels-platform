@@ -1,12 +1,8 @@
 <%
-    def previewImage = null
-    if (entry?.previewImage) {
-        previewImage = Base64.encoder.encodeToString(entry.previewImage)
-    }
     def modelIds = ""
-    if (entry?.models) {
-        Collection<String> ids = entry.models.values()
-        List list = new ArrayList(ids);
+    if (entry?.associatedModelMap) {
+        Collection<String> ids = entry.associatedModelMap.values()
+        List list = new ArrayList(ids)
         modelIds = String.join(", ", list)
     }
 %>
@@ -34,7 +30,7 @@
                 <label for="models" class="required">Models associated with (separated by commas)</label>
                 <input type="text" id="models" name="models" required
                        placeholder="Model identifiers associated with this entry separated by commas"
-                       value="${modelIds}">
+                       value="${entry?.models}">
                 <div class="row">
                     <div class="small-12 medium-6 large-6 columns">
                         <label for="publicationDate" class="required">Publication Date</label>
@@ -52,8 +48,8 @@
             </div>
             <div class="small-12 medium-6 large-6 columns">
                 <label for="previewImage">Preview Image</label>
-                <g:if test="${previewImage}">
-                    <img src="data:image/jpeg;base64,${previewImage}"
+                <g:if test="${entry?.previewImage}">
+                    <img src="data:image/jpeg;base64,${entry?.previewImage}"
                          id="previewImage"
                          title="Click on the thumbnail to view the result(s)" />
                 </g:if>
@@ -130,6 +126,7 @@
     }
 
     function buildMoMEntryTC() {
+        var id = "${entry?.id}";
         var authors = $('#authors').val();
         var title = $('#title').val();
         var shortDescription = $('#shortDescription').val();
@@ -137,6 +134,7 @@
         var lastUpdated = $('#lastUpdated').val();
         var models = $('#models').val();
         var momEntryTC = {
+            'id': id,
             'authors': authors,
             'title': title,
             'shortDescription': shortDescription,
@@ -158,7 +156,6 @@
             }
         }
         momEntryTC['mimeType'] = mimeType;
-        momEntryTC = JSON.stringify(momEntryTC);
         return momEntryTC;
     }
 
@@ -179,7 +176,7 @@
             }
 
             /* validate file size */
-            var MAX_SIZE = 1.44 * 1024 * 1024; // 1.44 MB ~ 1_500_000 is the allowed maximum size of the uploading image file
+            var MAX_SIZE = 2 * 1024 * 1024; // 2MB ~ 2_100_000 is the allowed maximum size of the uploading image file
             if (imageFile.size > MAX_SIZE) {
                 set("curationImageTooBig",
                         "${g.message(code: "curationNotesTransportCommand.curationImage.curationImageTooBig")}");
@@ -193,7 +190,7 @@
     $('#btnSave').on("click", function(event) {
         var shouldSubmit =  true; //checkRequiredValidity() && checkCustomValidity();
         if (shouldSubmit) {
-            var tmpEntry = buildMoMEntryTC();
+            var updatedEntry = buildMoMEntryTC();
             "use strict";
             event.preventDefault();
             $.ajax({
@@ -201,10 +198,7 @@
                 type: "POST",
                 url: $.jummp.createLink("modelOfTheMonth", "save"),
                 cache: true,
-                data: {
-                    momEntryTC: tmpEntry,
-                    id: "${entry.id}"
-                },
+                data: updatedEntry,
                 processData: true,
                 async: true,
                 beforeSend: function() {
@@ -212,7 +206,7 @@
                 },
                 success: function(response) {
                     var href = window.location.href;
-                    if ("${params.id}" == "" && typeof(response['id']) != 'undefined') {
+                    if ("${params.id}" === "" && typeof(response['id']) !== 'undefined') {
                         var newHref = href + "/" + response['id'];
                         if (window.history.pushState) {
                             window.history.pushState({}, null, newHref);
@@ -223,10 +217,10 @@
                     toastr.clear();
                     toastr.success(response['message']);
                 },
-                error: function(jqXHR, textStatus, errorThrown) {
+                error: function(jqXHR, textStatus, errorThrown, response) {
                     // TODO: the error message doesn't show properly
                     toastr.clear();
-                    toastr.error("Error: ", jqXHR.responseText + textStatus + errorThrown + JSON.stringify(jqXHR));
+                    toastr.error(response['errors']);
                 }
             });
         } else {

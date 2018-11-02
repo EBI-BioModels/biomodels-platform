@@ -58,8 +58,13 @@ class ModelOfTheMonthService {
         entries*.toCommandObject()
     }
 
-    List<ModelOfTheMonth> list() {
-        ModelOfTheMonth.getAll()
+    def list() {
+        List<ModelOfTheMonth> entries = ModelOfTheMonth.getAll()
+        List<ModelOfTheMonthTransportCommand>  entryCommands = new ArrayList<>()
+        for (ModelOfTheMonth entry : entries) {
+            entryCommands.add(entry.toCommandObject())
+        }
+        entryCommands
     }
     /**
      * Update the preview image and short description of a given model of the month entry
@@ -143,7 +148,7 @@ class ModelOfTheMonthService {
      * @param   command The transport command object representing the data of the object in demand
      * @return  The latest record has been created or updated
      */
-    @Transactional(readOnly = false)
+    @Transactional
     ModelOfTheMonth doCreateOrUpdate(ModelOfTheMonthTransportCommand command) {
         ModelOfTheMonth entry
         if (command?.id) {
@@ -160,7 +165,7 @@ class ModelOfTheMonthService {
         }
         // for the models associated with this entry
         Set<Model> models = new HashSet<>()
-        command.models.each {
+        command.associatedModelMap.each {
             Long id = it.key
             Model model = Model.get(id)
             models.add(model)
@@ -169,12 +174,12 @@ class ModelOfTheMonthService {
         entry.authors = command.authors
         entry.title = command.title
         entry.shortDescription = command.shortDescription
-        entry.previewImage = command.previewImage
+        entry.previewImage = Base64.decoder.decode(command.previewImage)
         if (entry.save(flush: true)) {
-            log.debug("The entry (${entry.id}) of the model of the month ${command.getMonth()} has been saved successfully!")
+            log.debug("The entry (${entry.id}) of the model of the month ${command.getYearMonth()} has been saved successfully!")
         } else {
             log.error("""\
-There are errors when trying to persist entry (${entry.id}) of the model of the month ${command.getMonth()} into the database: ${entry.errors.allErrors.inspect()}""")
+There are errors when trying to persist entry (${entry.id}) of the model of the month ${command.getYearMonth()} into the database: ${entry.errors.allErrors.inspect()}""")
             entry = null
         }
         entry

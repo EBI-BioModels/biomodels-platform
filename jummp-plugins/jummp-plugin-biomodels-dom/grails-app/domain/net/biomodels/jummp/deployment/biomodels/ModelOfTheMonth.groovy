@@ -43,22 +43,33 @@ class ModelOfTheMonth implements Serializable {
     byte[] previewImage
 
     static constraints = {
-        title nullable: false, blank: false
-        authors nullable: false, blank: false
+        title blank: false
+        authors blank: false
         shortDescription nullable: true, blank: true, maxSize: 1024
-        previewImage nullable: true, blank: true
+        // Limit upload file size to 2MB
+        previewImage nullable: true, blank: true, maxSize: 1024 * 1024 * 2
     }
 
     ModelOfTheMonthTransportCommand toCommandObject() {
         String date = publicationDate?.format(DATE_FORMAT_PATTERN)
         Map modelsMap = [:]
+        List<String> modelIdentifiers = new ArrayList<String>()
+        final String separator = ', '
         models.each {
             String perennialId = it.publicationId ?: it.submissionId
             modelsMap[it.id] = perennialId
+            modelIdentifiers.add(perennialId)
         }
-        new ModelOfTheMonthTransportCommand(authors: authors,
-            date: date, title: title, publicationDate: publicationDate,
+        String models = String.join(separator, modelIdentifiers)
+        String strPreviewImage = ""
+        if (previewImage?.size() > 0) {
+            strPreviewImage = new String(Base64.getEncoder().encodeToString(previewImage))
+        }
+        new ModelOfTheMonthTransportCommand(id: id, authors: authors,
+            formattedEntryDate: date,
+            title: title, publicationDate: publicationDate,
             lastUpdated: lastUpdated, shortDescription: shortDescription,
-            previewImage: previewImage, models: modelsMap)
+            previewImage: strPreviewImage, associatedModelMap: modelsMap,
+            models: models)
     }
 }

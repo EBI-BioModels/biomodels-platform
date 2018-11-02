@@ -29,16 +29,16 @@
     <div class="tabs-content" data-tabs-content="momManagementTabs">
         <div class="tabs-panel is-active" id="listAll">
             <h3>List all of Model of Month entries</h3>
-            <a class="button" href="${createLink(controller: "ModelOfTheMonth", action: "show")}">Add a new entry</a>
+            <a class="button" href="${createLink(controller: "ModelOfTheMonth", action: "create")}">Add a new entry</a>
             <table id="momEntries">
                 <thead class="row" style="font-weight: bold">
                 <tr>
-                    <th class="small-1 columns">Authors</th>
-                    <th class="small-2 columns">Title</th>
-                    <th class="small-4 columns">Short description</th>
-                    <th class="small-1 columns">Publication Date</th>
-                    <th class="small-1 columns">Last updated</th>
-                    <th class="small-1 columns">Models</th>
+                    <th>Authors</th>
+                    <th>Title</th>
+                    <th>Short description</th>
+                    <th>Publication Date</th>
+                    <th>Last updated</th>
+                    <th>Models</th>
                 </tr></thead>
                 <tbody>
                 <g:render template="/templates/momEntry" collection="${entries}" var="entry" />
@@ -47,18 +47,7 @@
             <script type="application/javascript">
                 $(document).ready(function() {
                     $('#momEntries').DataTable({
-                        "lengthMenu": [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]],
-                        // "columns": [
-                        //     null, null, null, null, null, {"visible": false}, null
-                        // ]
-                        // "columns": [
-                        //     { "name": "authors" },
-                        //     { "name": "title" },
-                        //     { "name": "shortDescription" },
-                        //     { "name": "publicationDate" },
-                        //     { "name": "lastUpdated" },
-                        //     { "name": "models" }
-                        // ]
+                        "lengthMenu": [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]]
                     });
                 });
             </script>

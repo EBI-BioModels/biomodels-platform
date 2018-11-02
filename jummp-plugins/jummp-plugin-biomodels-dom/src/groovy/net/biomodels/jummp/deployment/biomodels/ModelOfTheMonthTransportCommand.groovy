@@ -20,6 +20,8 @@
 
 package net.biomodels.jummp.deployment.biomodels
 
+import grails.util.Holders
+
 /**
  * @short Data transfer object (DTO) for ModelOfTheMonth domain class.
  *
@@ -33,27 +35,58 @@ class ModelOfTheMonthTransportCommand implements Serializable {
     static final String FALLBACK_URL = "content/model-of-the-month?all=yes"
     public static final String SEP = '-'
 
+    /**
+     * Dependency injection of modelDelegateService
+     */
+    transient def modelDelegateService = Holders.grailsApplication.mainContext.modelDelegateService
+
     Long id
     String title
     String authors
     Date publicationDate
     Date lastUpdated
-    String date
+    /**
+     * The calendar month for this entry -- e.g. 2010-05
+     */
+    String formattedEntryDate
     String shortDescription
-    byte[] previewImage
+    String previewImage
     String mimeType
     boolean updated
-    Map<Long, String> models
+    /**
+     * The keys represent the models' id (primary key) and the values are the models' perennial identifier.
+     */
+    transient Map<Long, String> associatedModelMap
+    String models
 
     static constraints = {
         importFrom(ModelOfTheMonth)
         id nullable: true
         mimeType nullable: true
+        models blank: false, validator: { String ids, ModelOfTheMonthTransportCommand cmd ->
+            def modelIdList = Arrays.asList(ids.split(', '))
+            def associationMap = cmd.modelDelegateService.findModelsByPerennialId(modelIdList)
+            if (modelIdList.size() == associationMap?.size()) {
+                cmd.associatedModelMap = associationMap
+                return true
+            }
+            return false
+        }
+        formattedEntryDate nullable: true, validator: { String ignoredValue, ModelOfTheMonthTransportCommand cmd ->
+            if (!cmd.publicationDate) {
+                return false
+            }
+            cmd.formattedEntryDate = cmd.publicationDate.format(ModelOfTheMonth.DATE_FORMAT_PATTERN)
+            return true
+        }
+        previewImage nullable: true, validator: {String img, ModelOfTheMonthTransportCommand cmd ->
+            return true
+        }
     }
 
     final String getFormattedURL() {
-        if (date?.isEmpty() || !date?.contains(SEP)) return FALLBACK_URL
-        String[] yearAndMonth = date?.split(SEP)
+        if (formattedEntryDate?.isEmpty() || !formattedEntryDate?.contains(SEP)) return FALLBACK_URL
+        String[] yearAndMonth = formattedEntryDate?.split(SEP)
         if (yearAndMonth?.length > 2) {
             return FALLBACK_URL
         }
@@ -64,7 +97,7 @@ class ModelOfTheMonthTransportCommand implements Serializable {
         return "${URL_SEED}year=$year&month=$month"
     }
 
-    String getMonth() {
-        publicationDate?.format(ModelOfTheMonth.DATE_FORMAT_PATTERN)
+    String getYearMonth() {
+        formattedEntryDate
     }
 }
