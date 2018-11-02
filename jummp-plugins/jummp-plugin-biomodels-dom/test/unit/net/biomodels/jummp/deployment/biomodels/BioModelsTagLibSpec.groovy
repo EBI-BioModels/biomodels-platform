@@ -39,7 +39,7 @@ class BioModelsTagLibSpec extends Specification {
             if (id == 0) { // model does not exist
                 return []
             }
-            [new ModelOfTheMonthTransportCommand(date: DATE, authors: 'Bob')]
+            [new ModelOfTheMonthTransportCommand(formattedEntryDate: DATE, authors: 'Bob')]
         }
         tagLib.modelOfTheMonthService = mockModelMonthService.createMock()
     }
