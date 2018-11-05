@@ -73,14 +73,6 @@ class ModelOfTheMonthController {
     }
 
     def save(ModelOfTheMonthTransportCommand command) {
-        if (params?.id) {
-            command.id = params.long("id")
-        }
-        if (params["previewImage"]) {
-            command.previewImage = params["previewImage"]
-            command.mimeType = params["mimeType"]
-        }
-        command.updated = command?.id ? true : false
         Map result = [:]
         if (command?.validate()) {
             ModelOfTheMonth updated = modelOfTheMonthService.doCreateOrUpdate(command)
@@ -96,8 +88,8 @@ class ModelOfTheMonthController {
             }
         } else {
             result.status = 422
-            result['errors'] = command.errors.allErrors.inspect()
             result['message'] = "Sorry, but your form was not submitted because it is not valid. Please correct or enter valid values into the required fields if they are missing. Click Save button again when you finish it!"
+            result['errors'] = command.errors.allErrors.inspect()
         }
         response.status = result.status
         render(result as JSON)

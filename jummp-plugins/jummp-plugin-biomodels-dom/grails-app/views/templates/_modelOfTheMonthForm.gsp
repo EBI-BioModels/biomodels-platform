@@ -1,3 +1,4 @@
+<div id="txtStatus" style="color: #ED0000; font-weight: 500; font-size: larger"></div>
 <div id="MoMEntryEditorForm">
     <form id="momEntryForm">
         <div class="row">
@@ -61,8 +62,8 @@
                 <button type="button" class="button" id="btnReset">Reset</button>
             </div>
             <div class="small-12 medium-6 large-6 columns" style="text-align: right">
-                <label for="uploadPreviewImage" class="button">Upload an image</label>
-                <input type="file" id="uploadPreviewImage" class="show-for-sr" accept="image/*"
+                <label for="btnUploadPreviewImage" class="button">Upload an image</label>
+                <input type="file" id="btnUploadPreviewImage" class="show-for-sr" accept="image/*"
                        style="text-align: right; direction: ltr">
             </div>
         </div>
@@ -76,8 +77,8 @@
 
     function showWarningMessage() {
         var imgSrc = "${grailsApplication.config.grails.serverURL}/images/biomodels/unacceptable.png";
-        $('#curaImageHolder').attr('src', imgSrc);
-        $('#curaImageHolder').attr('title', 'This format is not acceptable');
+        $('#previewImage').attr('src', imgSrc);
+        $('#previewImage').attr('title', 'This format is not acceptable');
     }
 
     $('#publicationDate').datepicker({
@@ -103,16 +104,21 @@
     }
 
     function checkRequiredValidity() {
-        /* check whether the curation image is available or not */
+        /* check whether the preview image is available or not */
         var previewImage = $('#previewImage').attr('src');
-        var re = new RegExp('data:image\/');
-        var isPreviewImageAvailable = re.exec(previewImage);
+        var isPreviewImageAvailable = true;
+        if (previewImage.indexOf("http") >= 0) {
+            isPreviewImageAvailable = true;
+        } else {
+            var re = new RegExp('data:image\/');
+            isPreviewImageAvailable = re.exec(previewImage);
+        }
         /* combine with the built-in validation check */
         var isValid = $('#momEntryForm')[0].checkValidity() && isPreviewImageAvailable;
         if (isValid) {
             delete messages["invalidForm"];
         } else {
-            set(messages, "invalidForm", "${g.message(code: "model.biomodels.curationNotes.editor.invalidForm")}");
+            set(messages, "invalidForm", "${g.message(code: "model.biomodels.modelOfTheMonth.editor.invalidForm")}");
         }
         return isValid;
     }
@@ -151,7 +157,7 @@
         return momEntryTC;
     }
 
-    $("#uploadPreviewImage").change(function(){
+    $("#btnUploadPreviewImage").change(function(){
         var re = new RegExp('image\/');
         //var re = new RegExp('(.*?)'); accept everything
         if (this.files && this.files[0]) {
@@ -162,31 +168,32 @@
                 imgUploadedStream = previewImage(this, '#previewImage');
                 delete messages["onlyAcceptImages"];
             } else {
-                set("onlyAcceptImages",
-                        "${g.message(code: "model.biomodels.curationNotes.editor.onlyAcceptImages")}");
+                set(messages, "onlyAcceptImages",
+                        "${g.message(code: "model.biomodels.modelOfTheMonth.editor.onlyAcceptImages")}");
                 showWarningMessage();
             }
 
             /* validate file size */
             var MAX_SIZE = 2 * 1024 * 1024; // 2MB ~ 2_100_000 is the allowed maximum size of the uploading image file
             if (imageFile.size > MAX_SIZE) {
-                set("curationImageTooBig",
-                        "${g.message(code: "curationNotesTransportCommand.curationImage.curationImageTooBig")}");
+                set(messages, "previewImageTooBig",
+                        "${g.message(code: "modelOfTheMonthTransportCommand.previewImage.previewImageTooBig")}");
+                showWarningMessage();
             } else {
-                delete messages["curationImageTooBig"];
+                delete messages["previewImageTooBig"];
             }
-            $('#txtStatus').html(values().join("<br/>"));
+            $('#txtStatus').html(values(messages).join("<br/>"));
         }
     });
 
     $('#btnSave').on("click", function(event) {
-        var shouldSubmit =  true; //checkRequiredValidity() && checkCustomValidity();
+        var shouldSubmit =  checkRequiredValidity() && checkCustomValidity();
         if (shouldSubmit) {
             var updatedEntry = buildMoMEntryTC();
             "use strict";
             event.preventDefault();
             $.ajax({
-                dataType: "json",
+                // dataType: "json",
                 type: "POST",
                 url: $.jummp.createLink("modelOfTheMonth", "save"),
                 cache: true,
@@ -196,27 +203,49 @@
                 beforeSend: function() {
                     toastr.info("The entry is being saved. Please wait...");
                 },
-                success: function(response) {
+                success: function(data, txtStatus, jqXHR) {
+                    // case: jqXHR.status === 200
                     var href = window.location.href;
-                    if ("${params.id}" === "" && typeof(response['id']) !== 'undefined') {
-                        var newHref = href + "/" + response['id'];
+                    if ("${params.id}" === "" && typeof(data['id']) !== 'undefined') {
+                        var newHref = href + "/" + data['id'];
                         if (window.history.pushState) {
                             window.history.pushState({}, null, newHref);
                         } else {
                             document.location.hash = newHref;
                         }
                     }
+                    var msg = jqXHR.responseJSON.message;
                     toastr.clear();
-                    toastr.success(response['message']);
+                    toastr.success(msg);
+                    messages = {};
+                    $('#txtStatus').html("");
                 },
-                error: function(jqXHR, textStatus, errorThrown, response) {
-                    // TODO: the error message doesn't show properly
+                error: function(jqXHR, exception, errorThrown) {
+                    var msg = "";
+                    if (jqXHR.status === 0) {
+                        msg = 'Not connect.<br/>Verify Network.<br/>'  + errorThrown;
+                    } else if (jqXHR.status == 404) {
+                        msg = '404 - Requested page not found.<br/>'  + errorThrown;
+                    } else if (jqXHR.status == 500) {
+                        msg = '500 - Internal Server Error.<br/>'  + errorThrown;
+                    } else if (jqXHR.status === 422 || jqXHR.staus === 400) {
+                        msg = "422 - " + jqXHR.statusText + "<br/>" + jqXHR.responseJSON.message;
+                    } else if (exception === 'parsererror') {
+                        msg = 'Requested JSON parse failed.<br/>'  + errorThrown;
+                    } else if (exception === 'timeout') {
+                        msg = 'Time out error.' + errorThrown;
+                    } else if (exception === 'abort') {
+                        msg = 'Ajax request aborted.<br/>' + errorThrown;
+                    } else {
+                        msg = 'Uncaught Error.<br/>' + jqXHR.responseText;
+                    }
+                    $('#txtStatus').html(msg);
                     toastr.clear();
-                    toastr.error(response['errors']);
+                    toastr.error(msg);
                 }
             });
         } else {
-            $('#txtStatus').html(values().join("<br/>"));
+            $('#txtStatus').html(values(messages).join("<br/>"));
         }
     });
 

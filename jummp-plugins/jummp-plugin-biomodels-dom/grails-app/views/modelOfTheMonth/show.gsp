@@ -26,7 +26,6 @@
 <body>
     <g:if test="${entry}">
     <h2>Entry of The Model of The Month: ${entry?.formattedEntryDate}</h2>
-    <div id="txtStatus" style="color: #ED0000; font-weight: 500; font-size: larger"></div>
     <g:render template="/templates/modelOfTheMonthForm" />
     </g:if>
     <g:else>

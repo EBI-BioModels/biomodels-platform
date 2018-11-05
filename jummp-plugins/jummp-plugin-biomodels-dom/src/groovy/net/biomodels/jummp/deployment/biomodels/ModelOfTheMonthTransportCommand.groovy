@@ -80,7 +80,9 @@ class ModelOfTheMonthTransportCommand implements Serializable {
             return true
         }
         previewImage nullable: true, validator: {String img, ModelOfTheMonthTransportCommand cmd ->
-            return true
+            def mimeTypePattern = /^image\//
+            def m = cmd.mimeType =~ mimeTypePattern
+            return m.count >= 0
         }
     }
 

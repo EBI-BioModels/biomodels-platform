@@ -17,6 +17,7 @@
 </head>
 
 <body>
+    <h2>Create a new entry of The Model of The Month: ${entry?.formattedEntryDate}</h2>
     <g:render template="/templates/modelOfTheMonthForm" />
 </body>
 </html>
