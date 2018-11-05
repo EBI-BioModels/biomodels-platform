@@ -32,7 +32,6 @@ package net.biomodels.jummp.deployment.biomodels
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
-import groovy.json.JsonSlurper
 
 import java.text.SimpleDateFormat
 
@@ -82,59 +81,25 @@ class ModelOfTheMonthController {
             command.mimeType = params["mimeType"]
         }
         command.updated = command?.id ? true : false
-        Map response = [:]
+        Map result = [:]
         if (command?.validate()) {
             ModelOfTheMonth updated = modelOfTheMonthService.doCreateOrUpdate(command)
             if (updated) {
-                response['entity'] = updated
-                response['id'] = updated.id
-                response['message'] = "The record has been updated successfully"
+                result.status = 200
+                result['entity'] = updated
+                result['id'] = updated.id
+                result['message'] = "The record has been updated successfully"
             } else {
-                response['message'] = "There is an error while trying to persist the entry into the database"
-                response['errors'] = updated.errors.getFieldErrors()
+                result.status = 400
+                result['message'] = "There is an error while trying to persist the entry into the database"
+                result['errors'] = updated.errors.getFieldErrors()
             }
         } else {
-            response['errors'] = command.errors.allErrors.inspect()
-            response['message'] = "There are missing required fields. Please double-check the form and click Save button again!"
+            result.status = 422
+            result['errors'] = command.errors.allErrors.inspect()
+            result['message'] = "Sorry, but your form was not submitted because it is not valid. Please correct or enter valid values into the required fields if they are missing. Click Save button again when you finish it!"
         }
-
-        render(response as JSON)
-    }
-
-    ModelOfTheMonthTransportCommand parseMoMEntryTC(def momEntryTC, def id) {
-        momEntryTC = new JsonSlurper().parseText(momEntryTC)
-        String authors = momEntryTC["authors"].encodeAsHTML()
-        String title = momEntryTC["title"].encodeAsHTML()
-        String shortDescription = momEntryTC["shortDescription"].encodeAsHTML()
-        def newPublicationDate = momEntryTC["publicationDate"]
-        def newLastUpdated = momEntryTC["lastUpdated"]
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
-        Date publicationDate = dateFormat.parse(newPublicationDate)
-        Date lastUpdated = dateFormat.parse(newLastUpdated)
-        String date = publicationDate?.format(ModelOfTheMonth.DATE_FORMAT_PATTERN)
-        String mimeType = momEntryTC["mimeType"]
-        boolean updated = momEntryTC["updated"]
-        def models = momEntryTC["models"]
-        List<String> modelIds = models.split(", ")
-        Map<Long, String> associatedModels = modelDelegateService.findModelsBySubmissionOrPublicationId(modelIds)
-        def bindingMap = [id: id,
-                          authors: authors,
-                          title: title,
-                          models: associatedModels,
-                          shortDescription: shortDescription,
-                          publicationDate: publicationDate,
-                          lastUpdated: lastUpdated,
-                          date: date,
-                          mimeType: mimeType,
-                          updated: updated]
-        ModelOfTheMonthTransportCommand command = new ModelOfTheMonthTransportCommand(bindingMap)
-        if (params?.id) {
-            command.id = params.long("id")
-        }
-        if (momEntryTC["previewImage"]) {
-            command.previewImage = Base64.decoder.decode(momEntryTC["previewImage"])
-            command.mimeType = momEntryTC["mimeType"]
-        }
-        command
+        response.status = result.status
+        render(result as JSON)
     }
 }

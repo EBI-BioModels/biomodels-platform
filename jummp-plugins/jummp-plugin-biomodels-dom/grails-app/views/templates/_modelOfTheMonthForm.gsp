@@ -1,11 +1,3 @@
-<%
-    def modelIds = ""
-    if (entry?.associatedModelMap) {
-        Collection<String> ids = entry.associatedModelMap.values()
-        List list = new ArrayList(ids)
-        modelIds = String.join(", ", list)
-    }
-%>
 <div id="MoMEntryEditorForm">
     <form id="momEntryForm">
         <div class="row">
