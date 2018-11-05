@@ -12,35 +12,28 @@
 
 <script>
     $(document).ready(function () {
-        const BASE_URL = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters?format=json&";
-        const FIELDS = "fields=entity,entity_id,reaction,model,publication,rate,parameters&";
-
         var columnConfig = [
             {
-                data: 'fields.entity',
-                render: formatData
+                data: 'fields.entity'
             },
             {
                 data: 'fields.entity_id',
-                orderable: false,
-                render: formatData
+                orderable: false
             },
 
             {
                 data: 'fields.reaction',
                 width: "40%",
-                orderable: false,
-                render: formatData
+                orderable: false
             },
             {
                 data: 'fields.model',
-                render: function (data, type, row) {
-                    if (data !== undefined && data.length !== 0) {
-                        data = data[0].replace(/\\/g, "");
-                        var lastIndexOfSlash = data.lastIndexOf("/");
-                        data = "<a target='_blank' href='https://www.ebi.ac.uk/biomodels/" + data + "'>" + data.substring(lastIndexOfSlash, data.length) + "</a>"
+                render: function (rawdata, type, row) {
+                    if (rawdata !== undefined && rawdata.length !== 0) {
+                        var data = rawdata;
+                        var formattedData = "<a target='_blank' href='https://www.ebi.ac.uk/biomodels/" + data + "'>" + data + "</a>";
                     }
-                    return data
+                    return formattedData
                 }
             },
             {
@@ -48,9 +41,7 @@
                 orderable: false,
                 render: function (data, type, row) {
                     if (data !== undefined && data.length !== 0) {
-                        data = data[0].replace(/\\/g, "");
-                        var lastIndexofSlash = data.lastIndexOf("/");
-                        lastIndexofSlash = data.lastIndexOf("/")+1;
+                        var lastIndexofSlash = data.lastIndexOf("/") + 1;
                         data = "<a target='_blank' href='" + data + "'>" + data.substring(lastIndexofSlash, data.length) + "</a>"
                     }
                     return data
@@ -58,13 +49,11 @@
             },
             {
                 data: 'fields.rate',
-                orderable: false,
-                render: formatData
+                orderable: false
             },
             {
                 data: 'fields.parameters',
-                orderable: false,
-                render: formatData
+                orderable: false
             }
         ];
 
@@ -78,54 +67,37 @@
 
         // Preprocess custom params before calling EbiSearch WS
         function preProcessEbiSearchParams(urlParams) {
-            // Global Filtering
-            var query;
-            if (!(urlParams.search.value)) {
-                query = "domain_source:biomodels_parameters";
-            } else {
-                query = urlParams.search.value;
-            }
-            urlParams.query = query;
+            var data = {};
+            data.query = encodeURIComponent(urlParams.search.value);
+            data.size = urlParams.length;
+            data.start = urlParams.start;
+            data.sort = "";
 
             // Sorting
             urlParams.order.forEach(function (obj) {
                 var column = urlParams.columns[obj.column];
                 var columnName = column.data.replace("fields.", "");
-                var sortDirection = obj.dir;
-                urlParams.sortfield = columnName;
-                if (sortDirection === "desc") {
-                    urlParams.order = "descending";
+                var sortDirectionArg = obj.dir;
+                var columnOrder;
+
+                if (sortDirectionArg === "desc") {
+                    columnOrder = "descending";
                 }
-                else if(sortDirection === "asc"){
-                    urlParams.order = "ascending";
+                else if (sortDirectionArg === "asc") {
+                    columnOrder = "ascending";
                 }
+                if (data.sort && columnOrder && columnName) {
+                    data.sort += ',';
+                }
+                data.sort += columnName + ':' + columnOrder;
             });
-            urlParams.size = urlParams.length;
-            delete urlParams[search];
-            delete urlParams[length];
-            return urlParams;
+            return data;
         }
 
-        function formatData(data, type, row) {
-            if (data !== undefined && data.length !== 0) {
-                data = data[0].replace(/\\/g, "");
-            }
-            return data
-        }
-
-        // Function called when data is received
-        function postProcessEbiSearchParams(data){
-            var json = jQuery.parseJSON( data );
-            json.recordsTotal = json["hitCount"];
-            json.recordsFiltered = json["hitCount"];
-            json.data = json["entries"];
-            return JSON.stringify( json );
-        }
         ajaxConfig = {
-            "url": BASE_URL + FIELDS,
+            "url": "${grailsApplication.config.grails.serverURL}/parameterSearch/search",
             "dataSrc": "entries",
-            "data": preProcessEbiSearchParams,
-            "dataFilter":postProcessEbiSearchParams
+            "data": preProcessEbiSearchParams
         };
 
 
