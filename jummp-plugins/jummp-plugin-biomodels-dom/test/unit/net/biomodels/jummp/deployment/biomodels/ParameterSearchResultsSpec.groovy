@@ -1,0 +1,49 @@
+package net.biomodels.jummp.deployment.biomodels
+
+import grails.converters.JSON
+import grails.test.mixin.TestFor
+import grails.test.mixin.TestMixin
+import grails.test.mixin.services.ServiceUnitTestMixin
+import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchResults
+import spock.lang.Specification
+
+/**
+ * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
+ */
+@TestMixin(ServiceUnitTestMixin)
+
+class ParameterSearchResultsSpec extends Specification {
+
+
+    void "test ParameterSearchResults fromJSON"() {
+
+        given: "A webservice call to ebi search and basic criteria"
+
+        String urlString = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters?format=json" +
+            "&fields=entity,entity_id,reaction,model,publication,rate,parameters" +
+            "&query=E4P*&size=10&start=0&sort=entity:ascending"
+        def searchResults = urlString.toURL().text
+
+        when: "Converted parsed from JSON with ParameterSearchResults"
+        ParameterSearchResults results = ParameterSearchResults.fromJson(JSON.parse(searchResults))
+
+        then: "It should return correct results"
+
+        int expectedTotalRecords = 22
+        int actualTotalRecords = results.recordsTotal
+        assert expectedTotalRecords == actualTotalRecords
+
+        then: "it should return reaction value"
+
+        String expectedReaction = "\\(122357 \\+ TP\\) => \\(165007 \\+ hydrogenphosphate\\)"
+        String actualReaction = results.entries.first().fields.reaction
+        assert expectedReaction == actualReaction
+
+        String expectedEntityId = "E4P"
+        String actualEntityId = results.entries.first().fields.entity_id
+        assert expectedEntityId == actualEntityId
+
+    }
+
+
+}
