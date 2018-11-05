@@ -21,6 +21,8 @@
 package net.biomodels.jummp.importer.support.biomodels
 
 import groovy.transform.CompileStatic
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * This abstract class aims to generalising model change detector. It is extended by concrete classes
@@ -34,6 +36,7 @@ import groovy.transform.CompileStatic
  */
 @CompileStatic
 abstract class AbstractModelChangeDetector implements ModelChangeDetector {
+    protected final Logger logger = LoggerFactory.getLogger(AbstractModelChangeDetector.class)
     ModelChangeDetector next
 
     @Override
@@ -47,6 +50,10 @@ abstract class AbstractModelChangeDetector implements ModelChangeDetector {
      * detectors to delegate to, this method will return false.
      */
     boolean hasChanged(ModelComparisonContext comparison) {
-        next?.hasChanged(comparison) ?: false
+        boolean result = next?.hasChanged(comparison)
+        if (result) {
+            logger.info("{} reports that {} has changed", this, comparison.properties)
+        }
+        result
     }
 }
