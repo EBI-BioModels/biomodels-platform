@@ -174,7 +174,9 @@ class ModelOfTheMonthService {
         entry.authors = command.authors
         entry.title = command.title
         entry.shortDescription = command.shortDescription
-        entry.previewImage = Base64.decoder.decode(command.previewImage)
+        if (command.previewImage) {
+            entry.previewImage = Base64.decoder.decode(command.previewImage)
+        }
         if (entry.save(flush: true)) {
             log.debug("The entry (${entry.id}) of the model of the month ${command.getYearMonth()} has been saved successfully!")
         } else {
