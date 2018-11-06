@@ -21,7 +21,7 @@ class ParameterSearchCommand {
 
     static constraints = {
         query nullable: true, validator: { String q, ParameterSearchCommand cmd ->
-            if (null == q || q == "" || q == "null" || q == '*' /** TODO check if we need to cover the null string */) {
+            if (null == q || q == "" || q == "null" || q == '*') {
                 cmd.query = DEFAULT_QUERY
             }
             return true

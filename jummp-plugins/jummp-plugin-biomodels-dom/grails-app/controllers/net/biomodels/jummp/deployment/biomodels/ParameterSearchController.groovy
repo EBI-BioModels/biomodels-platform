@@ -46,9 +46,9 @@ class ParameterSearchController {
 
     def search(ParameterSearchCommand command) {
         if (!command.validate()) {
-            def msg = String.format("Invalid request %s: %s", command.query, command.errors.allErrors) // TODO TEST THAT INVALID SEARCH REQUESTS ARE HANDLED GRACEFULLY
+            def msg = "Invalid request $command.query, $command.errors.allErrors"
             log.error(msg)
-            respond ["Invalid request object"] as JSON
+            render( ['message' : "Invalid request object"] as JSON)
             return
         }
         try {
@@ -56,8 +56,9 @@ class ParameterSearchController {
             render(result as JSON)
         } catch (IllegalArgumentException ie) {
             response.status = 400
-            log.error(ie.getMessage())
-            [ie.getMessage()]
+            String msg = "Error encountered while processing $command: ${ie.message}"
+            log.error(msg)
+            render(['message' : ie.getMessage()] as JSON)
         } catch (Exception ex) {
             response.status = 500
             String msg = "Error encountered while processing $command: ${ex.message}"
