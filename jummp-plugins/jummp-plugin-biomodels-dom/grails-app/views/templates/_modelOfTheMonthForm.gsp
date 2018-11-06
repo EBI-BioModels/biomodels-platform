@@ -229,7 +229,7 @@
                     } else if (jqXHR.status == 500) {
                         msg = '500 - Internal Server Error.<br/>'  + errorThrown;
                     } else if (jqXHR.status === 422 || jqXHR.staus === 400) {
-                        msg = "422 - " + jqXHR.statusText + "<br/>" + jqXHR.responseJSON.message;
+                        msg = jqXHR.status + " - " + jqXHR.statusText + "<br/>" + jqXHR.responseJSON.message;
                     } else if (exception === 'parsererror') {
                         msg = 'Requested JSON parse failed.<br/>'  + errorThrown;
                     } else if (exception === 'timeout') {
