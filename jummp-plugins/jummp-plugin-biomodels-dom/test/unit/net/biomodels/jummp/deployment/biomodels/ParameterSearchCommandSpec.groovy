@@ -25,7 +25,7 @@ class ParameterSearchCommandSpec extends Specification {
     }
 
 
-    void "test ParameterSearchCommand Negatively"() {
+    void "test ParameterSearchCommand Negatively with size and start"() {
 
         given: "A parameter search command object is defined with negative criteria"
         def bindingMap = [query: "E4P*", size: 13, start: -5, sort: "entity:ascending"]
@@ -36,6 +36,20 @@ class ParameterSearchCommandSpec extends Specification {
         then: "Validation should return false"
         assert !command.validate()
     }
+
+    void "test ParameterSearchCommand positively with query = *"() {
+
+        given: "A parameter search command object is defined with negative criteria"
+        def bindingMap = [query: null, size: 10, start: 0, sort: "entity:ascending"]
+        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+
+        when: "When command is validated with negative criteria"
+
+        then: "Validation should return false"
+        assert command.validate()
+        assertEquals("*:*",command.query)
+    }
+
 
     void "test ParameterSearchCommand URL"() {
 
