@@ -448,4 +448,15 @@ class ModelDelegateService implements IModelService {
         final boolean MANY_IDENTIFIERS = HAVE_PERENNIAL_PUBLICATION_ID || ID_TYPES.size() >= 2
         return MANY_IDENTIFIERS
     }
+
+    Map<Long, String> findModelsByPerennialId(List<String> identifiers) {
+        Map results = [:]
+        for (String id : identifiers) {
+            Model model = modelService.findByPerennialIdentifier(id)
+            if (model) {
+                results[model.id] = id
+            }
+        }
+        results
+    }
 }
