@@ -1108,8 +1108,8 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                     authorList.each {
                         if (it) {
                             String name = it["userRealName"]
-                            String institution = it["institution"]
-                            String orcid = it["orcid"]
+                            String institution = it["institution"] ?: null
+                            String orcid = it["orcid"] ?: null
                             def authorListSrc = model.publication.authors
                             if (!authorListSrc) {
                                 authorListSrc = new LinkedList<PersonTransportCommand>()
