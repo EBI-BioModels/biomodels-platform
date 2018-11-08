@@ -34,7 +34,7 @@ class ParameterSearchCommandSpec extends Specification {
         when: "When command is validated with negative criteria"
 
         then: "Validation should return false"
-        assert !command.validate()
+        !command.validate()
     }
 
     void "test ParameterSearchCommand positively with query = *"() {
@@ -46,7 +46,7 @@ class ParameterSearchCommandSpec extends Specification {
         when: "When command is validated with negative criteria"
 
         then: "Validation should return false"
-        assert command.validate()
+        command.validate()
         assertEquals("*:*",command.query)
     }
 
