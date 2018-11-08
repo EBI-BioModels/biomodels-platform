@@ -1,12 +1,15 @@
 <table id="table_id" class="display">
     <thead>
     <th>Entity</th>
+    <th>Entity Link</th>
     <th>Entity Id</th>
     <th>Reaction</th>
     <th>Model</th>
     <th>Publication</th>
     <th>Rate</th>
     <th>Parameters</th>
+    <th>Entity SBO Link</th>
+    <th>Reaction SBO Link</th>
     </thead>
 </table>
 
@@ -14,7 +17,12 @@
     $(document).ready(function () {
         var columnConfig = [
             {
-                data: 'fields.entity'
+                data: 'fields.entity_RAW'
+            },
+            {
+                data: 'fields.entity_accession_url',
+                orderable: false
+
             },
             {
                 data: 'fields.entity_id',
@@ -22,7 +30,7 @@
             },
 
             {
-                data: 'fields.reaction',
+                data: 'fields.reaction_RAW',
                 width: "40%",
                 orderable: false
             },
@@ -41,18 +49,27 @@
                 orderable: false,
                 render: function (data, type, row) {
                     if (data !== undefined && data.length !== 0) {
-                        var lastIndexofSlash = data.lastIndexOf("/") + 1;
+                        data = data.replace(/\\/g, "");
+                        var lastIndexofSlash = "http://identifiers.org/".lastIndexOf("/") + 1;
                         data = "<a target='_blank' href='" + data + "'>" + data.substring(lastIndexofSlash, data.length) + "</a>"
                     }
                     return data
                 }
             },
             {
-                data: 'fields.rate',
+                data: 'fields.rate_RAW',
                 orderable: false
             },
             {
-                data: 'fields.parameters',
+                data: 'fields.parameters_RAW',
+                orderable: false
+            },
+            {
+                data: 'fields.entity_sbo_term_link',
+                orderable: false
+            },
+            {
+                data: 'fields.reaction_sbo_term_link',
                 orderable: false
             }
         ];
@@ -76,7 +93,7 @@
             // Sorting
             urlParams.order.forEach(function (obj) {
                 var column = urlParams.columns[obj.column];
-                var columnName = column.data.replace("fields.", "");
+                var columnName = column.data.replace("fields.", "").replace("_RAW","");
                 var sortDirectionArg = obj.dir;
                 var columnOrder;
 
