@@ -12,7 +12,8 @@ import groovy.transform.ToString
 class ParameterSearchCommand {
     public static final String DEFAULT_QUERY = '*:*'
     public static
-    final String BASE_URL = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters?format=json&fields=entity,entity_id,reaction,model,publication,rate,parameters"
+    final String BASE_URL = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters?format=json" +
+        "&fields=entity_RAW,entity_id,reaction_RAW,model,publication,rate_RAW,parameters_RAW,entity_accession_url,reaction_sbo_term_link,entity_sbo_term_link"
     String query
     Integer size
     Integer start

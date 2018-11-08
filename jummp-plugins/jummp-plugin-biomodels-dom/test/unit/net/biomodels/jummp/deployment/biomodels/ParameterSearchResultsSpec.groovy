@@ -20,7 +20,7 @@ class ParameterSearchResultsSpec extends Specification {
         given: "A webservice call to ebi search and basic criteria"
 
         String urlString = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters?format=json" +
-            "&fields=entity,entity_id,reaction,model,publication,rate,parameters" +
+            "&fields=entity_RAW,entity_id,reaction_RAW,model,publication,rate_RAW,parameters_RAW" +
             "&query=E4P*&size=10&start=0&sort=entity:ascending"
         def searchResults = urlString.toURL().text
 
@@ -31,17 +31,17 @@ class ParameterSearchResultsSpec extends Specification {
 
         int expectedTotalRecords = 22
         int actualTotalRecords = results.recordsTotal
-        assert expectedTotalRecords == actualTotalRecords
+        assertEquals(expectedTotalRecords,actualTotalRecords)
 
         then: "it should return reaction value"
 
-        String expectedReaction = "\\(122357 \\+ TP\\) => \\(165007 \\+ hydrogenphosphate\\)"
-        String actualReaction = results.entries.first().fields.reaction
-        assert expectedReaction == actualReaction
+        String expectedReaction = "([24794350] + [122357]) => ([CHEBI:17969])"
+        String actualReaction = results.entries.first().fields.reaction_RAW
+        assertEquals(expectedReaction,actualReaction)
 
         String expectedEntityId = "E4P"
         String actualEntityId = results.entries.first().fields.entity_id
-        assert expectedEntityId == actualEntityId
+        assertEquals(expectedEntityId,actualEntityId)
 
     }
 
