@@ -22,7 +22,7 @@ class ParameterSearchCommand {
     static constraints = {
         query nullable: true, validator: { q,cmd ->
 
-            if(null == q || q == "" || q == "null" || q == '*'){
+            if(null == q || q == "" || q == '*'){
                 cmd.query = DEFAULT_QUERY
             }
             return true
