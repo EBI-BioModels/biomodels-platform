@@ -1175,7 +1175,7 @@ submitOriginalFile = { branch, modelId, originalFile, infoMap ->
         additionals = []
         def folder = new File(originalFile.parent)
         def additionalFiles = folder.listFiles().findAll { f ->
-            !(f in [originalFile] )
+            f.absolutePath != originalFile.absolutePath
         }
         additionals.addAll(additionalFiles)
     }
