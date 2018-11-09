@@ -1,5 +1,4 @@
 .flashNotificationDiv {
-	width:98%;
 	text-align:left;
 	padding-top:8px;
 	padding-bottom:8px;
@@ -11,7 +10,6 @@
     position: relative;
 }
 .PermanentMessage {
-	width:98%;
 	text-align:left;
 	padding-top:8px;
 	padding-bottom:8px;
