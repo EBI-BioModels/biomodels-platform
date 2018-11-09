@@ -564,7 +564,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                 def currentUser = springSecurityService.currentUser
                 String username = currentUser?.username ?: 'anonymous'
                 updateHistory(session.result_submission, username, "update", "html", update, true)
-                if (currentUser) {
+                if (currentUser && update != "") {
                     def notification = [
                             model: modelDelegateService.getModel(model),
                             user: currentUser,
