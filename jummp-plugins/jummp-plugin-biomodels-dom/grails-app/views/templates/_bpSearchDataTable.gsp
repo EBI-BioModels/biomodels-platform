@@ -50,8 +50,10 @@
                 render: function (data, type, row) {
                     if (data !== undefined && data.length !== 0) {
                         data = data.replace(/\\/g, "");
-                        var lastIndexofSlash = "http://identifiers.org/".lastIndexOf("/") + 1;
-                        data = "<a target='_blank' href='" + data + "'>" + data.substring(lastIndexofSlash, data.length) + "</a>"
+                        var lastIndexofUrlPrefix = "http://identifiers.org/".lastIndexOf("/") + 1;
+                        var urlSuffix = data.substring(lastIndexofUrlPrefix, data.length);
+                        var firstIndexOfUrlSuffix = urlSuffix.indexOf("/") + 1;
+                        data = "<a target='_blank' href='" + data + "'>" + urlSuffix.substring(firstIndexOfUrlSuffix, data.length) + "</a>"
                     }
                     return data
                 }
