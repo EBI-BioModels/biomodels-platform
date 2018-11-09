@@ -5,8 +5,6 @@ import grails.test.mixin.TestMixin
 import grails.test.mixin.services.ServiceUnitTestMixin
 import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchCommand
 import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchResults
-import org.junit.Test
-import org.junit.rules.ExpectedException
 import spock.lang.Specification
 
 /**
@@ -17,51 +15,36 @@ import spock.lang.Specification
 
 class ParameterSearchServiceSpec extends Specification {
 
-    ParameterSearchService parameterSearchService
-
-    def setup() {
-        parameterSearchService = new ParameterSearchService()
-    }
-
     void "test ParameterSearchService positively"() {
 
         given: "A parameter search command object is defined with basic criteria"
-        def bindingMap = [query: "BIOMD*1", size: 10, start: 0, sort: "entity:ascending"]
+        def bindingMap = [query: "BIOMD0000000292", size: 10, start: 0, sort: "entity:ascending"]
         ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
 
         when: "The service method's get data is called and parameter search command is valid"
-
-        assert command.validate()
-        ParameterSearchResults results = parameterSearchService.getData(command)
+        command.validate()
+        ParameterSearchResults results = service.getData(command)
+        def firstEntryFields = results.entries.first().fields
 
         then: "it should return correct number of records"
+        results.recordsTotal > 0
 
-        int expectedTotalRecords = 3577
-        int actualTotalRecords = results.recordsTotal
-        assert expectedTotalRecords == actualTotalRecords
+        and: "it should return correct records"
 
-        then: "it should return correct records i.e. reaction value"
+        String expectedReaction = "([3-phospho-D-glyceric acid, D-ribulose 1,5-bisphosphate, 3-Phospho-D-glycerate, \
+D-Ribulose 1,5-bisphosphate] + [NADPH, C00005] \
++ [ATP, C00002]) => \
+([dihydroxyacetone phosphate, aldehydo-D-ribose 5-phosphate, D-ribulose 5-phosphate, keto-D-fructose 1,6-bisphosphate, \
+keto-D-fructose 6-phosphate, D-erythrose 4-phosphate, sedoheptulose 1,7-bisphosphate, sedoheptulose 7-phosphate, \
+D-glyceraldehyde 3-phosphate, C00111, D-Ribose 5-phosphate;, D-Ribulose 5-phosphate, D-Ribulose 5-phosphate, \
+D-Ribulose 5-phosphate, D-Ribulose 5-phosphate, C00085, C00354, C00118] + [C00008, ADP] + [NADP(+), C00006])"
 
-        String expectedReaction = "\\(glyceraldehyde 3\\-phosphate \\+ keto\\-D\\-fructose 6\\-phosphate\\) " +
-            "=> \\(D\\-xylulose 5\\-phosphate \\+ 122357\\)"
-        String actualReaction = results.entries.first().fields.reaction
-        assert expectedReaction == actualReaction
+        expectedReaction == firstEntryFields.reaction_RAW
+        "Y" == firstEntryFields.entity_id
+        "BIOMD0000000292" == firstEntryFields.model
 
-        String expectedEntityId = "E4P"
-        String actualEntityId = results.entries.first().fields.entity_id
-        assert expectedEntityId == actualEntityId
-
-        then: "it should return correct records i.e. model id"
-
-        String expectedModel = "BIOMD0000000391"
-        String actualModel = results.entries.first().fields.model
-        assert expectedModel == actualModel
-
-        then: "Number of records per page should be as per size value"
-
-        int expectedEntriesSize = 10
-        int actualEntriesSize = results.entries.size()
-        assert expectedEntriesSize == actualEntriesSize
+        and: "Number of records per page should be as per size value"
+        10 == results.entries.size()
 
 
     }
@@ -74,14 +57,11 @@ class ParameterSearchServiceSpec extends Specification {
 
         when: "The service method's get data is called and parameter search command is valid"
 
-        assert command.validate()
-        ParameterSearchResults results = parameterSearchService.getData(command)
+        command.validate()
+        ParameterSearchResults results = service.getData(command)
 
         then: "it should return correct number of records"
-
-        int expectedTotalRecords = 0
-        int actualTotalRecords = results.recordsTotal
-        assert expectedTotalRecords == actualTotalRecords
+        0 == results.recordsTotal
 
     }
 

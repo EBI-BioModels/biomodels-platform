@@ -29,19 +29,18 @@ class ParameterSearchResultsSpec extends Specification {
 
         then: "It should return correct results"
 
-        int expectedTotalRecords = 22
-        int actualTotalRecords = results.recordsTotal
-        assertEquals(expectedTotalRecords,actualTotalRecords)
+        22 == results.recordsTotal
 
-        then: "it should return reaction value"
+        and: "it should return reaction value"
 
+        def resultFirstEntryFields = results.entries.first().fields
         String expectedReaction = "([24794350] + [122357]) => ([CHEBI:17969])"
-        String actualReaction = results.entries.first().fields.reaction_RAW
-        assertEquals(expectedReaction,actualReaction)
+        String actualReaction = resultFirstEntryFields.reaction_RAW
+        expectedReaction == actualReaction
 
         String expectedEntityId = "E4P"
-        String actualEntityId = results.entries.first().fields.entity_id
-        assertEquals(expectedEntityId,actualEntityId)
+        String actualEntityId = resultFirstEntryFields.entity_id
+        expectedEntityId == actualEntityId
 
     }
 

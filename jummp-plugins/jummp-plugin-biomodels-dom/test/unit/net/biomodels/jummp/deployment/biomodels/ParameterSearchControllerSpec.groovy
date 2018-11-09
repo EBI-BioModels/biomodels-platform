@@ -58,10 +58,9 @@ class ParameterSearchControllerSpec extends Specification {
         when : "Controller search method is invoked"
         controller.search(command)
 
-
         then: "Result should contain correct results"
-        assert response.json.recordsTotal == 2
-        assert response.json.entries.first().fields.entity == "e1"
+        response.json.recordsTotal == 2
+        response.json.entries.first().fields.entity == "e1"
 
     }
 }
