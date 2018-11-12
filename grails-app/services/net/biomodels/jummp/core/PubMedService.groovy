@@ -155,6 +155,14 @@ class PubMedService {
             } else {
                 author = new Person()
             }
+            /**
+             * Apparently, the full name should be combined from firstName and lastName
+             * rather than populated from the fullName field.
+             * The fullName field actually roles as the pubAlias property of PublicationPerson class
+             *
+             * TODO: capture the fullName, then assign it to the pubAlias property when we create an instance of
+             * PublicationPerson from PersonTransportCommand in PublicationService
+             */
             String userRealName = authorXml.fullName[0].text()
             author.userRealName = userRealName
             author.save(flush: true)

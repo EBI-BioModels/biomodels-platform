@@ -242,6 +242,9 @@ log4j.main = {
 
         // change the threshold to DEBUG to have debug output in development mode
         console name: "stdout", threshold: org.apache.log4j.Level.WARN
+
+        rollingFile name: "stacktrace", maxFileSize: 1024,
+                    file: "logs/stacktrace.log"
     }
 
     // configure the performanceStatsAppender to log at INFO level

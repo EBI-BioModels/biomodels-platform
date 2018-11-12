@@ -39,6 +39,18 @@ class PubMedServiceSpec extends IntegrationSpec {
         null != ptc
     }
 
+    def "fetch a publication and verify the authors"() {
+        given: "a PubMED ID"
+        String pubMedId = "30218022"
+        when: "make a call to fetchPublicationData() method"
+        PTC ptc = service.fetchPublicationData(pubMedId)
+        then: "receive an actual object and author name is not null"
+        null != ptc
+        ptc.validate()
+        println ptc.authors.last().userRealName
+        ptc.authors.first().userRealName != null
+    }
+
     def "fetch a publication which one of the authors has ORCID persisted in the database"() {
         given: "have a PubMedID"
         String pubMedID = "23664840"
