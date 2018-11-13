@@ -1554,9 +1554,7 @@ findNewestRevisionFiles = { branch, parent, id ->
     assert parent.exists()
     def result = [:]
     def mainFile
-    if (branch == "pdgsm_models" || branch == "cura") {
-        // also use getMainFileForCuraModel()
-        // because these branches behave the main file similarly
+    if (branch == "pdgsm_models") {
         mainFile = getMainFileForPDGSMModel(parent, id)
     } else {
         mainFile = getUrlFileForModel(parent, id)
