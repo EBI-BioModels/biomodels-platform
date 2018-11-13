@@ -40,7 +40,9 @@
     </thead>
     <tbody>
         <g:render template="/templates/biomodels/modelDisplay/renderModelFiles" model="${mfMap}"/>
-        <g:render template="/templates/biomodels/modelDisplay/renderAdditionalFiles" model="${afMap}"/>
+        <g:if test="${afMap["repoFiles"]}">
+            <g:render template="/templates/biomodels/modelDisplay/renderAdditionalFiles" model="${afMap}"/>
+        </g:if>
     </tbody>
 </table>
 

@@ -37,13 +37,13 @@ class ModelOfTheMonthSpec extends Specification {
         def cmd = mom.toCommandObject()
 
         then:
-        cmd.date == "1970-01"
+        cmd.formattedEntryDate == "1970-01"
 
         when: "the publication date is not set"
         mom.publicationDate = null
         cmd = mom.toCommandObject()
 
         then:
-        null == cmd.date
+        null == cmd.formattedEntryDate
     }
 }

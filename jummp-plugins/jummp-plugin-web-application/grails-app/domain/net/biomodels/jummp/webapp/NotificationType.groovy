@@ -37,7 +37,8 @@ enum NotificationType {
    ACCESS_GRANTED (3, "Another user is granted access to a model"),
    DELETED (4, "Model Deleted"),
    ACCESS_GRANTED_TO (5, "Access is granted to you"),
-   FEEDBACK_ARRIVED (6, "A feedback has been sent to you")
+   FEEDBACK_ARRIVED (6, "A feedback has been sent to you"),
+   SUBMIT_FOR_PUBLICATION (7, "A model has been submitted to you for publication")
 
    final int id
    final String textRepresentation
@@ -55,6 +56,7 @@ enum NotificationType {
    	   	   case 4: return DELETED
            case 5: return ACCESS_GRANTED_TO
            case 6: return FEEDBACK_ARRIVED
+           case 7: return SUBMIT_FOR_PUBLICATION
    	   }
    }
 
