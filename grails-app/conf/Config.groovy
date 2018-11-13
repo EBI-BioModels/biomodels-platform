@@ -776,3 +776,4 @@ elasticSearch.disableAutoIndex = true
 elasticSearch.client.mode = 'local'
 elasticSearch.index.store.type = 'simplefs' // store local node in memory and not on disk
 elasticSearch.maxBulkRequest = 10
+grails.databinding.dateFormats = ["yyyy-MM-dd'T'HH:mm:ss"]

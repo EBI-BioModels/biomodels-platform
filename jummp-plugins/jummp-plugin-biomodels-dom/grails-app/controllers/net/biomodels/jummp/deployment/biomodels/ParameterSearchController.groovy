@@ -1,4 +1,3 @@
-
 /**
  * Copyright (C) 2018 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
@@ -17,27 +16,55 @@
  *
  * You should have received a copy of the GNU Affero General Public License along
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
- *
- * Additional permission under GNU Affero GPL version 3 section 7
- *
- * If you modify Jummp, or any covered work, by linking or combining it with
- * Grails, Spring Security (or a modified version of that library), containing parts
- * covered by the terms of Apache License v2.0, the licensors of this
- * Program grant you additional permission to convey the resulting work.
- * {Corresponding Source for a non-source form of such a combination shall
- * include the source code for the parts of Grails, Spring Security used as well as
- * that of the covered work.}
- **/
+**/
+
 package net.biomodels.jummp.deployment.biomodels
 
+import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
+import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchCommand
+import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchResults
+import org.apache.commons.logging.Log
+import org.apache.commons.logging.LogFactory
 
 /**
  * Created by carankalle on 08/10/2018.
  */
 @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
 class ParameterSearchController {
-    def index = {
+
+    def parameterSearchService
+    def grailsApplication
+/**
+ * The class logger.
+ */
+    static final Log log = LogFactory.getLog(ParameterSearchController.class)
+
+    def index() {
         render(view: "index");
     }
+
+    def search(ParameterSearchCommand command) {
+        if (!command.validate()) {
+            def msg = "Invalid request $command.query, $command.errors.allErrors"
+            log.error(msg)
+            render( ['message' : "Invalid request object"] as JSON)
+            return
+        }
+        try {
+            ParameterSearchResults result = parameterSearchService.getData(command)
+            render(result as JSON)
+        } catch (IllegalArgumentException ie) {
+            response.status = 400
+            String msg = "Error encountered while processing $command: ${ie.message}"
+            log.error(msg)
+            render(['message' : ie.getMessage()] as JSON)
+        } catch (Exception ex) {
+            response.status = 500
+            String msg = "Error encountered while processing $command: ${ex.message}"
+            log.error(msg, ex)
+            render(['message': msg] as JSON)
+        }
+    }
 }
+
