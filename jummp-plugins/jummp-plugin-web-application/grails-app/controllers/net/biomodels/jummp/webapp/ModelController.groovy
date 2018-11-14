@@ -37,7 +37,6 @@ package net.biomodels.jummp.webapp
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import groovy.json.JsonSlurper
-import net.biomodels.jummp.core.ModelException
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
@@ -58,7 +57,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONObject
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.multipart.MultipartFile
-import org.springframework.security.core.GrantedAuthority
 
 import javax.servlet.http.HttpServletResponse
 import java.util.zip.ZipEntry
@@ -289,6 +287,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     if (flash.now["giveMessage"]) {
                         flashMessage = flash.now["giveMessage"]
                     }
+                    List<RFTC> repoFiles = modelDelegateService.retrieveModelFiles(rev)
                     List<RevisionTransportCommand> revs =
                         modelDelegateService.getAllRevisions(PERENNIAL_ID)
                     CurationNotesTransportCommand curationNotes =
@@ -311,6 +310,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                                  showPublishOption      : showPublishOption,
                                  canSubmitForPublication: canSubmitForPublication,
                                  canCertify             : canCertify,
+                                 repoFiles              : repoFiles,
                                  validationLevel        : rev.getValidationLevelMessage(),
                                  certComment            : rev.getCertificationMessage(),
                                  flags                  : flags,
@@ -426,10 +426,13 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
         try {
             def rev = modelDelegateService.getRevisionFromParams(params.id)
             modelDelegateService.submitModelRevisionForPublication(rev)
-
-            def notification = [revision:rev, user:getUsername(), perms: modelDelegateService.getPermissionsMap(rev.model.submissionId)]
-            sendMessage("seda:model.submitForPublication", notification)
-
+            def currentUser = springSecurityService.currentUser
+            if (currentUser) {
+                def notification = [revision: rev,
+                                    user    : currentUser,
+                                    perms   : modelDelegateService.getPermissionsMap(rev.model.submissionId)]
+                sendMessage("seda:model.sub4pub", notification)
+            }
             redirect(action: "showWithMessage",
                 id: rev.identifier(),
                 params: [flashMessage: "Model has been submitted to the curators for publication."])
@@ -564,7 +567,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                 def currentUser = springSecurityService.currentUser
                 String username = currentUser?.username ?: 'anonymous'
                 updateHistory(session.result_submission, username, "update", "html", update, true)
-                if (!currentUser) {
+                if (currentUser && update != "") {
                     def notification = [
                             model: modelDelegateService.getModel(model),
                             user: currentUser,
@@ -1051,17 +1054,17 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                                 boolean changed =  changedPubLinkProvider || changedPubLink
                                 if (!changed) {
                                     // reload the publication from cache
-                                    retrieved = publicationContext.publication
+                                    retrieved = publicationContext?.publication
                                     if (publicationContext.comesFromDatabase) {
                                         flash.flashMessage = g.message(code: "publication.editor.duplicateEntry.message")
                                     }
                                 } else { // load from database, external call or create a default PTC
                                     publicationContext = loadOrFetchOrCreatePublication(model)
-                                    retrieved = publicationContext.publication
+                                    retrieved = publicationContext?.publication
                                 }
                             } else { // load from database, external call or create a default PTC
                                 publicationContext = loadOrFetchOrCreatePublication(model)
-                                retrieved = publicationContext.publication
+                                retrieved = publicationContext?.publication
                             }
                         } else {
                             log.error("Expected publication objects initialised in workingMemory.")
@@ -1108,8 +1111,8 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                     authorList.each {
                         if (it) {
                             String name = it["userRealName"]
-                            String institution = it["institution"]
-                            String orcid = it["orcid"]
+                            String institution = it["institution"] ?: null
+                            String orcid = it["orcid"] ?: null
                             def authorListSrc = model.publication.authors
                             if (!authorListSrc) {
                                 authorListSrc = new LinkedList<PersonTransportCommand>()
@@ -1376,8 +1379,11 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
         boolean hasCuratorRole = userService.isLoggedInUserACurator()
         if (canUpdate && hasCuratorRole) {
             CurationState curationState = CurationState.valueOf(requestObject['curationState'] as String)
-            modelDelegateService.updateCurationStateRevision(modelId, revision, curationState)
-            render([message: "Curation status has been saved successfully"] as JSON)
+            RevisionTransportCommand revisionTC = modelDelegateService.updateCurationStateRevision(modelId, revision, curationState)
+            Map result = [:]
+            result["message"] = "Curation status has been updated successfully"
+            result["publicationId"] = revisionTC.model.publicationId
+            render(result as JSON)
             return
         }
         response.status = 401

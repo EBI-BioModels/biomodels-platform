@@ -39,7 +39,8 @@ class ModelOfTheMonthTransportCommandSpec extends Specification {
         cmd = new ModelOfTheMonth(publicationDate: today).toCommandObject()
         def year = today[Calendar.YEAR]
         def month = today[Calendar.MONTH] + 1 // Calendar.MONTH starts from 0
-        def expected = "${ModelOfTheMonthTransportCommand.URL_SEED}$year-$month"
+        month = month > 10 ? month.toString() : "0${month.toString()}"
+        def expected = "${ModelOfTheMonthTransportCommand.URL_SEED}year=$year&month=$month"
         def url = cmd.formattedURL
 
         then: 'the command object has the expected access URL'

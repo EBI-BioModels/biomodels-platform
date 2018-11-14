@@ -48,11 +48,18 @@ class ConversionController {
             String modelId = params.id
             String revisionId = params.revisionId
             revisionTC = modelDelegateService.getRevisionFromParams(modelId, revisionId)
-            modelConversionService.generateExports(revisionTC)
-            redirect(controller: "model", action: "showWithMessage",
-                id: revisionTC.identifier(),
-                params: [flashMessage: """The request of converting the model ${revisionTC.identifier()} 
+            boolean isServiceOn = modelConversionService.isAlive()
+            if (isServiceOn) {
+                modelConversionService.generateExports(revisionTC)
+                redirect(controller: "model", action: "showWithMessage",
+                    id: revisionTC.identifier(),
+                    params: [flashMessage: """The request of converting the model ${revisionTC.identifier()} 
 to the other formats has been sent to the external conversion service."""])
+            } else {
+                redirect(controller: "model", action: "showWithMessage",
+                    id: revisionTC.identifier(),
+                    params: [flashMessage: """The model conversion service is temporarily unavailable for processing the request."""])
+            }
         } catch(AccessDeniedException e) {
             log.error(e.message, e)
             forward(plugin: "jummp-plugin-web-application", controller: "errors", action: "error403")
@@ -69,7 +76,7 @@ to the other formats has been sent to the external conversion service."""])
 
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def download() {
-        final String EXPORT_FOLDER = Holders.grailsApplication.config.jummp.model.exportFolder
+        final String EXPORT_FOLDER = modelConversionService.EXPORT_FOLDER
         String modelId = params.id
         String revisionId = params.revisionId
         String fileName = params.fileName

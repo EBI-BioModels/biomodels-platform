@@ -31,6 +31,7 @@ import java.util.regex.Pattern
 /**
  * Service for registering and storing model identifier generator types.
  *
+ * @see ModelIdentifierGeneratorRegistryFactory
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
 @CompileStatic
@@ -46,6 +47,14 @@ class ModelIdentifierGeneratorRegistryService {
      * The set of generator bean names.
      */
     Set<String> generatorNames = null
+
+    /**
+     * The types of model id generators present. These types (e.g. submissionId, publicationId),
+     * directly mapped to eponymous fields in {@link net.biomodels.jummp.model.Model}, reflect the
+     * types of identifier generators declared in the runtime configuration. At least a submissionId
+     * is required.
+     */
+    Set<String> generatorTypes = null
 
     /**
      * The pattern that matches identifiers produced by the registered generators.
@@ -69,7 +78,7 @@ class ModelIdentifierGeneratorRegistryService {
      * @param generatorNames the generator bean names.
      */
     ModelIdentifierGeneratorRegistryService(GrailsApplication grailsApplication,
-            Set<String> generatorNames) {
+            Set<String> generatorNames, Set<String> generatorTypes) {
         if (null == generatorNames || !generatorNames.contains(
             ModelIdentifierUtils.DEFAULT_GENERATOR_BEAN))
             throw new IllegalStateException('SubmissionIdGenerator is mandatory but was not found')
@@ -79,6 +88,7 @@ If you instantiate this class outside Grails, please manually pass the grailsApp
 ''')
         this.grailsApplication   = grailsApplication
         this.generatorNames      = generatorNames
+        this.generatorTypes      = generatorTypes
         haveExplicitRegexSetting = false
     }
 
@@ -90,8 +100,8 @@ If you instantiate this class outside Grails, please manually pass the grailsApp
      * @param explicitRegex the model id pattern defined in the externalised configuration.
      */
     ModelIdentifierGeneratorRegistryService(GrailsApplication grailsApplication,
-            Set<String> generatorNames, String explicitRegex) {
-        this(grailsApplication, generatorNames)
+            Set<String> generatorNames, Set<String> generatorTypes, String explicitRegex) {
+        this(grailsApplication, generatorNames, generatorTypes)
         if (null == explicitRegex || explicitRegex.isEmpty())
             throw new IllegalArgumentException('''The model id regex cannot be empty or null. \
 Use ModelIdentifierGeneratorRegistryService(GrailsApplication, Set<String>) instead if the pattern \

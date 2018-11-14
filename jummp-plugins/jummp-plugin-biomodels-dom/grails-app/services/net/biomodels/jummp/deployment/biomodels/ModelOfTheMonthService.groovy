@@ -24,6 +24,7 @@ import grails.transaction.Transactional
 import org.apache.commons.io.IOUtils
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+import net.biomodels.jummp.model.Model
 
 import java.text.SimpleDateFormat
 
@@ -57,13 +58,18 @@ class ModelOfTheMonthService {
         entries*.toCommandObject()
     }
 
-    List<ModelOfTheMonth> list() {
-        ModelOfTheMonth.getAll()
+    def list() {
+        List<ModelOfTheMonth> entries = ModelOfTheMonth.getAll()
+        List<ModelOfTheMonthTransportCommand>  entryCommands = new ArrayList<>()
+        for (ModelOfTheMonth entry : entries) {
+            entryCommands.add(entry.toCommandObject())
+        }
+        entryCommands
     }
     /**
      * Update the preview image and short description of a given model of the month entry
      */
-    @Transactional(readOnly=false)
+    @Transactional(readOnly = false)
     ModelOfTheMonth updatePreviewImageAndShortDescription(Long id, byte[] previewImage, String shortDescription) {
         ModelOfTheMonth model = ModelOfTheMonth.findById(id)
         if (model) {
@@ -87,7 +93,7 @@ class ModelOfTheMonthService {
      * Try to update the preview image and short description for entire model of the month entries if
      * they haven't been attached these information
      */
-    @Transactional(readOnly=false)
+    @Transactional(readOnly = false)
     List<ModelOfTheMonth> updatePreviewImageAndShortDescription() {
         String prefixUrl = "http://www.ebi.ac.uk/biomodels/ModelMonth/"
         List<ModelOfTheMonth> modelOfTheMonths = ModelOfTheMonth.getAll()
@@ -119,6 +125,66 @@ class ModelOfTheMonthService {
             results << updatePreviewImageAndShortDescription(model.id, previewImage, shortDescription)
         }
         results
+    }
+
+    /**
+     * Get the model of the month record by the identifier,
+     * then convert it to transport command object
+     *
+     * @param id An integer denoting the identifier of the domain object
+     * @return the corresponding transport command object of the domain object
+     */
+    ModelOfTheMonthTransportCommand get(int id) {
+        ModelOfTheMonth m = ModelOfTheMonth.get(id)
+        m?.toCommandObject()
+    }
+
+    /**
+     * Create or update a record of Model of The Month
+     * By passing an object bringing date of an entry of Model of The Month, this method
+     * will try to look for in the database in order to determine to create a new record
+     * or update the existing one that data are accordance with the command.
+     *
+     * @param   command The transport command object representing the data of the object in demand
+     * @return  The latest record has been created or updated
+     */
+    @Transactional
+    ModelOfTheMonth doCreateOrUpdate(ModelOfTheMonthTransportCommand command) {
+        ModelOfTheMonth entry
+        if (command?.id) {
+            entry = ModelOfTheMonth.get(command?.id)
+        } else {
+            entry = new ModelOfTheMonth()
+        }
+        if (entry) {
+            entry.publicationDate = command.publicationDate
+            entry.lastUpdated = command.lastUpdated
+        } else {
+            entry.lastUpdated = new Date()
+            entry.publicationDate = new Date()
+        }
+        // for the models associated with this entry
+        Set<Model> models = new HashSet<>()
+        command.associatedModelMap.each {
+            Long id = it.key
+            Model model = Model.get(id)
+            models.add(model)
+        }
+        entry.models = models
+        entry.authors = command.authors
+        entry.title = command.title
+        entry.shortDescription = command.shortDescription
+        if (command.previewImage) {
+            entry.previewImage = Base64.decoder.decode(command.previewImage)
+        }
+        if (entry.save(flush: true)) {
+            log.debug("The entry (${entry.id}) of the model of the month ${command.getYearMonth()} has been saved successfully!")
+        } else {
+            log.error("""\
+There are errors when trying to persist entry (${entry.id}) of the model of the month ${command.getYearMonth()} into the database: ${entry.errors.allErrors.inspect()}""")
+            entry = null
+        }
+        entry
     }
 }
 
