@@ -2445,7 +2445,7 @@ the perennial publication identifier to the model file""")
     @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN')") //used to be: (hasRole('ROLE_USER') and hasPermission(#revision, admin))
     @PostLogging(LoggingEventType.SUBMIT_FOR_PUBLICATION)
     @Profiled(tag="modelService.submitModelRevisionForPublication")
-    public void submitModelRevisionForPublication(Revision revision) {
+    void submitModelRevisionForPublication(Revision revision) {
         if (!revision) {
             throw new IllegalArgumentException("Revision may not be null")
         }
@@ -2453,16 +2453,15 @@ the perennial publication identifier to the model file""")
             throw new IllegalArgumentException("Revision may not be deleted")
         }
         Model model = revision.model
-        // grant write access this model revision to all existing curators
-        List<User> curators = userService.getUsersByRole("ROLE_CURATOR")
-        curators.each { curator ->
-            grantWriteAccess(model, curator)
+        // grant permissions to ROLE_CURATOR
+        aclUtilService.addPermission(model, "ROLE_CURATOR", BasePermission.READ)
+        aclUtilService.addPermission(model, "ROLE_CURATOR", BasePermission.ADMINISTRATION)
+        aclUtilService.addPermission(model, "ROLE_CURATOR", BasePermission.WRITE)
+
+        model.revisions.each { Revision rev ->
+            aclUtilService.addPermission(rev, "ROLE_CURATOR", BasePermission.ADMINISTRATION)
+            aclUtilService.addPermission(rev, "ROLE_CURATOR", BasePermission.READ)
         }
-        // grant read access and administrative privilege to future curators
-        aclUtilService.addPermission(revision, "ROLE_CURATOR", BasePermission.ADMINISTRATION)
-        aclUtilService.addPermission(revision, "ROLE_CURATOR", BasePermission.READ)
-        revision.state = ModelState.UNPUBLISHED
-        revision.save(flush: true)
     }
 
     /**
