@@ -1822,43 +1822,6 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
     }
 
     /**
-    * Grants write access for @p model to all curators.
-    * All curators receive the right to add new revisions to the @p model.
-    * If the parameter @onlyPublishedRevision is true, the method only grants write access to
-    * the published revisions.
-    *
-    * @param model The Model for which write access should be granted
-    **/
-    @PreAuthorize("hasPermission(#model, admin) or hasRole('ROLE_ADMIN')")
-    @PostLogging(LoggingEventType.UPDATE)
-    @Profiled(tag="modelService.grantWriteAccessToCurators")
-    void grantWriteAccessToCurators(Model model, boolean onlyPublishedRevision = true) {
-        final String roleCurator = "ROLE_CURATOR"
-        String pubId = model.publicationId ? " aka. (${model.publicationId})" : ""
-        String modelId = "${model.submissionId}${pubId}"
-        aclUtilService.addPermission(model, roleCurator, BasePermission.READ)
-        aclUtilService.addPermission(model, roleCurator, BasePermission.WRITE)
-        log.info("${modelId}: grant read and write access for ROLE_CURATOR")
-        // check if admin rights have not already been granted to avoid duplication
-        if (!hasAdminPermission(model, roleCurator)) {
-            aclUtilService.addPermission(model, roleCurator, BasePermission.ADMINISTRATION)
-            log.info("${modelId}: grant admin access for ROLE_CURATOR")
-        }
-        Set<Revision> revisions = model.revisions
-        if (onlyPublishedRevision) {
-            revisions = revisions.findAll { it.state == ModelState.PUBLISHED }
-        }
-        revisions.each { Revision it ->
-            // may have been granted already through grantReadAccess for instance
-            if (!hasAdminPermission(it, roleCurator)) {
-                aclUtilService.addPermission(it, roleCurator, BasePermission.READ)
-                aclUtilService.addPermission(it, roleCurator, BasePermission.ADMINISTRATION)
-                log.info("${modelId}: grant read and admin access to all curators on the revision ${it.id}.${it.revisionNumber}")
-            }
-        }
-    }
-
-    /**
     * Revokes read access for @p model from @p collaborator.
     *
     * The @p collaborator gets the right to read future revisions to the @p model revoked.
