@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2017 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2018 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -20,19 +20,15 @@
 
 package net.biomodels.jummp.core.model.identifier
 
-import groovy.sql.GroovyRowResult
-import groovy.sql.Sql
 import net.biomodels.jummp.core.model.identifier.decorator.ChecksumAppendingDecorator
 import net.biomodels.jummp.core.model.identifier.decorator.DateAppendingDecorator
 import net.biomodels.jummp.core.model.identifier.decorator.FixedDigitAppendingDecorator
 import net.biomodels.jummp.core.model.identifier.decorator.FixedLiteralAppendingDecorator
 import net.biomodels.jummp.core.model.identifier.decorator.OrderedModelIdentifierDecorator
 import net.biomodels.jummp.core.model.identifier.decorator.VariableDigitAppendingDecorator
-import net.biomodels.jummp.core.model.identifier.generator.DefaultModelIdentifierGenerator
-import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGenerator
-import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.support.ChecksumModelIdentifierPartition
 import net.biomodels.jummp.core.model.identifier.support.DateModelIdentifierPartition
+import net.biomodels.jummp.core.model.identifier.support.GeneratorDetails
 import net.biomodels.jummp.core.model.identifier.support.LiteralModelIdentifierPartition
 import net.biomodels.jummp.core.model.identifier.support.ModelIdentifierPartition
 import net.biomodels.jummp.core.model.identifier.support.ModelIdentifierPartitionManager
@@ -40,10 +36,6 @@ import net.biomodels.jummp.core.model.identifier.support.ModelIdentifierPartitio
 import net.biomodels.jummp.core.model.identifier.support.NumericalModelIdentifierPartition
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
-import org.apache.tomcat.jdbc.pool.DataSource
-import org.apache.tomcat.jdbc.pool.PoolProperties
-
-import java.util.regex.Pattern
 
 /**
  * @short Helper class containing methods for interacting with model id scheme settings.
@@ -55,8 +47,6 @@ class ModelIdentifierUtils {
     private static final Log log = LogFactory.getLog(this)
     /* semaphores for the log threshold */
     private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
-    // Regular expressions for each model identifier generator scheme (submission, publication, ...)
-    static final Set<String> MODEL_ID_REGEXES = new LinkedHashSet<>()
 
     /*
      * The suffix to use in the bean reference corresponding to a generator.
@@ -68,7 +58,10 @@ class ModelIdentifierUtils {
      * there would be a corresponding fooIdGenerator bean reference that would
      * generate identifiers like 000000000001, 000000000002 etc.
      */
-    static final String GENERATOR_BEAN_SUFFIX = 'IdGenerator'
+    static final String GENERATOR_FIELD_SUFFIX = 'Id'
+    static final String GENERATOR_BEAN_SUFFIX  = 'IdGenerator'
+    static final String DEFAULT_GENERATOR_TYPE = 'submission'
+    static final String DEFAULT_GENERATOR_BEAN = 'submissionIdGenerator'
     static final String DEFAULT_URL =
                 "jdbc:h2:tempDb;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE"
     static final String DEFAULT_USERNAME = "sa"
@@ -81,9 +74,7 @@ class ModelIdentifierUtils {
      * characters support mode alongside the mandatory properties of database connection string
      */
     static final String UNICODE_OPTIONS = "useUnicode=yes&characterEncoding=UTF-8"
-    /* stores the patterns that are used to generate a model identifier */
-    static ConfigObject settings
-    static TreeSet perennialFields
+
 
     /* hide constructor - all non-private methods are static. */
     protected ModelIdentifierUtils() {}
@@ -94,127 +85,6 @@ class ModelIdentifierUtils {
             dbConnStr = dbConnStr.substring(0, posUnicodeOptions-1) // take into account the ? symbol
         }
         dbConnStr
-    }
-
-    /** The starting point for wiring up model identifier generator beans. */
-    static Map processGeneratorSettings(ConfigObject jummpConfig) {
-        if (!jummpConfig || jummpConfig.isEmpty()) {
-            def m ="""The settings for the model identification scheme are missing.
-A sample configuration is
-    jummp.model.id.submission.part1.type=literal
-    jummp.model.id.submission.part1.suffix=MODEL
-    jummp.model.id.submission.part2.type=date
-    jummp.model.id.submission.part2.format=yyyyMMdd
-    jummp.model.id.submission.part2.type=numerical
-    jummp.model.id.submission.part2.fixed=false
-    jummp.model.id.submission.part2.width=10"""
-            log.error "No configuration settings provided - cannot build id generators."
-            throw new Exception(m)
-        }
-        ConfigObject idSettings = jummpConfig.model.id
-        settings = idSettings
-        ConfigObject dbSettings = jummpConfig.database
-        Map db = extractDatabaseSettings(dbSettings)
-        boolean usingH2 = db['driver'] == DEFAULT_DRIVER
-        GroovyRowResult mostRecentModelDetails
-        Sql sql
-        if (!usingH2) {
-            // Due to GRAILS-10562 and GRAILS-10850, we cannot use
-            // dS = Sql.newInstance(db.url, db.user, db.password, db.driver)
-            // because of classloader issues, use Tomcat JDBC to create a dataSource
-            PoolProperties pp = new PoolProperties()
-            pp.url = db.url
-            pp.driverClassName = db.driver
-            pp.username = db.user
-            pp.password = db.password
-            DataSource ds = new DataSource()
-            ds.poolProperties = pp
-            sql = new Sql(ds)
-            try {
-                mostRecentModelDetails = sql.firstRow("""\
-select model.id,
-model.submission_id as submissionId,
-model.perennialPublicationIdentifier as publicationId
-from model
-where id = (
-    select model_id 
-    from revision 
-    where upload_date = (
-        select max(upload_date) from revision where revision_number = 1
-    )
-)
-""")
-                def lastPublished = sql.firstRow "select max(perennialPublicationIdentifier) as pId from model"
-                if (lastPublished && mostRecentModelDetails) {
-                    mostRecentModelDetails.publicationId = lastPublished.pId
-                }
-            } catch (Exception e) {
-                final String W = """Unable to access the database - model IDs will be created \
-using the default values."""
-                log.warn (W, e)
-            } finally {
-                sql.close() // very important
-            }
-            if (IS_DEBUG_ENABLED) {
-                log.debug "Most recent model in database is ${mostRecentModelDetails}"
-            }
-        }
-        Map<String, ModelIdentifierGenerator> generatorBeans = [:]
-        boolean submissionIdSettingsMissing = idSettings.submission.isEmpty()
-        if (submissionIdSettingsMissing) {
-            String e = """\
-The configuration settings lack the rules for generating model identifiers!"""
-            log.error e
-            throw new Exception(e)
-        }
-
-        boolean shouldComputeRegexes = true
-        def regexSetting = idSettings.remove("regex")
-        if (regexSetting instanceof String) {
-            if (!regexSetting?.trim()) {
-                throw new IllegalArgumentException("Invalid configuration value for the model \
-identifier regex. Remove it if you want it to be automatically generated from the settings.")
-            }
-            shouldComputeRegexes = false
-            String modelIdentifierSchemePattern
-            try {
-                modelIdentifierSchemePattern = Pattern.compile regexSetting
-            } catch (Exception ignore) {
-                throw new IllegalArgumentException("w-t-f $regexSetting ?!!")
-            }
-            if (IS_DEBUG_ENABLED) {
-                log.debug "Using model identifier regex $modelIdentifierSchemePattern"
-            }
-            MODEL_ID_REGEXES.add(modelIdentifierSchemePattern)
-        }
-        idSettings.each { name, cfg ->
-            final String BEAN_NAME = "${name}${GENERATOR_BEAN_SUFFIX}"
-            if (generatorBeans[BEAN_NAME]) {
-                String err = "Duplicate settings for '$name' identifier."
-                log.error(err)
-                throw new Exception(err)
-            }
-            final String PROPERTY_NAME = "${name}Id"
-            final String LAST_ID_FROM_THIS_GENERATOR = null
-            if (mostRecentModelDetails?.containsKey(PROPERTY_NAME)) {
-                LAST_ID_FROM_THIS_GENERATOR = mostRecentModelDetails[PROPERTY_NAME]
-            }
-            Set<OrderedModelIdentifierDecorator> decorators = buildDecoratorsFromSettings(
-                    cfg, LAST_ID_FROM_THIS_GENERATOR, shouldComputeRegexes)
-            ModelIdentifierGenerator generator = new DefaultModelIdentifierGenerator(decorators)
-            generatorBeans[BEAN_NAME] = generator
-        }
-        perennialFields = idSettings.keySet()
-        final String PUBLICATION_ID_BEAN_NAME = "publication$GENERATOR_BEAN_SUFFIX"
-        boolean publicationIdBeanMissing = !generatorBeans[PUBLICATION_ID_BEAN_NAME]
-        if (publicationIdBeanMissing) {
-            generatorBeans[PUBLICATION_ID_BEAN_NAME] = new NullModelIdentifierGenerator()
-        }
-        if (IS_DEBUG_ENABLED) {
-            String MSG = "Constructed the following objects: ${generatorBeans.inspect()}"
-            log.debug MSG
-        }
-        return generatorBeans
     }
 
     /* Builds map of arguments to construct dataSource from the given configuration. */
@@ -275,16 +145,17 @@ identifier regex. Remove it if you want it to be automatically generated from th
      * If @p mostRecentId is specified, the returned decorators will use it to adjust their
      * initial values.
      */
-    private static TreeSet<OrderedModelIdentifierDecorator> buildDecoratorsFromSettings(
+    static GeneratorDetails buildDecoratorsFromSettings(
                 ConfigObject c, String mostRecentId = null, boolean shouldComputeRegexes = true) {
         ModelIdentifierPartitionManager partitionManager =
                     new ModelIdentifierPartitionManager(c, mostRecentId)
-        TreeSet<OrderedModelIdentifierDecorator> decorators = new TreeSet()
+        SortedSet<? extends OrderedModelIdentifierDecorator> decorators = new TreeSet<>()
         List<ModelIdentifierPartition> partitions = partitionManager.partitions
         if (IS_DEBUG_ENABLED) {
             log.debug "Turned decorator settings ${c.inspect()} into ${partitions.inspect()}"
         }
         StringBuilder regexForThisIdentifier = new StringBuilder()
+        String regex = null
         partitions.eachWithIndex { p, i ->
             OrderedModelIdentifierDecorator d
             boolean validPartition = p.validate()
@@ -355,12 +226,12 @@ Consider introducing variable digit patterns or dates into the identifier scheme
             throw new Exception(err)
         }
         if (shouldComputeRegexes) {
-            MODEL_ID_REGEXES.add regexForThisIdentifier.toString()
+            regex = regexForThisIdentifier.toString()
         }
 
         if (IS_DEBUG_ENABLED) {
             log.debug "Identifier settings ${c.inspect()} converted to ${decorators.inspect()} and regex $regexForThisIdentifier"
         }
-        return decorators
+        new GeneratorDetails(decorators: decorators, regex: regex)
     }
 }

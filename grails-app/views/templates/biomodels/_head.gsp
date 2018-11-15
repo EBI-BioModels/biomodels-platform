@@ -28,10 +28,11 @@
   <!-- Not yet implemented -->
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
   <!-- Describe what this page is about -->
-  <meta name="description" content="EMBL-EBI"/>
-  <!-- A few keywords that relate to the content of THIS PAGE (not the whole project) -->
-  <meta name="keywords" content="bioinformatics, europe, institute">
-  <meta name="jummp" content="EMBL-EBI"/><!-- Your [project-name] here -->
+  <meta name="description" content="BioModels is a repository of freely-available mathematical models of biological and biomedical systems. It hosts a vast selection of physiologically and pharmaceutically relevant mechanistic models in standard formats.
+"/>
+  <meta name="keywords" content="BioModels Database, biomodels, systems biology, bioinformatics, computational modelling, systems modelling, model repository, model database, SBML, PharmML, COMBINE Archive, OMEX, public domain">
+  <meta name="author" content="BioModels"/>
+  <meta name="google" content="notranslate" />
   <meta name="ebi:localmasthead-color" content="#254146">
   <meta name="ebi:localmasthead-image"
         content="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/images/backgrounds/embl-ebi-background.jpg"/>
@@ -98,4 +99,4 @@
        Modernizr enables HTML5 elements & feature detects; Respond is a polyfill for min/max-width CSS3 Media Queries
        For optimal performance, use a custom Modernizr build: www.modernizr.com/download/ -->
   <script src="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/libraries/modernizr/modernizr.custom.49274.js"></script>
-  <title><g:layoutTitle default="BioModels Database"/></title>
+  <title><g:layoutTitle default="BioModels"/></title>

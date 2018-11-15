@@ -23,20 +23,26 @@
     <li <g:if test="${actionName == null}"> class="first active" </g:if> role="menuitem">
         <a href="${createLink(uri: '/', absolute: true)}" title="Back to BioModels homepage">Home</a>
     </li>
-    <li <g:if test="${g.pageProperty(name:'page.search')?.length()}"> class="first active" </g:if> role="menuitem">
-        <a href="${g.createLink(controller: 'search', action: 'search', params: [query: '*:*'])}">Browse</a>
-    </li>
-    <li <g:if test="${g.pageProperty(name:'page.submit')?.length()}"> class="active" </g:if> role="menuitem">
-        <a href="${g.createLink(controller: 'model', action: 'create')}">Submit</a>
-    </li>
     <%
         boolean selectedSupportItems = g.pageProperty(name:'page.faq')?.length() || g.pageProperty(name:'page.courses')?.length()
+        boolean selectedBrowseItems = g.pageProperty(name: 'page.search')?.length() || g.pageProperty(name: 'page.goChart')?.length()
         boolean selectedAboutusItems = g.pageProperty(name:'page.termsOfUse')?.length() ||
             g.pageProperty(name:'page.citation')?.length() ||
             g.pageProperty(name:'page.news')?.length() ||
             g.pageProperty(name:'page.acknowledgements')?.length() ||
             g.pageProperty(name:'page.jobs')?.length()
     %>
+    <li <g:if test="${selectedBrowseItems}"> class="active" </g:if> role="menuitem">
+        <a>Browse</a>
+        <ul class="menu">
+            <li><a href="${g.createLink(controller: 'search', action: 'search', params: [query: '*:*'])}">Browse all models</a></li>
+            <li><a href="${g.createLink(controller: 'goChart', action: 'index', plugin: 'jummp-plugin-biomodels-dom')}">Browse GO categories</a></li>
+            <li><a href="${g.createLink(controller: 'parameterSearch', action: 'index', plugin: 'jummp-plugin-biomodels-dom')}">Parameter Search</a></li>
+        </ul>
+    </li>
+    <li <g:if test="${g.pageProperty(name:'page.submit')?.length()}"> class="active" </g:if> role="menuitem">
+        <a href="${g.createLink(controller: 'model', action: 'create')}">Submit</a>
+    </li>
     <li <g:if test="${selectedSupportItems}"> class="active" </g:if> role="menuitem">
         <a><g:message code="jummp.support.biomodels.title"/></a>
         <ul class="menu">
@@ -44,7 +50,7 @@
             <li><a href="${g.createLink(controller: 'jummp', action: 'courses')}">Courses</a></li>
             <li><a href="//www.ebi.ac.uk/biomodels/tools/converters/" target="_blank">Online converters</a></li>
             <li><a href="//www.ebi.ac.uk/rdf/services/biomodels/sparql" target="_blank">SPARQL Endpoint</a></li>
-            <li><a href="//bitbucket.org/jummp/jummp">Technical corner</a></li>
+            <li><a href="${createLink(uri: '/docs', absolute: true)}">Technical corner</a></li>
         </ul>
     </li>
     <li <g:if test="${selectedAboutusItems}"> class="active" </g:if> role="menuitem">
@@ -57,12 +63,17 @@
             <li><a href="${g.createLink(controller: 'jummp', action: 'jobs')}">Jobs</a></li>
         </ul>
     </li>
+    <li id="menuItemSwitchToClassicBioModels" data-open="switchToClassicBioModels" role="menuitem">
+        <!-- switchToClassicBioModels is the identifier of the modal switchToClassicBioModels form defined in the footer.
+             This form is rendered using the switchClassicBioModels template of the web plugin -->
+        <a><g:message code="jummp.switchClassicBioModels.default.title"/></a>
+    </li>
     <li <g:if test="${g.pageProperty(name:'page.contactus')?.length()}"> class="active" </g:if> role="menuitem">
         <a href="${g.createLink(controller: 'jummp', action: 'contactus')}">
             <g:message code="jummp.contactus.biomodels.title"/>
         </a>
     </li>
-    <li style="border-right: none" id="menuItemFeedback" data-open="rate_review_form">
+    <li style="border-right: none" id="menuItemFeedback" data-open="rate_review_form" role="menuitem">
         <!-- rate_review_form is the identifier of the modal feedback form defined in the footer.
              This form is rendered using the feedback template of the web plugin -->
         <a><g:message code="jummp.feedback.default.title"/></a>

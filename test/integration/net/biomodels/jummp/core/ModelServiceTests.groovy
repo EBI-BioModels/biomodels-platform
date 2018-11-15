@@ -86,7 +86,7 @@ class ModelServiceTests extends JummpIntegrationTest {
         grailsApplication.config.jummp.vcs.workingDirectory = rootPath
         grailsApplication.config.jummp.vcs.exchangeDirectory = exchange.path
         assertTrue exchange.exists()
-        fileSystemService.currentModelContainer = currentContainer
+        fileSystemService.currentModelContainer.set(currentContainer)
         fileSystemService.root = container.getParentFile()
         modelService.vcsService.modelContainerRoot = rootPath
         def gitFactory = grailsApplication.mainContext.getBean("gitManagerFactory")
@@ -106,7 +106,7 @@ class ModelServiceTests extends JummpIntegrationTest {
         modelService.vcsService.vcsManager = null
         modelService.modelFileFormatService = modelFileFormatService
         modelService.vcsService.modelContainerRoot = null
-        fileSystemService.currentModelContainer = null
+        fileSystemService.currentModelContainer.set(null)
     }
 
     @Test
@@ -897,7 +897,7 @@ class ModelServiceTests extends JummpIntegrationTest {
         assertEquals(false, model.deleted)
         // let's change the model state
         Revision savedRev=modelService.getLatestRevision(model)
-        savedRev.state = ModelState.UNDER_CURATION
+        savedRev.state = ModelState.UNPUBLISHED
         savedRev.save(flush:true)
         shouldFail(AccessDeniedException) {
         	modelService.deleteModel(model)
@@ -1583,7 +1583,7 @@ class ModelServiceTests extends JummpIntegrationTest {
         assertNotNull checkout
         assertTrue checkout.model.vcsIdentifier.endsWith("$submissionId/")
         assertEquals name, checkout.name
-        File vcsFolder = new File(fileSystemService.currentModelContainer).listFiles().find {
+        File vcsFolder = new File(fileSystemService.currentModelContainer.get()).listFiles().find {
             it.isDirectory() && it.name.endsWith("$submissionId")
         }
         assertNotNull vcsFolder
@@ -1615,7 +1615,7 @@ class ModelServiceTests extends JummpIntegrationTest {
             assertNotNull checkout
             assertTrue checkout.model.vcsIdentifier.endsWith("$submissionId/")
             assertEquals name, checkout.name
-            def vcsRoot = new File(fileSystemService.currentModelContainer)
+            def vcsRoot = new File(fileSystemService.currentModelContainer.get())
             File vcsFolder = vcsRoot.listFiles().find {
                 it.isDirectory() && it.name.endsWith("$submissionId")
             }

@@ -74,7 +74,7 @@ try {
         dialect  = databaseConfig.jummp.database.dialect
         if (protocol != ModelIdentifierUtils.DEFAULT_PROTOCOL) {
             properties {
-                maxActive = 50
+                maxActive = 100
                 maxIdle = 25
                 minIdle =1
                 initialSize = 1

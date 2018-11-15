@@ -43,16 +43,10 @@
 <head>
     <g:render template="/templates/${styleName}/head" />
     <g:javascript library="jquery" plugin="jquery"/>
-    <g:javascript src="jquery/jquery.i18n.properties-min-1.0.9.js"/>
     <g:javascript src="jquery/jquery-ui-v1.10.3.js"/>
     <g:javascript>
     	$.appName = "${grailsApplication.metadata["app.name"]}";
     	$.serverUrl = "${grailsApplication.config.grails.serverURL}";
-    	$.i18n.properties({
-    		name: 'messages',
-    		path: "${grailsApplication.config.grails.serverURL}/js/i18n/",
-    		mode: "map"
-    	});
     	var helpHidden=1;
 
         <g:if test="${contextHelpLocation}">

@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2018 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -34,11 +34,12 @@
 
 package net.biomodels.jummp.core
 
+import groovy.transform.CompileStatic
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.PublicationAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.*
-import net.biomodels.jummp.core.model.identifier.generator.AbstractModelIdentifierGenerator
+import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorRegistryService
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import net.biomodels.jummp.core.vcs.VcsFileDetails
 import net.biomodels.jummp.model.Flag
@@ -74,7 +75,6 @@ class ModelDelegateService implements IModelService {
     def qcInfoDelegateService
     def modelFlagService
     def referenceTracker
-    def publicationIdGenerator
 
     String getPluginForFormat(ModelFormatTransportCommand format) {
         return modelFileFormatService.getPluginForFormat(format)
@@ -83,7 +83,7 @@ class ModelDelegateService implements IModelService {
     List<ModelTransportCommand> getAllModels(int offset, int count, boolean sortOrder, ModelListSorting sortColumn) {
         List<ModelTransportCommand> models = []
         modelService.getAllModels(offset, count, sortOrder, sortColumn).each {
-            models << new ModelAdapter(model: it).toCommandObject()
+            models << new ModelAdapter(model: it).toCommandObject(false)
         }
         return models
     }
@@ -91,7 +91,7 @@ class ModelDelegateService implements IModelService {
     List<ModelTransportCommand> getAllModels(int offset, int count, boolean sortOrder) {
         List<ModelTransportCommand> models = []
         modelService.getAllModels(offset, count, sortOrder).each {
-            models << new ModelAdapter(model: it).toCommandObject()
+            models << new ModelAdapter(model: it).toCommandObject(false)
         }
         return models
     }
@@ -99,7 +99,7 @@ class ModelDelegateService implements IModelService {
     List<ModelTransportCommand> getAllModels(int offset, int count, ModelListSorting sortColumn) {
         List<ModelTransportCommand> models = []
         modelService.getAllModels(offset, count, sortColumn).each {
-            models << new ModelAdapter(model: it).toCommandObject()
+            models << new ModelAdapter(model: it).toCommandObject(false)
         }
         return models
     }
@@ -107,7 +107,7 @@ class ModelDelegateService implements IModelService {
     List<ModelTransportCommand> getAllModels(int offset, int count) {
         List<ModelTransportCommand> models = []
         modelService.getAllModels(offset, count).each {
-            models << new ModelAdapter(model: it).toCommandObject()
+            models << new ModelAdapter(model: it).toCommandObject(false)
         }
         return models
     }
@@ -115,7 +115,7 @@ class ModelDelegateService implements IModelService {
     List<ModelTransportCommand> getAllModels(ModelListSorting sortColumn) {
         List<ModelTransportCommand> models = []
         modelService.getAllModels(sortColumn).each {
-            models << new ModelAdapter(model: it).toCommandObject()
+            models << new ModelAdapter(model: it).toCommandObject(false)
         }
         return models
     }
@@ -123,7 +123,7 @@ class ModelDelegateService implements IModelService {
     List<ModelTransportCommand> getAllModels() {
         List<ModelTransportCommand> models = []
         modelService.getAllModels().each {
-            models << new ModelAdapter(model: it).toCommandObject()
+            models << new ModelAdapter(model: it).toCommandObject(false)
         }
         return models
     }
@@ -149,7 +149,7 @@ class ModelDelegateService implements IModelService {
     }
 
     RevisionTransportCommand getLatestRevision(String modelId, boolean addToHistory = true) {
-        Model model = ModelAdapter.findByPerennialIdentifier(modelId)
+        Model model = modelService.findByPerennialIdentifier(modelId)
         if (!model) {
             throw new AccessDeniedException("No access to any revision of Model ${modelId}")
         }
@@ -163,7 +163,7 @@ class ModelDelegateService implements IModelService {
 
     List<RevisionTransportCommand> getAllRevisions(String modelId) {
         List<RevisionTransportCommand> revisions = []
-        modelService.getAllRevisions(ModelAdapter.findByPerennialIdentifier(modelId)).each {
+        modelService.getAllRevisions(modelService.findByPerennialIdentifier(modelId)).each {
             revisions << new RevisionAdapter(revision: it).toCommandObject()
         }
         return revisions
@@ -175,13 +175,13 @@ class ModelDelegateService implements IModelService {
 
     RevisionTransportCommand getRevision(String modelId, int revisionNumber) {
         return new RevisionAdapter(revision: modelService.getRevision(
-                    ModelAdapter.findByPerennialIdentifier(modelId), revisionNumber)).toCommandObject()
+                    modelService.findByPerennialIdentifier(modelId), revisionNumber)).toCommandObject()
     }
 
     PublicationTransportCommand getPublication(String modelId) throws AccessDeniedException,
                 IllegalArgumentException {
         def publication = modelService.getPublication(
-                               ModelAdapter.findByPerennialIdentifier(modelId))
+                               modelService.findByPerennialIdentifier(modelId))
         if (publication) {
             return new PublicationAdapter(publication: publication).toCommandObject()
         }
@@ -195,7 +195,7 @@ class ModelDelegateService implements IModelService {
 
     RevisionTransportCommand addRevision(String modelId, File file,
                 ModelFormatTransportCommand format, String comment) throws ModelException {
-        Model model = ModelAdapter.findByPerennialIdentifier(modelId)
+        Model model = modelService.findByPerennialIdentifier(modelId)
         ModelFormat modelFormat = ModelFormat.findByIdentifierAndFormatVersion(format.identifier,
             format.formatVersion)
         Revision revision = modelService.addRevisionAsFile(model, file, modelFormat, comment)
@@ -243,15 +243,15 @@ class ModelDelegateService implements IModelService {
     }
 
     Boolean canAddRevision(String modelId) {
-        return modelService.canAddRevision(ModelAdapter.findByPerennialIdentifier(modelId))
+        return modelService.canAddRevision(modelService.findByPerennialIdentifier(modelId))
     }
 
     Boolean canDelete(String modelId) {
-        return modelService.canDelete(ModelAdapter.findByPerennialIdentifier(modelId))
+        return modelService.canDelete(modelService.findByPerennialIdentifier(modelId))
     }
 
     Boolean canShare(String modelId) {
-        return modelService.canShare(ModelAdapter.findByPerennialIdentifier(modelId))
+        return modelService.canShare(modelService.findByPerennialIdentifier(modelId))
     }
 
     Boolean canPublish(RevisionTransportCommand revision) {
@@ -272,11 +272,8 @@ class ModelDelegateService implements IModelService {
     }
 
     Boolean canCertify(RevisionTransportCommand revision) {
-        if(!revision.qcInfo) {
-            String modelId = revision.model.publicationId ?: revision.model.submissionId
-            return qcInfoDelegateService.canCertify(ModelAdapter.findByPerennialIdentifier(modelId))
-        } else
-            return false
+        if (revision.qcInfo) return false
+        qcInfoDelegateService.canCertify(revision.modelIdentifier())
     }
 
     Boolean canCertify(String modelId) {
@@ -290,7 +287,7 @@ class ModelDelegateService implements IModelService {
     }
 
     Boolean canSubmitForPublication(RevisionTransportCommand revision) {
-        if ((revision.state == ModelState.UNPUBLISHED) && (revision.state != ModelState.UNDER_CURATION)) {
+        if ((revision.state == ModelState.UNPUBLISHED)) {
             try {
                 return modelService.canSubmitForPublication(Revision.get(revision.id))
             } catch (Exception e) {
@@ -321,41 +318,41 @@ class ModelDelegateService implements IModelService {
     }
 
     List<RepositoryFileTransportCommand> retrieveModelFiles(String modelId) {
-        return modelService.retrieveModelFiles(ModelAdapter.findByPerennialIdentifier(modelId))
+        return modelService.retrieveModelFiles(modelService.findByPerennialIdentifier(modelId))
     }
 
     void grantReadAccess(String modelId, User collaborator) {
-        modelService.grantReadAccess(ModelAdapter.findByPerennialIdentifier(modelId),
+        modelService.grantReadAccess(modelService.findByPerennialIdentifier(modelId),
                     User.get(collaborator.id))
     }
 
     void grantWriteAccess(String modelId, User collaborator) {
-        modelService.grantWriteAccess(ModelAdapter.findByPerennialIdentifier(modelId),
+        modelService.grantWriteAccess(modelService.findByPerennialIdentifier(modelId),
                     User.get(collaborator.id))
     }
 
     boolean revokeReadAccess(String modelId, User collaborator) {
-        return modelService.revokeReadAccess(ModelAdapter.findByPerennialIdentifier(modelId),
+        return modelService.revokeReadAccess(modelService.findByPerennialIdentifier(modelId),
                     User.get(collaborator.id))
     }
 
     boolean revokeWriteAccess(String modelId, User collaborator) {
-        return modelService.revokeWriteAccess(ModelAdapter.findByPerennialIdentifier(modelId),
+        return modelService.revokeWriteAccess(modelService.findByPerennialIdentifier(modelId),
                     User.get(collaborator.id))
     }
 
     void transferOwnerShip(String modelId, User collaborator) {
-        modelService.transferOwnerShip(ModelAdapter.findByPerennialIdentifier(modelId),
+        modelService.transferOwnerShip(modelService.findByPerennialIdentifier(modelId),
                     User.get(collaborator.id))
     }
 
     boolean deleteModel(String modelId) {
-        def model = ModelAdapter.findByPerennialIdentifier(modelId)
+        def model = modelService.findByPerennialIdentifier(modelId)
         modelService.deleteModel(model)
     }
 
     boolean restoreModel(String modelId) {
-        return modelService.restoreModel(ModelAdapter.findByPerennialIdentifier(modelId))
+        return modelService.restoreModel(modelService.findByPerennialIdentifier(modelId))
     }
 
     boolean deleteRevision(RevisionTransportCommand revision) {
@@ -363,11 +360,11 @@ class ModelDelegateService implements IModelService {
     }
 
     Collection<PermissionTransportCommand> getPermissionsMap(String modelId, boolean authenticated = true) {
-        return modelService.getPermissionsMap(ModelAdapter.findByPerennialIdentifier(modelId), authenticated)
+        return modelService.getPermissionsMap(modelService.findByPerennialIdentifier(modelId), authenticated)
     }
 
     void setPermissions(String modelId, List<PermissionTransportCommand> permissions) {
-        modelService.setPermissions(ModelAdapter.findByPerennialIdentifier(modelId), permissions)
+        modelService.setPermissions(modelService.findByPerennialIdentifier(modelId), permissions)
     }
 
     RevisionTransportCommand getRevisionDetails(RevisionTransportCommand skeleton) {
@@ -380,8 +377,10 @@ class ModelDelegateService implements IModelService {
         return new ModelAdapter(model: REV).toCommandObject()
     }
 
-    void publishModelRevision(RevisionTransportCommand revision) {
-        modelService.publishModelRevision(Revision.get(revision.id))
+    RevisionTransportCommand publishModelRevision(RevisionTransportCommand cmd) {
+        Revision revision = Revision.get(cmd.id)
+        Revision published = modelService.publishModelRevision(revision)
+        new RevisionAdapter(revision: published).toCommandObject()
     }
 
     void unpublishModelRevision(RevisionTransportCommand revision) {
@@ -393,11 +392,25 @@ class ModelDelegateService implements IModelService {
     }
 
     ModelTransportCommand findByPerennialIdentifier(String perennialId) {
-        def model = ModelAdapter.findByPerennialIdentifier(perennialId)
+        def model = modelService.findByPerennialIdentifier(perennialId)
         if (model) {
             return new ModelAdapter(model: model).toCommandObject()
         }
         return null
+    }
+
+    /**
+     * Update curation status of specific model revision
+     * @param modelId: submissionId of model
+     * @param revisionNumber: revision number
+     * @param curationState: curation status
+     */
+    RevisionTransportCommand updateCurationStateRevision(String modelId, int revisionNumber,
+            CurationState curationState) {
+        Revision revision = modelService.getRevision(
+            modelService.findByPerennialIdentifier(modelId), revisionNumber)
+        revision = modelService.updateRevisionCurationState(revision, curationState)
+        new RevisionAdapter(revision: revision).toCommandObject()
     }
 
     RevisionTransportCommand getRevisionFromParams(final String MODEL, String REVISION = null) {
@@ -426,17 +439,24 @@ class ModelDelegateService implements IModelService {
         return REV
     }
 
-    Set<String> getPerennialIdentifierTypes() {
-        return ModelAdapter.PERENNIAL_IDENTIFIER_TYPES
-    }
-
     boolean haveMultiplePerennialIdentifierTypes() {
-        final boolean HAVE_PERENNIAL_PUBLICATION_ID = publicationIdGenerator instanceof
-                    AbstractModelIdentifierGenerator && !(publicationIdGenerator instanceof
+        def publicationIdGenerator = modelService.publicationIdGenerator
+        final boolean HAVE_PERENNIAL_PUBLICATION_ID = !(publicationIdGenerator instanceof
                     NullModelIdentifierGenerator)
 
-        final Set<String> ID_TYPES = getPerennialIdentifierTypes()
+        final Set<String> ID_TYPES = modelService.getPerennialIdentifierTypes()
         final boolean MANY_IDENTIFIERS = HAVE_PERENNIAL_PUBLICATION_ID || ID_TYPES.size() >= 2
         return MANY_IDENTIFIERS
+    }
+
+    Map<Long, String> findModelsByPerennialId(List<String> identifiers) {
+        Map results = [:]
+        for (String id : identifiers) {
+            Model model = modelService.findByPerennialIdentifier(id)
+            if (model) {
+                results[model.id] = id
+            }
+        }
+        results
     }
 }

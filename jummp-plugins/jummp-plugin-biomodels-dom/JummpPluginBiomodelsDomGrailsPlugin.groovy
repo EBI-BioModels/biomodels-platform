@@ -44,6 +44,7 @@ Plugin to define domain classes specific to the biomodels database
 
     def doWithSpring = {
         // TODO Implement runtime spring config (optional)
+        application.config.grails.databinding.dateFormats = ["yyyy-MM-dd'T'HH:mm:ss"]
     }
 
     def doWithDynamicMethods = { ctx ->

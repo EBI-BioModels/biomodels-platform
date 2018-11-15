@@ -41,6 +41,10 @@ class RepositoryFileTransportCommand implements Serializable {
 
     Long id
     String path
+    // this property is used for tracking the actual file name of the file
+    String filename
+    long size
+    boolean showPreview
     String description
     boolean hidden
     boolean mainFile

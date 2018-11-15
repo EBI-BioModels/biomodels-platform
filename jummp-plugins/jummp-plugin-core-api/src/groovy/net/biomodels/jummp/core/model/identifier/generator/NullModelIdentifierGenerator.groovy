@@ -20,6 +20,8 @@
 
 package net.biomodels.jummp.core.model.identifier.generator
 
+import groovy.transform.CompileStatic
+import net.biomodels.jummp.core.events.ModelIdentifierDecoratorUpdatedEvent
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 
@@ -28,13 +30,14 @@ import org.apache.commons.logging.LogFactory
  *
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
-final class NullModelIdentifierGenerator implements ModelIdentifierGenerator {
+@CompileStatic
+final class NullModelIdentifierGenerator extends AbstractModelIdentifierGenerator {
     /* the class logger */
     private static final Log log = LogFactory.getLog(this)
     /* semaphore for the log threshold */
-    private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
+    private final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
 
-    public NullModelIdentifierGenerator() {
+    NullModelIdentifierGenerator() {
     }
 
     /**
@@ -50,5 +53,9 @@ final class NullModelIdentifierGenerator implements ModelIdentifierGenerator {
      * Nothing to do.
      */
     void update() {
+    }
+
+    @Override
+    void respondTo(ModelIdentifierDecoratorUpdatedEvent ignored) {
     }
 }

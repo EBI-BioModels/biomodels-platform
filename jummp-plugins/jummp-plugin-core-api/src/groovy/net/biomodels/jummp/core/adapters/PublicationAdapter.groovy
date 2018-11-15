@@ -32,7 +32,9 @@ import grails.util.Holders
 public class PublicationAdapter {
     Publication publication
 
-    def publicationService = Holders.getGrailsApplication().mainContext.publicationService
+    def grailsApplication = Holders.grailsApplication
+
+    def publicationService = grailsApplication.mainContext.publicationService
 
     PublicationTransportCommand toCommandObject() {
         PublicationTransportCommand pubTC = new PublicationTransportCommand(journal: publication.journal,

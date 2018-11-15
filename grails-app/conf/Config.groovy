@@ -62,6 +62,8 @@ try {
 def jummpConfig = new ConfigSlurper().parse(jummpProperties)
 List pluginsToExclude = []
 
+// The Accept header set by older versions of IE and Opera may be unreliable, ignore it
+grails.mime.disable.accept.header.userAgents = ['Presto', 'Trident']
 grails.mime.file.extensions = false // enables the parsing of file extensions from URLs into the request format
 grails.mime.use.accept.header = true
 grails.mime.types = [ html: ['text/html','application/xhtml+xml'],
@@ -240,6 +242,9 @@ log4j.main = {
 
         // change the threshold to DEBUG to have debug output in development mode
         console name: "stdout", threshold: org.apache.log4j.Level.WARN
+
+        rollingFile name: "stacktrace", maxFileSize: 1024,
+                    file: "logs/stacktrace.log"
     }
 
     // configure the performanceStatsAppender to log at INFO level
@@ -269,7 +274,7 @@ log4j.main = {
     ]
 
     rollingFile name: "debugAppender", file: "logs/jummp-debug.log", threshold: org.apache.log4j.Level.DEBUG
-    rollingFile name: "hibernateAppender", file: "logs/jummp-hibernate.log", threshold: org.apache.log4j.Level.DEBUG
+    rollingFile name: "hibernateAppender", file: "logs/jummp-hibernate.log", threshold: org.apache.log4j.Level.WARN
 
     debug debugAppender: [
         'net.biomodels.jummp',
@@ -283,7 +288,7 @@ log4j.main = {
         'net.biomodels.jummp.plugins.pharmml',
         'net.biomodels.jummp.search'
     ]
-    debug hibernateAppender: [
+    warn hibernateAppender: [
         'org.codehaus.groovy.grails.orm.hibernate',
         'org.codehaus.groovy.grails.orm.support',
         'org.hibernate.SQL',
@@ -298,6 +303,7 @@ grails.plugin.springsecurity.userLookup.userDomainClassName = 'net.biomodels.jum
 grails.plugin.springsecurity.userLookup.authorityJoinClassName = 'net.biomodels.jummp.plugins.security.UserRole'
 grails.plugin.springsecurity.authority.className = 'net.biomodels.jummp.plugins.security.Role'
 grails.plugin.springsecurity.securityConfigType = "Annotation" // "Annotation", "InterceptUrlMap", "Requestmap"
+grails.plugin.springsecurity.successHandler.alwaysUseDefaultTargetUrl = false
 
 jummp.controllerAnnotations = [
     // /model/create and /model/create?execution=e.*s1 show the display the submission guidelines, which should be visible without logging in
@@ -344,6 +350,7 @@ jummp.controllerAnnotations = [
     "/plugins/*/css/*":         ['permitAll'],
     "/plugins/*/images/*":      ['permitAll'],
     "/simpleCaptcha/captcha":   ['permitAll'],
+    "/docs/**":                 ['permitAll'],
     "/omicsdi/**":              ["hasRole('ROLE_ADMIN')"]
 ]
 
@@ -399,6 +406,14 @@ if (!(jummpConfig.jummp.search.strategy instanceof ConfigObject)) {
 
 if (jummpConfig.jummp.model.curators.mailinglist) {
     jummp.model.curators.mailinglist = jummpConfig.jummp.model.curators.mailinglist
+}
+
+if (jummpConfig.jummp.cache.dir) {
+    jummp.cache.dir = jummpConfig.jummp.cache.dir
+}
+
+if (jummpConfig.jummp.classification.endpoint) {
+    jummp.classification.endpoint = jummpConfig.jummp.classification.endpoint
 }
 
 if (jummp.search.strategy == "solr") {
@@ -740,8 +755,6 @@ if (!(jummpConfig.jummp.context.help.root instanceof ConfigObject)) {
 }
 jummp.config.maintenance = false
 
-jummp.id.generators = ModelIdentifierUtils.processGeneratorSettings(jummp)
-
 if (!(jummpConfig.jummp.metadata.officialDatabaseName instanceof ConfigObject)) {
     jummp.metadata.officialDatabaseName = jummpConfig.jummp.metadata.officialDatabaseName
 } else {
@@ -763,3 +776,4 @@ elasticSearch.disableAutoIndex = true
 elasticSearch.client.mode = 'local'
 elasticSearch.index.store.type = 'simplefs' // store local node in memory and not on disk
 elasticSearch.maxBulkRequest = 10
+grails.databinding.dateFormats = ["yyyy-MM-dd'T'HH:mm:ss"]

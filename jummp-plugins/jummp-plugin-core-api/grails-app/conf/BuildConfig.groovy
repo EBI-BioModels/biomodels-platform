@@ -71,13 +71,13 @@ grails.project.dependency.resolution = {
     }
     dependencies {
         compile("eu.ddmore.pharmml:libPharmML:0.4-beta-b3")
-        compile("net.biomodels.jummp:AnnotationStore:0.3.2-SNAPSHOT") {
+        compile("net.biomodels.jummp:AnnotationStore:0.3.3-SNAPSHOT") {
             excludes 'slf4j-log4j12'
         }
         compile("eu.ddmore.metadata:lib-metadata:1.5.2-SNAPSHOT") {
             excludes 'spring-context','spring-core','spring-test', 'jena', 'slf4j-log4j12'
         }
-        compile("uk.ac.ebi.ddi:ddi-ebe-ws-dao:1.0-SNAPSHOT") {
+        compile("uk.ac.ebi.ddi:ddi-ebe-ws-dao:1.0") {
             excludes 'slf4j-log4j12'
         }
         // Jackson DataBinder has 'provided' scope in DDI: See
@@ -85,6 +85,7 @@ grails.project.dependency.resolution = {
         //      https://github.com/BD2K-DDI/ddi-ebeye-ws-dao/blob/8bd08f/pom.xml
         compile "com.fasterxml.jackson.core:jackson-databind:2.5.2"
         compile "org.apache.commons:commons-lang3:3.3.2"
+        compile "org.apache.tika:tika-core:1.3"
     }
     plugins {
         build ":tomcat:7.0.55.3"

@@ -50,6 +50,8 @@ import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Facet
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.FacetValue
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.QueryResult
 
+import java.text.SimpleDateFormat
+
 /**
  * @short Singleton-scoped facade for interacting with a OmicsdiHolder's instance.
  *
@@ -74,6 +76,7 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
      * Flag indicating the logger's verbosity threshold.
      */
     static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
+    public static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd")
 
     private final java.util.regex.Pattern pattern = ~/(\p{Alnum}+:)(\p{Alnum}+):(\d+)/
     private final String replacement = '$1$2\\\\:$3' // note the single quotes to avoid Groovy string interpolation
@@ -158,20 +161,25 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
             ebeyeWsConfig = new EbeyeWsConfigProd()
         }
         DatasetWsClient datasetWsClient = new DatasetWsClient(ebeyeWsConfig)
+        // parse raw query to OmicsDI API to avoid double encoding issues.
+        final String rawQuery = query.decodeHTML()
         // escape special Lucene field separators in query string
-        query = escapeLuceneFieldSeparator(query)
+        query = escapeLuceneFieldSeparator(rawQuery)
         // TODO: should allow searching information of other fields
         // create the returned object
         SearchResponse searchResponse = new SearchResponse()
         String[] fields = ["name", "description", "submitter", "curationstatus",
                            "last_modification_date", "submission_date",
-                           "modelformat", "levelversion", "first_author", "publication_year"]
+                           "modelformat", "levelversion", "first_author", "publication_year", "isprivate"]
         String sortField = sortOrder.getField()
         String sortDir = sortOrder.direction == SortOrder.SortDirection.ASC ? "ascending" : "descending"
+        String sort = sortField ? String.format("%s:%s", sortField, sortDir) : ""
+        /* By default, we put the private models at the last pages if they are available */
+        sort = sort ? "isprivate:ascending,$sort" : "isprivate:ascending"
         QueryResult result
         try {
-            result = datasetWsClient.getDatasets("biomodels", query, fields, sortField, sortDir,
-                paginationCriteria['start'], paginationCriteria['length'], paginationCriteria['facetCount'])
+            result = datasetWsClient.getDatasets("biomodels", query, fields,
+                paginationCriteria['start'], paginationCriteria['length'], paginationCriteria['facetCount'], sort)
         } catch (HttpClientErrorException e) {
             log.debug("""\
 There was a problem obtaining search result from EBI search server. The root cause is ${e.toString()}""")
@@ -179,6 +187,8 @@ There was a problem obtaining search result from EBI search server. The root cau
             if (e.statusCode.value() == 400) {
                 log.debug("The querying string might be wrong syntax or contains restricted characters.")
             }
+            result = null
+        } catch (UnknownHostException ignored ) {
             result = null
         }
         List<Facet> facets = []
@@ -192,15 +202,12 @@ There was a problem obtaining search result from EBI search server. The root cau
             entries?.eachWithIndex { Entry entry, int i ->
                 ModelTransportCommand mtc
                 String submissionId = entry.id
-                String modelName = entry.getFields().get('name')[0]
-                String description = ""
-                boolean haveDescription = entry.getFields().get('description').length > 0
-                if (haveDescription) {
-                    description = entry.getFields().get('description')[0]
-                }
-                boolean haveSubmissionDate = entry.getFields().get('submission_date').length > 0
-                boolean haveModifiedDate = entry.getFields().get('last_modification_date').length > 0
-                boolean haveSubmitter = entry.getFields().get('submitter').length > 0
+                String modelName = getSingleValueForEntryField(entry, 'name')
+                String description = getSingleValueForEntryField(entry, 'description')
+
+                boolean haveSubmissionDate = getValueArrayForEntryField(entry, 'submission_date').length > 0
+                boolean haveModifiedDate = getValueArrayForEntryField(entry, 'last_modification_date').length > 0
+                boolean haveSubmitter = getValueArrayForEntryField(entry, 'submitter').length > 0
                 ModelState state
                 if (!haveSubmissionDate && !haveModifiedDate && !haveSubmitter) {
                     // TODO: make the condition of a private model stronger
@@ -213,20 +220,16 @@ There was a problem obtaining search result from EBI search server. The root cau
                     )
                 } else {
                     state = ModelState.PUBLISHED
-                    String submissionDateString = entry.getFields().get('submission_date')[0]
-                    java.text.SimpleDateFormat simpleDateFormat = new java.text.SimpleDateFormat("yyyyMMdd")
-                    Date submissionDate = simpleDateFormat.parse(submissionDateString)
-                    String submitterName = entry.getFields().get('submitter')[0]
-                    String modifiedDateString = entry.getFields().get('last_modification_date')[0]
-                    simpleDateFormat = new java.text.SimpleDateFormat("yyyyMMdd")
-                    Date modifiedDate = simpleDateFormat.parse(modifiedDateString)
-                    String formatName = entry.getFields().get('modelformat')[0]
-                    String formatVersion = entry.getFields().get('levelversion')[0]
-                    boolean havePublicationYear = entry.getFields().get('publication_year').length > 0
-                    String publicationYear = ""
-                    if (havePublicationYear) {
-                        publicationYear = entry.getFields().get('publication_year')[0]
-                    }
+                    String submissionDateString = getSingleValueForEntryField(  entry,
+                            'submission_date')
+                    Date submissionDate = formatParsedDateString(submissionDateString)
+                    String submitterName = getSingleValueForEntryField(entry, 'submitter')
+                    String modifiedDateString = getSingleValueForEntryField(entry,
+                            'last_modification_date')
+                    Date modifiedDate = formatParsedDateString(modifiedDateString)
+                    String formatName = getSingleValueForEntryField(entry, 'modelformat')
+                    String formatVersion = getSingleValueForEntryField(entry, 'levelversion')
+                    String publicationYear = getSingleValueForEntryField(entry, 'publication_year')
                     ModelFormatTransportCommand format =
                         new ModelFormatTransportCommand(name: formatName, formatVersion: formatVersion)
                     PublicationTransportCommand ptc = null
@@ -248,7 +251,7 @@ There was a problem obtaining search result from EBI search server. The root cau
                 results.add(mtc)
             }
             // facets
-            Set<String> hiddenFacets = ["PUBLICATION DATE", "OMICS TYPE", "REPOSITORY", "SOURCE"]
+            Set<String> hiddenFacets = ["PUBLICATION DATE", "OMICS TYPE", "REPOSITORY", "SOURCE", "ISPRIVATE"]
             boolean shouldBeHidden = false
             result.facets?.each { Facet facet ->
                 // deal with two fields due to camel case in the field names
@@ -309,6 +312,32 @@ There was a problem obtaining search result from EBI search server. The root cau
             log.debug("Results processed in ${System.currentTimeMillis() - start}")
         }
         return searchResponse
+    }
+
+    private Date formatParsedDateString(String dateString) {
+        Date date = null
+        if (!dateString.isEmpty()) {
+            date = dateFormat.parse(dateString)
+        }
+        date
+    }
+
+    private String getSingleValueForEntryField(Entry entry, String field) {
+        String[] values = getValueArrayForEntryField(entry, field)
+        if (values.length > 0) {
+            return values[0]
+        }
+        ""
+    }
+
+    private String[] getValueArrayForEntryField(Entry entry, String field) {
+        Objects.requireNonNull(entry)
+        final String[] defaultResult = new String[0]
+        String[] values = entry.getFields().get(field)
+        if (!values) {
+            return defaultResult // save client from testing for null
+        }
+        values
     }
 
     void updateIndex(RevisionTransportCommand revision) {

@@ -66,6 +66,7 @@ class SubmissionService {
     // concrete strategies for the submission state machine
     private final NewModelStateMachine newModel = new NewModelStateMachine()
     private final NewRevisionStateMachine newRevision = new NewRevisionStateMachine()
+    private final InPlaceStateMachine inPlaceMachine = new InPlaceStateMachine()
     /**
      * Disable transactional behaviour for this service.
      */
@@ -447,8 +448,11 @@ class SubmissionService {
 
         void updatePublicationLink(Map<String, Object> workingMemory, Map<String, String> modifications) {
             if (modifications.containsKey("PubLinkProvider")) {
+                MTC mtc = workingMemory.get("ModelTC") as MTC
+                workingMemory.put("previousPubLinkProvider", mtc.publication?.linkProvider)
+                workingMemory.put("previousPubLink", mtc.publication?.link)
                 workingMemory.put("RetrievePubDetails",
-                    updatePubs(workingMemory.get("ModelTC") as MTC,
+                    updatePubs(mtc,
                         modifications.get("PubLinkProvider"),
                         modifications.get("PubLink")))
                 if (workingMemory.containsKey("Authors")) {
@@ -566,6 +570,32 @@ class SubmissionService {
                 publication_objects_in_working.put(it, context)
             }
             publication_objects_in_working
+        }
+    }
+
+    @CompileStatic
+    class InPlaceStateMachine extends StateMachineStrategy {
+        void initialise(Map<String, Object> workingMemory) {
+
+        }
+
+        void removeFromVCS(Map<String, Object> workingMemory, List<RFTC> filesToDelete) {
+            //nothing in VCS, need to do nothing
+        }
+
+        //Always process files in create mode. Possibly needs optimisation.
+        boolean processingRequired(Map<String, Object> workingMemory) {
+            return true;
+        }
+
+        @Profiled(tag = "submissionService.InPlaceStateMachine.createTransportObjects")
+        protected void createTransportObjects(Map<String,Object> workingMemory) {
+
+        }
+        @TypeChecked(TypeCheckingMode.SKIP)
+        @Profiled(tag = "submissionService.InPlaceStateMachine.completeSubmission")
+        HashSet<String> completeSubmission(Map<String, Object> workingMemory) {
+
         }
     }
 
@@ -930,8 +960,13 @@ class SubmissionService {
      * @param workingMemory a Map containing all objects exchanged throughout the flow.
      */
     private StateMachineStrategy getStrategyFromContext(Map<String, Object> workingMemory) {
-        Boolean isUpdateOnExistingModel = (Boolean) workingMemory.get("isUpdateOnExistingModel");
+        Boolean isUpdateOnExistingModel = (Boolean) workingMemory.get("isUpdateOnExistingModel")
+        Boolean shouldCreateNewRevision = (Boolean) workingMemory.get("shouldCreateNewRevision")
         if (isUpdateOnExistingModel) {
+            shouldCreateNewRevision = Boolean.TRUE
+            if (!shouldCreateNewRevision) {
+                inPlaceMachine
+            }
             return newRevision
         }
         return newModel

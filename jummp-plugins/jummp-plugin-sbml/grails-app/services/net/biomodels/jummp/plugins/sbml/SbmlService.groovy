@@ -39,14 +39,12 @@ package net.biomodels.jummp.plugins.sbml
 
 import com.thoughtworks.xstream.converters.ConversionException
 import grails.util.Environment
+import net.biomodels.jummp.core.ModelException
 import java.util.regex.Pattern
 import javax.xml.stream.XMLInputFactory
 import javax.xml.stream.XMLStreamException
 import javax.xml.stream.XMLStreamReader
-import net.biomodels.jummp.core.IMetadataService
 import net.biomodels.jummp.core.ISbmlService
-import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand
-import net.biomodels.jummp.core.annotation.StatementTransportCommand
 import net.biomodels.jummp.core.model.FileFormatService
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
@@ -86,6 +84,7 @@ import org.sbml.jsbml.Reaction
 import org.sbml.jsbml.Rule
 import org.sbml.jsbml.SBMLDocument
 import org.sbml.jsbml.SBMLError
+import org.sbml.jsbml.SBMLException
 import org.sbml.jsbml.SBMLReader
 import org.sbml.jsbml.SBMLWriter
 import org.sbml.jsbml.SBO
@@ -113,10 +112,6 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
      */
     def miriamService
     /**
-     * Dependency Injection of metadata delegate service.
-     */
-    IMetadataService metadataDelegateService
-    /**
      * Dependency injection of grails application.
      */
     @SuppressWarnings("GrailsStatelessService")
@@ -135,7 +130,8 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
 
     // TODO: move initialization into afterPropertiesSet and make it configuration dependent
     @SuppressWarnings("GrailsStatelessService")
-    SbmlCache<RevisionTransportCommand, SBMLDocument> cache = new SbmlCache(100)
+    /** keys are {@link net.biomodels.jummp.core.model.RevisionTransportCommand#getId()}s*/
+    SbmlCache cache = new SbmlCache(100)
 
     void afterPropertiesSet() {
         if (Environment.current == Environment.PRODUCTION) {
@@ -163,6 +159,76 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
         }
     }
 
+    boolean addModelIdentifiersAsAnnotation(RevisionTransportCommand revision, String... identifiers)
+            throws ModelException {
+        boolean validRevision = revision && "SBML".equals(revision.format.identifier)
+        boolean validIdentifiers = null != identifiers && 0 != identifiers.length
+        if (!validIdentifiers || !validRevision) {
+            String msg = """A revision whose main files are encoded in SBML and at least one model \
+identifier are required"""
+            throw new IllegalArgumentException(msg)
+        }
+        SBMLDocument document = getFromCache(revision)
+        def rID = revision.identifier()
+        if (null == document) {
+            log.error("Cannot add $identifiers to revision $rID as we could not parse its main files")
+            return false
+        }
+
+        boolean needsUpdating = addModelIdAnnotationsIfNeeded(revision, document, identifiers)
+        if (!needsUpdating) {
+            return false
+        }
+        File sbmlFile = fetchMainFileFromRevision(revision)
+        SBMLWriter sbmlWriter = new SBMLWriter()
+        try {
+            sbmlWriter.writeSBML(document, sbmlFile)
+            return true
+        } catch (SBMLException | IOException | XMLStreamException e) {
+            def fn = sbmlFile.name
+            def msg = """Failed to add model annotations $identifiers to file $fn of revision $rID \
+due to an issue with JSBML"""
+            log.error "$msg: $e"
+            throw new ModelException(revision.model, msg)
+        }
+    }
+
+    private boolean addModelIdAnnotationsIfNeeded(RevisionTransportCommand revision,
+            SBMLDocument document, String... identifiers) throws ModelException {
+        def rID = Objects.requireNonNull(revision).identifier()
+        Model model = Objects.requireNonNull(document).model
+
+        final CVTerm.Qualifier bqmIs = CVTerm.Qualifier.BQM_IS
+        List<CVTerm> bqmIsAnnotations = model.filterCVTerms(bqmIs)
+
+        if (bqmIsAnnotations.isEmpty()) {
+            def cvTerm = new CVTerm(bqmIs, identifiers)
+            if (!model.addCVTerm(cvTerm)) {
+                throw new ModelException(revision.model, "Could not add a CVTerm for $identifiers")
+            }
+            return true
+        }
+        // annotations may be spread over several qualifiers, merge them before performing lookups
+        def currentResources = bqmIsAnnotations.collect { CVTerm t ->
+            t.getResources()
+        }.flatten()
+        def missing = []
+        for (String idURI : identifiers) {
+            if (!currentResources.contains(idURI)) {
+                missing << idURI
+            }
+        }
+
+        if (missing.isEmpty()) { // nothing to do
+            return false
+        }
+        String[] toAdd = missing as String[]
+        if (!bqmIsAnnotations.first().addResources(toAdd)) {
+            String msg = "We failed to add $missing to revision $rID"
+            throw new ModelException(revision.model, msg)
+        }
+        true
+    }
     private SBMLDocument getFileAsValidatedSBMLDocument(final File model, final List<String> errors) {
         // TODO: we should insert the parsed model into the cache
         SBMLDocument doc
@@ -227,7 +293,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
         final int DEPTH_LIMIT = 15
         BufferedReader reader = null
         String currentLine
-        final def p = Pattern.compile(".*\\<sbml.*xmlns=\"http://www\\.sbml\\.org/sbml/level.*\".*")
+        final def p = Pattern.compile(".*<sbml.*xmlns=\"http://www\\.sbml\\.org/sbml/level.*\".*")
 
         while (areAllSbml && iFiles < fileCount) {
             try {
@@ -249,9 +315,8 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
                 }
                 areAllSbml &= foundSbmlDeclarationLine
             } catch(IOException ex) {
-                ex.printStackTrace();
-            	def msg = new StringBuffer("Could not check if files ${files.inspect()} are valid SBML.")
-                msg.append(" Encountered ${ex.message} while reading line $currentLine of file ${files[iFiles]}")
+                def msg = new StringBuffer("Could not check if files ${files.inspect()} are valid SBML.")
+                msg.append(" Encountered $ex while reading line $currentLine of file ${files[iFiles]}")
                 log.error(msg.toString())
                 return false
             } finally {
@@ -312,12 +377,24 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
     @Override
     @Profiled(tag="sbmlService.updateName")
     boolean updateName(RevisionTransportCommand revision, final String name) {
-        //TODO update file contents
         if (revision && name.trim()) {
+            // update the name of the revision
             revision.name = name.trim()
+
+            // update the name of SBML model file of the revision
+            SBMLDocument sbmlDocument = getFromCache(revision)
+            Model sbmlModel = sbmlDocument.getModel()
+            sbmlModel.setName(name)
+            File sbmlFile = fetchMainFileFromRevision(revision)
+            SBMLWriter sbmlWriter = new SBMLWriter()
+            sbmlWriter.writeSBML(sbmlDocument, sbmlFile)
             return true
+        } else {
+            log.warn("""\
+Revision ${revision.id} of the model ${revision.model.submissionId} is null or 
+the user has attempted to update an blank value for the name attribute.""")
+            return false
         }
-        return false
     }
 
     /**
@@ -382,9 +459,17 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
     @Override
     @Profiled(tag="sbmlService.updateDescription")
     boolean updateDescription(RevisionTransportCommand revision, final String DESC) {
-        //TODO update file contents
         if (revision && DESC.trim()) {
+            // update the description of SBML model file of the revision
             revision.description = DESC.trim()
+
+            // update the description of SBML model file of the revision
+            SBMLDocument sbmlDocument = getFromCache(revision)
+            Model sbmlModel = sbmlDocument.getModel()
+            sbmlModel.setNotes(DESC)
+            File sbmlFile = fetchMainFileFromRevision(revision)
+            SBMLWriter sbmlWriter = new SBMLWriter()
+            sbmlWriter.writeSBML(sbmlDocument, sbmlFile)
             return true
         }
         return false
@@ -526,7 +611,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
     @Profiled(tag="SbmlService.getRule")
     Map getRule(RevisionTransportCommand revision, String variable) {
         Model model = getFromCache(revision).model
-        ExplicitRule rule = model.getRule(variable)
+        ExplicitRule rule = model.getRuleByVariable(variable)
         if (!rule) {
             return [:]
         }
@@ -700,7 +785,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
      * @return The parsed SBMLDocument
      */
     private SBMLDocument getFromCache(RevisionTransportCommand revision) throws XMLStreamException {
-        SBMLDocument document = cache.get(revision)
+        SBMLDocument document = cache.get(revision.id)
         if (document) {
             return document
         }
@@ -719,7 +804,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
                 def reader = new SBMLReader()
                 document = reader.readSBML(file)
                 if (document) {
-                  cache.put(revision, document)
+                  cache.put(revision.id, document)
                   //break
                 }
             } catch(Exception ignore) {

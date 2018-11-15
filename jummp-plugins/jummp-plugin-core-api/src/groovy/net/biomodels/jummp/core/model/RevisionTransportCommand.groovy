@@ -113,6 +113,11 @@ class RevisionTransportCommand implements Serializable {
 
     QcInfoTransportCommand qcInfo
 
+    /**
+     * The curation state of this revision
+     */
+    CurationState curationState
+
     List<ElementAnnotationTransportCommand> getAnnotations() {
         if (!annotations) {
             annotations = context.metadataDelegateService.fetchAnnotations(this)
@@ -131,6 +136,10 @@ class RevisionTransportCommand implements Serializable {
          final PERENNIAL_ID = model.publicationId ?: model.submissionId
          return new StringBuffer(PERENNIAL_ID).append(".").append(revisionNumber).toString()
      }
+
+    String modelIdentifier() {
+        model.publicationId ?: model.submissionId
+    }
 
 /*    String [] getValidationStatementList(){
         if(validationReport == null){

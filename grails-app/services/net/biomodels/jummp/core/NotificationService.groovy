@@ -46,6 +46,7 @@ import net.biomodels.jummp.webapp.NotificationType
 import net.biomodels.jummp.webapp.NotificationTypePreferences
 import net.biomodels.jummp.webapp.NotificationUser
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.context.i18n.LocaleContextHolder as LCH
 
 /**
  * Service asynchronously called by Camel plugin, in response to various messages.
@@ -126,6 +127,8 @@ class NotificationService {
 
     void modelCreated(def body) {
         ModelTransportCommand model = body.model
+        String serverURL = grailsApplication.config.grails.serverURL
+        String modelLink = "${serverURL}/${model.submissionId}"
         User submitter = body.user
         String submitterRealName = submitter.person.userRealName
         String submitterEmail = submitter.email
@@ -147,7 +150,7 @@ class NotificationService {
             GregorianCalendar cal = new GregorianCalendar()
             String submissionTime = cal.getTime().toGMTString()
             String[] args = [model.id.toString(), model.name, model.submissionId, format,
-                             submitterInfo, pubData, submissionTime]
+                             submitterInfo, pubData, submissionTime, modelLink]
             emailBody = messageSource.getMessage("notification.model.created.emailToCurator.body", args, null)
             mailService.sendMail {
                 async true
@@ -173,7 +176,7 @@ class NotificationService {
             String withPublicationProvided = messageSource.getMessage(withPubMsgCode, [] as String[],  null)
             String noPublicationProvided = messageSource.getMessage(noPubMsgCode, [] as String[], null)
             String askAcknowledgement = model.publication ? withPublicationProvided : noPublicationProvided
-            String[] args = [salutation, model.name, model.submissionId, askAcknowledgement]
+            String[] args = [salutation, model.name, model.submissionId, askAcknowledgement, modelLink]
             emailBody = messageSource.getMessage("notification.model.created.emailToSubmitter.body", args, null)
             mailService.sendMail {
                 async true
@@ -317,6 +320,35 @@ class NotificationService {
                 body.user,
                 getNotificationRecipients(body.perms),
                 model)
+    }
+
+    void modelSubmitForPublication(def body) {
+        RevisionTransportCommand revision = body.revision as RevisionTransportCommand
+        ModelTransportCommand model = revision.model
+        User user = body.user as User
+        String notificationTitle = "notification.model.sub4pub.title"
+        String[] titleParams = [revision.name] as String[]
+        String notificationBody = "notification.model.sub4pub.body"
+        String serverURL = grailsApplication.config.grails.serverURL
+        String modelLink = "${serverURL}/${revision.identifier()}"
+        String[] bodyParams = [revision?.name, user?.person?.userRealName, modelLink] as String[]
+        Set<User> watchers = getNotificationRecipients(body.perms)
+        // send a notification message to the members of the curator group
+        useGenericNotificationStructure(notificationTitle, titleParams,
+            notificationBody, bodyParams,
+            NotificationType.SUBMIT_FOR_PUBLICATION, user, watchers, model)
+        // send an email to biomodels' cura mailing list
+        String emailTo = grailsApplication.config.jummp.model.curators.mailinglist
+        String emailFrom = user.email //grailsApplication.config.jummp.security.registration.email.sender
+        String emailSubject = messageSource.getMessage(notificationTitle, titleParams, LCH.getLocale())
+        String emailBody = messageSource.getMessage(notificationBody, bodyParams, LCH.getLocale())
+        mailService.sendMail {
+            async true
+            to emailTo
+            from emailFrom
+            subject emailSubject
+            html emailBody
+        }
     }
 
     void feedback2Admin(def body) {
