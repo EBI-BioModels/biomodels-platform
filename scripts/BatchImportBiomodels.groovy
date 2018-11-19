@@ -1439,7 +1439,7 @@ getMainFileForPDGSMModel = { folder, id ->
 }
 
 getMainFileForCuraModel = { folder, id ->
-    new File(folder, "$id$DOT_XML")
+    new File(folder, "$id$URL_FILE")
 }
 
 getAdditionalFilesForNonSBMLModel = { modelId ->
