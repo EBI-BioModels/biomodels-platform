@@ -82,6 +82,7 @@ class UrlMappings {
         "/support"(controller: "jummp", action: "support")
         "/faq"(controller: "jummp", action: "faq")
         "/courses"(controller: "jummp", action: "courses")
+        "/dev"(controller: "jummp", action: "developerZone")
         "/about"(controller: "jummp", action: "aboutus")
         "/termsofuse"(controller: "jummp", action: "termsOfUse")
         "/citation"(controller: "jummp", action: "howToCiteBioModelsDatabase")
