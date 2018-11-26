@@ -223,6 +223,33 @@
           }
         }
       }
+    },
+    "/search/download": {
+      "get": {
+        "tags": ["Search models"],
+        "summary": "Download a single or multiple models",
+        "description": "Download the main file of a given single model or multiple models via their model identifiers.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "models",
+            "required": true,
+            "type": "string",
+            "description": "The list of model identifiers which you want to download their main file. Using the comma to separate if you are requesting more than one model."
+          }
+        ],
+        "produces": [
+          "application/zip"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation"
+          },
+          "404": {
+            "description": "Invalid Model Id Supplied"
+          }
+        }
+      }
     }
   },
   "definitions": {

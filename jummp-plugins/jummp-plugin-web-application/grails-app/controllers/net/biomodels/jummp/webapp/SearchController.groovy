@@ -216,7 +216,7 @@ class SearchController {
         }
 	    byte[] data = modelDelegateService.serveModelFilesAsZip(models)
         if (data) {
-            // the data could be null in a few situations such as the model files are unaccessible
+            // the data could be null in a few situations such as the model files are inaccessible
             response.setContentType("application/zip")
             String date = new Date().format("yyyyMMdd-HHmm")
             String filename = "BioModels-search-results_${date}.zip".toString()
