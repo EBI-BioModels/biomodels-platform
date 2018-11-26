@@ -70,6 +70,7 @@ class UrlMappings {
         "/"(view: "/index")
         "/maintenance"(controller: 'maintenance')
         "/maintenance/turnOn"(controller: 'maintenance', action: 'turnOn')
+        "400"(controller: "errors", action: "error400")
         "403"(controller: "errors", action: "error403")
         "404"(controller: "errors", action: "error404")
         "500"(controller: "errors", action: "error500")

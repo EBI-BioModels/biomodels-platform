@@ -190,7 +190,8 @@ class ModelController {
             }
         } catch(Exception e) {
             log.error(e.message, e)
-            forward(controller: "errors", action: "error403")
+            String actionError = params?.action == "download" ? "error400" : "error403"
+            forward(controller: "errors", action: actionError)
             return false
         }
     }
@@ -1328,37 +1329,50 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
      */
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def download() {
-        def modelId = params.id
-        def revisionId = params.revisionId
-        String fileName = params.filename?.encodeAsHTML()
-        if (!fileName) {
-            final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(
-                            modelDelegateService.getRevisionFromParams(modelId, revisionId))
-            serveModelAsCombineArchive(FILES, response)
-        } else {
-            final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(
-                            modelDelegateService.getRevisionFromParams(modelId, revisionId))
-            RFTC requested = FILES.find {
-                if (it.hidden) {
-                    return false
+        try {
+            if (params.containsKey("id")) {
+                def modelId = params.id
+                def revisionId = params.revisionId
+                String fileName = params.filename?.encodeAsHTML()
+                if (!fileName) {
+                    final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(
+                        modelDelegateService.getRevisionFromParams(modelId, revisionId))
+                    serveModelAsCombineArchive(FILES, response)
+                } else {
+                    final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(
+                        modelDelegateService.getRevisionFromParams(modelId, revisionId))
+                    RFTC requested = FILES.find {
+                        if (it.hidden) {
+                            return false
+                        }
+                        File file = new File(it.path)
+                        file.getName() == fileName
+                    }
+                    boolean inline = params.inline == "true"
+                    boolean preview = params.preview == "true"
+                    if (requested) {
+                        serveModelAsFile(requested, response, inline, preview)
+                    } else {
+                        response.status = HttpServletResponse.SC_BAD_REQUEST
+                        def err = new Error("Invalid file name",
+                            "Cannot find file ${fileName} belonging to model $modelId")
+                        withFormat {
+                            json { respond err }
+                            xml { respond err }
+                            // for all else we send a 404
+                        }
+                    }
                 }
-                File file = new File(it.path)
-                file.getName() == fileName
-            }
-            boolean inline = params.inline == "true"
-            boolean preview  = params.preview == "true"
-            if (requested) {
-                serveModelAsFile(requested, response, inline, preview)
             } else {
                 response.status = HttpServletResponse.SC_BAD_REQUEST
-                def err = new Error("Invalid file name",
-                    "Cannot find file ${fileName} belonging to model $modelId")
-                withFormat {
-                    json { respond err }
-                    xml { respond err }
-                    // for all else we send a 404
-                }
+                forward(controller: "errors", action: "error400")
             }
+        } catch (Exception e) {
+            log.error(e.message, e)
+            render(status: 400,
+                view: "/errors/error400",
+                model: [errorDescription: "The model identifier parameter must be provided."])
+            return
         }
     }
 
