@@ -160,7 +160,7 @@
           "Search models"
         ],
         "summary": "Download search results",
-        "description": "Search models of interest via keywords. See [Model search](https://www.ebi.ac.uk/biomodels/model_search.html) page to know more about search options",
+        "description": "Search models of interest via keywords. See [Model search](https://www.ebi.ac.uk/biomodels-static/model_search.html) page to know more about search options",
         "parameters": [
           {
             "in": "query",
@@ -283,9 +283,10 @@
           "format": "date-time",
           "description": "The date when the model first became publicly available in BioModels",
           "example": "BIOMD0000000001"
-        },},
+        }
+      },
       "xml": {
-        "name": "Model",
+        "name": "Model"
       }
     }
   },
