@@ -51,6 +51,7 @@ import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.PersonTransportCommand
 import net.biomodels.jummp.plugins.security.Team
 import net.biomodels.jummp.webapp.rest.errors.Error
+import net.biomodels.jummp.webapp.rest.model.show.Model as RestfulModel
 import net.biomodels.jummp.webapp.rest.model.show.ModelFiles
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
@@ -351,7 +352,8 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     respond net.biomodels.jummp.webapp.rest.errors.Error("Invalid Id",
                         "An invalid model id was specified")
                 } else {
-                    respond new net.biomodels.jummp.webapp.rest.model.show.Model(rev, isPrivateModel)
+                    RestfulModel model = new RestfulModel(rev, isPrivateModel)
+                    respond model
                 }
             }
             xml {
@@ -359,7 +361,8 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     respond net.biomodels.jummp.webapp.rest.errors.Error("Invalid Id",
                         "An invalid model id was specified")
                 } else {
-                    respond new net.biomodels.jummp.webapp.rest.model.show.Model(rev, isPrivateModel)
+                    RestfulModel model = new RestfulModel(rev, isPrivateModel)
+                    respond model
                 }
             }
             '*' {
