@@ -34,6 +34,9 @@
 
 package net.biomodels.jummp.webapp
 
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.xml.XmlMapper
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import groovy.json.JsonSlurper
@@ -353,7 +356,13 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                         "An invalid model id was specified")
                 } else {
                     RestfulModel model = new RestfulModel(rev, isPrivateModel)
-                    respond model
+                    //respond model -- don't ignore null and empty values
+                    //render model as JSON -- the same effect as the above command
+                    ObjectMapper mapper = new ObjectMapper()
+                    mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL)
+                    mapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
+                    String jsonModel = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(model)
+                    render(text: jsonModel, contentType: "application/json")
                 }
             }
             xml {
@@ -362,7 +371,13 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                         "An invalid model id was specified")
                 } else {
                     RestfulModel model = new RestfulModel(rev, isPrivateModel)
-                    respond model
+                    //respond model -- don't ignore null and empty values
+                    //render model as XML -- the same result as the above command
+                    ObjectMapper mapper = new XmlMapper()
+                    mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL)
+                    mapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
+                    String xmlModel = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(model)
+                    render(text: xmlModel, contentType: "application/xml")
                 }
             }
             '*' {
