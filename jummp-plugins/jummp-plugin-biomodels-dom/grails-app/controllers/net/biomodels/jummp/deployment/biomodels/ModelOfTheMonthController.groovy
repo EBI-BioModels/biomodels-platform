@@ -94,4 +94,10 @@ class ModelOfTheMonthController {
         response.status = result.status
         render(result as JSON)
     }
+
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def rss() {
+        String result = modelOfTheMonthService.createFeeds()
+        render(text: result, contentType: "application/xml")
+    }
 }

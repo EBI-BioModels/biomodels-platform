@@ -20,7 +20,17 @@
 
 package net.biomodels.jummp.deployment.biomodels
 
+import com.rometools.rome.feed.rss.Guid
+import com.rometools.rome.feed.synd.SyndContent
+import com.rometools.rome.feed.synd.SyndContentImpl
+import com.rometools.rome.feed.synd.SyndEntry
+import com.rometools.rome.feed.synd.SyndEntryImpl
+import com.rometools.rome.feed.synd.SyndFeed
+import com.rometools.rome.feed.synd.SyndFeedImpl
+import com.rometools.rome.io.SyndFeedOutput
 import grails.transaction.Transactional
+import net.biomodels.jummp.deployment.biomodels.feeds.CustomSyndEntryImpl
+import net.biomodels.jummp.deployment.biomodels.feeds.CustomSyndFeedImpl
 import org.apache.commons.io.IOUtils
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
@@ -48,6 +58,8 @@ class ModelOfTheMonthService {
      * Threshold for the verbosity of the logger.
      */
     private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
+
+    private static final String PREFIX_MOM_LINK = "https://www.ebi.ac.uk/biomodels/content/model-of-the-month"
 
     List fetchEntriesForModel(Long id) {
         List entries = ModelOfTheMonth.withCriteria {
@@ -95,7 +107,7 @@ class ModelOfTheMonthService {
      */
     @Transactional(readOnly = false)
     List<ModelOfTheMonth> updatePreviewImageAndShortDescription() {
-        String prefixUrl = "http://www.ebi.ac.uk/biomodels/ModelMonth/"
+        String prefixUrl = "https://www.ebi.ac.uk/biomodels/ModelMonth/"
         List<ModelOfTheMonth> modelOfTheMonths = ModelOfTheMonth.getAll()
         List<ModelOfTheMonth> results = []
         SimpleDateFormat dateFormat = new SimpleDateFormat('yyyy-MM')
@@ -184,6 +196,79 @@ class ModelOfTheMonthService {
 There are errors when trying to persist entry (${entry.id}) of the model of the month ${command.getYearMonth()} into the database: ${entry.errors.allErrors.inspect()}""")
             entry = null
         }
+        entry
+    }
+
+    String createFeeds() {
+        List<ModelOfTheMonthTransportCommand> momEntries = list()
+        momEntries.sort()
+        Collections.sort(momEntries, new Comparator<ModelOfTheMonthTransportCommand>() {
+            int compare(ModelOfTheMonthTransportCommand model1,
+                        ModelOfTheMonthTransportCommand model2) {
+                return model2.publicationDate.compareTo(model1.publicationDate)
+            }
+        })
+
+        String feedType = "rss_2.0"
+
+        SyndEntry entry
+        List entries = new ArrayList()
+        for (model in momEntries) {
+            entry = convertToSyndEntry(model, feedType)
+            entries.add(entry)
+        }
+
+        SyndFeed feed = createFeed(feedType)
+        feed.setEntries(entries)
+
+        File writer = File.createTempFile("tmp", "xml")
+        SyndFeedOutput output = new SyndFeedOutput()
+        output.output(feed, writer)
+        String result = writer.text
+        return result
+    }
+
+    private SyndFeed createFeed(String feedType) {
+        String title = "Models of The Month"
+        String link = "${PREFIX_MOM_LINK}?all=yes"
+        String description = """\
+Every month, a scientist from the BioModels Database team selects a model to further investigate and writes a synopsis to explain that model in details."""
+        SyndFeed feed = feedType == "rss_2.0" ? new CustomSyndFeedImpl() : new SyndFeedImpl()
+        feed.setFeedType(feedType)
+        feed.setTitle(title)
+        feed.setLink(link)
+        feed.setDescription(description)
+        feed.setLanguage("en-GB")
+        feed.setCopyright("Copyright 2005-2018, EMBL-EBI")
+        feed.setManagingEditor("biomodels-developers@lists.sf.net (BioModels Team)")
+        feed
+    }
+
+    private SyndEntry convertToSyndEntry(ModelOfTheMonthTransportCommand model, String feedType) {
+        SyndEntry entry
+        entry = feedType == "rss_2.0" ? new CustomSyndEntryImpl() : new SyndEntryImpl()
+        entry.setTitle("<![CDATA[${model.title}]]>")
+        entry.setPublishedDate(model.publicationDate)
+
+        /* prepare the entry link */
+        Calendar calendar = new GregorianCalendar()
+        calendar.setTime(model.publicationDate)
+        String year = calendar.get(Calendar.YEAR).toString()
+        int month = calendar.get(Calendar.MONTH) + 1
+        String strMonth = month < 10 ? '0'.concat(month.toString()) : month.toString()
+        String uniqueModelMonth = "year=${year}&amp;month=${strMonth}"
+        String link = "${PREFIX_MOM_LINK}?${uniqueModelMonth}"
+        entry.setLink(link)
+        Guid guid = new Guid()
+        guid.setValue(uniqueModelMonth)
+        entry.setUri(guid.value)
+
+        /* prepare the entry description */
+        SyndContent entryDescription
+        entryDescription = new SyndContentImpl()
+        entryDescription.setType("text/html")
+        entryDescription.setValue("<![CDATA[${model.shortDescription}]]>")
+        entry.setDescription(entryDescription)
         entry
     }
 }
