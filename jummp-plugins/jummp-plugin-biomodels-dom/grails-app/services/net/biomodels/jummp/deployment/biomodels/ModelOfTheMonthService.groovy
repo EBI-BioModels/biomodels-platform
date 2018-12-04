@@ -32,6 +32,7 @@ import grails.transaction.Transactional
 import net.biomodels.jummp.deployment.biomodels.feeds.CustomSyndEntryImpl
 import net.biomodels.jummp.deployment.biomodels.feeds.CustomSyndFeedImpl
 import org.apache.commons.io.IOUtils
+import org.apache.commons.lang.StringEscapeUtils
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import net.biomodels.jummp.model.Model
@@ -247,7 +248,7 @@ Every month, a scientist from the BioModels Database team selects a model to fur
     private SyndEntry convertToSyndEntry(ModelOfTheMonthTransportCommand model, String feedType) {
         SyndEntry entry
         entry = feedType == "rss_2.0" ? new CustomSyndEntryImpl() : new SyndEntryImpl()
-        entry.setTitle("<![CDATA[${model.title}]]>")
+        entry.setTitle(StringEscapeUtils.escapeXml(model.title))
         entry.setPublishedDate(model.publicationDate)
 
         /* prepare the entry link */
@@ -256,7 +257,7 @@ Every month, a scientist from the BioModels Database team selects a model to fur
         String year = calendar.get(Calendar.YEAR).toString()
         int month = calendar.get(Calendar.MONTH) + 1
         String strMonth = month < 10 ? '0'.concat(month.toString()) : month.toString()
-        String uniqueModelMonth = "year=${year}&amp;month=${strMonth}"
+        String uniqueModelMonth = "year=${year}&month=${strMonth}"
         String link = "${PREFIX_MOM_LINK}?${uniqueModelMonth}"
         entry.setLink(link)
         Guid guid = new Guid()
@@ -267,7 +268,8 @@ Every month, a scientist from the BioModels Database team selects a model to fur
         SyndContent entryDescription
         entryDescription = new SyndContentImpl()
         entryDescription.setType("text/html")
-        entryDescription.setValue("<![CDATA[${model.shortDescription}]]>")
+        String escapedDescription = StringEscapeUtils.escapeXml(model.shortDescription)
+        entryDescription.setValue(escapedDescription)
         entry.setDescription(entryDescription)
         entry
     }
