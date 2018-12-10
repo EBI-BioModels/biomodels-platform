@@ -185,12 +185,12 @@ class SearchController {
         respond new SearchResults(results)
     }
 
-    @Secured(['ROLE_ADMIN'])
+    @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
     def regen() {
         render(view: "regen")
     }
 
-    @Secured(['ROLE_ADMIN'])
+    @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
     def regenIndices() {
         long start = System.currentTimeMillis()
         searchService.regenerateIndices()
