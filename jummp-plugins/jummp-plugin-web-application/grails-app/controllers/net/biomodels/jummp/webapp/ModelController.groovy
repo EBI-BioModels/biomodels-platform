@@ -37,6 +37,7 @@ package net.biomodels.jummp.webapp
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import groovy.json.JsonSlurper
+import net.biomodels.jummp.core.adapters.PersonAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
@@ -48,6 +49,7 @@ import net.biomodels.jummp.core.model.audit.AccessType
 import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Revision
+import net.biomodels.jummp.plugins.security.Person
 import net.biomodels.jummp.plugins.security.PersonTransportCommand
 import net.biomodels.jummp.plugins.security.Team
 import net.biomodels.jummp.webapp.rest.errors.Error
@@ -1105,54 +1107,46 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                 def result = slurper.parseText(params.authorListContainer)
                 if (result['authors']) {
                     def authorList = result['authors']
+                    List<PersonTransportCommand> existingAuthors = model.publication.authors
                     authorList.each {
                         if (it) {
                             String name = it["userRealName"]
                             String institution = it["institution"] ?: null
                             String orcid = it["orcid"] ?: null
-                            def authorListSrc = model.publication.authors
-                            if (!authorListSrc) {
-                                authorListSrc = new LinkedList<PersonTransportCommand>()
-                            }
-                            def author = authorListSrc.find { auth ->
-                                if (orcid != "") {
-                                    return orcid == auth.orcid
-                                } else {
-                                    return name == auth.userRealName
+                            PersonTransportCommand author
+                            if (orcid) {
+                                /* retrieve the person having the same orcid, regardless of being or not being the existing authors */
+                                author = existingAuthors.find { PersonTransportCommand auth ->
+                                    orcid == auth.orcid
                                 }
-                                return false
+                                if (!author) {
+                                    Person person = Person.findByOrcid(orcid: orcid)
+                                    if (person) {
+                                        author = new PersonAdapter(person: person).toCommandObject()
+                                    }
+                                }
+                            } else if (existingAuthors?.size()) {
+                                author = existingAuthors.find { PersonTransportCommand auth ->
+                                    name == auth.userRealName
+                                }
                             }
                             if (!author) {
-                                author = new PersonTransportCommand(userRealName: name,
-                                    orcid: orcid, institution: institution)
-                                if (!model.publication.authors) {
-                                    model.publication.authors = new LinkedList<PersonTransportCommand>()
-                                }
-                                model.publication.authors.add(author)
-                            } else {
-                                if (author.userRealName != name) {
-                                    author.userRealName = name
-                                }
-                                if (author.orcid != orcid) {
-                                    author.orcid = orcid
-                                }
-                                if (author.institution != institution) {
-                                    author.institution = institution
-                                }
+                                author = new PersonTransportCommand(userRealName: name, institution: institution, orcid: orcid)
+                            } else if (institution) {
+                                author.institution = institution
                             }
                             if (author.validate()) {
                                 validatedAuthors.add(author)
                             } else {
                                 log.error """\
-                            Submission did not validate: ${author.properties}.
-                            Errors: ${author.errors.allErrors.inspect()}."""
+                                    Submission did not validate: ${author.properties}. Errors: ${author.errors.allErrors.inspect()}."""
                                 flash.validationErrorOn = author
                                 return error()
                             }
                         }
                     }
-                }
                     model.publication.authors = validatedAuthors
+                }
                 if (!model.publication.validate()) {
                     log.error """\
 Submission did not validate: ${model.publication.properties}.
