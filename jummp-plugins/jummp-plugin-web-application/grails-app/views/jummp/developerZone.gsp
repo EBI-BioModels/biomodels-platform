@@ -31,8 +31,9 @@
             <a href="${createLink(uri: '/docs', absolute: true)}" target="_blank">RESTful Web Services API Documentation</a><br>
             BioModels provides programmatic access to its content via RESTful Web Services Interface. The Web Services API covers everything users can do on the Web interface.
         </li>
-        <li><a href="${grailsApplication.config.jummp.ws.client.japi.docs}" target="_blank">Java based API of RESTful Web Services as a reference implementation</a><br/>
-            The Java library provides a very convenient way to use the web services. It gives access to improved methods (for example giving access to 'SimpleModel' objects rather than raw XML/JSON) in order to make the use of the web services easier.
+        <li><a href="${grailsApplication.config.jummp.ws.client.japi.docs}" target="_blank">Java based API of RESTful Web Services</a><br/>
+            The Java library provides a very convenient way to use a few web services endpoints requested by BioModels's existing clients.
+            We will only implement necessary features and support development until 31 May 2019 when the old infrastructure will be entirely retired. Please refer to <a href="https://www.ebi.ac.uk/biomodels/content/news/Planned-upgrades-to-BioModels">Planned upgrades to BioModels</a> to get the timeline.
         </li>
     </ul>
 </body>
