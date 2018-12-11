@@ -148,10 +148,8 @@ There are errors when trying to persist entry (${entry.id}) of the model of the 
         SyndFeed feed = createFeed(feedType)
         feed.setEntries(entries)
 
-        File writer = File.createTempFile("tmp", "xml")
         SyndFeedOutput output = new SyndFeedOutput()
-        output.output(feed, writer)
-        String result = writer.text
+        String result = output.outputString(feed, true)
         return result
     }
 
