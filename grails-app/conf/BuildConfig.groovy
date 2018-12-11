@@ -161,6 +161,7 @@ grails.project.dependency.resolution = {
         compile ("eu.ddmore.metadata:lib-metadata:1.5.2-SNAPSHOT") {
             excludes 'spring-context','spring-core','spring-test', 'jena', 'slf4j-log4j12'
         }
+        compile "com.rometools:rome:1.11.1"
     }
 
     plugins {
@@ -185,7 +186,12 @@ grails.project.dependency.resolution = {
         compile ":locale-variant:0.1"
         compile ":webflow:2.1.0"
 
-        runtime ":weceem:1.4"
+        runtime (":weceem:1.4") {
+            excludes "feeds"
+        }
+        runtime (":feeds:1.6") {
+            excludes "rome"
+        }
         //compile ":weceem-spring-security:1.4"
         runtime ":database-migration:1.4.1"
         runtime ":hibernate4:4.3.10"
