@@ -189,6 +189,9 @@ grails.project.dependency.resolution = {
         runtime (":weceem:1.4") {
             excludes "feeds"
         }
+        runtime (":feeds:1.6") {
+            excludes "rome"
+        }
         //compile ":weceem-spring-security:1.4"
         runtime ":database-migration:1.4.1"
         runtime ":hibernate4:4.3.10"
