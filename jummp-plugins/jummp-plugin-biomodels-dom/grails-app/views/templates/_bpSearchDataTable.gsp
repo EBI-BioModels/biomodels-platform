@@ -9,6 +9,7 @@
     <th>Parameters</th>
     <th>Entity SBO Link</th>
     <th>Reaction SBO Link</th>
+    <th>Initial Data</th>
     </thead>
 </table>
 
@@ -34,9 +35,9 @@
             {
                 data: 'fields.model',
                 render: function (rawdata, type, row) {
+                    var formattedData;
                     if (rawdata !== undefined && rawdata.length !== 0) {
-                        var data = rawdata;
-                        var formattedData = "<a target='_blank' href='https://www.ebi.ac.uk/biomodels/" + data + "'>" + data + "</a>";
+                        formattedData = "<a target='_blank' href='https://www.ebi.ac.uk/biomodels/" + rawdata + "'>" + rawdata + "</a>";
                     }
                     return formattedData
                 }
@@ -77,6 +78,11 @@
             {
                 data: 'fields.reaction_sbo_term_link',
                 orderable: false
+            },
+            {
+                data: 'fields.initial_data_RAW',
+                orderable: false
+
             }
         ];
 
