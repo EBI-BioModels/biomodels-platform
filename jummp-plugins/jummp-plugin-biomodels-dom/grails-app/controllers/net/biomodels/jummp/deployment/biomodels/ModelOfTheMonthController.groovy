@@ -45,15 +45,6 @@ class ModelOfTheMonthController {
         [entries: entries]
     }
 
-    def updatePreviewImageAndShortDescription() {
-        List<ModelOfTheMonth> models = modelOfTheMonthService.updatePreviewImageAndShortDescription()
-        String updateReport = ""
-        models.each {ModelOfTheMonth model ->
-            updateReport += "${model.publicationDate.toString()}: ${model.shortDescription}<br/>"
-        }
-        render updateReport
-    }
-
     def create() {
         Date current = new Date()
         String yearDate = current.format(ModelOfTheMonth.DATE_FORMAT_PATTERN)
