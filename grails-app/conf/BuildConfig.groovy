@@ -187,10 +187,8 @@ grails.project.dependency.resolution = {
         compile ":webflow:2.1.0"
 
         runtime (":weceem:1.4") {
+            /* feeds plugin clashes with rome api rendering Model of The Month RSS feed */
             excludes "feeds"
-        }
-        runtime (":feeds:1.6") {
-            excludes "rome"
         }
         //compile ":weceem-spring-security:1.4"
         runtime ":database-migration:1.4.1"
