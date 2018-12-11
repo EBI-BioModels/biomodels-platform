@@ -21,12 +21,7 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import com.rometools.rome.feed.rss.Guid
-import com.rometools.rome.feed.synd.SyndContent
-import com.rometools.rome.feed.synd.SyndContentImpl
-import com.rometools.rome.feed.synd.SyndEntry
-import com.rometools.rome.feed.synd.SyndEntryImpl
-import com.rometools.rome.feed.synd.SyndFeed
-import com.rometools.rome.feed.synd.SyndFeedImpl
+import com.rometools.rome.feed.synd.*
 import com.rometools.rome.io.SyndFeedOutput
 import grails.transaction.Transactional
 import net.biomodels.jummp.deployment.biomodels.feeds.CustomSyndEntryImpl
@@ -139,13 +134,7 @@ There are errors when trying to persist entry (${entry.id}) of the model of the 
 
     String createFeeds() {
         List<ModelOfTheMonthTransportCommand> momEntries = list()
-        momEntries.sort()
-        Collections.sort(momEntries, new Comparator<ModelOfTheMonthTransportCommand>() {
-            int compare(ModelOfTheMonthTransportCommand model1,
-                        ModelOfTheMonthTransportCommand model2) {
-                return model2.publicationDate.compareTo(model1.publicationDate)
-            }
-        })
+        momEntries.sort { m1, m2 -> m2.publicationDate <=> m1.publicationDate }
 
         String feedType = "rss_2.0"
 
@@ -172,12 +161,14 @@ There are errors when trying to persist entry (${entry.id}) of the model of the 
         String description = """\
 Every month, a scientist from the BioModels Database team selects a model to further investigate and writes a synopsis to explain that model in details."""
         SyndFeed feed = feedType == "rss_2.0" ? new CustomSyndFeedImpl() : new SyndFeedImpl()
+        Date currentDate = new Date()
+        String currentYear = currentDate.format('YYYY')
         feed.setFeedType(feedType)
         feed.setTitle(title)
         feed.setLink(link)
         feed.setDescription(description)
         feed.setLanguage("en-GB")
-        feed.setCopyright("Copyright 2005-2018, EMBL-EBI")
+        feed.setCopyright("Copyright 2005-${currentYear}, EMBL-EBI")
         feed.setManagingEditor("biomodels-developers@lists.sf.net (BioModels Team)")
         feed
     }
@@ -189,12 +180,9 @@ Every month, a scientist from the BioModels Database team selects a model to fur
         entry.setPublishedDate(model.publicationDate)
 
         /* prepare the entry link */
-        Calendar calendar = new GregorianCalendar()
-        calendar.setTime(model.publicationDate)
-        String year = calendar.get(Calendar.YEAR).toString()
-        int month = calendar.get(Calendar.MONTH) + 1
-        String strMonth = month < 10 ? '0'.concat(month.toString()) : month.toString()
-        String uniqueModelMonth = "year=${year}&month=${strMonth}"
+        String year = model.publicationDate.format('YYYY')
+        String month = model.publicationDate.format('YY')
+        String uniqueModelMonth = "year=${year}&month=${month}"
         String link = "${PREFIX_MOM_LINK}?${uniqueModelMonth}"
         entry.setLink(link)
         Guid guid = new Guid()
