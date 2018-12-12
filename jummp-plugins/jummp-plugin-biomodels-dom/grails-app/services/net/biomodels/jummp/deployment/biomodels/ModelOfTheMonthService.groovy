@@ -168,6 +168,12 @@ Every month, a scientist from the BioModels Database team selects a model to fur
         feed.setLanguage("en-GB")
         feed.setCopyright("Copyright 2005-${currentYear}, EMBL-EBI")
         feed.setManagingEditor("biomodels-developers@lists.sf.net (BioModels Team)")
+        final String iconUrl = "https://www.ebi.ac.uk/biomodels-static/icons/BioModels_Database_logo_small.png"
+        final SyndImage image = new SyndImageImpl()
+        image.setTitle(title)
+        image.setUrl(iconUrl)
+        feed.setImage(image)
+        feed.setIcon(image)
         feed
     }
 
