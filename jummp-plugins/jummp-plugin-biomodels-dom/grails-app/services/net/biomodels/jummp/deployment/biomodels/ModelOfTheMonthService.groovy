@@ -185,7 +185,7 @@ Every month, a scientist from the BioModels Database team selects a model to fur
 
         /* prepare the entry link */
         String year = model.publicationDate.format('YYYY')
-        String month = model.publicationDate.format('YY')
+        String month = model.publicationDate.format('MM')
         String uniqueModelMonth = "year=${year}&month=${month}"
         String link = "${PREFIX_MOM_LINK}?${uniqueModelMonth}"
         entry.setLink(link)
