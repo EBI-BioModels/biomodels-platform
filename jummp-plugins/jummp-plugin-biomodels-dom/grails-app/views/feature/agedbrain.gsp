@@ -6409,9 +6409,9 @@
         was published in CPT:PSP.</p>
     <p style="padding-left: 1em;">
         <a href="//www.agedbrainsysbio.eu/" title="AgedBrainSYSBIO">
-            <img style="height: 50px" src="//www.ebi.ac.uk/biomodels-static/icons/AgedBrainSYSBIO_logo.png" alt="AgedBrainSYSBIO logo" title="AgedBrainSYSBIO"></a>
+            <img style="height: 50px" src="${grailsApplication.config.grails.serverURL}/images/biomodels/AgedBrainSYSBIO_logo.png" alt="AgedBrainSYSBIO logo" title="AgedBrainSYSBIO"></a>
         <a href="//cordis.europa.eu/projects/rcn/105858_en.html" title="View additional information about the AgedBrain project">
-            <img style="height: 50px" src="//agedbrainsysbio.eu/images/Photos/logos/european_flag_blueyellow_standard.jpg" alt="EU logo" title="European Union (EU)"></a>
+            <img style="height: 50px" src="${grailsApplication.config.grails.serverURL}/images/biomodels/european_flag_blueyellow_standard.jpg" alt="EU logo" title="European Union (EU)"></a>
         AgedBrainSYSBIO has received funding from the European Union's Seventh
     Framework Programme for research, technological development and demonstration under grant agreement
     No 305299
