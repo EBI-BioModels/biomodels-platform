@@ -13,11 +13,19 @@
     <title>Mechanistic models describing neurodegenerative disease processes | BioModels</title>
     <style type="text/css">
         div.model-map {
-            display: block;
-            margin: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            max-width: 100%;
+            overflow: auto;
         }
         div.model-map p {
-            margin: 0 }
+            margin: 0
+        }
+        #svg4949 {
+            margin: 0 auto;
+            display: block;
+        }
     </style>
 </head>
 
@@ -64,8 +72,8 @@
     inkscape:version="0.47 r22583"
     x="0px"
     y="0px"
-    width="1471.18px"
-    height="1233.07px"
+    width="100%"
+    height="100%"
     viewBox="0 0 1471.18 1233.07"
     enable-background="new 0 0 1471.18 1233.07"
     xml:space="preserve"><metadata
