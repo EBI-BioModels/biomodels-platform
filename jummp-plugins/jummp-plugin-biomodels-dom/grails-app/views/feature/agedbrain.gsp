@@ -30,6 +30,7 @@
 </head>
 
 <body>
+<cache:block  ttl="${60*60*24*7}">
     <h2>Mechanistic models describing neurodegenerative disease processes</h2>
 <p style="padding: 8px 8px; background: #FCEFA1 none repeat scroll 0% 0%; margin-bottom: 2em; width: 100%;">
     This page is best viewed using Mozilla Firefox, Google Chrome or Safari. Please see
@@ -6416,5 +6417,6 @@
     No 305299
     </p>
 </div>
+</cache:block>
 </body>
 </html>
