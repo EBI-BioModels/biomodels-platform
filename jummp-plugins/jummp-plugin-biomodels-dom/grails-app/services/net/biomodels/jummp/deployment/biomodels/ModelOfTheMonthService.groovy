@@ -24,6 +24,7 @@ import com.rometools.rome.feed.rss.Guid
 import com.rometools.rome.feed.synd.*
 import com.rometools.rome.io.SyndFeedOutput
 import grails.transaction.Transactional
+import grails.util.Holders
 import net.biomodels.jummp.deployment.biomodels.feeds.CustomSyndEntryImpl
 import net.biomodels.jummp.deployment.biomodels.feeds.CustomSyndFeedImpl
 import net.biomodels.jummp.model.Model
@@ -53,6 +54,8 @@ class ModelOfTheMonthService {
     private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
 
     private static final String PREFIX_MOM_LINK = "https://www.ebi.ac.uk/biomodels/content/model-of-the-month"
+
+    def grailsApplication = Holders.grailsApplication
 
     List fetchEntriesForModel(Long id) {
         List entries = ModelOfTheMonth.withCriteria {
@@ -168,7 +171,7 @@ Every month, a scientist from the BioModels Database team selects a model to fur
         feed.setLanguage("en-GB")
         feed.setCopyright("Copyright 2005-${currentYear}, EMBL-EBI")
         feed.setManagingEditor("biomodels-developers@lists.sf.net (BioModels Team)")
-        final String iconUrl = "https://www.ebi.ac.uk/biomodels-static/icons/BioModels_Database_logo_small.png"
+        final String iconUrl = "${grailsApplication.config.grails.serverURL}/images/biomodels/logo_small.png"
         final SyndImage image = new SyndImageImpl()
         image.setTitle(title)
         image.setUrl(iconUrl)
