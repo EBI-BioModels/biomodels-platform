@@ -30,21 +30,24 @@
 
 package net.biomodels.jummp.core
 
+import net.biomodels.jummp.core.adapters.PersonAdapter
 import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter
 import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand
-import net.biomodels.jummp.model.PublicationLinkProvider
-import org.xml.sax.SAXParseException
-import org.springframework.transaction.annotation.Transactional
 import net.biomodels.jummp.core.model.PublicationTransportCommand
+import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.plugins.security.Person
+import net.biomodels.jummp.plugins.security.PersonTransportCommand
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+import org.xml.sax.SAXParseException
+
 /**
  * @short Service for fetching Publication Information for PubMed resources.
  *
  * This service class handles the interaction with the Web Service to retrieve
  * publication information for PubMed resources. It connects to citexplore and
  * parses the returned HTML page for the publication information.
+ *
  * @author Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
@@ -53,7 +56,8 @@ import org.apache.commons.logging.LogFactory
 class PubMedService {
     final Log log = LogFactory.getLog(getClass())
 
-    private setFieldIfItExists(String fieldName, PublicationTransportCommand publication, def xmlField, boolean castToInt) {
+    private setFieldIfItExists(String fieldName, PublicationTransportCommand publication,
+                               def xmlField, boolean castToInt) {
         try {
             if (xmlField && xmlField.size() == 1) {
                 String text = xmlField.text()
@@ -69,8 +73,7 @@ class PubMedService {
                     publication."${fieldName}" = text
                 }
             }
-        }
-        catch(Exception e) {
+        } catch(Exception e) {
             log.error e.message, e
         }
     }
@@ -81,7 +84,6 @@ class PubMedService {
      * @return A fully populated Publication
      */
     @SuppressWarnings("EmptyCatchBlock")
-    @Transactional
     PublicationTransportCommand fetchPublicationData(String id) throws JummpException {
         URL url
         try {
@@ -141,18 +143,33 @@ class PubMedService {
 
     /**
      * Parses the author information and adds it to @p publication
+     *
      * @param slurper The parsed XML document
      * @param publication The publication to add the authors to
      */
     private void parseAuthors(def slurper, PublicationTransportCommand publication) {
-        publication.authors=[];
+        publication.authors = []
         for (def authorXml in slurper.resultList.result.authorList.author) {
-            Person author = new Person()
-            author.userRealName = authorXml.fullName[0].text()
-            if (authorXml.authorId[0]?.@type=="ORCID") {
-                author.orcid = authorXml.authorId[0].text()
+            Person author
+            if (authorXml.authorId[0]?.@type == "ORCID") {
+                String orcid = authorXml.authorId[0].text()
+                author = Person.findOrCreateWhere(['orcid': orcid])
+            } else {
+                author = new Person()
             }
-            publication.authors.add(author);
+            /**
+             * Apparently, the full name should be combined from firstName and lastName
+             * rather than populated from the fullName field.
+             * The fullName field actually roles as the pubAlias property of PublicationPerson class
+             *
+             * TODO: capture the fullName, then assign it to the pubAlias property when we create an instance of
+             * PublicationPerson from PersonTransportCommand in PublicationService
+             */
+            String userRealName = authorXml.fullName[0].text()
+            author.userRealName = userRealName
+            author.save(flush: true)
+            PersonTransportCommand authorTC = new PersonAdapter(person: author).toCommandObject()
+            publication.authors.add(authorTC)
         }
     }
 }

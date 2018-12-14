@@ -10,5 +10,5 @@
     <li><a href="${createLink(action: 'changePassword')}">Change/Reset Password</a></li>--}%
     <li><a href="${createLink(action: 'branding', controller: "configuration")}">Select Branding</a></li>
     <li><a href="${createLink(action: 'cms', controller: "configuration")}">Content Management System</a></li>
-    <li><a href="${createLink(action: 'classifier', controller: 'classifierConfigure')}">Model Classifier System</a></li>
+    <li><a href="${createLink(action: 'classifier', controller: 'classifierConfigure', plugin: "jummp-plugin-biomodels-dom")}">Model Classifier System</a></li>
 </ul>

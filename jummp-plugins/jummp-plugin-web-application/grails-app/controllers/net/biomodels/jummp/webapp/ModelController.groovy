@@ -37,6 +37,7 @@ package net.biomodels.jummp.webapp
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import groovy.json.JsonSlurper
+import net.biomodels.jummp.core.adapters.PersonAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
@@ -48,6 +49,7 @@ import net.biomodels.jummp.core.model.audit.AccessType
 import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Revision
+import net.biomodels.jummp.plugins.security.Person
 import net.biomodels.jummp.plugins.security.PersonTransportCommand
 import net.biomodels.jummp.plugins.security.Team
 import net.biomodels.jummp.webapp.rest.errors.Error
@@ -57,7 +59,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONObject
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.multipart.MultipartFile
-import org.springframework.security.core.GrantedAuthority
 
 import javax.servlet.http.HttpServletResponse
 import java.util.zip.ZipEntry
@@ -116,6 +117,8 @@ class ModelController {
 
     def modelConversionService
 
+    def userService
+
     def messageSource
 
     /**
@@ -148,6 +151,10 @@ class ModelController {
     // if this method returns false, the controller method is no longer called.
     private boolean auditBefore() {
         try {
+            // XSS guard for the actions from this controller (excluding submission)
+            params.id = params.id?.encodeAsHTML()
+            params.revisionId = params.revisionId?.encodeAsHTML()
+
             String modelIdParam = params.id
             String revisionIdParam = params.revisionId
             String modelId = null
@@ -165,7 +172,7 @@ class ModelController {
                     def rev = modelDelegateService.getRevisionDetails(
                                 new RevisionTransportCommand(id: modelIdParam))
                     if (rev) {
-                        modelId = rev.model.publicationId ?: rev.model.submissionId
+                        modelId = rev.modelIdentifier()
                     }
                 }
             }
@@ -176,7 +183,7 @@ class ModelController {
             if (model) {
                 modelId = (model.publicationId) ?: model.submissionId
                 int historyItem = updateHistory(modelId, username, accessType, formatType, changesMade)
-                session.lastHistory = historyItem
+                request.lastHistory = historyItem
                 return true
             } else {
                 log.error "Ignoring invalid request for $actionUri with params $params."
@@ -192,9 +199,9 @@ class ModelController {
 
     private void auditAfter(def model) {
         try {
-            if (session.lastHistory) {
-                modelDelegateService.updateAuditSuccess(session.lastHistory, true)
-                session.removeAttribute("lastHistory")
+            if (request.lastHistory) {
+                modelDelegateService.updateAuditSuccess(request.lastHistory, true)
+                request.removeAttribute("lastHistory")
             }
         } catch(Exception e) {
             log.error e.message, e
@@ -243,6 +250,8 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
             if (params.revisionId) {
                 revisionNumber = params.int("revisionId")
             }
+            // TODO need to establish if the requested model revision exists in a way that bypasses
+            // ACLs and that doesn't rely on accessing domain objects from the controller
             Revision revision = revisionNumber >= 0 ?
                     model.revisions.getAt(revisionNumber-1) : model.revisions.last()
             if (!revision) {
@@ -280,6 +289,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     if (flash.now["giveMessage"]) {
                         flashMessage = flash.now["giveMessage"]
                     }
+                    List<RFTC> repoFiles = modelDelegateService.retrieveModelFiles(rev)
                     List<RevisionTransportCommand> revs =
                         modelDelegateService.getAllRevisions(PERENNIAL_ID)
                     CurationNotesTransportCommand curationNotes =
@@ -289,7 +299,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     List<String> originalModels = metadataDelegateService.fetchOriginalModels(rev)
                     Map<String, String> modellingApproaches =
                         metadataDelegateService.fetchModellingApproaches(rev)
-                    boolean hasCuratorRole = hasCuratorRole()
+                    boolean hasCuratorRole = userService.isLoggedInUserACurator()
                     boolean supportedForConversion = modelConversionService.isSupportedForConversion(rev)
                     List<RFTC> convertedFilesTC = modelConversionService.getConvertedFiles(rev)
                     def model = [revision               : rev,
@@ -302,6 +312,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                                  showPublishOption      : showPublishOption,
                                  canSubmitForPublication: canSubmitForPublication,
                                  canCertify             : canCertify,
+                                 repoFiles              : repoFiles,
                                  validationLevel        : rev.getValidationLevelMessage(),
                                  certComment            : rev.getCertificationMessage(),
                                  flags                  : flags,
@@ -381,9 +392,10 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
 
     def publish() {
         RevisionTransportCommand rev
+        RevisionTransportCommand published
         try {
             rev = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
-            rev = modelDelegateService.publishModelRevision(rev)
+            published = modelDelegateService.publishModelRevision(rev)
             def currentUser = springSecurityService.currentUser
             if (currentUser) {
                 def notification = [
@@ -392,9 +404,10 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     perms: modelDelegateService.getPermissionsMap(rev.model.submissionId)]
                 sendMessage("seda:model.publish", notification)
             }
-            String extraMsg = rev.state == ModelState.PUBLISHED ?
-                " with the publication identifier ${rev.modelIdentifier()}." : "."
-            redirect(action: "showWithMessage", id: rev.identifier(),
+            boolean havePublicationId = published.model.publicationId != null
+            String extraMsg = havePublicationId ?
+                " with the publication identifier ${published.modelIdentifier()}." : "."
+            redirect(action: "showWithMessage", id: published.identifier(),
                         params: [flashMessage: "Model has been published${extraMsg}"])
         } catch(AccessDeniedException e) {
             log.error(e.message, e)
@@ -405,6 +418,9 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     id: rev.identifier(),
                     params: [flashMessage: "Model has not been published because there is a " +
                             "problem with this version of the model. Sorry!"])
+        } catch(Exception e) {
+            log.error("General exception thrown while publishing ${rev.identifier()} (${published?.identifier()})", e)
+            redirect(action: "showWithMessage", id: rev.identifier(), params: [flashMessage: "An internal error prevented this model from being published"])
         }
     }
 
@@ -1037,17 +1053,17 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                                 boolean changed =  changedPubLinkProvider || changedPubLink
                                 if (!changed) {
                                     // reload the publication from cache
-                                    retrieved = publicationContext.publication
+                                    retrieved = publicationContext?.publication
                                     if (publicationContext.comesFromDatabase) {
                                         flash.flashMessage = g.message(code: "publication.editor.duplicateEntry.message")
                                     }
                                 } else { // load from database, external call or create a default PTC
                                     publicationContext = loadOrFetchOrCreatePublication(model)
-                                    retrieved = publicationContext.publication
+                                    retrieved = publicationContext?.publication
                                 }
                             } else { // load from database, external call or create a default PTC
                                 publicationContext = loadOrFetchOrCreatePublication(model)
-                                retrieved = publicationContext.publication
+                                retrieved = publicationContext?.publication
                             }
                         } else {
                             log.error("Expected publication objects initialised in workingMemory.")
@@ -1091,54 +1107,46 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                 def result = slurper.parseText(params.authorListContainer)
                 if (result['authors']) {
                     def authorList = result['authors']
+                    List<PersonTransportCommand> existingAuthors = model.publication.authors
                     authorList.each {
                         if (it) {
                             String name = it["userRealName"]
-                            String institution = it["institution"]
-                            String orcid = it["orcid"]
-                            def authorListSrc = model.publication.authors
-                            if (!authorListSrc) {
-                                authorListSrc = new LinkedList<PersonTransportCommand>()
-                            }
-                            def author = authorListSrc.find { auth ->
-                                if (orcid != "") {
-                                    return orcid == auth.orcid
-                                } else {
-                                    return name == auth.userRealName
+                            String institution = it["institution"] ?: null
+                            String orcid = it["orcid"] ?: null
+                            PersonTransportCommand author
+                            if (orcid) {
+                                /* retrieve the person having the same orcid, regardless of being or not being the existing authors */
+                                author = existingAuthors.find { PersonTransportCommand auth ->
+                                    orcid == auth.orcid
                                 }
-                                return false
+                                if (!author) {
+                                    Person person = Person.findByOrcid(orcid: orcid)
+                                    if (person) {
+                                        author = new PersonAdapter(person: person).toCommandObject()
+                                    }
+                                }
+                            } else if (existingAuthors?.size()) {
+                                author = existingAuthors.find { PersonTransportCommand auth ->
+                                    name == auth.userRealName
+                                }
                             }
                             if (!author) {
-                                author = new PersonTransportCommand(userRealName: name,
-                                    orcid: orcid, institution: institution)
-                                if (!model.publication.authors) {
-                                    model.publication.authors = new LinkedList<PersonTransportCommand>()
-                                }
-                                model.publication.authors.add(author)
-                            } else {
-                                if (author.userRealName != name) {
-                                    author.userRealName = name
-                                }
-                                if (author.orcid != orcid) {
-                                    author.orcid = orcid
-                                }
-                                if (author.institution != institution) {
-                                    author.institution = institution
-                                }
+                                author = new PersonTransportCommand(userRealName: name, institution: institution, orcid: orcid)
+                            } else if (institution) {
+                                author.institution = institution
                             }
                             if (author.validate()) {
                                 validatedAuthors.add(author)
                             } else {
                                 log.error """\
-                            Submission did not validate: ${author.properties}.
-                            Errors: ${author.errors.allErrors.inspect()}."""
+                                    Submission did not validate: ${author.properties}. Errors: ${author.errors.allErrors.inspect()}."""
                                 flash.validationErrorOn = author
                                 return error()
                             }
                         }
                     }
-                }
                     model.publication.authors = validatedAuthors
+                }
                 if (!model.publication.validate()) {
                     log.error """\
 Submission did not validate: ${model.publication.properties}.
@@ -1158,7 +1166,7 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
             on("Continue") {
                 Map<String,String> modifications = new HashMap<String,String>()
                 if (params.RevisionComments) {
-                    modifications.put("RevisionComments", params.RevisionComments)
+                    modifications.put("RevisionComments", params.RevisionComments?.encodeAsHTML())
                 } else {
                     modifications.put("RevisionComments", "Model revised without commit message")
                 }
@@ -1249,7 +1257,7 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
                 }
             } else {
                 PublicationTransportCommand retrieved
-                retrieved = publicationService.createPTCWithMinimalInformation(params.PubLinkProvider, params.PublicationLink, [])
+                retrieved = publicationService.createPTCWithMinimalInformation(params.PubLinkProvider?.encodeAsHTML(), params.PublicationLink?.encodeAsHTML(), [])
                 publicationContext.publication = retrieved
                 publicationContext.comesFromDatabase = false
             }
@@ -1313,7 +1321,7 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
     def download() {
         def modelId = params.id
         def revisionId = params.revisionId
-        String fileName = params.filename
+        String fileName = params.filename?.encodeAsHTML()
         if (!fileName) {
             final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(
                             modelDelegateService.getRevisionFromParams(modelId, revisionId))
@@ -1359,11 +1367,14 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
         int revision = Integer.parseInt(requestObject['revisionNumber'] as String)
         String modelId = requestObject['modelId']
         boolean canUpdate = modelDelegateService.canAddRevision(modelId as String)
-        boolean hasCuratorRole = hasCuratorRole()
+        boolean hasCuratorRole = userService.isLoggedInUserACurator()
         if (canUpdate && hasCuratorRole) {
             CurationState curationState = CurationState.valueOf(requestObject['curationState'] as String)
-            modelDelegateService.updateCurationStateRevision(modelId, revision, curationState)
-            render([message: "Curation status has been saved successfully"] as JSON)
+            RevisionTransportCommand revisionTC = modelDelegateService.updateCurationStateRevision(modelId, revision, curationState)
+            Map result = [:]
+            result["message"] = "Curation status has been updated successfully"
+            result["publicationId"] = revisionTC.model.publicationId
+            render(result as JSON)
             return
         }
         response.status = 401
@@ -1478,13 +1489,5 @@ Errors: ${model.publication.errors.allErrors.inspect()}."""
             }
         }
         return true
-    }
-
-    private boolean hasCuratorRole() {
-        Collection<GrantedAuthority> grantedAuthorities = springSecurityService.getPrincipal().getAuthorities()
-        Set<String> roleNames = grantedAuthorities.collect {
-            it.getAuthority()
-        }
-        "ROLE_CURATOR" in roleNames
     }
 }

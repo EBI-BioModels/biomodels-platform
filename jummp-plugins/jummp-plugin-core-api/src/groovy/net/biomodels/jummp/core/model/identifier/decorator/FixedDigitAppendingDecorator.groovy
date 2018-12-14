@@ -75,9 +75,9 @@ class FixedDigitAppendingDecorator extends AbstractAppendingDecorator {
             String currentId = modelIdentifier.getCurrentId()
             final String next = nextValue.get()
             if (IS_DEBUG_ENABLED) {
-                log.debug "Decorating $currentId with $nextValue "
+                log.debug "Decorating $currentId with $next"
             }
-            modelIdentifier.append(nextValue)
+            modelIdentifier.append(next)
             return modelIdentifier
         } else {
             log.warn "Undefined model identifier encountered - decorating a new one instead."

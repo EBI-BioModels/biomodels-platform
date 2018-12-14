@@ -125,11 +125,11 @@ class PublicationService {
 
     public void addPublicationAuthor(Publication publication,
                                      Person person,
-                                     String realName,
+                                     String pubAlias,
                                      Integer position) {
         def tmp = new PublicationPerson(publication: publication,
             person: person,
-            pubAlias: realName,
+            pubAlias: pubAlias,
             position: position)
         if (!tmp.save(flush: true)) {
             log.error("""\

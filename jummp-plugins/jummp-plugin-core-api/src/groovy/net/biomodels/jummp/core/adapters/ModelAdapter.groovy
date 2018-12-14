@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2018 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -22,9 +22,10 @@ package net.biomodels.jummp.core.adapters
 
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.util.Holders
+import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import net.biomodels.jummp.core.IModelService
 import net.biomodels.jummp.core.model.ModelTransportCommand
-import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Revision
 
@@ -33,21 +34,19 @@ import net.biomodels.jummp.model.Revision
  *
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  */
-public class ModelAdapter {
+@CompileStatic
+class ModelAdapter {
     Model model
 
-    static final Set<String> PERENNIAL_IDENTIFIER_TYPES = ModelIdentifierUtils.perennialFields
+    static final Set<String> PERENNIAL_IDENTIFIER_TYPES = doGetPerennialIdTypes()
     static final Set<String> FIND_BY_PERENNIAL_ID_CRITERIA = populateFindByCriteria()
 
-    def modelService = Holders.getGrailsApplication().mainContext.modelService
-
-    //@CompileStatic
+    @CompileStatic
     ModelTransportCommand toCommandObject(boolean saveHistory = true) {
-        // TODO: is it correct to show the latest upload date as the lastModifiedDate or does it need ACL restrictions?
         Set<String> creators = []
         Set<String> creatorUsernames = []
         if (model.revisions?.size() > 0) {
-            model.revisions.each { revision ->
+            for (Revision revision: model.revisions) {
                 creators.add(revision.owner.person.userRealName)
                 creatorUsernames.add(revision.owner.username)
             }
@@ -61,7 +60,7 @@ public class ModelAdapter {
                 latestRev = model.revisions.last()
                 firstRev = model.revisions.first()
             } else {
-                latestRev = modelService.getLatestRevision(model, saveHistory)
+                latestRev = getLatestRevisionForUser(saveHistory)
                 firstRev = model.revisions.first()
             }
         } else {
@@ -91,34 +90,48 @@ public class ModelAdapter {
         )
     }
 
+    @CompileDynamic
+    private Revision getLatestRevisionForUser(boolean saveHistory) {
+        def modelService = Holders.applicationContext.getBean("modelService")
+        modelService.getLatestRevision(model, saveHistory)
+    }
+
     /**
      * Convenience method for finding a model based on its externally-defined identifiers.
      *
      * @param perennialId The externally-defined ID by which to look up the model.
      * @return  the model corresponding to the given id, or null if there was no match
      */
-     static Model findByPerennialIdentifier(String perennialId) {
-         if (!perennialId) {
-             return null
-         }
-         perennialId = perennialId.contains("\\.") ? perennialId : perennialId.split("\\.")[0]
-         def results = Model.withCriteria {
-             or {
-                 FIND_BY_PERENNIAL_ID_CRITERIA.each {
-                     eq(it, perennialId)
-                 }
-             }
-         }
-         results[0]
+    @CompileDynamic
+    static Model findByPerennialIdentifier(String perennialId) {
+        if (!perennialId) {
+            return null
+        }
+        int dot = perennialId.indexOf('.')
+        perennialId = -1 == dot ? perennialId : perennialId.substring(0, dot)
+        def results = Model.withCriteria {
+            or {
+                FIND_BY_PERENNIAL_ID_CRITERIA.each {
+                    eq(it, perennialId)
+                }
+            }
+            cache true
+        }
+        results[0]
     }
 
     static Set<String> populateFindByCriteria() {
-        def result = PERENNIAL_IDENTIFIER_TYPES.collect { it + "Id" }
-        ['submissionId', 'publicationId'].each {
-            if (!result.contains(it)) {
-                result.add it
-            }
+        Set<String> result = new LinkedHashSet<>()
+        result.addAll(['submissionId', 'publicationId'])
+        for (String pit : PERENNIAL_IDENTIFIER_TYPES) {
+            result.add(pit + "Id")
         }
-        return result
+        result
+    }
+
+    private static Set<String> doGetPerennialIdTypes() {
+        def modelDelegateService = Holders.applicationContext.getBean("modelDelegateService",
+                IModelService.class)
+        modelDelegateService.getPerennialIdentifierTypes()
     }
 }

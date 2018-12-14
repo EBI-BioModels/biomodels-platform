@@ -308,4 +308,16 @@ interface ISbmlService {
      * @return Content of generated BioPAX file
      */
     public String generateBioPax(RevisionTransportCommand revision)
+
+    /**
+     * Adds the identifiers to the model-level annotations of a {@link RevisionTransportCommand}.
+     *
+     * @param identifiers the identifier URIs that should be added to the model's annotations
+     *           (e.g. http://identifiers.org/biomodels.db/BIOMD0000000001).
+     * @param revision the revision command to which we should add the annotation
+     * @return true if the annotation
+     * @throws ModelException in case of I/O or parsing issues when updating the model file.
+     */
+    boolean addModelIdentifiersAsAnnotation(RevisionTransportCommand revision, String... identifiers)
+            throws ModelException
 }
