@@ -54,6 +54,8 @@ class ModelOfTheMonthService {
 
     private static final String PREFIX_MOM_LINK = "https://www.ebi.ac.uk/biomodels/content/model-of-the-month"
 
+    def grailsApplication
+
     List fetchEntriesForModel(Long id) {
         List entries = ModelOfTheMonth.withCriteria {
             models {
@@ -168,6 +170,12 @@ Every month, a scientist from the BioModels Database team selects a model to fur
         feed.setLanguage("en-GB")
         feed.setCopyright("Copyright 2005-${currentYear}, EMBL-EBI")
         feed.setManagingEditor("biomodels-developers@lists.sf.net (BioModels Team)")
+        final String iconUrl = "${grailsApplication.config.grails.serverURL}/images/biomodels/logo_small.png"
+        final SyndImage image = new SyndImageImpl()
+        image.setTitle(title)
+        image.setUrl(iconUrl)
+        feed.setImage(image)
+        feed.setIcon(image)
         feed
     }
 
@@ -179,7 +187,7 @@ Every month, a scientist from the BioModels Database team selects a model to fur
 
         /* prepare the entry link */
         String year = model.publicationDate.format('YYYY')
-        String month = model.publicationDate.format('YY')
+        String month = model.publicationDate.format('MM')
         String uniqueModelMonth = "year=${year}&month=${month}"
         String link = "${PREFIX_MOM_LINK}?${uniqueModelMonth}"
         entry.setLink(link)
