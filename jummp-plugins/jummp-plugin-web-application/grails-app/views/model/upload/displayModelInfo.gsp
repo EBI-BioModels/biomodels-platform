@@ -42,20 +42,28 @@
         <div class="small-12 medium-12 columns">
             <label for="name" class="required">Name</label>
             <g:if test="${workingMemory['new_name']}">
-                <g:textField id="name" name="name" value="${workingMemory['new_name']}"/>
+                <g:textField id="name" name="name"
+                             value="${workingMemory['new_name']}"
+                             placeholder="Enter a simple sentence summarising title for your model or leave the title of the publication."/>
             </g:if>
             <g:else>
-                <g:textField id="name" name="name" value="${(workingMemory.get("RevisionTC") as RevisionTransportCommand).name}"/>
+                <g:textField id="name" name="name"
+                             value="${(workingMemory.get("RevisionTC") as RevisionTransportCommand).name}"
+                             placeholder="Enter a simple sentence summarising title for your model or leave the title of the publication."/>
             </g:else>
 
             <jummp:displayModelDescriptionLabel>
                 <label for="description">${description}</label>
             </jummp:displayModelDescriptionLabel>
             <g:if test="${workingMemory['new_description']}">
-                <g:textArea id="description" cols="70" rows="10" name="description" value="${workingMemory['new_description']}"/>
+                <g:textArea id="description" cols="70" rows="10" name="description"
+                            value="${workingMemory['new_description']}"
+                            placeholder="Enter a brief description for your model revision, for example: what are the  differences to the previous ones"/>
             </g:if>
             <g:else>
-                <g:textArea id="description" cols="70" rows="10" name="description" value='${(workingMemory.get("RevisionTC") as RevisionTransportCommand).description}'/>
+                <g:textArea id="description" cols="70" rows="10" name="description"
+                            value='${(workingMemory.get("RevisionTC") as RevisionTransportCommand).description}'
+                            placeholder="Enter a brief description for your model revision, for example: what are the  differences to the previous ones"/>
             </g:else>
 
             <input type='hidden' value='false' name='changed' id="changeStatus"/>

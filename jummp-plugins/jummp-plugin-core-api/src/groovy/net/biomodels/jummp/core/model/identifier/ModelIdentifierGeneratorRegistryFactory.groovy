@@ -85,17 +85,19 @@ class ModelIdentifierGeneratorRegistryFactory implements
         }
 
         Set<String> generatorNames = new LinkedHashSet<>()
+        Set<String> fields = new LinkedHashSet<>()
         for (String t : types) {
             if (null != t && !t.trim().isEmpty())
             generatorNames << "$t${ModelIdentifierUtils.GENERATOR_BEAN_SUFFIX}".toString()
+            fields << t + ModelIdentifierUtils.GENERATOR_FIELD_SUFFIX
         }
 
         def result
         if (haveExplicitRegexSetting) {
-            result = new ModelIdentifierGeneratorRegistryService(application, generatorNames,
+            result = new ModelIdentifierGeneratorRegistryService(application, generatorNames, fields,
                 explicitRegexValue)
         } else {
-            result = new ModelIdentifierGeneratorRegistryService(application, generatorNames)
+            result = new ModelIdentifierGeneratorRegistryService(application, fields, generatorNames)
         }
 
         result

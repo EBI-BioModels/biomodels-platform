@@ -20,12 +20,16 @@
 
 package net.biomodels.jummp.deployment.biomodels
 
+import com.rometools.rome.feed.rss.Guid
+import com.rometools.rome.feed.synd.*
+import com.rometools.rome.io.SyndFeedOutput
 import grails.transaction.Transactional
-import org.apache.commons.io.IOUtils
+import net.biomodels.jummp.deployment.biomodels.feeds.CustomSyndEntryImpl
+import net.biomodels.jummp.deployment.biomodels.feeds.CustomSyndFeedImpl
+import net.biomodels.jummp.model.Model
+import org.apache.commons.lang.StringEscapeUtils
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
-
-import java.text.SimpleDateFormat
 
 /**
  * @short Service responsible for retrieving BioModels ModelOfTheMonth entries.
@@ -48,6 +52,10 @@ class ModelOfTheMonthService {
      */
     private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
 
+    private static final String PREFIX_MOM_LINK = "https://www.ebi.ac.uk/biomodels/content/model-of-the-month"
+
+    def grailsApplication
+
     List fetchEntriesForModel(Long id) {
         List entries = ModelOfTheMonth.withCriteria {
             models {
@@ -57,68 +65,144 @@ class ModelOfTheMonthService {
         entries*.toCommandObject()
     }
 
-    List<ModelOfTheMonth> list() {
-        ModelOfTheMonth.getAll()
-    }
-    /**
-     * Update the preview image and short description of a given model of the month entry
-     */
-    @Transactional(readOnly=false)
-    ModelOfTheMonth updatePreviewImageAndShortDescription(Long id, byte[] previewImage, String shortDescription) {
-        ModelOfTheMonth model = ModelOfTheMonth.findById(id)
-        if (model) {
-            model.previewImage = previewImage
-            model.shortDescription = shortDescription
-            ModelOfTheMonth updatedModel = model.save(flush: true)
-            log.info "${model.id}: ${model.shortDescription}"
-            if (!model.save(flush: true)) {
-                log.debug("Errors at trying to save MoM: ${model.errors.allErrors.toString()}")
-                return null
-            } else {
-                return model
-            }
-        } else {
-            log.debug("Errors at trying to save MoM: ${model.errors.allErrors.toString()}")
-            return null
+    def list() {
+        List<ModelOfTheMonth> entries = ModelOfTheMonth.getAll()
+        List<ModelOfTheMonthTransportCommand>  entryCommands = new ArrayList<>()
+        for (ModelOfTheMonth entry : entries) {
+            entryCommands.add(entry.toCommandObject())
         }
+        entryCommands
     }
 
     /**
-     * Try to update the preview image and short description for entire model of the month entries if
-     * they haven't been attached these information
+     * Get the model of the month record by the identifier,
+     * then convert it to transport command object
+     *
+     * @param id An integer denoting the identifier of the domain object
+     * @return the corresponding transport command object of the domain object
      */
-    @Transactional(readOnly=false)
-    List<ModelOfTheMonth> updatePreviewImageAndShortDescription() {
-        String prefixUrl = "http://www.ebi.ac.uk/biomodels/ModelMonth/"
-        List<ModelOfTheMonth> modelOfTheMonths = ModelOfTheMonth.getAll()
-        List<ModelOfTheMonth> results = []
-        SimpleDateFormat dateFormat = new SimpleDateFormat('yyyy-MM')
-        modelOfTheMonths.each { ModelOfTheMonth model ->
-            Date publicationDate = model.publicationDate
-            String momFolder = dateFormat.format(publicationDate) // this is the folder pattern of where is storing MoM entry
-            String momFolderLink = "${prefixUrl}/${momFolder}"
-            String imageFileName = "preview.png"
-            String momImageLink = "${momFolderLink}/${imageFileName}"
-            URL imageURL = new URL(momImageLink)
-            int responseCode = imageURL.openConnection().getResponseCode()
-            byte[] previewImage = []
-            String shortDescription = ""
-            if (responseCode == 200) {
-                def InputStream is = new BufferedInputStream(imageURL.openStream())
-                byte[] bytes = IOUtils.toByteArray(is)
-                previewImage = bytes
-            }
-            String momShortDescriptionLink = "${momFolderLink}/briefdescrib"
-            URL textURL = new URL(momShortDescriptionLink)
-            responseCode = textURL.openConnection().getResponseCode()
-            if (responseCode == 200) {
-                def InputStream is = new BufferedInputStream(textURL.openStream())
-                List<String> text = is.readLines()
-                shortDescription = text.first()
-            }
-            results << updatePreviewImageAndShortDescription(model.id, previewImage, shortDescription)
+    ModelOfTheMonthTransportCommand get(int id) {
+        ModelOfTheMonth m = ModelOfTheMonth.get(id)
+        m?.toCommandObject()
+    }
+
+    /**
+     * Create or update a record of Model of The Month
+     * By passing an object bringing date of an entry of Model of The Month, this method
+     * will try to look for in the database in order to determine to create a new record
+     * or update the existing one that data are accordance with the command.
+     *
+     * @param   command The transport command object representing the data of the object in demand
+     * @return  The latest record has been created or updated
+     */
+    @Transactional
+    ModelOfTheMonth doCreateOrUpdate(ModelOfTheMonthTransportCommand command) {
+        ModelOfTheMonth entry
+        if (command?.id) {
+            entry = ModelOfTheMonth.get(command?.id)
+        } else {
+            entry = new ModelOfTheMonth()
         }
-        results
+        if (entry) {
+            entry.publicationDate = command.publicationDate
+            entry.lastUpdated = command.lastUpdated
+        } else {
+            entry.lastUpdated = new Date()
+            entry.publicationDate = new Date()
+        }
+        // for the models associated with this entry
+        Set<Model> models = new HashSet<>()
+        command.associatedModelMap.each {
+            Long id = it.key
+            Model model = Model.get(id)
+            models.add(model)
+        }
+        entry.models = models
+        entry.authors = command.authors
+        entry.title = command.title
+        entry.shortDescription = command.shortDescription
+        if (command.previewImage) {
+            entry.previewImage = Base64.decoder.decode(command.previewImage)
+        }
+        if (entry.save(flush: true)) {
+            log.debug("The entry (${entry.id}) of the model of the month ${command.getYearMonth()} has been saved successfully!")
+        } else {
+            log.error("""\
+There are errors when trying to persist entry (${entry.id}) of the model of the month ${command.getYearMonth()} into the database: ${entry.errors.allErrors.inspect()}""")
+            entry = null
+        }
+        entry
+    }
+
+    String createFeeds() {
+        List<ModelOfTheMonthTransportCommand> momEntries = list()
+        momEntries.sort { m1, m2 -> m2.publicationDate <=> m1.publicationDate }
+
+        String feedType = "rss_2.0"
+
+        SyndEntry entry
+        List entries = new ArrayList()
+        for (model in momEntries) {
+            entry = convertToSyndEntry(model, feedType)
+            entries.add(entry)
+        }
+
+        SyndFeed feed = createFeed(feedType)
+        feed.setEntries(entries)
+
+        SyndFeedOutput output = new SyndFeedOutput()
+        String result = output.outputString(feed, true)
+        return result
+    }
+
+    private SyndFeed createFeed(String feedType) {
+        String title = "Models of The Month"
+        String link = "${PREFIX_MOM_LINK}?all=yes"
+        String description = """\
+Every month, a scientist from the BioModels Database team selects a model to further investigate and writes a synopsis to explain that model in details."""
+        SyndFeed feed = feedType == "rss_2.0" ? new CustomSyndFeedImpl() : new SyndFeedImpl()
+        Date currentDate = new Date()
+        String currentYear = currentDate.format('YYYY')
+        feed.setFeedType(feedType)
+        feed.setTitle(title)
+        feed.setLink(link)
+        feed.setDescription(description)
+        feed.setLanguage("en-GB")
+        feed.setCopyright("Copyright 2005-${currentYear}, EMBL-EBI")
+        feed.setManagingEditor("biomodels-developers@lists.sf.net (BioModels Team)")
+        final String iconUrl = "${grailsApplication.config.grails.serverURL}/images/biomodels/logo_small.png"
+        final SyndImage image = new SyndImageImpl()
+        image.setTitle(title)
+        image.setUrl(iconUrl)
+        feed.setImage(image)
+        feed.setIcon(image)
+        feed
+    }
+
+    private SyndEntry convertToSyndEntry(ModelOfTheMonthTransportCommand model, String feedType) {
+        SyndEntry entry
+        entry = feedType == "rss_2.0" ? new CustomSyndEntryImpl() : new SyndEntryImpl()
+        entry.setTitle(StringEscapeUtils.escapeXml(model.title))
+        entry.setPublishedDate(model.publicationDate)
+
+        /* prepare the entry link */
+        String year = model.publicationDate.format('YYYY')
+        String month = model.publicationDate.format('MM')
+        String uniqueModelMonth = "year=${year}&month=${month}"
+        String link = "${PREFIX_MOM_LINK}?${uniqueModelMonth}"
+        entry.setLink(link)
+        Guid guid = new Guid()
+        guid.setValue(uniqueModelMonth)
+        entry.setUri(guid.value)
+
+        /* prepare the entry description */
+        SyndContent entryDescription
+        entryDescription = new SyndContentImpl()
+        entryDescription.setType("text/html")
+        String escapedDescription = StringEscapeUtils.escapeXml(model.shortDescription)
+        entryDescription.setValue(escapedDescription)
+        entry.setDescription(entryDescription)
+        entry
     }
 }
 

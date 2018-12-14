@@ -30,13 +30,17 @@
 
 package net.biomodels.jummp.core
 
+import grails.plugin.cache.Cacheable
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.authentication.GrailsAnonymousAuthenticationToken
+import grails.transaction.NotTransactional
 import grails.transaction.Transactional
+import groovy.transform.CompileStatic
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.events.*
 import net.biomodels.jummp.core.model.*
+import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorRegistryService
 import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import net.biomodels.jummp.core.vcs.VcsException
@@ -49,7 +53,7 @@ import org.apache.tika.detect.DefaultDetector
 import org.apache.tika.metadata.Metadata
 import org.perf4j.aop.Profiled
 import org.perf4j.log4j.Log4JStopWatch
-import org.springframework.beans.factory.annotation.Lookup
+import org.springframework.beans.factory.ObjectFactory
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.access.prepost.PostAuthorize
 import org.springframework.security.access.prepost.PostFilter
@@ -97,7 +101,7 @@ import java.util.concurrent.locks.ReentrantLock
  * @author Sarala Wimalaratne <sarala@ebi.ac.uk>
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  *
- * @date 20180906
+ * @date 20181025
  */
 @SuppressWarnings("GroovyUnusedCatchParameter")
 @Transactional
@@ -151,6 +155,8 @@ class ModelService {
     //def publishValidator
 
     def modelConversionService
+
+    ObjectFactory<ModelIdentifierGeneratorRegistryService> idGeneratorRegistryFactoryBean
 
     final boolean MAKE_PUBLICATION_ID = !(publicationIdGenerator instanceof NullModelIdentifierGenerator)
     /**
@@ -476,8 +482,8 @@ WHERE
      */
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getModel")
-    public Model getModel(String id) {
-        Model model = ModelAdapter.findByPerennialIdentifier(id)
+    Model getModel(String id) {
+        Model model = findByPerennialIdentifier(id)
         if (model) {
             if (!getLatestRevision(model)) {
                 throw new AccessDeniedException("No access to the versions of the model with id ${id}".toString())
@@ -490,6 +496,45 @@ WHERE
 
     Model getModelBySubmissionId(String submissionId) {
         Model.findBySubmissionId(submissionId)
+    }
+
+
+    /**
+     * Convenience method for finding a model based on its externally-defined identifiers.
+     *
+     * @param perennialId The externally-defined ID by which to look up the model.
+     * @return  the model corresponding to the given id, or null if there was no match
+     */
+    @Cacheable('perennialModelIdentifier')
+    Model findByPerennialIdentifier(String perennialId) {
+        if (!perennialId) {
+            return null
+        }
+        int dot = perennialId.indexOf('.')
+        perennialId = -1 == dot ? perennialId : perennialId.substring(0, dot)
+
+        Set<String> idFields = getPerennialIdentifierTypes()
+        Model.withCriteria(uniqueResult: true) {
+            or {
+                for (String f : idFields) {
+                    eq(f, perennialId)
+                }
+            }
+            cache true
+        } as Model
+    }
+
+    /**
+     * Indicates the kinds of perennial identifiers present in the runtime configuration.
+     *
+     * @return the set of identifier types that are defined, e.g. submissionId, publicationId.
+     */
+    @Cacheable('perennialIdentifierTypes')
+    @CompileStatic
+    @NotTransactional
+    Set<String> getPerennialIdentifierTypes() {
+        ModelIdentifierGeneratorRegistryService registry = idGeneratorRegistryFactoryBean.object
+        registry.generatorTypes
     }
 
     /**
@@ -601,10 +646,10 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     //@PostAuthorize("hasPermission(returnObject, read) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getRevisionByIdentifier")
-    public Revision getRevision(String identifier) {
+    Revision getRevision(String identifier) {
         String[] parts = identifier.split("\\.")
         String modelId = parts[0]
-        Model model = ModelAdapter.findByPerennialIdentifier(modelId)
+        Model model = findByPerennialIdentifier(modelId)
         if (parts.length == 1) {
             Revision revision = getLatestRevision(model)
             if (!revision) {
@@ -1777,43 +1822,6 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
     }
 
     /**
-    * Grants write access for @p model to all curators.
-    * All curators receive the right to add new revisions to the @p model.
-    * If the parameter @onlyPublishedRevision is true, the method only grants write access to
-    * the published revisions.
-    *
-    * @param model The Model for which write access should be granted
-    **/
-    @PreAuthorize("hasPermission(#model, admin) or hasRole('ROLE_ADMIN')")
-    @PostLogging(LoggingEventType.UPDATE)
-    @Profiled(tag="modelService.grantWriteAccessToCurators")
-    void grantWriteAccessToCurators(Model model, boolean onlyPublishedRevision = true) {
-        final String roleCurator = "ROLE_CURATOR"
-        String pubId = model.publicationId ? " aka. (${model.publicationId})" : ""
-        String modelId = "${model.submissionId}${pubId}"
-        aclUtilService.addPermission(model, roleCurator, BasePermission.READ)
-        aclUtilService.addPermission(model, roleCurator, BasePermission.WRITE)
-        log.info("${modelId}: grant read and write access for ROLE_CURATOR")
-        // check if admin rights have not already been granted to avoid duplication
-        if (!hasAdminPermission(model, roleCurator)) {
-            aclUtilService.addPermission(model, roleCurator, BasePermission.ADMINISTRATION)
-            log.info("${modelId}: grant admin access for ROLE_CURATOR")
-        }
-        Set<Revision> revisions = model.revisions
-        if (onlyPublishedRevision) {
-            revisions = revisions.findAll { it.state == ModelState.PUBLISHED }
-        }
-        revisions.each { Revision it ->
-            // may have been granted already through grantReadAccess for instance
-            if (!hasAdminPermission(it, roleCurator)) {
-                aclUtilService.addPermission(it, roleCurator, BasePermission.READ)
-                aclUtilService.addPermission(it, roleCurator, BasePermission.ADMINISTRATION)
-                log.info("${modelId}: grant read and admin access to all curators on the revision ${it.id}.${it.revisionNumber}")
-            }
-        }
-    }
-
-    /**
     * Revokes read access for @p model from @p collaborator.
     *
     * The @p collaborator gets the right to read future revisions to the @p model revoked.
@@ -2166,7 +2174,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         if (revision.model.deleted) {
             return false
         }
-        if (!SpringSecurityUtils.ifAnyGranted("ROLE_CURATOR")) {
+        if (!SpringSecurityUtils.ifAnyGranted("ROLE_CURATOR,ROLE_REVIEWER")) {
             return true
         }
         return false
@@ -2437,7 +2445,7 @@ the perennial publication identifier to the model file""")
     @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN')") //used to be: (hasRole('ROLE_USER') and hasPermission(#revision, admin))
     @PostLogging(LoggingEventType.SUBMIT_FOR_PUBLICATION)
     @Profiled(tag="modelService.submitModelRevisionForPublication")
-    public void submitModelRevisionForPublication(Revision revision) {
+    void submitModelRevisionForPublication(Revision revision) {
         if (!revision) {
             throw new IllegalArgumentException("Revision may not be null")
         }
@@ -2445,16 +2453,15 @@ the perennial publication identifier to the model file""")
             throw new IllegalArgumentException("Revision may not be deleted")
         }
         Model model = revision.model
-        // grant write access this model revision to all existing curators
-        List<User> curators = userService.getUsersByRole("ROLE_CURATOR")
-        curators.each { curator ->
-            grantWriteAccess(model, curator)
+        // grant permissions to ROLE_CURATOR
+        aclUtilService.addPermission(model, "ROLE_CURATOR", BasePermission.READ)
+        aclUtilService.addPermission(model, "ROLE_CURATOR", BasePermission.ADMINISTRATION)
+        aclUtilService.addPermission(model, "ROLE_CURATOR", BasePermission.WRITE)
+
+        model.revisions.each { Revision rev ->
+            aclUtilService.addPermission(rev, "ROLE_CURATOR", BasePermission.ADMINISTRATION)
+            aclUtilService.addPermission(rev, "ROLE_CURATOR", BasePermission.READ)
         }
-        // grant read access and administrative privilege to future curators
-        aclUtilService.addPermission(revision, "ROLE_CURATOR", BasePermission.ADMINISTRATION)
-        aclUtilService.addPermission(revision, "ROLE_CURATOR", BasePermission.READ)
-        revision.state = ModelState.UNPUBLISHED
-        revision.save(flush: true)
     }
 
     /**

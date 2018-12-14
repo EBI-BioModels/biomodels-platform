@@ -38,9 +38,6 @@ import net.biomodels.jummp.model.Revision
 class ModelAdapter {
     Model model
 
-    static final Set<String> PERENNIAL_IDENTIFIER_TYPES = doGetPerennialIdTypes()
-    static final Set<String> FIND_BY_PERENNIAL_ID_CRITERIA = populateFindByCriteria()
-
     @CompileStatic
     ModelTransportCommand toCommandObject(boolean saveHistory = true) {
         Set<String> creators = []
@@ -92,46 +89,8 @@ class ModelAdapter {
 
     @CompileDynamic
     private Revision getLatestRevisionForUser(boolean saveHistory) {
-        def modelService = Holders.applicationContext.getBean("modelService")
+        // Holders.applicationContext does not seem to work from Grails scripts
+        def modelService = Holders.grailsApplication.mainContext.modelService
         modelService.getLatestRevision(model, saveHistory)
-    }
-
-    /**
-     * Convenience method for finding a model based on its externally-defined identifiers.
-     *
-     * @param perennialId The externally-defined ID by which to look up the model.
-     * @return  the model corresponding to the given id, or null if there was no match
-     */
-    @CompileDynamic
-    static Model findByPerennialIdentifier(String perennialId) {
-        if (!perennialId) {
-            return null
-        }
-        int dot = perennialId.indexOf('.')
-        perennialId = -1 == dot ? perennialId : perennialId.substring(0, dot)
-        def results = Model.withCriteria {
-            or {
-                FIND_BY_PERENNIAL_ID_CRITERIA.each {
-                    eq(it, perennialId)
-                }
-            }
-            cache true
-        }
-        results[0]
-    }
-
-    static Set<String> populateFindByCriteria() {
-        Set<String> result = new LinkedHashSet<>()
-        result.addAll(['submissionId', 'publicationId'])
-        for (String pit : PERENNIAL_IDENTIFIER_TYPES) {
-            result.add(pit + "Id")
-        }
-        result
-    }
-
-    private static Set<String> doGetPerennialIdTypes() {
-        def modelDelegateService = Holders.applicationContext.getBean("modelDelegateService",
-                IModelService.class)
-        modelDelegateService.getPerennialIdentifierTypes()
     }
 }

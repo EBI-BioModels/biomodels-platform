@@ -298,6 +298,13 @@ public interface IModelService {
      */
     public ModelTransportCommand findByPerennialIdentifier(String identifier)
     /**
+     * Maps a list of perennial identifiers to their corresponding primary key.
+     * @param identifiers a List of strings corresponding to perennial model identifiers
+     * @return a map with keys containing the primary key for a model and the value being the given
+     *         perennial identifier
+     */
+    Map<Long, String> findModelsByPerennialId(List<String> identifiers)
+    /**
      * Finds the Revision corresponding to the supplied identifier arguments.
      *
      * @param model a perennial model identifier which may include the revision identifier or not.
@@ -305,14 +312,6 @@ public interface IModelService {
      * @return a RevisionTransportCommand representation of the requested model revision.
      */
     public RevisionTransportCommand getRevisionFromParams(final String model, final String revision)
-    /**
-     * @short Returns the types of perennial model identifiers that have been declared.
-     *
-     * This must include the submissionId field, but may contain others, such as publicationId.
-     * The set must be equivalent to the one which is constructed by ModelIdentifierUtils when
-     * parsing the externalised settings for perennial model identifier generators.
-     */
-    public Set<String> getPerennialIdentifierTypes()
     /**
      * @short Specifies whether there are one or more kinds of perennial identifiers defined.
      *
