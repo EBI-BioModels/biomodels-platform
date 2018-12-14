@@ -24,7 +24,6 @@ import com.rometools.rome.feed.rss.Guid
 import com.rometools.rome.feed.synd.*
 import com.rometools.rome.io.SyndFeedOutput
 import grails.transaction.Transactional
-import grails.util.Holders
 import net.biomodels.jummp.deployment.biomodels.feeds.CustomSyndEntryImpl
 import net.biomodels.jummp.deployment.biomodels.feeds.CustomSyndFeedImpl
 import net.biomodels.jummp.model.Model
@@ -55,7 +54,7 @@ class ModelOfTheMonthService {
 
     private static final String PREFIX_MOM_LINK = "https://www.ebi.ac.uk/biomodels/content/model-of-the-month"
 
-    def grailsApplication = Holders.grailsApplication
+    def grailsApplication
 
     List fetchEntriesForModel(Long id) {
         List entries = ModelOfTheMonth.withCriteria {
