@@ -30,27 +30,65 @@
 
 package net.biomodels.jummp.deployment.biomodels
 
+import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
+
+import java.text.SimpleDateFormat
 
 @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
 class ModelOfTheMonthController {
+    def modelDelegateService
     def modelOfTheMonthService
 
     def index() {
-        render(view: "index", model: [entries: list()])
+        List<ModelOfTheMonthTransportCommand> entries = modelOfTheMonthService.list()
+        [entries: entries]
     }
 
-    def updatePreviewImageAndShortDescription() {
-        List<ModelOfTheMonth> models = modelOfTheMonthService.updatePreviewImageAndShortDescription()
-        String updateReport = ""
-        models.each {ModelOfTheMonth model ->
-            updateReport += "${model.publicationDate.toString()}: ${model.shortDescription}<br/>"
+    def create() {
+        Date current = new Date()
+        String yearDate = current.format(ModelOfTheMonth.DATE_FORMAT_PATTERN)
+        ModelOfTheMonthTransportCommand entry = new ModelOfTheMonthTransportCommand(formattedEntryDate: yearDate, lastUpdated: current, publicationDate: current)
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+        [entry: entry, dateFormat: dateFormat]
+    }
+
+    def show(ModelOfTheMonth entry) {
+        if (!entry) {
+            // render out the error
         }
-        render updateReport
+        ModelOfTheMonthTransportCommand command = entry.toCommandObject()
+        command.formattedEntryDate = command.publicationDate.format(ModelOfTheMonth.DATE_FORMAT_PATTERN)
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+        [entry: command, dateFormat: dateFormat]
     }
 
-    List list() {
-        List<ModelOfTheMonth> entries = modelOfTheMonthService.list()
-        entries
+    def save(ModelOfTheMonthTransportCommand command) {
+        Map result = [:]
+        if (command?.validate()) {
+            ModelOfTheMonth updated = modelOfTheMonthService.doCreateOrUpdate(command)
+            if (updated) {
+                result.status = 200
+                result['entity'] = updated
+                result['id'] = updated.id
+                result['message'] = "The record has been updated successfully"
+            } else {
+                result.status = 400
+                result['message'] = "There is an error while trying to persist the entry into the database"
+                result['errors'] = updated.errors.getFieldErrors()
+            }
+        } else {
+            result.status = 422
+            result['message'] = "Sorry, but your form was not submitted because it is not valid. Please correct or enter valid values into the required fields if they are missing. Click Save button again when you finish it!"
+            result['errors'] = command.errors.allErrors.inspect()
+        }
+        response.status = result.status
+        render(result as JSON)
+    }
+
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def rss() {
+        String result = modelOfTheMonthService.createFeeds()
+        render(text: result, contentType: "application/xml")
     }
 }

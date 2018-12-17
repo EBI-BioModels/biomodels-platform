@@ -29,7 +29,9 @@ import spock.lang.Specification
 @TestFor(BioModelsTagLib)
 class BioModelsTagLibSpec extends Specification {
     final String DATE = '1970-01'
-    final String EXPECTED_URL = "${ModelOfTheMonthTransportCommand.URL_SEED}$DATE"
+    final String YEAR = DATE.substring(0,4)
+    final String MONTH = DATE.substring(5)
+    final String EXPECTED_URL = "${ModelOfTheMonthTransportCommand.URL_SEED}year=${YEAR}&amp;month=${MONTH}"
 
     def setup() {
         def mockModelMonthService = mockFor(ModelOfTheMonthService)
@@ -37,7 +39,7 @@ class BioModelsTagLibSpec extends Specification {
             if (id == 0) { // model does not exist
                 return []
             }
-            [new ModelOfTheMonthTransportCommand(date: DATE, authors: 'Bob')]
+            [new ModelOfTheMonthTransportCommand(formattedEntryDate: DATE, authors: 'Bob')]
         }
         tagLib.modelOfTheMonthService = mockModelMonthService.createMock()
     }

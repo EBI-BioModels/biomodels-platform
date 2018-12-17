@@ -171,7 +171,7 @@ LinkedBlockingQueue insertedRevisions = new LinkedBlockingQueue()
 /**
  * The branches of BioModels where we look for model information.
  */
-def bioModelsBranches = ["publ", "uncura_publ", "pdgsm_models"]//, "anno", "uncura_anno", "cura", "auto_gen_models"]
+def bioModelsBranches = ["publ", "uncura_publ", "pdgsm_models", "cura"]//, "anno", "uncura_anno", "auto_gen_models"]
 
 /*
  * Domain classes that will be needed in multiple closures, declared globally,
@@ -192,7 +192,6 @@ def Publication
 def ptc
 def personTC
 def mf
-def decorator
 def Model
 def Revision
 
@@ -243,7 +242,7 @@ def expectedFiles = [
         "[A-Z0-9]*_urn\\.xml": "Auto-generated SBML file with URNs",
         "[A-Z0-9]*-biopax2\\.owl": "Auto-generated BioPAX (Level 2)",
         "[A-Z0-9]*-biopax3\\.owl": "Auto-generated BioPAX (Level 3)",
-        "[A-Z0-9]*cellml": "Auto-generated CellML",
+        "[A-Z0-9]*\\.cellml": "Auto-generated CellML",
         "[A-Z0-9]*\\.m" : "Auto-generated Octave file",
         "[A-Z0-9]*\\.pdf" : "Auto-generated PDF file",
         "[A-Z0-9]*\\_manual.png" : "Manually generated Reaction graph (PNG)",
@@ -267,6 +266,7 @@ final String UPDATE_COMMENT_TPL = "Current version of "
 
 // BioModels branches
 final String AUTO_GEN = "auto_gen_models"
+final String CURA = "cura"
 final String PUBL = 'publ'
 final String UNCURA_PUBL = 'uncura_publ'
 
@@ -301,6 +301,8 @@ def NON_SBML_MODEL_FOLDER
 def bigModelsIgnored = []
 boolean excludeBigModels = true
 TreeSet<String> modelsImported = []
+TreeSet<String> curaModels = []
+def curaModelsId
 
 Map userMappingForInternalCurationComments
 
@@ -598,7 +600,6 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
     PublicationLinkProvider = loadClass("net.biomodels.jummp.model.PublicationLinkProvider")
     LinkType = PublicationLinkProvider.classes[0] // the only internal class...
     Model = loadClass("net.biomodels.jummp.model.Model")
-    decorator = loadClass("net.biomodels.jummp.core.model.identifier.decorator.AbstractAppendingDecorator")
 
     // annotation-related classes
     ResourceReference = loadClass("net.biomodels.jummp.annotationstore.ResourceReference")
@@ -621,7 +622,6 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
 
 
     // inject applicationContext in POGOs that expect it
-    decorator.context = appCtx
     rtc.context = appCtx
 
     // obtain references to singleton services
@@ -666,6 +666,13 @@ target(main: "Puts everything together to import models from a given folder") {
         if (it.submissionId) {modelsImported.add(it.submissionId)}
         if (it.publicationId) {modelsImported.add(it.publicationId)}
     }
+
+    /* populate all cura models (private and on hold models) */
+    query = "select model_id from cura where status < ? and (biomodels_id IS NULL OR biomodels_id = ?)"
+    curaModelsId = biomodelsConnection.rows(query, [5, ''])
+    curaModelsId.each {
+        curaModels.add(it["model_id"])
+    }
     log("${new Date()} -- commencing batch import")
     long duration = System.currentTimeMillis()
     /* run batch importer sequentially */
@@ -688,7 +695,7 @@ target(main: "Puts everything together to import models from a given folder") {
             addModelError modelId, "Entry found both in $BRANCH branch and also in publ."
         } else if (f.isDirectory() && modelId ==~ modelFolderPattern && tobeProcessed && !exists) {
             processModelFolder f
-        } else if (exists) {
+        } else if (exists && BRANCH != "cura") {
             // regardless of branch, this will check whether the model should be updated
             log("The model ${modelId} was already imported!")
             String submissionId = modelId
@@ -758,10 +765,7 @@ updateWithRecentChanges = { submissionId, publicationId, branch, folder, modelDe
     def submissionInfo = findSubmissionInfoToAddToNewRevision(submissionId)
     def submitter = submissionInfo["submitter"]
     def commitMessage = submissionInfo["commitMessage"]
-    // log in as the submitter; can't use authenticateAsUser because we do not know the unencrypted password
-    def userDetails = userDetailsService.loadUserByUsername(submitter.username)
-    SecurityContextHolder.context.authentication = new UsernamePasswordAuthenticationToken(
-        userDetails, userDetails.password, userDetails.authorities)
+    createAuthTokenForExistingUser(submitter)
 
     def id = Model.executeQuery("select id from Model m where m.submissionId = ?", [submissionId])
     def model = Model.get(id)
@@ -778,6 +782,11 @@ updateWithRecentChanges = { submissionId, publicationId, branch, folder, modelDe
         if (latestRev) {
             latestRev.curationState = CurationState.CURATED
         }
+    }
+    if (branch == "cura") {
+        // HACK!!! for those models, we ignore the last modification date
+        // in order to avoid reimporting them
+        modelDetails['lastModified'] = latestRev.uploadDate
     }
     def availDetectors = [
         ModelNameChangeDetector.newInstance(),
@@ -826,14 +835,19 @@ processModelFolder = { File folder ->
     final String MODEL_ID = folder.name
     // find branch
     final String BRANCH = getBranch MODEL_ID
+    boolean isCuraModel = curaModels.contains(MODEL_ID)
     if (!BRANCH) {
         addModelError(MODEL_ID, "Can not find $MODEL_ID in any of $bioModelsBranches")
         failureCount.incrementAndGet()
         return
+    } else if (BRANCH == "cura" && !isCuraModel) {
+        // The cura branch has more than 119 private models what we need to import.
+        // This aims to avoid importing everything presenting in the cura folder
+        return
     }
     // check symlink
     boolean haveSymlink = haveSymlinkToUrlFile folder, MODEL_ID
-    if (!haveSymlink && BRANCH != "pdgsm_models") {
+    if (!haveSymlink && BRANCH != "pdgsm_models" && BRANCH != "cura") {
         addModelError MODEL_ID, "${folder} does not contain a symbolic link to the URL file"
     }
     // separate original file from the rest of the folder contents
@@ -842,6 +856,8 @@ processModelFolder = { File folder ->
     if (isNonSBMLModel) {
         folder = new File(NON_SBML_MODEL_FOLDER, MODEL_ID)
         originalFile = new File("$NON_SBML_MODEL_FOLDER/$MODEL_ID", nonStandardSBMLModels.get(MODEL_ID).keySet()[0])
+    } else if (isCuraModel) {
+        originalFile = getMainFileForCuraModel(folder, MODEL_ID)
     } else {
         originalFile = findOriginalFile(folder, MODEL_ID)
     }
@@ -887,7 +903,8 @@ processModelFolder = { File folder ->
             failureCount.incrementAndGet()
             return
         }
-        if (isNonSBMLModel) {
+        if (isNonSBMLModel || isCuraModel) {
+            // For such models, we create one revision
             annotateModellingApproaches(submittedModel.revisions.first(), BRANCH, modelDetails, submitter)
         } else {
             def commitMessage = "$UPDATE_COMMENT_TPL $MODEL_ID"
@@ -900,7 +917,7 @@ processModelFolder = { File folder ->
         def revisions = submittedModel.revisions
         revisions.each { r ->
             try {
-                publishModelRevision(MODEL_ID, r)
+                if (!isCuraModel) { publishModelRevision(MODEL_ID, r) }
             } finally {
                 insertedRevisions.offer(r.id)
             }
@@ -1113,7 +1130,7 @@ findRightSubmitter = {MODEL_ID, BRANCH ->
         failureCount.incrementAndGet()
         return
     }
-    authenticateAsUser(submitter)
+    createAuthTokenForExistingUser(submitter)
     return submitter
 }
 
@@ -1153,7 +1170,19 @@ submitOriginalFile = { branch, modelId, originalFile, infoMap ->
         def msg = "Cannot submit original version of $modelId -- missing security context"
         throw new IllegalStateException(msg.toString())
     }
-    def originInfo = getSubmissionData(modelId, originalFile, [], [], ORIG_COMMENT_TPL + modelId)
+    def additionals = []
+    if ("cura" == branch) {
+        additionals = []
+        def folder = new File(originalFile.parent)
+        def additionalFiles = folder.listFiles().findAll { f ->
+            f.absolutePath != originalFile.absolutePath
+        }
+        additionals.addAll(additionalFiles)
+    }
+    def filesFromAdditionalFolder = []
+    def comment = ORIG_COMMENT_TPL + modelId
+    def originInfo = getSubmissionData(modelId, originalFile, additionals,
+        filesFromAdditionalFolder, comment)
     def fileTCs = getFilesFromSubmissionData originInfo
     def rftcObjects = getFilesFromAdditionalFolder(modelId, originalFile)
     fileTCs.addAll(rftcObjects["fileTCs"])
@@ -1173,7 +1202,7 @@ submitOriginalFile = { branch, modelId, originalFile, infoMap ->
     def publicationId = infoMap['biomodels_id']
     def submissionId = infoMap['model_id']
     def inPublBranch = isCuratedAndPublished(branch)
-    if ( inPublBranch && !publicationId) {
+    if (inPublBranch && !publicationId) {
         throw new IllegalStateException("No BIOMD* found for curated model $modelId".toString())
     }
     if (publicationId) {
@@ -1196,6 +1225,10 @@ submitOriginalFile = { branch, modelId, originalFile, infoMap ->
     }
     addModelMsg(modelId, "Original submission successfully imported")
     return model
+}
+
+isPrivateAndOnHold = { branch ->
+    CURA == branch
 }
 
 isCuratedAndPublished = { branch ->
@@ -1240,7 +1273,7 @@ addRevisionAnnotations = { revision, branch, modelDetails, user ->
     String original_model = modelDetails['original_model']
     if (original_model) {
         createBMAnnotation(revision, original_model, "source",
-            "http://purl.org/dc/elements/1.1/",
+            "http://biomodels.net/model-qualifiers/",
             "http://purl.org/dc/elements/1.1/", author)
     }
 
@@ -1403,6 +1436,10 @@ getUrlFileForModel = { folder, id ->
 
 getMainFileForPDGSMModel = { folder, id ->
     new File(folder, "$id$DOT_XML")
+}
+
+getMainFileForCuraModel = { folder, id ->
+    new File(folder, "$id$URL_FILE")
 }
 
 getAdditionalFilesForNonSBMLModel = { modelId ->
@@ -1708,6 +1745,13 @@ target(inspectSession: 'Prints information about entities stored in a Hibernate 
     log(result.toString())
 }
 
+/**
+ * Logs in a user with the given credentials.
+ *
+ * The supplied password must not be encrypted.
+ *
+ * Only use for authenticating as the user from the JSON properties file.
+ */
 authenticate = { user, passwd ->
     def authToken = new UsernamePasswordAuthenticationToken(user, passwd)
     def auth = appCtx.getBean("authenticationManager").authenticate(authToken)
@@ -1770,9 +1814,11 @@ getSubmissionData = { modelId, file, additional, filesFromAdditionalFolder, comm
     // get name and description
     // if the model is non SBML, the original file will be submitted but getting name and
     // description from the dummy SBML file
+    String formatName = formatCommand?.name
+    String formatVersion = formatCommand?.formatVersion
     final String MODEL_NAME = modelFileFormatService.extractName([file], format)?:
             new File(file.absolutePath).getName()
-    modelWrapper.description = "${MODEL_NAME}"
+    modelWrapper.description = "${formatName} ${formatVersion} presentation of ${MODEL_NAME}"
     final String DESCRIPTION = modelFileFormatService.extractDescription([file], format)
     // validate model
     boolean isValid = modelFileFormatService.validate([file], format.identifier, [])
@@ -1786,6 +1832,7 @@ getSubmissionData = { modelId, file, additional, filesFromAdditionalFolder, comm
     def fileTrack = []
     fileTrack.addAll(expectedFiles.keySet())
     boolean isNonSBMLModel = nonStandardSBMLModels.containsKey(modelId)
+    boolean isCuraModel = curaModels.contains(modelId)
     if (isNonSBMLModel) {
         modelWrapper.description = nonStandardSBMLModels.get(modelId).get(file.name)
         additional = getAdditionalFilesForNonSBMLModel(modelId)
@@ -1796,21 +1843,22 @@ getSubmissionData = { modelId, file, additional, filesFromAdditionalFolder, comm
             files.push(rftc.newInstance(path: path, description: description,
                 mainFile: false, userSubmitted: true, hidden: hidden))
         }
-    } else
-    additional.each { addFile ->
-        def pattern = expectedFiles.keySet().find {testPattern ->
-            Pattern.matches(testPattern, addFile.getName())
-        }
-        if (pattern) {
-            fileTrack.remove(pattern)
-            String path = addFile.absolutePath
-            boolean hidden = false
-            if (pattern.contains("_manual")) {
-                hidden = true
+    } else {
+        additional.each { addFile ->
+            def pattern = expectedFiles.keySet().find { testPattern ->
+                Pattern.matches(testPattern, addFile.getName())
             }
+            if (pattern) {
+                fileTrack.remove(pattern)
+                String path = addFile.absolutePath
+                boolean hidden = false
+                if (pattern.contains("_manual")) {
+                    hidden = true
+                }
 
-            files.push(rftc.newInstance(path: path, description: expectedFiles.get(pattern),
-                mainFile: false, userSubmitted: false, hidden: hidden))
+                files.push(rftc.newInstance(path: path, description: expectedFiles.get(pattern),
+                    mainFile: false, userSubmitted: false, hidden: hidden))
+            }
         }
     }
     // add the other additional files in 'additional' folder
@@ -2054,8 +2102,16 @@ getModelById = { modelId, branch ->
     biomodelsConnection.firstRow("select * from $branch where $idColumnName = ?", [modelId])
 }
 
-authenticateAsUser = { user ->
-    authenticate(user.username, "autocreated")
+/**
+ * Populates the authentication object in the current thread's SecurityContext with
+ * the credentials of a given user.
+ *
+ * Bypasses the call to authenticationManager.authenticate() typically used during login.
+ */
+createAuthTokenForExistingUser = { user ->
+    def userDetails = userDetailsService.loadUserByUsername(user.username)
+    SecurityContextHolder.context.authentication = new UsernamePasswordAuthenticationToken(
+            userDetails, userDetails.password, userDetails.authorities)
 }
 
 addPublicationLinkProvider =  { def cmd ->
@@ -2345,7 +2401,7 @@ getModelDetails = { modelId, modelBranch ->
         modelDetails['lastModified'] = row.last_modification_date
         if (modelBranch == "pdgsm_models") {
             modelDetails['publicationDate'] = row.publication_date
-        } else {
+        } else if (modelBranch != "cura" ) {
             modelDetails['publicationDate'] = row.creation_date
         }
         if ("auto_gen_models" == modelBranch || "pdgsm_models" == modelBranch) {
