@@ -20,6 +20,9 @@
 
 package net.biomodels.jummp.webapp.rest.model.show
 
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.xml.XmlMapper
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.PublicationTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
@@ -61,5 +64,14 @@ class Model {
         submissionId = model.submissionId
         publicationId = model.publicationId
         firstPublished = model.firstPublished
+    }
+
+    String outputModelAsString(String contentType) {
+        // the contentType is either "application/json" or "application/xml"
+        ObjectMapper mapper = contentType == "application/json" ? new ObjectMapper() : new XmlMapper()
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL)
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
+        String result = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(this)
+        result
     }
 }
