@@ -152,6 +152,7 @@ class SearchController {
     /**
      * Default action showing a archive view
      */
+    @Secured(['IS_AUTHENTICATED_FULLY'])
     def archive() {
         sanitiseParams()
         def results = archiveCore(params.sortBy, params.sortDir, params.offset, params.numResults)
@@ -223,9 +224,7 @@ class SearchController {
             response.setHeader("Content-disposition", "attachment;filename=\"${filename}\"")
             response.outputStream << new ByteArrayInputStream(data)
         } else {
-            def params = [query: "*:*", flashMessage: g.message(code: "jummp.search.download.model.unavailable.warningMessage")]
-            forward(action: 'search', params: params)
-            return [query: "*:*"]
+            render(view: "download", status: 404)
         }
     }
 

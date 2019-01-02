@@ -225,7 +225,7 @@
               }
           },
           "404": {
-            "description": "Invalid Model Id Supplied"
+            "description": "Not Found"
           }
         }
       }
@@ -252,7 +252,7 @@
             "description": "Successful operation"
           },
           "404": {
-            "description": "Invalid Model Id Supplied"
+            "description": "Not Found"
           }
         }
       }
