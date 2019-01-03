@@ -53,33 +53,25 @@
 </head>
 
 <body>
+<div class="row">
     <h2>Model of The Month Management</h2>
-    <ul class="tabs" data-tabs id="momManagementTabs">
-        <li class="tabs-title is-active" role="presentation"><a href="#listAll" aria-selected="true">All MoM entries</a></li>
-        <li class="tabs-title" role="presentation"><a href="#importFrom">Import from...</a></li>
-    </ul>
-    <div class="tabs-content" data-tabs-content="momManagementTabs">
-        <div class="tabs-panel is-active" id="listAll">
-            <h3>List all of Model of Month entries</h3>
-            <a class="button" href="${createLink(controller: "ModelOfTheMonth", action: "create")}">Add a new entry</a><a id="btnDeleteRow" class="button">Delete selected row</a>
-            <table id="momEntries" class="display">
-                <thead class="row" style="font-weight: bold">
-                <tr>
-                    <th>Authors</th>
-                    <th>Title</th>
-                    <th>Short description</th>
-                    <th>Publication Date</th>
-                    <th>Last updated</th>
-                    <th>Models</th>
-                </tr></thead>
-                <tbody>
-                <g:render template="/templates/momEntry" collection="${entries}" var="entry" />
-                </tbody>
-            </table>
-        </div>
-        <div class="tabs-panel" id="importFrom">
-            <g:render template="/templates/updatePIandSD" />
-        </div>
-    </div>
+    <h3>List all of Model of Month entries</h3>
+    <a class="button" href="${createLink(controller: "ModelOfTheMonth", action: "create")}">Add a new entry</a>
+    <table id="momEntries" class="display">
+        <thead class="row" style="font-weight: bold">
+        <tr>
+            <th>Authors</th>
+            <th>Title</th>
+            <th>Short description</th>
+            <th>Publication Date</th>
+            <th>Last updated</th>
+            <th>Models</th>
+        </tr></thead>
+        <tbody>
+        <g:render template="/templates/momEntry" collection="${entries}" var="entry" />
+        </tbody>
+    </table>
+</div>
+
 </body>
 </html>

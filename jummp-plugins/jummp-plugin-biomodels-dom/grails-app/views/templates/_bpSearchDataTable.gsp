@@ -1,7 +1,6 @@
 <table id="table_id" class="display">
     <thead>
     <th>Entity</th>
-    <th>Entity Link</th>
     <th>Entity Id</th>
     <th>Reaction</th>
     <th>Model</th>
@@ -10,15 +9,14 @@
     <th>Parameters</th>
     <th>Entity SBO Link</th>
     <th>Reaction SBO Link</th>
+    <th>Initial Data</th>
     </thead>
 </table>
 
 <script>
     $(document).ready(function () {
         var columnConfig = [
-            {
-                data: 'fields.entity_RAW'
-            },
+
             {
                 data: 'fields.entity_accession_url',
                 orderable: false
@@ -37,9 +35,9 @@
             {
                 data: 'fields.model',
                 render: function (rawdata, type, row) {
+                    var formattedData;
                     if (rawdata !== undefined && rawdata.length !== 0) {
-                        var data = rawdata;
-                        var formattedData = "<a target='_blank' href='https://www.ebi.ac.uk/biomodels/" + data + "'>" + data + "</a>";
+                        formattedData = "<a target='_blank' href='https://www.ebi.ac.uk/biomodels/" + rawdata + "'>" + rawdata + "</a>";
                     }
                     return formattedData
                 }
@@ -47,15 +45,22 @@
             {
                 data: 'fields.publication',
                 orderable: false,
-                render: function (data, type, row) {
-                    if (data !== undefined && data.length !== 0) {
-                        data = data.replace(/\\/g, "");
-                        var lastIndexofUrlPrefix = "http://identifiers.org/".lastIndexOf("/") + 1;
-                        var urlSuffix = data.substring(lastIndexofUrlPrefix, data.length);
-                        var firstIndexOfUrlSuffix = urlSuffix.indexOf("/") + 1;
-                        data = "<a target='_blank' href='" + data + "'>" + urlSuffix.substring(firstIndexOfUrlSuffix, data.length) + "</a>"
+                render: function (href, type, row) {
+                    if (href !== undefined && href.length !== 0) {
+                        var formattedData;
+                        if(href.includes(",")) {
+                            var formattedArray = [];
+                            var commaSeparatedLinks = href.split(",");
+                            commaSeparatedLinks.forEach(function(subHref) {
+                                formattedArray.push(generatePublicationLink(subHref));
+                            });
+                            formattedData = formattedArray.join(", ");
+                        } else{
+                            formattedData = generatePublicationLink(href);
+                        }
+
                     }
-                    return data
+                    return formattedData;
                 }
             },
             {
@@ -73,8 +78,22 @@
             {
                 data: 'fields.reaction_sbo_term_link',
                 orderable: false
+            },
+            {
+                data: 'fields.initial_data_RAW',
+                orderable: false
+
             }
         ];
+
+        function generatePublicationLink(href) {
+            href = href.replace(/\\/g, "");
+            var lastIndexofUrlPrefix = "http://identifiers.org/".lastIndexOf("/") + 1;
+            var urlSuffix = href.substring(lastIndexofUrlPrefix, href.length);
+            var firstIndexOfUrlSuffix = urlSuffix.indexOf("/") + 1;
+            href = "<a target='_blank' href='" + href + "'>" + urlSuffix.substring(firstIndexOfUrlSuffix, href.length) + "</a>"
+            return href;
+        }
 
         // Function called for showing the data pagination stats
         function infoCallback(settings, start, end, max, total, pre) {
@@ -96,19 +115,24 @@
             urlParams.order.forEach(function (obj) {
                 var column = urlParams.columns[obj.column];
                 var columnName = column.data.replace("fields.", "").replace("_RAW","");
-                var sortDirectionArg = obj.dir;
-                var columnOrder;
+                if(columnName === "model") {
+                    var sortDirectionArg = obj.dir;
+                    var columnOrder;
 
-                if (sortDirectionArg === "desc") {
-                    columnOrder = "descending";
+                    if (sortDirectionArg === "desc") {
+                        columnOrder = "descending";
+                    }
+                    else if (sortDirectionArg === "asc") {
+                        columnOrder = "ascending";
+                    }
+                    if (data.sort && columnOrder && columnName) {
+                        data.sort += ',';
+                    }
+                    data.sort += columnName + ':' + columnOrder;
+                }else {
+                    // Default sort
+                    data.sort += "model:ascending";
                 }
-                else if (sortDirectionArg === "asc") {
-                    columnOrder = "ascending";
-                }
-                if (data.sort && columnOrder && columnName) {
-                    data.sort += ',';
-                }
-                data.sort += columnName + ':' + columnOrder;
             });
             return data;
         }
