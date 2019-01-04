@@ -101,57 +101,12 @@ class GitManagerTests extends GrailsUnitTestCase {
         }
     }
 
-    void testImport() {
-        // not yet inited, so it should fail
-        shouldFail(VcsNotInitedException) {
-            gitManager.importFile(new File("/tmp"), "tmp")
+        // The init method should work now
+        gitManager.init(exchangeDirectory)
+        shouldFail VcsAlreadyInitedException, {
+            // test that we cannot initialise the checkout twice
+            gitManager.init(exchangeDirectory)
         }
-        gitManager.init(clone, exchangeDirectory)
-        shouldFail(VcsException) {
-            // non existing file
-            gitManager.importFile(new File("target/vcs/tmp"), "test")
-        }
-        shouldFail(VcsException) {
-            // directory instead of file
-            File directory = new File("target/vcs/tmp")
-            directory.mkdirs()
-            gitManager.importFile(directory, "test")
-        }
-        File importFile = new File("target/vcs/tmp/test")
-        FileUtils.touch(importFile)
-        shouldFail(FileAlreadyVersionedException) {
-            // test whether the file already exists in the directory
-            FileUtils.touch(new File(clone.absolutePath + File.separator + "test"))
-            gitManager.importFile(importFile, "test")
-        }
-        File importedFile = new File(clone.absolutePath + File.separator + "test")
-        // created the temp file in previous step - ensure it is deleted again
-        importedFile.delete()
-        String revision = gitManager.importFile(importFile, "test")
-        assertTrue(importedFile.exists())
-        assertTrue(importedFile.isFile())
-        ObjectId commit = repository.resolve(Constants.HEAD)
-        RevWalk revWalk = new RevWalk(repository)
-        RevCommit revCommit = revWalk.parseCommit(commit)
-        assertEquals(commit.getName(), revision)
-        assertEquals("Import of test", revCommit.getShortMessage())
-        assertEquals("Import of test", revCommit.getFullMessage())
-        shouldFail(FileAlreadyVersionedException) {
-            gitManager.importFile(importFile, "test")
-        }
-        // import a second file with custom commit message
-        revision = gitManager.importFile(importFile, "test2", "Custom commit message")
-        FileRepositoryBuilder builder = new FileRepositoryBuilder()
-        Repository repository = builder.setWorkTree(clone)
-        .readEnvironment() // scan environment GIT_* variables
-        .findGitDir(clone) // scan up the file system tree
-        .build()
-        commit = repository.resolve(Constants.HEAD)
-        revWalk = new RevWalk(repository)
-        revCommit = revWalk.parseCommit(commit)
-        assertEquals(commit.getName(), revision)
-        assertEquals("Custom commit message", revCommit.getShortMessage())
-        assertEquals("Custom commit message", revCommit.getFullMessage())
     }
 
     void testUpdate() {
