@@ -69,7 +69,7 @@ public interface VcsManager {
     * @throws VcsException if something goes wrong (needs to be made more specific to new usage)
     **/
     //TODO replace exchangeDir with java.io.tmpdir
-    public void init(File exchangeDirectory) throws VcsException;
+    void init(File exchangeDirectory) throws VcsException;
 
     /**
      * Imports a new model into a given folder.
@@ -77,7 +77,7 @@ public interface VcsManager {
      * @param files             the list of files that belong to this model
      * @param commitMessage     a brief message describing the model.
      */
-    public String createModel(File modelDirectory, List<File> files, String commitMessage);
+    String createModel(File modelDirectory, List<File> files, String commitMessage);
 
     /**
     * Imports files into an existing model repository
@@ -89,7 +89,7 @@ public interface VcsManager {
     * @return Revision corresponding to the commit
     * @throws VcsException
     **/
-    public String updateModel(File modelDirectory, List<File> files, List<File> deleted, String commitMessage) throws VcsException;
+    String updateModel(File modelDirectory, List<File> files, List<File> deleted, String commitMessage) throws VcsException;
 
     /**
     * Overloaded method for convenience using a default commit message.
@@ -101,7 +101,7 @@ public interface VcsManager {
     * @see updateModel
     * @throws VcsException
      */
-    public String updateModel(File modelDirectory, List<File> files, List<File> deleted) throws VcsException;
+    String updateModel(File modelDirectory, List<File> files, List<File> deleted) throws VcsException;
 
     /**
     * Retrieves files at the @p modelDirectory  of given @p revision.
@@ -116,7 +116,7 @@ public interface VcsManager {
     * @return The list of files in the exchange location
     * @throws VcsException if the revision is not found
     */
-    public List<File> retrieveModel(File modelDirectory, String revision) throws VcsException;
+    List<File> retrieveModel(File modelDirectory, String revision) throws VcsException;
 
     /**
      * Overloaded method for convenience passing null as revision
@@ -125,22 +125,22 @@ public interface VcsManager {
      * @throws VcsException if an error occurs (needs to be made more specific
      * @see retrieveFile(String file, String revision)
      */
-    public List<File> retrieveModel(File modelDirectory) throws VcsException;
+    List<File> retrieveModel(File modelDirectory) throws VcsException;
 
     /**
     * Retrieves the revision ids from @p modelDirectory
     * Returns the revision ids associated with the modelDirectory in the repository
     * @param modelDirectory the model directory
     */
-    public List<String> getRevisions(File modelDirectory);
+    List<String> getRevisions(File modelDirectory);
 
     /**
     * Updates the working copy to the latest remote HEAD.
     */
-    public void updateWorkingCopy(File modelDirectory);
+    void updateWorkingCopy(File modelDirectory);
 
     /**
     * Retrieves the creation and last modified dates for a file
     */
-    public List<VcsFileDetails> getFileDetails(File modelDirectory, String path);
+    List<VcsFileDetails> getFileDetails(File modelDirectory, String path);
 }
