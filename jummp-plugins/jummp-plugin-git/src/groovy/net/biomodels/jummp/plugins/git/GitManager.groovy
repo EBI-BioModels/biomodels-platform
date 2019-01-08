@@ -1,38 +1,39 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
-* Deutsches Krebsforschungszentrum (DKFZ)
-*
-* This file is part of Jummp.
-*
-* Jummp is free software you can redistribute it and/or modify it under the
-* terms of the GNU Affero General Public License as published by the Free
-* Software Foundation either version 3 of the License, or (at your option) any
-* later version.
-*
-* Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
-* WARRANTY without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-* A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
-* details.
-*
-* You should have received a copy of the GNU Affero General Public License along
-* with Jummp if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
-*
-* Additional permission under GNU Affero GPL version 3 section 7
-*
-* If you modify Jummp, or any covered work, by linking or combining it with
-* JGit, Apache Commons, Perf4j (or a modified version of that library), containing parts
-* covered by the terms of Apache License v2.0, Eclipse Distribution License v1.0, the licensors of this
-* Program grant you additional permission to convey the resulting work.
-* {Corresponding Source for a non-source form of such a combination shall
-* include the source code for the parts of JGit, Apache Commons, Perf4j used as well as
-* that of the covered work.}
-**/
-
-
-
+ * Copyright (C) 2010-2019 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Deutsches Krebsforschungszentrum (DKFZ)
+ *
+ * This file is part of Jummp.
+ *
+ * Jummp is free software you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along
+ * with Jummp if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
+ *
+ * Additional permission under GNU Affero GPL version 3 section 7
+ *
+ * If you modify Jummp, or any covered work, by linking or combining it with
+ * JGit, Apache Commons, Perf4j (or a modified version of that library), containing parts
+ * covered by the terms of Apache License v2.0, Eclipse Distribution License v1.0, the licensors of this
+ * Program grant you additional permission to convey the resulting work.
+ *{Corresponding Source for a non-source form of such a combination shall
+ * include the source code for the parts of JGit, Apache Commons, Perf4j used as well as
+ * that of the covered work.}
+ */
 
 
 package net.biomodels.jummp.plugins.git
+
+import net.biomodels.jummp.core.vcs.InvalidVcsRepositoryException
+import net.biomodels.jummp.core.vcs.VcsAlreadyInitedException
+import net.biomodels.jummp.core.vcs.VcsNotInitedException
 
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
@@ -75,6 +76,8 @@ import org.perf4j.aop.Profiled
  * the only resource accessing the model repositories!
  * @author Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
  * @author Raza Ali <raza.ali@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
+ * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
 class GitManager implements VcsManager {
     // uid for generating unique checkout directory names
@@ -83,21 +86,23 @@ class GitManager implements VcsManager {
     private final ConcurrentHashMap<String, ReentrantLock> locks = new ConcurrentHashMap<String, ReentrantLock>()
     private final ConcurrentHashMap<String, FileLock> diskLocks = new ConcurrentHashMap<String, FileLock>()
     // cache of initialised repositories
-    private final Map<File, Git>  initedRepositories = Collections.synchronizedMap(new LruCache<File, Git>(1000))
+    private final Map<File, Git> initedRepositories = Collections.synchronizedMap(new LruCache<File, Git>(1000))
     // exchange directory
     private File exchangeDirectory
     // legacy parameter specifying remoteness. Probably useless.
     private boolean hasRemote
 
-    /* 
+    /**
      * This internal class is a standard implementation of a cached hashmap
      * of fixed size, to avoid creating the repository related structures
-     * repeatedly with the standard LRU caching policy
-     * */
+     * repeatedly with the standard LRU caching policy.
+     * @param < A >
+     * @param < B >
+     */
     class LruCache<A, B> extends LinkedHashMap<A, B> {
         private final int maxEntries
 
-        public LruCache(final int maxEntries) {
+        LruCache(final int maxEntries) {
             super(maxEntries + 1, 1.0f, true)
             this.maxEntries = maxEntries
         }
@@ -125,16 +130,23 @@ class GitManager implements VcsManager {
     }
 
     /**
-     * Initialises the GitManager. Sets the exchangedirectory for temporary
+     * Initialises the GitManager. Sets the exchange directory for temporary
      * storage of model files
-     **/
+     */
     @Profiled(tag = "gitManager.init")
-    public void init(File exchangeDirectory) {
-        this.exchangeDirectory = exchangeDirectory
+    void init(File exchangeDirectory) {
+        if (this.exchangeDirectory == exchangeDirectory) {
+            throw new VcsAlreadyInitedException()
+        }
+        if (exchangeDirectory.exists() && exchangeDirectory.isDirectory()) {
+            this.exchangeDirectory = exchangeDirectory
+        } else {
+            throw new VcsException("${exchangeDirectory.name} is not a directory")
+        }
     }
 
     @Profiled(tag = "gitManager.createModel")
-    public String createModel(File modelDirectory, List<File> modelFiles, String commit) {
+    String createModel(File modelDirectory, List<File> modelFiles, String commit) {
         //FIXME this is meant to do Git-specific initialisation of the repository
         //then execute the same logic as importModel(modelDirectory, modelFiles, commit)
         return ""
@@ -154,9 +166,9 @@ class GitManager implements VcsManager {
                 try {
                     FileChannel channel = getRepositoryChannel(modelDirectory)
                     lock = channel.tryLock()
-                    //Write something to file, otherwise file isnt really locked
+                    //Write something to file, otherwise file isn't really locked
                     channel.write(ByteBuffer.wrap("\n".getBytes()))
-                } catch(Exception ignore) {
+                } catch (Exception ignore) {
                 }
                 if (lock) {
                     return lock
@@ -165,7 +177,7 @@ class GitManager implements VcsManager {
                 accumulate += 100
             }
             //lock=channel.lock()
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace()
         }
         if (!lock) {
@@ -184,13 +196,12 @@ class GitManager implements VcsManager {
      */
     @Profiled(tag = "gitManager.lockModelRepository")
     private void lockModelRepository(File modelDirectory) {
-        if (!locks.containsKey(modelDirectory.name))
-        {
+        if (!locks.containsKey(modelDirectory.name)) {
             ReentrantLock lock = new ReentrantLock()
             locks.put(modelDirectory.name, lock)
         }
         locks.get(modelDirectory.name).lock()
-        FileLock fileLock=obtainExclusiveLock(modelDirectory)
+        FileLock fileLock = obtainExclusiveLock(modelDirectory)
         diskLocks.put(modelDirectory.name, fileLock)
     }
 
@@ -203,9 +214,9 @@ class GitManager implements VcsManager {
      */
     @Profiled(tag = "gitManager.unlockModelRepository")
     private void unlockModelRepository(File modelDirectory) {
-        ReentrantLock lock=locks.get(modelDirectory.name)
+        ReentrantLock lock = locks.get(modelDirectory.name)
         if (!lock.hasQueuedThreads()) locks.remove(modelDirectory)
-        FileLock removing=diskLocks.remove(modelDirectory.name)
+        FileLock removing = diskLocks.remove(modelDirectory.name)
         new File(modelDirectory, ".git/.locker.txt").setText("")
         removing.release()
         removing.channel().close()
@@ -214,7 +225,9 @@ class GitManager implements VcsManager {
 
     private void ensureRepInited(File modelDirectory) {
         if (!initedRepositories.containsKey(modelDirectory)) {
-            if (exchangeDirectory==null) throw new VcsException("init error: exchange directory cannot be null")
+            if (exchangeDirectory == null) {
+                throw new VcsException("init error: exchange directory cannot be null")
+            }
             initRepository(modelDirectory)
         }
     }
@@ -230,178 +243,181 @@ class GitManager implements VcsManager {
     @Profiled(tag = "gitManager.initRepository")
     private void initRepository(File modelDirectory) {
         if (initedRepositories.containsKey(modelDirectory)) {
-            //throw new VcsAlreadyInitedException()
+            throw new VcsAlreadyInitedException()
             return
         }
         if (exchangeDirectory == null) {
             throw new VcsException("Exchange directory cannot be null!")
         }
         if (!modelDirectory.isDirectory() || !modelDirectory.exists()) {
-            throw new VcsException("Local model directory " + modelDirectory.toString() + " is either not a directory or does not exist")
+            throw new InvalidVcsRepositoryException(modelDirectory.toString())
         }
         if (!exchangeDirectory.isDirectory() || !exchangeDirectory.exists()) {
-            throw new VcsException("Exchange directory " + exchangeDirectory.getCanonicalPath() + " is either not a directory ${exchangeDirectory.isDirectory()} or does not exist ${!exchangeDirectory.exists()}")
+            throw new VcsException("""Exchange directory ${
+                exchangeDirectory.getCanonicalPath()
+            } is either not a directory ${exchangeDirectory.isDirectory()} or does not exist  ${
+                !exchangeDirectory.exists()
+            }""")
         }
         FileRepositoryBuilder builder = new FileRepositoryBuilder()
         Repository repository = builder.setWorkTree(modelDirectory)
-                .readEnvironment() // scan environment GIT_* variables
-                .setGitDir(modelDirectory) // use the current directory for the repository
-                .build()
+            .readEnvironment() // scan environment GIT_* variables
+            .setGitDir(modelDirectory) // use the current directory for the repository
+            .build()
         Git git = new Git(repository)
 
         String branchName
         String fullBranch = repository.getFullBranch()
 
-        //create the repository if it doesnt exist
+        // create the repository if it doesn't exist
         if (!fullBranch) {
-            git=createGitRepo(modelDirectory)
-            repository=git.getRepository()
-            fullBranch=repository.getFullBranch()
+            git = createGitRepo(modelDirectory)
+            repository = git.getRepository()
+            fullBranch = repository.getFullBranch()
 
         }
         branchName = fullBranch.substring(Constants.R_HEADS.length())
         Config repoConfig = repository.getConfig()
 
-        //this bit is probably unnecessary
+        // this bit is probably unnecessary
         final String remote = repoConfig.getString(
             ConfigConstants.CONFIG_BRANCH_SECTION, branchName,
             ConfigConstants.CONFIG_KEY_REMOTE)
         hasRemote = (remote != null)
-        initedRepositories.put(modelDirectory,git)
+        initedRepositories.put(modelDirectory, git)
     }
 
-    /*
+    /**
      * Equivalent to running git init on the directory supplied.
-     * @param modelDirectory The model directory
-     **/
+     * @param directory The model directory
+     * @return Git object
+     */
     @Profiled(tag = "gitManager.createGitRepo")
     private Git createGitRepo(File directory) {
-        Git git=null
+        Git git = null
         InitCommand initCommand = Git.init()
         initCommand.setDirectory(directory)
-        git=initCommand.call()
-        return git
+        git = initCommand.call()
+        git
     }
 
-    /*
-     * Updates a model with the suppled files and commit message
-     * 
+    /**
+     * Updates a model with the supplied files and default commit message (e.g. Update of Model ABC)
+     *
+     * Overload of updateModel with a default message
+     * @param modelDirectory The model directory
+     * @param addFiles A list of the supplied files to be put into the repository
+     */
+    @Profiled(tag = "gitManager.updateModel")
+    String updateModel(File modelDirectory, List<File> addFiles, List<File> removeFiles) {
+        return updateModel(modelDirectory, addFiles, removeFiles, "Update of ${modelDirectory.name}")
+    }
+
+    /**
+     * Updates a model with the supplied files and commit message
      * Locks model, initialises the repository if necessary and adds
      * the supplied files to the repository with the supplied message
      * @param modelDirectory The model directory
      * @param files A list of files to be put into the repository
      * @param removeFiles The list of files to be removed from the repository.
      * @param commitMessage The commit message for this revision
-     **/
+     */
     @Profiled(tag = "gitManager.updateModel")
-    public String updateModel(File modelDirectory, List<File> addfiles, List<File> removeFiles, String commitMessage) {
+    String updateModel(File modelDirectory, List<File> addFiles, List<File> removeFiles, String commitMessage) {
         ensureRepInited(modelDirectory)
         String revision = null
         lockModelRepository(modelDirectory)
         try {
-            revision = handleModification(modelDirectory, addfiles, removeFiles, commitMessage)
+            revision = handleModification(modelDirectory, addFiles, removeFiles, commitMessage)
         } finally {
             unlockModelRepository(modelDirectory)
         }
-        return revision
+        revision
     }
-    
-    
-    public List<VcsFileDetails> getFileDetails(File modelDirectory, String path) {
-    	List<VcsFileDetails> fileDetails = new ArrayList<VcsFileDetails>()
-    	try {
-    		FileRepositoryBuilder builder = new FileRepositoryBuilder()
-    		Repository repository
+
+    List<VcsFileDetails> getFileDetails(File modelDirectory, String path) {
+        List<VcsFileDetails> fileDetails = new ArrayList<VcsFileDetails>()
+        try {
+            FileRepositoryBuilder builder = new FileRepositoryBuilder()
+            Repository repository
             repository = builder.setGitDir(new File(".git", modelDirectory)).readEnvironment()
-                                                  .findGitDir().build()
+                .findGitDir().build()
 
             Git git = new Git(repository)
-            RevWalk walk = new RevWalk(repository,100)
+            RevWalk walk = new RevWalk(repository, 100)
             RevCommit commit = null
-			LogCommand cmd = git.log()
-			cmd.addPath(path)
-			Iterable<RevCommit> logs = cmd.call()
-			Iterator<RevCommit> i = logs.iterator()
+            LogCommand cmd = git.log()
+            cmd.addPath(path)
+            Iterable<RevCommit> logs = cmd.call()
+            Iterator<RevCommit> i = logs.iterator()
 
-			while (i.hasNext()) {
-				def iterated = i.next()
-				commit = walk.parseCommit( iterated )
-				long timestamp = commit.getCommitTime()
-				VcsFileDetails detail = new VcsFileDetails()
-				detail.revisionId=iterated.getName()
-				detail.commit=timestamp * 1000
-				detail.msg=commit.getFullMessage()
-				fileDetails.add(detail)
-			}
-		}
-		catch (Exception ex) {
-				throw new IOException("Git command could not be executed", ex)	
-		}
-		return fileDetails
-    }
-
-    /*
-     * Updates a model with the suppled files and default commit message
-     * 
-     * Overload of updateModel with a default message
-     * @param modelDirectory The model directory
-     * @param files A list of files to be put into the repository
-     **/
-    @Profiled(tag = "gitManager.updateModel")
-    public String updateModel(File modelDirectory, List<File> addfiles, List<File> removeFiles) {
-        return updateModel(modelDirectory, addfiles, removeFiles, "Update of ${modelDirectory.name}")
-    }
-
-    /*
-     * Convenience function for copying files from a given directory
-     * to exchange, and passing the file objects back
-     * 
-     * @param modelDirectory The model directory where files are to be copied from
-     * @param addHere a list object where the created file objects are stored
-     **/
-    @Profiled(tag = "gitManager.downloadFiles")
-    private void downloadFiles(File modelDirectory, List<File> addHere)
-    {
-        File[] repFiles=modelDirectory.listFiles()
-        File tempDir = new File (exchangeDirectory.absolutePath + System.getProperty("file.separator") + UUID.randomUUID().toString() )
-        tempDir.mkdir()
-        repFiles.each
-        {
-            File destinationFile = new File(tempDir.absolutePath + System.getProperty("file.separator") + it.getName())
-            if (!it.isDirectory())
-            {
-                FileUtils.copyFile(it, destinationFile)
-                addHere.add(destinationFile)
+            while (i.hasNext()) {
+                def iterated = i.next()
+                commit = walk.parseCommit(iterated)
+                long timestamp = commit.getCommitTime()
+                VcsFileDetails detail = new VcsFileDetails()
+                detail.revisionId = iterated.getName()
+                detail.commit = timestamp * 1000
+                detail.msg = commit.getFullMessage()
+                fileDetails.add(detail)
             }
         }
+        catch (Exception ex) {
+            throw new IOException("Git command could not be executed", ex)
+        }
+        return fileDetails
+    }
+    /**
+     * Convenience function for copying files from a given directory
+     * to exchange, and passing the file objects back
+     *
+     * @param modelDirectory The model directory where files are to be copied from
+     * @param addHere a list object where the created file objects are stored
+     */
+    @Profiled(tag = "gitManager.downloadFiles")
+    private void downloadFiles(File modelDirectory, List<File> addHere) {
+        File[] repFiles = modelDirectory.listFiles()
+        File tempDir = new File(exchangeDirectory.absolutePath + System.getProperty("file.separator") + UUID.randomUUID().toString())
+        tempDir.mkdir()
+        repFiles.each
+            {
+                File destinationFile = new File(tempDir.absolutePath + System.getProperty("file.separator") + it.getName())
+                if (!it.isDirectory()) {
+                    FileUtils.copyFile(it, destinationFile)
+                    addHere.add(destinationFile)
+                }
+            }
         if (addHere.isEmpty()) throw new VcsException("Model directory is empty!")
 
     }
 
-    /*
+    /**
      * Retrieves files associated with the latest revision of a model
-     * 
+     *
      * Same as calling retrieveModel(modelDirectory, null)
-     * @param modelDirectory The model directory
-     **/
+     * @param   modelDirectory The model directory
+     * @return  a list of the files associated with the the latest revision
+     */
     @Profiled(tag = "gitManager.retrieveModel")
-    public List<File> retrieveModel(File modelDirectory) {
+    List<File> retrieveModel(File modelDirectory) {
         return retrieveModel(modelDirectory, null)
     }
 
-    /*
+    /**
      * Retrieves files associated with the specified revision of a model
-     * 
+     *
      * Locks model directory. If the current revision is requested (by specifying
      * null as the revision) the files currently in the model directory are
      * copied into the exchange directory. If an earlier revision is requested
      * the repository is first set to the requested revision, the files are downloaded
-     * to exchange, before the repository is set back to the latest revision.
+     * to exchange directory, before the repository is set back to the latest revision.
      * @param modelDirectory The model directory
-     * @param revision The revision of the model requested
-     **/
+     * @param revision the string indicates the starting point of the checkout. It could be a hash string, branch name, tag name, etc. In the context of JUMMP, this is the vcs identifier of a specific revision.
+     * If this is null, HEAD will be used.
+     * @return a list of the files associated with the given revision
+     */
     @Profiled(tag = "gitManager.retrieveModel")
-    public List<File> retrieveModel(File modelDirectory, String revision) {
+    List<File> retrieveModel(File modelDirectory, String revision) {
         ensureRepInited(modelDirectory)
         List<File> returnedFiles = new LinkedList<File>()
         lockModelRepository(modelDirectory)
@@ -410,66 +426,66 @@ class GitManager implements VcsManager {
                 // return current HEAD revision
                 downloadFiles(modelDirectory, returnedFiles)
             } else {
-                if (!getRevisionsPrivate(modelDirectory,false).contains(revision))
-                throw new VcsException("Revision '$revision' not found in model directory '$modelDirectory' !")
+                if (!getRevisionsPrivate(modelDirectory, false).contains(revision))
+                    throw new VcsException("Revision '$revision' not found in model directory '$modelDirectory' !")
                 try {
                     // need to checkout in a temporary branch
                     String branchName = UUID.randomUUID()
                     initedRepositories.get(modelDirectory).
-                                       checkout().
-                                       setName(branchName).
-                                       setCreateBranch(true).
-                                       setStartPoint(revision).
-                                       call()
+                        checkout().
+                        setCreateBranch(true).
+                        setName(branchName).
+                        setStartPoint(revision).
+                        call()
                     downloadFiles(modelDirectory, returnedFiles)
                     initedRepositories.get(modelDirectory).checkout().setName("master").call()
                     initedRepositories.get(modelDirectory).branchDelete().setBranchNames(branchName).call()
-                } catch (Exception e) {
-                    throw new VcsException("Checking out file from git failed: ", e)
+                } catch (VcsException e) {
+                    throw new VcsException("Checking out file from git directory ${modelDirectory?.name} failed: ", e)
                 }
             }
+        } catch (VcsException e) {
+            throw new VcsNotInitedException()
         } finally {
             unlockModelRepository(modelDirectory)
         }
         return returnedFiles
     }
 
-    /*
-     * Retrieves the revisions associated with the model by looking at the git log
-     * 
+    /**
+     * Retrieves the revisions associated with the model by looking at the git log.
+     *
      * Locks model directory. Iterates through the git log, adding the revision
      * id associated with each commit to the returned list.
      * @param modelDirectory The model directory
-     **/
+     */
     @Profiled(tag = "gitManager.getRevisions")
-    public List<String> getRevisions(File modelDirectory) {
+    List<String> getRevisions(File modelDirectory) {
         return getRevisionsPrivate(modelDirectory, true)
     }
 
-    /*
-     * Retrieves the revisions associated with the model by looking at the git log with optional locking
-     * 
-     * Convenience function with flag for specifying whether or not to lock model directory. 
+    /**
+     * Retrieves the revisions associated with the model by looking at the git log with optional locking.
+     *
+     * Convenience function with flag for specifying whether or not to lock model directory.
      * As FileLocks are not re-entrant, when the function is called from within the class
-     * where the lock has already been acquired, set the flag false. 
+     * where the lock has already been acquired, set the flag false.
      * @param modelDirectory The model directory
      * @param acquireLocks Whether or not to acquire locks.
-     **/
+     */
     @Profiled(tag = "gitManager.getRevisionsPrivate")
     private List<String> getRevisionsPrivate(File modelDirectory, boolean acquireLocks) {
         ensureRepInited(modelDirectory)
-        List<String> myList=new LinkedList<String>()
+        List<String> myList = new LinkedList<String>()
         if (acquireLocks) {
             lockModelRepository(modelDirectory)
         }
         try {
-            Iterator<RevCommit> log=initedRepositories.get(modelDirectory).log().call().iterator()
-            log.each
-            {
+            Iterator<RevCommit> log = initedRepositories.get(modelDirectory).log().call().iterator()
+            log.each {
                 myList.add(it.getName())
             }
-        }
-        finally {
+        } finally {
             if (acquireLocks) {
                 unlockModelRepository(modelDirectory)
             }
@@ -477,26 +493,24 @@ class GitManager implements VcsManager {
         return myList
     }
 
-    /*
+    /**
      * Multi-file per model version of legacy remote repository implementation
-     * 
      * This is currently untested. The logic is the same as the single repository
      * implementation, however it is currently only acting on the cached repositories.
      * DO NOT USE AS IS FOR REMOTE REPOSITORIES. Untested mapping of legacy code
-     * to new data structures, mainly for the purposes of keeping interfaces 
+     * to new data structures, mainly for the purposes of keeping interfaces.
      * current and compiling.
      * @param modelDirectory The model directory
-     **/
+     */
     @Profiled(tag = "gitManager.updateWorkingCopy")
-    public void updateWorkingCopy(File modelDirectory) {
+    void updateWorkingCopy(File modelDirectory) {
         ensureRepInited(modelDirectory)
         lockModelRepository(modelDirectory)
         try {
             if (hasRemote) {
                 initedRepositories.get(modelDirectory).pull().call()
             }
-        }
-        finally {
+        } finally {
             unlockModelRepository(modelDirectory)
         }
     }
@@ -511,7 +525,8 @@ class GitManager implements VcsManager {
      * @param modelDirectory The model directory
      * @param files The files to copy into the directory
      * @param deleted The files that will be deleted
-     * @param commitMessage The commit message 
+     * @param commitMessage The commit message
+     * @return A String A string representing the commit hash of the recently created revision
      */
     @Profiled(tag = "gitManager.handleModification")
     private String handleModification(File modelDirectory, List<File> files, List<File> deleted, String commitMessage) {
