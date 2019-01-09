@@ -47,18 +47,18 @@ public class SubmissionFlowInvalidVersionTest extends SubmissionFlowTestBase {
 
     @Before
     void setUp() {
-    	initialise();
+        initialise()
     }
 
     @Test
     void testSubmitInvalidSbml() {
-    	grailsApplication.config.jummp.plugins.sbml.validation = true
-    	testSetup();
+        grailsApplication.config.jummp.plugins.sbml.validation = true
+        testSetup()
         getToUploadPage()
         signalEvent("Upload")
         assertFlowState("uploadFiles")
         Map<File, String> additionalFiles = getRandomAdditionalFiles(10)
-    	File file = new File("test/files/invalidVersion.xml");
+        File file = new File("test/files/invalidVersion.xml")
         addSubmissionFiles([file], additionalFiles)
         signalEvent("Upload")
         assertFlowState("uploadFiles")
