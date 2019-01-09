@@ -377,8 +377,11 @@ form.resource_search input.submit{
 .alert {
     padding: 7px;
     background-color: #f44336; /* Red */
-    color: white;
     margin-bottom: 3px;
+}
+
+.alert h5 {
+    color: white !important;
 }
 
 .alert.success {
