@@ -47,6 +47,10 @@ class UrlMappings {
                 controller(notEqual: 'model')
             }
         }
+        name agedbrain: "/agedbrain" {
+            controller = "feature"
+            action = 'agedbrain'
+        }
         // used for web services
         "/$controller/$action?/$id?(.$format)?"{
             constraints {

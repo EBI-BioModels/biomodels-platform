@@ -30,11 +30,13 @@
 
 package net.biomodels.jummp.core
 
+import net.biomodels.jummp.core.adapters.PersonAdapter
 import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter
 import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand
 import net.biomodels.jummp.core.model.PublicationTransportCommand
 import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.plugins.security.Person
+import net.biomodels.jummp.plugins.security.PersonTransportCommand
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.xml.sax.SAXParseException
@@ -166,7 +168,8 @@ class PubMedService {
             String userRealName = authorXml.fullName[0].text()
             author.userRealName = userRealName
             author.save(flush: true)
-            publication.authors.add(author)
+            PersonTransportCommand authorTC = new PersonAdapter(person: author).toCommandObject()
+            publication.authors.add(authorTC)
         }
     }
 }

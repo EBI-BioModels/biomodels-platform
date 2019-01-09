@@ -45,15 +45,6 @@ class ModelOfTheMonthController {
         [entries: entries]
     }
 
-    def updatePreviewImageAndShortDescription() {
-        List<ModelOfTheMonth> models = modelOfTheMonthService.updatePreviewImageAndShortDescription()
-        String updateReport = ""
-        models.each {ModelOfTheMonth model ->
-            updateReport += "${model.publicationDate.toString()}: ${model.shortDescription}<br/>"
-        }
-        render updateReport
-    }
-
     def create() {
         Date current = new Date()
         String yearDate = current.format(ModelOfTheMonth.DATE_FORMAT_PATTERN)
@@ -93,5 +84,11 @@ class ModelOfTheMonthController {
         }
         response.status = result.status
         render(result as JSON)
+    }
+
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def rss() {
+        String result = modelOfTheMonthService.createFeeds()
+        render(text: result, contentType: "application/xml")
     }
 }
