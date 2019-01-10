@@ -37,9 +37,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
-public class SubmissionFlowInvalidPharmmlTest extends SubmissionFlowTestBase {
-
-    
+class SubmissionFlowInvalidPharmmlTest extends SubmissionFlowTestBase {
     @After
     void tearDown() {
         super.tearDown()
@@ -47,17 +45,17 @@ public class SubmissionFlowInvalidPharmmlTest extends SubmissionFlowTestBase {
 
     @Before
     void setUp() {
-    	initialise();
+        initialise()
     }
 
     @Test
     void testSubmitInvalidPharmml() {
-    	testSetup();
+        testSetup()
         getToUploadPage()
         signalEvent("Upload")
         assertFlowState("uploadFiles")
         Map<File, String> additionalFiles = getRandomAdditionalFiles(10)
-    	File file = new File("test/files/invalidPharmml.xml");
+        File file = new File("test/files/invalidPharmml.xml")
         addSubmissionFiles([file], additionalFiles)
         signalEvent("Upload")
         assertFlowState("uploadFiles")

@@ -27,7 +27,7 @@ package net.biomodels.jummp.plugins.omicsdi
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 
-@Secured(["hasRole('ROLE_ADMIN')"])
+@Secured(['ROLE_ADMIN'])
 class OmicsdiController {
     /**
      * Flag that checks whether the dynamically-inserted logger is set to INFO or higher.
