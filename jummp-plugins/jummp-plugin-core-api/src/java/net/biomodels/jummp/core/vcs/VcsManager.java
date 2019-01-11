@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2019 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -52,14 +52,14 @@ import java.util.List;
 *
 *
 *
-* This interface has been modified from a 'file oriented' view to 'model oriented'. Here a folder 
+* This interface has been modified from a 'file oriented' view to 'model oriented'. Here a folder
 * is associated with a model, with files added and retrieved through specified
 * revisions of the model folder. The interface has been considerably modified including
 * the following behaviours: the initRepository no longer throws an exception if a
 * repository is already inited. Conversely, the functions that previously used to
-* throw an exception when the repository was not inited no longer do so, instead 
+* throw an exception when the repository was not inited no longer do so, instead
 * the repository should be inited. This is because repository folders are now to be
-* generated dynamically, which will make initing manually as part of the system 
+* generated dynamically, which will make initing manually as part of the system
 * setup infeasible.
 **/
 public interface VcsManager {
@@ -96,7 +96,7 @@ public interface VcsManager {
     * Copies @p files into the model directory of the VCS, with a single commit
     * @param modelDirectory the model directory
     * @param files the files to import
-    * @param deleted the files to delete (can be null) 
+    * @param deleted the files to delete (can be null)
     * @return Revision corresponding to the commit
     * @see updateModel
     * @throws VcsException
@@ -106,7 +106,7 @@ public interface VcsManager {
     /**
     * Retrieves files at the @p modelDirectory  of given @p revision.
     * Copies the files from @p modelDirectory to the exchange directory. If the version is the
-    * current head (specified by passing null as revision) this results in copying the 
+    * current head (specified by passing null as revision) this results in copying the
     * current model directory to the exchange directory. If a previous revision is required
     * a VCS depending operation is performed to retrieve the revision from VCS.
     * It is the responsibility of the caller to delete the files in the exchange directory, when
@@ -132,12 +132,12 @@ public interface VcsManager {
     * Returns the revision ids associated with the modelDirectory in the repository
     * @param modelDirectory the model directory
     */
-    List<String> getRevisions(File modelDirectory);
+    List<String> getRevisions(File modelDirectory) throws VcsException;
 
     /**
     * Updates the working copy to the latest remote HEAD.
     */
-    void updateWorkingCopy(File modelDirectory);
+    void updateWorkingCopy(File modelDirectory) throws VcsException;
 
     /**
     * Retrieves the creation and last modified dates for a file

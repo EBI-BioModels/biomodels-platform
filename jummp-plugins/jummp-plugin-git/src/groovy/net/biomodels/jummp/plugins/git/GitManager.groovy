@@ -134,7 +134,7 @@ class GitManager implements VcsManager {
      * storage of model files
      */
     @Profiled(tag = "gitManager.init")
-    void init(File exchangeDirectory) {
+    void init(File exchangeDirectory) throws VcsException {
         if (this.exchangeDirectory == exchangeDirectory) {
             throw new VcsAlreadyInitedException()
         }
@@ -158,9 +158,10 @@ class GitManager implements VcsManager {
         return channel
     }
 
-    private FileLock obtainExclusiveLock(File modelDirectory) {
+    private FileLock obtainExclusiveLock(File modelDirectory) throws VcsException {
         FileLock lock = null
         long accumulate = 0
+        Exception lastException = null
         try {
             while (accumulate < 300000) {
                 try {
@@ -178,10 +179,17 @@ class GitManager implements VcsManager {
             }
             //lock=channel.lock()
         } catch (Exception e) {
-            e.printStackTrace()
+            if (e instanceof InterruptedException && Thread.currentThread().isInterrupted()) {
+                throw e // let upstream deal with it
+            }
+            lastException = e
         }
         if (!lock) {
-            throw new Exception("Error obtaining disk based lock, waited $accumulate ms")
+            def ex = new VcsException("Error obtaining disk based lock, waited $accumulate ms")
+            if (null != lastException) {
+                ex.initCause(lastException)
+            }
+            throw ex
         }
         return lock
     }
@@ -195,7 +203,7 @@ class GitManager implements VcsManager {
      * @param modelDirectory The directory to lock
      */
     @Profiled(tag = "gitManager.lockModelRepository")
-    private void lockModelRepository(File modelDirectory) {
+    private void lockModelRepository(File modelDirectory) throws VcsException {
         if (!locks.containsKey(modelDirectory.name)) {
             ReentrantLock lock = new ReentrantLock()
             locks.put(modelDirectory.name, lock)
@@ -309,7 +317,8 @@ class GitManager implements VcsManager {
      * @param addFiles A list of the supplied files to be put into the repository
      */
     @Profiled(tag = "gitManager.updateModel")
-    String updateModel(File modelDirectory, List<File> addFiles, List<File> removeFiles) {
+    String updateModel(File modelDirectory, List<File> addFiles, List<File> removeFiles)
+            throws VcsException {
         return updateModel(modelDirectory, addFiles, removeFiles, "Update of ${modelDirectory.name}")
     }
 
@@ -323,7 +332,8 @@ class GitManager implements VcsManager {
      * @param commitMessage The commit message for this revision
      */
     @Profiled(tag = "gitManager.updateModel")
-    String updateModel(File modelDirectory, List<File> addFiles, List<File> removeFiles, String commitMessage) {
+    String updateModel(File modelDirectory, List<File> addFiles, List<File> removeFiles,
+            String commitMessage) throws VcsException {
         ensureRepInited(modelDirectory)
         String revision = null
         lockModelRepository(modelDirectory)
@@ -399,7 +409,7 @@ class GitManager implements VcsManager {
      * @return  a list of the files associated with the the latest revision
      */
     @Profiled(tag = "gitManager.retrieveModel")
-    List<File> retrieveModel(File modelDirectory) {
+    List<File> retrieveModel(File modelDirectory) throws VcsException {
         return retrieveModel(modelDirectory, null)
     }
 
@@ -417,7 +427,7 @@ class GitManager implements VcsManager {
      * @return a list of the files associated with the given revision
      */
     @Profiled(tag = "gitManager.retrieveModel")
-    List<File> retrieveModel(File modelDirectory, String revision) {
+    List<File> retrieveModel(File modelDirectory, String revision) throws VcsException {
         ensureRepInited(modelDirectory)
         List<File> returnedFiles = new LinkedList<File>()
         lockModelRepository(modelDirectory)
@@ -460,7 +470,7 @@ class GitManager implements VcsManager {
      * @param modelDirectory The model directory
      */
     @Profiled(tag = "gitManager.getRevisions")
-    List<String> getRevisions(File modelDirectory) {
+    List<String> getRevisions(File modelDirectory) throws VcsException {
         return getRevisionsPrivate(modelDirectory, true)
     }
 
@@ -503,7 +513,7 @@ class GitManager implements VcsManager {
      * @param modelDirectory The model directory
      */
     @Profiled(tag = "gitManager.updateWorkingCopy")
-    void updateWorkingCopy(File modelDirectory) {
+    void updateWorkingCopy(File modelDirectory) throws VcsException {
         ensureRepInited(modelDirectory)
         lockModelRepository(modelDirectory)
         try {

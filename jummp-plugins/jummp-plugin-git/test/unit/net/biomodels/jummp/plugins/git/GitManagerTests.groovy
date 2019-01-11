@@ -45,6 +45,7 @@ import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
+import org.junit.Test
 
 class GitManagerTests extends GrailsUnitTestCase {
     private File clone
@@ -54,7 +55,6 @@ class GitManagerTests extends GrailsUnitTestCase {
     private Repository repository
 
     protected void setUp() {
-        println "Set up"
         super.setUp()
         clone = new File("target/vcs/clone")
         clone.mkdirs()
@@ -67,7 +67,6 @@ class GitManagerTests extends GrailsUnitTestCase {
     }
 
     protected void tearDown() {
-        println "Clean up"
         super.tearDown()
         FileUtils.deleteDirectory(new File("target/vcs/"))
     }
@@ -92,6 +91,13 @@ class GitManagerTests extends GrailsUnitTestCase {
             gitManager.init(exchangeDirectory)
         }
     }
+
+    @Test
+    void testGetFileDetails() {
+        File clone = new File("target/vcs/clone")
+        assertNull new File(".git", clone).canonicalPath
+    }
+
 
     void testRetrieveModel() {
         println ">> Running testRetrieveModel()"
