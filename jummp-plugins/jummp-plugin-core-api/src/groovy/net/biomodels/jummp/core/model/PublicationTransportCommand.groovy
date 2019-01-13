@@ -115,6 +115,7 @@ class PublicationTransportCommand implements Serializable {
         authors nullable: false, validator: { authorValue, pubObj ->
         	return !authorValue.isEmpty()
         }
+        link(nullable: true, unique: 'linkProvider')
     }
 
     String prettierPrint() {
