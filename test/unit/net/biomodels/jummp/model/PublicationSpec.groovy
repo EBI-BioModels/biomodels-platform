@@ -82,7 +82,7 @@ class PublicationSpec extends ConstraintUnitSpec {
     @Unroll("test Publication unique constraint set for link and link provider")
     def "test Publication unique constraint set for link and link provider"() {
         given: "instantiate two mocked publications"
-        PublicationLinkProvider provider = new PublicationLinkProvider(linkType: PublicationLinkProvider.LinkType.PUBMED, pattern: "[0-9]+")
+        PublicationLinkProvider provider = new PublicationLinkProvider(linkType: PublicationLinkProvider.LinkType.PUBMED, pattern: "^\\d+\$")
         mockForConstraintsTests(Publication)
         Publication pub1 = new Publication(title: "Title 1", linkProvider: provider, link: '123456789')
 
@@ -91,7 +91,7 @@ class PublicationSpec extends ConstraintUnitSpec {
         pub1.save(flush: true)
         1 == Publication.count()
         Publication pub2 = new Publication(title: "Title 2", linkProvider: provider, link: '123456789')
-        // check for the uniqueness between two user objects
+        // check for the uniqueness between two publication objects
         mockForConstraintsTests(Publication, [pub2, pub1])
 
         then: "raise some errors"
