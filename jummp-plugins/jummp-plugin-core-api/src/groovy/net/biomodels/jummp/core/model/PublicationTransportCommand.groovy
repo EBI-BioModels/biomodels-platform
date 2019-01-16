@@ -46,6 +46,7 @@ import net.biomodels.jummp.plugins.security.PersonTransportCommand
 @grails.validation.Validateable
 class PublicationTransportCommand implements Serializable {
     private static final long serialVersionUID = 1L
+    Long id
     /**
      * Name of the journal where the publication has been published
      */
@@ -97,6 +98,7 @@ class PublicationTransportCommand implements Serializable {
     String link
     List<PersonTransportCommand> authors
     static constraints = {
+        id(nullable: true)
     	// importFrom Publication ...would have been nice :(
     	// TODO: do we need more than 250 characters?
         journal(nullable: false, blank: false)
