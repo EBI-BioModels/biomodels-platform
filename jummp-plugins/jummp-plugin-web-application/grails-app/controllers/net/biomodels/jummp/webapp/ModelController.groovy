@@ -48,6 +48,7 @@ import net.biomodels.jummp.core.model.audit.AccessFormat
 import net.biomodels.jummp.core.model.audit.AccessType
 import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
 import net.biomodels.jummp.model.Model
+import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.Person
 import net.biomodels.jummp.plugins.security.PersonTransportCommand
@@ -1007,6 +1008,12 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                 } else {
                     String pubLinkProvider = params.list("PubLinkProvider")[0]
                     String pubLink = params.list("PublicationLink")[0]
+                    /**
+                     * When 'Publication without link' is chosen, the 'pubLink' is an empty string. Its according value
+                     * in the database is null. To make a correct comparison below, we need to transform an empty string
+                     * to null.
+                     */
+                    pubLink = pubLink ?: null
                     if (pubLinkProvider) { // one of the publication link providers has been selected
                         if (!publicationService.verifyLink(pubLinkProvider, pubLink)) {
                             flash.flashMessage = "The link is not a valid ${params.PubLinkProvider}"
@@ -1015,7 +1022,7 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                         ModelTransportCommand model = flow.workingMemory.get("ModelTC") as ModelTransportCommand
                         boolean providerHasChanged = params.PubLinkProvider !=
                             model.publication?.linkProvider?.linkType
-                        boolean linkHasChanged = params.PublicationLink != model.publication?.link
+                        boolean linkHasChanged = pubLink != model.publication?.link
                         if (providerHasChanged || linkHasChanged) {
                             Map<String,String> modifications = new HashMap<String,String>()
                             modifications.put("PubLinkProvider", params.PubLinkProvider)
@@ -1062,15 +1069,21 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                                 boolean changedPubLinkProvider = previousPubLinkProvider?.linkType != updatedPubLinkProvider?.linkType
                                 boolean changedPubLink = previousPubLink != publicationContext?.publication?.link
                                 boolean changed =  changedPubLinkProvider || changedPubLink
+                                // reload the publication from cache
+                                retrieved = publicationContext?.publication
                                 if (!changed) {
-                                    // reload the publication from cache
-                                    retrieved = publicationContext?.publication
                                     if (publicationContext.comesFromDatabase) {
                                         flash.flashMessage = g.message(code: "publication.editor.duplicateEntry.message")
                                     }
                                 } else { // load from database, external call or create a default PTC
-                                    publicationContext = loadOrFetchOrCreatePublication(model)
-                                    retrieved = publicationContext?.publication
+                                    if (updatedPubLinkProvider.linkType == PublicationLinkProvider.LinkType.MANUAL_LABEL) {
+                                        if (publicationContext.comesFromDatabase) {
+                                            flash.flashMessage = g.message(code: "publication.editor.duplicateEntry.message")
+                                        }
+                                    } else {
+                                        publicationContext = loadOrFetchOrCreatePublication(model)
+                                        retrieved = publicationContext?.publication
+                                    }
                                 }
                             } else { // load from database, external call or create a default PTC
                                 publicationContext = loadOrFetchOrCreatePublication(model)
