@@ -91,13 +91,7 @@ class PublicationService {
     }
 
     PublicationDetailExtractionContext getPublicationExtractionContext(PublicationTransportCommand cmd) throws JummpException {
-        def linkType = PublicationLinkProvider.LinkType.findLinkTypeByLabel(cmd.linkProvider.linkType)
-        Publication publication = Publication.withCriteria(uniqueResult: true) {
-            eq("link", cmd.link)
-            linkProvider {
-                eq("linkType", linkType)
-            }
-        }
+        Publication publication = findByPublicationTransportCommand(cmd)
         PublicationDetailExtractionContext ctx = new  PublicationDetailExtractionContext()
         if (publication) {
             // if existing in database
@@ -202,12 +196,7 @@ Failed to add author $person to $publication: ${tmp.errors.allErrors.inspect()}"
     }
 
     Publication fromCommandObject(PublicationTransportCommand cmd) {
-        Publication publication = Publication.withCriteria(uniqueResult: true) {
-            eq("link",cmd.link)
-            linkProvider {
-                eq("linkType", PublicationLinkProvider.LinkType.findLinkTypeByLabel(cmd.linkProvider.linkType))
-            }
-        }
+        Publication publication = findByPublicationTransportCommand(cmd)
         if (publication) {
             publication.title = cmd.title
             publication.affiliation = cmd.affiliation
@@ -245,5 +234,21 @@ Failed to add author $person to $publication: ${tmp.errors.allErrors.inspect()}"
             log.error("Error encountered while saving publication ${publ.dump()}: $err".toString())
         }
         return publ
+    }
+
+    private Publication findByPublicationTransportCommand(PublicationTransportCommand cmd) {
+        Publication publication
+        if (cmd?.id) {
+            publication = Publication.get(cmd.id)
+        } else {
+            PublicationLinkProvider.LinkType linkType = PublicationLinkProvider.LinkType.findLinkTypeByLabel(cmd.linkProvider.linkType)
+            publication = Publication.withCriteria(uniqueResult: true) {
+                eq("link", cmd.link)
+                linkProvider {
+                    eq("linkType", linkType)
+                }
+            }
+        }
+        publication
     }
 }
