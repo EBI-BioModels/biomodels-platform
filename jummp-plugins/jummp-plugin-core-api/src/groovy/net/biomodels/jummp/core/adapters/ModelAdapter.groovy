@@ -24,7 +24,6 @@ import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.util.Holders
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
-import net.biomodels.jummp.core.IModelService
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Revision
@@ -54,15 +53,19 @@ class ModelAdapter {
         boolean modelIsSaved = null != modelId
         if (modelIsSaved) {
             if (SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
-                latestRev = model.revisions.last()
-                firstRev = model.revisions.first()
+                /*latestRev = model.revisions.last()
+                firstRev = model.revisions.first()*/
+                latestRev = model.revisions.sort { it.revisionNumber }.last()
+                firstRev = model.revisions.sort { it.revisionNumber }.first()
             } else {
                 latestRev = getLatestRevisionForUser(saveHistory)
-                firstRev = model.revisions.first()
+                //firstRev = model.revisions.first()
+                firstRev = model.revisions.sort { it.revisionNumber }.first()
             }
         } else {
             // if the model is not saved, there can only be at most one revision
-            latestRev = model.revisions?.first()
+            //latestRev = model.revisions?.first()
+            latestRev = model.revisions?.sort { it.revisionNumber }.first()
             firstRev = latestRev
         }
 
