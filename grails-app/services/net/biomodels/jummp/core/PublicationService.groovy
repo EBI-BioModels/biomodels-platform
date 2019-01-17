@@ -24,6 +24,7 @@
 
 package net.biomodels.jummp.core
 
+import groovy.json.JsonSlurper
 import net.biomodels.jummp.core.adapters.PublicationAdapter
 import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter
 import net.biomodels.jummp.core.model.PublicationDetailExtractionContext
@@ -36,6 +37,7 @@ import net.biomodels.jummp.plugins.security.PersonTransportCommand
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.springframework.validation.ObjectError
+
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -51,7 +53,6 @@ import java.util.regex.Pattern
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  * @date created on 08/06/2016.
  */
-
 
 class PublicationService {
     final Log log = LogFactory.getLog(getClass())
@@ -112,12 +113,12 @@ class PublicationService {
         ctx
     }
 
-    public List getPersons(Publication publication) {
+    List getPersons(Publication publication) {
         PublicationPerson.findAllByPublication(publication,
             [sort: "position", order: "asc"])
     }
 
-    public void addPublicationAuthor(Publication publication,
+    void addPublicationAuthor(Publication publication,
                                      Person person,
                                      String pubAlias,
                                      Integer position) {
@@ -131,7 +132,7 @@ Failed to add author $person to $publication: ${tmp.errors.allErrors.inspect()}"
         }
     }
 
-    public void removePublicationAuthor(Publication publication, Person person) {
+    void removePublicationAuthor(Publication publication, Person person) {
         def tobeDeleted = PublicationPerson.findByPublicationAndPerson(publication, person)
         if (tobeDeleted) {
             tobeDeleted.delete()
@@ -234,6 +235,59 @@ Failed to add author $person to $publication: ${tmp.errors.allErrors.inspect()}"
             log.error("Error encountered while saving publication ${publ.dump()}: $err".toString())
         }
         return publ
+    }
+
+    PublicationTransportCommand updateAuthors(PublicationTransportCommand cmd, def authorsAsJson) {
+        List<PersonTransportCommand> validatedAuthors = new LinkedList<PersonTransportCommand>()
+        validatedAuthors = parseAuthorsJSON(authorsAsJson)
+        if (validatedAuthors) {
+            cmd.authors = validatedAuthors
+        }
+        if (!cmd.validate()) {
+            log.error """\
+The publication does not validate: ${cmd.properties}. Errors: ${cmd.errors.allErrors.inspect()}."""
+            //flash.validationErrorOn = tempPTC
+            //return error()
+        }
+    }
+
+    private List<Person> parseAuthorsJSON(def jsonData) {
+        List<Person> validatedAuthors = new LinkedList<>()
+        def slurper = new JsonSlurper()
+        def parsedJson = slurper.parseText(jsonData)
+        if (!parsedJson['authors']) {
+            return []
+        }
+        def authorList = parsedJson['authors']
+        for (Object authorJson : authorList) {
+            if (!authorJson) {
+                continue // skip this record
+            }
+            String name = authorJson["userRealName"]
+            String institution = authorJson["institution"] ?: null
+            String orcid = authorJson["orcid"] ?: null
+
+            Person author
+            if (!orcid) {
+                author = Person.findOrCreateWhere(userRealName: name, orcid: orcid, institution: institution)
+            } else {
+                author = Person.findOrCreateByOrcid(orcid)
+                author.userRealName = name
+                author.institution  = institution
+            }
+
+            if (author.validate()) {
+                validatedAuthors.add(author)
+            } else {
+                // this person record is invalid
+                // throw a checked exception that is caught downstream -- e.g. in ModelController
+                log.error """\
+The author did not validate: ${author.properties}. Errors: ${author.errors.allErrors.inspect()}."""
+                //flash.validationErrorOn = author
+                //return error()
+            }
+        }
+        validatedAuthors
     }
 
     private Publication findByPublicationTransportCommand(PublicationTransportCommand cmd) {

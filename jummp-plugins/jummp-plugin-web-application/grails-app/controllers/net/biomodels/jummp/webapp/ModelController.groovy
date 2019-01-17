@@ -1125,61 +1125,9 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                 PDEC pubContext = publicationMap.get(flow.workingMemory.get("SelectedPubLinkProvider"))
                 PublicationTransportCommand tempPTC = pubContext.publication
                 bindData(tempPTC, params, [exclude: ['authors']])
-                bindData(model.publication, params, [exclude: ['authors']])
-                List<PersonTransportCommand> validatedAuthors = new LinkedList<PersonTransportCommand>()
-                def slurper = new JsonSlurper()
-                def result = slurper.parseText(params.authorListContainer)
-                if (result['authors']) {
-                    def authorList = result['authors']
-                    List<PersonTransportCommand> existingAuthors = model.publication.authors
-                    authorList.each {
-                        if (it) {
-                            String name = it["userRealName"]
-                            String institution = it["institution"] ?: null
-                            String orcid = it["orcid"] ?: null
-                            PersonTransportCommand author
-                            if (orcid) {
-                                /* retrieve the person having the same orcid, regardless of being or not being the existing authors */
-                                author = existingAuthors.find { PersonTransportCommand auth ->
-                                    orcid == auth.orcid
-                                }
-                                if (!author) {
-                                    Person person = Person.findByOrcid(orcid: orcid)
-                                    if (person) {
-                                        author = new PersonAdapter(person: person).toCommandObject()
-                                    }
-                                }
-                            } else if (existingAuthors?.size()) {
-                                author = existingAuthors.find { PersonTransportCommand auth ->
-                                    name == auth.userRealName
-                                }
-                            }
-                            if (!author) {
-                                author = new PersonTransportCommand(userRealName: name, institution: institution, orcid: orcid)
-                            } else if (institution) {
-                                author.institution = institution
-                            }
-                            if (author.validate()) {
-                                validatedAuthors.add(author)
-                            } else {
-                                log.error """\
-                                    Submission did not validate: ${author.properties}. Errors: ${author.errors.allErrors.inspect()}."""
-                                flash.validationErrorOn = author
-                                return error()
-                            }
-                        }
-                    }
-                    model.publication.authors = validatedAuthors
-                }
-                if (!model.publication.validate()) {
-                    log.error """\
-Submission did not validate: ${model.publication.properties}.
-Errors: ${model.publication.errors.allErrors.inspect()}."""
-                    flash.validationErrorOn = model.publication
-                    return error()
-                }
+                publicationService.updateAuthors(tempPTC, params.authorListContainer)
                 // Update the publication objects in working
-                tempPTC.authors = validatedAuthors
+                model.publication = tempPTC
                 pubContext.publication = tempPTC
                 publicationMap.put(flow.workingMemory.get("SelectedPubLinkProvider"), pubContext)
             }.to "displaySummaryOfChanges"
