@@ -35,11 +35,10 @@
 package net.biomodels.jummp.core.model
 
 import net.biomodels.jummp.model.Publication
-import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.plugins.security.PersonTransportCommand
 
 /**
- * @short Wrapper for a Publciation to be transported through JMS.
+ * @short Wrapper for a Publication to be transported through JMS.
  *
  * @author Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
  */
@@ -99,14 +98,10 @@ class PublicationTransportCommand implements Serializable {
     List<PersonTransportCommand> authors
     static constraints = {
         id(nullable: true)
-    	// importFrom Publication ...would have been nice :(
-    	// TODO: do we need more than 250 characters?
+        // importFrom Publication ...would have been nice :(
         journal(nullable: false, blank: false)
-        // TODO: do we need more than 250 characters?
         title(nullable: false, blank: false)
-        // TODO: do we need more than 250 characters?
         affiliation(nullable: false, blank: false)
-        // TODO: How long can an abstract be? Are 5000 characters sufficient?
         synopsis(nullable: false, blank: true, maxSize: 5000)
         year(nullable: true)
         month(nullable: true)
@@ -115,7 +110,7 @@ class PublicationTransportCommand implements Serializable {
         issue(nullable: true)
         pages(nullable: true)
         authors nullable: false, validator: { authorValue, pubObj ->
-        	return !authorValue.isEmpty()
+            return !authorValue.isEmpty()
         }
         link(nullable: true, unique: 'linkProvider')
     }
