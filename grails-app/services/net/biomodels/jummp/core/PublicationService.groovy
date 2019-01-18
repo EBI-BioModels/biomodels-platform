@@ -112,8 +112,7 @@ class PublicationService {
     }
 
     List getPersons(Publication publication) {
-        PublicationPerson.findAllByPublication(publication,
-            [sort: "position", order: "asc"])
+        PublicationPerson.findAllByPublication(publication, [sort: "position", order: "asc"])
     }
 
     void addPublicationAuthor(Publication publication,
@@ -143,8 +142,7 @@ Failed to add author $person to $publication: ${tmp.errors.allErrors.inspect()}"
             def existingAuthor = existing.find { oldAuthor ->
                 if (newAuthor.id) {
                     return newAuthor.id == oldAuthor.person.id
-                }
-                else if (newAuthor.orcid) {
+                } else if (newAuthor.orcid) {
                     return newAuthor.orcid == oldAuthor.person.orcid
                 }
                 return false
@@ -164,12 +162,10 @@ Failed to add author $person to $publication: ${tmp.errors.allErrors.inspect()}"
                 }
                 try {
                     addPublicationAuthor(publication, newlyCreatedPubAuthor, newAuthor.userRealName, index)
-                }
-                catch(Exception e) {
+                } catch(Exception e) {
                     e.printStackTrace()
                 }
-            }
-            else {
+            } else {
                 if (existingAuthor.position != index) {
                     existingAuthor.position = index
                     existingAuthor.save()
@@ -182,8 +178,7 @@ Failed to add author $person to $publication: ${tmp.errors.allErrors.inspect()}"
             def willBeRemovedAuthor = tobeAdded.find { willBeAddedAuthor ->
                 if (willBeAddedAuthor.id) {
                     return willBeAddedAuthor.id == author.person.id
-                }
-                else if (willBeAddedAuthor.orcid) {
+                } else if (willBeAddedAuthor.orcid) {
                     return willBeAddedAuthor.orcid == author.person.orcid
                 }
                 return false
