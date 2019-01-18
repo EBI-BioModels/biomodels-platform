@@ -30,6 +30,7 @@
 
 package net.biomodels.jummp.core
 
+import org.springframework.transaction.annotation.Transactional
 import net.biomodels.jummp.core.adapters.PersonAdapter
 import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter
 import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand
@@ -55,6 +56,7 @@ import org.xml.sax.SAXParseException
  */
 class PubMedService {
     final Log log = LogFactory.getLog(getClass())
+    static transactional = false
 
     private setFieldIfItExists(String fieldName, PublicationTransportCommand publication,
                                def xmlField, boolean castToInt) {
@@ -84,6 +86,7 @@ class PubMedService {
      * @return A fully populated Publication
      */
     @SuppressWarnings("EmptyCatchBlock")
+    @Transactional
     PublicationTransportCommand fetchPublicationData(String id) throws JummpException {
         URL url
         try {

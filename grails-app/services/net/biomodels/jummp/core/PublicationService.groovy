@@ -24,6 +24,7 @@
 
 package net.biomodels.jummp.core
 
+import org.springframework.transaction.annotation.Transactional
 import groovy.json.JsonSlurper
 import net.biomodels.jummp.core.adapters.PublicationAdapter
 import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter
@@ -196,6 +197,7 @@ Failed to add author $person to $publication: ${tmp.errors.allErrors.inspect()}"
         }
     }
 
+    @Transactional
     Publication fromCommandObject(PublicationTransportCommand cmd) {
         Publication publication = findByPublicationTransportCommand(cmd)
         if (publication) {
