@@ -21,50 +21,41 @@
 
 package net.biomodels.jummp.core
 
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
+import grails.test.runtime.FreshRuntime
 import grails.test.spock.IntegrationSpec
 import net.biomodels.jummp.core.model.PublicationTransportCommand as PTC
 import net.biomodels.jummp.plugins.security.Person
 
-@TestFor(PubMedService)
-@Mock([Person])
+@FreshRuntime
 class PubMedServiceSpec extends IntegrationSpec {
+    def service
+    def pubMedService
+    def setup() {
+        service = new PubMedService()
+    }
+
     def "search a PubMed publication"() {
-        given: "a PubMedID"
+        given: "a PubMed ID"
         String pubMedID = "23664840"
+
         when: "make a call to fetchPublicationData() method"
-        PTC ptc = service.fetchPublicationData(pubMedID)
+        PTC ptc = pubMedService.fetchPublicationData(pubMedID)
+
         then: "an actual object should be returned"
         null != ptc
     }
 
     def "fetch a publication and verify the authors"() {
-        given: "a PubMED ID"
+        given: "a PubMed ID"
         String pubMedId = "30218022"
+
         when: "make a call to fetchPublicationData() method"
-        PTC ptc = service.fetchPublicationData(pubMedId)
+        PTC ptc = pubMedService.fetchPublicationData(pubMedId)
+
         then: "receive an actual object and author name is not null"
         null != ptc
         ptc.validate()
         println ptc.authors.last().userRealName
         ptc.authors.first().userRealName != null
-    }
-
-    def "fetch a publication which one of the authors has ORCID persisted in the database"() {
-        given: "have a PubMedID"
-        String pubMedID = "23664840"
-
-        when: "try to fetch a publication which one of the authors has ORCID persisted in the database"
-        Person zanghellini = new Person(userRealName: "Zanghellini J", orcid: "0000-0002-1964-2455")
-        assert null != zanghellini
-        zanghellini.save()
-        assert 1 == Person.count()
-        PTC ptc = service.fetchPublicationData(pubMedID)
-        assert null != ptc
-
-        then: "author named Zanghellini J is reused rather than created newly"
-        ptc.authors.size() == 3
-        Person.count() == 3
     }
 }
