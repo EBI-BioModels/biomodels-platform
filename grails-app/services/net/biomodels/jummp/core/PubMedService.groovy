@@ -32,12 +32,12 @@ package net.biomodels.jummp.core
 
 import org.springframework.transaction.annotation.Transactional
 import net.biomodels.jummp.core.adapters.PersonAdapter
-import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter
-import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand
-import net.biomodels.jummp.core.model.PublicationTransportCommand
+import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter as PLPA
+import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PLPTC
+import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
 import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.plugins.security.Person
-import net.biomodels.jummp.plugins.security.PersonTransportCommand
+import net.biomodels.jummp.plugins.security.PersonTransportCommand as PersonTC
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.xml.sax.SAXParseException
@@ -58,7 +58,7 @@ class PubMedService {
     final Log log = LogFactory.getLog(getClass())
     static transactional = false
 
-    private setFieldIfItExists(String fieldName, PublicationTransportCommand publication,
+    private setFieldIfItExists(String fieldName, PubTC publication,
                                def xmlField, boolean castToInt) {
         try {
             if (xmlField && xmlField.size() == 1) {
@@ -87,7 +87,7 @@ class PubMedService {
      */
     @SuppressWarnings("EmptyCatchBlock")
     @Transactional
-    PublicationTransportCommand fetchPublicationData(String id) throws JummpException {
+    PubTC fetchPublicationData(String id) throws JummpException {
         URL url
         try {
             url = new URL("https://www.ebi.ac.uk/europepmc/webservices/rest/search/query=ext_id:${id}%20src:med&resulttype=core")
@@ -99,19 +99,18 @@ class PubMedService {
         def slurper
         try {
             slurper = new XmlSlurper().parse(url.openStream())
-        }
-        catch (SAXParseException e) {
+        } catch (SAXParseException e) {
             throw new JummpException("Could not parse PubMed information", e)
         }
         catch (Exception e) {
             throw new JummpException("Error retrieving publication info", e)
         }
         PublicationLinkProvider link = PublicationLinkProvider.withCriteria(uniqueResult: true) {
-            eq("linkType",PublicationLinkProvider.LinkType.PUBMED)
+            eq("linkType", PublicationLinkProvider.LinkType.PUBMED)
         }
-        PublicationLinkProviderTransportCommand linkCommand = new PublicationLinkProviderAdapter(
+        PLPTC linkCommand = new PLPA(
                 linkProvider: link).toCommandObject()
-        PublicationTransportCommand publication = new PublicationTransportCommand(linkProvider:
+        PubTC publication = new PubTC(linkProvider:
                 linkCommand, link: id)
         setFieldIfItExists("pages", publication, slurper.resultList.result.pageInfo, false)
         setFieldIfItExists("title", publication, slurper.resultList.result.title, false)
@@ -150,7 +149,7 @@ class PubMedService {
      * @param slurper The parsed XML document
      * @param publication The publication to add the authors to
      */
-    private void parseAuthors(def slurper, PublicationTransportCommand publication) {
+    private void parseAuthors(def slurper, PubTC publication) {
         publication.authors = []
         for (def authorXml in slurper.resultList.result.authorList.author) {
             Person author
@@ -171,7 +170,7 @@ class PubMedService {
             String userRealName = authorXml.fullName[0].text()
             author.userRealName = userRealName
             author.save(flush: true)
-            PersonTransportCommand authorTC = new PersonAdapter(person: author).toCommandObject()
+            PersonTC authorTC = new PersonAdapter(person: author).toCommandObject()
             publication.authors.add(authorTC)
         }
     }

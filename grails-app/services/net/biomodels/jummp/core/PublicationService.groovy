@@ -27,14 +27,14 @@ package net.biomodels.jummp.core
 import org.springframework.transaction.annotation.Transactional
 import groovy.json.JsonSlurper
 import net.biomodels.jummp.core.adapters.PublicationAdapter
-import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter
-import net.biomodels.jummp.core.model.PublicationDetailExtractionContext
-import net.biomodels.jummp.core.model.PublicationTransportCommand
+import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter as PLPA
+import net.biomodels.jummp.core.model.PublicationDetailExtractionContext as PDEC
+import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
 import net.biomodels.jummp.model.Publication
-import net.biomodels.jummp.model.PublicationLinkProvider
+import net.biomodels.jummp.model.PublicationLinkProvider as PLP
 import net.biomodels.jummp.model.PublicationPerson
 import net.biomodels.jummp.plugins.security.Person
-import net.biomodels.jummp.plugins.security.PersonTransportCommand
+import net.biomodels.jummp.plugins.security.PersonTransportCommand as PersonTC
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.springframework.validation.ObjectError
@@ -61,30 +61,28 @@ class PublicationService {
 
     def pubMedService
 
-    PublicationTransportCommand createPTCWithMinimalInformation(String pubLinkProvider,
-                                                                String pubLink,
-                                                                List<PersonTransportCommand> authors) {
-        def provider = PublicationLinkProvider.LinkType.findLinkTypeByLabel(pubLinkProvider)
-        PublicationTransportCommand retrieved = new PublicationTransportCommand()
-        PublicationLinkProvider publicationLinkProvider = PublicationLinkProvider.withCriteria(uniqueResult: true) {
+    PubTC createPTCWithMinimalInformation(String pubLinkProvider, String pubLink, List<PersonTC> authors) {
+        def provider = PLP.LinkType.findLinkTypeByLabel(pubLinkProvider)
+        PubTC retrieved = new PubTC()
+        PLP publicationLinkProvider = PLP.withCriteria(uniqueResult: true) {
             eq("linkType", provider)
         }
         retrieved.link = pubLink
-        retrieved.linkProvider = new PublicationLinkProviderAdapter(linkProvider:
+        retrieved.linkProvider = new PLPA(linkProvider:
                 publicationLinkProvider).toCommandObject()
         retrieved.authors = authors
         retrieved
     }
 
     boolean verifyLink(String linkTypeAsString, String link) {
-        def linkProvider = PublicationLinkProvider.LinkType.findLinkTypeByLabel(linkTypeAsString)
-        PublicationLinkProvider pubLinkProvider = PublicationLinkProvider.withCriteria(uniqueResult: true) {
+        def linkProvider = PLP.LinkType.findLinkTypeByLabel(linkTypeAsString)
+        PLP pubLinkProvider = PLP.withCriteria(uniqueResult: true) {
             eq("linkType", linkProvider)
         }
         if (!pubLinkProvider) {
             return false
         }
-        if (PublicationLinkProvider.LinkType.MANUAL_ENTRY == pubLinkProvider.linkType) {
+        if (PLP.LinkType.MANUAL_ENTRY == pubLinkProvider.linkType) {
             return true
         }
         Pattern p = Pattern.compile(pubLinkProvider.pattern);
@@ -92,19 +90,18 @@ class PublicationService {
         return m.matches()
     }
 
-    PublicationDetailExtractionContext getPublicationExtractionContext(PublicationTransportCommand cmd) throws JummpException {
+    PDEC getPublicationExtractionContext(PubTC cmd) throws JummpException {
         Publication publication = findByPublicationTransportCommand(cmd)
-        PublicationDetailExtractionContext ctx = new  PublicationDetailExtractionContext()
+        PDEC ctx = new  PDEC()
         if (publication) {
             // if existing in database
             ctx.publication = new PublicationAdapter(publication: publication).toCommandObject()
             ctx.comesFromDatabase = true
         } else {
             // if not in database
-            PublicationLinkProvider.LinkType type =
-                PublicationLinkProvider.LinkType.findLinkTypeByLabel(cmd.linkProvider.linkType)
+            PLP.LinkType type = PLP.LinkType.findLinkTypeByLabel(cmd.linkProvider.linkType)
             // fetch from pubmed
-            if (type == PublicationLinkProvider.LinkType.PUBMED) {
+            if (type == PLP.LinkType.PUBMED) {
                 ctx.publication = pubMedService.fetchPublicationData(cmd.link)
             } else {
                 ctx.publication = null
@@ -198,7 +195,7 @@ Failed to add author $person to $publication: ${tmp.errors.allErrors.inspect()}"
     }
 
     @Transactional
-    Publication fromCommandObject(PublicationTransportCommand cmd) {
+    Publication fromCommandObject(PubTC cmd) {
         Publication publication = findByPublicationTransportCommand(cmd)
         if (publication) {
             publication.title = cmd.title
@@ -225,7 +222,7 @@ Failed to add author $person to $publication: ${tmp.errors.allErrors.inspect()}"
             volume: cmd.volume,
             issue: cmd.issue,
             pages: cmd.pages,
-            linkProvider: PublicationLinkProviderAdapter.fromCommandObject(cmd.linkProvider),
+            linkProvider: PLPA.fromCommandObject(cmd.linkProvider),
             link: cmd.link)
         if (publ.save(flush: true)) {
             reconcile(publ, cmd.authors)
@@ -239,8 +236,8 @@ Failed to add author $person to $publication: ${tmp.errors.allErrors.inspect()}"
         return publ
     }
 
-    PublicationTransportCommand updateAuthors(PublicationTransportCommand cmd, def authorsAsJson) {
-        List<PersonTransportCommand> validatedAuthors = new LinkedList<PersonTransportCommand>()
+    PubTC updateAuthors(PubTC cmd, def authorsAsJson) {
+        List<PersonTC> validatedAuthors = new LinkedList<PersonTC>()
         validatedAuthors = parseAuthorsJSON(authorsAsJson)
         if (validatedAuthors) {
             cmd.authors = validatedAuthors
@@ -292,12 +289,12 @@ The author did not validate: ${author.properties}. Errors: ${author.errors.allEr
         validatedAuthors
     }
 
-    private Publication findByPublicationTransportCommand(PublicationTransportCommand cmd) {
+    private Publication findByPublicationTransportCommand(PubTC cmd) {
         Publication publication
         if (cmd?.id) {
             publication = Publication.get(cmd.id)
         } else {
-            PublicationLinkProvider.LinkType linkType = PublicationLinkProvider.LinkType.findLinkTypeByLabel(cmd.linkProvider.linkType)
+            PLP.LinkType linkType = PLP.LinkType.findLinkTypeByLabel(cmd.linkProvider.linkType)
             publication = Publication.withCriteria(uniqueResult: true) {
                 eq("link", cmd.link)
                 linkProvider {
