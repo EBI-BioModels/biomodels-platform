@@ -30,13 +30,10 @@
 
 package net.biomodels.jummp.core
 
-import org.springframework.transaction.annotation.Transactional
-import net.biomodels.jummp.core.adapters.PersonAdapter
 import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter as PLPA
 import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PLPTC
 import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
 import net.biomodels.jummp.model.PublicationLinkProvider
-import net.biomodels.jummp.plugins.security.Person
 import net.biomodels.jummp.plugins.security.PersonTransportCommand as PersonTC
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
@@ -57,6 +54,7 @@ import org.xml.sax.SAXParseException
 class PubMedService {
     final Log log = LogFactory.getLog(getClass())
     static transactional = false
+    def messageSource
 
     private setFieldIfItExists(String fieldName, PubTC publication,
                                def xmlField, boolean castToInt) {
@@ -86,7 +84,6 @@ class PubMedService {
      * @return A fully populated Publication
      */
     @SuppressWarnings("EmptyCatchBlock")
-    @Transactional
     PubTC fetchPublicationData(String id) throws JummpException {
         URL url
         try {
@@ -144,7 +141,7 @@ class PubMedService {
     }
 
     /**
-     * Parses the author information and adds it to @p publication
+     * Parses the author information provided from a JSON string and adds them to the given publication
      *
      * @param slurper The parsed XML document
      * @param publication The publication to add the authors to
@@ -152,12 +149,10 @@ class PubMedService {
     private void parseAuthors(def slurper, PubTC publication) {
         publication.authors = []
         for (def authorXml in slurper.resultList.result.authorList.author) {
-            Person author
+            PersonTC author = new PersonTC()
             if (authorXml.authorId[0]?.@type == "ORCID") {
                 String orcid = authorXml.authorId[0].text()
-                author = Person.findOrCreateWhere(['orcid': orcid])
-            } else {
-                author = new Person()
+                author.orcid = orcid
             }
             /**
              * Apparently, the full name should be combined from firstName and lastName
@@ -169,9 +164,15 @@ class PubMedService {
              */
             String userRealName = authorXml.fullName[0].text()
             author.userRealName = userRealName
-            author.save(flush: true)
-            PersonTC authorTC = new PersonAdapter(person: author).toCommandObject()
-            publication.authors.add(authorTC)
+            if (author.validate())
+                publication.authors.add(author)
+            else {
+                String err = author.errors.allErrors.collect { e ->
+                    messageSource.getMessage(e.code, author, null)
+                }.join(';')
+                String p = publication.prettierPrint()
+                log.error("Validation error with author ${author.inspect()} of publication $p: $err")
+            }
         }
     }
 }

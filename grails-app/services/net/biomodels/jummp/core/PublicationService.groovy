@@ -24,7 +24,6 @@
 
 package net.biomodels.jummp.core
 
-import org.springframework.transaction.annotation.Transactional
 import groovy.json.JsonSlurper
 import net.biomodels.jummp.core.adapters.PublicationAdapter
 import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter as PLPA
@@ -37,6 +36,7 @@ import net.biomodels.jummp.plugins.security.Person
 import net.biomodels.jummp.plugins.security.PersonTransportCommand as PersonTC
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+import grails.transaction.Transactional
 import org.springframework.validation.ObjectError
 
 import java.util.regex.Matcher
@@ -60,6 +60,7 @@ class PublicationService {
     static transactional = false
 
     def pubMedService
+    def messageSource
 
     PubTC createPTCWithMinimalInformation(String pubLinkProvider, String pubLink, List<PersonTC> authors) {
         def provider = PLP.LinkType.findLinkTypeByLabel(pubLinkProvider)
@@ -119,7 +120,7 @@ class PublicationService {
                                      Person person,
                                      String pubAlias,
                                      Integer position) {
-        def tmp = new PublicationPerson(publication: publication,
+        PublicationPerson tmp = new PublicationPerson(publication: publication,
             person: person,
             pubAlias: pubAlias,
             position: position)
@@ -136,34 +137,103 @@ Failed to add author $person to $publication: ${tmp.errors.allErrors.inspect()}"
         }
     }
 
-    private void reconcile(Publication publication, def tobeAdded) {
-        def existing = getPersons(publication)
-        tobeAdded.eachWithIndex { newAuthor, index ->
+    @Transactional
+    Publication fromCommandObject(PubTC cmd) {
+        Publication publication = findByPublicationTransportCommand(cmd)
+        if (publication) {
+            publication.title = cmd.title
+            publication.affiliation = cmd.affiliation
+            publication.synopsis = cmd.synopsis
+            publication.journal = cmd.journal
+            publication.year = cmd.year
+            publication.month = cmd.month
+            publication.day = cmd.day
+            publication.volume = cmd.volume
+            publication.issue = cmd.issue
+            publication.pages = cmd.pages
+        } else {
+            publication = new Publication(journal: cmd.journal,
+                title: cmd.title,
+                affiliation: cmd.affiliation,
+                synopsis: cmd.synopsis,
+                year: cmd.year,
+                month: cmd.month,
+                day: cmd.day,
+                volume: cmd.volume,
+                issue: cmd.issue,
+                pages: cmd.pages,
+                linkProvider: PLPA.fromCommandObject(cmd.linkProvider),
+                link: cmd.link)
+        }
+        if (publication.save(flush: true)) {
+            reconcile(publication, cmd.authors)
+        } else {
+            StringBuilder err = new StringBuilder()
+            publication.errors?.allErrors?.each { ObjectError e ->
+                err.append(e.defaultMessage).append('. ')
+            }
+            log.error("Error encountered while saving publication ${publication.dump()}: $err".toString())
+            publication = null
+        }
+        return publication
+    }
+
+    PubTC updateAuthors(PubTC cmd, def authorsAsJson) {
+        List<PersonTC> validatedAuthors = new LinkedList<PersonTC>()
+        validatedAuthors = parseAuthorsJSON(authorsAsJson)
+        if (validatedAuthors) {
+            cmd.authors = validatedAuthors
+        }
+        if (!cmd.validate()) {
+            log.error """\
+The publication does not validate: ${cmd.properties}. Errors: ${cmd.errors.allErrors.inspect()}."""
+        }
+    }
+
+    private void reconcile(Publication publication, List<PersonTC> tobeAdded) {
+        List<PublicationPerson> existing = getPersons(publication)
+        tobeAdded.eachWithIndex { PersonTC newAuthor, Integer index ->
             def existingAuthor = existing.find { oldAuthor ->
                 if (newAuthor.id) {
                     return newAuthor.id == oldAuthor.person.id
                 } else if (newAuthor.orcid) {
                     return newAuthor.orcid == oldAuthor.person.orcid
+                } else {
+                    return newAuthor.userRealName == oldAuthor.person.userRealName &&
+                        newAuthor.institution == oldAuthor.person.institution
                 }
                 return false
             }
             if (!existingAuthor) {
                 Person newlyCreatedPubAuthor
                 if (newAuthor.orcid) {
-                    def personWithSameOrcid = Person.findByOrcid(newAuthor.orcid)
-                    if (personWithSameOrcid) {
-                        newlyCreatedPubAuthor = personWithSameOrcid
-                    }
+                    newlyCreatedPubAuthor = Person.findOrCreateByOrcid(newAuthor.orcid)
+                } else {
+                    newlyCreatedPubAuthor = Person.findOrCreateWhere(userRealName: newAuthor.userRealName,
+                        orcid: newAuthor.orcid, institution: newAuthor.institution)
                 }
-                if (!newlyCreatedPubAuthor) {
-                    newlyCreatedPubAuthor = new Person(userRealName: newAuthor.userRealName,
-                        orcid: newAuthor.orcid)
-                    newlyCreatedPubAuthor.save(failOnError: true, flush: true);
+                if (!newlyCreatedPubAuthor.id && newlyCreatedPubAuthor.orcid) {
+                    newlyCreatedPubAuthor.userRealName = newAuthor.userRealName
+                    newlyCreatedPubAuthor.institution = newAuthor.institution
                 }
-                try {
-                    addPublicationAuthor(publication, newlyCreatedPubAuthor, newAuthor.userRealName, index)
-                } catch(Exception e) {
-                    e.printStackTrace()
+
+                if (newlyCreatedPubAuthor.save(flush: true)) {
+                    addPublicationAuthor(publication, newlyCreatedPubAuthor, newlyCreatedPubAuthor.userRealName, index)
+                } else {
+                    /**
+                     * The `transactionStatus` is an implicit variable defined and made available thanks to the AST
+                     * transformation in Grails Groovy. It could be applied to transactional methods during the
+                     * compilation process. The minimal example of how the transactional roll back works can be found
+                     * at the link https://bitbucket.org/MihaiGlont/grails2-rollback-demo/
+                     */
+                    transactionStatus.setRollbackOnly()
+                    def a = newlyCreatedPubAuthor.userRealName
+                    def err = newlyCreatedPubAuthor.errors.allErrors.collect { e ->
+                        messageSource.getMessage(e.code, Arrays.asList(newlyCreatedPubAuthor), null)
+                    }.join(';')
+                    def p = publication.linkProvider.linkType == PLP.LinkType.MANUAL_ENTRY ?
+                        "${publication.title}" : "${publication.link}"
+                    log.error("Author $a could not be saved $err. Publication '$p' will be rolled back")
                 }
             } else {
                 if (existingAuthor.position != index) {
@@ -189,64 +259,8 @@ Failed to add author $person to $publication: ${tmp.errors.allErrors.inspect()}"
         }
     }
 
-    @Transactional
-    Publication fromCommandObject(PubTC cmd) {
-        Publication publication = findByPublicationTransportCommand(cmd)
-        if (publication) {
-            publication.title = cmd.title
-            publication.affiliation = cmd.affiliation
-            publication.synopsis = cmd.synopsis
-            publication.journal = cmd.journal
-            publication.year = cmd.year
-            publication.month = cmd.month
-            publication.day = cmd.day
-            publication.volume = cmd.volume
-            publication.issue = cmd.issue
-            publication.pages = cmd.pages
-            publication.save(flush: true)
-            reconcile(publication, cmd.authors)
-            return publication
-        }
-        Publication publ = new Publication(journal: cmd.journal,
-            title: cmd.title,
-            affiliation: cmd.affiliation,
-            synopsis: cmd.synopsis,
-            year: cmd.year,
-            month: cmd.month,
-            day: cmd.day,
-            volume: cmd.volume,
-            issue: cmd.issue,
-            pages: cmd.pages,
-            linkProvider: PLPA.fromCommandObject(cmd.linkProvider),
-            link: cmd.link)
-        if (publ.save(flush: true)) {
-            reconcile(publ, cmd.authors)
-        } else {
-            StringBuilder err = new StringBuilder()
-            publ.errors?.allErrors?.each { ObjectError e ->
-                err.append(e.defaultMessage).append('. ')
-            }
-            log.error("Error encountered while saving publication ${publ.dump()}: $err".toString())
-        }
-        return publ
-    }
-
-    PubTC updateAuthors(PubTC cmd, def authorsAsJson) {
-        List<PersonTC> validatedAuthors = new LinkedList<PersonTC>()
-        validatedAuthors = parseAuthorsJSON(authorsAsJson)
-        if (validatedAuthors) {
-            cmd.authors = validatedAuthors
-        }
-        if (!cmd.validate()) {
-            log.error """\
-The publication does not validate: ${cmd.properties}. Errors: ${cmd.errors.allErrors.inspect()}."""
-            //flash.validationErrorOn = tempPTC
-            //return error()
-        }
-    }
-
-    private List<Person> parseAuthorsJSON(def jsonData) {
-        List<Person> validatedAuthors = new LinkedList<>()
+    private List<PersonTC> parseAuthorsJSON(def jsonData) {
+        List<PersonTC> validatedAuthors = new LinkedList<>()
         def slurper = new JsonSlurper()
         def parsedJson = slurper.parseText(jsonData)
         if (!parsedJson['authors']) {
@@ -260,25 +274,14 @@ The publication does not validate: ${cmd.properties}. Errors: ${cmd.errors.allEr
             String name = authorJson["userRealName"]
             String institution = authorJson["institution"] ?: null
             String orcid = authorJson["orcid"] ?: null
-
-            Person author
-            if (!orcid) {
-                author = Person.findOrCreateWhere(userRealName: name, orcid: orcid, institution: institution)
-            } else {
-                author = Person.findOrCreateByOrcid(orcid)
-                author.userRealName = name
-                author.institution  = institution
-            }
-
+            PersonTC author = new PersonTC(userRealName: name, orcid: orcid, institution: institution)
             if (author.validate()) {
                 validatedAuthors.add(author)
             } else {
                 // this person record is invalid
                 // throw a checked exception that is caught downstream -- e.g. in ModelController
-                log.error """\
-The author did not validate: ${author.properties}. Errors: ${author.errors.allErrors.inspect()}."""
-                //flash.validationErrorOn = author
-                //return error()
+                String error = "The author did not validate: ${author.userRealName}. Errors: ${author.errors.allErrors.inspect()}."
+                throw new IllegalArgumentException(error.toString())
             }
         }
         validatedAuthors
