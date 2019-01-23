@@ -51,21 +51,19 @@ class ModelAdapter {
         Revision firstRev
         Long modelId = model.id
         boolean modelIsSaved = null != modelId
+        // sort the revisions ascending based on revisionNumber
+        List<Revision> revisions = model.revisions?.sort { it.revisionNumber }
         if (modelIsSaved) {
             if (SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
-                /*latestRev = model.revisions.last()
-                firstRev = model.revisions.first()*/
-                latestRev = model.revisions.sort { it.revisionNumber }.last()
-                firstRev = model.revisions.sort { it.revisionNumber }.first()
+                latestRev = revisions.last()
+                firstRev = revisions.first()
             } else {
                 latestRev = getLatestRevisionForUser(saveHistory)
-                //firstRev = model.revisions.first()
-                firstRev = model.revisions.sort { it.revisionNumber }.first()
+                firstRev = revisions.first()
             }
         } else {
             // if the model is not saved, there can only be at most one revision
-            //latestRev = model.revisions?.first()
-            latestRev = model.revisions?.sort { it.revisionNumber }.first()
+            latestRev = revisions.first()
             firstRev = latestRev
         }
 
