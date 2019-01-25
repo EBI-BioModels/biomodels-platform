@@ -96,8 +96,7 @@ class PubMedService {
             slurper = new XmlSlurper().parse(url.openStream())
         } catch (SAXParseException e) {
             throw new JummpException("Could not parse PubMed information", e)
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new JummpException("Error retrieving publication info", e)
         }
         PublicationLinkProvider link = PublicationLinkProvider.withCriteria(uniqueResult: true) {
@@ -107,14 +106,15 @@ class PubMedService {
                 linkProvider: link).toCommandObject()
         PubTC publication = new PubTC(linkProvider:
                 linkCommand, link: id)
-        setFieldIfItExists("pages", publication, slurper.resultList.result.pageInfo, false)
-        setFieldIfItExists("title", publication, slurper.resultList.result.title, false)
-        setFieldIfItExists("affiliation", publication, slurper.resultList.result.affiliation, false)
-        setFieldIfItExists("synopsis", publication, slurper.resultList.result.abstractText, false)
+        def result = slurper.resultList.result
+        setFieldIfItExists("pages", publication, result.pageInfo, false)
+        setFieldIfItExists("title", publication, result.title, false)
+        setFieldIfItExists("affiliation", publication, result.affiliation, false)
+        setFieldIfItExists("synopsis", publication, result.abstractText, false)
 
-        if (slurper.resultList.result.journalInfo) {
-            setFieldIfItExists("month", publication, slurper.resultList.result.journalInfo.monthOfPublication, true)
-            setFieldIfItExists("year", publication, slurper.resultList.result.journalInfo.yearOfPublication, true)
+        if (result.journalInfo) {
+            setFieldIfItExists("month", publication, result.journalInfo.monthOfPublication, true)
+            setFieldIfItExists("year", publication, result.journalInfo.yearOfPublication, true)
             // cannot retrieve publication day directly like all other details
             def isoDateField = slurper.resultList.resultList.journalInfo.printPublicationDate
             if (isoDateField) {
@@ -129,9 +129,9 @@ class PubMedService {
                     }
                 }
             }
-            setFieldIfItExists("volume", publication, slurper.resultList.result.journalInfo.volume, false)
-            setFieldIfItExists("issue", publication, slurper.resultList.result.journalInfo.issue, false)
-            setFieldIfItExists("journal", publication, slurper.resultList.result.journalInfo.journal.title, false)
+            setFieldIfItExists("volume", publication, result.journalInfo.volume, false)
+            setFieldIfItExists("issue", publication, result.journalInfo.issue, false)
+            setFieldIfItExists("journal", publication, result.journalInfo.journal.title, false)
         }
         publication.parseAuthors(slurper)
 
