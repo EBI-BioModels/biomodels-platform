@@ -152,6 +152,7 @@ class SearchController {
     /**
      * Default action showing a archive view
      */
+    @Secured(['IS_AUTHENTICATED_FULLY'])
     def archive() {
         sanitiseParams()
         def results = archiveCore(params.sortBy, params.sortDir, params.offset, params.numResults)
@@ -216,16 +217,14 @@ class SearchController {
         }
 	    byte[] data = modelDelegateService.serveModelFilesAsZip(models)
         if (data) {
-            // the data could be null in a few situations such as the model files are unaccessible
+            // the data could be null in a few situations such as the model files are inaccessible
             response.setContentType("application/zip")
             String date = new Date().format("yyyyMMdd-HHmm")
             String filename = "BioModels-search-results_${date}.zip".toString()
             response.setHeader("Content-disposition", "attachment;filename=\"${filename}\"")
             response.outputStream << new ByteArrayInputStream(data)
         } else {
-            def params = [query: "*:*", flashMessage: g.message(code: "jummp.search.download.model.unavailable.warningMessage")]
-            forward(action: 'search', params: params)
-            return [query: "*:*"]
+            render(view: "download", status: 404)
         }
     }
 

@@ -105,6 +105,12 @@ class JummpController {
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def developerZone() {
+        detectTheme()
+        render(view: "developerZone", model: [titleCode: "jummp.developerZone.${theme}.title"])
+    }
+
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def feedback() {
         if (params.star) {
             byte star = params.byte("star")
