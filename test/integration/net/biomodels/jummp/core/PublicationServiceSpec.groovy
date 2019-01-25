@@ -120,6 +120,7 @@ class PublicationServiceSpec extends IntegrationSpec {
         exchangeDir.mkdirs()
         String rootPath = workingDir.getParent()
 
+        when: "initialise services' properties"
         grailsApplication.config.jummp.vcs.workingDirectory = rootPath
         grailsApplication.config.jummp.vcs.exchangeDirectory = exchangeDir.path
         String REGISTRY_EXPORT_FILE_NAME = "testMiriam.xml"
@@ -131,19 +132,28 @@ class PublicationServiceSpec extends IntegrationSpec {
         def gitFactory = grailsApplication.mainContext.getBean("gitManagerFactory")
         vcsService.vcsManager = gitFactory.getInstance()
         vcsService.vcsManager.exchangeDirectory = exchangeDir
+        then: "they are successfully initialised"
+        workingDir.exists()
+        exchangeDir.exists()
+        null != rootPath
+        null != grailsApplication.config.jummp.vcs.workingDirectory
+        vcsService.isValid()
 
-        //def pubMedService = new PubMedService()
-
-        when: "create a user, authenticate him and then create a model"
-        // authentication
+        when: "create a user, authenticate him"
+        /**
+         * The model files will be uploaded in a dedicated transaction in which the hibernate couldn't see the user
+         * owning the model. The user should exist in User table for looking up later. Thus, creating user and roles
+         * must be in a dedicated transaction.
+         */
         def txDefinition = [propagationBehavior: TransactionDefinition.PROPAGATION_REQUIRES_NEW]
-        //
         Model.withTransaction(txDefinition) {
             jummpIntegrationTest.createUserAndRoles()
         }
         jummpIntegrationTest.authenticateAsUser()
+        then: "test the newly created user"
         User.findByUsername("username").username == "username"
 
+        when: "create a model"
         File f = new File("test/files/BIOMD0000000272.xml")
         f.exists()
         String name = JummpXmlUtils.findModelAttribute(f, "model", "name").trim()
@@ -154,16 +164,18 @@ class PublicationServiceSpec extends IntegrationSpec {
         final String pid = "22761472"
 
         PublicationTransportCommand publication = pubMedService.fetchPublicationData(pid)
-        assert publication
         def mtc = new ModelTransportCommand(publication: publication)
         def rev = new RevisionTransportCommand(name: name, validated: true, format: fmt, model: mtc, owner: "username")
         Model m = modelService.uploadValidatedModel([rf], rev)
-        assert m.publication
         Model.withSession { s ->
             s.flush()
             s.clear()
         }
+        then: "the model was saved successfully"
+        assert publication
+        assert m.publication
 
+        when: "load the model and publication"
         Model alterEgo = Model.load(m.id)
         Revision firstCommit = modelService.getLatestRevision(alterEgo, false)
         Publication alterPub = firstCommit.model.publication
@@ -174,13 +186,9 @@ class PublicationServiceSpec extends IntegrationSpec {
         String journal = "Clinical cancer research : an official journal of the American Association for Cancer Research"
         String title = "A tumor growth inhibition model for low-grade glioma treated with chemotherapy or radiotherapy."
         String pages = "5071-5080"
-
-        then: "the directories were created"
-        workingDir.exists()
-        exchangeDir.exists()
-        null != rootPath
-        null != grailsApplication.config.jummp.vcs.workingDirectory
-        vcsService.isValid()
+        then: "test the publication is loaded fully"
+        null != rtc
+        null != ptc
 
         expect: "the publication was saved and its metadata is matched with the actual values"
         /**

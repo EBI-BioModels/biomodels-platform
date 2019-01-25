@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2019 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -24,15 +24,11 @@ package net.biomodels.jummp.core
 import grails.test.runtime.FreshRuntime
 import grails.test.spock.IntegrationSpec
 import net.biomodels.jummp.core.model.PublicationTransportCommand as PTC
-import net.biomodels.jummp.plugins.security.Person
 
 @FreshRuntime
 class PubMedServiceSpec extends IntegrationSpec {
-    def service
     def pubMedService
-    def setup() {
-        service = new PubMedService()
-    }
+    def messageSource
 
     def "search a PubMed publication"() {
         given: "a PubMed ID"
@@ -51,6 +47,7 @@ class PubMedServiceSpec extends IntegrationSpec {
 
         when: "make a call to fetchPublicationData() method"
         PTC ptc = pubMedService.fetchPublicationData(pubMedId)
+        ptc.messageSource = messageSource
 
         then: "receive an actual object and author name is not null"
         null != ptc

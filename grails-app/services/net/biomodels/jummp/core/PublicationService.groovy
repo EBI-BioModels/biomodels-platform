@@ -249,7 +249,7 @@ There has been errors when assembling authors $authors into the publication '${p
                     transactionStatus.setRollbackOnly()
                     def a = newlyCreatedPubAuthor.userRealName
                     def err = newlyCreatedPubAuthor.errors.allErrors.collect { e ->
-                        messageSource.getMessage(e.code, Arrays.asList(newlyCreatedPubAuthor), null)
+                        messageSource.getMessage(e.code, [newlyCreatedPubAuthor] as Object[], null)
                     }.join(';')
                     def p = publication.linkProvider.linkType == PLP.LinkType.MANUAL_ENTRY ?
                         "${publication.title}" : "${publication.link}"

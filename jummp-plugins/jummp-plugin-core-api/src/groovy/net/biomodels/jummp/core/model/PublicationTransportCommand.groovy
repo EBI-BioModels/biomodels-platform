@@ -34,12 +34,9 @@
 
 package net.biomodels.jummp.core.model
 
-import net.biomodels.jummp.model.Publication
-import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.plugins.security.PersonTransportCommand
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
-import org.grails.datastore.mapping.validation.ValidationException
 
 /**
  * @short Wrapper for a Publication to be transported through JMS.
