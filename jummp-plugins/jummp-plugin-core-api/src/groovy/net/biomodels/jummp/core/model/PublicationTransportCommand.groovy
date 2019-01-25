@@ -35,7 +35,11 @@
 package net.biomodels.jummp.core.model
 
 import net.biomodels.jummp.model.Publication
+import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.plugins.security.PersonTransportCommand
+import org.apache.commons.logging.Log
+import org.apache.commons.logging.LogFactory
+import org.grails.datastore.mapping.validation.ValidationException
 
 /**
  * @short Wrapper for a Publication to be transported through JMS.
@@ -45,6 +49,15 @@ import net.biomodels.jummp.plugins.security.PersonTransportCommand
 @grails.validation.Validateable
 class PublicationTransportCommand implements Serializable {
     private static final long serialVersionUID = 1L
+    /**
+     * The class logger
+     */
+    final Log log = LogFactory.getLog(PublicationTransportCommand.class)
+    /**
+     * Dependency injection of messageSource
+     */
+    def messageSource
+
     Long id
     /**
      * Name of the journal where the publication has been published
@@ -96,6 +109,7 @@ class PublicationTransportCommand implements Serializable {
      */
     String link
     List<PersonTransportCommand> authors
+
     static constraints = {
         id(nullable: true)
         // importFrom Publication ...would have been nice :(
@@ -116,15 +130,57 @@ class PublicationTransportCommand implements Serializable {
     }
 
     String prettierPrint() {
-        Publication publication = Publication.findByLink(link)
         StringBuilder returnedText = new StringBuilder("")
-        String linkTypeLabel = linkProvider.linkType
-        returnedText.append("${linkTypeLabel}:<br/>&emsp;")
-        returnedText.append(publication.link)
-        returnedText.append("<br/>Title:<br/>&emsp;")
-        returnedText.append(publication.title)
-        returnedText.append("<br/>Abstract:<br/>&emsp;")
-        returnedText.append(publication.synopsis)
+        String linkTypeLabel = linkProvider ? linkProvider.linkType : ""
+        if (linkTypeLabel) {
+            returnedText.append("${linkTypeLabel}:<br/>&emsp;")
+            returnedText.append(link)
+        }
+        if (title) {
+            returnedText.append("<br/>Title:<br/>&emsp;")
+            returnedText.append(title)
+        }
+        if (synopsis) {
+            returnedText.append("<br/>Abstract:<br/>&emsp;")
+            returnedText.append(synopsis)
+        }
         returnedText.toString()
+    }
+
+
+    /**
+     * Parses the author information provided from a GPathResult object and adds them to this publication
+     *
+     * @param slurper GPathResult
+     */
+    PersonTransportCommand parseAuthors(def slurper) {
+        authors = new ArrayList<>()
+        def authorsXml = slurper.resultList.result.authorList.author
+        for (def authorXml in authorsXml) {
+            PersonTransportCommand author = new PersonTransportCommand()
+            if (authorXml.authorId[0]?.@type == "ORCID") {
+                String orcid = authorXml.authorId[0].text()
+                author.orcid = orcid
+            }
+            /**
+             * Apparently, the full name should be combined from firstName and lastName
+             * rather than populated from the fullName field.
+             * The fullName field actually roles as the pubAlias property of PublicationPerson class
+             *
+             * TODO: capture the fullName, then assign it to the pubAlias property when we create an instance of
+             * PublicationPerson from PersonTransportCommand in PublicationService
+             */
+            String userRealName = authorXml.fullName[0].text()
+            author.userRealName = userRealName
+            if (author.validate())
+                this.authors.add(author)
+            else {
+                String err = author.errors.allErrors.collect { e ->
+                    messageSource.getMessage(e.code, [author] as Object[], null)
+                }.join(';')
+                String p = this.prettierPrint()
+                log.error("Validation error with author ${author.inspect()} of publication $p: $err")
+            }
+        }
     }
 }

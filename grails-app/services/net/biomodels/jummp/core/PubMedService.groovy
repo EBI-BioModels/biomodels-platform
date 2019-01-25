@@ -34,7 +34,6 @@ import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter as PLPA
 import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PLPTC
 import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
 import net.biomodels.jummp.model.PublicationLinkProvider
-import net.biomodels.jummp.plugins.security.PersonTransportCommand as PersonTC
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.xml.sax.SAXParseException
@@ -54,7 +53,6 @@ import org.xml.sax.SAXParseException
 class PubMedService {
     final Log log = LogFactory.getLog(getClass())
     static transactional = false
-    def messageSource
 
     private setFieldIfItExists(String fieldName, PubTC publication,
                                def xmlField, boolean castToInt) {
@@ -135,44 +133,8 @@ class PubMedService {
             setFieldIfItExists("issue", publication, slurper.resultList.result.journalInfo.issue, false)
             setFieldIfItExists("journal", publication, slurper.resultList.result.journalInfo.journal.title, false)
         }
-        parseAuthors(slurper, publication)
+        publication.parseAuthors(slurper)
 
         return publication
-    }
-
-    /**
-     * Parses the author information provided from a JSON string and adds them to the given publication
-     *
-     * @param slurper The parsed XML document
-     * @param publication The publication to add the authors to
-     */
-    private void parseAuthors(def slurper, PubTC publication) {
-        publication.authors = []
-        for (def authorXml in slurper.resultList.result.authorList.author) {
-            PersonTC author = new PersonTC()
-            if (authorXml.authorId[0]?.@type == "ORCID") {
-                String orcid = authorXml.authorId[0].text()
-                author.orcid = orcid
-            }
-            /**
-             * Apparently, the full name should be combined from firstName and lastName
-             * rather than populated from the fullName field.
-             * The fullName field actually roles as the pubAlias property of PublicationPerson class
-             *
-             * TODO: capture the fullName, then assign it to the pubAlias property when we create an instance of
-             * PublicationPerson from PersonTransportCommand in PublicationService
-             */
-            String userRealName = authorXml.fullName[0].text()
-            author.userRealName = userRealName
-            if (author.validate())
-                publication.authors.add(author)
-            else {
-                String err = author.errors.allErrors.collect { e ->
-                    messageSource.getMessage(e.code, author, null)
-                }.join(';')
-                String p = publication.prettierPrint()
-                log.error("Validation error with author ${author.inspect()} of publication $p: $err")
-            }
-        }
     }
 }
