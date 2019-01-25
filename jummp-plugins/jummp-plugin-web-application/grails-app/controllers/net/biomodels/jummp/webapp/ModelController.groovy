@@ -59,6 +59,7 @@ import net.biomodels.jummp.webapp.rest.model.show.ModelFiles
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONObject
+import org.grails.datastore.mapping.validation.ValidationException
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.multipart.MultipartFile
 
@@ -1125,7 +1126,16 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                 PDEC pubContext = publicationMap.get(flow.workingMemory.get("SelectedPubLinkProvider"))
                 PublicationTransportCommand tempPTC = pubContext.publication
                 bindData(tempPTC, params, [exclude: ['authors']])
-                publicationService.updateAuthors(tempPTC, params.authorListContainer)
+                try  {
+                    publicationService.assembleAuthors(tempPTC, params.authorListContainer)
+                } catch (ValidationException e) {
+                    flash.validationErrorOn = tempPTC.authors
+                    return error()
+                }
+                if (tempPTC.hasErrors()) {
+                    flash.validationErrorOn = model.publication
+                    return error()
+                }
                 // Update the publication objects in working
                 model.publication = tempPTC
                 pubContext.publication = tempPTC

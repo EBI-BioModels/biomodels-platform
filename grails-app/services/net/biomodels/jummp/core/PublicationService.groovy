@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2019 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -24,6 +24,7 @@
 
 package net.biomodels.jummp.core
 
+import grails.transaction.Transactional
 import groovy.json.JsonSlurper
 import net.biomodels.jummp.core.adapters.PublicationAdapter
 import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter as PLPA
@@ -36,7 +37,7 @@ import net.biomodels.jummp.plugins.security.Person
 import net.biomodels.jummp.plugins.security.PersonTransportCommand as PersonTC
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
-import grails.transaction.Transactional
+import org.grails.datastore.mapping.validation.ValidationException
 import org.springframework.validation.ObjectError
 
 import java.util.regex.Matcher
@@ -178,16 +179,35 @@ Failed to add author $person to $publication: ${tmp.errors.allErrors.inspect()}"
         return publication
     }
 
-    PubTC updateAuthors(PubTC cmd, def authorsAsJson) {
+    /**
+     * Parses the publication authors come from a JSON string and fits them into a given publication transport command.
+     *
+     * @param cmd  The publication transport command
+     * @param authorsAsJson A string representing the information of publication authors provided by submitters.
+     * @return  An updated publication transport command
+     */
+    PubTC assembleAuthors(PubTC cmd, def authorsAsJson) {
         List<PersonTC> validatedAuthors = new LinkedList<PersonTC>()
-        validatedAuthors = parseAuthorsJSON(authorsAsJson)
-        if (validatedAuthors) {
-            cmd.authors = validatedAuthors
+        try {
+            validatedAuthors = parseAuthorsJSON(authorsAsJson)
+        } catch (IllegalArgumentException e) {
+            String errMsg = "Parsing authors from a JSON string caused an error: $e.message"
+            throw new ValidationException(errMsg)
         }
+        cmd.authors = validatedAuthors
         if (!cmd.validate()) {
-            log.error """\
-The publication does not validate: ${cmd.properties}. Errors: ${cmd.errors.allErrors.inspect()}."""
+            String authors = validatedAuthors == [] ? "[]" : validatedAuthors.collect {
+                it.userRealName
+            }.join("; ")
+            String p  = cmd.toString()
+            String error = cmd.errors.allErrors.collect { it }.join("; ")
+            if (cmd.errors.hasFieldErrors("authors")) {
+                error = cmd.errors.getFieldError("authors").rejectedValue
+            }
+            log.error("""\
+There has been errors when assembling authors $authors into the publication '${p}' because the authors are $error.""")
         }
+        cmd
     }
 
     private void reconcile(Publication publication, List<PersonTC> tobeAdded) {
@@ -233,7 +253,7 @@ The publication does not validate: ${cmd.properties}. Errors: ${cmd.errors.allEr
                     }.join(';')
                     def p = publication.linkProvider.linkType == PLP.LinkType.MANUAL_ENTRY ?
                         "${publication.title}" : "${publication.link}"
-                    log.error("Author $a could not be saved $err. Publication '$p' will be rolled back")
+                    log.error("Author $a could not be saved due to $err. Publication '$p' will be rolled back")
                 }
             } else {
                 if (existingAuthor.position != index) {
