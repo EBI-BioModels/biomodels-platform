@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU Affero General Public License along
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
-**/
+ **/
 
 package net.biomodels.jummp.deployment.biomodels
 
@@ -28,7 +28,7 @@ import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 
 /**
- * Created by carankalle on 08/10/2018.
+ * @author carankalle on 08/10/2018.
  */
 @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
 class ParameterSearchController {
@@ -40,15 +40,20 @@ class ParameterSearchController {
  */
     static final Log log = LogFactory.getLog(ParameterSearchController.class)
 
-    def index() {
-        render(view: "index");
+    def index(ParameterSearchCommand command) {
+
+        if (command.query == "*:*") {
+            render(view: "index")
+        } else {
+            render(view: "index", model: ['urlQuery': command.query])
+        }
     }
 
     def search(ParameterSearchCommand command) {
         if (!command.validate()) {
             def msg = "Invalid request $command.query, $command.errors.allErrors"
             log.error(msg)
-            render( ['message' : "Invalid request object"] as JSON)
+            render(['message': "Invalid request object"] as JSON)
             return
         }
         try {
@@ -58,7 +63,7 @@ class ParameterSearchController {
             response.status = 400
             String msg = "Error encountered while processing $command: ${ie.message}"
             log.error(msg)
-            render(['message' : ie.getMessage()] as JSON)
+            render(['message': ie.getMessage()] as JSON)
         } catch (Exception ex) {
             response.status = 500
             String msg = "Error encountered while processing $command: ${ex.message}"
