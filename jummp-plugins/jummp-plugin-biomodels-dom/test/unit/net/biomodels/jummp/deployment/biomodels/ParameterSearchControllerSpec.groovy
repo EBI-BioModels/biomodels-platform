@@ -27,11 +27,22 @@ class ParameterSearchControllerSpec extends Specification {
     void "test index"() {
         given: "Controller and command initialized"
         when: "Redirected to index"
-        controller.index()
+        ParameterSearchCommand command = new ParameterSearchCommand()
+        controller.index(command)
         then: "Should show correct view"
         String expectedView = "/parameterSearch/index"
         String actualView = view
         assert expectedView == actualView
+    }
+
+    void "test index with Query"() {
+        given: "Controller and command object initialized"
+        when: "Redirected to index with query"
+        ParameterSearchCommand command = new ParameterSearchCommand()
+        command.query="test"
+        controller.index(command)
+        then: "Should show correct model"
+        assert model.urlQuery == "test"
     }
 
     void "test search"() {
