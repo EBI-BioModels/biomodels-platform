@@ -36,8 +36,6 @@ package net.biomodels.jummp.webapp
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
-import groovy.json.JsonSlurper
-import net.biomodels.jummp.core.adapters.PersonAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
@@ -50,8 +48,6 @@ import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.model.Revision
-import net.biomodels.jummp.plugins.security.Person
-import net.biomodels.jummp.plugins.security.PersonTransportCommand
 import net.biomodels.jummp.plugins.security.Team
 import net.biomodels.jummp.webapp.rest.errors.Error
 import net.biomodels.jummp.webapp.rest.model.show.Model as RestfulModel
@@ -59,11 +55,11 @@ import net.biomodels.jummp.webapp.rest.model.show.ModelFiles
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONObject
-import org.grails.datastore.mapping.validation.ValidationException
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.multipart.MultipartFile
 
 import javax.servlet.http.HttpServletResponse
+import java.text.ParseException
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -1128,7 +1124,7 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                 bindData(tempPTC, params, [exclude: ['authors']])
                 try  {
                     publicationService.assembleAuthors(tempPTC, params.authorListContainer)
-                } catch (ValidationException e) {
+                } catch (ParseException e) {
                     flash.validationErrorOn = tempPTC.authors
                     return error()
                 }
