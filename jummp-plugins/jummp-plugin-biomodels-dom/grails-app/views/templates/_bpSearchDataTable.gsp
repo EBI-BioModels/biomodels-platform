@@ -106,6 +106,11 @@
         // Preprocess custom params before calling EbiSearch WS
         function preProcessEbiSearchParams(urlParams) {
             var data = {};
+            var urlQuery = decodeURI("${urlQuery}");
+            if(urlQuery !== "" && urlParams.search.value === "") {
+                urlParams.search.value = urlQuery;
+                $('.dataTables_filter input').val(urlQuery);
+            }
             data.query = encodeURIComponent(urlParams.search.value);
             data.size = urlParams.length;
             data.start = urlParams.start;
@@ -147,6 +152,23 @@
         // Table configuration
         var table = $('#table_id').DataTable(
             {
+                initComplete : function() {
+                    var input = $('.dataTables_filter input').unbind(),
+                        self = this.api(),
+                        $searchButton = $('<button class="button icon icon-functional">')
+                            .text('search')
+                            .click(function () {
+                                self.search(input.val()).draw();
+                                window.history.pushState('parameterSearch', 'Title', '/jummp-biomodels/parameterSearch?query='+input.val());
+                            }),
+                        $clearButton = $('<button class="button">')
+                            .text('clear')
+                            .click(function () {
+                                input.val('');
+                                $searchButton.click();
+                            });
+                    $('.dataTables_filter').append($searchButton, '&nbsp;',$clearButton);
+                },
                 columns: columnConfig,
                 "processing": true,
                 "serverSide": true,
