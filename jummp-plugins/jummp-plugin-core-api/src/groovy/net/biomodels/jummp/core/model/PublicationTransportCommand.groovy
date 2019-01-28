@@ -148,9 +148,9 @@ class PublicationTransportCommand implements Serializable {
     /**
      * Parses the author information provided from a GPathResult object and adds them to this publication
      *
-     * @param slurper GPathResult
+     * @param slurper GPathResult object holding the author list
      */
-    PersonTransportCommand parseAuthors(def slurper) {
+    void parseAuthors(def slurper) {
         authors = new ArrayList<>()
         def authorsXml = slurper.resultList.result.authorList.author
         for (def authorXml in authorsXml) {
