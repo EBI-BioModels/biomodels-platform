@@ -44,9 +44,10 @@ class PublicationTransportCommandSpec extends Specification {
 
         then:
         !cmd.validate()
-        cmd.errors.getFieldErrors("authors").size() == 0
-        cmd.authors.size() == 1
+        cmd.errors.getFieldErrors("authors").size() == 1
+        cmd.authors.size() == 2
         cmd.authors.get(0).validate()
+        !cmd.authors.get(1).validate()
     }
 
     private static String createAuthorsXml(String... authors) {

@@ -121,7 +121,7 @@ class PublicationTransportCommand implements Serializable {
         issue(nullable: true)
         pages(nullable: true)
         authors nullable: false, validator: { authorValue, pubObj ->
-            return !authorValue.isEmpty()
+            return !authorValue.isEmpty() && !authorValue.find { !it.validate() }
         }
         link(nullable: true, unique: 'linkProvider')
     }
@@ -169,15 +169,7 @@ class PublicationTransportCommand implements Serializable {
              */
             String userRealName = authorXml.fullName[0].text()
             author.userRealName = userRealName
-            if (author.validate())
-                this.authors.add(author)
-            else {
-                String err = author.errors.allErrors.collect { e ->
-                    messageSource.getMessage(e.code, [author] as Object[], null)
-                }.join(';')
-                String p = this.prettierPrint()
-                log.error("Validation error with author ${author.inspect()} of publication $p: $err")
-            }
+            this.authors.add(author)
         }
     }
 }
