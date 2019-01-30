@@ -39,7 +39,6 @@ import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.springframework.validation.ObjectError
 
-import java.text.ParseException
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -190,9 +189,8 @@ Failed to add author $person to $publication: ${tmp.errors.allErrors.inspect()}"
         List<PersonTC> validatedAuthors = new LinkedList<PersonTC>()
         try {
             validatedAuthors = parseAuthorsJSON(authorsAsJson)
-        } catch (IllegalArgumentException e) {
-            String errMsg = "Parsing authors from a JSON string caused an error: $e.message"
-            throw new ParseException(errMsg, 0)
+        } catch (InvalidPublicationAuthorsException e) {
+            throw e
         }
         cmd.authors = validatedAuthors
         if (!cmd.validate()) {
@@ -287,6 +285,7 @@ There has been errors when assembling authors $authors into the publication '${p
             return []
         }
         def authorList = parsedJson['authors']
+        InvalidPublicationAuthorsException invalidAuthorsException = new InvalidPublicationAuthorsException()
         for (Object authorJson : authorList) {
             if (!authorJson) {
                 continue // skip this record
@@ -301,10 +300,15 @@ There has been errors when assembling authors $authors into the publication '${p
                 // this person record is invalid
                 // throw a checked exception that is caught downstream -- e.g. in ModelController
                 String error = "The author did not validate: ${author.userRealName}. Errors: ${author.errors.allErrors.inspect()}."
-                throw new IllegalArgumentException(error.toString(), author.errors)
+                //throw new IllegalArgumentException(error.toString())
+                invalidAuthorsException.addInvalidPublicationAuthor(author)
             }
         }
-        validatedAuthors
+        int nbBadAuthors = invalidAuthorsException.getInvalidAuthors()?.size()
+        if (nbBadAuthors > 0) {
+            throw invalidAuthorsException
+        }
+        return validatedAuthors
     }
 
     private Publication findByPublicationTransportCommand(PubTC cmd) {

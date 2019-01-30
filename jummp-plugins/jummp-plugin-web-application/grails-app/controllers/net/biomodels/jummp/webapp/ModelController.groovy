@@ -36,6 +36,7 @@ package net.biomodels.jummp.webapp
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
+import net.biomodels.jummp.core.InvalidPublicationAuthorsException
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
@@ -46,7 +47,6 @@ import net.biomodels.jummp.core.model.audit.AccessFormat
 import net.biomodels.jummp.core.model.audit.AccessType
 import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
 import net.biomodels.jummp.model.Model
-import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.Team
 import net.biomodels.jummp.webapp.rest.errors.Error
@@ -59,7 +59,6 @@ import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.multipart.MultipartFile
 
 import javax.servlet.http.HttpServletResponse
-import java.text.ParseException
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -1124,8 +1123,9 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                 bindData(tempPTC, params, [exclude: ['authors']])
                 try  {
                     publicationService.assembleAuthors(tempPTC, params.authorListContainer)
-                } catch (ParseException e) {
-                    flash.validationErrorOn = tempPTC.authors
+                } catch (InvalidPublicationAuthorsException e) {
+                    String errMsg = e.getI18nErrorMessage4InvalidAuthor()
+                    flash.flashMessage = "There have been errors when assembling authors to the publication:<br/>${errMsg}"
                     return error()
                 }
                 if (tempPTC.hasErrors()) {
