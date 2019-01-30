@@ -30,7 +30,10 @@
 
 package net.biomodels.jummp.core
 
+import grails.plugin.cache.Cacheable
+import groovy.util.slurpersupport.GPathResult
 import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter as PLPA
+import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand
 import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PLPTC
 import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
 import net.biomodels.jummp.model.PublicationLinkProvider
@@ -54,28 +57,6 @@ class PubMedService {
     final Log log = LogFactory.getLog(getClass())
     static transactional = false
 
-    private setFieldIfItExists(String fieldName, PubTC publication,
-                               def xmlField, boolean castToInt) {
-        try {
-            if (xmlField && xmlField.size() == 1) {
-                String text = xmlField.text()
-                if (castToInt) {
-                    try {
-                        publication."${fieldName}" = text as int
-                    } catch (NumberFormatException ignored) {
-                        final String pId = publication.link
-                        log.warn "Field '$fieldName' of publication $pId is not numerical: $text"
-                    }
-                }
-                else {
-                    publication."${fieldName}" = text
-                }
-            }
-        } catch(Exception e) {
-            log.error e.message, e
-        }
-    }
-
     /**
      * Downloads the XML describing the PubMed resource and parses the Publication information.
      * @param id The PubMed Identifier
@@ -83,6 +64,22 @@ class PubMedService {
      */
     @SuppressWarnings("EmptyCatchBlock")
     PubTC fetchPublicationData(String id) throws JummpException {
+        def slurper = lookupPublicationDataInPubMed(id)
+
+        PublicationLinkProviderTransportCommand linkCommand = createPubMedLinkProviderInstance()
+        PubTC.fromPubMed(linkCommand, id, slurper)
+    }
+
+    @Cacheable("pubMedLinkProviderInstance")
+    PublicationLinkProviderTransportCommand createPubMedLinkProviderInstance() {
+        PublicationLinkProvider link = PublicationLinkProvider.withCriteria(uniqueResult: true) {
+            eq("linkType", PublicationLinkProvider.LinkType.PUBMED)
+        }
+        PLPTC linkCommand = new PLPA(linkProvider: link).toCommandObject()
+        linkCommand
+    }
+
+    GPathResult lookupPublicationDataInPubMed(String id) throws JummpException {
         URL url
         try {
             url = new URL("https://www.ebi.ac.uk/europepmc/webservices/rest/search/query=ext_id:${id}%20src:med&resulttype=core")
@@ -91,7 +88,7 @@ class PubMedService {
             throw new JummpException("PubMed URL is malformed", e)
         }
 
-        def slurper
+        def slurper = null
         try {
             slurper = new XmlSlurper().parse(url.openStream())
         } catch (SAXParseException e) {
@@ -99,42 +96,6 @@ class PubMedService {
         } catch (Exception e) {
             throw new JummpException("Error retrieving publication info", e)
         }
-        PublicationLinkProvider link = PublicationLinkProvider.withCriteria(uniqueResult: true) {
-            eq("linkType", PublicationLinkProvider.LinkType.PUBMED)
-        }
-        PLPTC linkCommand = new PLPA(
-                linkProvider: link).toCommandObject()
-        PubTC publication = new PubTC(linkProvider:
-                linkCommand, link: id)
-        def result = slurper.resultList.result
-        setFieldIfItExists("pages", publication, result.pageInfo, false)
-        setFieldIfItExists("title", publication, result.title, false)
-        setFieldIfItExists("affiliation", publication, result.affiliation, false)
-        setFieldIfItExists("synopsis", publication, result.abstractText, false)
-
-        if (result.journalInfo) {
-            setFieldIfItExists("month", publication, result.journalInfo.monthOfPublication, true)
-            setFieldIfItExists("year", publication, result.journalInfo.yearOfPublication, true)
-            // cannot retrieve publication day directly like all other details
-            def isoDateField = slurper.resultList.resultList.journalInfo.printPublicationDate
-            if (isoDateField) {
-                String isoDate = isoDateField.text()
-                String[] dateParts = isoDate?.split('-')
-                if (dateParts.length == 3) {
-                    String dayAsString = dateParts[-1]
-                    try {
-                        publication.day = dayAsString as int
-                    } catch (NumberFormatException ignored) {
-                        log.warn "Invalid publication day $dayAsString for ${publication.link}"
-                    }
-                }
-            }
-            setFieldIfItExists("volume", publication, result.journalInfo.volume, false)
-            setFieldIfItExists("issue", publication, result.journalInfo.issue, false)
-            setFieldIfItExists("journal", publication, result.journalInfo.journal.title, false)
-        }
-        publication.parseAuthors(slurper)
-
-        return publication
+        slurper
     }
 }

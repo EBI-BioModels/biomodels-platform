@@ -8,14 +8,14 @@ import spock.lang.Specification
 
 @TestMixin(DomainClassUnitTestMixin)
 class PublicationTransportCommandSpec extends Specification {
-    def "test parseAuthors method populates the author list successfully"() {
+    def "test extractAuthorsFromPubMed method populates the author list successfully"() {
         given:
         def cmd = new PublicationTransportCommand()
         mockForConstraintsTests(PublicationTransportCommand, [cmd])
         def authorsXml = createAuthorsXml("Smith J")
         def slurper = new XmlSlurper().parseText(authorsXml)
         when:
-        cmd.parseAuthors(slurper)
+        cmd.extractAuthorsFromPubMed(slurper)
 
         then:
         !cmd.validate() // only the authors are set
@@ -28,7 +28,7 @@ class PublicationTransportCommandSpec extends Specification {
         firstAuthor.userRealName == 'Smith J'
     }
 
-    def "test parseAuthors method ignores publication authors with empty names"() {
+    def "test extractAuthorsFromPubMed method ignores publication authors with empty names"() {
         given:
         def authorsXml = createAuthorsXml("Smith J", "")
         def slurper = new XmlSlurper().parseText(authorsXml)
@@ -40,7 +40,7 @@ class PublicationTransportCommandSpec extends Specification {
         cmd.messageSource = mockMessageSource.createMock()
 
         when:
-        cmd.parseAuthors slurper
+        cmd.extractAuthorsFromPubMed slurper
 
         then:
         !cmd.validate()
@@ -48,6 +48,30 @@ class PublicationTransportCommandSpec extends Specification {
         cmd.authors.size() == 2
         cmd.authors.get(0).validate()
         !cmd.authors.get(1).validate()
+    }
+
+    def "test extractManuscriptInfoFromPubMed"() {
+        given:
+        def manuscriptDetails = [ pages: "1-10", title: "my awesome paper",
+            affiliation: "home", synopsis: "boring abstract",
+            journalInfo: [
+                monthOfPublication: "23",
+                yearOfPublication: "1975"
+            ]
+        ]
+        def xml = createManuscriptInfoXml(manuscriptDetails)
+        def slurper = new XmlSlurper().parseText(xml)
+        def cmd = new PublicationTransportCommand()
+
+        when:
+        cmd.extractManuscriptInfoFromPubMed(slurper)
+
+        then:
+        !cmd.validate()
+        ["pages", "title", "affiliation", "synopsis"].each { field ->
+            cmd.errors.getFieldErrors(field).size() == 0
+        }
+        cmd.errors.getFieldErrors("authors").size() == 1
     }
 
     private static String createAuthorsXml(String... authors) {
@@ -58,6 +82,24 @@ ${authors.collect { String a ->
     "<author><fullName>$a</fullName></author>"
 }.join('\n')}
 </authorList>
+</result>
+</resultList></responseWrapper>""".toString()
+    }
+
+    private static String createManuscriptInfoXml(Map args) {
+        """<?xml version="1.0" encoding="UTF-8" standalone="yes"?><responseWrapper><resultList>
+<result>
+<pages>$args.pages</pages>
+<title>$args.title</title>
+<affiliation>$args.affiliation</affiliation>
+<synopsis>$args.synopsis</synopsis>
+${
+    if (args.journalInfo) {
+        return "<journalInfo><monthOfPublication>${args.journalInfo.monthOfPublication}</monthOfPublication>" +
+            "<yearOfPublication>${args.journalInfo.yearOfPublication}</yearOfPublication>" +
+            "</journalInfo>"
+    }
+}
 </result>
 </resultList></responseWrapper>""".toString()
     }

@@ -34,6 +34,7 @@
 
 package net.biomodels.jummp.core.model
 
+import groovy.util.slurpersupport.GPathResult
 import net.biomodels.jummp.plugins.security.PersonTransportCommand
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
@@ -50,10 +51,6 @@ class PublicationTransportCommand implements Serializable {
      * The class logger
      */
     final Log log = LogFactory.getLog(PublicationTransportCommand.class)
-    /**
-     * Dependency injection of messageSource
-     */
-    def messageSource
 
     Long id
     /**
@@ -126,6 +123,14 @@ class PublicationTransportCommand implements Serializable {
         link(nullable: true, unique: 'linkProvider')
     }
 
+    static PublicationTransportCommand fromPubMed(PublicationLinkProviderTransportCommand linkProvider, String pmid,
+            GPathResult xml) {
+        def publication = new PublicationTransportCommand(linkProvider: linkProvider, link: pmid)
+        publication.extractManuscriptInfoFromPubMed(xml)
+        publication.extractAuthorsFromPubMed(xml)
+        publication
+    }
+
     String prettierPrint() {
         StringBuilder returnedText = new StringBuilder("")
         String linkTypeLabel = linkProvider ? linkProvider.linkType : ""
@@ -148,9 +153,9 @@ class PublicationTransportCommand implements Serializable {
     /**
      * Parses the author information provided from a GPathResult object and adds them to this publication
      *
-     * @param slurper GPathResult object holding the author list
+     * @param slurper GPathResult object holding the author list which is fetched from PubMed Central
      */
-    void parseAuthors(def slurper) {
+    void extractAuthorsFromPubMed(def slurper) {
         authors = new ArrayList<>()
         def authorsXml = slurper.resultList.result.authorList.author
         for (def authorXml in authorsXml) {
@@ -170,6 +175,57 @@ class PublicationTransportCommand implements Serializable {
             String userRealName = authorXml.fullName[0].text()
             author.userRealName = userRealName
             this.authors.add(author)
+        }
+    }
+
+    void extractManuscriptInfoFromPubMed(def slurper) {
+        def result = slurper.resultList.result
+        setFieldIfItExists("pages", result.pageInfo, false)
+        setFieldIfItExists("title", result.title, false)
+        setFieldIfItExists("affiliation", result.affiliation, false)
+        setFieldIfItExists("synopsis", result.abstractText, false)
+
+        if (result.journalInfo) {
+            setFieldIfItExists("month", result.journalInfo.monthOfPublication, true)
+            setFieldIfItExists("year", result.journalInfo.yearOfPublication, true)
+            // cannot retrieve publication day directly like all other details
+            def isoDateField = slurper.resultList.resultList.journalInfo.printPublicationDate
+            if (isoDateField) {
+                String isoDate = isoDateField.text()
+                String[] dateParts = isoDate?.split('-')
+                if (dateParts.length == 3) {
+                    String dayAsString = dateParts[-1]
+                    try {
+                        day = dayAsString as int
+                    } catch (NumberFormatException ignored) {
+                        log.warn("Invalid publication day $dayAsString for ${link}")
+                    }
+                }
+            }
+            setFieldIfItExists("volume", result.journalInfo.volume, false)
+            setFieldIfItExists("issue", result.journalInfo.issue, false)
+            setFieldIfItExists("journal", result.journalInfo.journal.title, false)
+        }
+    }
+
+    private void setFieldIfItExists(String fieldName, def xmlField, boolean castToInt) {
+        try {
+            if (xmlField && xmlField.size() == 1) {
+                String text = xmlField.text()
+                if (castToInt) {
+                    try {
+                        this."${fieldName}" = text as int
+                    } catch (NumberFormatException ignored) {
+                        final String pId = link
+                        log.warn("Field '$fieldName' of publication $pId is not numerical: $text")
+                    }
+                }
+                else {
+                    this."${fieldName}" = text
+                }
+            }
+        } catch(Exception e) {
+            log.error(e.message, e)
         }
     }
 }
