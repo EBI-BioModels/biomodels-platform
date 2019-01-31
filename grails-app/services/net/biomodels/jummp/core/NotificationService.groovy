@@ -331,7 +331,7 @@ class NotificationService {
         String notificationBody = "notification.model.sub4pub.body"
         String serverURL = grailsApplication.config.grails.serverURL
         String modelLink = "${serverURL}/${revision.identifier()}"
-        String[] bodyParams = [revision?.name, user?.person?.userRealName, modelLink] as String[]
+        String[] bodyParams = [revision?.name, user?.person?.userRealName, modelLink, user.email] as String[]
         Set<User> watchers = getNotificationRecipients(body.perms)
         // send a notification message to the members of the curator group
         useGenericNotificationStructure(notificationTitle, titleParams,
@@ -346,6 +346,7 @@ class NotificationService {
             async true
             to emailTo
             from emailFrom
+            replyTo emailFrom
             subject emailSubject
             html emailBody
         }
