@@ -29,6 +29,7 @@ import net.biomodels.jummp.model.Publication
 import net.biomodels.jummp.model.PublicationPerson
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.Person
+import net.biomodels.jummp.plugins.security.PersonTransportCommand
 import net.biomodels.jummp.plugins.security.User
 import org.apache.commons.io.FileUtils
 import org.springframework.transaction.TransactionDefinition
@@ -39,6 +40,7 @@ class PublicationServiceSpec extends IntegrationSpec {
     def grailsApplication
     def jummpIntegrationTest
     def miriamService
+    def messageSource
     def modelDelegateService
     def modelService
     def publicationService
@@ -65,7 +67,7 @@ class PublicationServiceSpec extends IntegrationSpec {
      * We are trying to fetch a PubMed publication which one of the authors is that person.
      * The test passes if the person could be reused instead created.
      */
-    def "fetch a publication which one of the authors has ORCID persisted in the database"() {
+    def "test fetch a publication which one of the authors has ORCID persisted in the database"() {
         given: "have a PubMed ID"
         String pubMedID = "23664840"
 
@@ -105,6 +107,85 @@ class PublicationServiceSpec extends IntegrationSpec {
         20 == pp?.size()
         viji.position == 0 // the position of the first author is counted from 0
         viji.pubAlias == "Chelliah V"
+    }
+    /**
+     * The test context: if the authors of a publication transport command object are wrongly modified, the publication
+     * in question should not be valid.
+     */
+    def "test any of the authors is invalid"() {
+        given: "a PubMed ID"
+        String pubMedID = "25414348" // BioModels: ten-year anniversary
+
+        when: "fetch that publication from PubMed Central"
+        assert 0 == Person.count()
+        assert 0 == PublicationPerson.count()
+        def slurper = pubMedService.lookupPublicationDataInPubMed(pubMedID)
+        PublicationTransportCommand ptc = pubMedService.fetchPublicationData(pubMedID)
+
+        then: "publication authors should be extracted properly"
+        null != slurper
+        ptc.authors.size() == 20
+
+        when: "attempt to corrupt any of the authors"
+        PersonTransportCommand firstAuthor = ptc.authors.first()
+        firstAuthor.userRealName = null
+
+        then: "the authors as well as publication will not be validated"
+        !ptc.validate()
+        ptc.errors.getFieldErrors("authors").size() == 1
+    }
+
+    /**
+     * The test context: testing assembleAuthors methods with different authors JSON strings as the input/argument.
+     * The method will be failed if any of the authors in the JSON string has a nullable real user name or an
+     * invalid orcid identifier.
+     */
+    def "test assembleAuthors method"() {
+        given: "null PublicationTransportCommand instance"
+        PublicationLinkProviderTransportCommand linkProviderTC = pubMedService.createPubMedLinkProviderInstance()
+        PublicationTransportCommand ptc = null
+
+        when: "instantiate the given publication transport command object with a map of parameters without authors"
+        Map args = [title: "BioModels repository - versioning models",
+                    journal: "Software Engineering Journal",
+                    synopsis: "this is a online repository of biological mathematics models",
+                    affiliation: "EMBL-EBI", pages: "1-10",
+                    year: 2019,
+                    month: "January",
+                    linkProvider: linkProviderTC,
+                    link: "14567897"]
+        ptc = new PublicationTransportCommand(args)
+        then: "the instance could not be valid because of missing authors"
+        // The validation of this ptc returns false because of missing authors
+        !ptc.validate()
+
+        when: "assemble the authors parsed from a JSON string into the publication"
+        def invalidAuthorsInJSONString = """\
+{"authors":[{"userRealName":"Abroudi A","institution":"","orcid":""},{"userRealName":"","institution":"","orcid":"0000-0003-2943-4331"},{"userRealName":"Kulasiri D","institution":"","orcid":"0000#0001#8744#1578"}]}"""
+        publicationService.assembleAuthors(ptc, invalidAuthorsInJSONString)
+        then: "publication is till invalid because of invalid JSON string has an empty real user name and an invalid orcid. The method will throw an exception"
+        !ptc.validate() // due to there are two bad authors which one has no real name and the other has an invalid orcid
+        thrown(InvalidPublicationAuthorsException)
+
+        when: "assemble again the authors parsed from an invalid JSON string into the publication"
+        def badAuthorsInJSONString = """\
+{"authors":[{"userRealName":"Abroudi A","institution":"","orcid":""},{"userRealName":"","institution":"","orcid":"0000-0003-2943-4331"},{"userRealName":"Kulasiri D","institution":"","orcid":"0000-0001-8744-1578"}]}"""
+        publicationService.assembleAuthors(ptc, badAuthorsInJSONString)
+        !ptc.validate() // due to there is a bad authors which has no real name
+        then: "the method will throw an exception and we hope to capture error messages"
+        final InvalidPublicationAuthorsException exception = thrown()
+        String errorMessage = exception.getI18nErrorMessage4InvalidAuthor()
+        String i18nMessage = messageSource.getMessage("personTransportCommand.userRealName.blank", [] as Object[], Locale.default)
+        errorMessage.contains(i18nMessage)
+        exception.invalidAuthors.size() == 1
+
+        when: "assemble the authors extracted from a valid JSON string into the publication"
+        def authorsInJSONString = """\
+{"authors":[{"userRealName":"Abroudi A","institution":"","orcid":""},{"userRealName":"Samarasinghe S","institution":"","orcid":"0000-0003-2943-4331"},{"userRealName":"Kulasiri D","institution":"","orcid":"0000-0001-8744-1578"}]}"""
+        publicationService.assembleAuthors(ptc, authorsInJSONString)
+        then: "the publication is valid and the authors are successfully populated"
+        ptc.validate()
+        ptc.authors.size() == 3
     }
 
     /**
