@@ -298,24 +298,20 @@ There has been errors when assembling authors $authors into the publication '${p
                 validatedAuthors.add(author)
             } else {
                 // this person record is invalid
-                // throw a checked exception that is caught downstream -- e.g. in ModelController
-                String error = "The author did not validate: ${author.userRealName}. Errors: ${author.errors.allErrors.inspect()}."
-                //throw new IllegalArgumentException(error.toString())
                 invalidAuthorsException.addInvalidPublicationAuthor(author)
             }
         }
         int nbBadAuthors = invalidAuthorsException.getInvalidAuthors()?.size()
         if (nbBadAuthors > 0) {
+            // throw a checked exception that is caught downstream -- e.g. in ModelController
             throw invalidAuthorsException
         }
         return validatedAuthors
     }
 
     private Publication findByPublicationTransportCommand(PubTC cmd) {
-        Publication publication
-        if (cmd?.id) {
-            publication = Publication.get(cmd.id)
-        } else {
+        Publication publication = null
+        if (cmd?.link) {
             PLP.LinkType linkType = PLP.LinkType.findLinkTypeByLabel(cmd.linkProvider.linkType)
             publication = Publication.withCriteria(uniqueResult: true) {
                 eq("link", cmd.link)
@@ -323,6 +319,8 @@ There has been errors when assembling authors $authors into the publication '${p
                     eq("linkType", linkType)
                 }
             }
+        } else if (cmd?.id) {
+            publication = Publication.get(cmd.id)
         }
         publication
     }
