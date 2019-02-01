@@ -21,15 +21,28 @@ class ParameterSearchCommand {
 
 
     static constraints = {
-        query nullable: true, validator: { q,cmd ->
+        query nullable: true, validator: { q, cmd ->
 
-            if(null == q || q == "" || q == '*'){
+            if (null == q || q == "" || q == '*') {
                 cmd.query = DEFAULT_QUERY
             }
             return true
         }
-        size inList: [10, 25, 50, 100]
-        start min: 0
+        size inList: [10, 25, 50, 100], nullable: true, validator: { val, cmd ->
+            if (0 == val || null == val) {
+                cmd.size = 10
+            }
+            return true
+
+        }
+
+        start min: 0, nullable: true, validator: { val, cmd ->
+            if (null == val) {
+                cmd.start = 0
+            }
+            return true
+        }
+        sort nullable: true
     }
 
     @CompileStatic
