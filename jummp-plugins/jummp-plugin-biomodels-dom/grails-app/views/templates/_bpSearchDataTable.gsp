@@ -1,3 +1,4 @@
+<%@ page import="grails.converters.JSON" %>
 <table id="table_id" class="display">
     <thead>
     <th>Entity</th>
@@ -15,6 +16,7 @@
 
 <script>
     $(document).ready(function () {
+        var isDirectionBack = false;
         var columnConfig = [
 
             {
@@ -48,14 +50,14 @@
                 render: function (href, type, row) {
                     if (href !== undefined && href.length !== 0) {
                         var formattedData;
-                        if(href.includes(",")) {
+                        if (href.includes(",")) {
                             var formattedArray = [];
                             var commaSeparatedLinks = href.split(",");
-                            commaSeparatedLinks.forEach(function(subHref) {
+                            commaSeparatedLinks.forEach(function (subHref) {
                                 formattedArray.push(generatePublicationLink(subHref));
                             });
                             formattedData = formattedArray.join(", ");
-                        } else{
+                        } else {
                             formattedData = generatePublicationLink(href);
                         }
 
@@ -86,64 +88,89 @@
             }
         ];
 
+        // Global state variable
+        var pageState = {
+            rootURL: "/jummp-biomodels/parameterSearch",
+            command: ${command as JSON},
+            dataTable: {},
+
+            isInitialState: function () {
+                return this.dataTable.query === undefined;
+            },
+
+            createSearchUrl: function () {
+                var url = this.rootURL;
+                var paramsArray = [];
+                for (var key in this.dataTable) {
+                    if (this.dataTable.hasOwnProperty(key)) {
+                        var value = this.dataTable[key];
+                        if (value !== undefined) {
+                            var encoded = encodeURIComponent(value);
+                            paramsArray.push(key + '=' + encoded);
+                        }
+                    }
+                }
+                if (paramsArray.length > 0) {
+                    url = url + '?' + paramsArray.join("&");
+                }
+                return url;
+            },
+
+            getData: function () {
+
+                return {
+                    command: this.command, dataTable: this.dataTable
+                }
+
+            }
+        };
+
+        // This method is to set the URL in browser once a table operation is executed
+        function setBrowserUrl() {
+            window.history.pushState(pageState.getData(), 'Title', pageState.createSearchUrl());
+        }
+
+        // This event is triggered when browser back button is clicked
+        window.onpopstate = function (event) {
+            isDirectionBack = true;
+            pageState.dataTable = event.state.dataTable;
+            updateTable(table);
+            isDirectionBack = false;
+
+        };
         function generatePublicationLink(href) {
             href = href.replace(/\\/g, "");
             var lastIndexofUrlPrefix = "http://identifiers.org/".lastIndexOf("/") + 1;
             var urlSuffix = href.substring(lastIndexofUrlPrefix, href.length);
             var firstIndexOfUrlSuffix = urlSuffix.indexOf("/") + 1;
-            href = "<a target='_blank' href='" + href + "'>" + urlSuffix.substring(firstIndexOfUrlSuffix, href.length) + "</a>"
+            href = "<a target='_blank' href='" + href + "'>" + urlSuffix.substring(firstIndexOfUrlSuffix, href.length) + "</a>";
             return href;
         }
 
         // Function called for showing the data pagination stats
         function infoCallback(settings, start, end, max, total, pre) {
             return (!isNaN(total))
-                ? "Showing " + start + " to " + end + " of " + total + " entries"
+                ? "Showing " + start + " to " + end
+                + " of " + total + " entries"
                 + ((total !== max) ? " (filtered from " + max + " total entries)" : "")
                 : "Showing " + start + " to " + (start + this.api().data().length - 1) + " entries";
         }
 
-        // Preprocess custom params before calling EbiSearch WS
-        function preProcessEbiSearchParams(urlParams) {
-            var data = {};
-            var urlQuery = decodeURI("${urlQuery}");
-            if(urlQuery !== "" && urlParams.search.value === "") {
-                urlParams.search.value = urlQuery;
-                $('.dataTables_filter input').val(urlQuery);
-            }
-            data.query = encodeURIComponent(urlParams.search.value);
-            data.size = urlParams.length;
-            data.start = urlParams.start;
-            data.sort = "";
+        // Function to update table as per the state
+        function updateTable(table) {
+            $('.dataTables_filter input').val(pageState.dataTable.query);
+            $('#searchButton').trigger("click");
 
-            // Sorting
-            urlParams.order.forEach(function (obj) {
-                var column = urlParams.columns[obj.column];
-                var columnName = column.data.replace("fields.", "").replace("_RAW","");
-                if(columnName === "model") {
-                    var sortDirectionArg = obj.dir;
-                    var columnOrder;
+            var page = Math.floor(pageState.dataTable.start / pageState.dataTable.size);
 
-                    if (sortDirectionArg === "desc") {
-                        columnOrder = "descending";
-                    }
-                    else if (sortDirectionArg === "asc") {
-                        columnOrder = "ascending";
-                    }
-                    if (data.sort && columnOrder && columnName) {
-                        data.sort += ',';
-                    }
-                    data.sort += columnName + ':' + columnOrder;
-                }else {
-                    // Default sort
-                    data.sort += "model:ascending";
-                }
-            });
-            return data;
+            table.page.len(pageState.dataTable.size).draw('page');
+            table.page(page).draw('page');
+
         }
 
+        // Ajax configuration
         ajaxConfig = {
-            "url": "${grailsApplication.config.grails.serverURL}/parameterSearch/search",
+            "url": "${g.createLink(controller: "parameterSearch", action: "search", absolute: true)}",
             "dataSrc": "entries",
             "data": preProcessEbiSearchParams
         };
@@ -152,22 +179,27 @@
         // Table configuration
         var table = $('#table_id').DataTable(
             {
-                initComplete : function() {
+                initComplete: function () {
+                    updateTable(table);
                     var input = $('.dataTables_filter input').unbind(),
                         self = this.api(),
-                        $searchButton = $('<button class="button icon icon-functional">')
+                        $searchButton = $('<button id="searchButton" class="button icon icon-functional">')
                             .text('search')
                             .click(function () {
                                 self.search(input.val()).draw();
-                                window.history.pushState('parameterSearch', 'Title', '/jummp-biomodels/parameterSearch?query='+input.val());
+                                pageState.dataTable.query = input.val();
+                                if (!isDirectionBack) setBrowserUrl();
                             }),
-                        $clearButton = $('<button class="button">')
+                        $clearButton = $('<button id="clearButton" class="button">')
                             .text('clear')
                             .click(function () {
                                 input.val('');
                                 $searchButton.click();
+                                pageState.dataTable = {};
+                                if (!isDirectionBack) setBrowserUrl();
                             });
-                    $('.dataTables_filter').append($searchButton, '&nbsp;',$clearButton);
+                    $('.dataTables_filter').append($searchButton, '&nbsp;', $clearButton);
+
                 },
                 columns: columnConfig,
                 "processing": true,
@@ -188,5 +220,77 @@
                 }
             });
 
+        // Function to preapare sort parameters
+        function prepareSortParams(dataTableArg, sort) {
+            if (sort === undefined || sort === "" || sort === null) {
+                sort = "";
+                dataTableArg.order.forEach(function (obj) {
+                    var column = dataTableArg.columns[obj.column];
+                    var columnName = column.data.replace("fields.", "").replace("_RAW", "");
+                    if (columnName === "model") {
+                        var sortDirectionArg = obj.dir;
+                        var columnOrder;
+
+                        if (sortDirectionArg === "desc") {
+                            columnOrder = "descending";
+                        }
+                        else if (sortDirectionArg === "asc") {
+                            columnOrder = "ascending";
+                        }
+                        if (sort && columnOrder && columnName) {
+                            sort += ',';
+                        }
+                        sort += columnName + ':' + columnOrder;
+                    } else {
+                        // Default sort
+                        sort += "model:ascending";
+                    }
+                });
+            }
+            return sort;
+        }
+
+        // Preprocess custom params before calling EbiSearch WS
+        function preProcessEbiSearchParams(dataTableArg) {
+
+            var data = {};
+            var query, start, size, sort;
+            if (pageState.isInitialState()) {
+                // populate data object from pageState.command
+                var command = pageState.command;
+                query = decodeURI(command.query);
+                start = Number(command.start);
+                size = Number(command.size);
+                sort = command.sort;
+
+                $('.dataTables_filter input').val(query);
+
+
+            } else {
+                // populate data object from dataTableArg and set pageState.dataTable to dataTableArg
+                query = encodeURIComponent(dataTableArg.search.value);
+                start = dataTableArg.start;
+                size = dataTableArg.length;
+            }
+
+
+            // Sorting
+            sort = prepareSortParams(dataTableArg, sort);
+
+            pageState.dataTable.query = query;
+            pageState.dataTable.start = start;
+            pageState.dataTable.size = size;
+            pageState.dataTable.sort = sort;
+
+            data.query = query;
+            data.size = size;
+            data.start = start;
+            data.sort = sort;
+
+            if (isDirectionBack === false) {
+                setBrowserUrl();
+            }
+            return data;
+        }
     });
 </script>
