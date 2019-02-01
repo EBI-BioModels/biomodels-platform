@@ -272,8 +272,7 @@ WHERE
     ${return filteredUsers ? "AND r.owner.id IN (:users)" : ""}
 """
         if (isAdmin) {
-            query = """\
-$query AND r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2 where r.model=r2.model)"""
+            query = """$query AND r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2 where r.model=r2.model)"""
         } else {
             query = """\
 $query AND r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2, AclEntry ace
@@ -299,15 +298,14 @@ WHERE r.model = r2.model
                 if (type) {
                     log.warn("Ignoring unsupported permission level '$type'.")
                 } else if (!isAdmin) {
-                    query = """\
-$query AND ((r.owner.id = ${u.id} AND r.state = '${ModelState.UNPUBLISHED}') 
+                    query = """$query AND ((r.owner.id = ${u.id} AND r.state = '${ModelState.UNPUBLISHED}') 
 OR (r.owner.id != ${u.id} AND r.state = '${ModelState.UNPUBLISHED}') 
 OR (r.owner.id = ${u.id} AND r.state = '${ModelState.PUBLISHED}'))
 """
                 }
                 break
         }
-        query = """$query ORDER BY ${getSortColumnAsString(sortColumn)} ${sortingDirection}"""
+        query = """$query ORDER BY ${getSortColumnAsString(sortColumn)} ${sortingDirection}, r.revisionNumber desc"""
         return query
     }
 
