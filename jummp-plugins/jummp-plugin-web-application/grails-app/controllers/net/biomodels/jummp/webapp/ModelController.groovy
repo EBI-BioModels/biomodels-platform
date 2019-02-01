@@ -1126,7 +1126,7 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                     publicationService.assembleAuthors(tempPTC, params.authorListContainer)
                 } catch (InvalidPublicationAuthorsException e) {
                     String errMsg = e.getI18nErrorMessage4InvalidAuthor()
-                    flash.flashMessage = "There have been errors when assembling authors to the publication:<br/>${errMsg}"
+                    flash.flashMessage = "There have been errors while parsing authors of the publication:<br/>${errMsg}"
                     return error()
                 }
                 if (tempPTC.hasErrors()) {
