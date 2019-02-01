@@ -34,19 +34,18 @@ import org.apache.commons.logging.LogFactory
 class ParameterSearchController {
 
     def parameterSearchService
-    def grailsApplication
-/**
- * The class logger.
- */
+    /**
+     * The class logger.
+     */
     static final Log log = LogFactory.getLog(ParameterSearchController.class)
 
     def index(ParameterSearchCommand command) {
-
-        if (command.query == "*:*") {
-            render(view: "index")
-        } else {
-            render(view: "index", model: ['urlQuery': command.query])
+        if(!command.validate()) {
+            def msg = "Invalid request $command.query, $command.errors.allErrors"
+            log.error(msg)
+            return['message': msg,"command":command]
         }
+        [command: command]
     }
 
     def search(ParameterSearchCommand command) {
