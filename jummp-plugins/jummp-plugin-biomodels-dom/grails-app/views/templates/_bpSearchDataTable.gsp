@@ -90,7 +90,7 @@
 
         // Global state variable
         var pageState = {
-            rootURL: "/jummp-biomodels/parameterSearch",
+            rootURL: "${createLinkTo(action: 'parameterSearch')}",
             command: ${command as JSON},
             dataTable: {},
 
@@ -114,26 +114,19 @@
                     url = url + '?' + paramsArray.join("&");
                 }
                 return url;
-            },
-
-            getData: function () {
-
-                return {
-                    command: this.command, dataTable: this.dataTable
-                }
-
             }
+
         };
 
         // This method is to set the URL in browser once a table operation is executed
         function setBrowserUrl() {
-            window.history.pushState(pageState.getData(), 'Title', pageState.createSearchUrl());
+            window.history.pushState(pageState.dataTable, 'Title', pageState.createSearchUrl());
         }
 
         // This event is triggered when browser back button is clicked
         window.onpopstate = function (event) {
             isDirectionBack = true;
-            pageState.dataTable = event.state.dataTable;
+            pageState.dataTable = event.state;
             updateTable(table);
             isDirectionBack = false;
 
