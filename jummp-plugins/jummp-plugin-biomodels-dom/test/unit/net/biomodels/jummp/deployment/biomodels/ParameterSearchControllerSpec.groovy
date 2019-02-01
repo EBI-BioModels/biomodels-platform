@@ -37,12 +37,18 @@ class ParameterSearchControllerSpec extends Specification {
 
     void "test index with Query"() {
         given: "Controller and command object initialized"
+        params.query = 'testQuery'
+        params.size = 10
+        params.start = 0
+        params.sort = "model:ascending"
         when: "Redirected to index with query"
-        ParameterSearchCommand command = new ParameterSearchCommand()
-        command.query="test"
-        controller.index(command)
+        controller.index()
+
         then: "Should show correct model"
-        assert model.urlQuery == "test"
+        assert model.query == "test"
+        assert model.size == 10
+        assert model.start == 0
+        assert model.sort == "model:ascending"
     }
 
     void "test search"() {
