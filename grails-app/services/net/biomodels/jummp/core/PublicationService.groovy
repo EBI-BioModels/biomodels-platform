@@ -185,13 +185,9 @@ Failed to add author $person to $publication: ${tmp.errors.allErrors.inspect()}"
      * @param authorsAsJson A string representing the information of publication authors provided by submitters.
      * @return  An updated publication transport command
      */
-    PubTC assembleAuthors(PubTC cmd, def authorsAsJson) {
+    PubTC assembleAuthors(PubTC cmd, def authorsAsJson) throws InvalidPublicationAuthorsException {
         List<PersonTC> validatedAuthors = new LinkedList<PersonTC>()
-        try {
-            validatedAuthors = parseAuthorsJSON(authorsAsJson)
-        } catch (InvalidPublicationAuthorsException e) {
-            throw e
-        }
+        validatedAuthors = parseAuthorsJSON(authorsAsJson)
         cmd.authors = validatedAuthors
         if (!cmd.validate()) {
             String authors = validatedAuthors == [] ? "[]" : validatedAuthors.collect {
