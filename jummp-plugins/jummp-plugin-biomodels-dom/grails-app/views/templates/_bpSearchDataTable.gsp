@@ -125,6 +125,9 @@
 
         // This event is triggered when browser back button is clicked
         window.onpopstate = function (event) {
+            if(event.state === undefined || event.state === null) {
+                return;
+            }
             isDirectionBack = true;
             pageState.dataTable = event.state;
             updateTable(table);
