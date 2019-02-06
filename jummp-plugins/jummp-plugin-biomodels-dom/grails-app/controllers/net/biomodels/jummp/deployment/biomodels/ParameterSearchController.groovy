@@ -62,7 +62,7 @@ class ParameterSearchController {
             response.status = 400
             String msg = "Error encountered while processing $command: ${ie.message}"
             log.error(msg)
-            render(['message': ie.getMessage()] as JSON)
+            render(['message': msg] as JSON)
         } catch (Exception ex) {
             response.status = 500
             String msg = "Error encountered while processing $command: ${ex.message}"
