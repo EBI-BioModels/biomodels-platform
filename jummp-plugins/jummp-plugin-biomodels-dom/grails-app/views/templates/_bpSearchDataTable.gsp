@@ -1,6 +1,5 @@
 <%@ page import="grails.converters.JSON" %>
-${message}
-<div id="errors" class="errors">
+<div id="errors" >
 </div>
 <table id="table_id" class="display">
     <thead>
