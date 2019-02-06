@@ -1,4 +1,7 @@
 <%@ page import="grails.converters.JSON" %>
+${message}
+<div id="errors" class="errors">
+</div>
 <table id="table_id" class="display">
     <thead>
     <th>Entity</th>
@@ -16,6 +19,7 @@
 
 <script>
     $(document).ready(function () {
+        const DEFAULT_QUERY = "*:*";
         var isDirectionBack = false;
         var columnConfig = [
 
@@ -90,7 +94,7 @@
 
         // Global state variable
         var pageState = {
-            rootURL: "${createLinkTo(action: 'parameterSearch')}",
+            rootURL: "${createLink(action: 'index')}",
             command: ${command as JSON},
             dataTable: {},
 
@@ -125,7 +129,7 @@
 
         // This event is triggered when browser back button is clicked
         window.onpopstate = function (event) {
-            if(event.state === undefined || event.state === null) {
+            if (event.state === undefined || event.state === null) {
                 return;
             }
             isDirectionBack = true;
@@ -134,6 +138,7 @@
             isDirectionBack = false;
 
         };
+
         function generatePublicationLink(href) {
             href = href.replace(/\\/g, "");
             var lastIndexofUrlPrefix = "http://identifiers.org/".lastIndexOf("/") + 1;
@@ -155,11 +160,11 @@
         // Function to update table as per the state
         function updateTable(table) {
             $('.dataTables_filter input').val(pageState.dataTable.query);
-            $('#searchButton').trigger("click");
 
             var page = Math.floor(pageState.dataTable.start / pageState.dataTable.size);
-
-            table.page.len(pageState.dataTable.size).draw('page');
+            var size = pageState.dataTable.size;
+            $('#searchButton').trigger("click");
+            table.page.len(size).draw(true);
             table.page(page).draw('page');
 
         }
@@ -168,9 +173,15 @@
         ajaxConfig = {
             "url": "${g.createLink(controller: "parameterSearch", action: "search", absolute: true)}",
             "dataSrc": "entries",
-            "data": preProcessEbiSearchParams
+            "data": preProcessEbiSearchParams,
+            "error": function (xhr, error, code) {
+                $('<p style="color:red">'
+                    +xhr.statusText+', No results to display please try again with appropriate details.</p>')
+                    .appendTo('#errors');
+            }
         };
 
+        $.fn.dataTable.ext.errMode = 'throw';
 
         // Table configuration
         var table = $('#table_id').DataTable(
@@ -184,7 +195,6 @@
                             .click(function () {
                                 self.search(input.val()).draw();
                                 pageState.dataTable.query = input.val();
-                                if (!isDirectionBack) setBrowserUrl();
                             }),
                         $clearButton = $('<button id="clearButton" class="button">')
                             .text('clear')
@@ -264,7 +274,11 @@
 
             } else {
                 // populate data object from dataTableArg and set pageState.dataTable to dataTableArg
-                query = encodeURIComponent(dataTableArg.search.value);
+                if (dataTableArg.search.value === "") {
+                    query = $('.dataTables_filter input').val();
+                } else {
+                    query = dataTableArg.search.value;
+                }
                 start = dataTableArg.start;
                 size = dataTableArg.length;
             }
@@ -273,7 +287,7 @@
             // Sorting
             sort = prepareSortParams(dataTableArg, sort);
 
-            pageState.dataTable.query = query;
+            pageState.dataTable.query = query === "" || query === DEFAULT_QUERY ? DEFAULT_QUERY : encodeURIComponent(query);
             pageState.dataTable.start = start;
             pageState.dataTable.size = size;
             pageState.dataTable.sort = sort;
