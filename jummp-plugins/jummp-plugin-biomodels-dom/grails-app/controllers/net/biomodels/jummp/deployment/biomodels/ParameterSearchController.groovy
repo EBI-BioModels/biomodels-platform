@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU Affero General Public License along
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
-**/
+ **/
 
 package net.biomodels.jummp.deployment.biomodels
 
@@ -26,11 +26,13 @@ import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchComman
 import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchResults
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+import grails.rest.*
 
 /**
- * Created by carankalle on 08/10/2018.
- */
+* @author carankalle on 08/10/2018.
+*/
 @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+@Resource(uri = '/search')
 class ParameterSearchController {
 
     def parameterSearchService
@@ -47,18 +49,28 @@ class ParameterSearchController {
     def search(ParameterSearchCommand command) {
         if (!command.validate()) {
             def msg = "Invalid request $command.query, $command.errors.allErrors"
+            response.status = 400
             log.error(msg)
-            render( ['message' : "Invalid request object"] as JSON)
+            render(['message': "Invalid request object"] as JSON)
             return
         }
         try {
-            ParameterSearchResults result = parameterSearchService.getData(command)
-            render(result as JSON)
+            def result = parameterSearchService.getData(command)
+            String responseformat = command.responseformat.toLowerCase()
+            if (result.toString().length() == 0 || result.hasProperty('recordsTotal') && result['recordsTotal'] == 0) {
+                String msg = "No matches found"
+                render(['message': msg] as JSON)
+            }
+            if (responseformat == "json") {
+                render(result as JSON)
+            } else if (responseformat == "csv") {
+                render(result)
+            }
         } catch (IllegalArgumentException ie) {
             response.status = 400
             String msg = "Error encountered while processing $command: ${ie.message}"
             log.error(msg)
-            render(['message' : ie.getMessage()] as JSON)
+            render(['message': ie.getMessage()] as JSON)
         } catch (Exception ex) {
             response.status = 500
             String msg = "Error encountered while processing $command: ${ex.message}"
