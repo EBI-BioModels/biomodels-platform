@@ -12,12 +12,17 @@ class ParameterSearchService {
     static final Log log = LogFactory.getLog(ParameterSearchService.class)
 
 
-    ParameterSearchResults getData(ParameterSearchCommand command) {
+    def getData(ParameterSearchCommand command) {
         if (!command) {
             throw new IllegalArgumentException("Couldn't read the request parameters");
         }
         def url = command.getSearchUrl()
         def searchResults = url.text
-        return ParameterSearchResults.fromJson(JSON.parse(searchResults))
+        String responseformat = command.responseformat.toLowerCase()
+        if (responseformat == "json") {
+            return ParameterSearchResults.fromJson(JSON.parse(searchResults))
+        } else if (responseformat == "csv") {
+            return searchResults
+        }
     }
 }
