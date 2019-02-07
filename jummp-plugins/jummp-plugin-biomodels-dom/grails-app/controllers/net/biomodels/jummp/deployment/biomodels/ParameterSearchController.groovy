@@ -32,7 +32,7 @@ import grails.rest.*
 * @author carankalle on 08/10/2018.
 */
 @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
-@Resource(uri = '/search')
+@Resource(uri = '/parameterSearch')
 class ParameterSearchController {
 
     def parameterSearchService
