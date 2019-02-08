@@ -85,7 +85,6 @@ grails.project.dependency.resolution = {
         compile "org.sbfc:converter:1.1"
         // XML parsing APIs
         compile "org.jdom:jdom:1.1.3"
-        compile "jaxen:jaxen:1.1.4"
         runtime 'org.javassist:javassist:3.17.1-GA'
     }
 

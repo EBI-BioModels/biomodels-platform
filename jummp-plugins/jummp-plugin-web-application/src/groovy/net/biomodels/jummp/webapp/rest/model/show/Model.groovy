@@ -20,14 +20,19 @@
 
 package net.biomodels.jummp.webapp.rest.model.show
 
-import net.biomodels.jummp.core.model.RevisionTransportCommand
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.xml.XmlMapper
 import net.biomodels.jummp.core.model.ModelTransportCommand
+import net.biomodels.jummp.core.model.PublicationTransportCommand
+import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.plugins.security.PersonTransportCommand
 
 class Model {
     String name
     String description
     Format format
-    String publication
+    Publication publication
     ModelFiles files
     History history
     Date firstPublished
@@ -35,15 +40,20 @@ class Model {
     String submissionId
     String publicationId
 
-    public Model(RevisionTransportCommand revision, boolean isPrivate) {
+    Model(RevisionTransportCommand revision, boolean isPrivate) {
         ModelTransportCommand model = revision.model
         name = revision.name
         description = revision.description
         format = new Format(revision.format)
         if (model.publication) {
-            publication = model.publication.linkProvider.identifiersPrefix ?
-                          model.publication.linkProvider.identifiersPrefix + model.publication.link :
-                          model.publication.link
+            PublicationTransportCommand pubTC = model.publication
+            publication = new Publication(pubTC)
+            publication.link = model.publication.linkProvider.identifiersPrefix ?
+                          pubTC.linkProvider.identifiersPrefix + pubTC.link :
+                          pubTC.link
+            pubTC.authors.each { PersonTransportCommand personTC ->
+                publication.authors << new PublicationAuthor(personTC)
+            }
         }
         if (isPrivate) {
             files = new ModelFiles()
@@ -54,5 +64,14 @@ class Model {
         submissionId = model.submissionId
         publicationId = model.publicationId
         firstPublished = model.firstPublished
+    }
+
+    String outputModelAsString(String contentType) {
+        // the contentType is either "application/json" or "application/xml"
+        ObjectMapper mapper = contentType == "application/json" ? new ObjectMapper() : new XmlMapper()
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL)
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
+        String result = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(this)
+        result
     }
 }

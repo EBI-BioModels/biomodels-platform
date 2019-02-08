@@ -769,6 +769,13 @@ if (!(jummpConfig.jummp.metadata.officialDatabaseDescription instanceof ConfigOb
         Models described from literature are manually curated and enriched with cross-references.
         """
 }
+
+if (!(jummpConfig.jummp.ws.client.japi.docs instanceof ConfigObject)) {
+    jummp.ws.client.japi.docs = jummpConfig.config.jummp.ws.client.japi.docs
+} else {
+    jummp.ws.client.japi.docs = "https://bitbucket.org/biomodels/biomodelswsclient"
+}
+
 // elasticsearch settings for weceem
 elasticSearch.datastoreImpl = 'hibernateDatastore'
 elasticSearch.bulkIndexOnStartup = false

@@ -65,6 +65,8 @@
         if (pubContext && pubContext.publication) {
             publication = pubContext.publication
         }
+        def nbAuthors = workingMemory.get("Authors")?.size()
+        def authorListContainerSize = nbAuthors > 5 || workingMemory.get("Authors") == null ? 5 : nbAuthors
     %>
     <div class="row">
     <h2>Update Publication Information</h2>
@@ -82,8 +84,7 @@
                 <label>
                     <g:message code="submission.publication.authors"/>
                     <select class="input50" id="authorList" name="authorList"
-                            size="${workingMemory.get("Authors")?.size() > 5 || workingMemory.get("Authors") == null ? 5 : workingMemory.get("Authors")?.size()}"
-                            style="height: inherit">
+                            size="${authorListContainerSize}" style="height: inherit">
                         <g:each in="${publication.authors}">
                             <option value="${it.userRealName}|${it.orcid ?: ""}|${it.institution ?: ""}">${it.userRealName}</option>
                         </g:each>
