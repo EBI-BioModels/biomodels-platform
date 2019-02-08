@@ -1,5 +1,5 @@
 <%@ page import="grails.converters.JSON" %>
-<div id="errors" >
+<div id="errors">
 </div>
 <table id="table_id" class="display">
     <thead>
@@ -162,21 +162,59 @@
 
             var page = Math.floor(pageState.dataTable.start / pageState.dataTable.size);
             var size = pageState.dataTable.size;
+            table.page.len(size);
             $('#searchButton').trigger("click");
-            table.page.len(size).draw(true);
-            table.page(page).draw('page');
+            table.page(page);
+
+
+        }
+
+        // Function to add Search and Clear button
+        function addSearchAndClearButton() {
+            if ($("#searchButton").length === 0) {
+                var input = $('.dataTables_filter input').unbind(),
+                    self = $("#table_id").dataTable().api(),
+                    $searchButton = $('<button id="searchButton" class="button icon icon-functional">')
+                        .text('search')
+                        .click(function () {
+                            self.search(input.val()).draw();
+                            pageState.dataTable.query = input.val();
+                        }),
+                    $clearButton = $('<button id="clearButton" class="button">')
+                        .text('clear')
+                        .click(function () {
+                            resetTable();
+                            if (!isDirectionBack) setBrowserUrl();
+                        });
+                $('.dataTables_filter').append($searchButton, '&nbsp;', $clearButton);
+            }
+        }
+
+        // Function to add Search and Clear button
+        function displayAsyncMessage(message) {
+            $('<p style="color:red">'
+                + message + '</p>')
+                .appendTo('#errors');
+        }
+
+        function resetTable() {
+            pageState.dataTable.start = 0;
+            pageState.dataTable.size = 10;
+            pageState.dataTable.query = DEFAULT_QUERY;
+            pageState.dataTable.sort = "";
+            updateTable(table);
 
         }
 
         // Ajax configuration
         ajaxConfig = {
             "url": "${g.createLink(controller: "parameterSearch", action: "search", absolute: true)}",
-            "dataSrc": "entries",
+            "dataSrc": 'entries',
             "data": preProcessEbiSearchParams,
             "error": function (xhr, error, code) {
-                $('<p style="color:red">'
-                    +xhr.statusText+', No results to display please try again with appropriate details.</p>')
-                    .appendTo('#errors');
+                displayAsyncMessage(xhr.responseJSON.message);
+                addSearchAndClearButton();
+
             }
         };
 
@@ -187,30 +225,15 @@
             {
                 initComplete: function () {
                     updateTable(table);
-                    var input = $('.dataTables_filter input').unbind(),
-                        self = this.api(),
-                        $searchButton = $('<button id="searchButton" class="button icon icon-functional">')
-                            .text('search')
-                            .click(function () {
-                                self.search(input.val()).draw();
-                                pageState.dataTable.query = input.val();
-                            }),
-                        $clearButton = $('<button id="clearButton" class="button">')
-                            .text('clear')
-                            .click(function () {
-                                input.val('');
-                                $searchButton.click();
-                                pageState.dataTable = {};
-                                if (!isDirectionBack) setBrowserUrl();
-                            });
-                    $('.dataTables_filter').append($searchButton, '&nbsp;', $clearButton);
-
+                    addSearchAndClearButton();
+                    $("#errors").empty();
                 },
                 columns: columnConfig,
-                "processing": true,
+                "processing": false,
                 "serverSide": true,
                 "infoCallback": infoCallback,
                 "ajax": ajaxConfig,
+
                 language: {
                     paginate: {
                         previous: '<',
