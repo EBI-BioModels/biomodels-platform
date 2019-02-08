@@ -60,14 +60,16 @@ class ParameterSearchController {
             render(result as JSON)
         } catch (IllegalArgumentException ie) {
             response.status = 400
-            String msg = "Error encountered while processing $command: ${ie.message}"
-            log.error(msg)
-            render(['message': msg] as JSON)
+            String logmsg = "Error encountered while processing $command: ${ie.message}"
+            String usermsg = "Bad request, please try again with correct request parameters"
+            log.error(logmsg)
+            render(['message': usermsg] as JSON)
         } catch (Exception ex) {
             response.status = 500
-            String msg = "Error encountered while processing $command: ${ex.message}"
-            log.error(msg, ex)
-            render(['message': msg] as JSON)
+            String logmsg = "Error encountered while processing $command: ${ex.getMessage()}"
+            String usermsg = "No results to display please try again with appropriate request parameters"
+            log.error(logmsg, ex)
+            render(['message': usermsg] as JSON)
         }
     }
 }
