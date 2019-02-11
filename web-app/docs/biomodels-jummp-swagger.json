@@ -23,6 +23,10 @@
     {
       "name": "Search models",
       "description": "Find models of interest"
+    },
+    {
+      "name": "Parameters Search",
+      "description": "Find model parameters of interest"
     }
   ],
   "schemes": [
@@ -222,7 +226,67 @@
           }
         }
       }
-    }
+    },
+      "/parameterSearch/search": {
+          "get": {
+              "tags": [
+                  "Parameters Search"
+              ],
+              "summary": "Search for parameters of a model",
+              "parameters": [
+                  {
+                      "in": "query",
+                      "name": "query",
+                      "required": false,
+                      "type": "string",
+                      "description": "A query to search against the model parameter values."
+                  },
+                  {
+                      "in": "query",
+                      "name": "start",
+                      "type": "integer",
+                      "required": false,
+                      "description": "It is the offset of the result set, please enter the number of records to skip.<br/> <i>Default value = 0</i>"
+                  },
+                  {
+                      "in": "query",
+                      "name": "size",
+                      "type": "integer",
+                      "required": false,
+                      "description": "The number of items to display per page. <i>Default value = 10</i>",
+                      "enum": [
+                          10,25,50,100
+                      ]
+                  },
+                  {
+                      "in": "query",
+                      "name": "sort",
+                      "type": "string",
+                      "required": false,
+                      "description": "The column name and sort direction to perform the sort operation, <u>Sortable column: model</u>.<br/> <i>Default value = model:ascending</i>"
+                  },
+                  {
+                      "in": "query",
+                      "name": "responseformat",
+                      "type": "string",
+                      "required": false,
+                      "description": "The format of the result (CSV,JSON). <i>Default value = JSON</i>"
+                  }
+              ],
+              "produces": [
+                  "application/json",
+                  "application/csv"
+              ],
+              "responses": {
+                  "200": {
+                      "description": "successful operation"
+                  },
+                  "400": {
+                      "description": "Bad request. Invalid request parameters"
+                  }
+              }
+          }
+      }
   },
   "definitions": {
     "Model": {
@@ -255,9 +319,9 @@
           "format": "date-time",
           "description": "The date when the model first became publicly available in BioModels",
           "example": "BIOMD0000000001"
-        },},
+        }},
       "xml": {
-        "name": "Model",
+        "name": "Model"
       }
     }
   },
