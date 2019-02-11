@@ -17,7 +17,7 @@
     <li>a brief description of the biological processes that are encoded as a mathematical model</li>
     <li>the biological role of each of the model elements</li>
     <li>the diseases that are caused due to the malfunction of these elements</li>
-    <li>the presenters own view on the model</li>
+    <li>the presenters' own view on the model</li>
 </ul>
 
 <p>Direct access to the models of the month for a given year:
