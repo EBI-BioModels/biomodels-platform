@@ -55,16 +55,33 @@ class ParameterSearchController {
             return
         }
         try {
-            def result = parameterSearchService.getData(command)
-            String responseformat = command.responseformat.toLowerCase()
-            if (result.toString().length() == 0 || result.hasProperty('recordsTotal') && result['recordsTotal'] == 0) {
-                String msg = "No matches found"
-                render(['message': msg] as JSON)
-            }
-            if (responseformat == "json") {
-                render(result as JSON)
-            } else if (responseformat == "csv") {
-                render(result)
+
+            withFormat {
+                json {
+                    response.setContentType("application/json")
+                    ParameterSearchResults result = parameterSearchService.getJSONData(command)
+                    if(result.hasProperty('recordsTotal') && result['recordsTotal'] == 0) {
+                        renderErrorMessage()
+                    }
+                    render(result as JSON)
+                }
+                xml {
+                    response.setContentType("text/xml")
+                    String resultXML = parameterSearchService.getXMLData(command)
+                    if(null == resultXML) {
+                        renderErrorMessage()
+                    }
+                    render(resultXML)
+
+                }
+                csv {
+                    response.setContentType("text/csv")
+                    String resultCSV = parameterSearchService.getCSVData(command)
+                    if(null == resultCSV) {
+                        renderErrorMessage()
+                    }
+                    render(resultCSV)
+                }
             }
         } catch (IllegalArgumentException ie) {
             response.status = 400
@@ -77,6 +94,11 @@ class ParameterSearchController {
             log.error(msg, ex)
             render(['message': msg] as JSON)
         }
+    }
+
+    private void renderErrorMessage() {
+            String msg = "No matches found"
+            render(['message': msg] as JSON)
     }
 }
 
