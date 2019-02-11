@@ -8,7 +8,7 @@ import groovy.transform.ToString
  * Created by carankalle on 31/10/2018.
  */
 @Validateable
-@ToString(includes = ['query', 'size', 'responseformat', 'start', 'sort'])
+@ToString(includes = ['query', 'size', 'start', 'sort'])
 class ParameterSearchCommand {
     public static final String DEFAULT_QUERY = '*:*'
     public static
@@ -18,7 +18,6 @@ class ParameterSearchCommand {
     Integer size
     Integer start
     String sort
-    String responseformat
 
     static constraints = {
         query nullable: true, validator: { q, cmd ->
@@ -28,26 +27,31 @@ class ParameterSearchCommand {
             }
             return true
         }
-        size inList: [10, 25, 50, 100]
-        start min: 0
-        responseformat nullable: true , validator: { f, cmd ->
+        size inList: [10, 25, 50, 100], nullable: true, validator: { val, cmd ->
+            if (0 == val || null == val) {
+                cmd.size = 10
+            }
+            return true
 
-            if (f == "" || null == f) {
-                cmd.responseformat = "json"
+        }
+
+        start min: 0, nullable: true, validator: { val, cmd ->
+            if (null == val) {
+                cmd.start = 0
             }
             return true
         }
+        sort nullable: true
     }
 
     @CompileStatic
-    URL getSearchUrl() {
+    URL getSearchUrl(String format) {
 
         def params = [
             query : query,
             size  : size,
             start : start,
             sort  : sort,
-            format : responseformat
         ]
         StringBuilder url = new StringBuilder(BASE_URL)
         for (element in params) {
@@ -55,6 +59,6 @@ class ParameterSearchCommand {
             String k = element.key
             url.append('&').append(k).append('=').append(v)
         }
-        new URL(url.toString())
+        new URL(url.toString() + "&format=" + format)
     }
 }
