@@ -28,7 +28,7 @@
             },
 
             {
-                data: 'fields.reaction_RAW',
+                data: 'fields.reaction',
                 width: "40%",
                 orderable: false
             },
@@ -64,11 +64,11 @@
                 }
             },
             {
-                data: 'fields.rate_RAW',
+                data: 'fields.rate',
                 orderable: false
             },
             {
-                data: 'fields.parameters_RAW',
+                data: 'fields.parameters',
                 orderable: false
             },
             {
@@ -80,7 +80,7 @@
                 orderable: false
             },
             {
-                data: 'fields.initial_data_RAW',
+                data: 'fields.initial_data',
                 orderable: false
 
             }
