@@ -164,7 +164,7 @@
             var size = pageState.dataTable.size;
             table.page.len(size);
             $('#searchButton').trigger("click");
-            table.page(page);
+            table.page(page).draw('page');
 
 
         }
@@ -226,7 +226,6 @@
                 initComplete: function () {
                     updateTable(table);
                     addSearchAndClearButton();
-                    $("#errors").empty();
                 },
                 columns: columnConfig,
                 "processing": false,
@@ -250,6 +249,7 @@
 
         // Function to preapare sort parameters
         function prepareSortParams(dataTableArg, sort) {
+            $("#errors").empty();
             if (sort === undefined || sort === "" || sort === null) {
                 sort = "";
                 dataTableArg.order.forEach(function (obj) {
