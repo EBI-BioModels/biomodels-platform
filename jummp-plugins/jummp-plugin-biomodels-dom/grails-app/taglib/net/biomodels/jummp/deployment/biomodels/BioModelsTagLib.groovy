@@ -24,6 +24,7 @@ import net.biomodels.jummp.core.model.FlagTransportCommand
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 
+import java.text.DateFormatSymbols
 import java.text.SimpleDateFormat
 
 /**
@@ -171,5 +172,33 @@ class BioModelsTagLib {
             template: "/templates/model/convert/convertedFileShow",
             collection: convertedFilesTC, var: "fileTC")
         out << "</ul>"
+    }
+
+    def renderAllMoMEntriesPage = {
+        Map sortedEntries = modelOfTheMonthService.buildAllEntries()
+        DateFormatSymbols dfs = new java.text.DateFormatSymbols()
+        out << render(template: "/templates/momIntroAllEntriesPage", plugin: "jummp-plugin-biomodels-dom", model: ['years': sortedEntries.keySet()])
+        sortedEntries.each { String year, Set values ->
+            out << render(template: "/templates/momYearTitleInAllEntriesPage", plugin: "jummp-plugin-biomodels-dom", model:['year': year])
+            out << "<ul>"
+            values.each { ModelOfTheMonthTransportCommand cmd ->
+                int month = cmd.publicationDate[Calendar.MONTH]
+                String monthName = dfs.months[month]
+                String links = cmd.associatedModelMap.values().collect { String id ->
+                    '<a href="' + g.createLink(controller: "model", action: "show", id: id) + '" target="_blank">' + id + '</a>'
+                }.join(", ")
+                String momLink = cmd.formattedURL.substring(8) // remove 'content/'
+                Map entryMap = new LinkedHashMap()
+                entryMap = ["monthName": monthName,
+                       "models": cmd.associatedModelMap,
+                       "links": links, "momLink": momLink,
+                       "title": cmd.title,
+                       "formattedURL": cmd.formattedURL,
+                       "authors": cmd.authors]
+                out << render(model: ['entry': entryMap],
+                    template: "/templates/momEntryInAllEntriesPage", plugin: "jummp-plugin-biomodels-dom")
+            }
+            out << "</ul>"
+        }
     }
 }

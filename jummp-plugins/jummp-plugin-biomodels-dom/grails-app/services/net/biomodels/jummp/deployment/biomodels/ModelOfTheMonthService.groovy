@@ -42,7 +42,7 @@ class ModelOfTheMonthService {
     /**
      * The class logger.
      */
-    private static final Log log = LogFactory.getLog(ModelOfTheMonth.class)
+    private static final Log log = LogFactory.getLog(ModelOfTheMonthService.class)
     /**
      * Threshold for the verbosity of the logger.
      */
@@ -55,6 +55,35 @@ class ModelOfTheMonthService {
     private static final String PREFIX_MOM_LINK = "https://www.ebi.ac.uk/biomodels/content/model-of-the-month"
 
     def grailsApplication
+
+    /**
+     * Builds a map of all entries used for rendering the page of all entries
+     */
+    Map buildAllEntries() {
+        Map<String, Set<ModelOfTheMonthTransportCommand>> result = new TreeMap<String, TreeSet>(ModelOfTheMonthTransportCommand.newReverseYearComparator())
+        def entries = ModelOfTheMonth.getAll()
+        entries.each { ModelOfTheMonth model ->
+            def cmd = model.toCommandObject()
+            TreeSet<ModelOfTheMonthTransportCommand> value
+            List ym = parseYearMonth(model.publicationDate)
+            String year = ym[0]
+            if (result.containsKey(year)) {
+                value = result.get(year)
+                value.add(cmd)
+            } else {
+                value = new TreeSet<>(ModelOfTheMonthTransportCommand.newReverseMonthComparator())
+                value.add(cmd)
+                result.put(year, value)
+            }
+        }
+        result
+    }
+
+    List parseYearMonth(Date date) {
+        String year = date.format("YYYY")
+        String month = date.format("MM")
+        [year, month]
+    }
 
     List fetchEntriesForModel(Long id) {
         List entries = ModelOfTheMonth.withCriteria {
