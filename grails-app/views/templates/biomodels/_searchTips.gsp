@@ -20,6 +20,6 @@
                     title="Search by Gene Ontology term cell growth" target="_blank">GO:GO:0016049</g:link></li>
         </ul>
         <p><a href="https://www.ebi.ac.uk/biomodels-static/jummp-biomodels-help/model_search.html"
-              target="_blank">See full documentation of searching models</a></p>
+              target="_blank">Learn more about searching models</a></p>
     </div>
 </div>
