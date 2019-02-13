@@ -110,6 +110,7 @@
             data.size = urlParams.length;
             data.start = urlParams.start;
             data.sort = "";
+            data.format = "json";
 
             // Sorting
             urlParams.order.forEach(function (obj) {
