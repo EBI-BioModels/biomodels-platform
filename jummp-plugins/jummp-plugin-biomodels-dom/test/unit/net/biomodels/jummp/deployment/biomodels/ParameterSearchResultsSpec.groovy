@@ -33,14 +33,19 @@ class ParameterSearchResultsSpec extends Specification {
 
         and: "it should return reaction value"
 
-        def resultFirstEntryFields = results.entries.first().fields
         String expectedReaction = "([24794350] + [122357]) => ([CHEBI:17969])"
-        String actualReaction = resultFirstEntryFields.reaction_RAW
-        expectedReaction == actualReaction
-
         String expectedEntityId = "E4P"
-        String actualEntityId = resultFirstEntryFields.entity_id
-        expectedEntityId == actualEntityId
+
+
+        boolean isTestPassed = false
+
+        results.entries.each{value ->
+            if(value.fields.entity_id == expectedEntityId && value.fields.reaction_RAW == expectedReaction) {
+                isTestPassed = true
+                return true
+            }
+        }
+        isTestPassed
 
     }
 
