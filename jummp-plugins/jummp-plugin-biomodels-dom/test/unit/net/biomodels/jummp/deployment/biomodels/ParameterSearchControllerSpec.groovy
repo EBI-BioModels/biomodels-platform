@@ -34,14 +34,14 @@ class ParameterSearchControllerSpec extends Specification {
         assert expectedView == actualView
     }
 
-    void "test search"() {
+    void "test search with json format"() {
         given: "ParameterSearchService is mocked with certain values"
-        def bindingMap = [query: "BIOMD*1", size: 10, start: 0, sort: "entity:ascending"]
+        def bindingMap = [query: "BIOMD*1", size: 10, start: 0, sort: "model:ascending"]
         ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
 
 
         def service = mockFor(ParameterSearchService)
-        service.demand.getData { ParameterSearchCommand cmd ->
+        service.demand.getJSONData { ParameterSearchCommand cmd ->
             new ParameterSearchResults(recordsTotal: 2, recordsFiltered: 2,
                 entries: [
                     new SearchResultEntry(fields: [
@@ -56,11 +56,112 @@ class ParameterSearchControllerSpec extends Specification {
         }
         controller.parameterSearchService = service.createMock()
         when : "Controller search method is invoked"
+        request.format="json"
+        request.contentType = 'application/json'
         controller.search(command)
 
         then: "Result should contain correct results"
         response.json.recordsTotal == 2
         response.json.entries.first().fields.entity == "e1"
+
+    }
+    void "test search with xml format"() {
+        given: "ParameterSearchService is mocked with certain values"
+        def bindingMap = [query: "BIOMD*1", size: 10, start: 0, sort: "model:ascending"]
+        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+
+
+        def service = mockFor(ParameterSearchService)
+        service.demand.getXMLData { ParameterSearchCommand cmd ->
+            '<result>' +
+                '<hitCount>2</hitCount>' +
+                '<entries>' +
+                    '<entry id="abc123", source="biomodels_parameters_test">' +
+                        '<fields>' +
+                            '<field id="entity">' +
+                                '<values>' +
+                                    '<value>e1</value>' +
+                                '</values>' +
+                            '</field>' +
+                        '</fields>' +
+                    '</entry>'+
+                    '<entry id="pqr123", source="biomodels_parameters_test">' +
+                        '<fields>' +
+                            '<field id="entity">' +
+                                '<values>' +
+                                    '<value>e2</value>' +
+                                '</values>' +
+                            '</field>' +
+                        '</fields>' +
+                    '</entry>' +
+                '</entries>' +
+            '</result>'
+        }
+        controller.parameterSearchService = service.createMock()
+
+        when : "Controller search method is invoked"
+        request.contentType = 'application/json'
+        request.format="xml"
+        controller.search(command)
+
+        then: "Result should contain correct results"
+        response.text.contains("<hitCount>2</hitCount>")
+        response.text.contains("<value>e1</value>")
+        response.text.contains("<value>e2</value>")
+
+
+    }
+
+    void "test search with csv format"() {
+        given: "ParameterSearchService is mocked with certain values"
+        def bindingMap = [query: "BIOMD*1", size: 10, start: 0, sort: "model:ascending"]
+        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+
+
+        def service = mockFor(ParameterSearchService)
+        service.demand.getCSVData { ParameterSearchCommand cmd ->
+           '"entity","reaction"\n'+
+            '"e1","e1,e2=>e3"\n'+
+            '"e2","e1,e2=>e3"'
+
+        }
+        controller.parameterSearchService = service.createMock()
+        request.contentType = 'application/json'
+        request.format="csv"
+        when : "Controller search method is invoked"
+        controller.search(command)
+        then: "Result should contain correct results"
+        String[] responseArray =  response.text.split("\n")
+        responseArray.length == 3
+        responseArray[0].contains('"entity","reaction"')
+        responseArray[1].contains('e1,e2=>e3')
+
+
+    }
+
+    void "test search with non matching format"() {
+        given: "ParameterSearchService is mocked with certain values"
+        def bindingMap = [query: "BIOMD*1", size: 10, start: 0, sort: "model:ascending"]
+        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+
+
+        def service = mockFor(ParameterSearchService)
+        service.demand.getCSVData { ParameterSearchCommand cmd ->
+           '"entity","reaction"\n'+
+            '"e1","e1,e2=>e3"\n'+
+            '"e2","e1,e2=>e3"'
+
+        }
+        controller.parameterSearchService = service.createMock()
+        request.contentType = 'application/json'
+        request.format="html"
+        when : "Controller search method is invoked"
+        controller.search(command)
+        then: "Result should contain correct results"
+        response.json.message == "Invalid format, please choose the format from JSON,XML and CSV"
+        response.status == 415
+
+
 
     }
 }
