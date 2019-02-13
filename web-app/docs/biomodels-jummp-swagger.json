@@ -263,7 +263,7 @@
                       "name": "sort",
                       "type": "string",
                       "required": false,
-                      "description": "The column name and sort direction to perform the sort operation, <u>Sortable column: model</u>.<br/> <i>Default value = model:ascending</i>"
+                      "description": "The column name and sort direction to perform the sort operation, <u>Sortable columns: model, entity</u>.<br/> <i>Default value = model:ascending</i>"
                   },
                   {
                       "in": "query",
