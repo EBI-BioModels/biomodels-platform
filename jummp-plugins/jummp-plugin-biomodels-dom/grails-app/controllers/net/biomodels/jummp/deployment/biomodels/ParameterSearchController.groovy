@@ -45,7 +45,7 @@ class ParameterSearchController {
             log.error(msg)
             return['message': msg,"command":command]
         }
-        [command: command]
+        render(view: "index",model:[command: command])
     }
 
     def search(ParameterSearchCommand command) {

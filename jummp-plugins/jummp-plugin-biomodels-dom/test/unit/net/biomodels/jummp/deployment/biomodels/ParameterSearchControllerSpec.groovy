@@ -45,10 +45,10 @@ class ParameterSearchControllerSpec extends Specification {
         controller.index()
 
         then: "Should show correct model"
-        assert model.query == "test"
-        assert model.size == 10
-        assert model.start == 0
-        assert model.sort == "model:ascending"
+        assert model.command.query == "testQuery"
+        assert model.command.size == 10
+        assert model.command.start == 0
+        assert model.command.sort == "model:ascending"
     }
 
     void "test search"() {
