@@ -55,8 +55,7 @@ class ParameterSearchController {
             return
         }
         try {
-
-            withFormat {
+            request.withFormat {
                 json {
                     response.setContentType("application/json")
                     ParameterSearchResults result = parameterSearchService.getJSONData(command)
@@ -81,6 +80,10 @@ class ParameterSearchController {
                         renderErrorMessage()
                     }
                     render(resultCSV)
+                }
+                '*' {
+                    response.status = 415
+                   render (['message': "Invalid format, please choose the format from JSON,XML and CSV"] as JSON)
                 }
             }
         } catch (IllegalArgumentException ie) {
