@@ -36,8 +36,12 @@ class ParameterSearchResultsSpec extends Specification {
         String expectedReaction = "([24794350] + [122357]) => ([CHEBI:17969])"
         String expectedEntityId = "E4P"
 
-        boolean isTestPassed = results.entries.each{value ->
+
+        boolean isTestPassed = false
+
+        results.entries.each{value ->
             if(value.fields.entity_id == expectedEntityId && value.fields.reaction_RAW == expectedReaction) {
+                isTestPassed = true
                 return true
             }
         }
