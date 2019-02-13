@@ -56,8 +56,8 @@ class ParameterSearchControllerSpec extends Specification {
         }
         controller.parameterSearchService = service.createMock()
         when : "Controller search method is invoked"
-        request.format="json"
         request.contentType = 'application/json'
+        response.format="json"
         controller.search(command)
 
         then: "Result should contain correct results"
@@ -101,7 +101,7 @@ class ParameterSearchControllerSpec extends Specification {
 
         when : "Controller search method is invoked"
         request.contentType = 'application/json'
-        request.format="xml"
+        response.format="xml"
         controller.search(command)
 
         then: "Result should contain correct results"
@@ -126,9 +126,9 @@ class ParameterSearchControllerSpec extends Specification {
 
         }
         controller.parameterSearchService = service.createMock()
-        request.contentType = 'application/json'
-        request.format="csv"
         when : "Controller search method is invoked"
+        request.contentType = 'application/json'
+        response.format = "csv"
         controller.search(command)
         then: "Result should contain correct results"
         String[] responseArray =  response.text.split("\n")
@@ -154,7 +154,7 @@ class ParameterSearchControllerSpec extends Specification {
         }
         controller.parameterSearchService = service.createMock()
         request.contentType = 'application/json'
-        request.format="html"
+        response.format="html"
         when : "Controller search method is invoked"
         controller.search(command)
         then: "Result should contain correct results"

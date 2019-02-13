@@ -55,7 +55,7 @@ class ParameterSearchController {
             return
         }
         try {
-            request.withFormat {
+            withFormat {
                 json {
                     response.setContentType("application/json")
                     ParameterSearchResults result = parameterSearchService.getJSONData(command)
