@@ -1,7 +1,6 @@
 <table id="table_id" class="display">
     <thead>
     <th>Entity</th>
-    <th>Entity Id</th>
     <th>Reaction</th>
     <th>Model</th>
     <th>Publication</th>
@@ -12,7 +11,16 @@
     <th>Initial Data</th>
     </thead>
 </table>
-
+<div  style="float:left;">
+<hr/>
+    <i>
+<u>Legends</u><br/>
+    <span style="width: 20px; height: 10px; display:inline-block; background-color: #01a252;">
+</span>
+<span >
+    : SBML model values give by the Author</span>
+    </i>
+</div>
 <script>
     $(document).ready(function () {
         var columnConfig = [
@@ -21,10 +29,6 @@
                 data: 'fields.entity_accession_url',
                 orderable: false
 
-            },
-            {
-                data: 'fields.entity_id',
-                orderable: false
             },
 
             {
