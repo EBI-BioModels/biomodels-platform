@@ -30,6 +30,21 @@ import grails.util.Holders
  */
 @grails.validation.Validateable
 class ModelOfTheMonthTransportCommand implements Serializable {
+    static final class ReverseMonthComparator implements
+        Comparator<ModelOfTheMonthTransportCommand> {
+        @Override
+        int compare(ModelOfTheMonthTransportCommand o1, ModelOfTheMonthTransportCommand o2) {
+            o2.publicationMonth <=> o1.publicationMonth
+        }
+    }
+
+    static final class ReverseYearComparator implements Comparator<String> {
+        @Override
+        int compare(String o1, String o2) {
+            o2 <=> o1
+        }
+    }
+
     static final String URL_SEED =
             "content/model-of-the-month?"
     static final String FALLBACK_URL = "content/model-of-the-month?all=yes"
@@ -101,5 +116,21 @@ class ModelOfTheMonthTransportCommand implements Serializable {
 
     String getYearMonth() {
         formattedEntryDate
+    }
+
+    int getPublicationMonth() {
+        publicationDate ? publicationDate[Calendar.MONTH] : -1
+    }
+
+    int getPublicationYear() {
+        publicationDate ? publicationDate[Calendar.YEAR] : -1
+    }
+
+    static ReverseMonthComparator newReverseMonthComparator() {
+        new ReverseMonthComparator()
+    }
+
+    static ReverseYearComparator newReverseYearComparator() {
+        new ReverseYearComparator()
     }
 }

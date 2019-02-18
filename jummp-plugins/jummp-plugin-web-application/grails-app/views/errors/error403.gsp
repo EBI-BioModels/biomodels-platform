@@ -31,10 +31,10 @@
 <html>
     <head>
         <meta name="layout" content="${session['branding.style']}/main" />
-        <title><g:message code="error.403.title"/></title>
+        <title><g:message code="error.403.title"/> | BioModels</title>
     </head>
     <body>
-        <h1><g:message code="error.403.title"/></h1>
+        <h2><g:message code="error.403.title"/></h2>
         <p><g:message code="error.403.explanation"/>
     </body>
 </html>

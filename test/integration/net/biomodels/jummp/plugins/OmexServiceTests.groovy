@@ -34,23 +34,20 @@
 
 package net.biomodels.jummp.plugins
 
+import grails.test.mixin.TestMixin
+import grails.test.mixin.integration.IntegrationTestMixin
 import net.biomodels.jummp.core.JummpIntegrationTest
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
-import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.model.Model
-import net.biomodels.jummp.model.ModelFormat
-import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.git.GitManagerFactory
 import org.apache.commons.io.FileUtils
-import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.lib.Repository
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder
-import org.junit.*
-import grails.test.mixin.TestMixin
-import grails.test.mixin.integration.IntegrationTestMixin
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
+
 import static org.junit.Assert.*
 
 @TestMixin(IntegrationTestMixin)
@@ -113,7 +110,7 @@ class OmexServiceTests extends JummpIntegrationTest {
         fileSystemService.root = new File("target/omex/git/").getCanonicalFile()
         fileSystemService.root.mkdirs()
         String containerPath = fileSystemService.root.absolutePath + "/ooo/"
-        fileSystemService.currentModelContainer = containerPath
+        fileSystemService.currentModelContainer.set(containerPath)
         modelService.vcsService.modelContainerRoot = fileSystemService.root
         GitManagerFactory gitService = new GitManagerFactory()
         gitService.grailsApplication = grailsApplication

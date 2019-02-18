@@ -47,17 +47,15 @@ import org.springframework.web.context.request.RequestContextHolder
 
 import static org.junit.Assert.*
 
-public class SubmissionFlowTestBase extends WebFlowTestCase {
-	
+class SubmissionFlowTestBase extends WebFlowTestCase {
     def grailsApplication = Holders.getGrailsApplication()
     def fileSystemService = Holders.getApplicationContext().getBean("fileSystemService")
     def modelService = Holders.getApplicationContext().getBean("modelService")
-    def authenticationManager=Holders.applicationContext.getBean("authenticationManager")
-    def springSecurityService=Holders.applicationContext.getBean("springSecurityService")
+    def authenticationManager = Holders.applicationContext.getBean("authenticationManager")
+    def springSecurityService = Holders.applicationContext.getBean("springSecurityService")
     def controller = new ModelController()
     protected boolean createFlow
 
-	
     void tearDown() {
         super.tearDown()
         FileUtils.deleteDirectory(new File("target/vcs/git"))
@@ -65,7 +63,7 @@ public class SubmissionFlowTestBase extends WebFlowTestCase {
     }
     
     void initialise(boolean createFlowType = true) {
-    	createFlow = createFlowType;
+        createFlow = createFlowType
         createUserAndRoles()
         File exchangeDirectory = new File("target/vcs/exchange/")
         exchangeDirectory.mkdirs()
@@ -75,17 +73,17 @@ public class SubmissionFlowTestBase extends WebFlowTestCase {
         parentLocation.mkdirs()
         fileSystemService.root = parentLocation
         String containerPath = parentLocation.absolutePath + File.separator + "ttt"
-        fileSystemService.currentModelContainer = containerPath
+        fileSystemService.currentModelContainer.set(containerPath)
         modelService.vcsService.modelContainerRoot = "target/vcs/git/"
         assertTrue modelService.vcsService.isValid()
         modelService.vcsService.vcsManager.exchangeDirectory = new File("target/vcs/exchange")
     }
     
-    protected void testSetup(String modelID = null) {
-    	super.setUp()
+    void testSetup(String modelID = null) {
+        super.setUp()
         mockRequest = new MockMultipartHttpServletRequest()
         if (modelID) {
-        	mockRequest.setParameter("id", modelID)
+            mockRequest.setParameter("id", modelID)
         }
         def mockGrailsRequest = new GrailsWebRequest(mockRequest, mockResponse,
                 mockServletContext, applicationContext)
@@ -103,9 +101,9 @@ public class SubmissionFlowTestBase extends WebFlowTestCase {
     }
     
     void submitFileTest(String filepath,
-    					String format, 
-    					String mname, 
-    					String[] descriptionStrings) {
+                        String format,
+                        String mname,
+                        String[] descriptionStrings) {
         testSetup(null)
         getToUploadPage()
         signalEvent("Upload")
@@ -114,7 +112,7 @@ public class SubmissionFlowTestBase extends WebFlowTestCase {
         fileUploadPipeline(MODEL_FILE, format, mname, descriptionStrings);
     }
 
-        protected void clickCancelEndFlow() {
+    protected void clickCancelEndFlow() {
         signalEvent("Cancel")
         assert "abort" == flowExecutionOutcome.id
     }
@@ -136,16 +134,17 @@ public class SubmissionFlowTestBase extends WebFlowTestCase {
         assertFlowState("uploadFiles")
     }
 
-     /**
+    /**
      * Sets the current authentication to testuser and does not model as admin user.
+     *
      * @return The testusers authentication
      */
     protected def authenticateAsTestUser() {
         modelAdminUser(false)
         return authenticate("testuser", "secret")
     }
-
-     /**
+    /**
+     *
      * Sets and authentication based on username and password.
      * @param username The name of the user
      * @param password The password of the user.
@@ -174,7 +173,7 @@ public class SubmissionFlowTestBase extends WebFlowTestCase {
         }
     }
 
-   /**
+    /**
      * Creates three users and their roles:
      * @li testuser with password secret and role ROLE_USER
      * @li user with password verysecret and role ROLE_USER
@@ -184,7 +183,7 @@ public class SubmissionFlowTestBase extends WebFlowTestCase {
         User user, user2, admin, curator
         Person person
         if (!User.findByUsername("testuser")) {
-            person=new Person(userRealName: "Test")
+            person = new Person(userRealName: "Test")
             user = new User(username: "testuser",
                     password: springSecurityService.encodePassword("secret"),
                     person: person,
@@ -216,7 +215,7 @@ public class SubmissionFlowTestBase extends WebFlowTestCase {
             user2 = User.findByUsername("username")
         }
         if (!User.findByUsername("admin")) {
-            person=new Person(userRealName: "administrator")
+            person = new Person(userRealName: "administrator")
             admin = new User(username: "admin",
                     password: springSecurityService.encodePassword("1234"),
                     person: person,
@@ -319,14 +318,14 @@ public class SubmissionFlowTestBase extends WebFlowTestCase {
         }
     }
 
-    public File getFileForTest(String filename, String text) {
+    File getFileForTest(String filename, String text) {
         def tmp = System.getProperty("java.io.tmpdir")
         def testFile=new File(tmp + File.separator + filename)
         testFile.setText(text?: "")
         return testFile
     }
 
-    /*
+    /**
      * Convenience function to create arbitrary additional files with corresponding
      * descriptions.
      */
@@ -339,7 +338,7 @@ public class SubmissionFlowTestBase extends WebFlowTestCase {
         return returnMe
     }
 
-    /*
+    /**
      * Convenience function to add the supplied main and additional files
      * to submission
      */
@@ -353,7 +352,7 @@ public class SubmissionFlowTestBase extends WebFlowTestCase {
         }
     }
 
-    /*
+    /**
      * Convenience function to compare a map of String->byte[] retrieved from
      * the repository with the supplied list of files
      */
@@ -371,7 +370,7 @@ public class SubmissionFlowTestBase extends WebFlowTestCase {
         }
     }
 
-     /*
+    /**
      * Adds the supplied file with parameters as a mock multipart file
      *
      */

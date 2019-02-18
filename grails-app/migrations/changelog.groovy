@@ -1269,5 +1269,7 @@ databaseChangeLog = {
     include file: '20180913_indexRevisionDateAndNumber.groovy'
 
     include file: '20181001_updateModelFileDescription.groovy'
+
+    include file: '20190114_addUniqueConstraintLinkProvider_Link_Publication.groovy'
 }
 
