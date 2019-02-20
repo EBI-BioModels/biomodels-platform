@@ -297,14 +297,14 @@
                       "name": "sort",
                       "type": "string",
                       "required": false,
-                      "description": "The column name and sort direction to perform the sort operation, <u>Sortable columns: model, entity</u>.<br/> <i>Default value = model:ascending</i>"
+                      "description": "The column name and sort direction to perform the sort operation, <u>Sortable columns: model, entity</u>.<br/>"
                   },
                   {
                       "in": "query",
-                      "name": "responseformat",
+                      "name": "format",
                       "type": "string",
                       "required": false,
-                      "description": "The format of the result (CSV,JSON). <i>Default value = JSON</i>"
+                      "description": "The format of the result (XML,CSV and JSON). <i>Default value = XML</i>"
                   }
               ],
               "produces": [
@@ -317,6 +317,9 @@
                   },
                   "400": {
                       "description": "Bad request. Invalid request parameters"
+                  },
+                  "500": {
+                      "description": "Error encountered while processing ParameterSearchCommand..., No matches found"
                   }
               }
           }
