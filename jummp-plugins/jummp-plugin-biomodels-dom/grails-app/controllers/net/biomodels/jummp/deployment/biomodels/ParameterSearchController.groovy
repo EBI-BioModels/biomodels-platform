@@ -47,38 +47,56 @@ class ParameterSearchController {
     }
 
     def search(ParameterSearchCommand command) {
+        String commandErrorMessage
+        boolean isCommandObjectInValid = true
+        final String NoMatchesFoundMessage = "No matches found"
+        String format = "xml"
         if (!command.validate()) {
-            def msg = "Invalid request $command.query, $command.errors.allErrors"
             response.status = 400
-            log.error(msg)
-            render(['message': "Invalid request object"] as JSON)
-            return
+            commandErrorMessage = "Invalid request parameter $command.errors.allErrors. "
+            isCommandObjectInValid = false
+            log.error(commandErrorMessage)
         }
         try {
             withFormat {
                 json {
-                    response.setContentType("application/json")
+                    format = "json"
+                    if(!isCommandObjectInValid) {
+                        renderErrorMessage(commandErrorMessage,format)
+                        return
+                    }
                     ParameterSearchResults result = parameterSearchService.getJSONData(command)
                     if(result.hasProperty('recordsTotal') && result['recordsTotal'] == 0) {
-                        renderErrorMessage()
+                        renderErrorMessage(NoMatchesFoundMessage,format)
                     }
+                    response.setContentType("application/json")
                     render(result as JSON)
                 }
                 xml {
-                    response.setContentType("text/xml")
-                    String resultXML = parameterSearchService.getXMLData(command)
-                    if(null == resultXML) {
-                        renderErrorMessage()
+                    format = "xml"
+                    if(!isCommandObjectInValid) {
+                        renderErrorMessage(commandErrorMessage,format)
+                        return
                     }
+                    String resultXML = parameterSearchService.getXMLData(command)
+                    if(null == resultXML || resultXML.isEmpty()) {
+                        renderErrorMessage(NoMatchesFoundMessage,format)
+                    }
+                    response.setContentType("text/xml")
                     render(resultXML)
 
                 }
                 csv {
-                    response.setContentType("text/csv")
-                    String resultCSV = parameterSearchService.getCSVData(command)
-                    if(null == resultCSV) {
-                        renderErrorMessage()
+                    format = "csv"
+                    if(!isCommandObjectInValid) {
+                        renderErrorMessage(commandErrorMessage,format)
+                        return
                     }
+                    String resultCSV = parameterSearchService.getCSVData(command)
+                    if(null == resultCSV || resultCSV.isEmpty()) {
+                        renderErrorMessage(NoMatchesFoundMessage,format)
+                    }
+                    response.setContentType("text/csv")
                     render(resultCSV)
                 }
                 '*' {
@@ -88,20 +106,29 @@ class ParameterSearchController {
             }
         } catch (IllegalArgumentException ie) {
             response.status = 400
-            String msg = "Error encountered while processing $command: ${ie.message}"
-            log.error(msg)
-            render(['message': ie.getMessage()] as JSON)
+            log.error(ie.message,ie)
+            renderErrorMessage(ie.getMessage(),format)
         } catch (Exception ex) {
             response.status = 500
-            String msg = "Error encountered while processing $command: ${ex.message}"
-            log.error(msg, ex)
-            render(['message': msg] as JSON)
+            String msg = "Error encountered while processing $command, No Matches found"
+            log.error(ex.message, ex)
+            renderErrorMessage(msg,format)
         }
     }
 
-    private void renderErrorMessage() {
-            String msg = "No matches found"
-            render(['message': msg] as JSON)
+    private void renderErrorMessage(String msg, String format) {
+        def responseContent
+        if(format == "json") {
+            responseContent = ['message': msg]
+            render(responseContent as JSON)
+        }else if(format == "xml") {
+            responseContent = "<errors><message>${msg}</message></errors>"
+            response.setContentType("text/xml")
+            render(responseContent)
+        }else if(format == "csv") {
+            response.setContentType("text/plain")
+            render(msg)
+        }
     }
 }
 
