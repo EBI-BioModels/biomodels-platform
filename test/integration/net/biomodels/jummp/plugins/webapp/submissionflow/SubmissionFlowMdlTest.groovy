@@ -37,9 +37,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
-public class SubmissionFlowMdlTest extends SubmissionFlowTestBase {
-
-    
+class SubmissionFlowMdlTest extends SubmissionFlowTestBase {
     @After
     void tearDown() {
         super.tearDown()
@@ -47,15 +45,14 @@ public class SubmissionFlowMdlTest extends SubmissionFlowTestBase {
 
     @Before
     void setUp() {
-    	initialise();
+        initialise()
     }
 
     @Test
     void testSubmitMDL() {
-    	submitFileTest("jummp-plugins/jummp-plugin-mdl/test/files/alzheimer/Alzheimer.mdl",
-    				   "MDL",
-    				   "Alzheimer",
-    				   ["Model comprised of files:"] as String[]);
+        submitFileTest("jummp-plugins/jummp-plugin-mdl/test/files/alzheimer/Alzheimer.mdl",
+                        "MDL",
+                        "Alzheimer",
+                               ["Model comprised of files:"] as String[]);
     }
-
 }

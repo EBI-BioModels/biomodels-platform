@@ -51,7 +51,6 @@ function deleteAuthor() {
         showNotification("The author has been deleted.")
         updateData();
         $("#authorList option:selected").remove();
-        $('#authorList').attr('size', authorList.length);
         $('#newAuthorName').val("");
         $('#newAuthorOrcid').val("");
         $('#newAuthorInstitution').val("");

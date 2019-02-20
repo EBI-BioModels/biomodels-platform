@@ -34,18 +34,25 @@
 
 package net.biomodels.jummp.core.model
 
-import net.biomodels.jummp.model.Publication
-import net.biomodels.jummp.model.PublicationLinkProvider
+import groovy.util.slurpersupport.GPathResult
 import net.biomodels.jummp.plugins.security.PersonTransportCommand
+import org.apache.commons.logging.Log
+import org.apache.commons.logging.LogFactory
 
 /**
- * @short Wrapper for a Publciation to be transported through JMS.
+ * @short Wrapper for a Publication to be transported through JMS.
  *
  * @author Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
  */
 @grails.validation.Validateable
 class PublicationTransportCommand implements Serializable {
     private static final long serialVersionUID = 1L
+    /**
+     * The class logger
+     */
+    final Log log = LogFactory.getLog(PublicationTransportCommand.class)
+
+    Long id
     /**
      * Name of the journal where the publication has been published
      */
@@ -96,15 +103,13 @@ class PublicationTransportCommand implements Serializable {
      */
     String link
     List<PersonTransportCommand> authors
+
     static constraints = {
-    	// importFrom Publication ...would have been nice :(
-    	// TODO: do we need more than 250 characters?
+        id(nullable: true)
+        // importFrom Publication ...would have been nice :(
         journal(nullable: false, blank: false)
-        // TODO: do we need more than 250 characters?
         title(nullable: false, blank: false)
-        // TODO: do we need more than 250 characters?
         affiliation(nullable: false, blank: false)
-        // TODO: How long can an abstract be? Are 5000 characters sufficient?
         synopsis(nullable: false, blank: true, maxSize: 5000)
         year(nullable: true)
         month(nullable: true)
@@ -113,20 +118,114 @@ class PublicationTransportCommand implements Serializable {
         issue(nullable: true)
         pages(nullable: true)
         authors nullable: false, validator: { authorValue, pubObj ->
-        	return !authorValue.isEmpty()
+            return !authorValue.isEmpty() && !authorValue.find { !it.validate() }
         }
+        link(nullable: true, unique: 'linkProvider')
+    }
+
+    static PublicationTransportCommand fromPubMed(PublicationLinkProviderTransportCommand linkProvider, String pmid,
+            GPathResult xml) {
+        def publication = new PublicationTransportCommand(linkProvider: linkProvider, link: pmid)
+        publication.extractManuscriptInfoFromPubMed(xml)
+        publication.extractAuthorsFromPubMed(xml)
+        publication
     }
 
     String prettierPrint() {
-        Publication publication = Publication.findByLink(link)
         StringBuilder returnedText = new StringBuilder("")
-        String linkTypeLabel = linkProvider.linkType
-        returnedText.append("${linkTypeLabel}:<br/>&emsp;")
-        returnedText.append(publication.link)
-        returnedText.append("<br/>Title:<br/>&emsp;")
-        returnedText.append(publication.title)
-        returnedText.append("<br/>Abstract:<br/>&emsp;")
-        returnedText.append(publication.synopsis)
+        String linkTypeLabel = linkProvider ? linkProvider.linkType : ""
+        if (linkTypeLabel) {
+            returnedText.append("${linkTypeLabel}:<br/>&emsp;")
+            returnedText.append(link)
+        }
+        if (title) {
+            returnedText.append("<br/>Title:<br/>&emsp;")
+            returnedText.append(title)
+        }
+        if (synopsis) {
+            returnedText.append("<br/>Abstract:<br/>&emsp;")
+            returnedText.append(synopsis)
+        }
         returnedText.toString()
+    }
+
+
+    /**
+     * Parses the author information provided from a GPathResult object and adds them to this publication
+     *
+     * @param slurper GPathResult object holding the author list which is fetched from PubMed Central
+     */
+    void extractAuthorsFromPubMed(def slurper) {
+        authors = new ArrayList<>()
+        def authorsXml = slurper.resultList.result.authorList.author
+        for (def authorXml in authorsXml) {
+            PersonTransportCommand author = new PersonTransportCommand()
+            if (authorXml.authorId[0]?.@type == "ORCID") {
+                String orcid = authorXml.authorId[0].text()
+                author.orcid = orcid
+            }
+            /**
+             * Apparently, the full name should be combined from firstName and lastName
+             * rather than populated from the fullName field.
+             * The fullName field actually roles as the pubAlias property of PublicationPerson class
+             *
+             * TODO: capture the fullName, then assign it to the pubAlias property when we create an instance of
+             * PublicationPerson from PersonTransportCommand in PublicationService
+             */
+            String userRealName = authorXml.fullName[0].text()
+            author.userRealName = userRealName
+            this.authors.add(author)
+        }
+    }
+
+    void extractManuscriptInfoFromPubMed(def slurper) {
+        def result = slurper.resultList.result
+        setFieldIfItExists("pages", result.pageInfo, false)
+        setFieldIfItExists("title", result.title, false)
+        setFieldIfItExists("affiliation", result.affiliation, false)
+        setFieldIfItExists("synopsis", result.abstractText, false)
+
+        if (result.journalInfo) {
+            setFieldIfItExists("month", result.journalInfo.monthOfPublication, true)
+            setFieldIfItExists("year", result.journalInfo.yearOfPublication, true)
+            // cannot retrieve publication day directly like all other details
+            def isoDateField = slurper.resultList.resultList.journalInfo.printPublicationDate
+            if (isoDateField) {
+                String isoDate = isoDateField.text()
+                String[] dateParts = isoDate?.split('-')
+                if (dateParts.length == 3) {
+                    String dayAsString = dateParts[-1]
+                    try {
+                        day = dayAsString as int
+                    } catch (NumberFormatException ignored) {
+                        log.warn("Invalid publication day $dayAsString for ${link}")
+                    }
+                }
+            }
+            setFieldIfItExists("volume", result.journalInfo.volume, false)
+            setFieldIfItExists("issue", result.journalInfo.issue, false)
+            setFieldIfItExists("journal", result.journalInfo.journal.title, false)
+        }
+    }
+
+    private void setFieldIfItExists(String fieldName, def xmlField, boolean castToInt) {
+        try {
+            if (xmlField && xmlField.size() == 1) {
+                String text = xmlField.text()
+                if (castToInt) {
+                    try {
+                        this."${fieldName}" = text as int
+                    } catch (NumberFormatException ignored) {
+                        final String pId = link
+                        log.warn("Field '$fieldName' of publication $pId is not numerical: $text")
+                    }
+                }
+                else {
+                    this."${fieldName}" = text
+                }
+            }
+        } catch(Exception e) {
+            log.error(e.message, e)
+        }
     }
 }

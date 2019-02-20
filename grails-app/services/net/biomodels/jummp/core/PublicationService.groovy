@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2019 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -24,18 +24,21 @@
 
 package net.biomodels.jummp.core
 
+import grails.transaction.Transactional
+import groovy.json.JsonSlurper
 import net.biomodels.jummp.core.adapters.PublicationAdapter
-import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter
-import net.biomodels.jummp.core.model.PublicationDetailExtractionContext
-import net.biomodels.jummp.core.model.PublicationTransportCommand
+import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter as PLPA
+import net.biomodels.jummp.core.model.PublicationDetailExtractionContext as PDEC
+import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
 import net.biomodels.jummp.model.Publication
-import net.biomodels.jummp.model.PublicationLinkProvider
+import net.biomodels.jummp.model.PublicationLinkProvider as PLP
 import net.biomodels.jummp.model.PublicationPerson
 import net.biomodels.jummp.plugins.security.Person
-import net.biomodels.jummp.plugins.security.PersonTransportCommand
+import net.biomodels.jummp.plugins.security.PersonTransportCommand as PersonTC
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.springframework.validation.ObjectError
+
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -52,37 +55,35 @@ import java.util.regex.Pattern
  * @date created on 08/06/2016.
  */
 
-
 class PublicationService {
     final Log log = LogFactory.getLog(getClass())
     static transactional = false
 
     def pubMedService
+    def messageSource
 
-    PublicationTransportCommand createPTCWithMinimalInformation(String pubLinkProvider,
-                                                                String pubLink,
-                                                                List<PersonTransportCommand> authors) {
-        def provider = PublicationLinkProvider.LinkType.findLinkTypeByLabel(pubLinkProvider)
-        PublicationTransportCommand retrieved = new PublicationTransportCommand()
-        PublicationLinkProvider publicationLinkProvider = PublicationLinkProvider.withCriteria(uniqueResult: true) {
+    PubTC createPTCWithMinimalInformation(String pubLinkProvider, String pubLink, List<PersonTC> authors) {
+        def provider = PLP.LinkType.findLinkTypeByLabel(pubLinkProvider)
+        PubTC retrieved = new PubTC()
+        PLP publicationLinkProvider = PLP.withCriteria(uniqueResult: true) {
             eq("linkType", provider)
         }
         retrieved.link = pubLink
-        retrieved.linkProvider = new PublicationLinkProviderAdapter(linkProvider:
+        retrieved.linkProvider = new PLPA(linkProvider:
                 publicationLinkProvider).toCommandObject()
         retrieved.authors = authors
         retrieved
     }
 
     boolean verifyLink(String linkTypeAsString, String link) {
-        def linkProvider = PublicationLinkProvider.LinkType.findLinkTypeByLabel(linkTypeAsString)
-        PublicationLinkProvider pubLinkProvider = PublicationLinkProvider.withCriteria(uniqueResult: true) {
+        def linkProvider = PLP.LinkType.findLinkTypeByLabel(linkTypeAsString)
+        PLP pubLinkProvider = PLP.withCriteria(uniqueResult: true) {
             eq("linkType", linkProvider)
         }
         if (!pubLinkProvider) {
             return false
         }
-        if (PublicationLinkProvider.LinkType.MANUAL_ENTRY == pubLinkProvider.linkType) {
+        if (PLP.LinkType.MANUAL_ENTRY == pubLinkProvider.linkType) {
             return true
         }
         Pattern p = Pattern.compile(pubLinkProvider.pattern);
@@ -90,25 +91,18 @@ class PublicationService {
         return m.matches()
     }
 
-    PublicationDetailExtractionContext getPublicationExtractionContext(PublicationTransportCommand cmd) throws JummpException {
-        def linkType = PublicationLinkProvider.LinkType.findLinkTypeByLabel(cmd.linkProvider.linkType)
-        Publication publication = Publication.withCriteria(uniqueResult: true) {
-            eq("link", cmd.link)
-            linkProvider {
-                eq("linkType", linkType)
-            }
-        }
-        PublicationDetailExtractionContext ctx = new  PublicationDetailExtractionContext()
+    PDEC getPublicationExtractionContext(PubTC cmd) throws JummpException {
+        Publication publication = findByPublicationTransportCommand(cmd)
+        PDEC ctx = new  PDEC()
         if (publication) {
             // if existing in database
             ctx.publication = new PublicationAdapter(publication: publication).toCommandObject()
             ctx.comesFromDatabase = true
         } else {
             // if not in database
-            PublicationLinkProvider.LinkType type =
-                PublicationLinkProvider.LinkType.findLinkTypeByLabel(cmd.linkProvider.linkType)
+            PLP.LinkType type = PLP.LinkType.findLinkTypeByLabel(cmd.linkProvider.linkType)
             // fetch from pubmed
-            if (type == PublicationLinkProvider.LinkType.PUBMED) {
+            if (type == PLP.LinkType.PUBMED) {
                 ctx.publication = pubMedService.fetchPublicationData(cmd.link)
             } else {
                 ctx.publication = null
@@ -118,16 +112,15 @@ class PublicationService {
         ctx
     }
 
-    public List getPersons(Publication publication) {
-        PublicationPerson.findAllByPublication(publication,
-            [sort: "position", order: "asc"])
+    List getPersons(Publication publication) {
+        PublicationPerson.findAllByPublication(publication, [sort: "position", order: "asc"])
     }
 
-    public void addPublicationAuthor(Publication publication,
+    void addPublicationAuthor(Publication publication,
                                      Person person,
                                      String pubAlias,
                                      Integer position) {
-        def tmp = new PublicationPerson(publication: publication,
+        PublicationPerson tmp = new PublicationPerson(publication: publication,
             person: person,
             pubAlias: pubAlias,
             position: position)
@@ -137,46 +130,126 @@ Failed to add author $person to $publication: ${tmp.errors.allErrors.inspect()}"
         }
     }
 
-    public void removePublicationAuthor(Publication publication, Person person) {
+    void removePublicationAuthor(Publication publication, Person person) {
         def tobeDeleted = PublicationPerson.findByPublicationAndPerson(publication, person)
         if (tobeDeleted) {
             tobeDeleted.delete()
         }
     }
 
-    private void reconcile(Publication publication, def tobeAdded) {
-        def existing = getPersons(publication)
-        tobeAdded.eachWithIndex { newAuthor, index ->
+    @Transactional
+    Publication fromCommandObject(PubTC cmd) {
+        Publication publication = findByPublicationTransportCommand(cmd)
+        if (publication) {
+            publication.title = cmd.title
+            publication.affiliation = cmd.affiliation
+            publication.synopsis = cmd.synopsis
+            publication.journal = cmd.journal
+            publication.year = cmd.year
+            publication.month = cmd.month
+            publication.day = cmd.day
+            publication.volume = cmd.volume
+            publication.issue = cmd.issue
+            publication.pages = cmd.pages
+        } else {
+            publication = new Publication(journal: cmd.journal,
+                title: cmd.title,
+                affiliation: cmd.affiliation,
+                synopsis: cmd.synopsis,
+                year: cmd.year,
+                month: cmd.month,
+                day: cmd.day,
+                volume: cmd.volume,
+                issue: cmd.issue,
+                pages: cmd.pages,
+                linkProvider: PLPA.fromCommandObject(cmd.linkProvider),
+                link: cmd.link)
+        }
+        if (publication.save(flush: true)) {
+            reconcile(publication, cmd.authors)
+        } else {
+            StringBuilder err = new StringBuilder()
+            publication.errors?.allErrors?.each { ObjectError e ->
+                err.append(e.defaultMessage).append('. ')
+            }
+            log.error("Error encountered while saving publication ${publication.dump()}: $err".toString())
+            publication = null
+        }
+        return publication
+    }
+
+    /**
+     * Parses the publication authors come from a JSON string and fits them into a given publication transport command.
+     *
+     * @param cmd  The publication transport command
+     * @param authorsAsJson A string representing the information of publication authors provided by submitters.
+     * @return  An updated publication transport command
+     */
+    PubTC assembleAuthors(PubTC cmd, def authorsAsJson) throws InvalidPublicationAuthorsException {
+        List<PersonTC> validatedAuthors = new LinkedList<PersonTC>()
+        validatedAuthors = parseAuthorsJSON(authorsAsJson)
+        cmd.authors = validatedAuthors
+        if (!cmd.validate()) {
+            String authors = validatedAuthors == [] ? "[]" : validatedAuthors.collect {
+                it.userRealName
+            }.join("; ")
+            String p  = cmd.toString()
+            String error = cmd.errors.allErrors.collect { it }.join("; ")
+            if (cmd.errors.hasFieldErrors("authors")) {
+                error = cmd.errors.getFieldError("authors").rejectedValue
+            }
+            log.error("""\
+There has been errors when assembling authors $authors into the publication '${p}' because the authors are $error.""")
+        }
+        cmd
+    }
+
+    private void reconcile(Publication publication, List<PersonTC> tobeAdded) {
+        List<PublicationPerson> existing = getPersons(publication)
+        tobeAdded.eachWithIndex { PersonTC newAuthor, Integer index ->
             def existingAuthor = existing.find { oldAuthor ->
                 if (newAuthor.id) {
                     return newAuthor.id == oldAuthor.person.id
-                }
-                else if (newAuthor.orcid) {
+                } else if (newAuthor.orcid) {
                     return newAuthor.orcid == oldAuthor.person.orcid
+                } else {
+                    return newAuthor.userRealName == oldAuthor.person.userRealName &&
+                        newAuthor.institution == oldAuthor.person.institution
                 }
                 return false
             }
             if (!existingAuthor) {
                 Person newlyCreatedPubAuthor
                 if (newAuthor.orcid) {
-                    def personWithSameOrcid = Person.findByOrcid(newAuthor.orcid)
-                    if (personWithSameOrcid) {
-                        newlyCreatedPubAuthor = personWithSameOrcid
-                    }
+                    newlyCreatedPubAuthor = Person.findOrCreateByOrcid(newAuthor.orcid)
+                } else {
+                    newlyCreatedPubAuthor = Person.findOrCreateWhere(userRealName: newAuthor.userRealName,
+                        orcid: newAuthor.orcid, institution: newAuthor.institution)
                 }
-                if (!newlyCreatedPubAuthor) {
-                    newlyCreatedPubAuthor = new Person(userRealName: newAuthor.userRealName,
-                        orcid: newAuthor.orcid)
-                    newlyCreatedPubAuthor.save(failOnError: true, flush: true);
+                if (!newlyCreatedPubAuthor.id && newlyCreatedPubAuthor.orcid) {
+                    newlyCreatedPubAuthor.userRealName = newAuthor.userRealName
+                    newlyCreatedPubAuthor.institution = newAuthor.institution
                 }
-                try {
-                    addPublicationAuthor(publication, newlyCreatedPubAuthor, newAuthor.userRealName, index)
+
+                if (newlyCreatedPubAuthor.save(flush: true)) {
+                    addPublicationAuthor(publication, newlyCreatedPubAuthor, newlyCreatedPubAuthor.userRealName, index)
+                } else {
+                    /**
+                     * The `transactionStatus` is an implicit variable defined and made available thanks to the AST
+                     * transformation in Grails Groovy. It could be applied to transactional methods during the
+                     * compilation process. The minimal example of how the transactional roll back works can be found
+                     * at the link https://bitbucket.org/MihaiGlont/grails2-rollback-demo/
+                     */
+                    transactionStatus.setRollbackOnly()
+                    def a = newlyCreatedPubAuthor.userRealName
+                    def err = newlyCreatedPubAuthor.errors.allErrors.collect { e ->
+                        messageSource.getMessage(e.code, [newlyCreatedPubAuthor] as Object[], null)
+                    }.join(';')
+                    def p = publication.linkProvider.linkType == PLP.LinkType.MANUAL_ENTRY ?
+                        "${publication.title}" : "${publication.link}"
+                    log.error("Author $a could not be saved due to $err. Publication '$p' will be rolled back")
                 }
-                catch(Exception e) {
-                    e.printStackTrace()
-                }
-            }
-            else {
+            } else {
                 if (existingAuthor.position != index) {
                     existingAuthor.position = index
                     existingAuthor.save()
@@ -189,8 +262,7 @@ Failed to add author $person to $publication: ${tmp.errors.allErrors.inspect()}"
             def willBeRemovedAuthor = tobeAdded.find { willBeAddedAuthor ->
                 if (willBeAddedAuthor.id) {
                     return willBeAddedAuthor.id == author.person.id
-                }
-                else if (willBeAddedAuthor.orcid) {
+                } else if (willBeAddedAuthor.orcid) {
                     return willBeAddedAuthor.orcid == author.person.orcid
                 }
                 return false
@@ -201,49 +273,51 @@ Failed to add author $person to $publication: ${tmp.errors.allErrors.inspect()}"
         }
     }
 
-    Publication fromCommandObject(PublicationTransportCommand cmd) {
-        Publication publication = Publication.withCriteria(uniqueResult: true) {
-            eq("link",cmd.link)
-            linkProvider {
-                eq("linkType", PublicationLinkProvider.LinkType.findLinkTypeByLabel(cmd.linkProvider.linkType))
+    private List<PersonTC> parseAuthorsJSON(def jsonData) {
+        List<PersonTC> validatedAuthors = new LinkedList<>()
+        def slurper = new JsonSlurper()
+        def parsedJson = slurper.parseText(jsonData)
+        if (!parsedJson['authors']) {
+            return []
+        }
+        def authorList = parsedJson['authors']
+        InvalidPublicationAuthorsException invalidAuthorsException = new InvalidPublicationAuthorsException()
+        for (Object authorJson : authorList) {
+            if (!authorJson) {
+                continue // skip this record
+            }
+            String name = authorJson["userRealName"]
+            String institution = authorJson["institution"] ?: null
+            String orcid = authorJson["orcid"] ?: null
+            PersonTC author = new PersonTC(userRealName: name, orcid: orcid, institution: institution)
+            if (author.validate()) {
+                validatedAuthors.add(author)
+            } else {
+                // this person record is invalid
+                invalidAuthorsException.addInvalidPublicationAuthor(author)
             }
         }
-        if (publication) {
-            publication.title = cmd.title
-            publication.affiliation = cmd.affiliation
-            publication.synopsis = cmd.synopsis
-            publication.journal = cmd.journal
-            publication.year = cmd.year
-            publication.month = cmd.month
-            publication.day = cmd.day
-            publication.volume = cmd.volume
-            publication.issue = cmd.issue
-            publication.pages = cmd.pages
-            publication.save(flush: true)
-            reconcile(publication, cmd.authors)
-            return publication
+        int nbBadAuthors = invalidAuthorsException.getInvalidAuthors()?.size()
+        if (nbBadAuthors > 0) {
+            // throw a checked exception that is caught downstream -- e.g. in ModelController
+            throw invalidAuthorsException
         }
-        Publication publ = new Publication(journal: cmd.journal,
-            title: cmd.title,
-            affiliation: cmd.affiliation,
-            synopsis: cmd.synopsis,
-            year: cmd.year,
-            month: cmd.month,
-            day: cmd.day,
-            volume: cmd.volume,
-            issue: cmd.issue,
-            pages: cmd.pages,
-            linkProvider: PublicationLinkProviderAdapter.fromCommandObject(cmd.linkProvider),
-            link: cmd.link)
-        if (publ.save(flush: true)) {
-            reconcile(publ, cmd.authors)
-        } else {
-            StringBuilder err = new StringBuilder()
-            publ.errors?.allErrors?.each { ObjectError e ->
-                err.append(e.defaultMessage).append('. ')
+        return validatedAuthors
+    }
+
+    private Publication findByPublicationTransportCommand(PubTC cmd) {
+        Publication publication = null
+        if (cmd?.link) {
+            PLP.LinkType linkType = PLP.LinkType.findLinkTypeByLabel(cmd.linkProvider.linkType)
+            publication = Publication.withCriteria(uniqueResult: true) {
+                eq("link", cmd.link)
+                linkProvider {
+                    eq("linkType", linkType)
+                }
             }
-            log.error("Error encountered while saving publication ${publ.dump()}: $err".toString())
+        } else if (cmd?.id) {
+            publication = Publication.get(cmd.id)
         }
-        return publ
+        publication
     }
 }

@@ -34,6 +34,14 @@ class ErrorsController {
                          messageSource.getMessage("error.${code}.explanation",args, Locale.getDefault()))
     }
 
+    def error400 = {
+        response.status = HttpServletResponse.SC_BAD_REQUEST
+        withFormat {
+            html { [resource: request.forwardURI, errorDescription: params?.errorDescription] }
+            '*' { respond getError("400", [request.forwardURI]) }
+        }
+    }
+
     def error403 = {
         response.setStatus HttpServletResponse.SC_FORBIDDEN
         withFormat {

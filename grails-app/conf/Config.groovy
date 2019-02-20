@@ -327,9 +327,9 @@ jummp.controllerAnnotations = [
     '/user/**':                 ['ROLE_ADMIN'],
     '/wcm-tools/**':            ['ROLE_ADMIN'],
     '/ck/**':                   ['ROLE_ADMIN'],
-    "/wcmEditor/**":            ["hasRole('ROLE_ADMIN')"],
+    "/wcmEditor/**":            ["hasAnyRole('ROLE_ADMIN', 'ROLE_CURATOR')"],
     "/wcmPortal/**":            ["hasRole('ROLE_ADMIN')"],
-    "/wcmRepository/**":        ["hasRole('ROLE_ADMIN')"],
+    "/wcmRepository/**":        ["hasAnyRole('ROLE_ADMIN', 'ROLE_CURATOR')"],
     "/wcmSpace/**":             ["hasRole('ROLE_ADMIN')"],
     "/wcmSynchronization/**":   ["hasRole('ROLE_ADMIN')"],
     "/wcmVersion/**":           ["hasRole('ROLE_ADMIN')"],
@@ -769,6 +769,13 @@ if (!(jummpConfig.jummp.metadata.officialDatabaseDescription instanceof ConfigOb
         Models described from literature are manually curated and enriched with cross-references.
         """
 }
+
+if (!(jummpConfig.jummp.ws.client.japi.docs instanceof ConfigObject)) {
+    jummp.ws.client.japi.docs = jummpConfig.config.jummp.ws.client.japi.docs
+} else {
+    jummp.ws.client.japi.docs = "https://bitbucket.org/biomodels/biomodelswsclient"
+}
+
 // elasticsearch settings for weceem
 elasticSearch.datastoreImpl = 'hibernateDatastore'
 elasticSearch.bulkIndexOnStartup = false
