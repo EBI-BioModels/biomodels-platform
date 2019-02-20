@@ -42,7 +42,11 @@ class ParameterSearchService {
     }
 
     String getXMLData(ParameterSearchCommand command) {
-        return getData(command, "XML")
+        String data = getData(command, "XML")
+        if(data.contains("<hitCount>0</hitCount>")) {
+            data=""
+        }
+        return data
     }
 
 
