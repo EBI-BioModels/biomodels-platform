@@ -1,3 +1,9 @@
+<style>
+    .legend-green {
+        color: #01a252;
+    }
+</style>
+
 <table id="table_id" class="display">
     <thead>
     <th>Entity</th>
