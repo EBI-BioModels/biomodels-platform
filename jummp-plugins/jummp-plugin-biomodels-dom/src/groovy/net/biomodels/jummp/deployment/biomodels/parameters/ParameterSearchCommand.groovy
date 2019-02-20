@@ -41,7 +41,12 @@ class ParameterSearchCommand {
             }
             return true
         }
-        sort nullable: true
+        sort nullable: true, validator: {val, cmd ->
+            if(null == val || val == "null") {
+                cmd.sort = ""
+            }
+            return true
+        }
     }
 
     @CompileStatic
@@ -60,5 +65,16 @@ class ParameterSearchCommand {
             url.append('&').append(k).append('=').append(v)
         }
         new URL(url.toString() + "&format=" + format)
+    }
+
+
+    @Override
+    public String toString() {
+        return "ParameterSearchCommand{" +
+            "query='" + query + '\'' +
+            ", size=" + size +
+            ", start=" + start +
+            ", sort='" + sort + '\'' +
+            '}';
     }
 }
