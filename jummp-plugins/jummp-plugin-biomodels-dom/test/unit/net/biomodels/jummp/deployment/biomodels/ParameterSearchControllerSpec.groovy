@@ -111,6 +111,24 @@ class ParameterSearchControllerSpec extends Specification {
 
 
     }
+    void "test search with xml format and no data (no matches found)"() {
+        given: "ParameterSearchService is mocked with certain values"
+        def bindingMap = [query: "NON_MATCHING_QUERY", size: 10, start: 0, sort: "model:ascending"]
+        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+
+
+        def service = mockFor(ParameterSearchService)
+        service.demand.getXMLData { ParameterSearchCommand cmd -> }
+        controller.parameterSearchService = service.createMock()
+
+        when : "Controller search method is invoked"
+        request.contentType = 'application/json'
+        response.format="xml"
+        controller.search(command)
+
+        then: "Result should contain correct results"
+        response.text.contains("No matchses found")
+    }
 
     void "test search with csv format"() {
         given: "ParameterSearchService is mocked with certain values"
@@ -138,6 +156,21 @@ class ParameterSearchControllerSpec extends Specification {
 
 
     }
+    void "test search with csv format with errenous parameters values"() {
+        given: "ParameterSearchService is mocked with certain values"
+        def bindingMap = [query: "NON_MATCHING_QUERY", size: 10, start: 400, sort: "model:ascending"]
+        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+        def service = mockFor(ParameterSearchService)
+        service.demand.getCSVData { ParameterSearchCommand cmd -> throw new IOException("Unable to retrieve the data")}
+        controller.parameterSearchService = service.createMock()
+        when : "Controller search method is invoked"
+        request.contentType = 'application/json'
+        response.format = "csv"
+        controller.search(command)
+        then: "Result should contain correct results"
+        response.text.contains("Error encountered while processing ParameterSearchCommand")
+    }
+
 
     void "test search with non matching format"() {
         given: "ParameterSearchService is mocked with certain values"
