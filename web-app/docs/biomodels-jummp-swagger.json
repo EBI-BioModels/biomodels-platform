@@ -316,10 +316,10 @@
                       "description": "successful operation"
                   },
                   "400": {
-                      "description": "Bad request. Invalid request parameters"
+                      "description": "Invalid request parameters OR\n Unable to retrieve data from EBI Search due to some problem with the request parameters"
                   },
                   "500": {
-                      "description": "Error encountered while processing ParameterSearchCommand..., No matches found"
+                      "description": "Error encountered while processing Request parameters, No matches found"
                   }
               }
           }
