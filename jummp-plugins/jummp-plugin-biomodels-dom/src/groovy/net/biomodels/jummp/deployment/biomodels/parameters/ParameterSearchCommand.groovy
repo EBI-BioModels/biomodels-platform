@@ -70,7 +70,7 @@ class ParameterSearchCommand {
 
     @Override
     public String toString() {
-        return "ParameterSearchCommand{" +
+        return "Request {" +
             "query='" + query + '\'' +
             ", size=" + size +
             ", start=" + start +
