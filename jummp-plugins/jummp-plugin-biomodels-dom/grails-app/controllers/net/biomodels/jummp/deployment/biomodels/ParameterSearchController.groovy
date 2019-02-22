@@ -27,6 +27,7 @@ import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchResult
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import grails.rest.*
+import org.springframework.validation.FieldError
 
 /**
 * @author carankalle on 08/10/2018.
@@ -53,7 +54,8 @@ class ParameterSearchController {
         String format = "xml"
         if (!command.validate()) {
             response.status = 400
-            commandErrorMessage = "Invalid request parameter $command.errors.allErrors. "
+            String errorString = parseErrors(command.errors.fieldErrors)
+            commandErrorMessage = "Invalid request parameter. $errorString "
             isCommandObjectInValid = false
             log.error(commandErrorMessage)
         }
@@ -62,12 +64,12 @@ class ParameterSearchController {
                 json {
                     format = "json"
                     if(!isCommandObjectInValid) {
-                        renderErrorMessage(commandErrorMessage,format)
+                        renderErrorMessage(commandErrorMessage,format,400)
                         return
                     }
                     ParameterSearchResults result = parameterSearchService.getJSONData(command)
                     if(result.hasProperty('recordsTotal') && result['recordsTotal'] == 0) {
-                        renderErrorMessage(NoMatchesFoundMessage,format)
+                        renderErrorMessage(NoMatchesFoundMessage,format,200)
                     }
                     response.setContentType("application/json")
                     render(result as JSON)
@@ -75,12 +77,12 @@ class ParameterSearchController {
                 xml {
                     format = "xml"
                     if(!isCommandObjectInValid) {
-                        renderErrorMessage(commandErrorMessage,format)
+                        renderErrorMessage(commandErrorMessage,format,400)
                         return
                     }
                     String resultXML = parameterSearchService.getXMLData(command)
                     if(null == resultXML || resultXML.isEmpty()) {
-                        renderErrorMessage(NoMatchesFoundMessage,format)
+                        renderErrorMessage(NoMatchesFoundMessage,format,200)
                     }
                     response.setContentType("text/xml")
                     render(resultXML)
@@ -89,12 +91,12 @@ class ParameterSearchController {
                 csv {
                     format = "csv"
                     if(!isCommandObjectInValid) {
-                        renderErrorMessage(commandErrorMessage,format)
+                        renderErrorMessage(commandErrorMessage,format,400)
                         return
                     }
                     String resultCSV = parameterSearchService.getCSVData(command)
                     if(null == resultCSV || resultCSV.isEmpty()) {
-                        renderErrorMessage(NoMatchesFoundMessage,format)
+                        renderErrorMessage(NoMatchesFoundMessage,format,200)
                     }
                     response.setContentType("text/csv")
                     render(resultCSV)
@@ -105,19 +107,23 @@ class ParameterSearchController {
                 }
             }
         } catch (IllegalArgumentException ie) {
-            response.status = 400
-            log.error(ie.message,ie)
-            renderErrorMessage(ie.getMessage(),format)
+            log.error(ie.message, ie)
+            renderErrorMessage(ie.getMessage(), format,400)
+        }catch(IOException ioe) {
+            log.error(ioe.message,ioe)
+            String msg = "Unable to retrieve data from EBI Search due to some problem with the request parameters, please use the suitable request parameters and try again"
+            renderErrorMessage(msg,format,400)
+
         } catch (Exception ex) {
-            response.status = 500
             String msg = "Error encountered while processing $command, No Matches found"
             log.error(ex.message, ex)
-            renderErrorMessage(msg,format)
+            renderErrorMessage(msg,format,500)
         }
     }
 
-    private void renderErrorMessage(String msg, String format) {
+    private void renderErrorMessage(String msg, String format, int statusCode) {
         def responseContent
+        response.status = statusCode
         if(format == "json") {
             responseContent = ['message': msg]
             render(responseContent as JSON)
@@ -129,6 +135,19 @@ class ParameterSearchController {
             response.setContentType("text/plain")
             render(msg)
         }
+    }
+
+    private static String parseErrors (List<FieldError> fieldErrors) {
+        String errorString = ""
+        for(int i=0; i<fieldErrors.size(); i++) {
+            String rejectedField = fieldErrors.get(i).field + "=" + fieldErrors.get(i).rejectedValue
+            if(!errorString.isEmpty()) {
+                errorString += ", " + rejectedField
+            }else {
+                errorString = "Rejected parameters: " + rejectedField
+            }
+        }
+        return  errorString
     }
 }
 
