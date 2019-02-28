@@ -127,7 +127,7 @@ class ParameterSearchControllerSpec extends Specification {
         controller.search(command)
 
         then: "Result should contain correct results"
-        response.text.contains("No matchses found")
+        response.text.contains("No matches found")
     }
 
     void "test search with csv format"() {
@@ -168,7 +168,7 @@ class ParameterSearchControllerSpec extends Specification {
         response.format = "csv"
         controller.search(command)
         then: "Result should contain correct results"
-        response.text.contains("Error encountered while processing ParameterSearchCommand")
+        response.text.contains("Unable to retrieve data")
     }
 
 
