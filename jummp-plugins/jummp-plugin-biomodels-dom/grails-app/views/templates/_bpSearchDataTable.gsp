@@ -88,10 +88,8 @@
 
         function generatePublicationLink(href) {
             href = href.replace(/\\/g, "");
-            var lastIndexofUrlPrefix = "http://identifiers.org/".lastIndexOf("/") + 1;
-            var urlSuffix = href.substring(lastIndexofUrlPrefix, href.length);
-            var firstIndexOfUrlSuffix = urlSuffix.indexOf("/") + 1;
-            href = "<a target='_blank' href='" + href + "'>" + urlSuffix.substring(firstIndexOfUrlSuffix, href.length) + "</a>"
+            var linkData = href.split('|');
+            href = "<a target='_blank' href='" + linkData[0] + "'>" + linkData[1] + "</a>";
             return href;
         }
 
