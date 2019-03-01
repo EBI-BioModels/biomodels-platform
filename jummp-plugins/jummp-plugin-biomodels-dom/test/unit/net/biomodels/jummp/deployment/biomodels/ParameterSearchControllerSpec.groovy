@@ -72,30 +72,16 @@ class ParameterSearchControllerSpec extends Specification {
 
 
         def service = mockFor(ParameterSearchService)
-        service.demand.getXMLData { ParameterSearchCommand cmd ->
-            '<result>' +
-                '<hitCount>2</hitCount>' +
-                '<entries>' +
-                    '<entry id="abc123", source="biomodels_parameters_test">' +
-                        '<fields>' +
-                            '<field id="entity">' +
-                                '<values>' +
-                                    '<value>e1</value>' +
-                                '</values>' +
-                            '</field>' +
-                        '</fields>' +
-                    '</entry>'+
-                    '<entry id="pqr123", source="biomodels_parameters_test">' +
-                        '<fields>' +
-                            '<field id="entity">' +
-                                '<values>' +
-                                    '<value>e2</value>' +
-                                '</values>' +
-                            '</field>' +
-                        '</fields>' +
-                    '</entry>' +
-                '</entries>' +
-            '</result>'
+        service.demand.getJSONData { ParameterSearchCommand cmd -> new ParameterSearchResults(recordsTotal: 2, recordsFiltered: 2,
+            entries: [
+                new SearchResultEntry(fields: [
+                    entity: 'e1'
+                ]),
+                new SearchResultEntry(fields: [
+                    entity: 'e2'
+                ])
+            ]
+        )
         }
         controller.parameterSearchService = service.createMock()
 
@@ -105,9 +91,9 @@ class ParameterSearchControllerSpec extends Specification {
         controller.search(command)
 
         then: "Result should contain correct results"
-        response.text.contains("<hitCount>2</hitCount>")
-        response.text.contains("<value>e1</value>")
-        response.text.contains("<value>e2</value>")
+        response.text.contains("<recordsTotal>2</recordsTotal>")
+        response.text.contains("<entity>e1</entity>")
+        response.text.contains("<entity>e2</entity>")
 
 
     }
@@ -118,7 +104,7 @@ class ParameterSearchControllerSpec extends Specification {
 
 
         def service = mockFor(ParameterSearchService)
-        service.demand.getXMLData { ParameterSearchCommand cmd -> }
+        service.demand.getJSONData { ParameterSearchCommand cmd -> }
         controller.parameterSearchService = service.createMock()
 
         when : "Controller search method is invoked"

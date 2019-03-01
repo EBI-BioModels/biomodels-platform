@@ -21,9 +21,11 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import grails.converters.JSON
+import grails.converters.XML
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchCommand
 import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchResults
+import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchXmlMarshaller
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import grails.rest.*
@@ -80,12 +82,13 @@ class ParameterSearchController {
                         renderErrorMessage(commandErrorMessage,format,400)
                         return
                     }
-                    String resultXML = parameterSearchService.getXMLData(command)
-                    if(null == resultXML || resultXML.isEmpty()) {
+                   XML.registerObjectMarshaller(new ParameterSearchXmlMarshaller() )
+                    ParameterSearchResults resultXML = parameterSearchService.getJSONData(command)
+                    if(resultXML.hasProperty('recordsTotal') && resultXML['recordsTotal'] == 0) {
                         renderErrorMessage(NoMatchesFoundMessage,format,200)
                     }
                     response.setContentType("text/xml")
-                    render(resultXML)
+                    render(resultXML as XML)
 
                 }
                 csv {

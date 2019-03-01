@@ -41,14 +41,6 @@ class ParameterSearchService {
         return getData(command, "CSV")
     }
 
-    String getXMLData(ParameterSearchCommand command) {
-        String data = getData(command, "XML")
-        if(data.contains("<hitCount>0</hitCount>")) {
-            data=""
-        }
-        return data
-    }
-
 
 
 }
