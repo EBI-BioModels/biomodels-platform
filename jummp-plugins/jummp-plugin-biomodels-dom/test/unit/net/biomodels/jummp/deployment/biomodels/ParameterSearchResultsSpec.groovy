@@ -35,10 +35,10 @@ class ParameterSearchResultsSpec extends Specification {
 
         String expectedReaction = "([24794350] + [122357]) => ([CHEBI:17969])"
         String expectedEntityId = "E4P"
+        String expectedPublication = "http://identifiers.org/pubmed/15073223|15073223"
 
 
         boolean isTestPassed = false
-
         results.entries.each{value ->
             if(value.fields.entity_id == expectedEntityId && value.fields.reaction_RAW == expectedReaction) {
                 isTestPassed = true
