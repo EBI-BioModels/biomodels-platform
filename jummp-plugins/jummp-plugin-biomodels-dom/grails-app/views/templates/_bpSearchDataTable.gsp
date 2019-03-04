@@ -1,9 +1,3 @@
-<style>
-    .legend-green {
-        color: #01a252;
-    }
-</style>
-
 <table id="table_id" class="display">
     <thead>
     <th>Entity</th>
@@ -21,7 +15,7 @@
 <hr/>
     <i>
 <u>Legends</u><br/>
-    <span style="width: 20px; height: 10px; display:inline-block; background-color: #01a252;">
+    <span class="legend-green-block">
 </span>
 <span >
     : SBML model values give by the Author</span>
