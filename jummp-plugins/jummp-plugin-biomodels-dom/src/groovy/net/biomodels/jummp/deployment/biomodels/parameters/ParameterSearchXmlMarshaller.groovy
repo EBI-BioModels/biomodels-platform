@@ -6,8 +6,8 @@ import org.codehaus.groovy.grails.web.converters.marshaller.ObjectMarshaller
 /**
  * @short Custom XML marshaller that takes into ParameterSearchResults model
  *
- * This class overrides the default XML renderer for a Model to ensure that its perennial
- * identifier or identifiers.
+ * This class overrides the default XML renderer for ParameterSearchResults object to make sure that the data incoming
+ * from Ebi Search is converted to XML format as per the requirement.
  *
  * @author Chinmay Arankalle <carankalle@ebi.ac.uk>
  */
