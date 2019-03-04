@@ -1,3 +1,5 @@
+import grails.converters.XML
+import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchXmlMarshaller
 class JummpPluginBiomodelsDomGrailsPlugin {
     // the plugin version
     def version = "0.1"
@@ -7,7 +9,7 @@ class JummpPluginBiomodelsDomGrailsPlugin {
     def pluginExcludes = [
         "grails-app/views/error.gsp"
     ]
-    
+
     def loadAfter = ["jummp-plugin-security", "jummp-plugin-core-api"]
 
     // TODO Fill in these fields
@@ -53,6 +55,7 @@ Plugin to define domain classes specific to the biomodels database
 
     def doWithApplicationContext = { ctx ->
         // TODO Implement post initialization spring config (optional)
+        XML.registerObjectMarshaller(new ParameterSearchXmlMarshaller())
     }
 
     def onChange = { event ->
