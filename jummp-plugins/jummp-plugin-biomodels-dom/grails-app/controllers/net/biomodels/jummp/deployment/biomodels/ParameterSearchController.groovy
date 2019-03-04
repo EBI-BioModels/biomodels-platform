@@ -69,12 +69,13 @@ class ParameterSearchController {
                         renderErrorMessage(commandErrorMessage,format,400)
                         return
                     }
-                    ParameterSearchResults result = parameterSearchService.getJSONData(command)
-                    if(result.hasProperty('recordsTotal') && result['recordsTotal'] == 0) {
+                    ParameterSearchResults resultJSON = parameterSearchService.getJSONData(command)
+                    if(resultJSON.hasProperty('recordsTotal') && resultJSON['recordsTotal'] == 0) {
                         renderErrorMessage(NoMatchesFoundMessage,format,200)
+                        return
                     }
                     response.setContentType("application/json")
-                    render(result as JSON)
+                    render(resultJSON as JSON)
                 }
                 xml {
                     format = "xml"
@@ -82,13 +83,13 @@ class ParameterSearchController {
                         renderErrorMessage(commandErrorMessage,format,400)
                         return
                     }
-                   XML.registerObjectMarshaller(new ParameterSearchXmlMarshaller() )
-                    ParameterSearchResults resultXML = parameterSearchService.getJSONData(command)
-                    if(resultXML.hasProperty('recordsTotal') && resultXML['recordsTotal'] == 0) {
+                    ParameterSearchResults resultJSON = parameterSearchService.getJSONData(command)
+                    if(resultJSON.hasProperty('recordsTotal') && resultJSON['recordsTotal'] == 0) {
                         renderErrorMessage(NoMatchesFoundMessage,format,200)
+                        return
                     }
                     response.setContentType("text/xml")
-                    render(resultXML as XML)
+                    render(resultJSON as XML)
 
                 }
                 csv {
@@ -100,6 +101,7 @@ class ParameterSearchController {
                     String resultCSV = parameterSearchService.getCSVData(command)
                     if(null == resultCSV || resultCSV.isEmpty()) {
                         renderErrorMessage(NoMatchesFoundMessage,format,200)
+                        return
                     }
                     response.setContentType("text/csv")
                     render(resultCSV)
