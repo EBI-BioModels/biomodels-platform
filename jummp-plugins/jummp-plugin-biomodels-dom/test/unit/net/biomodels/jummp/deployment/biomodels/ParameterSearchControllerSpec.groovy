@@ -104,7 +104,8 @@ class ParameterSearchControllerSpec extends Specification {
 
 
         def service = mockFor(ParameterSearchService)
-        service.demand.getJSONData { ParameterSearchCommand cmd -> }
+        service.demand.getJSONData { ParameterSearchCommand cmd ->
+            new ParameterSearchResults(recordsTotal: 0, recordsFiltered: 0, entries:[])}
         controller.parameterSearchService = service.createMock()
 
         when : "Controller search method is invoked"
