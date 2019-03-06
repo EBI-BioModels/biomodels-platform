@@ -61,10 +61,27 @@ class ParameterSearchCommandSpec extends Specification {
 
         and : "It should form correct url"
 
-        String expectedSearchUrl = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters?format=json" +
-            "&fields=entity_RAW,entity_id,initial_data_RAW,reaction_RAW,model,publication,rate_RAW,parameters_RAW,entity_accession_url,reaction_sbo_term_link,entity_sbo_term_link" +
-            "&query=E4P*&size=10&start=0&sort=entity:ascending"
-        String actualSearchUrl = command.getSearchUrl()
+        String expectedSearchUrl = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters?" +
+            "fields=entity_RAW,entity_id,initial_data_RAW,reaction_RAW,model,publication,rate_RAW,parameters_RAW,entity_accession_url,reaction_sbo_term_link,entity_sbo_term_link" +
+            "&query=E4P*&size=10&start=0&sort=entity:ascending&format=json"
+        String actualSearchUrl = command.getSearchUrl("json")
         expectedSearchUrl == actualSearchUrl
+    }
+
+    void "test ParameterSearchCommand for default options"() {
+
+        given: "A parameter search command object is defined with negative criteria"
+        def bindingMap = [query: "E4P*", size: null, start: null, sort: "model:ascending"]
+        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+
+        when: "When command is validated with positive criteria"
+        then: "Validation should return true"
+        command.validate()
+
+        and : "It should return default command object"
+
+        command.size == 10
+        command.start == 0
+
     }
 }

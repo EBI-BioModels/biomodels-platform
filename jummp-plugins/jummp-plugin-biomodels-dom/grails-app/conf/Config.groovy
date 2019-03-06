@@ -1,3 +1,6 @@
+import grails.converters.XML
+import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchXmlMarshaller
+
 // configuration for plugin testing - will not be included in the plugin zip
 
 log4j = {
@@ -22,3 +25,4 @@ log4j = {
 }
 
 grails.databinding.dateFormats = ["yyyy-MM-dd'T'HH:mm:ss"]
+XML.registerObjectMarshaller(new ParameterSearchXmlMarshaller())

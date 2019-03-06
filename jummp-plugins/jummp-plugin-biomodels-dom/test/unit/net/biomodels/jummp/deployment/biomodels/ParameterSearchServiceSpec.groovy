@@ -23,7 +23,7 @@ class ParameterSearchServiceSpec extends Specification {
 
         when: "The service method's get data is called and parameter search command is valid"
         command.validate()
-        ParameterSearchResults results = service.getData(command)
+        ParameterSearchResults results = service.getJSONData(command)
 
         then: "it should return correct number of records"
         results.recordsTotal > 0
@@ -43,9 +43,9 @@ class ParameterSearchServiceSpec extends Specification {
         boolean isTestPassed = false
 
         results.entries.each{value ->
-            if(value.fields.reaction_RAW == expectedReaction
-                && value.fields.entity_id == expectedEntityId
-                && value.fields.model == expectedModel) {
+            if(value.fields.reaction == expectedReaction &&
+                value.fields.entity_id == expectedEntityId &&
+                value.fields.model == expectedModel) {
                 isTestPassed = true
                 return true
             }
@@ -66,10 +66,28 @@ class ParameterSearchServiceSpec extends Specification {
         when: "The service method's get data is called and parameter search command is valid"
 
         command.validate()
-        ParameterSearchResults results = service.getData(command)
+        ParameterSearchResults results = service.getJSONData(command)
 
         then: "it should return correct number of records"
         0 == results.recordsTotal
+
+    }
+
+    void "test ParameterSearchService With CSV data"() {
+
+        given: "A parameter search command object is defined with basic criteria"
+        def bindingMap = [query: "BIOMD0000000292", size: 10, start: 0, sort: "entity:ascending"]
+        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+
+        when: "The service method's get data is called and parameter search command is valid"
+
+        command.validate()
+        String results = service.getCSVData(command)
+
+        then: "it should return correct number of records"
+        results.indexOf("[C00008, ADP]") != -1
+        results.indexOf("entity_RAW") == -1
+        results.indexOf("reaction_RAW") == -1
 
     }
 

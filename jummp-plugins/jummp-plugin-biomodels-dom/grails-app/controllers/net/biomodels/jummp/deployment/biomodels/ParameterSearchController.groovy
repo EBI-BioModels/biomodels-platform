@@ -21,16 +21,22 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import grails.converters.JSON
+import grails.converters.XML
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchCommand
 import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchResults
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+import grails.rest.*
+import org.springframework.validation.FieldError
 
 /**
+<<<<<<< HEAD
  * @author carankalle on 08/10/2018.
  */
+
 @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+@Resource(uri = '/parameterSearch')
 class ParameterSearchController {
 
     def parameterSearchService
@@ -49,28 +55,109 @@ class ParameterSearchController {
     }
 
     def search(ParameterSearchCommand command) {
+        String commandErrorMessage
+        boolean isCommandObjectInValid = true
+        final String NoMatchesFoundMessage = "No matches found"
+        String format = "xml"
         if (!command.validate()) {
-            def msg = "Invalid request $command.query, $command.errors.allErrors"
-            log.error(msg)
-            render(['message': "Invalid request object"] as JSON)
-            return
+            response.status = 400
+            String errorString = parseErrors(command.errors.fieldErrors)
+            commandErrorMessage = "Invalid request parameter. $errorString "
+            isCommandObjectInValid = false
+            log.error(commandErrorMessage)
         }
         try {
-            ParameterSearchResults result = parameterSearchService.getData(command)
-            render(result as JSON)
+            withFormat {
+                json {
+                    format = "json"
+                    if(!isCommandObjectInValid) {
+                        renderErrorMessage(commandErrorMessage,format,400)
+                        return
+                    }
+                    ParameterSearchResults resultJSON = parameterSearchService.getJSONData(command)
+                    if(resultJSON.hasProperty('recordsTotal') && resultJSON['recordsTotal'] == 0) {
+                        renderErrorMessage(NoMatchesFoundMessage,format,200)
+                        return
+                    }
+                    response.setContentType("application/json")
+                    render(resultJSON as JSON)
+                }
+                xml {
+                    format = "xml"
+                    if(!isCommandObjectInValid) {
+                        renderErrorMessage(commandErrorMessage,format,400)
+                        return
+                    }
+                    ParameterSearchResults resultJSON = parameterSearchService.getJSONData(command)
+                    if(resultJSON.hasProperty('recordsTotal') && resultJSON['recordsTotal'] == 0) {
+                        renderErrorMessage(NoMatchesFoundMessage,format,200)
+                        return
+                    }
+                    response.setContentType("text/xml")
+                    render(resultJSON as XML)
+
+                }
+                csv {
+                    format = "csv"
+                    if(!isCommandObjectInValid) {
+                        renderErrorMessage(commandErrorMessage,format,400)
+                        return
+                    }
+                    String resultCSV = parameterSearchService.getCSVData(command)
+                    if(null == resultCSV || resultCSV.isEmpty()) {
+                        renderErrorMessage(NoMatchesFoundMessage,format,200)
+                        return
+                    }
+                    response.setContentType("text/csv")
+                    render(resultCSV)
+                }
+                '*' {
+                    response.status = 415
+                   render (['message': "Invalid format, please choose the format from JSON,XML and CSV"] as JSON)
+                }
+            }
         } catch (IllegalArgumentException ie) {
-            response.status = 400
-            String logmsg = "Error encountered while processing $command: ${ie.message}"
-            String usermsg = "Bad request, please try again with correct request parameters"
-            log.error(logmsg)
-            render(['message': usermsg] as JSON)
+            log.error(ie.message, ie)
+            renderErrorMessage(ie.getMessage(), format,400)
+        }catch(IOException ioe) {
+            log.error(ioe.message,ioe)
+            String msg = "Unable to retrieve data from EBI Search due to some problem with the request parameters, please use the suitable request parameters and try again"
+            renderErrorMessage(msg,format,400)
+
         } catch (Exception ex) {
-            response.status = 500
-            String logmsg = "Error encountered while processing $command: ${ex.getMessage()}"
-            String usermsg = "No results to display please try again with appropriate request parameters"
-            log.error(logmsg, ex)
-            render(['message': usermsg] as JSON)
+            String msg = "Error encountered while processing $command, No Matches found"
+            log.error(ex.message, ex)
+            renderErrorMessage(msg,format,500)
         }
+    }
+
+    private void renderErrorMessage(String msg, String format, int statusCode) {
+        def responseContent
+        response.status = statusCode
+        if(format == "json") {
+            responseContent = ['message': msg]
+            render(responseContent as JSON)
+        }else if(format == "xml") {
+            responseContent = "<errors><message>${msg}</message></errors>"
+            response.setContentType("text/xml")
+            render(responseContent)
+        }else if(format == "csv") {
+            response.setContentType("text/plain")
+            render(msg)
+        }
+    }
+
+    private static String parseErrors (List<FieldError> fieldErrors) {
+        String errorString = ""
+        for(int i=0; i<fieldErrors.size(); i++) {
+            String rejectedField = fieldErrors.get(i).field + "=" + fieldErrors.get(i).rejectedValue
+            if(!errorString.isEmpty()) {
+                errorString += ", " + rejectedField
+            }else {
+                errorString = "Rejected parameters: " + rejectedField
+            }
+        }
+        return  errorString
     }
 }
 
