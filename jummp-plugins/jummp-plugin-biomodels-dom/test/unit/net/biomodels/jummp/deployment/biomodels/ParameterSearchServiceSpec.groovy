@@ -31,19 +31,21 @@ class ParameterSearchServiceSpec extends Specification {
         and: "it should return correct records"
 
         String expectedReaction = "([3-phospho-D-glyceric acid, D-ribulose 1,5-bisphosphate, 3-Phospho-D-glycerate, " +
-            "D-Ribulose 1,5-bisphosphate] + [CHEBI:16474, C00005] " +
-            "+ [CHEBI:15422, C00002]) => " +
-            "([CHEBI:16108, aldehydo-D-ribose 5-phosphate, D-ribulose 5-phosphate, keto-D-fructose 1,6-bisphosphate, " +
+            "D-Ribulose 1,5-bisphosphate] + [NADPH, C00005] " +
+            "+ [ATP, C00002]) => " +
+            "([dihydroxyacetone phosphate, aldehydo-D-ribose 5-phosphate, D-ribulose 5-phosphate, keto-D-fructose 1,6-bisphosphate, " +
             "keto-D-fructose 6-phosphate, D-erythrose 4-phosphate, sedoheptulose 1,7-bisphosphate, sedoheptulose 7-phosphate, " +
             "D-glyceraldehyde 3-phosphate, C00111, D-Ribose 5-phosphate;, D-Ribulose 5-phosphate, Sedoheptulose 7-phosphate;, " +
-            "Sedoheptulose 1,7-bisphosphate, D-Erythrose 4-phosphate, C00085, C00354, C00118] + [C00008, CHEBI:16761] + [NADP(+), C00006])"
+            "Sedoheptulose 1,7-bisphosphate, D-Erythrose 4-phosphate, C00085, C00354, C00118] + [C00008, ADP] + [NADP(+), C00006])"
         String expectedEntityId = "Y"
         String expectedModel = "BIOMD0000000292"
 
         boolean isTestPassed = false
 
         results.entries.each{value ->
-            if(value.fields.reaction_RAW == expectedReaction && value.fields.entity_id == expectedEntityId && value.fields.model == expectedModel) {
+            if(value.fields.reaction_RAW == expectedReaction
+                && value.fields.entity_id == expectedEntityId
+                && value.fields.model == expectedModel) {
                 isTestPassed = true
                 return true
             }
