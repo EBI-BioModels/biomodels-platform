@@ -29,7 +29,7 @@
             },
 
             {
-                data: 'fields.reaction_RAW',
+                data: 'fields.reaction',
                 width: "40%",
                 orderable: false
             },
@@ -70,11 +70,11 @@
                 }
             },
             {
-                data: 'fields.rate_RAW',
+                data: 'fields.rate',
                 orderable: false
             },
             {
-                data: 'fields.parameters_RAW',
+                data: 'fields.parameters',
                 orderable: false
             },
             {
@@ -86,7 +86,7 @@
                 orderable: false
             },
             {
-                data: 'fields.initial_data_RAW',
+                data: 'fields.initial_data',
                 orderable: false
 
             }
@@ -94,10 +94,8 @@
 
         function generatePublicationLink(href) {
             href = href.replace(/\\/g, "");
-            var lastIndexofUrlPrefix = "http://identifiers.org/".lastIndexOf("/") + 1;
-            var urlSuffix = href.substring(lastIndexofUrlPrefix, href.length);
-            var firstIndexOfUrlSuffix = urlSuffix.indexOf("/") + 1;
-            href = "<a target='_blank' href='" + href + "'>" + urlSuffix.substring(firstIndexOfUrlSuffix, href.length) + "</a>"
+            var linkData = href.split('|');
+            href = "<a target='_blank' href='" + linkData[0] + "'>" + linkData[1] + "</a>";
             return href;
         }
 
@@ -116,6 +114,7 @@
             data.size = urlParams.length;
             data.start = urlParams.start;
             data.sort = "";
+            data.format = "json";
 
             // Sorting
             urlParams.order.forEach(function (obj) {
