@@ -62,6 +62,7 @@
             <g:link controller="search" action="search" params="${[query: "MAPK cascade"]}" class="secondary label" title="Search by GO term">MAPK cascade</g:link>
             <g:link controller="search" action="search" params="${[query: "homo sapiens"]}" class="secondary label" title="Search by Taxonomy term">homo sapiens</g:link>
             <g:link controller="search" action="search" params="${[query: "lung cancer"]}" class="secondary label" title="Search by Disease term">lung cancer</g:link>
+            <a title="Search tips/tricks" data-open="searchTipsBox" class="secondary label label-floating-right">Search tips</a>
         </p>
     </fieldset>
 </form>

@@ -31,7 +31,7 @@
 <html>
     <head>
         <meta name="layout" content="${session['branding.style']}/main" />
-        <title><g:message code="error.404.title"/></title>
+        <title><g:message code="error.404.title"/> | BioModels</title>
     </head>
     <body>
         <h2><g:message code="error.404.title"/></h2>

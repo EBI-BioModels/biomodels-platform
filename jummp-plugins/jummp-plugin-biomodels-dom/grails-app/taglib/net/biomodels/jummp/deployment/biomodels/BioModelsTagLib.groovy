@@ -24,6 +24,7 @@ import net.biomodels.jummp.core.model.FlagTransportCommand
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 
+import java.text.DateFormatSymbols
 import java.text.SimpleDateFormat
 
 /**
@@ -94,7 +95,7 @@ class BioModelsTagLib {
             // use class 'row' specifically designed by EBI Visual Framework to gain responsive design performance
             out << render(collection: base64CurationNotes, template: '/templates/curationNotes',
                     plugin: 'jummp-plugin-biomodels-dom', var: 'curaRec')
-	    } else {
+        } else {
             out << "<h3>The simulation result for this model is not present</h3>"
         }
         boolean hasCuratorRole = attrs.hasCuratorRole
@@ -136,14 +137,14 @@ class BioModelsTagLib {
             "list-style-position: inside; padding: 0; margin-left: 0'>")
         models?.each {
             ModelTransportCommand mtc = it.key
-	        String modelId = mtc.publicationId ?: mtc.submissionId
+            String modelId = mtc.publicationId ?: mtc.submissionId
             String modelURI = g.createLink(controller: 'model', id: modelId, action: 'show')
-	        String modelLink = "<li style='text-indent: -1.2em; padding-left: 1em'>" +
+            String modelLink = "<li style='text-indent: -1.2em; padding-left: 1em'>" +
                 "<span class='icon icon-functional' data-icon='4'>&nbsp;</span>" +
                 "<a href='${modelURI}'>${it.value.modelName}</a></li>"
             result.append(modelLink)
         }
-	    result.append("</ul>")
+        result.append("</ul>")
         out << result.toString()
     }
 
@@ -153,14 +154,14 @@ class BioModelsTagLib {
             "list-style-position: inside; padding: 0; margin-left: 0'>")
         models?.each {
             ModelTransportCommand mtc = it.key
-	        String modelId = mtc.publicationId ?: mtc.submissionId
+            String modelId = mtc.publicationId ?: mtc.submissionId
             String modelURI = g.createLink(controller: 'model', id: modelId, action: 'show')
             String modelLink= "<li style='text-indent: -1.2em; padding-left: 1em'>" +
                 "<span class='icon icon-functional' data-icon='U'>&nbsp;</span>" +
                 "<a href='${modelURI}'>${it.value.modelName}</a></li>"
             result.append(modelLink)
         }
-	    result.append("</ul>")
+        result.append("</ul>")
         out << result.toString()
     }
 
@@ -171,5 +172,33 @@ class BioModelsTagLib {
             template: "/templates/model/convert/convertedFileShow",
             collection: convertedFilesTC, var: "fileTC")
         out << "</ul>"
+    }
+
+    def renderAllMoMEntriesPage = {
+        Map sortedEntries = modelOfTheMonthService.buildAllEntries()
+        DateFormatSymbols dfs = new java.text.DateFormatSymbols()
+        out << render(template: "/templates/momIntroAllEntriesPage", plugin: "jummp-plugin-biomodels-dom", model: ['years': sortedEntries.keySet()])
+        sortedEntries.each { String year, Set values ->
+            out << render(template: "/templates/momYearTitleInAllEntriesPage", plugin: "jummp-plugin-biomodels-dom", model:['year': year])
+            out << "<ul>"
+            values.each { ModelOfTheMonthTransportCommand cmd ->
+                int month = cmd.publicationMonth
+                String monthName = dfs.months[month]
+                String links = cmd.associatedModelMap.values().collect { String id ->
+                    '<a href="' + g.createLink(controller: "model", action: "show", id: id) + '" target="_blank">' + id + '</a>'
+                }.join(", ")
+                String momLink = cmd.formattedURL.substring(8) // remove 'content/'
+                Map entryMap = new LinkedHashMap()
+                entryMap = ["monthName": monthName,
+                       "models": cmd.associatedModelMap,
+                       "links": links, "momLink": momLink,
+                       "title": cmd.title,
+                       "formattedURL": cmd.formattedURL,
+                       "authors": cmd.authors]
+                out << render(model: ['entry': entryMap],
+                    template: "/templates/momEntryInAllEntriesPage", plugin: "jummp-plugin-biomodels-dom")
+            }
+            out << "</ul>"
+        }
     }
 }
