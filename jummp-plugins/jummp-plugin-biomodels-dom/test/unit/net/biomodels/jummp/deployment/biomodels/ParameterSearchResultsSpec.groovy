@@ -38,15 +38,11 @@ class ParameterSearchResultsSpec extends Specification {
         String expectedEntityId = "E4P"
 
 
-        boolean isTestPassed = false
-        results.entries.each{value ->
-            if(value.fields.entity_id == expectedEntityId && value.fields.reaction_RAW == expectedReaction && value.fields.publication == expectedPublication) {
-                isTestPassed = true
-                return true
-            }
+        results.entries.find{value ->
+           value.fields.entity_id == expectedEntityId &&
+               value.fields.reaction_RAW == expectedReaction &&
+               value.fields.publication == expectedPublication
         }
-        isTestPassed
-
     }
 
 

@@ -23,6 +23,7 @@ class ParameterSearchServiceSpec extends Specification {
 
         when: "The service method's get data is called and parameter search command is valid"
         command.validate()
+
         ParameterSearchResults results = service.getJSONData(command)
 
         then: "it should return correct number of records"
@@ -39,17 +40,15 @@ class ParameterSearchServiceSpec extends Specification {
             "Sedoheptulose 1,7-bisphosphate, D-Erythrose 4-phosphate, C00085, C00354, C00118] + [C00008, ADP] + [NADP(+), C00006])"
         String expectedEntityId = "Y"
         String expectedModel = "BIOMD0000000292"
+        String expectedOrganism = "Viridiplantae"
 
-
-        boolean isTestPassed = false
-
-        results.entries.each{value ->
-            if(value.fields.reaction == expectedReaction && value.fields.entity_id == expectedEntityId && value.fields.model == expectedModel) {
-                isTestPassed = true
-                return true
-            }
+        results.entries.find { value ->
+            value.fields.reaction == expectedReaction &&
+                value.fields.entity_id == expectedEntityId &&
+                value.fields.model == expectedModel &&
+                value.fields.organism == expectedOrganism
         }
-        isTestPassed
+
         and: "Number of records per page should be as per size value"
         10 == results.entries.size()
 
