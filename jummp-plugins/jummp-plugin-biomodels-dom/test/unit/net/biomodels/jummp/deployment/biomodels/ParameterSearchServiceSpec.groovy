@@ -40,14 +40,15 @@ class ParameterSearchServiceSpec extends Specification {
             "Sedoheptulose 1,7-bisphosphate, D-Erythrose 4-phosphate, C00085, C00354, C00118] + [C00008, ADP] + [NADP(+), C00006])"
         String expectedEntityId = "Y"
         String expectedModel = "BIOMD0000000292"
-
+        String expectedOrganism = "Viridiplantae"
 
         boolean isTestPassed = false
 
         results.entries.each{value ->
             if(value.fields.reaction == expectedReaction &&
                 value.fields.entity_id == expectedEntityId &&
-                value.fields.model == expectedModel) {
+                value.fields.model == expectedModel &&
+                value.fields.organism == expectedOrganism) {
                 isTestPassed = true
                 return true
             }
