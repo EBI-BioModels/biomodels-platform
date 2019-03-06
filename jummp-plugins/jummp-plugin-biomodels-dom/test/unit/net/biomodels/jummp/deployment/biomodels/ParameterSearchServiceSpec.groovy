@@ -41,18 +41,11 @@ class ParameterSearchServiceSpec extends Specification {
         String expectedEntityId = "Y"
         String expectedModel = "BIOMD0000000292"
 
-
-        boolean isTestPassed = false
-
-        results.entries.each{value ->
-            if(value.fields.reaction == expectedReaction &&
+        results.entries.find{value ->
+            value.fields.reaction == expectedReaction &&
                 value.fields.entity_id == expectedEntityId &&
-                value.fields.model == expectedModel) {
-                isTestPassed = true
-                return true
-            }
+                value.fields.model == expectedModel
         }
-        isTestPassed
         and: "Number of records per page should be as per size value"
         10 == results.entries.size()
 
