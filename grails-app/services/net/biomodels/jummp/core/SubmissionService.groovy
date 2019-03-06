@@ -31,7 +31,6 @@
 
 package net.biomodels.jummp.core
 
-import grails.orm.HibernateCriteriaBuilder
 import groovy.transform.CompileStatic
 import groovy.transform.TypeChecked
 import groovy.transform.TypeCheckingMode
@@ -190,7 +189,7 @@ class SubmissionService {
             Collection<RFTC> mains
             Collection<RFTC> additionals
             if (workingMemory.containsKey("repository_files")) {
-	            /* case: the repository files are being updated and maintained in memory */
+                /* case: the repository files are being updated and maintained in memory */
                 Collection<RFTC> existing = workingMemory.get("repository_files") as List<RFTC>
                 if (!tobeAdded && !filesToDelete &&
                         !workingMemory['isUpdateOnExistingModel']) {
@@ -558,7 +557,7 @@ class SubmissionService {
          * track of information submitter has entered in publication editor form so avoid losing it.
          */
         protected Map<Object, PublicationDetailExtractionContext> initialisePublicationMap() {
-            String[] linkSourceTypes = PublicationLinkProvider.LinkType.values().collect {
+            List<String> linkSourceTypes = PublicationLinkProvider.LinkType.values().collect {
                 PublicationLinkProvider.LinkType it -> it.label
             }
             Map<Object, PublicationDetailExtractionContext> publication_objects_in_working =
@@ -1011,6 +1010,4 @@ class SubmissionService {
             String mapName = "repository_files") {
         return (List) workingMemory.get(mapName)
     }
-
-
 }

@@ -116,7 +116,7 @@ class VcsServiceTests extends JummpIntegrationTest implements ApplicationContext
         grailsApplication.config.jummp.vcs.workingDirectory="target/vcs/"
         File root = new File("target/vcs/")
         String containerPath = root.absolutePath + "/vvv/"
-        fileSystemService.currentModelContainer = containerPath
+        fileSystemService.currentModelContainer.set(containerPath)
         vcsService.modelContainerRoot = grailsApplication.config.jummp.vcs.workingDirectory
         File gitDirectory = new File("target/vcs/vvv/git/")
         gitDirectory.mkdirs()
@@ -151,7 +151,7 @@ class VcsServiceTests extends JummpIntegrationTest implements ApplicationContext
         String modelIdentifier = "test/"
         fileSystemService.root = new File("target/vcs/git").canonicalFile
         String containerPath = fileSystemService.root.absolutePath + "/aaa/"
-        fileSystemService.currentModelContainer = containerPath
+        fileSystemService.currentModelContainer.set(containerPath)
         //modelService ensures that the model folder gets created
         File modelDirectory = new File(new File(containerPath), "test")
         modelDirectory.mkdirs()
@@ -232,7 +232,7 @@ class VcsServiceTests extends JummpIntegrationTest implements ApplicationContext
     void testUpdate() {
         fileSystemService.root = new File("target/vcs/git").canonicalFile
         String containerPath = fileSystemService.root.absolutePath + "/uuu/"
-        fileSystemService.currentModelContainer = containerPath
+        fileSystemService.currentModelContainer.set(containerPath)
         //modelService ensures that the model folder gets created
         File modelDirectory = new File(new File(containerPath), "testUpdate")
         modelDirectory.mkdirs()
@@ -456,7 +456,7 @@ class VcsServiceTests extends JummpIntegrationTest implements ApplicationContext
     void testRetrieve() {
         fileSystemService.root = new File("target/vcs/git").canonicalFile
         String containerPath = fileSystemService.root.absolutePath + "/aaa/"
-        fileSystemService.currentModelContainer = containerPath
+        fileSystemService.currentModelContainer.set(containerPath)
         vcsService.modelContainerRoot = "target/vcs/git"
 
         assertFalse(vcsService.isValid())

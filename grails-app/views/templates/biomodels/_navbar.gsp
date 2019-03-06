@@ -38,6 +38,7 @@
             <li><a href="${g.createLink(controller: 'search', action: 'search', params: [query: '*:*'])}">Browse all models</a></li>
             <li><a href="${g.createLink(controller: 'goChart', action: 'index', plugin: 'jummp-plugin-biomodels-dom')}">Browse GO categories</a></li>
             <li><a href="${g.createLink(controller: 'parameterSearch', action: 'index', plugin: 'jummp-plugin-biomodels-dom')}">Parameter Search</a></li>
+            <li><g:link mapping="agedbrain">Browse neurodegeneration models</g:link></li>
         </ul>
     </li>
     <li <g:if test="${g.pageProperty(name:'page.submit')?.length()}"> class="active" </g:if> role="menuitem">
@@ -50,7 +51,7 @@
             <li><a href="${g.createLink(controller: 'jummp', action: 'courses')}">Courses</a></li>
             <li><a href="//www.ebi.ac.uk/biomodels/tools/converters/" target="_blank">Online converters</a></li>
             <li><a href="//www.ebi.ac.uk/rdf/services/biomodels/sparql" target="_blank">SPARQL Endpoint</a></li>
-            <li><a href="${createLink(uri: '/docs', absolute: true)}">Technical corner</a></li>
+            <li><a href="${createLink(controller: 'jummp', action: 'developerZone')}">Developer's Zone</a></li>
         </ul>
     </li>
     <li <g:if test="${selectedAboutusItems}"> class="active" </g:if> role="menuitem">

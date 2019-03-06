@@ -37,7 +37,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
-public class SubmissionFlowOmexTest extends SubmissionFlowTestBase {
+class SubmissionFlowOmexTest extends SubmissionFlowTestBase {
         
     @After
     void tearDown() {
@@ -46,15 +46,15 @@ public class SubmissionFlowOmexTest extends SubmissionFlowTestBase {
 
     @Before
     void setUp() {
-    	initialise();
+        initialise()
     }
 
     @Test
     void testSubmitOmex() {
         submitFileTest("jummp-plugins/jummp-plugin-combine-archive/test/files/sample archive.omex",
-    				   "OMEX",
-    				   "sample archive",
-    				   ["sample archive.omex"] as String[]);
+                        "OMEX",
+                        "sample archive",
+                               ["sample archive.omex"] as String[]);
     }
 
 }
