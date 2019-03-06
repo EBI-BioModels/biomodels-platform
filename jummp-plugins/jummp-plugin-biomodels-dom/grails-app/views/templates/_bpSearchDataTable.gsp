@@ -202,18 +202,6 @@
             pageState.dataTable.sort = "";
             updateTable(table);
         }
-/*
-        // Preprocess custom params before calling EbiSearch WS
-        function preProcessEbiSearchParams(urlParams) {
-            var data = {};
-            data.query = encodeURIComponent(urlParams.search.value);
-            data.size = urlParams.length;
-            data.start = urlParams.start;
-            data.sort = "";
-            data.format = "json";
-
-        }*/
-
         // Ajax configuration
         ajaxConfig = {
             "url": "${g.createLink(controller: "parameterSearch", action: "search", absolute: true)}",
