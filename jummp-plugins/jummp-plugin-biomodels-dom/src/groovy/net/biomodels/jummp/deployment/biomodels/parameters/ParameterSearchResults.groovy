@@ -62,6 +62,38 @@ class ParameterSearchResults {
 
     }
 
+    private static String prepareHrefAndLabel(String href) {
+        href = href.replaceAll("\\\\", "")
+        int lastIndexofUrlPrefix = "http://identifiers.org/".lastIndexOf("/") + 1;
+        String urlSuffix = href.substring(lastIndexofUrlPrefix, href.length())
+        int firstIndexOfUrlSuffix = urlSuffix.indexOf("/") + 1
+        href = href + "|" + urlSuffix.substring(firstIndexOfUrlSuffix, urlSuffix.length())
+        return href
+    }
+
+
+    private static String generatePublicationLink(String fieldName, String fieldValue) {
+        if (fieldValue == null && fieldValue.length() == 0) {
+            return ""
+        }
+        String formattedData
+        if(fieldName == "publication") {
+            if (fieldValue.contains(",")) {
+                List<String> formattedList
+                String commaSeparatedLinks = fieldValue.split(",")
+                commaSeparatedLinks.each { key, value ->
+                    formattedList.add(prepareAnchorTagForPublication(value));
+                }
+                formattedData = formattedList.join(", ")
+            } else {
+                formattedData = prepareHrefAndLabel(fieldValue);
+            }
+            return formattedData
+        }else{
+            return fieldValue
+        }
+    }
+
     protected static SearchResultEntry parseEntry(def entry) {
         if (!entry) return null
 
@@ -77,6 +109,7 @@ class ParameterSearchResults {
 
                 def value = values.first()
                 value = convertToLink(fieldName, value)
+                value = generatePublicationLink(fieldName, value)
                 parsedFields[fieldName] = value
             }else{
                 parsedFields[fieldName] = values
