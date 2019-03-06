@@ -11,7 +11,7 @@
     <th>Initial Data</th>
     </thead>
 </table>
-<div  style="float:left;">
+<div  class="pull-element-left">
 <hr/>
     <i>
 <u>Legends</u><br/>

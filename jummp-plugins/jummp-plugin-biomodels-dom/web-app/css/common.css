@@ -5,6 +5,10 @@
 .legend-green-block {
     width: 20px;
     height: 10px;
-    display:inline-block;
+    display: inline-block;
     background-color: #01a252;
+}
+
+.pull-element-left {
+    float: left
 }
