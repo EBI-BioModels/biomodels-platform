@@ -33,7 +33,7 @@ class ParameterSearchResultsSpec extends Specification {
 
         and: "it should return reaction value"
 
-        String expectedReaction = "([24794350] + [122357]) => ([CHEBI:17969])"
+        String expectedReaction = "([24794350] + [122357]) => ([sedoheptulose 1,7-bisphosphate])"
         String expectedEntityId = "E4P"
 
 
