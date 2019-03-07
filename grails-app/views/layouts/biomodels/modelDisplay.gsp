@@ -218,6 +218,19 @@
                 }
             });
 
+            $('#warn-publication-details').dialog({
+                resizable: false,
+                autoOpen: false,
+                height: 420,
+                width: 725,
+                modal: true,
+                buttons: {
+                    Close: function() {
+                        $(this).dialog("close");
+                    }
+                }
+            });
+
             $("body").append("<div id='modelToolbar' class='collapsibleContainer' title='Model Toolbar'>" +
                 "<button title='Expand Toolbar' data-showing='0' id='panelToggle'>Expand</button></div>	");
             $("#buttonContainer").prependTo("#modelToolbar");
@@ -406,16 +419,29 @@
                     </li>
                 </g:if>
                 <g:if test="${canSubmitForPublication}">
-                    <div id="confirm-model-notify"
-                         title="<jummp:renderSubmitForPublicationConfirmDialogTitle/>"
-                         style="display:none;">
-                        <p><jummp:renderSubmitForPublicationConfirmDialogMessage/></p>
-                    </div>
+                    <% def dialog_id %>
+                    <g:if test="${revision.model.publication}">
+                        <div id="confirm-model-notify"
+                             title="<jummp:renderSubmitForPublicationConfirmDialogTitle/>"
+                             style="display:none;">
+                            <p><jummp:renderSubmitForPublicationConfirmDialogMessage/></p>
+                        </div>
+
+                        <li>
+                        <% dialog_id = "confirm-model-notify" %>
+                    </g:if>
+                    <g:else>
+                        <div id="warn-publication-details"
+                             title="<jummp:renderSubmitForPublicationWarningDialogTitle/>" style="display: none">
+                            <p><jummp:renderSubmitForPublicationWarningDialogMessage/></p>
+                        </div>
+                        <% dialog_id = "warn-publication-details" %>
+                    </g:else>
                     <li>
-                    <button class='toolbutton' id="peer-review"
-                            title="Submit for publication"
-                            onclick='return $( "#confirm-model-notify" ).dialog( "open");'>
-                        Submit</button></li>
+                        <button class='toolbutton' id="peer-review"
+                                title="Submit for publication"
+                                onclick='return $("#${dialog_id}").dialog("open");'>
+                            Publish</button></li>
                 </g:if>
                 <g:if test="${showPublishOption}">
                     <div id="confirm-model-publish" title="You are about to publish this model version"
