@@ -205,7 +205,10 @@
         // Ajax configuration
         ajaxConfig = {
             "url": "${g.createLink(controller: "parameterSearch", action: "search", absolute: true)}",
-            "dataSrc": 'entries',
+            "dataSrc": function(data) {
+                addSearchAndClearButton();
+                return data.entries
+            },
             "data": preProcessEbiSearchParams,
             "error": function (xhr, error, code) {
                 displayAsyncMessage(xhr.responseJSON.message);
