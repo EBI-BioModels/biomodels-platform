@@ -70,10 +70,10 @@ class ParameterSearchResults {
         String formattedData
         if(fieldName == "publication") {
             if (fieldValue.contains(",")) {
-                List<String> formattedList
-                String commaSeparatedLinks = fieldValue.split(",")
-                commaSeparatedLinks.each { key, value ->
-                    formattedList.add(prepareAnchorTagForPublication(value));
+                List<String> formattedList = new ArrayList<>()
+                String[] commaSeparatedLinks = fieldValue.split(",")
+                commaSeparatedLinks.each { value ->
+                    formattedList.add(prepareHrefAndLabel(value));
                 }
                 formattedData = formattedList.join(", ")
             } else {
@@ -95,7 +95,7 @@ class ParameterSearchResults {
                 if (1 < valueCount) {
                     logger.warn(
                         'More than one value was found in field {}: {}. Only the first will be used',
-                        field, values)
+                        fieldName, values)
                 }
 
                 def value = values.first()
