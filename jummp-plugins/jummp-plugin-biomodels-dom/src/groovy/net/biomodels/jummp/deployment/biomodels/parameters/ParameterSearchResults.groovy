@@ -48,7 +48,7 @@ class ParameterSearchResults {
     private static combineEnityAndEntityIdFields(def parsedFields) {
 
         if (parsedFields['entity_accession_url'] != null && parsedFields['entity_id'] != null) {
-            parsedFields['entity_accession_url'] = parsedFields['entity_accession_url'] + '<hr/>' + "<span class='legend-green'>"+parsedFields['entity_id'] + "</span>"
+            parsedFields['entity_show'] = parsedFields['entity_accession_url'] + '<hr/>' + "<span class='legend-green'>"+parsedFields['entity_id'] + "</span>"
         }
         return parsedFields
 
