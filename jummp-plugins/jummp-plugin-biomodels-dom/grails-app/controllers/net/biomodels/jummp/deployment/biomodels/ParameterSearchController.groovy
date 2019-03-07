@@ -31,7 +31,6 @@ import grails.rest.*
 import org.springframework.validation.FieldError
 
 /**
-<<<<<<< HEAD
  * @author carankalle on 08/10/2018.
  */
 
