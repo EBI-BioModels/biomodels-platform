@@ -27,7 +27,7 @@
         var columnConfig = [
 
             {
-                data: 'fields.entity_accession_url',
+                data: 'fields.entity_show',
                 orderable: false
 
             },
