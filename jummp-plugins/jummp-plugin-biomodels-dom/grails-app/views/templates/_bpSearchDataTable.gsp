@@ -3,6 +3,7 @@
     <th>Entity</th>
     <th>Reaction</th>
     <th>Model</th>
+    <th>Organism</th>
     <th>Publication</th>
     <th>Rate</th>
     <th>Parameters</th>
@@ -45,6 +46,11 @@
                     }
                     return formattedData
                 }
+            },
+            {
+                data: 'fields.organism',
+                width: "40%",
+                orderable: false
             },
             {
                 data: 'fields.publication',
