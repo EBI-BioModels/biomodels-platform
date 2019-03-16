@@ -25,7 +25,6 @@ import grails.converters.XML
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchCommand
 import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchResults
-import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchXmlMarshaller
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import grails.rest.*
@@ -52,23 +51,14 @@ class ParameterSearchController {
     }
 
     def search(ParameterSearchCommand command) {
-        String commandErrorMessage
-        boolean isCommandObjectInValid = true
+
         final String NoMatchesFoundMessage = "No matches found"
         String format = "xml"
-        if (!command.validate()) {
-            response.status = 400
-            String errorString = parseErrors(command.errors.fieldErrors)
-            commandErrorMessage = "Invalid request parameter. $errorString "
-            isCommandObjectInValid = false
-            log.error(commandErrorMessage)
-        }
         try {
             withFormat {
                 json {
                     format = "json"
-                    if(!isCommandObjectInValid) {
-                        renderErrorMessage(commandErrorMessage,format,400)
+                    if(!validateCommandObject(command, format)) {
                         return
                     }
                     ParameterSearchResults resultJSON = parameterSearchService.getJSONData(command)
@@ -81,8 +71,7 @@ class ParameterSearchController {
                 }
                 xml {
                     format = "xml"
-                    if(!isCommandObjectInValid) {
-                        renderErrorMessage(commandErrorMessage,format,400)
+                    if(!validateCommandObject(command, format)) {
                         return
                     }
                     ParameterSearchResults resultJSON = parameterSearchService.getJSONData(command)
@@ -96,8 +85,7 @@ class ParameterSearchController {
                 }
                 csv {
                     format = "csv"
-                    if(!isCommandObjectInValid) {
-                        renderErrorMessage(commandErrorMessage,format,400)
+                    if(!validateCommandObject(command, format)) {
                         return
                     }
                     String resultCSV = parameterSearchService.getCSVData(command)
@@ -118,8 +106,7 @@ class ParameterSearchController {
             renderErrorMessage(ie.getMessage(), format,400)
         }catch(IOException ioe) {
             log.error(ioe.message,ioe)
-            String msg = "Unable to retrieve data from EBI Search due to some problem with the request parameters, please use the suitable request parameters and try again"
-            renderErrorMessage(msg,format,400)
+            renderErrorMessage(IOExceptionCustomMessage,format,400)
 
         } catch (Exception ex) {
             String msg = "Error encountered while processing $command, No Matches found"
