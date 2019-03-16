@@ -5,8 +5,8 @@ import groovy.transform.CompileStatic
 import groovy.transform.ToString
 
 /**
- * Created by carankalle on 31/10/2018.
- */
+* @author carankalle on 31/10/2018.
+*/
 @Validateable
 @ToString(includes = ['query', 'size', 'start', 'sort'])
 class ParameterSearchCommand {
@@ -62,7 +62,8 @@ class ParameterSearchCommand {
         for (element in params) {
             Object v = element.value
             String k = element.key
-            url.append('&').append(k).append('=').append(v)
+            if (v != null)
+                url.append('&').append(k).append('=').append(v)
         }
         new URL(url.toString() + "&format=" + format)
     }
