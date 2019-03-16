@@ -5,8 +5,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 /**
- * Created by carankalle on 31/10/2018.
- */
+* @author carankalle on 31/10/2018.
+*/
 class ParameterSearchResults {
     static
     final Logger logger = LoggerFactory.getLogger(ParameterSearchResults.class)
@@ -19,13 +19,14 @@ class ParameterSearchResults {
         Objects.requireNonNull(json)
         int hitCount = json.hitCount
         def parsedEntries = json.entries.collect { e -> parseEntry(e) }
-        new ParameterSearchResults(recordsFiltered: hitCount, recordsTotal: hitCount,
+        return new ParameterSearchResults(recordsFiltered: hitCount, recordsTotal: hitCount,
             entries: parsedEntries)
     }
 
-    private static convertToLink(String fieldName, String value) {
-
+    private static String convertToLink(String fieldName, String value) {
         if (isLink(fieldName)) {
+            if (null == value || value?.isEmpty()) return ""
+
             value = value.replace("\\", "")
             String[] values = value.split(',')
             List<String> links = new ArrayList<>()
@@ -64,7 +65,7 @@ class ParameterSearchResults {
 
 
     private static String generatePublicationLink(String fieldName, String fieldValue) {
-        if (fieldValue == null && fieldValue.length() == 0) {
+        if (fieldValue == null && fieldValue?.length() == 0) {
             return ""
         }
         String formattedData
@@ -89,7 +90,7 @@ class ParameterSearchResults {
         if (!entry) return null
 
         def parsedFields = [:]
-        entry.fields.each { fieldName, values ->
+        entry.fields.each { String fieldName, values ->
             int valueCount = Objects.requireNonNull(values).length()
             if (0 < valueCount) {
                 if (1 < valueCount) {
@@ -99,8 +100,8 @@ class ParameterSearchResults {
                 }
 
                 def value = values.first()
-                value = convertToLink(fieldName, value)
-                value = generatePublicationLink(fieldName, value)
+                value = convertToLink(fieldName,(String)value)
+                value = generatePublicationLink(fieldName, (String)value)
                 parsedFields[fieldName] = value
             }else{
                 parsedFields[fieldName] = values
