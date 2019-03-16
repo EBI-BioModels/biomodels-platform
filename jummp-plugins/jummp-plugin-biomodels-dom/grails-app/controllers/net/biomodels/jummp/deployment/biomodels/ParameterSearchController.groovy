@@ -45,6 +45,8 @@ class ParameterSearchController {
  */
     static final Log log = LogFactory.getLog(ParameterSearchController.class)
 
+    final String IOExceptionCustomMessage = "Unable to retrieve data from EBI Search due to some problem with the request " +
+        "parameters, please use the suitable request parameters and try again"
     def index() {
         render(view: "index");
     }
@@ -124,6 +126,48 @@ class ParameterSearchController {
             log.error(ex.message, ex)
             renderErrorMessage(msg,format,500)
         }
+    }
+
+    def export(ParameterSearchCommand command) {
+
+        final String NoMatchesFoundMessage = "No matches found"
+        String format = "csv"
+        if(!validateCommandObject(command, format)){
+            return
+        }
+        try {
+            String resultCSV = parameterSearchService.exportData(command)
+            if (null == resultCSV || resultCSV.isEmpty()) {
+                renderErrorMessage(NoMatchesFoundMessage, format, 200)
+                return
+            }
+            response.setContentType("text/csv")
+            render(resultCSV)
+
+        } catch (IllegalArgumentException ie) {
+            log.error(ie.message, ie)
+            renderErrorMessage(ie.getMessage(), format, 400)
+        } catch (IOException ioe) {
+            log.error(ioe.message, ioe)
+            renderErrorMessage(IOExceptioCustomMessage, format, 400)
+        } catch (Exception ex) {
+            String msg = "Error encountered while processing $command, No Matches found"
+            log.error(ex.message, ex)
+            renderErrorMessage(msg, format, 500)
+        }
+
+    }
+
+    private boolean validateCommandObject(ParameterSearchCommand command, String format) {
+        if (!command.validate()) {
+            response.status = 400
+            String errorString = parseErrors(command.errors.fieldErrors)
+            String commandErrorMessage = "Invalid request parameter. $errorString "
+            log.error(commandErrorMessage)
+            renderErrorMessage(commandErrorMessage, format, 400)
+            return false
+        }
+        return true
     }
 
     private void renderErrorMessage(String msg, String format, int statusCode) {
