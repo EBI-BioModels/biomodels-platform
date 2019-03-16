@@ -1,7 +1,6 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import grails.converters.JSON
-import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.services.ServiceUnitTestMixin
 import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchResults
