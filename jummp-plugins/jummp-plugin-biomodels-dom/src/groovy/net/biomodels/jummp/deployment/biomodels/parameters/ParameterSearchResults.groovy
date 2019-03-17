@@ -5,8 +5,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 /**
- * Created by carankalle on 31/10/2018.
- */
+* @author carankalle on 31/10/2018.
+*/
 class ParameterSearchResults {
     static
     final Logger logger = LoggerFactory.getLogger(ParameterSearchResults.class)
@@ -45,6 +45,14 @@ class ParameterSearchResults {
         }
     }
 
+    private static combineReactionAndReactionOriginal(def parsedFields) {
+
+        if (parsedFields['reaction'] != null && parsedFields['reaction_original_RAW'] != null) {
+            parsedFields['reaction_show'] = parsedFields['reaction'] + '<hr/>' + "<span class='legend-green'>"+parsedFields['reaction_original_RAW'] + "</span>"
+        }
+        return parsedFields
+
+    }
     private static isLink(String fieldName) {
 
         return (fieldName.equalsIgnoreCase("entity_accession_url")
@@ -106,8 +114,8 @@ class ParameterSearchResults {
                 parsedFields[fieldName] = values
             }
         }
-
-        new SearchResultEntry(fields: parsedFields)
+        def modifiedParsedFields = combineReactionAndReactionOriginal(parsedFields);
+        new SearchResultEntry(fields: modifiedParsedFields)
     }
 
 }
