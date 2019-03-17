@@ -13,7 +13,16 @@
     <th>Initial Data</th>
     </thead>
 </table>
-
+<div  class="pull-element-left">
+    <hr/>
+    <i>
+        <u>Legends</u><br/>
+        <span class="legend-green-block">
+        </span>
+        <span >
+            : SBML model values give by the Author</span>
+    </i>
+</div>
 <script>
     $(document).ready(function () {
         var columnConfig = [
@@ -29,7 +38,8 @@
             },
 
             {
-                data: 'fields.reaction',
+
+                data: 'fields.reaction_show',
                 width: "40%",
                 orderable: false
             },
