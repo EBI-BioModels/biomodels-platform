@@ -5,15 +5,15 @@ import groovy.transform.CompileStatic
 import groovy.transform.ToString
 
 /**
- * Created by carankalle on 31/10/2018.
- */
+* @author carankalle on 31/10/2018.
+*/
 @Validateable
 @ToString(includes = ['query', 'size', 'start', 'sort'])
 class ParameterSearchCommand {
     public static final String DEFAULT_QUERY = '*:*'
     public static
     final String BASE_URL = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters?" +
-        "fields=entity_RAW,entity_id,initial_data_RAW,reaction_RAW,model,organism,publication,rate_RAW,parameters_RAW,entity_accession_url,reaction_sbo_term_link,entity_sbo_term_link"
+        "fields=entity_RAW,entity_id,initial_data_RAW,reaction_RAW,reaction_original_RAW,model,organism,publication,rate_RAW,parameters_RAW,entity_accession_url,reaction_sbo_term_link,entity_sbo_term_link"
     String query
     Integer size
     Integer start
