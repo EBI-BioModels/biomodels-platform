@@ -56,7 +56,7 @@ class ParameterSearchController {
     def search(ParameterSearchCommand command) {
         String commandErrorMessage
         boolean isCommandObjectInValid = true
-        final String NoMatchesFoundMessage = "No matches found"
+        final def NoMatchesFoundMessage = "No matches found"
         String format = "xml"
         if (!command.validate()) {
             response.status = 400
@@ -69,13 +69,17 @@ class ParameterSearchController {
             withFormat {
                 json {
                     format = "json"
+                    def errorObject = ['recordsTotal':0,'recordsFiltered':0,'entries':[]]
+
                     if(!isCommandObjectInValid) {
-                        renderErrorMessage(commandErrorMessage,format,400)
+                        errorObject['message'] = commandErrorMessage
+                        renderErrorMessage(errorObject,format,400)
                         return
                     }
                     ParameterSearchResults resultJSON = parameterSearchService.getJSONData(command)
                     if(resultJSON.hasProperty('recordsTotal') && resultJSON['recordsTotal'] == 0) {
-                        renderErrorMessage(NoMatchesFoundMessage,format,200)
+                        errorObject['message'] = NoMatchesFoundMessage
+                        renderErrorMessage(errorObject,format,200)
                         return
                     }
                     response.setContentType("application/json")
@@ -130,12 +134,11 @@ class ParameterSearchController {
         }
     }
 
-    private void renderErrorMessage(String msg, String format, int statusCode) {
+    private void renderErrorMessage(def msg, String format, int statusCode) {
         def responseContent
         response.status = statusCode
         if(format == "json") {
-            responseContent = ['message': msg]
-            render(responseContent as JSON)
+            render(msg as JSON)
         }else if(format == "xml") {
             responseContent = "<errors><message>${msg}</message></errors>"
             response.setContentType("text/xml")
