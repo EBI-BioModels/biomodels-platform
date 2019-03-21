@@ -43,6 +43,9 @@
           href="${resource(dir: 'css', file: 'easy-autocomplete.min.css')}"
           type="text/css">
     <link rel="stylesheet"
+          href="${resource(dir: 'css', file: 'common.css')}"
+          type="text/css">
+    <link rel="stylesheet"
           href="${resource(dir: 'css', file: 'easy-autocomplete.themes.min.css')}"
           type="text/css">
 </head>

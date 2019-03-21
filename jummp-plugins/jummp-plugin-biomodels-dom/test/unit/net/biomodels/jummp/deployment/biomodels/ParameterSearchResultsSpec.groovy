@@ -20,7 +20,7 @@ class ParameterSearchResultsSpec extends Specification {
         given: "A webservice call to ebi search and basic criteria"
 
         String urlString = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters?format=json" +
-            "&fields=entity_RAW,entity_id,reaction_RAW,model,publication,rate_RAW,parameters_RAW" +
+            "&fields=entity_RAW,entity_id,reaction_RAW,model,publication,entity_accession_url,rate_RAW,parameters_RAW" +
             "&query=E4P*&size=10&start=0&sort=entity:ascending"
         def searchResults = urlString.toURL().text
 
@@ -29,20 +29,23 @@ class ParameterSearchResultsSpec extends Specification {
 
         then: "It should return correct results"
 
-        22 == results.recordsTotal
+        results.recordsTotal > 1
 
         and: "it should return reaction value"
+
 
         String expectedPublication = "http://identifiers.org/pubmed/22001849|22001849"
         String expectedReaction = "([24794350] + [122357]) => ([sedoheptulose 1,7-bisphosphate])"
         String expectedEntityId = "E4P"
-
+        String expectedEntityShow = "<a target='_blank' href='http://identifiers.org/pubchem.compound/122357' > 122357 </a><hr/><span class='legend-green'>E4P</span>"
 
         results.entries.find{value ->
-           value.fields.entity_id == expectedEntityId &&
-               value.fields.reaction_RAW == expectedReaction &&
-               value.fields.publication == expectedPublication
+            value.fields.entity_id == expectedEntityId &&
+                value.fields.reaction_RAW == expectedReaction &&
+                value.fields.publication == expectedPublication &&
+                value.fields.entity_show == expectedEntityShow
         }
+
     }
 
 
