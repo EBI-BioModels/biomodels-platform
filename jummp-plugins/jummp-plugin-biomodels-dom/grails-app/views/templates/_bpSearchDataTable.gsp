@@ -4,7 +4,6 @@
 <table id="table_id" class="display">
     <thead>
     <th>Entity</th>
-    <th>Entity Id</th>
     <th>Reaction</th>
     <th>Model</th>
     <th>Organism</th>
@@ -16,7 +15,16 @@
     <th>Initial Data</th>
     </thead>
 </table>
-
+<div  class="pull-element-left">
+<hr/>
+    <i>
+<u>Legends</u><br/>
+    <span class="legend-green-block">
+</span>
+<span >
+    : SBML model values give by the Author</span>
+    </i>
+</div>
 <script>
     $(document).ready(function () {
         const DEFAULT_QUERY = "*:*";
@@ -24,13 +32,9 @@
         var columnConfig = [
 
             {
-                data: 'fields.entity_accession_url',
+                data: 'fields.entity_show',
                 orderable: false
 
-            },
-            {
-                data: 'fields.entity_id',
-                orderable: false
             },
 
             {

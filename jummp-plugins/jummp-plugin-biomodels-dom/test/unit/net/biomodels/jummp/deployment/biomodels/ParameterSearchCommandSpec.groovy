@@ -61,6 +61,7 @@ class ParameterSearchCommandSpec extends Specification {
 
         and : "It should form correct url"
 
+
         String expectedSearchUrl = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters?" +
             "fields=entity_RAW,entity_id,initial_data_RAW,reaction_RAW,model,organism,publication,rate_RAW,parameters_RAW,entity_accession_url,reaction_sbo_term_link,entity_sbo_term_link" +
             "&query=E4P*&size=10&start=0&sort=entity:ascending&format=json"
