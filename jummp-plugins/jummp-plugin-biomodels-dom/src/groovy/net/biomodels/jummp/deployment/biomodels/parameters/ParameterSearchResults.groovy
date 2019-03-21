@@ -50,7 +50,6 @@ class ParameterSearchResults {
         if (parsedFields['reaction'] != null && parsedFields['reaction_original_RAW'] != null) {
             parsedFields['reaction_show'] = parsedFields['reaction'] + '<hr/>' + "<span class='legend-green'>"+parsedFields['reaction_original_RAW'] + "</span>"
         }
-        return parsedFields
 
     }
     private static isLink(String fieldName) {
@@ -114,8 +113,8 @@ class ParameterSearchResults {
                 parsedFields[fieldName] = values
             }
         }
-        def modifiedParsedFields = combineReactionAndReactionOriginal(parsedFields);
-        new SearchResultEntry(fields: modifiedParsedFields)
+        combineReactionAndReactionOriginal(parsedFields);
+        new SearchResultEntry(fields: parsedFields)
     }
 
 }
