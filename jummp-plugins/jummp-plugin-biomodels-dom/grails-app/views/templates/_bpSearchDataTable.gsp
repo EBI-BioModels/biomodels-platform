@@ -1,7 +1,6 @@
 <table id="table_id" class="display">
     <thead>
     <th>Entity</th>
-    <th>Entity Id</th>
     <th>Reaction</th>
     <th>Model</th>
     <th>Organism</th>
@@ -28,13 +27,9 @@
         var columnConfig = [
 
             {
-                data: 'fields.entity_accession_url',
+                data: 'fields.entity_show',
                 orderable: false
 
-            },
-            {
-                data: 'fields.entity_id',
-                orderable: false
             },
 
             {

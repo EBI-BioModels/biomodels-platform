@@ -52,6 +52,14 @@ class ParameterSearchResults {
         }
 
     }
+    private static combineEnityAndEntityIdFields(def parsedFields) {
+
+        if (parsedFields['entity_accession_url'] != null && parsedFields['entity_id'] != null) {
+            parsedFields['entity_show'] = parsedFields['entity_accession_url'] + '<hr/>' + "<span class='legend-green'>"+parsedFields['entity_id'] + "</span>"
+        }
+
+    }
+
     private static isLink(String fieldName) {
 
         return (fieldName.equalsIgnoreCase("entity_accession_url")
@@ -114,6 +122,7 @@ class ParameterSearchResults {
             }
         }
         combineReactionAndReactionOriginal(parsedFields);
+        combineEnityAndEntityIdFields(parsedFields);
         new SearchResultEntry(fields: parsedFields)
     }
 
