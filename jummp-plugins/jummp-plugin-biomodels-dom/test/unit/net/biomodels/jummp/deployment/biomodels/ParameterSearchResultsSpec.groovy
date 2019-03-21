@@ -39,6 +39,7 @@ class ParameterSearchResultsSpec extends Specification {
         String expectedEntityId = "E4P"
         String expectedEntityShow = "<a target='_blank' href='http://identifiers.org/pubchem.compound/122357' > 122357 </a><hr/><span class='legend-green'>E4P</span>"
 
+
         results.entries.find{value ->
             value.fields.entity_id == expectedEntityId &&
                 value.fields.reaction_RAW == expectedReaction &&
