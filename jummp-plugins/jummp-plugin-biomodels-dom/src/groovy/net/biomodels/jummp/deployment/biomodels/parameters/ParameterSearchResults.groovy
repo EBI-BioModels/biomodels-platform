@@ -60,6 +60,13 @@ class ParameterSearchResults {
 
     }
 
+    private static combineRateAndRateOriginal(def parsedFields) {
+
+        if (parsedFields['rate'] != null && parsedFields['rate_original_RAW'] != null) {
+            parsedFields['rate_show'] = parsedFields['rate'] + '<hr/>' + "<span class='legend-green'>"+parsedFields['rate_original_RAW'] + "</span>"
+        }
+
+    }
     private static isLink(String fieldName) {
 
         return (fieldName.equalsIgnoreCase("entity_accession_url")
@@ -121,8 +128,10 @@ class ParameterSearchResults {
                 parsedFields[fieldName] = values
             }
         }
-        combineReactionAndReactionOriginal(parsedFields);
-        combineEnityAndEntityIdFields(parsedFields);
+        combineReactionAndReactionOriginal(parsedFields)
+        combineEnityAndEntityIdFields(parsedFields)
+        combineRateAndRateOriginal(parsedFields)
+
         new SearchResultEntry(fields: parsedFields)
     }
 
