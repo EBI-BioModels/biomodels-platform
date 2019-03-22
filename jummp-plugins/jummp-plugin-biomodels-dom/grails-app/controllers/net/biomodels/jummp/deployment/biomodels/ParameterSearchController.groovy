@@ -25,34 +25,38 @@ import grails.converters.XML
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchCommand
 import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchResults
-import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchXmlMarshaller
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import grails.rest.*
 import org.springframework.validation.FieldError
 
 /**
-* @author carankalle on 08/10/2018.
-*/
+ * @author carankalle on 08/10/2018.
+ */
+
 @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
 @Resource(uri = '/parameterSearch')
 class ParameterSearchController {
 
     def parameterSearchService
-    def grailsApplication
-/**
- * The class logger.
- */
+    /**
+     * The class logger.
+     */
     static final Log log = LogFactory.getLog(ParameterSearchController.class)
 
-    def index() {
-        render(view: "index");
+    def index(ParameterSearchCommand command) {
+        if(!command.validate()) {
+            def msg = "Invalid request $command.query, $command.errors.allErrors"
+            log.error(msg)
+            return['message': msg,"command":command]
+        }
+        render(view: "index",model:[command: command])
     }
 
     def search(ParameterSearchCommand command) {
         String commandErrorMessage
         boolean isCommandObjectInValid = true
-        final String NoMatchesFoundMessage = "No matches found"
+        final def NoMatchesFoundMessage = "No matches found"
         String format = "xml"
         if (!command.validate()) {
             response.status = 400
@@ -65,13 +69,17 @@ class ParameterSearchController {
             withFormat {
                 json {
                     format = "json"
+                    def errorObject = ['recordsTotal':0,'recordsFiltered':0,'entries':[]]
+
                     if(!isCommandObjectInValid) {
-                        renderErrorMessage(commandErrorMessage,format,400)
+                        errorObject['message'] = commandErrorMessage
+                        renderErrorMessage(errorObject,format,400)
                         return
                     }
                     ParameterSearchResults resultJSON = parameterSearchService.getJSONData(command)
                     if(resultJSON.hasProperty('recordsTotal') && resultJSON['recordsTotal'] == 0) {
-                        renderErrorMessage(NoMatchesFoundMessage,format,200)
+                        errorObject['message'] = NoMatchesFoundMessage
+                        renderErrorMessage(errorObject,format,200)
                         return
                     }
                     response.setContentType("application/json")
@@ -126,12 +134,11 @@ class ParameterSearchController {
         }
     }
 
-    private void renderErrorMessage(String msg, String format, int statusCode) {
+    private void renderErrorMessage(def msg, String format, int statusCode) {
         def responseContent
         response.status = statusCode
         if(format == "json") {
-            responseContent = ['message': msg]
-            render(responseContent as JSON)
+            render(msg as JSON)
         }else if(format == "xml") {
             responseContent = "<errors><message>${msg}</message></errors>"
             response.setContentType("text/xml")

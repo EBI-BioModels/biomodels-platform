@@ -1,7 +1,9 @@
+<%@ page import="grails.converters.JSON" %>
+<div id="errors">
+</div>
 <table id="table_id" class="display">
     <thead>
     <th>Entity</th>
-    <th>Entity Id</th>
     <th>Reaction</th>
     <th>Model</th>
     <th>Organism</th>
@@ -13,23 +15,31 @@
     <th>Initial Data</th>
     </thead>
 </table>
-
+<div  class="pull-element-left">
+    <hr/>
+    <i>
+        <u>Legends</u><br/>
+        <span class="legend-green-block">
+        </span>
+        <span >
+            : SBML model values give by the Author</span>
+    </i>
+</div>
 <script>
     $(document).ready(function () {
+        const DEFAULT_QUERY = "*:*";
+        var isDirectionBack = false;
         var columnConfig = [
 
             {
-                data: 'fields.entity_accession_url',
+                data: 'fields.entity_show',
                 orderable: false
 
             },
-            {
-                data: 'fields.entity_id',
-                orderable: false
-            },
 
             {
-                data: 'fields.reaction',
+
+                data: 'fields.reaction_show',
                 width: "40%",
                 orderable: false
             },
@@ -54,14 +64,14 @@
                 render: function (href, type, row) {
                     if (href !== undefined && href.length !== 0) {
                         var formattedData;
-                        if(href.includes(",")) {
+                        if (href.includes(",")) {
                             var formattedArray = [];
                             var commaSeparatedLinks = href.split(",");
-                            commaSeparatedLinks.forEach(function(subHref) {
+                            commaSeparatedLinks.forEach(function (subHref) {
                                 formattedArray.push(generatePublicationLink(subHref));
                             });
                             formattedData = formattedArray.join(", ");
-                        } else{
+                        } else {
                             formattedData = generatePublicationLink(href);
                         }
 
@@ -92,6 +102,53 @@
             }
         ];
 
+        // Global state variable
+        var pageState = {
+            rootURL: "${createLink(action: 'index')}",
+            command: ${command as JSON},
+            dataTable: {},
+
+            isInitialState: function () {
+                return this.dataTable.query === undefined;
+            },
+
+            createSearchUrl: function () {
+                var url = this.rootURL;
+                var paramsArray = [];
+                for (var key in this.dataTable) {
+                    if (this.dataTable.hasOwnProperty(key)) {
+                        var value = this.dataTable[key];
+                        if (value !== undefined) {
+                            var encoded = encodeURIComponent(value);
+                            paramsArray.push(key + '=' + encoded);
+                        }
+                    }
+                }
+                if (paramsArray.length > 0) {
+                    url = url + '?' + paramsArray.join("&");
+                }
+                return url;
+            }
+
+        };
+
+        // This method is to set the URL in browser once a table operation is executed
+        function setBrowserUrl() {
+            window.history.pushState(pageState.dataTable, 'Title', pageState.createSearchUrl());
+        }
+
+        // This event is triggered when browser back button is clicked
+        window.onpopstate = function (event) {
+            if (event.state === undefined || event.state === null) {
+                return;
+            }
+            isDirectionBack = true;
+            pageState.dataTable = event.state;
+            updateTable(table);
+            isDirectionBack = false;
+
+        };
+
         function generatePublicationLink(href) {
             href = href.replace(/\\/g, "");
             var linkData = href.split('|');
@@ -102,61 +159,90 @@
         // Function called for showing the data pagination stats
         function infoCallback(settings, start, end, max, total, pre) {
             return (!isNaN(total))
-                ? "Showing " + start + " to " + end + " of " + total + " entries"
+                ? "Showing " + start + " to " + end
+                + " of " + total + " entries"
                 + ((total !== max) ? " (filtered from " + max + " total entries)" : "")
                 : "Showing " + start + " to " + (start + this.api().data().length - 1) + " entries";
         }
 
-        // Preprocess custom params before calling EbiSearch WS
-        function preProcessEbiSearchParams(urlParams) {
-            var data = {};
-            data.query = encodeURIComponent(urlParams.search.value);
-            data.size = urlParams.length;
-            data.start = urlParams.start;
-            data.sort = "";
-            data.format = "json";
+        // Function to update table as per the state
+        function updateTable(table) {
+            $('.dataTables_filter input').val(pageState.dataTable.query);
 
-            // Sorting
-            urlParams.order.forEach(function (obj) {
-                var column = urlParams.columns[obj.column];
-                var columnName = column.data.replace("fields.", "").replace("_RAW","");
-                if(columnName === "model") {
-                    var sortDirectionArg = obj.dir;
-                    var columnOrder;
+            var page = Math.floor(pageState.dataTable.start / pageState.dataTable.size);
+            var size = pageState.dataTable.size;
+            table.page.len(size);
+            $('#searchButton').trigger("click");
+            table.page(page).draw('page');
 
-                    if (sortDirectionArg === "desc") {
-                        columnOrder = "descending";
-                    }
-                    else if (sortDirectionArg === "asc") {
-                        columnOrder = "ascending";
-                    }
-                    if (data.sort && columnOrder && columnName) {
-                        data.sort += ',';
-                    }
-                    data.sort += columnName + ':' + columnOrder;
-                }else {
-                    // Default sort
-                    data.sort += "model:ascending";
-                }
-            });
-            return data;
+
         }
 
+        // Function to add Search and Clear button
+        function addSearchAndClearButton() {
+            if ($("#searchButton").length === 0) {
+                var input = $('.dataTables_filter input').unbind(),
+                    self = $("#table_id").dataTable().api(),
+                    $searchButton = $('<button id="searchButton" class="button icon icon-functional">')
+                        .text('search')
+                        .click(function () {
+                            self.search(input.val()).draw();
+                            pageState.dataTable.query = input.val();
+                        }),
+                    $clearButton = $('<button id="clearButton" class="button">')
+                        .text('clear')
+                        .click(function () {
+                            resetTable();
+                            if (!isDirectionBack) setBrowserUrl();
+                        });
+                $('.dataTables_filter').append($searchButton, '&nbsp;', $clearButton);
+            }
+        }
+
+        // Function to add Search and Clear button
+        function displayAsyncMessage(message) {
+            $('<p style="color:red">'
+                + message + '</p>')
+                .appendTo('#errors');
+        }
+
+        function resetTable() {
+            pageState.dataTable.start = 0;
+            pageState.dataTable.size = 10;
+            pageState.dataTable.query = DEFAULT_QUERY;
+            pageState.dataTable.sort = "";
+            updateTable(table);
+        }
+        // Ajax configuration
         ajaxConfig = {
-            "url": "${grailsApplication.config.grails.serverURL}/parameterSearch/search",
-            "dataSrc": "entries",
-            "data": preProcessEbiSearchParams
+            "url": "${g.createLink(controller: "parameterSearch", action: "search", absolute: true)}",
+            "dataSrc": function(data) {
+                addSearchAndClearButton();
+                return data.entries
+            },
+            "data": preProcessEbiSearchParams,
+            "error": function (xhr, error, code) {
+                displayAsyncMessage(xhr.responseJSON.message);
+                addSearchAndClearButton();
+
+            }
         };
 
+        $.fn.dataTable.ext.errMode = 'throw';
 
         // Table configuration
         var table = $('#table_id').DataTable(
             {
+                initComplete: function () {
+                    updateTable(table);
+                    addSearchAndClearButton();
+                },
                 columns: columnConfig,
-                "processing": true,
+                "processing": false,
                 "serverSide": true,
                 "infoCallback": infoCallback,
                 "ajax": ajaxConfig,
+
                 language: {
                     paginate: {
                         previous: '<',
@@ -171,5 +257,83 @@
                 }
             });
 
+        // Function to preapare sort parameters
+        function prepareSortParams(dataTableArg, sort) {
+            $("#errors").empty();
+            if (sort === undefined || sort === "" || sort === null) {
+                sort = "";
+                dataTableArg.order.forEach(function (obj) {
+                    var column = dataTableArg.columns[obj.column];
+                    var columnName = column.data.replace("fields.", "").replace("_RAW", "");
+                    if (columnName === "model") {
+                        var sortDirectionArg = obj.dir;
+                        var columnOrder;
+
+                        if (sortDirectionArg === "desc") {
+                            columnOrder = "descending";
+                        }
+                        else if (sortDirectionArg === "asc") {
+                            columnOrder = "ascending";
+                        }
+                        if (sort && columnOrder && columnName) {
+                            sort += ',';
+                        }
+                        sort += columnName + ':' + columnOrder;
+                    } else {
+                        // Default sort
+                        sort += "model:ascending";
+                    }
+                });
+            }
+            return sort;
+        }
+
+        // Preprocess custom params before calling EbiSearch WS
+        function preProcessEbiSearchParams(dataTableArg) {
+
+            var data = {};
+            var query, start, size, sort;
+            if (pageState.isInitialState()) {
+                // populate data object from pageState.command
+                var command = pageState.command;
+                query = decodeURI(command.query);
+                start = Number(command.start);
+                size = Number(command.size);
+                sort = command.sort;
+
+                $('.dataTables_filter input').val(query);
+
+
+            } else {
+                // populate data object from dataTableArg and set pageState.dataTable to dataTableArg
+                if (dataTableArg.search.value === "") {
+                    query = $('.dataTables_filter input').val();
+                } else {
+                    query = dataTableArg.search.value;
+                }
+                start = dataTableArg.start;
+                size = dataTableArg.length;
+            }
+
+
+            // Sorting
+            sort = prepareSortParams(dataTableArg, sort);
+
+            pageState.dataTable.query = query === "" || query === DEFAULT_QUERY ? DEFAULT_QUERY : encodeURIComponent(query);
+            pageState.dataTable.start = start;
+            pageState.dataTable.size = size;
+            pageState.dataTable.sort = sort;
+
+            data.query = query;
+            data.size = size;
+            data.start = start;
+            data.sort = sort;
+            data.format = "json";
+
+            if (isDirectionBack === false) {
+                setBrowserUrl();
+            }
+            return data;
+        }
     });
 </script>
