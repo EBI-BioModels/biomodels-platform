@@ -80,7 +80,7 @@
                 }
             },
             {
-                data: 'fields.rate',
+                data: 'fields.rate_show',
                 orderable: false
             },
             {
