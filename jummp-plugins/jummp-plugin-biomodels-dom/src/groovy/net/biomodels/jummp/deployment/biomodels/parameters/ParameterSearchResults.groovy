@@ -5,8 +5,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 /**
- * Created by carankalle on 31/10/2018.
- */
+* @author carankalle on 31/10/2018.
+*/
 class ParameterSearchResults {
     static
     final Logger logger = LoggerFactory.getLogger(ParameterSearchResults.class)
@@ -45,12 +45,18 @@ class ParameterSearchResults {
         }
     }
 
+    private static combineReactionAndReactionOriginal(def parsedFields) {
+
+        if (parsedFields['reaction'] != null && parsedFields['reaction_original_RAW'] != null) {
+            parsedFields['reaction_show'] = parsedFields['reaction'] + '<hr/>' + "<span class='legend-green'>"+parsedFields['reaction_original_RAW'] + "</span>"
+        }
+
+    }
     private static combineEnityAndEntityIdFields(def parsedFields) {
 
         if (parsedFields['entity_accession_url'] != null && parsedFields['entity_id'] != null) {
             parsedFields['entity_show'] = parsedFields['entity_accession_url'] + '<hr/>' + "<span class='legend-green'>"+parsedFields['entity_id'] + "</span>"
         }
-        return parsedFields
 
     }
 
@@ -115,9 +121,9 @@ class ParameterSearchResults {
                 parsedFields[fieldName] = values
             }
         }
-
-        def modifiedParsedFields = combineEnityAndEntityIdFields(parsedFields);
-        new SearchResultEntry(fields: modifiedParsedFields)
+        combineReactionAndReactionOriginal(parsedFields);
+        combineEnityAndEntityIdFields(parsedFields);
+        new SearchResultEntry(fields: parsedFields)
     }
 
 }
