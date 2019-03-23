@@ -1,7 +1,6 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import grails.converters.JSON
-import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.services.ServiceUnitTestMixin
 import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchResults
@@ -18,15 +17,9 @@ class ParameterSearchResultsSpec extends Specification {
     void "test ParameterSearchResults fromJSON"() {
 
         given: "A webservice call to ebi search and basic criteria"
+        when: "Called getResultObjectWithQuery to hit the webservice and get the results"
 
-        String urlString = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters?format=json" +
-            "&fields=entity_RAW,entity_id,reaction_RAW,entity_accession_url,reaction_original_RAW,model,publication,rate_RAW,parameters_RAW" +
-
-            "&query=E4P*&size=10&start=0&sort=entity:ascending"
-        def searchResults = urlString.toURL().text
-        searchResults = ParameterSearchService.replaceFieldNames(searchResults)
-        when: "Converted parsed from JSON with ParameterSearchResults"
-        ParameterSearchResults results = ParameterSearchResults.fromJson(JSON.parse(searchResults))
+        ParameterSearchResults results = getResultObjectWithQuery("E4P*")
 
         then: "It should return correct results"
 
@@ -52,6 +45,34 @@ class ParameterSearchResultsSpec extends Specification {
                value.fields.entity_show == expectedEntityShow
         }
 
+    }
+
+    void "test ParameterSearchResults fromJSON for External links"() {
+
+        given: "A webservice call to ebi search and basic criteria"
+        when: "Called getResultObjectWithQuery to hit the webservice and get the results"
+        ParameterSearchResults results = getResultObjectWithQuery("BIO*53")
+
+        then: "it should return correct external links value"
+
+        String expectedExternalLinksShow = "<a href=\"http://sabiork.h-its.org/newSearch?q=3',5'-cyclic AMP\" " +
+            "target=\"_blank\">3',5'-cyclic AMP</a>"
+
+        results.entries.find{value ->
+           value.fields.external_links_show == expectedExternalLinksShow
+        }
+
+    }
+
+
+    private static ParameterSearchResults getResultObjectWithQuery(String query) {
+        String urlString = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters?format=json" +
+            "&fields=entity_RAW,entity_id,reaction_RAW,entity_accession_url,reaction_original_RAW,model,publication," +
+            "rate_RAW,parameters_RAW,external_links&query=${query}&size=10&start=0&sort=entity:ascending"
+        def searchResults = urlString.toURL().text
+        searchResults = ParameterSearchService.replaceFieldNames(searchResults)
+        ParameterSearchResults results = ParameterSearchResults.fromJson(JSON.parse(searchResults))
+        results
     }
 
 
