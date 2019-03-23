@@ -17,7 +17,7 @@ class ParameterSearchResults {
 
     static ParameterSearchResults fromJson(JSONElement json) {
         Objects.requireNonNull(json)
-        int hitCount = json.hitCount
+        int hitCount = json?.hitCount
         def parsedEntries = json.entries.collect { e -> parseEntry(e) }
         new ParameterSearchResults(recordsFiltered: hitCount, recordsTotal: hitCount,
             entries: parsedEntries)
@@ -43,6 +43,23 @@ class ParameterSearchResults {
         } else {
             return value
         }
+    }
+
+    private static processExternalLinksForSabioRK(def parsedFields) {
+
+        final String sABIORKUrlPrefix = "http://sabiork.h-its.org/newSearch?q="
+        List<String> displayLinks = new ArrayList<>()
+        if (parsedFields['external_links'] != null && parsedFields['external_links'].size() > 0) {
+            String[] links = parsedFields['external_links'].toString().split(/SABIORK,/)
+            links.each { value ->
+                String[] identifiers = value.split('\\|')
+                        String accession = identifiers[0].replace("\\", "")
+                        displayLinks.add("<a href=\"${sABIORKUrlPrefix}${accession}\" target=\"_blank\">${accession}</a>")
+            }
+
+        }
+        parsedFields['external_links_show'] = displayLinks.join(",")
+
     }
 
     private static combineReactionAndReactionOriginal(def parsedFields) {
@@ -121,8 +138,9 @@ class ParameterSearchResults {
                 parsedFields[fieldName] = values
             }
         }
-        combineReactionAndReactionOriginal(parsedFields);
-        combineEnityAndEntityIdFields(parsedFields);
+        combineReactionAndReactionOriginal(parsedFields)
+        combineEnityAndEntityIdFields(parsedFields)
+        processExternalLinksForSabioRK(parsedFields)
         new SearchResultEntry(fields: parsedFields)
     }
 
