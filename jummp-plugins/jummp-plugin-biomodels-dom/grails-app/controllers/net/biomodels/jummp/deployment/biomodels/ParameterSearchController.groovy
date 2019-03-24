@@ -127,6 +127,7 @@ class ParameterSearchController {
 
     def export(ParameterSearchCommand command) {
 
+        String query = command.query
         final String NoMatchesFoundMessage = "No matches found"
         String format = "csv"
         if(!validateCommandObject(command, format)){
@@ -138,7 +139,8 @@ class ParameterSearchController {
                 renderErrorMessage(NoMatchesFoundMessage, format, 200)
                 return
             }
-            String filename = "BioModels_Parameters_Export(Query-${command.query})-${new Date().format("dd-MM-yyyy")}.csv"
+            query = query=="*:*"?"all":query
+            String filename = "BioModels_Parameters_Export(Query-${query})-${new Date().format("dd-MM-yyyy")}.csv"
             response.setContentType("application/octet-stream")
             response.setHeader("Content-Disposition", "attachment;filename=${filename}")
             render(resultCSV)
