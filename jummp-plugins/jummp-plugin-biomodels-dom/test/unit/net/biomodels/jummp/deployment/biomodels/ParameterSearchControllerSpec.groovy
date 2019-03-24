@@ -24,6 +24,18 @@ class ParameterSearchControllerSpec extends Specification {
         controller = new ParameterSearchController()
     }
 
+    private void exportData(ParameterSearchCommand command) {
+        request.contentType = 'application/json'
+        response.format = "csv"
+        controller.export(command)
+    }
+
+    private void searchData(ParameterSearchCommand command, String format) {
+        request.contentType = 'application/json'
+        response.format = format
+        controller.search(command)
+    }
+
     void "test index"() {
         given: "Controller and command initialized"
         when: "Redirected to index"
@@ -56,9 +68,8 @@ class ParameterSearchControllerSpec extends Specification {
         }
         controller.parameterSearchService = service.createMock()
         when : "Controller search method is invoked"
-        request.contentType = 'application/json'
-        response.format="json"
-        controller.search(command)
+        searchData(command,"json")
+
 
         then: "Result should contain correct results"
         response.json.recordsTotal == 2
@@ -86,9 +97,7 @@ class ParameterSearchControllerSpec extends Specification {
         controller.parameterSearchService = service.createMock()
 
         when : "Controller search method is invoked"
-        request.contentType = 'application/json'
-        response.format="xml"
-        controller.search(command)
+        searchData(command,"xml")
 
         then: "Result should contain correct results"
         response.text.contains("<recordsTotal>2</recordsTotal>")
@@ -109,9 +118,7 @@ class ParameterSearchControllerSpec extends Specification {
         controller.parameterSearchService = service.createMock()
 
         when : "Controller search method is invoked"
-        request.contentType = 'application/json'
-        response.format="xml"
-        controller.search(command)
+        searchData(command,"xml")
 
         then: "Result should contain correct results"
         response.text.contains("No matches found")
@@ -132,9 +139,7 @@ class ParameterSearchControllerSpec extends Specification {
         }
         controller.parameterSearchService = service.createMock()
         when : "Controller search method is invoked"
-        request.contentType = 'application/json'
-        response.format = "csv"
-        controller.search(command)
+        searchData(command,"csv")
         then: "Result should contain correct results"
         String[] responseArray =  response.text.split("\n")
         responseArray.length == 3
@@ -151,9 +156,7 @@ class ParameterSearchControllerSpec extends Specification {
         service.demand.getCSVData { ParameterSearchCommand cmd -> throw new IOException("Unable to retrieve the data")}
         controller.parameterSearchService = service.createMock()
         when : "Controller search method is invoked"
-        request.contentType = 'application/json'
-        response.format = "csv"
-        controller.search(command)
+        searchData(command,"csv")
         then: "Result should contain correct results"
         response.text.contains("Unable to retrieve data")
     }
@@ -173,15 +176,50 @@ class ParameterSearchControllerSpec extends Specification {
 
         }
         controller.parameterSearchService = service.createMock()
-        request.contentType = 'application/json'
-        response.format="html"
+
         when : "Controller search method is invoked"
-        controller.search(command)
+        searchData(command,"html")
         then: "Result should contain correct results"
         response.json.message == "Invalid format, please choose the format from JSON,XML and CSV"
         response.status == 415
 
 
 
+    }
+
+    void "test export"() {
+        given: "ParameterSearchService is mocked with certain values"
+        def bindingMap = [query: "BIOMD*1", size: 10, start: 0, sort: "model:ascending"]
+        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+
+        def service = mockFor(ParameterSearchService)
+        service.demand.exportData { ParameterSearchCommand cmd ->
+           '"entity","reaction"\n'+
+            '"entity103","entity103,entity104=>entity555"\n'+
+            '"entity104","entity10,entity104=>entity5"'
+
+        }
+        controller.parameterSearchService = service.createMock()
+
+        when : "Controller search method is invoked"
+        exportData(command)
+        then: "Result should contain correct results"
+        response.text.split("\n").length == 3
+        response.text.contains("entity10,entity104=>entity5")
+    }
+
+    void "test export with non-matching query"() {
+        given: "ParameterSearchService is mocked with certain values"
+        def bindingMap = [query: "NON_MATCHING_QUERY", size: 10, start: 0, sort: "model:ascending"]
+        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+
+        def service = mockFor(ParameterSearchService)
+        service.demand.exportData { ParameterSearchCommand cmd -> }
+        controller.parameterSearchService = service.createMock()
+
+        when : "Controller search method is invoked"
+        exportData(command)
+        then: "Result should contain correct results"
+        response.text == "No matches found"
     }
 }
