@@ -31,14 +31,14 @@ import grails.rest.*
 import org.springframework.validation.FieldError
 
 /**
-* @author carankalle on 08/10/2018.
-*/
+ * @author carankalle on 08/10/2018.
+ */
+
 @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
 @Resource(uri = '/parameterSearch')
 class ParameterSearchController {
 
     def parameterSearchService
-    def grailsApplication
 /**
  * The class logger.
  */
@@ -46,24 +46,34 @@ class ParameterSearchController {
 
     final String IOExceptionCustomMessage = "Unable to retrieve data from EBI Search due to some problem with the request " +
         "parameters, please use the suitable request parameters and try again"
-    def index() {
-        render(view: "index");
+
+    def index(ParameterSearchCommand command) {
+        if(!command.validate()) {
+            def msg = "Invalid request $command.query, $command.errors.allErrors"
+            log.error(msg)
+            return['message': msg,"command":command]
+        }
+        render(view: "index",model:[command: command])
     }
 
     def search(ParameterSearchCommand command) {
-
-        final String NoMatchesFoundMessage = "No matches found"
+        String commandErrorMessage
+        def errorObject = ['recordsTotal': 0, 'recordsFiltered': 0, 'entries': []]
+        final def NoMatchesFoundMessage = "No matches found"
         String format = "xml"
         try {
             withFormat {
                 json {
                     format = "json"
-                    if(!validateCommandObject(command, format)) {
+                    if (!validateCommandObject(command, format)) {
+                        errorObject['message'] = commandErrorMessage
+                        renderErrorMessage(errorObject, format, 400)
                         return
                     }
                     ParameterSearchResults resultJSON = parameterSearchService.getJSONData(command)
                     if(resultJSON.hasProperty('recordsTotal') && resultJSON['recordsTotal'] == 0) {
-                        renderErrorMessage(NoMatchesFoundMessage,format,200)
+                        errorObject['message'] = NoMatchesFoundMessage
+                        renderErrorMessage(errorObject,format,200)
                         return
                     }
                     response.setContentType("application/json")
@@ -138,7 +148,7 @@ class ParameterSearchController {
             renderErrorMessage(ie.getMessage(), format, 400)
         } catch (IOException ioe) {
             log.error(ioe.message, ioe)
-            renderErrorMessage(IOExceptioCustomMessage, format, 400)
+            renderErrorMessage(IOExceptionCustomMessage, format, 400)
         } catch (Exception ex) {
             String msg = "Error encountered while processing $command, No Matches found"
             log.error(ex.message, ex)
@@ -159,12 +169,11 @@ class ParameterSearchController {
         return true
     }
 
-    private void renderErrorMessage(String msg, String format, int statusCode) {
+    private void renderErrorMessage(def msg, String format, int statusCode) {
         def responseContent
         response.status = statusCode
         if(format == "json") {
-            responseContent = ['message': msg]
-            render(responseContent as JSON)
+            render(msg as JSON)
         }else if(format == "xml") {
             responseContent = "<errors><message>${msg}</message></errors>"
             response.setContentType("text/xml")

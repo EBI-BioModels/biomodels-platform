@@ -32,7 +32,7 @@ class ParameterSearchService {
         }
         return replaceFieldNames(records)
     }
-    private static replaceFieldNames(String data) {
+    static String replaceFieldNames(String data) {
 
         data = data.replaceAll("entity_RAW","entity")
         data = data.replaceAll("initial_data_RAW","initial_data")

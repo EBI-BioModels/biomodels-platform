@@ -46,6 +46,21 @@ class ParameterSearchResults {
         }
     }
 
+    private static combineReactionAndReactionOriginal(def parsedFields) {
+
+        if (parsedFields['reaction'] != null && parsedFields['reaction_original_RAW'] != null) {
+            parsedFields['reaction_show'] = parsedFields['reaction'] + '<hr/>' + "<span class='legend-green'>"+parsedFields['reaction_original_RAW'] + "</span>"
+        }
+
+    }
+    private static combineEnityAndEntityIdFields(def parsedFields) {
+
+        if (parsedFields['entity_accession_url'] != null && parsedFields['entity_id'] != null) {
+            parsedFields['entity_show'] = parsedFields['entity_accession_url'] + '<hr/>' + "<span class='legend-green'>"+parsedFields['entity_id'] + "</span>"
+        }
+
+    }
+
     private static isLink(String fieldName) {
 
         return (fieldName.equalsIgnoreCase("entity_accession_url")
@@ -71,10 +86,10 @@ class ParameterSearchResults {
         String formattedData
         if(fieldName == "publication") {
             if (fieldValue.contains(",")) {
-                List<String> formattedList
-                String commaSeparatedLinks = fieldValue.split(",")
-                commaSeparatedLinks.each { key, value ->
-                    formattedList.add(prepareAnchorTagForPublication(value));
+                List<String> formattedList = new ArrayList<>()
+                String[] commaSeparatedLinks = fieldValue.split(",")
+                commaSeparatedLinks.each { value ->
+                    formattedList.add(prepareHrefAndLabel(value));
                 }
                 formattedData = formattedList.join(", ")
             } else {
@@ -96,7 +111,7 @@ class ParameterSearchResults {
                 if (1 < valueCount) {
                     logger.warn(
                         'More than one value was found in field {}: {}. Only the first will be used',
-                        field, values)
+                        fieldName, values)
                 }
 
                 def value = values.first()
@@ -107,7 +122,8 @@ class ParameterSearchResults {
                 parsedFields[fieldName] = values
             }
         }
-
+        combineReactionAndReactionOriginal(parsedFields);
+        combineEnityAndEntityIdFields(parsedFields);
         new SearchResultEntry(fields: parsedFields)
     }
 

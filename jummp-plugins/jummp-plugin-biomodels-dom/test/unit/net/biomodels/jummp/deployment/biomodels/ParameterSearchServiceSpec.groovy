@@ -36,6 +36,7 @@ class ParameterSearchServiceSpec extends Specification {
 
         and: "it should return correct records"
 
+
         String expectedReaction = "([3-phospho-D-glyceric acid, D-ribulose 1,5-bisphosphate, 3-Phospho-D-glycerate, " +
             "D-Ribulose 1,5-bisphosphate] + [NADPH, C00005] " +
             "+ [ATP, C00002]) => " +
@@ -53,10 +54,8 @@ class ParameterSearchServiceSpec extends Specification {
                 value.fields.model == expectedModel &&
                 value.fields.organism == expectedOrganism
         }
-
         and: "Number of records per page should be as per size value"
         10 == results.entries.size()
-
 
     }
 
