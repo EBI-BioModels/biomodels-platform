@@ -15,7 +15,7 @@ class ParameterSearchService {
     static transactional = false
 
     static final Log log = LogFactory.getLog(ParameterSearchService.class)
-    static List<String> columnNames = ["entity","entity_id","initial_data","reaction","model","organism","publication",
+    static List<String> columnNames = ["entity","entity_id","initial_data","reaction","reaction_original","model","organism","publication",
                                        "rate","parameters","entity_accession_url","reaction_sbo_term_link",
                                        "entity_sbo_term_link"]
 
