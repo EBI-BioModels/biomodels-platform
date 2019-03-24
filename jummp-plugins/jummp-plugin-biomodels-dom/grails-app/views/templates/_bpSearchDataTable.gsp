@@ -1,4 +1,6 @@
 <%@ page import="grails.converters.JSON" %>
+
+
 <div id="errors">
 </div>
 <table id="table_id" class="display">
@@ -27,6 +29,9 @@
 </div>
 <script>
     $(document).ready(function () {
+        const DOWNLOADING_LABEL = "Downloading now...";
+        const DOWNLOAD_LABEL = "Download";
+
         const DEFAULT_QUERY = "*:*";
         var isDirectionBack = false;
         var columnConfig = [
@@ -177,12 +182,52 @@
 
 
         }
+        function downloadFile(query) {
+            if(query) {
+                $.ajax({
+                    url: "${g.createLink(controller: "parameterSearch", action: "export", absolute: true)}",
+                    data: {"query": query},
+                    success: function (data, status, xhr) {
+                        var header = xhr.getResponseHeader('Content-Disposition');
+                        if (null !== header) {
+                            $("#downloadButton")
+                                .text(DOWNLOAD_LABEL)
+                                .prop("disabled",false);
+
+                            var lastIndexOf = header.lastIndexOf("filename=");
+                            var blob = new Blob([data]);
+                            var link = document.createElement('a');
+                            link.href = window.URL.createObjectURL(blob);
+                            if (header && header.indexOf('attachment') === 0) {
+                                link.download = header.substr("filename=".length + lastIndexOf);
+                            } else {
+                                link.download = "Query-query_download.csv";
+                            }
+                            link.click();
+                        } else {
+                            alert("No records to download");
+                        }
+                    },
+                    error: function (xhr, ajaxOptions, thrownError) {
+                        console.log(thrownError);
+                    }
+                });
+            }
+        }
 
         // Function to add Search and Clear button
-        function addSearchAndClearButton() {
+        function addActionButtons() {
             if ($("#searchButton").length === 0) {
                 var input = $('.dataTables_filter input').unbind(),
                     self = $("#table_id").dataTable().api(),
+                    $downloadButton = $('<button id="downloadButton" class="button">')
+                        .text(DOWNLOAD_LABEL)
+                        .click(function () {
+                            $("#downloadButton")
+                                .text(DOWNLOADING_LABEL)
+                                .prop("disabled",true);
+                            downloadFile(pageState.dataTable.query);
+                        }),
                     $searchButton = $('<button id="searchButton" class="button icon icon-functional">')
                         .text('search')
                         .click(function () {
@@ -195,7 +240,8 @@
                             resetTable();
                             if (!isDirectionBack) setBrowserUrl();
                         });
-                $('.dataTables_filter').append($searchButton, '&nbsp;', $clearButton);
+
+                $('.dataTables_filter').append($downloadButton,'&nbsp;',$searchButton, '&nbsp;', $clearButton);
             }
         }
 
@@ -217,13 +263,21 @@
         ajaxConfig = {
             "url": "${g.createLink(controller: "parameterSearch", action: "search", absolute: true)}",
             "dataSrc": function(data) {
-                addSearchAndClearButton();
+                addActionButtons();
+                var downloadButton = $("#downloadButton");
+                if(data.entries.length === 0) {
+                    downloadButton.prop("disabled",true);
+                } else {
+                    if( downloadButton.textContent === DOWNLOAD_LABEL) {
+                        downloadButton.prop("disabled", false);
+                    }
+                }
                 return data.entries
             },
             "data": preProcessEbiSearchParams,
             "error": function (xhr, error, code) {
                 displayAsyncMessage(xhr.responseJSON.message);
-                addSearchAndClearButton();
+                addActionButtons();
 
             }
         };
@@ -235,7 +289,7 @@
             {
                 initComplete: function () {
                     updateTable(table);
-                    addSearchAndClearButton();
+                    addActionButtons();
                 },
                 columns: columnConfig,
                 "processing": false,
