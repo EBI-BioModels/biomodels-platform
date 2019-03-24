@@ -93,7 +93,7 @@ class ParameterSearchServiceSpec extends Specification {
         results.indexOf("reaction_RAW") == -1
     }
 
-     @Timeout(value = 90, unit = TimeUnit.SECONDS)
+     @Timeout(value = 120, unit = TimeUnit.SECONDS)
     void "concurrent requests to fetch CSV data complete successfully"() {
         given:
         final int WORKER_COUNT = 10
