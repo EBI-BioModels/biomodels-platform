@@ -1,25 +1,36 @@
 package net.biomodels.jummp.deployment.biomodels
 
+
 import grails.converters.JSON
+import grails.plugin.cache.Cacheable
+import groovy.transform.CompileStatic
+import groovyx.gpars.GParsPool
 import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchCommand
 import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchResults
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+import org.grails.async.factory.gpars.LoggingPoolFactory
 
 class ParameterSearchService {
     static transactional = false
 
     static final Log log = LogFactory.getLog(ParameterSearchService.class)
-
+    static List<String> columnNames = ["entity","entity_id","initial_data","reaction","model","organism","publication",
+                                       "rate","parameters","entity_accession_url","reaction_sbo_term_link",
+                                       "entity_sbo_term_link"]
 
     private static String getData(ParameterSearchCommand command, String format) {
         if (!command) {
             throw new IllegalArgumentException("Couldn't read the request parameters");
         }
         def url = command.getSearchUrl(format)
-        String searchResults = url.text
-        String modifiedData = replaceFieldNames(searchResults)
-        return modifiedData
+        String records = ""
+        try {
+            records = url.text
+        }catch(SocketException se) {
+            log.error("Error while retrieving records from Ebi Search ${se.getMessage()}, command - ${command}")
+        }
+        return replaceFieldNames(records)
     }
     private static replaceFieldNames(String data) {
 
@@ -32,6 +43,12 @@ class ParameterSearchService {
 
     }
 
+    private static String removeHeader(String csvData) {
+        if (null == csvData) return null
+        int indexofNewLineChar = csvData.indexOf("\n")
+        return csvData.substring(indexofNewLineChar + 1)
+    }
+
     ParameterSearchResults getJSONData(ParameterSearchCommand command) {
         String searchResults = getData(command, "JSON")
         return ParameterSearchResults.fromJson(JSON.parse(searchResults))
@@ -41,6 +58,44 @@ class ParameterSearchService {
         return getData(command, "CSV")
     }
 
+    @CompileStatic
+    @Cacheable(value = "csvRecords", key = "#command.query")
+    String exportData(ParameterSearchCommand command) {
+        int MAX_RECORDS = 100
+        LoggingPoolFactory
+        String csvRecords = null
+        ParameterSearchResults parameterSearchResults = getJSONData(command)
+        command.size = MAX_RECORDS
+        int recordsTotal = parameterSearchResults.recordsTotal
 
+        if (recordsTotal > MAX_RECORDS) {
+            csvRecords = assembleSearchResultsUsingGPars(command, recordsTotal, MAX_RECORDS)
+        } else {
+            csvRecords = getCSVData(command)
+        }
+        return csvRecords
+    }
 
+    String assembleSearchResultsUsingGPars(ParameterSearchCommand command, int total, int MAX_RECORDS) {
+        final int batchCount = Math.floor(total / MAX_RECORDS)
+        def searchResults = null
+        GParsPool.withPool(100) {
+            searchResults = (0..batchCount).collectParallel { int page ->
+                String query = command.query
+                def thisCmd = new ParameterSearchCommand(query: query, start: page * MAX_RECORDS,
+                    size: MAX_RECORDS)
+                String result = ""
+                try {
+                    result = removeHeader(getCSVData(thisCmd))
+                } catch (Throwable t) {
+                    log.error("Could not retrieve batch $page of $batchCount for query $query", t)
+                }
+
+                return result
+            }
+        }
+
+        "\"" + columnNames.join("\",\"") + "\"\n" + searchResults?.join("")
+    }
 }
+
