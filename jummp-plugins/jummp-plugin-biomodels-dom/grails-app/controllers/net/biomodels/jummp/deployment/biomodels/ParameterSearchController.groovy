@@ -128,7 +128,9 @@ class ParameterSearchController {
                 renderErrorMessage(NoMatchesFoundMessage, format, 200)
                 return
             }
-            response.setContentType("text/csv")
+            String filename = "BioModels_Parameters_Export(Query-${command.query})-${new Date().format("dd-MM-yyyy")}.csv"
+            response.setContentType("application/octet-stream")
+            response.setHeader("Content-Disposition", "attachment;filename=${filename}")
             render(resultCSV)
 
         } catch (IllegalArgumentException ie) {
