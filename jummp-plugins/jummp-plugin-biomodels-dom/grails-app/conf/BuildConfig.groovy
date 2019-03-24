@@ -45,6 +45,8 @@ grails.project.dependency.resolution = {
               ":rest-client-builder:1.0.3") {
             export = false
         }
+        compile ":cache:1.1.8"
+        compile ":cache-ehcache:1.0.5"
     }
 }
 grails.plugin.location.'jummp-plugin-security' = "../jummp-plugin-security"
