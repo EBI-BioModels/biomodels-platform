@@ -58,7 +58,6 @@ class ParameterSearchController {
 
     def search(ParameterSearchCommand command) {
         String commandErrorMessage
-        def errorObject = ['recordsTotal': 0, 'recordsFiltered': 0, 'entries': []]
         final def NoMatchesFoundMessage = "No matches found"
         String format = "xml"
         try {
@@ -66,14 +65,13 @@ class ParameterSearchController {
                 json {
                     format = "json"
                     if (!validateCommandObject(command, format)) {
-                        errorObject['message'] = commandErrorMessage
-                        renderErrorMessage(errorObject, format, 400)
+
+                        renderErrorMessage(commandErrorMessage, format, 400)
                         return
                     }
                     ParameterSearchResults resultJSON = parameterSearchService.getJSONData(command)
                     if(resultJSON.hasProperty('recordsTotal') && resultJSON['recordsTotal'] == 0) {
-                        errorObject['message'] = NoMatchesFoundMessage
-                        renderErrorMessage(errorObject,format,200)
+                        renderErrorMessage(NoMatchesFoundMessage, format,200)
                         return
                     }
                     response.setContentType("application/json")
@@ -147,14 +145,26 @@ class ParameterSearchController {
         } catch (IllegalArgumentException ie) {
             log.error(ie.message, ie)
             renderErrorMessage(ie.getMessage(), format, 400)
+
         } catch (IOException ioe) {
             log.error(ioe.message, ioe)
+
+            def msgObject
             renderErrorMessage(IOExceptionCustomMessage, format, 400)
+
         } catch (Exception ex) {
             String msg = "Error encountered while processing $command, No Matches found"
             log.error(ex.message, ex)
             renderErrorMessage(msg, format, 500)
+
         }
+
+    }
+
+    private static prepareJsonErrorMessage(String message) {
+        def errorObject = ['recordsTotal': 0, 'recordsFiltered': 0, 'entries': []]
+        errorObject['message'] = message
+        return errorObject
 
     }
 
@@ -170,13 +180,12 @@ class ParameterSearchController {
         return true
     }
 
-    private void renderErrorMessage(def msg, String format, int statusCode) {
-        def responseContent
+    private void renderErrorMessage(String msg, String format, int statusCode) {
         response.status = statusCode
         if(format == "json") {
-            render(msg as JSON)
+            render(prepareJsonErrorMessage(msg) as JSON)
         }else if(format == "xml") {
-            responseContent = "<errors><message>${msg}</message></errors>"
+            def responseContent = "<errors><message>${msg}</message></errors>"
             response.setContentType("text/xml")
             render(responseContent)
         }else if(format == "csv") {
