@@ -24,7 +24,7 @@
         <span class="legend-green-block">
         </span>
         <span >
-            : SBML model values give by the Author</span>
+            : SBML model values given by the Authors</span>
     </i>
 </div>
 <script>
@@ -229,13 +229,13 @@
                             downloadFile(pageState.dataTable.query);
                         }),
                     $searchButton = $('<button id="searchButton" class="button icon icon-functional">')
-                        .text('search')
+                        .text('Search')
                         .click(function () {
                             self.search(input.val()).draw();
                             pageState.dataTable.query = input.val();
                         }),
                     $clearButton = $('<button id="clearButton" class="button">')
-                        .text('clear')
+                        .text('Clear')
                         .click(function () {
                             resetTable();
                             if (!isDirectionBack) setBrowserUrl();
