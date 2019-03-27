@@ -139,8 +139,7 @@ class ParameterSearchController {
                 renderErrorMessage(NoMatchesFoundMessage, format, 200)
                 return
             }
-            query = query=="*:*"?"all":query
-            String filename = "BioModels_Parameters_Export(Query-${query})-${new Date().format("dd-MM-yyyy")}.csv"
+            String filename = "BioModels_Parameters_Export-${new Date().format("yyyy-MM-dd")}.csv"
             response.setContentType("application/octet-stream")
             response.setHeader("Content-Disposition", "attachment;filename=${filename}")
             render(resultCSV)
