@@ -15,8 +15,9 @@ class ParameterSearchService {
     static transactional = false
 
     static final Log log = LogFactory.getLog(ParameterSearchService.class)
-    static List<String> columnNames = ["entity","entity_id","initial_data","reaction","reaction_original","model","organism","publication",
-                                       "rate","parameters","entity_accession_url","reaction_sbo_term_link",
+    static List<String> columnNames = ["entity", "entity_id", "initial_data", "reaction", "reaction_original",
+                                       "model", "organism", "publication",
+                                       "rate", "parameters", "entity_accession_url", "reaction_sbo_term_link",
                                        "entity_sbo_term_link"]
 
     private static String getData(ParameterSearchCommand command, String format) {
@@ -33,12 +34,11 @@ class ParameterSearchService {
         return replaceFieldNames(records)
     }
     static String replaceFieldNames(String data) {
-
-        data = data.replaceAll("entity_RAW","entity")
-        data = data.replaceAll("initial_data_RAW","initial_data")
-        data = data.replaceAll("reaction_RAW","reaction")
-        data = data.replaceAll("rate_RAW","rate")
-        data = data.replaceAll("parameters_RAW","parameters")
+        data = data.replaceAll("entity_RAW", "entity")
+        data = data.replaceAll("initial_data_RAW", "initial_data")
+        data = data.replaceAll("reaction_RAW", "reaction")
+        data = data.replaceAll("rate_RAW", "rate")
+        data = data.replaceAll("parameters_RAW", "parameters")
         return data
 
     }
@@ -73,6 +73,7 @@ class ParameterSearchService {
         } else {
             csvRecords = getCSVData(command)
         }
+
         return csvRecords
     }
 
@@ -97,5 +98,4 @@ class ParameterSearchService {
 
         "\"" + columnNames.join("\",\"") + "\"\n" + searchResults?.join("")
     }
-}
 
