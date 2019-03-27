@@ -20,19 +20,6 @@ class ParameterSearchService {
                                        "rate", "parameters", "entity_accession_url", "reaction_sbo_term_link",
                                        "entity_sbo_term_link"]
 
-    private static String getData(ParameterSearchCommand command, String format) {
-        if (!command) {
-            throw new IllegalArgumentException("Couldn't read the request parameters");
-        }
-        def url = command.getSearchUrl(format)
-        String records = ""
-        try {
-            records = url.text
-        }catch(SocketException se) {
-            log.error("Error while retrieving records from Ebi Search ${se.getMessage()}, command - ${command}")
-        }
-        return replaceFieldNames(records)
-    }
     static String replaceFieldNames(String data) {
         data = data.replaceAll("entity_RAW", "entity")
         data = data.replaceAll("initial_data_RAW", "initial_data")
@@ -40,13 +27,6 @@ class ParameterSearchService {
         data = data.replaceAll("rate_RAW", "rate")
         data = data.replaceAll("parameters_RAW", "parameters")
         return data
-
-    }
-
-    private static String removeHeader(String csvData) {
-        if (null == csvData) return null
-        int indexofNewLineChar = csvData.indexOf("\n")
-        return csvData.substring(indexofNewLineChar + 1)
     }
 
     ParameterSearchResults getJSONData(ParameterSearchCommand command) {
@@ -99,3 +79,23 @@ class ParameterSearchService {
         "\"" + columnNames.join("\",\"") + "\"\n" + searchResults?.join("")
     }
 
+    private static String removeHeader(String csvData) {
+        if (null == csvData) return null
+        int indexOfNewLineChar = csvData.indexOf("\n")
+        return csvData.substring(indexOfNewLineChar + 1)
+    }
+
+    private static String getData(ParameterSearchCommand command, String format) {
+        if (!command) {
+            throw new IllegalArgumentException("Couldn't read the request parameters");
+        }
+        def url = command.getSearchUrl(format)
+        String records = ""
+        try {
+            records = url.text
+        } catch (SocketException se) {
+            log.error("Error while retrieving records from EBI Search ${se.getMessage()}, command - ${command}")
+        }
+        return replaceFieldNames(records)
+    }
+}
