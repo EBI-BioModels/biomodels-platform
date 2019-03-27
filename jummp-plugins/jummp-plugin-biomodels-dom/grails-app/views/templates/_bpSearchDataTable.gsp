@@ -276,8 +276,10 @@
             },
             "data": preProcessEbiSearchParams,
             "error": function (xhr, error, code) {
-                displayAsyncMessage(xhr.responseJSON.message);
                 addActionButtons();
+                displayAsyncMessage(xhr.responseJSON.message);
+                $("#downloadButton").prop("disabled", true);
+
 
             }
         };
