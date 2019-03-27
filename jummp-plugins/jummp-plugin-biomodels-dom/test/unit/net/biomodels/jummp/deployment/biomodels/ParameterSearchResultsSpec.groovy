@@ -55,8 +55,7 @@ class ParameterSearchResultsSpec extends Specification {
 
         then: "it should return correct external links value"
 
-        String expectedExternalLinksShow = "<a href=\"http://sabiork.h-its.org/newSearch?q=3',5'-cyclic AMP\" " +
-            "target=\"_blank\">3',5'-cyclic AMP</a>"
+        String expectedExternalLinksShow = "<a href=\"http://sabiork.h-its.org/newSearch?q=17489\" target=\"_blank\">17489</a>"
 
         results.entries.find{value ->
            value.fields.external_links_show == expectedExternalLinksShow
