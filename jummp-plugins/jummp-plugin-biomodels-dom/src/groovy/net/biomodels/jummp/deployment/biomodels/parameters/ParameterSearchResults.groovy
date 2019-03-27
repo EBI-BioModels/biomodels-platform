@@ -5,8 +5,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 /**
-* @author carankalle on 31/10/2018.
-*/
+ * @author carankalle on 31/10/2018.
+ */
 class ParameterSearchResults {
     static
     final Logger logger = LoggerFactory.getLogger(ParameterSearchResults.class)
@@ -50,15 +50,22 @@ class ParameterSearchResults {
         final String sABIORKUrlPrefix = "http://sabiork.h-its.org/newSearch?q="
         List<String> displayLinks = new ArrayList<>()
         if (parsedFields['external_links'] != null && parsedFields['external_links'].size() > 0) {
-            String[] links = parsedFields['external_links'].toString().split(/SABIORK,/)
+            String[] links = parsedFields['external_links'].toString().split(/,/)
             links.each { value ->
                 String[] identifiers = value.split('\\|')
-                        String accession = identifiers[0].replace("\\", "")
-                        displayLinks.add("<a href=\"${sABIORKUrlPrefix}${accession}\" target=\"_blank\">${accession}</a>")
+                String accession = identifiers[0].replace("\\", "")
+                    .replace("[","")
+                    .replace("]","")
+                displayLinks.add("<a href=\"${sABIORKUrlPrefix}${accession}\" target=\"_blank\">${accession}</a>")
             }
 
         }
-        parsedFields['external_links_show'] = displayLinks.join(",")
+        if (displayLinks.size() > 0) {
+            parsedFields['external_links_show'] = displayLinks.join(",")
+        } else {
+            parsedFields['external_links_show'] = ""
+
+        }
 
     }
 
