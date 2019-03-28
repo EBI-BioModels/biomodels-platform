@@ -17,8 +17,8 @@ class ParameterSearchService {
     static final Log log = LogFactory.getLog(ParameterSearchService.class)
     static List<String> columnNames = ["entity", "entity_id", "initial_data", "reaction", "reaction_original",
                                        "model", "organism", "publication",
-                                       "rate", "parameters", "entity_accession_url", "reaction_sbo_term_link",
-                                       "entity_sbo_term_link"]
+                                       "rate", "rate_original","parameters", "entity_accession_url", "reaction_sbo_term_link",
+                                       "entity_sbo_term_link","external_links"]
 
     static String replaceFieldNames(String data) {
         data = data.replaceAll("entity_RAW", "entity")
