@@ -26,3 +26,17 @@ log4j = {
 
 grails.databinding.dateFormats = ["yyyy-MM-dd'T'HH:mm:ss"]
 XML.registerObjectMarshaller(new ParameterSearchXmlMarshaller())
+grails.hibernate.cache.queries = false
+
+beans {
+    cacheManager {
+        shared = true
+    }
+}
+
+grails.cache.config.provider.name = "jummpCacheManager"
+grails.cache.ehcache.cacheManagerName = "jummpCacheManager"
+
+if (jummpConfig.jummp.cache.dir) {
+    jummp.cache.dir = jummpConfig.jummp.cache.dir
+}

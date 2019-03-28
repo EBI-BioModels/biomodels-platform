@@ -1,4 +1,6 @@
 <%@ page import="grails.converters.JSON" %>
+
+
 <div id="errors">
 </div>
 <table id="table_id" class="display">
@@ -13,32 +15,32 @@
     <th>Entity SBO Link</th>
     <th>Reaction SBO Link</th>
     <th>Initial Data</th>
+    <th>External Links</th>
     </thead>
 </table>
-<div  class="pull-element-left">
+
+<div class="pull-element-left">
     <hr/>
     <i>
-        <u>Legends</u><br/>
+        <strong>Legends</strong><br/>
         <span class="legend-green-block">
         </span>
-        <span >
-            : SBML model values give by the Author</span>
+        <span>
+            : SBML model values given by the authors</span>
     </i>
 </div>
 <script>
     $(document).ready(function () {
+        const DOWNLOADING_LABEL = "Downloading now...";
+        const DOWNLOAD_LABEL = "Download";
         const DEFAULT_QUERY = "*:*";
         var isDirectionBack = false;
         var columnConfig = [
-
             {
                 data: 'fields.entity_show',
                 orderable: false
-
             },
-
             {
-
                 data: 'fields.reaction_show',
                 width: "40%",
                 orderable: false
@@ -74,7 +76,6 @@
                         } else {
                             formattedData = generatePublicationLink(href);
                         }
-
                     }
                     return formattedData;
                 }
@@ -98,7 +99,10 @@
             {
                 data: 'fields.initial_data',
                 orderable: false
-
+            },
+            {
+                data: 'fields.external_links_show',
+                orderable: false
             }
         ];
 
@@ -129,7 +133,6 @@
                 }
                 return url;
             }
-
         };
 
         // This method is to set the URL in browser once a table operation is executed
@@ -146,7 +149,6 @@
             pageState.dataTable = event.state;
             updateTable(table);
             isDirectionBack = false;
-
         };
 
         function generatePublicationLink(href) {
@@ -167,35 +169,76 @@
 
         // Function to update table as per the state
         function updateTable(table) {
-            $('.dataTables_filter input').val(pageState.dataTable.query);
+            $('.dataTables_filter input').val(decodeURI(pageState.dataTable.query));
 
             var page = Math.floor(pageState.dataTable.start / pageState.dataTable.size);
             var size = pageState.dataTable.size;
             table.page.len(size);
             $('#searchButton').trigger("click");
             table.page(page).draw('page');
+        }
 
-
+        function downloadFile(query) {
+            if (query) {
+                $.ajax({
+                    url: "${g.createLink(controller: "parameterSearch", action: "export", absolute: true)}",
+                    data: {"query": query},
+                    success: function (data, status, xhr) {
+                        var header = xhr.getResponseHeader('Content-Disposition');
+                        if (null !== header) {
+                            $("#downloadButton")
+                                .text(DOWNLOAD_LABEL)
+                                .prop("disabled", false);
+                            var lastIndexOf = header.lastIndexOf("filename=");
+                            var blob = new Blob([data]);
+                            var link = document.createElement('a');
+                            link.href = window.URL.createObjectURL(blob);
+                            if (header && header.indexOf('attachment') === 0) {
+                                link.download = header.substr("filename=".length + lastIndexOf);
+                            } else {
+                                link.download = "Query-query_download.csv";
+                            }
+                            link.click();
+                        } else {
+                            alert("No records to download");
+                        }
+                    },
+                    error: function (xhr, ajaxOptions, thrownError) {
+                        console.log(thrownError);
+                    }
+                });
+            }
         }
 
         // Function to add Search and Clear button
-        function addSearchAndClearButton() {
+        function addActionButtons() {
             if ($("#searchButton").length === 0) {
                 var input = $('.dataTables_filter input').unbind(),
                     self = $("#table_id").dataTable().api(),
+                    $downloadButton = $('<button id="downloadButton" class="button">')
+                        .text(DOWNLOAD_LABEL)
+                        .click(function () {
+                            $("#downloadButton")
+                                .text(DOWNLOADING_LABEL)
+                                .prop("disabled", true);
+                            downloadFile(pageState.dataTable.query);
+                        }),
                     $searchButton = $('<button id="searchButton" class="button icon icon-functional">')
-                        .text('search')
+                        .text('Search')
                         .click(function () {
                             self.search(input.val()).draw();
+                            $("#downloadButton").prop("disabled", false);
                             pageState.dataTable.query = input.val();
                         }),
                     $clearButton = $('<button id="clearButton" class="button">')
-                        .text('clear')
+                        .text('Clear')
                         .click(function () {
                             resetTable();
+                            $("#downloadButton").prop("disabled", false);
                             if (!isDirectionBack) setBrowserUrl();
                         });
-                $('.dataTables_filter').append($searchButton, '&nbsp;', $clearButton);
+
+                $('.dataTables_filter').append($downloadButton, '&nbsp;', $searchButton, '&nbsp;', $clearButton);
             }
         }
 
@@ -213,18 +256,27 @@
             pageState.dataTable.sort = "";
             updateTable(table);
         }
+
         // Ajax configuration
         ajaxConfig = {
             "url": "${g.createLink(controller: "parameterSearch", action: "search", absolute: true)}",
-            "dataSrc": function(data) {
-                addSearchAndClearButton();
+            "dataSrc": function (data) {
+                addActionButtons();
+                var downloadButton = $("#downloadButton");
+                if (data.entries.length === 0) {
+                    downloadButton.prop("disabled", true);
+                } else {
+                    if (downloadButton.textContent === DOWNLOAD_LABEL) {
+                        downloadButton.prop("disabled", false);
+                    }
+                }
                 return data.entries
             },
             "data": preProcessEbiSearchParams,
             "error": function (xhr, error, code) {
+                addActionButtons();
                 displayAsyncMessage(xhr.responseJSON.message);
-                addSearchAndClearButton();
-
+                $("#downloadButton").prop("disabled", true);
             }
         };
 
@@ -235,7 +287,7 @@
             {
                 initComplete: function () {
                     updateTable(table);
-                    addSearchAndClearButton();
+                    addActionButtons();
                 },
                 columns: columnConfig,
                 "processing": false,
@@ -271,8 +323,7 @@
 
                         if (sortDirectionArg === "desc") {
                             columnOrder = "descending";
-                        }
-                        else if (sortDirectionArg === "asc") {
+                        } else if (sortDirectionArg === "asc") {
                             columnOrder = "ascending";
                         }
                         if (sort && columnOrder && columnName) {
@@ -290,7 +341,6 @@
 
         // Preprocess custom params before calling EbiSearch WS
         function preProcessEbiSearchParams(dataTableArg) {
-
             var data = {};
             var query, start, size, sort;
             if (pageState.isInitialState()) {
@@ -302,8 +352,6 @@
                 sort = command.sort;
 
                 $('.dataTables_filter input').val(query);
-
-
             } else {
                 // populate data object from dataTableArg and set pageState.dataTable to dataTableArg
                 if (dataTableArg.search.value === "") {
@@ -314,7 +362,6 @@
                 start = dataTableArg.start;
                 size = dataTableArg.length;
             }
-
 
             // Sorting
             sort = prepareSortParams(dataTableArg, sort);
