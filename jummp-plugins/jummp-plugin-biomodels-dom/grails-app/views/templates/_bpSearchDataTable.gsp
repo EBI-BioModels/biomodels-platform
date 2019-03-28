@@ -17,33 +17,29 @@
     <th>Initial Data</th>
     </thead>
 </table>
-<div  class="pull-element-left">
+
+<div class="pull-element-left">
     <hr/>
     <i>
-        <u>Legends</u><br/>
+        <strong>Legends</strong><br/>
         <span class="legend-green-block">
         </span>
-        <span >
-            : SBML model values given by the Authors</span>
+        <span>
+            : SBML model values given by the authors</span>
     </i>
 </div>
 <script>
     $(document).ready(function () {
         const DOWNLOADING_LABEL = "Downloading now...";
         const DOWNLOAD_LABEL = "Download";
-
         const DEFAULT_QUERY = "*:*";
         var isDirectionBack = false;
         var columnConfig = [
-
             {
                 data: 'fields.entity_show',
                 orderable: false
-
             },
-
             {
-
                 data: 'fields.reaction_show',
                 width: "40%",
                 orderable: false
@@ -79,7 +75,6 @@
                         } else {
                             formattedData = generatePublicationLink(href);
                         }
-
                     }
                     return formattedData;
                 }
@@ -103,7 +98,6 @@
             {
                 data: 'fields.initial_data',
                 orderable: false
-
             }
         ];
 
@@ -134,7 +128,6 @@
                 }
                 return url;
             }
-
         };
 
         // This method is to set the URL in browser once a table operation is executed
@@ -151,7 +144,6 @@
             pageState.dataTable = event.state;
             updateTable(table);
             isDirectionBack = false;
-
         };
 
         function generatePublicationLink(href) {
@@ -179,11 +171,10 @@
             table.page.len(size);
             $('#searchButton').trigger("click");
             table.page(page).draw('page');
-
-
         }
+
         function downloadFile(query) {
-            if(query) {
+            if (query) {
                 $.ajax({
                     url: "${g.createLink(controller: "parameterSearch", action: "export", absolute: true)}",
                     data: {"query": query},
@@ -192,8 +183,7 @@
                         if (null !== header) {
                             $("#downloadButton")
                                 .text(DOWNLOAD_LABEL)
-                                .prop("disabled",false);
-
+                                .prop("disabled", false);
                             var lastIndexOf = header.lastIndexOf("filename=");
                             var blob = new Blob([data]);
                             var link = document.createElement('a');
@@ -225,7 +215,7 @@
                         .click(function () {
                             $("#downloadButton")
                                 .text(DOWNLOADING_LABEL)
-                                .prop("disabled",true);
+                                .prop("disabled", true);
                             downloadFile(pageState.dataTable.query);
                         }),
                     $searchButton = $('<button id="searchButton" class="button icon icon-functional">')
@@ -243,7 +233,7 @@
                             if (!isDirectionBack) setBrowserUrl();
                         });
 
-                $('.dataTables_filter').append($downloadButton,'&nbsp;',$searchButton, '&nbsp;', $clearButton);
+                $('.dataTables_filter').append($downloadButton, '&nbsp;', $searchButton, '&nbsp;', $clearButton);
             }
         }
 
@@ -261,16 +251,17 @@
             pageState.dataTable.sort = "";
             updateTable(table);
         }
+
         // Ajax configuration
         ajaxConfig = {
             "url": "${g.createLink(controller: "parameterSearch", action: "search", absolute: true)}",
-            "dataSrc": function(data) {
+            "dataSrc": function (data) {
                 addActionButtons();
                 var downloadButton = $("#downloadButton");
-                if(data.entries.length === 0) {
-                    downloadButton.prop("disabled",true);
+                if (data.entries.length === 0) {
+                    downloadButton.prop("disabled", true);
                 } else {
-                    if( downloadButton.textContent === DOWNLOAD_LABEL) {
+                    if (downloadButton.textContent === DOWNLOAD_LABEL) {
                         downloadButton.prop("disabled", false);
                     }
                 }
@@ -281,8 +272,6 @@
                 addActionButtons();
                 displayAsyncMessage(xhr.responseJSON.message);
                 $("#downloadButton").prop("disabled", true);
-
-
             }
         };
 
@@ -329,8 +318,7 @@
 
                         if (sortDirectionArg === "desc") {
                             columnOrder = "descending";
-                        }
-                        else if (sortDirectionArg === "asc") {
+                        } else if (sortDirectionArg === "asc") {
                             columnOrder = "ascending";
                         }
                         if (sort && columnOrder && columnName) {
@@ -348,7 +336,6 @@
 
         // Preprocess custom params before calling EbiSearch WS
         function preProcessEbiSearchParams(dataTableArg) {
-
             var data = {};
             var query, start, size, sort;
             if (pageState.isInitialState()) {
@@ -360,8 +347,6 @@
                 sort = command.sort;
 
                 $('.dataTables_filter input').val(query);
-
-
             } else {
                 // populate data object from dataTableArg and set pageState.dataTable to dataTableArg
                 if (dataTableArg.search.value === "") {
@@ -372,7 +357,6 @@
                 start = dataTableArg.start;
                 size = dataTableArg.length;
             }
-
 
             // Sorting
             sort = prepareSortParams(dataTableArg, sort);

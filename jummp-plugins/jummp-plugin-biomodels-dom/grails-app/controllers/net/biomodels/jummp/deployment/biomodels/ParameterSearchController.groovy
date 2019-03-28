@@ -37,23 +37,23 @@ import org.springframework.validation.FieldError
 @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
 @Resource(uri = '/parameterSearch')
 class ParameterSearchController {
-
     def parameterSearchService
-/**
- * The class logger.
- */
+    /**
+     * The class logger.
+     */
     static final Log log = LogFactory.getLog(ParameterSearchController.class)
 
-    final String IOExceptionCustomMessage = "Unable to retrieve data from EBI Search due to some problem with the request " +
-        "parameters, please use the suitable request parameters and try again"
+    final String IOExceptionCustomMessage = """\
+Unable to retrieve data from EBI Search due to some problems with the request parameters, 
+please use the suitable request parameters and try again."""
 
     def index(ParameterSearchCommand command) {
-        if(!command.validate()) {
-            def msg = "Invalid request $command.query, $command.errors.allErrors"
+        if (!command.validate()) {
+            def msg = "Invalid request $command.query, ${command.errors.allErrors.inspect().toString()}"
             log.error(msg)
-            return['message': msg,"command":command]
+            return ["message": msg, "command": command]
         }
-        render(view: "index",model:[command: command])
+        render(view: "index", model: [command: command])
     }
 
     def search(ParameterSearchCommand command) {
@@ -70,8 +70,8 @@ class ParameterSearchController {
                         return
                     }
                     ParameterSearchResults resultJSON = parameterSearchService.getJSONData(command)
-                    if(resultJSON.hasProperty('recordsTotal') && resultJSON['recordsTotal'] == 0) {
-                        renderErrorMessage(NoMatchesFoundMessage, format,200)
+                    if (resultJSON.hasProperty('recordsTotal') && resultJSON['recordsTotal'] == 0) {
+                        renderErrorMessage(NoMatchesFoundMessage, format, 200)
                         return
                     }
                     response.setContentType("application/json")
@@ -79,26 +79,25 @@ class ParameterSearchController {
                 }
                 xml {
                     format = "xml"
-                    if(!validateCommandObject(command, format)) {
+                    if (!validateCommandObject(command, format)) {
                         return
                     }
                     ParameterSearchResults resultJSON = parameterSearchService.getJSONData(command)
-                    if(resultJSON.hasProperty('recordsTotal') && resultJSON['recordsTotal'] == 0) {
-                        renderErrorMessage(NoMatchesFoundMessage,format,200)
+                    if (resultJSON.hasProperty('recordsTotal') && resultJSON['recordsTotal'] == 0) {
+                        renderErrorMessage(NoMatchesFoundMessage, format, 200)
                         return
                     }
                     response.setContentType("text/xml")
                     render(resultJSON as XML)
-
                 }
                 csv {
                     format = "csv"
-                    if(!validateCommandObject(command, format)) {
+                    if (!validateCommandObject(command, format)) {
                         return
                     }
                     String resultCSV = parameterSearchService.getCSVData(command)
-                    if(null == resultCSV || resultCSV.isEmpty()) {
-                        renderErrorMessage(NoMatchesFoundMessage,format,200)
+                    if (null == resultCSV || resultCSV.isEmpty()) {
+                        renderErrorMessage(NoMatchesFoundMessage, format, 200)
                         return
                     }
                     response.setContentType("text/csv")
@@ -106,34 +105,31 @@ class ParameterSearchController {
                 }
                 '*' {
                     response.status = 415
-                   render (['message': "Invalid format, please choose the format from JSON,XML and CSV"] as JSON)
+                    render(['message': "Invalid format, please choose the format from JSON, XML and CSV"] as JSON)
                 }
             }
         } catch (IllegalArgumentException ie) {
             log.error(ie.message, ie)
-            renderErrorMessage(ie.getMessage(), format,400)
-        }catch(IOException ioe) {
-            log.error(ioe.message,ioe)
-            renderErrorMessage(IOExceptionCustomMessage,format,400)
-
+            renderErrorMessage(ie.getMessage(), format, 400)
+        } catch (IOException ioe) {
+            log.error(ioe.message, ioe)
+            renderErrorMessage(IOExceptionCustomMessage, format, 400)
         } catch (Exception ex) {
-            String msg = "Error encountered while processing $command, No Matches found"
+            String msg = "Error encountered while processing $command, No matches found"
             log.error(ex.message, ex)
-            renderErrorMessage(msg,format,500)
+            renderErrorMessage(msg, format, 500)
         }
     }
 
     def export(ParameterSearchCommand command) {
-
-        String query = command.query
-        final String NoMatchesFoundMessage = "No matches found"
         String format = "csv"
-        if(!validateCommandObject(command, format)){
+        if (!validateCommandObject(command, format)) {
             return
         }
         try {
             String resultCSV = parameterSearchService.exportData(command)
             if (null == resultCSV || resultCSV.isEmpty()) {
+                final String NoMatchesFoundMessage = "No matches found"
                 renderErrorMessage(NoMatchesFoundMessage, format, 200)
                 return
             }
@@ -141,38 +137,31 @@ class ParameterSearchController {
             response.setContentType("application/octet-stream")
             response.setHeader("Content-Disposition", "attachment;filename=${filename}")
             render(resultCSV)
-
         } catch (IllegalArgumentException ie) {
             log.error(ie.message, ie)
             renderErrorMessage(ie.getMessage(), format, 400)
-
         } catch (IOException ioe) {
             log.error(ioe.message, ioe)
-
-            def msgObject
-            renderErrorMessage(IOExceptionCustomMessage, format, 400)
+            renderErrorMessage(ioe.message, format, 400)
 
         } catch (Exception ex) {
-            String msg = "Error encountered while processing $command, No Matches found"
+            String msg = "Error encountered while processing $command, No matches found"
             log.error(ex.message, ex)
             renderErrorMessage(msg, format, 500)
-
         }
-
     }
 
     private static prepareJsonErrorMessage(String message) {
         def errorObject = ['recordsTotal': 0, 'recordsFiltered': 0, 'entries': []]
         errorObject['message'] = message
         return errorObject
-
     }
 
     private boolean validateCommandObject(ParameterSearchCommand command, String format) {
         if (!command.validate()) {
             response.status = 400
             String errorString = parseErrors(command.errors.fieldErrors)
-            String commandErrorMessage = "Invalid request parameter. $errorString "
+            String commandErrorMessage = "Invalid request parameter. $errorString"
             log.error(commandErrorMessage)
             renderErrorMessage(commandErrorMessage, format, 400)
             return false
@@ -182,29 +171,29 @@ class ParameterSearchController {
 
     private void renderErrorMessage(String msg, String format, int statusCode) {
         response.status = statusCode
-        if(format == "json") {
+        if (format == "json") {
             render(prepareJsonErrorMessage(msg) as JSON)
-        }else if(format == "xml") {
+        } else if (format == "xml") {
             def responseContent = "<errors><message>${msg}</message></errors>"
             response.setContentType("text/xml")
             render(responseContent)
-        }else if(format == "csv") {
+        } else if (format == "csv") {
             response.setContentType("text/plain")
             render(msg)
         }
     }
 
-    private static String parseErrors (List<FieldError> fieldErrors) {
+    private static String parseErrors(List<FieldError> fieldErrors) {
         String errorString = ""
-        for(int i=0; i<fieldErrors.size(); i++) {
+        for (int i = 0; i < fieldErrors.size(); i++) {
             String rejectedField = fieldErrors.get(i).field + "=" + fieldErrors.get(i).rejectedValue
-            if(!errorString.isEmpty()) {
+            if (!errorString.isEmpty()) {
                 errorString += ", " + rejectedField
-            }else {
+            } else {
                 errorString = "Rejected parameters: " + rejectedField
             }
         }
-        return  errorString
+        return errorString
     }
 }
 
