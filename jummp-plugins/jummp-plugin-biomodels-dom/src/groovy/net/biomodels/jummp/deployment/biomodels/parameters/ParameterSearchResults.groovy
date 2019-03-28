@@ -18,6 +18,10 @@ class ParameterSearchResults {
     static ParameterSearchResults fromJson(JSONElement json) {
         Objects.requireNonNull(json)
         int hitCount = json.hitCount
+        if(hitCount == 0) {
+            return new ParameterSearchResults(recordsFiltered: hitCount, recordsTotal: hitCount,
+                entries: [])
+        }
         def parsedEntries = json.entries.collect { e -> parseEntry(e) }
         new ParameterSearchResults(recordsFiltered: hitCount, recordsTotal: hitCount,
             entries: parsedEntries)
