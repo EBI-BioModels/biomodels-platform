@@ -218,10 +218,13 @@
                     $downloadButton = $('<button id="downloadButton" class="button">')
                         .text(DOWNLOAD_LABEL)
                         .click(function () {
+                            if(pageState.dataTable.hasOwnProperty("query") &&
+                                pageState.dataTable.query !== "") {
                             $("#downloadButton")
                                 .text(DOWNLOADING_LABEL)
                                 .prop("disabled", true);
-                            downloadFile(pageState.dataTable.query);
+                                downloadFile(pageState.dataTable.query);
+                            }
                         }),
                     $searchButton = $('<button id="searchButton" class="button icon icon-functional">')
                         .text('Search')
