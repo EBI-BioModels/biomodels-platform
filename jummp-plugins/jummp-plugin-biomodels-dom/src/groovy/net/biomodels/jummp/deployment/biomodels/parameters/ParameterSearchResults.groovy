@@ -22,7 +22,6 @@ class ParameterSearchResults {
             return new ParameterSearchResults(recordsFiltered: hitCount, recordsTotal: hitCount,
                 entries: [])
         }
-
         def parsedEntries = json.entries.collect { e -> parseEntry(e) }
         return new ParameterSearchResults(recordsFiltered: hitCount, recordsTotal: hitCount,
             entries: parsedEntries)
@@ -90,6 +89,13 @@ class ParameterSearchResults {
 
     }
 
+    private static combineRateAndRateOriginal(def parsedFields) {
+
+        if (parsedFields['rate'] != null && parsedFields['rate_original_RAW'] != null) {
+            parsedFields['rate_show'] = parsedFields['rate'] + '<hr/>' + "<span class='legend-green'>"+parsedFields['rate_original_RAW'] + "</span>"
+        }
+
+    }
     private static isLink(String fieldName) {
 
         return (fieldName.equalsIgnoreCase("entity_accession_url")
@@ -153,6 +159,7 @@ class ParameterSearchResults {
         }
         combineReactionAndReactionOriginal(parsedFields)
         combineEnityAndEntityIdFields(parsedFields)
+        combineRateAndRateOriginal(parsedFields)
         processExternalLinksForSabioRK(parsedFields)
         new SearchResultEntry(fields: parsedFields)
     }

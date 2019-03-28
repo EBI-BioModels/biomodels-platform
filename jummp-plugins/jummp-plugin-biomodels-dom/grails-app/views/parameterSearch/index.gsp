@@ -28,7 +28,7 @@
           href="${resource(dir: 'css', file: 'toastr.min.css',
               contextPath: "${grailsApplication.config.grails.serverURL}")}"/>
     <link rel="stylesheet"
-          href="${resource(dir: 'css/datatable', file: 'jquery.dataTables.min.css',
+          href="${resource(dir: 'css/', file: 'jquery.dataTables.min.css',
               contextPath: "${grailsApplication.config.grails.serverURL}")}"
           type="text/css">
     <link rel="stylesheet"

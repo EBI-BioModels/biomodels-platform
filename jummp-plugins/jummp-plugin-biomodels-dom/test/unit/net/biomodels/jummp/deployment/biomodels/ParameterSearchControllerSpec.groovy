@@ -197,7 +197,7 @@ class ParameterSearchControllerSpec extends Specification {
         when : "Controller search method is invoked"
         searchData(command,"html")
         then: "Result should contain correct results"
-        response.json.message == "Invalid format, please choose the format from JSON,XML and CSV"
+        response.json.message == "Invalid format, please choose the format from JSON, XML and CSV"
         response.status == 415
 
 
