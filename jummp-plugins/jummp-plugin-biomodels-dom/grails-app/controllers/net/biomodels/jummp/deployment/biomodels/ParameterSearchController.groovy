@@ -121,16 +121,17 @@ class ParameterSearchController {
             }
         } catch (IllegalArgumentException ie) {
             log.error(ie.message, ie)
-            renderErrorMessage(ie.getMessage(), format,400)
+            def msgObject = ['message': ie.getMessage()]
+            renderErrorMessage(msgObject, format,400)
         }catch(IOException ioe) {
             log.error(ioe.message,ioe)
-            String msg = "Unable to retrieve data from EBI Search due to some problem with the request parameters, please use the suitable request parameters and try again"
-            renderErrorMessage(msg,format,400)
+            def msgObject = ['message': "Unable to retrieve data from EBI Search due to some problem with the request parameters, please use the suitable request parameters and try again"]
+            renderErrorMessage(msgObject,format,400)
 
         } catch (Exception ex) {
-            String msg = "Error encountered while processing $command, No Matches found"
+            def msgObject = ['message': "Error encountered while processing $command, No Matches found"]
             log.error(ex.message, ex)
-            renderErrorMessage(msg,format,500)
+            renderErrorMessage(msgObject,format,500)
         }
     }
 

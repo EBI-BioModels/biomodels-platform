@@ -13,7 +13,8 @@ class ParameterSearchCommand {
     public static final String DEFAULT_QUERY = '*:*'
     public static
     final String BASE_URL = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters?" +
-        "fields=entity_RAW,entity_id,initial_data_RAW,reaction_RAW,reaction_original_RAW,model,organism,publication,rate_RAW,parameters_RAW,entity_accession_url,reaction_sbo_term_link,entity_sbo_term_link"
+        "fields=entity_RAW,entity_id,initial_data_RAW,reaction_RAW,reaction_original_RAW,model,organism,publication," +
+        "rate_RAW,parameters_RAW,entity_accession_url,reaction_sbo_term_link,entity_sbo_term_link,external_links"
     String query
     Integer size
     Integer start
@@ -53,7 +54,7 @@ class ParameterSearchCommand {
     URL getSearchUrl(String format) {
 
         def params = [
-            query : query,
+            query : URLEncoder.encode(query,"UTF-8"),
             size  : size,
             start : start,
             sort  : sort,

@@ -5,8 +5,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 /**
-* @author carankalle on 31/10/2018.
-*/
+ * @author carankalle on 31/10/2018.
+ */
 class ParameterSearchResults {
     static
     final Logger logger = LoggerFactory.getLogger(ParameterSearchResults.class)
@@ -17,7 +17,7 @@ class ParameterSearchResults {
 
     static ParameterSearchResults fromJson(JSONElement json) {
         Objects.requireNonNull(json)
-        int hitCount = json.hitCount
+        int hitCount = json?.hitCount
         def parsedEntries = json.entries.collect { e -> parseEntry(e) }
         new ParameterSearchResults(recordsFiltered: hitCount, recordsTotal: hitCount,
             entries: parsedEntries)
@@ -43,6 +43,30 @@ class ParameterSearchResults {
         } else {
             return value
         }
+    }
+
+    private static processExternalLinksForSabioRK(def parsedFields) {
+
+        final String sABIORKUrlPrefix = "http://sabiork.h-its.org/newSearch?q="
+        List<String> displayLinks = new ArrayList<>()
+        if (parsedFields['external_links'] != null && parsedFields['external_links'].size() > 0) {
+            String[] links = parsedFields['external_links'].toString().split(/,/)
+            links.each { value ->
+                String[] identifiers = value.split('\\|')
+                String accession = identifiers[0].replace("\\", "")
+                    .replace("[","")
+                    .replace("]","")
+                displayLinks.add("<a href=\"${sABIORKUrlPrefix}${accession}\" target=\"_blank\">${accession}</a>")
+            }
+
+        }
+        if (displayLinks.size() > 0) {
+            parsedFields['external_links_show'] = displayLinks.join(",")
+        } else {
+            parsedFields['external_links_show'] = ""
+
+        }
+
     }
 
     private static combineReactionAndReactionOriginal(def parsedFields) {
@@ -121,8 +145,9 @@ class ParameterSearchResults {
                 parsedFields[fieldName] = values
             }
         }
-        combineReactionAndReactionOriginal(parsedFields);
-        combineEnityAndEntityIdFields(parsedFields);
+        combineReactionAndReactionOriginal(parsedFields)
+        combineEnityAndEntityIdFields(parsedFields)
+        processExternalLinksForSabioRK(parsedFields)
         new SearchResultEntry(fields: parsedFields)
     }
 
