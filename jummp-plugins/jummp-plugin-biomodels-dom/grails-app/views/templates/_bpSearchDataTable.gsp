@@ -172,7 +172,7 @@
 
         // Function to update table as per the state
         function updateTable(table) {
-            $('.dataTables_filter input').val(pageState.dataTable.query);
+            $('.dataTables_filter input').val(decodeURI(pageState.dataTable.query));
 
             var page = Math.floor(pageState.dataTable.start / pageState.dataTable.size);
             var size = pageState.dataTable.size;
@@ -232,12 +232,14 @@
                         .text('Search')
                         .click(function () {
                             self.search(input.val()).draw();
+                            $("#downloadButton").prop("disabled", false);
                             pageState.dataTable.query = input.val();
                         }),
                     $clearButton = $('<button id="clearButton" class="button">')
                         .text('Clear')
                         .click(function () {
                             resetTable();
+                            $("#downloadButton").prop("disabled", false);
                             if (!isDirectionBack) setBrowserUrl();
                         });
 
