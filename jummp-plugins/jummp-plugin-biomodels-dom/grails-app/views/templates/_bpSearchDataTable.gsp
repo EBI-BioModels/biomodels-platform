@@ -15,6 +15,7 @@
     <th>Entity SBO Link</th>
     <th>Reaction SBO Link</th>
     <th>Initial Data</th>
+    <th>External Links</th>
     </thead>
 </table>
 
@@ -97,6 +98,10 @@
             },
             {
                 data: 'fields.initial_data',
+                orderable: false
+            },
+            {
+                data: 'fields.external_links_show',
                 orderable: false
             }
         ];
