@@ -63,7 +63,8 @@ class ParameterSearchCommand {
         for (element in params) {
             Object v = element.value
             String k = element.key
-            url.append('&').append(k).append('=').append(v)
+            if (v != null)
+                url.append('&').append(k).append('=').append(v)
         }
         new URL(url.toString() + "&format=" + format)
     }
