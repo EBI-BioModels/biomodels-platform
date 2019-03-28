@@ -53,7 +53,7 @@ class ParameterSearchCommand {
     URL getSearchUrl(String format) {
 
         def params = [
-            query : query,
+            query : URLEncoder.encode(query,"UTF-8"),
             size  : size,
             start : start,
             sort  : sort,
