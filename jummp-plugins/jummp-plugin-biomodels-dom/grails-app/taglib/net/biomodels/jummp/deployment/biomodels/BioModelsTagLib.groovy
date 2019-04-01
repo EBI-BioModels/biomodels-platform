@@ -21,8 +21,10 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import net.biomodels.jummp.core.model.FlagTransportCommand
+import net.biomodels.jummp.core.model.ModelState
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
+import net.biomodels.jummp.model.PublicationLinkProvider
 
 import java.text.DateFormatSymbols
 import java.text.SimpleDateFormat
@@ -199,6 +201,19 @@ class BioModelsTagLib {
                     template: "/templates/momEntryInAllEntriesPage", plugin: "jummp-plugin-biomodels-dom")
             }
             out << "</ul>"
+        }
+    }
+
+    def displayDisclaimer = { attrs ->
+        def revision = attrs.revision
+        boolean isPublic = revision.state == ModelState.PUBLISHED
+        boolean published = revision.model?.firstPublished != null
+        String manualLabel = PublicationLinkProvider.LinkType.MANUAL_LABEL
+        String linkType = revision.model.publication?.linkProvider?.linkType
+        boolean manualPubEntry = linkType == manualLabel
+        boolean withoutPublication = revision.model?.publication == null
+        if (isPublic && published && (manualPubEntry || withoutPublication)) {
+            out << render(template: "/templates/displayDisclaimer", plugin: "jummp-plugin-biomodels-dom")
         }
     }
 }

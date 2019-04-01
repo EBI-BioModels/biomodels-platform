@@ -666,6 +666,8 @@
                                 <div class="small-12 medium-6 large-8 columns">
                                     <biomd:renderOriginalModels sources="${originalModels}"/></div>
                             </div></g:if>
+                            <!-- Render a disclaimer if the model has been published without a publicly available manuscript -->
+                            <biomd:displayDisclaimer revision="${revision}"/>
                             %{--<div class='row'>
                                 <div class="medium-3 columns">Validation Status</div>
                                 <div class="medium-9 columns">${validationLevel}</div>
