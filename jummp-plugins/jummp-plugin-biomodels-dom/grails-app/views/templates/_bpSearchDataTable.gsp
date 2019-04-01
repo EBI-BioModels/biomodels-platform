@@ -3,7 +3,7 @@
 
 <div id="errors">
 </div>
-<table id="table_id" class="display">
+<table  id="table_id" class="display">
     <thead>
     <th>Entity</th>
     <th>Reaction</th>
@@ -14,11 +14,10 @@
     <th>Parameters</th>
     <th>Entity SBO Link</th>
     <th>Reaction SBO Link</th>
-    <th>Initial Data</th>
+    <th>Initial Concentration/<br/>Amount</th>
     <th>External Links</th>
     </thead>
 </table>
-
 <div class="pull-element-left">
     <hr/>
     <i>
@@ -26,7 +25,7 @@
         <span class="legend-green-block">
         </span>
         <span>
-            : SBML model values given by the authors</span>
+            : SBML model variables given by the authors</span>
     </i>
 </div>
 <script>
@@ -230,14 +229,15 @@
                         .text('Search')
                         .click(function () {
                             self.search(input.val()).draw();
-                            $("#downloadButton").prop("disabled", false);
                             pageState.dataTable.query = input.val();
                         }),
                     $clearButton = $('<button id="clearButton" class="button">')
                         .text('Clear')
                         .click(function () {
                             resetTable();
-                            $("#downloadButton").prop("disabled", false);
+                            if (downloadButton.textContent === DOWNLOAD_LABEL) {
+                                $("#downloadButton").prop("disabled", false);
+                            }
                             if (!isDirectionBack) setBrowserUrl();
                         });
 
@@ -269,7 +269,7 @@
                 if (data.entries.length === 0) {
                     downloadButton.prop("disabled", true);
                 } else {
-                    if (downloadButton.textContent === DOWNLOAD_LABEL) {
+                    if (downloadButton.text() === DOWNLOAD_LABEL) {
                         downloadButton.prop("disabled", false);
                     }
                 }
@@ -290,7 +290,6 @@
             {
                 initComplete: function () {
                     updateTable(table);
-                    addActionButtons();
                 },
                 columns: columnConfig,
                 "processing": false,
