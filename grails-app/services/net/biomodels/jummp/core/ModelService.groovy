@@ -1678,29 +1678,30 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
                 String principal = it.getSid().principal
                 if (permission) {
                     User user = User.findByUsername(principal)
-                    String userRealName = user.person.userRealName
-                    int userId = user.id
-                    if (!map.containsKey(userId)) {
-                        PermissionTransportCommand ptc = new PermissionTransportCommand(
+                    if (user) {
+                        String userRealName = user.person.userRealName
+                        int userId = user.id
+                        if (!map.containsKey(userId)) {
+                            PermissionTransportCommand ptc = new PermissionTransportCommand(
                                 name: userRealName, id: userId, username: user.username)
-                        map.put(userId, ptc)
-                    }
-                    if (principal == springSecurityService.principal.username) {
-                        map.get(userId).show = false
-                    }
-                    if (permission == "r") {
-                        map.get(userId).read = true
-                    }
-                    else {
-                        map.get(userId).write = true
-                        //disable editing for curators and for users who have contributed revisions
-                        if (userService.isCurator(user) &&
-                                model.revisions*.owner*.id.contains(user.id)) {
-                            map.get(userId).disabledEdit = true
+                            map.put(userId, ptc)
                         }
-                        model.revisions.each {
-                            if (it.owner.username == principal) {
+                        if (principal == springSecurityService.principal.username) {
+                            map.get(userId).show = false
+                        }
+                        if (permission == "r") {
+                            map.get(userId).read = true
+                        } else {
+                            map.get(userId).write = true
+                            //disable editing for curators and for users who have contributed revisions
+                            if (userService.isCurator(user) &&
+                                model.revisions*.owner*.id.contains(user.id)) {
                                 map.get(userId).disabledEdit = true
+                            }
+                            model.revisions.each {
+                                if (it.owner.username == principal) {
+                                    map.get(userId).disabledEdit = true
+                                }
                             }
                         }
                     }
