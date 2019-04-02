@@ -70,7 +70,7 @@ grails.project.dependency.resolution = {
         //flatDir name: "jummpLibs", dirs: "../../lib/"
     }
     dependencies {
-        compile 'org.eclipse.jgit:org.eclipse.jgit:1.2.0.201112221803-r'
+        compile 'org.eclipse.jgit:org.eclipse.jgit:5.2.0.201812061821-r'
     }
     plugins {
         build ":tomcat:7.0.55.3"
