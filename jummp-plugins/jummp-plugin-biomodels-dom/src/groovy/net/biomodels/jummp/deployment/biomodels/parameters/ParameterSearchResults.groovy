@@ -152,7 +152,7 @@ class ParameterSearchResults {
                 def value = values.first()
                 value = convertToLink(fieldName,(String)value)
                 value = generatePublicationLink(fieldName, (String)value)
-                parsedFields[fieldName] = value
+                parsedFields[fieldName] = value.replaceAll("\\\\","")
             }else{
                 parsedFields[fieldName] = values
             }
