@@ -25,7 +25,7 @@
         <span class="legend-green-block">
         </span>
         <span>
-            : SBML model variables given by the authors</span>
+            : Variable used inside SBML models</span>
     </i>
 </div>
 <script>
