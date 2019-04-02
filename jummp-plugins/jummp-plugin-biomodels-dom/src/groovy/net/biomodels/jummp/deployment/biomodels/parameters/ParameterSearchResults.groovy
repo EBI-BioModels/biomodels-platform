@@ -1,5 +1,6 @@
 package net.biomodels.jummp.deployment.biomodels.parameters
 
+import org.codehaus.groovy.grails.web.json.JSONArray
 import org.codehaus.groovy.grails.web.json.JSONElement
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -76,22 +77,40 @@ class ParameterSearchResults {
 
     private static combineReactionAndReactionOriginal(def parsedFields) {
 
-        if (parsedFields['reaction'] != null && parsedFields['reaction_original_RAW'] != null) {
+
+        if (parsedFields['reaction'] == null ||
+            parsedFields['reaction'] instanceof JSONArray &&
+            parsedFields['reaction'].size()==0  ||
+            parsedFields['reaction_original_RAW'] == null) {
+
+            parsedFields['reaction_show'] = ""
+        }else{
             parsedFields['reaction_show'] = parsedFields['reaction'] + '<hr/>' + "<span class='legend-green'>"+parsedFields['reaction_original_RAW'] + "</span>"
         }
 
     }
     private static combineEnityAndEntityIdFields(def parsedFields) {
 
-        if (parsedFields['entity_accession_url'] != null && parsedFields['entity_id'] != null) {
+        if (parsedFields['entity_accession_url'] == null ||
+            parsedFields['entity_accession_url'] instanceof JSONArray &&
+            parsedFields['entity_accession_url'].size()==0  ||
+            parsedFields['entity_id'] == null) {
+
+            parsedFields['entity_show'] ="<span class='legend-green'>"+parsedFields['entity_id'] + "</span>"
+        }else{
             parsedFields['entity_show'] = parsedFields['entity_accession_url'] + '<hr/>' + "<span class='legend-green'>"+parsedFields['entity_id'] + "</span>"
         }
-
     }
 
     private static combineRateAndRateOriginal(def parsedFields) {
 
-        if (parsedFields['rate'] != null && parsedFields['rate_original_RAW'] != null) {
+        if (parsedFields['rate'] == null ||
+            parsedFields['rate'] instanceof JSONArray &&
+            parsedFields['rate'].size()==0  ||
+            parsedFields['rate_original_RAW'] == null) {
+
+            parsedFields['rate_show'] = ""
+        }else{
             parsedFields['rate_show'] = parsedFields['rate'] + '<hr/>' + "<span class='legend-green'>"+parsedFields['rate_original_RAW'] + "</span>"
         }
 
@@ -152,7 +171,7 @@ class ParameterSearchResults {
                 def value = values.first()
                 value = convertToLink(fieldName,(String)value)
                 value = generatePublicationLink(fieldName, (String)value)
-                parsedFields[fieldName] = value
+                parsedFields[fieldName] = value.replaceAll("\\\\","")
             }else{
                 parsedFields[fieldName] = values
             }
