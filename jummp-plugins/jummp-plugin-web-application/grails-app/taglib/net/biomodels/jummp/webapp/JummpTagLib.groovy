@@ -138,6 +138,19 @@ class JummpTagLib {
         out << message(code: submitForPublicationConfirmDialogMessage)
     }
 
+    def renderSubmitForPublicationWarningDialogTitle = {
+        String de = detectDeploymentEnvironment()
+        String submitForPublicationWarningDialogTitle = "model.toolbar.submit-for-publication${de}.publication.warning.title"
+        out << message(code: submitForPublicationWarningDialogTitle)
+    }
+
+    def renderSubmitForPublicationWarningDialogMessage = {
+        String de = detectDeploymentEnvironment()
+        String submitForPublicationWarningDialogMessage = "model.toolbar.submit-for-publication${de}.publication.warning.message"
+        out << message(code: submitForPublicationWarningDialogMessage)
+    }
+
+
     /**
      * Renders the HTML code for a JUMMP styled button.
      * That is including the active glow.
