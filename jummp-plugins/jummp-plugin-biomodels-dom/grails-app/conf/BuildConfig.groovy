@@ -37,6 +37,7 @@ grails.project.dependency.resolution = {
     dependencies {
         // specify dependencies here under either 'build', 'compile', 'runtime', 'test' or 'provided' scopes eg.
         // runtime 'mysql:mysql-connector-java:5.1.27'
+        compile "com.rometools:rome:1.11.1"
     }
 
     plugins {
@@ -44,6 +45,8 @@ grails.project.dependency.resolution = {
               ":rest-client-builder:1.0.3") {
             export = false
         }
+        compile ":cache:1.1.8"
+        compile ":cache-ehcache:1.0.5"
     }
 }
 grails.plugin.location.'jummp-plugin-security' = "../jummp-plugin-security"

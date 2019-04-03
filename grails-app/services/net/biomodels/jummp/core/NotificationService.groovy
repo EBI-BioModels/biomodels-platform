@@ -73,6 +73,7 @@ class NotificationService {
         notification.body = messageSource.getMessage(notificationBody, bodyParams, null)
         notification.notificationType = type
         notification.sender = sender
+        notification.dateCreated = new Date()
         if (watchers.contains(notification.sender)) {
             watchers.remove(notification.sender)
         }
@@ -122,14 +123,14 @@ class NotificationService {
         if (pref.sendNotification) {
             NotificationUser userNotify = new NotificationUser(notification: notification,
                     user: user)
-            if (!userNotify.save()) {
+            if (!userNotify.save(flush: true)) {
                 log.error "Was not able to deliver notification ${userNotify.errors.allErrors}"
             }
         }
     }
 
     void sendNotification(ModelTransportCommand model, Notification notification, Set<User> watchers) {
-        if (!notification.save()) {
+        if (!notification.save(flush: true)) {
             log.error("Notification $notification for users $watchers was not persisted")
         } else {
             watchers.each { sendNotificationToUser(it, notification) }
@@ -280,7 +281,7 @@ class NotificationService {
             User notificationsFor = User.findByUsername(username)
             NotificationUser notificationUser = NotificationUser.findByNotificationAndUser(notification, notificationsFor)
             notificationUser.setNotificationSeen(true)
-            notificationUser.save()
+            notificationUser.save(flush: true)
         }
     }
 
