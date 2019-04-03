@@ -167,7 +167,7 @@
           "Search models"
         ],
         "summary": "Download search results",
-        "description": "Search models of interest via keywords. Examples: PUBMED:\"27869123\" to search models associated with the PubMed record identified by 27869123. See [Model search](https://www.ebi.ac.uk/biomodels-static/model_search.html) page to know more about search syntax, options and examples.",
+        "description": "Search models of interest via keywords. Examples: PUBMED:\"27869123\" to search models associated with the PubMed record identified by 27869123. See [Model search](https://www.ebi.ac.uk/biomodels-static/user-guide/model_search.html) page to know more about search syntax, options and examples.",
         "parameters": [
           {
             "in": "query",
