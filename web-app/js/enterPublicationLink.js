@@ -12,7 +12,7 @@ $(document).ready(function () {
         } else {
             $('#publicationLink').val("");
             $('#publicationLink').hide();
-            let warningMessage = "We gently remind you to update the publication details as soon as it is available to increase the chances of your model citations.";
+            let warningMessage = "We gently remind you to update the publication details as soon as they are available to increase the chances of your model getting cited.";
             showNotification(warningMessage);
         }
     });
