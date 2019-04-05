@@ -101,7 +101,7 @@ please use the suitable request parameters and try again."""
                         return
                     }
                     response.setContentType("text/csv")
-                    render(resultCSV)
+                    render(resultCSV, encoding: 'UTF-8')
                 }
                 '*' {
                     response.status = 415
@@ -136,7 +136,7 @@ please use the suitable request parameters and try again."""
             String filename = "BioModels_Parameters_Export-${new Date().format("yyyy-MM-dd")}.csv"
             response.setContentType("application/octet-stream")
             response.setHeader("Content-Disposition", "attachment;filename=${filename}")
-            render(resultCSV)
+            render(resultCSV, encoding: 'UTF-8')
         } catch (IllegalArgumentException ie) {
             log.error(ie.message, ie)
             renderErrorMessage(ie.getMessage(), format, 400)
