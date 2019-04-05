@@ -49,6 +49,22 @@ class ParameterSearchResultsSpec extends Specification {
 
     }
 
+    void "test ParameterSearchResults fromJSON for html escaping special character"() {
+
+        given: "A webservice call to ebi search and basic criteria"
+        when: "Called getResultObjectWithQuery to hit the webservice and get the results"
+        ParameterSearchResults results = getResultObjectWithQuery("BIO*122")
+
+        then: "it should return correct initial data value with special character units"
+
+        String expectedInitialData = "9.477E-4 μmol"
+
+        results.entries.find{value ->
+            value.fields.initial_data == expectedInitialData
+        }
+
+    }
+
     void "test ParameterSearchResults fromJSON for External links"() {
 
         given: "A webservice call to ebi search and basic criteria"
@@ -69,7 +85,7 @@ class ParameterSearchResultsSpec extends Specification {
     private static ParameterSearchResults getResultObjectWithQuery(String query) {
         String urlString = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters?format=json" +
             "&fields=entity_RAW,entity_id,reaction_RAW,entity_accession_url,reaction_original_RAW,model,publication," +
-            "rate_RAW,rate_original_RAW,parameters_RAW,external_links&query=${query}&size=10&start=0&sort=entity:ascending"
+            "rate_RAW,rate_original_RAW,parameters_RAW,external_links,initial_data_RAW&query=${query}&size=10&start=0&sort=entity:ascending"
         def searchResults = urlString.toURL().text
         searchResults = ParameterSearchService.replaceFieldNames(searchResults)
         ParameterSearchResults results = ParameterSearchResults.fromJson(JSON.parse(searchResults))
