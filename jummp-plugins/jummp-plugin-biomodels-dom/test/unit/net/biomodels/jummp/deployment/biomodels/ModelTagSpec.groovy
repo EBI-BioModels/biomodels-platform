@@ -45,6 +45,7 @@ class ModelTagSpec extends Specification {
         tag.name = "Annotated"
         tag.userCreated = user
         tag.dateCreated = new Date()
+        tag.dateModified = new Date()
     }
 
     void "test breaking constraints applied to ModelTag"() {
@@ -63,5 +64,4 @@ class ModelTagSpec extends Specification {
         then: "the object is saved successfully"
         ModelTag.count() == 1
     }
-
 }

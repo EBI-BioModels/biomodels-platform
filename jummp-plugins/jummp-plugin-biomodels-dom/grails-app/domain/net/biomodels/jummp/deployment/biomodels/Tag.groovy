@@ -37,6 +37,7 @@ class Tag implements Serializable {
     String name
     User userCreated
     Date dateCreated
+    Date dateModified
 
     static constraints = {
         name unique: true, nullable: false
@@ -45,7 +46,9 @@ class Tag implements Serializable {
     TagTransportCommand toCommandObject() {
         String dateFormat= "yyyy-MM-dd'T'HH:mm:ss"
         SimpleDateFormat sdf = new SimpleDateFormat(dateFormat)
-        String date = sdf.format(dateCreated)
-        new TagTransportCommand(id: id, name: name, userCreated: userCreated.username, dateCreated: date)
+        String dateCreated = sdf.format(dateCreated)
+        String dateModified = sdf.format(dateModified)
+        new TagTransportCommand(id: id, name: name, userCreated: userCreated.username,
+            dateCreated: dateCreated, dateModified: dateModified)
     }
 }

@@ -51,8 +51,9 @@ class TagSpec extends Specification {
         valid = tag.validate()
         then: "the validation is still stuck"
         !valid
-        when: "update the instance's userCreated and dateCreated property, then do validate the object again"
+        when: "update the instance's userCreated, dateCreated and dateModified property, then do validate the object again"
         tag.dateCreated = new Date()
+        tag.dateModified = new Date()
         tag.userCreated = user
         then: "the validation should be passed"
         tag.validate()
@@ -64,6 +65,7 @@ class TagSpec extends Specification {
         tag.name = "Annotated"
         tag.userCreated = user
         tag.dateCreated = new Date()
+        tag.dateModified = new Date()
         expect: "the instance passes the validation"
         tag.validate()
     }
@@ -74,6 +76,7 @@ class TagSpec extends Specification {
         tag.name = "Annotated"
         tag.userCreated = user
         tag.dateCreated = new Date()
+        tag.dateModified = new Date()
         when: "save the instance into database"
         tag.save(flush: true)
         then: "the instance is saved into database successfully"

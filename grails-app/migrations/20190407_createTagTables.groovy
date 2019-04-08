@@ -26,15 +26,19 @@ databaseChangeLog = {
                 constraints(nullable: "false")
             }
 
-            column(name: "date_created", type: "datetime") {
-                constraints(nullable: "false")
-            }
-
             column(name: "name", type: "varchar(255)") {
                 constraints(nullable: "false")
             }
 
             column(name: "user_created_id", type: "bigint") {
+                constraints(nullable: "false")
+            }
+
+            column(name: "date_created", type: "datetime") {
+                constraints(nullable: "false")
+            }
+
+            column(name: "date_modified", type: "datetime") {
                 constraints(nullable: "false")
             }
         }
