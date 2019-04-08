@@ -227,7 +227,7 @@
                             if (!isDirectionBack) setBrowserUrl();
                         });
 
-                $('.dataTables_filter').append($downloadButton, '<span id="downloadLink"></span>','&nbsp;', $searchButton, '&nbsp;', $clearButton);
+                $('.dataTables_filter').append($downloadButton, '&nbsp;', $searchButton, '&nbsp;', $clearButton);
             }
         }
 
