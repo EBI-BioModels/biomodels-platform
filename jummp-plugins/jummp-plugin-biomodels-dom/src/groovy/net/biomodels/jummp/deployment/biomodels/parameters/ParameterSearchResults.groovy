@@ -132,7 +132,16 @@ class ParameterSearchResults {
         return href
     }
 
+    private static String escapeHtmlFieldValue(String fieldName, String fieldValue) {
 
+        if (fieldValue == null && fieldValue?.length() == 0) {
+            return ""
+        }
+        if(fieldName == "initial_data_RAW" || fieldName == "parameters" ) {
+            org.springframework.web.util.JavaScriptUtils.javaScriptEscape(fieldValue)
+        }
+        return fieldValue
+    }
     private static String generatePublicationLink(String fieldName, String fieldValue) {
         if (fieldValue == null && fieldValue?.length() == 0) {
             return ""
@@ -171,6 +180,7 @@ class ParameterSearchResults {
                 def value = values.first()
                 value = convertToLink(fieldName,(String)value)
                 value = generatePublicationLink(fieldName, (String)value)
+                value = escapeHtmlFieldValue(fieldName, (String)value)
                 parsedFields[fieldName] = value.replaceAll("\\\\","")
             }else{
                 parsedFields[fieldName] = values

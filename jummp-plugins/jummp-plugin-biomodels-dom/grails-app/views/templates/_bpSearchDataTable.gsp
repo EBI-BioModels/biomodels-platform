@@ -179,33 +179,11 @@
 
         function downloadFile(query) {
             if (query) {
-                $.ajax({
-                    url: "${g.createLink(controller: "parameterSearch", action: "export", absolute: true)}",
-                    data: {"query": query},
-                    success: function (data, status, xhr) {
-                        var header = xhr.getResponseHeader('Content-Disposition');
-                        if (null !== header) {
-                            $("#downloadButton")
-                                .text(DOWNLOAD_LABEL)
-                                .prop("disabled", false);
-                            var lastIndexOf = header.lastIndexOf("filename=");
-                            var blob = new Blob([data]);
-                            var link = document.createElement('a');
-                            link.href = window.URL.createObjectURL(blob);
-                            if (header && header.indexOf('attachment') === 0) {
-                                link.download = header.substr("filename=".length + lastIndexOf);
-                            } else {
-                                link.download = "Query-query_download.csv";
-                            }
-                            link.click();
-                        } else {
-                            alert("No records to download");
-                        }
-                    },
-                    error: function (xhr, ajaxOptions, thrownError) {
-                        console.log(thrownError);
-                    }
-                });
+                var base = "${g.createLink(controller: "parameterSearch", action: "export", absolute: true)}";
+                var uri = base + '?query=' + encodeURIComponent(query);
+                $.jummp.openPage(uri);
+            } else {
+                alert("undefined query " + query);
             }
         }
 
@@ -219,10 +197,18 @@
                         .click(function () {
                             if(pageState.dataTable.hasOwnProperty("query") &&
                                 pageState.dataTable.query !== "") {
-                            $("#downloadButton")
-                                .text(DOWNLOADING_LABEL)
-                                .prop("disabled", true);
-                                downloadFile(pageState.dataTable.query);
+                                var buttonSelector = $("#downloadButton");
+                                buttonSelector
+                                    .text(DOWNLOADING_LABEL)
+                                    .prop("disabled", true);
+                                try {
+                                    downloadFile(pageState.dataTable.query);
+                                } catch (e) {
+                                    alert("Something went wrong. Please try again later: ", e);
+                                }
+                                buttonSelector
+                                    .text(DOWNLOAD_LABEL)
+                                    .prop("disabled", false);
                             }
                         }),
                     $searchButton = $('<button id="searchButton" class="button icon icon-functional">')
