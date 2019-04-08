@@ -197,7 +197,9 @@
                             } else {
                                 link.download = "Query-query_download.csv";
                             }
-                            link.click();
+                            $("#downloadLink").append(link);
+                            $("#downloadLink").children('a')[0].click();
+                            $("#downloadLink").empty();
                         } else {
                             alert("No records to download");
                         }
@@ -241,7 +243,7 @@
                             if (!isDirectionBack) setBrowserUrl();
                         });
 
-                $('.dataTables_filter').append($downloadButton, '&nbsp;', $searchButton, '&nbsp;', $clearButton);
+                $('.dataTables_filter').append($downloadButton, '<span id="downloadLink"></span>','&nbsp;', $searchButton, '&nbsp;', $clearButton);
             }
         }
 
