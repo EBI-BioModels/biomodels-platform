@@ -37,7 +37,6 @@
         		visibility:hidden;
         	}
         </style>
-        <link rel="stylesheet" href="${resource(dir: 'css', file: 'jstree.css')}" />
     </head>
     <body>
         <div id="register" class="row">

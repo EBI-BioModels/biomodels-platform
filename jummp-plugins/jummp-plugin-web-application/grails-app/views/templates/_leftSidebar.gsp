@@ -9,6 +9,7 @@
     facets.eachWithIndex {value, index ->
         listOfFacets.add(index)
     }
+    int nbFacets = listOfFacets?.size()
     def specialCharacters = "([:+\\(\\)\\[\\]\\{\\}\\|\\*\\&\"\\?\'\\!\\^])"
     def FACETS_WRAPPED_DOUBLE_QUOTE = ["curationstatus", "modelformat", "disease", "modellingapproach", "modelflag"]
     String queryString = params.query?.replaceAll('"', '\\\\"')
@@ -19,7 +20,8 @@
         <div id="facetList${i}">
         <h5 style="padding-top: 5px">${facet.label}</h5>
         <% String idFacet = facet.label.replace(' ', '') %>
-        <input type="text" id="txtSearch${idFacet}" placeholder="Find your ${facet.label}" class="searchEachFacet search" />
+        <input type="text" id="txtSearch${idFacet}" placeholder="Find your ${facet.label}"
+               class="searchEachFacet search" />
         <div class="facetContainer" id="facet${idFacet}">
             <ul id="${idFacet}" class="list">
             <g:each in="${facet.facetValues}" var="fv">
@@ -108,9 +110,10 @@
         valueNames: ['facetLabel'] // add css classes associated with the elements that you want to search in
     };
     var facetList = [];
-    $.each(${listOfFacets}, function(index, element) {
-        facetList[index] = new List('facetList'+index, options);
-    });
+    var nbFacets = ${nbFacets};
+    for (i = 0; i <= nbFacets; i++) {
+        facetList[i] = new List('facetList'+i, options);
+    }
 
     function runFacetSearch(e, facetGroupId, facetValue) {
         var newSearchURI = "${grailsApplication.config.grails.serverURL}/search?query="
@@ -186,5 +189,4 @@
         }
         window.location.href = newSearchURL + newParams;
     }
-}
 </g:javascript>
