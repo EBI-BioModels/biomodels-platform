@@ -45,6 +45,8 @@ class BioModelsTagLib {
     def decorationService
     def modelOfTheMonthService
     def modelDelegateService
+    def modelTagService
+    def tagService
     def springSecurityService
     /**
      * Displays the Model of the Month (MoM) entry for the given model.
@@ -213,7 +215,29 @@ class BioModelsTagLib {
         boolean manualPubEntry = linkType == manualLabel
         boolean withoutPublication = revision.model?.publication == null
         if (isPublic && published && (manualPubEntry || withoutPublication)) {
+            out << render(template: "/templates/metadataSeparator", plugin: "jummp-plugin-biomodels-dom")
             out << render(template: "/templates/displayDisclaimer", plugin: "jummp-plugin-biomodels-dom")
         }
+    }
+
+    def showTags = { attrs ->
+        ModelTransportCommand model = attrs.model
+        List<String> tags = fetchModelTags(model)
+        out << render(template: "/templates/showTags", plugin: "jummp-plugin-biomodels-dom", model: ['tags': tags])
+    }
+
+    def showEditableTags = { attrs ->
+        ModelTransportCommand model = attrs.model
+        Set<String> tags = fetchModelTags(model)
+        Set<String> allTags = tagService.getAllTagNames().toSet()
+        Set<String> unTags = allTags - tags
+        out << render(template: "/templates/showEditableTags", plugin: "jummp-plugin-biomodels-dom", model: ['tags': tags, 'unTags': unTags])
+    }
+
+    def insertSeparator = {
+        out << render(template: "/templates/metadataSeparator", plugin: "jummp-plugin-biomodels-dom")
+    }
+    private List<String> fetchModelTags(ModelTransportCommand model) {
+        modelTagService.getTagsByModelId(model.submissionId)
     }
 }

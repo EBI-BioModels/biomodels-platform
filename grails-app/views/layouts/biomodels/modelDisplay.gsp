@@ -34,11 +34,44 @@
 <%@ page import="net.biomodels.jummp.qcinfo.*"%>
 
 <head xmlns="http://www.w3.org/1999/html">
-    <title>${revision.name}</title>
+    <title>${revision.name} | BioModels</title>
     <script type="text/javascript">
+        let initialTags = [];
         $(document).ready(function() {
             var mainContainer = $("#content");
             mainContainer.css('margin-left', 40+'px');
+            $('.model-tags-select2').select2({
+                placeholder: "Search existing or enter new tags",
+                tags: true,
+                multiple: true,
+                /*
+                ajax: {
+                    url: $.jummp.createLink("modelTag", "fetchTagsForSelect2"),
+                    dataType: 'json',
+                    type: "GET",
+                    cache: true,
+                    async: true,
+                    processData: true,
+                    data: function (params) {
+                        var queryParameters = {
+                            search: params.term
+                        };
+                        return queryParameters;
+                    },
+                    processResults: function (data) {
+                        console.log(data);
+                        return {
+                            results: data
+                        };
+                    }
+                }*/
+            });
+
+            let data = $('.model-tags-select2').select2('data');
+            $.each(data, function (index, value) {
+                initialTags.push(value.text);
+            });
+            console.log(initialTags);
         });
     </script>
     <script type="text/x-mathjax-config">
@@ -50,7 +83,7 @@
             src="${grailsApplication.config.grails.serverURL}/js/MathJax-2.6.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
     </script>
     <g:javascript>
-	    var canUpdate = ${canUpdate};
+        var canUpdate = ${canUpdate};
     </g:javascript>
     <g:javascript src="syntax/shCore.js"/>
     <g:javascript src="syntax/shBrushMdl.js"/>
@@ -75,17 +108,34 @@
             margin: 0;
             padding: 0;
         }
-    </style>
-    <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.handsontable.full.min.css')}"/>
-    <link rel="stylesheet" href="${resource(dir: 'css/syntax', file: 'shCore.css')}" />
-    <link rel="stylesheet" href="${resource(dir: 'css/syntax', file: 'shThemeDefault.css')}" />
-    <link rel="stylesheet" href="${resource(dir: 'css', file: 'toastr.min.css')}"/>
-    <style>
         #toolbarList li .ui-button-text {
             font-size: 0.75em;
         }
+        .model-tag {
+            color: #39739d;
+            background-color: #e1ecf4;
+            border-color: #e1ecf4;
+            display: inline-block;
+            padding: .4em .5em;
+            margin: 2px 2px 2px 0;
+            line-height: 1;
+            white-space: nowrap;
+            text-decoration: none;
+            text-align: center;
+            border-width: .3em;
+            border-style: solid;
+            border-radius: 3px;
+        }
+        .select2 {
+            width: 100% !important;
+        }
     </style>
-
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.handsontable.full.min.css')}"/>
+    <link rel="stylesheet" href="${resource(dir: 'css/syntax', file: 'shCore.css')}"/>
+    <link rel="stylesheet" href="${resource(dir: 'css/syntax', file: 'shThemeDefault.css')}"/>
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'toastr.min.css')}"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/css/select2.min.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.min.js"></script>
     <script>
         $(function() {
             $( "#tabs" ).tabs({
@@ -629,6 +679,7 @@
                             <div class="rounded-header"><h4 style="color: #ffffee">Metadata information</h4></div>
                             <g:pageProperty name="page.genericAnnotations"/>
                             <g:if test="${curationState}">
+                            <biomd:insertSeparator/>
                             <div class='row'>
                                 <div class="small-12 medium-6 large-4 columns">Curation status</div>
                                 <div class="small-12 medium-6 large-8 columns">
@@ -654,6 +705,7 @@
                                 </div>
                             </div></g:if>
                             <g:if test="${modellingApproaches}">
+                            <biomd:insertSeparator/>
                             <div class='row'>
                                 <div class="small-12 medium-6 large-4 columns">Modelling approach(es)</div>
                                 <div class="small-12 medium-6 large-8 columns">
@@ -661,11 +713,21 @@
                                 </div>
                             </div></g:if>
                             <g:if test="${originalModels}">
+                            <biomd:insertSeparator/>
                             <div class='row'>
                                 <div class="small-12 medium-6 large-4 columns">Original model(s)</div>
                                 <div class="small-12 medium-6 large-8 columns">
                                     <biomd:renderOriginalModels sources="${originalModels}"/></div>
                             </div></g:if>
+                            <!-- Show all tags assigned to the model -->
+                            <g:if test="${canUpdate && hasCuratorRole}">
+                                <biomd:insertSeparator/>
+                                <biomd:showEditableTags model="${revision.model}"/>
+                            </g:if>
+                            <g:else>
+                                <biomd:insertSeparator/>
+                                <biomd:showTags model="${revision.model}"/>
+                            </g:else>
                             <!-- Render a disclaimer if the model has been published without a publicly available manuscript -->
                             <biomd:displayDisclaimer revision="${revision}"/>
                             %{--<div class='row'>
@@ -744,6 +806,73 @@
                 </div>
             </div>
         </div>
+    <script>
+        $('#btnSaveTags').on("click", function (event) {
+            "use strict";
+            event.preventDefault();
+            let data = $('.model-tags-select2').select2('data');
+            let updatedTags = [];
+            $.each(data, function (index, value) {
+                updatedTags.push(value.text);
+            });
+            if (initialTags.length === updatedTags.length && !initialTags.length) {
+                toastr.clear();
+                toastr.warning("No label applied to the model. Alternatively, select at least one label from the list.");
+            } else {
+                $.ajax({
+                    type: "POST",
+                    url: $.jummp.createLink("modelTag", "updateModelTag"),
+                    cache: true,
+                    async: true,
+                    processData: true,
+                    dataType: "json",
+                    data: {
+                        updatedTags: updatedTags.join(","),
+                        modelId: "${revision.model.submissionId}"
+                    },
+                    beforeSend: function () {
+                        let msg = "";
+                        if (updatedTags.length === 0) {
+                            msg = "No tags applied to the model.";
+                        } else {
+                            msg = "The labels applied to the model are being saved into our database. Please wait...";
+                        }
+                        toastr.clear();
+                        toastr.info(msg);
+                    },
+                    success: function (data, txtStatus, jqXHR) {
+                        var msg = data.message;
+                        toastr.clear();
+                        toastr.success(msg);
+                        initialTags = updatedTags;
+                    },
+                    error: function (data, jqXHR, exception, errorThrown) {
+                        var msg = data.responseJSON.message;
+                        var statusCode = data.status;
+                        if (jqXHR.status === 0) {
+                            msg = 'Not connect.<br/>Verify Network.<br/>' + errorThrown;
+                        } else if (jqXHR.status == 404) {
+                            msg = '404 - Requested page not found.<br/>' + errorThrown;
+                        } else if (jqXHR.status == 500) {
+                            msg = '500 - Internal Server Error.<br/>' + errorThrown;
+                        } else if (jqXHR.status === 422 || jqXHR.staus === 400) {
+                            msg = jqXHR.status + " - " + jqXHR.statusText + "<br/>" + jqXHR.responseJSON.message;
+                        } else if (exception === 'parsererror') {
+                            msg = 'Requested JSON parse failed.<br/>' + errorThrown;
+                        } else if (exception === 'timeout') {
+                            msg = 'Time out error.' + errorThrown;
+                        } else if (exception === 'abort') {
+                            msg = 'Ajax request aborted.<br/>' + errorThrown;
+                        } else {
+                            msg = 'Uncaught Error.<br/>' + jqXHR.responseText;
+                        }
+                        toastr.clear();
+                        toastr.error(msg);
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 <content tag="contexthelp">
         display

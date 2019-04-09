@@ -52,9 +52,9 @@
 iframe {
     border: 0px solid #ffffff;
 }
-.ui-widget a:link {color: #000000; text-decoration: underline; !important }
-.ui-widget a:active {color: #0000ff; text-decoration: underline; !important}
-.ui-widget a:visited {color: #008000; text-decoration: underline; !important}
+.ui-widget a:link {color: #000000 }
+.ui-widget a:active {color: #0000ff }
+.ui-widget a:visited {color: #008000 }
 .ui-widget a:hover {color: #ff0000; text-decoration: none; !important}
 
 #btnEditCurationNotes a:link {
