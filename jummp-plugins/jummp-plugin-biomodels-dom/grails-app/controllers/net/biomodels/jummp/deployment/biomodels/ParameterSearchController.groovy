@@ -30,6 +30,8 @@ import org.apache.commons.logging.LogFactory
 import grails.rest.*
 import org.springframework.validation.FieldError
 
+import java.nio.charset.StandardCharsets
+
 /**
  * @author carankalle on 08/10/2018.
  */
@@ -101,7 +103,7 @@ please use the suitable request parameters and try again."""
                         return
                     }
                     response.setContentType("text/csv")
-                    render(resultCSV)
+                    render(resultCSV, encoding: 'UTF-8')
                 }
                 '*' {
                     response.status = 415
@@ -134,9 +136,10 @@ please use the suitable request parameters and try again."""
                 return
             }
             String filename = "BioModels_Parameters_Export-${new Date().format("yyyy-MM-dd")}.csv"
-            response.setContentType("application/octet-stream")
+            response.setContentType("text/csv; header=present; charset=UTF-8")
             response.setHeader("Content-Disposition", "attachment;filename=${filename}")
-            render(resultCSV)
+            def content = resultCSV.getBytes(StandardCharsets.UTF_8)
+            response.outputStream << new ByteArrayInputStream(content)
         } catch (IllegalArgumentException ie) {
             log.error(ie.message, ie)
             renderErrorMessage(ie.getMessage(), format, 400)
