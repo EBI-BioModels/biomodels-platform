@@ -8,7 +8,7 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
-    <title>Tag updated successfully | BioModels</title>
+    <title>${title} | BioModels</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="layout" content="${grailsApplication.config.jummp.branding.style}/main"/>
 </head>

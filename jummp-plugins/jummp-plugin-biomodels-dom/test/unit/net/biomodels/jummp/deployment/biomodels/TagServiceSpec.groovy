@@ -87,7 +87,7 @@ class TagServiceSpec extends Specification {
         cmd.dateModified = sdf.format(dateModified)
 
         and: "call update service"
-        Tag updated = service.update(cmd)
+        Tag updated = service.createOrUpdate(cmd)
 
         then: "the tag will be updated successfully"
         updated.name == newName

@@ -23,6 +23,10 @@ class TagControllerSpec extends Specification {
             password: 'changeme', accountExpired: false, accountLocked: false, passwordExpired: false)
         user.save(flush: true)
         User.count() == 1
+        controller.springSecurityService = [
+            encodePassword: 'changeme',
+            reauthenticate: { String u -> true},
+            loggedIn: true]
     }
 
     void "test index action"() {
@@ -92,20 +96,77 @@ class TagControllerSpec extends Specification {
         sdf.format(returned.dateModified) == sdf.format(dateModified)
     }
 
-    /*void "test add action"() {
+    void "test add action"() {
         given: "a mock UserService"
         def loggedInUser = User.findByUsername("elvis")
-        def springSecurityService = mockFor(SpringSecurityService)
-        springSecurityService.demand.getCurrentUser {
+        /**
+         * The following snippet cannot work with Spock testing framework
+         * def springSecurityService = mockFor(SpringSecurityService)
+         * springSecurityService.demand.getCurrentUser {
             if (loggedInUser instanceof GrailsUser) {
                 loggedInUser.id
             } else {
                 loggedInUser.username
             }
+         }
+         controller.springSecurityService = springSecurityService.createMock()
+         */
+
+        /* move the following snippet to setup() */
+        /*controller.springSecurityService = [
+            encodePassword: 'changeme',
+            reauthenticate: { String u -> true},
+            loggedIn: true,
+            currentUser: loggedInUser ]*/
+        controller.springSecurityService.put("currentUser", loggedInUser)
+        when: "invoke add action"
+        def result = controller.add()
+
+        then:
+        200 == response.status
+        result.tag.userCreated.username == loggedInUser.username
+        assert result.tag.dateCreated
+        assert result.tag.dateModified
+        String dP = "yyyy-MM-dd'T'HH:mm:ss"
+        result.dateFormat.toPattern() == dP
+    }
+
+    void "test createOrUpdate action without initialising values for params"() {
+        when: "call createOrUpdate action"
+        controller.createOrUpdate()
+        then: "get an invalid command object"
+        view == "/tag/save"
+        model.title == "Tag saved unsuccessfully"
+        model.message.contains("There have been errors while doing a data binding for the object")
+    }
+
+    void "test createOrUpdate action with initialising values for params"() {
+        given: "a logged in user"
+        def loggedInUser = User.findByUsername("elvis")
+        controller.springSecurityService.put("currentUser", loggedInUser)
+        when: "mock TagService"
+        def tagService = mockFor(TagService)
+        tagService.demand.createOrUpdate { TagTransportCommand cmd ->
+            Tag tag = new Tag(name: cmd.name, userCreated: loggedInUser)
+            tag.dateCreated = new Date()
+            tag.dateModified = new Date()
+            tag.save(flush: true)
         }
-        controller.springSecurityService = springSecurityService.createMock()
-        expect:
-        controller.add()
-    }*/
+        controller.tagService = tagService.createMock()
+        and: "initialise actual values for params"
+        params.name = "My funny tag"
+        params.userCreated = loggedInUser.username
+        String dP = "yyyy-MM-dd'T'HH:mm:ss"
+        SimpleDateFormat sdf = new SimpleDateFormat(dP)
+        Date current = new Date()
+        params.dateCreated = sdf.format(current)
+        params.dateModified = sdf.format(current)
+        and: "hit createOrUpdate action"
+        controller.createOrUpdate()
+        then:
+        model.title == "Tag saved successfully"
+        model.message == "Tag '${params.name}' saved successfully"
+        Tag.count == 1
+    }
 }
 

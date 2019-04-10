@@ -53,7 +53,7 @@ class ModelTagService {
                 if (records?.isEmpty()) {
                     message = "The model has no longer been tagged any label"
                 } else {
-                    message = "Labels [${updatedTags.join(', ')}] applied successfully to the model"
+                    message = "Labels [${updatedTags.join(', ')}] have been applied successfully to the model"
                 }
             } else {
                 statusCode = 400

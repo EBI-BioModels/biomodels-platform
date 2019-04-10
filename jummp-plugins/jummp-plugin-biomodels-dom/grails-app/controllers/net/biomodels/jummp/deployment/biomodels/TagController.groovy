@@ -20,7 +20,7 @@
 
 package net.biomodels.jummp.deployment.biomodels
 
-import grails.converters.JSON
+
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.plugins.security.User
 import java.text.SimpleDateFormat
@@ -33,7 +33,6 @@ import java.text.SimpleDateFormat
 @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
 class TagController {
     def springSecurityService
-    def userService
     def tagService
 
     def index() {
@@ -47,19 +46,8 @@ class TagController {
         [tag: tag, dateFormat: dateFormat]
     }
 
-    def create(String name) {
-        def user = springSecurityService.getCurrentUser()
-        Tag tagObj = tagService.create(name, user)
-        if (tagObj) {
-            render(tagObj as JSON)
-        } else {
-            String errMsg = "There is an error while trying to persist the tag '$name' in the database."
-            render([message: errMsg] as JSON)
-        }
-    }
-
     def add() {
-        User user = springSecurityService.getCurrentUser()
+        User user = springSecurityService.currentUser
         Date current = new Date()
         Tag tag = new Tag(name: "", userCreated: user)
         tag.dateCreated = current
@@ -74,15 +62,18 @@ class TagController {
     def createOrUpdate(TagTransportCommand command) {
         Map result = [:]
         if (!command.validate()) {
-            result["message"] = "There have been errors while making a data binding for the object ${command.dump()}"
+            result["message"] = "There have been errors while doing a data binding for the object ${command.dump()}"
+            result["title"] = "Tag saved unsuccessfully"
         } else {
             Tag tag = tagService.createOrUpdate(command)
             if (tag) {
-                result["message"] = "Updated tag '${tag.name}' successfully"
+                result["message"] = "Tag '${tag.name}' saved successfully"
+                result["title"] = "Tag saved successfully"
             } else {
                 result["message"] = "There have been errors while saving the update on the tag ${command.name}"
+                result["title"] = "Tag saved unsuccessfully"
             }
         }
-        render(view: "update", model: ['message': result["message"]])
+        render(view: "save", model: ['message': result["message"], 'title': result["title"]])
     }
 }
