@@ -26,16 +26,18 @@ package net.biomodels.jummp.webapp
 import net.biomodels.jummp.plugins.security.User
 /**
  * @short Representation of one NotificationTypePreferences.
+ *
  * This class is the representation of how users want to receive different types
- * of preferences. 
+ * of preferences.
+ *
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  */
 class NotificationTypePreferences implements Serializable {
     private static final long serialVersionUID = 1L
     
-    NotificationType notificationType;
-    boolean sendMail = false;
-    boolean sendNotification = true;
+    NotificationType notificationType
+    boolean sendMail = false
+    boolean sendNotification = true
     static belongsTo = [user:User]
     
     static constraints = {
@@ -44,10 +46,11 @@ class NotificationTypePreferences implements Serializable {
         sendNotification(nullable: false, unique: false)
     }
     
-    public static NotificationTypePreferences getDefault(User user, NotificationType type) {
-    	NotificationTypePreferences defaultPref = new NotificationTypePreferences();
-    	defaultPref.user = user;
-    	defaultPref.notificationType = type;
-    	return defaultPref;
+    static NotificationTypePreferences getDefault(User user, NotificationType type) {
+        NotificationTypePreferences defaultPref = new NotificationTypePreferences()
+        defaultPref.user = user
+        defaultPref.notificationType = type
+        defaultPref.save(flush: true)
+        return defaultPref
     }
 }

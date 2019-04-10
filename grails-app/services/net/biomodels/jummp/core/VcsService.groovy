@@ -87,7 +87,8 @@ class VcsService implements InitializingBean {
     **/
     @PreAuthorize("hasPermission(#model, write) or hasRole('ROLE_ADMIN')")
     @Profiled(tag = "vcsService.updateModel")
-    String updateModel(final Model model, final List<File> files, final List<File> deleted, final String commitMessage) throws VcsException {
+    String updateModel(final Model model, final List<File> files, final List<File> deleted,
+           final String commitMessage) throws VcsException {
         if (!isValid()) {
             throw new VcsException("Version Control System is not valid")
         }
@@ -105,7 +106,7 @@ class VcsService implements InitializingBean {
     @PreAuthorize("hasPermission(#model, write) or hasRole('ROLE_ADMIN')")
     @Profiled(tag = "vcsService.updateModel")
     String updateModel(final Model model, final File file, final String commitMessage) throws VcsException {
-        return updateModel(model, [file], commitMessage);
+        return updateModel(model, [file], [], commitMessage);
     }
     /**
      * Imports a new Model file into the VCS.

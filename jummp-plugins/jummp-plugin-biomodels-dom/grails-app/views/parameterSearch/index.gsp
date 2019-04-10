@@ -18,17 +18,17 @@
 --%>
 <html>
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <meta name="layout" content="${session['branding.style']}/main" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="layout" content="${session['branding.style']}/main"/>
 
-    <title>BioModels Parameters</title>
+    <title>BioModels Parameters | BioModels</title>
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/pretty-checkbox@3.0/dist/pretty-checkbox.min.css"/>
     <link rel="stylesheet"
           href="${resource(dir: 'css', file: 'toastr.min.css',
               contextPath: "${grailsApplication.config.grails.serverURL}")}"/>
     <link rel="stylesheet"
-          href="${resource(dir: 'css/datatable', file: 'jquery.dataTables.min.css',
+          href="${resource(dir: 'css/', file: 'jquery.dataTables.min.css',
               contextPath: "${grailsApplication.config.grails.serverURL}")}"
           type="text/css">
     <link rel="stylesheet"
@@ -43,9 +43,13 @@
           href="${resource(dir: 'css', file: 'easy-autocomplete.min.css')}"
           type="text/css">
     <link rel="stylesheet"
+          href="${resource(dir: 'css', file: 'common.css')}"
+          type="text/css">
+    <link rel="stylesheet"
           href="${resource(dir: 'css', file: 'easy-autocomplete.themes.min.css')}"
           type="text/css">
 </head>
+
 <body>
 <g:javascript contextPath="" src="toastr.min.js"/>
 <g:javascript src="datatable/jquery.dataTables.min.js" contextPath=""/>
@@ -61,16 +65,12 @@
     </div>
 </g:if>
 <div id="remote" class="body">
-    <br/>
-     <h3 > <b>BioModels Parameters</b></h3>
+    <h2>BioModels Parameters</h2>
 
     <g:render template="/templates/bpSearchContent"
-              plugin="jummp-plugin-biomodels-dom"
-               />
-  <g:render template="/templates/bpSearchDataTable"
-              plugin="jummp-plugin-biomodels-dom"
-               />
-
+              plugin="jummp-plugin-biomodels-dom"/>
+    <g:render template="/templates/bpSearchDataTable"
+              plugin="jummp-plugin-biomodels-dom"/>
 </div>
 </body>
 </html>

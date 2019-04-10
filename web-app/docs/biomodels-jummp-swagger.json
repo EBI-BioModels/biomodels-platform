@@ -23,6 +23,10 @@
     {
       "name": "Search models",
       "description": "Find models of interest"
+    },
+    {
+      "name": "Parameters Search",
+      "description": "Find model parameters of interest"
     }
   ],
   "schemes": [
@@ -163,7 +167,7 @@
           "Search models"
         ],
         "summary": "Download search results",
-        "description": "Search models of interest via keywords. Examples: PUBMED:\"27869123\" to search models associated with the PubMed record identified by 27869123. See [Model search](https://www.ebi.ac.uk/biomodels-static/model_search.html) page to know more about search syntax, options and examples.",
+        "description": "Search models of interest via keywords. Examples: PUBMED:\"27869123\" to search models associated with the PubMed record identified by 27869123. See [Model search](https://www.ebi.ac.uk/biomodels-static/user-guide/model_search.html) page to know more about search syntax, options and examples.",
         "parameters": [
           {
             "in": "query",
@@ -256,7 +260,70 @@
           }
         }
       }
-    }
+    },
+      "/parameterSearch/search": {
+          "get": {
+              "tags": [
+                  "Parameters Search"
+              ],
+              "summary": "Search for parameters of a model",
+              "parameters": [
+                  {
+                      "in": "query",
+                      "name": "query",
+                      "required": false,
+                      "type": "string",
+                      "description": "A query to search against the model parameter values."
+                  },
+                  {
+                      "in": "query",
+                      "name": "start",
+                      "type": "integer",
+                      "required": false,
+                      "description": "It is the offset of the result set, please enter the number of records to skip.<br/> <i>Default value = 0</i>"
+                  },
+                  {
+                      "in": "query",
+                      "name": "size",
+                      "type": "integer",
+                      "required": false,
+                      "description": "The number of items to display per page. <i>Default value = 10</i>",
+                      "enum": [
+                          10,25,50,100
+                      ]
+                  },
+                  {
+                      "in": "query",
+                      "name": "sort",
+                      "type": "string",
+                      "required": false,
+                      "description": "The column name and sort direction to perform the sort operation, <u>Sortable columns: model, entity</u>.<br/>"
+                  },
+                  {
+                      "in": "query",
+                      "name": "format",
+                      "type": "string",
+                      "required": false,
+                      "description": "The format of the result (XML,CSV and JSON). <i>Default value = XML</i>"
+                  }
+              ],
+              "produces": [
+                  "application/json",
+                  "application/csv"
+              ],
+              "responses": {
+                  "200": {
+                      "description": "successful operation"
+                  },
+                  "400": {
+                      "description": "Invalid request parameters OR\n Unable to retrieve data from EBI Search due to some problem with the request parameters"
+                  },
+                  "500": {
+                      "description": "Error encountered while processing Request parameters, No matches found"
+                  }
+              }
+          }
+      }
   },
   "definitions": {
     "Model": {
