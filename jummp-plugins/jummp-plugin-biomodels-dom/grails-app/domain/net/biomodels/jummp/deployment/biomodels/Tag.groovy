@@ -39,6 +39,10 @@ class Tag implements Serializable {
     Date dateCreated
     Date dateModified
 
+    static mapping = {
+        autoTimestamp(false)
+    }
+
     static constraints = {
         name unique: true, nullable: false
     }
