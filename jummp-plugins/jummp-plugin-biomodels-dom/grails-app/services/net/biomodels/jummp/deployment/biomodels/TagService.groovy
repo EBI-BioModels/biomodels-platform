@@ -63,7 +63,8 @@ class TagService {
         returned
     }
 
-    Tag update(TagTransportCommand command) {
+    Tag createOrUpdate(TagTransportCommand command) {
+        // this command object was validated in the controller before coming here
         Tag tag
         String dateFormat= "yyyy-MM-dd'T'HH:mm:ss"
         if (command?.id) {

@@ -1,6 +1,6 @@
 <div class="row">
     <div class="small-12 medium-6 medium-centered large-6 large-centered columns">
-        <g:form action="update" method="POST">
+        <g:form action="createOrUpdate" method="POST">
             <div class="row">
                 <div class="small-12 columns">
                     <input id="id" name="id" value="${tag?.id}" hidden>

@@ -71,19 +71,18 @@ class TagController {
         [tag: tag, dateFormat: dateFormat, tagCmd: tagCmd]
     }
 
-    def update(TagTransportCommand command) {
+    def createOrUpdate(TagTransportCommand command) {
         Map result = [:]
         if (!command.validate()) {
             result["message"] = "There have been errors while making a data binding for the object ${command.dump()}"
         } else {
-            Tag tag = tagService.update(command)
+            Tag tag = tagService.createOrUpdate(command)
             if (tag) {
                 result["message"] = "Updated tag '${tag.name}' successfully"
             } else {
                 result["message"] = "There have been errors while saving the update on the tag ${command.name}"
             }
         }
-        //render(result as JSON)
         render(view: "update", model: ['message': result["message"]])
     }
 }
