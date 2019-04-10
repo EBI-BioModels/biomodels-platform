@@ -204,6 +204,11 @@ There has been errors when assembling authors $authors into the publication '${p
         cmd
     }
 
+    PubTC getById(Long id) {
+        Publication publication = Publication.get(id)
+        new PublicationAdapter(publication: publication).toCommandObject()
+    }
+
     private void reconcile(Publication publication, List<PersonTC> tobeAdded) {
         List<PublicationPerson> existing = getPersons(publication)
         tobeAdded.eachWithIndex { PersonTC newAuthor, Integer index ->
