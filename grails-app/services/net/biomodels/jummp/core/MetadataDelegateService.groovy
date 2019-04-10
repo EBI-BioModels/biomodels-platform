@@ -73,6 +73,7 @@ class MetadataDelegateService implements IMetadataService {
      */
     def curationNotesService
 
+    def modelTagService
     /**
      * {@inheritDoc}
      */
@@ -246,6 +247,10 @@ class MetadataDelegateService implements IMetadataService {
             }
         }
         result
+    }
+
+    Set<String> fetchModelTags(String modelSubmissionId) {
+        modelTagService.getTagsByModelId(modelSubmissionId) as Set
     }
 
     private List<StatementTransportCommand> getModelLevelAnnotations(RevisionTransportCommand rev) {

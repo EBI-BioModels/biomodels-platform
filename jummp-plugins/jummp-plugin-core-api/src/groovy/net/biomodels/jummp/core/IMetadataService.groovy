@@ -79,4 +79,6 @@ interface IMetadataService {
             revision, String subject)
 
     List<String> getMetadataNamespaces()
+
+    Set<String> fetchModelTags(String modelSubmissionId)
 }

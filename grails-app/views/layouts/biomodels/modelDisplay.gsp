@@ -36,7 +36,6 @@
 <head xmlns="http://www.w3.org/1999/html">
     <title>${revision.name} | BioModels</title>
     <script type="text/javascript">
-        let initialTags = [];
         $(document).ready(function() {
             var mainContainer = $("#content");
             mainContainer.css('margin-left', 40+'px');
@@ -66,12 +65,6 @@
                     }
                 }*/
             });
-
-            let data = $('.model-tags-select2').select2('data');
-            $.each(data, function (index, value) {
-                initialTags.push(value.text);
-            });
-            console.log(initialTags);
         });
     </script>
     <script type="text/x-mathjax-config">
@@ -83,7 +76,13 @@
             src="${grailsApplication.config.grails.serverURL}/js/MathJax-2.6.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
     </script>
     <g:javascript>
-        var canUpdate = ${canUpdate};
+        let canUpdate = ${canUpdate};
+        let initialTags = [];
+        let tags = Object.values(${tags});
+        $.each(${tags}, function (index, value) {
+            initialTags.push(value);
+        });
+        console.log(initialTags);
     </g:javascript>
     <g:javascript src="syntax/shCore.js"/>
     <g:javascript src="syntax/shBrushMdl.js"/>
@@ -110,24 +109,6 @@
         }
         #toolbarList li .ui-button-text {
             font-size: 0.75em;
-        }
-        .model-tag {
-            color: #39739d;
-            background-color: #e1ecf4;
-            border-color: #e1ecf4;
-            display: inline-block;
-            padding: .4em .5em;
-            margin: 2px 2px 2px 0;
-            line-height: 1;
-            white-space: nowrap;
-            text-decoration: none;
-            text-align: center;
-            border-width: .3em;
-            border-style: solid;
-            border-radius: 3px;
-        }
-        .select2 {
-            width: 100% !important;
         }
     </style>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.handsontable.full.min.css')}"/>
