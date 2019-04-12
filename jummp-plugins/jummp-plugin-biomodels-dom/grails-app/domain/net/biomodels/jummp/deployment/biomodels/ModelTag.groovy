@@ -36,6 +36,7 @@ class ModelTag implements Serializable {
 
     static mapping = {
         id composite: ['model', 'tag']
+        version false
     }
 
     static constraints = {
