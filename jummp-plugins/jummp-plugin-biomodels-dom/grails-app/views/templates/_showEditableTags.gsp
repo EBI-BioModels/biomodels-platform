@@ -3,12 +3,12 @@
         Tags
     </div>
     <div class="small-12 medium-6 large-8 columns">
-        <select class="model-tags-select2" name="tags[]" multiple="multiple">
+        <select class="model-tags-select2" name="tags" multiple="multiple">
         <g:each in="${tags}" var="tag">
-            <option class="model-tag" value="${tag}" selected>${tag}</option>
+            <option class="model-tag" value="${tag?.id}" id="${tag?.id}" name="${tag?.name}" selected>${tag?.name}</option>
         </g:each>
         <g:each in="${unTags}" var="tag">
-            <option class="model-tag" value="${tag}">${tag}</option>
+            <option class="model-tag" value="${tag?.id}" id="${tag?.id}" name="${tag?.name}">${tag?.name}</option>
         </g:each>
         </select>
         <br/>

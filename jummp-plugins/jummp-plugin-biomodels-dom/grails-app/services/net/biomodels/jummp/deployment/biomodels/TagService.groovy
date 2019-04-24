@@ -69,7 +69,7 @@ class TagService {
         String dateFormat= "yyyy-MM-dd'T'HH:mm:ss"
         if (command?.id) {
             tag = Tag.get(command?.id)
-            tag.dateModified = Date.parse(dateFormat, command.dateModified)
+            tag.dateModified = new Date()
         } else {
             tag = new Tag()
             Date current = new Date()

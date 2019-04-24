@@ -21,6 +21,7 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import grails.validation.Validateable
+import net.biomodels.jummp.core.model.ModelTransportCommand
 
 /**
  * The class is used for creating DTOs communicating between services, views and models
@@ -28,25 +29,13 @@ import grails.validation.Validateable
  * @author  Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 @Validateable
-class TagTransportCommand {
-    Long id
-    String name
-    String userCreated
-    String dateCreated
-    String dateModified
+class ModelTagTransportCommand {
+    String modelId
+    List<TagTransportCommand> tags = [].withLazyDefault {
+        new TagTransportCommand()
+    }
 
     static constraints = {
-        id(nullable: true)
-        userCreated(nullable: true)
-        dateCreated(nullable: true)
-        dateModified(nullable: true)
-    }
-
-    TagTransportCommand() {
-        super()
-    }
-
-    TagTransportCommand(String name) {
-        this.name = name
+        tags(nullable: true)
     }
 }

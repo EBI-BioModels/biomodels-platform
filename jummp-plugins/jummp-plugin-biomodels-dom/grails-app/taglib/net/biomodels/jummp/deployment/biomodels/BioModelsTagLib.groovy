@@ -45,7 +45,6 @@ class BioModelsTagLib {
     def decorationService
     def modelOfTheMonthService
     def modelDelegateService
-    def modelTagService
     def tagService
     def springSecurityService
     /**
@@ -221,23 +220,19 @@ class BioModelsTagLib {
     }
 
     def showTags = { attrs ->
-        ModelTransportCommand model = attrs.model
-        List<String> tags = fetchModelTags(model)
+        Set<TagTransportCommand> tags = attrs.tags
         out << render(template: "/templates/showTags", plugin: "jummp-plugin-biomodels-dom", model: ['tags': tags])
     }
 
     def showEditableTags = { attrs ->
-        ModelTransportCommand model = attrs.model
-        Set<String> tags = fetchModelTags(model)
-        Set<String> allTags = tagService.getAllTagNames().toSet()
-        Set<String> unTags = allTags - tags
+        Set<TagTransportCommand> tags = attrs.tags
+        Set<Integer> tagIdSet = tags.collect { it.id }
+        Set<TagTransportCommand> allTags = tagService.all.toSet()
+        Set<TagTransportCommand> unTags = allTags.findAll { !tagIdSet.contains(it.id) }
         out << render(template: "/templates/showEditableTags", plugin: "jummp-plugin-biomodels-dom", model: ['tags': tags, 'unTags': unTags])
     }
 
     def insertSeparator = {
         out << render(template: "/templates/metadataSeparator", plugin: "jummp-plugin-biomodels-dom")
-    }
-    private List<String> fetchModelTags(ModelTransportCommand model) {
-        modelTagService.getTagsByModelId(model.submissionId)
     }
 }

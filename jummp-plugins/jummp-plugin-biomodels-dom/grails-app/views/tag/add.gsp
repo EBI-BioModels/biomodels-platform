@@ -55,7 +55,6 @@
             success: function(data, txtStatus, jqXHR) {
                 var msg = data.message;
                 toastr.clear();
-                toastr.success(msg);
             },
             error: function(data, jqXHR, exception, errorThrown) {
                 var msg = data.responseJSON.message;
