@@ -39,8 +39,6 @@
     <title>${revision.name} | BioModels</title>
     <script type="text/javascript">
         $(document).ready(function() {
-            var mainContainer = $("#content");
-            mainContainer.css('margin-left', 40+'px');
             $('.model-tags-select2').select2({
                 placeholder: "Search existing or enter new tags",
                 tags: false,

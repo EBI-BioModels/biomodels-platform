@@ -53,16 +53,25 @@
                        class="clearable search_box_style">
             </div>
             <div class="input-group-button">
-                <input id="search_submit" class="button icon icon-functional" tabindex="2" type="submit" name="submit1" value="1" />
+                <input id="search_submit" class="button icon icon-functional" tabindex="2"
+                       type="submit" name="submit1" value="1" />
             </div>
         </div>
         <p id="example">
             Examples:
-            <g:link controller="search" action="search" params="${[query: "*:*"]}" class="secondary label" title="Search all">*:*</g:link>
-            <g:link controller="search" action="search" params="${[query: "MAPK cascade"]}" class="secondary label" title="Search by GO term">MAPK cascade</g:link>
-            <g:link controller="search" action="search" params="${[query: "homo sapiens"]}" class="secondary label" title="Search by Taxonomy term">homo sapiens</g:link>
-            <g:link controller="search" action="search" params="${[query: "lung cancer"]}" class="secondary label" title="Search by Disease term">lung cancer</g:link>
-            <a title="Search tips/tricks" data-open="searchTipsBox" class="secondary label label-floating-right">Search tips</a>
+            <g:link controller="search" action="search"
+                    params="${[query: "*:*"]}" class="secondary label" title="Search all">*:*</g:link>
+            <g:link controller="search" action="search"
+                    params="${[query: "MAPK cascade"]}" class="secondary label"
+                    title="Search by GO term">MAPK cascade</g:link>
+            <g:link controller="search" action="search"
+                    params="${[query: "homo sapiens"]}" class="secondary label"
+                    title="Search by Taxonomy term">homo sapiens</g:link>
+            <g:link controller="search" action="search"
+                    params="${[query: "lung cancer"]}" class="secondary label"
+                    title="Search by Disease term">lung cancer</g:link>
+            <a title="Search tips/tricks" data-open="searchTipsBox"
+               class="secondary label label-floating-right">Search tips</a>
         </p>
     </fieldset>
 </form>

@@ -27,15 +27,13 @@
 
 
 
- <footer>
+<footer id="local-footer" class="local-footer">
     <!-- Optional local footer (insert citation / project-specific copyright / etc here -->
-    <div id="local-footer">
-        <div class="row">
-            <div id="footer" class="float-left">
-                Build: <g:render template="/templates/version"/>
-            </div>
-            <div class="clear"></div>
+    <div class="row">
+        <div id="footer" class="float-left">
+            Build: <g:render template="/templates/version"/>
         </div>
+        <div class="clear"></div>
     </div>
      <div id="elixir-banner" data-color="grey" data-name="This service"
           data-description="BioModels is an ELIXIR Deposition Database"
@@ -89,47 +87,42 @@
      </style>
     <!-- End optional local footer -->
 
-    <div id="global-footer">
-        <nav id="global-nav-expanded" class="row">
+    <div id="global-footer" class="global-footer">
+        <nav id="global-nav-expanded" class="row global-nav-expanded">
             <!-- Footer will be automatically inserted by footer.js -->
         </nav>
-        <section id="ebi-footer-meta" class="row">
+        <section id="ebi-footer-meta" class="row ebi-footer-meta">
             <!-- Footer meta will be automatically inserted by footer.js -->
         </section>
     </div>
      <g:render template="/templates/feedback" plugin="jummp-plugin-web-application"/>
      <g:render template="/templates/switchClassicBioModels" plugin="jummp-plugin-web-application"/>
      <g:render template="/templates/biomodels/searchTips" />
- </footer>
-</div> <!--! end of #wrapper -->
+</footer>
+</div> <!--! end of #mainframe -->
 
-  <!-- JavaScript at the bottom for fast page loading -->
-  <!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if offline -->
+<!-- JavaScript at the bottom for fast page loading -->
+<script src="https://dev.ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/js/script.js"></script>
+<!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if offline -->
 
-  <script defer="defer" src="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/js/cookiebanner.js"></script>
-  <script defer="defer" src="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/js/foot.js"></script>
-  <script defer="defer" src="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/js/script.js"></script>
+<!-- The Foundation theme JavaScript -->
+<script src="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.3/libraries/foundation-6/js/foundation.js"></script>
+<script src="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.3/js/foundationExtendEBI.js"></script>
+<script type="text/JavaScript">$(document).foundation();</script>
+<script type="text/JavaScript">$(document).foundationExtendEBI();</script>
 
-  <!-- The Foundation theme JavaScript -->
-  <script src="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/libraries/foundation-6/js/foundation.js"></script>
-  <script src="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.1/js/foundationExtendEBI.js"></script>
-  <script type="text/JavaScript">$(document).foundation();</script>
-  <script type="text/JavaScript">$(document).foundationExtendEBI();</script>
+<!-- customised scripts -->
+<g:javascript src="common.js"></g:javascript>
+<!-- end scripts-->
 
-  <!-- customised scripts -->
-  <g:javascript src="common.js"></g:javascript>
-  <!-- end scripts-->
+<!-- Google Analytics details... -->
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-39747892-1"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
 
-  <!-- Google Analytics details... -->
-  <script>
-    window._gaq = [['_setAccount','UA-106769759-1'],['_trackPageview'],['_trackPageLoadTime']];
-    Modernizr.load({
-      load: ('https:' == location.protocol ? '//ssl' : '//www') + '.google-analytics.com/ga.js'
-    });
-  </script>
+    gtag('config', 'UA-39747892-1');
+</script>
 
-  <!-- Prompt IE 6 users to install Chrome Frame. Remove this if you want to support IE 6.
-       chromium.org/developers/how-tos/chrome-frame-getting-started -->
-  <!--[if lt IE 7 ]>
-  <!--<script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script>-->
-  <!--<script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script>-->
