@@ -454,7 +454,8 @@ a.external:hover, a.external:active {
     text-align: center;
     border-width: .3em;
     border-style: solid;
-    border-radius: 3px;
+    border-radius: 12px;
+    cursor: help;
 }
 .select2 {
     width: 100% !important;

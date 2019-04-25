@@ -30,12 +30,14 @@ import net.biomodels.jummp.core.model.ModelTransportCommand
  */
 @Validateable
 class ModelTagTransportCommand {
+    Long id
     String modelId
     List<TagTransportCommand> tags = [].withLazyDefault {
         new TagTransportCommand()
     }
 
     static constraints = {
+        id(nullable: true)
         tags(nullable: true)
     }
 }

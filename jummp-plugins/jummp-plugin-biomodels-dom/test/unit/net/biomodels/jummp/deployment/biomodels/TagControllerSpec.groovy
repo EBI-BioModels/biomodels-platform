@@ -47,6 +47,7 @@ class TagControllerSpec extends Specification {
              *
              * See the other cases: ModelOfTheMonthControllerSpec
              */
+            tag.description = "This is a fully annotated model"
             tag.dateCreated = dateCreated
             tag.dateModified = dateModified
             tag.id = 1
@@ -72,6 +73,7 @@ class TagControllerSpec extends Specification {
         Date dateCreated = new Date()
         Date dateModified = new Date()
         Tag tag = new Tag(name: "Annotated", userCreated: userCreated)
+        tag.description = "This is a fully annotated model"
         tag.dateCreated = dateCreated
         tag.dateModified = dateModified
         tag.save()
@@ -148,6 +150,7 @@ class TagControllerSpec extends Specification {
         def tagService = mockFor(TagService)
         tagService.demand.createOrUpdate { TagTransportCommand cmd ->
             Tag tag = new Tag(name: cmd.name, userCreated: loggedInUser)
+            tag.description = cmd.description
             tag.dateCreated = new Date()
             tag.dateModified = new Date()
             tag.save(flush: true)
@@ -155,6 +158,7 @@ class TagControllerSpec extends Specification {
         controller.tagService = tagService.createMock()
         and: "initialise actual values for params"
         params.name = "My funny tag"
+        params.description = "This is my model"
         params.userCreated = loggedInUser.username
         String dP = "yyyy-MM-dd'T'HH:mm:ss"
         SimpleDateFormat sdf = new SimpleDateFormat(dP)

@@ -14,7 +14,7 @@
 </head>
 
 <body>
-    <h2>Message</h2>
+    <h2>Report</h2>
     <p>${message}</p>
     <p><a href="${g.createLink(controller: "tag", action: "index")}">Back to list of all tags</a> </p>
 </body>

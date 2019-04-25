@@ -47,11 +47,12 @@ class TagSpec extends Specification {
         then: "the validation cannot be passed"
         !valid
         when: "assign a tag name to that object, then validate it again"
-        tag.name = "Annotated partially"
+        tag.name = "Partially Annotated"
         valid = tag.validate()
         then: "the validation is still stuck"
         !valid
-        when: "update the instance's userCreated, dateCreated and dateModified property, then do validate the object again"
+        when: "update the instance's description, userCreated, dateCreated and dateModified property, then validate the object again"
+        tag.description = "The model was partially annotated"
         tag.dateCreated = new Date()
         tag.dateModified = new Date()
         tag.userCreated = user
@@ -63,6 +64,7 @@ class TagSpec extends Specification {
         given: "an initialised instance of Tag class"
         Tag tag = new Tag()
         tag.name = "Annotated"
+        tag.description = "The model was completely annotated"
         tag.userCreated = user
         tag.dateCreated = new Date()
         tag.dateModified = new Date()
@@ -74,6 +76,7 @@ class TagSpec extends Specification {
         given: "an initialised instance of Tag class"
         Tag tag = new Tag()
         tag.name = "Annotated"
+        tag.description = "The model was completely annotated"
         tag.userCreated = user
         tag.dateCreated = new Date()
         tag.dateModified = new Date()

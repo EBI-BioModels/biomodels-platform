@@ -7,7 +7,7 @@
             <%
                 def href = g.createLink(controller: 'search', action: 'search', params: ['query': "${tag.name}"])
             %>
-            <span class="model-tag"><a href="${href}">${tag.name}</a></span>
+            <span class="model-tag" title="${tag?.description}"><a href="${href}">${tag.name}</a></span>
         </g:each>
     </div>
 </div>

@@ -17,11 +17,20 @@
             </div>
             <div class="row">
                 <div class="small-3 columns">
+                    <label for="description" class="right inline">Tag Description</label>
+                </div>
+                <div class="small-9 columns">
+                    <input type="text" id="description" name="description"
+                           placeholder="Enter A Tag Description" value="${tag?.description}">
+                </div>
+            </div>
+            <div class="row">
+                <div class="small-3 columns">
                     <label for="userCreated" class="right inline">Created By</label>
                 </div>
                 <div class="small-9 columns">
                     <g:textField type="text" id="userCreated" name="userCreated"
-                                 placeholder="Enter A User Name" value="${tag?.userCreated?.username}"/>
+                                 placeholder="Enter A User Name" value="${tag?.userCreated?.username}" readonly="readonly" />
                 </div>
             </div>
             <div class="row">
@@ -30,7 +39,7 @@
                 </div>
                 <div class="small-9 columns">
                     <g:textField type="text" id="dateCreated" name="dateCreated"
-                                 placeholder="Enter A Date" value="${dateFormat.format(tag?.dateCreated)}"/>
+                                 placeholder="Enter A Date" value="${dateFormat.format(tag?.dateCreated)}" readonly="readonly"/>
                 </div>
             </div>
             <div class="row">
@@ -39,7 +48,7 @@
                 </div>
                 <div class="small-9 columns">
                     <g:textField type="text" id="dateModified" name="dateModified"
-                                 placeholder="Enter A Date" value="${dateFormat.format(tag?.dateModified)}"/>
+                                 placeholder="Enter A Date" value="${dateFormat.format(tag?.dateModified)}" readonly="readonly"/>
                 </div>
             </div>
             <div class="row">

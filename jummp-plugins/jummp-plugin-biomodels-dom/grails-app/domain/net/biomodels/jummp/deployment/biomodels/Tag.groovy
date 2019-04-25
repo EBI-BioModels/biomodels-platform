@@ -35,6 +35,11 @@ class Tag implements Serializable {
     private static final long serialVersionUID = 1L
 
     String name
+    /**
+     * The description captures the detailed information about the tag.
+     * This information will be appeared when users hover the tag
+     */
+    String description
     User userCreated
     Date dateCreated
     Date dateModified
@@ -52,7 +57,9 @@ class Tag implements Serializable {
         SimpleDateFormat sdf = new SimpleDateFormat(dateFormat)
         String dateCreated = sdf.format(dateCreated)
         String dateModified = sdf.format(dateModified)
-        new TagTransportCommand(id: id, name: name, userCreated: userCreated.username,
-            dateCreated: dateCreated, dateModified: dateModified)
+        new TagTransportCommand(id: id, name: name, description: description,
+            userCreated: userCreated.username,
+            dateCreated: dateCreated,
+            dateModified: dateModified)
     }
 }

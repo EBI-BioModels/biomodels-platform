@@ -51,16 +51,17 @@ class TagServiceSpec extends Specification {
         String username = "elvis"
         User user = User.findByUsername(username)
         String name = "Reproducible"
+        String description = "The model is reproducible"
 
         when: "call creation service to create the tag"
-        Tag tag = service.create(name, user)
+        Tag tag = service.create(name, description, user)
         assert tag
 
         then: "the tag can be looked up"
         Tag.findByName(name)
 
         when: "call creation service to create another tag with the same property values"
-        service.create(name, user)
+        service.create(name, description, user)
 
         then: "the number of records is still 1"
         1 == Tag.count()
@@ -71,13 +72,14 @@ class TagServiceSpec extends Specification {
         String username = "elvis"
         User user = User.findByUsername(username)
         String name = "Reproducible"
+        String description = "The model is reproducible"
 
         when: "call creation service to create the tag"
-        Tag tag = service.create(name, user)
+        Tag tag = service.create(name, description, user)
         assert tag
 
         and: "try to change tag name and date modified"
-        String newName = "Annotated partially"
+        String newName = "Partially Annotated"
         Date dateModified = new Date()
 
         TagTransportCommand cmd = tag.toCommandObject()

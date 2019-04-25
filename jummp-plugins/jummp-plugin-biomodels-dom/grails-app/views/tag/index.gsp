@@ -61,7 +61,8 @@
     <table id="allTagsTable" class="display">
         <thead class="row" style="font-weight: bold">
         <tr>
-            <th>Tag Name</th>
+            <th>Name</th>
+            <th>Description</th>
             <th>Created By</th>
             <th>Created On</th>
             <th>Modified On</th>

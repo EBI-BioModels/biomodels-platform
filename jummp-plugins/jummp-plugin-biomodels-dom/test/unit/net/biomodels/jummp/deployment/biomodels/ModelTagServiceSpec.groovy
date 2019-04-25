@@ -57,7 +57,7 @@ class ModelTagServiceSpec extends Specification {
         when:
         tags = service.getTagsByModelId("M002")
         then:
-        tags.contains("Annotated Partially") && tags.contains("Reproducible")
+        tags.contains("Partially Annotated") && tags.contains("Reproducible")
     }
 
     void "test the service of updating tags for a certain model"() {
@@ -86,5 +86,33 @@ class ModelTagServiceSpec extends Specification {
         then:
         result["status"] == 422
         result["message"] == "Cannot save nothing for labels to the model"
+    }
+
+    void "test the service of saving or updating model tag"() {
+        given:
+        String modelId = "M001"
+        Model model = Model.findBySubmissionId(modelId)
+        model
+        def modelTag = ModelTag.findAllByModel(model)
+        modelTag?.size() == 2
+        User user = User.findByUsername("elvis")
+        ModelTagTransportCommand cmd = new ModelTagTransportCommand()
+        cmd.modelId = modelId
+        when:
+        cmd.tags = new ArrayList<TagTransportCommand>()
+        Map result = [:]
+        result = service.saveOrUpdate(cmd, user)
+        then:
+        result["status"] == 200
+        result["message"] == "The model has no longer been tagged any label"
+        when:
+        def tag1 = new TagTransportCommand(name: "Annotated",
+            description: "this is a fully annotated model", userCreated: user)
+        tag1.dateCreated = new Date()
+        tag1.dateModified = new Date()
+        cmd.tags.add(tag1)
+        result = service.saveOrUpdate(cmd, user)
+        then:
+        result["message"].contains("have been applied successfully to the model")
     }
 }
