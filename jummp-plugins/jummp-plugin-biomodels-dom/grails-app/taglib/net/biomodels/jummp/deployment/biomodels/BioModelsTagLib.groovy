@@ -215,7 +215,14 @@ class BioModelsTagLib {
         boolean withoutPublication = revision.model?.publication == null
         if (isPublic && published && (manualPubEntry || withoutPublication)) {
             out << render(template: "/templates/metadataSeparator", plugin: "jummp-plugin-biomodels-dom")
-            out << render(template: "/templates/displayDisclaimer", plugin: "jummp-plugin-biomodels-dom")
+            String message = ""
+            if (withoutPublication) {
+                message = "This model has been pre-published upon author's request without reference publication."
+            } else {
+                message = "This model has been published without a web link to the reference publication."
+            }
+            out << render(template: "/templates/displayDisclaimer", plugin: "jummp-plugin-biomodels-dom",
+                model: ['message': message])
         }
     }
 
