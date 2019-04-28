@@ -262,12 +262,12 @@ class SearchController {
         if (models.size() > length) {
             models = models[0..length-1]
         }
-
+        String searchTerm = searchService.extractSearchTerm(query, facets)
         return [models: models, facets: facets, matches: totalCount,
                 offset: paginationCriteria['start'],
                 length: paginationCriteria['length'],
                 sortBy: sortBy, sortDirection: sortDirection,
-                query: query, facetStats: builder.toString()]
+                query: query, searchTerm: searchTerm, facetStats: builder.toString()]
     }
 
     private def archiveCore(String sortBy, String sortDirection, int offset, int length) {

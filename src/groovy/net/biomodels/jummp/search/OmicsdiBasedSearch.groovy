@@ -37,6 +37,7 @@ import net.biomodels.jummp.core.model.PublicationTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 import net.biomodels.jummp.model.Revision
+import net.biomodels.jummp.utils.search.SearchTermParser
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.springframework.context.ApplicationListener
@@ -427,6 +428,12 @@ There was a problem obtaining search result from EBI search server. The root cau
 
     String[] getSortFields() {
         ["relevance", "submissionid", "name"]
+    }
+
+    @Override
+    String extractSearchTerm(String query, List facets) {
+        SearchTermParser stp = new SearchTermParser(query: query)
+        return stp.extractSearchTerm()
     }
 
     private List<String> fetchFilesFromRevision(RevisionTransportCommand rev, boolean filterMains) {

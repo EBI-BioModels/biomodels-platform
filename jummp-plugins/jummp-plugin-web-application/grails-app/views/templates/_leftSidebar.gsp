@@ -9,9 +9,9 @@
     facets.eachWithIndex {value, index ->
         listOfFacets.add(index)
     }
+    int nbFacets = listOfFacets?.size()
     def specialCharacters = "([:+\\(\\)\\[\\]\\{\\}\\|\\*\\&\"\\?\'\\!\\^])"
     def FACETS_WRAPPED_DOUBLE_QUOTE = ["curationstatus", "modelformat", "disease", "modellingapproach", "modelflag"]
-    String queryString = params.query?.replaceAll('"', '\\\\"')
 %>
 <g:if test="${models}">
     <h4>Filter your results</h4>
@@ -43,8 +43,8 @@
                     }
                 %>
                 <g:if test="${isAsked}">
-                    <input type="checkbox" id="facetValue_${fv.value}" checked
-                           value="${fv.value}" title="${fv.value}"
+                    <input type="checkbox" id="facetValue_${fv.value}" checked class="search-facet"
+                           value="${fv.value}" title="${fv.value}" data-facet-id="${facet.id}"
                            onchange="${jsMethod}($(this), '${facet.id}' ,'${escapedFacetValue}')">
                     <span class="facetLabel" onclick="${jsMethod}($(this), '${facet.id}' ,'${escapedFacetValue}')">
                         <g:render template="/templates/singleFacetShow" model="[fv: fv, method: jsMethod]" /></span>
@@ -73,8 +73,8 @@
                             newParams["sort"] = params.sort
                         }
                     %>
-                    <input type="checkbox" id="choosenFacetValue"
-                           value="${fv.value}" title="${fv.value}"
+                    <input type="checkbox" id="choosenFacetValue" class="search-facet"
+                           value="${fv.value}" title="${fv.value}" data-facet-id="${facet.id}"
                            onchange="${jsMethod}($(this), '${facet.id}' ,'${escapedFacetValue}')">
                     <g:link controller="search" action="${actionName}" params="${newParams}" class="facetLabel">
                         <span class="facetLabel">
@@ -104,29 +104,36 @@
 <script src="//cdnjs.cloudflare.com/ajax/libs/list.js/1.5.0/list.min.js"></script>
 
 <g:javascript>
-    var options = {
+    let options = {
         valueNames: ['facetLabel'] // add css classes associated with the elements that you want to search in
     };
-    var facetList = [];
-    $.each(${listOfFacets}, function(index, element) {
-        facetList[index] = new List('facetList'+index, options);
-    });
 
+    let facetList = [];
+    let nbFacets = ${nbFacets};
+    for (i = 0; i <= nbFacets; i++) {
+        facetList[i] = new List('facetList'+i, options);
+    }
+
+    let doubleQuotedFacets = [];
+    <g:each in="${FACETS_WRAPPED_DOUBLE_QUOTE}" var="facetId">
+        doubleQuotedFacets.push("${facetId}");
+    </g:each>
     function runFacetSearch(e, facetGroupId, facetValue) {
-        var newSearchURI = "${grailsApplication.config.grails.serverURL}/search?query="
-        var isNeededDQ = "${FACETS_WRAPPED_DOUBLE_QUOTE}".indexOf(facetGroupId) > -1
-        if (isNeededDQ) {
-            facetValue = '"' + facetValue + '"';
-        }
-        var lastQueryString = " AND " + facetGroupId + ":" + facetValue;
-        var currentQuery = "${queryString}";
-        if (e[0].checked) {
-            currentQuery += lastQueryString;
-        } else {
-            // remove the search term out the query string, update newSearchURI
-            currentQuery = currentQuery.replace(lastQueryString, "")
-        }
-        var otherParams = "";
+        var checkedBoxes = [];
+        $.each($('.search-facet:checked'), function() {
+            checkedBoxes.push({"key": $(this).attr("data-facet-id"), "value": $(this).val()});
+        });
+        let combinedFacet = '';
+        $.each(checkedBoxes, function(index, element) {
+            let value = element.value;
+            let isDqFacet = $.inArray(element.key, doubleQuotedFacets);
+            if (isDqFacet >= 0) {
+                value = '"' + element.value + '"';
+            }
+            combinedFacet += ' AND ' + element.key + ':' + value;
+        });
+        let newSearchURL = "${grailsApplication.config.grails.serverURL}/search?query="
+        let otherParams = "";
         if ("${params.offset}") {
             otherParams += "&amp;offset=${params.offset}";
         }
@@ -136,8 +143,12 @@
         if ("${params.sort}") {
             otherParams += "&amp;sort=${params.sort}";
         }
-        newSearchURI += encodeURIComponent(currentQuery) + otherParams;
-        window.location.href = newSearchURI;
+        let currentQuery = '${searchTerm}';
+        //alert(currentQuery);
+        currentQuery += combinedFacet;
+        //alert("currentQuery: " + currentQuery);
+        newSearchURL += encodeURIComponent(currentQuery) + otherParams;
+        window.location.href = newSearchURL;
     }
 
     function runFacetList(e, facetGroupId, facetValue) {
@@ -186,5 +197,4 @@
         }
         window.location.href = newSearchURL + newParams;
     }
-}
 </g:javascript>

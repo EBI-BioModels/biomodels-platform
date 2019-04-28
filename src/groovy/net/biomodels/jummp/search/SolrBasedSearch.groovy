@@ -432,7 +432,11 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
         ["relevance"]
     }
 
-    /**
+    @Override
+    String extractSearchTerm(String query, List facets) {
+        return null
+    }
+/**
      * Internal method to execute a query.
      *
      * Queries Solr and returns the results.

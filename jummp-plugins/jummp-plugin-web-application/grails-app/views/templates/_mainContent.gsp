@@ -12,7 +12,7 @@
     if (!params.sort) {
         params.sort = "relevance-desc"
     }
-    String queryString = params.query?.replaceAll('"', '\\\\"')
+    String queryString = params.query
 %>
 <div class="content">
     <g:if test="${models}">
@@ -45,7 +45,7 @@
                     </g:if>
                     <span id="flashMessage"></span>
                     <span style="font-size: 85%">Search terms: </span>
-                    <span id="searchString" style="font-weight: bolder; font-size: 85%"></span>
+                    <span id="searchString" style="font-weight: bolder; font-size: 85%">${queryString}</span>
                     <span id="resetSearch" style="margin-left: 1em; font-size: 85%"></span>
                 </g:else>
         </div>
@@ -130,9 +130,7 @@
                         // show the query string on local search box and string query division
                         // at the top of main content division
                         $(document).ready(function() {
-                            var query = "${queryString}";
-                            $('#local-searchbox').val(query);
-                            $('#searchString').text(query);
+                            $('#local-searchbox').val('${queryString.replaceAll("\\'", "\\\\'")}');
                             if ("${params.sort}") {
                                 $('div#sorting > label > select').val("${params.sort}");
                             }
@@ -202,8 +200,8 @@
                                 }
                             });
                             // show all models ~ reset the current search ==> start a new search
-                            var query = "${queryString}";
-                            if (query !== "*:*") {
+                            //var query = "${queryString}";
+                            if ("${queryString != '*:*'}") {
                                 var url = "${createLink(controller: 'search', action: "${action}",
                                                     params: [query: "*:*"])}";
                                 $('#resetSearch').html('<a href="' + url + '" title="Clear the current search">Reset</a>');

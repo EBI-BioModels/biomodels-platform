@@ -42,4 +42,5 @@ interface ModelSearchStrategy {
     SearchResponse searchModels(String query, SortOrder sortOrder, Map<String, Integer> paginationCriteria)
     void updateIndex(RevisionTransportCommand revision)
     String[] getSortFields()
+    String extractSearchTerm(String query, List facets)
 }

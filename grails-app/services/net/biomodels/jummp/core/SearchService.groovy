@@ -285,5 +285,10 @@ class SearchService {
 
         facets
     }
+
+    String extractSearchTerm(String query, List facets) {
+        String term = strategy.extractSearchTerm(query, facets)
+        term
+    }
 }
 
