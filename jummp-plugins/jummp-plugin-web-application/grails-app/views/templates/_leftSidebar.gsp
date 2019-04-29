@@ -19,7 +19,8 @@
         <div id="facetList${i}">
         <h5 style="padding-top: 5px">${facet.label}</h5>
         <% String idFacet = facet.label.replace(' ', '') %>
-        <input type="text" id="txtSearch${idFacet}" placeholder="Find your ${facet.label}" class="searchEachFacet search" />
+        <input type="text" id="txtSearch${idFacet}" placeholder="Find your ${facet.label}"
+               class="searchEachFacet search" />
         <div class="facetContainer" id="facet${idFacet}">
             <ul id="${idFacet}" class="list">
             <g:each in="${facet.facetValues}" var="fv">

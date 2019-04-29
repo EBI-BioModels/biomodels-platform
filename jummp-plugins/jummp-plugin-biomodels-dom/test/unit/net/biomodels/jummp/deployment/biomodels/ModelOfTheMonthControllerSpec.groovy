@@ -2,7 +2,6 @@ package net.biomodels.jummp.deployment.biomodels
 
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
-import net.biomodels.jummp.core.IModelService
 import net.biomodels.jummp.model.Model
 import spock.lang.Specification
 
@@ -24,7 +23,7 @@ class ModelOfTheMonthControllerSpec extends Specification {
             result.publicationDate = pubDate
             result.lastUpdated = mDate
             result.id = 1
-            [result]
+            [result.toCommandObject()]
         }
         controller.modelOfTheMonthService = modelOfTheMonthService.createMock()
 

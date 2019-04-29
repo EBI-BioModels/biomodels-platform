@@ -46,6 +46,7 @@ import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.audit.AccessFormat
 import net.biomodels.jummp.core.model.audit.AccessType
 import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
+import net.biomodels.jummp.deployment.biomodels.TagTransportCommand
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.model.Revision
@@ -304,6 +305,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     boolean hasCuratorRole = userService.isLoggedInUserACurator()
                     boolean supportedForConversion = modelConversionService.isSupportedForConversion(rev)
                     List<RFTC> convertedFilesTC = modelConversionService.getConvertedFiles(rev)
+                    Set<TagTransportCommand> tags = metadataDelegateService.findTagsByModel(rev.model)
                     def model = [revision               : rev,
                                  authors                : rev.model.creators,
                                  allRevs                : revs,
@@ -325,7 +327,8 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                                  originalModels         : originalModels,
                                  hasCuratorRole         : hasCuratorRole,
                                  supportedForConversion : supportedForConversion,
-                                 convertedFilesTC       : convertedFilesTC
+                                 convertedFilesTC       : convertedFilesTC,
+                                 tags                   : tags
                     ]
                     if (rev.id == revision.id) {
                         flash.genericModel = model

@@ -35,7 +35,9 @@
         <g:javascript contextPath="" src="useradministration.js"/>
         <g:javascript contextPath="" src="jquery/jquery.dataTables.min.js"/>
         <g:javascript contextPath="" src="jquery/dataTables.responsive.min.js"/>
-        <link rel="stylesheet" href="${resource(contextPath: "${grailsApplication.config.grails.serverURL}", dir: '/css', file: 'jquery.dataTables.min.css')}" />
+        <link rel="stylesheet"
+              href="${resource(contextPath: "${grailsApplication.config.grails.serverURL}",
+                  dir: '/css', file: 'jquery.dataTables.min.css')}" />
     </head>
     <body>
         <div class="content">
@@ -43,7 +45,8 @@
                 <a style="float:right;margin-top:5px" title="Add new user" href="${g.createLink(action: "register")}">
                     <span>
                         Add new user
-                        <img style="width:20px;float:none;margin-left:5px" src="${grailsApplication.config.grails.serverURL}/images/user_add.png"/>
+                        <img style="width:20px;float:none;margin-left:5px"
+                             src="${grailsApplication.config.grails.serverURL}/images/user_add.png"/>
                     </span>
                 </a>
                 <div class="view-content rown column">

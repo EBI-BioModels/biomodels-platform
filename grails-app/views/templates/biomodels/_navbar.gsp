@@ -18,7 +18,7 @@
 --%>
 
 <nav>
-<ul class="grid_24 main-menu dropdown menu float-left columns medium-12"
+<ul class="main-menu dropdown menu float-left small-12 medium-12 large-12 columns"
     id="local-nav" data-dropdown-menu role="menubar">
     <li <g:if test="${actionName == null}"> class="first active" </g:if> role="menuitem">
         <a href="${createLink(uri: '/', absolute: true)}" title="Back to BioModels homepage">Home</a>
