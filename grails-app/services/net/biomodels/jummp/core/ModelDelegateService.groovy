@@ -34,6 +34,8 @@
 
 package net.biomodels.jummp.core
 
+import grails.transaction.NotTransactional
+import grails.transaction.Transactional
 import groovy.transform.CompileStatic
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.PublicationAdapter
@@ -66,8 +68,8 @@ import java.util.zip.ZipOutputStream
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  * @author Sarala Wimalaratne <sarala@ebi.ac.uk>
  */
+@Transactional
 class ModelDelegateService implements IModelService {
-    static transactional = false
     private static final Log log = LogFactory.getLog(ModelDelegateService.class)
 
     def modelService
@@ -76,6 +78,7 @@ class ModelDelegateService implements IModelService {
     def modelFlagService
     def referenceTracker
 
+    @NotTransactional
     String getPluginForFormat(ModelFormatTransportCommand format) {
         return modelFileFormatService.getPluginForFormat(format)
     }
@@ -128,18 +131,22 @@ class ModelDelegateService implements IModelService {
         return models
     }
 
+    @NotTransactional
     Integer getModelCount() {
         return modelService.getModelCount()
     }
 
+    @NotTransactional
     long createAuditItem(ModelAuditTransportCommand cmd) {
         return modelService.createAuditItem(cmd)
     }
 
+    @NotTransactional
     void updateAuditSuccess(Long itemId, boolean success) {
         modelService.updateAuditSuccess(itemId, success)
     }
 
+    @Transactional(readOnly = true)
     List<VcsFileDetails> getFileDetails(long revID, String filename) {
         return modelService.getFileDetails(Revision.get(revID), filename)
     }
@@ -202,6 +209,7 @@ class ModelDelegateService implements IModelService {
         return new RevisionAdapter(revision: revision).toCommandObject()
     }
 
+    @NotTransactional
     Byte[] serveModelFilesAsZip(List<RepositoryFileTransportCommand> files) {
         ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream()
         ZipOutputStream zipFile = new ZipOutputStream(byteBuffer)
@@ -217,6 +225,7 @@ class ModelDelegateService implements IModelService {
         response
     }
 
+    @NotTransactional
     Byte[] serveModelFilesAsZip(String[] modelIDs) {
         List<RepositoryFileTransportCommand> files = modelService.fetchMainFileForModels(modelIDs)
         if (files) {
@@ -242,18 +251,22 @@ class ModelDelegateService implements IModelService {
         return Collections.emptyList()
     }
 
+    @NotTransactional
     Boolean canAddRevision(String modelId) {
         return modelService.canAddRevision(modelService.findByPerennialIdentifier(modelId))
     }
 
+    @NotTransactional
     Boolean canDelete(String modelId) {
         return modelService.canDelete(modelService.findByPerennialIdentifier(modelId))
     }
 
+    @NotTransactional
     Boolean canShare(String modelId) {
         return modelService.canShare(modelService.findByPerennialIdentifier(modelId))
     }
 
+    @NotTransactional
     Boolean canPublish(RevisionTransportCommand revision) {
         if (revision.state == ModelState.UNPUBLISHED) {
             try {
@@ -266,26 +279,31 @@ class ModelDelegateService implements IModelService {
         return false
     }
 
+    @NotTransactional
     Boolean canPublish(String modelId) {
         def revision = getLatestRevision(modelId)
         canPublish(revision)
     }
 
+    @NotTransactional
     Boolean canCertify(RevisionTransportCommand revision) {
         if (revision.qcInfo) return false
         qcInfoDelegateService.canCertify(revision.modelIdentifier())
     }
 
+    @NotTransactional
     Boolean canCertify(String modelId) {
         def revision = getLatestRevision(modelId)
         canCertify(revision)
     }
 
+    @NotTransactional
     Boolean canCheckConsistency(RevisionTransportCommand revision) {
         Revision actualRevision = Revision.get(revision.id)
         modelService.canCheckConsistency(actualRevision)
     }
 
+    @NotTransactional
     Boolean canSubmitForPublication(RevisionTransportCommand revision) {
         if ((revision.state == ModelState.UNPUBLISHED)) {
             try {
@@ -297,6 +315,7 @@ class ModelDelegateService implements IModelService {
         return false
     }
 
+    @NotTransactional
     Boolean canSubmitForPublication(String modelId) {
         def revision = getLatestRevision(modelId)
         canSubmitForPublication(revision)
@@ -439,6 +458,7 @@ class ModelDelegateService implements IModelService {
         return REV
     }
 
+    @NotTransactional
     boolean haveMultiplePerennialIdentifierTypes() {
         def publicationIdGenerator = modelService.publicationIdGenerator
         final boolean HAVE_PERENNIAL_PUBLICATION_ID = !(publicationIdGenerator instanceof

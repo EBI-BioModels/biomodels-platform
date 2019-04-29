@@ -227,7 +227,8 @@ class ModelController {
         return modelDelegateService.createAuditItem(audit)
     }
 
-    def showWithMessage = {
+    @grails.transaction.Transactional
+    def showWithMessage() {
         flash["giveMessage"] = params.flashMessage
         StringBuilder modelId = new StringBuilder(params.id)
         if (params.revisionId) {
@@ -237,6 +238,7 @@ class ModelController {
     }
 
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    @grails.transaction.Transactional
     def show() {
         RevisionTransportCommand rev
         boolean isPrivateModel = false
