@@ -11,7 +11,7 @@
     }
     def specialCharacters = "([:+\\(\\)\\[\\]\\{\\}\\|\\*\\&\"\\?\'\\!\\^])"
     def FACETS_WRAPPED_DOUBLE_QUOTE = ["curationstatus", "modelformat", "disease", "modellingapproach", "modelflag"]
-    String queryString = params.query?.replaceAll('"', '\\\\"')
+    String queryString = params.query?.replaceAll('([^\\\\])"', '$1\\\\"')
 %>
 <g:if test="${models}">
     <h4>Filter your results</h4>
@@ -108,9 +108,9 @@
         valueNames: ['facetLabel'] // add css classes associated with the elements that you want to search in
     };
     var facetList = [];
-    $.each(${listOfFacets}, function(index, element) {
-        facetList[index] = new List('facetList'+index, options);
-    });
+    for (i = 0; i< ${listOfFacets.size()}; i++) {
+        facetList[i] = new List('facetList'+i, options);
+    };
 
     function runFacetSearch(e, facetGroupId, facetValue) {
         var newSearchURI = "${grailsApplication.config.grails.serverURL}/search?query="
@@ -186,5 +186,4 @@
         }
         window.location.href = newSearchURL + newParams;
     }
-}
 </g:javascript>
