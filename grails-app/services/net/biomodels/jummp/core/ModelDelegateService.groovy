@@ -34,6 +34,7 @@
 
 package net.biomodels.jummp.core
 
+import com.google.common.io.Files
 import grails.transaction.NotTransactional
 import grails.transaction.Transactional
 import groovy.transform.CompileStatic
@@ -210,12 +211,14 @@ class ModelDelegateService implements IModelService {
     }
 
     @NotTransactional
-    Byte[] serveModelFilesAsZip(List<RepositoryFileTransportCommand> files) {
+    Byte[] serveModelFilesAsZip(Map<String, RepositoryFileTransportCommand> files) {
         ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream()
         ZipOutputStream zipFile = new ZipOutputStream(byteBuffer)
-        files.each {
-            File file = new File(it.path)
-            zipFile.putNextEntry(new ZipEntry(file.getName()))
+        files.each { String modelId, RepositoryFileTransportCommand cmd ->
+            File file = new File(cmd.path)
+            String extension = Files.getFileExtension(file.getName())
+            ZipEntry entry = new ZipEntry("${modelId}.$extension")
+            zipFile.putNextEntry(entry)
             byte[] fileData = file.getBytes()
             zipFile.write(fileData, 0, fileData.length)
             zipFile.closeEntry()
@@ -227,7 +230,7 @@ class ModelDelegateService implements IModelService {
 
     @NotTransactional
     Byte[] serveModelFilesAsZip(String[] modelIDs) {
-        List<RepositoryFileTransportCommand> files = modelService.fetchMainFileForModels(modelIDs)
+        Map<String, RepositoryFileTransportCommand> files = modelService.fetchMainFileForModels(modelIDs)
         if (files) {
             return serveModelFilesAsZip(files)
         } else
