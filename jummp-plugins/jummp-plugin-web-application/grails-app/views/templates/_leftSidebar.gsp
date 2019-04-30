@@ -11,7 +11,6 @@
     }
     def specialCharacters = "([:+\\(\\)\\[\\]\\{\\}\\|\\*\\&\"\\?\'\\!\\^])"
     def FACETS_WRAPPED_DOUBLE_QUOTE = ["curationstatus", "modelformat", "disease", "modellingapproach", "modelflag"]
-    String queryString = params.query?.replaceAll('([^\\\\])"', '$1\\\\"')
 %>
 <g:if test="${models}">
     <h4>Filter your results</h4>
@@ -120,7 +119,7 @@
             facetValue = '"' + facetValue + '"';
         }
         var lastQueryString = " AND " + facetGroupId + ":" + facetValue;
-        var currentQuery = "${queryString}";
+        var currentQuery = "${params.query}";
         if (e[0].checked) {
             currentQuery += lastQueryString;
         } else {
