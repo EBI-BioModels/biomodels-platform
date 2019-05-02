@@ -40,7 +40,7 @@
     <script type="text/javascript">
         $(document).ready(function() {
             $('.model-tags-select2').select2({
-                placeholder: "Search existing or enter new tags",
+                placeholder: "Type here to search a tag",
                 tags: false,
                 multiple: true
             });
