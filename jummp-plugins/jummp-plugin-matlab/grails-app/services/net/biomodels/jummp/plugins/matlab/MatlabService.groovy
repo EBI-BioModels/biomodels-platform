@@ -125,7 +125,6 @@ class MatlabService implements FileFormatService {
             try {
                 String mime = mimeDetector.detect(stream, metadata)?.toString()
                 log.debug "File $f has media type $mime"
-                println "File $f has media type $mime"
                 return mime in TARGET_MIME_TYPES
             } catch (IOException e) {
                 String n = f.name
