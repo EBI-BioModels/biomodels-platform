@@ -215,7 +215,7 @@ class SearchController {
             forward(action: 'search', params: params)
             return params
         }
-	    byte[] data = modelDelegateService.serveModelFilesAsZip(models)
+        byte[] data = modelDelegateService.serveModelFilesAsZip(models)
         if (data) {
             // the data could be null in a few situations such as the model files are inaccessible
             response.setContentType("application/zip")

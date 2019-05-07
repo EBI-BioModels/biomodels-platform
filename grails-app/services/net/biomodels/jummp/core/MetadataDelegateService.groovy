@@ -22,21 +22,16 @@ package net.biomodels.jummp.core
 
 import eu.ddmore.metadata.service.ValidationException
 import grails.async.Promises
-import net.biomodels.jummp.annotationstore.ElementAnnotation
+import net.biomodels.jummp.annotation.SectionContainer
 import net.biomodels.jummp.annotationstore.ResourceReference
 import net.biomodels.jummp.annotationstore.RevisionAnnotation
 import net.biomodels.jummp.annotationstore.Statement
-import net.biomodels.jummp.core.annotation.ElementAnnotationCategory
-import net.biomodels.jummp.core.annotation.ElementAnnotationTransportCommand
-import net.biomodels.jummp.core.annotation.QualifierTransportCommand
-import net.biomodels.jummp.core.annotation.ResourceReferenceCategory
-import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand
-import net.biomodels.jummp.core.annotation.StatementCategory
-import net.biomodels.jummp.core.annotation.StatementTransportCommand
+import net.biomodels.jummp.core.annotation.*
 import net.biomodels.jummp.core.model.AnnotationValidationContext
+import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.annotation.SectionContainer
 import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
+import net.biomodels.jummp.deployment.biomodels.TagTransportCommand
 import net.biomodels.jummp.model.Revision
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
@@ -73,6 +68,7 @@ class MetadataDelegateService implements IMetadataService {
      */
     def curationNotesService
 
+    def modelTagService
     /**
      * {@inheritDoc}
      */
@@ -246,6 +242,14 @@ class MetadataDelegateService implements IMetadataService {
             }
         }
         result
+    }
+
+    Set<String> fetchModelTags(String modelSubmissionId) {
+        modelTagService.getTagsByModelId(modelSubmissionId) as Set
+    }
+
+    Set<TagTransportCommand> findTagsByModel(ModelTransportCommand model) {
+        modelTagService.findTagsByModel(model)
     }
 
     private List<StatementTransportCommand> getModelLevelAnnotations(RevisionTransportCommand rev) {

@@ -69,11 +69,17 @@ class ParameterSearchResultsSpec extends Specification {
 
         given: "A webservice call to ebi search and basic criteria"
         when: "Called getResultObjectWithQuery to hit the webservice and get the results"
-        ParameterSearchResults results = getResultObjectWithQuery("BIO*53")
+        ParameterSearchResults results = ParameterSearchResults.fromJson(JSON.parse(
+            '''
+             {"hitCount" : 1,
+                "entries":[{"fields":{"entity":"e1",
+                "external_links" : "reactome:1234,sabiork.compound:9877" }}]
+                }'''))
 
         then: "it should return correct external links value"
 
-        String expectedExternalLinksShow = "<a href=\"http://sabiork.h-its.org/newSearch?q=17489\" target=\"_blank\">17489</a>"
+        String expectedExternalLinksShow = '''<a href="https://reactome.org/content/query?q=1234" target="_blank">reactome:1234</a>,\
+<a href="http://cloud.identifiers.org/sabiork.compound:9877" target="_blank">sabiork.compound:9877</a>'''
 
         results.entries.find{value ->
            value.fields.external_links_show == expectedExternalLinksShow

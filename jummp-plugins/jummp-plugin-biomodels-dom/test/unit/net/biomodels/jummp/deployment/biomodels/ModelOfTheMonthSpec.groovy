@@ -20,10 +20,10 @@
 
 package net.biomodels.jummp.deployment.biomodels
 
-import grails.test.mixin.*
+
+import grails.test.mixin.TestFor
+import grails.test.mixin.TestMixin
 import grails.test.mixin.domain.DomainClassUnitTestMixin
-import net.biomodels.jummp.model.Model
-import net.biomodels.jummp.model.Revision
 import spock.lang.Specification
 
 @TestMixin(DomainClassUnitTestMixin)
