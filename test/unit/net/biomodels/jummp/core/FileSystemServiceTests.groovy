@@ -131,5 +131,19 @@ class FileSystemServiceTests {
             }
         }
     }
+
+    @Test
+    void aNewContainerIsCreatedIfTheCurrentOneIsFull() {
+        def parent = service.findCurrentModelContainer()
+        for (int i = 0; i < service.maxContainerSize + 1; ++i) {
+            String newModel = UUID.randomUUID().toString()
+            File m = new File(parent, newModel)
+            assertTrue m.mkdirs()
+        }
+
+        def container = service.findCurrentModelContainer()
+        assertTrue "$container ends with ttu", container.endsWith('ttu')
+        assertEquals "$container is empty", 0, new File(container).list().length
+    }
 }
 

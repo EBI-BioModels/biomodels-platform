@@ -96,26 +96,6 @@
     var mimeType = 'unknown';
     var messages = {}; // or: new Object(); or: new Map(); but not supported in IE
 
-    function get(k) {
-        return messages[k];
-    }
-
-    function set(k, v) {
-        messages[k] = v;
-    }
-
-    function remove(k) {
-        delete messages[k];
-    }
-
-    function values() {
-        var values = [];
-        for (var k in messages) {
-            values.push(messages[k]);
-        }
-        return values;
-    }
-
     $('#submitter, #lastModifier').on('keydown', function() {
         $(this).autocomplete({
             source: function(request, response) {
@@ -160,7 +140,7 @@
     $('#txtDateAdded').datepicker({
         dateFormat: 'yy-mm-dd',
         onSelect: function(datetext) {
-            datetext = datetext + updateOnSelect();
+            datetext = datetext + getTimeStamp();
             $('#datepicker').val(datetext);
             $(this).val(datetext);
         }
@@ -169,19 +149,11 @@
     $('#txtLastModified').datepicker({
         dateFormat: 'yy-mm-dd',
         onSelect: function(datetext) {
-            datetext = datetext + updateOnSelect();
+            datetext = datetext + getTimeStamp();
             $('#datepicker').val(datetext);
             $(this).val(datetext);
         }
     });
-
-    function updateOnSelect() {
-        var d = new Date(); // for now
-        var hour = d.getHours() < 10 ? "0" + d.getHours().toString() : d.getHours();
-        var minute = d.getMinutes() < 10 ? "0" + d.getMinutes().toString() : d.getMinutes();
-        var second = d.getSeconds() < 10 ? "0" + d.getSeconds().toString() : d.getSeconds();
-        return "T" + hour + ":" + minute + ":"+ second;
-    }
 
     function buildCurationNotesTC() {
         var comment = $('#comment').val();
@@ -216,21 +188,6 @@
         return curationNotes;
     }
 
-    function previewImage(input) {
-        // reused sample codes from https://stackoverflow.com/a/4459419/865603
-        if (input.files && input.files[0]) {
-            var reader = new FileReader();
-            var image = input.files[0];
-            reader.onload = function (event) {
-                var imgSrc = event.target.result;
-                imgUploadedStream = event.target.result.replace("data:"+ image.type +";base64,", '');
-                $('#curaImageHolder').attr('src', imgSrc);
-                $('#curaImageHolder').attr('title', 'This image has been uploaded or replaced');
-            }
-            reader.readAsDataURL(image);
-        }
-    }
-
     function showWarningMessage() {
         var imgSrc = "${grailsApplication.config.grails.serverURL}/images/biomodels/unacceptable.png";
         $('#curaImageHolder').attr('src', imgSrc);
@@ -245,10 +202,10 @@
             var imageFile = this.files[0];
             mimeType = imageFile.type;
             if (re.exec(mimeType)) {
-                previewImage(this);
+                imgUploadedStream = previewImage(this, '#curaImageHolder');
                 delete messages["onlyAcceptImages"];
             } else {
-                set("onlyAcceptImages",
+                set(messages, "onlyAcceptImages",
                         "${g.message(code: "model.biomodels.curationNotes.editor.onlyAcceptImages")}");
                 showWarningMessage();
             }
@@ -256,12 +213,12 @@
             /* validate file size */
             var MAX_SIZE = 1.44 * 1024 * 1024; // 1.44 MB ~ 1_500_000 is the allowed maximum size of the uploading image file
             if (imageFile.size > MAX_SIZE) {
-                set("curationImageTooBig",
+                set(messages, "curationImageTooBig",
                         "${g.message(code: "curationNotesTransportCommand.curationImage.curationImageTooBig")}");
             } else {
                 delete messages["curationImageTooBig"];
             }
-            $('#txtStatus').html(values().join("<br/>"));
+            $('#txtStatus').html(values(messages).join("<br/>"));
         }
     });
 
@@ -279,7 +236,7 @@
         if (isValid) {
             delete messages["invalidForm"];
         } else {
-            set("invalidForm", "${g.message(code: "model.biomodels.curationNotes.editor.invalidForm")}");
+            set(messages, "invalidForm", "${g.message(code: "model.biomodels.curationNotes.editor.invalidForm")}");
         }
         return isValid;
     }
@@ -302,7 +259,7 @@
                 processData: true,
                 async: true,
                 beforeSend: function() {
-                    $('#txtStatus').html("The curation notes are being saved. Please wait...");
+                    toastr.info("The curation notes are being saved. Please wait...");
                 },
                 success: function(response) {
                     var href = window.location.href;
@@ -314,15 +271,17 @@
                             document.location.hash = newHref;
                         }
                     }
-                    $('#txtStatus').html(response['message']);
+                    toastr.clear();
+                    toastr.success(response['message']);
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
                     // TODO: the error message doesn't show properly
-                    $('#txtStatus').html("Error: ", jqXHR.responseText + textStatus + errorThrown + JSON.stringify(jqXHR));
+                    toastr.clear();
+                    toastr.error("Error: ", jqXHR.responseText + textStatus + errorThrown + JSON.stringify(jqXHR));
                 }
             });
         } else {
-            $('#txtStatus').html(values().join("<br/>"));
+            $('#txtStatus').html(values(messages).join("<br/>"));
         }
     });
 

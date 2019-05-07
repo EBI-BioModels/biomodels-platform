@@ -2,28 +2,49 @@ package net.biomodels.jummp.deployment.biomodels
 
 import com.google.gson.JsonObject
 import grails.test.mixin.TestFor
-import groovy.mock.interceptor.MockFor
+import grails.test.mixin.TestMixin
+import grails.test.mixin.support.GrailsUnitTestMixin
+import grails.test.runtime.FreshRuntime
 import net.biomodels.jummp.core.util.RestUtils
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.models.KV
-import spock.lang.Specification
+import net.biomodels.jummp.models.ModelDetails
+import org.codehaus.groovy.grails.commons.InstanceFactoryBean
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.client.RestTemplate
+import spock.lang.Specification
 
-@TestFor(ModelClassifierService)
+@FreshRuntime
+@TestMixin(GrailsUnitTestMixin)
+/*
+ * @MockFor(ModelClassifierService) does not initialise the modelClassifierService bean properly
+ * and its afterPropertiesSet() method does not seem to be called.
+ * We therefore manually define the bean using doWithSpring and instantiate it in setup()
+ */
 class ModelClassifierServiceSpec extends Specification {
+    def service
+    def cacheService = Mock(CacheService) {
+        hasCache() >> false
+        getCache() >> null
+        setCache() >> null
+    }
+
+    def doWithConfig(c) {
+        c.jummp.classification.endpoint = "http://127.0.0.1:5000"
+    }
+
+    def doWithSpring = {
+        modelClassifierService(ModelClassifierService) { bean ->
+            grailsApplication = ref('grailsApplication')
+            cacheService      = ref('cacheService')
+        }
+        cacheService(InstanceFactoryBean, cacheService, CacheService)
+    }
 
     def setup() {
-        grailsApplication.config.jummp.classification.endpoint = "http://127.0.0.1:5000"
-        def cacheService = new MockFor(CacheService)
-        cacheService.demand.hasCache {String name -> return false}
-        cacheService.demand.setCache {String name, Serializable value, int expired -> null}
-        service.cacheService = Mock(CacheService) {
-            hasCache() >> false
-            setCache() >> null
-        }
+        service = getGrailsApplication().mainContext.modelClassifierService
     }
 
     void "test single model classify result parser"() {
@@ -44,8 +65,8 @@ class ModelClassifierServiceSpec extends Specification {
         when:
             Model testModel = new Model()
             testModel.setSubmissionId(modelToTest)
-            List<KV<Model, Date>> models = new ArrayList<>()
-            models.add(new KV<Model, Date>(testModel, new Date()))
+            List<ModelDetails> models = new ArrayList<>()
+            models.add(new ModelDetails(testModel, "Sample Model For Testing", new Date()))
             Map<?, ?> result = service.classifyModels(models)
         then:
             1 == result.keySet().size()
@@ -55,9 +76,9 @@ class ModelClassifierServiceSpec extends Specification {
             (result.get(rootKey) as Map).containsKey(parentKey)
             KV<String, String> classKey = new KV<>("GO:0007165", "signal transduction")
             ((result.get(rootKey) as Map).get(parentKey) as Map).containsKey(classKey)
-            List<Model> classified = (((result.get(rootKey) as Map).get(parentKey) as Map).get(classKey) as List)
+            List<ModelDetails> classified = (((result.get(rootKey) as Map).get(parentKey) as Map).get(classKey) as List)
             1 == classified.size()
-            classified.get(0).getSubmissionId() == modelToTest
+            classified.get(0).model.submissionId == modelToTest
     }
 
     String getModelIdFromURI(URI uri) {
@@ -108,8 +129,8 @@ class ModelClassifierServiceSpec extends Specification {
                             responseMock.get(getModelIdFromURI(uri)).toString(), HttpStatus.OK)}
             RestUtils.restTemplate = restTemplate.createMock()
         when:
-            List<KV<Model, Date>> models = responseMock.keySet().collect{
-                new KV<>(createModel(it), new Date())}
+            List<ModelDetails> models = responseMock.keySet().collect{
+                new ModelDetails(createModel(it), "Sample Model For Testing", new Date())}
             Map<?, ?> result = service.classifyModels(models)
         then:
             1 == result.keySet().size()

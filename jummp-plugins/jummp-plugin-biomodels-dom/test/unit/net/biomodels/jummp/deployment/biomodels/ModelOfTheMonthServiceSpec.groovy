@@ -81,7 +81,7 @@ class ModelOfTheMonthServiceSpec extends Specification {
         and: 'it is the expected one'
         def momCmd = result[0]
         'Rose' == momCmd.authors
-        '2000-01' == momCmd.date
+        '2000-01' == momCmd.formattedEntryDate
     }
 
     void "no results are returned for models that do not exist in the database"() {

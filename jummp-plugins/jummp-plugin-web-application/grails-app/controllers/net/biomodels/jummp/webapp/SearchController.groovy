@@ -37,7 +37,6 @@ import groovy.json.JsonBuilder
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.model.ModelListSorting
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
-import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.search.OrderedFacet
 import net.biomodels.jummp.search.SearchResponse
@@ -90,15 +89,15 @@ class SearchController {
     private void sanitiseParams() {
         if (params.sort) {
             def sortVal = params.sort.split("-")
-            params.sortBy = sortVal[0]
-            params.sortDir = sortVal[1]
+            params.sortBy = sortVal[0].encodeAsHTML()
+            params.sortDir = sortVal[1].encodeAsHTML()
         } else {
             params.sortBy = "relevance"
             params.sortDir = "desc"
         }
         params.numResults = numResults()
         if (integerCheck(params.offset, true, -1)) {
-            params.offset = params.offset ? Integer.parseInt(params.offset) : 0
+            params.offset = params.offset ? params.int("offset") : 0
         }
         else {
             params.offset = 0
@@ -120,7 +119,7 @@ class SearchController {
             prefs = Preferences.getDefaults()
         }
         if (integerCheck(params.numResults, true, -1)) {
-            prefs.numResults = params.numResults as Integer
+            prefs.numResults = params.int("numResults")
             if (prefs.numResults > MAXRESULTS ) {
                 prefs.numResults = MAXRESULTS
             }
@@ -143,7 +142,7 @@ class SearchController {
         sanitiseParams()
         def results = browseCore(params.sortBy, params.sortDir, params.offset, params.numResults, params.query)
 
-        if (!params.format || params.format=="html") {
+        if (response.format=="html") {
             results["history"] = modelHistoryService.history()
             return results
         }
@@ -153,6 +152,7 @@ class SearchController {
     /**
      * Default action showing a archive view
      */
+    @Secured(['IS_AUTHENTICATED_FULLY'])
     def archive() {
         sanitiseParams()
         def results = archiveCore(params.sortBy, params.sortDir, params.offset, params.numResults)
@@ -178,9 +178,9 @@ class SearchController {
                 params.flashMessage = "Please use *:* to browse all models."
             }
         }
-        println "Search terms: ${params.query}, requested from: ${request.getRemoteAddr()} under the format: ${params.format}"
+        println "Search terms: ${params.query}, requested from: ${request.getRemoteAddr()} under the format: ${response.format}"
         def results = searchCore(params.query, params.sortBy, params.sortDir, params.offset, params.numResults)
-        if (!params.format || params.format=="html") {
+        if (response.format=="html") {
             return results
         }
         respond new SearchResults(results)
@@ -215,18 +215,16 @@ class SearchController {
             forward(action: 'search', params: params)
             return params
         }
-	    byte[] data = modelDelegateService.serveModelFilesAsZip(models)
+        byte[] data = modelDelegateService.serveModelFilesAsZip(models)
         if (data) {
-            // the data could be null in a few situations such as the model files are unaccessible
+            // the data could be null in a few situations such as the model files are inaccessible
             response.setContentType("application/zip")
             String date = new Date().format("yyyyMMdd-HHmm")
             String filename = "BioModels-search-results_${date}.zip".toString()
             response.setHeader("Content-disposition", "attachment;filename=\"${filename}\"")
             response.outputStream << new ByteArrayInputStream(data)
         } else {
-            def params = [query: "*:*", flashMessage: g.message(code: "jummp.search.download.model.unavailable.warningMessage")]
-            forward(action: 'search', params: params)
-            return [query: "*:*"]
+            render(view: "download", status: 404)
         }
     }
 
@@ -337,14 +335,9 @@ class SearchController {
         List modelsDomain = modelService.getAllModels(offset, length, sortDirection == "asc", sort, filter)
         List models = []
         modelsDomain.each {
-            models.add(new ModelAdapter(model: it).toCommandObject())
+            models.add(new ModelAdapter(model: it).toCommandObject(false))
         }
-        List<Model> myModels = modelService.getMyModels(null, false)
-        List<MTC> myMTCs  = myModels.collect {
-            new ModelAdapter(model: it).toCommandObject()
-        }
-
-        List<Facet> basicFacets = searchService.buildBasicFacets(myMTCs)
+        List<Facet> basicFacets = searchService.buildBasicFacets(models)
         int totalCount = modelService.getModelCount(filter, false)
         return [models: models, facets: basicFacets, modelsAvailable: totalCount, sortBy: sortBy,
                 sortDirection: sortDirection, offset: offset, length: length, query: filter]

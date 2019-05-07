@@ -20,6 +20,8 @@
 
 package net.biomodels.jummp.importer.support.biomodels
 
+import groovy.transform.CompileStatic
+
 /**
  * This class is used to detect models that the publication identifiers were recently updated.
  *
@@ -29,11 +31,14 @@ package net.biomodels.jummp.importer.support.biomodels
  * Created by Mihai Glonț on 08/02/18.
  * Updated by Tung nguyen on 04/06/18.
  */
+@CompileStatic
 final class BioModelsIdChangeDetector extends AbstractModelChangeDetector {
     @Override
-	boolean hasChanged(ModelComparisonContext comparison) {
+    boolean hasChanged(ModelComparisonContext comparison) {
         Objects.requireNonNull(comparison)
-        if (comparison.imported?.model?.publicationId != comparison.biomodelsId) {
+        Objects.requireNonNull(comparison.imported)
+        Objects.requireNonNull(comparison.imported.model)
+        if (comparison.imported.model.publicationId != comparison.biomodelsId) {
             return true
         }
         super.hasChanged(comparison)

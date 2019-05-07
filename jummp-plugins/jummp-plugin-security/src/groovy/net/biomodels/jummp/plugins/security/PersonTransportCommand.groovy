@@ -29,13 +29,14 @@ import grails.validation.Validateable
 @Validateable
 class PersonTransportCommand implements Serializable {
     private static final long serialVersionUID = 1L
-    long id
+    Long id
     String userRealName
     String institution
     String orcid
 
     static constraints = {
         importFrom Person
+        id (nullable: true)
     }
 
     public String toString() {

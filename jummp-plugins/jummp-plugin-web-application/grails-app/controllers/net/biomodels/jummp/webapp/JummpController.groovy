@@ -105,9 +105,15 @@ class JummpController {
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def developerZone() {
+        detectTheme()
+        render(view: "developerZone", model: [titleCode: "jummp.developerZone.${theme}.title"])
+    }
+
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def feedback() {
         if (params.star) {
-            byte star = Byte.parseByte(params.star)
+            byte star = params.byte("star")
             String email = params.email
             String comment = params.comment
             if (star < 1 && star > 5) {
@@ -153,7 +159,7 @@ class JummpController {
 		if (params.teamID) {
 			long teamID;
 			try {
-				teamID = Long.parseLong(params.teamID)
+				teamID = params.long("teamID")
 			}
 			catch(Exception e) {
 				e.printStackTrace();

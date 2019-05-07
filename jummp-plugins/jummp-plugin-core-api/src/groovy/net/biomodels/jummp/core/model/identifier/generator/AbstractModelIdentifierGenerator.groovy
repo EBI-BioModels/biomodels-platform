@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2018 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -20,59 +20,129 @@
 
 package net.biomodels.jummp.core.model.identifier.generator
 
+import groovy.transform.CompileStatic
 import net.biomodels.jummp.core.model.identifier.ModelIdentifier
 import net.biomodels.jummp.core.events.DateModelIdentifierDecoratorUpdatedEvent
 import net.biomodels.jummp.core.events.ModelIdentifierDecoratorUpdatedEvent
+import net.biomodels.jummp.core.model.identifier.decorator.AbstractAppendingDecorator
 import net.biomodels.jummp.core.model.identifier.decorator.OrderedModelIdentifierDecorator
 import net.biomodels.jummp.core.model.identifier.decorator.VariableDigitAppendingDecorator
+import net.biomodels.jummp.core.model.identifier.support.GeneratorDetails
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
-import org.springframework.context.ApplicationEvent
-import org.springframework.context.ApplicationListener
 
 /**
  * @short Abstract implementation for producing model identifiers.
  *
- * This class also implements the SmartApplicationListener in order to respond to events issued
- * by ModelIdentifierDecorator implementations.
+ * This class also implements
+ * {@link ModelIdentifierGenerator#respondTo(net.biomodels.jummp.core.events.ModelIdentifierDecoratorUpdatedEvent)}
+ * in order to respond to events issued by ModelIdentifierDecorator implementations.
+ *
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
-abstract class AbstractModelIdentifierGenerator implements ModelIdentifierGenerator,
-            ApplicationListener {
+abstract class AbstractModelIdentifierGenerator implements ModelIdentifierGenerator {
     /** the class logger. */
     private static final Log log = LogFactory.getLog(this)
     private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
     /**
      * The registry of decorators which an implementation may use to generate model identifiers.
      */
-    protected TreeSet<OrderedModelIdentifierDecorator> DECORATOR_REGISTRY
+    SortedSet<? extends OrderedModelIdentifierDecorator> decoratorRegistry
+    /**
+     * The regular expression corresponding to identifiers this generator instance creates.
+     */
+    String regex
+
+    /**
+     * Default constructor
+     */
+    protected AbstractModelIdentifierGenerator() {
+        this((SortedSet) null)
+    }
+
+    /**
+     * Constructs a generator instance with the given decorators.
+     *
+     * @param decorators an ordered set of model id decorators.
+     */
+    protected AbstractModelIdentifierGenerator(
+            SortedSet<? extends OrderedModelIdentifierDecorator> decorators) {
+        doSetDecoratorRegistry(decorators)
+        regex = null
+    }
+
+    /**
+     *  Constructs a generator instance from the provided {@code GeneratorDetails}.
+     *
+     * @param details the set of decorators and the regex belonging to this instance.
+     */
+    protected AbstractModelIdentifierGenerator(GeneratorDetails details) {
+        /*
+         * this line causes errors with Groovy 2.4.5 if the class has @CompileStatic
+         * NoSuchMethodError: GeneratorDetails.getDecorators()Ljava/util/TreeSet
+         * No idea why, but I left @CompileStatic on the often-used methods of this class
+         */
+        this(details?.decorators)
+        regex = details?.regex
+    }
 
     abstract String generate()
 
     abstract void update()
 
-    void onApplicationEvent(ApplicationEvent decoratorUpdatedEvent) {
-        if (!(decoratorUpdatedEvent instanceof ModelIdentifierDecoratorUpdatedEvent)) {
-            return
+    @CompileStatic
+    SortedSet<? extends OrderedModelIdentifierDecorator> getDecoratorRegistry() {
+        if (null == decoratorRegistry || decoratorRegistry.isEmpty()) {
+            final String msg = "At least one decorator is needed to make model identifiers for $this."
+            log.error(msg)
+            throw new IllegalStateException(msg)
         }
+
+        return decoratorRegistry
+    }
+
+    @SuppressWarnings("GroovyUnusedDeclaration")
+    void setDecoratorRegistry(SortedSet<? extends OrderedModelIdentifierDecorator> registry) {
+        doSetDecoratorRegistry(registry)
+    }
+
+    /**
+     * @inherit
+     */
+    @CompileStatic
+    void respondTo(ModelIdentifierDecoratorUpdatedEvent event) {
         if (IS_DEBUG_ENABLED) {
-            log.debug "Processing event ${decoratorUpdatedEvent.inspect()}"
+            log.debug "Processing event ${event.inspect()}"
         }
         synchronized(ModelIdentifier.class) {
-            if (decoratorUpdatedEvent instanceof DateModelIdentifierDecoratorUpdatedEvent) {
+            if (event instanceof DateModelIdentifierDecoratorUpdatedEvent) {
                 // finds the first variable digit decorator and reset its value.
-                VariableDigitAppendingDecorator d = DECORATOR_REGISTRY.find { d ->
-                    d instanceof VariableDigitAppendingDecorator
-                }
+                VariableDigitAppendingDecorator d = decoratorRegistry.find {
+                    it instanceof VariableDigitAppendingDecorator
+                } as VariableDigitAppendingDecorator
                 if (d) {
-                    final String NEW_VALUE = "1".padLeft(d.WIDTH, '0')
-                    d.nextValue.set(NEW_VALUE)
-                    d.nextSuffix.set(1)
-                    d.lastUsedSuffix.set(-1)
+                    d.reset()
                     if (IS_DEBUG_ENABLED) {
-                        log.debug "Attribute 'nextValue' of $d has been reset to $NEW_VALUE."
+                        log.debug "Attribute 'nextValue' of $d has been reset to ${d.nextValue.get()}."
                     }
                 }
+            }
+        }
+    }
+
+    @CompileStatic
+    private void doSetDecoratorRegistry(
+            SortedSet<? extends OrderedModelIdentifierDecorator> decorators) {
+        if (!decorators) return
+
+        decoratorRegistry = Collections.unmodifiableSortedSet(decorators)
+        // tell the decorators who to notify in case of changes
+        Iterator<? extends OrderedModelIdentifierDecorator> i = decoratorRegistry.iterator()
+        while (i.hasNext()) {
+            //noinspection ChangeToOperator
+            OrderedModelIdentifierDecorator nextDecorator = i.next()
+            if (nextDecorator instanceof AbstractAppendingDecorator) {
+                nextDecorator.generator = this
             }
         }
     }

@@ -19,10 +19,14 @@
 **/
 
 import grails.util.Holders
-import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
+import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorRegistryService
+
+import java.util.regex.Pattern
 
 
 class UrlMappings {
+
+    def grailsApplication
 
     static mappings = {
         "/model/create"(controller: "model", action: "create")
@@ -43,6 +47,10 @@ class UrlMappings {
                 controller(notEqual: 'model')
             }
         }
+        name agedbrain: "/agedbrain" {
+            controller = "feature"
+            action = 'agedbrain'
+        }
         // used for web services
         "/$controller/$action?/$id?(.$format)?"{
             constraints {
@@ -54,12 +62,11 @@ class UrlMappings {
             action = 'show'
             constraints {
                 id(nullable: false, validator: { modelId ->
-                    Set<String> modelIdRegexes = ModelIdentifierUtils.MODEL_ID_REGEXES
-                    if (!modelIdRegexes) {
-                        ModelIdentifierUtils.processGeneratorSettings(Holders.config.jummp)
-                    }
-                    String pattern = modelIdRegexes.join('|')
-                    modelId.matches pattern
+                    def registryFactory = grailsApplication.mainContext.idGeneratorRegistryFactoryBean
+                    def registry = registryFactory.object
+                    Pattern modelIdRegexes = registry.getRegexForAllModelIdentifiers()
+
+                    modelIdRegexes.matcher(modelId).matches()
                 })
                 revisionId(matches: /\d+/)
             }
@@ -67,6 +74,7 @@ class UrlMappings {
         "/"(view: "/index")
         "/maintenance"(controller: 'maintenance')
         "/maintenance/turnOn"(controller: 'maintenance', action: 'turnOn')
+        "400"(controller: "errors", action: "error400")
         "403"(controller: "errors", action: "error403")
         "404"(controller: "errors", action: "error404")
         "500"(controller: "errors", action: "error500")
@@ -79,6 +87,7 @@ class UrlMappings {
         "/support"(controller: "jummp", action: "support")
         "/faq"(controller: "jummp", action: "faq")
         "/courses"(controller: "jummp", action: "courses")
+        "/dev"(controller: "jummp", action: "developerZone")
         "/about"(controller: "jummp", action: "aboutus")
         "/termsofuse"(controller: "jummp", action: "termsOfUse")
         "/citation"(controller: "jummp", action: "howToCiteBioModelsDatabase")

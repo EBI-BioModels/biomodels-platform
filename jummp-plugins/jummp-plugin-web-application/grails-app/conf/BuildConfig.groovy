@@ -70,15 +70,10 @@ grails.project.dependency.resolution = {
         //mavenRepo "http://repository.jboss.com/maven2/"
         //flatDir name: "jummpLibs", dirs: "../../lib/"
     }
-    dependencies {
-        // swagger
-        compile 'com.wordnik:swagger-servlet_2.10:1.3.1'
-    }
 
     plugins {
         build ":tomcat:7.0.55.3"
 
-        runtime ":weceem:1.4"
         runtime ":jquery:1.11.1"
         runtime ":jquery-datatables:1.7.5"
     }

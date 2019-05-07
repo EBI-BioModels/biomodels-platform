@@ -62,6 +62,8 @@ try {
 def jummpConfig = new ConfigSlurper().parse(jummpProperties)
 List pluginsToExclude = []
 
+// The Accept header set by older versions of IE and Opera may be unreliable, ignore it
+grails.mime.disable.accept.header.userAgents = ['Presto', 'Trident']
 grails.mime.file.extensions = false // enables the parsing of file extensions from URLs into the request format
 grails.mime.use.accept.header = true
 grails.mime.types = [ html: ['text/html','application/xhtml+xml'],
@@ -240,6 +242,9 @@ log4j.main = {
 
         // change the threshold to DEBUG to have debug output in development mode
         console name: "stdout", threshold: org.apache.log4j.Level.WARN
+
+        rollingFile name: "stacktrace", maxFileSize: 1024,
+                    file: "logs/stacktrace.log"
     }
 
     // configure the performanceStatsAppender to log at INFO level
@@ -269,7 +274,7 @@ log4j.main = {
     ]
 
     rollingFile name: "debugAppender", file: "logs/jummp-debug.log", threshold: org.apache.log4j.Level.DEBUG
-    rollingFile name: "hibernateAppender", file: "logs/jummp-hibernate.log", threshold: org.apache.log4j.Level.DEBUG
+    rollingFile name: "hibernateAppender", file: "logs/jummp-hibernate.log", threshold: org.apache.log4j.Level.WARN
 
     debug debugAppender: [
         'net.biomodels.jummp',
@@ -283,7 +288,7 @@ log4j.main = {
         'net.biomodels.jummp.plugins.pharmml',
         'net.biomodels.jummp.search'
     ]
-    debug hibernateAppender: [
+    warn hibernateAppender: [
         'org.codehaus.groovy.grails.orm.hibernate',
         'org.codehaus.groovy.grails.orm.support',
         'org.hibernate.SQL',
@@ -322,12 +327,12 @@ jummp.controllerAnnotations = [
     '/user/**':                 ['ROLE_ADMIN'],
     '/wcm-tools/**':            ['ROLE_ADMIN'],
     '/ck/**':                   ['ROLE_ADMIN'],
-    "/wcmEditor/**":            ["hasRole('ROLE_ADMIN')"],
-    "/wcmPortal/**":            ["hasRole('ROLE_ADMIN')"],
-    "/wcmRepository/**":        ["hasRole('ROLE_ADMIN')"],
-    "/wcmSpace/**":             ["hasRole('ROLE_ADMIN')"],
-    "/wcmSynchronization/**":   ["hasRole('ROLE_ADMIN')"],
-    "/wcmVersion/**":           ["hasRole('ROLE_ADMIN')"],
+    "/wcmEditor/**":            ["hasAnyRole('ROLE_ADMIN', 'ROLE_CURATOR')"],
+    "/wcmPortal/**":            ["hasAnyRole('ROLE_ADMIN', 'ROLE_CURATOR')"],
+    "/wcmRepository/**":        ["hasAnyRole('ROLE_ADMIN', 'ROLE_CURATOR')"],
+    "/wcmSpace/**":             ["hasAnyRole('ROLE_ADMIN', 'ROLE_CURATOR')"],
+    "/wcmSynchronization/**":   ["hasAnyRole('ROLE_ADMIN', 'ROLE_CURATOR')"],
+    "/wcmVersion/**":           ["hasAnyRole('ROLE_ADMIN', 'ROLE_CURATOR')"],
     "/wcm*/**":                 ["permitAll"],
     "/WeceemFiles/**":          ["permitAll"],
     "/css/**":                  ["permitAll"],
@@ -345,6 +350,7 @@ jummp.controllerAnnotations = [
     "/plugins/*/css/*":         ['permitAll'],
     "/plugins/*/images/*":      ['permitAll'],
     "/simpleCaptcha/captcha":   ['permitAll'],
+    "/docs/**":                 ['permitAll'],
     "/omicsdi/**":              ["hasRole('ROLE_ADMIN')"]
 ]
 
@@ -749,8 +755,6 @@ if (!(jummpConfig.jummp.context.help.root instanceof ConfigObject)) {
 }
 jummp.config.maintenance = false
 
-jummp.id.generators = ModelIdentifierUtils.processGeneratorSettings(jummp)
-
 if (!(jummpConfig.jummp.metadata.officialDatabaseName instanceof ConfigObject)) {
     jummp.metadata.officialDatabaseName = jummpConfig.jummp.metadata.officialDatabaseName
 } else {
@@ -765,6 +769,13 @@ if (!(jummpConfig.jummp.metadata.officialDatabaseDescription instanceof ConfigOb
         Models described from literature are manually curated and enriched with cross-references.
         """
 }
+
+if (!(jummpConfig.jummp.ws.client.japi.docs instanceof ConfigObject)) {
+    jummp.ws.client.japi.docs = jummpConfig.config.jummp.ws.client.japi.docs
+} else {
+    jummp.ws.client.japi.docs = "https://bitbucket.org/biomodels/biomodelswsclient"
+}
+
 // elasticsearch settings for weceem
 elasticSearch.datastoreImpl = 'hibernateDatastore'
 elasticSearch.bulkIndexOnStartup = false
@@ -772,3 +783,4 @@ elasticSearch.disableAutoIndex = true
 elasticSearch.client.mode = 'local'
 elasticSearch.index.store.type = 'simplefs' // store local node in memory and not on disk
 elasticSearch.maxBulkRequest = 10
+grails.databinding.dateFormats = ["yyyy-MM-dd'T'HH:mm:ss"]

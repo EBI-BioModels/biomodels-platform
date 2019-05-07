@@ -31,7 +31,6 @@
 
 package net.biomodels.jummp.core
 
-import grails.orm.HibernateCriteriaBuilder
 import groovy.transform.CompileStatic
 import groovy.transform.TypeChecked
 import groovy.transform.TypeCheckingMode
@@ -190,7 +189,7 @@ class SubmissionService {
             Collection<RFTC> mains
             Collection<RFTC> additionals
             if (workingMemory.containsKey("repository_files")) {
-	            /* case: the repository files are being updated and maintained in memory */
+                /* case: the repository files are being updated and maintained in memory */
                 Collection<RFTC> existing = workingMemory.get("repository_files") as List<RFTC>
                 if (!tobeAdded && !filesToDelete &&
                         !workingMemory['isUpdateOnExistingModel']) {
@@ -448,8 +447,11 @@ class SubmissionService {
 
         void updatePublicationLink(Map<String, Object> workingMemory, Map<String, String> modifications) {
             if (modifications.containsKey("PubLinkProvider")) {
+                MTC mtc = workingMemory.get("ModelTC") as MTC
+                workingMemory.put("previousPubLinkProvider", mtc.publication?.linkProvider)
+                workingMemory.put("previousPubLink", mtc.publication?.link)
                 workingMemory.put("RetrievePubDetails",
-                    updatePubs(workingMemory.get("ModelTC") as MTC,
+                    updatePubs(mtc,
                         modifications.get("PubLinkProvider"),
                         modifications.get("PubLink")))
                 if (workingMemory.containsKey("Authors")) {
@@ -555,7 +557,7 @@ class SubmissionService {
          * track of information submitter has entered in publication editor form so avoid losing it.
          */
         protected Map<Object, PublicationDetailExtractionContext> initialisePublicationMap() {
-            String[] linkSourceTypes = PublicationLinkProvider.LinkType.values().collect {
+            List<String> linkSourceTypes = PublicationLinkProvider.LinkType.values().collect {
                 PublicationLinkProvider.LinkType it -> it.label
             }
             Map<Object, PublicationDetailExtractionContext> publication_objects_in_working =
@@ -1008,6 +1010,4 @@ class SubmissionService {
             String mapName = "repository_files") {
         return (List) workingMemory.get(mapName)
     }
-
-
 }

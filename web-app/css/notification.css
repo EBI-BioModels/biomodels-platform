@@ -1,5 +1,4 @@
 .flashNotificationDiv {
-	width:98%;
 	text-align:left;
 	padding-top:8px;
 	padding-bottom:8px;
@@ -10,8 +9,10 @@
     padding:10px;
     position: relative;
 }
+.flashNotificationDiv ul {
+    margin-bottom: 0; /* override Foundation setting */
+}
 .PermanentMessage {
-	width:98%;
 	text-align:left;
 	padding-top:8px;
 	padding-bottom:8px;

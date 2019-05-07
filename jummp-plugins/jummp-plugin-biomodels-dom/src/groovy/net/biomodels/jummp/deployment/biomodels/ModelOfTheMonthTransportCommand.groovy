@@ -20,24 +20,117 @@
 
 package net.biomodels.jummp.deployment.biomodels
 
+import grails.util.Holders
+
 /**
  * @short Data transfer object (DTO) for ModelOfTheMonth domain class.
  *
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-@groovy.transform.CompileStatic
+@grails.validation.Validateable
 class ModelOfTheMonthTransportCommand implements Serializable {
-    static final String URL_SEED =
-            "http://www.ebi.ac.uk/biomodels-main/static-pages.do?page=ModelMonth%2F"
-    static final String FALLBACK_URL = "http://www.ebi.ac.uk/biomodels-main/modelmonth"
-    String authors
-    String date
-
-    final String getFormattedURL() {
-        return date ? "$URL_SEED$date" : FALLBACK_URL
+    static final class ReverseMonthComparator implements
+        Comparator<ModelOfTheMonthTransportCommand> {
+        @Override
+        int compare(ModelOfTheMonthTransportCommand o1, ModelOfTheMonthTransportCommand o2) {
+            o2.publicationMonth <=> o1.publicationMonth
+        }
     }
 
-    String toString() {
-        "$date"
+    static final class ReverseYearComparator implements Comparator<String> {
+        @Override
+        int compare(String o1, String o2) {
+            o2 <=> o1
+        }
+    }
+
+    static final String URL_SEED =
+            "content/model-of-the-month?"
+    static final String FALLBACK_URL = "content/model-of-the-month?all=yes"
+    public static final String SEP = '-'
+
+    /**
+     * Dependency injection of modelDelegateService
+     */
+    transient def modelDelegateService = Holders.grailsApplication.mainContext.modelDelegateService
+
+    Long id
+    String title
+    String authors
+    Date publicationDate
+    Date lastUpdated
+    /**
+     * The calendar month for this entry -- e.g. 2010-05
+     */
+    String formattedEntryDate
+    String shortDescription
+    String previewImage
+    String mimeType
+    boolean updated
+    /**
+     * The keys represent the models' id (primary key) and the values are the models' perennial identifier.
+     */
+    transient Map<Long, String> associatedModelMap
+    String models
+
+    static constraints = {
+        importFrom(ModelOfTheMonth)
+        id nullable: true
+        mimeType nullable: true
+        models blank: false, validator: { String ids, ModelOfTheMonthTransportCommand cmd ->
+            def modelIdList = Arrays.asList(ids.split(', '))
+            def associationMap = cmd.modelDelegateService.findModelsByPerennialId(modelIdList)
+            if (modelIdList.size() == associationMap?.size()) {
+                cmd.associatedModelMap = associationMap
+                return true
+            }
+            return false
+        }
+        formattedEntryDate nullable: true, validator: { String ignoredValue, ModelOfTheMonthTransportCommand cmd ->
+            if (!cmd.publicationDate) {
+                return false
+            }
+            cmd.formattedEntryDate = cmd.publicationDate.format(ModelOfTheMonth.DATE_FORMAT_PATTERN)
+            return true
+        }
+        previewImage nullable: true, validator: {String img, ModelOfTheMonthTransportCommand cmd ->
+            def mimeTypePattern = /^image\//
+            def m = cmd.mimeType =~ mimeTypePattern
+            return m.count >= 0
+        }
+    }
+
+    final String getFormattedURL() {
+        if (formattedEntryDate?.isEmpty() || !formattedEntryDate?.contains(SEP)) return FALLBACK_URL
+        String[] yearAndMonth = formattedEntryDate?.split(SEP)
+        if (yearAndMonth?.length > 2) {
+            return FALLBACK_URL
+        }
+
+        String year = yearAndMonth[0]
+        String month = yearAndMonth[1]
+
+        return "${URL_SEED}year=$year&month=$month"
+    }
+
+    String getYearMonth() {
+        formattedEntryDate
+    }
+
+    int getPublicationMonth() {
+        publicationDate ? publicationDate[Calendar.MONTH] : -1
+    }
+
+    int getPublicationYear() {
+        publicationDate ? publicationDate[Calendar.YEAR] : -1
+    }
+
+    static ReverseMonthComparator newReverseMonthComparator() {
+        new ReverseMonthComparator()
+    }
+
+    static ReverseYearComparator newReverseYearComparator() {
+        new ReverseYearComparator()
     }
 }

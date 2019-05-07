@@ -144,8 +144,14 @@ class FileSystemService implements IFileSystemService, InitializingBean {
             } else {
                 MODEL_COUNT = dirs.length
             }
-            if (MODEL_COUNT == maxContainerSize) {
+            if (MODEL_COUNT > maxContainerSize) {
+                log.error """Model container $current contains $MODEL_COUNT entries but the limit \
+is $maxContainerSize. Folders with more than a few thousand child nodes cause latency issues, \
+particularly for network file systems."""
+            }
+            if (MODEL_COUNT >= maxContainerSize) {
                 current = incrementModelContainer(current)
+                log.info "The model container folder is now $current"
                 assert ensureFolderExists(current)
                 currentModelContainer.set(current)
             }

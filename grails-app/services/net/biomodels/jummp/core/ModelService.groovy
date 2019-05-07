@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2018 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -30,12 +30,18 @@
 
 package net.biomodels.jummp.core
 
+import grails.plugin.cache.Cacheable
 import grails.plugin.springsecurity.SpringSecurityUtils
+import grails.plugin.springsecurity.authentication.GrailsAnonymousAuthenticationToken
+import grails.transaction.NotTransactional
 import grails.transaction.Transactional
+import groovy.transform.CompileStatic
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.events.*
 import net.biomodels.jummp.core.model.*
+import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorRegistryService
+import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import net.biomodels.jummp.core.vcs.VcsException
 import net.biomodels.jummp.core.vcs.VcsFileDetails
@@ -47,16 +53,17 @@ import org.apache.tika.detect.DefaultDetector
 import org.apache.tika.metadata.Metadata
 import org.perf4j.aop.Profiled
 import org.perf4j.log4j.Log4JStopWatch
+import org.springframework.beans.factory.ObjectFactory
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.access.prepost.PostAuthorize
 import org.springframework.security.access.prepost.PostFilter
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.acls.domain.BasePermission
+import org.springframework.security.acls.domain.GrantedAuthoritySid
 import org.springframework.security.acls.domain.PrincipalSid
+import org.springframework.security.acls.model.AccessControlEntry
 import org.springframework.security.acls.model.Acl
-import org.springframework.security.authentication.AnonymousAuthenticationToken
 import org.springframework.security.core.Authentication
-import org.springframework.security.core.authority.GrantedAuthorityImpl
 import org.springframework.transaction.TransactionDefinition
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Propagation
@@ -64,12 +71,28 @@ import org.springframework.transaction.annotation.Propagation
 import java.util.concurrent.locks.ReentrantLock
 
 /**
- * @short Service class for managing Models
+ * Service class for managing Models.
  *
- * This service provides the high-level API to access models and their revisions.
+ * <p>This service provides the high-level API to access models and their revisions.
  * It is recommended to use this service instead of accessing Models and Revisions
  * directly through GORM. The service methods respect the ACL on the objects and by
- * that ensures that no user can perform actions he is not allowed to.
+ * that ensures that no user can perform actions he is not allowed to.</p>
+
+ * <p>ModelService is a singleton, but the model ID generators are prototypes.
+ * We cannot directly inject the id generator beans because Spring caches a singleton's
+ * dependencies after creation, meaning modelService.submissionIdGenerator.lastUsedValue would
+ * always return the identifier generated before the modelService bean got instantiated (e.g.
+ * when the application started).</p>
+ *
+ * <p>The getters {@code getSubmissionIdGenerator} and {@code getPublicationIdGenerator} solve
+ * this reference problem by ensuring that the generators are always retrieved from the application
+ * context. Since these beans have prototype scope, every time we call these getters, or their
+ * Groovy short-hand equivalents ({@code submissionIdGenerator} and {@code publicationIdGenerator}
+ * respectively), we get a new instance of these generators that are initialised with the most
+ * recent identifier values generated in the past. See
+ * <a href='https://www.baeldung.com/spring-inject-prototype-bean-into-singleton'>this article<a>
+ * for a more in-depth discussion of the problem.</p>
+ *
  * @see Model
  * @see Revision
  * @author Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
@@ -78,7 +101,7 @@ import java.util.concurrent.locks.ReentrantLock
  * @author Sarala Wimalaratne <sarala@ebi.ac.uk>
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  *
- * @date 20151014
+ * @date 20181025
  */
 @SuppressWarnings("GroovyUnusedCatchParameter")
 @Transactional
@@ -91,8 +114,6 @@ class ModelService {
      * Threshold for the verbosity of the logger.
      */
     private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
-    private final Authentication anonymousAuthentication = new AnonymousAuthenticationToken(
-            'anon', "ANONYMOUS_USER", [ new GrantedAuthorityImpl("ROLE_ANONYMOUS") ])
     /**
      * Dependency Injection of Spring Security Service
      */
@@ -130,24 +151,32 @@ class ModelService {
      * Dependency Injection of userService
      */
     def userService
-    /**
-     * Dependency injection of submissionIdGenerator
-     */
-    def submissionIdGenerator
-    /**
-     * Dependency injection of publicationIdGenerator
-     */
-    def publicationIdGenerator
 
     //def publishValidator
 
     def modelConversionService
+
+    ObjectFactory<ModelIdentifierGeneratorRegistryService> idGeneratorRegistryFactoryBean
 
     final boolean MAKE_PUBLICATION_ID = !(publicationIdGenerator instanceof NullModelIdentifierGenerator)
     /**
      * Guard insertion of ACL entries from concurrent access.
      */
     final ReentrantLock aclInsertionLock = new ReentrantLock()
+
+    /**
+     * Provides a prototype-scoped submission id generator bean.
+     */
+    ModelIdentifierGenerator getSubmissionIdGenerator() {
+        grailsApplication?.mainContext?.submissionIdGenerator
+    }
+
+    /**
+     * Provides a prototype-scoped publication id generator bean.
+     */
+    ModelIdentifierGenerator getPublicationIdGenerator() {
+        grailsApplication?.mainContext?.publicationIdGenerator
+    }
 
     /**
     * Returns list of Models the user has access to.
@@ -243,8 +272,7 @@ WHERE
     ${return filteredUsers ? "AND r.owner.id IN (:users)" : ""}
 """
         if (isAdmin) {
-            query = """\
-$query AND r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2 where r.model=r2.model)"""
+            query = """$query AND r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2 where r.model=r2.model)"""
         } else {
             query = """\
 $query AND r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2, AclEntry ace
@@ -258,20 +286,26 @@ WHERE r.model = r2.model
         User u = springSecurityService.currentUser
         switch(type?.toLowerCase()) {
             case "private":
-                query = "$query AND r.owner.id = ${u.id}"
+                query = "$query AND r.owner.id = ${u.id} AND r.state = '${ModelState.UNPUBLISHED}'"
                 break
             case "shared":
-                query = "$query AND r.owner.id != ${u.id}"
+                query = "$query AND r.owner.id != ${u.id} AND r.state = '${ModelState.UNPUBLISHED}'"
+                break
+            case "public":
+                query = "$query AND r.owner.id = ${u.id} AND r.state = '${ModelState.PUBLISHED}'"
                 break
             default:
                 if (type) {
                     log.warn("Ignoring unsupported permission level '$type'.")
+                } else if (!isAdmin) {
+                    query = """$query AND ((r.owner.id = ${u.id} AND r.state = '${ModelState.UNPUBLISHED}') 
+OR (r.owner.id != ${u.id} AND r.state = '${ModelState.UNPUBLISHED}') 
+OR (r.owner.id = ${u.id} AND r.state = '${ModelState.PUBLISHED}'))
+"""
                 }
                 break
         }
-
-        query = """$query AND r.state = '${ModelState.UNPUBLISHED}' 
-ORDER BY ${getSortColumnAsString(sortColumn)} ${sortingDirection}"""
+        query = """$query ORDER BY ${getSortColumnAsString(sortColumn)} ${sortingDirection}, r.revisionNumber desc"""
         return query
     }
 
@@ -446,8 +480,8 @@ WHERE
      */
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getModel")
-    public Model getModel(String id) {
-        Model model = ModelAdapter.findByPerennialIdentifier(id)
+    Model getModel(String id) {
+        Model model = findByPerennialIdentifier(id)
         if (model) {
             if (!getLatestRevision(model)) {
                 throw new AccessDeniedException("No access to the versions of the model with id ${id}".toString())
@@ -460,6 +494,45 @@ WHERE
 
     Model getModelBySubmissionId(String submissionId) {
         Model.findBySubmissionId(submissionId)
+    }
+
+
+    /**
+     * Convenience method for finding a model based on its externally-defined identifiers.
+     *
+     * @param perennialId The externally-defined ID by which to look up the model.
+     * @return  the model corresponding to the given id, or null if there was no match
+     */
+    @Cacheable('perennialModelIdentifier')
+    Model findByPerennialIdentifier(String perennialId) {
+        if (!perennialId) {
+            return null
+        }
+        int dot = perennialId.indexOf('.')
+        perennialId = -1 == dot ? perennialId : perennialId.substring(0, dot)
+
+        Set<String> idFields = getPerennialIdentifierTypes()
+        Model.withCriteria(uniqueResult: true) {
+            or {
+                for (String f : idFields) {
+                    eq(f, perennialId)
+                }
+            }
+            cache true
+        } as Model
+    }
+
+    /**
+     * Indicates the kinds of perennial identifiers present in the runtime configuration.
+     *
+     * @return the set of identifier types that are defined, e.g. submissionId, publicationId.
+     */
+    @Cacheable('perennialIdentifierTypes')
+    @CompileStatic
+    @NotTransactional
+    Set<String> getPerennialIdentifierTypes() {
+        ModelIdentifierGeneratorRegistryService registry = idGeneratorRegistryFactoryBean.object
+        registry.generatorTypes
     }
 
     /**
@@ -571,10 +644,10 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     //@PostAuthorize("hasPermission(returnObject, read) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getRevisionByIdentifier")
-    public Revision getRevision(String identifier) {
+    Revision getRevision(String identifier) {
         String[] parts = identifier.split("\\.")
         String modelId = parts[0]
-        Model model = ModelAdapter.findByPerennialIdentifier(modelId)
+        Model model = findByPerennialIdentifier(modelId)
         if (parts.length == 1) {
             Revision revision = getLatestRevision(model)
             if (!revision) {
@@ -752,8 +825,8 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         Model model = getModel(PERENNIAL_ID)
         final String formatVersion = modelFileFormatService.getFormatVersion(rev)
         Revision revision = new Revision(model: model, name: rev.name, description: rev.description,
-                    comment: rev.comment, uploadDate: new Date(), owner: currentUser, minorRevision: false,
-                    validated:rev.validated,
+                    comment: rev.comment, uploadDate: new Date(), owner: currentUser,
+                    validated: rev.validated, curationState: rev.curationState, minorRevision: rev.minorRevision,
                     format: ModelFormat.findByIdentifierAndFormatVersion(rev.format.identifier, formatVersion),
                     validationReport: rev.validationReport, validationLevel: rev.validationLevel)
         def stopWatch = new Log4JStopWatch("modelService.addValidatedRevision.rftcCreation")
@@ -1014,7 +1087,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
 
         // vcs identifier is container name + upload date + submissionId - this should by all means be unique
         String timestamp = new Date().format("yyyy-MM-dd'T'HH-mm-ss-SSS")
-        final String submissionId = submissionIdGenerator.generate()
+        final String submissionId = getSubmissionIdGenerator().generate()
         String modelPath = new StringBuilder(timestamp).append("_").append(submissionId).
                 append(File.separator).toString()
         String container = fileSystemService.findCurrentModelContainer()
@@ -1596,34 +1669,39 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         if (!authenticated || aclUtilService.hasPermission(springSecurityService.authentication, model,
                     BasePermission.ADMINISTRATION ) || SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')) {
             def permissions = aclUtilService.readAcl(model).getEntries()
-            permissions.each {
+            for (AccessControlEntry it: permissions) {
                 String permission = getPermissionString(it.getPermission().getMask())
+                // TODO refactor permission code to handle both GrantedAuthoritySid and PrincipalSid
+                if (it.sid instanceof GrantedAuthoritySid) {
+                    continue // skip to the next one
+                }
                 String principal = it.getSid().principal
                 if (permission) {
                     User user = User.findByUsername(principal)
-                    String userRealName = user.person.userRealName
-                    int userId = user.id
-                    if (!map.containsKey(userId)) {
-                        PermissionTransportCommand ptc = new PermissionTransportCommand(
+                    if (user) {
+                        String userRealName = user.person.userRealName
+                        int userId = user.id
+                        if (!map.containsKey(userId)) {
+                            PermissionTransportCommand ptc = new PermissionTransportCommand(
                                 name: userRealName, id: userId, username: user.username)
-                        map.put(userId, ptc)
-                    }
-                    if (principal == springSecurityService.principal.username) {
-                        map.get(userId).show = false
-                    }
-                    if (permission == "r") {
-                        map.get(userId).read = true
-                    }
-                    else {
-                        map.get(userId).write = true
-                        //disable editing for curators and for users who have contributed revisions
-                        if (userService.isCurator(user) &&
-                                model.revisions*.owner*.id.contains(user.id)) {
-                            map.get(userId).disabledEdit = true
+                            map.put(userId, ptc)
                         }
-                        model.revisions.each {
-                            if (it.owner.username == principal) {
+                        if (principal == springSecurityService.principal.username) {
+                            map.get(userId).show = false
+                        }
+                        if (permission == "r") {
+                            map.get(userId).read = true
+                        } else {
+                            map.get(userId).write = true
+                            //disable editing for curators and for users who have contributed revisions
+                            if (userService.isCurator(user) &&
+                                model.revisions*.owner*.id.contains(user.id)) {
                                 map.get(userId).disabledEdit = true
+                            }
+                            model.revisions.each {
+                                if (it.owner.username == principal) {
+                                    map.get(userId).disabledEdit = true
+                                }
                             }
                         }
                     }
@@ -1718,7 +1796,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
     @PreAuthorize("hasPermission(#model, admin) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.grantWriteAccess")
-    public void grantWriteAccess(Model model, User collaborator) {
+    void grantWriteAccess(Model model, User collaborator) {
         final String principal = collaborator.username
         aclUtilService.addPermission(model, principal, BasePermission.WRITE)
         boolean isCurator = userService.isCurator(collaborator)
@@ -1979,7 +2057,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         if (!publicRevision) {
             return false
         }
-        aclUtilService.hasPermission anonymousAuthentication, publicRevision, BasePermission.READ
+        aclUtilService.hasPermission(createAnonymousAuthToken(), publicRevision, BasePermission.READ)
     }
 
     /**
@@ -2095,7 +2173,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         if (revision.model.deleted) {
             return false
         }
-        if (!SpringSecurityUtils.ifAnyGranted("ROLE_CURATOR")) {
+        if (!SpringSecurityUtils.ifAnyGranted("ROLE_CURATOR,ROLE_REVIEWER")) {
             return true
         }
         return false
@@ -2146,6 +2224,33 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
     }
 
     /**
+     * Updates the curation state of a revision.
+     *
+     * If this is revision is already published and state is CURATED, then we also generate a
+     * publicationId that gets written to the model file. In this case, a revision is created
+     * and returned.
+     *
+     * @param revision the revision for which to set the curation state.
+     * @param state the new curation state
+     * @return a revision with the updated curation state that has been persisted into the database
+     */
+    Revision updateRevisionCurationState(Revision revision, CurationState state) {
+        revision.setCurationState(state)
+        if (CurationState.CURATED == state && isRevisionPublic(revision)) {
+            Revision updated = doBeforePublishingCuratedRevision(revision)
+            if (null != updated && updated != revision) {
+                // ask Hibernate to not persist the original revision
+                // so that only the updated one is curated and public
+                revision.discard()
+                // we've just added a new private revision atop of a public one. make HEAD public
+                markRevisionAsPublic updated
+                return updated.save(flush: true)
+            }
+        }
+        revision.save(flush:true)
+    }
+
+    /**
      * Makes a Model Revision publicly available.
      * This means that ROLE_USER and ROLE_ANONYMOUS gain read access to the Revision and by that also to
      * the Model.
@@ -2157,11 +2262,11 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
     @PreAuthorize("hasRole('ROLE_CURATOR') or hasRole('ROLE_ADMIN')") //used to be: (hasRole('ROLE_CURATOR') and hasPermission(#revision, admin))
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.publishModelRevision")
-    public void publishModelRevision(Revision revision) {
+    Revision publishModelRevision(Revision revision) {
         if (!SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
             if (!aclUtilService.hasPermission(springSecurityService.authentication, revision,
                         BasePermission.ADMINISTRATION)) {
-                throw new AccessDeniedException("You cannot publish this model.");
+                throw new AccessDeniedException("You cannot publish this model.")
             }
         }
         if (!revision) {
@@ -2217,19 +2322,85 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
 
         boolean curatedModel = isCurated(revision)
         if (MAKE_PUBLICATION_ID && curatedModel) {
-            model.publicationId = model.publicationId ?: publicationIdGenerator.generate()
+            revision = doBeforePublishingCuratedRevision(revision)
         }
         model.firstPublished = new Date()
-        aclUtilService.addPermission(revision, "ROLE_USER", BasePermission.READ)
-        aclUtilService.addPermission(revision, "ROLE_ANONYMOUS", BasePermission.READ)
-        revision.state = ModelState.PUBLISHED
+        markRevisionAsPublic(revision)
         if (!model.save(flush: true)) {
             ModelTransportCommand cmd = new ModelAdapter(model: model).toCommandObject(false)
             throw new ModelException(cmd,
                     "Cannot publish model ${model.submissionId}:${model.errors.allErrors.inspect()}")
         }
 
-        //return publishValidator.generatePublishContext(scenario)
+        revision
+    }
+
+    /*
+     * Sets ACL permissions and the revision state to published.
+     * Any user, whether logged in or not, can read public revisions.
+     */
+    private void markRevisionAsPublic(Revision revision) {
+        aclUtilService.addPermission(revision, "ROLE_USER", BasePermission.READ)
+        aclUtilService.addPermission(revision, "ROLE_ANONYMOUS", BasePermission.READ)
+        revision.state = ModelState.PUBLISHED
+    }
+
+    /*
+     * Returns true if a revision can be read by anonymous users and has state ModelState.PUBLISHED
+     * and false otherwise.
+     */
+    private boolean isRevisionPublic(Revision revision) {
+        (revision.state == ModelState.PUBLISHED || revision.state == ModelState.RELEASED) &&
+            aclUtilService.hasPermission(createAnonymousAuthToken(), revision, BasePermission.READ)
+    }
+
+    /*
+     * Convenience method for constructing anonymous authentication tokens.
+     *
+     * Useful when wishing to check whether anonymous users have permissions for a model/revision.
+     * See
+     *      https://github.com/spring-projects/spring-security/blob/3.2.9.RELEASE/core/src/main/java/org/springframework/security/authentication/AnonymousAuthenticationToken.java#L42
+     *      https://github.com/grails-plugins/grails-spring-security-core/blob/2.x/src/java/grails/plugin/springsecurity/authentication/GrailsAnonymousAuthenticationToken.java
+     *      https://github.com/grails-plugins/grails-spring-security-core/blob/2.x/grails-app/conf/DefaultSecurityConfig.groovy#L145
+     */
+    private Authentication createAnonymousAuthToken() {
+        String key ='foo' // same as grailsApplication.config.grails.plugin.springsecurity.anon.key
+        new GrailsAnonymousAuthenticationToken(key, null)
+    }
+
+    private Revision doBeforePublishingCuratedRevision(Revision revision) throws ModelException {
+        String publicationId
+        if (null == revision.model.publicationId) {
+            revision.model.publicationId = getPublicationIdGenerator().generate()
+        }
+        publicationId = revision.model.publicationId
+
+        // TODO move out of here and invoke via e.g. grailsApplication.mainContext.publishEvent()
+        String format = revision.format.identifier
+        if ("SBML".equals(format)) {
+            RevisionTransportCommand revisionTC = new RevisionAdapter(revision: revision).toCommandObject()
+            def sbmlService = grailsApplication.mainContext.getBean("sbmlService", ISbmlService.class)
+            // TODO externalise generation of canonical model URIs?
+            String[] idXRefs = [revision.model.submissionId, publicationId].collect { String id ->
+                "http://identifiers.org/biomodels.db/$id".toString()
+            } as String[]
+            boolean revisionUpdated = sbmlService.addModelIdentifiersAsAnnotation(revisionTC,
+                 idXRefs)
+
+            if (!revisionUpdated) {
+                return revision // nothing else to do
+            }
+            revisionTC.minorRevision = true
+            revisionTC.comment = "Automatically added model identifier $publicationId"
+            Revision toPublish = doAddValidatedRevision(revisionTC.files, [], revisionTC)
+            RevisionTransportCommand toPublishTC = new RevisionAdapter(revision: toPublish).toCommandObject()
+            indexModelRevision(toPublishTC)
+            return toPublish
+        } else {
+            log.warn("""We are publishing $revision encoded in $format, but won't be able to add \
+the perennial publication identifier to the model file""")
+        }
+        return revision
     }
 
     /**
@@ -2254,7 +2425,11 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         aclUtilService.deletePermission(revision, "ROLE_USER", BasePermission.READ)
         aclUtilService.deletePermission(revision, "ROLE_ANONYMOUS", BasePermission.READ)
         revision.state=ModelState.UNPUBLISHED
-        revision.save(flush:true)
+        revision.model.firstPublished = null
+        revision.model.publicationId = null
+        if (!revision.save(flush:true)) {
+            log.error("Revision ${revision.id} was not made private: ${revision.errors.allErrors}")
+        }
     }
 
     /**
@@ -2269,7 +2444,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
     @PreAuthorize("hasRole('ROLE_USER') or hasRole('ROLE_ADMIN')") //used to be: (hasRole('ROLE_USER') and hasPermission(#revision, admin))
     @PostLogging(LoggingEventType.SUBMIT_FOR_PUBLICATION)
     @Profiled(tag="modelService.submitModelRevisionForPublication")
-    public void submitModelRevisionForPublication(Revision revision) {
+    void submitModelRevisionForPublication(Revision revision) {
         if (!revision) {
             throw new IllegalArgumentException("Revision may not be null")
         }
@@ -2277,16 +2452,15 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             throw new IllegalArgumentException("Revision may not be deleted")
         }
         Model model = revision.model
-        // grant write access this model revision to all existing curators
-        List<User> curators = userService.getUsersByRole("ROLE_CURATOR")
-        curators.each { curator ->
-            grantWriteAccess(model, curator)
+        // grant permissions to ROLE_CURATOR
+        aclUtilService.addPermission(model, "ROLE_CURATOR", BasePermission.READ)
+        aclUtilService.addPermission(model, "ROLE_CURATOR", BasePermission.ADMINISTRATION)
+        aclUtilService.addPermission(model, "ROLE_CURATOR", BasePermission.WRITE)
+
+        model.revisions.each { Revision rev ->
+            aclUtilService.addPermission(rev, "ROLE_CURATOR", BasePermission.ADMINISTRATION)
+            aclUtilService.addPermission(rev, "ROLE_CURATOR", BasePermission.READ)
         }
-        // grant read access and administrative privilege to future curators
-        aclUtilService.addPermission(revision, "ROLE_CURATOR", BasePermission.ADMINISTRATION)
-        aclUtilService.addPermission(revision, "ROLE_CURATOR", BasePermission.READ)
-        revision.state = ModelState.UNPUBLISHED
-        revision.save(flush: true)
     }
 
     /**
@@ -2366,8 +2540,8 @@ Failed to update audit $itemId to $success: ${audit.errors.allErrors.inspect()}"
      * @return either the list of RepositoryFileTransportCommand objects or null
      *         if there is no model files available
      */
-    List<RepositoryFileTransportCommand> fetchMainFileForModels(String[] modelIDs) {
-        List<RepositoryFileTransportCommand> results = []
+    Map<String, RepositoryFileTransportCommand> fetchMainFileForModels(String[] modelIDs) {
+        Map<String, RepositoryFileTransportCommand> results = [:]
         List mids = modelIDs.toList()
         String query = """
 SELECT
@@ -2391,7 +2565,7 @@ WHERE
             AND ace.mask = 1)"""
         List revisions = Model.executeQuery(query, [mids: mids])
 
-        revisions.each {Revision revision ->
+        revisions.each { Revision revision ->
             List<File> files = retrieveModelRepFiles(revision)
             RepositoryFile rf = revision.repoFiles.find { RepositoryFile rf -> rf.mainFile }
             File f = files.find { it.name == rf.path }
@@ -2399,6 +2573,7 @@ WHERE
                 log.error "Cannot find main file for revision {}", revision.id
                 return
             }
+            String filename = revision.model.publicationId ?: revision.model.submissionId
             RepositoryFileTransportCommand rftc = new RepositoryFileTransportCommand(
                 id: rf.id,
                 path: f.getCanonicalPath(),
@@ -2407,7 +2582,7 @@ WHERE
                 mainFile: rf.mainFile,
                 userSubmitted: rf.userSubmitted,
                 mimeType: rf.mimeType)
-            results.add(rftc)
+            results.put(filename, rftc)
         }
 
 	    return results

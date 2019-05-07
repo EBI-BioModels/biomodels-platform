@@ -20,10 +20,10 @@
 
 package net.biomodels.jummp.deployment.biomodels
 
-import grails.test.mixin.*
+
+import grails.test.mixin.TestFor
+import grails.test.mixin.TestMixin
 import grails.test.mixin.domain.DomainClassUnitTestMixin
-import net.biomodels.jummp.model.Model
-import net.biomodels.jummp.model.Revision
 import spock.lang.Specification
 
 @TestMixin(DomainClassUnitTestMixin)
@@ -37,13 +37,13 @@ class ModelOfTheMonthSpec extends Specification {
         def cmd = mom.toCommandObject()
 
         then:
-        cmd.date == "1970-01"
+        cmd.formattedEntryDate == "1970-01"
 
         when: "the publication date is not set"
         mom.publicationDate = null
         cmd = mom.toCommandObject()
 
         then:
-        null == cmd.date
+        null == cmd.formattedEntryDate
     }
 }

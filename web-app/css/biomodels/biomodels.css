@@ -377,8 +377,11 @@ form.resource_search input.submit{
 .alert {
     padding: 7px;
     background-color: #f44336; /* Red */
-    color: white;
     margin-bottom: 3px;
+}
+
+.alert h5 {
+    color: white !important;
 }
 
 .alert.success {
@@ -435,4 +438,25 @@ a.external:hover, a.external:active {
 #fileDesc {
     display: none;
     cursor: pointer;
+}
+
+/* Below are CSS classes used for displaying model tags in the model display page */
+.model-tag {
+    color: #39739d;
+    background-color: #e1ecf4;
+    border-color: #e1ecf4;
+    display: inline-block;
+    padding: .4em .5em;
+    margin: 2px 2px 2px 0;
+    line-height: 1;
+    white-space: inherit;
+    text-decoration: none;
+    text-align: center;
+    border-width: .3em;
+    border-style: solid;
+    border-radius: 12px;
+    cursor: help;
+}
+.select2 {
+    width: 100% !important;
 }

@@ -20,8 +20,10 @@
 
 package net.biomodels.jummp.core.model.identifier.generator
 
+import groovy.transform.CompileStatic
 import net.biomodels.jummp.core.model.identifier.decorator.OrderedModelIdentifierDecorator
 import net.biomodels.jummp.core.model.identifier.ModelIdentifier
+import net.biomodels.jummp.core.model.identifier.support.GeneratorDetails
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 
@@ -30,27 +32,26 @@ import org.apache.commons.logging.LogFactory
  *
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
+@CompileStatic
 class DefaultModelIdentifierGenerator extends AbstractModelIdentifierGenerator {
     /* the class logger */
     private static final Log log = LogFactory.getLog(this)
     /* semaphore for the log threshold */
     private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
 
-    protected DefaultModelIdentifierGenerator() {
+    @SuppressWarnings("GroovyUnusedDeclaration")
+    DefaultModelIdentifierGenerator() {
     }
 
     /**
-     * The only public constructor of this class.
-     *
-     * Throws an IllegalArgumentException if @p decorators is empty or undefined.
+     * Initialises the decorators that should be used by this class instance.
      */
-    public DefaultModelIdentifierGenerator(TreeSet<OrderedModelIdentifierDecorator> decorators) {
-        if (!decorators) {
-            final String msg = "At least one decorator is needed to make model identifiers."
-            log.error(msg)
-            throw new IllegalArgumentException(msg)
-        }
-        DECORATOR_REGISTRY = Collections.unmodifiableSortedSet(decorators)
+    DefaultModelIdentifierGenerator(SortedSet<? extends OrderedModelIdentifierDecorator> decorators) {
+        super(decorators)
+    }
+
+    DefaultModelIdentifierGenerator(GeneratorDetails details) {
+        super(details)
     }
 
     /**
@@ -59,8 +60,10 @@ class DefaultModelIdentifierGenerator extends AbstractModelIdentifierGenerator {
     String generate() {
         ModelIdentifier identifier = new ModelIdentifier()
         final String MODEL_ID
+        def iterator = getDecoratorRegistry().iterator()
         synchronized(ModelIdentifier.class) {
-            DECORATOR_REGISTRY.each { decorator ->
+            while (iterator.hasNext()) {
+                def decorator = iterator.next()
                 identifier.decorate(decorator)
             }
             MODEL_ID = identifier.getCurrentId()
@@ -75,6 +78,10 @@ class DefaultModelIdentifierGenerator extends AbstractModelIdentifierGenerator {
      * Asks decorators in DECORATOR_REGISTRY to prepare new values for the next identifier.
      */
     void update() {
-        DECORATOR_REGISTRY.each { it.isFixed() ?: it.refresh() }
+        def iterator = getDecoratorRegistry().iterator()
+        while (iterator.hasNext()) {
+            def decorator = iterator.next()
+            decorator.isFixed() ?: decorator.refresh()
+        }
     }
 }

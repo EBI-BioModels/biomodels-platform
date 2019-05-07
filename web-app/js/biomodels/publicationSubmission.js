@@ -51,7 +51,6 @@ function deleteAuthor() {
         showNotification("The author has been deleted.")
         updateData();
         $("#authorList option:selected").remove();
-        $('#authorList').attr('size', authorList.length);
         $('#newAuthorName').val("");
         $('#newAuthorOrcid').val("");
         $('#newAuthorInstitution').val("");
@@ -103,8 +102,8 @@ function updateAuthor() {
  * This content is formed at a JSON string that could be parsed by JsonSlurper on server side.
  */
 function updateTempDataDivElement() {
-    var input = "<input name='authorListContainer' value='";
-    input += JSON.stringify(authorMap) + "' style='width: 98%; height: 40px'/>";
+    var input = "<textarea name='authorListContainer' style='width: 200%; height: 40px'>"
+    input += JSON.stringify(authorMap) + "</textarea>";
     document.getElementById("authorListTemp").innerHTML = input;
 }
 function updateData() {

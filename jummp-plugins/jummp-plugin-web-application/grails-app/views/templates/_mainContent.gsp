@@ -12,11 +12,11 @@
     if (!params.sort) {
         params.sort = "relevance-desc"
     }
-    String queryString = params.query?.replaceAll('"', '\\\\"')
+    String queryString = params.query?.replaceAll('([^\\\\])"', '$1\\\\"')
 %>
 <div class="content">
     <g:if test="${models}">
-        <div id="inline-list" class="row">
+        <div id="inline-list" class="row" style="margin-top: 10px;">
             <div class="small-12 medium-12 large-6 columns" id="sorting">
                 <!-- Show Sort by box on the search page only for now-->
                 <g:if test="${action == "search"}">
@@ -326,20 +326,6 @@
         </div>
     </g:if>
     <g:else>
-        <g:if test="${matches != null}">
-            <p>No available models matched your query. Please try logging in to
-            access more models, or another search query.</p>
-        </g:if>
-        <g:else>
-            <p>No available models matched your query. Please try logging in to
-            access more models, or another search query.</p>
-        </g:else>
-        <div class="alert info">
-            <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
-            <h5 style="color: #ffffff">Please also check the syntax of your search terms.</h5>
-        </div>
-        <script>
-            $('#clearsearch').hide();
-        </script>
+        <g:render template="/templates/searchNotFound" />
     </g:else>
 </div>

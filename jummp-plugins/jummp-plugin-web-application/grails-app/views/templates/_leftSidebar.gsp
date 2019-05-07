@@ -1,7 +1,7 @@
 <%@
     page import="grails.converters.JSON"
     contentType="text/html;charset=UTF-8"
-    expressionCodec="none"
+    expressionCodec="html"
 %>
 <%
     // create the list of indices using for the javascript at the bottom
@@ -11,7 +11,7 @@
     }
     def specialCharacters = "([:+\\(\\)\\[\\]\\{\\}\\|\\*\\&\"\\?\'\\!\\^])"
     def FACETS_WRAPPED_DOUBLE_QUOTE = ["curationstatus", "modelformat", "disease", "modellingapproach", "modelflag"]
-    String queryString = params.query?.replaceAll('"', '\\\\"')
+    String queryString = params.query?.replaceAll('([^\\\\])"', '$1\\\\"')
 %>
 <g:if test="${models}">
     <h4>Filter your results</h4>
@@ -19,7 +19,8 @@
         <div id="facetList${i}">
         <h5 style="padding-top: 5px">${facet.label}</h5>
         <% String idFacet = facet.label.replace(' ', '') %>
-        <input type="text" id="txtSearch${idFacet}" placeholder="Find your ${facet.label}" class="searchEachFacet search" />
+        <input type="text" id="txtSearch${idFacet}" placeholder="Find your ${facet.label}"
+               class="searchEachFacet search" />
         <div class="facetContainer" id="facet${idFacet}">
             <ul id="${idFacet}" class="list">
             <g:each in="${facet.facetValues}" var="fv">
@@ -41,14 +42,13 @@
                         selectedFacet = "${facet.id}:${fv.value}"
                         isAsked = params.query?.contains("${facet.id}:${escapedFacetValue}")
                     }
-
                 %>
                 <g:if test="${isAsked}">
                     <input type="checkbox" id="facetValue_${fv.value}" checked
                            value="${fv.value}" title="${fv.value}"
                            onchange="${jsMethod}($(this), '${facet.id}' ,'${escapedFacetValue}')">
                     <span class="facetLabel" onclick="${jsMethod}($(this), '${facet.id}' ,'${escapedFacetValue}')">
-                        ${fv.label} (${fv.count})</span>
+                        <g:render template="/templates/singleFacetShow" model="[fv: fv, method: jsMethod]" /></span>
                 </g:if>
                 <g:else>
                     <%
@@ -78,7 +78,10 @@
                            value="${fv.value}" title="${fv.value}"
                            onchange="${jsMethod}($(this), '${facet.id}' ,'${escapedFacetValue}')">
                     <g:link controller="search" action="${actionName}" params="${newParams}" class="facetLabel">
-                        <span class="facetLabel">${fv.label} (${fv.count})</span></g:link>
+                        <span class="facetLabel">
+                            <g:render template="/templates/singleFacetShow" model="[fv: fv, method: jsMethod]" />
+                        </span>
+                    </g:link>
                 </g:else>
                 </li>
             </g:each>
@@ -106,9 +109,9 @@
         valueNames: ['facetLabel'] // add css classes associated with the elements that you want to search in
     };
     var facetList = [];
-    $.each(${listOfFacets}, function(index, element) {
-        facetList[index] = new List('facetList'+index, options);
-    });
+    for (i = 0; i< ${listOfFacets.size()}; i++) {
+        facetList[i] = new List('facetList'+i, options);
+    };
 
     function runFacetSearch(e, facetGroupId, facetValue) {
         var newSearchURI = "${grailsApplication.config.grails.serverURL}/search?query="
@@ -116,8 +119,8 @@
         if (isNeededDQ) {
             facetValue = '"' + facetValue + '"';
         }
-	    var lastQueryString = " AND " + facetGroupId + ":" + facetValue;
-	    var currentQuery = "${queryString}";
+        var lastQueryString = " AND " + facetGroupId + ":" + facetValue;
+        var currentQuery = "${queryString}";
         if (e[0].checked) {
             currentQuery += lastQueryString;
         } else {
@@ -126,13 +129,13 @@
         }
         var otherParams = "";
         if ("${params.offset}") {
-            otherParams += "&offset=${params.offset}";
+            otherParams += "&amp;offset=${params.offset}";
         }
         if ("${params.numResults}") {
-            otherParams += "&numResults=${params.numResults}";
+            otherParams += "&amp;numResults=${params.numResults}";
         }
         if ("${params.sort}") {
-            otherParams += "&sort=${params.sort}";
+            otherParams += "&amp;sort=${params.sort}";
         }
         newSearchURI += encodeURIComponent(currentQuery) + otherParams;
         window.location.href = newSearchURI;
@@ -142,7 +145,7 @@
         var currentQueryString = "${params.query?.replaceAll('"', '\\\\"')}";
         facetValue = escapeSpecialLuceneCharacters(facetValue);
         /* the above utility function is defined in common.js which is already included in the footer section */
-	    var latestQueryString = facetGroupId + ":" + facetValue;
+        var latestQueryString = facetGroupId + ":" + facetValue;
         if (e[0].checked) {
             // choose and click on a single facet
             if (currentQueryString === "") {
@@ -163,15 +166,15 @@
             // why don't we need to check empty of the currentQueryString?
             currentQueryString = currentQueryString.replace(latestQueryString, "");
         }
-	    var otherParams = "";
+        var otherParams = "";
         if ("${params.offset}") {
-            otherParams += "&offset=${params.offset}";
+            otherParams += "&amp;offset=${params.offset}";
         }
         if ("${params.numResults}") {
-            otherParams += "&numResults=${params.numResults}";
+            otherParams += "&amp;numResults=${params.numResults}";
         }
         if ("${params.sort}") {
-            otherParams += "&sort=${params.sort}";
+            otherParams += "&amp;sort=${params.sort}";
         }
         var newSearchURL = "${grailsApplication.config.grails.serverURL}/models"
         currentQueryString = encodeURIComponent(currentQueryString);
@@ -179,7 +182,8 @@
         if (currentQueryString) {
             newParams += "query=" + currentQueryString + otherParams;
         } else {
-            newParams += otherParams.substr(1); // eliminate the first character '&'
+            // eliminate the first HTML-encoded '&' (&amp;)
+            newParams += otherParams.substr(5);
         }
         window.location.href = newSearchURL + newParams;
     }

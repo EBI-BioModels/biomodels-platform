@@ -253,8 +253,6 @@
                             $(this).css("display", "inline");
                             //var discardID = "discard" + $(this).attr('id');
                             //$("#"+discardID).attr('download', fileName);
-                            $('#mainFileDescription').val('');
-
                         } else {
                             var td = $(this).parent().get(0);
                             var span = $($.parseHTML($(td).html()))[1];
@@ -320,11 +318,11 @@
                                 var newFile = {filename: fileName, description: fileName}
                                 existingMainFiles.push(newFile);
                             }
+                        } else {
+                            var flashDiv = $('.flashNotificationDiv');
+                            $(flashDiv).html("The main file cannot be empty");
+                            $(flashDiv).show();
                         }
-                    } else {
-                        var flashDiv = $('.flashNotificationDiv');
-                        $(flashDiv).html("The main file cannot be empty");
-                        $(flashDiv).show();
                     }
                 });
 
@@ -347,7 +345,7 @@
                                 id: 'description' + index,
                                 name: 'description',
                                 style: "width: 100%; box-sizing: border-box; -webkit-box-sizing: border-box; -moz-box-sizing: border-box;",
-                                placeholder: 'Please enter a description'
+                                placeholder: 'Please enter a description about the file type and format (e.g., PNG plot of the model simulation)'
                             }).prop('required', true)
                         ),
                         $('</td><td style="width: 10%; display: table-cell; vertical-align: middle; text-align: center">&nbsp;').append(

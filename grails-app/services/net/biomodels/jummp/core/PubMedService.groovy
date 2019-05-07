@@ -30,21 +30,24 @@
 
 package net.biomodels.jummp.core
 
-import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter
+import grails.plugin.cache.Cacheable
+import groovy.util.slurpersupport.GPathResult
+import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter as PLPA
 import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand
+import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PLPTC
+import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
 import net.biomodels.jummp.model.PublicationLinkProvider
-import org.xml.sax.SAXParseException
-import org.springframework.transaction.annotation.Transactional
-import net.biomodels.jummp.core.model.PublicationTransportCommand
-import net.biomodels.jummp.plugins.security.Person
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+import org.xml.sax.SAXParseException
+
 /**
  * @short Service for fetching Publication Information for PubMed resources.
  *
  * This service class handles the interaction with the Web Service to retrieve
  * publication information for PubMed resources. It connects to citexplore and
  * parses the returned HTML page for the publication information.
+ *
  * @author Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
@@ -52,28 +55,7 @@ import org.apache.commons.logging.LogFactory
  */
 class PubMedService {
     final Log log = LogFactory.getLog(getClass())
-
-    private setFieldIfItExists(String fieldName, PublicationTransportCommand publication, def xmlField, boolean castToInt) {
-        try {
-            if (xmlField && xmlField.size() == 1) {
-                String text = xmlField.text()
-                if (castToInt) {
-                    try {
-                        publication."${fieldName}" = text as int
-                    } catch (NumberFormatException ignored) {
-                        final String pId = publication.link
-                        log.warn "Field '$fieldName' of publication $pId is not numerical: $text"
-                    }
-                }
-                else {
-                    publication."${fieldName}" = text
-                }
-            }
-        }
-        catch(Exception e) {
-            log.error e.message, e
-        }
-    }
+    static transactional = false
 
     /**
      * Downloads the XML describing the PubMed resource and parses the Publication information.
@@ -81,8 +63,23 @@ class PubMedService {
      * @return A fully populated Publication
      */
     @SuppressWarnings("EmptyCatchBlock")
-    @Transactional
-    PublicationTransportCommand fetchPublicationData(String id) throws JummpException {
+    PubTC fetchPublicationData(String id) throws JummpException {
+        def slurper = lookupPublicationDataInPubMed(id)
+
+        PublicationLinkProviderTransportCommand linkCommand = createPubMedLinkProviderInstance()
+        PubTC.fromPubMed(linkCommand, id, slurper)
+    }
+
+    @Cacheable("pubMedLinkProviderInstance")
+    PublicationLinkProviderTransportCommand createPubMedLinkProviderInstance() {
+        PublicationLinkProvider link = PublicationLinkProvider.withCriteria(uniqueResult: true) {
+            eq("linkType", PublicationLinkProvider.LinkType.PUBMED)
+        }
+        PLPTC linkCommand = new PLPA(linkProvider: link).toCommandObject()
+        linkCommand
+    }
+
+    GPathResult lookupPublicationDataInPubMed(String id) throws JummpException {
         URL url
         try {
             url = new URL("https://www.ebi.ac.uk/europepmc/webservices/rest/search/query=ext_id:${id}%20src:med&resulttype=core")
@@ -91,68 +88,14 @@ class PubMedService {
             throw new JummpException("PubMed URL is malformed", e)
         }
 
-        def slurper
+        def slurper = null
         try {
             slurper = new XmlSlurper().parse(url.openStream())
-        }
-        catch (SAXParseException e) {
+        } catch (SAXParseException e) {
             throw new JummpException("Could not parse PubMed information", e)
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new JummpException("Error retrieving publication info", e)
         }
-        PublicationLinkProvider link = PublicationLinkProvider.withCriteria(uniqueResult: true) {
-            eq("linkType",PublicationLinkProvider.LinkType.PUBMED)
-        }
-        PublicationLinkProviderTransportCommand linkCommand = new PublicationLinkProviderAdapter(
-                linkProvider: link).toCommandObject()
-        PublicationTransportCommand publication = new PublicationTransportCommand(linkProvider:
-                linkCommand, link: id)
-        setFieldIfItExists("pages", publication, slurper.resultList.result.pageInfo, false)
-        setFieldIfItExists("title", publication, slurper.resultList.result.title, false)
-        setFieldIfItExists("affiliation", publication, slurper.resultList.result.affiliation, false)
-        setFieldIfItExists("synopsis", publication, slurper.resultList.result.abstractText, false)
-
-        if (slurper.resultList.result.journalInfo) {
-            setFieldIfItExists("month", publication, slurper.resultList.result.journalInfo.monthOfPublication, true)
-            setFieldIfItExists("year", publication, slurper.resultList.result.journalInfo.yearOfPublication, true)
-            // cannot retrieve publication day directly like all other details
-            def isoDateField = slurper.resultList.resultList.journalInfo.printPublicationDate
-            if (isoDateField) {
-                String isoDate = isoDateField.text()
-                String[] dateParts = isoDate?.split('-')
-                if (dateParts.length == 3) {
-                    String dayAsString = dateParts[-1]
-                    try {
-                        publication.day = dayAsString as int
-                    } catch (NumberFormatException ignored) {
-                        log.warn "Invalid publication day $dayAsString for ${publication.link}"
-                    }
-                }
-            }
-            setFieldIfItExists("volume", publication, slurper.resultList.result.journalInfo.volume, false)
-            setFieldIfItExists("issue", publication, slurper.resultList.result.journalInfo.issue, false)
-            setFieldIfItExists("journal", publication, slurper.resultList.result.journalInfo.journal.title, false)
-        }
-        parseAuthors(slurper, publication)
-
-        return publication
-    }
-
-    /**
-     * Parses the author information and adds it to @p publication
-     * @param slurper The parsed XML document
-     * @param publication The publication to add the authors to
-     */
-    private void parseAuthors(def slurper, PublicationTransportCommand publication) {
-        publication.authors=[];
-        for (def authorXml in slurper.resultList.result.authorList.author) {
-            Person author = new Person()
-            author.userRealName = authorXml.fullName[0].text()
-            if (authorXml.authorId[0]?.@type=="ORCID") {
-                author.orcid = authorXml.authorId[0].text()
-            }
-            publication.authors.add(author);
-        }
+        slurper
     }
 }

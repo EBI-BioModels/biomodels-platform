@@ -1,3 +1,6 @@
+import grails.converters.XML
+import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchXmlMarshaller
+
 // configuration for plugin testing - will not be included in the plugin zip
 
 log4j = {
@@ -19,4 +22,21 @@ log4j = {
            'org.springframework',
            'org.hibernate',
            'net.sf.ehcache.hibernate'
+}
+
+grails.databinding.dateFormats = ["yyyy-MM-dd'T'HH:mm:ss"]
+XML.registerObjectMarshaller(new ParameterSearchXmlMarshaller())
+grails.hibernate.cache.queries = false
+
+beans {
+    cacheManager {
+        shared = true
+    }
+}
+
+grails.cache.config.provider.name = "jummpCacheManager"
+grails.cache.ehcache.cacheManagerName = "jummpCacheManager"
+
+if (jummpConfig.jummp.cache.dir) {
+    jummp.cache.dir = jummpConfig.jummp.cache.dir
 }

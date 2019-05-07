@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2019 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -45,6 +45,7 @@ import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
+import org.junit.Test
 
 class GitManagerTests extends GrailsUnitTestCase {
     private File clone
@@ -60,11 +61,7 @@ class GitManagerTests extends GrailsUnitTestCase {
         exchangeDirectory = new File("target/vcs/exchange")
         exchangeDirectory.mkdirs()
         gitManager = new GitManager()
-        FileRepositoryBuilder builder = new FileRepositoryBuilder()
-        repository = builder.setWorkTree(clone)
-        .readEnvironment() // scan environment GIT_* variables
-        .findGitDir(clone) // scan up the file system tree
-        .build()
+        repository = GitSupport.buildRepository(clone)
         git = new Git(repository)
         git.init().setDirectory(clone).call()
     }
@@ -75,193 +72,95 @@ class GitManagerTests extends GrailsUnitTestCase {
     }
 
     void testInit() {
-        shouldFail(VcsException) {
+        println ">> Running testInit()"
+        shouldFail VcsException, {
             // test that we cannot init into a file
             File noDirectory = new File("target/vcs/tmp")
             FileUtils.touch(noDirectory)
-            gitManager.init(noDirectory, exchangeDirectory)
+            gitManager.init(noDirectory)
         }
-        shouldFail(VcsException) {
-            // test that we cannot init into a non-existing directory
-            gitManager.init(new File("target/vcs/tmp2"), exchangeDirectory)
+        shouldFail VcsException, {
+            // test that we cannot initialise into a non-existing directory
+            gitManager.init(new File("target/vcs/tmp2"))
         }
-        shouldFail(VcsException) {
-            // test that exchange directory is not a file
-            gitManager.init(clone, new File("target/vcs/tmp"))
-        }
-        shouldFail(VcsException) {
-            // test that exchange directory exists
-            gitManager.init(clone, new File("target/vcs/tmp3"))
-        }
-        // init should work now
-        gitManager.init(clone, exchangeDirectory)
-        shouldFail(VcsAlreadyInitedException) {
-            // test that we cannot init the checkout twice
-            gitManager.init(clone, exchangeDirectory)
+
+        // The init method should work now
+        gitManager.init(exchangeDirectory)
+        shouldFail VcsAlreadyInitedException, {
+            // test that we cannot initialise the checkout twice
+            gitManager.init(exchangeDirectory)
         }
     }
 
-    void testImport() {
-        // not yet inited, so it should fail
-        shouldFail(VcsNotInitedException) {
-            gitManager.importFile(new File("/tmp"), "tmp")
+    @Test
+    void testGetFileDetails() {
+        File clone = new File("target/vcs/clone")
+        assertNull new File(".git", clone).canonicalPath
+    }
+
+
+    void testRetrieveModel() {
+        println ">> Running testRetrieveModel()"
+        shouldFail VcsException, {
+            // exchange directory has not been initialised
+            gitManager.retrieveModel(new File("/tmp"), "tmp")
         }
-        gitManager.init(clone, exchangeDirectory)
-        shouldFail(VcsException) {
+
+        gitManager.init(exchangeDirectory)
+
+        shouldFail VcsException, {
             // non existing file
-            gitManager.importFile(new File("target/vcs/tmp"), "test")
+            gitManager.retrieveModel(new File("target/vcs/tmp"), "test")
         }
-        shouldFail(VcsException) {
+
+        shouldFail Exception, {
             // directory instead of file
             File directory = new File("target/vcs/tmp")
             directory.mkdirs()
-            gitManager.importFile(directory, "test")
+            gitManager.retrieveModel(directory, "test")
         }
-        File importFile = new File("target/vcs/tmp/test")
-        FileUtils.touch(importFile)
-        shouldFail(FileAlreadyVersionedException) {
-            // test whether the file already exists in the directory
-            FileUtils.touch(new File(clone.absolutePath + File.separator + "test"))
-            gitManager.importFile(importFile, "test")
-        }
-        File importedFile = new File(clone.absolutePath + File.separator + "test")
-        // created the temp file in previous step - ensure it is deleted again
-        importedFile.delete()
-        String revision = gitManager.importFile(importFile, "test")
-        assertTrue(importedFile.exists())
-        assertTrue(importedFile.isFile())
-        ObjectId commit = repository.resolve(Constants.HEAD)
-        RevWalk revWalk = new RevWalk(repository)
-        RevCommit revCommit = revWalk.parseCommit(commit)
-        assertEquals(commit.getName(), revision)
-        assertEquals("Import of test", revCommit.getShortMessage())
-        assertEquals("Import of test", revCommit.getFullMessage())
-        shouldFail(FileAlreadyVersionedException) {
-            gitManager.importFile(importFile, "test")
-        }
-        // import a second file with custom commit message
-        revision = gitManager.importFile(importFile, "test2", "Custom commit message")
-        FileRepositoryBuilder builder = new FileRepositoryBuilder()
-        Repository repository = builder.setWorkTree(clone)
-        .readEnvironment() // scan environment GIT_* variables
-        .findGitDir(clone) // scan up the file system tree
-        .build()
-        commit = repository.resolve(Constants.HEAD)
-        revWalk = new RevWalk(repository)
-        revCommit = revWalk.parseCommit(commit)
-        assertEquals(commit.getName(), revision)
-        assertEquals("Custom commit message", revCommit.getShortMessage())
-        assertEquals("Custom commit message", revCommit.getFullMessage())
-    }
 
-    void testUpdate() {
-        shouldFail(VcsNotInitedException) {
-            gitManager.updateFile(new File("/tmp"), "tmp")
-        }
-        gitManager.init(clone, exchangeDirectory)
-        shouldFail(VcsException) {
-            // non existing file
-            gitManager.updateFile(new File("target/vcs/tmp"), "test")
-        }
-        shouldFail(VcsException) {
-            // directory instead of file
-            File directory = new File("target/vcs/tmp")
-            directory.mkdirs()
-            gitManager.updateFile(directory, "test")
-        }
         File importFile = new File("target/vcs/tmp/test")
         FileUtils.touch(importFile)
-        shouldFail(FileNotVersionedException) {
-            gitManager.updateFile(importFile, "test")
+        shouldFail InvalidVcsRepositoryException, {
+            // it is an invalid git repository
+            gitManager.retrieveModel(importFile, "test")
         }
+
+        // test the git repository
+        assertNotNull(repository)
+        assertTrue(!repository.isBare())
+        assertNotNull(gitManager)
+
         // import the file
-        gitManager.importFile(importFile, "test")
-        ObjectId commit = repository.resolve(Constants.HEAD)
-        RevWalk revWalk = new RevWalk(repository)
-        RevCommit revCommit = revWalk.parseCommit(commit)
-        String prevCommit = revCommit.getName()
-        // now update it
-        importFile.append("Some test text\n")
-        // verify commit message
-        String revision = gitManager.updateFile(importFile, "test")
-        FileRepositoryBuilder builder = new FileRepositoryBuilder()
-        Repository repository = builder.setWorkTree(clone)
-        .readEnvironment() // scan environment GIT_* variables
-        .findGitDir(clone) // scan up the file system tree
-        .build()
-        commit = repository.resolve(Constants.HEAD)
-        revWalk = new RevWalk(repository)
-        revCommit = revWalk.parseCommit(commit)
-        assertTrue(prevCommit != commit.getName())
-        assertEquals(commit.getName(), revision)
-        assertEquals("Update of test", revCommit.getShortMessage())
-        assertEquals("Update of test", revCommit.getFullMessage())
-        // custom commit message
-        importFile.append("Some more text")
-        revision = gitManager.updateFile(importFile, "test", "Test commit message")
-        repository = builder.setWorkTree(clone)
-        .readEnvironment() // scan environment GIT_* variables
-        .findGitDir(clone) // scan up the file system tree
-        .build()
-        commit = repository.resolve(Constants.HEAD)
-        revWalk = new RevWalk(repository)
-        revCommit = revWalk.parseCommit(commit)
-        assertEquals(commit.getName(), revision)
-        assertEquals("Test commit message", revCommit.getShortMessage())
-        assertEquals("Test commit message", revCommit.getFullMessage())
-    }
-
-    void testRetrieveFile() {
-        shouldFail(VcsNotInitedException) {
-            gitManager.retrieveFile("/tmp")
-        }
-        gitManager.init(clone, exchangeDirectory)
-        shouldFail(FileNotVersionedException) {
-            gitManager.retrieveFile("test")
-        }
-        File importFile = new File("target/vcs/tmp/test")
+        importFile = new File(clone, "test.txt")
+        importFile.append("Import the file")
         FileUtils.touch(importFile)
-        // import the file
-        String importRevision = gitManager.importFile(importFile, "test")
-        // now update it
-        importFile.append("Some test text\n")
-        String updateRevision = gitManager.updateFile(importFile, "test")
-        // retrieve the file
-        File retrievedFile = gitManager.retrieveFile("test")
-        String path = retrievedFile.absolutePath
-        assertTrue(retrievedFile.exists())
-        assertTrue(retrievedFile.isFile())
-        List<String> lines = retrievedFile.readLines()
-        assertEquals(1, lines.size())
-        assertEquals("Some test text", lines[0])
-        // passing invalid revision should fail
-        shouldFail(VcsException) {
-            retrievedFile = gitManager.retrieveFile("test", "not a number")
-        }
-        shouldFailWithCause(MissingObjectException) {
-            // some random sha1 sum should faild
-            retrievedFile = gitManager.retrieveFile("test", "780f5fb1e98c9fb8fa96570bdafac121ddb0fd03")
-        }
-        retrievedFile = gitManager.retrieveFile("test", importRevision)
-        assertTrue("Retrieved files have same path, but each retrieved file should have a unique identifier", path != retrievedFile.absolutePath)
-        assertEquals(0, retrievedFile.readBytes().length)
-        // clone has to be on HEAD again
-        FileRepositoryBuilder builder = new FileRepositoryBuilder()
-        Repository repository = builder.setWorkTree(clone)
-        .readEnvironment() // scan environment GIT_* variables
-        .findGitDir(clone) // scan up the file system tree
-        .build()
-        ObjectId commit = repository.resolve(Constants.HEAD)
-        RevWalk revWalk = new RevWalk(repository)
-        RevCommit revCommit = revWalk.parseCommit(commit)
-        assertEquals(updateRevision, revCommit.name())
-    }
+        GitSupport.importFile(git, importFile.name)
+        String authorName = "Admin"
+        String authorEmail = "admin@example.com"
+        String commitMessage = "Upload the first files"
+        GitSupport.makeCommit(git, authorName, authorEmail, commitMessage)
 
-    void testUpdateWorkingCopy() {
-        shouldFail(VcsNotInitedException) {
-            gitManager.updateWorkingCopy()
-        }
-        gitManager.init(clone, exchangeDirectory)
-        // TODO: write suited test case
+        String firstCommitHash = GitSupport.getLatestCommitHashString(repository) // get that for the future use
+        String actualCtMsg = GitSupport.getFullLatestCommitMessage(repository)
+        assertEquals(commitMessage, actualCtMsg)
+
+        List files = gitManager.retrieveModel(clone)
+        assertEquals(1, files.size())
+
+        // now update the repository by adding a new file
+        File anotherFile = new File(clone, "dummy.txt")
+        anotherFile.append("This is a dummy file")
+        GitSupport.importFile(git, anotherFile.name)
+        commitMessage = "Add a dummy file"
+        GitSupport.makeCommit(git, authorName, authorEmail, commitMessage)
+        files = gitManager.retrieveModel(clone)
+        assertEquals(2, files.size())
+
+        // test with a specific starting point (i.e. commit hash string, branch name, tag name, etc.)
+        // For this case, we test with the first commit
+        files = gitManager.retrieveModel(clone, firstCommitHash)
+        assertEquals(1, files.size())
     }
 }
