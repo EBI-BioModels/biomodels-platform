@@ -17,6 +17,7 @@
                         <option value="${it.userRealName}|${it.orcid ?: ""}|${it.institution ?: ""}">${it.userRealName}</option>
                     </g:each>
                 </select>
+                Click to select an author to update or delete. Click Add button to add a new author into the list.
             </label>
             <div>
                 <ul class="subListForm">

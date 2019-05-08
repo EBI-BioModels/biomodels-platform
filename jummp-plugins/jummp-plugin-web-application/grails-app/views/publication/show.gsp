@@ -25,6 +25,7 @@
 --%>
 
 <%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page import="grails.converters.JSON;" %>
 <%
     def style = grailsApplication.config.jummp.branding.style
     def serverUrl = grailsApplication.config.grails.serverURL
@@ -39,6 +40,24 @@
           href="${resource(contextPath: "${serverUrl}", dir: "css", file: 'toastr.min.css')}"/>
 
     <g:javascript src="toastr.min.js" contextPath=""/>
+    <g:javascript>
+        // Indeed, we don't need to check whether the authors is null or not because if case of the model has
+        // no publication yet, we always create an empty PersonTransportCommand to maintain authors
+        // during the submission flow.
+        if (${publication != null}) {
+            var authorMap = {"authors": ${publication?.authors?.collect {
+                String userRealName = it.userRealName ?: ""
+                String institution = it.institution ?: ""
+                String orcid = it.orcid ?: ""
+                [userRealName: userRealName, institution: institution, orcid: orcid]
+            } as JSON}};
+            var authorList = authorMap["authors"];
+        } /*else {
+            var authorMap = {"authors": []};
+            var authorList = {};
+        }*/
+    </g:javascript>
+    <g:javascript src="${style}/publicationSubmission.js" contextPath="" />
 </head>
 
 <body>
