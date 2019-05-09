@@ -328,7 +328,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                                  hasCuratorRole         : hasCuratorRole,
                                  supportedForConversion : supportedForConversion,
                                  convertedFilesTC       : convertedFilesTC,
-                                 tags                   : tags
+                                 bmTags                 : tags
                     ]
                     if (rev.id == revision.id) {
                         flash.genericModel = model

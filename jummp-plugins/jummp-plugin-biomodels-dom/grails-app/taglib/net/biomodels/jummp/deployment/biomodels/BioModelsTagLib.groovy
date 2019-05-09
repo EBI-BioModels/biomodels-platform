@@ -227,12 +227,12 @@ class BioModelsTagLib {
     }
 
     def showTags = { attrs ->
-        Set<TagTransportCommand> tags = attrs.tags
+        Set<TagTransportCommand> tags = attrs.bmTags
         out << render(template: "/templates/showTags", plugin: "jummp-plugin-biomodels-dom", model: ['tags': tags])
     }
 
     def showEditableTags = { attrs ->
-        Set<TagTransportCommand> tags = attrs.tags
+        Set<TagTransportCommand> tags = attrs.bmTags
         Set<Integer> tagIdSet = tags.collect { it.id }
         Set<TagTransportCommand> allTags = tagService.all.toSet()
         Set<TagTransportCommand> unTags = allTags.findAll { !tagIdSet.contains(it.id) }
