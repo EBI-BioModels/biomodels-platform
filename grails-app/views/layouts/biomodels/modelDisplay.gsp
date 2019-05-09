@@ -29,16 +29,21 @@
 --%>
 
 <g:applyLayout name="biomodels/main">
-<%@ page import="java.text.DateFormat"%>
+<%@ page import="grails.converters.JSON; java.text.DateFormat"%>
 <%@ page import="net.biomodels.jummp.core.model.ModelState"%>
 <%@ page import="net.biomodels.jummp.qcinfo.*"%>
-
+<%
+    JSON tagsJSON = tags as grails.converters.JSON
+%>
 <head xmlns="http://www.w3.org/1999/html">
-    <title>${revision.name}</title>
+    <title>${revision.name} | BioModels</title>
     <script type="text/javascript">
         $(document).ready(function() {
-            var mainContainer = $("#content");
-            mainContainer.css('margin-left', 40+'px');
+            $('.model-tags-select2').select2({
+                placeholder: "Type here to search a tag",
+                tags: false,
+                multiple: true
+            });
         });
     </script>
     <script type="text/x-mathjax-config">
@@ -50,7 +55,14 @@
             src="${grailsApplication.config.grails.serverURL}/js/MathJax-2.6.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
     </script>
     <g:javascript>
-	    var canUpdate = ${canUpdate};
+        let canUpdate = ${canUpdate};
+        // initialTags is the list of tags associated with the model
+        // as the page is completely loaded
+        let initialTags = [];
+        let tagsJSON = Object.values(${tagsJSON});
+        $.each(${tagsJSON}, function (index, value) {
+            initialTags.push(value);
+        });
     </g:javascript>
     <g:javascript src="syntax/shCore.js"/>
     <g:javascript src="syntax/shBrushMdl.js"/>
@@ -75,17 +87,16 @@
             margin: 0;
             padding: 0;
         }
-    </style>
-    <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.handsontable.full.min.css')}"/>
-    <link rel="stylesheet" href="${resource(dir: 'css/syntax', file: 'shCore.css')}" />
-    <link rel="stylesheet" href="${resource(dir: 'css/syntax', file: 'shThemeDefault.css')}" />
-    <link rel="stylesheet" href="${resource(dir: 'css', file: 'toastr.min.css')}"/>
-    <style>
         #toolbarList li .ui-button-text {
             font-size: 0.75em;
         }
     </style>
-
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.handsontable.full.min.css')}"/>
+    <link rel="stylesheet" href="${resource(dir: 'css/syntax', file: 'shCore.css')}"/>
+    <link rel="stylesheet" href="${resource(dir: 'css/syntax', file: 'shThemeDefault.css')}"/>
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'toastr.min.css')}"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/css/select2.min.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.min.js"></script>
     <script>
         $(function() {
             $( "#tabs" ).tabs({
@@ -629,6 +640,7 @@
                             <div class="rounded-header"><h4 style="color: #ffffee">Metadata information</h4></div>
                             <g:pageProperty name="page.genericAnnotations"/>
                             <g:if test="${curationState}">
+                            <biomd:insertSeparator/>
                             <div class='row'>
                                 <div class="small-12 medium-6 large-4 columns">Curation status</div>
                                 <div class="small-12 medium-6 large-8 columns">
@@ -654,6 +666,7 @@
                                 </div>
                             </div></g:if>
                             <g:if test="${modellingApproaches}">
+                            <biomd:insertSeparator/>
                             <div class='row'>
                                 <div class="small-12 medium-6 large-4 columns">Modelling approach(es)</div>
                                 <div class="small-12 medium-6 large-8 columns">
@@ -661,11 +674,21 @@
                                 </div>
                             </div></g:if>
                             <g:if test="${originalModels}">
+                            <biomd:insertSeparator/>
                             <div class='row'>
                                 <div class="small-12 medium-6 large-4 columns">Original model(s)</div>
                                 <div class="small-12 medium-6 large-8 columns">
                                     <biomd:renderOriginalModels sources="${originalModels}"/></div>
                             </div></g:if>
+                            <!-- Show all tags assigned to the model -->
+                            <g:if test="${canUpdate && hasCuratorRole}">
+                                <biomd:insertSeparator/>
+                                <biomd:showEditableTags tags="${tags}"/>
+                            </g:if>
+                            <g:else>
+                                <biomd:insertSeparator/>
+                                <biomd:showTags tags="${tags}"/>
+                            </g:else>
                             <!-- Render a disclaimer if the model has been published without a publicly available manuscript -->
                             <biomd:displayDisclaimer revision="${revision}"/>
                             %{--<div class='row'>
@@ -744,6 +767,80 @@
                 </div>
             </div>
         </div>
+    <script>
+        $('#btnSaveTags').on("click", function (event) {
+            "use strict";
+            event.preventDefault();
+            let updatedTags = getDataFromSelect2();
+            if (initialTags.length === updatedTags.length && !initialTags.length) {
+                toastr.clear();
+                toastr.warning("No label applied to the model. Alternatively, select at least one label from the list.");
+            } else {
+                $.ajax({
+                    type: "POST",
+                    url: $.jummp.createLink("modelTag", "saveModelTag"),
+                    cache: true,
+                    async: true,
+                    processData: true,
+                    dataType: "json",
+                    data: {
+                        modelId: "${revision.model.submissionId}",
+                        tags: buildTagSet()
+                    },
+                    beforeSend: function () {
+                        let msg = "";
+                        if (updatedTags.length === 0) {
+                            msg = "No tags applied to the model.";
+                        } else {
+                            msg = "The labels applied to the model are being saved into our database. Please wait...";
+                        }
+                        toastr.clear();
+                        toastr.info(msg);
+                    }
+                }).done(function (data, txtStatus, jqXHR) {
+                        var msg = data.message;
+                        var statusCode = data.status
+                        toastr.clear();
+                        if (statusCode === 200) {
+                            toastr.success(msg);
+                            // update select2 data
+
+                        } else if (statusCode === 400) {
+                            toastr.error(msg);
+                        } else if (statusCode === 422) {
+                            toastr.warn(msg);
+                        } else {
+                            toastr.error("Cannot determine the reason for the unexpected error");
+                        }
+                        initialTags = updatedTags;
+
+                }).fail(function (jqXHR, status, errorThrown) {
+                        var msg = jqXHR.statusText;
+                        toastr.clear();
+                        toastr.error(msg);
+                });
+            }
+        });
+
+        function buildTagSet() {
+            let data = $('.model-tags-select2').select2('data');
+            let updatedTags = [];
+            $.each(data, function (index, value) {
+                updatedTags.push({"id": value.id, "name": value.text});
+            });
+            var jsonStr = JSON.stringify(updatedTags, ['id', 'name']);
+            return jsonStr;
+        }
+
+        function getDataFromSelect2() {
+            let data = $('.model-tags-select2').select2('data');
+            let updatedTags = [];
+            $.each(data, function (index, value) {
+                updatedTags.push(value.text);
+            });
+            return updatedTags;
+        }
+    </script>
 </body>
 <content tag="contexthelp">
         display

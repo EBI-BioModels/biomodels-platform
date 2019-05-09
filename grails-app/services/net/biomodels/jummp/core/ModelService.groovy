@@ -2540,8 +2540,8 @@ Failed to update audit $itemId to $success: ${audit.errors.allErrors.inspect()}"
      * @return either the list of RepositoryFileTransportCommand objects or null
      *         if there is no model files available
      */
-    List<RepositoryFileTransportCommand> fetchMainFileForModels(String[] modelIDs) {
-        List<RepositoryFileTransportCommand> results = []
+    Map<String, RepositoryFileTransportCommand> fetchMainFileForModels(String[] modelIDs) {
+        Map<String, RepositoryFileTransportCommand> results = [:]
         List mids = modelIDs.toList()
         String query = """
 SELECT
@@ -2565,7 +2565,7 @@ WHERE
             AND ace.mask = 1)"""
         List revisions = Model.executeQuery(query, [mids: mids])
 
-        revisions.each {Revision revision ->
+        revisions.each { Revision revision ->
             List<File> files = retrieveModelRepFiles(revision)
             RepositoryFile rf = revision.repoFiles.find { RepositoryFile rf -> rf.mainFile }
             File f = files.find { it.name == rf.path }
@@ -2573,6 +2573,7 @@ WHERE
                 log.error "Cannot find main file for revision {}", revision.id
                 return
             }
+            String filename = revision.model.publicationId ?: revision.model.submissionId
             RepositoryFileTransportCommand rftc = new RepositoryFileTransportCommand(
                 id: rf.id,
                 path: f.getCanonicalPath(),
@@ -2581,7 +2582,7 @@ WHERE
                 mainFile: rf.mainFile,
                 userSubmitted: rf.userSubmitted,
                 mimeType: rf.mimeType)
-            results.add(rftc)
+            results.put(filename, rftc)
         }
 
 	    return results

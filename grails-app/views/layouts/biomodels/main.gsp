@@ -18,23 +18,21 @@
 --%>
 
 <%
+    def contextHelpLocation=g.pageProperty(name:'page.contexthelp')
+    if (contextHelpLocation) {
+        contextHelpLocation=contextHelpLocation.trim()
+    }
+    else {
+        contextHelpLocation="manual"
+    }
+    int helpWidth = 800;
 
-  		def contextHelpLocation=g.pageProperty(name:'page.contexthelp')
-  		if (contextHelpLocation) {
-  			contextHelpLocation=contextHelpLocation.trim()
-  		}
-  		else {
-  			contextHelpLocation="manual"
-  		}
-  		int helpWidth = 800;
+    def styleName = grailsApplication.config.jummp.branding.style
 
-        def styleName = grailsApplication.config.jummp.branding.style
-
-        response.setHeader("Cache-Control","no-cache");
-        response.setHeader("Cache-Control","no-store");
-        response.setDateHeader("Expires", 0);
-        response.setHeader("Pragma","no-cache");
-
+    response.setHeader("Cache-Control","no-cache");
+    response.setHeader("Cache-Control","no-store");
+    response.setDateHeader("Expires", 0);
+    response.setHeader("Pragma","no-cache");
 %>
 
 <!doctype html>
@@ -45,9 +43,9 @@
     <g:javascript library="jquery" plugin="jquery"/>
     <g:javascript src="jquery/jquery-ui-v1.10.3.js"/>
     <g:javascript>
-    	$.appName = "${grailsApplication.metadata["app.name"]}";
-    	$.serverUrl = "${grailsApplication.config.grails.serverURL}";
-    	var helpHidden=1;
+        $.appName = "${grailsApplication.metadata["app.name"]}";
+        $.serverUrl = "${grailsApplication.config.grails.serverURL}";
+        var helpHidden=1;
 
         <g:if test="${contextHelpLocation}">
             var helpWidth=-1;
@@ -107,7 +105,7 @@
             pollForNotifications('<g:createLink controller="notification" action="unreadNotificationCount"/>')
         </sec:ifLoggedIn>
         <g:if test="${contextHelpLocation}">
-            $( "#helpPanel" ).resizable({
+            $("#helpPanel").resizable({
                         handles: 'n,e,s,w',
                         maxWidth: maxHelpWidth,
                         animate: true,
@@ -268,29 +266,33 @@
     <g:layoutHead/>
 </head>
 <!-- open body tag -->
-<g:render template="/templates/${styleName}/bodyTag"/>
-<div id="wrapper" class="container_24 page">
-    <div id="mainframe">
-        <g:render template="/templates/${styleName}/header"/>
-        <g:render template="/templates/${styleName}/mainbody"/>
-        <g:render template="/templates/${styleName}/footer"/>
+<%
+    def sidebarContent = g.pageProperty(name:'page.sidebar')
+    if (sidebarContent) {
+        sidebarContent = sidebarContent.trim()
+    }
+%>
+<body class="level2 full-width">
+<div id="mainframe">
+    <g:render template="/templates/${styleName}/header"/>
+    <g:render template="/templates/${styleName}/mainbody"/>
+    <g:render template="/templates/${styleName}/footer"/>
 
-        <g:if test="${contextHelpLocation}">
-            <div id="helpbutton">
-                <a id="toggleHelp" title="Access help for this page" href="#">Help</a>
+    <g:if test="${contextHelpLocation}">
+        <div id="helpbutton">
+            <a id="toggleHelp" title="Access help for this page" href="#">Help</a>
+        </div>
+        <div id="helpPanel">
+            <div id="toolbar" class="ui-widget-header ui-corner-all">
+                <button id="expand">Increase help size</button>
+                <button id="contract">Decrease help size</button>
+                <button id="snap">Reset help</button>
+                <button id="outlink">Open in a new tab</button>
+                <button id="close">Close</button>
             </div>
-            <div id="helpPanel">
-                <div id="toolbar" class="ui-widget-header ui-corner-all">
-                    <button id="expand">Increase help size</button>
-                    <button id="contract">Decrease help size</button>
-                    <button id="snap">Reset help</button>
-                    <button id="outlink">Open in a new tab</button>
-                    <button id="close">Close</button>
-                </div>
-                <ContextHelp:getLink location="${contextHelpLocation}" width="${helpWidth}"/>
-            </div>
-        </g:if>
-    </div>
+            <ContextHelp:getLink location="${contextHelpLocation}" width="${helpWidth}"/>
+        </div>
+    </g:if>
 </div>
 </body>
 </html>

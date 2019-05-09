@@ -45,6 +45,7 @@ class BioModelsTagLib {
     def decorationService
     def modelOfTheMonthService
     def modelDelegateService
+    def tagService
     def springSecurityService
     /**
      * Displays the Model of the Month (MoM) entry for the given model.
@@ -213,7 +214,32 @@ class BioModelsTagLib {
         boolean manualPubEntry = linkType == manualLabel
         boolean withoutPublication = revision.model?.publication == null
         if (isPublic && published && (manualPubEntry || withoutPublication)) {
-            out << render(template: "/templates/displayDisclaimer", plugin: "jummp-plugin-biomodels-dom")
+            out << render(template: "/templates/metadataSeparator", plugin: "jummp-plugin-biomodels-dom")
+            String message = ""
+            if (withoutPublication) {
+                message = "This model has been pre-published upon author's request without reference publication."
+            } else {
+                message = "This model has been published without a web link to the reference publication."
+            }
+            out << render(template: "/templates/displayDisclaimer", plugin: "jummp-plugin-biomodels-dom",
+                model: ['message': message])
         }
+    }
+
+    def showTags = { attrs ->
+        Set<TagTransportCommand> tags = attrs.tags
+        out << render(template: "/templates/showTags", plugin: "jummp-plugin-biomodels-dom", model: ['tags': tags])
+    }
+
+    def showEditableTags = { attrs ->
+        Set<TagTransportCommand> tags = attrs.tags
+        Set<Integer> tagIdSet = tags.collect { it.id }
+        Set<TagTransportCommand> allTags = tagService.all.toSet()
+        Set<TagTransportCommand> unTags = allTags.findAll { !tagIdSet.contains(it.id) }
+        out << render(template: "/templates/showEditableTags", plugin: "jummp-plugin-biomodels-dom", model: ['tags': tags, 'unTags': unTags])
+    }
+
+    def insertSeparator = {
+        out << render(template: "/templates/metadataSeparator", plugin: "jummp-plugin-biomodels-dom")
     }
 }
