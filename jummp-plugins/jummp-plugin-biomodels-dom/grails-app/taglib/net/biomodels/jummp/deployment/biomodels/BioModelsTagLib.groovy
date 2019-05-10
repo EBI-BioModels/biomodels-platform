@@ -227,16 +227,16 @@ class BioModelsTagLib {
     }
 
     def showTags = { attrs ->
-        Set<TagTransportCommand> tags = attrs.bmTags
-        out << render(template: "/templates/showTags", plugin: "jummp-plugin-biomodels-dom", model: ['tags': tags])
+        Set<TagTransportCommand> bmTags = attrs.bmTags
+        out << render(template: "/templates/showTags", plugin: "jummp-plugin-biomodels-dom", model: ['bmTags': bmTags])
     }
 
     def showEditableTags = { attrs ->
-        Set<TagTransportCommand> tags = attrs.bmTags
-        Set<Integer> tagIdSet = tags.collect { it.id }
+        Set<TagTransportCommand> bmTags = attrs.bmTags
+        Set<Integer> tagIdSet = bmTags.collect { it.id }
         Set<TagTransportCommand> allTags = tagService.all.toSet()
         Set<TagTransportCommand> unTags = allTags.findAll { !tagIdSet.contains(it.id) }
-        out << render(template: "/templates/showEditableTags", plugin: "jummp-plugin-biomodels-dom", model: ['tags': tags, 'unTags': unTags])
+        out << render(template: "/templates/showEditableTags", plugin: "jummp-plugin-biomodels-dom", model: ['tags': bmTags, 'unTags': unTags])
     }
 
     def insertSeparator = {
