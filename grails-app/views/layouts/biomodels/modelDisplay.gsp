@@ -33,7 +33,7 @@
 <%@ page import="net.biomodels.jummp.core.model.ModelState"%>
 <%@ page import="net.biomodels.jummp.qcinfo.*"%>
 <%
-    JSON tagsJSON = tags as grails.converters.JSON
+    JSON tagsJSON = bmTags as grails.converters.JSON
 %>
 <head xmlns="http://www.w3.org/1999/html">
     <title>${revision.name} | BioModels</title>
@@ -59,10 +59,19 @@
         // initialTags is the list of tags associated with the model
         // as the page is completely loaded
         let initialTags = [];
+        Object.values = function(object) {
+            let values = [];
+            for(let property in object) {
+                values.push(object[property]);
+            }
+            return values;
+        }
         let tagsJSON = Object.values(${tagsJSON});
-        $.each(${tagsJSON}, function (index, value) {
-            initialTags.push(value);
-        });
+        if (tagsJSON.length !== 0) {
+            $.each(tagsJSON, function (index, value) {
+                initialTags.push(value);
+            });
+        }
     </g:javascript>
     <g:javascript src="syntax/shCore.js"/>
     <g:javascript src="syntax/shBrushMdl.js"/>
@@ -683,11 +692,11 @@
                             <!-- Show all tags assigned to the model -->
                             <g:if test="${canUpdate && hasCuratorRole}">
                                 <biomd:insertSeparator/>
-                                <biomd:showEditableTags tags="${tags}"/>
+                                <biomd:showEditableTags bmTags="${bmTags}"/>
                             </g:if>
                             <g:else>
                                 <biomd:insertSeparator/>
-                                <biomd:showTags tags="${tags}"/>
+                                <biomd:showTags bmTags="${bmTags}"/>
                             </g:else>
                             <!-- Render a disclaimer if the model has been published without a publicly available manuscript -->
                             <biomd:displayDisclaimer revision="${revision}"/>
