@@ -209,6 +209,7 @@ void handleModelFolder(File modelFolder) {
             } else {
                 def err = model.errors.allErrors
                 addModelError(id, "Could not update the submission identifier: $err")
+                // TODO set tx as rollback only, we may need to avoid flushing!
             }
         }
     } finally {
@@ -217,15 +218,31 @@ void handleModelFolder(File modelFolder) {
     }
 }
 
+RepositoryFileTransportCommand createRepoFile(File file, boolean isMainFile, String description) {
+    new RepositoryFileTransportCommand(path: file.absolutePath, mainFile: isMainFile,
+             userSubmitted: true, hidden: false, description: description)
+}
+
 RevisionTransportCommand createRevisionCmdForModelFolder(String id, File folder) {
-    def modelFile = new File(folder, "${id}_url.xml")
-    if (!modelFile.exists()) {
-        addModelError(id, "Missing model file '$modelFile'")
+    File modelFile = null
+    List<File> additionals = []
+    for (File child: folder.listFiles()) {
+        if (child.name.endsWith('.xml')) {
+            modelFile = child
+        } else {
+            additionals << child
+        }
+    }
+
+    if (!modelFile) {
+        addModelError(id, "Missing model file in folder '${folder.name}'")
         return null
     }
 
-    def mainFileRFTC = new RepositoryFileTransportCommand(path: modelFile.absolutePath,
-            mainFile: true, userSubmitted: true, hidden: false) // also need to set description
+    def mainFileRFTC = createRepoFile(modelFile, true, 'Path2Models entry for E. coli')
+    def otherRepoFiles = additionals.collect { f ->
+        createRepoFile f, false, 'All files for E. coli'
+    }
     def modelFileFormatService = ctx.modelFileFormatService
     ModelFormatTransportCommand fmtCmd = modelFileFormatService.inferModelFormat([mainFileRFTC])
     def fmt = ModelFormat.findByIdentifierAndFormatVersion(fmtCmd.identifier, fmtCmd.formatVersion)
@@ -238,10 +255,8 @@ RevisionTransportCommand createRevisionCmdForModelFolder(String id, File folder)
 
     String modelName = modelFileFormatService.extractName([modelFile], fmt)
     String modelDesc = modelFileFormatService.extractDescription([modelFile], fmt)
-    mainFileRFTC.description = "Main submission file for $modelName"
 
-    // TODO include additional files (SBGN-ML + PNG) for the metabolic branch
-    def repoFileCommands = [mainFileRFTC]
+    def repoFileCommands = [mainFileRFTC] + otherRepoFiles
     def modelCmd = new ModelTransportCommand(submitter: Ctx.submitterAccount, format: fmtCmd,
             submissionDate: new Date())
 
