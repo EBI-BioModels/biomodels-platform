@@ -59,10 +59,19 @@
         // initialTags is the list of tags associated with the model
         // as the page is completely loaded
         let initialTags = [];
+        Object.values = function(object) {
+            let values = [];
+            for(let property in object) {
+                values.push(object[property]);
+            }
+            return values;
+        }
         let tagsJSON = Object.values(${tagsJSON});
-        $.each(${tagsJSON}, function (index, value) {
-            initialTags.push(value);
-        });
+        if (tagsJSON.length !== 0) {
+            $.each(tagsJSON, function (index, value) {
+                initialTags.push(value);
+            });
+        }
     </g:javascript>
     <g:javascript src="syntax/shCore.js"/>
     <g:javascript src="syntax/shBrushMdl.js"/>
