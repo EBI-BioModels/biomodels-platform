@@ -313,7 +313,7 @@ class NotificationService {
         ModelTransportCommand model = revision.model
         User user = body.user as User
         String notificationTitle = "notification.model.sub4pub.title"
-        String[] titleParams = [revision.name] as String[]
+        String[] titleParams = [model.submissionId, revision.name] as String[]
         String notificationBody = "notification.model.sub4pub.body"
         String serverURL = grailsApplication.config.grails.serverURL
         String modelLink = "${serverURL}/${revision.identifier()}"
