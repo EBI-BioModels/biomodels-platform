@@ -24,7 +24,7 @@
 
 package net.biomodels.jummp.search
 
-import grails.transaction.Transactional
+import grails.transaction.NotTransactional
 import grails.util.Environment
 import grails.util.Holders
 import groovy.json.JsonBuilder
@@ -61,7 +61,6 @@ import java.text.SimpleDateFormat
  */
 
 class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelOperationEvent> {
-    static transactional = false
     /**
      * The class logger.
      */
@@ -126,14 +125,17 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
 
     def producerTemplate = Holders.grailsApplication.mainContext.getBean('producerTemplate')
 
+    @NotTransactional
     void onApplicationEvent(ModelOperationEvent event) {
         // look at solrbasedsearch
     }
 
+    @NotTransactional
     String[] getSortFields() {
         ["relevance", "submissionid", "name"]
     }
 
+    @NotTransactional
     SearchResponse searchModels(String query, SortOrder sortOrder,
             Map<String, Integer> paginationCriteria = ["start": 0, "length": 50, "facetCount": 10] ) {
         long start = System.currentTimeMillis()
@@ -298,7 +300,6 @@ There was a problem obtaining search result from EBI search server. The root cau
         return searchResponse
     }
 
-    @Transactional
     void updateIndex(RevisionTransportCommand revision) {
         Revision.withSession {
             String name = revision.name ?: ""
@@ -384,7 +385,6 @@ There was a problem obtaining search result from EBI search server. The root cau
         }
     }
 
-    @Transactional
     void clearIndex() {
         // Delete indexing plans from the database
         if (IS_DEBUG_ENABLED) {
