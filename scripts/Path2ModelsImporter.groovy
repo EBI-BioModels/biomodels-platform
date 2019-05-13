@@ -426,7 +426,7 @@ try {
     def submitterAuth = getAuthTokenFor(Ctx.submitterAccount, Ctx.passwordString)
     Ctx.adminAuth     = getAuthTokenFor(Ctx.adminUsername, Ctx.adminPass)
 
-    GParsPool.withPool(POOL_SIZE) {
+    GParsPool.withPool(/*POOL_SIZE*/ 1) {
         GParsPool.runForkJoin(new File(modelFolder)) { File root ->
             final String rootName = root.name
             if (rootName ==~ modelFolderPattern) {
@@ -437,7 +437,7 @@ try {
                         addModelError(rootName, ise.message)
                     }  catch (Exception e) {
                         addModelError(rootName, "oops: $e")
-                        //e.printStackTrace()
+                        e.printStackTrace()
                     }
                 })
             } else { // fork dedicated task for each sub-folder
