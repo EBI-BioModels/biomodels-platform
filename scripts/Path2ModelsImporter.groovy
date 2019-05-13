@@ -65,7 +65,6 @@ class Ctx {
     static def bioModelsConnection = Sql.newInstance(System.getenv("DB_URL"),
             System.getenv("DB_USER"), System.getenv("DB_PWD"), "com.mysql.jdbc.Driver"
     )
-    static final def submissionIdGenerator = new DefaultModelIdentifierGenerator(idDecorators)
     static final Person submitterPerson    = Person.findOrSaveByUserRealName(submitterName)
     static final User submitter            = account
     // there are two possible manuscripts that can be associated with these models
@@ -116,15 +115,6 @@ class Ctx {
         newUser
     }
 
-    private static TreeSet getIdDecorators() {
-        def bmid = new FixedLiteralAppendingDecorator(0, "BMID")
-        def digits = new VariableDigitAppendingDecorator(1, 0, 12)
-        digits.lastUsedSuffix.set(0)
-        def decorators = new TreeSet()
-        decorators << bmid
-        decorators << digits
-        decorators
-    }
 }
 
 /*
@@ -401,16 +391,12 @@ void publish(Revision r) {
 }
 
 // set the application context reference in POGOs that expect it
-AbstractAppendingDecorator.context = ctx
 RevisionTransportCommand.context = ctx
 
 // don't let Camel shut itself down within 5 minutes of the importer finishing.
 // wait for all models to be indexed instead.
 def camelContext = ctx.camelContext
 camelContext.shutdownStrategy.setTimeout(Long.MAX_VALUE)
-
-// use the BMID\d{12} submission id scheme, because MODEL\d{10} cannot cope with 140k models
-ctx.modelService.submissionIdGenerator = Ctx.submissionIdGenerator
 
 // ensure we have reference publications persisted into the database
 fetchPublicationDetails()

@@ -122,7 +122,6 @@ giving up. Sorry about that.""", vcsIssues)
     def format = mf.findByIdentifierAndFormatVersion(formatCommand.identifier,
             formatCommand.formatVersion)
 
-    decorator.context = appCtx
     rtc.context = appCtx
     def modelService = appCtx.modelService
     def modelFileFormatService = appCtx.modelFileFormatService
