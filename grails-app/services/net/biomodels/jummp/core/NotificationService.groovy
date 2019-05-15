@@ -313,11 +313,14 @@ class NotificationService {
         ModelTransportCommand model = revision.model
         User user = body.user as User
         String notificationTitle = "notification.model.sub4pub.title"
-        String[] titleParams = [model.submissionId, revision.name] as String[]
+        String subjectPrefix = model.publication ? "Publication Request" : "Pre-publication Request"
+        String[] titleParams = [subjectPrefix, model.submissionId, revision.name] as String[]
         String notificationBody = "notification.model.sub4pub.body"
         String serverURL = grailsApplication.config.grails.serverURL
         String modelLink = "${serverURL}/${revision.identifier()}"
-        String[] bodyParams = [revision?.name, user?.person?.userRealName, modelLink, user.email] as String[]
+        String prePubCode = "notification.model.sub4pub.body.prePublishText"
+        String prePublishText = model.publication ? "" : messageSource.getMessage(prePubCode, [] as String[], LCH.getLocale())
+        String[] bodyParams = [modelLink, revision?.name, prePublishText, user?.person?.userRealName, user.email] as String[]
         Set<User> watchers = getNotificationRecipients(body.perms)
         // send a notification message to the members of the curator group
         useGenericNotificationStructure(notificationTitle, titleParams,

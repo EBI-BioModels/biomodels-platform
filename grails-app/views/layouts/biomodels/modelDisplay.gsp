@@ -147,7 +147,8 @@
             $( "#dialog-confirm" ).dialog({
                     resizable: false,
                     autoOpen: false,
-                    height:250,
+                    height: 200,
+                    width: 440,
                     modal: true,
                     buttons: {
                         "Confirm Delete": function() {
@@ -241,14 +242,18 @@
             $('#warn-publication-details').dialog({
                 resizable: false,
                 autoOpen: false,
-                height: 420,
-                width: 725,
+                height: 540,
+                width: 895,
                 modal: true,
-                buttons: {
-                    Close: function() {
-                        $(this).dialog("close");
+                buttons: [
+                    {
+                        id: "btnWarningDialogAction",
+                        text: "Close",
+                        click: function() {
+                            doProceedOrLeave($(this));
+                        }
                     }
-                }
+                ]
             });
 
             $("body").append("<div id='modelToolbar' class='collapsibleContainer' title='Model Toolbar'>" +
@@ -848,6 +853,26 @@
                 updatedTags.push(value.text);
             });
             return updatedTags;
+        }
+        $('#chkPublishWithoutPublication').change(function () {
+            let whichButton = '';
+            if (this.checked) {
+                console.log("Change Close to Proceed");
+                whichButton = '<span class="ui-button-text">Proceed</span>';
+            } else {
+                console.log("Change Proceed to Close");
+                whichButton = '<span class="ui-button-text">Close</span>';
+            }
+            $('#btnWarningDialogAction').html(whichButton);
+        });
+
+        function doProceedOrLeave(pointer) {
+            let actionButton = $('#btnWarningDialogAction').text();
+            if (actionButton === "Proceed") {
+                $.jummp.openPage("${g.createLink(controller: 'model',
+                        action: 'submitForPublication', id: revision.identifier())}");
+            }
+            pointer.dialog("close");
         }
     </script>
 </body>
