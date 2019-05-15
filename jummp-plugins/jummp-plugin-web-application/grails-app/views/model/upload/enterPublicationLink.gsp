@@ -53,7 +53,6 @@
         }
     }
 %>
-<div class="row">
     <h2><g:message code="submission.publicationLink.header"/></h2>
 
         <g:message code="submission.publink.publication"/>
@@ -81,7 +80,8 @@
                     <g:select name="PubLinkProvider" id="pubLinkProvider"
                               from="${linkSourceTypes}"
                               noSelection="['':'- No publication available -']"/>
-                    <g:textField name="PublicationLink" id="publicationLink"/>
+                    <g:textField name="PublicationLink" id="publicationLink"
+                                 placeholder="Enter PubMed identifier, DOI or web link"/>
                 </g:else>
                 <g:submitButton name="Cancel" class="button"
                                 value="${g.message(code: 'submission.common.cancelButton')}" />
@@ -92,7 +92,6 @@
             </div>
         </div>
     </g:form>
-</div>
 </body>
 <g:render template="/templates/decorateSubmission" />
 <g:render template="/templates/subFlowContextHelp" />
