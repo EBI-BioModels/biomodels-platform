@@ -857,10 +857,8 @@
         $('#chkPublishWithoutPublication').change(function () {
             let whichButton = '';
             if (this.checked) {
-                console.log("Change Close to Proceed");
                 whichButton = '<span class="ui-button-text">Proceed</span>';
             } else {
-                console.log("Change Proceed to Close");
                 whichButton = '<span class="ui-button-text">Close</span>';
             }
             $('#btnWarningDialogAction').html(whichButton);
