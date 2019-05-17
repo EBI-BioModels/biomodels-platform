@@ -67,7 +67,17 @@
         }
         def nbAuthors = workingMemory.get("Authors")?.size()
         def authorListContainerSize = nbAuthors > 5 || workingMemory.get("Authors") == null ? 5 : nbAuthors
+        // If users have tried to reload the page, the flash message has been wiped.
+        // Therefore, we need to re-populate it to display the message again
+        boolean isReloaded = false
+        if (pubContext.comesFromDatabase && null == flashMessage) {
+            isReloaded = true
+            flashMessage = message(code: "publication.editor.duplicateEntry.message")
+        }
     %>
+    <g:if test="${isReloaded}">
+        <g:render template="/templates/notification/showNotificationDiv" contextPath=""/>
+    </g:if>
     <div class="row">
     <h2>Update Publication Information</h2>
     <g:render plugin="jummp-plugin-web-application" template="/templates/publicationEditorForm"
