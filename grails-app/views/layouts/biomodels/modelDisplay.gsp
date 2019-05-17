@@ -451,8 +451,6 @@
                              style="display:none;">
                             <p><jummp:renderSubmitForPublicationConfirmDialogMessage/></p>
                         </div>
-
-                        <li>
                         <% dialog_id = "confirm-model-notify" %>
                     </g:if>
                     <g:else>
