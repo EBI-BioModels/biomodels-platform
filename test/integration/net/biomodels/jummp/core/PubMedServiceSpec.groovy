@@ -24,11 +24,11 @@ package net.biomodels.jummp.core
 import grails.test.runtime.FreshRuntime
 import grails.test.spock.IntegrationSpec
 import net.biomodels.jummp.core.model.PublicationTransportCommand as PTC
+import spock.lang.Unroll
 
 @FreshRuntime
 class PubMedServiceSpec extends IntegrationSpec {
     def pubMedService
-    def messageSource
 
     def "search a PubMed publication"() {
         given: "a PubMed ID"
@@ -39,20 +39,29 @@ class PubMedServiceSpec extends IntegrationSpec {
 
         then: "an actual object should be returned"
         null != ptc
+        3 == ptc.authors.size()
     }
 
-    def "fetch a publication and verify the authors"() {
-        given: "a PubMed ID"
-        String pubMedId = "30218022"
+    @Unroll("test fetchPublicationData() with PubMed ID = #identifier, authorSize = #authorSize, firstAuthor = #firstAuthorRealName, lastAuthor = #lastAuthorRealName")
+    def "fetch a publication and verify the authors with various PubMed #identifier, #authorSize, #firstAuthorRealName, #lastAuthorRealName"() {
+        given: "a PubMed ID = #identifier"
+        String pubMedId = identifier
 
         when: "make a call to fetchPublicationData() method"
         PTC ptc = pubMedService.fetchPublicationData(pubMedId)
-        ptc.messageSource = messageSource
 
-        then: "receive an actual object and author name is not null"
+        then: "get an actual object"
         null != ptc
         ptc.validate()
-        println ptc.authors.last().userRealName
-        ptc.authors.first().userRealName != null
+        authorSize == ptc.authors.size()
+        firstAuthorRealName == ptc.authors.first().userRealName
+        lastAuthorRealName == ptc.authors.last().userRealName
+        where: "parameters can be given in the table"
+        identifier | authorSize | firstAuthorRealName | lastAuthorRealName
+        "30218022" | 10         | "Seif Y"            | "Monk JM"
+        "27906974" | 5          | "Scheidel J"        | "Koch I"
+        "29843739" | 6          | "Pereira B"         | "Carneiro S"
+        "28625987" | 8          | "Guarnieri MT"      | "Beckham GT"
+        "31079267" | 11         | "Shimizu K"         | "Kikkawa F"
     }
 }
