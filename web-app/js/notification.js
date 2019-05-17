@@ -15,8 +15,8 @@ function hideNow() {
 }
 
 function showNotification(message) {
-    $(".flashNotificationDiv").show()
-    $(".flashNotificationDiv").text(message)
+    $(".flashNotificationDiv").show();
+    $(".flashNotificationDiv").text(message);
 }
 
 function pollForNotifications(url) {
