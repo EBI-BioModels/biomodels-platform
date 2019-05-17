@@ -17,7 +17,8 @@
                         <option value="${it.userRealName}|${it.orcid ?: ""}|${it.institution ?: ""}">${it.userRealName}</option>
                     </g:each>
                 </select>
-                Click to select an author to update or delete. Click Add button to add a new author into the list.
+            Enter new author name and ORCID, then click <strong>Add</strong> button to add a new author into the list.
+            Select any author in the list so as to <strong>Update</strong> or <strong>Delete</strong>. <strong>Notes: </strong>It must have at least one author.
             </label>
             <div>
                 <ul class="subListForm">
