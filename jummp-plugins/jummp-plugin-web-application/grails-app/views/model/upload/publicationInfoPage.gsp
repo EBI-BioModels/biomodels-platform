@@ -80,7 +80,7 @@
     </g:if>
     <div class="row">
     <h2>Update Publication Information</h2>
-    <g:render plugin="jummp-plugin-web-application" template="/templates/publicationEditorForm"
+    <g:render plugin="jummp-plugin-web-application" template="/templates/publication/publicationEditorForm"
               model="['publication': publication, 'authorListContainerSize': authorListContainerSize]" />
     </div>
 </body>

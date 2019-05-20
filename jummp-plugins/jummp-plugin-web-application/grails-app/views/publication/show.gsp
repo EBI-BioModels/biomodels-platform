@@ -63,7 +63,7 @@
 <body>
     <h2>Publication Details</h2>
     <g:if test="${publication}">
-        <g:render template="/templates/publicationEditorForm"
+        <g:render template="/templates/publication/publicationEditorForm"
                   plugin="jummp-plugin-web-application"
                   model="['publication': publication, 'authorListContainerSize': authorListContainerSize]"/>
         <g:javascript>
