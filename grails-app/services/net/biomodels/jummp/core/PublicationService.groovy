@@ -104,6 +104,7 @@ class PublicationService {
             // fetch from pubmed
             if (type == PLP.LinkType.PUBMED) {
                 ctx.publication = pubMedService.fetchPublicationData(cmd.link)
+                log.debug("The publication details fetched from EuropePMC look ${ctx.publication?.dump()}")
             } else {
                 ctx.publication = null
             }

@@ -68,7 +68,6 @@
         def nbAuthors = workingMemory.get("Authors")?.size()
         def authorListContainerSize = nbAuthors > 5 || workingMemory.get("Authors") == null ? 5 : nbAuthors
     %>
-    <div class="row">
     <h2>Update Publication Information</h2>
     <g:form>
         <div class="dialog">
@@ -181,6 +180,5 @@
             </div>
         </div>
     </g:form>
-    </div>
 </body>
 <g:render template="/templates/decorateSubmission" />
