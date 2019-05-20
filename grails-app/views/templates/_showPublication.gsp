@@ -43,7 +43,9 @@
                          src="${grailsApplication.config.grails.serverURL}/images/expand.png"/>
                 </span>
             </a>
-
+            <g:if test="${canUpdate}">
+            &nbsp;
+            <a href="${createLink(controller: "publication", action: "show", id: model.publication.id)}" class="button" style="color: white">Update</a></g:if>
         </li>
 		<li>${model.publication.authors.collect{"${it.userRealName}"}.join(", ")}</li>
     	<li><i>${model.publication.journal}</i>
