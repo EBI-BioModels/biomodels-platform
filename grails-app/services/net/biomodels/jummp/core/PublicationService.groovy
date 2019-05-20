@@ -62,6 +62,13 @@ class PublicationService {
     def pubMedService
     def messageSource
 
+    List<PubTC> getAll() {
+        List pubs = Publication.all
+        pubs.each {
+            new PublicationAdapter(publication: it).toCommandObject()
+        }
+    }
+
     PubTC createPTCWithMinimalInformation(String pubLinkProvider, String pubLink, List<PersonTC> authors) {
         def provider = PLP.LinkType.findLinkTypeByLabel(pubLinkProvider)
         PubTC retrieved = new PubTC()

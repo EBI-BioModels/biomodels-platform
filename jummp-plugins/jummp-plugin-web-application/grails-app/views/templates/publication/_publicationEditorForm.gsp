@@ -109,7 +109,7 @@
                             value="${g.message(code: 'submission.common.cancelButton')}" />
             <g:submitButton name="Back" class="button"
                             value="${g.message(code: 'submission.common.backButton')}" />
-            <g:if test="${controllerName == "publication" && actionName == "show"}">
+            <g:if test="${controllerName == "publication" && (actionName == "show" || actionName == "add")}">
                 <g:submitButton id="btnSave" name="Save" class="button"
                                 value="${g.message(code: 'submission.publication.saveButton')}" />
             </g:if>

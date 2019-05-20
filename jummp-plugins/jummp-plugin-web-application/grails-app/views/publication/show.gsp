@@ -102,6 +102,9 @@
                     }
                 });
             });
+            $('input[name="Back"]').on("click", function() {
+                backAway();
+            });
         </g:javascript>
     </g:if>
     <g:else>

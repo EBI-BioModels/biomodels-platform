@@ -12,9 +12,16 @@ class PublicationController {
     def publicationService
 
     def index() {
-
+        List<PublicationTransportCommand> publications = new ArrayList<>()
+        publications = publicationService.getAll()
+        [publications: publications]
     }
 
+    def add(Publication publication) {
+        PublicationTransportCommand pubTC = publicationService.createPTCWithMinimalInformation("PubMed ID", null, null)
+        pubTC.id = null
+        [publication: pubTC]
+    }
     /*def show(PublicationTransportCommand pubCmd) {
         if (!pubCmd) {
             // render out the error
@@ -24,7 +31,8 @@ class PublicationController {
 
     def show(Publication publication) {
         if (!publication) {
-            // render out the error
+            render(view: "error404")
+            return false
         }
         def pubCmd = publicationService.getById(params.long("id"))
         [publication: pubCmd, authorListContainerSize: pubCmd?.authors?.size() > 5 ? 5 : pubCmd?.authors?.size()]

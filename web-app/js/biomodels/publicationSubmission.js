@@ -150,3 +150,12 @@ $(document).ready(function () {
         updateData();
     });
 });
+
+function backAway(){
+    // if it was the first page
+    if(history.length === 1){
+        window.location = "https://www.ebi.ac.uk/biomodels";//"${serverUrl}";
+    } else {
+        history.back();
+    }
+}

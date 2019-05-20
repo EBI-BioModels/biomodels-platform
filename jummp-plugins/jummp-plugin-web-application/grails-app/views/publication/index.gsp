@@ -34,8 +34,53 @@
         border-bottom: 1px solid grey;
     }
     </style>
+    <link rel="stylesheet" type="text/css"
+          href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+    <script type="text/javascript" language="javascript"
+            src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+    <script type="application/javascript">
+        $(document).ready(function() {
+            let table = $('#allPublicationsTable').DataTable({
+                "lengthMenu": [[5, 10, 15, 20, 25, 50, -1], [5, 10, 15, 20, 25, 50, "All"]]
+            });
+            $('#allPublicationsTabe tbody').on('click', 'tr', function() {
+                if ( $(this).hasClass('selected') ) {
+                    $(this).removeClass('selected');
+                }
+                else {
+                    table.$('tr.selected').removeClass('selected');
+                    $(this).addClass('selected');
+                }
+            });
+        });
+    </script>
 </head>
 <body>
-    <h2>List of publications</h2>
+<div class="row">
+    <div class="small-12 medium-12 large-12 columns">
+        <h2>List of publications</h2>
+        <a class="button" href="${createLink(action: "add")}">Add a new publication</a>
+        <table id="allPublicationsTable" class="display">
+            <thead class="row" style="font-weight: bold">
+            <tr>
+                <th>Link</th>
+                <th>Title</th>
+                <th>Journal</th>
+                <th>Affiliation</th>
+                <th>Abstract</th>
+                <th>Year</th>
+                <th>Month</th>
+                <th>Day</th>
+                <th>Volume</th>
+                <th>Issue</th>
+                <th>Pages</th>
+                <th>Authors</th>
+            </tr></thead>
+            <tbody>
+            <g:render template="/templates/publication/publication" collection="${publications}" var="publication" />
+            </tbody>
+        </table>
+    </div>
+</div>
 </body>
 </html>
