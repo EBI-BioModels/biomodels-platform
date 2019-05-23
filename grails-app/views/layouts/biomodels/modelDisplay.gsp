@@ -33,14 +33,14 @@
 <%@ page import="net.biomodels.jummp.core.model.ModelState"%>
 <%@ page import="net.biomodels.jummp.qcinfo.*"%>
 <%
-    JSON tagsJSON = tags as grails.converters.JSON
+    JSON tagsJSON = bmTags as grails.converters.JSON
 %>
 <head xmlns="http://www.w3.org/1999/html">
     <title>${revision.name} | BioModels</title>
     <script type="text/javascript">
         $(document).ready(function() {
             $('.model-tags-select2').select2({
-                placeholder: "Search existing or enter new tags",
+                placeholder: "Type here to search a tag",
                 tags: false,
                 multiple: true
             });
@@ -59,10 +59,19 @@
         // initialTags is the list of tags associated with the model
         // as the page is completely loaded
         let initialTags = [];
+        Object.values = function(object) {
+            let values = [];
+            for(let property in object) {
+                values.push(object[property]);
+            }
+            return values;
+        }
         let tagsJSON = Object.values(${tagsJSON});
-        $.each(${tagsJSON}, function (index, value) {
-            initialTags.push(value);
-        });
+        if (tagsJSON.length !== 0) {
+            $.each(tagsJSON, function (index, value) {
+                initialTags.push(value);
+            });
+        }
     </g:javascript>
     <g:javascript src="syntax/shCore.js"/>
     <g:javascript src="syntax/shBrushMdl.js"/>
@@ -138,7 +147,8 @@
             $( "#dialog-confirm" ).dialog({
                     resizable: false,
                     autoOpen: false,
-                    height:250,
+                    height: 200,
+                    width: 440,
                     modal: true,
                     buttons: {
                         "Confirm Delete": function() {
@@ -232,14 +242,18 @@
             $('#warn-publication-details').dialog({
                 resizable: false,
                 autoOpen: false,
-                height: 420,
-                width: 725,
+                height: 540,
+                width: 895,
                 modal: true,
-                buttons: {
-                    Close: function() {
-                        $(this).dialog("close");
+                buttons: [
+                    {
+                        id: "btnWarningDialogAction",
+                        text: "Close",
+                        click: function() {
+                            doProceedOrLeave($(this));
+                        }
                     }
-                }
+                ]
             });
 
             $("body").append("<div id='modelToolbar' class='collapsibleContainer' title='Model Toolbar'>" +
@@ -683,11 +697,11 @@
                             <!-- Show all tags assigned to the model -->
                             <g:if test="${canUpdate && hasCuratorRole}">
                                 <biomd:insertSeparator/>
-                                <biomd:showEditableTags tags="${tags}"/>
+                                <biomd:showEditableTags bmTags="${bmTags}"/>
                             </g:if>
                             <g:else>
                                 <biomd:insertSeparator/>
-                                <biomd:showTags tags="${tags}"/>
+                                <biomd:showTags bmTags="${bmTags}"/>
                             </g:else>
                             <!-- Render a disclaimer if the model has been published without a publicly available manuscript -->
                             <biomd:displayDisclaimer revision="${revision}"/>
@@ -839,6 +853,24 @@
                 updatedTags.push(value.text);
             });
             return updatedTags;
+        }
+        $('#chkPublishWithoutPublication').change(function () {
+            let whichButton = '';
+            if (this.checked) {
+                whichButton = '<span class="ui-button-text">Proceed</span>';
+            } else {
+                whichButton = '<span class="ui-button-text">Close</span>';
+            }
+            $('#btnWarningDialogAction').html(whichButton);
+        });
+
+        function doProceedOrLeave(pointer) {
+            let actionButton = $('#btnWarningDialogAction').text();
+            if (actionButton === "Proceed") {
+                $.jummp.openPage("${g.createLink(controller: 'model',
+                        action: 'submitForPublication', id: revision.identifier())}");
+            }
+            pointer.dialog("close");
         }
     </script>
 </body>

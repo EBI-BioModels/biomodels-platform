@@ -116,7 +116,8 @@
                                     </label>
                                 </td>
                                 <td class="value">
-                                    <g:textArea name="RevisionComments" rows="5" cols="70"/>
+                                    <g:textArea name="RevisionComments" rows="5" cols="70"
+                                                placeholder="Explain what you have updated"/>
                                 </td>
                           </tr>
                         </g:if>

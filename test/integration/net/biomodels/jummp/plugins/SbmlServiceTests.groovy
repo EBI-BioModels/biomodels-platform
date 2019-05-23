@@ -166,6 +166,14 @@ class SbmlServiceTests extends JummpIntegrationTest {
         assertEquals(2, sbmlService.getLevel(rev2))
         assertEquals(4, sbmlService.getVersion(rev2))
         assertEquals("L2V4", sbmlService.getFormatVersion(rev2))
+        // Test SBML Level 3 Version 2
+        rf = new RepositoryFileTransportCommand(path: "test/files/tiny_example_12.xml",
+            description: "Matthias model", mainFile: true)
+        RevisionTransportCommand rev3 = new RevisionAdapter(revision: modelService.addRevisionAsFile(model, rf,
+            ModelFormat.findByIdentifierAndFormatVersion("SBML", "L3V2"), "test")).toCommandObject()
+        assertEquals(3, sbmlService.getLevel(rev3))
+        assertEquals(2, sbmlService.getVersion(rev3))
+        assertEquals("L3V2", sbmlService.getFormatVersion(rev3))
     }
 
     @Test

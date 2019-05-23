@@ -93,7 +93,7 @@
         </g:if>
         <g:render template="/templates/errorMessage"/>
         <h2>${headerTitle}</h2>
-        <p style="padding-bottom:1em"><g:message code="submission.upload.explanation"/></p>
+        <p style="padding-bottom:1em"><g:message code="submission.biomodels.upload.explanation"/></p>
         <g:uploadForm id="fileUpload" novalidate="false" autocomplete="false" name="fileUploadForm"
                       onsubmit="return validate()">
             <div class="dialog">
