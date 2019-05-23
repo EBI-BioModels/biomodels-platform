@@ -71,7 +71,7 @@
             publication = pubContext.publication
         }
         def nbAuthors = workingMemory.get("Authors")?.size()
-        def authorListContainerSize = nbAuthors > 5 || workingMemory.get("Authors") == null ? 5 : nbAuthors
+        def authorListContainerSize = 4
         // If users have tried to reload the page, the flash message has been wiped.
         // Therefore, we need to re-populate it to display the message again
         boolean isReloaded = false
@@ -85,8 +85,13 @@
     </g:if>
     <div class="row">
     <h2>Update Publication Information</h2>
-    <g:render plugin="jummp-plugin-web-application" template="/templates/publication/publicationEditorForm"
+    <g:render template="/templates/publication/refreshPubMedDataButton"
+              plugin="jummp-plugin-web-application"
+              model="['publication': publication]"/>
+    <div id="publicationForm">
+        <g:render plugin="jummp-plugin-web-application" template="/templates/publication/publicationEditorForm"
               model="['publication': publication, 'authorListContainerSize': authorListContainerSize]" />
+    </div>
     </div>
 </body>
 <g:render template="/templates/decorateSubmission" />

@@ -49,7 +49,12 @@
                 String userRealName = it.userRealName ?: ""
                 String institution = it.institution ?: ""
                 String orcid = it.orcid ?: ""
-                [userRealName: userRealName, institution: institution, orcid: orcid]
+                def id = it.id ?: "undefined"
+                if (id == "undefined") {
+                    [userRealName: userRealName, institution: institution, orcid: orcid]
+                } else {
+                    [id: id, userRealName: userRealName, institution: institution, orcid: orcid]
+                }
             } as JSON}};
             var authorList = authorMap["authors"];
         } /*else {
@@ -63,9 +68,16 @@
 <body>
     <h2>Publication Details</h2>
     <g:if test="${publication}">
-        <g:render template="/templates/publication/publicationEditorForm"
+        <g:render template="/templates/publication/refreshPubMedDataButton"
                   plugin="jummp-plugin-web-application"
-                  model="['publication': publication, 'authorListContainerSize': authorListContainerSize]"/>
+                  model="['publication': publication]"/>
+        <div id="publicationForm">
+            <g:render template="/templates/publication/publicationEditableElements"
+                      plugin="jummp-plugin-web-application"
+                      model="['publication': publication, 'authorListContainerSize': authorListContainerSize]"/>
+            <g:render template="/templates/publication/publicationButtonsForm"
+                      plugin="jummp-plugin-web-application"/>
+        </div>
         <g:javascript>
             $('#btnSave').on("click", function(event) {
                 "use strict";
@@ -76,25 +88,18 @@
                     cache: true,
                     processData: true,
                     async: true,
-                    data: {
-                        'id': ${params.id}
-                    },
+                    data: JSON.stringify(buildPublicationTC()),
+                    contentType: "application/json",
                     beforeSend: function() {
                         toastr.info("The publication details are being saved. Please wait...");
                     },
                     success: function(response) {
-                        console.log("Success!");
-                        var href = window.location.href;
-                        if (href.indexOf("&id=") < 0 && typeof(response['id']) != 'undefined') {
-                            var newHref = href + "&id=" + response['id'];
-                            if (window.history.pushState) {
-                                window.history.pushState({}, null, newHref);
-                            } else {
-                                document.location.hash = newHref;
-                            }
-                        }
                         toastr.clear();
-                        toastr.success(response['message']);
+                        if (response['status'] === 200) {
+                            toastr.success(response['message']);
+                        } else if (response['status'] === 500) {
+                            toastr.error(response['message']);
+                        }
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
                         toastr.clear();
@@ -102,8 +107,78 @@
                     }
                 });
             });
+            /* build up a publication transport command object */
+            function buildPublicationTC() {
+                let id = ${params.id};
+                let linkProvider = {
+                    "linkType": $('#linkProvider').val(),
+                    "pattern": ""
+                }
+                let link = $('#link').val();
+                let title = $('#title').val();
+                let journal = $('#journal').val();
+                let affiliation = $('#affiliation').val();
+                let synopsis = $('#synopsis').val();
+                let year = $('#year').val();
+                let month = $('#month').val();
+                let day = $('#day').val();
+                let volume = $('#volume').val();
+                let issue = $('#issue').val();
+                let pages = $('#pages').val();
+                let opts = $('#authorList option');
+                let authors  = $.map(opts, function(opt) {
+                    if ($(opt).attr("data-person-id") === "undefined") {
+                        return {
+                            "userRealName": $(opt).attr("data-person-realname"),
+                            "orcid": $(opt).attr("data-person-orcid"),
+                            "institution": $(opt).attr("data-person-institution")
+                        };
+                    } else {
+                        return {
+                            "id": $(opt).attr("data-person-id"),
+                            "userRealName": $(opt).attr("data-person-realname"),
+                            "orcid": $(opt).attr("data-person-orcid"),
+                            "institution": $(opt).attr("data-person-institution")
+                        };
+                    }
+                });
+
+                let pubCmd = {
+                    'id': id,
+                    'linkProvider': linkProvider,
+                    'link': link,
+                    'title': title,
+                    'journal': journal,
+                    'affiliation': affiliation,
+                    'synopsis': synopsis,
+                    'year': year,
+                    'month': month,
+                    'day': day,
+                    'volume': volume,
+                    'issue': issue,
+                    'pages': pages,
+                    'authors': authors
+                }
+                return pubCmd;
+            }
+
             $('input[name="Back"]').on("click", function() {
+                // The following function is defined in publicationSubmission.js
                 backAway();
+            });
+
+            $(document).on('click', '#refreshPublicationFromPubMed', {}, function(e) {
+                e.preventDefault();
+                $.ajax({
+                    type: "POST",
+                    url: "${createLink(controller: "publication", action: "refreshPubMedData")}",
+                    data: {
+                        id: ${params.id},
+                        pubmed: $('#link').val()
+                    }
+                }).done(function(data) {
+                    $('.editablePart').html(data);
+                });
             });
         </g:javascript>
     </g:if>

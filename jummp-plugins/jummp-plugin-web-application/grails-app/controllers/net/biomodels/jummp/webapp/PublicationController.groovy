@@ -3,6 +3,7 @@ package net.biomodels.jummp.webapp
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.InvalidPublicationAuthorsException
+import net.biomodels.jummp.core.adapters.PublicationAdapter
 import net.biomodels.jummp.model.Publication
 
 import net.biomodels.jummp.core.model.PublicationTransportCommand
@@ -10,6 +11,7 @@ import net.biomodels.jummp.core.model.PublicationTransportCommand
 @Secured(['IS_AUTHENTICATED_FULLY'])
 class PublicationController {
     def publicationService
+    def pubMedService
 
     def index() {
         List<PublicationTransportCommand> publications = new ArrayList<>()
@@ -22,40 +24,44 @@ class PublicationController {
         pubTC.id = null
         [publication: pubTC]
     }
-    /*def show(PublicationTransportCommand pubCmd) {
-        if (!pubCmd) {
-            // render out the error
-        }
-        [publication: pubCmd]
-    }*/
 
     def show(Publication publication) {
         if (!publication) {
             render(view: "error404")
             return false
         }
-        def pubCmd = publicationService.getById(params.long("id"))
-        [publication: pubCmd, authorListContainerSize: pubCmd?.authors?.size() > 5 ? 5 : pubCmd?.authors?.size()]
+        PublicationTransportCommand pubCmd = new PublicationAdapter(publication: publication).toCommandObject()
+        [publication: pubCmd, authorListContainerSize: 4]
     }
 
-    def save() {
+    def refreshPubMedData() {
+        PublicationTransportCommand pubTC = pubMedService.fetchPublicationData(params.pubmed)
+        pubTC.id = params.long("id")
+        render template: "/templates/publication/publicationEditableElements",
+            plugin: "jummp-plugin-web-application",
+            model: [id: params.id, publication: pubTC, authorListContainerSize: 4, controllerName: "publication", actionName: "show"]
+    }
+
+    def save(PublicationTransportCommand pubCmd) {
         Map result = [:]
-        Long id = params.long("id")
-        println "Id: ${id}"
-        result.message = "Saved successfully"
-        /*if (id) {
-            PublicationTransportCommand tempPTC = new PublicationTransportCommand()
-            bindData(tempPTC, params, [exclude: ['authors']])
-            try  {
-                publicationService.assembleAuthors(tempPTC, params.authorListContainer)
-            } catch (InvalidPublicationAuthorsException e) {
-                String errMsg = e.getI18nErrorMessage4InvalidAuthor()
-                flash.flashMessage = "There have been errors while parsing authors of the publication:<br/>${errMsg}"
+        String message = ""
+        Integer status
+        if (pubCmd.validate()) {
+            message = "Data binding is valid"
+            Publication publication = publicationService.fromCommandObject(pubCmd)
+            if (publication) {
+                message += "<br/>The data have been saved successfully"
+                status = 200
+            } else {
+                message += "<br/>Failures of saving data"
+                status = 500
             }
-            if (tempPTC.hasErrors()) {
-                flash.validationErrorOn = tempPTC
-            }
-        }*/
+            result.message = message
+            result.status = status
+        } else {
+            result.message = "There have been problems with data binding:<br/>${pubCmd.errors.allErrors.inspect()}"
+            result.status = 500
+        }
         render(result as JSON)
     }
 

@@ -16,10 +16,15 @@ function addAuthor() {
             authorList.push(newAuthor);
             // display/add it to the option element
             var id = userRealName + DELIMITER + orcid + DELIMITER + institution;
-            $('#authorList').attr('size', authorList.length);
+            $('#authorList').attr('size', 4);
             $('#authorList')
-                .append($('<option>', { value : id })
-                    .text(userRealName));
+                .append($('<option>', {
+                    value : id,
+                    "data-person-id": "undefined",
+                    "data-person-realname": userRealName,
+                    "data-person-orcid": orcid,
+                    "data-person-institution": institution
+                }).text(userRealName));
             showNotification("The author has been added in the author list.");
             // update the temporary hidden element playing as transporter
             updateData();
@@ -60,6 +65,7 @@ function deleteAuthor() {
 }
 function updateAuthor() {
     if ($('#newAuthorName').val()) {
+        let personId = $("#authorList option:selected").attr("data-person-id");
         var userRealName = $('#newAuthorName').val();
         var orcid = $('#newAuthorOrcid').val() || "";
         var institution = $('#newAuthorInstitution').val() || "";
@@ -74,15 +80,23 @@ function updateAuthor() {
             showNotification("No changes need to be saved.");
         } else {
             // create a new author before updating
-            var newAuthor = {userRealName: userRealName, institution: institution, orcid: orcid};
-            //authorList.push(newAuthor);
+            let newAuthor = {userRealName: userRealName, institution: institution, orcid: orcid};
+            if (personId !== "undefined") {
+                newAuthor["id"] = personId;
+            }
             // display/add it to the option element
-            var id = userRealName + DELIMITER + orcid + DELIMITER + institution;
+            let id = userRealName + DELIMITER + orcid + DELIMITER + institution;
             authorList[position] = newAuthor;
-            $("#authorList option:selected").remove();
-            $('#authorList')
-                .append($('<option>', { value : id })
-                    .text(userRealName));
+            let selected = $("#authorList option:selected");
+            $('#authorList option:selected')
+                .after($('<option>', {
+                    value : id,
+                    "data-person-id": personId,
+                    "data-person-realname": userRealName,
+                    "data-person-orcid": orcid,
+                    "data-person-institution": institution
+                }).text(userRealName));
+            $(selected).remove();
             showNotification("The author has been updated.");
             // update the temporary hidden element playing as transporter
             updateData();
@@ -91,7 +105,6 @@ function updateAuthor() {
         $('#newAuthorName').val("");
         $('#newAuthorOrcid').val("");
         $('#newAuthorInstitution').val("");
-        console.log(authorList);
     } else {
         showNotification("Please select a name before updating it.");
     }
@@ -113,44 +126,60 @@ function updateData() {
         var userRealName = entry["userRealName"];
         var institution = entry["institution"] || "";
         var orcid = entry["orcid"] || "";
-        authorMap.authors.push({'userRealName': userRealName, 'institution': institution, 'orcid': orcid});
+        let obj = {'userRealName': userRealName, 'institution': institution, 'orcid': orcid};
+        if (entry["id"] !== "undefined") {
+            obj["id"] = entry["id"];
+        }
+        authorMap.authors.push(obj);
     });
     updateTempDataDivElement();
 }
 
 $(document).ready(function () {
     updateData();
-    $("#authorList").change(function() {
-        var value = $(this).val();
-        var authorDetail = value.split(DELIMITER);
-        if (authorDetail[0]) {
-            $("#newAuthorName").val(authorDetail[0]);
-        }
-        if (authorDetail[1] == "") {
-            $("#newAuthorOrcid").val("");
-        } else {
-            $("#newAuthorOrcid").val(authorDetail[1]);
-        }
-        if (authorDetail[2] == "") {
-            $("#newAuthorInstitution").val("");
-        } else {
-            $("#newAuthorInstitution").val(authorDetail[2]);
-        }
-    });
-    $('#addButton').click(function() {
-        addAuthor();
-    });
-    $('#deleteButton').click(function() {
-        deleteAuthor();
-    });
-    $('#updateButton').click(function() {
-        updateAuthor();
-    });
-    $("#continueButton").click(function() {
-        updateData();
-    });
+});
+$(document).on("change", "#authorList", function() {
+    let selected = $("option:selected", this);
+    let personRealName = $(selected).attr("data-person-realname");
+    let personOrcid = $(selected).attr("data-person-orcid");
+    let personInstitution = $(selected).attr("data-person-institution");
+    if (personRealName) {
+        $("#newAuthorName").val(personRealName);
+    }
+    if (personOrcid == "") {
+        $("#newAuthorOrcid").val("");
+    } else {
+        $("#newAuthorOrcid").val(personOrcid);
+    }
+    if (personInstitution == "") {
+        $("#newAuthorInstitution").val("");
+    } else {
+        $("#newAuthorInstitution").val(personInstitution);
+    }
 });
 
+$(document).on("click", '#addButton', function() {
+    addAuthor();
+});
+$(document).on("click", '#deleteButton', function() {
+    deleteAuthor();
+});
+$(document).on("click", '#updateButton', function() {
+    updateAuthor();
+});
+$(document).on("click", "#continueButton", function() {
+    updateData();
+});
+
+/* The following function is used for re-ordering authors */
+$(document).on("click", '.moving-author', function() {
+    let $op = $('#authorList option:selected'),
+        $this = $(this);
+    console.log($this.attr("data-name"));
+    if ($op.length){
+        ($this.attr("data-name") === 'Up') ? $op.first().prev().before($op) : $op.last().next().after($op);
+    }
+});
 function backAway(){
     // if it was the first page
     if(history.length === 1){
