@@ -72,7 +72,7 @@ relevant mechanistic models in standard formats."/>
       href="//ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/css/ebi-global.css"
       media="none" onload="if(media!=='all') media='all'">
 <link rel="stylesheet" type="text/css"
-      href="//ebi.emblstatic.net/web_guidelines/EBI-Icon-fonts/v1.2/fonts.css"
+      href="//ebi.emblstatic.net/web_guidelines/EBI-Icon-fonts/v1.3/fonts.css"
       media="none" onload="if(media!=='all') media='all'">
 <link rel="stylesheet" type="text/css"
       href="//ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/css/theme-embl-petrol.css"
