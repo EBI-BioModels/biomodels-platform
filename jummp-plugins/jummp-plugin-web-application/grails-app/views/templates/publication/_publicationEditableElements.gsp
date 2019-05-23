@@ -34,10 +34,10 @@
             </select>
         </div>
         <div class="small-2 medium-3 columns text-left">
-            <i class="icon icon-common icon-arrow-up button btn-up moving-author"
+            <i class="icon icon-common icon-arrow-up button btn-up re-ordering-author"
                data-name="Up"></i>
             <br/>
-            <i class="icon icon-common icon-arrow-down button btn-down moving-author"
+            <i class="icon icon-common icon-arrow-down button btn-down re-ordering-author"
                data-name="Down"></i>
         </div>
     </div>

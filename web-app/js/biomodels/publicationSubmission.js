@@ -172,10 +172,9 @@ $(document).on("click", "#continueButton", function() {
 });
 
 /* The following function is used for re-ordering authors */
-$(document).on("click", '.moving-author', function() {
+$(document).on("click", '.re-ordering-author', function() {
     let $op = $('#authorList option:selected'),
         $this = $(this);
-    console.log($this.attr("data-name"));
     if ($op.length){
         ($this.attr("data-name") === 'Up') ? $op.first().prev().before($op) : $op.last().next().after($op);
     }

@@ -72,7 +72,7 @@
         }
         def nbAuthors = workingMemory.get("Authors")?.size()
         def authorListContainerSize = 4
-        // If users have tried to reload the page, the flash message has been wiped.
+        // If users strive to reload the page for any reason, the flash message would have been wiped.
         // Therefore, we need to re-populate it to display the message again
         boolean isReloaded = false
         if (pubContext.comesFromDatabase && null == flashMessage) {
