@@ -50,7 +50,7 @@ class PublicationTransportCommand implements Serializable {
     /**
      * The class logger
      */
-    final Log log = LogFactory.getLog(PublicationTransportCommand.class)
+    private final Log log = LogFactory.getLog(PublicationTransportCommand.class)
 
     Long id
     /**

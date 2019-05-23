@@ -48,7 +48,12 @@
                 String userRealName = it.userRealName ?: ""
                 String institution = it.institution ?: ""
                 String orcid = it.orcid ?: ""
-                [userRealName: userRealName, institution: institution, orcid: orcid]
+                def id = it.id ?: "undefined"
+                if (id == "undefined") {
+                    [userRealName: userRealName, institution: institution, orcid: orcid]
+                } else {
+                    [id: id, userRealName: userRealName, institution: institution, orcid: orcid]
+                }
                 } as JSON}
             };
             var authorList = authorMap["authors"];

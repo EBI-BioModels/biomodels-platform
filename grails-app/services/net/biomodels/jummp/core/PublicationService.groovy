@@ -218,8 +218,25 @@ There has been errors when assembling authors $authors into the publication '${p
 
     private void reconcile(Publication publication, List<PersonTC> tobeAdded) {
         List<PublicationPerson> existing = getPersons(publication)
+        existing.eachWithIndex { PublicationPerson author, int index ->
+            // find the authors will be remove out of the publication authors
+            def willBeRemovedAuthor = tobeAdded.find { willBeAddedAuthor ->
+                if (willBeAddedAuthor.id) {
+                    return willBeAddedAuthor.id == author.person.id
+                } else if (willBeAddedAuthor.orcid) {
+                    return willBeAddedAuthor.orcid == author.person.orcid
+                } else if (willBeAddedAuthor.userRealName || willBeAddedAuthor.institution) {
+                    return willBeAddedAuthor.userRealName == author.person.userRealName &&
+                        willBeAddedAuthor.institution == author.person.institution
+                }
+                return false
+            } // return false means the author is not existing in the tobeAdded list
+            if (!willBeRemovedAuthor) {
+                removePublicationAuthor(publication, author.person)
+            }
+        }
         tobeAdded.eachWithIndex { PersonTC newAuthor, Integer index ->
-            def existingAuthor = existing.find { oldAuthor ->
+            def existingAuthor = existing.find { PublicationPerson oldAuthor ->
                 if (newAuthor.id) {
                     return newAuthor.id == oldAuthor.person.id
                 } else if (newAuthor.orcid) {
@@ -262,25 +279,31 @@ There has been errors when assembling authors $authors into the publication '${p
                     log.error("Author $a could not be saved due to $err. Publication '$p' will be rolled back")
                 }
             } else {
-                if (existingAuthor.position != index) {
-                    existingAuthor.position = index
-                    existingAuthor.save()
+                // If the position of authors have been updated
+                if (existingAuthor.position != index ||
+                    existingAuthor.pubAlias != newAuthor.userRealName) {
+                    String query = """update PublicationPerson pp 
+set pp.position = :newPosition, pp.pubAlias = :newPubAlias
+where pp.publication = :publication and pp.person = :person and pp.position = :oldPosition"""
+                    Map parameters = [newPosition: index,
+                                      newPubAlias: newAuthor.userRealName,
+                                      publication: existingAuthor.publication,
+                                      person     : existingAuthor.person,
+                                      oldPosition: existingAuthor.position]
+                    PublicationPerson.executeUpdate(query, parameters)
                 }
-            }
-        }
-
-        existing.eachWithIndex{ PublicationPerson author, int index ->
-            // find the authors will be remove out of the publication authors
-            def willBeRemovedAuthor = tobeAdded.find { willBeAddedAuthor ->
-                if (willBeAddedAuthor.id) {
-                    return willBeAddedAuthor.id == author.person.id
-                } else if (willBeAddedAuthor.orcid) {
-                    return willBeAddedAuthor.orcid == author.person.orcid
+                // If authors' else properties have been changed
+                if (existingAuthor.person.userRealName != newAuthor.userRealName ||
+                    existingAuthor.person.orcid != newAuthor.orcid ||
+                    existingAuthor.person.institution != newAuthor.institution) {
+                    Person person = existingAuthor.person
+                    person.userRealName = newAuthor.userRealName
+                    person.orcid = newAuthor.orcid
+                    person.institution = newAuthor.institution
+                    if (!person.save(flush: true)) {
+                        log.error("Cannot saved the updates of the person ${person.errors.allErrors.inspect()}")
+                    }
                 }
-                return false
-            } // return false means the author is not existing in the tobeAdded list
-            if (!willBeRemovedAuthor) {
-                removePublicationAuthor(publication, author.person)
             }
         }
     }
@@ -298,10 +321,11 @@ There has been errors when assembling authors $authors into the publication '${p
             if (!authorJson) {
                 continue // skip this record
             }
+            Long id = authorJson["id"] ?: null
             String name = authorJson["userRealName"]
             String institution = authorJson["institution"] ?: null
             String orcid = authorJson["orcid"] ?: null
-            PersonTC author = new PersonTC(userRealName: name, orcid: orcid, institution: institution)
+            PersonTC author = new PersonTC(id: id, userRealName: name, orcid: orcid, institution: institution)
             if (author.validate()) {
                 validatedAuthors.add(author)
             } else {
