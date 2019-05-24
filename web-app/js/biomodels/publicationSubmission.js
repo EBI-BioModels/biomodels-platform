@@ -64,13 +64,14 @@ function deleteAuthor() {
     }
 }
 function updateAuthor() {
+    let selectedIndex = $('#authorList').prop('selectedIndex');
     if ($('#newAuthorName').val()) {
         let personId = $("#authorList option:selected").attr("data-person-id");
-        var userRealName = $('#newAuthorName').val();
-        var orcid = $('#newAuthorOrcid').val() || "";
-        var institution = $('#newAuthorInstitution').val() || "";
-        var position;
-        var updatedAuthor = authorList.filter(function(v,index) {
+        let userRealName = $('#newAuthorName').val();
+        let orcid = $('#newAuthorOrcid').val() || "";
+        let institution = $('#newAuthorInstitution').val() || "";
+        let position;
+        let updatedAuthor = authorList.filter(function(v,index) {
             position = index;
             return v["userRealName"] == userRealName &&
                 v["orcid"] == orcid &&
@@ -78,6 +79,8 @@ function updateAuthor() {
         })[0];
         if (updatedAuthor) {
             showNotification("No changes need to be saved.");
+        } else if (selectedIndex < 0) {
+            showNotification("Cannot update a nonexistent author (i.e. " + userRealName + ")");
         } else {
             // create a new author before updating
             let newAuthor = {userRealName: userRealName, institution: institution, orcid: orcid};
@@ -85,7 +88,9 @@ function updateAuthor() {
                 newAuthor["id"] = parseInt(personId);
             }
             // display/add it to the option element
-            let id = userRealName + DELIMITER + orcid + DELIMITER + institution;
+            let pId = personId === "undefined" ? "" : personId + DELIMITER
+            let id = pId + userRealName + DELIMITER + orcid + DELIMITER + institution;
+            let position = selectedIndex;
             authorList[position] = newAuthor;
             let selected = $("#authorList option:selected");
             $('#authorList option:selected')
@@ -123,9 +128,9 @@ function updateData() {
     // update the author map
     authorMap.authors = [];
     $.each(authorList, function(index, entry) {
-        var userRealName = entry["userRealName"];
-        var institution = entry["institution"] || "";
-        var orcid = entry["orcid"] || "";
+        let userRealName = entry["userRealName"];
+        let institution = entry["institution"] || "";
+        let orcid = entry["orcid"] || "";
         let obj = {'userRealName': userRealName, 'institution': institution, 'orcid': orcid};
         if (entry["id"] !== "undefined") {
             obj["id"] = entry["id"];
