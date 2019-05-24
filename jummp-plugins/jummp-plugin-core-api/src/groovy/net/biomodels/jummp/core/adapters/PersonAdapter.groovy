@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2019 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -21,18 +21,17 @@
 package net.biomodels.jummp.core.adapters
 import net.biomodels.jummp.plugins.security.Person
 import net.biomodels.jummp.plugins.security.PersonTransportCommand
+
 /**
  * @short Adapter class for the Person domain class
  *
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  */
-public class PersonAdapter {
+class PersonAdapter {
     Person person
 
-    public PersonTransportCommand toCommandObject() {
-    	return new PersonTransportCommand(id: person.id,
-    									  userRealName: person.userRealName,
-    									  institution: person.institution,
-    									  orcid: person.orcid)
+    PersonTransportCommand toCommandObject() {
+        new PersonTransportCommand(id: person.id, userRealName: person.userRealName,
+            institution: person.institution, orcid: person.orcid)
     }
 }
