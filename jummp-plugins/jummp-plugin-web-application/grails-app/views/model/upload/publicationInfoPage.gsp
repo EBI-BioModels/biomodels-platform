@@ -81,6 +81,9 @@
         }
     %>
     <g:if test="${isReloaded}">
+        <script>
+            $('.flashNotificationDiv').remove();
+        </script>
         <g:render template="/templates/notification/showNotificationDiv" contextPath=""/>
     </g:if>
     <div class="row">
