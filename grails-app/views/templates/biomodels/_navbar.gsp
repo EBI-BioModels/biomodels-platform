@@ -18,10 +18,11 @@
 --%>
 
 <nav>
-<ul class="main-menu dropdown menu float-left small-12 medium-12 large-12 columns"
-    id="local-nav" data-dropdown-menu role="menubar">
+<ul id="local-nav" class="main-menu dropdown menu"
+    data-description="navigational" data-dropdown-menu role="menubar"%>
     <li <g:if test="${actionName == null}"> class="first active" </g:if> role="menuitem">
-        <a href="${createLink(uri: '/', absolute: true)}" title="Back to BioModels homepage">Home</a>
+        <a href="${createLink(uri: '/', absolute: true)}" title="Back to BioModels homepage">
+            <i class="icon icon-generic" data-icon="H"></i> Home</a>
     </li>
     <%
         boolean selectedSupportItems = g.pageProperty(name:'page.faq')?.length() || g.pageProperty(name:'page.courses')?.length()
@@ -33,7 +34,7 @@
             g.pageProperty(name:'page.jobs')?.length()
     %>
     <li <g:if test="${selectedBrowseItems}"> class="active" </g:if> role="menuitem">
-        <a>Browse</a>
+        <a><i class="icon icon-common" data-icon="b"></i> Browse</a>
         <ul class="menu">
             <li><a href="${g.createLink(controller: 'search', action: 'search', params: [query: '*:*'])}">Browse all models</a></li>
             <li><a href="${g.createLink(controller: 'goChart', action: 'index', plugin: 'jummp-plugin-biomodels-dom')}">Browse GO categories</a></li>
@@ -42,10 +43,10 @@
         </ul>
     </li>
     <li <g:if test="${g.pageProperty(name:'page.submit')?.length()}"> class="active" </g:if> role="menuitem">
-        <a href="${g.createLink(controller: 'model', action: 'create')}">Submit</a>
+        <a href="${g.createLink(controller: 'model', action: 'create')}"><i class="icon icon-common icon-submit"></i> Submit</a>
     </li>
     <li <g:if test="${selectedSupportItems}"> class="active" </g:if> role="menuitem">
-        <a><g:message code="jummp.support.biomodels.title"/></a>
+        <a><i class="icon icon-common icon-support"></i> <g:message code="jummp.support.biomodels.title"/></a>
         <ul class="menu">
             <li><a href="${g.createLink(controller: 'jummp', action: 'faq')}">FAQ</a></li>
             <li><a href="${g.createLink(controller: 'jummp', action: 'courses')}">Courses</a></li>
@@ -55,7 +56,7 @@
         </ul>
     </li>
     <li <g:if test="${selectedAboutusItems}"> class="active" </g:if> role="menuitem">
-        <a><g:message code="jummp.aboutus.biomodels.title"/></a>
+        <a><i class="icon icon-common icon-info"></i> <g:message code="jummp.aboutus.biomodels.title"/></a>
         <ul class="menu">
             <li><a href="${g.createLink(controller: 'jummp', action: 'termsOfUse')}">Terms of Use</a></li>
             <li><a href="${g.createLink(controller: 'jummp', action: 'howToCiteBioModelsDatabase')}">Citation</a></li>
@@ -71,13 +72,13 @@
     </li>
     <li <g:if test="${g.pageProperty(name:'page.contactus')?.length()}"> class="active" </g:if> role="menuitem">
         <a href="${g.createLink(controller: 'jummp', action: 'contactus')}">
-            <g:message code="jummp.contactus.biomodels.title"/>
+            <i class="icon icon-common icon-contact"></i> <g:message code="jummp.contactus.biomodels.title"/>
         </a>
     </li>
     <li style="border-right: none" id="menuItemFeedback" data-open="rate_review_form" role="menuitem">
         <!-- rate_review_form is the identifier of the modal feedback form defined in the footer.
              This form is rendered using the feedback template of the web plugin -->
-        <a><g:message code="jummp.feedback.default.title"/></a>
+        <a><i class="icon icon-common icon-comment"></i> <g:message code="jummp.feedback.default.title"/></a>
     </li>
     <!-- If you need to include functional (as opposed to purely navigational) links in your local menu,
        add them here, and give them a class of "functional". Remember: you'll need a class of "last" for
@@ -87,7 +88,7 @@
         <li class="functional first float-right" role="menuitem">
             <a>My Account</a>
             <ul class="menu">
-                <li><a href="${grailsApplication.config.grails.serverURL}/user" class="icon icon-functional" data-icon="5">
+                <li><a href="${grailsApplication.config.grails.serverURL}/user"><i class="icon icon-common icon-user-circle"></i>
                     ${sec.username()}'s Profile</a></li>
                 <li class="divider"></li>
                 <li><a href="${g.createLink(controller: 'search', action: 'list')}">
