@@ -82,7 +82,7 @@ function updateAuthor() {
             // create a new author before updating
             let newAuthor = {userRealName: userRealName, institution: institution, orcid: orcid};
             if (personId !== "undefined") {
-                newAuthor["id"] = personId;
+                newAuthor["id"] = parseInt(personId);
             }
             // display/add it to the option element
             let id = userRealName + DELIMITER + orcid + DELIMITER + institution;
