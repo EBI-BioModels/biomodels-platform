@@ -65,6 +65,9 @@ public class JummpXmlUtils {
         String theResult
         XMLInputFactory factory = XMLInputFactory.newInstance()
         factory.setProperty(XMLInputFactory.IS_COALESCING, Boolean.FALSE)
+        // see https://github.com/OWASP/CheatSheetSeries/blob/master/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.md
+        factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
+        factory.setProperty("javax.xml.stream.isSupportingExternalEntities", false);
         XMLStreamReader xmlReader
         try {
             xmlReader = factory.createXMLStreamReader(fileReader)
