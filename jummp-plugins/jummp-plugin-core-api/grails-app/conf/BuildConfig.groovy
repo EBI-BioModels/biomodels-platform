@@ -29,8 +29,8 @@ grails.project.test.reports.dir = "target/test-reports"
 grails.project.work.dir = "target/work"
 //grails.project.war.file = "target/${appName}-${appVersion}.war"
 grails.project.groupId = "net.biomodels.jummp.core"
-grails.project.source.level = 1.7
-grails.project.target.level = 1.7
+grails.project.source.level = 1.8
+grails.project.target.level = 1.8
 
 grails.project.fork = [
     // configure settings for the test-app JVM, uses the daemon by default
@@ -85,7 +85,7 @@ grails.project.dependency.resolution = {
         //      https://github.com/BD2K-DDI/ddi-ebeye-ws-dao/blob/8bd08f/pom.xml
         compile "com.fasterxml.jackson.core:jackson-databind:2.5.2"
         compile "org.apache.commons:commons-lang3:3.3.2"
-        compile "org.apache.tika:tika-core:1.3"
+        compile "org.apache.tika:tika-core:1.14"
     }
     plugins {
         build ":tomcat:7.0.55.3"

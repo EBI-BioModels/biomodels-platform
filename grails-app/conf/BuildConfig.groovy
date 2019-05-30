@@ -120,7 +120,7 @@ grails.project.dependency.resolution = {
                     'xml-apis'
         }*/
         compile 'log4j:log4j:1.2.17'
-        compile "org.apache.tika:tika-core:1.3"
+        compile "org.apache.tika:tika-core:1.14"
         /**
          * Weceem lists it as a runtime dependency, while jsbml needs it during compilation.
          * Unfortunately, Grails misbehaves and leaves xstream out at compile time unless we

@@ -27,8 +27,8 @@ grails.project.class.dir = "target/classes"
 grails.project.test.class.dir = "target/test-classes"
 grails.project.test.reports.dir = "target/test-reports"
 grails.project.work.dir = "target/work"
-grails.project.source.level = 1.7
-grails.project.target.level = 1.7
+grails.project.source.level = 1.8
+grails.project.target.level = 1.8
 // maven can't handle flatDirs, would break sbml and bives
 grails.project.dependency.resolver = "maven"
 
@@ -70,7 +70,7 @@ grails.project.dependency.resolution = {
         compile "commons-io:commons-io:2.1"
         compile 'xml-apis:xml-apis:1.4.01'
         // mime-type detection
-        compile "org.apache.tika:tika-core:1.3"
+        compile "org.apache.tika:tika-core:1.14"
     }
 
     plugins {
