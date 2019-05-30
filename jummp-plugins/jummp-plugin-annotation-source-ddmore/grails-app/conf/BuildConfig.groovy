@@ -46,7 +46,6 @@ grails.project.dependency.resolution = {
         grailsCentral()
         mavenLocal()
         mavenCentral()
-        mavenRepo "http://maven.mango-solutions.com/ddmore/"
         mavenRepo "http://www.ebi.ac.uk/~maven/m2repo_snapshots/"
     }
 
@@ -66,7 +65,6 @@ grails.project.dependency.resolution = {
             excludes 'spring-core', 'spring-context', 'slf4j-log4j12'
         }
 
-/*        compile "net.biomodels.jummp:AnnotationStore:0.2.9-SNAPSHOT"*/
         compile("net.sf.jung:jung-graph-impl:$jungVersion")
 
         // useful for WordUtils.capitalise()
