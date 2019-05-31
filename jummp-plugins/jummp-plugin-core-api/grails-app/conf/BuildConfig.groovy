@@ -91,6 +91,8 @@ grails.project.dependency.resolution = {
         build ":tomcat:7.0.55.3"
         compile ":perf4j:0.2.1"
         runtime ":hibernate4:4.3.10"
+        compile ":spring-security-acl:2.0.1"
+        compile ":spring-security-core:2.0.0"
+        compile ":spring-security-ldap:2.0.1"
     }
 }
-grails.plugin.location.'jummp-plugin-security'="../jummp-plugin-security"

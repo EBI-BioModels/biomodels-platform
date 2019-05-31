@@ -83,5 +83,4 @@ grails.project.dependency.resolution = {
         compile ":perf4j:0.2.1"
     }
 }
-grails.plugin.location.'jummp-plugin-security'="../jummp-plugin-security"
 grails.plugin.location.'jummp-plugin-core-api'="../jummp-plugin-core-api"
