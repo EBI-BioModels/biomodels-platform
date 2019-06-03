@@ -31,25 +31,15 @@
 
 package net.biomodels.jummp.plugins.git
 
-import net.biomodels.jummp.core.vcs.InvalidVcsRepositoryException
-import net.biomodels.jummp.core.vcs.VcsAlreadyInitedException
-import net.biomodels.jummp.core.vcs.VcsNotInitedException
-
-import java.nio.ByteBuffer
-import java.nio.channels.FileChannel
-import java.nio.channels.FileLock
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.locks.ReentrantLock
-import net.biomodels.jummp.core.vcs.VcsManager
-import net.biomodels.jummp.core.vcs.VcsException
-import net.biomodels.jummp.core.vcs.VcsFileDetails
+import grails.util.Holders
+import net.biomodels.jummp.core.ILockService
+import net.biomodels.jummp.core.locks.DistributedLockService
+import net.biomodels.jummp.core.locks.FileBasedLockService
+import net.biomodels.jummp.core.vcs.*
 import org.apache.commons.io.FileUtils
-import org.eclipse.jgit.api.AddCommand
-import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.api.InitCommand
-import org.eclipse.jgit.api.LogCommand
-import org.eclipse.jgit.api.RmCommand
+import org.apache.commons.logging.Log
+import org.apache.commons.logging.LogFactory
+import org.eclipse.jgit.api.*
 import org.eclipse.jgit.lib.Config
 import org.eclipse.jgit.lib.ConfigConstants
 import org.eclipse.jgit.lib.Constants
@@ -58,6 +48,8 @@ import org.eclipse.jgit.revwalk.DepthWalk.RevWalk
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.perf4j.aop.Profiled
+
+import javax.annotation.PostConstruct
 
 /**
  * @short GitManager provides the interface to a local git clone.
@@ -80,17 +72,15 @@ import org.perf4j.aop.Profiled
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
 class GitManager implements VcsManager {
-    // uid for generating unique checkout directory names
-    private static final AtomicInteger uid = new AtomicInteger(0)
-    // locks to ensure model directories are not accessed concurrently
-    private final ConcurrentHashMap<String, ReentrantLock> locks = new ConcurrentHashMap<String, ReentrantLock>()
-    private final ConcurrentHashMap<String, FileLock> diskLocks = new ConcurrentHashMap<String, FileLock>()
+    static final Log LOGGER = LogFactory.getLog(GitManager.class)
     // cache of initialised repositories
     private final Map<File, Git> initedRepositories = Collections.synchronizedMap(new LruCache<File, Git>(1000))
     // exchange directory
     private File exchangeDirectory
     // legacy parameter specifying remoteness. Probably useless.
     private boolean hasRemote
+
+    ILockService lockService
 
     /**
      * This internal class is a standard implementation of a cached hashmap
@@ -145,90 +135,25 @@ class GitManager implements VcsManager {
         }
     }
 
+    @PostConstruct
+    void setLockService() {
+        String lockServiceName = "fileBasedLockService"
+        lockService = Holders.grailsApplication.mainContext.getBean(lockServiceName)
+        String lockStrategy = Holders.grailsApplication.config.jummp.model.lock.strategy
+        if (!lockStrategy) {
+            LOGGER.error "Cannot load the setting for model lock strategy"
+            lockStrategy = "FileBasedLock"
+            LOGGER.error "... using the default model lock strategy: $lockStrategy"
+        }
+        lockService = lockStrategy.equalsIgnoreCase("FileBasedLock") ?
+            new FileBasedLockService() : new DistributedLockService()
+    }
+
     @Profiled(tag = "gitManager.createModel")
     String createModel(File modelDirectory, List<File> modelFiles, String commit) {
         //FIXME this is meant to do Git-specific initialisation of the repository
         //then execute the same logic as importModel(modelDirectory, modelFiles, commit)
         return ""
-    }
-
-    private FileChannel getRepositoryChannel(File modelDirectory) {
-        File repositoryFile = new File(modelDirectory, ".git/.locker.txt")
-        FileChannel channel = new RandomAccessFile(repositoryFile, "rw").getChannel()
-        return channel
-    }
-
-    private FileLock obtainExclusiveLock(File modelDirectory) throws VcsException {
-        FileLock lock = null
-        long accumulate = 0
-        Exception lastException = null
-        try {
-            while (accumulate < 300000) {
-                try {
-                    FileChannel channel = getRepositoryChannel(modelDirectory)
-                    lock = channel.tryLock()
-                    //Write something to file, otherwise file isn't really locked
-                    channel.write(ByteBuffer.wrap("\n".getBytes()))
-                } catch (Exception ignore) {
-                }
-                if (lock) {
-                    return lock
-                }
-                Thread.sleep(100)
-                accumulate += 100
-            }
-            //lock=channel.lock()
-        } catch (Exception e) {
-            if (e instanceof InterruptedException && Thread.currentThread().isInterrupted()) {
-                throw e // let upstream deal with it
-            }
-            lastException = e
-        }
-        if (!lock) {
-            def ex = new VcsException("Error obtaining disk based lock, waited $accumulate ms")
-            if (null != lastException) {
-                ex.initCause(lastException)
-            }
-            throw ex
-        }
-        return lock
-    }
-
-    /**
-     * Lock a model repository
-     *
-     * Checks whether a lock for the directory exists. If it does not exist
-     * then it associates a lock with the model directory. It then acquires
-     * the model directory lock
-     * @param modelDirectory The directory to lock
-     */
-    @Profiled(tag = "gitManager.lockModelRepository")
-    private void lockModelRepository(File modelDirectory) throws VcsException {
-        if (!locks.containsKey(modelDirectory.name)) {
-            ReentrantLock lock = new ReentrantLock()
-            locks.put(modelDirectory.name, lock)
-        }
-        locks.get(modelDirectory.name).lock()
-        FileLock fileLock = obtainExclusiveLock(modelDirectory)
-        diskLocks.put(modelDirectory.name, fileLock)
-    }
-
-    /**
-     * Unlock a model repository
-     *
-     * Unlocks the model directory, and if no other threads are waiting on it
-     * the lock is removed from the locks container
-     * @param modelDirectory The directory to unlock
-     */
-    @Profiled(tag = "gitManager.unlockModelRepository")
-    private void unlockModelRepository(File modelDirectory) {
-        ReentrantLock lock = locks.get(modelDirectory.name)
-        if (!lock.hasQueuedThreads()) locks.remove(modelDirectory)
-        FileLock removing = diskLocks.remove(modelDirectory.name)
-        new File(modelDirectory, ".git/.locker.txt").setText("")
-        removing.release()
-        removing.channel().close()
-        lock.unlock()
     }
 
     private void ensureRepInited(File modelDirectory) {
@@ -336,11 +261,11 @@ class GitManager implements VcsManager {
             String commitMessage) throws VcsException {
         ensureRepInited(modelDirectory)
         String revision = null
-        lockModelRepository(modelDirectory)
+        lockService.lockModelRepository(modelDirectory)
         try {
             revision = handleModification(modelDirectory, addFiles, removeFiles, commitMessage)
         } finally {
-            unlockModelRepository(modelDirectory)
+            lockService.unlockModelRepository(modelDirectory)
         }
         revision
     }
@@ -387,16 +312,19 @@ class GitManager implements VcsManager {
     @Profiled(tag = "gitManager.downloadFiles")
     private void downloadFiles(File modelDirectory, List<File> addHere) {
         File[] repFiles = modelDirectory.listFiles()
-        File tempDir = new File(exchangeDirectory.absolutePath + System.getProperty("file.separator") + UUID.randomUUID().toString())
+        String fileSeparator = System.getProperty("file.separator")
+        File tempDir = new File(exchangeDirectory.absolutePath +
+            fileSeparator + UUID.randomUUID().toString())
         tempDir.mkdir()
-        repFiles.each
-            {
-                File destinationFile = new File(tempDir.absolutePath + System.getProperty("file.separator") + it.getName())
-                if (!it.isDirectory()) {
-                    FileUtils.copyFile(it, destinationFile)
-                    addHere.add(destinationFile)
-                }
+        repFiles.each {
+            File destinationFile = new File(tempDir.absolutePath +
+                fileSeparator + it
+                .getName())
+            if (!it.isDirectory()) {
+                FileUtils.copyFile(it, destinationFile)
+                addHere.add(destinationFile)
             }
+        }
         if (addHere.isEmpty()) throw new VcsException("Model directory is empty!")
 
     }
@@ -430,7 +358,7 @@ class GitManager implements VcsManager {
     List<File> retrieveModel(File modelDirectory, String revision) throws VcsException {
         ensureRepInited(modelDirectory)
         List<File> returnedFiles = new LinkedList<File>()
-        lockModelRepository(modelDirectory)
+        lockService.lockModelRepository(modelDirectory)
         try {
             if (revision == null) {
                 // return current HEAD revision
@@ -457,7 +385,7 @@ class GitManager implements VcsManager {
         } catch (VcsException e) {
             throw new VcsNotInitedException()
         } finally {
-            unlockModelRepository(modelDirectory)
+            lockService.unlockModelRepository(modelDirectory)
         }
         return returnedFiles
     }
@@ -488,7 +416,7 @@ class GitManager implements VcsManager {
         ensureRepInited(modelDirectory)
         List<String> myList = new LinkedList<String>()
         if (acquireLocks) {
-            lockModelRepository(modelDirectory)
+            lockService.lockModelRepository(modelDirectory)
         }
         try {
             Iterator<RevCommit> log = initedRepositories.get(modelDirectory).log().call().iterator()
@@ -497,7 +425,7 @@ class GitManager implements VcsManager {
             }
         } finally {
             if (acquireLocks) {
-                unlockModelRepository(modelDirectory)
+                lockService.unlockModelRepository(modelDirectory)
             }
         }
         return myList
@@ -515,13 +443,13 @@ class GitManager implements VcsManager {
     @Profiled(tag = "gitManager.updateWorkingCopy")
     void updateWorkingCopy(File modelDirectory) throws VcsException {
         ensureRepInited(modelDirectory)
-        lockModelRepository(modelDirectory)
+        lockService.lockModelRepository(modelDirectory)
         try {
             if (hasRemote) {
                 initedRepositories.get(modelDirectory).pull().call()
             }
         } finally {
-            unlockModelRepository(modelDirectory)
+            lockService.unlockModelRepository(modelDirectory)
         }
     }
 

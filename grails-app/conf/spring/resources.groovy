@@ -117,6 +117,16 @@ beans = {
         }
     }
 
+    fileBasedLockService(net.biomodels.jummp.core.locks.FileBasedLockService) { bean ->
+        bean.autowire = "byName"
+        bean.singleton = true
+    }
+
+    distributedLockService(net.biomodels.jummp.core.locks.DistributedLockService) { bean ->
+        bean.autowire = "byName"
+        bean.singleton = true
+    }
+
     revisionCreatedListener(net.biomodels.jummp.plugins.bives.RevisionCreatedListener) { bean ->
         bean.autowire = "byName"
         bean.singleton = true

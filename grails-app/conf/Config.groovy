@@ -403,6 +403,13 @@ if (!(jummpConfig.jummp.search.strategy instanceof ConfigObject)) {
     // default to solr
     jummp.search.strategy = "solr"
 }
+// model lock strategy: FileBasedLock or DistributedBasedLock
+if (!(jummpConfig.jummp.model.lock.strategy instanceof ConfigObject)) {
+    jummp.model.lock.strategy = jummpConfig.jummp.model.lock.strategy
+} else {
+    // default to FileBasedLock
+    jummp.model.lock.strategy = "FileBasedLock"
+}
 
 if (jummpConfig.jummp.model.curators.mailinglist) {
     jummp.model.curators.mailinglist = jummpConfig.jummp.model.curators.mailinglist

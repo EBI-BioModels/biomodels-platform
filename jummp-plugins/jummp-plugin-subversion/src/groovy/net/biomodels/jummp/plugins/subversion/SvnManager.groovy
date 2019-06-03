@@ -35,6 +35,8 @@
 package net.biomodels.jummp.plugins.subversion
 
 import net.biomodels.jummp.core.vcs.*
+
+import javax.annotation.PostConstruct
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
 import org.apache.commons.io.FileUtils
@@ -65,8 +67,10 @@ import org.tmatesoft.svn.core.internal.io.svn.SVNRepositoryFactoryImpl
  * @author Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
-public class SvnManager implements VcsManager {
+class SvnManager implements VcsManager {
     // TODO: we need some way of authentication
+    def lockService
+
     private static final ReentrantLock lock = new ReentrantLock()
     private static final AtomicInteger uid = new AtomicInteger(0)
     private static final Log log = LogFactory.getLog(this)
@@ -120,7 +124,7 @@ public class SvnManager implements VcsManager {
         }
     }
 
-    public void init(File workingCopy, File exchangeDirectory) {
+    void init(File workingCopy, File exchangeDirectory) {
         lock.lock()
         try {
             if (inited) {
@@ -148,7 +152,12 @@ public class SvnManager implements VcsManager {
         }
     }
 
-    public String importFile(File file, String name, String commitMessage) {
+    @PostConstruct
+    void setLockService() {
+
+    }
+
+    String importFile(File file, String name, String commitMessage) {
         String revision
         lock.lock()
         try {
@@ -282,6 +291,16 @@ public class SvnManager implements VcsManager {
         throw new UnsupportedOperationException("This is a stub.")
     }
 
+    @Override
+    String updateModel(File modelDirectory, List<File> files, List<File> deleted, String commitMessage) throws VcsException {
+        return null
+    }
+
+    @Override
+    String updateModel(File modelDirectory, List<File> files, List<File> deleted) throws VcsException {
+        return null
+    }
+
     String updateModel(File d, List files, String msg) {
         throw new UnsupportedOperationException("This is a stub.")
     }
@@ -310,7 +329,11 @@ public class SvnManager implements VcsManager {
         throw new UnsupportedOperationException("This is a stub.")
     }
 
-    /*
+    @Override
+    List<VcsFileDetails> getFileDetails(File modelDirectory, String path) {
+        return null
+    }
+/*
      * Initializes the library to work with a repository via
      * different protocols.
      */

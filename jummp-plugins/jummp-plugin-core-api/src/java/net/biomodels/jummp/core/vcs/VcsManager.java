@@ -25,6 +25,9 @@
 
 package net.biomodels.jummp.core.vcs;
 
+import net.biomodels.jummp.core.ILockService;
+
+import javax.annotation.PostConstruct;
 import java.io.File;
 import java.util.List;
 
@@ -63,11 +66,16 @@ import java.util.List;
 * setup infeasible.
 **/
 public interface VcsManager {
+
+    @PostConstruct
+    void setLockService();
+
     /**
-    * Initialises the exchange directory required by JUMMP.
-    * @param exchangeDirectory The exchange directory for retrieved files
-    * @throws VcsException if something goes wrong (needs to be made more specific to new usage)
-    **/
+     * Initialises the exchange directory required by JUMMP.
+     * @param exchangeDirectory The exchange directory for retrieved files
+     * @throws VcsException if something goes wrong (needs to be made more
+     * specific to new usage)
+     */
     //TODO replace exchangeDir with java.io.tmpdir
     void init(File exchangeDirectory) throws VcsException;
 

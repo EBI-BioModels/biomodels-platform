@@ -162,6 +162,8 @@ grails.project.dependency.resolution = {
             excludes 'spring-context','spring-core','spring-test', 'jena', 'slf4j-log4j12'
         }
         compile "com.rometools:rome:1.11.1"
+        compile "com.hazelcast:hazelcast:3.12"
+        compile "com.hazelcast:hazelcast-client:3.12"
     }
 
     plugins {

@@ -68,6 +68,8 @@ grails.project.dependency.resolution = {
         //mavenRepo "http://repository.jboss.com/maven2/"
         mavenRepo "http://www.ebi.ac.uk/~maven/m2repo"
         mavenRepo "http://www.ebi.ac.uk/~maven/m2repo_snapshots/"
+        mavenRepo "https://repository.hazelcast.com/snapshot/"
+        mavenRepo "https://repository.hazelcast.com/release/"
     }
     dependencies {
         compile("eu.ddmore.pharmml:libPharmML:0.4-beta-b3")
@@ -86,6 +88,8 @@ grails.project.dependency.resolution = {
         compile "com.fasterxml.jackson.core:jackson-databind:2.5.2"
         compile "org.apache.commons:commons-lang3:3.3.2"
         compile "org.apache.tika:tika-core:1.14"
+        compile "com.hazelcast:hazelcast:3.12"
+        compile "com.hazelcast:hazelcast-client:3.12"
     }
     plugins {
         build ":tomcat:7.0.55.3"
