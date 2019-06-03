@@ -30,13 +30,13 @@
  * this service could communicate to get various exports of the given model.
  *
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
+ * @author Mihai Glont <mihai.glont@ebi.ac.uk>
  *
- * @date 20180316
+ * @date 20190603
  */
 
 package net.biomodels.jummp.core.model
 
-import grails.util.Holders
 import groovy.json.JsonException
 import groovy.json.JsonSlurper
 import net.biomodels.jummp.core.IModelConversionService
@@ -45,6 +45,7 @@ import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -53,17 +54,22 @@ import java.nio.file.StandardCopyOption
 
 import net.biomodels.jummp.core.util.JummpHttpService
 
-class ModelConversionService implements IModelConversionService {
+class ModelConversionService implements IModelConversionService, GrailsConfigurationAware {
+    static scope = "prototype"
 
     private static final Log log = LogFactory.getLog(ModelConversionService.class)
 
-    def grailsApplication = Holders.grailsApplication
+    String CONVERSION_SERVICE_URL
 
-    final String CONVERSION_SERVICE_URL = grailsApplication.config.jummp.model.converter.url
-
-    final String EXPORT_FOLDER = grailsApplication.config.jummp.model.exportFolder
+    String EXPORT_FOLDER
 
     def repositoryFileService
+
+    @Override
+    void setConfiguration(ConfigObject co) {
+        CONVERSION_SERVICE_URL = co.jummp.model.converter.url
+        EXPORT_FOLDER = co.jummp.model.exportFolder
+    }
 
     /**
      * This utility method aims to check the connection state of the external conversion service.
