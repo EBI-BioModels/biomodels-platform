@@ -94,13 +94,13 @@ class ModelFileFormatService {
         if (!modelFiles) {
             return null
         }
-        List<File> fileList=new LinkedList<File>()
+        List<File> fileList = new LinkedList<File>()
         modelFiles.each {
-        	if (it.mainFile) {
-        		fileList.add(new File(it.path))
-        	}
+            if (it.mainFile) {
+                fileList.add(new File(it.path))
+            }
         }
-        Map<String, String> services=getServices()
+        Map<String, String> services = getServices()
 
         String match = services.keySet().find {
             if (it == "UNKNOWN") return false

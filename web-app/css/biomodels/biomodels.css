@@ -460,3 +460,13 @@ a.external:hover, a.external:active {
 .select2 {
     width: 100% !important;
 }
+
+#local-nav a:hover {
+    background-color: darkred !important;
+    color: white;
+}
+
+#local-nav ul > li > ul a:hover {
+    background-color: darkred !important;
+    color: white;
+}

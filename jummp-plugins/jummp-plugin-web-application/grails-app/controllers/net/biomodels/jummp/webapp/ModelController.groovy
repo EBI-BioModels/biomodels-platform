@@ -328,7 +328,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                                  hasCuratorRole         : hasCuratorRole,
                                  supportedForConversion : supportedForConversion,
                                  convertedFilesTC       : convertedFilesTC,
-                                 tags                   : tags
+                                 bmTags                 : tags
                     ]
                     if (rev.id == revision.id) {
                         flash.genericModel = model
@@ -996,8 +996,6 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                 }
                 modifications.put("changeStatus", changeStatus);
                 submissionService.refineModelInfo(flow.workingMemory, modifications)
-                //ModelTransportCommand model = flow.workingMemory.get('ModelTC') as ModelTransportCommand
-                //RevisionTransportCommand revision = flow.workingMemory.get("RevisionTC") as RevisionTransportCommand
             }.to "enterPublicationLink"
             on("Cancel").to "cleanUpAndTerminate"
             on("Back"){}.to "uploadFiles"

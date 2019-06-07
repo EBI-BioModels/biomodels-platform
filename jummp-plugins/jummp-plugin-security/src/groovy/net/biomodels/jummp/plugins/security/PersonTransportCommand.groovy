@@ -39,7 +39,7 @@ class PersonTransportCommand implements Serializable {
         id (nullable: true)
     }
 
-    public String toString() {
+    String toString() {
         userRealName
     }
 }

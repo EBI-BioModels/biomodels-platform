@@ -178,7 +178,13 @@ class SearchController {
                 params.flashMessage = "Please use *:* to browse all models."
             }
         }
-        println "Search terms: ${params.query}, requested from: ${request.getRemoteAddr()} under the format: ${response.format}"
+        /**
+         * Check whether the request isn't re-processed by Load Balancer
+         */
+        String clientIPAddress = request.getHeader("X-Forwarded-For") ?: request.getRemoteAddr()
+        String searchInfo = """\
+Search terms: ${params.query}, requested from: ${clientIPAddress} under the format: ${response.format}"""
+        println searchInfo
         def results = searchCore(params.query, params.sortBy, params.sortDir, params.offset, params.numResults)
         if (response.format=="html") {
             return results

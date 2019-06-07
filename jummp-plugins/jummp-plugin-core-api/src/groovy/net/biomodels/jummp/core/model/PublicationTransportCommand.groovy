@@ -50,7 +50,7 @@ class PublicationTransportCommand implements Serializable {
     /**
      * The class logger
      */
-    final Log log = LogFactory.getLog(PublicationTransportCommand.class)
+    private final Log log = LogFactory.getLog(PublicationTransportCommand.class)
 
     Long id
     /**
@@ -174,6 +174,7 @@ class PublicationTransportCommand implements Serializable {
              */
             String userRealName = authorXml.fullName[0].text()
             author.userRealName = userRealName
+            log.debug("Author: ${author?.userRealName}")
             this.authors.add(author)
         }
     }
