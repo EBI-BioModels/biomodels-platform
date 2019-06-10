@@ -343,9 +343,9 @@
             } else {
                 // populate data object from dataTableArg and set pageState.dataTable to dataTableArg
                 if (dataTableArg.search.value === "") {
-                    query = $('.dataTables_filter input').val();
+                    query = decodeURI($('.dataTables_filter input').val());
                 } else {
-                    query = dataTableArg.search.value;
+                    query = decodeURI(dataTableArg.search.value);
                 }
                 start = dataTableArg.start;
                 size = dataTableArg.length;
@@ -354,7 +354,7 @@
             // Sorting
             sort = prepareSortParams(dataTableArg, sort);
 
-            pageState.dataTable.query = query === "" || query === DEFAULT_QUERY ? DEFAULT_QUERY : encodeURIComponent(query);
+            pageState.dataTable.query = query === "" || query === DEFAULT_QUERY ? DEFAULT_QUERY : query;
             pageState.dataTable.start = start;
             pageState.dataTable.size = size;
             pageState.dataTable.sort = sort;
