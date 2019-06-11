@@ -21,6 +21,9 @@
 import grails.plugin.springsecurity.acl.AclSid
 import groovy.sql.Sql
 import groovyx.gpars.GParsPool
+import net.biomodels.jummp.deployment.biomodels.ModelTagTransportCommand
+import net.biomodels.jummp.deployment.biomodels.TagTransportCommand
+
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
@@ -78,6 +81,9 @@ class Ctx {
     static Publication pidPaper
     // auth token for admin account; used by worker threads to publish models
     static def adminAuth
+    // tags are assigned to Path2Models models
+    static Map<String, String> definedTags = ["Auto-Generated": "This tag indicates the model was automatically generated",
+                                              "Path2Models": "This model belongs to Path2Models project"]
 
     /**
      * Very simple means of executing an action as a different user than the one
@@ -206,6 +212,7 @@ void handleModelFolder(File modelFolder) {
             if (model.save()) {
                 portDataFromLegacySystem(model)
                 publish(model.revisions[0])
+                assignTags(model, Ctx.definedTags)
             } else {
                 def err = model.errors.allErrors
                 addModelError(id, "Could not update the submission identifier: $err")
@@ -403,6 +410,18 @@ void publish(Revision r) {
             throw new IllegalStateException("Cannot publish revision ${r.id}: $err")
         }
     })
+}
+
+void assignTags(Model model, Map<String, String> tags) {
+    def modelTagService = ctx.modelTagService
+    def cmd = new ModelTagTransportCommand()
+    cmd.modelId = model.submissionId
+    cmd.tags = tags.collect {
+        new TagTransportCommand(name: it.key, description: it.value)
+    }
+    def user = Ctx.submitter
+    Map result = modelTagService.saveOrUpdate(cmd, user)
+    addModelMsg(model.submissionId, result["message"])
 }
 
 // set the application context reference in POGOs that expect it
