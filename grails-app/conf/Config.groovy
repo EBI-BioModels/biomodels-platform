@@ -18,6 +18,9 @@
 * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 **/
 
+
+import grails.util.Environment
+
 import java.util.regex.Pattern
 
 // locations to search for config files that get merged into the main config
@@ -39,8 +42,12 @@ grails.plugin.springsecurity.useSessionFixationPrevention = false
 grails.plugin.springsecurity.rejectIfNoRule = true
 grails.plugin.springsecurity.fii.rejectPublicInvocations = false
 
-String catalinaHome = System.properties['catalina.home']
-String logDir = "$catalinaHome/logs"
+String catalinaBase = System.properties['catalina.base']
+String logDir = "$catalinaBase/logs"
+
+if (Environment.isDevelopmentMode()) {
+    logDir = "${System.properties['user.dir']}/logs"
+}
 
 Properties jummpProperties = new Properties()
 try {
