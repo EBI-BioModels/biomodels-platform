@@ -583,7 +583,7 @@ target(loadClasses: 'Loads required classes in the Jummp Grails environment') {
     mtc = loadClass("net.biomodels.jummp.core.model.ModelTransportCommand")
     plptc = loadClass("net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand")
     ptc = loadClass("net.biomodels.jummp.core.model.PublicationTransportCommand")
-    personTC = loadClass("net.biomodels.jummp.plugins.net.biomodels.jummp.core.user.PersonTransportCommand")
+    personTC = loadClass("net.biomodels.jummp.core.user.PersonTransportCommand")
     ftc = loadClass("net.biomodels.jummp.core.model.FlagTransportCommand")
 
     // submission-related domain classes
