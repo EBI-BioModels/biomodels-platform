@@ -2,9 +2,31 @@ package net.biomodels.jummp.plugins.sbml
 
 import grails.test.mixin.TestFor
 import spock.lang.Specification
+import spock.lang.Unroll
 
 @TestFor(SbmlService)
-class JSBMLSpec extends Specification {
+class SbmlServiceSpec extends Specification {
+
+    @Unroll("run this method areFilesThisFormat() with file #sbmlFile: #expected")
+    void "test areFilesThisFormat() with different sbmlFile"(String sbmlFile, boolean expected) {
+        expect: "sbmlService is fired up"
+        service
+
+        when: "feed the file #sbmlFile to the method"
+        def f = new File("test/files/$sbmlFile".toString())
+        f.exists()
+        boolean result = service.areFilesThisFormat([f])
+
+        then: "the method returns an expected result"
+        result == expected
+
+        where: "the data table"
+        sbmlFile                 | expected
+        "BIOMD0000000272.xml"    | true
+        "fbc_example1.xml"       | true
+        "Koch2017.xml"           | true    // <sbml tag and xmlns attribute are not the same line
+        "NonSBML.xml"            | false   // this is a dummy xml file
+    }
 
     void "valid SBML models do not throw errors"(String fileName, def result) {
         expect:
