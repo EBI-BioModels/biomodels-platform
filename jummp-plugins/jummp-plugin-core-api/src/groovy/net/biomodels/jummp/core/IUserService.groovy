@@ -36,6 +36,7 @@ package net.biomodels.jummp.core
 
 import net.biomodels.jummp.core.user.RegistrationException
 import net.biomodels.jummp.core.user.RoleNotFoundException
+import net.biomodels.jummp.core.user.UserCommand
 import net.biomodels.jummp.core.user.UserInvalidException
 import net.biomodels.jummp.core.user.UserManagementException
 import net.biomodels.jummp.core.user.UserNotFoundException

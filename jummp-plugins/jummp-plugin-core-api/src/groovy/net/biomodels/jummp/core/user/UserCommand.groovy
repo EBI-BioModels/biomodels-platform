@@ -32,7 +32,7 @@
 
 
 
-package net.biomodels.jummp.core
+package net.biomodels.jummp.core.user
 
 import grails.validation.Validateable
 

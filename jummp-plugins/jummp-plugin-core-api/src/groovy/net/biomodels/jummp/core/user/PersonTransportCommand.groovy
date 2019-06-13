@@ -18,20 +18,29 @@
 * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 **/
 
+package net.biomodels.jummp.core.user
 
+import grails.validation.Validateable
+import net.biomodels.jummp.plugins.security.Person
 
+/**
+ * @short Representation of a Person. Should be subclassed to help understand what type of person
+ * @author Raza Ali <raza.ali@ebi.ac.uk>
+ */
+@Validateable
+class PersonTransportCommand implements Serializable {
+    private static final long serialVersionUID = 1L
+    Long id
+    String userRealName
+    String institution
+    String orcid
 
+    static constraints = {
+        importFrom Person
+        id (nullable: true)
+    }
 
-class UrlMappings {
-
-	static mappings = {
-        "/$controller/$action?/$id?(.$format)?"{
-			constraints {
-				// apply constraints here
-			}
-		}
-
-		"/"(view:"/index")
-		"500"(view:'/error')
-	}
+    String toString() {
+        userRealName
+    }
 }
