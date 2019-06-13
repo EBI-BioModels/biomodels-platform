@@ -31,7 +31,6 @@
 package net.biomodels.jummp.plugins.security
 
 import grails.transaction.Transactional
-import grails.plugin.springsecurity.SpringSecurityUtils
 import org.perf4j.aop.Profiled
 import org.springframework.security.access.prepost.PreAuthorize
 

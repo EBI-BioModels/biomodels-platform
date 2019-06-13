@@ -28,4 +28,4 @@
 			</table>
 		{{/if}
 </script>
-<g:javascript src="teams.js" plugin="jummp-plugin-security"/>
+<g:javascript src="teams.js" plugin="jummp-plugin-web-application"/>

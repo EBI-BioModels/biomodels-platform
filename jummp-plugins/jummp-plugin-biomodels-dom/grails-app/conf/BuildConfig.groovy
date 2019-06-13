@@ -49,6 +49,5 @@ grails.project.dependency.resolution = {
         compile ":cache-ehcache:1.0.5"
     }
 }
-grails.plugin.location.'jummp-plugin-security' = "../jummp-plugin-security"
 grails.plugin.location.'jummp-plugin-core-api' = "../jummp-plugin-core-api"
 grails.plugin.location.'jummp-plugin-configuration' = "../jummp-plugin-configuration"

@@ -110,7 +110,6 @@ grails.project.dependency.resolution = {
         runtime ":jquery:1.11.1"
     }
 }
-grails.plugin.location.'jummp-plugin-security'="../jummp-plugin-security"
 grails.plugin.location.'jummp-plugin-core-api'="../jummp-plugin-core-api"
 //grails.plugin.location.'jummp-plugin-bives'="../jummp-plugin-bives"
 grails.plugin.location.'jummp-plugin-sbml'="../jummp-plugin-sbml"
