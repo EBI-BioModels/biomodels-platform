@@ -53,12 +53,13 @@ class TagService {
         result
     }
 
-    Tag create(String name, User userCreated) {
+    Tag create(String name, String description, User userCreated) {
         Tag tagObj = Tag.findOrCreateByNameAndUserCreated(name, userCreated)
         if (!tagObj.id) {
             tagObj.dateCreated = new Date()
             tagObj.dateModified = new Date()
         }
+        tagObj.description = description
         Tag returned = tagObj.save(flush: true)
         returned
     }
@@ -66,10 +67,9 @@ class TagService {
     Tag createOrUpdate(TagTransportCommand command) {
         // this command object was validated in the controller before coming here
         Tag tag
-        String dateFormat= "yyyy-MM-dd'T'HH:mm:ss"
         if (command?.id) {
             tag = Tag.get(command?.id)
-            tag.dateModified = Date.parse(dateFormat, command.dateModified)
+            tag.dateModified = new Date()
         } else {
             tag = new Tag()
             Date current = new Date()
@@ -77,6 +77,7 @@ class TagService {
             tag.dateModified = current
         }
         tag.name = command.name
+        tag.description = command.description
         tag.userCreated = User.findByUsername(command.userCreated)
         Tag saved = tag.save(flush: true)
         if (saved) {

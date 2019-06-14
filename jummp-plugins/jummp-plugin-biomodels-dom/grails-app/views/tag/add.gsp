@@ -42,27 +42,6 @@
             $(this).val(datetext);
         }
     });
-    /*$('#btnSave').click(function(event) {
-        event.preventDefault();
-        console.log("Saved!");
-        $.ajax({
-            type: "POST",
-            cache: true,
-            url: $.jummp.createLink("tag", "update"),
-            beforeSend: function() {
-                toastr.info("The tag is being saved into our database. Please wait...");
-            },
-            success: function(data, txtStatus, jqXHR) {
-                var msg = data.message;
-                toastr.clear();
-                toastr.success(msg);
-            },
-            error: function(data, jqXHR, exception, errorThrown) {
-                var msg = data.responseJSON.message;
-                var statusCode = data.status;
-            }
-        });
-    });*/
 </g:javascript>
 </body>
 </html>

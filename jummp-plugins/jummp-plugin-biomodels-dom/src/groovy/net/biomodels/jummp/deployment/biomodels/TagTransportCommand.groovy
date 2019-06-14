@@ -31,11 +31,24 @@ import grails.validation.Validateable
 class TagTransportCommand {
     Long id
     String name
+    String description
     String userCreated
     String dateCreated
     String dateModified
 
     static constraints = {
         id(nullable: true)
+        description(nullable: true)
+        userCreated(nullable: true)
+        dateCreated(nullable: true)
+        dateModified(nullable: true)
+    }
+
+    TagTransportCommand() {
+        super()
+    }
+
+    TagTransportCommand(String name) {
+        this.name = name
     }
 }

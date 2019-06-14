@@ -62,7 +62,8 @@ class TagController {
     def createOrUpdate(TagTransportCommand command) {
         Map result = [:]
         if (!command.validate()) {
-            result["message"] = "There have been errors while doing a data binding for the object ${command.dump()}"
+            String errors = command.errors.allErrors.inspect()
+            result["message"] = "There have been errors while doing a data binding for the object \n\t${errors}"
             result["title"] = "Tag saved unsuccessfully"
         } else {
             Tag tag = tagService.createOrUpdate(command)

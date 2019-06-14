@@ -9,10 +9,6 @@ databaseChangeLog = {
             column(name: "tag_id", type: "bigint") {
                 constraints(nullable: "false")
             }
-
-            column(name: "version", type: "bigint") {
-                constraints(nullable: "false")
-            }
         }
     }
 

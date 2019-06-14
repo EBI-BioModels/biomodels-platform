@@ -48,6 +48,7 @@ class ModelTagBootStrap {
         // Create some tags
         Tag tag = new Tag()
         tag.name = "Annotated"
+        tag.description = "The is a fully annotated model"
         tag.userCreated = User.findByUsername("elvis")
         tag.dateCreated = new Date()
         tag.dateModified = new Date()
@@ -55,13 +56,15 @@ class ModelTagBootStrap {
 
         tag = new Tag()
         tag.name = "Reproducible"
+        tag.description = "The is a reproducible model"
         tag.userCreated = User.findByUsername("elvis")
         tag.dateCreated = new Date()
         tag.dateModified = new Date()
         assert tag.save()
 
         tag = new Tag()
-        tag.name = "Annotated Partially"
+        tag.name = "Partially Annotated"
+        tag.description = "The is a partially annotated model"
         tag.userCreated = User.findByUsername("elvis")
         tag.dateCreated = new Date()
         tag.dateModified = new Date()
@@ -71,7 +74,7 @@ class ModelTagBootStrap {
 
         // Map models and tags
         Tag tagAnnotated = Tag.findByName("Annotated")
-        Tag tagAnnotatedPartially = Tag.findByName("Annotated Partially")
+        Tag tagPartiallyAnnotated = Tag.findByName("Partially Annotated")
         Tag tagReproducible = Tag.findByName("Reproducible")
 
         ModelTag modelTag1 = new ModelTag(model: m1, tag: tagAnnotated)
@@ -79,7 +82,7 @@ class ModelTagBootStrap {
         modelTag1.save()
         modelTag2.save()
 
-        ModelTag modelTag3 = new ModelTag(model: m2, tag: tagAnnotatedPartially)
+        ModelTag modelTag3 = new ModelTag(model: m2, tag: tagPartiallyAnnotated)
         ModelTag modelTag4 = new ModelTag(model: m2, tag: tagReproducible)
         modelTag3.save()
         modelTag4.save()

@@ -1194,11 +1194,11 @@ databaseChangeLog = {
 
     include file: '20150820_widen_curation_comments.groovy'
 
-	include file: '20151012_addMetadataValidationToRevision.groovy'
+    include file: '20151012_addMetadataValidationToRevision.groovy'
 
     include file: '20151105_populate_revision_validation_level.groovy'
 
-	include file: '20151207_nullable_xref_uri.groovy'
+    include file: '20151207_nullable_xref_uri.groovy'
 
     include file: '20160114-makeResourceReferenceNameText.groovy'
 
@@ -1206,7 +1206,7 @@ databaseChangeLog = {
 
     include file: "20160511_updateRDFdescription.groovy"
 
-	include file: '20160713_createTableQcInfo.groovy'
+    include file: '20160713_createTableQcInfo.groovy'
 
     include file: '20160718_addQcInfoToRevision.groovy'
 
@@ -1260,7 +1260,7 @@ databaseChangeLog = {
 
     include file: '20180409_addInternalComment_CurationNotes.groovy'
 
-	include file: '20180417_change_DataTypes_Constraints_CurationNotes.groovy'
+    include file: '20180417_change_DataTypes_Constraints_CurationNotes.groovy'
 
     include file: '20180515_modelDeleted_personName_idx.groovy'
 
@@ -1273,5 +1273,7 @@ databaseChangeLog = {
     include file: '20190114_addUniqueConstraintLinkProvider_Link_Publication.groovy'
 
     include file: '20190407_createTagTables.groovy'
+
+    include file: '20190424_addTagDescriptionColumn.groovy'
 }
 

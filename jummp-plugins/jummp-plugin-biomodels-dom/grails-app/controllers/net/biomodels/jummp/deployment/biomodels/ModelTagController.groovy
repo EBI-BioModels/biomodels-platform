@@ -61,4 +61,30 @@ class ModelTagController {
         response.status = result["status"]
         render(result as JSON)
     }
+
+    def saveModelTag(ModelTagTransportCommand command) {
+        Map result = [:]
+        /* Manually bind data for command.tags */
+        def tags = JSON.parse(params.tags)
+        List list = tags.collect {
+            TagTransportCommand cmd = new TagTransportCommand(name: it.name)
+            if (it.id.matches("[0-9]+")) {
+                cmd.id = Long.parseLong(it.id)
+            }
+            cmd
+        }
+        command.tags = list
+        if (command.validate()) {
+            def user = springSecurityService.currentUser
+            result = modelTagService.saveOrUpdate(command, user)
+        } else {
+            response.status = 422
+            def errors = command.errors.allErrors.collect {
+                message(error: it)
+            }
+            result["status"] = 422
+            result["message"] = errors.toString()
+        }
+        render(result as JSON)
+    }
 }

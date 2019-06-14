@@ -35,9 +35,8 @@
         <title>Model Information</title>
     </head>
     <body>
-        <div class="row">
-        <h2>Model Information</h2>
-        <p>Please ensure the following fields are correctly filled in.</p>
+        <h2><g:message code="submission.biomodels.model.information.heading" locale="${Locale.getDefault()}"/></h2>
+        <p><g:message code="submission.biomodels.model.information.explanation" locale="${Locale.getDefault()}"/></p>
         <g:form>
         <div class="small-12 medium-12 columns">
             <label for="name" class="required">Name</label>
@@ -74,7 +73,6 @@
             </div>
         </div>
         </g:form>
-        </div>
 
         <script>
             function associateEventHandlers(id) {

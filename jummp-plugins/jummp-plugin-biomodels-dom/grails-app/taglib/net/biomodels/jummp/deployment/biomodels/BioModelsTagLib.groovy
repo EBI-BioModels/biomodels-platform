@@ -45,7 +45,6 @@ class BioModelsTagLib {
     def decorationService
     def modelOfTheMonthService
     def modelDelegateService
-    def modelTagService
     def tagService
     def springSecurityService
     /**
@@ -216,28 +215,31 @@ class BioModelsTagLib {
         boolean withoutPublication = revision.model?.publication == null
         if (isPublic && published && (manualPubEntry || withoutPublication)) {
             out << render(template: "/templates/metadataSeparator", plugin: "jummp-plugin-biomodels-dom")
-            out << render(template: "/templates/displayDisclaimer", plugin: "jummp-plugin-biomodels-dom")
+            String message = ""
+            if (withoutPublication) {
+                message = "This model has been pre-published upon author's request without reference publication."
+            } else {
+                message = "This model has been published without a web link to the reference publication."
+            }
+            out << render(template: "/templates/displayDisclaimer", plugin: "jummp-plugin-biomodels-dom",
+                model: ['message': message])
         }
     }
 
     def showTags = { attrs ->
-        ModelTransportCommand model = attrs.model
-        List<String> tags = fetchModelTags(model)
-        out << render(template: "/templates/showTags", plugin: "jummp-plugin-biomodels-dom", model: ['tags': tags])
+        Set<TagTransportCommand> bmTags = attrs.bmTags
+        out << render(template: "/templates/showTags", plugin: "jummp-plugin-biomodels-dom", model: ['bmTags': bmTags])
     }
 
     def showEditableTags = { attrs ->
-        ModelTransportCommand model = attrs.model
-        Set<String> tags = fetchModelTags(model)
-        Set<String> allTags = tagService.getAllTagNames().toSet()
-        Set<String> unTags = allTags - tags
-        out << render(template: "/templates/showEditableTags", plugin: "jummp-plugin-biomodels-dom", model: ['tags': tags, 'unTags': unTags])
+        Set<TagTransportCommand> bmTags = attrs.bmTags
+        Set<Integer> tagIdSet = bmTags.collect { it.id }
+        Set<TagTransportCommand> allTags = tagService.all.toSet()
+        Set<TagTransportCommand> unTags = allTags.findAll { !tagIdSet.contains(it.id) }
+        out << render(template: "/templates/showEditableTags", plugin: "jummp-plugin-biomodels-dom", model: ['tags': bmTags, 'unTags': unTags])
     }
 
     def insertSeparator = {
         out << render(template: "/templates/metadataSeparator", plugin: "jummp-plugin-biomodels-dom")
-    }
-    private List<String> fetchModelTags(ModelTransportCommand model) {
-        modelTagService.getTagsByModelId(model.submissionId)
     }
 }

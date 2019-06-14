@@ -9,10 +9,8 @@
     facets.eachWithIndex {value, index ->
         listOfFacets.add(index)
     }
-    int nbFacets = listOfFacets?.size()
     def specialCharacters = "([:+\\(\\)\\[\\]\\{\\}\\|\\*\\&\"\\?\'\\!\\^])"
     def FACETS_WRAPPED_DOUBLE_QUOTE = ["curationstatus", "modelformat", "disease", "modellingapproach", "modelflag"]
-    String queryString = params.query?.replaceAll('"', '\\\\"')
 %>
 <g:if test="${models}">
     <h4>Filter your results</h4>
@@ -110,10 +108,9 @@
         valueNames: ['facetLabel'] // add css classes associated with the elements that you want to search in
     };
     var facetList = [];
-    var nbFacets = ${nbFacets};
-    for (i = 0; i <= nbFacets; i++) {
+    for (i = 0; i< ${listOfFacets.size()}; i++) {
         facetList[i] = new List('facetList'+i, options);
-    }
+    };
 
     function runFacetSearch(e, facetGroupId, facetValue) {
         var newSearchURI = "${grailsApplication.config.grails.serverURL}/search?query="
@@ -122,7 +119,7 @@
             facetValue = '"' + facetValue + '"';
         }
         var lastQueryString = " AND " + facetGroupId + ":" + facetValue;
-        var currentQuery = "${queryString}";
+        var currentQuery = "${params.query}";
         if (e[0].checked) {
             currentQuery += lastQueryString;
         } else {

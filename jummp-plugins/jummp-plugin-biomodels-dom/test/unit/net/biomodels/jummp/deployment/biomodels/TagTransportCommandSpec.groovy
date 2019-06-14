@@ -35,6 +35,7 @@ class TagTransportCommandSpec extends Specification {
         Date dateModified = new Date()
         User userCreated = new User(username: "elvis")
         Tag tag = new Tag(name: "Sample model", userCreated: userCreated)
+        tag.description = "This is a sample model"
         tag.dateCreated = dateCreated
         tag.dateModified = dateModified
         assert tag.validate()

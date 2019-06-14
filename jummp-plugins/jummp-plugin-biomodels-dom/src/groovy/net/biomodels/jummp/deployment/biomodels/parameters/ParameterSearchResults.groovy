@@ -4,6 +4,7 @@ import org.codehaus.groovy.grails.web.json.JSONArray
 import org.codehaus.groovy.grails.web.json.JSONElement
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.web.util.JavaScriptUtils
 
 /**
  * @author carankalle on 31/10/2018.
@@ -51,18 +52,24 @@ class ParameterSearchResults {
         }
     }
 
-    private static processExternalLinksForSabioRK(def parsedFields) {
+    private static processExternalLinks(def parsedFields) {
 
-        final String sABIORKUrlPrefix = "http://sabiork.h-its.org/newSearch?q="
+        final String compactIdentifiersCloudPrefix = "http://cloud.identifiers.org/"
+        final String reactomePrefix = "https://reactome.org/content/query?q="
         List<String> displayLinks = new ArrayList<>()
         if (parsedFields['external_links'] != null && parsedFields['external_links'].size() > 0) {
             String[] links = parsedFields['external_links'].toString().split(/,/)
             links.each { value ->
-                String[] identifiers = value.split('\\|')
-                String accession = identifiers[0].replace("\\", "")
-                    .replace("[","")
-                    .replace("]","")
-                displayLinks.add("<a href=\"${sABIORKUrlPrefix}${accession}\" target=\"_blank\">${accession}</a>")
+                String finalLink = "";
+                if (value.contains("reactome")) {
+                    finalLink = reactomePrefix + value.split(':')[1]
+                }else if(value.contains("sabiork")) {
+                    finalLink = compactIdentifiersCloudPrefix + value
+                }
+
+                if(finalLink != "") {
+                    displayLinks.add("<a href=\"${finalLink}\" target=\"_blank\">${value}</a>")
+                }
             }
 
         }
@@ -132,7 +139,16 @@ class ParameterSearchResults {
         return href
     }
 
+    private static String escapeHtmlFieldValue(String fieldName, String fieldValue) {
 
+        if (fieldValue == null && fieldValue?.length() == 0) {
+            return ""
+        }
+        if(fieldName == "initial_data_RAW" || fieldName == "parameters" ) {
+            JavaScriptUtils.javaScriptEscape(fieldValue)
+        }
+        return fieldValue
+    }
     private static String generatePublicationLink(String fieldName, String fieldValue) {
         if (fieldValue == null && fieldValue?.length() == 0) {
             return ""
@@ -168,9 +184,15 @@ class ParameterSearchResults {
                         fieldName, values)
                 }
 
-                def value = values.first()
+                String value
+                if(values instanceof String){
+                    value = values
+                }else {
+                    value = values.first()
+                }
                 value = convertToLink(fieldName,(String)value)
                 value = generatePublicationLink(fieldName, (String)value)
+                value = escapeHtmlFieldValue(fieldName, (String)value)
                 parsedFields[fieldName] = value.replaceAll("\\\\","")
             }else{
                 parsedFields[fieldName] = values
@@ -179,7 +201,7 @@ class ParameterSearchResults {
         combineReactionAndReactionOriginal(parsedFields)
         combineEnityAndEntityIdFields(parsedFields)
         combineRateAndRateOriginal(parsedFields)
-        processExternalLinksForSabioRK(parsedFields)
+        processExternalLinks(parsedFields)
         new SearchResultEntry(fields: parsedFields)
     }
 

@@ -12,11 +12,11 @@
     if (!params.sort) {
         params.sort = "relevance-desc"
     }
-    String queryString = params.query?.replaceAll('"', '\\\\"')
+    String queryString = params.query?.replaceAll('([^\\\\])"', '$1\\\\"')
 %>
 <div class="content">
     <g:if test="${models}">
-        <div id="inline-list" class="row">
+        <div id="inline-list" class="row" style="margin-top: 10px;">
             <div class="small-12 medium-12 large-6 columns" id="sorting">
                 <!-- Show Sort by box on the search page only for now-->
                 <g:if test="${action == "search"}">

@@ -15,10 +15,10 @@ class ParameterSearchService {
     static transactional = false
 
     static final Log log = LogFactory.getLog(ParameterSearchService.class)
-    static List<String> columnNames = ["entity", "entity_id", "initial_data", "reaction", "reaction_original",
+    static List<String> columnNames = ["entity", "entity_id", "initial concentration/amount", "reaction with entity labels", "reaction with entity ids",
                                        "model", "organism", "publication",
-                                       "rate", "rate_original","parameters", "entity_accession_url", "reaction_sbo_term_link",
-                                       "entity_sbo_term_link","external_links"]
+                                       "rate with entity labels", "rate with entity ids","parameters", "entity access url", "reaction SBO link",
+                                       "entity SBO link","external links"]
 
     static String replaceFieldNames(String data) {
         data = data.replaceAll("entity_RAW", "entity")
@@ -51,7 +51,11 @@ class ParameterSearchService {
         if (recordsTotal > MAX_RECORDS) {
             csvRecords = assembleSearchResultsUsingGPars(command, recordsTotal, MAX_RECORDS)
         } else {
-            csvRecords = getCSVData(command)
+            csvRecords = removeHeader(getCSVData(command))
+        }
+
+        if(!csvRecords.isEmpty()) {
+            csvRecords = "\"" + columnNames.join("\",\"") + "\"\n" +csvRecords;
         }
 
         return csvRecords
@@ -76,7 +80,7 @@ class ParameterSearchService {
             }
         }
 
-        "\"" + columnNames.join("\",\"") + "\"\n" + searchResults?.join("")
+        return searchResults?.join("")
     }
 
     private static String removeHeader(String csvData) {

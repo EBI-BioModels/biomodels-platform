@@ -24,17 +24,14 @@
 
 package net.biomodels.jummp.search
 
+import grails.transaction.NotTransactional
 import grails.util.Environment
 import grails.util.Holders
 import groovy.json.JsonBuilder
 import net.biomodels.jummp.annotationstore.ResourceReference
 import net.biomodels.jummp.core.ModelSearchStrategy
 import net.biomodels.jummp.core.events.ModelOperationEvent
-import net.biomodels.jummp.core.model.ModelFormatTransportCommand
-import net.biomodels.jummp.core.model.ModelState
-import net.biomodels.jummp.core.model.ModelTransportCommand
-import net.biomodels.jummp.core.model.PublicationTransportCommand
-import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 import net.biomodels.jummp.model.Revision
 import org.apache.commons.logging.Log
@@ -128,28 +125,17 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
 
     def producerTemplate = Holders.grailsApplication.mainContext.getBean('producerTemplate')
 
+    @NotTransactional
     void onApplicationEvent(ModelOperationEvent event) {
         // look at solrbasedsearch
     }
 
-    void clearIndex() {
-        // Delete indexing plans from the database
-        if (IS_DEBUG_ENABLED) {
-            log.debug "Clearing the indexing plans."
-        }
-        Revision.executeUpdate("delete IndexingPlan")
+    @NotTransactional
+    String[] getSortFields() {
+        ["relevance", "submissionid", "name"]
     }
 
-    private String escapeLuceneFieldSeparator(String query) {
-        def matcher = query =~ pattern
-        def out = new StringBuffer()
-        while (matcher) {
-            matcher.appendReplacement(out, replacement)
-        }
-        matcher.appendTail(out)
-        out.toString()
-    }
-
+    @NotTransactional
     SearchResponse searchModels(String query, SortOrder sortOrder,
             Map<String, Integer> paginationCriteria = ["start": 0, "length": 50, "facetCount": 10] ) {
         long start = System.currentTimeMillis()
@@ -314,32 +300,6 @@ There was a problem obtaining search result from EBI search server. The root cau
         return searchResponse
     }
 
-    private Date formatParsedDateString(String dateString) {
-        Date date = null
-        if (!dateString.isEmpty()) {
-            date = dateFormat.parse(dateString)
-        }
-        date
-    }
-
-    private String getSingleValueForEntryField(Entry entry, String field) {
-        String[] values = getValueArrayForEntryField(entry, field)
-        if (values.length > 0) {
-            return values[0]
-        }
-        ""
-    }
-
-    private String[] getValueArrayForEntryField(Entry entry, String field) {
-        Objects.requireNonNull(entry)
-        final String[] defaultResult = new String[0]
-        String[] values = entry.getFields().get(field)
-        if (!values) {
-            return defaultResult // save client from testing for null
-        }
-        values
-    }
-
     void updateIndex(RevisionTransportCommand revision) {
         Revision.withSession {
             String name = revision.name ?: ""
@@ -425,8 +385,38 @@ There was a problem obtaining search result from EBI search server. The root cau
         }
     }
 
-    String[] getSortFields() {
-        ["relevance", "submissionid", "name"]
+    void clearIndex() {
+        // Delete indexing plans from the database
+        if (IS_DEBUG_ENABLED) {
+            log.debug "Clearing the indexing plans."
+        }
+        Revision.executeUpdate("delete IndexingPlan")
+    }
+
+    private Date formatParsedDateString(String dateString) {
+        Date date = null
+        if (!dateString.isEmpty()) {
+            date = dateFormat.parse(dateString)
+        }
+        date
+    }
+
+    private String getSingleValueForEntryField(Entry entry, String field) {
+        String[] values = getValueArrayForEntryField(entry, field)
+        if (values.length > 0) {
+            return values[0]
+        }
+        ""
+    }
+
+    private String[] getValueArrayForEntryField(Entry entry, String field) {
+        Objects.requireNonNull(entry)
+        final String[] defaultResult = new String[0]
+        String[] values = entry.getFields().get(field)
+        if (!values) {
+            return defaultResult // save client from testing for null
+        }
+        values
     }
 
     private List<String> fetchFilesFromRevision(RevisionTransportCommand rev, boolean filterMains) {
@@ -434,5 +424,15 @@ There was a problem obtaining search result from EBI search server. The root cau
             return rev?.files?.findAll{it.mainFile}.collect{it.path}
         }
         return rev?.files?.collect{it.path}
+    }
+
+    private String escapeLuceneFieldSeparator(String query) {
+        def matcher = query =~ pattern
+        def out = new StringBuffer()
+        while (matcher) {
+            matcher.appendReplacement(out, replacement)
+        }
+        matcher.appendTail(out)
+        out.toString()
     }
 }
