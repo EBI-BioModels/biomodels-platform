@@ -19,10 +19,10 @@
  **/
 
 package net.biomodels.jummp.core.adapters
+
+import net.biomodels.jummp.core.user.PersonTransportCommand
 import net.biomodels.jummp.model.Publication
 import net.biomodels.jummp.core.model.PublicationTransportCommand
-import net.biomodels.jummp.plugins.security.Person
-import net.biomodels.jummp.plugins.security.PersonTransportCommand
 import grails.util.Holders
 /**
  * @short Adapter class for the Publication domain class

@@ -21,7 +21,7 @@
 package net.biomodels.jummp.core
 
 import grails.util.Holders
-import net.biomodels.jummp.plugins.security.PersonTransportCommand
+import net.biomodels.jummp.core.user.PersonTransportCommand
 import org.springframework.validation.ObjectError
 
 /**
