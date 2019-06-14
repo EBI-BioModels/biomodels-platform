@@ -1,0 +1,61 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<!-- Created by MonaLisa version MonaLisa R5 1.0.0  on 2017-17-06 at 10:17:23 CET with JSBML version 1.1. -->
+<sbml
+    xmlns="http://www.sbml.org/sbml/level3/version1/core" level="3" version="1">
+    <model id="MonaLisaExport" name="Core Metabolism Arabidopsis thaliana" metaid="_8a172188-1cf0-45e3-a5fa-010e6fe7032e">
+        <annotation>
+            <rdf:RDF
+                xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+                xmlns:dc="http://purl.org/dc/elements/1.1/"
+                xmlns:vCard="http://www.w3.org/2001/vcard-rdf/3.0#"
+                xmlns:dcterms="http://purl.org/dc/terms/"
+                xmlns:bqmodel="http://biomodels.net/model-qualifiers/">
+                <rdf:Description rdf:about="#_8a172188-1cf0-45e3-a5fa-010e6fe7032e">
+                    <dc:creator>
+                        <rdf:Bag>
+                            <rdf:li rdf:parseType="Resource">
+                                <vCard:N rdf:parseType="Resource">
+                                    <vCard:Family>Nöthen</vCard:Family>
+                                    <vCard:Given>Joachim</vCard:Given>
+                                </vCard:N>
+                                <vCard:EMAIL>joachim.noethen@bioinformatik.uni-frankfurt.de</vCard:EMAIL>
+                                <vCard:ORG rdf:parseType="Resource">
+                                    <vCard:Orgname>Johann Wolfgang Goethe-University, Frankfurt am Main, Germany</vCard:Orgname>
+                                </vCard:ORG>
+                            </rdf:li>
+                            <rdf:li rdf:parseType="Resource">
+                                <vCard:N rdf:parseType="Resource">
+                                    <vCard:Family>Koch</vCard:Family>
+                                    <vCard:Given>Ina</vCard:Given>
+                                </vCard:N>
+                                <vCard:EMAIL>ina.koch@bioinformatik.uni-frankfurt.de</vCard:EMAIL>
+                                <vCard:ORG rdf:parseType="Resource">
+                                    <vCard:Orgname>Department of Molecular Bioinformatics, Institute of Computer Science, Goethe-University Frankfurt, Frankfurt am Main, Germany</vCard:Orgname>
+                                </vCard:ORG>
+                            </rdf:li>
+                            <rdf:li rdf:parseType="Resource">
+                                <vCard:N rdf:parseType="Resource">
+                                    <vCard:Family>Schleiff</vCard:Family>
+                                    <vCard:Given>Enrico</vCard:Given>
+                                </vCard:N>
+                                <vCard:EMAIL>schleiff@bio.uni-frankfurt.de</vCard:EMAIL>
+                                <vCard:ORG rdf:parseType="Resource">
+                                    <vCard:Orgname>Department of Biosciences, Institute of Molecular Biosciences, Molecular Cell Biology of Plants, Goethe-University Frankurt, Frankfurt am Main, Germany</vCard:Orgname>
+                                </vCard:ORG>
+                            </rdf:li>
+                        </rdf:Bag>
+                    </dc:creator>
+                    <dcterms:created rdf:parseType="Resource">
+                        <dcterms:W3CDTF>2017-06-30T10:00:00Z</dcterms:W3CDTF>
+                    </dcterms:created>
+                    <bqmodel:isDescribedBy>
+                        <rdf:Bag>
+                            <rdf:li rdf:resource="http://identifiers.org/pubmed/28713420"/>
+                            <rdf:li rdf:resource="PMC5491931"/>
+                        </rdf:Bag>
+                    </bqmodel:isDescribedBy>
+                </rdf:Description>
+            </rdf:RDF>
+        </annotation>
+    </model>
+</sbml>
