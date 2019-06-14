@@ -86,4 +86,21 @@ class ParameterSearchCommandSpec extends Specification {
         command.start == 0
 
     }
+
+    void "test ParameterSearchCommand for Cross side scripting"() {
+
+        given: "A parameter search command object is defined with negative criteria"
+        def bindingMap = [query: "<script>alert('hi')</script>", size: null, start: null, sort: "<script>alert('hi')</script>"]
+        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+
+        when: "When command is validated with positive criteria"
+        then: "Validation should return true"
+        command.validate()
+
+        and : "It should return default command object"
+
+        command.query == "&lt;script&gt;alert(&#39;hi&#39;)&lt;/script&gt;"
+        command.sort == "&lt;script&gt;alert(&#39;hi&#39;)&lt;/script&gt;"
+
+    }
 }
