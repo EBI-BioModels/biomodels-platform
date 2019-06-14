@@ -26,6 +26,9 @@ import net.biomodels.jummp.core.certification.QcInfoTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.model.Revision
+import org.apache.commons.logging.Log
+import org.apache.commons.logging.LogFactory
+import org.springframework.transaction.support.TransactionSynchronizationManager
 
 /**
  * @short Adapter class for the Revision domain class
@@ -34,6 +37,8 @@ import net.biomodels.jummp.model.Revision
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 public class RevisionAdapter {
+    private static final Log log = LogFactory.getLog(RevisionAdapter.class)
+
     Revision revision
 
     def grailsApplication = Holders.getGrailsApplication()
@@ -67,6 +72,12 @@ public class RevisionAdapter {
     }
 
     RevisionTransportCommand toCommandObject() {
+        def msg = """\
+Converting Revision #${revision.id} (attached: ${revision.isAttached()}),
+(format attached: ${revision.format.isAttached()}) to cmd object
+isSynchronisationActive: ${TransactionSynchronizationManager.isSynchronizationActive()}
+sessionClosed: ${grailsApplication.mainContext.sessionFactory.currentSession.isClosed()}""".toString()
+        log.info(msg)
         def formatAdapter = new ModelFormatAdapter(format: revision.format)
         def formatCmd = formatAdapter.toCommandObject()
         String submitterName = revision.owner.person.userRealName
