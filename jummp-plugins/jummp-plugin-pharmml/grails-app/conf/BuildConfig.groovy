@@ -27,8 +27,8 @@ grails.project.class.dir = "target/classes"
 grails.project.test.class.dir = "target/test-classes"
 grails.project.test.reports.dir = "target/test-reports"
 grails.project.work.dir = "target/work"
-grails.project.source.level = 1.7
-grails.project.target.level = 1.7
+grails.project.source.level = 1.8
+grails.project.target.level = 1.8
 grails.project.dependency.resolver = "maven"
 
 grails.project.fork = [
@@ -63,13 +63,12 @@ grails.project.dependency.resolution = {
             excludes "slf4j-log4j12"
         }
         runtime("commons-jexl:commons-jexl:1.1") { excludes 'junit', 'commons-logging' }
-        compile "org.apache.tika:tika-core:1.3"
+        compile "org.apache.tika:tika-core:1.14"
     }
 
     plugins {
         build ":tomcat:7.0.55.3"
     }
 }
-grails.plugin.location.'jummp-plugin-security' = "../jummp-plugin-security"
 grails.plugin.location.'jummp-plugin-core-api' = "../jummp-plugin-core-api"
 grails.plugin.location.'jummp-plugin-configuration' = "../jummp-plugin-configuration"

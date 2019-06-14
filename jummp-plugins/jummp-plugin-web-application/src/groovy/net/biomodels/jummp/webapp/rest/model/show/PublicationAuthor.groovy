@@ -1,6 +1,6 @@
 package net.biomodels.jummp.webapp.rest.model.show
 
-import net.biomodels.jummp.plugins.security.PersonTransportCommand
+import net.biomodels.jummp.core.user.PersonTransportCommand
 
 class PublicationAuthor {
     String name

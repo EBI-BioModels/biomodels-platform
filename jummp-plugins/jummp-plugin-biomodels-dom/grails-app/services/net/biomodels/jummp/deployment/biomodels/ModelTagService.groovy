@@ -181,8 +181,13 @@ so we will persist all the tags into database""")
 
     private Set<ModelTag> persistModelAndTagFromCommandObject(Model model, ModelTagTransportCommand cmd, User user) {
         List result = cmd.tags.collect { TagTransportCommand tagCmd ->
-            Tag tag = Tag.findOrCreateWhere(id: tagCmd.id, name: tagCmd.name)
-            if (!tagCmd.id) {
+            Map cond = [name: tagCmd.name]
+            if (tagCmd?.id) {
+                cond["id"] = tagCmd.id
+            }
+            Tag tag = Tag.findOrCreateWhere(cond)
+            if (!tag.id) {
+                tag.description = tagCmd.description
                 tag.userCreated = user
                 tag.dateCreated = new Date()
                 tag.dateModified = new Date()

@@ -72,7 +72,6 @@ grails.project.dependency.resolution = {
         mavenRepo "http://www.ebi.ac.uk/~maven/m2repo_snapshots/"
         mavenRepo "http://download.eclipse.org/jgit/maven"
         mavenRepo "http://www.biojava.org/download/maven/"
-        mavenRepo "http://maven.mango-solutions.com/ddmore/"
         mavenRepo "http://repo.spring.io/milestone"
         mavenRepo "http://repo.grails.org/grails/core"
 
@@ -121,7 +120,7 @@ grails.project.dependency.resolution = {
                     'xml-apis'
         }*/
         compile 'log4j:log4j:1.2.17'
-        compile "org.apache.tika:tika-core:1.3"
+        compile "org.apache.tika:tika-core:1.14"
         /**
          * Weceem lists it as a runtime dependency, while jsbml needs it during compilation.
          * Unfortunately, Grails misbehaves and leaves xstream out at compile time unless we
@@ -201,7 +200,6 @@ grails.project.dependency.resolution = {
     }
 }
 
-grails.plugin.location.'jummp-plugin-security' = "jummp-plugins/jummp-plugin-security"
 grails.plugin.location.'jummp-plugin-core-api' = "jummp-plugins/jummp-plugin-core-api"
 grails.plugin.location.'jummp-plugin-configuration' = "jummp-plugins/jummp-plugin-configuration"
 grails.plugin.location.'jummp-plugin-git' = "jummp-plugins/jummp-plugin-git"
