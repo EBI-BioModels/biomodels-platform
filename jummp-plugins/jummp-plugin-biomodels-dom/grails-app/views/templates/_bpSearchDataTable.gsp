@@ -168,7 +168,7 @@
 
         // Function to update table as per the state
         function updateTable(table) {
-            $('.dataTables_filter input').val(decodeURI(pageState.dataTable.query));
+            $('.dataTables_filter input').val(pageState.dataTable.query);
 
             var page = Math.floor(pageState.dataTable.start / pageState.dataTable.size);
             var size = pageState.dataTable.size;
@@ -334,7 +334,7 @@
             if (pageState.isInitialState()) {
                 // populate data object from pageState.command
                 var command = pageState.command;
-                query = decodeURI(command.query);
+                query = command.query;
                 start = Number(command.start);
                 size = Number(command.size);
                 sort = command.sort;
@@ -343,9 +343,9 @@
             } else {
                 // populate data object from dataTableArg and set pageState.dataTable to dataTableArg
                 if (dataTableArg.search.value === "") {
-                    query = decodeURI($('.dataTables_filter input').val());
+                    query = encodeURIComponent($('.dataTables_filter input').val());
                 } else {
-                    query = decodeURI(dataTableArg.search.value);
+                    query = dataTableArg.search.value;
                 }
                 start = dataTableArg.start;
                 size = dataTableArg.length;
