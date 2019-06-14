@@ -10,7 +10,7 @@ class JummpPluginBiomodelsDomGrailsPlugin {
         "grails-app/views/error.gsp"
     ]
 
-    def loadAfter = ["jummp-plugin-security", "jummp-plugin-core-api"]
+    def loadAfter = ["jummp-plugin-core-api"]
 
     // TODO Fill in these fields
     def title = "BioModels database-specific domain classes" // Headline display name of the plugin

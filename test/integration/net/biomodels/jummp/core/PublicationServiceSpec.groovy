@@ -29,7 +29,7 @@ import net.biomodels.jummp.model.Publication
 import net.biomodels.jummp.model.PublicationPerson
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.Person
-import net.biomodels.jummp.plugins.security.PersonTransportCommand
+import net.biomodels.jummp.core.user.PersonTransportCommand
 import net.biomodels.jummp.plugins.security.User
 import org.apache.commons.io.FileUtils
 import org.springframework.transaction.TransactionDefinition
