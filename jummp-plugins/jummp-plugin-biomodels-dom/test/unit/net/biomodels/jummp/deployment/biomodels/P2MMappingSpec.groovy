@@ -1,27 +1,19 @@
 package net.biomodels.jummp.deployment.biomodels
 
-import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
-import net.biomodels.jummp.model.Model
 import spock.lang.Specification
 
 /**
  * See the API for {@link grails.test.mixin.domain.DomainClassUnitTestMixin} for usage instructions
  */
 @TestFor(P2MMapping)
-@Mock(Model)
 class P2MMappingSpec extends Specification {
-    Model representative
+    String representative
     String member
 
     def setup() {
-        representative = new Model(submissionId: "BMID000000112901")
-        representative.save(flush: true)
+        representative = "BMID000000112901"
         member = "BMID000000112902"
-    }
-
-    def cleanup() {
-
     }
 
     void "test the number of records at initial stage"() {

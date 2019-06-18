@@ -35,7 +35,10 @@ import net.biomodels.jummp.model.Model
 class P2MMapping implements Serializable {
     private static final long serialVersionUID = 1L
 
-    Model representative
+    // The representative model identifier
+    String representative
+
+    // The identifier of the others in the same group
     String member
 
     static mapping = {

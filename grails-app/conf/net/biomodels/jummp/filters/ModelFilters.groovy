@@ -21,7 +21,6 @@
 package net.biomodels.jummp.filters
 
 import net.biomodels.jummp.deployment.biomodels.P2MMapping
-import net.biomodels.jummp.model.Model
 
 /**
  * @short Filter to redirect users to ModelController for Path2Models models
@@ -46,8 +45,8 @@ class ModelFilters {
                 if (modelId.contains("BMID")) {
                     P2MMapping modelMap = P2MMapping.findByMember(modelId)
                     if (modelMap) {
-                        Model representative = modelMap.representative
-                        forward(controller: "model", action: "show", id: representative?.submissionId)
+                        String representative = modelMap.representative
+                        forward(controller: "model", action: "show", id: representative)
                     }
                     return true
                 } else {
