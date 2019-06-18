@@ -84,5 +84,4 @@ grails.project.dependency.resolution = {
         build ":tomcat:7.0.55.3"
     }
 }
-grails.plugin.location.'jummp-plugin-security'="../jummp-plugin-security"
 grails.plugin.location.'jummp-plugin-core-api'="../jummp-plugin-core-api"

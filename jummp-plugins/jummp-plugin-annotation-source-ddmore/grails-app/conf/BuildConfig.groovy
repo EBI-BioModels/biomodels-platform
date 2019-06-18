@@ -46,7 +46,6 @@ grails.project.dependency.resolution = {
         grailsCentral()
         mavenLocal()
         mavenCentral()
-        mavenRepo "http://maven.mango-solutions.com/ddmore/"
         mavenRepo "http://www.ebi.ac.uk/~maven/m2repo_snapshots/"
     }
 
@@ -66,7 +65,6 @@ grails.project.dependency.resolution = {
             excludes 'spring-core', 'spring-context', 'slf4j-log4j12'
         }
 
-/*        compile "net.biomodels.jummp:AnnotationStore:0.2.9-SNAPSHOT"*/
         compile("net.sf.jung:jung-graph-impl:$jungVersion")
 
         // useful for WordUtils.capitalise()
@@ -81,7 +79,6 @@ grails.project.dependency.resolution = {
     }
 }
 
-grails.plugin.location.'jummp-plugin-security' = "../jummp-plugin-security"
 grails.plugin.location.'jummp-plugin-core-api' = "../jummp-plugin-core-api"
 grails.plugin.location.'jummp-plugin-configuration' = "../jummp-plugin-configuration"
 grails.plugin.location.'jummp-plugin-annotation-core' = "../jummp-plugin-annotation-core"

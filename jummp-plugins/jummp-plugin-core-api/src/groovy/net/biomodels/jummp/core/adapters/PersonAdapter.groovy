@@ -19,8 +19,9 @@
  **/
 
 package net.biomodels.jummp.core.adapters
+
+import net.biomodels.jummp.core.user.PersonTransportCommand
 import net.biomodels.jummp.plugins.security.Person
-import net.biomodels.jummp.plugins.security.PersonTransportCommand
 
 /**
  * @short Adapter class for the Person domain class

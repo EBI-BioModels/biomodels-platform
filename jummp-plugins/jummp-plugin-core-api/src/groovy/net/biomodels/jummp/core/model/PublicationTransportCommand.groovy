@@ -35,7 +35,7 @@
 package net.biomodels.jummp.core.model
 
 import groovy.util.slurpersupport.GPathResult
-import net.biomodels.jummp.plugins.security.PersonTransportCommand
+import net.biomodels.jummp.core.user.PersonTransportCommand
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 

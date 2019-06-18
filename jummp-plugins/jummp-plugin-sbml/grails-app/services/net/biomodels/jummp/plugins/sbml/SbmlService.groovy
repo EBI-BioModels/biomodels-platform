@@ -289,33 +289,32 @@ due to an issue with JSBML"""
         boolean areAllSbml = true
         int iFiles = 0
         final fileCount = files.size()
-        //should work with any value above 2, but sometimes there are comments at the start of the file
-        final int DEPTH_LIMIT = 15
+        // should work with any value above 2, but sometimes there are comments at the start of the file
+        final int DEPTH_LIMIT = 20
         BufferedReader reader = null
         String currentLine
-        final def p = Pattern.compile(".*<sbml.*xmlns=\"http://www\\.sbml\\.org/sbml/level.*\".*")
+        final def p = Pattern.compile(".*<sbml.(\\s*).*xmlns=\"http://www\\.sbml\\.org/sbml/level.*\".*")
 
         while (areAllSbml && iFiles < fileCount) {
             try {
                 reader = new BufferedReader(new FileReader(files[iFiles]))
                 boolean foundSbmlDeclarationLine = false
+                StringBuilder sbmlHeader = new StringBuilder()
                 int iLine = 0
                 while (!foundSbmlDeclarationLine && iLine < DEPTH_LIMIT) {
                     currentLine = reader.readLine()
-                    if (currentLine == null) {
-                        areAllSbml = false
-                        break
-                    }
-                    if (Pattern.matches(p.toString(), currentLine)) {
+                    sbmlHeader.append(currentLine)
+                    if (p.matcher(sbmlHeader.toString()).matches()) {
                         foundSbmlDeclarationLine = true
-                    }
-                    else {
+                        break
+                    } else {
                         iLine++
                     }
                 }
                 areAllSbml &= foundSbmlDeclarationLine
             } catch(IOException ex) {
-                def msg = new StringBuffer("Could not check if files ${files.inspect()} are valid SBML.")
+                def msg = new StringBuffer("""\
+Could not check if SBML files ${files.inspect()} are valid or not.""")
                 msg.append(" Encountered $ex while reading line $currentLine of file ${files[iFiles]}")
                 log.error(msg.toString())
                 return false
