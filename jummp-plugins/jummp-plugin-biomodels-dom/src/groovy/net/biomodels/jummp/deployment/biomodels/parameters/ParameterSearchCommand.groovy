@@ -4,7 +4,6 @@ import grails.util.Environment
 import grails.validation.Validateable
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
-import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
 
 /**
 * @author carankalle on 31/10/2018.
