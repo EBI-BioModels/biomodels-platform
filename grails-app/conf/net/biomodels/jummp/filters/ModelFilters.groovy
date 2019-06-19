@@ -55,5 +55,22 @@ class ModelFilters {
 
             }
         }
+
+        downloadP2MModel(controller: "model", action: "download") {
+            before = {
+                String modelId = params.id
+                if (modelId.contains("BMID")) {
+                    P2MMapping modelMap = P2MMapping.findByMember(modelId)
+                    if (modelMap) {
+                        String representative = modelMap.representative
+                        forward(controller: "model", action: "download", id: representative)
+                    }
+                    return true
+                } else {
+                    return false
+                }
+
+            }
+        }
     }
 }
