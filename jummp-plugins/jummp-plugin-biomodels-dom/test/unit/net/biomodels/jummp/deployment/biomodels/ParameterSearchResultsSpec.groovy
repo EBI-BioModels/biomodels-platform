@@ -36,6 +36,7 @@ class ParameterSearchResultsSpec extends Specification {
         String expectedEntityShow = "<a target='_blank' href='http://identifiers.org/pubchem.compound/122357' > 122357 </a><hr/><span class='legend-green'>E4P</span>"
         String expectedRateShow = "chloroplast*function_7(Vm, [668], [122357], [sedoheptulose 1,7-bisphosphate], q, Ks1, Ks2)<hr/><span class='legend-green'>chloroplast*function_7(Vm, DHAP, E4P, SBP, q, Ks1, Ks2)</span>"
 
+        String expectedRateShow = "chloroplast*Vm*([668]*[122357]-[sedoheptulose 1,7-bisphosphate]/q)/(([668]+Ks1)*([122357]+Ks2))<hr/><span class='legend-green'>chloroplast*Vm*(DHAP*E4P-SBP/q)/((DHAP+Ks1)*(E4P+Ks2))</span>"
 
         results.entries.find{value ->
            value.fields.entity_id == expectedEntityId &&
