@@ -48,11 +48,7 @@ class ModelFilters {
                         String representative = modelMap.representative
                         forward(controller: "model", action: "show", id: representative)
                     }
-                    return true
-                } else {
-                    return false
                 }
-
             }
         }
 
@@ -65,11 +61,7 @@ class ModelFilters {
                         String representative = modelMap.representative
                         forward(controller: "model", action: "download", id: representative)
                     }
-                    return true
-                } else {
-                    return false
-                }
-
+                } 
             }
         }
     }
