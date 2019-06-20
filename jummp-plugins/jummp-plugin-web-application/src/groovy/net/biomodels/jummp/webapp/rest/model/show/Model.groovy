@@ -26,7 +26,7 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.PublicationTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.plugins.security.PersonTransportCommand
+import net.biomodels.jummp.core.user.PersonTransportCommand
 
 class Model {
     String name
