@@ -1,7 +1,6 @@
 package net.biomodels.jummp.core.user
 
 import net.biomodels.jummp.plugins.security.Person
-import net.biomodels.jummp.plugins.security.PersonTransportCommand
 
 /**
  * Convenience class for adding customised methods to Person class.

@@ -34,7 +34,7 @@ import net.biomodels.jummp.model.Publication
 import net.biomodels.jummp.model.PublicationLinkProvider as PLP
 import net.biomodels.jummp.model.PublicationPerson
 import net.biomodels.jummp.plugins.security.Person
-import net.biomodels.jummp.plugins.security.PersonTransportCommand as PersonTC
+import net.biomodels.jummp.core.user.PersonTransportCommand as PersonTC
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.springframework.validation.ObjectError

@@ -1,5 +1,6 @@
 package net.biomodels.jummp.deployment.biomodels.parameters
 
+import grails.util.Environment
 import grails.validation.Validateable
 import groovy.transform.CompileStatic
 import groovy.transform.ToString
@@ -13,9 +14,10 @@ import org.codehaus.groovy.grails.plugins.codecs.HTMLEncoder
 class ParameterSearchCommand {
     public static final String DEFAULT_QUERY = '*:*'
     public static
-    final String BASE_URL = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters?" +
-        "fields=entity_RAW,entity_id,initial_data_RAW,reaction_RAW,reaction_original_RAW,model,organism,publication,rate_RAW," +
+    final String BASE_URL_PARAMS = "fields=entity_RAW,entity_id,initial_data_RAW,reaction_RAW,reaction_original_RAW,model,organism,publication,rate_RAW," +
     "rate_original_RAW,parameters_RAW,entity_accession_url,reaction_sbo_term_link,entity_sbo_term_link,external_links"
+    final String EBI_SEARCH_DEV_BASE_URL = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters"
+    final String EBI_SEARCH_BASE_URL = "https://www.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters"
 
     String query
     Integer size
@@ -72,14 +74,13 @@ class ParameterSearchCommand {
 
     @CompileStatic
     URL getSearchUrl(String format) {
-
         def params = [
             query : query.equals("*:*")?URLEncoder.encode(query,"UTF-8"): URLEncoder.encode('"'+query+'"',"UTF-8") ,
             size  : size,
             start : start,
             sort  : sort,
         ]
-        StringBuilder url = new StringBuilder(BASE_URL)
+        StringBuilder url = new StringBuilder(getEbiSearchUrl())
         for (element in params) {
             Object v = element.value
             String k = element.key
@@ -98,5 +99,14 @@ class ParameterSearchCommand {
             ", start=" + start +
             ", sort='" + sort + '\'' +
             '}';
+    }
+
+    @CompileStatic
+    String getEbiSearchUrl() {
+        if(Environment.current == Environment.PRODUCTION) {
+            return "$EBI_SEARCH_BASE_URL?$BASE_URL_PARAMS"
+        }else{
+            return "$EBI_SEARCH_DEV_BASE_URL?$BASE_URL_PARAMS"
+        }
     }
 }
