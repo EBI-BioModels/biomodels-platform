@@ -29,4 +29,9 @@ class FeatureController {
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def agedbrain() {
     }
+
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def path2models() {
+
+    }
 }

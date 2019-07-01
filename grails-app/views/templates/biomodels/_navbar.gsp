@@ -36,10 +36,16 @@
     <li <g:if test="${selectedBrowseItems}"> class="active" </g:if> role="menuitem">
         <a><i class="icon icon-common" data-icon="b"></i> Browse</a>
         <ul class="menu">
-            <li><a href="${g.createLink(controller: 'search', action: 'search', params: [query: '*:*'])}">Browse all models</a></li>
-            <li><a href="${g.createLink(controller: 'goChart', action: 'index', plugin: 'jummp-plugin-biomodels-dom')}">Browse GO categories</a></li>
-            <li><a href="${g.createLink(controller: 'parameterSearch', action: 'index', plugin: 'jummp-plugin-biomodels-dom')}">Parameter Search</a></li>
-            <li><g:link mapping="agedbrain">Browse neurodegeneration models</g:link></li>
+            <li><a href="${g.createLink(controller: 'search', action: 'search', params: [query: '*:*'])}">All
+            models</a></li>
+            <li><a
+                href="${g.createLink(controller: 'goChart', action: 'index', plugin: 'jummp-plugin-biomodels-dom')}">GO categories</a>
+            </li>
+            <li><a
+                href="${g.createLink(controller: 'parameterSearch', action: 'index', plugin: 'jummp-plugin-biomodels-dom')}">Parameter Search</a>
+            </li>
+            <li><g:link mapping="agedbrain">Neurodegeneration models</g:link></li>
+            <li><g:link mapping="path2models">Path2Models models</g:link></li>
         </ul>
     </li>
     <li <g:if test="${g.pageProperty(name:'page.submit')?.length()}"> class="active" </g:if> role="menuitem">

@@ -1275,5 +1275,9 @@ databaseChangeLog = {
     include file: '20190407_createTagTables.groovy'
 
     include file: '20190424_addTagDescriptionColumn.groovy'
+
+    include file: '20190614_createTableP2MMapping.groovy'
+
+    include file: '20190618_populateData4P2MMapping.groovy'
 }
 
