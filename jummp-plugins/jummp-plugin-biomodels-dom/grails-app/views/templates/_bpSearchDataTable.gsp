@@ -49,7 +49,7 @@
                 render: function (rawdata, type, row) {
                     var formattedData;
                     if (rawdata === undefined || rawdata.length === 0) {
-                        return "";
+                        return null;
                     }
                     formattedData = "<a target='_blank' href='https://www.ebi.ac.uk/biomodels/" + rawdata + "'>" + rawdata + "</a>";
                     return formattedData
@@ -65,7 +65,7 @@
                 orderable: false,
                 render: function (href, type, row) {
                     if (href === undefined || href.length === 0) {
-                        return "";
+                        return null;
                     }
                     var formattedData;
                         if (href.includes(",")) {
