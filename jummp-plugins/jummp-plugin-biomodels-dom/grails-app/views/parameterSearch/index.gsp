@@ -54,21 +54,24 @@
 <g:javascript contextPath="" src="toastr.min.js"/>
 <g:javascript src="datatable/jquery.dataTables.min.js" contextPath=""/>
 <g:javascript src="datatable/dataTables.buttons.min.js" contextPath=""/>
-<g:hasErrors>
-    <div class="errors">
-        <g:renderErrors/>
-    </div>
-</g:hasErrors>
-<g:if test="${flash.message}">
-    <div class="warning">
-        ${flash.message}
-    </div>
-</g:if>
+
+
 <div id="remote" class="body">
     <h2>BioModels Parameters</h2>
 
     <g:render template="/templates/bpSearchContent"
               plugin="jummp-plugin-biomodels-dom"/>
+
+    <g:hasErrors>
+        <div class="warning">
+            <g:renderErrors/>
+        </div>
+    </g:hasErrors>
+    <g:if test="${flash.message}">
+        <div class="warning">
+            ${flash.message}
+        </div>
+    </g:if>
     <g:render template="/templates/bpSearchDataTable"
               plugin="jummp-plugin-biomodels-dom"/>
 </div>
