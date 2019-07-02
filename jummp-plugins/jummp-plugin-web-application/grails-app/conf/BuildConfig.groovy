@@ -71,6 +71,11 @@ grails.project.dependency.resolution = {
         //flatDir name: "jummpLibs", dirs: "../../lib/"
     }
 
+    dependencies {
+        compile "com.fasterxml.jackson.core:jackson-databind:2.5.2"
+        compile "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.5.2"
+    }
+
     plugins {
         build ":tomcat:7.0.55.3"
 
