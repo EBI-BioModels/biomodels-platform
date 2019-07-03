@@ -1,20 +1,26 @@
+import grails.util.Holders
 import net.biomodels.jummp.deployment.biomodels.P2MMapping
 
 databaseChangeLog = {
-    changeSet(author: "tnguyen (written)", id: "1560871943092-1") {
+    changeSet(author: "tnguyen (customised)", id: "1560871943092-1") {
         grailsChange {
             change {
-                def userDir = System.properties["user.dir"]
-                File csvFile = new File(userDir, "modelMapping.csv")
+                File csvFile = Holders.grailsApplication.mainContext.getResource("modelMapping.csv").file
                 csvFile.eachLine { String line ->
                     def split = line.split(",")
                     String rep = split[0]
                     String parts = split[1]
                     String strMembers = parts.substring(1, parts.length() - 2)
                     List members = strMembers.split(";")
-                    members.each { String mem ->
+                    members.eachWithIndex { String mem, int i ->
                         def p2m = P2MMapping.findOrSaveByRepresentativeAndMember(rep, mem)
-                        p2m.save(flush: true)
+                        if (i.mod(100) == 0) {
+                            // clear session and save records after every 100 entries created
+                            P2MMapping.withSession { session ->
+                                session.flush()
+                                session.clear()
+                            }
+                        }
                     }
                 }
             }
