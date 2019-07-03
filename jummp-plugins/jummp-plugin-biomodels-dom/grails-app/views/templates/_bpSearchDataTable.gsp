@@ -48,9 +48,10 @@
                 data: 'fields.model',
                 render: function (rawdata, type, row) {
                     var formattedData;
-                    if (rawdata !== undefined && rawdata.length !== 0) {
-                        formattedData = "<a target='_blank' href='https://www.ebi.ac.uk/biomodels/" + rawdata + "'>" + rawdata + "</a>";
+                    if (rawdata === undefined || rawdata.length === 0) {
+                        return null;
                     }
+                    formattedData = "<a target='_blank' href='https://www.ebi.ac.uk/biomodels/" + rawdata + "'>" + rawdata + "</a>";
                     return formattedData
                 }
             },
@@ -63,8 +64,10 @@
                 data: 'fields.publication',
                 orderable: false,
                 render: function (href, type, row) {
-                    if (href !== undefined && href.length !== 0) {
-                        var formattedData;
+                    if (href === undefined || href.length === 0) {
+                        return null;
+                    }
+                    var formattedData;
                         if (href.includes(",")) {
                             var formattedArray = [];
                             var commaSeparatedLinks = href.split(",");
@@ -75,7 +78,7 @@
                         } else {
                             formattedData = generatePublicationLink(href);
                         }
-                    }
+
                     return formattedData;
                 }
             },
