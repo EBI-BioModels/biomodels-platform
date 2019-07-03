@@ -22,6 +22,7 @@ package net.biomodels.jummp.filters
 
 import grails.converters.JSON
 import grails.converters.XML
+import grails.util.Holders
 import net.biomodels.jummp.deployment.biomodels.P2MMapping
 
 /**
@@ -41,6 +42,7 @@ import net.biomodels.jummp.deployment.biomodels.P2MMapping
  */
 class ModelFilters {
     final Set SUPPORTED_FORMAT = ['json', 'xml']
+    final String serverURL = Holders.grailsApplication.config.grails.serverURL
     def filters = {
         showP2MModel(controller: "model", action: "show") {
             before = {
@@ -52,7 +54,12 @@ class ModelFilters {
                         String format = params.format
                         if (format in SUPPORTED_FORMAT) {
                             response.setContentType(format == 'json' ? "application/json" : "application/xml")
-                            def result = [status: 301, message: "Moved permanently"]
+                            response.status = 301
+                            String newLocation = "${serverURL}/${representative}"
+                            response.setHeader("Location", newLocation)
+                            def result = [status: 301,
+                                          message: "Resources have been moved permanently",
+                                          Location: newLocation]
                             def returned = format == 'json' ? result as JSON : result as XML
                             render(returned)
                             return false
@@ -87,7 +94,12 @@ class ModelFilters {
                         String format = params.format
                         if (format in SUPPORTED_FORMAT) {
                             response.setContentType(format == 'json' ? "application/json" : "application/xml")
-                            def result = [status: 301, message: "Resources have been moved permanently"]
+                            response.status = 301
+                            String newLocation = "${serverURL}/${representative}"
+                            response.setHeader("Location", newLocation)
+                            def result = [status: 301,
+                                          message: "Resources have been moved permanently",
+                                          Location: newLocation]
                             def returned = format == 'json' ? result as JSON : result as XML
                             render(returned)
                             return false
