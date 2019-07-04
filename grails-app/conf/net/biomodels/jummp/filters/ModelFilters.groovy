@@ -28,7 +28,7 @@ import net.biomodels.jummp.deployment.biomodels.P2MMapping
 /**
  * @short Filter to redirect users to ModelController for Path2Models models
  *
- * About 140K models in Path2Models project are bringing to BioModels under hundreds representative models. These
+ * About 140K models in Path2Models project are bringing to BioModels under hundreds of representative models. These
  * representative models are the main ones after grouping models into small categories. Each category will have a
  * delegate which is submitted into BioModels as the main file along with annotations and metadata information. The
  * other members of the group are archived into a zip file as an additional file and submitted together the main file

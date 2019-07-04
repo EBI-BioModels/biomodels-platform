@@ -44,24 +44,20 @@ class P2mController {
 
     def missing() {
         List<String> missingIds = p2mService.findMissing()
-        try {
-            withFormat {
-                html {
-                    render(view: "missing", model: [missing: missingIds])
-                }
-                json {
-                    response.setContentType("application/json")
-                    response.status = 200
-                    render([missing: missingIds] as JSON)
-                }
-                xml {
-                    response.setContentType("application/xml")
-                    response.status = 200
-                    render([missing: missingIds] as XML)
-                }
+        withFormat {
+            html {
+                render(view: "missing", model: [missing: missingIds])
             }
-        } catch (IllegalArgumentException iae) {
-            log.error(iae.message, iae)
+            json {
+                response.setContentType("application/json")
+                response.status = 200
+                render([missing: missingIds] as JSON)
+            }
+            xml {
+                response.setContentType("application/xml")
+                response.status = 200
+                render([missing: missingIds] as XML)
+            }
         }
     }
 
@@ -71,7 +67,8 @@ class P2mController {
         def message = ""
         if (!requestedModelId) {
             status = 402
-            message = "Missing requried parameters"
+            message = "Missing required parameters"
+            response.status = status
             render(view: "error", model: [status: status, message: message])
             return
         }
@@ -79,23 +76,19 @@ class P2mController {
         result["requestedModelId"] = requestedModelId
         String representativeModelId = p2mService.getRepresentativeId(requestedModelId)
         result["representativeModelId"] = representativeModelId
-        try {
-            withFormat {
-                html {
-                    render(view: "representative", model: result) }
-                json {
-                    response.setContentType("application/json")
-                    response.status = 200
-                    render(result as JSON)
-                }
-                xml {
-                    response.setContentType("application/xml")
-                    response.status = 200
-                    render(result as XML)
-                }
+        withFormat {
+            html {
+                render(view: "representative", model: result) }
+            json {
+                response.setContentType("application/json")
+                response.status = 200
+                render(result as JSON)
             }
-        } catch (IllegalArgumentException iae) {
-            log.error(iae.message, iae)
+            xml {
+                response.setContentType("application/xml")
+                response.status = 200
+                render(result as XML)
+            }
         }
     }
 
@@ -104,24 +97,20 @@ class P2mController {
         List modelIds = paramsModelIds?.split(",")
         Map reps = p2mService.getRepresentatives(modelIds)
 
-        try {
-            withFormat {
-                html {
-                    render(view: "representatives", model: [representatives: reps])
-                }
-                json {
-                    response.setContentType("application/json")
-                    response.status = 200
-                    render(reps as JSON)
-                }
-                xml {
-                    response.setContentType("application/xml")
-                    response.status = 200
-                    render(reps as XML)
-                }
+        withFormat {
+            html {
+                render(view: "representatives", model: [representatives: reps])
             }
-        } catch (IllegalArgumentException iae) {
-            log.error(iae.message, iae)
+            json {
+                response.setContentType("application/json")
+                response.status = 200
+                render(reps as JSON)
+            }
+            xml {
+                response.setContentType("application/xml")
+                response.status = 200
+                render(reps as XML)
+            }
         }
     }
 }
