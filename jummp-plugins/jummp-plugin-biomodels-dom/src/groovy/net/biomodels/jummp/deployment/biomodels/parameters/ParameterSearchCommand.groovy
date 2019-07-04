@@ -75,7 +75,9 @@ class ParameterSearchCommand {
     @CompileStatic
     URL getSearchUrl(String format) {
         def params = [
-            query : query.equals("*:*")?URLEncoder.encode(query,"UTF-8"): URLEncoder.encode('"'+query+'"',"UTF-8") ,
+            query : query.equals("*:*")
+                ?URLEncoder.encode(query,"UTF-8")
+                :URLEncoder.encode(query.replace(":", $/\:/$).replace("/", $/\\/$),"UTF-8") ,
             size  : size,
             start : start,
             sort  : sort,
