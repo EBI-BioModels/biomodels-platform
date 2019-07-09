@@ -53,6 +53,9 @@ import net.biomodels.jummp.plugins.security.User
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.springframework.security.access.AccessDeniedException
+import org.springframework.transaction.NoTransactionException
+import org.springframework.transaction.interceptor.TransactionAspectSupport
+import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -170,8 +173,19 @@ class ModelDelegateService implements IModelService {
     }
 
     List<RevisionTransportCommand> getAllRevisions(String modelId) {
+        def model = modelService.findByPerennialIdentifier(modelId)
+        def revs = modelService.getAllRevisions(model)
+        def msg = """Fetching revisions ${revs*.id} for $modelId. Attachment to current session: ${revs*.isAttached()}
+transactionStatus: ${transactionStatus /* injected by org.codehaus.groovy.grails.transaction.transform.TransactionalTransform*/} ; 
+session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.applicationContext.sessionFactory)
+            .session.persistenceContext.entitiesByKey.collect {
+            def instance = it.value
+            "{${instance.class.name} ${instance.hasProperty('id') ? instance.id : instance.toString() }}" }.toString()}
+"""
+        log.info(msg.toString())
+
         List<RevisionTransportCommand> revisions = []
-        modelService.getAllRevisions(modelService.findByPerennialIdentifier(modelId)).each {
+        revs.each {
             revisions << new RevisionAdapter(revision: it).toCommandObject()
         }
         return revisions
