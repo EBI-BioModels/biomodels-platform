@@ -20,8 +20,6 @@
 
 package net.biomodels.jummp.deployment.biomodels
 
-import net.biomodels.jummp.model.Model
-
 /**
  * Domain class for mapping a representative model with other models in the same genus
  *
