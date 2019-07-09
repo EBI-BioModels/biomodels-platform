@@ -64,14 +64,15 @@
                 data: 'fields.publication',
                 orderable: false,
                 render: function (href, type, row) {
+
                     if (href === undefined || href.length === 0) {
                         return null;
                     }
                     var formattedData;
-                        if (href.includes(",")) {
+                        if (href.includes(";")) {
                             var formattedArray = [];
-                            var commaSeparatedLinks = href.split(",");
-                            commaSeparatedLinks.forEach(function (subHref) {
+                            var separatedLinks = href.split(";");
+                            separatedLinks.forEach(function (subHref) {
                                 formattedArray.push(generatePublicationLink(subHref));
                             });
                             formattedData = formattedArray.join(", ");
