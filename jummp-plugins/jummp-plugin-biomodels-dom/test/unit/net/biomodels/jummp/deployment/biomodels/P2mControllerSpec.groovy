@@ -79,4 +79,24 @@ class P2mControllerSpec extends Specification {
         then:
         response.text
     }
+
+    void "test browse action"() {
+        given:
+        def p2mService = mockFor(P2mService)
+        p2mService.demand.getModelCategoryMap { ->
+            [
+                "BMID000000142512": ['Cucumis'] as Set,
+                "BMID000000142019": ['Deferribacter'] as Set
+            ]
+        }
+        controller.p2mService = p2mService.createMock()
+
+        when:
+        def model = controller.browse()
+
+        then:
+        model.title == "Browse Path2Models"
+        model.categories.size() == 2
+        model.genus
+    }
 }

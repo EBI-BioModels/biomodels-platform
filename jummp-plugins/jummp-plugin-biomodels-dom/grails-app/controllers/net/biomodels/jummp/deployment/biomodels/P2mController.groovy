@@ -113,4 +113,11 @@ class P2mController {
             }
         }
     }
+
+    def browse() {
+        String title = "Browse Path2Models"
+        Map result = p2mService.modelCategoryMap
+        def genus = result.values()
+        [title: title, categories: result, genus: genus]
+    }
 }
