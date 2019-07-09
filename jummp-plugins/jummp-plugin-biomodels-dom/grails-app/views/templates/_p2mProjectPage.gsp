@@ -1,28 +1,28 @@
 <h2>Path2Models project page</h2>
 
 <p>
-    Path2Models is a branch of BioModels Database dedicated to hosting models automatically generated from
-    pathway resources, such as
+    Path2Models is a collection of models automatically generated from pathway resources such as
     <a href="http://www.kegg.jp/" title="KEGG: Kyoto Encyclopedia of Genes and Genomes">KEGG</a>,
     <a href="https://cgap.nci.nih.gov/Pathways/BioCarta_Pathways" title="BioCarta">BioCarta</a>,
     <a href="http://www.metacyc.org/" title="MetaCyc">MetaCyc</a>,
     <a href="https://wiki.nci.nih.gov/pages/viewpage.action?pageId=315491760" title="Pathway Interaction Database">PID</a> and
-    <a href="http://sabio.villa-bosch.de/" title="SABIO-RK">SABIO-RK</a>.
+    <a href="http://sabio.villa-bosch.de/" title="SABIO-RK">SABIO-RK</a> and hosted in BioModels database.
 </p>
 
+<p>About 140K models in Path2Models project are grouped taxonomically into 814 bundles of models,
+typically one per genus. Each bundle of models contains one representative entry, typically a genome
+scale model
+for one of the organisms under that genus. The description of a representative SBML model contains the
+BioModels accessions of all models under this bundle along with metadata information. The other
+models of
+the
+group are available as a COMBINE archive alongside the main file.
+All requests to access a model inside a COMBINE archive will be redirected to the representative model.
+</p>
 <h3>Browse models</h3>
-
-<p>
-    Models from this branch are classified in 3 distinct categories:
-</p>
-
-<p>
-    One can also browse those models by organism:
-</p>
-<ul>
-    <li><a href="#" title="Browse models by organism">list of all organisms</a></li>
-</ul>
-
+<p>One can also browse those models through <a href="${createLink(controller: "p2m", action: "browse")}">the dedicated
+browse page</a>
+    .</p>
 <h3>Search models</h3>
 
 <p>We will support and adopt searching models into the primary search system later.</p>
