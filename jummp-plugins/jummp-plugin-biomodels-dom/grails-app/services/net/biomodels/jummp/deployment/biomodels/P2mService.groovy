@@ -31,8 +31,11 @@ import grails.transaction.Transactional
 @Transactional
 class P2mService {
     List<String> findMissing() {
-        P2MMapping.all.collect {
-            it.member
+        // executeQuery() queries are not supported in unit tests with Grails 2.5, use criteria queries instead
+        P2MMapping.createCriteria().list {
+            projections {
+                property 'member'
+            }
         }
     }
 
