@@ -20,12 +20,15 @@
 
 package net.biomodels.jummp.filters
 
+import grails.converters.JSON
+import grails.converters.XML
+import grails.util.Holders
 import net.biomodels.jummp.deployment.biomodels.P2MMapping
 
 /**
  * @short Filter to redirect users to ModelController for Path2Models models
  *
- * About 140K models in Path2Models project are bringing to BioModels under hundreds representative models. These
+ * About 140K models in Path2Models project are bringing to BioModels under hundreds of representative models. These
  * representative models are the main ones after grouping models into small categories. Each category will have a
  * delegate which is submitted into BioModels as the main file along with annotations and metadata information. The
  * other members of the group are archived into a zip file as an additional file and submitted together the main file
@@ -38,6 +41,8 @@ import net.biomodels.jummp.deployment.biomodels.P2MMapping
  * @date 2019-06-14
  */
 class ModelFilters {
+    final Set SUPPORTED_FORMAT = ['json', 'xml']
+    final String serverURL = Holders.grailsApplication.config.grails.serverURL
     def filters = {
         showP2MModel(controller: "model", action: "show") {
             before = {
@@ -46,7 +51,21 @@ class ModelFilters {
                     P2MMapping modelMap = P2MMapping.findByMember(modelId)
                     if (modelMap) {
                         String representative = modelMap.representative
-                        forward(controller: "model", action: "show", id: representative)
+                        String format = params.format
+                        if (format in SUPPORTED_FORMAT) {
+                            response.setContentType(format == 'json' ? "application/json" : "application/xml")
+                            response.status = 301
+                            String newLocation = "${serverURL}/${representative}"
+                            response.setHeader("Location", newLocation)
+                            def result = [status: 301,
+                                          message: "Resources have been moved permanently",
+                                          Location: newLocation]
+                            def returned = format == 'json' ? result as JSON : result as XML
+                            render(returned)
+                            return false
+                        } else {
+                            forward(controller: "model", action: "show", id: representative)
+                        }
                     }
                 }
             }
@@ -62,6 +81,33 @@ class ModelFilters {
                         forward(controller: "model", action: "download", id: representative)
                     }
                 } 
+            }
+        }
+
+        filesP2MModel(controller: "model", action: "files") {
+            before = {
+                String modelId = params.id
+                if (modelId.contains("BMID")) {
+                    P2MMapping modelMap = P2MMapping.findByMember(modelId)
+                    if (modelMap) {
+                        String representative = modelMap.representative
+                        String format = params.format
+                        if (format in SUPPORTED_FORMAT) {
+                            response.setContentType(format == 'json' ? "application/json" : "application/xml")
+                            response.status = 301
+                            String newLocation = "${serverURL}/${representative}"
+                            response.setHeader("Location", newLocation)
+                            def result = [status: 301,
+                                          message: "Resources have been moved permanently",
+                                          Location: newLocation]
+                            def returned = format == 'json' ? result as JSON : result as XML
+                            render(returned)
+                            return false
+                        } else {
+                            forward(controller: "model", action: "files", id: representative)
+                        }
+                    }
+                }
             }
         }
     }
