@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "description": "<p>BioModels is a repository of mathematical models of biological and biomedical systems. It hosts a vast selection of existing literature-based physiologically and pharmaceutically relevant mechanistic models in standard formats. Our mission is to provide the systems modelling community with reproducible, high-quality, <a href='http://creativecommons.org/publicdomain/zero/1.0/' target='_blank'>freely-accessible</a> models published in the scientific literature. More information about BioModels can be found in the <a href='../faq'>FAQ</a>.</p> <h3>Notes about this API</h3> <h4 id='contentNegotiation'>Content negotiation</h4> <p>Both XML and JSON MIME types are supported. Clients have two ways of specifying the content type: <ul> <li>an explicit format request parameter (e.g. format=xml)</li> <li>the Accept request header (e.g. Accept: application/xml).</li> </ul> If both are specified, the format parameter has priority. </p> <h4>BioModels content</h4> <p>Model information is retrieved based on the a submission identifier, such as MODEL1707110000, or a BioModels identifier, like BIOMD0000000123. BioModels content is versioned and model revision numbers are assigned incrementally starting from 1. If a particular model revision is public, it can be accessed by appending a dot ('.') and its number to the model identifier (e.g. BIOMD0000000123.1). </p> <p>The <a href='https://www.ebi.ac.uk/biomodels-main/path2models' target='_blank' title='find out more about Path2Models -- link opens in a new window'>Path2Models</a> branch of models is not available through this API at this time.</p> ",
+    "description": "<p>BioModels is a repository of mathematical models of biological and biomedical systems. It hosts a vast selection of existing literature-based physiologically and pharmaceutically relevant mechanistic models in standard formats. Our mission is to provide the systems modelling community with reproducible, high-quality, <a href='http://creativecommons.org/publicdomain/zero/1.0/' target='_blank'>freely-accessible</a> models published in the scientific literature. More information about BioModels can be found in the <a href='../faq'>FAQ</a>.</p> <h3>Notes about this API</h3> <h4 id='contentNegotiation'>Content negotiation</h4> <p>Both XML and JSON MIME types are supported. Clients have two ways of specifying the content type: <ul> <li>an explicit format request parameter (e.g. format=xml)</li> <li>the Accept request header (e.g. Accept: application/xml).</li> </ul> If both are specified, the format parameter has priority. </p> <h4>BioModels content</h4> <p>Model information is retrieved based on the a submission identifier, such as MODEL1707110000, or a BioModels identifier, like BIOMD0000000123. BioModels content is versioned and model revision numbers are assigned incrementally starting from 1. If a particular model revision is public, it can be accessed by appending a dot ('.') and its number to the model identifier (e.g. BIOMD0000000123.1). </p> <p><h4>Path2Models</h4></p>Models from the <a href='../path2models' target='_blank' title='find out more about Path2Models -- link opens in a new window'>Path2Models</a> project are now clustered based on their genus. Each Path2Models entry now consists of a representative model and a COMBINE archive of all other models whose organisms belong to that genus. As a result of this shuffle, some models are no longer directly accessible and such requests are redirected to the corresponding representative model. There are dedicated end points for checking which models are now only retrievable indirectly and also to find the representative model(s) for a given set of model identifiers.</p> ",
     "version": "beta2",
     "title": "BioModels",
     "termsOfService": "https://www.ebi.ac.uk/data-protection/privacy-notice/embl-ebi-public-website",
@@ -331,8 +331,8 @@
       "/p2m/missing": {
           "get": {
               "tags": ["Path2Models operations"],
-              "summary": "Retrieve all missing models in Path2Models",
-              "description": "Retrieve all missing models in Path2Models",
+              "summary": "Retrieve the identifiers of all Path2Models entries that are no longer directly accessible",
+              "description": "Retrieve all models in Path2Models that are now only available indirectly, through the representative model for the corresponding genus",
               "parameters": [
                   {
                       "in": "path",
@@ -355,9 +355,6 @@
               "responses": {
                   "200": {
                       "description": "Successful operation"
-                  },
-                  "404": {
-                      "description": "Not Found"
                   }
               }
           }
@@ -366,12 +363,12 @@
           "get": {
               "tags": ["Path2Models operations"],
               "summary": "Retrieve a representative model in Path2Models",
-              "description": "Get a representative model identifier of a given missing model in Path2Models. The API end point needs a required model identifier and an optional response format",
+              "description": "Get the representative model identifier for a given missing model in Path2Models. This endpoint accepts as parameters a mandatory model identifier and an optional response format",
               "parameters": [
                   {
                       "in": "query",
                       "name": "model",
-                      "description": "The identifier of model of interest",
+                      "description": "The identifier of a model of interest",
                       "required": true,
                       "type": "string"
                   },
@@ -395,7 +392,7 @@
               ],
               "responses": {
                   "200": {
-                      "description": "Successful operation"
+                      "description": "Successful operation. We return a mapping between the given accession and that of its representative (or null if the given identifier does not exist)"
                   },
                   "404": {
                       "description": "Not Found"
@@ -406,8 +403,8 @@
       "/p2m/representatives": {
           "get": {
               "tags": ["Path2Models operations"],
-              "summary": "Retrieve representative models of a set of missing models in Path2Models",
-              "description": "Get the representative model identifiers of a set of given missing models in Path2Models. The API end point needs a required list of requested model identifiers separated by a comma without any preceding space and an optional response format. Examples: BMID000000112902,BMID000000009880,BMID000000027397",
+              "summary": "Find the replacement accessions for a set of Path2Models entries",
+              "description": "Get the representative model identifiers of a set of given missing models in Path2Models. This end pointexpects a comma-separated list of model identifiers (without any surrounding whitespace) and an optional response format. Examples: BMID000000112902,BMID000000009880,BMID000000027397",
               "parameters": [
                   {
                       "in": "query",
@@ -442,10 +439,7 @@
               ],
               "responses": {
                   "200": {
-                      "description": "Successful operation"
-                  },
-                  "404": {
-                      "description": "Not Found"
+                      "description": "The lookup completed successfully. The response will contain a mapping between the given identifiers and their corresponding ."
                   }
               }
           }
