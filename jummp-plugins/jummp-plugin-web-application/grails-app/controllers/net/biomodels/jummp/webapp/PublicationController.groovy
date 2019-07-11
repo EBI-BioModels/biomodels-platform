@@ -2,7 +2,6 @@ package net.biomodels.jummp.webapp
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
-import net.biomodels.jummp.core.InvalidPublicationAuthorsException
 import net.biomodels.jummp.core.adapters.PublicationAdapter
 import net.biomodels.jummp.model.Publication
 
@@ -16,13 +15,13 @@ class PublicationController {
     def index() {
         List<PublicationTransportCommand> publications = new ArrayList<>()
         publications = publicationService.getAll()
-        [publications: publications]
+        [publications: publications, title: "List of all publications"]
     }
 
     def add(Publication publication) {
         PublicationTransportCommand pubTC = publicationService.createPTCWithMinimalInformation("PubMed ID", null, null)
         pubTC.id = null
-        [publication: pubTC]
+        [publication: pubTC, title: "A a new publication"]
     }
 
     def show(Publication publication) {
@@ -31,7 +30,7 @@ class PublicationController {
             return false
         }
         PublicationTransportCommand pubCmd = new PublicationAdapter(publication: publication).toCommandObject()
-        [publication: pubCmd, authorListContainerSize: 4]
+        [publication: pubCmd, authorListContainerSize: 4, title: "Show a publication"]
     }
 
     def refreshPubMedData() {
@@ -52,6 +51,7 @@ class PublicationController {
             if (publication) {
                 message += "<br/>The data have been saved successfully"
                 status = 200
+                result["publicationId"] = publication.id
             } else {
                 message += "<br/>Failures of saving data"
                 status = 500
@@ -63,9 +63,5 @@ class PublicationController {
             result.status = 500
         }
         render(result as JSON)
-    }
-
-    def doAddOrUpdate() {
-
     }
 }
