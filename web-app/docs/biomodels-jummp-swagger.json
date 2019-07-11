@@ -27,6 +27,10 @@
     {
       "name": "Parameters Search",
       "description": "Find model parameters of interest"
+    },
+    {
+      "name": "Path2Models operations",
+      "description": "Find Path2Models models of interest"
     }
   ],
   "schemes": [
@@ -323,7 +327,130 @@
                   }
               }
           }
+      },
+      "/p2m/missing": {
+          "get": {
+              "tags": ["Path2Models operations"],
+              "summary": "Retrieve all missing models in Path2Models",
+              "description": "Retrieve all missing models in Path2Models",
+              "parameters": [
+                  {
+                      "in": "path",
+                      "name": "format",
+                      "description": "The response format",
+                      "required": false,
+                      "type": "string",
+                      "enum": [
+                          "json",
+                          "xml",
+                          "html"
+                      ]
+                  }
+              ],
+              "produces": [
+                  "application/json",
+                  "application/xml",
+                  "text/html"
+              ],
+              "responses": {
+                  "200": {
+                      "description": "Successful operation"
+                  },
+                  "404": {
+                      "description": "Not Found"
+                  }
+              }
+          }
+      },
+      "/p2m/representative": {
+          "get": {
+              "tags": ["Path2Models operations"],
+              "summary": "Retrieve a representative model in Path2Models",
+              "description": "Get a representative model identifier of a given missing model in Path2Models. The API end point needs a required model identifier and an optional response format",
+              "parameters": [
+                  {
+                      "in": "query",
+                      "name": "model",
+                      "description": "The identifier of model of interest",
+                      "required": true,
+                      "type": "string"
+                  },
+                  {
+                      "in": "query",
+                      "name": "format",
+                      "description": "The response format",
+                      "required": false,
+                      "type": "string",
+                      "enum": [
+                          "json",
+                          "xml",
+                          "html"
+                      ]
+                  }
+              ],
+              "produces": [
+                  "application/json",
+                  "application/xml",
+                  "text/html"
+              ],
+              "responses": {
+                  "200": {
+                      "description": "Successful operation"
+                  },
+                  "404": {
+                      "description": "Not Found"
+                  }
+              }
+          }
+      },
+      "/p2m/representatives": {
+          "get": {
+              "tags": ["Path2Models operations"],
+              "summary": "Retrieve representative models of a set of missing models in Path2Models",
+              "description": "Get the representative model identifiers of a set of given missing models in Path2Models. The API end point needs a required list of requested model identifiers separated by a comma without any preceding space and an optional response format. Examples: BMID000000112902,BMID000000009880,BMID000000027397",
+              "parameters": [
+                  {
+                      "in": "query",
+                      "name": "modelIds",
+                      "description": "The list of requested model identifiers",
+                      "required": true,
+                      "type": "array",
+                      "collectionFormat": "csv",
+                      "items": [
+                          {
+                              "type": "string"
+                          }
+                      ]
+                  },
+                  {
+                      "in": "query",
+                      "name": "format",
+                      "description": "The response format",
+                      "required": false,
+                      "type": "string",
+                      "enum": [
+                          "json",
+                          "xml",
+                          "html"
+                      ]
+                  }
+              ],
+              "produces": [
+                  "application/json",
+                  "application/xml",
+                  "text/html"
+              ],
+              "responses": {
+                  "200": {
+                      "description": "Successful operation"
+                  },
+                  "404": {
+                      "description": "Not Found"
+                  }
+              }
+          }
       }
+
   },
   "definitions": {
     "Model": {
