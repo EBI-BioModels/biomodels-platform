@@ -29,7 +29,7 @@ browse page</a>
 
 <h3>Download all models</h3>
 <ul>
-    <li><a href="ftp://ftp.ebi.ac.uk/pub/databases/biomodels/releases/latest/"
+    <li><a href="ftp://ftp.ebi.ac.uk/pub/databases/biomodels/auto_generated/path2models/latest/"
            title="Access to the FTP server where the models archives are hosted">Archives of all models</a> (from the latest release)
     </li>
 </ul>
