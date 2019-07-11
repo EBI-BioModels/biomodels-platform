@@ -48,9 +48,10 @@
                 data: 'fields.model',
                 render: function (rawdata, type, row) {
                     var formattedData;
-                    if (rawdata !== undefined && rawdata.length !== 0) {
-                        formattedData = "<a target='_blank' href='https://www.ebi.ac.uk/biomodels/" + rawdata + "'>" + rawdata + "</a>";
+                    if (rawdata === undefined || rawdata.length === 0) {
+                        return null;
                     }
+                    formattedData = "<a target='_blank' href='https://www.ebi.ac.uk/biomodels/" + rawdata + "'>" + rawdata + "</a>";
                     return formattedData
                 }
             },
@@ -63,19 +64,22 @@
                 data: 'fields.publication',
                 orderable: false,
                 render: function (href, type, row) {
-                    if (href !== undefined && href.length !== 0) {
-                        var formattedData;
-                        if (href.includes(",")) {
+
+                    if (href === undefined || href.length === 0) {
+                        return null;
+                    }
+                    var formattedData;
+                        if (href.includes(";")) {
                             var formattedArray = [];
-                            var commaSeparatedLinks = href.split(",");
-                            commaSeparatedLinks.forEach(function (subHref) {
+                            var separatedLinks = href.split(";");
+                            separatedLinks.forEach(function (subHref) {
                                 formattedArray.push(generatePublicationLink(subHref));
                             });
                             formattedData = formattedArray.join(", ");
                         } else {
                             formattedData = generatePublicationLink(href);
                         }
-                    }
+
                     return formattedData;
                 }
             },
@@ -168,7 +172,7 @@
 
         // Function to update table as per the state
         function updateTable(table) {
-            $('.dataTables_filter input').val(decodeURI(pageState.dataTable.query));
+            $('.dataTables_filter input').val(pageState.dataTable.query);
 
             var page = Math.floor(pageState.dataTable.start / pageState.dataTable.size);
             var size = pageState.dataTable.size;
@@ -334,7 +338,7 @@
             if (pageState.isInitialState()) {
                 // populate data object from pageState.command
                 var command = pageState.command;
-                query = decodeURI(command.query);
+                query = command.query;
                 start = Number(command.start);
                 size = Number(command.size);
                 sort = command.sort;
@@ -343,7 +347,7 @@
             } else {
                 // populate data object from dataTableArg and set pageState.dataTable to dataTableArg
                 if (dataTableArg.search.value === "") {
-                    query = $('.dataTables_filter input').val();
+                    query = encodeURIComponent($('.dataTables_filter input').val());
                 } else {
                     query = dataTableArg.search.value;
                 }
@@ -354,7 +358,7 @@
             // Sorting
             sort = prepareSortParams(dataTableArg, sort);
 
-            pageState.dataTable.query = query === "" || query === DEFAULT_QUERY ? DEFAULT_QUERY : encodeURIComponent(query);
+            pageState.dataTable.query = query === "" || query === DEFAULT_QUERY ? DEFAULT_QUERY : query;
             pageState.dataTable.start = start;
             pageState.dataTable.size = size;
             pageState.dataTable.sort = sort;

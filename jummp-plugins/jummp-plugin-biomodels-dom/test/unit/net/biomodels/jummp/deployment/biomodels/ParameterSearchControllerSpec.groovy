@@ -62,6 +62,15 @@ class ParameterSearchControllerSpec extends Specification {
         assert model.command.start == 0
         assert model.command.sort == "model:ascending"
     }
+    void "test index with XSS Query"() {
+        given: "Controller and command object initialized"
+        params.query = '<script>alert(\'hi\')</script>'
+        when: "Redirected to index with query"
+        controller.index()
+
+        then: "Should show correct model"
+        assert model.command.query == "&amp;lt;script&amp;gt;alert(&amp;#39;hi&amp;#39;)&amp;lt;/script&amp;gt;"
+    }
 
     void "test search with json format"() {
         given: "ParameterSearchService is mocked with certain values"

@@ -29,7 +29,6 @@ class JummpPluginAnnotationCoreGrailsPlugin {
     def grailsVersion = "2.3 > *"
     def loadAfter = [
             'jummp-plugin-core-api',
-            'jummp-plugin-security',
             'jummp-plugin-configuration'
     ]
     def loadBefore = [

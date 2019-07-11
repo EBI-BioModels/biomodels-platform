@@ -107,10 +107,11 @@ class ModelTagServiceSpec extends Specification {
         result["message"] == "The model has no longer been tagged any label"
         when:
         def tag1 = new TagTransportCommand(name: "Annotated",
-            description: "this is a fully annotated model", userCreated: user)
+            description: "This is a fully annotated model", userCreated: user)
         tag1.dateCreated = new Date()
         tag1.dateModified = new Date()
-        cmd.tags.add(tag1)
+        def tag2 = new TagTransportCommand(name: "Auto-generated")
+        cmd.tags.addAll([tag1, tag2])
         result = service.saveOrUpdate(cmd, user)
         then:
         result["message"].contains("have been applied successfully to the model")

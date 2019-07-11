@@ -34,7 +34,7 @@ import net.biomodels.jummp.model.Publication
 import net.biomodels.jummp.model.PublicationLinkProvider as PLP
 import net.biomodels.jummp.model.PublicationPerson
 import net.biomodels.jummp.plugins.security.Person
-import net.biomodels.jummp.plugins.security.PersonTransportCommand as PersonTC
+import net.biomodels.jummp.core.user.PersonTransportCommand as PersonTC
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.springframework.validation.ObjectError
@@ -111,6 +111,7 @@ class PublicationService {
             // fetch from pubmed
             if (type == PLP.LinkType.PUBMED) {
                 ctx.publication = pubMedService.fetchPublicationData(cmd.link)
+                log.debug("The publication details fetched from EuropePMC look ${ctx.publication?.dump()}")
             } else {
                 ctx.publication = null
             }

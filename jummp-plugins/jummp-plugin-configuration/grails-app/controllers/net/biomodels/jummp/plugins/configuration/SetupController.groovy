@@ -24,7 +24,7 @@
 
 package net.biomodels.jummp.plugins.configuration
 
-import net.biomodels.jummp.core.UserCommand
+import net.biomodels.jummp.core.user.UserCommand
 
 /**
  * @short Controller to bootstrap the configuration of an application instance.

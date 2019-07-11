@@ -31,7 +31,6 @@ class JummpPluginAnnotationSourceDdmoreGrailsPlugin {
     def grailsVersion = "2.3 > *"
     def loadAfter = [
             'jummp-plugin-core-api',
-            'jummp-plugin-security',
             'jummp-plugin-configuration',
             'jummp-plugin-annotation-core',
             'jummp-plugin-web-application'

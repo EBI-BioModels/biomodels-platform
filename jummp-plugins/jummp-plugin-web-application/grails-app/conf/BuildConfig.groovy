@@ -71,6 +71,11 @@ grails.project.dependency.resolution = {
         //flatDir name: "jummpLibs", dirs: "../../lib/"
     }
 
+    dependencies {
+        compile "com.fasterxml.jackson.core:jackson-databind:2.5.2"
+        compile "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.5.2"
+    }
+
     plugins {
         build ":tomcat:7.0.55.3"
 
@@ -78,6 +83,5 @@ grails.project.dependency.resolution = {
         runtime ":jquery-datatables:1.7.5"
     }
 }
-grails.plugin.location.'jummp-plugin-security'="../jummp-plugin-security"
 grails.plugin.location.'jummp-plugin-core-api'="../jummp-plugin-core-api"
 grails.plugin.location.'jummp-plugin-biomodels-dom'="../jummp-plugin-biomodels-dom"
