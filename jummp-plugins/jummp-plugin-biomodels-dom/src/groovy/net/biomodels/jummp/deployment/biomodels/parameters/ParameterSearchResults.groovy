@@ -155,13 +155,13 @@ class ParameterSearchResults {
         }
         String formattedData
         if(fieldName == "publication") {
-            if (fieldValue.contains(",")) {
+            if (fieldValue.contains(";")) {
                 List<String> formattedList = new ArrayList<>()
-                String[] commaSeparatedLinks = fieldValue.split(",")
+                String[] commaSeparatedLinks = fieldValue.split(";")
                 commaSeparatedLinks.each { value ->
                     formattedList.add(prepareHrefAndLabel(value));
                 }
-                formattedData = formattedList.join(", ")
+                formattedData = formattedList.join(";")
             } else {
                 formattedData = prepareHrefAndLabel(fieldValue);
             }
