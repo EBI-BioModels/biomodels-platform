@@ -51,6 +51,10 @@ class UrlMappings {
             controller = "feature"
             action = 'agedbrain'
         }
+        name path2models: "/path2models" {
+            controller = "feature"
+            action = 'path2models'
+        }
         // used for web services
         "/$controller/$action?/$id?(.$format)?"{
             constraints {

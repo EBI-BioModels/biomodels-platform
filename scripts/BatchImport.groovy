@@ -79,7 +79,8 @@ String exchangeDirectory
 def userAuthenticationDetails
 
 target(main: "Puts everything together to import models from a given folder") {
-    bootstrapOnce()
+    depends(configureProxy, enableExpandoMetaClass, packageApp, classpath, loadApp, configureApp)
+
     int inputIssues = sanitiseInput()
     if (inputIssues) {
         error("""There was a problem parsing the input parameters so I'm giving up. \
@@ -121,7 +122,6 @@ giving up. Sorry about that.""", vcsIssues)
     def format = mf.findByIdentifierAndFormatVersion(formatCommand.identifier,
             formatCommand.formatVersion)
 
-    decorator.context = appCtx
     rtc.context = appCtx
     def modelService = appCtx.modelService
     def modelFileFormatService = appCtx.modelFileFormatService

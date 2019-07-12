@@ -2,7 +2,7 @@
     window.onload = function() {
         if (window.jQuery) {
             $('.go-to-top').click(function () {
-                $('body').animate({"scrollTop": "0px"}, 1000);
+                $('html, body').animate({"scrollTop": "0px"}, 1000);
             });
         } else {
             alert("jQuery is not loaded");
