@@ -29,7 +29,7 @@
 
 <%@ page contentType="text/html;charset=UTF-8" %>
     <head>
-        <title>Model Search</title>
+        <title>Model Search | BioModels</title>
         <meta name="layout" content="${session['branding.style']}/main" />
         <meta name="robots" content="nofollow" />
          <link rel="stylesheet" href="${resource(contextPath: "${grailsApplication.config.grails.serverURL}", dir: '/css', file: 'datatablestyle.css')}" />

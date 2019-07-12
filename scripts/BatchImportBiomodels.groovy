@@ -435,7 +435,8 @@ loadClass = { String fqdn ->
 }
 
 target(bootstrapJummp: 'Creates a fully-initialised JUMMP environment loaded with seed data') {
-    bootstrap() // grails bootstrapping
+    // grails bootstrapping
+    depends(configureProxy, enableExpandoMetaClass, packageApp, classpath, loadApp, configureApp)
 
     // load necessary classes
     loadClasses()
