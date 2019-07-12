@@ -9,8 +9,8 @@
     <a href="http://sabio.villa-bosch.de/" title="SABIO-RK">SABIO-RK</a> and hosted in BioModels database.
 </p>
 
-<p>About 140K models in Path2Models project are grouped taxonomically into 814 bundles of models,
-typically one per genus. Each bundle of models contains one representative entry, typically a genome
+<p>The approximately 140000 models in the Path2Models project are now grouped taxonomically into 814 bundles,
+typically one per genus. Each such bundle contains one representative entry, typically a genome
 scale model
 for one of the organisms under that genus. The description of a representative SBML model contains the
 BioModels accessions of all models under this bundle along with metadata information. The other
@@ -19,13 +19,12 @@ the
 group are available as a COMBINE archive alongside the main file.
 All requests to access a model inside a COMBINE archive will be redirected to the representative model.
 </p>
-<h3>Browse models</h3>
-<p>One can also browse those models through <a href="${createLink(controller: "p2m", action: "browse")}">the dedicated
-browse page</a>
-    .</p>
-<h3>Search models</h3>
 
-<p>We will support and adopt searching models into the primary search system later.</p>
+<h3>Browsing models</h3>
+
+<p>The models can be accessed through <a href="${createLink(controller: "p2m", action: "browse")}">the dedicated
+browse page</a>. We currently only offer textual search capabilities for these models. We are working
+hard to consolidate this in the near future. Thank you for your patience and undestanding during this time.</p>
 
 <h3>Download all models</h3>
 <ul>
@@ -37,7 +36,7 @@ browse page</a>
 <h3>Additional information</h3>
 
 <p>
-    Those automatically generated models are only partially parameterized. In the case of KEGG signaling pathways for which no mechanistic details are provided, the models (with qual constructs) contain only topological relationships together with interaction signs. No logical rules specify the effects of (combined) interactions, and these models should be seen as scaffolds to be further parameterized before use in simulation. This can be done either by considering default, yet biologically meaningful, logical functions (e.g., requiring the presence of at least one activator and absence of all inhibitors) [<a
+    These automatically generated models are only partially parameterised. In the case of KEGG signaling pathways for which no mechanistic details are provided, the models (with qual constructs) contain only topological relationships together with interaction signs. No logical rules specify the effects of (combined) interactions, and these models should be seen as scaffolds to be further parameterised before use in simulation. This can be done either by considering default, yet biologically meaningful, logical functions (e.g., requiring the presence of at least one activator and absence of all inhibitors) [<a
     href="http://identifiers.org/pubmed/14636597"
     title="A structure-based anatomy of the E. coli metabolome">Nobeli2003</a>], by doing further manual refinement of the model (e.g., by literature mining), or by using dedicated experimental data to identify the functions [<a
     href="http://identifiers.org/pubmed/22871648"
@@ -56,7 +55,7 @@ browse page</a>
     href="http://identifiers.org/pubmed/22871178"
     title="The Cell Collective: toward an open and collaborative approach to systems biology">Helikar2012</a>]. GINsim provides complementary features that allow performing multiple analyses of logical models using powerful algorithms [<a
     href="http://identifiers.org/pubmed/22144167"
-    title="Logical modelling of gene regulatory networks with GINsim">Chaouiya2012</a>]. Therefore, relying on a combined use of these tools, one could use the Path2Models qualitative models by training them against data of, for instance, a cell type of interest, and subsequently analyzing the resulting models.
+    title="Logical modelling of gene regulatory networks with GINsim">Chaouiya2012</a>]. Therefore, relying on a combined use of these tools, one could use the Path2Models qualitative models by training them against data of, for instance, a cell type of interest, and subsequently analysing the resulting models.
 </p>
 
 <h3>References</h3>
@@ -110,5 +109,5 @@ completed. Models generated from other efforts are added to this branch.
 
 <p>
     For general BioModels Database reference information,
-    please see our <a href="citation" title="How can I quote BioModels Database?">citation page</a>.
+    please see our <a href="citation" title="How can I quote BioModels?">citation page</a>.
 </p>
