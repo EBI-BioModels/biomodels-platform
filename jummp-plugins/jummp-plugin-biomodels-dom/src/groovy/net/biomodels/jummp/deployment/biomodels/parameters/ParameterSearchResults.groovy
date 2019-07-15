@@ -12,7 +12,7 @@ import org.springframework.web.util.JavaScriptUtils
 class ParameterSearchResults {
     static
     final Logger logger = LoggerFactory.getLogger(ParameterSearchResults.class)
-
+    static final String fieldSeparator = ';'
     int recordsTotal
     int recordsFiltered
     List<SearchResultEntry> entries
@@ -34,7 +34,7 @@ class ParameterSearchResults {
             if (null == value || value?.isEmpty()) return ""
 
             value = value.replace("\\", "")
-            String[] values = value.split(';')
+            String[] values = value.split(fieldSeparator)
             List<String> links = new ArrayList<>()
 
             for (String subvalue : values) {
@@ -46,7 +46,7 @@ class ParameterSearchResults {
                     links.add(subvalue)
                 }
             }
-            return links.join(';')
+            return links.join(fieldSeparator+" ")
         } else {
             return value
         }
@@ -58,7 +58,7 @@ class ParameterSearchResults {
         final String reactomePrefix = "https://reactome.org/content/query?q="
         List<String> displayLinks = new ArrayList<>()
         if (parsedFields['external_links'] != null && parsedFields['external_links'].size() > 0) {
-            String[] links = parsedFields['external_links'].toString().split(/;/)
+            String[] links = parsedFields['external_links'].toString().split(fieldSeparator)
             links.each { value ->
                 String finalLink = "";
                 String suffixValue = value
@@ -83,7 +83,7 @@ class ParameterSearchResults {
 
         }
         if (displayLinks.size() > 0) {
-            parsedFields['external_links_show'] = displayLinks.join(";")
+            parsedFields['external_links_show'] = displayLinks.join(fieldSeparator+" ")
         } else {
             parsedFields['external_links_show'] = ""
 
@@ -164,13 +164,13 @@ class ParameterSearchResults {
         }
         String formattedData
         if(fieldName == "publication") {
-            if (fieldValue.contains(";")) {
+            if (fieldValue.contains(fieldSeparator)) {
                 List<String> formattedList = new ArrayList<>()
-                String[] commaSeparatedLinks = fieldValue.split(";")
+                String[] commaSeparatedLinks = fieldValue.split(fieldSeparator)
                 commaSeparatedLinks.each { value ->
                     formattedList.add(prepareHrefAndLabel(value));
                 }
-                formattedData = formattedList.join(";")
+                formattedData = formattedList.join(fieldSeparator)
             } else {
                 formattedData = prepareHrefAndLabel(fieldValue);
             }
