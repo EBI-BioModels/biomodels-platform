@@ -39,8 +39,7 @@ public class PublicationLinkProviderAdapter {
         PublicationLinkProvider.LinkType pubLinkProviderType =
                 PublicationLinkProvider.LinkType.findLinkTypeByLabel(cmd.linkType)
         if (pubLinkProviderType) {
-            def result = PublicationLinkProvider.findByLinkTypeAndPatternAndIdentifiersPrefix(
-                    pubLinkProviderType, cmd.pattern, cmd.identifiersPrefix)
+            def result = PublicationLinkProvider.findByLinkType(pubLinkProviderType)
             return result
         }
         return null
