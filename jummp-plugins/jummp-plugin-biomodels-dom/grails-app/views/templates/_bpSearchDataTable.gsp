@@ -30,6 +30,7 @@
 </div>
 <script>
     $(document).ready(function () {
+        const FIELD_SEPARATOR = ';';
         const DOWNLOADING_LABEL = "Downloading now...";
         const DOWNLOAD_LABEL = "Download";
         const DEFAULT_QUERY = "*:*";
@@ -69,13 +70,13 @@
                         return null;
                     }
                     var formattedData;
-                        if (href.includes(";")) {
+                        if (href.includes(FIELD_SEPARATOR)) {
                             var formattedArray = [];
-                            var separatedLinks = href.split(";");
+                            var separatedLinks = href.split(FIELD_SEPARATOR);
                             separatedLinks.forEach(function (subHref) {
                                 formattedArray.push(generatePublicationLink(subHref));
                             });
-                            formattedData = formattedArray.join(", ");
+                            formattedData = formattedArray.join(FIELD_SEPARATOR+' ');
                         } else {
                             formattedData = generatePublicationLink(href);
                         }
