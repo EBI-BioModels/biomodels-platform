@@ -131,7 +131,8 @@
                     </g:if>
                     <g:submitButton name="Upload" class="button" value="${uploadButtonLabel}" />
                     <g:if test="${showProceedWithoutValidationDialog || showProceedAsUnknownFormat}">
-                        <g:submitButton name="ProceedWithoutValidation" class="button" value="ProceedWithoutValidation" hidden="true"/>
+                        <g:submitButton name="ProceedWithoutValidation" class="button"
+                                        value="Proceed Without Validation" hidden="true"/>
                     </g:if>
                     <g:if test="${showProceedAsUnknownFormat}">
                         <g:submitButton name="ProceedAsUnknown" class="button" value="ProceedAsUnknown" hidden="true"/>
