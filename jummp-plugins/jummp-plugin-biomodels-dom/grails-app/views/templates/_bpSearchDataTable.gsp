@@ -75,7 +75,7 @@
                             separatedLinks.forEach(function (subHref) {
                                 formattedArray.push(generatePublicationLink(subHref));
                             });
-                            formattedData = formattedArray.join(", ");
+                            formattedData = formattedArray.join(";");
                         } else {
                             formattedData = generatePublicationLink(href);
                         }
