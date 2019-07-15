@@ -66,13 +66,13 @@ class ParameterSearchResults {
 
                 if (suffixValues.length == 3) {
                     suffixValue = suffixValues[1] + ":" + suffixValues[2]
-                }else if (suffixValues.length == 2) {
+                } else if (suffixValues.length == 2) {
                     suffixValue = suffixValues[1]
                 }
 
                 if (value.contains("reactome")) {
                     finalLink = reactomePrefix + suffixValue
-                }else if(value.contains("sabiork")) {
+                } else if(value.contains("sabiork")) {
                     finalLink = sabioRKPrefix + suffixValue
                 }
 
