@@ -12,11 +12,15 @@ import spock.lang.Specification
 
 class ParameterSearchCommandSpec extends Specification {
 
+    private static ParameterSearchCommand prepareCommandObject(Map bindingMap) {
+        return new ParameterSearchCommand(bindingMap)
+
+    }
+
     void "test ParameterSearchCommand Positively"() {
 
         given: "A parameter search command object is defined with basic criteria"
-        def bindingMap = [query: "E4P*", size: 10, start: 0, sort: "entity:ascending"]
-        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+        ParameterSearchCommand command = prepareCommandObject([query: "E4P*", size: 10, start: 0, sort: "entity:ascending"])
 
         when: "When command is validated with positive criteria"
         then: "Validation should return true"
@@ -27,8 +31,7 @@ class ParameterSearchCommandSpec extends Specification {
     void "test ParameterSearchCommand Negatively with size and start"() {
 
         given: "A parameter search command object is defined with negative criteria"
-        def bindingMap = [query: "E4P*", size: 13, start: -5, sort: "entity:ascending"]
-        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+        ParameterSearchCommand command = prepareCommandObject([query: "E4P*", size: 13, start: -5, sort: "entity:ascending"])
 
         when: "When command is validated with negative criteria"
         then: "Validation should return false"
@@ -38,8 +41,7 @@ class ParameterSearchCommandSpec extends Specification {
     void "test ParameterSearchCommand positively with query = *"() {
 
         given: "A parameter search command object is defined with negative criteria"
-        def bindingMap = [query: null, size: 10, start: 0, sort: "entity:ascending"]
-        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+        ParameterSearchCommand command = prepareCommandObject([query: null, size: 10, start: 0, sort: "entity:ascending"])
 
         when: "When command is validated with negative criteria"
 
@@ -52,8 +54,7 @@ class ParameterSearchCommandSpec extends Specification {
     void "test ParameterSearchCommand URL"() {
 
         given: "A parameter search command object is defined with negative criteria"
-        def bindingMap = [query: "E4P*", size: 10, start: 0, sort: "entity:ascending"]
-        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+        ParameterSearchCommand command = prepareCommandObject([query: "E4P*", size: 10, start: 0, sort: "entity:ascending"])
 
         when: "When command is validated with positive criteria"
         then: "Validation should return true"
@@ -72,8 +73,7 @@ class ParameterSearchCommandSpec extends Specification {
     void "test ParameterSearchCommand URL with special character for accession"() {
 
         given: "A parameter search command object is defined with negative criteria"
-        def bindingMap = [query: "GO:0005892", size: 10, start: 0, sort: "entity:ascending"]
-        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+        ParameterSearchCommand command = prepareCommandObject([query: "GO:0005892", size: 10, start: 0, sort: "entity:ascending"])
 
         when: "When command is validated with positive criteria"
         then: "Validation should return true"
@@ -85,7 +85,7 @@ class ParameterSearchCommandSpec extends Specification {
         String expectedSearchUrl = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters?" +
             "fields=entity_RAW,entity_id,initial_data_RAW,reaction_RAW,reaction_original_RAW,model,organism,publication," +
                 "rate_RAW,rate_original_RAW,parameters_RAW,entity_accession_url,reaction_sbo_term_link,entity_sbo_term_link,external_links" +
-            "&query=GO%5C%3A0005892&size=10&start=0&sort=entity:ascending&format=json"
+            "&query=GO%5C%3A0005892+AND+is_curated:true&size=10&start=0&sort=entity:ascending&format=json"
         String actualSearchUrl = command.getSearchUrl("json")
         expectedSearchUrl == actualSearchUrl
     }
@@ -93,8 +93,7 @@ class ParameterSearchCommandSpec extends Specification {
     void "test ParameterSearchCommand for default options"() {
 
         given: "A parameter search command object is defined with negative criteria"
-        def bindingMap = [query: "E4P*", size: null, start: null, sort: "model:ascending", is_curated:null]
-        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+        ParameterSearchCommand command = prepareCommandObject([query: "E4P*", size: null, start: null, sort: "model:ascending", is_curated:null])
 
         when: "When command is validated with positive criteria"
         then: "Validation should return true"
@@ -111,8 +110,7 @@ class ParameterSearchCommandSpec extends Specification {
     void "test ParameterSearchCommand for Cross side scripting"() {
 
         given: "A parameter search command object is defined with negative criteria"
-        def bindingMap = [query: "<script>alert('hi')</script>", size: null, start: null, sort: "<script>alert('hi')</script>"]
-        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+        ParameterSearchCommand command =prepareCommandObject([query: "<script>alert('hi')</script>", size: null, start: null, sort: "<script>alert('hi')</script>"])
 
         when: "When command is validated with positive criteria"
         then: "Validation should return true"
