@@ -6,6 +6,8 @@ import groovy.transform.CompileStatic
 import groovy.transform.ToString
 import org.codehaus.groovy.grails.plugins.codecs.HTMLEncoder
 
+import javax.ws.rs.HEAD
+
 /**
  * @author carankalle on 31/10/2018.
  */
@@ -83,8 +85,11 @@ class ParameterSearchCommand {
 
     @CompileStatic
     URL getSearchUrl(String format) {
+        String is_curated_param = "is_curated:${is_curated}"
         def params = [
-            query : query.equals("*:*")?URLEncoder.encode(query +" AND " ,"UTF-8") +"is_curated:"+is_curated: URLEncoder.encode(query+' AND ',"UTF-8")+'is_curated:'+is_curated  ,
+            query : query.equals("*:*")
+                ?URLEncoder.encode(query+" AND ","UTF-8") + is_curated_param
+                :URLEncoder.encode(query.replace(":", $/\:/$).replace("/", $/\\/$) + ' AND ',"UTF-8") +  is_curated_param,
             size  : size,
             start : start,
             sort  : sort
