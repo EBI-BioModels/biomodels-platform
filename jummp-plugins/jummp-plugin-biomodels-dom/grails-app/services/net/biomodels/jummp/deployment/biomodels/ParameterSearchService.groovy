@@ -39,7 +39,7 @@ class ParameterSearchService {
     }
 
     @CompileStatic
-    @Cacheable(value = "csvRecords", key = "#command.query")
+    @Cacheable(value = "csvRecords", key = "#command.query.concat(#command.is_curated)")
     String exportData(ParameterSearchCommand command) {
         int MAX_RECORDS = 100
         LoggingPoolFactory
