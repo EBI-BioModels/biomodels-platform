@@ -3,6 +3,12 @@
 
 <div id="errors">
 </div>
+<span>
+    <span class="pull_element_right" >
+        <input id="curated_id" type="radio"  name="curation" value="curated"><label for="curated_id">Curated</label>
+        <input id="non_curated_id" type="radio"  name="curation" value="non-curated" > <label for="non_curated_id" >Non-Curated</label>
+    </span>
+</span>
 <table  id="table_id" class="display">
     <thead>
     <th>Entity</th>
@@ -41,7 +47,6 @@
             },
             {
                 data: 'fields.reaction_show',
-                width: "40%",
                 orderable: false
             },
             {
@@ -57,7 +62,6 @@
             },
             {
                 data: 'fields.organism',
-                width: "40%",
                 orderable: false
             },
             {
@@ -172,7 +176,6 @@
         // Function to update table as per the state
         function updateTable(table) {
             $('.dataTables_filter input').val(pageState.dataTable.query);
-
             var page = Math.floor(pageState.dataTable.start / pageState.dataTable.size);
             var size = pageState.dataTable.size;
             table.page.len(size);
@@ -180,10 +183,10 @@
             table.page(page).draw('page');
         }
 
-        function downloadFile(query) {
+        function downloadFile(query, is_curated) {
             if (query) {
                 var base = "${g.createLink(controller: "parameterSearch", action: "export", absolute: true)}";
-                var uri = base + '?query=' + encodeURIComponent(query);
+                var uri = base + '?query=' + encodeURIComponent(query) + '&is_curated='+is_curated;
                 $.jummp.openPage(uri);
             } else {
                 alert("undefined query " + query);
@@ -205,7 +208,7 @@
                                     .text(DOWNLOADING_LABEL)
                                     .prop("disabled", true);
                                 try {
-                                    downloadFile(pageState.dataTable.query);
+                                    downloadFile(pageState.dataTable.query, pageState.dataTable.is_curated);
                                 } catch (e) {
                                     alert("Something went wrong. Please try again later: ", e);
                                 }
@@ -333,7 +336,8 @@
         // Preprocess custom params before calling EbiSearch WS
         function preProcessEbiSearchParams(dataTableArg) {
             var data = {};
-            var query, start, size, sort;
+            var query, start, size, sort, is_curated;
+
             if (pageState.isInitialState()) {
                 // populate data object from pageState.command
                 var command = pageState.command;
@@ -341,7 +345,7 @@
                 start = Number(command.start);
                 size = Number(command.size);
                 sort = command.sort;
-
+                is_curated = command.is_curated;
                 $('.dataTables_filter input').val(query);
             } else {
                 // populate data object from dataTableArg and set pageState.dataTable to dataTableArg
@@ -354,20 +358,29 @@
                 size = dataTableArg.length;
             }
 
+            // Setting radioboxes
+            if (is_curated===undefined) {
+                is_curated = $('input[name="curation"]:checked')[0].value === "curated";
+            } else if(is_curated === true) {
+                $("#curated_id").prop("checked",true);
+            }else if (is_curated === false) {
+                $("#non_curated_id").prop("checked",true);
+            }
+
             // Sorting
             sort = prepareSortParams(dataTableArg, sort);
 
-            pageState.dataTable.query = query === "" || query === DEFAULT_QUERY ? DEFAULT_QUERY : query;
+            pageState.dataTable.query = query;
             pageState.dataTable.start = start;
             pageState.dataTable.size = size;
             pageState.dataTable.sort = sort;
-
+            pageState.dataTable.is_curated = is_curated;
             data.query = query;
             data.size = size;
             data.start = start;
             data.sort = sort;
             data.format = "json";
-
+            data.is_curated = is_curated;
             if (isDirectionBack === false) {
                 setBrowserUrl();
             }
