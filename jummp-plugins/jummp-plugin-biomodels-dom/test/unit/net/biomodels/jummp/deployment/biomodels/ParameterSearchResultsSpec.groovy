@@ -74,14 +74,13 @@ class ParameterSearchResultsSpec extends Specification {
             '''
              {"hitCount" : 1,
                 "entries":[{"fields":{"entity":"e1",
-                "external_links" : "reactome:1234,sabiork.compound:9877" }}]
+                "external_links" : "reactome:1234;sabiork.compound:9877" }}]
                 }'''))
 
         then: "it should return correct external links value"
 
-        String expectedExternalLinksShow = '''<a href="https://reactome.org/content/query?q=1234" target="_blank">reactome:1234</a>,\
-<a href="http://cloud.identifiers.org/sabiork.compound:9877" target="_blank">sabiork.compound:9877</a>'''
-
+        String expectedExternalLinksShow = '''<a href="https://reactome.org/content/query?q=1234" target="_blank">reactome:1234</a>;\
+<a href="http://sabiork.h-its.org/newSearch?q=9877" target="_blank">sabiork.compound:9877</a>'''
         results.entries.find{value ->
            value.fields.external_links_show == expectedExternalLinksShow
         }
