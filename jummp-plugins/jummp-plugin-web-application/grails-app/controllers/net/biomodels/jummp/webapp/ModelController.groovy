@@ -778,7 +778,8 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                 }
             }.to "transferFilesToService"
             on("ProceedWithoutValidation"){
-
+                // do nothing except for logging
+                log.debug("The submitter decided to proceed the submission without validation")
             }.to "inferModelInfo"
             on("ProceedAsUnknown"){
                 flow.workingMemory.get("model_type").identifier = "UNKNOWN"
@@ -937,7 +938,7 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                 flow.workingMemory.remove("changedMainFiles")
                 submissionService.performValidation(flow.workingMemory)
                 MFTC format = flow.workingMemory.get("model_type")
-                if (format && format.identifier !="UNKNOWN" && format.identifier != "matlab" && format.formatVersion == "*") {
+                if (format && format.identifier !="UNKNOWN" && format.formatVersion == "*") {
                     UnknownFormatVersion()
                 } else if (!flow.workingMemory.containsKey("validation_error")) {
                     Valid()
@@ -967,8 +968,8 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                 flash.modelFormatDetectedAs = flow.workingMemory.get("model_type").identifier
             }.to "uploadFiles"
             on("FilesNotValid") {
-                String actuallErrorMessage = flow.workingMemory.remove("validation_error") as String
-                String[] args = [actuallErrorMessage]
+                String actualErrorMessage = flow.workingMemory.remove("validation_error") as String
+                String[] args = [actualErrorMessage]
                 flash.flashMessage = messageSource.getMessage("submission.upload.error.file.invalid",
                     args, Locale.getDefault())
             }.to "uploadFiles"

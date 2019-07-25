@@ -79,7 +79,13 @@
             <div id="dialog-confirm" title="Model Format Error">
                 <p>The model was detected as ${modelFormatDetectedAs} but is not a
                 supported version. You can proceed with the submission but the model
-                will be stored as an unknown model. Would you like to proceed?</p>
+                will be stored as a ${modelFormatDetectedAs} model in an unknown format version or as unknown model.
+                Please make your decision after escaping from the dialog.</p>
+                <ul>
+                    <g:each in="${workingMemory['validationErrorList']}">
+                        <li>${it}</li>
+                    </g:each>
+                </ul>
             </div>
         </g:if>
         <g:if test ="${showProceedWithoutValidationDialog}">
