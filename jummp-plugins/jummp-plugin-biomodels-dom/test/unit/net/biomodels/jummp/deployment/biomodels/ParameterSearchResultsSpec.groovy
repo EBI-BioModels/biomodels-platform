@@ -34,8 +34,8 @@ class ParameterSearchResultsSpec extends Specification {
         String expectedReactionShow = "([24794350] + [122357]) => ([sedoheptulose 1,7-bisphosphate])<hr/><span class='legend-green'>(TP + E4P) => (SBP)</span>"
         String expectedEntityId = "E4P"
         String expectedEntityShow = "<a target='_blank' href='http://identifiers.org/pubchem.compound/122357' > 122357 </a><hr/><span class='legend-green'>E4P</span>"
-        String expectedRateShow = "chloroplast*function_7(Vm, [668], [122357], [sedoheptulose 1,7-bisphosphate], q, Ks1, Ks2)<hr/><span class='legend-green'>chloroplast*function_7(Vm, DHAP, E4P, SBP, q, Ks1, Ks2)</span>"
-
+        String expectedRateShow = "chloroplast*Vm*([668]*[122357]-[sedoheptulose 1,7-bisphosphate]/q)/(([668]+Ks1)*([122357]+Ks2))<hr/><span class='legend-green'>chloroplast*Vm*(DHAP*E4P-SBP/q)/((DHAP+Ks1)*(E4P+Ks2))</span>"
+        String expectedParameters = "q=1.017; Vm=1.21889; Ks2=0.2; Ks1=0.4"
 
         results.entries.find{value ->
            value.fields.entity_id == expectedEntityId &&
@@ -44,7 +44,8 @@ class ParameterSearchResultsSpec extends Specification {
                value.fields.publication == expectedPublication &&
                value.fields.reaction_show == expectedReactionShow &&
                value.fields.entity_show == expectedEntityShow &&
-               value.fields.rate_show == expectedRateShow
+               value.fields.rate_show == expectedRateShow &&
+               value.fields.parameters == expectedParameters
         }
 
     }
@@ -73,14 +74,13 @@ class ParameterSearchResultsSpec extends Specification {
             '''
              {"hitCount" : 1,
                 "entries":[{"fields":{"entity":"e1",
-                "external_links" : "reactome:1234,sabiork.compound:9877" }}]
+                "external_links" : "reactome:1234;sabiork.compound:9877" }}]
                 }'''))
 
         then: "it should return correct external links value"
 
-        String expectedExternalLinksShow = '''<a href="https://reactome.org/content/query?q=1234" target="_blank">reactome:1234</a>,\
-<a href="http://cloud.identifiers.org/sabiork.compound:9877" target="_blank">sabiork.compound:9877</a>'''
-
+        String expectedExternalLinksShow = '''<a href="https://reactome.org/content/query?q=1234" target="_blank">reactome:1234</a>;\
+<a href="http://sabiork.h-its.org/newSearch?q=9877" target="_blank">sabiork.compound:9877</a>'''
         results.entries.find{value ->
            value.fields.external_links_show == expectedExternalLinksShow
         }

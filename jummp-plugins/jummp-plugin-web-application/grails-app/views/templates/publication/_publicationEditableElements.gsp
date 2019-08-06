@@ -1,12 +1,19 @@
+<%@ page import=" net.biomodels.jummp.model.PublicationLinkProvider" %>
+<%
+    linkSourceTypes = PublicationLinkProvider.LinkType.values().collect { it.label }
+%>
 <div class="editablePart">
 <div class="small-6 medium-6 columns">
-    <g:if test="${controllerName == "publication" && actionName == "show"}">
+    <g:if test="${controllerName == "publication" && actionName in ["show","add"]}">
     <div class="row">
-        <div class="small-12 medium-3 columns">
-            <label for="linkProvider" class="required">Source</label>
-            <g:textField class="input25" name="linkProvider" value="${publication.linkProvider.linkType}"/>
+        <div class="small-12 medium-4 large-4 columns">
+            <label for="PubLinkProvider" class="required">Source</label>
+            <g:select name="PubLinkProvider" id="linkProvider"
+                      from="${linkSourceTypes}"
+                      value="${publication.linkProvider.linkType}"
+                      noSelection="['':'- No publication available -']"/>
         </div>
-        <div class="small-12 medium-9 columns">
+        <div class="small-12 medium-8 large-8 columns">
             <label for="link" class="required">Link</label>
             <g:textField class="input25" name="link" value="${publication.link}"/></div></div>
     </g:if>

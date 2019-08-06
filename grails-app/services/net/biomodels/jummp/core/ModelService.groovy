@@ -2550,7 +2550,8 @@ FROM
 Revision AS r1
 JOIN r1.model AS model
 WHERE
-	r1.revisionNumber = (select max(r2.revisionNumber) from Revision AS r2 where r2.model = model)
+    r1.revisionNumber = (select max(r2.revisionNumber) from Revision AS r2 
+                        where r2.model = model and r2.state = '${ModelState.PUBLISHED}')
     AND (model.submissionId IN (:mids) OR model.publicationId IN (:mids))
     AND r1.id IN (
         SELECT aoi.objectId
