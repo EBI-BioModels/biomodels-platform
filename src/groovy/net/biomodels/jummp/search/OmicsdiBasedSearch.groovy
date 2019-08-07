@@ -123,6 +123,8 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
      */
     def aclUtilService = Holders.grailsApplication.mainContext.getBean('aclUtilService')
 
+    def modelTagService = Holders.grailsApplication.mainContext.getBean('modelTagService')
+
     def producerTemplate = Holders.grailsApplication.mainContext.getBean('producerTemplate')
 
     @NotTransactional
@@ -319,7 +321,7 @@ There was a problem obtaining search result from EBI search server. The root cau
             String dbUsername = dsConfig?.username
             String dbPassword = dsConfig?.password
             def dbSettings = [ 'url': dbUrl, 'username': dbUsername, 'password': dbPassword ]
-            def builder = new JsonBuilder()
+            def tags = modelTagService.getTagsByModelId(revision.model.submissionId)
             def partialData = [
                 'submissionId': submissionId,
                 'publicationId' :publicationId,
@@ -345,8 +347,10 @@ There was a problem obtaining search result from EBI search server. The root cau
                 'versionNumber' : versionNumber,
                 'submissionDate' : revision.model.submissionDate,
                 'lastModified' :  revision.model.lastModifiedDate,
-                'uniqueId' : uniqueId
+                'uniqueId' : uniqueId,
+                'tags': tags
             ]
+            def builder = new JsonBuilder()
             builder(partialData: partialData,
                 'folder': exchangeFolder,
                 'mainFiles': fetchFilesFromRevision(revision, true),
