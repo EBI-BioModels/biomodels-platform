@@ -76,11 +76,16 @@
     </head>
     <body>
         <g:if test="${showProceedAsUnknownFormat}">
-            <div id="dialog-confirm" title="Model Format Error">
+            <div id="dialog-confirm-0" title="Validation Error">
+                <p>The model files are in an unknown format. Would you like to proceed?</p>
+            </div>
+        </g:if>
+        <g:if test="${showProceedAsUnknownFormatVersion}">
+            <div id="dialog-confirm-1" title="Model Format Error">
                 <p>The model was detected as ${modelFormatDetectedAs} but is not a
                 supported version. You can proceed with the submission but the model
                 will be stored as a ${modelFormatDetectedAs} model in an unknown format version or as unknown model.
-                Please make your decision after escaping from the dialog.</p>
+                Please make your decision by pressing either of the following buttons on the dialog.</p>
                 <ul>
                     <g:each in="${workingMemory['validationErrorList']}">
                         <li>${it}</li>
@@ -89,7 +94,7 @@
             </div>
         </g:if>
         <g:if test ="${showProceedWithoutValidationDialog}">
-            <div id="dialog-confirm" title="Validation Error">
+            <div id="dialog-confirm-2" title="Validation Error">
                 <p>The model files did not pass validation, with errors as below. Would you like to proceed?</p>
                 <ul><g:each in="${workingMemory['validationErrorList']}">
                     <li>${it}</li>
@@ -136,14 +141,15 @@
                         <g:submitButton name="Back" class="button" value="${g.message(code: 'submission.common.backButton')}" />
                     </g:if>
                     <g:submitButton name="Upload" class="button" value="${uploadButtonLabel}" />
-                    <g:if test="${showProceedWithoutValidationDialog || showProceedAsUnknownFormat}">
-                        <g:submitButton name="ProceedWithoutValidation" class="button"
-                                        value="Proceed Without Validation" hidden="true"/>
-                    </g:if>
-                    <g:if test="${showProceedAsUnknownFormat}">
-                        <g:submitButton name="ProceedAsUnknown" class="button" value="Proceed As Unknown"
-                                        hidden="true"/>
-                    </g:if>
+
+                    <g:submitButton name="ProceedWithoutValidation" class="button"
+                                        value="Proceed Without Validation" hidden="true" style="display: none"/>
+                    <g:submitButton name="ProceedAsUnknownFormatVersion" class="button"
+                                    value="Proceed As Unknown Format Version"
+                                        hidden="true" style="display: none"/>
+                    <g:submitButton name="ProceedAsUnknownFormat" class="button"
+                                    value="Proceed As Unknown Format"
+                                        hidden="true" style="display: none"/>
                 </div>
             </div>
         </g:uploadForm>
@@ -467,12 +473,55 @@
                 }
             });
 
-            $( "#dialog-confirm" ).dialog({
+            $( "#dialog-confirm-0" ).dialog({
                 resizable: false,
-                height:300,
-                width:500,
+                height:250,
+                width:520,
                 modal: true,
                 buttons: {
+                    "Proceed As Unknown Format": function() {
+                        let eventID = '_eventId_ProceedAsUnknownFormat';
+                        document.getElementById(eventID).click();
+                        $( this ).dialog( "close" );
+                    },
+                    Close: function() {
+                        $( this ).dialog( "close" );
+                    }
+                }
+            });
+            $( "#dialog-confirm-1" ).dialog({
+                resizable: false,
+                height:350,
+                width:850,
+                modal: true,
+                buttons: {
+                    "Proceed Without Validation": function() {
+                        let eventID = '_eventId_ProceedWithoutValidation';
+                        document.getElementById(eventID).click();
+                        $( this ).dialog( "close" );
+                    },
+                    "Proceed As Unknown Format Version": function() {
+                        let eventID = '_eventId_ProceedAsUnknownFormatVersion';
+                        document.getElementById(eventID).click();
+                        $( this ).dialog( "close" );
+                    },
+
+                    Close: function() {
+                        $( this ).dialog( "close" );
+                    }
+                }
+            });
+            $( "#dialog-confirm-2" ).dialog({
+                resizable: false,
+                height:350,
+                width:750,
+                modal: true,
+                buttons: {
+                    "Proceed Without Validation": function() {
+                        let eventID = '_eventId_ProceedWithoutValidation';
+                        document.getElementById(eventID).click();
+                        $( this ).dialog( "close" );
+                    },
                     Close: function() {
                         $( this ).dialog( "close" );
                     }
