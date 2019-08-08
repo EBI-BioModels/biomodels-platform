@@ -270,6 +270,7 @@ class SubmissionService {
          */
         void performValidation(Map<String, Object> workingMemory) {
             if (processingRequired(workingMemory)) {
+                workingMemory.remove("validationErrorList")
                 List<File> modelFiles = getFilesFromMemory(workingMemory, false)
                 modelFiles.each { File it ->
                     if (!it) {
