@@ -1,6 +1,7 @@
 package net.biomodels.jummp.qc
 
 import grails.test.mixin.TestFor
+import net.biomodels.jummp.qcinfo.QcInfo
 import spock.lang.Specification
 
 /**

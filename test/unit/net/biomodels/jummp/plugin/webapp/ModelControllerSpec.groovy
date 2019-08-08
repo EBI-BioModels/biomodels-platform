@@ -1,5 +1,6 @@
 package net.biomodels.jummp.plugin.webapp
 
+import grails.test.mixin.Mock
 import net.biomodels.jummp.core.ModelDelegateService
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.PermissionTransportCommand
