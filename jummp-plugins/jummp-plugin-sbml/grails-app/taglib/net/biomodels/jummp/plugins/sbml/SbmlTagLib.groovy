@@ -22,8 +22,7 @@
 
 
 
-package net.biomodels.jummp.webapp
-
+package net.biomodels.jummp.plugins.sbml
 import groovy.xml.StreamingMarkupBuilder
 
 class SbmlTagLib {
