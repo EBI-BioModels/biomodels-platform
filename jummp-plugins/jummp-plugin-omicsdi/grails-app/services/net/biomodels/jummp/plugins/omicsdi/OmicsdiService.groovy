@@ -31,7 +31,7 @@ import org.perf4j.aop.Profiled
 /**
  * @short Omicsdi class for managing OmicsDI's settings
  *
- * This class provides means of handling functionalities for searching models based on OmicsDI's API.
+ * This class provides means of handling functionality for searching models based on OmicsDI's API.
  * It accesses the database and get essential data that are included into XML files.
  * Otherwise, we implement the methods configuring OmicsDI API.
  *
