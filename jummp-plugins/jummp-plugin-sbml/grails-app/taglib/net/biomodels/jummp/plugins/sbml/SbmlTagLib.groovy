@@ -29,6 +29,9 @@ class SbmlTagLib {
 
     static namespace = "sbml"
 
+    def decideTabs = { attrs ->
+        out << "<li><a href='#Components'>Components</a></li>"
+    }
     /**
      * Renders an SBML notes string.
      * @attr notes REQUIRED The notes string
