@@ -39,7 +39,7 @@
         <h3>How to exclude models based on tags</h3>
 
         <p>We can exclude multiple models from the export by indicating tags associated with those excluded models</p>
-        <select class="js-data-example-ajax" id="tagsExcluded"
+        <select class="select-tag" id="tagsExcluded"
                 name="tagsExcluded"></select>
         </div></div>
 
@@ -54,14 +54,11 @@
     $(document).ready(function () {
         $('#nbEntries').hide();
     });
-    let element = $('input[name="howToExportFile"]');
-    let res = element.filter(function () {
-        return this.checked;
-    });
+    let tags = [];
     // when select option 2, need to enter the number of file
     let option = 1;
     let nbEntriesPerFile = '';
-    $('input[name="howToExportFile"]').click(function () {
+    $('input[name="howToExportFile"]').on("click", function () {
         option = $(this).val();
         if (option === "2") {
             $('#numberEntriesOnEachFile').prop('required', true);
@@ -72,7 +69,8 @@
             $('#nbEntries').hide();
         }
     });
-    $('.js-data-example-ajax').select2({
+
+    $('.select-tag').select2({
         placeholder: "Enter list of tags excluded from export",
         multiple: true,
         tags: true, scrollAfterSelect: true,
@@ -95,32 +93,17 @@
                 }
         }
     });
-    $('#btnExport').click(function () {
-        let data = $('.js-data-example-ajax').select2('data');
-        let tags = $.map(data,
-            function (item) {
-                return [
-                    item.text
-                ]
-            });
-        if (option === "2") {
-            var nbFiles = $('#numberEntriesOnEachFile').val();
-            if (nbFiles === '') {
-                showNotification("Please enter a positive integer number.");
-                $('#numberEntriesOnEachFile').focus();
-                return false;
-            } else {
-                nbEntriesPerFile = nbFiles;
-            }
-        }
+
+    $('#btnExport').on("click", function () {
+        let settings = handleChangesOnSettings();
         $.ajax({
             type: "post",
             dataType: "JSON",
             cache: false,
-            url: $.jummp.createLink("Omicsdi", "exportOmicsdiEntriesWithIndexer"),
+            url: $.jummp.createLink("omicsdi", "exportOmicsdiEntriesWithIndexer"),
             data: {
                 howToExportFile: option,
-                numberEntriesOnEachFile: $('#numberEntriesOnEachFile').val(),
+                numberEntriesOnEachFile: nbEntriesPerFile,
                 tags: tags
             },
             success: function (response) {
@@ -132,4 +115,47 @@
             }
         });
     });
+
+    $('#btnSaveSettings').on("click", function () {
+        let settings = handleChangesOnSettings();
+        $.ajax({
+            type: "post",
+            dataType: "JSON",
+            cache: false,
+            url: $.jummp.createLink("omicsdi", "saveOmicsdiExportSettings"),
+            data: {
+                howToExportFile: option,
+                numberEntriesOnEachFile: nbEntriesPerFile,
+                tags: tags
+            },
+            success: function (response) {
+                let message = response[0];
+                if (message.trim()) {
+                    message = message.trim();
+                    showNotification(message);
+                }
+            }
+        });
+    });
+    
+    function handleChangesOnSettings() {
+        let data = $('.select-tag').select2('data');
+        tags = $.map(data,
+            function (item) {
+                return [
+                    item.text
+                ]
+            });
+        if (option === "2") {
+            let nbEntries = $('#numberEntriesOnEachFile').val();
+            if (nbEntries === '') {
+                showNotification("Please enter a positive integer number.");
+                $('#numberEntriesOnEachFile').focus();
+                return false;
+            } else {
+                nbEntriesPerFile = nbEntries;
+            }
+        }
+        return {option: option, nbEntriesPerFile: nbEntriesPerFile, tags: tags}
+    }
 </script>

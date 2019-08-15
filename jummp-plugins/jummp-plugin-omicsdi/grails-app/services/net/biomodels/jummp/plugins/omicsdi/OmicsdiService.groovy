@@ -69,7 +69,7 @@ class OmicsdiService {
         return GRAILS_CONF_LOCATION.concat("/").concat(OMICSDI_CONFIG_LOCATION)
     }
 
-    void exportOmicsdiEntries(def options) {
+    File saveOmicsdiExportSettings(def options) {
         def dsConfig = grailsApplication.config.dataSource
         String searchStrategy = grailsApplication.config.jummp.search.strategy
         String exportFolder = grailsApplication.config.jummp.search.exportFolder
@@ -94,7 +94,13 @@ class OmicsdiService {
             'options': options)
         File indexingData = new File(exportFolder, "omicsdiSettings.json")
         indexingData.setText(builder.toPrettyString())
+        return indexingData
+    }
+
+    void exportOmicsdiEntries(def options) {
+        File indexingData = saveOmicsdiExportSettings(options)
         String jarJummpIndexerPath = grailsApplication.config.jummp.search.pathToIndexerExecutable
+
         def argsMap = [jarPath: jarJummpIndexerPath, jsonPath: indexingData.getCanonicalPath(), omicsdi: "OmicsDIXml"]
 
         String httpProxy = System.getProperty("http.proxyHost")
