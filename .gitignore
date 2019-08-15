@@ -24,7 +24,6 @@ latex/*
 output/*
 grails-app/views/templates/_version.gsp
 grailswork/*
-jummp-plugins/*/.*
 jummp-plugins/*/*.iml
 jummp-plugins/*/build.number
 jummp-plugins/*/ast-build
