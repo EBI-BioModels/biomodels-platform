@@ -606,7 +606,7 @@
 
                             </div>
                             <div class="content">
-                                <g:if test="${components.species.size() > 0}">
+                                <g:if test="${components.species?.size() > 0}">
                                     <table style="width: 50%; margin-left: 25%;">
                                         <th>Species</th>
                                         <th>Initial Concentration/Amount</th>
@@ -627,7 +627,7 @@
 
                             </div>
                             <div class="content">
-                                <g:if test="${components.reactions.size() > 0}">
+                                <g:if test="${components.reactions?.size() > 0}">
                                     <table style="width: 100%">
                                         <th>Reactions</th>
                                         <th>Rate</th>
