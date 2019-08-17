@@ -35,67 +35,77 @@
     <sbml:decideTabs/>
 </content>
 <content tag="modelspecifictabscontent">
-    <div id="Components">
-        <div class="pull-element-right round-border">
-            <strong>Legends</strong><br/>
-            <span class="legend-green-block">
-            </span>
-            <span>
-                : Variable used inside SBML models</span>
-        </div>
-        <div class="component-buttons">
-            <button id="expand-all"><i class="icon icon-common icon-plus"></i> Expand All</button><br/>
-            <button id="collapse-all"><i class="icon icon-common icon-collapse"></i> Collapse All</button>
+    <div id="Components" class="row">
+        <div class="small-12 columns">
+            <div class="row">
+                <div class="pull-element-right round-border small-12 medium-4 large-2 columns">
+                    <strong>Legends</strong><br/>
+                    <span class="legend-green-block">
+                    </span>
+                    <span>
+                        : Variable used inside SBML models</span>
+                </div>
+
+                <div class="small-12 medium-4 large-2 columns">
+                <button id="expand-all"><i class="icon icon-common icon-plus"></i> Expand All</button><br/>
+                <button id="collapse-all"><i class="icon icon-common icon-collapse"></i> Collapse All</button>
+            </div>
         </div>
         <br/>
-        <div class="container">
-            <div class="header"><span>Species</span>
+
+            <div class="container row">
+                <div class="small-12 medium-4 large-8 columns">
+                    <div class="header"><span>Species</span>
+                    </div>
+
+
+                    <div class="content">
+                        <g:if test="${components.species?.size() > 0}">
+                            <table>
+                                <th>Species</th>
+                                <th>Initial Concentration/Amount</th>
+                                <g:each var="a" in="${components.species}">
+                                    <tr style="text-align: center">
+                                        <td>${a.value.speciesAnnotationShow}</td>
+                                        <td>${a.value.initialData}</td>
+                                    </tr>
+                                </g:each>
+                            </table>
+                        </g:if>
+                        <g:else>
+                            No records to display
+                        </g:else>
+                    </div>
+
+                    <div class="header"><span>Reactions</span>
+
+                    </div>
+
+                    <div class="content small-12 medium-4 large-8 columns">
+                        <g:if test="${components.reactions?.size() > 0}">
+                            <table style="width: 100%">
+                                <th>Reactions</th>
+                                <th>Rate</th>
+                                <th>Parameters</th>
+                                <g:each var="a" in="${components.reactions}">
+                                    <tr style="text-align: center">
+                                        <td>${a.value.reactionShow}</td>
+                                        <td>${a.value.rateShow}</td>
+                                        <td>${a.value.parameters}</td>
+                                    </tr>
+                                </g:each>
+                            </table>
+                        </g:if>
+                        <g:else>
+                            No records to display
+                        </g:else>
+
+                    </div>
+
+                </div>
 
             </div>
-            <div class="content">
-                <g:if test="${components.species?.size() > 0}">
-                    <table style="width: 50%; margin-left: 25%;">
-                        <th>Species</th>
-                        <th>Initial Concentration/Amount</th>
-                        <g:each var="a" in="${components.species}">
-                            <tr style="text-align: center">
-                                <td>${a.value.speciesAnnotationShow}</td>
-                                <td>${a.value.initialData}</td>
-                            </tr>
-                        </g:each>
-                    </table>
-                </g:if>
-                <g:else>
-                    No records to display
-                </g:else>
-
-            </div>
-            <div class="header"><span>Reactions</span>
-
-            </div>
-            <div class="content">
-                <g:if test="${components.reactions?.size() > 0}">
-                    <table style="width: 100%">
-                        <th>Reactions</th>
-                        <th>Rate</th>
-                        <th>Parameters</th>
-                        <g:each var="a" in="${components.reactions}">
-                            <tr style="text-align: center">
-                                <td>${a.value.reactionShow}</td>
-                                <td>${a.value.rateShow}</td>
-                                <td>${a.value.parameters}</td>
-                            </tr>
-                        </g:each>
-                    </table>
-                </g:if>
-                <g:else>
-                    No records to display
-                </g:else>
-
-            </div>
-
         </div>
-
 
     </div>
 
@@ -106,9 +116,11 @@
             //getting the next element
             $content = $header.next();
             //open up the content needed - toggle the slide- if visible, slide up, if not slidedown.
-            $content.slideToggle(500, function () {});
+            $content.slideToggle(500, function () {
+            });
 
         });
     </g:javascript>
+
 </content>
 
