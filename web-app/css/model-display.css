@@ -18,13 +18,9 @@
 }
 
 .container {
-    width:75%;
+    width:100%;
     border:1px solid #d3d3d3;
     margin-left: 12%;
-}
-
-.component-buttons{
-    width: 20%;
 }
 
 .container div {
@@ -42,6 +38,7 @@
 .container .content {
     display: none;
     padding : 5px;
+    overflow-x: scroll;
 }
 .ui-button {
     border-left: none;
