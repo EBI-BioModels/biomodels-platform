@@ -68,7 +68,7 @@ class ParameterSearchService {
             searchResults = (0..batchCount).collectParallel { int page ->
                 String query = command.query
                 def thisCmd = new ParameterSearchCommand(query: query, start: page * MAX_RECORDS,
-                    size: MAX_RECORDS)
+                    size: MAX_RECORDS, is_curated: command.is_curated)
                 String result = ""
                 try {
                     result = removeHeader(getCSVData(thisCmd))
