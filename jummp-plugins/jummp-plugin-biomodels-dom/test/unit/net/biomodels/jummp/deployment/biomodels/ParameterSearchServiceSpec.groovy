@@ -93,7 +93,7 @@ class ParameterSearchServiceSpec extends Specification {
         ParameterSearchResults results = service.getJSONData(command)
 
         then: "it should return correct number of records"
-        String expectedModel = "MODEL1112150000"
+        String expectedModel = "MODEL1410060000"
         results.entries.find{value ->
             expectedModel == value.fields.model
 
