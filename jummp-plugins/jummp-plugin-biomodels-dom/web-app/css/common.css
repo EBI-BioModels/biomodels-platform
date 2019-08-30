@@ -10,5 +10,9 @@
 }
 
 .pull-element-left {
-    float: left
+    float: left;
+}
+
+.pull_element_right {
+    float: right;
 }

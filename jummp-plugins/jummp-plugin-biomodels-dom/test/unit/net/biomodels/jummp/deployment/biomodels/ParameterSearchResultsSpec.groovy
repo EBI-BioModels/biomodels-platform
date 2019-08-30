@@ -77,7 +77,7 @@ class ParameterSearchResultsSpec extends Specification {
                 }'''))
 
         then: "it should return correct external links value"
-            String expectedExternalLinksShow = '''<a href="https://reactome.org/content/query?q=1234" target="_blank">reactome:1234</a>;\
+        String expectedExternalLinksShow = '''<a href="https://reactome.org/content/query?q=1234" target="_blank">reactome:1234</a>;\
  <a href="http://sabiork.h-its.org/newSearch?q=9877" target="_blank">sabiork.compound:9877</a>'''
 
         results.entries.find{value ->
