@@ -44,6 +44,14 @@
                 tags: false,
                 multiple: true
             });
+            $(".header").first().next().slideDown(500);
+
+            $("#expand-all").click(function(){
+                $(".header").next().slideDown(500);
+            });
+            $("#collapse-all").click(function(){
+                $(".header").next().slideUp(500);
+            })
         });
     </script>
     <script type="text/x-mathjax-config">
@@ -78,28 +86,7 @@
     <g:javascript src="syntax/shBrushXml.js"/>
     <g:javascript src="toastr.min.js"/>
     <g:javascript src="jquery.handsontable.full.js"/>
-    <style>
-        <%-- class for buttons on sticky left-hand-side menu --%>
-        .ui-button {
-            border-left: none;
-            margin: 0;
-        }
-        .toast {
-            opacity: 1 !important;
-        }
-        .rounded-header {
-            background-color: rgb(0, 124, 150);
-            border-bottom: 0 none;
-            border-top-left-radius: 5px;
-            border-top-right-radius: 5px;
-            line-height: inherit;
-            margin: 0;
-            padding: 0;
-        }
-        #toolbarList li .ui-button-text {
-            font-size: 0.75em;
-        }
-    </style>
+
     <link rel="alternate" href="https://identifiers.org/biomodels.db/${revision.modelIdentifier()}"/>
     <link rel="alternate" href="https://www.ebi.ac.uk/biomodels-main/${revision.modelIdentifier()}"/>
     <link rel="alternate" href="https://www.ebi.ac.uk/biomodels-main/${revision.modelIdentifier()}"/>
@@ -110,6 +97,7 @@
     <link rel="stylesheet" href="${resource(dir: 'css/syntax', file: 'shCore.css')}"/>
     <link rel="stylesheet" href="${resource(dir: 'css/syntax', file: 'shThemeDefault.css')}"/>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'toastr.min.css')}"/>
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'model-display.css')}"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/css/select2.min.css"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.min.js"></script>
     <script>

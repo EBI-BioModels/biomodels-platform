@@ -41,7 +41,7 @@ class ParameterSearchResults {
                 if (subvalue.contains('|')) {
 
                     def (href, label) = subvalue.tokenize('|')
-                    links.add("<a target='_blank' href='${href}' > ${label} </a>")
+                    links.add("<a style='color:black' target='_blank' href='${href}' > ${label} </a>")
                 } else {
                     links.add(subvalue)
                 }
