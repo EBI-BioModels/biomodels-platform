@@ -238,7 +238,7 @@ due to an issue with JSBML"""
             doc = reader.readSBML(model)
         } catch (XMLStreamException e) {
             e.printStackTrace()
-            String error = "SBMLDocument could not be read from ${model.name}"
+            String error = "SBMLDocument could not be read from ${model.name} caused by\n${e.message}"
             log.error(error)
             errors.add(error)
             return null

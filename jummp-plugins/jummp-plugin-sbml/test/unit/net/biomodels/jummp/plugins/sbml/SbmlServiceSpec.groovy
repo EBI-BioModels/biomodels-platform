@@ -48,6 +48,24 @@ class SbmlServiceSpec extends Specification {
         "fbc_example1.xml"      | _
     }
 
+    void "capture error messages when invalid SBML models throw"(String sbmlFileName, String expectedErrors) {
+        when:
+        def f = new File("test/files/$sbmlFileName".toString())
+        def actualErrors = []
+        def sbmlDoc = service.getFileAsValidatedSBMLDocument(f, actualErrors)
+
+        then:
+        !sbmlDoc
+        actualErrors
+        1 == actualErrors.size()
+        actualErrors[0].contains(expectedErrors)
+
+        where:
+        sbmlFileName                    | expectedErrors
+        "Phan2017.xml"                  | 'Undeclared namespace prefix "bqbio"'
+        "tiny_example_12.xml"           | 'Unexpected close tag </bqmodel:are>; expected </bqmodel:is>'
+    }
+
     void "we can extract FBC-related stuff without errors"() {
         when:
         def f = new File("test/files/fbc_example1.xml")

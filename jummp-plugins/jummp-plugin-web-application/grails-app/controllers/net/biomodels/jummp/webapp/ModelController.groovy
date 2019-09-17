@@ -786,9 +786,13 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                 }
             }.to "transferFilesToService"
             on("ProceedWithoutValidation"){
-
+                // do nothing except for logging
+                log.debug("The submitter decided to proceed the submission without validation")
             }.to "inferModelInfo"
-            on("ProceedAsUnknown"){
+            on("ProceedAsUnknownFormatVersion"){
+                flow.workingMemory.get("model_type").identifier = "UNKNOWN"
+            }.to "inferModelInfo"
+            on("ProceedAsUnknownFormat"){
                 flow.workingMemory.get("model_type").identifier = "UNKNOWN"
             }.to "inferModelInfo"
             on("Cancel").to "cleanUpAndTerminate"
@@ -945,7 +949,9 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                 flow.workingMemory.remove("changedMainFiles")
                 submissionService.performValidation(flow.workingMemory)
                 MFTC format = flow.workingMemory.get("model_type")
-                if (format && format.identifier !="UNKNOWN" && format.identifier != "matlab" && format.formatVersion == "*") {
+                if (format && format.identifier == "UNKNOWN") {
+                    UnknownFormat()
+                } else if (format && format.identifier !="UNKNOWN" && format.formatVersion == "*") {
                     UnknownFormatVersion()
                 } else if (!flow.workingMemory.containsKey("validation_error")) {
                     Valid()
@@ -967,16 +973,21 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                 // validation in upload files view
                 flash.showProceedWithoutValidationDialog = true
             }.to "uploadFiles"
+            on("UnknownFormat") {
+                flow.workingMemory.put("FormatVersionUnsupported", true)
+                flash.showProceedAsUnknownFormat = true
+                flash.modelFormatDetectedAs = "UNKNOWN"
+            }.to("uploadFiles")
             on("UnknownFormatVersion") {
                 flow.workingMemory.put("FormatVersionUnsupported", true)
                 // read this parameter to display option to upload without
                 // validation in upload files view
-                flash.showProceedAsUnknownFormat = true
+                flash.showProceedAsUnknownFormatVersion = true
                 flash.modelFormatDetectedAs = flow.workingMemory.get("model_type").identifier
             }.to "uploadFiles"
             on("FilesNotValid") {
-                String actuallErrorMessage = flow.workingMemory.remove("validation_error") as String
-                String[] args = [actuallErrorMessage]
+                String actualErrorMessage = flow.workingMemory.remove("validation_error") as String
+                String[] args = [actualErrorMessage]
                 flash.flashMessage = messageSource.getMessage("submission.upload.error.file.invalid",
                     args, Locale.getDefault())
             }.to "uploadFiles"
