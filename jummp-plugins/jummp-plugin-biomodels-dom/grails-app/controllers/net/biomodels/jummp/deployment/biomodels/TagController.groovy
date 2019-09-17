@@ -20,9 +20,10 @@
 
 package net.biomodels.jummp.deployment.biomodels
 
-
 import grails.plugin.springsecurity.annotation.Secured
+import net.biomodels.jummp.model.Tag
 import net.biomodels.jummp.plugins.security.User
+
 import java.text.SimpleDateFormat
 
 /**

@@ -24,6 +24,7 @@ import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.services.ServiceUnitTestMixin
+import net.biomodels.jummp.model.Tag
 import net.biomodels.jummp.plugins.security.Person
 import net.biomodels.jummp.plugins.security.User
 import spock.lang.Specification
@@ -82,7 +83,7 @@ class TagServiceSpec extends Specification {
         String newName = "Partially Annotated"
         Date dateModified = new Date()
 
-        TagTransportCommand cmd = tag.toCommandObject()
+        TagTransportCommand cmd = TagTransportCommand.fromTag(tag)
         cmd.name = newName
         String dateFormat= "yyyy-MM-dd'T'HH:mm:ss"
         SimpleDateFormat sdf = new SimpleDateFormat(dateFormat)

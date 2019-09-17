@@ -23,6 +23,7 @@ package net.biomodels.jummp.deployment.biomodels
 import grails.test.mixin.Mock
 import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin
+import net.biomodels.jummp.model.Tag
 import net.biomodels.jummp.plugins.security.User
 import spock.lang.Specification
 
@@ -41,7 +42,7 @@ class TagTransportCommandSpec extends Specification {
         assert tag.validate()
 
         when: "convert this Tag object to command object"
-        TagTransportCommand cmd = tag.toCommandObject()
+        TagTransportCommand cmd = TagTransportCommand.fromTag(tag)
 
         then: "the command keeps original information of the initial Tag object"
         cmd.validate()
