@@ -1,9 +1,9 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import grails.plugin.springsecurity.SpringSecurityService
-import grails.plugin.springsecurity.userdetails.GrailsUser
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import net.biomodels.jummp.model.Tag
 import net.biomodels.jummp.plugins.security.Person
 import net.biomodels.jummp.plugins.security.User
 import spock.lang.Specification
@@ -51,7 +51,7 @@ class TagControllerSpec extends Specification {
             tag.dateCreated = dateCreated
             tag.dateModified = dateModified
             tag.id = 1
-            [tag.toCommandObject()] as List
+            [TagTransportCommand.fromTag(tag)] as List
         }
         controller.springSecurityService = springSecurityService.createMock()
         controller.tagService = tagService.createMock()

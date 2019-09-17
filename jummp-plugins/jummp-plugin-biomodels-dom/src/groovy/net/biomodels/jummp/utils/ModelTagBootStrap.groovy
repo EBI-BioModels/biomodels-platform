@@ -1,8 +1,6 @@
-package net.biomodels.jummp.deployment.biomodels
+package net.biomodels.jummp.utils
 
-import net.biomodels.jummp.model.Model
-import net.biomodels.jummp.model.ModelFormat
-import net.biomodels.jummp.model.Revision
+import net.biomodels.jummp.model.*
 import net.biomodels.jummp.plugins.security.Person
 import net.biomodels.jummp.plugins.security.User
 

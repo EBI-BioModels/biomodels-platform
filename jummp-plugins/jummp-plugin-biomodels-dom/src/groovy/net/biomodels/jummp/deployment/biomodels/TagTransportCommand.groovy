@@ -21,6 +21,9 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import grails.validation.Validateable
+import net.biomodels.jummp.model.Tag
+
+import java.text.SimpleDateFormat
 
 /**
  * The class is used for creating DTOs communicating between services, views and models
@@ -50,5 +53,22 @@ class TagTransportCommand {
 
     TagTransportCommand(String name) {
         this.name = name
+    }
+
+    /**
+     * Provides a lightweight command object that can be used outside Jummp's core.
+     *
+     * @return the TagTransportCommand representation of a Tag object.
+     */
+    static TagTransportCommand fromTag(Tag tag) {
+        String dateFormat= "yyyy-MM-dd'T'HH:mm:ss"
+        SimpleDateFormat sdf = new SimpleDateFormat(dateFormat)
+        String dateCreated = sdf.format(tag.dateCreated)
+        String dateModified = sdf.format(tag.dateModified)
+        new TagTransportCommand(id: tag.id,
+            name: tag.name, description: tag.description,
+            userCreated: tag.userCreated.username,
+            dateCreated: dateCreated,
+            dateModified: dateModified)
     }
 }

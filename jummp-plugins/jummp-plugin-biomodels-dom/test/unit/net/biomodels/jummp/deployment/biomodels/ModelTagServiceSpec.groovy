@@ -25,10 +25,12 @@ import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.services.ServiceUnitTestMixin
 import net.biomodels.jummp.model.Model
-import net.biomodels.jummp.model.ModelFormat
+import net.biomodels.jummp.model.ModelTag
 import net.biomodels.jummp.model.Revision
+import net.biomodels.jummp.model.Tag
 import net.biomodels.jummp.plugins.security.Person
 import net.biomodels.jummp.plugins.security.User
+import net.biomodels.jummp.utils.ModelTagBootStrap
 import spock.lang.Specification
 
 @TestMixin(ServiceUnitTestMixin)
@@ -50,7 +52,7 @@ class ModelTagServiceSpec extends Specification {
         String modelId = "M001"
 
         when:
-        List tags = service.getTagsByModelId("M001")
+        List tags = service.getTagsByModelId(modelId)
         then:
         tags.size() == 2
 

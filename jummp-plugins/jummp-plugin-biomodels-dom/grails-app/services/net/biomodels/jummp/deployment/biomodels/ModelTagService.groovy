@@ -23,6 +23,8 @@ package net.biomodels.jummp.deployment.biomodels
 import grails.transaction.Transactional
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.model.Model
+import net.biomodels.jummp.model.ModelTag
+import net.biomodels.jummp.model.Tag
 import net.biomodels.jummp.plugins.security.User
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
@@ -123,7 +125,7 @@ Cannot save nothing for labels to the model"""
         String query = "from ModelTag as mt where mt.model.submissionId=? order by mt.tag.name"
         List<ModelTag> result = ModelTag.findAll(query, [model.submissionId])
         List<TagTransportCommand> tagCmdList = result.collect {
-            it.tag.toCommandObject()
+            TagTransportCommand.fromTag(it.tag)
         }
         List sortedTagList = tagCmdList.sort { cmd1, cmd2 -> cmd1.name <=> cmd2.name }
         Set tagSet = new LinkedHashSet()
