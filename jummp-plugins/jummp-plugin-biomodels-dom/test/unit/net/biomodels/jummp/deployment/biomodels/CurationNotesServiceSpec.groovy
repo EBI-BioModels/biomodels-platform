@@ -1,5 +1,7 @@
 package net.biomodels.jummp.deployment.biomodels
 
+import grails.test.mixin.Mock
+import grails.test.mixin.TestMixin
 import grails.test.mixin.services.ServiceUnitTestMixin
 import grails.test.mixin.TestFor
 import spock.lang.Specification

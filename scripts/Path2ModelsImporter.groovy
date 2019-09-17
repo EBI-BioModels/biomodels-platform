@@ -18,29 +18,14 @@
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
  */
 
+
 import grails.plugin.springsecurity.acl.AclSid
 import groovy.sql.Sql
 import groovyx.gpars.GParsPool
+import net.biomodels.jummp.annotationstore.*
+import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.deployment.biomodels.ModelTagTransportCommand
 import net.biomodels.jummp.deployment.biomodels.TagTransportCommand
-import net.biomodels.jummp.deployment.biomodels.P2MMapping
-
-import java.time.Duration
-import java.time.Instant
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.*
-import net.biomodels.jummp.annotationstore.*
-import net.biomodels.jummp.core.model.ModelFormatTransportCommand
-import net.biomodels.jummp.core.model.ModelState
-import net.biomodels.jummp.core.model.ModelTransportCommand
-import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
-import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.core.model.ValidationState
-import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
-import net.biomodels.jummp.core.model.identifier.decorator.AbstractAppendingDecorator
-import net.biomodels.jummp.core.model.identifier.decorator.FixedLiteralAppendingDecorator
-import net.biomodels.jummp.core.model.identifier.decorator.VariableDigitAppendingDecorator
-import net.biomodels.jummp.core.model.identifier.generator.DefaultModelIdentifierGenerator
 import net.biomodels.jummp.model.*
 import net.biomodels.jummp.plugins.security.Person
 import net.biomodels.jummp.plugins.security.Role
@@ -49,6 +34,11 @@ import net.biomodels.jummp.plugins.security.UserRole
 import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.context.SecurityContextHolder
+
+import java.time.Duration
+import java.time.Instant
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 
 String modelFolder = System.getenv("MODEL_FOLDER")
 
