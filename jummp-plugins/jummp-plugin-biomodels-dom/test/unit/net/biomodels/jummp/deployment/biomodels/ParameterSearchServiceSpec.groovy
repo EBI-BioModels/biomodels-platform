@@ -20,11 +20,21 @@ import java.util.concurrent.TimeUnit
 
 class ParameterSearchServiceSpec extends Specification {
 
+
+    private static ParameterSearchCommand prepareCommandObject(Map bindingMap) {
+        return new ParameterSearchCommand(bindingMap)
+
+    }
+    private static isDataExists(String data) {
+        String[] responseArray =  data.split("\n")
+        return responseArray.length  > 1
+
+    }
+
     void "test ParameterSearchService positively"() {
 
         given: "A parameter search command object is defined with basic criteria"
-        def bindingMap = [query: "BIOMD0000000292", size: 10, start: 0, sort: "entity:ascending"]
-        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+        ParameterSearchCommand command = prepareCommandObject([query: "BIOMD0000000292", size: 10, start: 0, sort: "entity:ascending", is_curated: true])
 
         when: "The service method's get data is called and parameter search command is valid"
         command.validate()
@@ -37,13 +47,12 @@ class ParameterSearchServiceSpec extends Specification {
         and: "it should return correct records"
 
 
-        String expectedReaction = "([3-phospho-D-glyceric acid, D-ribulose 1,5-bisphosphate, 3-Phospho-D-glycerate, " +
-            "D-Ribulose 1,5-bisphosphate] + [NADPH, C00005] " +
-            "+ [ATP, C00002]) => " +
-            "([dihydroxyacetone phosphate, aldehydo-D-ribose 5-phosphate, D-ribulose 5-phosphate, keto-D-fructose 1,6-bisphosphate, " +
-            "keto-D-fructose 6-phosphate, D-erythrose 4-phosphate, sedoheptulose 1,7-bisphosphate, sedoheptulose 7-phosphate, " +
-            "D-glyceraldehyde 3-phosphate, C00111, D-Ribose 5-phosphate;, D-Ribulose 5-phosphate, Sedoheptulose 7-phosphate;, " +
-            "Sedoheptulose 1,7-bisphosphate, D-Erythrose 4-phosphate, C00085, C00354, C00118] + [C00008, ADP] + [NADP(+), C00006])"
+        String expectedReaction = "([3-phospho-D-glyceric acid; D-ribulose 1,5-bisphosphate; 3-Phospho-D-glycerate; D-Ribulose " +
+            "1,5-bisphosphate] + [NADPH; C00005] + [ATP; C00002]) => ([dihydroxyacetone phosphate; aldehydo-D-ribose 5-phosphate; " +
+            "D-ribulose 5-phosphate; keto-D-fructose 1,6-bisphosphate; keto-D-fructose 6-phosphate; D-erythrose 4-phosphate; sedoheptulose 1,7-bisphosphate; sedoheptulose 7-phosphate; " +
+            "D-glyceraldehyde 3-phosphate; C00111; D-Ribose 5-phosphate;; D-Ribulose " +
+            "5-phosphate; Sedoheptulose 7-phosphate;; Sedoheptulose 1,7-bisphosphate; D-Erythrose 4-phosphate; C00085; " +
+            "C00354; C00118] + [C00008; ADP] + [NADP(+); C00006])"
         String expectedEntityId = "Y"
         String expectedModel = "BIOMD0000000292"
         String expectedOrganism = "Viridiplantae"
@@ -62,8 +71,7 @@ class ParameterSearchServiceSpec extends Specification {
     void "test ParameterSearchService Negatively"() {
 
         given: "A parameter search command object is defined with basic criteria"
-        def bindingMap = [query: "NON_MATCHING_QUERY", size: 10, start: 0, sort: "entity:ascending"]
-        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+        ParameterSearchCommand command = prepareCommandObject([query: "NON_MATCHING_QUERY", size: 10, start: 0, sort: "entity:ascending", is_curated: true])
 
         when: "The service method's get data is called and parameter search command is valid"
 
@@ -74,12 +82,28 @@ class ParameterSearchServiceSpec extends Specification {
         0 == results.recordsTotal
 
     }
+    void "test ParameterSearchService with non-curated query"() {
+
+        given: "A parameter search command object is defined with basic criteria"
+        ParameterSearchCommand command = prepareCommandObject([query: "Mus musculus", size: 10, start: 0, sort: "entity:ascending", is_curated:false])
+
+        when: "The service method's get data is called and parameter search command is valid"
+
+        command.validate()
+        ParameterSearchResults results = service.getJSONData(command)
+
+        then: "it should return correct number of records"
+        String expectedModel = "MODEL1410060000"
+        results.entries.find{value ->
+            expectedModel == value.fields.model
+
+        }
+    }
 
     void "test ParameterSearchService With CSV data"() {
 
         given: "A parameter search command object is defined with basic criteria"
-        def bindingMap = [query: "BIOMD0000000292", size: 10, start: 0, sort: "entity:ascending"]
-        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+        ParameterSearchCommand command = prepareCommandObject([query: "BIOMD0000000292", size: 10, start: 0, sort: "entity:ascending", is_curated: true])
 
         when: "The service method's get data is called and parameter search command is valid"
 
@@ -87,7 +111,7 @@ class ParameterSearchServiceSpec extends Specification {
         String results = service.getCSVData(command)
 
         then: "it should return correct number of records"
-        results.indexOf("[C00008, ADP]") != -1
+        results.indexOf("[C00008; ADP]") != -1
         results.indexOf("entity_RAW") == -1
         results.indexOf("reaction_RAW") == -1
     }
@@ -138,19 +162,34 @@ class ParameterSearchServiceSpec extends Specification {
 
     void "test export with csv format for all the records"() {
         given: "ParameterSearchService's exportData is called"
-        def bindingMap = [query: "*:*", size: 10, start: 0, sort: "model:ascending"]
-        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+        ParameterSearchCommand command = prepareCommandObject([query: "*:*", size: 10, start: 0, sort: "model:ascending", is_curated: true])
         when : "Controller export method is invoked"
         String result = service.exportData(command)
         then: "Result should contain correct results"
-        String[] responseArray =  result.split("\n")
-        responseArray.length  > 1
+        isDataExists(result)
+
+    }
+
+    void "test export with non-curated models"() {
+        given: "ParameterSearchService's exportData is called"
+        ParameterSearchCommand command = prepareCommandObject([query: "mus", size: 10, start: 0, sort: "model:ascending", is_curated: false])
+        when : "Controller export method is invoked"
+        String result = service.exportData(command)
+        then: "Result should contain correct results"
+        isDataExists(result)
 
     }
     void "test export with csv format for non matching query"() {
         given: "ParameterSearchService's exportData is called"
-        def bindingMap = [query: "NON_MATCHING_QUERY", size: 10, start: 0, sort: "model:ascending"]
-        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+        ParameterSearchCommand command = prepareCommandObject([query: "NON_MATCHING_QUERY", size: 10, start: 0, sort: "model:ascending", is_curated: true])
+        when : "Controller export method is invoked"
+        then: "Result should contain empty results"
+        service.exportData(command)?.isEmpty()
+    }
+
+    void "test export with is_curated flag and non_matching query"() {
+        given: "ParameterSearchService's exportData is called"
+        ParameterSearchCommand command = prepareCommandObject([query: "BIOMD0000000292", size: 10, start: 0, sort: "model:ascending", is_curated: false])
         when : "Controller export method is invoked"
         then: "Result should contain empty results"
         service.exportData(command)?.isEmpty()

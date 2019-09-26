@@ -33,7 +33,7 @@
 <html>
 <head>
     <meta name="layout" content="${session['branding.style']}/main" />
-    <title>Show a publication</title>
+    <title>${title} | BioModels</title>
     <link rel="stylesheet"
           href="${resource(contextPath: "${serverUrl}", dir: "css/${style}", file: 'publicationPageStyle.css')}" />
     <link rel="stylesheet"
@@ -113,7 +113,7 @@
                 let linkProvider = {
                     "linkType": $('#linkProvider').val(),
                     "pattern": ""
-                }
+                };
                 let link = $('#link').val();
                 let title = $('#title').val();
                 let journal = $('#journal').val();
@@ -158,7 +158,7 @@
                     'issue': issue,
                     'pages': pages,
                     'authors': authors
-                }
+                };
                 return pubCmd;
             }
 

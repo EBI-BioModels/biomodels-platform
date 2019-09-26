@@ -1,11 +1,13 @@
 package net.biomodels.jummp.deployment.biomodels
 
-import grails.converters.JSON
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import net.biomodels.jummp.model.Model
+import net.biomodels.jummp.model.ModelTag
+import net.biomodels.jummp.model.Tag
 import net.biomodels.jummp.plugins.security.Person
 import net.biomodels.jummp.plugins.security.User
+import net.biomodels.jummp.utils.ModelTagBootStrap
 import spock.lang.Specification
 
 /**

@@ -3,6 +3,12 @@
 
 <div id="errors">
 </div>
+<span>
+    <span class="pull_element_right" >
+        <input id="curated_id" type="radio"  name="curation" value="curated"><label for="curated_id">Curated</label>
+        <input id="non_curated_id" type="radio"  name="curation" value="non-curated" > <label for="non_curated_id" >Non-Curated</label>
+    </span>
+</span>
 <table  id="table_id" class="display">
     <thead>
     <th>Entity</th>
@@ -30,6 +36,7 @@
 </div>
 <script>
     $(document).ready(function () {
+        const FIELD_SEPARATOR = ';';
         const DOWNLOADING_LABEL = "Downloading now...";
         const DOWNLOAD_LABEL = "Download";
         const DEFAULT_QUERY = "*:*";
@@ -41,41 +48,43 @@
             },
             {
                 data: 'fields.reaction_show',
-                width: "40%",
                 orderable: false
             },
             {
                 data: 'fields.model',
                 render: function (rawdata, type, row) {
                     var formattedData;
-                    if (rawdata !== undefined && rawdata.length !== 0) {
-                        formattedData = "<a target='_blank' href='https://www.ebi.ac.uk/biomodels/" + rawdata + "'>" + rawdata + "</a>";
+                    if (rawdata === undefined || rawdata.length === 0) {
+                        return null;
                     }
+                    formattedData = "<a target='_blank' href='https://www.ebi.ac.uk/biomodels/" + rawdata + "'>" + rawdata + "</a>";
                     return formattedData
                 }
             },
             {
                 data: 'fields.organism',
-                width: "40%",
                 orderable: false
             },
             {
                 data: 'fields.publication',
                 orderable: false,
                 render: function (href, type, row) {
-                    if (href !== undefined && href.length !== 0) {
-                        var formattedData;
-                        if (href.includes(",")) {
+
+                    if (href === undefined || href.length === 0) {
+                        return null;
+                    }
+                    var formattedData;
+                        if (href.includes(FIELD_SEPARATOR)) {
                             var formattedArray = [];
-                            var commaSeparatedLinks = href.split(",");
-                            commaSeparatedLinks.forEach(function (subHref) {
+                            var separatedLinks = href.split(FIELD_SEPARATOR);
+                            separatedLinks.forEach(function (subHref) {
                                 formattedArray.push(generatePublicationLink(subHref));
                             });
-                            formattedData = formattedArray.join(", ");
+                            formattedData = formattedArray.join(FIELD_SEPARATOR+' ');
                         } else {
                             formattedData = generatePublicationLink(href);
                         }
-                    }
+
                     return formattedData;
                 }
             },
@@ -168,8 +177,7 @@
 
         // Function to update table as per the state
         function updateTable(table) {
-            $('.dataTables_filter input').val(decodeURI(pageState.dataTable.query));
-
+            $('.dataTables_filter input').val(pageState.dataTable.query);
             var page = Math.floor(pageState.dataTable.start / pageState.dataTable.size);
             var size = pageState.dataTable.size;
             table.page.len(size);
@@ -177,10 +185,10 @@
             table.page(page).draw('page');
         }
 
-        function downloadFile(query) {
+        function downloadFile(query, is_curated) {
             if (query) {
                 var base = "${g.createLink(controller: "parameterSearch", action: "export", absolute: true)}";
-                var uri = base + '?query=' + encodeURIComponent(query);
+                var uri = base + '?query=' + encodeURIComponent(query) + '&is_curated='+is_curated;
                 $.jummp.openPage(uri);
             } else {
                 alert("undefined query " + query);
@@ -202,7 +210,7 @@
                                     .text(DOWNLOADING_LABEL)
                                     .prop("disabled", true);
                                 try {
-                                    downloadFile(pageState.dataTable.query);
+                                    downloadFile(pageState.dataTable.query, pageState.dataTable.is_curated);
                                 } catch (e) {
                                     alert("Something went wrong. Please try again later: ", e);
                                 }
@@ -330,20 +338,21 @@
         // Preprocess custom params before calling EbiSearch WS
         function preProcessEbiSearchParams(dataTableArg) {
             var data = {};
-            var query, start, size, sort;
+            var query, start, size, sort, is_curated;
+
             if (pageState.isInitialState()) {
                 // populate data object from pageState.command
                 var command = pageState.command;
-                query = decodeURI(command.query);
+                query = command.query;
                 start = Number(command.start);
                 size = Number(command.size);
                 sort = command.sort;
-
+                is_curated = command.is_curated;
                 $('.dataTables_filter input').val(query);
             } else {
                 // populate data object from dataTableArg and set pageState.dataTable to dataTableArg
                 if (dataTableArg.search.value === "") {
-                    query = $('.dataTables_filter input').val();
+                    query = encodeURIComponent($('.dataTables_filter input').val());
                 } else {
                     query = dataTableArg.search.value;
                 }
@@ -351,20 +360,29 @@
                 size = dataTableArg.length;
             }
 
+            // Setting radioboxes
+            if (is_curated===undefined) {
+                is_curated = $('input[name="curation"]:checked')[0].value === "curated";
+            } else if(is_curated === true) {
+                $("#curated_id").prop("checked",true);
+            }else if (is_curated === false) {
+                $("#non_curated_id").prop("checked",true);
+            }
+
             // Sorting
             sort = prepareSortParams(dataTableArg, sort);
 
-            pageState.dataTable.query = query === "" || query === DEFAULT_QUERY ? DEFAULT_QUERY : encodeURIComponent(query);
+            pageState.dataTable.query = query;
             pageState.dataTable.start = start;
             pageState.dataTable.size = size;
             pageState.dataTable.sort = sort;
-
+            pageState.dataTable.is_curated = is_curated;
             data.query = query;
             data.size = size;
             data.start = start;
             data.sort = sort;
             data.format = "json";
-
+            data.is_curated = is_curated;
             if (isDirectionBack === false) {
                 setBrowserUrl();
             }

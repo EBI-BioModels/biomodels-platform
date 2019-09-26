@@ -27,7 +27,7 @@ class SimpleWorker implements Runnable {
     void run() {
         startLatch.await()
 
-        def cmd = new ParameterSearchCommand(query: query, size: 100)
+        def cmd = new ParameterSearchCommand(query: query, size: 100, is_curated: true)
         try {
             result = service.exportData(cmd)
         } catch (Throwable t) {

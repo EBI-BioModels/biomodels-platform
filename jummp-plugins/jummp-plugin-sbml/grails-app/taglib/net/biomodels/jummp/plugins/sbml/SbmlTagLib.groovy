@@ -22,14 +22,16 @@
 
 
 
-package net.biomodels.jummp.webapp
-
+package net.biomodels.jummp.plugins.sbml
 import groovy.xml.StreamingMarkupBuilder
 
 class SbmlTagLib {
 
     static namespace = "sbml"
 
+    def decideTabs = { attrs ->
+        out << "<li><a href='#Components'>Components</a></li>"
+    }
     /**
      * Renders an SBML notes string.
      * @attr notes REQUIRED The notes string

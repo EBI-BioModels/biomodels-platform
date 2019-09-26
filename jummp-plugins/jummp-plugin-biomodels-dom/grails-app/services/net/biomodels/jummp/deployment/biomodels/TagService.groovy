@@ -21,6 +21,7 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import grails.transaction.Transactional
+import net.biomodels.jummp.model.Tag
 import net.biomodels.jummp.plugins.security.User
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
@@ -37,7 +38,7 @@ class TagService {
     List<TagTransportCommand> getAll() {
         List<Tag> tags = Tag.getAll()
         List<TagTransportCommand> commands = tags.collect {
-            it.toCommandObject()
+            TagTransportCommand.fromTag(it)
         }
         commands
     }

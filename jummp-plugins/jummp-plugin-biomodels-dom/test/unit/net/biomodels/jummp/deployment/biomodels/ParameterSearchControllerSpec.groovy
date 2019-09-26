@@ -30,6 +30,11 @@ class ParameterSearchControllerSpec extends Specification {
         controller.export(command)
     }
 
+    private static ParameterSearchCommand prepareCommandObject(Map bindingMap) {
+        return new ParameterSearchCommand(bindingMap)
+
+    }
+
     private void searchData(ParameterSearchCommand command, String format) {
         request.contentType = 'application/json'
         response.format = format
@@ -62,11 +67,19 @@ class ParameterSearchControllerSpec extends Specification {
         assert model.command.start == 0
         assert model.command.sort == "model:ascending"
     }
+    void "test index with XSS Query"() {
+        given: "Controller and command object initialized"
+        params.query = '<script>alert(\'hi\')</script>'
+        when: "Redirected to index with query"
+        controller.index()
+
+        then: "Should show correct model"
+        assert model.command.query == "&amp;lt;script&amp;gt;alert(&amp;#39;hi&amp;#39;)&amp;lt;/script&amp;gt;"
+    }
 
     void "test search with json format"() {
         given: "ParameterSearchService is mocked with certain values"
-        def bindingMap = [query: "BIOMD*1", size: 10, start: 0, sort: "model:ascending"]
-        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+        ParameterSearchCommand command = prepareCommandObject([query: "BIOMD*1", size: 10, start: 0, sort: "model:ascending", is_curated: true])
 
 
         def service = mockFor(ParameterSearchService)
@@ -95,8 +108,7 @@ class ParameterSearchControllerSpec extends Specification {
     }
     void "test search with xml format"() {
         given: "ParameterSearchService is mocked with certain values"
-        def bindingMap = [query: "BIOMD*1", size: 10, start: 0, sort: "model:ascending"]
-        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+        ParameterSearchCommand command = prepareCommandObject([query: "BIOMD*1", size: 10, start: 0, sort: "model:ascending", is_curated: true])
 
 
         def service = mockFor(ParameterSearchService)
@@ -125,8 +137,7 @@ class ParameterSearchControllerSpec extends Specification {
     }
     void "test search with xml format and no data (no matches found)"() {
         given: "ParameterSearchService is mocked with certain values"
-        def bindingMap = [query: "NON_MATCHING_QUERY", size: 10, start: 0, sort: "model:ascending"]
-        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+        ParameterSearchCommand command = prepareCommandObject([query: "NON_MATCHING_QUERY", size: 10, start: 0, sort: "model:ascending", is_curated: false])
 
 
         def service = mockFor(ParameterSearchService)
@@ -143,9 +154,7 @@ class ParameterSearchControllerSpec extends Specification {
 
     void "test search with csv format"() {
         given: "ParameterSearchService is mocked with certain values"
-        def bindingMap = [query: "BIOMD*1", size: 10, start: 0, sort: "model:ascending"]
-        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
-
+        ParameterSearchCommand command = prepareCommandObject([query: "BIOMD*1", size: 10, start: 0, sort: "model:ascending", is_curated: true])
 
         def service = mockFor(ParameterSearchService)
         service.demand.getCSVData { ParameterSearchCommand cmd ->
@@ -167,8 +176,7 @@ class ParameterSearchControllerSpec extends Specification {
     }
     void "test search with csv format with errenous parameters values"() {
         given: "ParameterSearchService is mocked with certain values"
-        def bindingMap = [query: "NON_MATCHING_QUERY", size: 10, start: 400, sort: "model:ascending"]
-        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+        ParameterSearchCommand command = prepareCommandObject([query: "NON_MATCHING_QUERY", size: 10, start: 400, sort: "model:ascending", is_curated: true])
         def service = mockFor(ParameterSearchService)
         service.demand.getCSVData { ParameterSearchCommand cmd -> throw new IOException("Unable to retrieve the data")}
         controller.parameterSearchService = service.createMock()
@@ -181,8 +189,7 @@ class ParameterSearchControllerSpec extends Specification {
 
     void "test search with non matching format"() {
         given: "ParameterSearchService is mocked with certain values"
-        def bindingMap = [query: "BIOMD*1", size: 10, start: 0, sort: "model:ascending"]
-        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+        ParameterSearchCommand command = prepareCommandObject([query: "BIOMD*1", size: 10, start: 0, sort: "model:ascending", is_curated: true])
 
 
         def service = mockFor(ParameterSearchService)
@@ -206,8 +213,7 @@ class ParameterSearchControllerSpec extends Specification {
 
     void "test export"() {
         given: "ParameterSearchService is mocked with certain values"
-        def bindingMap = [query: "BIOMD*1", size: 10, start: 0, sort: "model:ascending"]
-        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+        ParameterSearchCommand command = prepareCommandObject([query: "BIOMD*1", size: 10, start: 0, sort: "model:ascending", is_curated: true])
 
         def service = mockFor(ParameterSearchService)
         service.demand.exportData { ParameterSearchCommand cmd ->
@@ -227,8 +233,21 @@ class ParameterSearchControllerSpec extends Specification {
 
     void "test export with non-matching query"() {
         given: "ParameterSearchService is mocked with certain values"
-        def bindingMap = [query: "NON_MATCHING_QUERY", size: 10, start: 0, sort: "model:ascending"]
-        ParameterSearchCommand command = new ParameterSearchCommand(bindingMap)
+        ParameterSearchCommand command = prepareCommandObject([query: "NON_MATCHING_QUERY", size: 10, start: 0, sort: "model:ascending", is_curated: true])
+
+        def service = mockFor(ParameterSearchService)
+        service.demand.exportData { ParameterSearchCommand cmd -> }
+        controller.parameterSearchService = service.createMock()
+
+        when : "Controller search method is invoked"
+        exportData(command)
+        then: "Result should contain correct results"
+        response.text == "No matches found"
+    }
+
+    void "test export with non-matching query and is_curated flag as false"() {
+        given: "ParameterSearchService is mocked with certain values"
+        ParameterSearchCommand command = prepareCommandObject([query: "BIOM*1", size: 10, start: 0, sort: "model:ascending", is_curated: false])
 
         def service = mockFor(ParameterSearchService)
         service.demand.exportData { ParameterSearchCommand cmd -> }

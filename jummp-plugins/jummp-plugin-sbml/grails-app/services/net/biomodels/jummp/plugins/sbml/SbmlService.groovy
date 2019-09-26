@@ -105,6 +105,7 @@ import org.springframework.beans.factory.InitializingBean
  */
 class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
     static transactional = true
+    def bpToModelDisplayService
     private static final Log log = LogFactory.getLog(this)
     private static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
     /**
@@ -237,7 +238,7 @@ due to an issue with JSBML"""
             doc = reader.readSBML(model)
         } catch (XMLStreamException e) {
             e.printStackTrace()
-            String error = "SBMLDocument could not be read from ${model.name}"
+            String error = "SBMLDocument could not be read from ${model.name} caused by\n${e.message}"
             log.error(error)
             errors.add(error)
             return null
@@ -396,6 +397,9 @@ the user has attempted to update an blank value for the name attribute.""")
         }
     }
 
+    def extractComponentsFromBP(String modelId) {
+        return bpToModelDisplayService.getComponentsFromBP(modelId)
+    }
     /**
      * Extracts the SBML model notes.
      *
@@ -906,7 +910,7 @@ the user has attempted to update an blank value for the name attribute.""")
         String type = null
         Variable symbol = null
         if (rule instanceof RateRule) {
-            type = "rate"
+            type = "rateShow"
             symbol = rule.model.findSymbol(rule.variable)
         } else if (rule instanceof AssignmentRule) {
             type = "assignment"
