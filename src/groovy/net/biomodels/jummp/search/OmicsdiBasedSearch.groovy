@@ -138,7 +138,7 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
     }
 
     @NotTransactional
-    SearchResponse searchModels(String query, SortOrder sortOrder,
+    SearchResponse searchModels(String query, String domain, SortOrder sortOrder,
             Map<String, Integer> paginationCriteria = ["start": 0, "length": 50, "facetCount": 10] ) {
         long start = System.currentTimeMillis()
         boolean inDevMode = Environment.isDevelopmentMode()
@@ -166,7 +166,7 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
         sort = sort ? "isprivate:ascending,$sort" : "isprivate:ascending"
         QueryResult result
         try {
-            result = datasetWsClient.getDatasets("biomodels", query, fields,
+            result = datasetWsClient.getDatasets(domain, query, fields,
                 paginationCriteria['start'], paginationCriteria['length'], paginationCriteria['facetCount'], sort)
         } catch (HttpClientErrorException e) {
             log.debug("""\

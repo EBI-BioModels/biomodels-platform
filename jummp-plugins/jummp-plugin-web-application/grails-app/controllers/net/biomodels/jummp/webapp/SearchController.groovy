@@ -178,6 +178,9 @@ class SearchController {
                 params.flashMessage = "Please use *:* to browse all models."
             }
         }
+        if (!params.domain) {
+            params.domain = "biomodels"
+        }
         /**
          * Check whether the request isn't re-processed by Load Balancer
          */
@@ -185,7 +188,8 @@ class SearchController {
         String searchInfo = """\
 Search terms: ${params.query}, requested from: ${clientIPAddress} under the format: ${response.format}"""
         println searchInfo
-        def results = searchCore(params.query, params.sortBy, params.sortDir, params.offset, params.numResults)
+        def results = searchCore(params.query, params.domain, params.sortBy, params.sortDir, params.offset, params
+            .numResults)
         if (response.format=="html") {
             return results
         }
@@ -234,14 +238,14 @@ Search terms: ${params.query}, requested from: ${clientIPAddress} under the form
         }
     }
 
-    private def searchCore(String query, String sortBy, String sortDirection, int offset, int length) {
+    private def searchCore(String query, String domain, String sortBy, String sortDirection, int offset, int length) {
         Map<String, Integer> paginationCriteria = ["start": offset, "length": length, "facetCount": 100]
         SortOrder sortOrder = new SortOrder(sortBy, sortDirection)
         List<MTC> models = []
         List<Facet> facets = []
         int totalCount
         if (query?.trim()) {
-            SearchResponse response = searchService.searchModels(query, sortOrder, paginationCriteria)
+            SearchResponse response = searchService.searchModels(query, domain, sortOrder, paginationCriteria)
             ArrayList<MTC> res = response.results
             totalCount = response.totalCount
             if (res.size() > 0) {
