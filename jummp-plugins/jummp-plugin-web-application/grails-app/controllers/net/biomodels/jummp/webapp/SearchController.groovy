@@ -161,7 +161,7 @@ class SearchController {
 
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def searchRedir() {
-        redirect action: 'search', params: [query:params.search_block_form]
+        redirect action: 'search', params: [query: params.search_block_form, domain: params.chosenDomain]
     }
 
     /**

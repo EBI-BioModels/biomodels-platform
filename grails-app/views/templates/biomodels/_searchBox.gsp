@@ -38,23 +38,35 @@
     }
     .clearable {
         position: relative;
-        text-align: center;
+        text-align: left;
+    }
+
+    #domain_switcher {
+        width: auto !important;
     }
 </style>
 <form id="local-search" name="local-search"
       action="${createLink(controller: 'search', action: 'searchRedir')}" method="post">
     <fieldset>
-        <div class="input-group">
+        <div class="input-group margin-bottom-none margin-top-large padding-bottom-medium">
+            <div class="input-group-field">
+                <label>
+                    <select class="margin-bottom-none" id="domain_switcher" name="domain_switcher">
+                        <option value="biomodels_all">BioModels All</option>
+                        <option value="biomodels">BioModels</option>
+                        <option value="biomodels_autogen">BioModels Autogen</option>
+                    </select>
+                </label>
+                <input type="text" id="chosenDomain" name="chosenDomain"
+                       style="display: none" value="biomodels"/>
+            </div>
             <input type="text" name="search_block_form" id="local-searchbox"
-                   placeholder="Search..." class="input-group-field search_box_style"
+                   placeholder="Search..." class="input-group-field search_box_style clearable"
+                   title="Search"
                    tabindex="1" size="35" maxlength="2048">
             <div class="input-group-button">
-                <input id="clearsearch" type="button" value="X" tabindex="3"
-                       class="clearable search_box_style">
-            </div>
-            <div class="input-group-button">
                 <input id="search_submit" class="button icon icon-functional" tabindex="2"
-                       type="submit" name="submit1" value="1" />
+                       type="submit" name="searchSubmit" value="1" />
             </div>
         </div>
         <p id="example">
@@ -75,7 +87,7 @@
         </p>
     </fieldset>
 </form>
-<script>
+<script type="text/javascript">
     function doShowOrHide(e) {
         if ($(e).val() == '') {
             $('#clearsearch').hide();
@@ -98,12 +110,17 @@
     $('#local-searchbox').dblclick(function() {
         doShowOrHide(this);
     });
-
-    $('#clearsearch').click(function () {
-        $('#local-searchbox').val('');
-        $(this).hide();
-    });
     $(document).ready(function () {
         doShowOrHide('#local-searchbox');
+        let domain = "${params.domain}";
+        // biomodels is the default domain
+        // alert(domain);
+        let chosenDomain = domain.length > 0 ? domain : "biomodels";
+        $('#domain_switcher').val(chosenDomain);
+    });
+    $(document).on('change', '#domain_switcher', {}, function(e) {
+        e.preventDefault();
+        let domain = $(this).val();
+        $('#chosenDomain').val(domain);
     });
 </script>
