@@ -141,12 +141,12 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
     SearchResponse searchModels(String query, String domain, SortOrder sortOrder,
             Map<String, Integer> paginationCriteria = ["start": 0, "length": 50, "facetCount": 10] ) {
         long start = System.currentTimeMillis()
-        boolean inDevMode = Environment.isDevelopmentMode()
+        boolean inProdMode = Environment.current == Environment.PRODUCTION
         AbstractEbeyeWsConfig ebeyeWsConfig
-        if (inDevMode) {
-            ebeyeWsConfig = new EbeyeWsConfigDev()
+        if (inProdMode) {
+            ebeyeWsConfig = new EbeyeWsConfigProd()()
         } else {
-            ebeyeWsConfig = new EbeyeWsConfigProd()
+            ebeyeWsConfig = new EbeyeWsConfigDev()
         }
         DatasetWsClient datasetWsClient = new DatasetWsClient(ebeyeWsConfig)
         // parse raw query to OmicsDI API to avoid double encoding issues.
