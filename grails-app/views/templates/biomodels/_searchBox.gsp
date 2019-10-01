@@ -114,8 +114,8 @@
         doShowOrHide('#local-searchbox');
         let domain = "${params.domain}";
         // biomodels is the default domain
-        // alert(domain);
         let chosenDomain = domain.length > 0 ? domain : "biomodels";
+        $('#chosenDomain').val(chosenDomain);
         $('#domain_switcher').val(chosenDomain);
     });
     $(document).on('change', '#domain_switcher', {}, function(e) {
