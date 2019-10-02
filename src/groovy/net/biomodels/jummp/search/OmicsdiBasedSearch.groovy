@@ -144,7 +144,7 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
         boolean inProdMode = Environment.current == Environment.PRODUCTION
         AbstractEbeyeWsConfig ebeyeWsConfig
         if (inProdMode) {
-            ebeyeWsConfig = new EbeyeWsConfigProd()()
+            ebeyeWsConfig = new EbeyeWsConfigProd()
         } else {
             ebeyeWsConfig = new EbeyeWsConfigDev()
         }
