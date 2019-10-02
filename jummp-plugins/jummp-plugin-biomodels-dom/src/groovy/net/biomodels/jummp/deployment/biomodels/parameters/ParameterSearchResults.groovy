@@ -41,7 +41,7 @@ class ParameterSearchResults {
                 if (subvalue.contains('|')) {
 
                     def (href, label) = subvalue.tokenize('|')
-                    links.add("<a target='_blank' href='${href}' > ${label} </a>")
+                    links.add("<a style='color:black' target='_blank' href='${href}' > ${label} </a>")
                 } else {
                     links.add(subvalue)
                 }
@@ -101,7 +101,7 @@ class ParameterSearchResults {
 
             parsedFields['reaction_show'] = ""
         }else{
-            parsedFields['reaction_show'] = parsedFields['reaction'] + '<hr/>' + "<span class='legend-green'>"+parsedFields['reaction_original_RAW'] + "</span>"
+            parsedFields['reaction_show'] = buildShowString(parsedFields['reaction_original_RAW'].toString(), parsedFields['reaction'].toString())
         }
 
     }
@@ -112,9 +112,9 @@ class ParameterSearchResults {
             parsedFields['entity_accession_url'].size()==0  ||
             parsedFields['entity_id'] == null) {
 
-            parsedFields['entity_show'] ="<span class='legend-green'>"+parsedFields['entity_id'] + "</span>"
+            parsedFields['entity_show'] = buildShowString(parsedFields['entity_id'].toString(),"")
         }else{
-            parsedFields['entity_show'] = parsedFields['entity_accession_url'] + '<hr/>' + "<span class='legend-green'>"+parsedFields['entity_id'] + "</span>"
+            parsedFields['entity_show'] = buildShowString(parsedFields['entity_id'].toString(), parsedFields['entity_accession_url'].toString())
         }
     }
 
@@ -127,9 +127,17 @@ class ParameterSearchResults {
 
             parsedFields['rate_show'] = ""
         }else{
-            parsedFields['rate_show'] = parsedFields['rate'] + '<hr/>' + "<span class='legend-green'>"+parsedFields['rate_original_RAW'] + "</span>"
+            parsedFields['rate_show'] = buildShowString(parsedFields['rate_original_RAW'].toString(), parsedFields['rate'].toString())
         }
 
+    }
+
+    private static buildShowString(String authorGivenValues, String resolvedValues) {
+        if ("" != resolvedValues) {
+            return "<span class='legend-green'>" + authorGivenValues + "</span><br/><br/>" + resolvedValues
+        }else{
+            return "<span class='legend-green'>" + authorGivenValues + "</span>"
+        }
     }
     private static isLink(String fieldName) {
 

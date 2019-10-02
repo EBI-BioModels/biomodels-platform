@@ -123,6 +123,8 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
      */
     def aclUtilService = Holders.grailsApplication.mainContext.getBean('aclUtilService')
 
+    def modelTagService = Holders.grailsApplication.mainContext.getBean('modelTagService')
+
     def producerTemplate = Holders.grailsApplication.mainContext.getBean('producerTemplate')
 
     @NotTransactional
@@ -139,12 +141,12 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
     SearchResponse searchModels(String query, SortOrder sortOrder,
             Map<String, Integer> paginationCriteria = ["start": 0, "length": 50, "facetCount": 10] ) {
         long start = System.currentTimeMillis()
-        boolean inDevMode = Environment.isDevelopmentMode()
+        boolean inProdMode = Environment.current == Environment.PRODUCTION
         AbstractEbeyeWsConfig ebeyeWsConfig
-        if (inDevMode) {
-            ebeyeWsConfig = new EbeyeWsConfigDev()
-        } else {
+        if (inProdMode) {
             ebeyeWsConfig = new EbeyeWsConfigProd()
+        } else {
+            ebeyeWsConfig = new EbeyeWsConfigDev()
         }
         DatasetWsClient datasetWsClient = new DatasetWsClient(ebeyeWsConfig)
         // parse raw query to OmicsDI API to avoid double encoding issues.
@@ -319,7 +321,7 @@ There was a problem obtaining search result from EBI search server. The root cau
             String dbUsername = dsConfig?.username
             String dbPassword = dsConfig?.password
             def dbSettings = [ 'url': dbUrl, 'username': dbUsername, 'password': dbPassword ]
-            def builder = new JsonBuilder()
+            def tags = modelTagService.getTagsByModelId(revision.model.submissionId)
             def partialData = [
                 'submissionId': submissionId,
                 'publicationId' :publicationId,
@@ -345,8 +347,10 @@ There was a problem obtaining search result from EBI search server. The root cau
                 'versionNumber' : versionNumber,
                 'submissionDate' : revision.model.submissionDate,
                 'lastModified' :  revision.model.lastModifiedDate,
-                'uniqueId' : uniqueId
+                'uniqueId' : uniqueId,
+                'tags': tags
             ]
+            def builder = new JsonBuilder()
             builder(partialData: partialData,
                 'folder': exchangeFolder,
                 'mainFiles': fetchFilesFromRevision(revision, true),
