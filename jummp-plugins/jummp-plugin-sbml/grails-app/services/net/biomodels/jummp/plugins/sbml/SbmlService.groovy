@@ -252,6 +252,18 @@ due to an issue with JSBML"""
             return null
         }
         // TODO: WARNING: checkConsistency uses an online validator. This might render timeouts during model upload
+        // we only check consistency as long as the model file size is less than the maximum upload file limit
+        // TODO: externalise this value by defined the property,
+        //  e.g. grailsApplication.config.jummp.plugins.sbml.validation.maxFileSize
+        final long MAX_SIZE = 10*1024*1024 // 10MB
+        long actualSize = model.length()
+        if (0 >= actualSize || actualSize > MAX_SIZE) {
+            errorMsg = """\
+Your file exceeds the maximum upload size limit that our system currently supports. The consistency check for your 
+model is being ignored."""
+            errors.add(errorMsg)
+            return doc
+        }
         try {
             final int CONSISTENCY_ERRORS = doc.checkConsistency()
             if (CONSISTENCY_ERRORS == -1) {

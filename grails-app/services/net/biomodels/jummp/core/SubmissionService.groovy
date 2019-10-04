@@ -291,7 +291,7 @@ class SubmissionService {
                 if (!workingMemory.containsKey("model_type")) {   //TODO IS THIS NEEDED?
                     workingMemory.put("validation_error",
                         "Missing Format Error: Validation could not be performed, format unknown")
-                } else if (!modelsAreValid) {
+                } else if (!modelsAreValid || errors?.size() > 0) {
                     //TODO be more specific to the user about what went wrong.
                     workingMemory.put("validation_error", "ModelValidationError")
                     workingMemory.put("validationErrorList", errors)
