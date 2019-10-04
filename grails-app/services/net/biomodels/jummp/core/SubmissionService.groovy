@@ -159,7 +159,7 @@ class SubmissionService {
          *
          * @param workingMemory a Map containing all objects exchanged throughout the flow.
          */
-        @Profiled(tag = "submissionService.NewModelStateMachine.performValidation")
+        @Profiled(tag = "submissionService.NewModelStateMachine.handleDeletes")
         protected void handleDeletes(Map<String, Object> workingMemory, List<RFTC> filesToDelete) {
             if (workingMemory.containsKey("repository_files")) {
                 List<RFTC> existing = (workingMemory.get("repository_files") as List<RFTC>)
@@ -291,7 +291,7 @@ class SubmissionService {
                 if (!workingMemory.containsKey("model_type")) {   //TODO IS THIS NEEDED?
                     workingMemory.put("validation_error",
                         "Missing Format Error: Validation could not be performed, format unknown")
-                } else if (!modelsAreValid) {
+                } else if (!modelsAreValid || errors?.size() > 0) {
                     //TODO be more specific to the user about what went wrong.
                     workingMemory.put("validation_error", "ModelValidationError")
                     workingMemory.put("validationErrorList", errors)
