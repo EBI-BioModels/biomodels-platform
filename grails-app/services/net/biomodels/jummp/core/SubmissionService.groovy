@@ -159,7 +159,7 @@ class SubmissionService {
          *
          * @param workingMemory a Map containing all objects exchanged throughout the flow.
          */
-        @Profiled(tag = "submissionService.NewModelStateMachine.performValidation")
+        @Profiled(tag = "submissionService.NewModelStateMachine.handleDeletes")
         protected void handleDeletes(Map<String, Object> workingMemory, List<RFTC> filesToDelete) {
             if (workingMemory.containsKey("repository_files")) {
                 List<RFTC> existing = (workingMemory.get("repository_files") as List<RFTC>)

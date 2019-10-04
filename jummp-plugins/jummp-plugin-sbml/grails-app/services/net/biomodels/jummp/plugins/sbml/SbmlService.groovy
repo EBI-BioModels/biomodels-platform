@@ -232,36 +232,37 @@ due to an issue with JSBML"""
     }
     private SBMLDocument getFileAsValidatedSBMLDocument(final File model, final List<String> errors) {
         // TODO: we should insert the parsed model into the cache
+        String errorMsg = ""
         SBMLDocument doc
         SBMLReader reader = new SBMLReader()
         try {
             doc = reader.readSBML(model)
         } catch (XMLStreamException e) {
             e.printStackTrace()
-            String error = "SBMLDocument could not be read from ${model.name} caused by\n${e.message}"
-            log.error(error)
-            errors.add(error)
+            errorMsg = "SBMLDocument could not be read from ${model.name} caused by\n${e.message}"
+            log.error(errorMsg)
+            errors.add(errorMsg)
             return null
         }
         if (doc == null) {
             // although the API documentation states that an Exception is thrown for incorrect files, it seems that null is returned
-            String error = "SBMLDocument is not valid for file ${model.name}"
-            log.error(error)
-            errors.add(error)
+            errorMsg = "SBMLDocument is not valid for file ${model.name}"
+            log.error(errorMsg)
+            errors.add(errorMsg)
             return null
         }
         // TODO: WARNING: checkConsistency uses an online validator. This might render timeouts during model upload
         try {
             final int CONSISTENCY_ERRORS = doc.checkConsistency()
             if (CONSISTENCY_ERRORS == -1) {
-                log.debug("Internal error in online SBML Validator while validating ${doc.inspect()}\t${doc.properties}")
+                errorMsg ="Internal error in online SBML Validator while validating ${doc.inspect()}\t${doc.properties}"
+                errors.add(errorMsg)
                 return null
-            }
-            if (CONSISTENCY_ERRORS > 0) {
+            } else if (CONSISTENCY_ERRORS > 0) {
                 // search for an error
                 for (SBMLError error in doc.getListOfErrors().validationErrors) {
                     if (error.isFatal() || error.isInternal() || error.isSystem() || error.isXML() || error.isError()) {
-                        String errorMsg = error.getMessage()
+                        errorMsg = error.getMessage()
                         log.debug(errorMsg)
                         errors.add(errorMsg)
                         doc = null
