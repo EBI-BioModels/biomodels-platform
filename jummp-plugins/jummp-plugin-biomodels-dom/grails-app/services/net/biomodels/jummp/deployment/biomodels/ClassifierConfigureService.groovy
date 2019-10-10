@@ -33,7 +33,6 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import com.fasterxml.jackson.core.type.TypeReference
-import com.google.common.base.Joiner
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.http.HttpEntity
 import org.springframework.http.HttpHeaders
@@ -92,7 +91,7 @@ class ClassifierConfigureService implements InitializingBean {
         map.add("val_per_epoch", Integer.toString(valPerEpoch))
         map.add("batch_size", Integer.toString(batchSize))
         if (hiddenLayers.size() > 0) {
-            map.add("hidden_layer", Joiner.on(",").join(hiddenLayers))
+            map.add("hidden_layer", hiddenLayers.join(","))
         }
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<MultiValueMap<String, String>>(map, headers)
