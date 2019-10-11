@@ -48,6 +48,7 @@ import net.biomodels.jummp.core.model.audit.AccessType
 import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
 import net.biomodels.jummp.deployment.biomodels.TagTransportCommand
 import net.biomodels.jummp.model.Model
+import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.Team
@@ -125,7 +126,7 @@ class ModelController {
      * The list of actions for which we should not automatically create an audit item.
      */
     final List<String> AUDIT_EXCEPTIONS = ['updateFlow', 'createFlow', 'uploadFlow',
-                'showWithMessage', 'share', 'getFileDetails', 'submitForPublication', 'updateCurationState']
+                'showWithMessage', 'share', 'getFileDetails', 'submitForPublication', 'updateCurationState', 'searchModellingApproach']
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
 
@@ -1395,6 +1396,37 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
         render([message: "You do not have right permissions to change the curation status"] as JSON)
     }
 
+    /**
+     * Search modelling approaches based what users are typing. The data populate the source of
+     * Autocomplete widgets. The data can be customised but they have to include two mandatory
+     * fields as label and value. These two fields are formed from the other ones. For example:
+     * label = MAMO accession: the friendly name
+     * Example: MAMO_0000009: constraint-based model
+     */
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    @grails.transaction.Transactional
+    def searchModellingApproach() {
+        Integer request = params.getInt("request")
+        String searchTerm = params.get("search")
+        if (request == 1) {
+            List modellingApproaches = metadataDelegateService.searchModellingApproach(searchTerm)
+            List approaches = []
+            modellingApproaches.each { approach ->
+                long id = approach[0]
+                String accession = approach[1]
+                String name = approach[2]
+                //String resource = approach[3]
+                String label = "$accession: $name"
+                approaches << [value: id, label: label]
+            }
+            render(approaches as JSON)
+        } else {
+            String approach = params.get("accession")
+            ModellingApproach modellingApproach = metadataDelegateService.getModellingApproach(approach)
+            render([modellingApproach] as JSON)
+        }
+
+    }
 
     /**
      * Display basic information about the model

@@ -23,6 +23,7 @@ package net.biomodels.jummp.core
 import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand
 import net.biomodels.jummp.core.annotation.StatementTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.model.ModellingApproach
 
 /**
  * @short Contract for services wishing to deal with model metadata.
@@ -81,4 +82,8 @@ interface IMetadataService {
     List<String> getMetadataNamespaces()
 
     Set<String> fetchModelTags(String modelSubmissionId)
+
+    List searchModellingApproach(String searchTerm)
+
+    ModellingApproach getModellingApproach(String accession)
 }

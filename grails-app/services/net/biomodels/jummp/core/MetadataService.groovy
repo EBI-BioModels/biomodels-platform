@@ -36,6 +36,7 @@ import net.biomodels.jummp.core.model.AnnotationValidationContext
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.model.Model
+import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.model.Revision
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
@@ -360,6 +361,28 @@ class MetadataService {
         }
         promise.get()
         return result
+    }
+
+    @Profiled(tag = "metadataService.searchModellingApproach")
+    List searchModellingApproach(String searchTerm) {
+        def result = ModellingApproach.createCriteria().list {
+            projections {
+                property('id')
+                property('accession')
+                property('name')
+                property('resource')
+            }
+            or {
+                ilike 'accession', "%$searchTerm%"
+                ilike 'name', "%$searchTerm%"
+                ilike 'resource', "%$searchTerm%"
+            }
+        }
+        return result
+    }
+
+    ModellingApproach getModellingApproach(String accession) {
+        ModellingApproach.findByAccession(accession)
     }
 
     /*

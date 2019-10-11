@@ -32,6 +32,7 @@ import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
 import net.biomodels.jummp.deployment.biomodels.TagTransportCommand
+import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.model.Revision
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
@@ -246,6 +247,16 @@ class MetadataDelegateService implements IMetadataService {
 
     Set<String> fetchModelTags(String modelSubmissionId) {
         modelTagService.getTagsByModelId(modelSubmissionId) as Set
+    }
+
+    @Override
+    List searchModellingApproach(String searchTerm) {
+        metadataService.searchModellingApproach(searchTerm)
+    }
+
+    @Override
+    ModellingApproach getModellingApproach(String accession) {
+        metadataService.getModellingApproach(accession)
     }
 
     Set<TagTransportCommand> findTagsByModel(ModelTransportCommand model) {
