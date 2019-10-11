@@ -75,7 +75,7 @@ class JummpTagLib {
     def displayExistingMainFile = { attrs ->
         String de = detectDeploymentEnvironment()
         String mainFileLabel = "submission.upload.mainFile${de}.label"
-        String mainFileSectionHeading = "<h3>${message(code: mainFileLabel)}</h3>"
+        String mainFileSectionHeading = "<h3 class='required'>${message(code: mainFileLabel)}</h3>"
         out << mainFileSectionHeading
         out << "<table class='formtable responsive-table'><tbody>"
         if (!attrs.main) {
