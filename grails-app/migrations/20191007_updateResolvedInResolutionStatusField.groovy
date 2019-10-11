@@ -1,7 +1,7 @@
 import liquibase.statement.core.UpdateStatement
 databaseChangeLog = {
 
-    changeSet(author: "carankalle", id: "populate the resolution_status with RESOLVED value") {
+    changeSet(author: "carankalle (customized)", id: "1570800300.545341") {
         grailsChange {
             change {
                 def statements = []

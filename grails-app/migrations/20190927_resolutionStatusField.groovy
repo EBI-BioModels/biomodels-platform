@@ -13,7 +13,7 @@ databaseChangeLog = {
 			column(name: "resolution_status")
 		}
 	}
-    changeSet(author: "carankalle", id: "update the resolution_status with default value") {
+    changeSet(author: "carankalle (customized)", id: "1570800273.258036") {
         grailsChange {
             change {
                 def statements = []
