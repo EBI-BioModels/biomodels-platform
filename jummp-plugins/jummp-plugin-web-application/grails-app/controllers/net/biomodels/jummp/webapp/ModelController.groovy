@@ -654,8 +654,11 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                 if (flow.isUpdate) {
                     String model_id = conversation.model_id
                     flow.workingMemory.put("model_id", model_id)
-                    flow.workingMemory.put("LastRevision",
-                                modelDelegateService.getLatestRevision(model_id, false))
+                    RevisionTransportCommand latest = modelDelegateService.getLatestRevision(model_id, false)
+                    flow.workingMemory.put("LastRevision", latest)
+                    ModellingApproach approach = latest.model.modellingApproach
+                    String modellingApproach = approach ? "${approach.accession}: ${approach.name}" : ""
+                    flow.workingMemory.put("modelling_approach", modellingApproach)
                     /* Maintain reference to the previous revision in session
                        memory to ensure it is not overwritten. Do it with a
                        random variable name to allow updating of multiple

@@ -50,31 +50,33 @@
                         Integer selectedValue
                         ModelFormatTransportCommand format = workingMemory['model_type']
                         if (format) {
-                            String fmtVersion = format.formatVersion!="*" ? format.formatVersion : ""
+                            String fmtVersion = format.formatVersion != "*" ? format.formatVersion : ""
                             fmtStr = "${format.name} ${fmtVersion}"
                             selectedValue = format.id
                         } else {
-                            fmtStr = 'Original code'
+                            fmtStr = 'Original code *'
                             selectedValue = ModelFormat.findByName("UNKNOWN")?.id
                         }
+                        String readmeSubmission = workingMemory['readme_submission']
+                        String modellingApproach = workingMemory['modelling_approach']
                     %>
+
                     <g:select name="model_format" id="model_format" required=""
-                              from="${net.biomodels.jummp.model.ModelFormat.list()}"
+                              from="${net.biomodels.jummp.model.ModelFormat.list().sort { it.name }}"
                               value="${selectedValue}"
                               optionKey="id"
                               optionValue="${{it?.name + ' ' + it?.formatVersion}}"
                                />
-                    <g:if test="${fmtStr.trim() == 'Original code'}">
+                    <div id="readme_submission_div">
                     <label for="readme_submission" class="required">Describe more exactly your model format</label>
-                    <g:textField name="readme_submission" id="readme_submission" required=""
-                                 placeholder="Please describe here more accurately what is your model format" /></g:if>
+                    <g:textField name="readme_submission" id="readme_submission"
+                                 value="${readmeSubmission}" style="display: inline"
+                                 placeholder="Please describe here more accurately what is your model format" /></div>
                 </div>
                 <div class="small-12 medium-6 large-6 columns">
                     <label for="modelling_approach" class="required">Modelling Approach</label>
-                    <g:textField name="modelling_approach" id="modelling_approach" required=""
+                    <g:textField name="modelling_approach" id="modelling_approach" value="${modellingApproach}"
                                  placeholder="Enter your modelling approach"/>
-
-
                 </div>
             </div>
 
@@ -128,9 +130,10 @@
                     });
                 }
             }
-            $( document ).ready(function() {
+            $(document).ready(function() {
                 associateEventHandlers("description");
                 associateEventHandlers("name");
+                showOrHideReadmeBox($('#model_format').find('option:selected').text());
             });
 
             $('#modelling_approach').on('keydown', function() {
@@ -177,6 +180,25 @@
                     }
                 });
             });
+
+            $('#model_format').on("change", function () {
+                let $opt = $(this).find('option:selected');
+                let selectedFormat = $opt.val();
+                let selectedText = $opt.text();
+                console.log(selectedFormat);
+                console.log(selectedText);
+                showOrHideReadmeBox(selectedText);
+            });
+
+            function showOrHideReadmeBox(selectedText) {
+                if (selectedText === 'Original code *') {
+                    console.log("Show the readme box");
+                    $('#readme_submission_div').removeAttr("style").show();
+                } else {
+                    console.log("Hide the readme box");
+                    $('#readme_submission_div').hide();
+                }
+            }
         </g:javascript>
 
     </body>
