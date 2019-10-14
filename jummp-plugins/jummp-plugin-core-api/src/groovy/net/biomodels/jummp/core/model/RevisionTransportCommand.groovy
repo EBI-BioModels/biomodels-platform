@@ -113,6 +113,8 @@ class RevisionTransportCommand implements Serializable {
 
     QcInfoTransportCommand qcInfo
 
+    String readmeSubmission
+
     /**
      * The curation state of this revision
      */

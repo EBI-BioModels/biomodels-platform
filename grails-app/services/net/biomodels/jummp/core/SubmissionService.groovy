@@ -42,6 +42,7 @@ import net.biomodels.jummp.core.model.PublicationDetailExtractionContext
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import net.biomodels.jummp.core.model.PublicationTransportCommand
+import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelFormat
@@ -360,7 +361,7 @@ class SubmissionService {
          *
          * @param workingMemory a Map containing all objects exchanged throughout the flow.
          */
-        @Profiled(tag = "submissionService.updateRevisionComments")
+        @Profiled(tag = "submissionService.updateRevisionFromFiles")
         @TypeChecked(TypeCheckingMode.SKIP)
         protected void updateRevisionFromFiles(Map<String, Object> workingMemory) {
             RTC revision = workingMemory.get("RevisionTC") as RTC
@@ -760,6 +761,7 @@ class SubmissionService {
                 workingMemory.put("model_type", revision.format)
                 workingMemory.put("model_validation_result", revision.validated)
             }
+            workingMemory.put("readme_submission", revision.readmeSubmission ?: "")
             storeTCs(workingMemory, revision.model, revision)
             //ensure that a new revision tc is used for submission, use
             //this one for copying info!
@@ -811,6 +813,12 @@ class SubmissionService {
                     changes.add("Added file: ${fileAdded}")
                 }
             }
+            String modellingApproach = workingMemory.get("modelling_approach")
+            String accession = modellingApproach.substring(0, modellingApproach.indexOf(":"))
+            ModellingApproach approach = ModellingApproach.findByAccession(accession)
+            revision.model.modellingApproach = approach
+            String readme = workingMemory.get("readme_submission")
+            revision.readmeSubmission = readme
             Revision newlyCreated = modelService.addValidatedRevision(repoFiles, deleteFiles, revision)
             RTC newlyCreatedRTC = new RevisionAdapter(revision: newlyCreated).toCommandObject()
             final String NEW_NAME = workingMemory["new_name"]

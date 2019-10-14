@@ -828,7 +828,8 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
                     comment: rev.comment, uploadDate: new Date(), owner: currentUser,
                     validated: rev.validated, curationState: rev.curationState, minorRevision: rev.minorRevision,
                     format: ModelFormat.findByIdentifierAndFormatVersion(rev.format.identifier, formatVersion),
-                    validationReport: rev.validationReport, validationLevel: rev.validationLevel)
+                    validationReport: rev.validationReport, validationLevel: rev.validationLevel, readmeSubmission:
+            rev.readmeSubmission)
         def stopWatch = new Log4JStopWatch("modelService.addValidatedRevision.rftcCreation")
         List<RepositoryFile> domainObjects = convertRepositoryFilesFromTransportCommands(repoFiles, revision)
 
@@ -854,6 +855,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
 
         if (revision.validate()) {
             model.addToRevisions(revision)
+            model.modellingApproach = rev.model.modellingApproach
             PublicationTransportCommand publicationTC = rev.model.publication
             if (!publicationTC && model.publication) {
                 // delete db association if corresponding publication was removed in the UI

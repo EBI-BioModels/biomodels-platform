@@ -22,6 +22,7 @@ package net.biomodels.jummp.core
 
 import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand
 import net.biomodels.jummp.core.annotation.StatementTransportCommand
+import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.model.ModellingApproach
 
@@ -86,4 +87,6 @@ interface IMetadataService {
     List searchModellingApproach(String searchTerm)
 
     ModellingApproach getModellingApproach(String accession)
+
+    ModellingApproach getModellingApproach(ModelTransportCommand model)
 }

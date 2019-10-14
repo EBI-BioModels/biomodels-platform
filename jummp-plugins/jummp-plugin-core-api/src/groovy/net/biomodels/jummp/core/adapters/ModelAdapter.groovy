@@ -84,7 +84,8 @@ class ModelAdapter {
             submissionDate: firstRev?.uploadDate,
             creators: creators,
             creatorUsernames: creatorUsernames,
-            flagLevel: latestRev?.qcInfo?.flag
+            flagLevel: latestRev?.qcInfo?.flag,
+            modellingApproach: model.modellingApproach
         )
     }
 

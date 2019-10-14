@@ -259,6 +259,11 @@ class MetadataDelegateService implements IMetadataService {
         metadataService.getModellingApproach(accession)
     }
 
+    @Override
+    ModellingApproach getModellingApproach(ModelTransportCommand model) {
+        return model.modellingApproach
+    }
+
     Set<TagTransportCommand> findTagsByModel(ModelTransportCommand model) {
         modelTagService.findTagsByModel(model)
     }

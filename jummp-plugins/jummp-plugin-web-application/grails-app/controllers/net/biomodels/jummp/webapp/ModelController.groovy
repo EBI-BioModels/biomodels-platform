@@ -1011,14 +1011,18 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                 final String NAME = params.name
                 final String DESC = params.description
                 final String changeStatus = params.changed
+                final String modellingApproach = params.modelling_approach
+                final String readmeSubmission = params.readme_submission
                 if (NAME && NAME.trim()) {
                     modifications.put("new_name", NAME.trim())
                 }
                 if (DESC && DESC.trim()) {
                     modifications.put("new_description", DESC.trim())
                 }
-                modifications.put("changeStatus", changeStatus);
+                modifications.put("changeStatus", changeStatus)
                 submissionService.refineModelInfo(flow.workingMemory, modifications)
+                flow.workingMemory.put("readme_submission", readmeSubmission)
+                flow.workingMemory.put("modelling_approach", modellingApproach)
             }.to "enterPublicationLink"
             on("Cancel").to "cleanUpAndTerminate"
             on("Back"){}.to "uploadFiles"
