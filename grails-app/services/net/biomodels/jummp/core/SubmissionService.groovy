@@ -34,6 +34,7 @@ package net.biomodels.jummp.core
 import groovy.transform.CompileStatic
 import groovy.transform.TypeChecked
 import groovy.transform.TypeCheckingMode
+import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC //rude?
@@ -335,6 +336,40 @@ class SubmissionService {
             model.publication.linkProvider = new PublicationLinkProviderAdapter(linkProvider:
                     publSrc).toCommandObject()
             return refreshPublication
+        }
+
+        /**
+         * This tries to capture readme information about unknown format and other modelling approach.
+         *
+         * Retrieving all these information from the working memory and update the revision in question.
+         *
+         * @param revision  Revision
+         * @param workingMemory a map of temporary variables
+         */
+        @Profiled(tag = "submissionService.storeReadmeInfo")
+        @TypeChecked(TypeCheckingMode.SKIP)
+        protected void storeReadmeInfo(RTC revision, Map<String, Object> workingMemory) {
+            // update modelling approach
+            String modellingApproach = workingMemory.get("modelling_approach")
+            String accession = modellingApproach.substring(0, modellingApproach.indexOf(":"))
+            ModellingApproach approach = ModellingApproach.findByAccession(accession)
+            revision.model.modellingApproach = approach
+
+            if (workingMemory.get("other_info")) {
+                revision.model.otherInfo = workingMemory.get("other_info")
+            }
+
+            // update model format
+            final long fmtId = workingMemory.get("model_format")
+            if (fmtId != revision.format.id) {
+                // the model format has been changed by the user
+                MFTC formatTC = new ModelFormatAdapter(format: ModelFormat.get(fmtId)).toCommandObject()
+                revision.format = formatTC
+            }
+            // TODO: check that 'Original code *' is the currently chosen value. If not, don't do the statement below
+            if (workingMemory.get("readme_submission")) {
+                revision.readmeSubmission = workingMemory.get("readme_submission")
+            }
         }
 
         protected String getModelNameFromFiles(List<File> mainFiles) {
@@ -664,6 +699,8 @@ class SubmissionService {
             RTC revision = workingMemory.get("RevisionTC") as RTC
             MTC model = revision.model
             model.format = revision.format
+            // update model format, modelling approach and readme info if they're provided
+            storeReadmeInfo(revision, workingMemory)
             revision.comment = "Import of ${revision.name}".toString()
             Model newModel = modelService.uploadValidatedModel(repoFiles, revision)
             Revision latest = modelService.getLatestRevision(newModel, false)
@@ -762,6 +799,7 @@ class SubmissionService {
                 workingMemory.put("model_validation_result", revision.validated)
             }
             workingMemory.put("readme_submission", revision.readmeSubmission ?: "")
+            workingMemory.put("other_info", revision.model.otherInfo)
             storeTCs(workingMemory, revision.model, revision)
             //ensure that a new revision tc is used for submission, use
             //this one for copying info!
@@ -813,12 +851,10 @@ class SubmissionService {
                     changes.add("Added file: ${fileAdded}")
                 }
             }
-            String modellingApproach = workingMemory.get("modelling_approach")
-            String accession = modellingApproach.substring(0, modellingApproach.indexOf(":"))
-            ModellingApproach approach = ModellingApproach.findByAccession(accession)
-            revision.model.modellingApproach = approach
-            String readme = workingMemory.get("readme_submission")
-            revision.readmeSubmission = readme
+
+            // update model format, modelling approach and readme info if they're provided and changed
+            storeReadmeInfo(revision, workingMemory)
+
             Revision newlyCreated = modelService.addValidatedRevision(repoFiles, deleteFiles, revision)
             RTC newlyCreatedRTC = new RevisionAdapter(revision: newlyCreated).toCommandObject()
             final String NEW_NAME = workingMemory["new_name"]

@@ -85,7 +85,8 @@ class ModelAdapter {
             creators: creators,
             creatorUsernames: creatorUsernames,
             flagLevel: latestRev?.qcInfo?.flag,
-            modellingApproach: model.modellingApproach
+            modellingApproach: model.modellingApproach,
+            otherInfo: model.otherInfo
         )
     }
 

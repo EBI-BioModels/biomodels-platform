@@ -1289,5 +1289,9 @@ databaseChangeLog = {
     include file: '20191009_readmeSubmission.groovy'
 
     include file: '20191010_populateModellingApproachTable.groovy'
+
+    include file: '20191015_addOther2ModellingApproach.groovy'
+
+    include file: '20191015_addOtherInfo2Model.groovy'
 }
 

@@ -659,6 +659,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     ModellingApproach approach = latest.model.modellingApproach
                     String modellingApproach = approach ? "${approach.accession}: ${approach.name}" : ""
                     flow.workingMemory.put("modelling_approach", modellingApproach)
+                    flow.workingMemory.put("other_info", latest.model.otherInfo ?: "")
                     /* Maintain reference to the previous revision in session
                        memory to ensure it is not overwritten. Do it with a
                        random variable name to allow updating of multiple
@@ -1013,6 +1014,8 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                 final String changeStatus = params.changed
                 final String modellingApproach = params.modelling_approach
                 final String readmeSubmission = params.readme_submission
+                final String otherInfo = params.other_info
+                final long modelFormat = params.getLong("model_format")
                 if (NAME && NAME.trim()) {
                     modifications.put("new_name", NAME.trim())
                 }
@@ -1023,6 +1026,8 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                 submissionService.refineModelInfo(flow.workingMemory, modifications)
                 flow.workingMemory.put("readme_submission", readmeSubmission)
                 flow.workingMemory.put("modelling_approach", modellingApproach)
+                flow.workingMemory.put("other_info", otherInfo)
+                flow.workingMemory.put("model_format", modelFormat)
             }.to "enterPublicationLink"
             on("Cancel").to "cleanUpAndTerminate"
             on("Back"){}.to "uploadFiles"

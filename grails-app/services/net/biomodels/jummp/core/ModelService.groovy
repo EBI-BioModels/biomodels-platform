@@ -856,6 +856,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         if (revision.validate()) {
             model.addToRevisions(revision)
             model.modellingApproach = rev.model.modellingApproach
+            model.otherInfo = rev.model.otherInfo
             PublicationTransportCommand publicationTC = rev.model.publication
             if (!publicationTC && model.publication) {
                 // delete db association if corresponding publication was removed in the UI
@@ -1086,7 +1087,8 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         stopWatch.lap("Finished adding RepositoryFiles to the Model")
         stopWatch.setTag("modelService.uploadValidatedModel.prepareVcsStorage")
         ModelFormat format = ModelFormat.findByIdentifierAndFormatVersion(rev.format.identifier, rev.format.formatVersion)
-
+        model.modellingApproach = rev.model.modellingApproach
+        model.otherInfo = rev.model.otherInfo
         // vcs identifier is container name + upload date + submissionId - this should by all means be unique
         String timestamp = new Date().format("yyyy-MM-dd'T'HH-mm-ss-SSS")
         final String submissionId = getSubmissionIdGenerator().generate()

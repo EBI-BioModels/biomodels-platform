@@ -59,6 +59,7 @@
                         }
                         String readmeSubmission = workingMemory['readme_submission']
                         String modellingApproach = workingMemory['modelling_approach']
+                        String otherInfo = workingMemory['other_info']
                     %>
 
                     <g:select name="model_format" id="model_format" required=""
@@ -67,16 +68,22 @@
                               optionKey="id"
                               optionValue="${{it?.name + ' ' + it?.formatVersion}}"
                                />
-                    <div id="readme_submission_div">
+                    <div id="readme_submission_div" style="display: none">
                     <label for="readme_submission" class="required">Describe more exactly your model format</label>
                     <g:textField name="readme_submission" id="readme_submission"
-                                 value="${readmeSubmission}" style="display: inline"
+                                 value="${readmeSubmission}"
                                  placeholder="Please describe here more accurately what is your model format" /></div>
                 </div>
                 <div class="small-12 medium-6 large-6 columns">
                     <label for="modelling_approach" class="required">Modelling Approach</label>
                     <g:textField name="modelling_approach" id="modelling_approach" value="${modellingApproach}"
                                  placeholder="Enter your modelling approach"/>
+                    <div id="model_other_info_div" style="display: none">
+                    <label for="readme_submission" class="required">Describe more exactly your model format</label>
+                    <g:textField name="other_info" id="other_info"
+                                 value="${otherInfo}"
+                                 placeholder="Please enter here what is your modelling approach"/></div>
+                </div>
                 </div>
             </div>
 
@@ -123,22 +130,23 @@
                     descBox.attachEvent("onpropertychange", $.proxy(function () {
                         if (event.propertyName == "value")
                             $("#changeStatus").val(true);
-                        }, descBox));
+                    }, descBox));
                 } else {
                     descBox.addEventListener("input", function () {
                         $("#changeStatus").val(true);
                     });
                 }
             }
-            $(document).ready(function() {
+            $(document).ready(function () {
                 associateEventHandlers("description");
                 associateEventHandlers("name");
-                showOrHideReadmeBox($('#model_format').find('option:selected').text());
+                handleShowOrHideModelFormatExtraInfo($('#model_format'));
+                handleShowOrHideModellingApproachExtraInfo($('#modelling_approach'))
             });
 
-            $('#modelling_approach').on('keydown', function() {
+            $('#modelling_approach').on('keydown', function () {
                 $(this).autocomplete({
-                    source: function(request, response) {
+                    source: function (request, response) {
                         $.ajax({
                             url: $.jummp.createLink('model', 'searchModellingApproach'),
                             type: 'POST',
@@ -147,16 +155,16 @@
                                 search: request.term,
                                 request: 1
                             },
-                            success: function(data) {
+                            success: function (data) {
                                 response(data);
                             }
                         });
                     },
-                    select: function(event, ui) {
+                    select: function (event, ui) {
                         let label = ui.item.label;
                         $(this).val(label);   // display the selected text
                         let id = ui.item.id; // selected value
-                        let accession = label.substring(0,label.indexOf(":"));
+                        let accession = label.substring(0, label.indexOf(":"));
                         $.ajax({
                             url: $.jummp.createLink('model', 'searchModellingApproach'),
                             type: 'POST',
@@ -166,9 +174,9 @@
                                 request: 2
                             },
                             dataType: 'json',
-                            success: function(response) {
+                            success: function (response) {
                                 let len = response.length;
-                                if(len > 0){
+                                if (len > 0) {
                                     let id = response[0]['id'];
                                     let accession = response[0]['accession'];
                                     let name = response[0]['name'];
@@ -181,22 +189,36 @@
                 });
             });
 
-            $('#model_format').on("change", function () {
-                let $opt = $(this).find('option:selected');
-                let selectedFormat = $opt.val();
-                let selectedText = $opt.text();
-                console.log(selectedFormat);
-                console.log(selectedText);
-                showOrHideReadmeBox(selectedText);
+            $('#modelling_approach').on('change', function () {
+                handleShowOrHideModellingApproachExtraInfo(this);
             });
 
-            function showOrHideReadmeBox(selectedText) {
-                if (selectedText === 'Original code *') {
-                    console.log("Show the readme box");
-                    $('#readme_submission_div').removeAttr("style").show();
+            $('#model_format').on("change", function () {
+                handleShowOrHideModelFormatExtraInfo(this);
+            });
+
+
+            function handleShowOrHideModellingApproachExtraInfo(selector) {
+                let element = $('#model_other_info_div');
+                let updatedVal = $(selector).val();
+                let comparableVal = 'OTHER: Other';
+                showOrHideBox(element, updatedVal, comparableVal);
+            }
+
+            function handleShowOrHideModelFormatExtraInfo(selector) {
+                let $opt = $(selector).find('option:selected');
+                let element = $('#readme_submission_div');
+                let selectedFormat = $opt.val();
+                let selectedText = $opt.text();
+                let comparableText = 'Original code *';
+                showOrHideBox(element, selectedText, comparableText);
+            }
+
+            function showOrHideBox(element, selectedText, comparableText) {
+                if (selectedText === comparableText) {
+                    $(element).removeAttr("style").show();
                 } else {
-                    console.log("Hide the readme box");
-                    $('#readme_submission_div').hide();
+                    $(element).hide();
                 }
             }
         </g:javascript>

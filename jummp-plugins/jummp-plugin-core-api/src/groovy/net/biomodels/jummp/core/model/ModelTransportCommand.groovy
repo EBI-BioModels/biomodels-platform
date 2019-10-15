@@ -119,4 +119,6 @@ class ModelTransportCommand implements Serializable {
      * Modelling Approach
      */
     ModellingApproach modellingApproach = null
+
+    String otherInfo
 }
