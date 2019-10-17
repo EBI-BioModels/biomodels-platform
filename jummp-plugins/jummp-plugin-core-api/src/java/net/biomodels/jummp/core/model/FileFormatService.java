@@ -25,6 +25,8 @@
 
 package net.biomodels.jummp.core.model;
 
+import net.biomodels.jummp.model.ModellingApproach;
+
 import java.io.File;
 import java.util.List;
 
@@ -105,4 +107,15 @@ public interface FileFormatService {
     public String getFormatVersion(RevisionTransportCommand revision);
 
     public boolean doBeforeSavingAnnotations(File annoFile, RevisionTransportCommand newRevision);
+
+    /**
+     * Gets MAMO terms annotated in the model as the modelling approach.
+     *
+     * The majority of models deposited in BioModels are being annotated with MAMO terms so as to
+     * denote the modelling approach of the model.
+     *
+     * @param revision  The Revision instance indicating the given model
+     * @return  an ModellingApproach object indicating a specified approach
+     */
+    ModellingApproach getModellingApproach(final RevisionTransportCommand revision);
 }

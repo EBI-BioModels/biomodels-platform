@@ -25,6 +25,7 @@
 package net.biomodels.jummp.core
 
 import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.model.ModellingApproach
 
 /**
  * @short Interface describing the service to access an SBML Model.
@@ -320,4 +321,7 @@ interface ISbmlService {
      */
     boolean addModelIdentifiersAsAnnotation(RevisionTransportCommand revision, String... identifiers)
             throws ModelException
+
+    void addModellingApproachAsAnnotation(RevisionTransportCommand revision, ModellingApproach approach) throws
+        ModelException
 }

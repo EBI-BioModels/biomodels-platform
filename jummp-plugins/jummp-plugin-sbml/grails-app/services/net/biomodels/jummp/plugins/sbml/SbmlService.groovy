@@ -1159,4 +1159,30 @@ the user has attempted to update an blank value for the name attribute.""")
     boolean doBeforeSavingAnnotations(File annoFile, RevisionTransportCommand rev) {
         return true
     }
+
+    @Override
+    ModellingApproach getModellingApproach(final RevisionTransportCommand revision) {
+        SBMLDocument document = getFromCache(revision)
+        def rID = revision.identifier() ? "revision ${revision.identifier()}" : "the provisional revision in the new submission"
+        if (null == document) {
+            log.error("Cannot extract modelling approach from $rID as we could not parse its main files")
+            return null
+        } else {
+            Model model = document.model
+            Annotation annotation = model?.annotation
+            if(!annotation) {
+                return null
+            }
+            List<CVTerm> filters = annotation.filterCVTerms(CVTerm.Qualifier.BQB_HAS_PROPERTY)
+            List<List<String>> mamoTerms = []
+            filters.each { filter ->
+                CVTerm cvTerm = new CVTerm(filter)
+                mamoTerms.add(cvTerm.filterResources("MAMO", "mamo"))
+            }
+            def first = mamoTerms.first()[0]
+            String[] parts = first?.split("/mamo/")
+            ModellingApproach approach = ModellingApproach.findByResourceOrAccession(first, parts[1])
+            return approach
+        }
+    }
 }

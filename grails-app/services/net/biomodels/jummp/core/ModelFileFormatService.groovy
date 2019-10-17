@@ -42,6 +42,7 @@ import net.biomodels.jummp.core.model.FileFormatService
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
+import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.model.Revision
 import org.perf4j.aop.Profiled
 import net.biomodels.jummp.core.adapters.ModelFormatAdapter
@@ -308,6 +309,15 @@ class ModelFileFormatService {
             return service.getPubMedAnnotation(new ModelFormatAdapter(format:rev).toCommandObject())
         } else {
             return []
+        }
+    }
+
+    ModellingApproach extractModellingApproachFromFiles(final RTC revision) {
+        FileFormatService service = serviceForFormat(revision.format)
+        if (service) {
+            return service.getModellingApproach(revision)
+        } else {
+            return null
         }
     }
 

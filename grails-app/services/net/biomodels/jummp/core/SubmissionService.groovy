@@ -430,6 +430,16 @@ class SubmissionService {
             if (!workingMemory.containsKey("RevisionTC")) {
                 createTransportObjects(workingMemory)
             }
+            RTC revision = workingMemory.get("RevisionTC") as RTC
+            workingMemory.put("readme_submission", revision.readmeSubmission ?: "")
+            workingMemory.put("other_info", revision.model.otherInfo)
+            // At this stage, the modelling approach has been loaded from the database if it was persisted.
+            // Otherwise, it will be extracted from the model file.
+            if (!workingMemory.get("modelling_approach")) {
+                ModellingApproach approach = modelFileFormatService.extractModellingApproachFromFiles(revision)
+                String modellingApproach = approach ? "$approach.accession: $approach.name" : ""
+                workingMemory.put("modelling_approach", modellingApproach)
+            }
             updateRevisionFromFiles(workingMemory)
         }
 

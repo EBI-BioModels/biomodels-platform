@@ -25,6 +25,7 @@
 package net.biomodels.jummp.core.model
 
 import net.biomodels.jummp.core.annotation.ElementAnnotationTransportCommand
+import net.biomodels.jummp.model.ModellingApproach
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.perf4j.aop.Profiled
@@ -87,6 +88,11 @@ class UnknownFormatService implements FileFormatService {
 
     boolean doBeforeSavingAnnotations(File annoFile, RevisionTransportCommand rev) {
         return true
+    }
+
+    @Override
+    ModellingApproach getModellingApproach(RevisionTransportCommand revision) {
+        return null
     }
 
     @Profiled(tag="unknownFormatService.getModelOntologyTerm")
