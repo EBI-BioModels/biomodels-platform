@@ -671,6 +671,9 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     }
                     flow.workingMemory.put("SafeReferenceVariable", variableName)
                     session."${variableName}" = flow.workingMemory.get("LastRevision")
+                } else {
+                    flow.workingMemory.put("modelling_approach", "")
+                    flow.workingMemory.put("other_info", "")
                 }
                 submissionService.initialise(flow.workingMemory)
                 if (flow.isUpdate) {

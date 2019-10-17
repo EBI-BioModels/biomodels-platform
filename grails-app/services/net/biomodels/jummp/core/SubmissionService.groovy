@@ -798,8 +798,6 @@ class SubmissionService {
                 workingMemory.put("model_type", revision.format)
                 workingMemory.put("model_validation_result", revision.validated)
             }
-            workingMemory.put("readme_submission", revision.readmeSubmission ?: "")
-            workingMemory.put("other_info", revision.model.otherInfo)
             storeTCs(workingMemory, revision.model, revision)
             //ensure that a new revision tc is used for submission, use
             //this one for copying info!
