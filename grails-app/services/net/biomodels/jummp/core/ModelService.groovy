@@ -2620,4 +2620,10 @@ Try to connect with Conversion service to export the model ${cmd.model.submissio
     private boolean isCurated(Revision revision) {
         revision.curationState == CurationState.CURATED
     }
+
+    void addModellingApproachAsAnnotation(RevisionTransportCommand revisionTC, ModellingApproach approach) throws
+        ModelException {
+        def sbmlService = grailsApplication.mainContext.getBean("sbmlService", ISbmlService.class)
+        boolean result = sbmlService.addModellingApproachAsAnnotation(revisionTC, approach)
+    }
 }

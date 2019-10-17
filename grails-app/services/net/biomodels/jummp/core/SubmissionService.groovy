@@ -87,14 +87,13 @@ class SubmissionService {
      */
     transient SessionFactory sessionFactory
 
-    /*
+    /**
      * Abstract state machine strategy, to be extended by the two concrete
      * strategy implementations
      */
 
     @CompileStatic
     abstract class StateMachineStrategy {
-
         /**
          * Load existing objects associated with the model in working into the application cache,
          * called workingMemory before the upload (i.e. new submission and update) process is into gear.
@@ -359,6 +358,10 @@ class SubmissionService {
                 revision.model.otherInfo = workingMemory.get("other_info")
             }
 
+            // add MAMO term representing the modelling approach into the SBML file if it was not added to model
+            // level annotations
+            addModellingApproachAsAnnotation(revision, approach)
+
             // update model format
             final long fmtId = workingMemory.get("model_format")
             if (fmtId != revision.format.id) {
@@ -373,6 +376,19 @@ class SubmissionService {
             }
         }
 
+        /**
+         * Add a modelling approach as an annotation to the main file.
+         * By this time, we only support for SBML models.
+         *
+         * TODO: we should delegate this call to a format specific service instead of ModelService
+         */
+        @Profiled(tag = "submissionService.addModellingApproachAsAnnotation")
+        @TypeChecked(TypeCheckingMode.SKIP)
+        protected void addModellingApproachAsAnnotation(RTC revisionTC, ModellingApproach approach) {
+            if (revisionTC.format.identifier == "SBML") {
+                modelService.addModellingApproachAsAnnotation(revisionTC, approach)
+            }
+        }
         protected String getModelNameFromFiles(List<File> mainFiles) {
             StringBuilder name = new StringBuilder()
             boolean first = true
