@@ -365,6 +365,7 @@ class SubmissionService {
                 // the model format has been changed by the user
                 MFTC formatTC = new ModelFormatAdapter(format: ModelFormat.get(fmtId)).toCommandObject()
                 revision.format = formatTC
+                revision.model.format = revision.model.format
             }
             // TODO: check that 'Original code *' is the currently chosen value. If not, don't do the statement below
             if (workingMemory.get("readme_submission")) {

@@ -823,7 +823,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         final User currentUser = User.findByUsername(springSecurityService.authentication.name)
         final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
         Model model = getModel(PERENNIAL_ID)
-        final String formatVersion = modelFileFormatService.getFormatVersion(rev)
+        final String formatVersion = rev.format.formatVersion ?: modelFileFormatService.getFormatVersion(rev)
         Revision revision = new Revision(model: model, name: rev.name, description: rev.description,
                     comment: rev.comment, uploadDate: new Date(), owner: currentUser,
                     validated: rev.validated, curationState: rev.curationState, minorRevision: rev.minorRevision,
