@@ -12,6 +12,10 @@
     if (!params.sort) {
         params.sort = "relevance-desc"
     }
+    def domain = params.domain
+    if (!domain) {
+        domain = "biomodels"
+    }
     String queryString = params.query?.replaceAll('([^\\\\])"', '$1\\\\"')
 %>
 <div class="content">
@@ -26,7 +30,7 @@
             <div class="small-12 medium-12 large-6 columns">
                 <g:render template="/templates/pageSize"
                           model="[resultOptions: resultOptions, length: length,
-                                  action: action, query: query]"/>
+                                  action: action, query: query, domain: domain]"/>
             </div>
         </div>
         <div class="row">
@@ -246,6 +250,7 @@
                     pagedParams = [offset: 0, numResults: length, sort: params.sort]
                     if (query) {
                         pagedParams["query"] = query
+                        pagedParams["domain"] = params.domain
                     }
                 %>
                 <a href="${createLink(controller: 'search', action: action, params: pagedParams)}">First</a>
@@ -262,6 +267,7 @@
                     pagedParams = [offset: modelStart - length - 1, numResults: length, sort: params.sort]
                     if (query) {
                         pagedParams["query"] = query
+                        pagedParams["domain"] = params.domain
                     }
                 %>
                 <a href="${createLink(controller: 'search', action: action, params: pagedParams)}">
@@ -286,6 +292,7 @@
                             pagedParams = [offset: (i - 1) * length, numResults: length, sort: params.sort]
                             if (query) {
                                 pagedParams["query"] = query
+                                pagedParams["domain"] = params.domain
                             }
                         %>
                         <a href="${createLink(controller: 'search', action: action, params: pagedParams)}">
@@ -303,6 +310,7 @@
                     pagedParams = [offset: modelStart + length - 1, numResults: length, sort: params.sort]
                     if (query) {
                         pagedParams["query"] = query
+                        pagedParams["domain"] = params.domain
                     }
                 %>
                 <a href="${createLink(controller: 'search', action: action, params: pagedParams)}">
@@ -315,6 +323,7 @@
                     pagedParams = [offset: length * (numPages - 1), numResults: length, sort: params.sort]
                     if (query) {
                         pagedParams["query"] = query
+                        pagedParams["domain"] = params.domain
                     }
                 %>
                 <a href="${createLink(controller: 'search', action: action, params: pagedParams)}">Last</a>
@@ -326,6 +335,6 @@
         </div>
     </g:if>
     <g:else>
-        <g:render template="/templates/searchNotFound" />
+        <g:render template="/templates/searchNotFound" model="[params: params]"/>
     </g:else>
 </div>

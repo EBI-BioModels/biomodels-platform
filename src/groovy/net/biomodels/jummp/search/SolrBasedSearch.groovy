@@ -363,7 +363,8 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
      **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="searchService.searchModels")
-    SearchResponse searchModels(String query, SortOrder sortOrder, Map<String, Integer> paginationCriteria) {
+    SearchResponse searchModels(String query, String domain, SortOrder sortOrder, Map<String, Integer>
+        paginationCriteria) {
         //solrServerHolder.init()
         long start = System.currentTimeMillis()
         SolrDocumentList results = search(query)
