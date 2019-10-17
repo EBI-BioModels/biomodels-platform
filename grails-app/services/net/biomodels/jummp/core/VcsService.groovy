@@ -126,7 +126,8 @@ class VcsService implements InitializingBean {
 
         String root = fileSystemService.root
         final File MODEL_FOLDER = new File(root, model.vcsIdentifier)
-        return vcsManager.updateModel(MODEL_FOLDER, files, null, "Imported model at ${new Date().toGMTString()}")
+        final String commitMessage = "Imported model at ${new Date().format("dd-MM-yyyy'T'HH-mm-ss-SSS")}"
+        return vcsManager.updateModel(MODEL_FOLDER, files, null, commitMessage)
     }
 
     /**
