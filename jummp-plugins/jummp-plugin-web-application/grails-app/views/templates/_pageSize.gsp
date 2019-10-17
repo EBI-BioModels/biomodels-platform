@@ -9,6 +9,7 @@
                     Map customParams = [offset: 0, numResults: it, sort: params.sort]
                     if (action == 'search') {
                         customParams['query'] = query
+                        customParams['domain'] = domain
                     }
                 %>
                 <a href="${createLink(controller: 'search', action: action,

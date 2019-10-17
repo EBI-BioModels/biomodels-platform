@@ -34,20 +34,21 @@
     <meta name="layout" content="${session['branding.style']}/main" />
     <title>OmicsDI Settings</title>
     <style>
-        .editor {
-            margin-left: 10px;
-            width: 900px;
-        }
         #schemaXmlContent {
             resize: both;
         }
     </style>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.8/css/select2.min.css"
+          rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.8/js/select2.min.js"></script>
 </head>
 
 <body>
-    <div>
-    <h1>OmicsDI Settings</h1>
-    <g:render template="/templates/settings" />
+    <div class="row">
+        <div class="small-12 medium-12 large-12 columns">
+            <h2>OmicsDI Export Settings</h2>
+            <g:render template="/templates/settings" />
+        </div>
     </div>
 </body>
 </html>

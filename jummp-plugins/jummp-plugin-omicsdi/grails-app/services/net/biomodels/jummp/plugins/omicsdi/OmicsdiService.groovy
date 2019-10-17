@@ -31,7 +31,7 @@ import org.perf4j.aop.Profiled
 /**
  * @short Omicsdi class for managing OmicsDI's settings
  *
- * This class provides means of handling functionalities for searching models based on OmicsDI's API.
+ * This class provides means of handling functionality for searching models based on OmicsDI's API.
  * It accesses the database and get essential data that are included into XML files.
  * Otherwise, we implement the methods configuring OmicsDI API.
  *
@@ -69,7 +69,7 @@ class OmicsdiService {
         return GRAILS_CONF_LOCATION.concat("/").concat(OMICSDI_CONFIG_LOCATION)
     }
 
-    void exportOmicsdiEntries(def options) {
+    File saveOmicsdiExportSettings(def options) {
         def dsConfig = grailsApplication.config.dataSource
         String searchStrategy = grailsApplication.config.jummp.search.strategy
         String exportFolder = grailsApplication.config.jummp.search.exportFolder
@@ -94,7 +94,13 @@ class OmicsdiService {
             'options': options)
         File indexingData = new File(exportFolder, "omicsdiSettings.json")
         indexingData.setText(builder.toPrettyString())
+        return indexingData
+    }
+
+    void exportOmicsdiEntries(def options) {
+        File indexingData = saveOmicsdiExportSettings(options)
         String jarJummpIndexerPath = grailsApplication.config.jummp.search.pathToIndexerExecutable
+
         def argsMap = [jarPath: jarJummpIndexerPath, jsonPath: indexingData.getCanonicalPath(), omicsdi: "OmicsDIXml"]
 
         String httpProxy = System.getProperty("http.proxyHost")

@@ -8,11 +8,12 @@
         <p>You might need to:</p>
         <ul>
             <g:if test="${action == "search"}">
+                <li>Check the syntax of your query.</li>
                 <li><a href="${g.createLink(controller: "login", action: "auth")}">Log in</a> with your username
                 and password if you're trying to access an unpublished model.</li></g:if>
-            <li>Check the syntax of your query.</li>
-            <li><a onclick="window.history.back()">Go back to the previous page.</a></li></ul>
+                <li><a onclick="window.history.back()">Go back to the previous page.</a></li></ul>
         <script>
+            $('#local-searchbox').val("${params.query}");
             $('#clearsearch').hide();
         </script>
     </div>
