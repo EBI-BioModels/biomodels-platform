@@ -389,6 +389,15 @@ class SubmissionService {
                 modelService.addModellingApproachAsAnnotation(revisionTC, approach)
             }
         }
+
+        /**
+         * Get the model name from uploading files
+         *
+         * @param mainFiles All of the uploading files
+         * @return  a string representing the file name as model name
+         */
+        @Profiled(tag = "submissionService.getModelNameFromFiles")
+        @TypeChecked(TypeCheckingMode.SKIP)
         protected String getModelNameFromFiles(List<File> mainFiles) {
             StringBuilder name = new StringBuilder()
             boolean first = true
@@ -402,6 +411,14 @@ class SubmissionService {
             return name.toString()
         }
 
+        /**
+         * Get the model description from files uploading
+         *
+         * @param allFiles
+         * @return
+         */
+        @Profiled(tag = "submissionService.getModelDescriptionFromFiles")
+        @TypeChecked(TypeCheckingMode.SKIP)
         protected String getModelDescriptionFromFiles(List<File> allFiles) {
             StringBuilder desc = new StringBuilder("Model comprised of files: ")
             String fileNames = allFiles.collect { File it -> it.name }.join(', ')
@@ -539,8 +556,8 @@ class SubmissionService {
          *
          * @param workingMemory a Map containing all objects exchanged throughout the flow.
          */
-        @TypeChecked(TypeCheckingMode.SKIP)
         @Profiled(tag = "submissionService.handleSubmission")
+        @TypeChecked(TypeCheckingMode.SKIP)
         HashSet<String> handleSubmission(Map<String, Object> workingMemory) {
             HashSet<String> retval
             try {
@@ -569,8 +586,9 @@ class SubmissionService {
             try {
                 List<RFTC> repoFiles = getRepFiles(workingMemory)
                 File parent = null
-                repoFiles?.each { RFTC it ->
-                    File deleteMe = new File(it.path)
+                repoFiles?.each { Object it ->
+                    RFTC rfTC = it as RFTC
+                    File deleteMe = new File(rfTC.path as String)
                     if (!parent) {
                         parent = deleteMe.getParentFile()
                     }
@@ -1055,7 +1073,8 @@ class SubmissionService {
             //only for testing, remove and throw exception perhaps!
         }
         if (filterMain) {
-            repFiles = repFiles.findAll { RFTC it -> it.mainFile } //filter out non-main files
+            /* filter out non-main files */
+            repFiles = repFiles.findAll { RFTC it -> it.mainFile }
         }
         return getFilesFromRepFiles(repFiles.toList())
     }
