@@ -350,8 +350,7 @@ class SubmissionService {
         protected void storeReadmeInfo(RTC revision, Map<String, Object> workingMemory) {
             // update modelling approach
             String modellingApproach = workingMemory.get("modelling_approach")
-            String accession = modellingApproach.substring(0, modellingApproach.indexOf(":"))
-            ModellingApproach approach = ModellingApproach.findByAccession(accession)
+            ModellingApproach approach = ModellingApproach.findByName(modellingApproach)
             revision.model.modellingApproach = approach
 
             if (workingMemory.get("other_info")) {
@@ -470,7 +469,7 @@ class SubmissionService {
             // Otherwise, it will be extracted from the model file.
             if (!workingMemory.get("modelling_approach")) {
                 ModellingApproach approach = modelFileFormatService.extractModellingApproachFromFiles(revision)
-                String modellingApproach = approach ? "$approach.accession: $approach.name" : ""
+                String modellingApproach = approach ? approach.name : ""
                 workingMemory.put("modelling_approach", modellingApproach)
             }
             updateRevisionFromFiles(workingMemory)

@@ -255,8 +255,8 @@ class MetadataDelegateService implements IMetadataService {
     }
 
     @Override
-    ModellingApproach getModellingApproach(String accession) {
-        metadataService.getModellingApproach(accession)
+    ModellingApproach getModellingApproach(String name) {
+        metadataService.getModellingApproach(name)
     }
 
     @Override

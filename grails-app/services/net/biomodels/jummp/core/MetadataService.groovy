@@ -381,8 +381,8 @@ class MetadataService {
         return result
     }
 
-    ModellingApproach getModellingApproach(String accession) {
-        ModellingApproach.findByAccession(accession)
+    ModellingApproach getModellingApproach(String name) {
+        ModellingApproach.findByName(name)
     }
 
     /*

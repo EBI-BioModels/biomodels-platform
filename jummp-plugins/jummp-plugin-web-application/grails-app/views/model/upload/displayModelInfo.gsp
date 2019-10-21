@@ -46,15 +46,12 @@
                     <g:if test="${workingMemory['model_type']}">
                     </g:if>
                     <%
-                        String fmtStr
                         Integer selectedValue
                         ModelFormatTransportCommand format = workingMemory['model_type']
                         if (format) {
                             String fmtVersion = format.formatVersion != "*" ? format.formatVersion : ""
-                            fmtStr = "${format.name} ${fmtVersion}"
                             selectedValue = format.id
                         } else {
-                            fmtStr = 'Original code *'
                             selectedValue = ModelFormat.findByName("UNKNOWN")?.id
                         }
                         String readmeSubmission = workingMemory['readme_submission']
@@ -164,13 +161,12 @@
                         let label = ui.item.label;
                         $(this).val(label);   // display the selected text
                         let id = ui.item.id; // selected value
-                        let accession = label.substring(0, label.indexOf(":"));
                         $.ajax({
                             url: $.jummp.createLink('model', 'searchModellingApproach'),
                             type: 'POST',
                             data: {
                                 id: id,
-                                accession: accession,
+                                name: label,
                                 request: 2
                             },
                             dataType: 'json',
@@ -201,7 +197,7 @@
             function handleShowOrHideModellingApproachExtraInfo(selector) {
                 let element = $('#model_other_info_div');
                 let updatedVal = $(selector).val();
-                let comparableVal = 'OTHER: Other';
+                let comparableVal = 'Other';
                 showOrHideBox(element, updatedVal, comparableVal);
             }
 

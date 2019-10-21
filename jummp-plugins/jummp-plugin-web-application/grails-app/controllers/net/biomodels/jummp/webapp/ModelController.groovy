@@ -657,7 +657,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     RevisionTransportCommand latest = modelDelegateService.getLatestRevision(model_id, false)
                     flow.workingMemory.put("LastRevision", latest)
                     ModellingApproach approach = latest.model.modellingApproach
-                    String modellingApproach = approach ? "${approach.accession}: ${approach.name}" : ""
+                    String modellingApproach = approach ? approach.name : ""
                     flow.workingMemory.put("modelling_approach", modellingApproach)
                     flow.workingMemory.put("other_info", latest.model.otherInfo ?: "")
                     /* Maintain reference to the previous revision in session
@@ -1430,13 +1430,13 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                 long id = approach[0]
                 String accession = approach[1]
                 String name = approach[2]
-                //String resource = approach[3]
-                String label = "$accession: $name"
-                approaches << [value: id, label: label]
+                String resource = approach[3]
+                String label = name
+                approaches << [id: id, name: name, resource: resource, value: id, label: label]
             }
             render(approaches as JSON)
         } else {
-            String approach = params.get("accession")
+            String approach = params.get("name")
             ModellingApproach modellingApproach = metadataDelegateService.getModellingApproach(approach)
             render([modellingApproach] as JSON)
         }
