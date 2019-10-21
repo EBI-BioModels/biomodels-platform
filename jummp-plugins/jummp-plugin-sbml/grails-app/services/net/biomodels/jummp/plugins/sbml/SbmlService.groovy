@@ -1161,10 +1161,19 @@ the user has attempted to update an blank value for the name attribute.""")
             List<List<String>> mamoTerms = []
             filters.each { filter ->
                 CVTerm cvTerm = new CVTerm(filter)
-                mamoTerms.add(cvTerm.filterResources("MAMO", "mamo"))
+                List<String> resources = cvTerm.filterResources("MAMO", "mamo")
+                if (resources.size()) {
+                    mamoTerms.add(resources)
+                }
             }
-            def first = mamoTerms.first()[0]
+            def first = mamoTerms.find { it.size() } [0]
+            if (!first) {
+                return null
+            }
             String[] parts = first?.split("/mamo/")
+            if (!parts[0]) {
+                return null
+            }
             ModellingApproach approach = ModellingApproach.findByResourceOrAccession(first, parts[1])
             return approach
         }
