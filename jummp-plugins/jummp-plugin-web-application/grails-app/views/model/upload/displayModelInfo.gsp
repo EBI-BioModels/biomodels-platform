@@ -39,7 +39,6 @@
         <h2><g:message code="submission.biomodels.model.information.heading" locale="${Locale.getDefault()}"/></h2>
         <p><g:message code="submission.biomodels.model.information.explanation" locale="${Locale.getDefault()}"/></p>
         <g:form>
-        <div class="small-12 medium-12 columns">
             <div class="row">
                 <div class="small-12 medium-6 large-6 columns">
                     <label for="model_format" class="required">Model Format</label>
@@ -81,9 +80,10 @@
                                  value="${otherInfo}"
                                  placeholder="Please enter here what is your modelling approach"/></div>
                 </div>
-                </div>
             </div>
 
+            <div class="row">
+            <div class="small-12 medium-12 large-12 columns">
             <label for="name" class="required">Name</label>
             <g:if test="${workingMemory['new_name']}">
                 <g:textField id="name" name="name" required=""
@@ -109,7 +109,7 @@
                             value='${(workingMemory.get("RevisionTC") as RevisionTransportCommand).description}'
                             placeholder="Enter a brief description for your model revision, for example: what are the  differences to the previous ones"/>
             </g:else>
-
+            </div></div>
             <input type='hidden' value='false' name='changed' id="changeStatus"/>
             <div class="buttons">
                 <g:submitButton name="Cancel" class="button" value="Abort" />
