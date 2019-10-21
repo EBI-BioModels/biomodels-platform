@@ -211,7 +211,7 @@
             }
 
             function showOrHideBox(element, selectedText, comparableText) {
-                if (selectedText === comparableText) {
+                if (selectedText.toLowerCase() === comparableText.toLowerCase()) {
                     $(element).removeAttr("style").show();
                 } else {
                     $(element).hide();
