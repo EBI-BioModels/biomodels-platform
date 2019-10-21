@@ -1166,7 +1166,10 @@ the user has attempted to update an blank value for the name attribute.""")
                     mamoTerms.add(resources)
                 }
             }
-            def first = mamoTerms.find { it.size() } [0]
+            if (mamoTerms == null || mamoTerms?.isEmpty()) {
+                return null
+            }
+            def first = mamoTerms?.find { it != null || !it?.isEmpty() }
             if (!first) {
                 return null
             }
