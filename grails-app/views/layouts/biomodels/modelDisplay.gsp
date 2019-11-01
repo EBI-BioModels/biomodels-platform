@@ -589,8 +589,16 @@
                         <div class="small-12 medium-8 large-8 columns">
                             <div class="row">
                                 <div class="small-12 medium-2 large-2 columns">
+                                    <span class="overview-tab-attribute">Model Identifier</span>
+                                </div>
+                                <div class="small-12 medium-10 large-10 columns">
+                                    ${revision.modelIdentifier()}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="small-12 medium-2 large-2 columns">
                                     <jummp:displayModelDescriptionLabel>
-                                        <span style="font-weight: bold; color: rgb(0,124,130)">${description}</span>
+                                        <span class="overview-tab-attribute">${description}</span>
                                     </jummp:displayModelDescriptionLabel>
                                 </div>
                                 <div class="small-12 medium-10 large-10 columns">
@@ -612,7 +620,7 @@
                             </div>
                             <div class="row">
                                 <div class="small-12 medium-2 large-2 columns">
-                                    <span style="font-weight: bold; color: rgb(0,124,130)"><g:message code="model.model.format"/></span>
+                                    <span class="overview-tab-attribute"><g:message code="model.model.format"/></span>
                                 </div>
                                 <div class="small-12 medium-10 large-10 columns">
                                     ${revision.format.name}
@@ -625,7 +633,7 @@
                             %>
                             <div class="row">
                             <div class="small-12 medium-2 large-2 columns">
-                                <span style="font-weight: bold; color: rgb(0,124,130)"><g:message code="model.model.publication"/></span>
+                                <span class="overview-tab-attribute"><g:message code="model.model.publication"/></span>
                             </div>
                             <div class="small-12 medium-10 large-10 columns">
                                 <g:render  model="[model:model]" template="/templates/showPublication" />
@@ -634,7 +642,7 @@
                             </g:if>
                             <div class="row">
                                 <div class="small-12 medium-2 large-2 columns">
-                                    <span style="font-weight: bold; color: rgb(0,124,130)"><g:message code="model.model.authors"/></span>
+                                    <span class="overview-tab-attribute"><g:message code="model.model.authors"/></span>
                                 </div>
                                 <div class="small-12 medium-10 large-10 columns">
                                     <g:join in="${authors}"/>
