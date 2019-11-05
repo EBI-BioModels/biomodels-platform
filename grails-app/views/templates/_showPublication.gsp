@@ -1,3 +1,4 @@
+<%@ page import="net.biomodels.jummp.model.PublicationLinkProvider" %>
 <%--
  Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
  Deutsches Krebsforschungszentrum (DKFZ)
@@ -24,9 +25,17 @@
 
 
 
+<%
+    String publicationLinkLabel = ""
+    if (model.publication.link) {
+        publicationLinkLabel = ", ${model.publication.linkProvider.linkType}: ${model.publication.link}"
+    }
+    String publicationLink = ""
+    String identifiersPrefix = model.publication.linkProvider.identifiersPrefix
 
+    publicationLink = identifiersPrefix ? "$identifiersPrefix$model.publication.link" : model.publication.link
 
-
+%>
 <g:if test="${model.publication}">
 	<div>
 		<style>
@@ -35,7 +44,7 @@
     	<ul style="list-style-type: none;margin: 0px;padding:0px;">
 		<li><a title="View publication - this will open an external site"
                class="publicationLink"
-               href="${model.publication.linkProvider.identifiersPrefix?model.publication.linkProvider.identifiersPrefix+model.publication.link:model.publication.link}">
+               href="${publicationLink}">
 			<b>${model.publication.title}</b></a>
             <a class="expander" title="Click to see more" href="#">
                 <span>
@@ -45,7 +54,8 @@
             </a>
             <g:if test="${canUpdate}">
             &nbsp;
-            <a href="${createLink(controller: "publication", action: "show", id: model.publication.id)}" class="button" style="color: white">Edit</a></g:if>
+            <a href="${createLink(controller: "publication", action: "show", id: model.publication.id)}"
+               class="button" style="color: white">Edit</a></g:if>
         </li>
 		<li>${model.publication.authors.collect{"${it.userRealName}"}.join(", ")}</li>
     	<li><i>${model.publication.journal}</i>
@@ -53,7 +63,9 @@
             ${model.publication.year?"${model.publication.year}":""}
             ${model.publication.volume?", Volume ${model.publication.volume}":""}
             ${model.publication.issue?", Issue ${model.publication.issue}":""}
-            ${model.publication.pages?", pages: ${model.publication.pages}":""}</li>
+            ${model.publication.pages?", pages: ${model.publication.pages}":""}
+            ${publicationLinkLabel}
+        </li>
  		<div class="hiddenContent">
  			<g:if test="${model.publication.affiliation}">
  				<li><label>Affiliation: </label> ${model.publication.affiliation}</li>

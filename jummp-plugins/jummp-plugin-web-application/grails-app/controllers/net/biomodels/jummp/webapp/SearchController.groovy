@@ -37,12 +37,14 @@ import groovy.json.JsonBuilder
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.model.ModelListSorting
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.search.OrderedFacet
 import net.biomodels.jummp.search.SearchResponse
 import net.biomodels.jummp.search.SortOrder
 import net.biomodels.jummp.webapp.rest.search.BrowseResults
 import net.biomodels.jummp.webapp.rest.search.SearchResults
+import org.weceem.security.AccessDeniedException
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Facet
 
 @Secured(['IS_AUTHENTICATED_FULLY'])
@@ -199,6 +201,37 @@ Search terms: ${params.query}, requested from: ${clientIPAddress} under the form
     @Secured(['ROLE_ADMIN'])
     def regen() {
         render(view: "regen")
+    }
+
+    @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
+    def reindex() {
+        def models = params.models.split(",")
+        Map<String, String> msgMap = [:]
+        models.each { String model ->
+            String message = ""
+            model = model.trim()
+            if (model == null) {
+                // show reindex view to provide an interface for users
+                // where entering model revision
+                message = "Please enter the identifiers of the models you want to re-index"
+            } else  {
+                // show reindex view and
+                // display the successful message about reindexing the model revision
+                RTC revision = null
+                try {
+                    revision = modelDelegateService.getRevisionFromParams(model)
+                } catch (org.springframework.security.access.AccessDeniedException ade) {
+                    message = "Unable to access the model $model"
+                }
+                if (revision) {
+                    String modelIdentifier = revision.identifier()
+                    searchService.updateIndex(revision)
+                    message = "Started re-indexing the model $modelIdentifier"
+                }
+            }
+            msgMap[model] = message
+        }
+        [msgMap: msgMap]
     }
 
     @Secured(['ROLE_ADMIN'])
