@@ -58,6 +58,11 @@
                             newQuery = selectedFacet
                         }
                         def newParams = [:]
+                        if (params.domain) {
+                            newParams['domain'] = params.domain
+                        } else {
+                            newParams['domain'] = 'biomodels'
+                        }
                         if (params.query) {
                             newParams["query"] = newQuery
                         } else {
@@ -104,47 +109,47 @@
 <script src="//cdnjs.cloudflare.com/ajax/libs/list.js/1.5.0/list.min.js"></script>
 
 <g:javascript>
-    var options = {
+    let options = {
         valueNames: ['facetLabel'] // add css classes associated with the elements that you want to search in
     };
-    var facetList = [];
+    let facetList = [];
     for (i = 0; i< ${listOfFacets.size()}; i++) {
         facetList[i] = new List('facetList'+i, options);
     };
 
     function runFacetSearch(e, facetGroupId, facetValue) {
-        var newSearchURI = "${grailsApplication.config.grails.serverURL}/search?query="
-        var isNeededDQ = "${FACETS_WRAPPED_DOUBLE_QUOTE}".indexOf(facetGroupId) > -1
+        let newSearchURI = "${grailsApplication.config.grails.serverURL}/search?query="
+        let isNeededDQ = "${FACETS_WRAPPED_DOUBLE_QUOTE}".indexOf(facetGroupId) > -1
         if (isNeededDQ) {
             facetValue = '"' + facetValue + '"';
         }
-        var lastQueryString = " AND " + facetGroupId + ":" + facetValue;
-        var currentQuery = "${params.query}";
+        let lastQueryString = " AND " + facetGroupId + ":" + facetValue;
+        let currentQuery = "${params.query}";
         if (e[0].checked) {
             currentQuery += lastQueryString;
         } else {
             // remove the search term out the query string, update newSearchURI
             currentQuery = currentQuery.replace(lastQueryString, "")
         }
-        var otherParams = "";
+        let otherParams = "domain=${params.domain}";
         if ("${params.offset}") {
-            otherParams += "&amp;offset=${params.offset}";
+            otherParams += "&offset=${params.offset}";
         }
         if ("${params.numResults}") {
-            otherParams += "&amp;numResults=${params.numResults}";
+            otherParams += "&numResults=${params.numResults}";
         }
         if ("${params.sort}") {
-            otherParams += "&amp;sort=${params.sort}";
+            otherParams += "&sort=${params.sort}";
         }
-        newSearchURI += encodeURIComponent(currentQuery) + otherParams;
+        newSearchURI += encodeURIComponent(currentQuery) + "&" + otherParams;
         window.location.href = newSearchURI;
     }
 
     function runFacetList(e, facetGroupId, facetValue) {
-        var currentQueryString = "${params.query?.replaceAll('"', '\\\\"')}";
+        let currentQueryString = "${params.query?.replaceAll('"', '\\\\"')}";
         facetValue = escapeSpecialLuceneCharacters(facetValue);
         /* the above utility function is defined in common.js which is already included in the footer section */
-        var latestQueryString = facetGroupId + ":" + facetValue;
+        let latestQueryString = facetGroupId + ":" + facetValue;
         if (e[0].checked) {
             // choose and click on a single facet
             if (currentQueryString === "") {
@@ -165,7 +170,7 @@
             // why don't we need to check empty of the currentQueryString?
             currentQueryString = currentQueryString.replace(latestQueryString, "");
         }
-        var otherParams = "";
+        let otherParams = "domain=${params.domain}";
         if ("${params.offset}") {
             otherParams += "&amp;offset=${params.offset}";
         }
@@ -175,9 +180,9 @@
         if ("${params.sort}") {
             otherParams += "&amp;sort=${params.sort}";
         }
-        var newSearchURL = "${grailsApplication.config.grails.serverURL}/models"
+        let newSearchURL = "${grailsApplication.config.grails.serverURL}/models"
         currentQueryString = encodeURIComponent(currentQueryString);
-        var newParams = "?";
+        let newParams = "?";
         if (currentQueryString) {
             newParams += "query=" + currentQueryString + otherParams;
         } else {

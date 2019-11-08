@@ -1,5 +1,5 @@
 <%--
- Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
  Deutsches Krebsforschungszentrum (DKFZ)
 
  This file is part of Jummp.
@@ -17,38 +17,25 @@
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
-
-
-
-
-
-
-
-
-
+<%--
+  Created by IntelliJ IDEA.
+  User: nvntung@gmail.com
+  Date: 2019-10-31
+  Time: 23:10
+--%>
 
 <%@ page contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <meta name="layout" content="${session['branding.style']}/main" />
-    <title>OmicsDI Settings</title>
-    <style>
-        #schemaXmlContent {
-            resize: both;
-        }
-    </style>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.8/css/select2.min.css"
-          rel="stylesheet" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.8/js/select2.min.js"></script>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="layout" content="${grailsApplication.config.jummp.branding.style}/main"/>
+    <title>Reindex model | BioModels</title>
 </head>
 
 <body>
-    <div class="row">
-        <div class="small-12 medium-12 large-12 columns">
-            <h2>OmicsDI Export Settings</h2>
-            <g:render template="/templates/settings" />
-        </div>
-    </div>
+    <h2>Indexing model(s)</h2>
+    <g:each in="${msgMap}" var="model">
+        <h4>${model.value}</h4>
+    </g:each>
 </body>
 </html>
