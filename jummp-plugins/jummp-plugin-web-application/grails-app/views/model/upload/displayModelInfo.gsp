@@ -67,9 +67,14 @@
                 <div class="small-12 medium-6 large-6 columns">
                     <label for="modelling_approach" class="required">Modelling Approach</label>
                     <g:textField name="modelling_approach" id="modelling_approach" value="${modellingApproach}"
-                                 placeholder="Enter your modelling approach"/>
+                                 placeholder="Enter your modelling approach"
+                                 aria-describedby="modellingApproachHelp"/>
+                    <p class="help-text" id="modellingApproachHelp">Find the appropriate one by typing a few more
+                first characters of your words. The system will suggest you our defined modelling approaches. If you
+                are not sure your modelling approach, please type Other for now.</p>
+
                     <div id="model_other_info_div" style="display: none">
-                    <label for="readme_submission" class="required">Describe more exactly your model format</label>
+                    <label for="other_info" class="required">Describe more exactly your modelling approach</label>
                     <g:textField name="other_info" id="other_info"
                                  value="${otherInfo}"
                                  placeholder="Please enter here what is your modelling approach"/></div>
