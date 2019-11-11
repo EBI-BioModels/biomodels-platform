@@ -144,7 +144,7 @@
                             dataType: 'json',
                             data: {
                                 search: request.term,
-                                request: 1
+                                request: ${net.biomodels.jummp.webapp.RequestType.SEARCH_TERMS}
                             },
                             success: function (data) {
                                 response(data);
@@ -161,7 +161,7 @@
                             data: {
                                 id: id,
                                 name: label,
-                                request: 2
+                                request: ${net.biomodels.jummp.webapp.RequestType.SELECT_VALUE}
                             },
                             dataType: 'json',
                             success: function (response) {

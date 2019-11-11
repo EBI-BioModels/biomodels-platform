@@ -1423,7 +1423,7 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
     def searchModellingApproach() {
         Integer request = params.getInt("request")
         String searchTerm = params.get("search")
-        if (request == 1) {
+        if (request == RequestType.SEARCH_TERMS) {
             List modellingApproaches = metadataDelegateService.searchModellingApproach(searchTerm)
             List approaches = []
             modellingApproaches.each { approach ->
@@ -1435,10 +1435,15 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                 approaches << [id: id, name: name, resource: resource, value: id, label: label]
             }
             render(approaches as JSON)
-        } else {
+        } else if (request == RequestType.SELECT_VALUE) {
             String approach = params.get("name")
             ModellingApproach modellingApproach = metadataDelegateService.getModellingApproach(approach)
             render([modellingApproach] as JSON)
+        } else {
+            String message = """\
+Please type a few first characters of your thinking words or select a modelling 
+approach from the list of suggested values"""
+            render([message: message] as JSON)
         }
 
     }
