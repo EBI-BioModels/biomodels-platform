@@ -66,7 +66,7 @@
                 <input type="text" name="search_block_form" id="local-searchbox"
                    placeholder="Search..." class="input-group-field search_box_style clearable"
                    title="Search"
-                   tabindex="1" minlength="100">
+                   tabindex="1" style="width: 100%;">
             <p id="example">
                 Examples:
                 <g:link controller="search" action="search"
