@@ -45,25 +45,19 @@
                     <g:if test="${workingMemory['model_type']}">
                     </g:if>
                     <%
-                        Integer selectedValue
+                        List modelFormatsSortedByName = workingMemory['sorted_model_formats']
                         ModelFormatTransportCommand format = workingMemory['model_type']
-                        if (format) {
-                            String fmtVersion = format.formatVersion != "*" ? format.formatVersion : ""
-                            selectedValue = format.id
-                        } else {
-                            selectedValue = ModelFormat.findByName("UNKNOWN")?.id
-                        }
+                        Integer selectedValue = format ? format.id : ModelFormat.findByName("UNKNOWN")?.id
                         String readmeSubmission = workingMemory['readme_submission']
                         String modellingApproach = workingMemory['modelling_approach']
                         String otherInfo = workingMemory['other_info']
                     %>
 
                     <g:select name="model_format" id="model_format" required=""
-                              from="${net.biomodels.jummp.model.ModelFormat.list().sort { it.name }}"
+                              from="${modelFormatsSortedByName}"
                               value="${selectedValue}"
                               optionKey="id"
-                              optionValue="${{it?.name + ' ' + it?.formatVersion}}"
-                               />
+                              optionValue="${{it?.name + ' ' + it?.formatVersion}}"/>
                     <div id="readme_submission_div" style="display: none">
                     <label for="readme_submission" class="required">Describe more exactly your model format</label>
                     <g:textField name="readme_submission" id="readme_submission"

@@ -31,6 +31,7 @@
 
 package net.biomodels.jummp.core
 
+import grails.plugin.cache.Cacheable
 import groovy.transform.CompileStatic
 import groovy.transform.TypeChecked
 import groovy.transform.TypeCheckingMode
@@ -100,7 +101,11 @@ class SubmissionService {
          *
          * @param workingMemory a Map containing all objects exchanged throughout the flow.
          */
-        abstract void initialise(Map<String, Object> workingMemory);
+        @Cacheable('sortedModelFormats')
+        void initialise(Map<String, Object> workingMemory) {
+            List<ModelFormat> sortedModelFormats = net.biomodels.jummp.model.ModelFormat.list().sort { it.name }
+            workingMemory.put("sorted_model_formats", sortedModelFormats)
+        }
         /**
          * The method allows filtering out the files being added and the ones will be deleted.
          * At the same time, the cache system, i.e. workingMemory, is also made up-to-date.
@@ -357,9 +362,11 @@ class SubmissionService {
                 revision.model.otherInfo = workingMemory.get("other_info")
             }
 
-            // add MAMO term representing the modelling approach into the SBML file if it was not added to model
-            // level annotations
-            addModellingApproachAsAnnotation(revision, approach)
+            // add MAMO term representing the modelling approach into the SBML file if the curators or the submitter
+            // has not added it to model level annotations yet
+            if (revision.format.identifier == "SBML") {
+                modelService.addModellingApproachAsAnnotation(revision, approach)
+            }
 
             // update model format
             final long fmtId = workingMemory.get("model_format")
@@ -372,20 +379,6 @@ class SubmissionService {
             // TODO: check that 'Original code *' is the currently chosen value. If not, don't do the statement below
             if (workingMemory.get("readme_submission")) {
                 revision.readmeSubmission = workingMemory.get("readme_submission")
-            }
-        }
-
-        /**
-         * Add a modelling approach as an annotation to the main file.
-         * By this time, we only support for SBML models.
-         *
-         * TODO: we should delegate this call to a format specific service instead of ModelService
-         */
-        @Profiled(tag = "submissionService.addModellingApproachAsAnnotation")
-        @TypeChecked(TypeCheckingMode.SKIP)
-        protected void addModellingApproachAsAnnotation(RTC revisionTC, ModellingApproach approach) {
-            if (revisionTC.format.identifier == "SBML") {
-                modelService.addModellingApproachAsAnnotation(revisionTC, approach)
             }
         }
 
@@ -656,7 +649,7 @@ class SubmissionService {
     @CompileStatic
     class InPlaceStateMachine extends StateMachineStrategy {
         void initialise(Map<String, Object> workingMemory) {
-
+            super.initialise(workingMemory)
         }
 
         void removeFromVCS(Map<String, Object> workingMemory, List<RFTC> filesToDelete) {
@@ -693,6 +686,7 @@ class SubmissionService {
          * @param workingMemory a Map containing all objects exchanged throughout the flow.
          */
         void initialise(Map<String, Object> workingMemory) {
+            super.initialise(workingMemory)
             def publication_objects_in_working = initialisePublicationMap()
             workingMemory.put("publication_objects_in_working", publication_objects_in_working)
         }
@@ -787,6 +781,7 @@ class SubmissionService {
          */
         @Profiled(tag = "submissionService.NewRevisionStateMachine.initialise")
         void initialise(Map<String, Object> workingMemory) {
+            super.initialise(workingMemory)
             // fetch files from repository, make RFTCs out of them
             RTC rev = workingMemory.get("LastRevision") as RTC
             List<RFTC> repFiles = rev.getFiles()

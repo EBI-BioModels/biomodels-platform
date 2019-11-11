@@ -377,6 +377,7 @@ class MetadataService {
                 ilike 'name', "%$searchTerm%"
                 ilike 'resource', "%$searchTerm%"
             }
+            cache(true)
         }
         return result
     }
