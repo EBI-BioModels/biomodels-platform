@@ -1169,11 +1169,11 @@ the user has attempted to update an blank value for the name attribute.""")
             if (mamoTerms == null || mamoTerms?.isEmpty()) {
                 return null
             }
-            def first = mamoTerms?.find { it != null || !it?.isEmpty() }
+            def first = mamoTerms.find { it != null || !it?.isEmpty() }
             if (!first) {
                 return null
             }
-            String[] parts = first?.split("/mamo/")
+            String[] parts = first[0].split("/mamo/")
             if (!parts[0]) {
                 return null
             }
