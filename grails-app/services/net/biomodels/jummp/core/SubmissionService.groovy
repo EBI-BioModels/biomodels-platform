@@ -102,10 +102,14 @@ class SubmissionService {
          * @param workingMemory a Map containing all objects exchanged throughout the flow.
          */
         @Cacheable('sortedModelFormats')
+        //@Cacheable('definedModellingApproaches') // should split it into two methods so as to apply cacheable
         void initialise(Map<String, Object> workingMemory) {
             List<ModelFormat> sortedModelFormats = net.biomodels.jummp.model.ModelFormat.list().sort { it.name }
             workingMemory.put("sorted_model_formats", sortedModelFormats)
+            List<ModellingApproach> definedModellingApproaches = ModellingApproach.list()
+            workingMemory.put("defined_modelling_approaches", definedModellingApproaches)
         }
+
         /**
          * The method allows filtering out the files being added and the ones will be deleted.
          * At the same time, the cache system, i.e. workingMemory, is also made up-to-date.

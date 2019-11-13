@@ -30,10 +30,29 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <%@ page import="net.biomodels.jummp.core.model.ModelFormatTransportCommand" %>
 <%@ page import="net.biomodels.jummp.core.model.RevisionTransportCommand" %>
+<%
+    List modelFormatsSortedByName = workingMemory['sorted_model_formats']
+    ModelFormatTransportCommand format = workingMemory['model_type']
+    Integer selectedValue = format ? format.id : ModelFormat.findByName("UNKNOWN")?.id
+    String readmeSubmission = workingMemory['readme_submission']
+    String modellingApproach = workingMemory['modelling_approach']
+    String otherInfo = workingMemory['other_info']
+    List definedModellingApproachNames = workingMemory['defined_modelling_approaches'].collect { it.name }
+%>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="layout" content="${session['branding.style']}/main" />
         <title>Model Information - Submission | BioModels</title>
+        <g:javascript>
+            let definedModellingApproachNames = [];
+            <g:each in="${definedModellingApproachNames}" var="name">
+                definedModellingApproachNames.push("${name}");
+            </g:each>
+            let definedModelFormatNames = [];
+            <g:each in="${modelFormatsSortedByName}" var="fmt">
+                definedModelFormatNames.push("${fmt?.name + ' ' + fmt?.formatVersion}");
+            </g:each>
+        </g:javascript>
     </head>
     <body>
         <h2><g:message code="submission.biomodels.model.information.heading" locale="${Locale.getDefault()}"/></h2>
@@ -44,15 +63,6 @@
                     <label for="model_format" class="required">Model Format</label>
                     <g:if test="${workingMemory['model_type']}">
                     </g:if>
-                    <%
-                        List modelFormatsSortedByName = workingMemory['sorted_model_formats']
-                        ModelFormatTransportCommand format = workingMemory['model_type']
-                        Integer selectedValue = format ? format.id : ModelFormat.findByName("UNKNOWN")?.id
-                        String readmeSubmission = workingMemory['readme_submission']
-                        String modellingApproach = workingMemory['modelling_approach']
-                        String otherInfo = workingMemory['other_info']
-                    %>
-
                     <g:select name="model_format" id="model_format" required=""
                               from="${modelFormatsSortedByName}"
                               value="${selectedValue}"
@@ -118,6 +128,22 @@
         </div>
         </g:form>
 
+        <!-- warning model popup -->
+
+        <div class="reveal" id="modellingApproachWarningPopup" data-reveal>
+            <h3 id="messageTitle"
+                style="border-bottom: 1px solid grey">Attention!</h3>
+            <button class="close-button" data-close aria-label="Close modal" type="button">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <div class="contact-panel" id="feedback_panel" data-toggler=".is-active">
+                <p class="lead">You have entered a value as your modelling approach which does not exist in our system.
+                Please check your spelling or try again. Otherwise, type 'Other' and enter what is your modelling
+                approach in the box below.</p>
+            </div>
+        </div>
+
+
         <g:javascript>
             function associateEventHandlers(id) {
                 let descBox = document.getElementById(id);
@@ -137,7 +163,7 @@
                 associateEventHandlers("description");
                 associateEventHandlers("name");
                 handleShowOrHideModelFormatExtraInfo($('#model_format'));
-                handleShowOrHideModellingApproachExtraInfo($('#modelling_approach'))
+                handleShowOrHideModellingApproachExtraInfo($('#modelling_approach'), false)
             });
 
             $('#modelling_approach').on('keydown', function () {
@@ -185,7 +211,7 @@
             });
 
             $('#modelling_approach').on('change', function () {
-                handleShowOrHideModellingApproachExtraInfo(this);
+                handleShowOrHideModellingApproachExtraInfo(this, true);
             });
 
             $('#model_format').on("change", function () {
@@ -193,11 +219,14 @@
             });
 
 
-            function handleShowOrHideModellingApproachExtraInfo(selector) {
+            function handleShowOrHideModellingApproachExtraInfo(selector, flag) {
                 let element = $('#model_other_info_div');
-                let updatedVal = $(selector).val();
+                let inputVal = $(selector).val();
                 let comparableVal = 'Other';
-                showOrHideBox(element, updatedVal, comparableVal);
+                if (flag) {
+                    showWarningMessageIfNecessary(inputVal, definedModellingApproachNames);
+                }
+                showOrHideBox(element, inputVal, comparableVal, definedModellingApproachNames);
             }
 
             function handleShowOrHideModelFormatExtraInfo(selector) {
@@ -206,11 +235,23 @@
                 let selectedFormat = $opt.val();
                 let selectedText = $opt.text();
                 let comparableText = 'Original code *';
-                showOrHideBox(element, selectedText, comparableText);
+                showOrHideBox(element, selectedText, comparableText, definedModelFormatNames);
+            }
+            
+            function showWarningMessageIfNecessary(inputVal, definedModellingApproachNames) {
+                inputVal = $.trim(inputVal);
+                let existed = $.inArray(inputVal, definedModellingApproachNames) >= 0;
+                if (!existed) {
+                    console.log("show dialog box");
+                    let popup = new Foundation.Reveal($('#modellingApproachWarningPopup'));
+                    popup.open();
+                }
             }
 
-            function showOrHideBox(element, selectedText, comparableText) {
-                if (selectedText.toLowerCase() === comparableText.toLowerCase()) {
+            function showOrHideBox(element, selectedText, comparableText, listOfDefinedValues) {
+                selectedText = $.trim(selectedText);
+                let existed = $.inArray(selectedText, listOfDefinedValues) >= 0;
+                if (selectedText.toLowerCase() === comparableText.toLowerCase() || !existed) {
                     $(element).removeAttr("style").show();
                 } else {
                     $(element).hide();
