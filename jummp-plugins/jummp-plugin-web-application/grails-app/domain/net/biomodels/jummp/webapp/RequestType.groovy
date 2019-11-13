@@ -28,11 +28,15 @@ enum RequestType {
     SEARCH_TERMS(1, "Search for a value"),
     SELECT_VALUE(2, "Select a certain value")
 
-    final int id
-    final String description
+    private final int id
+    private final String description
 
     RequestType(final int id, final String description) {
         this.id = id
         this.description = description
+    }
+
+    int getValue() {
+        id
     }
 }
