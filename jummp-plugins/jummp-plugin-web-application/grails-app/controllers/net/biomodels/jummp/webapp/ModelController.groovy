@@ -1012,12 +1012,12 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
             on("Continue") {
                 //populate modifications object with form data
                 Map<String,Object> modifications = new HashMap<String,Object>()
-                final String NAME = params.name
-                final String DESC = params.description
+                final String NAME = params.name.encodeAsHTML()
+                final String DESC = params.description.encodeAsHTML()
                 final String changeStatus = params.changed
-                final String modellingApproach = params.modelling_approach
-                final String readmeSubmission = params.readme_submission
-                final String otherInfo = params.other_info
+                final String modellingApproach = params.modelling_approach.encodeAsHTML()
+                final String readmeSubmission = params.readme_submission.encodeAsHTML()
+                final String otherInfo = params.other_info.encodeAsHTML()
                 final long modelFormat = params.getLong("model_format")
                 if (NAME && NAME.trim()) {
                     modifications.put("new_name", NAME.trim())
@@ -1418,7 +1418,7 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
      * label = MAMO accession: the friendly name
      * Example: MAMO_0000009: constraint-based model
      */
-    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    @Secured(['IS_AUTHENTICATED_FULLY'])
     @grails.transaction.Transactional
     def searchModellingApproach() {
         Integer request = params.getInt("request")
