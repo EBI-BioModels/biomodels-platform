@@ -136,7 +136,7 @@ class RevisionTransportCommand implements Serializable {
 
      String identifier() {
          final PERENNIAL_ID = model.publicationId ?: model.submissionId
-         String retVal = PERENNIAL_ID ? new StringBuffer(PERENNIAL_ID).append(".").append(revisionNumber).toString() : ""
+         String retVal = PERENNIAL_ID ? new StringBuffer(PERENNIAL_ID).append(".").append(revisionNumber).toString() : null
          return retVal
      }
 

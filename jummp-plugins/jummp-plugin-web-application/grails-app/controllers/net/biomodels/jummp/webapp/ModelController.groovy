@@ -1442,7 +1442,7 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
         } else {
             String message = """\
 Please type a few first characters of your thinking words or select a modelling 
-approach from the list of suggested values"""
+approach from the list of suggested values. Otherwise, type 'Other'"""
             render([message: message] as JSON)
         }
 

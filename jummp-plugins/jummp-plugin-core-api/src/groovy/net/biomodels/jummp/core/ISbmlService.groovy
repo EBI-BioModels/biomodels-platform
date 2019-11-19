@@ -322,6 +322,6 @@ interface ISbmlService {
     boolean addModelIdentifiersAsAnnotation(RevisionTransportCommand revision, String... identifiers)
             throws ModelException
 
-    void addModellingApproachAsAnnotation(RevisionTransportCommand revision, ModellingApproach approach) throws
+    boolean addModellingApproachAsAnnotation(RevisionTransportCommand revision, ModellingApproach approach) throws
         ModelException
 }

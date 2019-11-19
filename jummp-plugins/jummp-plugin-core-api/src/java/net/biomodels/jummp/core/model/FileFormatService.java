@@ -117,5 +117,5 @@ public interface FileFormatService {
      * @param revision  The Revision instance indicating the given model
      * @return  an ModellingApproach object indicating a specified approach
      */
-    ModellingApproach getModellingApproach(final RevisionTransportCommand revision);
+    public ModellingApproach getModellingApproach(final RevisionTransportCommand revision);
 }
