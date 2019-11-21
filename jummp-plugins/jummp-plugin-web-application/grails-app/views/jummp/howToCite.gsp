@@ -118,6 +118,8 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
     </dd>
 </dl>
 
+<h3 id="others">Other publications</h3>
+
 <dl>
     <dt>
         Vijayalakshmi Chelliah, Nick Juty, Ishan Ajmera, Raza Ali, Marine Dumousseau,
@@ -148,7 +150,6 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
     </dd>
 </dl>
 
-<h3 id="others">Other publications</h3>
 <dl>
     <dt>
         A Lloret‐Villas, TM Varusai, N Juty, C Laibe, N Le Novère, H Hermjakob and V Chelliah
