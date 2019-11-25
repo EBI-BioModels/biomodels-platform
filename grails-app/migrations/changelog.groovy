@@ -1297,5 +1297,8 @@ databaseChangeLog = {
     include file: '20191015_addOtherInfo2Model.groovy'
 
     include file: '20191108_indexNameModellingApproach.groovy'
+
+    include file: '20191122_updateTableModellingApproach.groovy'
+
 }
 

@@ -21,7 +21,7 @@ databaseChangeLog = {
                         println "successfully saved ${approach.dump()}"
                     }
                     // clear session and save records after every 50 entries created
-                    if (index.mod(50) == 0) {
+                    if (index % 50 == 0) {
                         ModellingApproach.withSession { session ->
                             session.flush()
                             session.clear()
