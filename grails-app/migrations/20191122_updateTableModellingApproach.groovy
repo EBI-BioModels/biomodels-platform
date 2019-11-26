@@ -1,6 +1,6 @@
-import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand
-import net.biomodels.jummp.core.annotation.StatementTransportCommand
+import net.biomodels.jummp.annotationstore.ResourceReference
 import net.biomodels.jummp.model.Model
+import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.model.ModellingApproach
 
 databaseChangeLog = {
@@ -11,9 +11,8 @@ databaseChangeLog = {
                 ModellingApproach.list().each { ModellingApproach approach ->
                     MODELLING_APPROACHES.put(approach.accession, approach.name)
                 }
-                def mdDService = ctx.getBean('metadataDelegateService')
-                def rs = Model.executeQuery """
-                    select m, r
+                def resultSet = Model.executeQuery """
+                    select m, r, xref
                     from RevisionAnnotation ra
                         join ra.revision as r
                         join ra.elementAnnotation as ea
@@ -29,29 +28,22 @@ databaseChangeLog = {
                         )
                     group by m
                 """, [readOnly: true]
-                List revisions = rs[1]
-                revisions.eachWithIndex { revision, index ->
-                    int revisionId = revision.id
-                    List<StatementTransportCommand> statements = mdDService.getModelLevelAnnotations(revisionId)
-                    statements.each { StatementTransportCommand s ->
-                        final ResourceReferenceTransportCommand xref = s.object
-                        if (MODELLING_APPROACHES.containsKey(xref.accession)) {
-                            // update modelling approach
-                            println "update modelling approach"
-                            ModellingApproach approach = ModellingApproach.findByAccession(xref.accession)
-                            Model model = revision.model
-                            model.modellingApproach = approach
-                            if (model.save(flush: true)) {
-                                println """\
+                resultSet.eachWithIndex { Model model, Revision revision, ResourceReference mamoXref, int index ->
+                     String mamoTermLabel = mamoXref.accession
+                    if (MODELLING_APPROACHES.containsKey(mamoTermLabel)) {
+                        // update modelling approach
+                        ModellingApproach approach = ModellingApproach.findByAccession(mamoTermLabel)
+                        model.modellingApproach = approach
+                        if (model.save(flush: true)) {
+                            println """\
 set modelling approach ${approach.properties} to model ${model.properties} successfully"""
-                            } else {
-                                println """\
-cannot update modelling apporach ${approach.properties} to model ${model.properties}"""
-
-                            }
                         } else {
-                            println "cannot find any mamo term describing a modelling approach"
+                            String msg = """\
+cannot update modelling apporach ${approach.properties} to model ${model.properties}"""
+                            throw new IllegalStateException(msg)
                         }
+                    } else {
+                        println "cannot find any MAMO term describing a modelling approach"
                     }
 
                     // clear session and save records after every 100 entries created
@@ -62,6 +54,7 @@ cannot update modelling apporach ${approach.properties} to model ${model.propert
                         }
                     }
                 }
+
                 // clear session and save last records
                 Model.withSession { session ->
                     session.flush()
