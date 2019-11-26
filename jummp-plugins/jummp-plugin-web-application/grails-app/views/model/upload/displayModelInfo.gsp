@@ -28,25 +28,79 @@
 
 
 <%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page import="net.biomodels.jummp.core.model.ModelFormatTransportCommand" %>
 <%@ page import="net.biomodels.jummp.core.model.RevisionTransportCommand" %>
+<%
+    List modelFormatsSortedByName = workingMemory['sorted_model_formats']
+    ModelFormatTransportCommand format = workingMemory['model_type']
+    Integer selectedValue = format ? format.id : ModelFormat.findByName("UNKNOWN")?.id
+    String readmeSubmission = workingMemory['readme_submission']
+    String modellingApproach = workingMemory['modelling_approach']
+    String otherInfo = workingMemory['other_info']
+    List definedModellingApproachNames = workingMemory['defined_modelling_approaches'].collect { it.name }
+%>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="layout" content="${session['branding.style']}/main" />
-        <title>Model Information</title>
+        <title>Model Information - Submission | BioModels</title>
+        <g:javascript>
+            let definedModellingApproachNames = [];
+            <g:each in="${definedModellingApproachNames}" var="name">
+                definedModellingApproachNames.push("${name}");
+            </g:each>
+            let definedModelFormatNames = [];
+            <g:each in="${modelFormatsSortedByName}" var="fmt">
+                definedModelFormatNames.push("${fmt?.name + ' ' + fmt?.formatVersion}");
+            </g:each>
+        </g:javascript>
     </head>
     <body>
         <h2><g:message code="submission.biomodels.model.information.heading" locale="${Locale.getDefault()}"/></h2>
         <p><g:message code="submission.biomodels.model.information.explanation" locale="${Locale.getDefault()}"/></p>
         <g:form>
-        <div class="small-12 medium-12 columns">
+            <div class="row">
+                <div class="small-12 medium-6 large-6 columns">
+                    <label for="model_format" class="required">Model Format</label>
+                    <g:if test="${workingMemory['model_type']}">
+                    </g:if>
+                    <g:select name="model_format" id="model_format" required=""
+                              from="${modelFormatsSortedByName}"
+                              value="${selectedValue}"
+                              optionKey="id"
+                              optionValue="${{it?.name + ' ' + it?.formatVersion}}"/>
+                    <div id="readme_submission_div" style="display: none">
+                    <label for="readme_submission" class="required">Describe more exactly your model format</label>
+                    <g:textField name="readme_submission" id="readme_submission"
+                                 value="${readmeSubmission}"
+                                 placeholder="Please describe here more accurately what is your model format" /></div>
+                </div>
+                <div class="small-12 medium-6 large-6 columns">
+                    <label for="modelling_approach" class="required">Modelling Approach</label>
+                    <g:textField name="modelling_approach" id="modelling_approach" value="${modellingApproach}"
+                                 placeholder="Enter your modelling approach"
+                                 aria-describedby="modellingApproachHelp"/>
+                    <p class="help-text" id="modellingApproachHelp">Find the appropriate one by typing a few more
+                first characters of your words. The system will suggest you our defined modelling approaches. If you
+                are not sure your modelling approach, please type Other for now.</p>
+
+                    <div id="model_other_info_div" style="display: none">
+                    <label for="other_info" class="required">Describe more exactly your modelling approach</label>
+                    <g:textField name="other_info" id="other_info"
+                                 value="${otherInfo}"
+                                 placeholder="Please enter here what is your modelling approach"/></div>
+                </div>
+            </div>
+
+            <div class="row">
+            <div class="small-12 medium-12 large-12 columns">
             <label for="name" class="required">Name</label>
             <g:if test="${workingMemory['new_name']}">
-                <g:textField id="name" name="name"
+                <g:textField id="name" name="name" required=""
                              value="${workingMemory['new_name']}"
                              placeholder="Enter a simple sentence summarising title for your model or leave the title of the publication."/>
             </g:if>
             <g:else>
-                <g:textField id="name" name="name"
+                <g:textField id="name" name="name" required=""
                              value="${(workingMemory.get("RevisionTC") as RevisionTransportCommand).name}"
                              placeholder="Enter a simple sentence summarising title for your model or leave the title of the publication."/>
             </g:else>
@@ -64,7 +118,7 @@
                             value='${(workingMemory.get("RevisionTC") as RevisionTransportCommand).description}'
                             placeholder="Enter a brief description for your model revision, for example: what are the  differences to the previous ones"/>
             </g:else>
-
+            </div></div>
             <input type='hidden' value='false' name='changed' id="changeStatus"/>
             <div class="buttons">
                 <g:submitButton name="Cancel" class="button" value="Abort" />
@@ -74,29 +128,136 @@
         </div>
         </g:form>
 
-        <script>
-            function associateEventHandlers(id) {
-                var descBox = document.getElementById(id);
+        <!-- warning model popup -->
 
-                if ("onpropertychange" in descBox)
-                {
+        <div class="reveal" id="modellingApproachWarningPopup" data-reveal>
+            <h3 id="messageTitle"
+                style="border-bottom: 1px solid grey">Attention!</h3>
+            <button class="close-button" data-close aria-label="Close modal" type="button">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <div class="contact-panel" id="feedback_panel" data-toggler=".is-active">
+                <p class="lead">You have entered a value as your modelling approach which does not exist in our system.
+                Please check your spelling or try again. Otherwise, type 'Other' and enter what is your modelling
+                approach in the box below.</p>
+            </div>
+        </div>
+
+
+        <g:javascript>
+            function associateEventHandlers(id) {
+                let descBox = document.getElementById(id);
+
+                if ("onpropertychange" in descBox) {
                     descBox.attachEvent("onpropertychange", $.proxy(function () {
                         if (event.propertyName == "value")
                             $("#changeStatus").val(true);
-                        }, descBox));
-                }
-                else
-                {
+                    }, descBox));
+                } else {
                     descBox.addEventListener("input", function () {
                         $("#changeStatus").val(true);
                     });
                 }
             }
-            $( document ).ready(function() {
+            $(document).ready(function () {
                 associateEventHandlers("description");
                 associateEventHandlers("name");
+                handleShowOrHideModelFormatExtraInfo($('#model_format'));
+                handleShowOrHideModellingApproachExtraInfo($('#modelling_approach'), false)
             });
-    	</script>
+
+            $('#modelling_approach').on('keydown', function () {
+                $(this).autocomplete({
+                    source: function (request, response) {
+                        $.ajax({
+                            url: $.jummp.createLink('model', 'searchModellingApproach'),
+                            type: 'POST',
+                            dataType: 'json',
+                            data: {
+                                search: request.term,
+                                request: ${net.biomodels.jummp.webapp.RequestType.SEARCH_TERMS.value}
+                            },
+                            success: function (data) {
+                                response(data);
+                            }
+                        });
+                    },
+                    select: function (event, ui) {
+                        let label = ui.item.label;
+                        $(this).val(label);   // display the selected text
+                        let id = ui.item.id; // selected value
+                        $.ajax({
+                            url: $.jummp.createLink('model', 'searchModellingApproach'),
+                            type: 'POST',
+                            data: {
+                                id: id,
+                                name: label,
+                                request: ${net.biomodels.jummp.webapp.RequestType.SELECT_VALUE.value}
+                            },
+                            dataType: 'json',
+                            success: function (response) {
+                                let len = response.length;
+                                if (len > 0) {
+                                    let id = response[0]['id'];
+                                    let accession = response[0]['accession'];
+                                    let name = response[0]['name'];
+                                    let resource = response[0]['resource'];
+                                }
+                            }
+                        });
+                        return false;
+                    }
+                });
+            });
+
+            $('#modelling_approach').on('change', function () {
+                handleShowOrHideModellingApproachExtraInfo(this, true);
+            });
+
+            $('#model_format').on("change", function () {
+                handleShowOrHideModelFormatExtraInfo(this);
+            });
+
+
+            function handleShowOrHideModellingApproachExtraInfo(selector, flag) {
+                let element = $('#model_other_info_div');
+                let inputVal = $(selector).val();
+                let comparableVal = 'Other';
+                if (flag) {
+                    showWarningMessageIfNecessary(inputVal, definedModellingApproachNames);
+                }
+                showOrHideBox(element, inputVal, comparableVal, definedModellingApproachNames);
+            }
+
+            function handleShowOrHideModelFormatExtraInfo(selector) {
+                let $opt = $(selector).find('option:selected');
+                let element = $('#readme_submission_div');
+                let selectedFormat = $opt.val();
+                let selectedText = $opt.text();
+                let comparableText = 'Original code *';
+                showOrHideBox(element, selectedText, comparableText, definedModelFormatNames);
+            }
+            
+            function showWarningMessageIfNecessary(inputVal, definedModellingApproachNames) {
+                inputVal = $.trim(inputVal);
+                let existed = $.inArray(inputVal, definedModellingApproachNames) >= 0;
+                if (!existed) {
+                    console.log("show dialog box");
+                    let popup = new Foundation.Reveal($('#modellingApproachWarningPopup'));
+                    popup.open();
+                }
+            }
+
+            function showOrHideBox(element, selectedText, comparableText, listOfDefinedValues) {
+                selectedText = $.trim(selectedText);
+                let existed = $.inArray(selectedText, listOfDefinedValues) >= 0;
+                if (selectedText.toLowerCase() === comparableText.toLowerCase() || !existed) {
+                    $(element).removeAttr("style").show();
+                } else {
+                    $(element).hide();
+                }
+            }
+        </g:javascript>
 
     </body>
     <g:render template="/templates/decorateSubmission" />

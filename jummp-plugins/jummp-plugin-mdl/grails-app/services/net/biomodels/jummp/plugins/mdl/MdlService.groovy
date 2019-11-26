@@ -23,6 +23,7 @@ package net.biomodels.jummp.plugins.mdl
 import net.biomodels.jummp.core.model.FileFormatService
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.core.util.JummpXmlUtils
+import net.biomodels.jummp.model.ModellingApproach
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.apache.tika.detect.DefaultDetector
@@ -248,5 +249,10 @@ class MdlService implements FileFormatService {
 
     boolean doBeforeSavingAnnotations(File annoFile, RevisionTransportCommand rev) {
         return true
+    }
+
+    @Override
+    ModellingApproach getModellingApproach(final RevisionTransportCommand revision) {
+        return null
     }
 }

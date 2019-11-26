@@ -39,15 +39,12 @@ package net.biomodels.jummp.plugins.sbml
 
 import com.thoughtworks.xstream.converters.ConversionException
 import grails.util.Environment
-import net.biomodels.jummp.core.ModelException
-import java.util.regex.Pattern
-import javax.xml.stream.XMLInputFactory
-import javax.xml.stream.XMLStreamException
-import javax.xml.stream.XMLStreamReader
 import net.biomodels.jummp.core.ISbmlService
+import net.biomodels.jummp.core.ModelException
 import net.biomodels.jummp.core.model.FileFormatService
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.model.ModellingApproach
 import org.apache.commons.io.FileUtils
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
@@ -60,41 +57,21 @@ import org.jdom.input.SAXBuilder
 import org.jdom.output.XMLOutputter
 import org.jdom.xpath.XPath
 import org.perf4j.aop.Profiled
+import org.sbml.jsbml.*
+import org.sbml.jsbml.CVTerm.Qualifier
+import org.springframework.beans.factory.InitializingBean
+
+import javax.xml.stream.XMLInputFactory
+import javax.xml.stream.XMLStreamException
+import javax.xml.stream.XMLStreamReader
+import java.util.regex.Pattern
+
 //import org.sbfc.converter.models.BioPaxModel
 //import org.sbfc.converter.models.OctaveModel
 //import org.sbfc.converter.models.SBMLModel
 //import org.sbfc.converter.sbml2biopax.SBML2BioPAX_l3
 //import org.sbfc.converter.sbml2dot.SBML2Dot
 //import org.sbfc.converter.sbml2octave.SBML2Octave
-import org.sbml.jsbml.AlgebraicRule
-import org.sbml.jsbml.Annotation
-import org.sbml.jsbml.AssignmentRule
-import org.sbml.jsbml.CVTerm
-import org.sbml.jsbml.Compartment
-import org.sbml.jsbml.Event
-import org.sbml.jsbml.EventAssignment
-import org.sbml.jsbml.ExplicitRule
-import org.sbml.jsbml.FunctionDefinition
-import org.sbml.jsbml.ListOf
-import org.sbml.jsbml.Model
-import org.sbml.jsbml.Parameter
-import org.sbml.jsbml.QuantityWithUnit
-import org.sbml.jsbml.RateRule
-import org.sbml.jsbml.Reaction
-import org.sbml.jsbml.Rule
-import org.sbml.jsbml.SBMLDocument
-import org.sbml.jsbml.SBMLError
-import org.sbml.jsbml.SBMLException
-import org.sbml.jsbml.SBMLReader
-import org.sbml.jsbml.SBMLWriter
-import org.sbml.jsbml.SBO
-import org.sbml.jsbml.SBase
-import org.sbml.jsbml.SimpleSpeciesReference
-import org.sbml.jsbml.Species
-import org.sbml.jsbml.SpeciesReference
-import org.sbml.jsbml.Symbol
-import org.sbml.jsbml.Variable
-import org.springframework.beans.factory.InitializingBean
 
 /**
  * Service class for handling Model files in the SBML format.
@@ -160,73 +137,67 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
         }
     }
 
+    @Override
     boolean addModelIdentifiersAsAnnotation(RevisionTransportCommand revision, String... identifiers)
             throws ModelException {
-        boolean validRevision = revision && "SBML".equals(revision.format.identifier)
-        boolean validIdentifiers = null != identifiers && 0 != identifiers.length
-        if (!validIdentifiers || !validRevision) {
-            String msg = """A revision whose main files are encoded in SBML and at least one model \
-identifier are required"""
-            throw new IllegalArgumentException(msg)
-        }
-        SBMLDocument document = getFromCache(revision)
-        def rID = revision.identifier()
-        if (null == document) {
-            log.error("Cannot add $identifiers to revision $rID as we could not parse its main files")
-            return false
-        }
-
-        boolean needsUpdating = addModelIdAnnotationsIfNeeded(revision, document, identifiers)
-        if (!needsUpdating) {
-            return false
-        }
-        File sbmlFile = fetchMainFileFromRevision(revision)
-        SBMLWriter sbmlWriter = new SBMLWriter()
-        try {
-            sbmlWriter.writeSBML(document, sbmlFile)
-            return true
-        } catch (SBMLException | IOException | XMLStreamException e) {
-            def fn = sbmlFile.name
-            def msg = """Failed to add model annotations $identifiers to file $fn of revision $rID \
-due to an issue with JSBML"""
-            log.error "$msg: $e"
-            throw new ModelException(revision.model, msg)
-        }
+        Qualifier qualifier = Qualifier.BQM_IS
+        String accessionPattern = "biomodels.db[/:](BIOMD|MODEL)[0-9]{10}"
+        addAnnotations2Model(revision, qualifier, accessionPattern, identifiers)
     }
 
-    private boolean addModelIdAnnotationsIfNeeded(RevisionTransportCommand revision,
-            SBMLDocument document, String... identifiers) throws ModelException {
-        def rID = Objects.requireNonNull(revision).identifier()
+    @Override
+    boolean addModellingApproachAsAnnotation(RevisionTransportCommand revision, ModellingApproach approach) {
+        final CVTerm.Qualifier bqbHasProperty = CVTerm.Qualifier.BQB_HAS_PROPERTY
+        String[] identifiers = ["http://identifiers.org/mamo/${approach.accession}"] as String[]
+        String accessionPattern = "mamo[/:]MAMO_[0-9]{7}"
+        addAnnotations2Model(revision, bqbHasProperty, accessionPattern, identifiers)
+    }
+
+    private boolean addAnnotationsIfNeeded(RevisionTransportCommand revision,
+                                           SBMLDocument document,
+                                           Qualifier qualifier,
+                                           String accessionPattern,
+                                           String... identifiers) throws ModelException {
+        String rID = Objects.requireNonNull(revision).identifier()
         Model model = Objects.requireNonNull(document).model
 
-        final CVTerm.Qualifier bqmIs = CVTerm.Qualifier.BQM_IS
-        List<CVTerm> bqmIsAnnotations = model.filterCVTerms(bqmIs)
+        // resources with this pattern should be removed
+        def targetAccessionPattern = Pattern.compile(accessionPattern)
 
-        if (bqmIsAnnotations.isEmpty()) {
-            def cvTerm = new CVTerm(bqmIs, identifiers)
+        List<CVTerm> cVTerms = model.filterCVTerms(qualifier)
+
+        if (cVTerms.isEmpty()) {
+            def cvTerm = new CVTerm(qualifier, identifiers)
             if (!model.addCVTerm(cvTerm)) {
                 throw new ModelException(revision.model, "Could not add a CVTerm for $identifiers")
             }
             return true
         }
-        // annotations may be spread over several qualifiers, merge them before performing lookups
-        def currentResources = bqmIsAnnotations.collect { CVTerm t ->
-            t.getResources()
-        }.flatten()
-        def missing = []
-        for (String idURI : identifiers) {
-            if (!currentResources.contains(idURI)) {
-                missing << idURI
+
+        // find the set of resources that should be kept
+        def filteredAnnotations = cVTerms.collect { CVTerm t ->
+            t.getResources().findAll { String xref ->
+                if (!targetAccessionPattern.matcher(xref).find()) {
+                    return true
+                }
+                return false
+            }
+        }.flatten() as List<String>
+
+        for (CVTerm t: cVTerms) {
+            if (!model.removeCVTerm(t)) {
+                throw new ModelException(revision.model, "Could not remove CVTerm $t for revision $rID")
             }
         }
 
-        if (missing.isEmpty()) { // nothing to do
-            return false
-        }
-        String[] toAdd = missing as String[]
-        if (!bqmIsAnnotations.first().addResources(toAdd)) {
-            String msg = "We failed to add $missing to revision $rID"
-            throw new ModelException(revision.model, msg)
+        List<String> idList = Arrays.asList(identifiers)
+        filteredAnnotations.addAll(idList)
+        String[] replacementAnnotations = filteredAnnotations as String[]
+        def replacementCVTerm = new CVTerm(qualifier, replacementAnnotations)
+
+        boolean haveAddedNewQualifier = model.addCVTerm(replacementCVTerm)
+        if (!haveAddedNewQualifier) {
+            throw new ModelException(revision.model, "Could not insert qualifier for resources ${identifiers} to revision $rID")
         }
         true
     }
@@ -807,7 +778,7 @@ the user has attempted to update an blank value for the name attribute.""")
         //SBMLDocument document=null;
         // we do not have a document, so retrieve first the file
         //List<RepositoryFileTransportCommand> files = grailsApplication.mainContext.getBean("modelDelegateService").retrieveModelFiles(revision)
-        List<RepositoryFileTransportCommand> files=revision.files
+        List<RepositoryFileTransportCommand> files = revision.files
         files = files.findAll { it.mainFile }
 
         files.each {
@@ -1103,7 +1074,7 @@ the user has attempted to update an blank value for the name attribute.""")
         return null
     }
 
-    /*
+    /**
      * Convenience method for handling conversions from String to long.
      * @param value the value that should be converted to long
      * @param name the name of attribute whose value is being converted. Used in the log messages.
@@ -1158,5 +1129,89 @@ the user has attempted to update an blank value for the name attribute.""")
 
     boolean doBeforeSavingAnnotations(File annoFile, RevisionTransportCommand rev) {
         return true
+    }
+
+    @Override
+    ModellingApproach getModellingApproach(final RevisionTransportCommand revision) {
+        SBMLDocument document = getFromCache(revision)
+        def rID = revision.identifier() ? "revision ${revision.identifier()}" : "the provisional revision in the new submission"
+        if (null == document) {
+            log.error("Cannot extract modelling approach from $rID as we could not parse its main files")
+            return null
+        } else {
+            Model model = document.model
+            Annotation annotation = model?.annotation
+            if(!annotation) {
+                return null
+            }
+            List<CVTerm> filters = annotation.filterCVTerms(CVTerm.Qualifier.BQB_HAS_PROPERTY)
+            List<List<String>> mamoTerms = []
+            filters.each { filter ->
+                CVTerm cvTerm = new CVTerm(filter)
+                List<String> resources = cvTerm.filterResources("MAMO", "mamo")
+                if (resources.size()) {
+                    mamoTerms.add(resources)
+                }
+            }
+            if (mamoTerms == null || mamoTerms?.isEmpty()) {
+                return null
+            }
+            def first = mamoTerms.find { it != null || !it?.isEmpty() }
+            if (!first) {
+                return null
+            }
+            String[] parts = first[0].split("/mamo/")
+            if (!parts[0]) {
+                return null
+            }
+            ModellingApproach approach = ModellingApproach.findByResourceOrAccession(first, parts[1])
+            return approach
+        }
+    }
+    /**
+     * Add one or multiple annotations having the same biological qualifier to a given model.
+     *
+     * This utility is used to add annotations in a batch mode. The requirement is that these annotations
+     * have to go with the identical biological qualifier.
+     *
+     * @param revision  The Revision instance denoting the given model
+     * @param qualifier The Qualifier instance denoting the biological qualifier
+     * @param identifiers   The list of identifiers.org based URLs denoting the input annotations
+     * @return a boolean value indicating whether the service finished successfully or failed.
+     */
+    private boolean addAnnotations2Model(RevisionTransportCommand revision,
+                                         Qualifier qualifier,
+                                         String accessionPattern,
+                                         String... identifiers) {
+        boolean validRevision = revision && "SBML".equals(revision.format.identifier)
+        boolean validIdentifiers = null != identifiers && 0 != identifiers.length
+        if (!validIdentifiers || !validRevision) {
+            String msg = """A revision whose main files are encoded in SBML and at least one model \
+identifier are required"""
+            throw new IllegalArgumentException(msg)
+        }
+        SBMLDocument document = getFromCache(revision)
+        def rID = revision.identifier() ? "revision ${revision.identifier()}" : "the provisional revision in the new submission"
+        if (null == document) {
+            log.error("Cannot add $identifiers to $rID as we could not parse its main files")
+            return false
+        }
+
+        boolean needsUpdating = addAnnotationsIfNeeded(revision, document, qualifier, accessionPattern, identifiers)
+        if (!needsUpdating) {
+            return false
+        }
+        File sbmlFile = fetchMainFileFromRevision(revision)
+        SBMLWriter sbmlWriter = new SBMLWriter()
+        try {
+            sbmlWriter.writeSBML(document, sbmlFile)
+            return true
+        } catch (SBMLException | IOException | XMLStreamException e) {
+            def fn = sbmlFile.name
+            def msg = """Failed to add model annotations $identifiers to file $fn of revision $rID \
+due to an issue with JSBML"""
+            log.error "$msg: $e"
+            throw new ModelException(revision.model, msg)
+        }
     }
 }

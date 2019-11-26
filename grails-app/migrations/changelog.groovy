@@ -1287,5 +1287,18 @@ databaseChangeLog = {
     include file: '20190927_resolutionStatusField.groovy'
 
     include file: '20191007_updateResolvedInResolutionStatusField.groovy'
+
+    include file: '20191009_readmeSubmission.groovy'
+
+    include file: '20191010_populateModellingApproachTable.groovy'
+
+    include file: '20191015_addOther2ModellingApproach.groovy'
+
+    include file: '20191015_addOtherInfo2Model.groovy'
+
+    include file: '20191108_indexNameModellingApproach.groovy'
+
+    include file: '20191122_updateTableModellingApproach.groovy'
+
 }
 

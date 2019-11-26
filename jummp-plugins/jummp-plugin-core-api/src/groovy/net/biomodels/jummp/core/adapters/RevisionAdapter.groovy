@@ -103,7 +103,8 @@ sessionClosed: ${grailsApplication.mainContext.sessionFactory.currentSession.isC
                 model: modelCmd,
                 validationLevel: revision.validationLevel,
                 validationReport: revision.validationReport,
-                qcInfo: qcInfoCmd
+                qcInfo: qcInfoCmd,
+                readmeSubmission: revision.readmeSubmission
         )
         return rev
     }

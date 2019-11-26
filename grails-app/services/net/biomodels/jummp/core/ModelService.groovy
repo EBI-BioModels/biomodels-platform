@@ -823,12 +823,13 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         final User currentUser = User.findByUsername(springSecurityService.authentication.name)
         final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
         Model model = getModel(PERENNIAL_ID)
-        final String formatVersion = modelFileFormatService.getFormatVersion(rev)
+        final String formatVersion = rev.format.formatVersion ?: modelFileFormatService.getFormatVersion(rev)
         Revision revision = new Revision(model: model, name: rev.name, description: rev.description,
                     comment: rev.comment, uploadDate: new Date(), owner: currentUser,
                     validated: rev.validated, curationState: rev.curationState, minorRevision: rev.minorRevision,
                     format: ModelFormat.findByIdentifierAndFormatVersion(rev.format.identifier, formatVersion),
-                    validationReport: rev.validationReport, validationLevel: rev.validationLevel)
+                    validationReport: rev.validationReport, validationLevel: rev.validationLevel, readmeSubmission:
+            rev.readmeSubmission)
         def stopWatch = new Log4JStopWatch("modelService.addValidatedRevision.rftcCreation")
         List<RepositoryFile> domainObjects = convertRepositoryFilesFromTransportCommands(repoFiles, revision)
 
@@ -854,6 +855,8 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
 
         if (revision.validate()) {
             model.addToRevisions(revision)
+            model.modellingApproach = rev.model.modellingApproach
+            model.otherInfo = rev.model.otherInfo
             PublicationTransportCommand publicationTC = rev.model.publication
             if (!publicationTC && model.publication) {
                 // delete db association if corresponding publication was removed in the UI
@@ -1084,7 +1087,8 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         stopWatch.lap("Finished adding RepositoryFiles to the Model")
         stopWatch.setTag("modelService.uploadValidatedModel.prepareVcsStorage")
         ModelFormat format = ModelFormat.findByIdentifierAndFormatVersion(rev.format.identifier, rev.format.formatVersion)
-
+        model.modellingApproach = rev.model.modellingApproach
+        model.otherInfo = rev.model.otherInfo
         // vcs identifier is container name + upload date + submissionId - this should by all means be unique
         String timestamp = new Date().format("yyyy-MM-dd'T'HH-mm-ss-SSS")
         final String submissionId = getSubmissionIdGenerator().generate()
@@ -2615,5 +2619,11 @@ Try to connect with Conversion service to export the model ${cmd.model.submissio
      */
     private boolean isCurated(Revision revision) {
         revision.curationState == CurationState.CURATED
+    }
+
+    void addModellingApproachAsAnnotation(RevisionTransportCommand revisionTC, ModellingApproach approach) throws
+            ModelException {
+        def sbmlService = grailsApplication.mainContext.getBean("sbmlService", ISbmlService.class)
+        boolean result = sbmlService.addModellingApproachAsAnnotation(revisionTC, approach)
     }
 }

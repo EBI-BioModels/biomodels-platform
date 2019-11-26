@@ -54,6 +54,73 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
 <h3 id="biomodels">BioModels</h3>
 
 <dl>
+    <dt>Rahuman S Malik-Sheriff, Mihai Glont, Tung V N Nguyen, Krishna Tiwari, Matthew G Roberts, Ashley Xavier,
+    Manh T Vu, Jinghao Men, Matthieu Maire, Sarubini Kananathan, Emma L Fairbanks, Johannes P Meyer,
+    Chinmay Arankalle, Thawfeek M Varusai, Vincent Knight-Schrijver, Lu Li, Corina Dueñas-Roca, Gaurhari Dass,
+    Sarah M Keating, Young M Park, Nicola Buso, Nicolas Rodriguez, Michael Hucka, and Henning Hermjakob</dt>
+    <dd style="margin-left:0;">
+        <div class="pubtitle">BioModels — 15 years of sharing computational models in life science.</div>
+        <div class="pubjournal"><em>Nucl. Acids Res.</em> 2019</div>
+        [<a href="//academic.oup.com/nar/advance-article/doi/10.1093/nar/gkz1055/5614569"
+            title="Publication on Nucl. Acids Res. (Open Access)">Nucl. Acids Res.</a>]
+    [<a href="javascript:toggleDisplayById('bib_Rahuman2019');"
+        title="Display/hide the BibTeX entry for this publication">
+        <img src="//www.ebi.ac.uk/biomodels-static/icons/plus.gif" alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
+        <pre id="bib_Rahuman2019" class="hidden">
+        @article{BioModels2019,
+        author = {Malik-Sheriff, Rahuman S and Glont, Mihai and Nguyen, Tung V N and Tiwari, Krishna and Roberts, Matthew G and Xavier, Ashley and Vu, Manh T and Men, Jinghao and Maire, Matthieu and Kananathan, Sarubini and Fairbanks, Emma L and Meyer, Johannes P and Arankalle, Chinmay and Varusai, Thawfeek M and Knight-Schrijver, Vincent and Li, Lu and Dueñas-Roca, Corina and Dass, Gaurhari and Keating, Sarah M and Park, Young M and Buso, Nicola and Rodriguez, Nicolas and Hucka, Michael and Hermjakob, Henning},
+        title = "{BioModels—15 years of sharing computational models in life science}",
+        journal = {Nucleic Acids Research},
+        year = {2019},
+        month = {11},
+        abstract = "{Computational modelling has become increasingly common in life science research. To provide a platform to support universal sharing, easy accessibility and model reproducibility, BioModels (https://www.ebi.ac.uk/biomodels/), a repository for mathematical models, was established in 2005. The current BioModels platform allows submission of models encoded in diverse modelling formats, including SBML, CellML, PharmML, COMBINE archive, MATLAB, Mathematica, R, Python or C++. The models submitted to BioModels are curated to verify the computational representation of the biological process and the reproducibility of the simulation results in the reference publication. The curation also involves encoding models in standard formats and annotation with controlled vocabularies following MIRIAM (minimal information required in the annotation of biochemical models) guidelines. BioModels now accepts large-scale submission of auto-generated computational models. With gradual growth in content over 15 years, BioModels currently hosts about 2000 models from the published literature. With about 800 curated models, BioModels has become the world’s largest repository of curated models and emerged as the third most used data resource after PubMed and Google Scholar among the scientists who use modelling in their research. Thus, BioModels benefits modellers by providing access to reliable and semantically enriched curated models in standard formats that are easy to share, reproduce and reuse.}",
+        issn = {0305-1048},
+        doi = {10.1093/nar/gkz1055},
+        url = {https://doi.org/10.1093/nar/gkz1055},
+        note = {gkz1055},
+        eprint = {http://oup.prod.sis.lan/nar/advance-article-pdf/doi/10.1093/nar/gkz1055/30488340/gkz1055.pdf},
+        }
+        </pre>
+    </dd>
+</dl>
+
+<dl>
+    <dt>
+        Mihai Glont, Tung V N Nguyen, Martin Graesslin, Robert Hälke, Raza Ali, Jochen Schramm, Sarala M Wimalaratne,
+        Varun B Kothamachu, Nicolas Rodriguez, Maciej J Swat, Jurgen Eils, Roland Eils, Camille Laibe, Rahuman S
+        Malik-Sheriff, Vijayalakshmi Chelliah, Nicolas Le Novère, and Henning Hermjakob
+    </dt>
+    <dd style="margin-left:0;">
+        <div class="pubtitle">BioModels: expanding horizons to include more modelling approaches and formats.</div>
+        <div class="pubjournal"><em>Nucl. Acids Res.</em> 2018</div>
+        [<a href="//academic.oup.com/nar/advance-article/doi/10.1093/nar/gkx1023/4584626"
+            title="Publication on Nucl. Acids Res. (Open Access)">Nucl. Acids Res.</a>]
+    [<a href="javascript:toggleDisplayById('bib_Glont2018');"
+        title="Display/hide the BibTeX entry for this publication">
+        <img src="//www.ebi.ac.uk/biomodels-static/icons/plus.gif" alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
+        <pre id="bib_Glont2018" class="hidden">
+            @ARTICLE{BioModels2018a,
+            author  = {Glont, Mihai and Nguyen, Tung V N and Graesslin, Martin and Hälke, Robert and Ali, Raza and
+            Schramm, Jochen and Wimalaratne, Sarala M and Kothamachu, Varun B and Rodriguez, Nicolas and
+            Swat, Maciej J and Eils, Jurgen and Eils, Roland and Laibe, Camille and
+            Malik-Sheriff, Rahuman S and Chelliah, Vijayalakshmi and Le Novère, Nicolas and Hermjakob, Henning},
+            title   = {BioModels: expanding horizons to include more modelling approaches and formats},
+            journal = {Nucleic Acids Research},
+            volume  = {46},
+            number  = {D1},
+            pages   = {D1248–D1253},
+            year    = {2018},
+            doi     = {10.1093/nar/gkx1023},
+            URL     = {https://dx.doi.org/10.1093/nar/gkx1023},
+            eprint = {/oup/backfile/content_public/journal/nar/46/d1/10.1093_nar_gkx1023/2/gkx1023.pdf}
+            }
+        </pre>
+    </dd>
+</dl>
+
+<h3 id="others">Other publications</h3>
+
+<dl>
     <dt>
         Vijayalakshmi Chelliah, Nick Juty, Ishan Ajmera, Raza Ali, Marine Dumousseau,
         Mihai Glont, Michael Hucka, Gaël Jalowicki, Sarah Keating, Vincent Knight-Schrijver,
@@ -83,43 +150,6 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
     </dd>
 </dl>
 
-<dl>
-    <dt>
-        Mihai Glont, Tung V. N. Nguyen, Martin Graesslin, Robert Hälke, Raza Ali,
-        Jochen Schramm, Sarala M. Wimalaratne, Varun B. Kothamachu , Nicolas Rodriguez,
-        Maciej J. Swat, Jurgen Eils, Roland Eils, Camille Laibe, Rahuman S. Malik-Sheriff,
-        Vijayalakshmi Chelliah, Nicolas Le Novère and Henning Hermjakob
-    </dt>
-    <dd style="margin-left:0;">
-        <div class="pubtitle">BioModels: expanding horizons to include more modelling approaches and formats.</div>
-        <div class="pubjournal"><em>Nucl. Acids Res.</em> 2018</div>
-        [<a href="//academic.oup.com/nar/advance-article/doi/10.1093/nar/gkx1023/4584626"
-            title="Publication on Nucl. Acids Res. (Open Access)">Nucl. Acids Res.</a>]
-    [<a href="javascript:toggleDisplayById('bib_Glont2018');"
-        title="Display/hide the BibTeX entry for this publication">
-        <img src="//www.ebi.ac.uk/biomodels-static/icons/plus.gif" alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
-<pre id="bib_Glont2018" class="hidden">
-@ARTICLE{BioModels2018a,
-    author  = {Glont, Mihai and Nguyen, Tung V. N. and Graesslin, Martin and Hälke, Robert
-            and Ali, Raza and Schramm, Jochen and Wimalaratne, Sarala M. and Kothamachu, Varun B.
-            and Rodriguez, Nicolas and Swat, Maciej J. and Eils, Jurgen and Eils, Roland
-            and Laibe, Camille and Malik-Sheriff, Rahuman S. and Chelliah, Vijayalakshmi
-            and Le Novère, Nicolas and Hermjakob, Henning},
-    title   = {BioModels: expanding horizons to include more modelling approaches and formats},
-    journal = {Nucleic Acids Research},
-    volume  = {46},
-    number  = {D1},
-    pages   = {D1248–D1253},
-    year    = {2018},
-    doi     = {10.1093/nar/gkx1023},
-    URL     = {https://dx.doi.org/10.1093/nar/gkx1023},
-    eprint = {/oup/backfile/content_public/journal/nar/46/d1/10.1093_nar_gkx1023/2/gkx1023.pdf}
-}
-</pre>
-    </dd>
-</dl>
-
-<h3 id="others">Other publications</h3>
 <dl>
     <dt>
         A Lloret‐Villas, TM Varusai, N Juty, C Laibe, N Le Novère, H Hermjakob and V Chelliah
