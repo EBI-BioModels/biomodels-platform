@@ -100,6 +100,7 @@
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'model-display.css')}"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/css/select2.min.css"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.min.js"></script>
+    <script type="text/javascript" language="javascript" src="https://reactome.org/DiagramJs/diagram/diagram.nocache.js"></script>
     <script>
         $(function() {
             $( "#tabs" ).tabs({
@@ -410,6 +411,56 @@
             </sec:ifNotLoggedIn>
             // displayToolbar(true, true);
         });
+        if("${reactomeId}") {
+            var reactomeId = "${reactomeId}";
+            $(document).ready(function () {
+                $("#dialog").dialog({
+                    width: 1000,
+                    height: 650,
+                    modal: true
+                    // autoOpen: false
+                });
+                $("#dialog").append('<div id="diagramHolder"></div>');
+
+                $("#opener").on("click", function () {
+                    $("#dialog").dialog("open");
+                });
+            });
+
+
+            //Creating the Reactome Diagram widget
+            //Take into account a proxy needs to be set up in your server side pointing to www.reactome.org
+            function onReactomeDiagramReady() {  //This function is automatically called when the widget code is ready to be used
+
+                var diagram = Reactome.Diagram.create({
+                    "placeHolder": "diagramHolder",
+                    "width": 900,
+                    "height": 500
+                });
+
+                //Initialising it to the "Hemostasis" pathway
+                console.log("# Loading ${reactomeId}");
+                diagram.loadDiagram(reactomeId);
+
+                //Adding different listeners
+
+                diagram.onDiagramLoaded(function (loaded) {
+                    console.info("Loaded ", loaded);
+                    diagram.flagItems("FYN");
+                    if (loaded == reactomeId) diagram.selectItem(reactomeId);
+                });
+
+                diagram.onObjectHovered(function (hovered) {
+                    console.info("Hovered ", hovered);
+                });
+
+                diagram.onObjectSelected(function (selected) {
+                    console.info("Selected ", selected);
+                });
+            }
+        } else {
+            $("#opener").attr("disabled", "disabled");
+        }
     </script>
     <g:layoutHead/>
 </head>
@@ -561,7 +612,11 @@
                              src="${grailsApplication.config.grails.serverURL}/images/lock.png"/>
                     </g:else>
                 </div>
+                <div style="margin-right: 50%;">
+                    <a class="readmore button" id="opener" >View Reactome pathway</a>
+                </div>
             </div>
+
             <div id="tablewrapper">
                 <div id="tabs">
                     <ul class='modelTabs'>
@@ -878,3 +933,5 @@
         display
 </content>
 </g:applyLayout>
+<div id="dialog" title="Reactome pathway">
+</div>
