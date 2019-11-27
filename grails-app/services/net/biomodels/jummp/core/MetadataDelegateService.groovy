@@ -137,6 +137,11 @@ class MetadataDelegateService implements IMetadataService {
         metadataService.saveMetadata(model, statements)
     }
 
+    @Profiled(tag = "metadataDelegateService.getPathwayForModelId")
+    String getPathwayForModelId(String modelId) {
+        metadataService.getPathwayForModelId(modelId)
+    }
+
     @Profiled(tag = "metadataDelegateService.persistAnnotationSchema")
     boolean persistAnnotationSchema(Collection<SectionContainer> sections) {
         if (IS_DEBUG_ENABLED) {
