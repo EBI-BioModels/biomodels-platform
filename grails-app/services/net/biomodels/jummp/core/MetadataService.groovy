@@ -68,6 +68,8 @@ class MetadataService {
      * Dependency injection for Model Service.
      */
     def modelService
+
+    def reactomeService
     /**
      * Dependency injection for Model Format Service.
      */
@@ -135,6 +137,11 @@ class MetadataService {
             log.debug "Found ${result.size()} matching annotations."
         }
         return result
+    }
+
+    @Profiled(tag = "metadataService.getPathwayForModelId")
+    String getPathwayForModelId(String modelId) {
+        return reactomeService.getPathwayForModelId(modelId)
     }
 
     /**
