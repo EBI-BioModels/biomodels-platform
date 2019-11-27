@@ -30,14 +30,8 @@ package net.biomodels.jummp.deployment.biomodels
  *
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-class P2MMapping implements Serializable {
+class P2MMapping extends AutoGenModelMapping implements Serializable {
     private static final long serialVersionUID = 1L
-
-    // The representative model identifier
-    String representative
-
-    // The identifier of the others in the same group
-    String member
 
     static mapping = {
         id composite: ['representative', 'member']

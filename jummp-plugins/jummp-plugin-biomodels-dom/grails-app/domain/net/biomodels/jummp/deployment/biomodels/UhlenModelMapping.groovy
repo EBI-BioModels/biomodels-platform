@@ -30,14 +30,8 @@ package net.biomodels.jummp.deployment.biomodels
  *
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-class UhlenModelMapping implements Serializable {
+class UhlenModelMapping extends AutoGenModelMapping implements Serializable {
     private static final long serialVersionUID = 1L
-
-    // The representative model identifier
-    String representative
-
-    // The identifier of the others in the same group
-    String member
 
     static mapping = {
         id composite: ['representative', 'member']
