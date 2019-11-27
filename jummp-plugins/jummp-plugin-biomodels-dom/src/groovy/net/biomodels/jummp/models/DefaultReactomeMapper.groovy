@@ -25,7 +25,6 @@ class DefaultReactomeMapper implements ReactomeMapper {
         } catch (IOException ie) {
             System.err.printf("Unable to parse reactome mapping file, %s", ie.getMessage())
         } finally{
-            print("executed....")
             inputStream.close()
             reader.close()
         }
