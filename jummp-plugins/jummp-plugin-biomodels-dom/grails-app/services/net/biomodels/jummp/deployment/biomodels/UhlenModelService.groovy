@@ -24,15 +24,15 @@ import grails.transaction.Transactional
 
 /**
  * This service provides means of operating and managing the map between representative and missing models in
- * Path2Models.
+ * PDGSM project.
  *
  * @author Tung Nguyen <tnguyen@ebi.ac.uk>
  */
 @Transactional
-class P2mService extends AutoGenModelService {
+class UhlenModelService extends AutoGenModelService {
     List<String> findMissing() {
         // executeQuery() queries are not supported in unit tests with Grails 2.5, use criteria queries instead
-        P2MMapping.createCriteria().list {
+        UhlenModelMapping.createCriteria().list {
             projections {
                 property 'member'
             }
@@ -40,12 +40,12 @@ class P2mService extends AutoGenModelService {
     }
 
     String getRepresentativeId(String id) {
-        P2MMapping map = P2MMapping.findByMember(id)
+        UhlenModelMapping map = UhlenModelMapping.findByMember(id)
         if (map) {
             return map.representative
         } else {
             // the identifier in question is the model itself
-            map = P2MMapping.findByRepresentative(id)
+            map = UhlenModelMapping.findByRepresentative(id)
             return map?.representative ?: null
         }
     }
