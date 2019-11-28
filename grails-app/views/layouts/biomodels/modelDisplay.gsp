@@ -413,15 +413,24 @@
         });
         if("${reactomeId}") {
             var reactomeId = "${reactomeId}";
+            var global_diagram;
+            var REACTOME_HEIGHT = 500;
+            var REACTOME_WEIGHT = 900;
+            var DIALOG_WEIGHT = 1000;
+            var DIALOG_HEIGHT = 650;
+
             $(document).ready(function () {
                 $("#dialog").dialog({
-                    width: 1000,
-                    height: 650,
-                    modal: true
-                    // autoOpen: false
+                    width: DIALOG_WEIGHT,
+                    height: DIALOG_HEIGHT,
+                    modal: true,
+                    open: function( event, ui ) {
+                        global_diagram.resize(REACTOME_WEIGHT,REACTOME_HEIGHT);
+                        global_diagram.resetSelection();
+                        global_diagram.selectItem(reactomeId);
+                    },
+                    autoOpen: false
                 });
-                $("#dialog").append('<div id="diagramHolder"></div>');
-
                 $("#opener").on("click", function () {
                     $("#dialog").dialog("open");
                 });
@@ -434,20 +443,18 @@
 
                 var diagram = Reactome.Diagram.create({
                     "placeHolder": "diagramHolder",
-                    "width": 900,
-                    "height": 500
+                    "width": REACTOME_WEIGHT,
+                    "height": REACTOME_HEIGHT
                 });
-
                 //Initialising it to the "Hemostasis" pathway
-                console.log("# Loading ${reactomeId}");
                 diagram.loadDiagram(reactomeId);
 
                 //Adding different listeners
+                global_diagram =diagram;
 
                 diagram.onDiagramLoaded(function (loaded) {
-                    console.info("Loaded ", loaded);
                     diagram.flagItems("FYN");
-                    if (loaded == reactomeId) diagram.selectItem(reactomeId);
+                    // if (loaded == reactomeId) diagram.selectItem(reactomeId);
                 });
 
                 diagram.onObjectHovered(function (hovered) {
@@ -934,4 +941,5 @@
 </content>
 </g:applyLayout>
 <div id="dialog" title="Reactome pathway">
+    <div id="diagramHolder"></div>
 </div>
