@@ -20,11 +20,14 @@
 
 package net.biomodels.jummp.deployment.biomodels
 
+import grails.transaction.Transactional
+
 /**
  * Abstract class to be used to handle services concerning auto generated models
  *
  * @author: Tung Nguyen <tnguyen@ebi.ac.uk>
  */
+@Transactional
 abstract class AutoGenModelService {
     Map getRepresentatives(List<String> missingIds) {
         Map representatives = [:]

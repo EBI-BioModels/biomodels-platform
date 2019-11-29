@@ -20,6 +20,8 @@
 
 package net.biomodels.jummp.deployment.biomodels
 
+import grails.persistence.Entity
+
 /**
  * Domain class for mapping a representative model with other models in the same genus
  *
@@ -30,6 +32,7 @@ package net.biomodels.jummp.deployment.biomodels
  *
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
+@Entity
 class P2MMapping extends AutoGenModelMapping implements Serializable {
     private static final long serialVersionUID = 1L
 
@@ -50,8 +53,8 @@ class P2MMapping extends AutoGenModelMapping implements Serializable {
     }
 
     static constraints = {
-        representative(size: 15..32)
-        member(size: 15..32)
+        representative(maxSize: 32)
+        member(maxSize: 32)
     }
 }
 
