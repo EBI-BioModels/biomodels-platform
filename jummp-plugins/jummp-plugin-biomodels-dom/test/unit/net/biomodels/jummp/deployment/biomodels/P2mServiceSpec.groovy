@@ -90,7 +90,7 @@ class P2mServiceSpec extends Specification {
 
 
         when: "the method is called"
-        Map result = service.getModelCategoryMap()
+        Map result = service.getModelCategoryMap("BMID")
 
         then: "the method returns a map of four elements"
         3 == result.size()

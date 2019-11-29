@@ -23,17 +23,17 @@ package net.biomodels.jummp.deployment.biomodels
 import grails.persistence.Entity
 
 /**
- * Domain class for mapping a representative model with other models in the same genus
+ * Domain class for mapping a representative model with other models in the akin disease
  *
- * These models were auto-generated in Path2Models project. Because of its complexity, we cluster
- * them into smaller groups based on genus. A cluster should have a representative model which
- * is chosen from the list of models in the same genus. Without losing generality, the first model
- * in the alphabetical order is nominated.
+ * These models were auto-generated in the large submission deposited to BioModels on 11.07.2017. Because of its
+ * complexity, we cluster them into smaller groups based on disease name. A cluster should have a representative
+ * model which is chosen from the list of models describing the same disease. Without losing generality,
+ * the first model in the alphabetical order is nominated.
  *
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 @Entity
-class P2MMapping extends AutoGenModelMapping implements Serializable {
+class UhlenModelMapping extends AutoGenModelMapping implements Serializable {
     private static final long serialVersionUID = 1L
 
     static mapping = {
@@ -48,8 +48,8 @@ class P2MMapping extends AutoGenModelMapping implements Serializable {
          *
          * [1] https://github.com/grails-plugins/grails-database-migration/issues/74
          */
-        representative(indexColumn: [name: "idx_p2m_rep", type: String])
-        member(indexColumn: [name: "idx_p2m_mem", type: String])
+        representative(indexColumn: [name: "idx_uhlen_rep", type: String])
+        member(indexColumn: [name: "idx_uhlen_mem", type: String])
     }
 
     static constraints = {

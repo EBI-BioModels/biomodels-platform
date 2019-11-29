@@ -12,5 +12,5 @@
     <td>${publication.volume}</td>
     <td>${publication.issue}</td>
     <td>${publication.pages}</td>
-    <td>Chua co</td>
+    <td></td>
 </tr>
