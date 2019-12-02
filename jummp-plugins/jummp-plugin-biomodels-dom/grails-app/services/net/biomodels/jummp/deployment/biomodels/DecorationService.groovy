@@ -40,7 +40,7 @@ import org.perf4j.aop.Profiled
  *
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-@Transactional
+@Transactional(readOnly = true)
 class DecorationService {
     /**
      * get 5 of the most accessed models from the last six months
