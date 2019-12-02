@@ -43,7 +43,7 @@ import org.perf4j.aop.Profiled
 @Transactional(readOnly = true)
 class DecorationService {
     /**
-     * get 5 of the most accessed models from the last six months
+     * get 7 of the most accessed models from the last six months
      * @return A map of ModelTransportCommand associating with their hits
      */
     @Profiled(tag = 'decorationService.getRecentlyAccessedModels')
@@ -88,7 +88,7 @@ ORDER BY hits DESC
     }
 
     /**
-     * get 5 of the most recently published models
+     * get 7 of the most recently published models
      * @return A map of ModelTransportCommand associating with latest published date
      */
     @Profiled(tag = 'decorationService.getRecentlyPublishedModels')
