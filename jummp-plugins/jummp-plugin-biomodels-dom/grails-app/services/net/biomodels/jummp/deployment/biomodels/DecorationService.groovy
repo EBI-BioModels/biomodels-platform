@@ -29,6 +29,7 @@ import groovy.time.TimeCategory
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.model.Model
+import org.perf4j.aop.Profiled
 
 /**
  * @short Service responsible for retrieving necessary data to design front page and
@@ -45,6 +46,7 @@ class DecorationService {
      * get 5 of the most accessed models from the last six months
      * @return A map of ModelTransportCommand associating with their hits
      */
+    @Profiled(tag = 'decorationService.getRecentlyAccessedModels')
     Map<ModelTransportCommand, ModelHits> getRecentlyAccessedModels() {
         String query = '''
 SELECT ma.model, COUNT(*) as hits, rev.name
@@ -89,6 +91,7 @@ ORDER BY hits DESC
      * get 5 of the most recently published models
      * @return A map of ModelTransportCommand associating with latest published date
      */
+    @Profiled(tag = 'decorationService.getRecentlyPublishedModels')
     Map<ModelTransportCommand, ModelLatestPublished> getRecentlyPublishedModels() {
         String query = '''
 SELECT model, max(model.firstPublished), rev.name
