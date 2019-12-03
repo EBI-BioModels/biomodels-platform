@@ -39,6 +39,17 @@ class UhlenModelService extends AutoGenModelService {
         }
     }
 
+    @Override
+    List findRepresentatives(List<String> missing) {
+        UhlenModelMapping.createCriteria().list {
+            projections {
+                property "member"
+                property "representative"
+            }
+            inList "member", missing
+        }
+    }
+
     String getRepresentativeId(String id) {
         UhlenModelMapping map = UhlenModelMapping.findByMember(id)
         if (map) {
