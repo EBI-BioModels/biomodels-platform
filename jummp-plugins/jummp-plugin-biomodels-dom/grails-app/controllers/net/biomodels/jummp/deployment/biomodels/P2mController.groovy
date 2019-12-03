@@ -116,7 +116,7 @@ class P2mController {
 
     def browse() {
         String title = "Browse Path2Models"
-        Map result = p2mService.getModelCategoryMap("BMID")
+        Map result = p2mService.getModelCategoryMap(AutoGenModelIdentifierPrefix.P2M.prefix)
         def genus = result.values()
         [title: title, categories: result, genus: genus]
     }

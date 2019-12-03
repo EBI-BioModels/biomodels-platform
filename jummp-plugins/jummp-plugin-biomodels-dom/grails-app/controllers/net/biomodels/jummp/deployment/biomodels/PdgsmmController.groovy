@@ -39,7 +39,7 @@ class PdgsmmController {
     def uhlenModelService
 
     def index() {
-        Map result = uhlenModelService.getModelCategoryMap("MODEL170711")
+        Map result = uhlenModelService.getModelCategoryMap(AutoGenModelIdentifierPrefix.PDGSMM.prefix)
         def diseases = result.keySet()
         render(view: "index", model: [title: "PDGSM models", diseases: diseases, categories: result])
     }
