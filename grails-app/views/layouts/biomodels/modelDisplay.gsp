@@ -411,13 +411,19 @@
             </sec:ifNotLoggedIn>
             // displayToolbar(true, true);
         });
+        var size = {
+            width: window.innerWidth || document.body.clientWidth,
+            height: window.innerHeight || document.body.clientHeight
+        };
+        console.log(size);
+
         if("${reactomeId}") {
             var reactomeId = "${reactomeId}";
             var global_diagram;
-            var REACTOME_HEIGHT = 500;
-            var REACTOME_WEIGHT = 900;
-            var DIALOG_WEIGHT = 1000;
-            var DIALOG_HEIGHT = 650;
+            var REACTOME_HEIGHT = Math.floor(size.height/2);
+            var REACTOME_WEIGHT = Math.floor(size.width/2);
+            var DIALOG_WEIGHT = Math.floor(size.width/2)+100;
+            var DIALOG_HEIGHT = Math.floor(size.height/2)+150;
 
             $(document).ready(function () {
                 $("#dialog").dialog({
