@@ -5,17 +5,6 @@
 <g:if test="${models}">
     <g:if test="${actionName == 'search'}">
         <div class="element" id="rightSidebar">
-            <h4>Browse Path2Models content</h4>
-            <p>Models from this branch are classified in 3 distinct categories:</p>
-            <ul>
-                <li><a href="//www.ebi.ac.uk/biomodels-main/path2models?cat=metabolic">metabolic models</a></li>
-                <li><a href="//www.ebi.ac.uk/biomodels-main/path2models?cat=non-metabolic">non-metabolic models</a></li>
-                <li><a href="//www.ebi.ac.uk/biomodels-main/path2models?cat=genome-scale">whole genome metabolism models</a></li>
-            </ul>
-            <p>One can also browse those models by organism:</p>
-            <ul><li><a href="//www.ebi.ac.uk/biomodels-main/path2models?cat=organism">list of all organisms</a></li></ul>
-
-            <p>Learn more about <a href="//www.ebi.ac.uk/biomodels-main/path2models">Path2Models</a></p>
         </div>
     </g:if>
     <g:elseif test="${actionName == 'list'}">
@@ -33,7 +22,7 @@
         </g:if>
     </g:elseif>
     <div class="element">
-        <g:link controller="goChart"><h3>Browse models using GO Chart</h3></g:link>
+        <g:link controller="goChart"><h4>Browse models using GO Chart</h4></g:link>
         <p>This is a chart view of the models in this Database based on <a href="http://www.geneontology.org/">Gene Ontology</a>.</p>
     </div>
 </g:if>
