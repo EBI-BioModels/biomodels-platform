@@ -43,19 +43,19 @@ import org.springframework.context.ApplicationContextAware
 @CompileStatic
 class ReactomeMapperFactoryBean implements FactoryBean<ReactomeMapper>, ApplicationContextAware {
 
-    public ApplicationContext applicationContext
+    private ReactomeMapper defaultReactomeMapper
 
     @Override
     void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = applicationContext
     }
 
     ReactomeMapperFactoryBean() {
+        defaultReactomeMapper = new DefaultReactomeMapper()
     }
 
     @Override
     ReactomeMapper getObject() throws Exception {
-        return getReactomeMapperObject()
+        return getDefaultReactomeMapper()
     }
 
     @Override
@@ -68,8 +68,7 @@ class ReactomeMapperFactoryBean implements FactoryBean<ReactomeMapper>, Applicat
         false // prototype beans
     }
 
-    ReactomeMapper getReactomeMapperObject() throws BeansException {
-        Objects.requireNonNull(applicationContext)
-            .getBean("defaultReactomeMapper", ReactomeMapper.class)
+    ReactomeMapper getDefaultReactomeMapper() {
+        return defaultReactomeMapper
     }
 }
