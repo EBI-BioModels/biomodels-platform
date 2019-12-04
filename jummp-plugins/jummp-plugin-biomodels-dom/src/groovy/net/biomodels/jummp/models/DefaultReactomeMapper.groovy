@@ -45,8 +45,7 @@ class DefaultReactomeMapper implements ReactomeMapper {
 
     @Override
     void extractModel2PathwayData() {
-        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("./models2pathways.tsv")
-        println(inputStream)
+        InputStream inputStream = getClass().getClassLoader().getResourceAsStream("models2pathways.tsv")
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"))
         try  {
             for(String line : reader.lines().iterator()) {
