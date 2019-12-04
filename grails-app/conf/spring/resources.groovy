@@ -181,9 +181,6 @@ beans = {
     reactomeMapperFactoryBean(ReactomeMapperFactoryBean) {bean ->
         bean.scope = 'prototype'
     }
-    defaultReactomeMapper(DefaultReactomeMapper) { bean ->
-        bean.scope = 'singleton'
-    }
 
     // this is the only mandatory identifier generator, all others are optional
     submissionIdGenerator(ModelIdentifierGeneratorFactoryBean) { bean ->
