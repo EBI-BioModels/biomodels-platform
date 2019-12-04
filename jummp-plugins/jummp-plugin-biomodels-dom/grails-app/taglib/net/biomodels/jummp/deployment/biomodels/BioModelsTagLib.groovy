@@ -271,4 +271,24 @@ class BioModelsTagLib {
         }
 
     }
+
+    def renderPdgsmmDiseasesInTwoColumnsLayout = { attrs ->
+        Map m = attrs.categories
+        Map leftColumn = new TreeMap<String, TreeSet>()
+        Map rightColumn = new TreeMap<String, TreeSet>()
+        int nbElePerCol = m.size() / 2
+        m.eachWithIndex { e, int i ->
+            if (i <= nbElePerCol) {
+                leftColumn.put(e.key, e.value)
+            } else {
+                rightColumn.put(e.key, e.value)
+            }
+        }
+        out << '<div class="row">'
+        out << render(template: "/templates/pdgsmmDiseaseColumn", plugin: "jummp-plugin-biomodels-dom",
+            model: [diseases: leftColumn])
+        out << render(template: "/templates/pdgsmmDiseaseColumn", plugin: "jummp-plugin-biomodels-dom",
+            model: [diseases: rightColumn])
+        out << '</div>'
+    }
 }

@@ -31,6 +31,10 @@
     {
       "name": "Path2Models operations",
       "description": "Find Path2Models models of interest"
+    },
+    {
+      "name": "PDGSMM operations",
+      "description": "Find Patient-derived genome-scale metabolic models (PDGSMM) of interest"
     }
   ],
   "schemes": [
@@ -404,7 +408,7 @@
           "get": {
               "tags": ["Path2Models operations"],
               "summary": "Find the replacement accessions for a set of Path2Models entries",
-              "description": "Get the representative model identifiers of a set of given missing models in Path2Models. This end pointexpects a comma-separated list of model identifiers (without any surrounding whitespace) and an optional response format. Examples: BMID000000112902,BMID000000009880,BMID000000027397",
+              "description": "Get the representative model identifiers of a set of given missing models in Path2Models. This end point expects a comma-separated list of model identifiers (without any surrounding whitespace) and an optional response format. Examples: BMID000000112902,BMID000000009880,BMID000000027397",
               "parameters": [
                   {
                       "in": "query",
@@ -440,6 +444,122 @@
               "responses": {
                   "200": {
                       "description": "The lookup completed successfully. The response will contain a mapping between the given identifiers and their corresponding ."
+                  }
+              }
+          }
+      },
+      "/pdgsmm/missing": {
+          "get": {
+              "tags": ["PDGSMM operations"],
+              "summary": "Retrieve the identifiers of all PDGSMM entries that are no longer directly accessible",
+              "description": "Retrieve all models in PDGSMM that are now only available indirectly, through the representative model for the corresponding disease",
+              "parameters": [
+                  {
+                      "in": "path",
+                      "name": "format",
+                      "description": "The response format",
+                      "required": false,
+                      "type": "string",
+                      "enum": [
+                          "json",
+                          "xml",
+                          "html"
+                      ]
+                  }
+              ],
+              "produces": [
+                  "application/json",
+                  "application/xml",
+                  "text/html"
+              ],
+              "responses": {
+                  "200": {
+                      "description": "Successful operation"
+                  }
+              }
+          }
+      },
+      "/pdgsmm/representative": {
+          "get": {
+              "tags": ["PDGSMM operations"],
+              "summary": "Retrieve a representative model in PDGSMM",
+              "description": "Get the representative model identifier for a given missing model in PDGSMM. This endpoint accepts as parameters a mandatory model identifier and an optional response format",
+              "parameters": [
+                  {
+                      "in": "query",
+                      "name": "model",
+                      "description": "The identifier of a model of interest",
+                      "required": true,
+                      "type": "string"
+                  },
+                  {
+                      "in": "query",
+                      "name": "format",
+                      "description": "The response format",
+                      "required": false,
+                      "type": "string",
+                      "enum": [
+                          "json",
+                          "xml",
+                          "html"
+                      ]
+                  }
+              ],
+              "produces": [
+                  "application/json",
+                  "application/xml",
+                  "text/html"
+              ],
+              "responses": {
+                  "200": {
+                      "description": "Successful operation. We return a mapping between the given accession and that of its representative (or null if the given identifier does not exist)"
+                  },
+                  "404": {
+                      "description": "Not Found"
+                  }
+              }
+          }
+      },
+      "/pdgsmm/representatives": {
+          "get": {
+              "tags": ["PDGSMM operations"],
+              "summary": "Find the replacement accessions for a set of PDGSMM",
+              "description": "Get the representative model identifiers of a set of given missing models in PDGSMM. This end point expects a comma-separated list of model identifiers (without any surrounding whitespace) and an optional response format. Examples: MODEL1707110145,MODEL1707112456,MODEL1707115900",
+              "parameters": [
+                  {
+                      "in": "query",
+                      "name": "modelIds",
+                      "description": "The list of requested model identifiers",
+                      "required": true,
+                      "type": "array",
+                      "collectionFormat": "csv",
+                      "items": [
+                          {
+                              "type": "string"
+                          }
+                      ]
+                  },
+                  {
+                      "in": "query",
+                      "name": "format",
+                      "description": "The response format",
+                      "required": false,
+                      "type": "string",
+                      "enum": [
+                          "json",
+                          "xml",
+                          "html"
+                      ]
+                  }
+              ],
+              "produces": [
+                  "application/json",
+                  "application/xml",
+                  "text/html"
+              ],
+              "responses": {
+                  "200": {
+                      "description": "The lookup completed successfully. The response will contain a mapping between the given identifiers and their corresponding."
                   }
               }
           }
