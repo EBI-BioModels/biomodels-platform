@@ -419,10 +419,12 @@
         if("${reactomeId}") {
             var reactomeId = "${reactomeId}";
             var global_diagram;
-            var REACTOME_HEIGHT = Math.floor(size.height/2);
-            var REACTOME_WEIGHT = Math.floor(size.width/2);
-            var DIALOG_WEIGHT = Math.floor(size.width/2)+100;
-            var DIALOG_HEIGHT = Math.floor(size.height/2)+150;
+            var base_height = Math.floor(size.height/2);
+            var base_width = Math.floor(size.width/2);
+            var REACTOME_HEIGHT = base_height;
+            var REACTOME_WEIGHT = base_width;
+            var DIALOG_WEIGHT = base_width+100;
+            var DIALOG_HEIGHT = base_height+150;
 
             $(document).ready(function () {
                 $("#dialog").dialog({
