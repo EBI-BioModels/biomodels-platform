@@ -29,14 +29,9 @@ Program grant you additional permission to convey the resulting work.
 */
 package net.biomodels.jummp.deployment.biomodels
 
-import grails.transaction.Transactional
-import grails.util.Holders
-
-@Transactional
 class ReactomeService {
 
-    def grailsApplication = Holders.grailsApplication.mainContext.getBean('grailsApplication')
-
+    def grailsApplication
     Map<String, String> getModelPathwayMapFromReactomeFactoryBean() {
         return grailsApplication?.mainContext?.reactomeMapperFactoryBean?.getModelPathwayMap()
     }
