@@ -415,7 +415,6 @@
             width: window.innerWidth || document.body.clientWidth,
             height: window.innerHeight || document.body.clientHeight
         };
-        console.log(size);
 
         if("${reactomeId}") {
             var reactomeId = "${reactomeId}";
