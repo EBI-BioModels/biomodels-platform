@@ -1,6 +1,7 @@
 import grails.converters.XML
-import net.biomodels.jummp.deployment.biomodels.ReactomeService
 import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchXmlMarshaller
+import net.biomodels.jummp.models.ReactomeServiceFactoryBean
+
 class JummpPluginBiomodelsDomGrailsPlugin {
     // the plugin version
     def version = "0.1"
@@ -50,6 +51,9 @@ Plugin to define domain classes specific to the biomodels database
         def df = "yyyy-MM-dd'T'HH:mm:ss"
         if (!application.config.grails.databinding.dateFormats.contains(df)) {
             application.config.grails.databinding.dateFormats.add(df)
+        }
+        reactomeService(ReactomeServiceFactoryBean) { bean ->
+            bean.scope = "prototype"
         }
     }
 
