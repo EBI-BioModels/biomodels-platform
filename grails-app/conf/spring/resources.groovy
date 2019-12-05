@@ -38,8 +38,6 @@ import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorRegistr
 import net.biomodels.jummp.core.model.identifier.support.NullModelIdentifierGeneratorInitializer
 import net.biomodels.jummp.core.model.identifier.support.PublicationIdGeneratorInitializer
 import net.biomodels.jummp.core.model.identifier.support.SubmissionIdGeneratorInitializer
-import net.biomodels.jummp.models.DefaultReactomeMapper
-import net.biomodels.jummp.models.ReactomeMapperFactoryBean
 import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
 import org.codehaus.groovy.grails.commons.spring.GrailsApplicationContext
 import org.springframework.beans.factory.config.BeanDefinition
@@ -176,10 +174,6 @@ beans = {
         } catch (PatternSyntaxException ignore) {
             throw new IllegalArgumentException("'$regexSetting' is not a valid Java regex pattern.")
         }
-    }
-
-    reactomeMapperFactoryBean(ReactomeMapperFactoryBean) {bean ->
-        bean.scope = 'prototype'
     }
 
     // this is the only mandatory identifier generator, all others are optional
