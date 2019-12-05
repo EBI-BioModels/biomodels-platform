@@ -29,15 +29,27 @@ Program grant you additional permission to convey the resulting work.
 */
 package net.biomodels.jummp.deployment.biomodels
 
-class ReactomeService {
+import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationContextAware
 
-    def grailsApplication
-    Map<String, String> getModelPathwayMapFromReactomeFactoryBean() {
-        return grailsApplication?.mainContext?.reactomeMapperFactoryBean?.getModelPathwayMap()
+/**
+ * Service for accessing the Reactome pathway mapping information.
+ *
+ * This is a prototype-scoped service which holds the model-pathway mapping information.
+ *
+ * @author carankalle on 26/11/2019.
+ * @author mglont on 05/12/2019.
+ * @see {@link net.biomodels.jummp.models.ReactomeServiceFactoryBean}
+ */
+class ReactomeService implements ApplicationContextAware {
+    ApplicationContext applicationContext
+    Map<String, String> modelPathwayMapping
+
+    ReactomeService(Map<String, String> modelPathwayMapping) {
+        this.modelPathwayMapping = modelPathwayMapping
     }
 
     String getPathwayForModelId(String modelId) {
-        Map<String, String> modelPathwayMap = getModelPathwayMapFromReactomeFactoryBean()
-        return modelPathwayMap.get(modelId)
+        modelPathwayMapping.get(modelId)
     }
 }
