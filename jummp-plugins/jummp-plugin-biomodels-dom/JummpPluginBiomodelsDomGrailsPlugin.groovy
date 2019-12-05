@@ -51,9 +51,6 @@ Plugin to define domain classes specific to the biomodels database
         if (!application.config.grails.databinding.dateFormats.contains(df)) {
             application.config.grails.databinding.dateFormats.add(df)
         }
-        reactomeService(ReactomeService) {
-            grailsApplication = ref("grailsApplication")
-        }
     }
 
     def doWithDynamicMethods = { ctx ->
