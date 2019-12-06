@@ -60,7 +60,7 @@
                 </select>
                 <br/><br/>
                 <a class="help-text label-floating-left secondary label"
-                   title="Click here if you don't know what this dropdown box is used for"
+                   title="Learn more"
                    data-open="domainSwitcherExplanationBox">What is this box used for?</a>
                 <input type="text" id="chosenDomain" name="chosenDomain"
                        style="display: none" value="biomodels"/>

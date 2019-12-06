@@ -6,7 +6,7 @@
     </button>
 
     <div class="explanation-panel" id="domainSwitcherExplanationPanel" data-toggler=".is-active">
-        <p>This drop down box allows you to choose a pool (aka. domain) from where models are searched for.
+        <p>This drop down box allows you to choose a domain from where models are searched for.
         At the current stage, all auto generated models as well as ones belonging to the large submissions have been
         indexed to the separate domain called <strong>BioModels Autogen</strong> which currently consists of
         <g:link mapping="path2models" target="_blank">Path2Models</g:link> and
