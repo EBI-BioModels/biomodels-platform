@@ -447,30 +447,18 @@
             //Creating the Reactome Diagram widget
             //Take into account a proxy needs to be set up in your server side pointing to www.reactome.org
             function onReactomeDiagramReady() {  //This function is automatically called when the widget code is ready to be used
-
                 var diagram = Reactome.Diagram.create({
                     "placeHolder": "diagramHolder",
                     "width": REACTOME_WEIGHT,
                     "height": REACTOME_HEIGHT
                 });
-                //Initialising it to the "Hemostasis" pathway
                 diagram.loadDiagram(reactomeId);
 
-                //Adding different listeners
-                global_diagram =diagram;
-
-                diagram.onDiagramLoaded(function (loaded) {
-                    diagram.flagItems("FYN");
-                    // if (loaded == reactomeId) diagram.selectItem(reactomeId);
-                });
-
-                diagram.onObjectHovered(function (hovered) {
-                    console.info("Hovered ", hovered);
-                });
-
-                diagram.onObjectSelected(function (selected) {
-                    console.info("Selected ", selected);
-                });
+                // store this in a global variable so we can call resetSelection() from
+                // the callback for opening the Reactome popup. Calling it here results
+                // in a popup window with an invisible pathway, even though the widget
+                // control buttons are rendered just fine.
+                global_diagram = diagram;
             }
         } else {
             $("#opener").attr("disabled", "disabled");
