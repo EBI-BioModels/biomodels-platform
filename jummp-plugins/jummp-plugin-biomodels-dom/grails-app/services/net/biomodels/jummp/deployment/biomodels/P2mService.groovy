@@ -39,6 +39,17 @@ class P2mService extends AutoGenModelService {
         }
     }
 
+    @Override
+    List findRepresentatives(List<String> missing) {
+        P2MMapping.createCriteria().list {
+            projections {
+                property "member"
+                property "representative"
+            }
+            inList "member", missing
+        }
+    }
+
     String getRepresentativeId(String id) {
         P2MMapping map = P2MMapping.findByMember(id)
         if (map) {
