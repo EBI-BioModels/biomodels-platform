@@ -100,6 +100,7 @@
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'model-display.css')}"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/css/select2.min.css"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.min.js"></script>
+    <script type="text/javascript" language="javascript" src="https://reactome.org/DiagramJs/diagram/diagram.nocache.js"></script>
     <script>
         $(function() {
             $( "#tabs" ).tabs({
@@ -410,6 +411,58 @@
             </sec:ifNotLoggedIn>
             // displayToolbar(true, true);
         });
+        var size = {
+            width: window.innerWidth || document.body.clientWidth,
+            height: window.innerHeight || document.body.clientHeight
+        };
+
+        if("${reactomeId}") {
+            var reactomeId = "${reactomeId}";
+            var global_diagram;
+            var base_height = Math.floor(size.height/2);
+            var base_width = Math.floor(size.width/2);
+            var REACTOME_HEIGHT = base_height;
+            var REACTOME_WEIGHT = base_width;
+            var DIALOG_WEIGHT = base_width+100;
+            var DIALOG_HEIGHT = base_height+150;
+
+            $(document).ready(function () {
+                $("#dialog").dialog({
+                    width: DIALOG_WEIGHT,
+                    height: DIALOG_HEIGHT,
+                    modal: true,
+                    open: function( event, ui ) {
+                        global_diagram.resize(REACTOME_WEIGHT,REACTOME_HEIGHT);
+                        global_diagram.resetSelection();
+                        global_diagram.selectItem(reactomeId);
+                    },
+                    autoOpen: false
+                });
+                $("#opener").on("click", function () {
+                    $("#dialog").dialog("open");
+                });
+            });
+
+
+            //Creating the Reactome Diagram widget
+            //Take into account a proxy needs to be set up in your server side pointing to www.reactome.org
+            function onReactomeDiagramReady() {  //This function is automatically called when the widget code is ready to be used
+                var diagram = Reactome.Diagram.create({
+                    "placeHolder": "diagramHolder",
+                    "width": REACTOME_WEIGHT,
+                    "height": REACTOME_HEIGHT
+                });
+                diagram.loadDiagram(reactomeId);
+
+                // store this in a global variable so we can call resetSelection() from
+                // the callback for opening the Reactome popup. Calling it here results
+                // in a popup window with an invisible pathway, even though the widget
+                // control buttons are rendered just fine.
+                global_diagram = diagram;
+            }
+        } else {
+            $("#opener").attr("disabled", "disabled");
+        }
     </script>
     <g:layoutHead/>
 </head>
@@ -561,7 +614,11 @@
                              src="${grailsApplication.config.grails.serverURL}/images/lock.png"/>
                     </g:else>
                 </div>
+                <div style="margin-right: 50%;">
+                    <a class="readmore button" id="opener" >View Reactome pathway</a>
+                </div>
             </div>
+
             <div id="tablewrapper">
                 <div id="tabs">
                     <ul class='modelTabs'>
@@ -878,3 +935,6 @@
         display
 </content>
 </g:applyLayout>
+<div id="dialog" title="Reactome pathway">
+    <div id="diagramHolder"></div>
+</div>
