@@ -156,6 +156,8 @@ class ModelService {
 
     def modelConversionService
 
+    def repositoryFileService
+
     ObjectFactory<ModelIdentifierGeneratorRegistryService> idGeneratorRegistryFactoryBean
 
     final boolean MAKE_PUBLICATION_ID = !(publicationIdGenerator instanceof NullModelIdentifierGenerator)
@@ -1554,10 +1556,12 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         }
         List<File> files
         try {
-            files = vcsService.retrieveFiles(revision)
+            files = repositoryFileService.retrieveFiles(revision)
         } catch (VcsException e) {
-            log.error("Retrieving Revision ${revision.vcsId} for Model ${revision.name} from VCS failed.", e)
-            throw new ModelException(new ModelAdapter(model: revision.model).toCommandObject(), "Retrieving Revision ${revision.vcsId} from VCS failed.", e)
+            String message = "Retrieving Revision ${revision.vcsId} for Model ${revision.name} from VCS failed."
+            log.error(message, e)
+            ModelTransportCommand model = new ModelAdapter(model: revision.model).toCommandObject()
+            throw new ModelException(model, message, e)
         }
         return files
     }

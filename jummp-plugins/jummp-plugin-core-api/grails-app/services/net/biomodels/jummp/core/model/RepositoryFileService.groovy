@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU Affero General Public License along
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
- **/
+ */
 
 
 
@@ -25,11 +25,17 @@
 package net.biomodels.jummp.core.model
 
 import grails.transaction.Transactional
+import net.biomodels.jummp.core.ModelException
+import net.biomodels.jummp.core.adapters.ModelAdapter
+import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.RepositoryFile
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
+import net.biomodels.jummp.model.Revision
 import org.apache.tika.detect.DefaultDetector
 import org.apache.tika.metadata.Metadata
+import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 
 /**
  * This class enables to handle services for manipulating repository files such as updating repository files,
@@ -37,8 +43,34 @@ import org.apache.tika.metadata.Metadata
  *
  * @author  Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-class RepositoryFileService {
-    private static final Log log = LogFactory.getLog(RepositoryFileService.class)
+class RepositoryFileService implements GrailsConfigurationAware {
+    static scope = "prototype"
+
+    private static final Logger logger = LoggerFactory.getLogger(RepositoryFileService.class)
+
+    def modelService
+
+    def vcsService
+
+    def grailsApplication
+
+    String MODEL_CACHE_DIR
+
+    /**
+     * Populate the model cache directory
+     */
+    @Override
+    void setConfiguration(ConfigObject co) {
+        MODEL_CACHE_DIR = grailsApplication.config.jummp.model.cache.dir
+        if (!MODEL_CACHE_DIR) {
+            String message = """\
+The configuration file is missing the property of jummp.model.cache.dir"""
+            logger.debug(message)
+        } else {
+            logger.info("The model cache directory is set at the location: $MODEL_CACHE_DIR")
+
+        }
+    }
 
     /**
      * This method aims at updating the description of a given repository file.
@@ -56,11 +88,11 @@ class RepositoryFileService {
         if (rf) {
             rf.description = description
             if (rf.save(flush: true)) {
-                log.debug("""\
+                logger.debug("""\
 The repository file which is associated with the file $path has been updated its description: $description""")
                 return Boolean.TRUE
             } else {
-                log.debug("""\
+                logger.debug("""\
 There is an error when trying to update the description: $description --- of the repository file $path""")
                 return Boolean.FALSE
             }
@@ -90,5 +122,60 @@ There is an error when trying to update the description: $description --- of the
             results.add(command)
         }
         results
+    }
+
+    List retrieveFiles(final Revision revision) {
+        // look in the cache and either serve what's there, or fetch from VCS and update the cache
+        List files
+        files = get(revision)
+        if (!files) {
+            files = vcsService.retrieveFiles(revision)
+            // log the result
+            String message = """\
+Retrieving the revision ${revision.vcsId} for Model ${revision.model.submissionId} from the local model 
+cache directory failed. The revision has been checked out from VCS instead."""
+            logger.debug(message)
+            // update the cache
+            String modelId = revision.model.submissionId
+            boolean updated = updateModelRevisionCache(modelId, revision.revisionNumber)
+            if (updated) {
+                message = """\
+The model ${modelId} revision ${revision.revisionNumber} has been populated them to the  cache successfully"""
+            } else {
+                message = """\
+The model ${modelId} revision ${revision.revisionNumber} has been failed when updating them to the  cache"""
+            }
+            logger.debug(message)
+        }
+        return files
+    }
+
+    List<File> get(long revisionId) {
+        get(Revision.get(revisionId))
+    }
+
+    List<File> get(Revision revision) {
+        get(revision.model.submissionId, revision.revisionNumber)
+    }
+
+    List<File> get(String modelId, int revisionNumber) throws FileNotFoundException {
+        File modelDirectory = new File(MODEL_CACHE_DIR, modelId)
+        File revisionDirectory
+        List returnedFiles = new LinkedList<File>()
+        try {
+            revisionDirectory = new File(modelDirectory, revisionNumber.toString())
+            returnedFiles = revisionDirectory.listFiles().toList()
+        } catch (FileNotFoundException me) {
+            Model model = modelService.getModel(modelId)
+            boolean saveHistory = false
+            ModelTransportCommand modelTC = new ModelAdapter(model: model).toCommandObject(saveHistory)
+            String message = "The files associated with this model ${modelId}, revision ${revisionNumber} do not exist"
+            throw new ModelException(modelTC, message)
+        }
+        return returnedFiles
+    }
+
+    boolean updateModelRevisionCache(String modelId, int revisionNumber) {
+        return null
     }
 }
