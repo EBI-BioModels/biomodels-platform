@@ -467,7 +467,7 @@ static List<RepositoryFileTransportCommand> getRepoFilesOfLastRevision(Model mod
     revisionCmd.files
 }
 
-void  printModelLog() {
+void printModelLog() {
     ModelLogger.messageLog.keySet().sort().each { modelId ->
         def logger = ModelLogger.messageLog[modelId]
         def infoMessages = logger.out
@@ -515,7 +515,7 @@ void doHandleModelFolder(SessionHolder session, File submissionFolder) {
     Model m = Model.findBySubmissionId(id)
     assert m : "Model '$id' should have already been imported but isn't."
 
-    Revision newRevision = doInsertNewRevision()
+    Revision newRevision = doInsertNewRevision(id, submissionFolder, m)
 
     if (!newRevision || newRevision?.hasErrors()) {
         addModelError(id, "Model update failed: ${newRevision?.errors?.allErrors}")
