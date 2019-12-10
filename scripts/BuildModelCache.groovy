@@ -35,10 +35,8 @@ import java.time.Duration
 import java.time.Instant
 
 /**
- * Created by Tung Nguyen <nvntung@gmail.com> on 07/10/16.
- * Updated by Tung Nguyen <nvntung@gmail.com> on 10/12/19.
+ * @author Tung Nguyen <nvntung@gmail.com> on 10/12/19.
  */
-
 class AppCtx {
 
     static final String adminUsername = System.getenv("ADMIN_USER")
@@ -98,54 +96,63 @@ class AppCtx {
         createTokenForUser(User.findByUsername(username))
     }
 }
-void copyRevisionFiles(Revision revision) throws RuntimeException {
-    String modelId = revision.model.submissionId
-    String revNum = revision.revisionNumber.toString()
-    println "Copying the files associated with the revision ${revision.vcsId} (${revision.id}): ${modelId}.${revNum}"
-    try {
-        File modelDirectory = new File(ctx.repositoryFileService.MODEL_CACHE_DIR, revision.model.submissionId)
-        if (!modelDirectory.exists()) {
-            modelDirectory.mkdirs()
-        }
-        File modelRevDir = new File(modelDirectory, revision.revisionNumber.toString())
-        if (!modelRevDir.exists()) {
-            modelRevDir.mkdirs()
-        }
-        try {
-            List<File> files = ctx.vcsService.retrieveFiles(revision)
-            files.each {
-                println "File: ${it.absolutePath}"
-                Path path = Files.copy(it.toPath(),
-                    new File(modelRevDir, it.getName()).toPath(),
-                    StandardCopyOption.REPLACE_EXISTING)
-                println "Copied: ${path.toString()}"
 
+class ModelCacheBuilder {
+    def ctx
+
+    void copyRevisionFiles(Revision revision) throws RuntimeException {
+        String modelId = revision.model.submissionId
+        String revNum = revision.revisionNumber.toString()
+        println "Copying the files associated with the revision ${revision.vcsId} (${revision.id}): ${modelId}.${revNum}"
+        try {
+            File modelDirectory = new File(ctx.repositoryFileService.MODEL_CACHE_DIR, revision.model.submissionId)
+            if (!modelDirectory.exists()) {
+                modelDirectory.mkdirs()
             }
-        } catch (VcsException | InvalidVcsRepositoryException | VcsAlreadyInitedException | VcsNotInitedException |
-        FileAlreadyVersionedException | FileNotVersionedException e) {
-            println "Encountered VCS errors for model ${modelId}, revision number ${revNum} (${revision.vcsId})"
+            File modelRevDir = new File(modelDirectory, revision.revisionNumber.toString())
+            if (!modelRevDir.exists()) {
+                modelRevDir.mkdirs()
+            }
+            try {
+                List<File> files = ctx.vcsService.retrieveFiles(revision)
+                files.each {
+                    println "File: ${it.absolutePath}"
+                    Path path = Files.copy(it.toPath(),
+                        new File(modelRevDir, it.getName()).toPath(),
+                        StandardCopyOption.REPLACE_EXISTING)
+                    println "Copied: ${path.toString()}"
+
+                }
+            } catch (VcsException | InvalidVcsRepositoryException | VcsAlreadyInitedException | VcsNotInitedException |
+            FileAlreadyVersionedException | FileNotVersionedException e) {
+                println "Encountered VCS errors for model ${modelId}, revision number ${revNum} (${revision.vcsId})"
+            }
+        } catch (RuntimeException e) {
+            println "Encountered the problem: ${e.toString()}"
         }
-    } catch (RuntimeException e) {
-        println "Encountered the problem: ${e.toString()}"
+    }
+
+    void build() {
+        String duration
+        Instant startTime = Instant.now()
+        try {
+            AppCtx.simpleRunAs(AppCtx.adminAuth, {
+                // iterate on the list of revisions
+                Revision.withTransaction {
+                    List revisions = Revision.getAll()
+                    revisions.eachWithIndex{ Revision revision, int i ->
+                        copyRevisionFiles(revision)
+                    }
+                }
+            })
+        } catch (Exception e) {
+            System.err.println("Generic exception encountered while initialising model cache directory: $e")
+        } finally {
+            duration = Duration.between(startTime, Instant.now())
+            String formattedDuration = duration.toString()
+            println "Initialised the model cache directory in $formattedDuration"
+        }
     }
 }
 
-String duration
-Instant startTime = Instant.now()
-try {
-    AppCtx.simpleRunAs(AppCtx.adminAuth, {
-        // iterate on the list of revisions
-        Revision.withTransaction {
-            List revisions = Revision.getAll()
-            revisions.eachWithIndex{ Revision revision, int i ->
-                copyRevisionFiles(revision)
-            }
-        }
-    })
-} catch (Exception e) {
-    System.err.println("Generic exception encountered while initialising model cache directory: $e")
-} finally {
-    duration = Duration.between(startTime, Instant.now())
-    String formattedDuration = duration.toString()
-    println "Initialised the model cache directory in $formattedDuration"
-}
+new ModelCacheBuilder(ctx: ctx).build()
