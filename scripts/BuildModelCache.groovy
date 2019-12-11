@@ -19,10 +19,15 @@
  */
 
 import grails.plugin.springsecurity.SpringSecurityUtils
+import groovyx.gpars.GParsPool
+import net.biomodels.jummp.core.JummpException
 import net.biomodels.jummp.core.vcs.*
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.plugins.security.UserRole
+import org.eclipse.jgit.api.errors.NoHeadException
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.GrantedAuthority
@@ -30,6 +35,7 @@ import org.springframework.security.core.context.SecurityContextHolder
 
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.time.Duration
 import java.time.Instant
@@ -37,36 +43,14 @@ import java.time.Instant
 /**
  * @author Tung Nguyen <nvntung@gmail.com> on 10/12/19.
  */
-class AppCtx {
+class ModelCacheBuilder {
+    def ctx
+
+    private static final Logger logger = LoggerFactory.getLogger(ModelCacheBuilder.class)
 
     static final String adminUsername = System.getenv("ADMIN_USER")
     // auth token for admin account; used by worker threads to publish models
     static final Authentication adminAuth = createTokenForUser(adminUsername)
-
-    /**
-     * Very simple means of executing an action as a different user than the one
-     * that is currently authenticated.
-     *
-     * Performs the action defined by closure as the user defined by Authentication
-     * object auth, then reverts to the original authentication.
-     *
-     * Suitable for lightweight work for which we need not create a separate thread.
-     */
-    static def simpleRunAs = { auth, closure ->
-        def currentAuth
-        try {
-            currentAuth = SecurityContextHolder.context.authentication
-            SecurityContextHolder.context.authentication = auth
-            def result = closure.call()
-            return result
-        } finally {
-            if (currentAuth) {
-                SecurityContextHolder.context.authentication = currentAuth
-            } else {
-                SecurityContextHolder.clearContext()
-            }
-        }
-    }
 
     /*
      * Creates and returns an authentication token for the given user.
@@ -95,62 +79,97 @@ class AppCtx {
         assert username : "Username required but not defined"
         createTokenForUser(User.findByUsername(username))
     }
-}
 
-class ModelCacheBuilder {
-    def ctx
+    /**
+     * Very simple means of executing an action as a different user than the one
+     * that is currently authenticated.
+     *
+     * Performs the action defined by closure as the user defined by Authentication
+     * object auth, then reverts to the original authentication.
+     *
+     * Suitable for lightweight work for which we need not create a separate thread.
+     */
+    static def simpleRunAs = { auth, closure ->
+        def currentAuth
+        try {
+            currentAuth = SecurityContextHolder.context.authentication
+            SecurityContextHolder.context.authentication = auth
+            def result = closure.call()
+            return result
+        } finally {
+            if (currentAuth) {
+                SecurityContextHolder.context.authentication = currentAuth
+            } else {
+                SecurityContextHolder.clearContext()
+            }
+        }
+    }
 
     void copyRevisionFiles(Revision revision) throws RuntimeException {
         String modelId = revision.model.submissionId
         String revNum = revision.revisionNumber.toString()
-        println "Copying the files associated with the revision ${revision.vcsId} (${revision.id}): ${modelId}.${revNum}"
+        logger.info("""\
+Copying the files associated with the revision ${revision.vcsId} (${revision.id}): ${modelId}.${revNum}""")
+        File modelRevDir = Paths.get(ctx.repositoryFileService.MODEL_CACHE_DIR, modelId, revNum).toFile()
+        boolean created = modelRevDir.mkdirs()
+        if (!created) {
+            String message = """\
+the revision directory '${modelRevDir.absolutePath}' might exist or we were unable to create it"""
+            logger.debug(message)
+        }
         try {
-            File modelDirectory = new File(ctx.repositoryFileService.MODEL_CACHE_DIR, revision.model.submissionId)
-            if (!modelDirectory.exists()) {
-                modelDirectory.mkdirs()
-            }
-            File modelRevDir = new File(modelDirectory, revision.revisionNumber.toString())
-            if (!modelRevDir.exists()) {
-                modelRevDir.mkdirs()
-            }
             try {
                 List<File> files = ctx.vcsService.retrieveFiles(revision)
                 files.each {
-                    println "File: ${it.absolutePath}"
-                    Path path = Files.copy(it.toPath(),
-                        new File(modelRevDir, it.getName()).toPath(),
-                        StandardCopyOption.REPLACE_EXISTING)
-                    println "Copied: ${path.toString()}"
-
+                    Files.copy(it.toPath(),
+                        new File(modelRevDir, it.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING)
                 }
-            } catch (VcsException | InvalidVcsRepositoryException | VcsAlreadyInitedException | VcsNotInitedException |
-            FileAlreadyVersionedException | FileNotVersionedException e) {
-                println "Encountered VCS errors for model ${modelId}, revision number ${revNum} (${revision.vcsId})"
+            } catch (NoHeadException | VcsException e) {
+                logger.error("""\
+There have been errors with VCS manager for the model $modelId, revision $revNum: $e.message""")
             }
-        } catch (RuntimeException e) {
-            println "Encountered the problem: ${e.toString()}"
+        } catch (VcsException e) {
+            logger.error("""\
+Encountered VCS errors for model ${modelId}, revision number ${revNum} (${revision.vcsId})""")
         }
     }
 
     void build() {
         String duration
         Instant startTime = Instant.now()
+        ctx.persistenceInterceptor?.init()
+
         try {
-            AppCtx.simpleRunAs(AppCtx.adminAuth, {
-                // iterate on the list of revisions
-                Revision.withTransaction {
-                    List revisions = Revision.getAll()
-                    revisions.eachWithIndex{ Revision revision, int i ->
-                        copyRevisionFiles(revision)
-                    }
+            String query = "select id from Revision"
+            List revisions = Revision.executeQuery(query)
+            final int POOL_SIZE = 2
+            GParsPool.withPool(POOL_SIZE) {
+                revisions.eachParallel { long revisionId ->
+                    simpleRunAs(adminAuth, {
+                        ctx.persistenceInterceptor?.init()
+                        Revision revision = Revision.read(revisionId)
+                        try {
+                            copyRevisionFiles(revision)
+                        } catch (RuntimeException re) {
+                            String message = """\
+Cannot copy files of the model: ${revision.model.submissionId}, revision: ${revisionId} because of the below error: 
+${re.getStackTrace().inspect()}"""
+                            logger.error(message)
+                            re.printStackTrace()
+                        } finally {
+                            ctx.persistenceInterceptor?.destroy()
+                        }
+                    })
                 }
-            })
-        } catch (Exception e) {
-            System.err.println("Generic exception encountered while initialising model cache directory: $e")
+            }
+        } catch (JummpException e) {
+            System.err.println("""\
+Generic exception encountered while initialising model cache directory: ${e.message}""")
         } finally {
+            ctx.persistenceInterceptor?.destroy()
             duration = Duration.between(startTime, Instant.now())
             String formattedDuration = duration.toString()
-            println "Initialised the model cache directory in $formattedDuration"
+            logger.info("Initialised the model cache directory in $formattedDuration")
         }
     }
 }
