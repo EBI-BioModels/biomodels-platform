@@ -66,9 +66,6 @@ class RepositoryFileService implements GrailsConfigurationAware {
             String message = """\
 The configuration file is missing the property of jummp.model.cache.dir"""
             logger.debug(message)
-        } else {
-            logger.info("The model cache directory is set at the location: $MODEL_CACHE_DIR")
-
         }
     }
 
