@@ -136,16 +136,14 @@ class BioModelsTagLib {
     }
 
     def renderRecentlyAccessedModels = {
-        Map<ModelTransportCommand, ModelHits> models = decorationService.getRecentlyAccessedModels()
+        Map<String, String> models = decorationService.getRecentlyAccessedModels()
         StringBuilder result = new StringBuilder("<ul style='list-style: none; " +
             "list-style-position: inside; padding: 0; margin-left: 0'>")
-        models?.each {
-            ModelTransportCommand mtc = it.key
-            String modelId = mtc.publicationId ?: mtc.submissionId
+        models?.each { String modelId, String modelName ->
             String modelURI = g.createLink(controller: 'model', id: modelId, action: 'show')
             String modelLink = "<li style='text-indent: -1.2em; padding-left: 1em'>" +
                 "<span class='icon icon-functional' data-icon='4'>&nbsp;</span>" +
-                "<a href='${modelURI}'>${it.value.modelName}</a></li>"
+                "<a href='${modelURI}'>${modelName}</a></li>"
             result.append(modelLink)
         }
         result.append("</ul>")
