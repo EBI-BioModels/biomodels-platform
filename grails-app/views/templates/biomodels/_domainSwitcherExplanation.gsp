@@ -8,19 +8,22 @@
     <div class="explanation-panel" id="domainSwitcherExplanationPanel" data-toggler=".is-active">
         <p>This drop down box allows you to choose a domain from where models are searched for.
         At the current stage, all auto generated models as well as ones belonging to the large submissions have been
-        indexed to the separate domain called <strong>BioModels Autogen</strong> which currently consists of
+        indexed to the separate domain called
+            <strong><g:message code="net.biomodels.jummp.domain.name.BioModelsAutogen"/></strong> which currently consists of
         <g:link mapping="path2models" target="_blank">Path2Models</g:link> and
             <a href="${g.createLink(controller: 'pdgsmm', action: 'index')}" target="_blank">Patient-derived genome scale metabolic
         models (PDGSMM)</a>. You can consult more
         information about these submissions in BioModels by following the links we have pointed out earlier.</p>
 
-        <p>By default, <strong>BioModels</strong> is added to your query if you do not specify any domain from
+        <p>By default, <strong><g:message code="net.biomodels.jummp.domain.name.BioModels"/></strong>
+            is added to your query if you do not specify any domain from
         the box . This domain contains all other models, except for auto generated models and ones deposited
         alongside large scale submissions. If you do not want to ignore them, please choose
-            <strong>BioModels All</strong>.</p>
+            <strong><g:message code="net.biomodels.jummp.domain.name.BioModelsAll"/></strong>.</p>
 
         <ul>
-            <li>Search for the phrase "Metabolism" in the name field of models in BioModels Autogen, here is the
+            <li>Search for the phrase "Metabolism" in the name field of models in <g:message
+                code="net.biomodels.jummp.domain.name.BioModelsAutogen"/>, here is the
                 query <code>name:Metabolism&domain=biomodels_autogen</code>. The sharable search link looks like<br/>
 <code>${grailsApplication.config.grails.serverURL}/search?query=name:Metabolism&domain=biomodels_autogen</code>.
             Click <a

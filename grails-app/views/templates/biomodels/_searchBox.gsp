@@ -54,9 +54,9 @@
         <div class="input-group margin-bottom-none margin-top-large padding-bottom-medium">
             <div class="input-group-field" style="vertical-align: text-top">
                 <select class="margin-bottom-none align-self-top" id="domain_switcher" name="domain_switcher">
-                    <option value="biomodels_all">BioModels All</option>
-                    <option value="biomodels">BioModels</option>
-                    <option value="biomodels_autogen">BioModels Autogen</option>
+                    <option value="biomodels_all"><g:message code="net.biomodels.jummp.domain.name.BioModelsAll"/></option>
+                    <option value="biomodels"><g:message code="net.biomodels.jummp.domain.name.BioModels"/></option>
+                    <option value="biomodels_autogen"><g:message code="net.biomodels.jummp.domain.name.BioModelsAutogen"/></option>
                 </select>
                 <br/><br/>
                 <a class="help-text label-floating-left secondary label"
