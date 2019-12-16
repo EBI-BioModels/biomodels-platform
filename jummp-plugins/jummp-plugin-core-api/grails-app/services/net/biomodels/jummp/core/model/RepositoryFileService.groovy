@@ -129,8 +129,9 @@ There is an error when trying to update the description: $description --- of the
     List retrieveFiles(final Revision revision) {
         // look in the cache and either serve what's there, or fetch from VCS and update the cache
         List files
-        files = get(revision)
-        if (!files) {
+        try {
+            files = get(revision)
+        } catch (ModelException e) {
             files = vcsService.retrieveFiles(revision)
             // log the result
             String message = """\
@@ -166,7 +167,7 @@ The model ${modelId} revision ${revision.revisionNumber} has been failed when up
         List returnedFiles = new LinkedList<File>()
         try {
             revisionDirectory = new File(modelDirectory, revisionNumber.toString())
-            returnedFiles = revisionDirectory.listFiles().toList()
+            returnedFiles = revisionDirectory.listFiles()?.toList()
         } catch (FileNotFoundException me) {
             Model model = modelService.getModel(modelId)
             boolean saveHistory = false
