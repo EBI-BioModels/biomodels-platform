@@ -1578,7 +1578,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
     List<RepositoryFileTransportCommand> retrieveModelFiles(final Revision revision) throws ModelException {
         if (aclUtilService.hasPermission(springSecurityService.authentication, revision, BasePermission.READ)
                 || SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')) {
-            return new RevisionAdapter(revision: revision).getRepositoryFilesForRevision()
+            return repositoryFileService.getRepositoryFilesForRevision(revision)
         } else {
             log.error "you can't access revision ${revision.id}!"
             throw new AccessDeniedException("Sorry you are not allowed to download this Model")

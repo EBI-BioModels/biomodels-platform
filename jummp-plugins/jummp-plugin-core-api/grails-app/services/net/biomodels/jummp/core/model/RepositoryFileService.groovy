@@ -139,8 +139,8 @@ Retrieving the revision ${revision.vcsId} for Model ${revision.model.submissionI
 cache directory failed. The revision has been checked out from VCS instead."""
             logger.debug(message)
             // update the cache
-            String modelId = revision.model.submissionId
             boolean updated = updateModelRevisionCache(revision)
+            String modelId = revision.model.submissionId
             if (updated) {
                 message = """\
 The model ${modelId} revision ${revision.revisionNumber} has been populated them to the  cache successfully"""
@@ -218,5 +218,31 @@ There have been errors with VCS manager for the model $modelId, revision $revNum
 Encountered VCS errors for model ${modelId}, revision number ${revNum} (${revision.vcsId})""")
             return false
         }
+    }
+
+    List<RepositoryFileTransportCommand> getRepositoryFilesForRevision(final Revision revision) {
+        List<RepositoryFileTransportCommand> repFiles = new LinkedList<RepositoryFileTransportCommand>()
+        List<File> files = modelService.retrieveModelRepFiles(revision)
+        revision.repoFiles.each { rf ->
+            File tmpFile = files.find { it.getName() == (new File(rf.path)).getName() }
+            if (tmpFile != null) {
+                long size = tmpFile.length()
+                long configPreviewSize = grailsApplication.config.jummp.web.file.preview
+                boolean showPreview = size > configPreviewSize ? true : false
+                RepositoryFileTransportCommand rftc = new RepositoryFileTransportCommand(
+                    id: rf.id,
+                    path: tmpFile.absolutePath,
+                    filename: rf.path,
+                    size: size,
+                    showPreview: showPreview,
+                    description: rf.description,
+                    hidden: rf.hidden,
+                    mainFile: rf.mainFile,
+                    userSubmitted: rf.userSubmitted,
+                    mimeType: rf.mimeType)
+                repFiles.add(rftc)
+            }
+        }
+        return repFiles
     }
 }
