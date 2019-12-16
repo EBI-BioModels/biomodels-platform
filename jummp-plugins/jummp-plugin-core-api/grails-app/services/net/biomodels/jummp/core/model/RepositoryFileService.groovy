@@ -140,7 +140,7 @@ cache directory failed. The revision has been checked out from VCS instead."""
             logger.debug(message)
             // update the cache
             String modelId = revision.model.submissionId
-            boolean updated = updateModelRevisionCache(modelId, revision.revisionNumber)
+            boolean updated = updateModelRevisionCache(revision)
             if (updated) {
                 message = """\
 The model ${modelId} revision ${revision.revisionNumber} has been populated them to the  cache successfully"""
@@ -153,11 +153,11 @@ The model ${modelId} revision ${revision.revisionNumber} has been failed when up
         return files
     }
 
-    List<File> get(long revisionId) {
+    List<File> get(long revisionId) throws ModelException {
         get(Revision.get(revisionId))
     }
 
-    List<File> get(Revision revision) {
+    List<File> get(Revision revision) throws ModelException {
         get(revision.model.submissionId, revision.revisionNumber)
     }
 
@@ -167,12 +167,17 @@ The model ${modelId} revision ${revision.revisionNumber} has been failed when up
         List returnedFiles = new LinkedList<File>()
         try {
             revisionDirectory = new File(modelDirectory, revisionNumber.toString())
-            returnedFiles = revisionDirectory.listFiles()?.toList()
+            if (!revisionDirectory.exists()) {
+                throw new FileNotFoundException()
+            } else {
+                returnedFiles = revisionDirectory.listFiles().toList()
+            }
         } catch (FileNotFoundException me) {
             Model model = modelService.getModel(modelId)
             boolean saveHistory = false
             ModelTransportCommand modelTC = new ModelAdapter(model: model).toCommandObject(saveHistory)
-            String message = "The files associated with this model ${modelId}, revision ${revisionNumber} do not exist"
+            String message = """\
+The files associated with this model ${modelId}, revision ${revisionNumber} has been cached yet"""
             throw new ModelException(modelTC, message)
         }
         return returnedFiles
