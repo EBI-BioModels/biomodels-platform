@@ -2629,5 +2629,10 @@ Try to connect with Conversion service to export the model ${cmd.model.submissio
             ModelException {
         def sbmlService = grailsApplication.mainContext.getBean("sbmlService", ISbmlService.class)
         boolean result = sbmlService.addModellingApproachAsAnnotation(revisionTC, approach)
+        if (!result) {
+            log.error("""\
+There has been error while adding $approach to the model ${revisionTC.identifier()}""")
+        }
+    }
     }
 }
