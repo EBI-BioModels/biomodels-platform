@@ -18,14 +18,13 @@
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
  */
 
+
 import grails.plugin.springsecurity.SpringSecurityUtils
 import groovyx.gpars.GParsPool
 import net.biomodels.jummp.core.JummpException
-import net.biomodels.jummp.core.vcs.*
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.plugins.security.UserRole
-import org.eclipse.jgit.api.errors.NoHeadException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -33,10 +32,6 @@ import org.springframework.security.core.Authentication
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
 import java.time.Duration
 import java.time.Instant
 
@@ -106,32 +101,7 @@ class ModelCacheBuilder {
     }
 
     void copyRevisionFiles(Revision revision) throws RuntimeException {
-        String modelId = revision.model.submissionId
-        String revNum = revision.revisionNumber.toString()
-        logger.info("""\
-Copying the files associated with the revision ${revision.vcsId} (${revision.id}): ${modelId}.${revNum}""")
-        File modelRevDir = Paths.get(ctx.repositoryFileService.MODEL_CACHE_DIR, modelId, revNum).toFile()
-        boolean created = modelRevDir.mkdirs()
-        if (!created) {
-            String message = """\
-the revision directory '${modelRevDir.absolutePath}' might exist or we were unable to create it"""
-            logger.debug(message)
-        }
-        try {
-            try {
-                List<File> files = ctx.vcsService.retrieveFiles(revision)
-                files.each {
-                    Files.copy(it.toPath(),
-                        new File(modelRevDir, it.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING)
-                }
-            } catch (NoHeadException | VcsException e) {
-                logger.error("""\
-There have been errors with VCS manager for the model $modelId, revision $revNum: $e.message""")
-            }
-        } catch (VcsException e) {
-            logger.error("""\
-Encountered VCS errors for model ${modelId}, revision number ${revNum} (${revision.vcsId})""")
-        }
+        ctx.repositoryFileService.updateModelRevisionCache(revision)
     }
 
     void build() {

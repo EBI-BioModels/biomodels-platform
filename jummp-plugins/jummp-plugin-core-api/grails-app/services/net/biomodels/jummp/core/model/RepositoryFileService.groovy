@@ -27,15 +27,20 @@ package net.biomodels.jummp.core.model
 import grails.transaction.Transactional
 import net.biomodels.jummp.core.ModelException
 import net.biomodels.jummp.core.adapters.ModelAdapter
+import net.biomodels.jummp.core.vcs.VcsException
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.RepositoryFile
 import net.biomodels.jummp.model.Revision
 import org.apache.tika.detect.DefaultDetector
 import org.apache.tika.metadata.Metadata
 import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
+import org.eclipse.jgit.api.errors.NoHeadException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.InitializingBean
+
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 
 /**
  * This class enables to handle services for manipulating repository files such as updating repository files,
@@ -172,7 +177,40 @@ The model ${modelId} revision ${revision.revisionNumber} has been failed when up
         return returnedFiles
     }
 
-    boolean updateModelRevisionCache(String modelId, int revisionNumber) {
-        return null
+    boolean updateModelRevisionCache(final Revision revision) throws RuntimeException {
+        String modelId = revision.model.submissionId
+        String revNum = revision.revisionNumber.toString()
+        logger.info("""\
+Copying the files associated with the revision ${revision.vcsId} (${revision.id}): ${modelId}.${revNum}""")
+        File modelRevDir = Paths.get(MODEL_CACHE_DIR, modelId, revNum).toFile()
+        boolean created = modelRevDir.mkdirs()
+        if (!created) {
+            if (!modelRevDir.exists()) {
+                String message = """\
+we were unable to create the revision directory '${modelRevDir.absolutePath}'"""
+                logger.warn(message)
+                return false
+            } else {
+                logger.info("The directory '${modelRevDir.absolutePath}' exists")
+            }
+        }
+        try {
+            try {
+                List<File> files = vcsService.retrieveFiles(revision)
+                files.each {
+                    Files.copy(it.toPath(),
+                        new File(modelRevDir, it.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING)
+                }
+                return true
+            } catch (NoHeadException | VcsException e) {
+                logger.error("""\
+There have been errors with VCS manager for the model $modelId, revision $revNum: $e.message""")
+                return false
+            }
+        } catch (VcsException e) {
+            logger.error("""\
+Encountered VCS errors for model ${modelId}, revision number ${revNum} (${revision.vcsId})""")
+            return false
+        }
     }
 }
