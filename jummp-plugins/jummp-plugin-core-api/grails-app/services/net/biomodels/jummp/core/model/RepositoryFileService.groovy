@@ -183,7 +183,7 @@ The files associated with this model ${modelId}, revision ${revisionNumber} has 
         return returnedFiles
     }
 
-    boolean updateModelRevisionCache(final Revision revision) throws RuntimeException {
+    boolean updateModelRevisionCache(final Revision revision) {
         String modelId = revision.model.submissionId
         String revNum = revision.revisionNumber.toString()
         logger.info("""\
@@ -200,24 +200,24 @@ we were unable to create the revision directory '${modelRevDir.absolutePath}'"""
                 logger.info("The directory '${modelRevDir.absolutePath}' exists")
             }
         }
+        boolean result = false
         try {
-            try {
-                List<File> files = vcsService.retrieveFiles(revision)
-                files.each {
-                    Files.copy(it.toPath(),
-                        new File(modelRevDir, it.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING)
-                }
-                return true
-            } catch (NoHeadException | VcsException e) {
-                logger.error("""\
-There have been errors with VCS manager for the model $modelId, revision $revNum: $e.message""")
-                return false
+            List<File> files = vcsService.retrieveFiles(revision)
+            for (File it: files) {
+                Files.copy(it.toPath(),
+                    new File(modelRevDir, it.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING)
             }
-        } catch (VcsException e) {
+            result = true
+        } catch (NoHeadException | VcsException e) {
             logger.error("""\
-Encountered VCS errors for model ${modelId}, revision number ${revNum} (${revision.vcsId})""")
-            return false
+There have been errors with VCS manager for the model $modelId, revision $revNum: $e.message""")
+            result = false
+        } catch (IOException e) {
+            logger.error("""\
+IO exception encountered for model $modelId (revision $revNum): $e""")
+            result = false
         }
+        return result
     }
 
     List<RepositoryFileTransportCommand> getRepositoryFilesForRevision(final Revision revision) {

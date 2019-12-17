@@ -100,7 +100,7 @@ class ModelCacheBuilder {
         }
     }
 
-    void copyRevisionFiles(Revision revision) throws RuntimeException {
+    void copyRevisionFiles(Revision revision) {
         ctx.repositoryFileService.updateModelRevisionCache(revision)
     }
 
@@ -120,21 +120,18 @@ class ModelCacheBuilder {
                         Revision revision = Revision.read(revisionId)
                         try {
                             copyRevisionFiles(revision)
-                        } catch (RuntimeException re) {
+                        } catch (Exception e) {
                             String message = """\
 Cannot copy files of the model: ${revision.model.submissionId}, revision: ${revisionId} because of the below error: 
-${re.getStackTrace().inspect()}"""
+${e}"""
                             logger.error(message)
-                            re.printStackTrace()
+                            e.printStackTrace()
                         } finally {
                             ctx.persistenceInterceptor?.destroy()
                         }
                     })
                 }
             }
-        } catch (JummpException e) {
-            System.err.println("""\
-Generic exception encountered while initialising model cache directory: ${e.message}""")
         } finally {
             ctx.persistenceInterceptor?.destroy()
             duration = Duration.between(startTime, Instant.now())
