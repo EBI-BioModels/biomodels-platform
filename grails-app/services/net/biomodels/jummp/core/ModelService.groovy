@@ -156,6 +156,8 @@ class ModelService {
 
     def modelConversionService
 
+    def repositoryFileService
+
     ObjectFactory<ModelIdentifierGeneratorRegistryService> idGeneratorRegistryFactoryBean
 
     final boolean MAKE_PUBLICATION_ID = !(publicationIdGenerator instanceof NullModelIdentifierGenerator)
@@ -1554,10 +1556,12 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         }
         List<File> files
         try {
-            files = vcsService.retrieveFiles(revision)
+            files = repositoryFileService.retrieveFiles(revision)
         } catch (VcsException e) {
-            log.error("Retrieving Revision ${revision.vcsId} for Model ${revision.name} from VCS failed.", e)
-            throw new ModelException(new ModelAdapter(model: revision.model).toCommandObject(), "Retrieving Revision ${revision.vcsId} from VCS failed.", e)
+            String message = "Retrieving Revision ${revision.vcsId} for Model ${revision.name} from VCS failed."
+            log.error(message, e)
+            ModelTransportCommand model = new ModelAdapter(model: revision.model).toCommandObject()
+            throw new ModelException(model, message, e)
         }
         return files
     }
@@ -1574,7 +1578,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
     List<RepositoryFileTransportCommand> retrieveModelFiles(final Revision revision) throws ModelException {
         if (aclUtilService.hasPermission(springSecurityService.authentication, revision, BasePermission.READ)
                 || SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')) {
-            return new RevisionAdapter(revision: revision).getRepositoryFilesForRevision()
+            return repositoryFileService.getRepositoryFilesForRevision(revision)
         } else {
             log.error "you can't access revision ${revision.id}!"
             throw new AccessDeniedException("Sorry you are not allowed to download this Model")
@@ -2625,5 +2629,10 @@ Try to connect with Conversion service to export the model ${cmd.model.submissio
             ModelException {
         def sbmlService = grailsApplication.mainContext.getBean("sbmlService", ISbmlService.class)
         boolean result = sbmlService.addModellingApproachAsAnnotation(revisionTC, approach)
+        if (!result) {
+            log.error("""\
+There has been error while adding $approach to the model ${revisionTC.identifier()}""")
+        }
+    }
     }
 }
