@@ -736,26 +736,28 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     }
 
     /**
-    * Adds a new Revision to the model, to be used by SubmissionService
-    * The provided @p modelFiles will be stored in the VCS as an update to the existing files of the same @p model.
-    * A new Revision will be created and appended to the list of Revisions of the @p model.
-    * The revision will not be validated, as the checks are assumed to have been conducted
-    * already
-    * @param model The Model the revision should be added
-    * @param modelFiles The model files to be stored in the VCS as a new revision
-    * @param format The format of the model files
-    * @param comment The commit message for the new revision
-    * @return The newly-added Revision. In case an error occurred while accessing the VCS @c null will be returned.
-    * @throws ModelException If either @p model, @p modelFiles or @p comment are null or if the files do not exist or are directories.
-    **/
-//    @PreAuthorize("hasPermission(#model, write) or hasRole('ROLE_ADMIN')")
+     * @short Adds a new Revision to the model, to be used by SubmissionService
+     *
+     * The provided @p modelFiles will be stored in the VCS as an update to the existing files of the same @p model.
+     * A new Revision will be created and appended to the list of Revisions of the @p model.
+     * The revision will not be validated, as the checks are assumed to have been already conducted. The revision
+     * will be also indexed if it is successfully added to the model.
+     *
+     * @param model The Model the revision should be added
+     * @param modelFiles The model files to be stored in the VCS as a new revision
+     * @param format The format of the model files
+     * @param comment The commit message for the new revision
+     * @return The newly-added Revision. In case an error occurred while accessing the VCS @c null will be returned.
+     * @throws ModelException If either @p model, @p modelFiles or @p comment are null or if the files do not exist
+     * or are directories.
+     */
     @PreAuthorize("hasRole('ROLE_USER')")
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.addValidatedRevision")
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public Revision addValidatedRevision(final List<RepositoryFileTransportCommand> repoFiles,
-                final List<RepositoryFileTransportCommand> deleteFiles, RevisionTransportCommand rev) throws
-                ModelException {
+    Revision addValidatedRevision(final List<RepositoryFileTransportCommand> repoFiles,
+                                  final List<RepositoryFileTransportCommand> deleteFiles,
+                                  RevisionTransportCommand rev) throws ModelException {
         Revision revision
         def txDefinition = [
             // this tx will use a different session than the current one
@@ -805,8 +807,8 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
      * been deleted or if the comment is null.
      */
     Revision doAddValidatedRevision(List<RepositoryFileTransportCommand> repoFiles,
-            List<RepositoryFileTransportCommand> deleteFiles, RevisionTransportCommand rev)
-            throws ModelException {
+                                    List<RepositoryFileTransportCommand> deleteFiles,
+                                    RevisionTransportCommand rev) throws ModelException {
         // TODO: the method should be thread safe, add a lock
         if (!rev.model) {
             throw new ModelException(null, "Model may not be null")
