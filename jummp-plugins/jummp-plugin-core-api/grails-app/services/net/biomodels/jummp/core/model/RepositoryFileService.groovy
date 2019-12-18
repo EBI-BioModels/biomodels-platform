@@ -47,6 +47,7 @@ import java.nio.file.StandardCopyOption
  * retrieving these files from the file system, etc.
  *
  * @author  Tung Nguyen <tung.nguyen@ebi.ac.uk>
+ * @author  Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
 class RepositoryFileService implements GrailsConfigurationAware {
     static scope = "prototype"
@@ -135,7 +136,7 @@ There is an error when trying to update the description: $description --- of the
             files = vcsService.retrieveFiles(revision)
             // log the result
             String message = """\
-Retrieving the revision ${revision.vcsId} for Model ${revision.model.submissionId} from the local model 
+Retrieving the revision ${revision.vcsId} for Model ${revision.model.submissionId} from the local model
 cache directory failed. The revision has been checked out from VCS instead."""
             logger.debug(message)
             // update the cache
@@ -144,11 +145,12 @@ cache directory failed. The revision has been checked out from VCS instead."""
             if (updated) {
                 message = """\
 The model ${modelId} revision ${revision.revisionNumber} has been populated them to the  cache successfully"""
+                logger.info(message)
             } else {
                 message = """\
-The model ${modelId} revision ${revision.revisionNumber} has been failed when updating them to the  cache"""
+There have been errors when updating the cache directory for the model ${modelId} revision ${revision.revisionNumber}"""
+                logger.error(message)
             }
-            logger.debug(message)
         }
         return files
     }
@@ -161,7 +163,7 @@ The model ${modelId} revision ${revision.revisionNumber} has been failed when up
         get(revision.model.submissionId, revision.revisionNumber)
     }
 
-    List<File> get(String modelId, int revisionNumber) throws FileNotFoundException {
+    List<File> get(String modelId, int revisionNumber) throws ModelException {
         File modelDirectory = new File(MODEL_CACHE_DIR, modelId)
         File revisionDirectory
         List returnedFiles = new LinkedList<File>()
