@@ -627,7 +627,9 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         }*/
         // exclude deleted revisions
         modelHistoryService.addModelToHistory(model)
-        return model.revisions.toList().findAll { !it.deleted }.sort {it.revisionNumber}
+        List<Revision> revisions = model.revisions.toList().findAll { !it.deleted }.sort {it.revisionNumber}
+        log.debug("All Domain Revision Objects: ${revisions.dump()}")
+        return revisions
     }
 
     /**
