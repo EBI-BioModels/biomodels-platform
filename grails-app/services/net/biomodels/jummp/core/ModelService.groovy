@@ -300,8 +300,8 @@ WHERE r.model = r2.model
                 if (type) {
                     log.warn("Ignoring unsupported permission level '$type'.")
                 } else if (!isAdmin) {
-                    query = """$query AND ((r.owner.id = ${u.id} AND r.state = '${ModelState.UNPUBLISHED}') 
-OR (r.owner.id != ${u.id} AND r.state = '${ModelState.UNPUBLISHED}') 
+                    query = """$query AND ((r.owner.id = ${u.id} AND r.state = '${ModelState.UNPUBLISHED}')
+OR (r.owner.id != ${u.id} AND r.state = '${ModelState.UNPUBLISHED}')
 OR (r.owner.id = ${u.id} AND r.state = '${ModelState.PUBLISHED}'))
 """
                 }
@@ -2562,7 +2562,7 @@ FROM
 Revision AS r1
 JOIN r1.model AS model
 WHERE
-    r1.revisionNumber = (select max(r2.revisionNumber) from Revision AS r2 
+    r1.revisionNumber = (select max(r2.revisionNumber) from Revision AS r2
                         where r2.model = model and r2.state = '${ModelState.PUBLISHED}')
     AND (model.submissionId IN (:mids) OR model.publicationId IN (:mids))
     AND r1.id IN (
@@ -2637,6 +2637,5 @@ Try to connect with Conversion service to export the model ${cmd.model.submissio
             log.error("""\
 There has been error while adding $approach to the model ${revisionTC.identifier()}""")
         }
-    }
     }
 }
