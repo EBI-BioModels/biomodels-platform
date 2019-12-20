@@ -146,7 +146,8 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
     }
 
     @Override
-    boolean addModellingApproachAsAnnotation(RevisionTransportCommand revision, ModellingApproach approach) {
+    boolean addModellingApproachAsAnnotation(RevisionTransportCommand revision,
+            ModellingApproach approach) throws ModelException {
         final CVTerm.Qualifier bqbHasProperty = CVTerm.Qualifier.BQB_HAS_PROPERTY
         String[] identifiers = ["http://identifiers.org/mamo/${approach?.accession}"] as String[]
         String accessionPattern = "mamo[/:]MAMO_[0-9]{7}"
