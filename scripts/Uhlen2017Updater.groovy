@@ -366,12 +366,20 @@ class UhlenModelUpdater {
 
                 RepositoryFile.executeUpdate(query, [revision: toDelete])
                 toDelete.delete(flush: true)
-                revertGitRevision(toDelete)
             } catch (Exception e) {
                 // rollback everything in this transaction and notify the callee
                 status.setRollbackOnly()
                 String msg = "Could not delete Revision $rId: ${e.message}"
                 throw new IllegalStateException(msg)
+            }
+            try {
+                // database rollback ok, now try the reverting VCS changes for this revision
+                revertGitRevision(toDelete)
+            } catch (Exception e) {
+                // VCS rollback failed, don't commit the database rollback to preserve consistency
+                status.setRollbackOnly()
+                String msg = "Could not revert VCS changes introduced by Revision $rId: $e"
+                throw new IllegalStateException(msg, e)
             }
         }
     }
