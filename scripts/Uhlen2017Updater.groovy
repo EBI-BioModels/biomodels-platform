@@ -599,15 +599,18 @@ class UhlenModelUpdater {
             addModelError(id, "Model update failed: ${newRevision?.errors?.allErrors}")
             assert markSessionAsRollbackOnly(session): "No new revision could be inserted and we failed to roll back the current session"
         } else {
-            assignModellingApproach(m)
-            int deleteCount = markNonRepresentativeModelsAsDeleted(id)
-            addModelMsg(id, "Archived $deleteCount non-representative models.")
-            if (m.save()) {
-                publish newRevision
-            } else {
-                def err = m.errors.allErrors
-                addModelError(id, "Could not set the modelling approach: $err")
-                rollBackSessionAndRevision newRevision, session
+            Revision.withTransaction { status ->
+                try {
+                    assignModellingApproach(id)
+                    // the session of this transaction is empty; attach the new revision to it
+                    newRevision = Revision.get(newRevision.id)
+                    publish newRevision
+                    int deleteCount = markNonRepresentativeModelsAsDeleted(id)
+                    addModelMsg(id, "Archived $deleteCount non-representative models.")
+                } catch (JummpException e) {
+                    addModelError(id, e.message)
+                    rollBackSessionAndRevision newRevision, session
+                }
             }
         }
     }
