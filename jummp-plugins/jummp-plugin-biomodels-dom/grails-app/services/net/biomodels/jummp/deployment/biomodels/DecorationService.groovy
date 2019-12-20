@@ -79,7 +79,7 @@ GROUP BY rev.model
         }
         def matchedModels = Model.executeQuery(query, [then: then, now: now, max: 7]) as List<List>
         Map<String, String> returnedModels = new LinkedHashMap<>()
-        matchedModels.each { List<String> row ->
+        matchedModels.each { row ->
             String id = row[0]
             String name = row[1]
             returnedModels.put(id, name)
