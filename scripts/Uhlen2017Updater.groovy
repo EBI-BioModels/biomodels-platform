@@ -20,12 +20,18 @@
 
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.acl.AclUtilService
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
 import groovyx.gpars.GParsPool
+import net.biomodels.jummp.core.JummpException
 import net.biomodels.jummp.core.ModelException
+import net.biomodels.jummp.core.ModelFileFormatService
 import net.biomodels.jummp.core.ModelService
-import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
+import net.biomodels.jummp.core.model.CurationState
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand
+import net.biomodels.jummp.core.model.ModelTransportCommand
+import net.biomodels.jummp.core.model.ModelState
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.core.model.ValidationState
@@ -38,20 +44,22 @@ import net.biomodels.jummp.model.RepositoryFile
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.git.GitSupport
 import net.biomodels.jummp.plugins.security.User
-import net.biomodels.jummp.plugins.security.UserRole
 import org.apache.camel.CamelContext
+import org.apache.camel.component.seda.SedaConsumer
 import org.codehaus.groovy.grails.commons.GrailsApplication
+import org.codehaus.groovy.grails.support.PersistenceContextInterceptor
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.GitAPIException
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.Repository
+import org.hibernate.SessionFactory
 import org.springframework.context.ApplicationContext
 import org.springframework.orm.hibernate4.SessionHolder
 import org.springframework.security.acls.domain.BasePermission
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
-import org.springframework.security.core.GrantedAuthority
-import org.springframework.security.core.context.SecurityContextHolder
+import org.springframework.security.core.userdetails.UserDetails
+import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.transaction.TransactionDefinition
 import org.springframework.transaction.TransactionStatus
 import org.springframework.transaction.support.TransactionSynchronizationManager
@@ -61,13 +69,14 @@ import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.regex.Pattern
 
 
 /*
  * Script to update the Uhlen2017 models by grouping them into 21 categories based on their cancer type.
  *
  * The script expects a folder containing files of the new version for each representative model. It creates
- * a new revision with these new files, sets the modelling approach to metabolic network (MAMO_0000040),
+ * a new revision with these new files, sets the modelling approach to constraint-based (MAMO_0000009),
  * archives the non-representative models and publishes the latest revision for the representative model.
  *
  * In case of errors, we roll back the newly created revision, perform a git revert and append the
@@ -81,41 +90,16 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * Simple holder for variables defined in this script that are accessed by different methods.
  */
+@CompileStatic
 class UhlenScriptSupport {
     static final String MODEL_ID_LIKE_QUERY_PATTERN = "MODEL170711%"
     static final User submitter = getSubmitterAccount()
-    static final Authentication submitterAuth = createTokenForUser(submitter)
+
     static final String adminUsername = System.getenv("ADMIN_USER")
-    // auth token for admin account; used by worker threads to publish models
-    static final Authentication adminAuth = createTokenForUser(adminUsername)
     // the current session
     static final SessionHolder session = null
-    static final String metabolicNetwork = "http://identifiers.org/mamo/MAMO_0000040"
-
-    /**
-     * Very simple means of executing an action as a different user than the one
-     * that is currently authenticated.
-     *
-     * Performs the action defined by closure as the user defined by Authentication
-     * object auth, then reverts to the original authentication.
-     *
-     * Suitable for lightweight work for which we need not create a separate thread.
-     */
-    static def simpleRunAs = { auth, closure ->
-        def currentAuth
-        try {
-            currentAuth = SecurityContextHolder.context.authentication
-            SecurityContextHolder.context.authentication = auth
-            def result = closure.call()
-            return result
-        } finally {
-            if (currentAuth) {
-                SecurityContextHolder.context.authentication = currentAuth
-            } else {
-                SecurityContextHolder.clearContext()
-            }
-        }
-    }
+    static final String constraintBasedModel = "http://identifiers.org/mamo/MAMO_0000009"
+    static final ModellingApproach modellingApproach = lookupModellingApproach()
 
     /*
      * Returns the User account owning the models to be updated.
@@ -124,6 +108,7 @@ class UhlenScriptSupport {
      *
      * @return the User account that should be used to update these models.
      */
+    @CompileDynamic
     private static User getSubmitterAccount() {
         // we deliberately call get() because we expect a single result; getting >1 results would be an error which
         // would be propagated upstream to the callees of this method.
@@ -135,37 +120,12 @@ class UhlenScriptSupport {
                 like "submissionId", MODEL_ID_LIKE_QUERY_PATTERN
             }
         } as User
-
         owner
     }
 
-
-    /*
-     * Creates and returns an authentication token for the given user.
-     * Note that the owner of the credentials is *not* authenticated until the token is put in the SecurityContext
-     * (see simpleRunAs()). Also note that, by default, SecurityContexts are thread-local.
-     *
-     * @param username the username for the account whose credentials should be used to create the authentication token
-     * @return the authentication token which, if placed in the security context of the current thread, would allow us
-     *      to log in as the given user.
-     */
-    private static UsernamePasswordAuthenticationToken createTokenForUser(User u) {
-        assert u
-        def authorities = UserRole.findAllByUser(u)*.role*.authority.join(",")
-        List<GrantedAuthority> roles = SpringSecurityUtils.parseAuthoritiesString authorities
-        return new UsernamePasswordAuthenticationToken(u.username, u.password, roles)
-    }
-
-    /*
-     * Creates and returns an authentication token for the given user.
-     *
-     * @param username the username for the account whose credentials should be used to create the authentication token
-     * @return an authentication token for the given user
-     * @see {@link UhlenScriptSupport#createTokenForUser(net.biomodels.jummp.plugins.security.User)}
-     */
-    private static UsernamePasswordAuthenticationToken createTokenForUser(String username) {
-        assert username : "Username required but not defined"
-        createTokenForUser(User.findByUsername(username))
+    @CompileDynamic
+    private static ModellingApproach lookupModellingApproach() {
+        ModellingApproach.findByResource(constraintBasedModel)
     }
 }
 
@@ -180,6 +140,7 @@ class UhlenScriptSupport {
  * to block.
  * See also the printModelLog() method.
  */
+@CompileStatic
 class ModelLogger {
     /**
      * Log for model-related messages.
@@ -190,7 +151,7 @@ class ModelLogger {
      * Since all messages relating to a model will be inserted by the same thread, there is no
      * need to use locks.
      */
-    static def messageLog = new ConcurrentHashMap<String, ModelLogger>()
+    static ConcurrentHashMap<String, ModelLogger> messageLog = new ConcurrentHashMap<>()
     /**
      * The error log for this model
      */
@@ -213,13 +174,71 @@ class ModelLogger {
     }
 }
 
+@CompileStatic
+class FolderFilter implements FileFilter {
+    public static final FolderFilter instance = new FolderFilter()
+
+    boolean accept(File candidate) {
+        candidate.isDirectory()
+    }
+}
+
+@CompileStatic
 class UhlenModelUpdater {
+    static final AtomicInteger processedCount = new AtomicInteger()
+    static final AtomicInteger failureCount = new AtomicInteger()
+    final String modelFolder = System.getenv("MODEL_FOLDER")
     ApplicationContext ctx
     GrailsApplication grailsApp
-    final String modelFolder = System.getenv("MODEL_FOLDER")
+    // auth token for admin account; used by worker threads to publish models
+    Authentication submitterAuth
+    Authentication adminAuth
+    CamelContext camelContext
 
-    static final def processedCount = new AtomicInteger()
-    static final def failureCount = new AtomicInteger()
+    void init() {
+        submitterAuth = createTokenForUser(UhlenScriptSupport.submitter)
+        adminAuth = createTokenForUser(UhlenScriptSupport.adminUsername)
+
+        // set the application context reference in POGOs that expect it
+        RevisionTransportCommand.context = ctx
+
+        // don't let Camel shut itself down within 5 minutes of the importer finishing.
+        // wait for all models to be indexed instead.
+        camelContext = ctx.getBean "camelContext", CamelContext
+        camelContext.shutdownStrategy.setTimeout(Long.MAX_VALUE)
+    }
+
+    /*
+     * Creates and returns an authentication token for the given user.
+     * Note that the owner of the credentials is *not* authenticated until the token is put in the SecurityContext.
+     * Also note that, by default, SecurityContexts are thread-local.
+     *
+     * @param username the username for the account whose credentials should be used to create the authentication token
+     * @return the authentication token which, if placed in the security context of the current thread, would allow us
+     *      to log in as the given user.
+     * @see grails.plugin.springsecurity.SpringSecurityUtils.doWithAuth(String, Closure)
+     */
+    UsernamePasswordAuthenticationToken createTokenForUser(User u) {
+        assert u
+        assert ctx: "ApplicationContext not initialised yet"
+        UserDetailsService userDetailsService = ctx.getBean("userDetailsService", UserDetailsService)
+        UserDetails userDetails = userDetailsService.loadUserByUsername(u.username)
+        // first constructor argument needs to be a UserDetails instance
+        new UsernamePasswordAuthenticationToken(userDetails, u.password, userDetails.authorities)
+    }
+
+    /*
+     * Creates and returns an authentication token for the given user.
+     *
+     * @param username the username for the account whose credentials should be used to create the authentication token
+     * @return an authentication token for the given user
+     * @see {@link UhlenScriptSupport#createTokenForUser(net.biomodels.jummp.plugins.security.User)}
+     */
+    @CompileDynamic
+    UsernamePasswordAuthenticationToken createTokenForUser(String username) {
+        assert username : "Username required but not defined"
+        createTokenForUser(User.findByUsername(username))
+    }
 
     static void addModelMsg(String model, def msg) {
         def logger = getOrCreateModelLogger model
@@ -239,23 +258,24 @@ class UhlenModelUpdater {
     }
 
     static void printModelLog() {
-        ModelLogger.messageLog.keySet().sort().each { modelId ->
-            def logger = ModelLogger.messageLog[modelId]
-            def infoMessages = logger.out
-            infoMessages.each { m -> println("$modelId: $m") }
+        ModelLogger.messageLog.keySet().sort().each { String modelId ->
+            ModelLogger logger = ModelLogger.messageLog[modelId]
+            Set infoMessages = logger.out
+            for (m in infoMessages) println("$modelId: $m")
         }
         if (failureCount.get() > 0) {
-            System.err.println("Failed to import the following models:")
-            ModelLogger.messageLog.keySet().sort().each { modelId ->
-                def logger = ModelLogger.messageLog[modelId]
-                def errorMessages = logger.err
-                errorMessages.each { m -> System.err.println("$modelId: $m") }
+            println("Failed to import the following models:")
+            ModelLogger.messageLog.keySet().sort().each { String modelId ->
+                ModelLogger logger = ModelLogger.messageLog[modelId]
+                Set errorMessages = logger.err
+                for (m in errorMessages) System.err.println("$modelId: $m")
             }
         }
     }
 
     SessionHolder getCurrentSession() {
-        TransactionSynchronizationManager.getResource(ctx.sessionFactory) as SessionHolder
+        SessionFactory factory = ctx.getBean "sessionFactory", SessionFactory
+        TransactionSynchronizationManager.getResource(factory) as SessionHolder
     }
 
     static boolean markSessionAsRollbackOnly(SessionHolder session) {
@@ -273,7 +293,7 @@ class UhlenModelUpdater {
     File findModelDotGitDirectory(Model model) {
         assert model?.vcsIdentifier: "Model instance having a vcsIdentifier expected"
         assert grailsApp: "Missing grailsApplication bean reference 'grailsApp'. Are you using grails run-script ?"
-        def base = grailsApp.config.jummp.vcs.workingDirectory
+        def base = grailsApp.config.flatten().get "jummp.vcs.workingDirectory"
         assert base instanceof String
         Paths.get(base, model.vcsIdentifier, ".git").toFile()
     }
@@ -287,7 +307,6 @@ class UhlenModelUpdater {
      * @throws GitAPIException if there was an internal error which prevented us from reverting the revision
      * @see {@link revertGitRevision()}
      */
-
     static void doRevertGitRevision(Repository repository, Revision revision) throws GitAPIException {
         def revisionId = Objects.requireNonNull(revision, "Revision to revert required").vcsId
         ObjectId toRevert = Objects.requireNonNull(repository, "Model folder Git repo required")
@@ -309,7 +328,7 @@ class UhlenModelUpdater {
      */
     void revertGitRevision(Revision revision) throws GitAPIException {
         assert revision
-        def model = revision.model
+        Model model = revision.model
         File baseDir = findModelDotGitDirectory(model)
 
         Repository repository = GitSupport.buildRepository(baseDir)
@@ -335,7 +354,8 @@ class UhlenModelUpdater {
      */
     void undoRevisionInsertion(Revision toDelete) {
         assert toDelete
-        AclUtilService aclUtilService = ctx.aclUtilService as AclUtilService
+        long rId = toDelete.id
+        AclUtilService aclUtilService = ctx.getBean "aclUtilService", AclUtilService
         // a revision and its ACLs are inserted in a dedicated transaction, so we cannot simply
         def txSettings = [propagationBehavior: TransactionDefinition.PROPAGATION_NESTED,
                           isolationLevel     : TransactionDefinition.ISOLATION_READ_COMMITTED]
@@ -350,7 +370,7 @@ class UhlenModelUpdater {
             } catch (Exception e) {
                 // rollback everything in this transaction and notify the callee
                 status.setRollbackOnly()
-                def msg = "Could not delete Revision ${toDelete.id}: ${e.message}"
+                String msg = "Could not delete Revision $rId: ${e.message}"
                 throw new IllegalStateException(msg)
             }
         }
@@ -377,14 +397,14 @@ class UhlenModelUpdater {
      * @param submissionFolder the model folder on which to operate
      * @return the result of the work performed, possibly null.
      */
-    Object processModelInSession(Closure callback, File submissionFolder) {
+    Object doInSession(Closure callback) {
         // set up a Hibernate session
-        def persistenceInterceptor = ctx.persistenceInterceptor
-        def session = null
+        PersistenceContextInterceptor persistenceInterceptor = ctx.getBean "persistenceInterceptor", PersistenceContextInterceptor
+        SessionHolder session = null
         try {
             persistenceInterceptor?.init()
             session = getCurrentSession()
-            callback.call(session, submissionFolder)
+            callback.call(session)
         } finally {
             if (!session?.rollbackOnly) {
                 persistenceInterceptor?.flush()
@@ -402,8 +422,9 @@ class UhlenModelUpdater {
         List<RepositoryFileTransportCommand> filesToAdd = revisionData.toAdd as List<RepositoryFileTransportCommand>
         List<RepositoryFileTransportCommand> filesToDelete = revisionData.toDelete as List<RepositoryFileTransportCommand>
         Revision newRevision = null
+        ModelService modelService = ctx.getBean "modelService", ModelService
         try {
-            newRevision = ((ModelService) ctx.modelService).addValidatedRevision(filesToAdd, filesToDelete, revisionCmd)
+            newRevision = modelService.addValidatedRevision(filesToAdd, filesToDelete, revisionCmd)
         } catch (ModelException e) {
             assert markSessionAsRollbackOnly(getCurrentSession()): "Adding revision ${revisionCmd.properties} failed but could not roll back"
             addModelError(modelId, "ModelException thrown when inserting the new revision: $e.message")
@@ -421,11 +442,18 @@ class UhlenModelUpdater {
      *
      * All 21 updated Uhlen models have a predefined category they fall under.
      */
+    @CompileDynamic
     static String lookupAutoGeneratedCategory(String modelId) {
-        def category = AutoGeneratedCategory.findByModelIdentifier(modelId)
+        AutoGeneratedCategory category = AutoGeneratedCategory.findByModelIdentifier(modelId)
         assert category: "No category found for representative model $modelId"
 
         category.categoryName
+    }
+
+    @SuppressWarnings("GrMethodMayBeStatic")
+    @CompileDynamic
+    ModelFormat fetchModelFormat(ModelFormatTransportCommand cmd) {
+        ModelFormat.findByIdentifierAndFormatVersion(cmd.identifier, cmd.formatVersion)
     }
 
     Map<String, Object> createRevisionCmdForModelFolder(String id, File folder, Model model) {
@@ -434,10 +462,10 @@ class UhlenModelUpdater {
         List<RepositoryFileTransportCommand> additionals = repoFileMap.additionals as List<RepositoryFileTransportCommand>
         def mainFiles = [new File(modelFile.path)]
 
-        def modelFileFormatService = ctx.modelFileFormatService
+        ModelFileFormatService modelFileFormatService = ctx.getBean "modelFileFormatService", ModelFileFormatService
         ModelFormatTransportCommand fmtCmd = modelFileFormatService.inferModelFormat([modelFile])
-        def fmt = ModelFormat.findByIdentifierAndFormatVersion(fmtCmd.identifier, fmtCmd.formatVersion)
-        def errors = []
+        ModelFormat fmt = fetchModelFormat(fmtCmd)
+        List errors = []
         boolean isValid = modelFileFormatService.validate(mainFiles, fmt.identifier, errors)
         if (!isValid) {
             addModelError(id, "Model failed validation: $errors")
@@ -447,11 +475,20 @@ class UhlenModelUpdater {
         String modelName = modelFileFormatService.extractName(mainFiles, fmt)
         String modelDesc = modelFileFormatService.extractDescription(mainFiles, fmt)
 
+        ModelTransportCommand modelCmd = new ModelTransportCommand(deleted: false, submissionId: model.submissionId)
+        addModelMsg id, "fake mtc created"
+        // avoid calling new ModelAdapter(model: model).toCommandObject(false) because, for
+        // reasons not entirely understood yet, modelService.getSpringDatabaseRoles() returns an empty set
+        // which causes the query in getLatestRevision() to throw a BadSqlGrammarException. This is because
+        // we cannot use empty collections with the 'in' operator in HQL.
+        //new ModelAdapter(model: model).toCommandObject(false)
+        //addModelMsg id, "real mtc created"
+
         def repoFileCommands = [modelFile] + additionals
-        def modelCmd = new ModelAdapter(model: model).toCommandObject(false)
         def filesToDelete = getRepoFilesOfLastRevision(model)
         def revisionCmd = new RevisionTransportCommand(files: repoFileCommands, format: fmtCmd, validated: isValid,
             name: modelName, description: modelDesc, validationLevel: ValidationState.APPROVED,
+            curationState: CurationState.NON_CURATED, minorRevision: false,
             comment: "Import of '$modelName'.", model: modelCmd)
 
         [revision: revisionCmd, toAdd: repoFileCommands, toDelete: filesToDelete]
@@ -498,8 +535,8 @@ class UhlenModelUpdater {
      * Makes a given revision readable to anyone.
      */
     void publish(Revision r) {
-        UhlenScriptSupport.simpleRunAs(UhlenScriptSupport.adminAuth, {
-            def aclUtilService = ctx.aclUtilService
+        SpringSecurityUtils.doWithAuth(UhlenScriptSupport.submitter.username) {
+            AclUtilService aclUtilService = ctx.getBean "aclUtilService", AclUtilService
             aclUtilService.addPermission(r, "ROLE_USER", BasePermission.READ)
             aclUtilService.addPermission(r, "ROLE_ANONYMOUS", BasePermission.READ)
             r.state = ModelState.PUBLISHED
@@ -508,13 +545,21 @@ class UhlenModelUpdater {
                 assert markSessionAsRollbackOnly(getCurrentSession()): "Publishing $r failed ($err), but we could not roll back the session"
                 throw new IllegalStateException("Cannot publish revision ${r.id}: $err")
             }
-        })
+        }
     }
 
-    static void assignModellingApproach(Model model) {
-        def approach = ModellingApproach.findByResource(UhlenScriptSupport.metabolicNetwork)
-        model.modellingApproach = approach
-        addModelMsg(model.submissionId, "Set modelling approach to ${approach}")
+    static void assignModellingApproach(String submissionId) throws JummpException {
+        def q = "update Model m set m.modellingApproach = :approach where m.submissionId = :id"
+        def args = [approach: UhlenScriptSupport.modellingApproach, id: submissionId]
+        int updateCount = Model.executeUpdate(q, args)
+        if (1 != updateCount)
+            throw new JummpException("Could not set the modelling approach for $submissionId")
+        addModelMsg(submissionId, "Assigned modelling approach")
+    }
+
+    @CompileDynamic
+    static Model findModelBySubmissionId(String id) {
+        Model.findBySubmissionId(id)
     }
 
     /*
@@ -522,12 +567,13 @@ class UhlenModelUpdater {
      */
     void doHandleModelFolder(SessionHolder session, File submissionFolder) {
         assert submissionFolder?.isDirectory(): "'$submissionFolder' is not a model folder that exists"
+        processedCount.incrementAndGet()
         String id = submissionFolder.name
-        Model m = Model.findBySubmissionId(id)
+        Model m = findModelBySubmissionId(id)
         assert m: "Model '$id' should have already been imported but isn't."
 
         Revision newRevision = doInsertNewRevision(id, submissionFolder, m)
-
+        addModelMsg id, "inserted revision $newRevision"
         if (!newRevision || newRevision?.hasErrors()) {
             addModelError(id, "Model update failed: ${newRevision?.errors?.allErrors}")
             assert markSessionAsRollbackOnly(session): "No new revision could be inserted and we failed to roll back the current session"
@@ -550,10 +596,14 @@ class UhlenModelUpdater {
      * deletes the non-representative models for the model's category.
      */
     void handleModelFolder(File modelFolder) {
-        processedCount.incrementAndGet()
-        processModelInSession({ SessionHolder s, File folderToProcess ->
-            doHandleModelFolder(s, folderToProcess)
-        }, modelFolder)
+        doInSession { SessionHolder s ->
+            doHandleModelFolder(s, modelFolder)
+        }
+    }
+
+    @CompileDynamic
+    static UhlenModelMapping findUhlenModelMapping(String submissionId) {
+        UhlenModelMapping.findByRepresentative(submissionId)
     }
 
     /**
@@ -570,8 +620,8 @@ class UhlenModelUpdater {
      * @return the number of models that have been marked as deleted.
      */
     static int markNonRepresentativeModelsAsDeleted(String representativeId) {
-        assert UhlenModelMapping.findByRepresentative(representativeId): "'$representativeId' is not representative for a Uhlen2017 category"
-        assert Model.findBySubmissionId(representativeId): "No model with identifier '$representativeId' submitted"
+        assert findUhlenModelMapping(representativeId): "'$representativeId' is not representative for a Uhlen2017 category"
+        assert findModelBySubmissionId(representativeId): "No model with identifier '$representativeId' submitted"
 
         String query = """\
 update Model m set m.deleted = true where m.submissionId in (
@@ -580,62 +630,16 @@ update Model m set m.deleted = true where m.submissionId in (
     }
 
     void updateModels() {
-        // set the application context reference in POGOs that expect it
-        RevisionTransportCommand.context = ctx
-
-        // don't let Camel shut itself down within 5 minutes of the importer finishing.
-        // wait for all models to be indexed instead.
-        def camelContext = ctx.camelContext as CamelContext
-        camelContext.shutdownStrategy.setTimeout(Long.MAX_VALUE)
+        init()
 
         def duration
         def startTime = Instant.now()
         try {
-            def modelFolderPattern = ~/MODEL170711\d{4}/
-            final int POOL_SIZE = Math.min(7, 2 * Runtime.getRuntime().availableProcessors())
-            println("Pool size is $POOL_SIZE, model folder is $modelFolder")
+            def modelFolderPattern = ~/^MODEL170711\d{4}$/
 
-            GParsPool.withPool(POOL_SIZE) {
-                GParsPool.runForkJoin(new File(modelFolder)) { File root ->
-                    final String rootName = root.name
-                    if (rootName ==~ modelFolderPattern) {
-                        UhlenScriptSupport.simpleRunAs(UhlenScriptSupport.submitterAuth, {
-                            try {
-                                handleModelFolder root
-                            } catch (IllegalStateException ise) {
-                                addModelError(rootName, ise.message)
-                            } catch (AssertionError e) {
-                                addModelError rootName, e.toString()
-                            } catch (Exception e) {
-                                addModelError(rootName, "oops: $e")
-                                e.printStackTrace()
-                            }
-                        })
-                    } else { // fork dedicated task for each sub-folder
-                        def subFolders = root.listFiles(new FileFilter() {
-                            boolean accept(File candidate) {
-                                candidate.isDirectory()
-                            }
-                        })
-                        subFolders.each { File child ->
-                            forkOffChild child
-                        }
-                    }
-                }
-            }
-
-            // wait for pending indexing jobs to complete before stopping
-            def indexRequestDispatcher = ctx.camelContext.routes.find {
-                // we use seda:exec to invoke the indexer
-                it.consumer.endpoint.endpointKey.startsWith("seda://exec")
-            }.consumer
-
-            int pendingIndexingJobs = indexRequestDispatcher.pendingExchangesSize
-            while (pendingIndexingJobs > 0) {
-                println("Waiting for ${pendingIndexingJobs} models to be indexed...")
-                Thread.sleep(30000)
-                pendingIndexingJobs = indexRequestDispatcher.pendingExchangesSize
-            }
+            File base = new File(modelFolder)
+            processSubmissionsFolder(base, modelFolderPattern)
+            awaitCompletionOfIndexingJobs()
         } catch (Exception e) {
             System.err.println("Generic exception encountered while importing the models: $e")
         } finally {
@@ -645,6 +649,59 @@ update Model m set m.deleted = true where m.submissionId in (
             printModelLog()
         }
     }
+
+    private void awaitCompletionOfIndexingJobs() {
+        // wait for pending indexing jobs to complete before stopping
+        def indexRequestDispatcher = camelContext.routes.find {
+            // we use seda:exec to invoke the indexer
+            it.consumer.endpoint.endpointKey.startsWith("seda://exec")
+        }.consumer as SedaConsumer
+
+        int pendingIndexingJobs = indexRequestDispatcher.pendingExchangesSize
+        while (pendingIndexingJobs > 0) {
+            println("Waiting for ${pendingIndexingJobs} models to be indexed...")
+            Thread.sleep(30000)
+            pendingIndexingJobs = indexRequestDispatcher.pendingExchangesSize
+        }
+    }
+
+    private void submissionDetected(File root) {
+        final String rootName = root.name
+        SpringSecurityUtils.doWithAuth(UhlenScriptSupport.submitter.username) {
+            try {
+                handleModelFolder root
+                println "handled $rootName"
+            } catch (IllegalStateException ise) {
+                addModelError(rootName, ise.message)
+            } catch (AssertionError e) {
+                addModelError rootName, e.toString()
+            } catch (Exception e) {
+                addModelError(rootName, "oops: $rootName -- $e")
+                e.printStackTrace()
+            }
+        }
+    }
+
+    @CompileDynamic
+    private void processSubmissionsFolder(File root, Pattern modelFolderPattern) {
+        final int POOL_SIZE = Math.min(7, 2 * Runtime.getRuntime().availableProcessors())
+        println("Pool size is $POOL_SIZE, model folder is $modelFolder")
+        GParsPool.withPool(POOL_SIZE) {
+            GParsPool.runForkJoin(root) { File dir ->
+                final String dirName = dir.name
+                if (dirName ==~ modelFolderPattern) {
+                    submissionDetected dir
+                } else { // fork dedicated task for each sub-folder
+                    //descendIntoSubFolders(root)
+                    def subFolders = dir.listFiles(FolderFilter.instance)
+                    for (File child in subFolders) {
+                        forkOffChild child
+                    }
+                }
+            }
+        }
+    }
 }
 
-new UhlenModelUpdater(ctx: ctx, grailsApp: grailsApplication).updateModels()
+def updater = new UhlenModelUpdater(ctx: ctx, grailsApp: grailsApplication)
+updater.updateModels()
