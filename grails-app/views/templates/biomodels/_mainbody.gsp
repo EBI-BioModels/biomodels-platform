@@ -44,16 +44,16 @@
         <div data-sticky-container class="sticky-container">
             <section>
                 <g:if test="${facetSearchContent}">
-                    <div class="small-4 medium-2 large-2 columns show-for-medium">
+                    <div class="medium-2 large-2 columns show-for-medium hide-for-small-only">
                         ${raw(facetSearchContent)}
                     </div>
                     <g:if test="${sidebarContent}">
-                        <div class="small-12 medium-7 large-7 columns">
+                        <div class="small-12 medium-8 large-8 columns">
                             <g:render template="/templates/notification/showNotificationDiv"/>
                             <g:pageProperty name="page.main-content" />
                             <g:layoutBody/>
                         </div>
-                        <div class="small-2 medium-3 large-3 columns sidebar sticky-container
+                        <div class="medium-2 large-2 columns sidebar sticky-container
                         show-for-medium hide-for-small-only" data-sticky-container>
                             ${raw(sidebarContent)}
                         </div>

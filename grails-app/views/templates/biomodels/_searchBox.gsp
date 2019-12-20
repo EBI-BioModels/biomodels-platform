@@ -42,8 +42,10 @@
     }
 
     #domain_switcher {
-        width: auto !important;
         float: right;
+    }
+    .example-label {
+        font-size: 0.8rem;
     }
 </style>
 <form id="local-search" name="local-search"
@@ -51,38 +53,40 @@
     <fieldset>
         <div class="input-group margin-bottom-none margin-top-large padding-bottom-medium">
             <div class="input-group-field" style="vertical-align: text-top">
-                <label>
-                    <select class="margin-bottom-none align-self-top" id="domain_switcher" name="domain_switcher">
-                        <option value="biomodels_all">BioModels All</option>
-                        <option value="biomodels">BioModels</option>
-                        <option value="biomodels_autogen">BioModels Autogen</option>
-                    </select>
-                </label>
+                <select class="margin-bottom-none align-self-top" id="domain_switcher" name="domain_switcher">
+                    <option value="biomodels_all"><g:message code="net.biomodels.jummp.domain.name.BioModelsAll"/></option>
+                    <option value="biomodels"><g:message code="net.biomodels.jummp.domain.name.BioModels"/></option>
+                    <option value="biomodels_autogen"><g:message code="net.biomodels.jummp.domain.name.BioModelsAutogen"/></option>
+                </select>
+                <br/><br/>
+                <a class="help-text label-floating-left secondary label"
+                   title="Learn more"
+                   data-open="domainSwitcherExplanationBox">What is this box used for?</a>
                 <input type="text" id="chosenDomain" name="chosenDomain"
                        style="display: none" value="biomodels"/>
             </div>
-            <div class="input-group-field">
 
+            <div class="input-group-field">
                 <input type="text" name="search_block_form" id="local-searchbox"
                    placeholder="Search..." class="input-group-field search_box_style clearable"
                    title="Search"
                    tabindex="1" style="width: 100%;">
-            <p id="example">
-                Examples:
-                <g:link controller="search" action="search"
-                        params="${[query: "*:*"]}" class="secondary label" title="Search all">*:*</g:link>
-                <g:link controller="search" action="search"
-                        params="${[query: "MAPK cascade"]}" class="secondary label"
-                        title="Search by GO term">MAPK cascade</g:link>
-                <g:link controller="search" action="search"
-                        params="${[query: "homo sapiens"]}" class="secondary label"
-                        title="Search by Taxonomy term">homo sapiens</g:link>
-                <g:link controller="search" action="search"
-                        params="${[query: "lung cancer"]}" class="secondary label"
-                        title="Search by Disease term">lung cancer</g:link>
-                <a title="Search tips/tricks" data-open="searchTipsBox"
-                   class="secondary label label-floating-right">Search tips</a>
-            </p></div>
+                <p id="example" class="example-label">
+                    Examples:
+                    <g:link controller="search" action="search"
+                            params="${[query: "*:*"]}" class="secondary label" title="Search all">*:*</g:link>
+                    <g:link controller="search" action="search"
+                            params="${[query: "MAPK cascade"]}" class="secondary label"
+                            title="Search by GO term">MAPK cascade</g:link>
+                    <g:link controller="search" action="search"
+                            params="${[query: "homo sapiens"]}" class="secondary label"
+                            title="Search by Taxonomy term">homo sapiens</g:link>
+                    <g:link controller="search" action="search"
+                            params="${[query: "lung cancer"]}" class="secondary label"
+                            title="Search by Disease term">lung cancer</g:link>
+                    <a title="Search tips/tricks" data-open="searchTipsBox"
+                       class="secondary label label-floating-right">Search tips</a>
+                </p></div>
             <div class="input-group-button">
                 <input id="search_submit" class="button icon icon-functional" tabindex="2"
                        type="submit" name="searchSubmit" value="1" />

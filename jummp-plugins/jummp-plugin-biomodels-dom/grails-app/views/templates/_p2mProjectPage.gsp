@@ -9,7 +9,7 @@
     <a href="http://sabio.villa-bosch.de/" title="SABIO-RK">SABIO-RK</a> and hosted in BioModels database.
 </p>
 
-<p>The approximately 140000 models in the Path2Models project are now grouped taxonomically into 814 bundles,
+<p>The approximately 140,000 models in the Path2Models project are now grouped taxonomically into 812 bundles,
 typically one per genus. Each such bundle contains one representative entry, typically a genome
 scale model
 for one of the organisms under that genus. The description of a representative SBML model contains the
