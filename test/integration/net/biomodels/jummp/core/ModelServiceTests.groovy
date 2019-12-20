@@ -1392,7 +1392,7 @@ class ModelServiceTests extends JummpIntegrationTest {
         secondRevision.name = "Some other name"
         secondRevision.description = "Some other description"
         secondRevision.comment = "Some important change"
-        def r2 = modelService.addValidatedRevision([model], [], secondRevision)
+        def r2 = modelService.addRevision([model], [], secondRevision)
         assertNotNull r2
         assertFalse r2.hasErrors()
 

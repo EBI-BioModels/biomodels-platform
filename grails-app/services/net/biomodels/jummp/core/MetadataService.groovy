@@ -220,7 +220,7 @@ class MetadataService {
         try {
             files = executeMetadataSavingStrategy(newRevision, statements, isUpdate)
 
-            def result = modelService.addValidatedRevision(files, [], newRevision)
+            def result = modelService.addRevision(files, [], newRevision)
             if (!result) {
                 log.error """\
             Could not update revision ${baseRevision.id} with annotations ${statements.dump()}"""

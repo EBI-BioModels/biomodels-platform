@@ -172,6 +172,27 @@ public interface IModelService {
     **/
     public RevisionTransportCommand addRevision(String modelId, final File file, final ModelFormatTransportCommand format, final String comment) throws ModelException
     /**
+     * @short Adds a new Revision to the model, to be used by SubmissionService
+     *
+     * The provided @p modelFiles will be stored in the VCS as an update to the existing files of the same @p model.
+     * A new Revision will be created and appended to the list of Revisions of the @p model.
+     * The revision will not be validated, as the checks are assumed to have been already conducted. The revision
+     * will be also indexed if it is successfully added to the model.
+     *
+     * @param model The Model the revision should be added
+     * @param modelFiles The model files to be stored in the VCS as a new revision
+     * @param format The format of the model files
+     * @param comment The commit message for the new revision
+     *
+     * @return The newly-added Revision. In case an error occurred while accessing the VCS @c null will be returned.
+     * @throws ModelException If either @p model, @p modelFiles or @p comment are null or if the files do not exist
+     * or are directories.
+     */
+    RevisionTransportCommand addRevision(final List<RepositoryFileTransportCommand> repoFiles,
+                                         final List<RepositoryFileTransportCommand> deleteFiles,
+                                         final RevisionTransportCommand rev) throws ModelException
+
+    /**
      * Returns whether the current user has the right to add a revision to the model.
      * @param modelId The id of the model to check
      * @return @c true if the user has write permission on the revision or is an admin user, @c false otherwise.

@@ -747,21 +747,21 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
      * The revision will not be validated, as the checks are assumed to have been already conducted. The revision
      * will be also indexed if it is successfully added to the model.
      *
-     * @param model The Model the revision should be added
-     * @param modelFiles The model files to be stored in the VCS as a new revision
-     * @param format The format of the model files
-     * @param comment The commit message for the new revision
+     * @param repoFiles     The model files to be stored in the VCS as a new revision
+     * @param deleteFiles   The list of files to be deleted from the VCS
+     * @param rev           The revision to be added the model which the revision is being associated with
+     *
      * @return The newly-added Revision. In case an error occurred while accessing the VCS @c null will be returned.
      * @throws ModelException If either @p model, @p modelFiles or @p comment are null or if the files do not exist
      * or are directories.
      */
     @PreAuthorize("hasRole('ROLE_USER')")
     @PostLogging(LoggingEventType.UPDATE)
-    @Profiled(tag="modelService.addValidatedRevision")
+    @Profiled(tag="modelService.addRevision")
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    Revision addValidatedRevision(final List<RepositoryFileTransportCommand> repoFiles,
-                                  final List<RepositoryFileTransportCommand> deleteFiles,
-                                  RevisionTransportCommand rev) throws ModelException {
+    Revision addRevision(final List<RepositoryFileTransportCommand> repoFiles,
+                         final List<RepositoryFileTransportCommand> deleteFiles,
+                         final RevisionTransportCommand rev) throws ModelException {
         Revision revision
         def txDefinition = [
             // this tx will use a different session than the current one
@@ -769,7 +769,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         ]
         Revision.withTransaction(txDefinition) {
             // the returned revision is detached from the Hibernate session
-            revision = doAddValidatedRevision(repoFiles, deleteFiles, rev)
+            revision = persistRevision(repoFiles, deleteFiles, rev)
         }
         if (revision) {
             /*
@@ -798,21 +798,22 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     }
 
     /**
-     * Persists a new model revision in the database.
+     * Persists a new model revision in the database and upload the repository files in VCS.
      *
      * This unit of work is performed in a dedicated transaction.so as to ensure that it is
      * committed before the [synchronous] indexing process tries to load the revision from the
      * database.
-     * @param repoFiles the files of the revision
-     * @param deleteFiles the files that should be deleted compared to the previous revision
-     * @param rev the transport command from which to construct the new revision
+     * @param repoFiles         the files to be associated with the revision
+     * @param deleteFiles       the files to be deleted and compared to the previous revision
+     * @param rev               the transport command from which to construct the new revision
+     *
      * @return the new revision
      * @throws ModelException if there is no model associated with @p rev, if its model has
      * been deleted or if the comment is null.
      */
-    Revision doAddValidatedRevision(List<RepositoryFileTransportCommand> repoFiles,
-                                    List<RepositoryFileTransportCommand> deleteFiles,
-                                    RevisionTransportCommand rev) throws ModelException {
+    Revision persistRevision(List<RepositoryFileTransportCommand> repoFiles,
+                             List<RepositoryFileTransportCommand> deleteFiles,
+                             RevisionTransportCommand rev) throws ModelException {
         // TODO: the method should be thread safe, add a lock
         if (!rev.model) {
             throw new ModelException(null, "Model may not be null")
@@ -836,12 +837,12 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
                     format: ModelFormat.findByIdentifierAndFormatVersion(rev.format.identifier, formatVersion),
                     validationReport: rev.validationReport, validationLevel: rev.validationLevel, readmeSubmission:
             rev.readmeSubmission)
-        def stopWatch = new Log4JStopWatch("modelService.addValidatedRevision.rftcCreation")
+        def stopWatch = new Log4JStopWatch("modelService.addRevision.rftcCreation")
         List<RepositoryFile> domainObjects = convertRepositoryFilesFromTransportCommands(repoFiles, revision)
 
         stopWatch.lap("RepositoryFileTransportCommands created.")
         // save the new model in the database
-        stopWatch.setTag("modelService.addValidatedRevision.persistModel")
+        stopWatch.setTag("modelService.addRevision.persistModel")
         try {
             String vcsId = vcsService.updateModel(model, modelFiles, filesToDelete, revision.comment)
             revision.vcsId = vcsId
@@ -879,7 +880,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             revision.save()
             model.save(flush: true)
             stopWatch.lap("Model persisted to the database.")
-            stopWatch.setTag("modelService.addValidatedRevision.grantPermissions")
+            stopWatch.setTag("modelService.addRevision.grantPermissions")
             aclInsertionLock.lock()
             try {
                 aclUtilService.addPermission(revision, currentUser.username, BasePermission.ADMINISTRATION)
@@ -2404,7 +2405,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             }
             revisionTC.minorRevision = true
             revisionTC.comment = "Automatically added model identifier $publicationId"
-            Revision toPublish = doAddValidatedRevision(revisionTC.files, [], revisionTC)
+            Revision toPublish = persistRevision(revisionTC.files, [], revisionTC)
             RevisionTransportCommand toPublishTC = new RevisionAdapter(revision: toPublish).toCommandObject()
             indexModelRevision(toPublishTC)
             return toPublish

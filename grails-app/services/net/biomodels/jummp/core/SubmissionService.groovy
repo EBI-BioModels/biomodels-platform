@@ -82,6 +82,8 @@ class SubmissionService {
      */
     ModelService modelService
 
+    ModelDelegateService modelDelegateService
+
     /**
      * Dependency Injection of session factory to prevent serialisation of revision
      * domain object.
@@ -761,7 +763,7 @@ class SubmissionService {
             }
             if (SHOULD_UPDATE) {
                 latestRTC.comment = "Edited model metadata online."
-                modelService.addValidatedRevision(latestRTC.files, [], latestRTC)
+                modelService.addRevision(latestRTC.files, [], latestRTC)
             }
             String modelId = newModel.submissionId
             workingMemory.put("model_id", modelId)
@@ -896,7 +898,7 @@ class SubmissionService {
             // update model format, modelling approach and readme info if they're provided and changed
             storeReadmeInfo(revision, workingMemory)
 
-            Revision newlyCreated = modelService.addValidatedRevision(repoFiles, deleteFiles, revision)
+            Revision newlyCreated = modelService.addRevision(repoFiles, deleteFiles, revision)
             RTC newlyCreatedRTC = new RevisionAdapter(revision: newlyCreated).toCommandObject()
             final String NEW_NAME = workingMemory["new_name"]
             final String NEW_DESCRIPTION = workingMemory["new_description"]
@@ -913,8 +915,7 @@ class SubmissionService {
             }
             if (SHOULD_UPDATE) {
                 newlyCreatedRTC.comment = "Edited model metadata online."
-                def updated = modelService.addValidatedRevision(
-                        newlyCreatedRTC.files, [], newlyCreatedRTC)
+                def updated = modelService.addRevision(newlyCreatedRTC.files, [], newlyCreatedRTC)
                 workingMemory.put("model_id", updated.model.submissionId)
             } else {
                 workingMemory.put("model_id", newlyCreated.model.submissionId)

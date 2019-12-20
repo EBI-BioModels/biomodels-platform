@@ -225,6 +225,14 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         return new RevisionAdapter(revision: revision).toCommandObject()
     }
 
+    RevisionTransportCommand addRevision(final List<RepositoryFileTransportCommand> repoFiles,
+                                         final List<RepositoryFileTransportCommand> deleteFiles,
+                                         final RevisionTransportCommand rev) throws ModelException {
+        Revision revision = modelService.addRevision(repoFiles, deleteFiles, rev)
+        RevisionTransportCommand revisionTC = new RevisionAdapter(revision: revision).toCommandObject()
+        return revisionTC
+    }
+
     @NotTransactional
     Byte[] serveModelFilesAsZip(Map<String, RepositoryFileTransportCommand> files) {
         ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream()
