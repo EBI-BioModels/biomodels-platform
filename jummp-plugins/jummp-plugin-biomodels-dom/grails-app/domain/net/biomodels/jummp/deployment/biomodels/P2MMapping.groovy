@@ -20,6 +20,8 @@
 
 package net.biomodels.jummp.deployment.biomodels
 
+import grails.persistence.Entity
+
 /**
  * Domain class for mapping a representative model with other models in the same genus
  *
@@ -30,18 +32,29 @@ package net.biomodels.jummp.deployment.biomodels
  *
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-class P2MMapping implements Serializable {
+@Entity
+class P2MMapping extends AutoGenModelMapping implements Serializable {
     private static final long serialVersionUID = 1L
-
-    // The representative model identifier
-    String representative
-
-    // The identifier of the others in the same group
-    String member
 
     static mapping = {
         id composite: ['representative', 'member']
         version false
+        /**
+         * There is an issue in the currently being used version of the database migration plugin which Hibernate
+         * Database does not support to generate some types of scripts (e.g. creating index for a given column). This
+         * was fixed in version 3.0.0.BUILD-SNAPSHOT as stated in the discussion [1]. We leave mappings below so as
+         * use for the future if we upgrade the plugin. Therefore, the migration scripts for creating indexes will be
+         * added to manually.
+         *
+         * [1] https://github.com/grails-plugins/grails-database-migration/issues/74
+         */
+        representative(indexColumn: [name: "idx_p2m_rep", type: String])
+        member(indexColumn: [name: "idx_p2m_mem", type: String])
+    }
+
+    static constraints = {
+        representative(maxSize: 32)
+        member(maxSize: 32)
     }
 }
 

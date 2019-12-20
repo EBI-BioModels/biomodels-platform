@@ -46,7 +46,7 @@ grails.project.dependency.resolution = {
         grailsCentral()
         mavenLocal()
         mavenCentral()
-        mavenRepo "http://www.ebi.ac.uk/~maven/m2repo_snapshots/"
+        mavenRepo "https://www.ebi.ac.uk/~maven/m2repo_snapshots/"
     }
 
     String ddmoreMetadataIntegrationServiceVersion = "0.1.3-SNAPSHOT"

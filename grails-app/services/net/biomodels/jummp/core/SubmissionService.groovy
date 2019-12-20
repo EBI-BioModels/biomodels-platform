@@ -31,9 +31,11 @@
 
 package net.biomodels.jummp.core
 
+import grails.plugin.cache.Cacheable
 import groovy.transform.CompileStatic
 import groovy.transform.TypeChecked
 import groovy.transform.TypeCheckingMode
+import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC //rude?
@@ -42,6 +44,7 @@ import net.biomodels.jummp.core.model.PublicationDetailExtractionContext
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import net.biomodels.jummp.core.model.PublicationTransportCommand
+import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelFormat
@@ -85,21 +88,28 @@ class SubmissionService {
      */
     transient SessionFactory sessionFactory
 
-    /*
+    /**
      * Abstract state machine strategy, to be extended by the two concrete
      * strategy implementations
      */
 
     @CompileStatic
     abstract class StateMachineStrategy {
-
         /**
          * Load existing objects associated with the model in working into the application cache,
          * called workingMemory before the upload (i.e. new submission and update) process is into gear.
          *
          * @param workingMemory a Map containing all objects exchanged throughout the flow.
          */
-        abstract void initialise(Map<String, Object> workingMemory);
+        @Cacheable('sortedModelFormats')
+        //@Cacheable('definedModellingApproaches') // should split it into two methods so as to apply cacheable
+        void initialise(Map<String, Object> workingMemory) {
+            List<ModelFormat> sortedModelFormats = net.biomodels.jummp.model.ModelFormat.list().sort { it.name }
+            workingMemory.put("sorted_model_formats", sortedModelFormats)
+            List<ModellingApproach> definedModellingApproaches = ModellingApproach.list()
+            workingMemory.put("defined_modelling_approaches", definedModellingApproaches)
+        }
+
         /**
          * The method allows filtering out the files being added and the ones will be deleted.
          * At the same time, the cache system, i.e. workingMemory, is also made up-to-date.
@@ -336,6 +346,54 @@ class SubmissionService {
             return refreshPublication
         }
 
+        /**
+         * This tries to capture readme information about unknown format and other modelling approach.
+         *
+         * Retrieving all these information from the working memory and update the revision in question.
+         *
+         * @param revision  Revision
+         * @param workingMemory a map of temporary variables
+         */
+        @Profiled(tag = "submissionService.storeReadmeInfo")
+        @TypeChecked(TypeCheckingMode.SKIP)
+        protected void storeReadmeInfo(RTC revision, Map<String, Object> workingMemory) {
+            // update modelling approach
+            String modellingApproach = workingMemory.get("modelling_approach")
+            ModellingApproach approach = ModellingApproach.findByName(modellingApproach)
+            revision.model.modellingApproach = approach
+
+            if (workingMemory.get("other_info")) {
+                revision.model.otherInfo = workingMemory.get("other_info")
+            }
+
+            // add MAMO term representing the modelling approach into the SBML file if the curators or the submitter
+            // has not added it to model level annotations yet
+            if (revision.format.identifier == "SBML") {
+                modelService.addModellingApproachAsAnnotation(revision, approach)
+            }
+
+            // update model format
+            final long fmtId = workingMemory.get("model_format")
+            if (fmtId != revision.format.id) {
+                // the model format has been changed by the user
+                MFTC formatTC = new ModelFormatAdapter(format: ModelFormat.get(fmtId)).toCommandObject()
+                revision.format = formatTC
+                revision.model.format = revision.model.format
+            }
+            // TODO: check that 'Original code *' is the currently chosen value. If not, don't do the statement below
+            if (workingMemory.get("readme_submission")) {
+                revision.readmeSubmission = workingMemory.get("readme_submission")
+            }
+        }
+
+        /**
+         * Get the model name from uploading files
+         *
+         * @param mainFiles All of the uploading files
+         * @return  a string representing the file name as model name
+         */
+        @Profiled(tag = "submissionService.getModelNameFromFiles")
+        @TypeChecked(TypeCheckingMode.SKIP)
         protected String getModelNameFromFiles(List<File> mainFiles) {
             StringBuilder name = new StringBuilder()
             boolean first = true
@@ -349,6 +407,14 @@ class SubmissionService {
             return name.toString()
         }
 
+        /**
+         * Get the model description from files uploading
+         *
+         * @param allFiles
+         * @return
+         */
+        @Profiled(tag = "submissionService.getModelDescriptionFromFiles")
+        @TypeChecked(TypeCheckingMode.SKIP)
         protected String getModelDescriptionFromFiles(List<File> allFiles) {
             StringBuilder desc = new StringBuilder("Model comprised of files: ")
             String fileNames = allFiles.collect { File it -> it.name }.join(', ')
@@ -360,7 +426,7 @@ class SubmissionService {
          *
          * @param workingMemory a Map containing all objects exchanged throughout the flow.
          */
-        @Profiled(tag = "submissionService.updateRevisionComments")
+        @Profiled(tag = "submissionService.updateRevisionFromFiles")
         @TypeChecked(TypeCheckingMode.SKIP)
         protected void updateRevisionFromFiles(Map<String, Object> workingMemory) {
             RTC revision = workingMemory.get("RevisionTC") as RTC
@@ -392,6 +458,16 @@ class SubmissionService {
         void inferModelInfo(Map<String, Object> workingMemory) {
             if (!workingMemory.containsKey("RevisionTC")) {
                 createTransportObjects(workingMemory)
+            }
+            RTC revision = workingMemory.get("RevisionTC") as RTC
+            workingMemory.put("readme_submission", revision.readmeSubmission ?: "")
+            workingMemory.put("other_info", revision.model.otherInfo)
+            // At this stage, the modelling approach has been loaded from the database if it was persisted.
+            // Otherwise, it will be extracted from the model file.
+            if (!workingMemory.get("modelling_approach")) {
+                ModellingApproach approach = modelFileFormatService.extractModellingApproachFromFiles(revision)
+                String modellingApproach = approach ? approach.name : ""
+                workingMemory.put("modelling_approach", modellingApproach)
             }
             updateRevisionFromFiles(workingMemory)
         }
@@ -476,8 +552,8 @@ class SubmissionService {
          *
          * @param workingMemory a Map containing all objects exchanged throughout the flow.
          */
-        @TypeChecked(TypeCheckingMode.SKIP)
         @Profiled(tag = "submissionService.handleSubmission")
+        @TypeChecked(TypeCheckingMode.SKIP)
         HashSet<String> handleSubmission(Map<String, Object> workingMemory) {
             HashSet<String> retval
             try {
@@ -506,8 +582,9 @@ class SubmissionService {
             try {
                 List<RFTC> repoFiles = getRepFiles(workingMemory)
                 File parent = null
-                repoFiles?.each { RFTC it ->
-                    File deleteMe = new File(it.path)
+                repoFiles?.each { Object it ->
+                    RFTC rfTC = it as RFTC
+                    File deleteMe = new File(rfTC.path as String)
                     if (!parent) {
                         parent = deleteMe.getParentFile()
                     }
@@ -576,7 +653,7 @@ class SubmissionService {
     @CompileStatic
     class InPlaceStateMachine extends StateMachineStrategy {
         void initialise(Map<String, Object> workingMemory) {
-
+            super.initialise(workingMemory)
         }
 
         void removeFromVCS(Map<String, Object> workingMemory, List<RFTC> filesToDelete) {
@@ -613,6 +690,7 @@ class SubmissionService {
          * @param workingMemory a Map containing all objects exchanged throughout the flow.
          */
         void initialise(Map<String, Object> workingMemory) {
+            super.initialise(workingMemory)
             def publication_objects_in_working = initialisePublicationMap()
             workingMemory.put("publication_objects_in_working", publication_objects_in_working)
         }
@@ -663,6 +741,8 @@ class SubmissionService {
             RTC revision = workingMemory.get("RevisionTC") as RTC
             MTC model = revision.model
             model.format = revision.format
+            // update model format, modelling approach and readme info if they're provided
+            storeReadmeInfo(revision, workingMemory)
             revision.comment = "Import of ${revision.name}".toString()
             Model newModel = modelService.uploadValidatedModel(repoFiles, revision)
             Revision latest = modelService.getLatestRevision(newModel, false)
@@ -705,6 +785,7 @@ class SubmissionService {
          */
         @Profiled(tag = "submissionService.NewRevisionStateMachine.initialise")
         void initialise(Map<String, Object> workingMemory) {
+            super.initialise(workingMemory)
             // fetch files from repository, make RFTCs out of them
             RTC rev = workingMemory.get("LastRevision") as RTC
             List<RFTC> repFiles = rev.getFiles()
@@ -811,6 +892,10 @@ class SubmissionService {
                     changes.add("Added file: ${fileAdded}")
                 }
             }
+
+            // update model format, modelling approach and readme info if they're provided and changed
+            storeReadmeInfo(revision, workingMemory)
+
             Revision newlyCreated = modelService.addValidatedRevision(repoFiles, deleteFiles, revision)
             RTC newlyCreatedRTC = new RevisionAdapter(revision: newlyCreated).toCommandObject()
             final String NEW_NAME = workingMemory["new_name"]
@@ -986,7 +1071,8 @@ class SubmissionService {
             //only for testing, remove and throw exception perhaps!
         }
         if (filterMain) {
-            repFiles = repFiles.findAll { RFTC it -> it.mainFile } //filter out non-main files
+            /* filter out non-main files */
+            repFiles = repFiles.findAll { RFTC it -> it.mainFile }
         }
         return getFilesFromRepFiles(repFiles.toList())
     }

@@ -83,7 +83,7 @@ class P2mControllerSpec extends Specification {
     void "test browse action"() {
         given:
         def p2mService = mockFor(P2mService)
-        p2mService.demand.getModelCategoryMap { ->
+        p2mService.demand.getModelCategoryMap() { pattern ->
             [
                 "BMID000000142512": ['Cucumis'] as Set,
                 "BMID000000142019": ['Deferribacter'] as Set

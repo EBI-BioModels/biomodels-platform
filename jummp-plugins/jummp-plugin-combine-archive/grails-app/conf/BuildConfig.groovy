@@ -57,8 +57,8 @@ grails.project.dependency.resolution = {
         grailsCentral()
         mavenRepo("http://mvn.sems.uni-rostock.de/releases/")
         mavenCentral()
-        mavenRepo "http://www.ebi.ac.uk/~maven/m2repo"
-        mavenRepo "http://www.ebi.ac.uk/~maven/m2repo_snapshots/"
+        mavenRepo "https://www.ebi.ac.uk/~maven/m2repo"
+        mavenRepo "https://www.ebi.ac.uk/~maven/m2repo_snapshots/"
     }
     dependencies {
         compile("org.mbine.co:libCombineArchive:0.1") {
