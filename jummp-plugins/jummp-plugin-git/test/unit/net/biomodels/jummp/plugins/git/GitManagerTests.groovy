@@ -35,17 +35,16 @@
 package net.biomodels.jummp.plugins.git
 
 import grails.test.GrailsUnitTestCase
-import net.biomodels.jummp.core.vcs.*
 import org.apache.commons.io.FileUtils
 import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.errors.MissingObjectException
-import org.eclipse.jgit.lib.Constants
-import org.eclipse.jgit.lib.ObjectId
+import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.lib.Repository
-import org.eclipse.jgit.revwalk.RevWalk
-import org.eclipse.jgit.revwalk.RevCommit
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.junit.Test
+
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+
+import static org.junit.Assert.*
 
 class GitManagerTests extends GrailsUnitTestCase {
     private File clone
@@ -162,5 +161,51 @@ class GitManagerTests extends GrailsUnitTestCase {
         // For this case, we test with the first commit
         files = gitManager.retrieveModel(clone, firstCommitHash)
         assertEquals(1, files.size())
+    }
+
+    @Test
+    void canRevertARevisionIfWeHaveAtLeastTwo() {
+        def baseDir = new File("target/demoGitRevertRepo")
+        baseDir.mkdirs()
+
+        def git = Git.init()
+            .setDirectory(baseDir)
+            .call()
+        try {
+            def dotGit = new File(baseDir, ".git")
+            assert dotGit.isDirectory()
+
+            def importFile = new File(baseDir, "demo.txt")
+            importFile.append("v1: ${new Date()}", "UTF-8")
+            FileUtils.touch(importFile)
+            GitSupport.importFile(git, importFile.name)
+            GitSupport.makeCommit(git, "me", "me@example.com", "v1")
+
+            importFile.append("v2: ${new Date()}", "UTF-8")
+            FileUtils.touch importFile
+            GitSupport.importFile(git, importFile.name)
+            def v2 = GitSupport.makeCommit(git, "me", "me@example.com", "v2")
+            def revisionToRevert = v2.name
+
+            Repository repository = git.repository
+
+            Ref headRef = repository.exactRef("HEAD")
+            assertNotNull "HEAD reference is null, but it should not be", headRef
+
+            def newHead = git.revert()
+                .include(headRef)
+                .call()
+
+            assertNotNull "newHead is null", newHead
+            assertNotEquals "revert commit not created", revisionToRevert, newHead.name
+
+            def lines = Files.readAllLines(importFile.toPath(), StandardCharsets.UTF_8)
+            assertEquals 1, lines.size()
+            assertTrue lines.first().startsWith("v1")
+        } finally {
+            git.close()
+        }
+
+        assert baseDir.deleteDir(): "failed to delete $baseDir"
     }
 }
