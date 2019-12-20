@@ -35,25 +35,47 @@ class OmicsdiController {
     private final boolean IS_INFO_ENABLED = log.isInfoEnabled()
 
     def omicsdiService
+    def tagService
 
     def index() {
         render(view: "index")
+    }
+
+    def fetchAllTags() {
+       render(tagService.getAll() as JSON)
     }
 
     def exportOmicsdiEntriesWithIndexer() {
         if (IS_INFO_ENABLED) {
             log.info "Delegating this work to JummpIndexer."
         }
+        def options = parseOptions()
+        omicsdiService.exportOmicsdiEntries(options)
+        render(["Sent the request to JummpIndexer with the options ${options}"] as JSON)
+    }
+
+    def saveOmicsdiExportSettings() {
+        def options = parseOptions()
+        File indexingData = omicsdiService.saveOmicsdiExportSettings(options)
+        String message = "Saved settings and configurations of OmicsDI export successfully"
+        if (!indexingData) {
+            message = "Cannot save settings and configurations of OmicsDI export"
+        }
+        render([message] as JSON)
+    }
+
+    private Map parseOptions() {
         boolean allowMultipleFilesParam = (params.howToExportFile == "1") ? false : true
         int numberEntriesOnEachFile = 0
         if (params.numberEntriesOnEachFile != "") {
-            numberEntriesOnEachFile = Integer.parseInt(nbEntries)
+            numberEntriesOnEachFile = params.int("numberEntriesOnEachFile")
         }
+        List<String> tagsExcluded = params.list("tags[]")
         def options = [
             'allowMultipleFiles': allowMultipleFilesParam,
-            'numberEntriesOnEachFile': numberEntriesOnEachFile
+            'numberEntriesOnEachFile': numberEntriesOnEachFile ?: 'undefined',
+            'tagsExcluded': tagsExcluded
         ]
-        omicsdiService.exportOmicsdiEntries(options)
-        render(["Sent the request to JummpIndexer with the options ${options}"] as JSON)
+        options
     }
 }

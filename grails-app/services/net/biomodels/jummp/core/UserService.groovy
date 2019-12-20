@@ -245,7 +245,7 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="userService.searchUsers")
     @PreAuthorize("hasRole('ROLE_ADMIN') or isAuthenticated()") //used to be: authentication.name==#username
-    List<String> searchUsers(String term) {
+    List searchUsers(String term) {
         return User.withCriteria {
             projections {
                 property('email')

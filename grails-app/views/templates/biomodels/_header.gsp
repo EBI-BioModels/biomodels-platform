@@ -43,7 +43,8 @@
                 background-image: url('//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.3/images/backgrounds/embl-ebi-background.jpg');">
         <!-- local-title, local search -->
         <div id="local-title" class="row" style="padding-top: 10px">
-            <div class="small-2 medium-7 large-8 columns" style="padding: 0">
+            <div
+                class="hide-for-small-only medium-12 large-4 columns padding-top-none padding-bottom-none padding-left-none padding-right-none">
                 <h1>
                     <a href="${createLink(uri: '/', absolute: true)}" title="Back to BioModels homepage"
                     style="text-decoration: none; border-bottom-style: none">
@@ -53,7 +54,7 @@
                 </h1>
             </div>
             <!-- local-search -->
-            <div id="localsearch" class="small-10 medium-5 large-4 columns float-right">
+            <div id="localsearch" class="small-12 medium-12 large-8 columns float-right">
                 <g:render template="/templates/${grailsApplication.config.jummp.branding.style}/searchBox"/>
             </div>
         </div>

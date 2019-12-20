@@ -23,7 +23,6 @@ package net.biomodels.jummp.core.adapters
 import grails.util.Holders
 import net.biomodels.jummp.core.certification.QcInfoCategory
 import net.biomodels.jummp.core.certification.QcInfoTransportCommand
-import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.model.Revision
 import org.apache.commons.logging.Log
@@ -42,34 +41,6 @@ public class RevisionAdapter {
     Revision revision
 
     def grailsApplication = Holders.getGrailsApplication()
-
-    def modelService = grailsApplication.mainContext.modelService
-
-    List<RFTC> getRepositoryFilesForRevision() {
-        List<RFTC> repFiles = new LinkedList<RFTC>()
-        List<File> files = modelService.retrieveModelRepFiles(revision)
-        revision.repoFiles.each { rf ->
-            File tmpFile = files.find { it.getName() == (new File(rf.path)).getName() }
-            if (tmpFile != null) {
-                long size = tmpFile.length()
-                long configPreviewSize = grailsApplication.config.jummp.web.file.preview
-                boolean showPreview = size > configPreviewSize ? true : false
-                RFTC rftc = new RFTC(
-                    id: rf.id,
-                    path: tmpFile.absolutePath,
-                    filename: rf.path,
-                    size: size,
-                    showPreview: showPreview,
-                    description: rf.description,
-                    hidden: rf.hidden,
-                    mainFile: rf.mainFile,
-                    userSubmitted: rf.userSubmitted,
-                    mimeType: rf.mimeType)
-                repFiles.add(rftc)
-            }
-        }
-        return repFiles
-    }
 
     RevisionTransportCommand toCommandObject() {
         def msg = """\
@@ -103,7 +74,8 @@ sessionClosed: ${grailsApplication.mainContext.sessionFactory.currentSession.isC
                 model: modelCmd,
                 validationLevel: revision.validationLevel,
                 validationReport: revision.validationReport,
-                qcInfo: qcInfoCmd
+                qcInfo: qcInfoCmd,
+                readmeSubmission: revision.readmeSubmission
         )
         return rev
     }

@@ -1,6 +1,15 @@
 package net.biomodels.jummp.plugins.sbml
 
 import grails.test.mixin.TestFor
+import net.biomodels.jummp.core.model.CurationState
+import net.biomodels.jummp.core.model.ModelFormatTransportCommand
+import net.biomodels.jummp.core.model.ModelState
+import net.biomodels.jummp.core.model.ModelTransportCommand
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
+import net.biomodels.jummp.core.model.RevisionTransportCommand
+import org.sbml.jsbml.CVTerm
+import org.sbml.jsbml.SBMLDocument
+import org.sbml.jsbml.SBMLReader
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -48,6 +57,24 @@ class SbmlServiceSpec extends Specification {
         "fbc_example1.xml"      | _
     }
 
+    void "capture error messages when invalid SBML models throw"(String sbmlFileName, String expectedErrors) {
+        when:
+        def f = new File("test/files/$sbmlFileName".toString())
+        def actualErrors = []
+        def sbmlDoc = service.getFileAsValidatedSBMLDocument(f, actualErrors)
+
+        then:
+        !sbmlDoc
+        actualErrors
+        1 == actualErrors.size()
+        actualErrors[0].contains(expectedErrors)
+
+        where:
+        sbmlFileName                    | expectedErrors
+        "Phan2017.xml"                  | 'Undeclared namespace prefix "bqbio"'
+        "tiny_example_12.xml"           | 'Unexpected close tag </bqmodel:are>; expected </bqmodel:is>'
+    }
+
     void "we can extract FBC-related stuff without errors"() {
         when:
         def f = new File("test/files/fbc_example1.xml")
@@ -73,5 +100,64 @@ class SbmlServiceSpec extends Specification {
         "J0" == fb.getReaction()
         "EQUAL" == fb.getOperation().name()
         10 == fb.getValue()
+    }
+
+    @Unroll("""\
+run this test with arguments #targetQualifier, #identifiersToBeInserted, #origIdentifiers, #updated and #nbOrigQuals 
+against the document #documentPath""")
+    void "test model annotations get inserted"(String documentPath,
+                                               CVTerm.Qualifier targetQualifier,
+                                               String accessionPattern,
+                                               List origIdentifiers,
+                                               List updated,
+                                               int nbOrigQuals,
+                                               String... identifiersToBeInserted) {
+        when:
+        SBMLDocument orig = new SBMLReader().readSBML(documentPath)
+        List<CVTerm> origQualifierList = orig.model.annotation.filterCVTerms(targetQualifier)
+        List<String> origAnnotations = origQualifierList*.resources.flatten()
+
+        then:
+        origQualifierList.size() == nbOrigQuals
+        origAnnotations == origIdentifiers
+
+        when:
+        def rf = new RepositoryFileTransportCommand(path: documentPath, mainFile: true, description: "model file")
+        def model = new ModelTransportCommand(submissionId: "MODEL0123456789")
+        def format = new ModelFormatTransportCommand(identifier: "SBML")
+        RevisionTransportCommand rev = new RevisionTransportCommand(model: model, state: ModelState.UNPUBLISHED,
+            revisionNumber: 1, owner: "me", minorRevision: false, validated: true, name: "my model", format: format,
+            description: "desc", uploadDate: new Date(), files: [rf], curationState: CurationState.CURATED)
+
+        SBMLDocument doc = new SBMLReader().readSBML(documentPath)
+        boolean isOk = service.addAnnotationsIfNeeded(rev, doc, targetQualifier,
+            accessionPattern, identifiersToBeInserted)
+        def modifiedQualifiers = doc.model.annotation.filterCVTerms(targetQualifier)
+        then:
+        isOk
+        modifiedQualifiers.size() == 1
+        modifiedQualifiers.resources.flatten() == updated
+
+        where: "samples"
+        documentPath << ["test/files/BIOMD0000000272.xml",
+                         "test/files/BIOMD0000000654.xml"]
+        targetQualifier << [CVTerm.Qualifier.BQM_IS, CVTerm.Qualifier.BQB_HAS_PROPERTY]
+        accessionPattern << ["biomodels.db[/:](BIOMD|MODEL)[0-9]{10}",
+                             "mamo[/:]MAMO_[0-9]{7}"]
+        origIdentifiers << [["http://identifiers.org/biomodels.db/MODEL1005260001",
+                             "http://identifiers.org/biomodels.db/BIOMD0000000272"],
+                            ["http://identifiers.org/mamo/MAMO_0000046",
+                             "http://identifiers.org/teddy/TEDDY456",
+                             "http://identifiers.org/teddy/TEDDY123",
+                             "http://identifiers.org/mamo/MAMO_0000007",]]
+        updated << [["http://identifiers.org/biomodels.db/MODEL1005260001",
+                     "http://identifiers.org/biomodels.db/BIOMD0000000272"],
+                    ["http://identifiers.org/teddy/TEDDY456",
+                     "http://identifiers.org/teddy/TEDDY123",
+                     "http://identifiers.org/mamo/MAMO_0000009"]]
+        nbOrigQuals << [2, 3]
+        identifiersToBeInserted << [["http://identifiers.org/biomodels.db/MODEL1005260001",
+                                     "http://identifiers.org/biomodels.db/BIOMD0000000272"] as String[],
+                                    ["http://identifiers.org/mamo/MAMO_0000009"] as String[]]
     }
 }

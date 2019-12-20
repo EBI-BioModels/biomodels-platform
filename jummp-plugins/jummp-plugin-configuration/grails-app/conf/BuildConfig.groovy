@@ -69,7 +69,7 @@ grails.project.dependency.resolution = {
         //flatDir name: "jummpLibs", dirs: "../../lib/"
     }
     dependencies {
-        compile("net.biomodels.jummp:AnnotationStore:0.3.3") {
+        compile("net.biomodels.jummp:AnnotationStore:0.3.5") {
             excludes 'slf4j-log4j12'
         }
     }

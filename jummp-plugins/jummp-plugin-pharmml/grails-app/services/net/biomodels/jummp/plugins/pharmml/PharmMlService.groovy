@@ -51,6 +51,7 @@ import net.biomodels.jummp.core.IPharmMlService
 import net.biomodels.jummp.core.model.FileFormatService
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.core.util.JummpXmlUtils
+import net.biomodels.jummp.model.ModellingApproach
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.apache.tika.detect.DefaultDetector
@@ -423,7 +424,11 @@ class PharmMlService implements FileFormatService {
         AbstractPharmMlHandler.savePharmML(pharmML, res)
     }
 
-    /*
+    @Override
+    ModellingApproach getModellingApproach(RevisionTransportCommand revision) {
+        return null
+    }
+/*
      * Helper function that updates a given element of model encoded in PharmML.
      *
      * Specifically, it updates the XML element, as well as the corresponding attribute in

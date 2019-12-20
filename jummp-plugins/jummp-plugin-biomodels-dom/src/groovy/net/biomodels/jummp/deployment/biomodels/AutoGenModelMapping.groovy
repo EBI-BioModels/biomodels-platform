@@ -20,39 +20,24 @@
 
 package net.biomodels.jummp.deployment.biomodels
 
-import net.biomodels.jummp.model.Model
-import org.apache.commons.lang.builder.HashCodeBuilder
-
 /**
- * Domain class for managing associations between models and tags used in BioModels
+ * Abstract class for representing mapping of representative models and its members.
+ *
+ * This class has been designed to use in declaration of generic variables in ModelFilters.
+ * We leave P2MMapping table intact and create a corresponding table for Uhlen's models.
+ * As the structures of the tables are most identical, the abstract is essential to provide
+ * some common functionality and to be used in variable declaration.
+ *
+ * We might have another large scale submissions in the future. If you have to implement a new
+ * mapping domain class, it should be extended this abstract class. Please see UhlenModelMapping
+ * and P2MMapping class for your reference.
  *
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-class ModelTag implements Serializable {
-    private static final long serialVersionUID = 1L
+abstract class AutoGenModelMapping {
+    // The representative model identifier
+    String representative
 
-    Model model
-    Tag tag
-
-    static mapping = {
-        id composite: ['model', 'tag']
-        version false
-    }
-
-    static constraints = {
-    }
-
-    boolean equals(other) {
-        if (!(other instanceof ModelTag)) {
-            return false
-        }
-        model.equals(other.model) && tag.equals(other.tag)
-    }
-
-    int hashCode() {
-        def builder = new HashCodeBuilder()
-        builder.append(model)
-        builder.append(tag)
-        builder.toHashCode()
-    }
+    // The identifier of the others in the same group
+    String member
 }

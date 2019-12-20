@@ -46,6 +46,11 @@
             </li>
             <li><g:link mapping="agedbrain">Neurodegeneration models</g:link></li>
             <li><g:link mapping="path2models">Path2Models models</g:link></li>
+            <li>
+                <a href="${g.createLink(controller: 'pdgsmm', action: 'index')}">
+                    PDGSM models
+                </a>
+            </li>
         </ul>
     </li>
     <li <g:if test="${g.pageProperty(name:'page.submit')?.length()}"> class="active" </g:if> role="menuitem">

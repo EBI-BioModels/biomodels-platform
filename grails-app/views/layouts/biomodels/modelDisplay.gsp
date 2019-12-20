@@ -44,6 +44,14 @@
                 tags: false,
                 multiple: true
             });
+            $(".header").first().next().slideDown(500);
+
+            $("#expand-all").click(function(){
+                $(".header").next().slideDown(500);
+            });
+            $("#collapse-all").click(function(){
+                $(".header").next().slideUp(500);
+            })
         });
     </script>
     <script type="text/x-mathjax-config">
@@ -78,34 +86,21 @@
     <g:javascript src="syntax/shBrushXml.js"/>
     <g:javascript src="toastr.min.js"/>
     <g:javascript src="jquery.handsontable.full.js"/>
-    <style>
-        <%-- class for buttons on sticky left-hand-side menu --%>
-        .ui-button {
-            border-left: none;
-            margin: 0;
-        }
-        .toast {
-            opacity: 1 !important;
-        }
-        .rounded-header {
-            background-color: rgb(0, 124, 150);
-            border-bottom: 0 none;
-            border-top-left-radius: 5px;
-            border-top-right-radius: 5px;
-            line-height: inherit;
-            margin: 0;
-            padding: 0;
-        }
-        #toolbarList li .ui-button-text {
-            font-size: 0.75em;
-        }
-    </style>
+
+    <link rel="alternate" href="https://identifiers.org/biomodels.db/${revision.modelIdentifier()}"/>
+    <link rel="alternate" href="https://www.ebi.ac.uk/biomodels-main/${revision.modelIdentifier()}"/>
+    <link rel="alternate" href="https://www.ebi.ac.uk/biomodels-main/${revision.modelIdentifier()}"/>
+    <link rel="alternate" href="http://biomodels.caltech.edu/${revision.identifier()}"/>
+    <link rel="alternate" href="http://biomodels.caltech.edu/${revision.modelIdentifier()}"/>
+    <link rel="canonical" href="https://www.ebi.ac.uk/biomodels/${revision.modelIdentifier()}"/>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.handsontable.full.min.css')}"/>
     <link rel="stylesheet" href="${resource(dir: 'css/syntax', file: 'shCore.css')}"/>
     <link rel="stylesheet" href="${resource(dir: 'css/syntax', file: 'shThemeDefault.css')}"/>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'toastr.min.css')}"/>
+    <link rel="stylesheet" href="${resource(dir: 'css', file: 'model-display.css')}"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/css/select2.min.css"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.min.js"></script>
+    <script type="text/javascript" language="javascript" src="https://reactome.org/DiagramJs/diagram/diagram.nocache.js"></script>
     <script>
         $(function() {
             $( "#tabs" ).tabs({
@@ -416,6 +411,58 @@
             </sec:ifNotLoggedIn>
             // displayToolbar(true, true);
         });
+        var size = {
+            width: window.innerWidth || document.body.clientWidth,
+            height: window.innerHeight || document.body.clientHeight
+        };
+
+        if("${reactomeId}") {
+            var reactomeId = "${reactomeId}";
+            var global_diagram;
+            var base_height = Math.floor(size.height/2);
+            var base_width = Math.floor(size.width/2);
+            var REACTOME_HEIGHT = base_height;
+            var REACTOME_WEIGHT = base_width;
+            var DIALOG_WEIGHT = base_width+100;
+            var DIALOG_HEIGHT = base_height+150;
+
+            $(document).ready(function () {
+                $("#dialog").dialog({
+                    width: DIALOG_WEIGHT,
+                    height: DIALOG_HEIGHT,
+                    modal: true,
+                    open: function( event, ui ) {
+                        global_diagram.resize(REACTOME_WEIGHT,REACTOME_HEIGHT);
+                        global_diagram.resetSelection();
+                        global_diagram.selectItem(reactomeId);
+                    },
+                    autoOpen: false
+                });
+                $("#opener").on("click", function () {
+                    $("#dialog").dialog("open");
+                });
+            });
+
+
+            //Creating the Reactome Diagram widget
+            //Take into account a proxy needs to be set up in your server side pointing to www.reactome.org
+            function onReactomeDiagramReady() {  //This function is automatically called when the widget code is ready to be used
+                var diagram = Reactome.Diagram.create({
+                    "placeHolder": "diagramHolder",
+                    "width": REACTOME_WEIGHT,
+                    "height": REACTOME_HEIGHT
+                });
+                diagram.loadDiagram(reactomeId);
+
+                // store this in a global variable so we can call resetSelection() from
+                // the callback for opening the Reactome popup. Calling it here results
+                // in a popup window with an invisible pathway, even though the widget
+                // control buttons are rendered just fine.
+                global_diagram = diagram;
+            }
+        } else {
+            $("#opener").attr("disabled", "disabled");
+        }
     </script>
     <g:layoutHead/>
 </head>
@@ -567,7 +614,11 @@
                              src="${grailsApplication.config.grails.serverURL}/images/lock.png"/>
                     </g:else>
                 </div>
+                <div style="margin-right: 50%;">
+                    <a class="readmore button" id="opener" >View Reactome pathway</a>
+                </div>
             </div>
+
             <div id="tablewrapper">
                 <div id="tabs">
                     <ul class='modelTabs'>
@@ -595,8 +646,16 @@
                         <div class="small-12 medium-8 large-8 columns">
                             <div class="row">
                                 <div class="small-12 medium-2 large-2 columns">
+                                    <span class="overview-tab-attribute">Model Identifier</span>
+                                </div>
+                                <div class="small-12 medium-10 large-10 columns">
+                                    ${revision.modelIdentifier()}
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="small-12 medium-2 large-2 columns">
                                     <jummp:displayModelDescriptionLabel>
-                                        <span style="font-weight: bold; color: rgb(0,124,130)">${description}</span>
+                                        <span class="overview-tab-attribute">${description}</span>
                                     </jummp:displayModelDescriptionLabel>
                                 </div>
                                 <div class="small-12 medium-10 large-10 columns">
@@ -618,7 +677,7 @@
                             </div>
                             <div class="row">
                                 <div class="small-12 medium-2 large-2 columns">
-                                    <span style="font-weight: bold; color: rgb(0,124,130)"><g:message code="model.model.format"/></span>
+                                    <span class="overview-tab-attribute"><g:message code="model.model.format"/></span>
                                 </div>
                                 <div class="small-12 medium-10 large-10 columns">
                                     ${revision.format.name}
@@ -631,7 +690,7 @@
                             %>
                             <div class="row">
                             <div class="small-12 medium-2 large-2 columns">
-                                <span style="font-weight: bold; color: rgb(0,124,130)"><g:message code="model.model.publication"/></span>
+                                <span class="overview-tab-attribute"><g:message code="model.model.publication"/></span>
                             </div>
                             <div class="small-12 medium-10 large-10 columns">
                                 <g:render  model="[model:model]" template="/templates/showPublication" />
@@ -640,7 +699,7 @@
                             </g:if>
                             <div class="row">
                                 <div class="small-12 medium-2 large-2 columns">
-                                    <span style="font-weight: bold; color: rgb(0,124,130)"><g:message code="model.model.authors"/></span>
+                                    <span class="overview-tab-attribute"><g:message code="model.model.authors"/></span>
                                 </div>
                                 <div class="small-12 medium-10 large-10 columns">
                                     <g:join in="${authors}"/>
@@ -876,3 +935,6 @@
         display
 </content>
 </g:applyLayout>
+<div id="dialog" title="Reactome pathway">
+    <div id="diagramHolder"></div>
+</div>

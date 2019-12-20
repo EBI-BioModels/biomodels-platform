@@ -407,6 +407,9 @@ if (jummpConfig.jummp.vcs.exchangeDirectory) {
 if (jummpConfig.jummp.vcs.workingDirectory) {
     jummp.vcs.workingDirectory = jummpConfig.jummp.vcs.workingDirectory
 }
+if (jummpConfig.jummp.model.cache.dir) {
+    jummp.model.cache.dir = jummpConfig.jummp.model.cache.dir
+}
 // search config
 // model search strategy setting: "omicsdi" or "solr"
 if (!(jummpConfig.jummp.search.strategy instanceof ConfigObject)) {

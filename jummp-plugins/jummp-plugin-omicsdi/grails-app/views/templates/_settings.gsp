@@ -23,28 +23,42 @@
 
 
 <div id="OmicsDISchemaXMLeditor" class="editor">
-    <h2>Options</h2>
-    <h3>How to export OmicsDI XML file(s)</h3>
-    <input type="radio" name="howToExportFile" value="1" checked> All models of the whole database will be exported in an XML file.<br>
-    <input type="radio" name="howToExportFile" value="2"> Multiple models will be accommodated in an XML file.
-    <div id="nbEntries" class="small-12 medium-6">
-        <label>How many models are exported in each XML file?<input type="number" id="numberEntriesOnEachFile" width="10%"/></label>
-    </div>
-    <h3>How to launch the job</h3>
-    <button class="button" type="button" id="btnExport">Export OmicsDI entries via JummpIndexer right now</button>
+    <div class="row">
+        <div class="columns small-12 medium-6 large-6">
+        <h3>How to export OmicsDI XML file(s)</h3>
+        <input type="radio" name="howToExportFile" value="1"
+               checked> All models of the whole database will be exported in an XML file.<br>
+        <input type="radio" name="howToExportFile" value="2"> Multiple models will be accommodated in an XML file.
+        <div id="nbEntries" class="small-12 medium-6">
+            <label>How many models are exported in each XML file?
+                <input type="number" id="numberEntriesOnEachFile"
+                       width="10%"/></label>
+        </div></div>
+
+        <div class="columns small-12 medium-6 large-6">
+        <h3>How to exclude models based on tags</h3>
+
+        <p>We can exclude multiple models from the export by indicating tags associated with those excluded models</p>
+        <select class="select-tag" id="tagsExcluded"
+                name="tagsExcluded"></select>
+        </div></div>
+
+    <div class="row">
+        <div class="columns small-12 medium-6 large-6">
+        <h3>How to launch the job</h3>
+        <button class="button" type="button" id="btnSaveSettings">Save changes of OmicsDI Export Settings</button>
+        <button class="button" type="button" id="btnExport">Export OmicsDI entries via JummpIndexer</button>
+        </div></div>
 </div>
 <script type="text/javascript">
     $(document).ready(function () {
         $('#nbEntries').hide();
     });
-    var element = $('input[name="howToExportFile"]');
-    var res = element.filter(function() {
-        return this.checked;
-    });
+    let tags = [];
     // when select option 2, need to enter the number of file
-    var option = 1;
-    var nbEntriesPerFile = '';
-    $('input[name="howToExportFile"]').click(function () {
+    let option = 1;
+    let nbEntriesPerFile = '';
+    $('input[name="howToExportFile"]').on("click", function () {
         option = $(this).val();
         if (option === "2") {
             $('#numberEntriesOnEachFile').prop('required', true);
@@ -55,28 +69,45 @@
             $('#nbEntries').hide();
         }
     });
-    $('#btnExport').click(function () {
-        console.log("selected the option " + option);
-        if (option === "2") {
-            var nbFiles = $('#numberEntriesOnEachFile').val();
-            if (nbFiles === '') {
-                showNotification("Please enter a positive integer number.");
-                $('#numberEntriesOnEachFile').focus();
-                return false;
-            } else {
-                nbEntriesPerFile = nbFiles;
-            }
+
+    $('.select-tag').select2({
+        placeholder: "Enter list of tags excluded from export",
+        multiple: true,
+        tags: true, scrollAfterSelect: true,
+        ajax: {
+            url: "${createLink(controller: "omicsdi", action: "fetchAllTags")}",
+            dataType: 'json',
+            data: function(term) {
+                return term;
+            },
+            processResults: function(data, page) {
+                return {
+                    results: $.map(data,
+                        function (item) {
+                            return {
+                                text: item.name,
+                                id: item.id
+                            }
+                        })
+                    }
+                }
         }
+    });
+
+    $('#btnExport').on("click", function () {
+        let settings = handleChangesOnSettings();
         $.ajax({
-            dataType: "json",
+            type: "post",
+            dataType: "JSON",
             cache: false,
+            url: $.jummp.createLink("omicsdi", "exportOmicsdiEntriesWithIndexer"),
             data: {
                 howToExportFile: option,
-                numberEntriesOnEachFile: $('#numberEntriesOnEachFile').val()
+                numberEntriesOnEachFile: nbEntriesPerFile,
+                tags: tags
             },
-            url: $.jummp.createLink("Omicsdi", "exportOmicsdiEntriesWithIndexer"),
             success: function (response) {
-                message = response[0];
+                let message = response[0];
                 if (message.trim()) {
                     message = message.trim();
                     showNotification(message);
@@ -84,4 +115,47 @@
             }
         });
     });
+
+    $('#btnSaveSettings').on("click", function () {
+        let settings = handleChangesOnSettings();
+        $.ajax({
+            type: "post",
+            dataType: "JSON",
+            cache: false,
+            url: $.jummp.createLink("omicsdi", "saveOmicsdiExportSettings"),
+            data: {
+                howToExportFile: option,
+                numberEntriesOnEachFile: nbEntriesPerFile,
+                tags: tags
+            },
+            success: function (response) {
+                let message = response[0];
+                if (message.trim()) {
+                    message = message.trim();
+                    showNotification(message);
+                }
+            }
+        });
+    });
+    
+    function handleChangesOnSettings() {
+        let data = $('.select-tag').select2('data');
+        tags = $.map(data,
+            function (item) {
+                return [
+                    item.text
+                ]
+            });
+        if (option === "2") {
+            let nbEntries = $('#numberEntriesOnEachFile').val();
+            if (nbEntries === '') {
+                showNotification("Please enter a positive integer number.");
+                $('#numberEntriesOnEachFile').focus();
+                return false;
+            } else {
+                nbEntriesPerFile = nbEntries;
+            }
+        }
+        return {option: option, nbEntriesPerFile: nbEntriesPerFile, tags: tags}
+    }
 </script>

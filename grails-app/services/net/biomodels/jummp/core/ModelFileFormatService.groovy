@@ -34,14 +34,15 @@
 
 package net.biomodels.jummp.core
 
-import net.biomodels.jummp.core.model.ModelElementTypeCategory
-import net.biomodels.jummp.core.model.ModelElementTypeTransportCommand
-import net.biomodels.jummp.model.ModelElementType
+import net.biomodels.jummp.core.model.ModelElementTypeCategory as METC
+import net.biomodels.jummp.core.model.ModelElementTypeTransportCommand as METTC
+import net.biomodels.jummp.model.ModelElementType as MET
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.core.model.FileFormatService
-import net.biomodels.jummp.core.model.ModelFormatTransportCommand
-import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
+import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.model.Revision
 import org.perf4j.aop.Profiled
 import net.biomodels.jummp.core.adapters.ModelFormatAdapter
@@ -74,14 +75,6 @@ class ModelFileFormatService {
     @SuppressWarnings("GrailsStatelessService")
     def grailsApplication
 
-    private Map<String,String> getServices() {
-        grailsApplication.mainContext.getBean("modelFileFormatConfig").getServices()
-    }
-
-    private Map<String,String> getControllers() {
-        grailsApplication.mainContext.getBean("modelFileFormatConfig").getControllers()
-    }
-
     /**
      * Extracts the format of the supplied @p modelFiles.
      * Returns the default ModelFormat representation with an empty formatVersion, since this is expected to exist
@@ -90,7 +83,7 @@ class ModelFileFormatService {
      * @returns the corresponding model format, or unknown if this cannot be inferred.
      */
     @Profiled(tag = "modelFileFormatService.inferModelFormat")
-    ModelFormatTransportCommand inferModelFormat(List<RFTC> modelFiles) {
+    MFTC inferModelFormat(List<RFTC> modelFiles) {
         if (!modelFiles) {
             return null
         }
@@ -112,10 +105,10 @@ class ModelFileFormatService {
             return new ModelFormatAdapter(format:
                 ModelFormat.findByIdentifierAndFormatVersion("UNKNOWN", "*")).toCommandObject()
         } else {
-            ModelFormatTransportCommand unknownVersionFormat =
+            MFTC unknownVersionFormat =
                     new ModelFormatAdapter(format:ModelFormat.findByIdentifierAndFormatVersion(match, "*"))
                                                         .toCommandObject()
-            RevisionTransportCommand rev = new RevisionTransportCommand(files: modelFiles,
+            RTC rev = new RTC(files: modelFiles,
                                                                         format: unknownVersionFormat)
             String formatVersion = getFormatVersion(rev)
             ModelFormat knownVersionFormat = ModelFormat.findByIdentifierAndFormatVersion(match, formatVersion);
@@ -137,7 +130,7 @@ class ModelFileFormatService {
      * @return Existing or new ModelFormat represented in a ModelFormatTransportCommand
      */
     @Profiled(tag = "modelFileFormatService.registerModelFormat")
-    ModelFormatTransportCommand registerModelFormat(final String identifier, final String name, String version) {
+    MFTC registerModelFormat(final String identifier, final String name, String version) {
         ModelFormat modelFormat = ModelFormat.findByIdentifierAndFormatVersion(identifier, version)
         if (modelFormat) {
             return new ModelFormatAdapter(format:modelFormat).toCommandObject()
@@ -148,26 +141,26 @@ class ModelFileFormatService {
         }
     }
 
-    ModelFormatTransportCommand registerModelFormat(final String identifier, final String name) {
+    MFTC registerModelFormat(final String identifier, final String name) {
         return registerModelFormat(identifier, name, "*")
     }
 
-    ModelElementTypeTransportCommand registerModelElementType(final ModelFormatTransportCommand modelFormatTC, final String name) {
+    METTC registerModelElementType(final MFTC modelFormatTC, final String name) {
         ModelFormat modelFormat = ModelFormat.findByIdentifierAndFormatVersion(modelFormatTC.identifier, modelFormatTC.formatVersion)
         try {
-            ModelElementType modelElementType = ModelElementType.findByModelFormatAndName(modelFormat, name)
+            MET modelElementType = MET.findByModelFormatAndName(modelFormat, name)
             if (modelElementType) {
-                use(ModelElementTypeCategory) {
+                use(METC) {
                     return modelElementType.toCommandObject()
                 }
             } else {
-                modelElementType = new ModelElementType(modelFormat: modelFormat, name: name)
+                modelElementType = new MET(modelFormat: modelFormat, name: name)
                 if (!modelElementType.save(flush: true)) {
                     def err = modelElementType.errors.allErrors()
                     String msg = "Illegal element type $name for fmt ${modelFormat.id}: ${err}"
                     throw new IllegalArgumentException(msg)
                 }
-                use(ModelElementTypeCategory) {
+                use(METC) {
                     return modelElementType.toCommandObject()
                 }
             }
@@ -187,7 +180,7 @@ class ModelFileFormatService {
      * @throws IllegalArgumentException if the @p format has not been registered yet
      */
     @Profiled(tag = "modelFileFormatService.handleModelFormat")
-    void handleModelFormat(ModelFormatTransportCommand format, String service, String controller) {
+    void handleModelFormat(MFTC format, String service, String controller) {
         ModelFormat modelFormat = ModelFormat.findByIdentifierAndFormatVersion(format.identifier, "*")
         if (!modelFormat) {
             throw new IllegalArgumentException("ModelFormat ${format.properties} not registered in database")
@@ -237,7 +230,7 @@ class ModelFileFormatService {
      * @param name The new name that the model should have.
      * @return true if the operation was successful, false otherwise.
      */
-    boolean updateName(RevisionTransportCommand revision, final String name) {
+    boolean updateName(RTC revision, final String name) {
         FileFormatService service = serviceForFormat(revision.format)
         assert service
         service.updateName(revision, name)
@@ -265,7 +258,7 @@ class ModelFileFormatService {
      * @param name The new description that the model should have.
      * @return true if the operation was successful, false otherwise.
      */
-    boolean updateDescription(RevisionTransportCommand revision, final String description) {
+    boolean updateDescription(RTC revision, final String description) {
         FileFormatService service = serviceForFormat(revision.format)
         assert service
         service.updateDescription(revision, description)
@@ -311,6 +304,16 @@ class ModelFileFormatService {
         }
     }
 
+    ModellingApproach extractModellingApproachFromFiles(final RTC revision) {
+        FileFormatService service = serviceForFormat(revision.format)
+        if (service) {
+            return service.getModellingApproach(revision)
+        } else {
+            return null
+        }
+    }
+
+
     /**
      * Used to select the templates used to display the model of the @p format provided.
      * The convention is to place the templates inside views/model/"uniquelabel". The uniquelabel
@@ -318,7 +321,7 @@ class ModelFileFormatService {
      * @param rev The Revision for which all pubmed annotations should be retrieved
      * @return The folder where template for the model display can be found
      */
-    String getPluginForFormat(final ModelFormatTransportCommand format) {
+    String getPluginForFormat(final MFTC format) {
         return getControllers().get(format.identifier)
     }
 
@@ -327,7 +330,7 @@ class ModelFileFormatService {
      * This selection is performed dynamically at run time thank to using Factory Method Pattern 'serviceForFormat'
      */
     @Profiled(tag = "modelFileFormatService.doBeforeSavingAnnotations")
-    boolean doBeforeSavingAnnotations(File annoFile, RevisionTransportCommand newRevision) {
+    boolean doBeforeSavingAnnotations(File annoFile, RTC newRevision) {
         FileFormatService service = serviceForFormat(newRevision.format)
         assert service
         if (service) {
@@ -339,6 +342,7 @@ class ModelFileFormatService {
 
     /**
      * Helper function to get the proper service for @p format.
+     *
      * @param format The ModelFormatTransportCommand/ModelFormat identifier for which the service should be returned.
      * @return The service which handles the format.
      */
@@ -351,5 +355,13 @@ class ModelFileFormatService {
         } else {
             return null
         }
+    }
+
+    private Map<String,String> getServices() {
+        grailsApplication.mainContext.getBean("modelFileFormatConfig").getServices()
+    }
+
+    private Map<String,String> getControllers() {
+        grailsApplication.mainContext.getBean("modelFileFormatConfig").getControllers()
     }
 }

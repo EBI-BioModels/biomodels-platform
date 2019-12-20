@@ -10,7 +10,7 @@ import org.codehaus.groovy.grails.plugins.codecs.HTMLEncoder
  * @author carankalle on 31/10/2018.
  */
 @Validateable
-@ToString(includes = ['query', 'size', 'start', 'sort'])
+@ToString(includes = ['query', 'size', 'start', 'sort', 'is_curated'])
 class ParameterSearchCommand {
     public static final String DEFAULT_QUERY = '*:*'
     public static
@@ -23,6 +23,7 @@ class ParameterSearchCommand {
     Integer size
     Integer start
     String sort
+    Boolean is_curated = true
 
     static constraints = {
         query nullable: true, validator: { q, cmd ->
@@ -61,6 +62,14 @@ class ParameterSearchCommand {
             }
             return true
         }
+        is_curated nullable: true, validator: {val, cmd ->
+            if(null == val) {
+                cmd.is_curated = true
+            } else {
+                cmd.is_curated = val
+            }
+            return true
+        }
     }
 
     @CompileStatic
@@ -74,13 +83,14 @@ class ParameterSearchCommand {
 
     @CompileStatic
     URL getSearchUrl(String format) {
+        String is_curated_param = "is_curated:${is_curated}"
         def params = [
             query : query.equals("*:*")
-                ?URLEncoder.encode(query,"UTF-8")
-                :URLEncoder.encode(query.replace(":", $/\:/$).replace("/", $/\\/$),"UTF-8") ,
+                ?URLEncoder.encode(query+" AND ","UTF-8") + is_curated_param
+                :URLEncoder.encode(query.replace(":", $/\:/$).replace("/", $/\\/$) + ' AND ',"UTF-8") +  is_curated_param,
             size  : size,
             start : start,
-            sort  : sort,
+            sort  : sort
         ]
         StringBuilder url = new StringBuilder(getEbiSearchUrl())
         for (element in params) {
@@ -100,6 +110,7 @@ class ParameterSearchCommand {
             ", size=" + size +
             ", start=" + start +
             ", sort='" + sort + '\'' +
+            ", is_curated='" + is_curated + '\'' +
             '}';
     }
 

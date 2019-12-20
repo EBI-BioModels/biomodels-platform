@@ -24,6 +24,7 @@
 
 package net.biomodels.jummp.core.model
 
+import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.qcinfo.FlagLevel
 import net.biomodels.jummp.qcinfo.QcInfo
 
@@ -113,4 +114,11 @@ class ModelTransportCommand implements Serializable {
     String submitterUsername
 
     FlagLevel flagLevel
+
+    /**
+     * Modelling Approach
+     */
+    ModellingApproach modellingApproach = null
+
+    String otherInfo
 }
