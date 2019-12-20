@@ -101,7 +101,7 @@ class UhlenScriptSupport {
     static final String constraintBasedModel = "http://identifiers.org/mamo/MAMO_0000009"
     static final ModellingApproach modellingApproach = lookupModellingApproach()
 
-    /*
+    /**
      * Returns the User account owning the models to be updated.
      *
      * All models were submitted by the same account, and we guard this assumption with a runtime (fatal) exception.
@@ -129,7 +129,7 @@ class UhlenScriptSupport {
     }
 }
 
-/*
+/**
  * Model-centric log holder.
  *
  * Printing to System.out in a multi-threaded environment introduces unnecessary blocking and also
@@ -208,7 +208,7 @@ class UhlenModelUpdater {
         camelContext.shutdownStrategy.setTimeout(Long.MAX_VALUE)
     }
 
-    /*
+    /**
      * Creates and returns an authentication token for the given user.
      * Note that the owner of the credentials is *not* authenticated until the token is put in the SecurityContext.
      * Also note that, by default, SecurityContexts are thread-local.
@@ -216,7 +216,7 @@ class UhlenModelUpdater {
      * @param username the username for the account whose credentials should be used to create the authentication token
      * @return the authentication token which, if placed in the security context of the current thread, would allow us
      *      to log in as the given user.
-     * @see grails.plugin.springsecurity.SpringSecurityUtils.doWithAuth(String, Closure)
+     * @see grails.plugin.springsecurity.SpringSecurityUtils#doWithAuth(java.lang.String, groovy.lang.Closure)
      */
     UsernamePasswordAuthenticationToken createTokenForUser(User u) {
         assert u
@@ -227,12 +227,12 @@ class UhlenModelUpdater {
         new UsernamePasswordAuthenticationToken(userDetails, u.password, userDetails.authorities)
     }
 
-    /*
+    /**
      * Creates and returns an authentication token for the given user.
      *
      * @param username the username for the account whose credentials should be used to create the authentication token
      * @return an authentication token for the given user
-     * @see {@link UhlenScriptSupport#createTokenForUser(net.biomodels.jummp.plugins.security.User)}
+     * @see {@link UhlenModelUpdater#createTokenForUser(net.biomodels.jummp.plugins.security.User)}
      */
     @CompileDynamic
     UsernamePasswordAuthenticationToken createTokenForUser(String username) {
@@ -311,14 +311,14 @@ class UhlenModelUpdater {
        newHead.name
     }
 
-    /*
+    /**
      * Handles the mechanics of reverting a model revision from the Git repo.
      *
-     * You should probably call {@link revertGitRevision(Revision)} instead.
+     * You should probably call {@link UhlenModelUpdater#revertGitRevision(Revision)} instead.
      * @param repository the initialised repository reference for that revision's model.
      * @param revision the revision whose file system changes we should revert
      * @throws GitAPIException if there was an internal error which prevented us from reverting the revision
-     * @see {@link revertGitRevision()}
+     * @see {@link UhlenModelUpdater#revertGitRevision(Revision)}
      */
     static void doRevertGitRevision(Repository repository, Revision revision) throws GitAPIException {
         String revisionId = Objects.requireNonNull(revision, "Revision to revert required").vcsId
@@ -460,7 +460,7 @@ class UhlenModelUpdater {
             userSubmitted: true, hidden: false, description: description)
     }
 
-    /*
+    /**
      * Infers the category for a submission given its files.
      *
      * All 21 updated Uhlen models have a predefined category they fall under.
@@ -576,7 +576,7 @@ class UhlenModelUpdater {
         Model.findBySubmissionId(id)
     }
 
-    /*
+    /**
      * Support method for handleModelFolder()
      */
     void doHandleModelFolder(SessionHolder session, File submissionFolder) {
