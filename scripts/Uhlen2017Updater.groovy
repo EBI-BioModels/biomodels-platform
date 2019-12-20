@@ -445,6 +445,8 @@ class UhlenModelUpdater {
         Revision newRevision = null
         ModelService modelService = ctx.getBean "modelService", ModelService
         try {
+            modelService.addModellingApproachAsAnnotation(revisionCmd, UhlenScriptSupport.modellingApproach)
+            addModelMsg(modelId, "Assigned modelling approach")
             newRevision = modelService.addValidatedRevision(filesToAdd, filesToDelete, revisionCmd)
         } catch (ModelException e) {
             assert markSessionAsRollbackOnly(getCurrentSession()): "Adding revision ${revisionCmd.properties} failed but could not roll back"
@@ -569,15 +571,6 @@ class UhlenModelUpdater {
         }
     }
 
-    static void assignModellingApproach(String submissionId) throws JummpException {
-        def q = "update Model m set m.modellingApproach = :approach where m.submissionId = :id"
-        def args = [approach: UhlenScriptSupport.modellingApproach, id: submissionId]
-        int updateCount = Model.executeUpdate(q, args)
-        if (1 != updateCount)
-            throw new JummpException("Could not set the modelling approach for $submissionId")
-        addModelMsg(submissionId, "Assigned modelling approach")
-    }
-
     @CompileDynamic
     static Model findModelBySubmissionId(String id) {
         Model.findBySubmissionId(id)
@@ -601,7 +594,6 @@ class UhlenModelUpdater {
         } else {
             Revision.withTransaction { status ->
                 try {
-                    assignModellingApproach(id)
                     // the session of this transaction is empty; attach the new revision to it
                     newRevision = Revision.get(newRevision.id)
                     publish newRevision
