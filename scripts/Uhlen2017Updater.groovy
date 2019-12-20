@@ -27,11 +27,11 @@ import net.biomodels.jummp.core.JummpException
 import net.biomodels.jummp.core.ModelException
 import net.biomodels.jummp.core.ModelFileFormatService
 import net.biomodels.jummp.core.ModelService
-import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.CurationState
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.ModelState
+import net.biomodels.jummp.core.model.RepositoryFileService
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.core.model.ValidationState
@@ -548,10 +548,10 @@ class UhlenModelUpdater {
         [main: modelFile, additionals: additionals]
     }
 
-    static List<RepositoryFileTransportCommand> getRepoFilesOfLastRevision(Model model) {
+    List<RepositoryFileTransportCommand> getRepoFilesOfLastRevision(Model model) {
         Revision latest = model.revisions.max { it.revisionNumber }
-        RevisionTransportCommand revisionCmd = new RevisionAdapter(revision: latest).toCommandObject()
-        revisionCmd.files
+        RepositoryFileService service = ctx.getBean("repositoryFileService", RepositoryFileService)
+        service.getRepositoryFilesForRevision latest
     }
 
     /**
