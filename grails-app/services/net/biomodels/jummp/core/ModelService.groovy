@@ -719,7 +719,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @PreAuthorize("hasRole('ROLE_USER')")
     @PostLogging(LoggingEventType.CREATION)
     @Profiled(tag="modelService.uploadModelAsFile")
-    public Model uploadModelAsFile(final RepositoryFileTransportCommand repoFile, ModelTransportCommand meta)
+    Model uploadModelAsFile(final RepositoryFileTransportCommand repoFile, ModelTransportCommand meta)
             throws ModelException {
         if (repoFile) {
            return uploadModelAsList([repoFile], meta)
@@ -1051,7 +1051,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
     @PostLogging(LoggingEventType.CREATION)
     @Profiled(tag="modelService.uploadValidatedModel")
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public Model uploadValidatedModel(final List<RepositoryFileTransportCommand> repoFiles,
+    Model uploadValidatedModel(final List<RepositoryFileTransportCommand> repoFiles,
             RevisionTransportCommand rev) throws ModelException {
         Model model
         // this tx will use a different session than the current one
