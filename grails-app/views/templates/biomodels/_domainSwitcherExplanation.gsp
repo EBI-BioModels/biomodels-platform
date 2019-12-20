@@ -6,31 +6,15 @@
     </button>
 
     <div class="explanation-panel" id="domainSwitcherExplanationPanel" data-toggler=".is-active">
-        <p>This drop down box allows you to choose a domain from where models are searched for.
-        At the current stage, all auto generated models as well as ones belonging to the large submissions have been
-        indexed to the separate domain called
-            <strong><g:message code="net.biomodels.jummp.domain.name.BioModelsAutogen"/></strong> which currently consists of
-        <g:link mapping="path2models" target="_blank">Path2Models</g:link> and
-            <a href="${g.createLink(controller: 'pdgsmm', action: 'index')}" target="_blank">Patient-derived genome scale metabolic
-        models (PDGSMM)</a>. You can consult more
-        information about these submissions in BioModels by following the links we have pointed out earlier.</p>
-
-        <p>By default, <strong><g:message code="net.biomodels.jummp.domain.name.BioModels"/></strong>
-            is added to your query if you do not specify any domain from
-        the box . This domain contains all other models, except for auto generated models and ones deposited
-        alongside large scale submissions. If you do not want to ignore them, please choose
-            <strong><g:message code="net.biomodels.jummp.domain.name.BioModelsAll"/></strong>.</p>
-
+        <p>This drop down box allows you to filter which models appear in the search results:
         <ul>
-            <li>Search for the phrase "Metabolism" in the name field of models in <g:message
-                code="net.biomodels.jummp.domain.name.BioModelsAutogen"/>, here is the
-                query <code>name:Metabolism&domain=biomodels_autogen</code>. The sharable search link looks like<br/>
-<code>${grailsApplication.config.grails.serverURL}/search?query=name:Metabolism&domain=biomodels_autogen</code>.
-            Click <a
-                href="${grailsApplication.config.grails.serverURL}/search?query=name:Metabolism&domain=biomodels_autogen" target="_blank">here</a> to see the search results for this query.
-            <li><code>domain</code> field is either of the three following values: biomodels,
-        biomodels_autogen, and biomodels_all.</li>
+            <li><strong><g:message code="net.biomodels.jummp.domain.name.BioModelsAutogen"/></strong>: large-scale or automatically-generated submissions such as <g:link mapping="path2models" target="_blank">Path2Models</g:link> or
+            <a href="${g.createLink(controller: 'pdgsmm', action: 'index')}" target="_blank">Patient-derived genome scale metabolic models (PDGSMM)</a> </li>
+            <li><strong><g:message code="net.biomodels.jummp.domain.name.BioModels"/></strong>: models described in the literature that have been submitted individually to BioModels</li>
+            <li><strong><g:message code="net.biomodels.jummp.domain.name.BioModelsAll"/></strong>: the whole BioModels content</li>
         </ul>
+        </p>
+        <p>The default search domain is <strong><g:message code="net.biomodels.jummp.domain.name.BioModels"/></strong>.</p>
 
         <p><a href="https://www.ebi.ac.uk/biomodels-static/jummp-biomodels-help/model_search.html"
               target="_blank">Learn more about searching models</a></p>
