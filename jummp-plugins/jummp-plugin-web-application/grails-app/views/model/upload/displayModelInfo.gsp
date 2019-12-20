@@ -77,7 +77,7 @@
                 <div class="small-12 medium-6 large-6 columns">
                     <label for="modelling_approach" class="required">Modelling Approach</label>
                     <g:textField name="modelling_approach" id="modelling_approach" value="${modellingApproach}"
-                                 placeholder="Enter your modelling approach"
+                                 placeholder="Enter your modelling approach" required="true"
                                  aria-describedby="modellingApproachHelp"/>
                     <p class="help-text" id="modellingApproachHelp">Find the appropriate one by typing a few more
                 first characters of your words. The system will suggest you our defined modelling approaches. If you

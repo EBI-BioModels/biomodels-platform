@@ -28,22 +28,24 @@ import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 
 /**
- * This controller defines logical routes to communication between P2mService and corresponding views
+ * This controller defines logical routes to communication between UhlenModelService and corresponding views
  *
  * @author Tung Nguyen <nvntung@gmail.com>
  */
 @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
-@Resource(uri = "/path2models")
-class P2mController {
-    static final Log log = LogFactory.getLog(P2mController.class)
-    def p2mService
+@Resource(uri = "/pdgsmm")
+class PdgsmmController {
+    static final Log log = LogFactory.getLog(PdgsmmController.class)
+    def uhlenModelService
 
     def index() {
-        render(view: "index", model: [title: "Path2Models project page"])
+        Map result = uhlenModelService.getModelCategoryMap(AutoGenModelIdentifierPrefix.PDGSMM.prefix)
+        def diseases = result.keySet()
+        render(view: "index", model: [title: "PDGSM models", diseases: diseases, categories: result])
     }
 
     def missing() {
-        List<String> missingIds = p2mService.findMissing()
+        List<String> missingIds = uhlenModelService.findMissing()
         withFormat {
             html {
                 render(view: "missing", model: [missing: missingIds])
@@ -74,7 +76,7 @@ class P2mController {
         }
         Map<String, String> result = [:]
         result["requestedModelId"] = requestedModelId
-        String representativeModelId = p2mService.getRepresentativeId(requestedModelId)
+        String representativeModelId = uhlenModelService.getRepresentativeId(requestedModelId)
         result["representativeModelId"] = representativeModelId
         withFormat {
             html {
@@ -95,7 +97,7 @@ class P2mController {
     def representatives() {
         String paramsModelIds = params.get('modelIds')
         List modelIds = paramsModelIds?.split(",")
-        Map reps = p2mService.getRepresentatives(modelIds)
+        Map reps = uhlenModelService.getRepresentatives(modelIds)
 
         withFormat {
             html {
@@ -112,12 +114,5 @@ class P2mController {
                 render(reps as XML)
             }
         }
-    }
-
-    def browse() {
-        String title = "Browse Path2Models"
-        Map result = p2mService.getModelCategoryMap(AutoGenModelIdentifierPrefix.P2M.prefix)
-        def genus = result.values()
-        [title: title, categories: result, genus: genus]
     }
 }
