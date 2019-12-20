@@ -298,6 +298,19 @@ class UhlenModelUpdater {
         Paths.get(base, model.vcsIdentifier, ".git").toFile()
     }
 
+    private static String performGitRevert(Repository repository, String ref) throws GitAPIException {
+         ObjectId toRevert = Objects.requireNonNull(repository, "Model folder Git repo required")
+            .resolve(ref)
+        Git git = new Git(repository)
+        def newHead = git.revert()
+            .include(toRevert)
+            .call()
+        /* use git.reset().setMode(org.eclipse.jgit.api.ResetCommand.ResetType.HARD)
+            .setRef("HEAD^").call() to undo if needed */
+
+       newHead.name
+    }
+
     /*
      * Handles the mechanics of reverting a model revision from the Git repo.
      *
@@ -308,16 +321,23 @@ class UhlenModelUpdater {
      * @see {@link revertGitRevision()}
      */
     static void doRevertGitRevision(Repository repository, Revision revision) throws GitAPIException {
-        def revisionId = Objects.requireNonNull(revision, "Revision to revert required").vcsId
-        ObjectId toRevert = Objects.requireNonNull(repository, "Model folder Git repo required")
-            .resolve(revisionId)
-        Git git = new Git(repository)
-        def newHead = git.revert()
-            .include(toRevert)
-            .call()
-
-        def msg = "Reverted ${revisionId}. HEAD is now ${newHead.name}"
+        String revisionId = Objects.requireNonNull(revision, "Revision to revert required").vcsId
+        String newHead = performGitRevert repository, revisionId
+        String msg = "Reverted ${revisionId}. HEAD is now $newHead"
         addModelMsg(revision.model.submissionId, msg)
+    }
+
+    private Object withGitRepoForRevision(Revision revision, Closure c) {
+        assert revision
+        Model model = revision.model
+        File baseDir = findModelDotGitDirectory(model)
+
+        Repository repository = GitSupport.buildRepository(baseDir)
+        try {
+            c.call(repository)
+        } finally {
+            repository.close()
+        }
     }
 
     /**
@@ -327,15 +347,8 @@ class UhlenModelUpdater {
      * @throws GitAPIException if JGit encountered an error while performing the revert command.
      */
     void revertGitRevision(Revision revision) throws GitAPIException {
-        assert revision
-        Model model = revision.model
-        File baseDir = findModelDotGitDirectory(model)
-
-        Repository repository = GitSupport.buildRepository(baseDir)
-        try {
+        withGitRepoForRevision(revision) { Repository repository ->
             doRevertGitRevision(repository, revision)
-        } finally {
-            repository.close()
         }
     }
 
