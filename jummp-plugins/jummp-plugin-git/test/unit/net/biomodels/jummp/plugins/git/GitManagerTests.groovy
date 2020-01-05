@@ -43,6 +43,8 @@ import org.junit.Test
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 
 import static org.junit.Assert.*
 
@@ -161,6 +163,62 @@ class GitManagerTests extends GrailsUnitTestCase {
         // For this case, we test with the first commit
         files = gitManager.retrieveModel(clone, firstCommitHash)
         assertEquals(1, files.size())
+    }
+
+    @Test
+    void testUpdateModel() {
+        assert gitManager != null
+        assertEquals(clone.listFiles().size(), 1) // .git directory
+        // make the first commit
+        List addFiles = []
+        List removeFiles = []
+        Path tmpGitTestDir
+        tmpGitTestDir = Files.createTempDirectory("gitTest1")
+        File MODEL001 = new File(tmpGitTestDir.toString(), "MODEL001.txt")
+        MODEL001.text = "This is the first commit for MODEL001"
+        addFiles << MODEL001
+        String ciMsg = "Make the first commit"
+        gitManager.updateModel(git, addFiles, removeFiles, ciMsg)
+        assertEquals(clone.listFiles().size(), 2) // .git and MODEL001.txt
+        println "After making the first commit:"
+        clone.listFiles().each {
+            println "Item: ${it.getName()}"
+        }
+        // make the second commit
+        /**
+         * create a file having the identical name to MODEL001.txt
+         * under /tmp
+         */
+        tmpGitTestDir = Files.createTempDirectory("gitTest2")
+        assert Files.isDirectory(tmpGitTestDir)
+        Path newMODEL001 = Paths.get(tmpGitTestDir.toString(), "MODEL001.txt")
+        String data = "This is the second commit for MODEL001"
+        Files.write(newMODEL001, data.getBytes())
+        data = "123 456 789"
+        Path dat = Paths.get(tmpGitTestDir.toString(), "simulation.dat")
+        Files.write(dat, data.getBytes())
+
+        /**
+         * add/remove files
+         */
+        addFiles.clear()
+        addFiles.add(newMODEL001.toFile())
+        addFiles.add(dat.toFile())
+        removeFiles.clear()
+        removeFiles.add(MODEL001)
+        assert addFiles
+        assert removeFiles
+        /**
+         * commit
+         */
+        ciMsg = "Make the second commit"
+        gitManager.updateModel(git, addFiles, removeFiles, ciMsg)
+        assertEquals(clone.listFiles().size(), 2) // .git and simulation.dat
+        println "After making the second commit:"
+        clone.listFiles().each {
+            println "Item: ${it.getName()}"
+        }
+        println "Finish!"
     }
 
     @Test
