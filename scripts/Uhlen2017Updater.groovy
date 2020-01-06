@@ -508,7 +508,8 @@ class UhlenModelUpdater {
         //addModelMsg id, "real mtc created"
 
         def repoFileCommands = [modelFile] + additionals
-        def filesToDelete = getRepoFilesOfLastRevision(model)
+        // GitManager needs filesToDelete and repoFileCommands to not have any overlapping files.
+        def filesToDelete = []
         def revisionCmd = new RevisionTransportCommand(files: repoFileCommands, format: fmtCmd, validated: isValid,
             name: modelName, description: modelDesc, validationLevel: ValidationState.APPROVED,
             curationState: CurationState.NON_CURATED, minorRevision: false,
@@ -546,12 +547,6 @@ class UhlenModelUpdater {
             }
         }
         [main: modelFile, additionals: additionals]
-    }
-
-    List<RepositoryFileTransportCommand> getRepoFilesOfLastRevision(Model model) {
-        Revision latest = model.revisions.max { it.revisionNumber }
-        RepositoryFileService service = ctx.getBean("repositoryFileService", RepositoryFileService)
-        service.getRepositoryFilesForRevision latest
     }
 
     /**
