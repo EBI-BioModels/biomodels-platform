@@ -532,6 +532,7 @@ class GitManager implements VcsManager {
      * This method contains the merged implementation for both import and update.
      * It locks the model directory, initialises if necessary
      * copies the files, does git add, git commit and finally a push
+     *
      * @param modelDirectory The model directory
      * @param files The files to copy into the directory
      * @param deleted The files that will be deleted
@@ -539,11 +540,19 @@ class GitManager implements VcsManager {
      * @return A String A string representing the commit hash of the recently created revision
      */
     @Profiled(tag = "gitManager.handleModification")
-    private String handleModification(File modelDirectory, List<File> files, List<File> deleted, String commitMessage) {
+    private String handleModification(File modelDirectory, List<File> files,
+                                      List<File> deleted,
+                                      String commitMessage) {
         String revision
         try {
-            //updateWorkingCopy(modelDirectory)
             Git git = initedRepositories.get(modelDirectory)
+            if (deleted) {
+                RmCommand rm = git.rm()
+                deleted.each {
+                    rm = rm.addFilepattern(it.getName())
+                }
+                rm.call()
+            }
             if (files) {
                 AddCommand add = git.add()
                 files.each {
@@ -551,13 +560,6 @@ class GitManager implements VcsManager {
                     add = add.addFilepattern(it.getName())
                 }
                 add.call()
-            }
-            if (deleted) {
-                RmCommand rm = git.rm()
-                deleted.each {
-                    rm = rm.addFilepattern(it.getName())
-                }
-                rm.call()
             }
             RevCommit commit = git.commit().setMessage(commitMessage).call()
             revision = commit.getId().getName()
@@ -574,10 +576,15 @@ class GitManager implements VcsManager {
     String updateModel(Git git, List<File> files, List<File> deleted, String commitMessage) {
         String revision
         try {
-            //updateWorkingCopy(modelDirectory)
-//            Git git = initedRepositories.get(modelDirectory)
             String repoDir = git.repository.directory.parent // parent of .git dir
             File modelDirectory = new File(repoDir)
+            if (deleted) {
+                RmCommand rm = git.rm()
+                deleted.each {
+                    rm = rm.addFilepattern(it.getName())
+                }
+                rm.call()
+            }
             if (files) {
                 AddCommand add = git.add()
                 files.each {
@@ -585,13 +592,6 @@ class GitManager implements VcsManager {
                     add = add.addFilepattern(it.getName())
                 }
                 add.call()
-            }
-            if (deleted) {
-                RmCommand rm = git.rm()
-                deleted.each {
-                    rm = rm.addFilepattern(it.getName())
-                }
-                rm.call()
             }
             RevCommit commit = git.commit().setMessage(commitMessage).call()
             revision = commit.getId().getName()

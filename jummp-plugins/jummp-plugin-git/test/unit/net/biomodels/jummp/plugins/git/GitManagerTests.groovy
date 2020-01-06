@@ -213,7 +213,7 @@ class GitManagerTests extends GrailsUnitTestCase {
          */
         ciMsg = "Make the second commit"
         gitManager.updateModel(git, addFiles, removeFiles, ciMsg)
-        assertEquals(clone.listFiles().size(), 2) // .git and simulation.dat
+        assertEquals(clone.listFiles().size(), 3) // .git, MODEL001.txt and simulation.dat
         println "After making the second commit:"
         clone.listFiles().each {
             println "Item: ${it.getName()}"
