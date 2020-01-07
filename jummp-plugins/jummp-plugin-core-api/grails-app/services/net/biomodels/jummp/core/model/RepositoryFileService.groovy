@@ -34,7 +34,6 @@ import net.biomodels.jummp.model.Revision
 import org.apache.tika.detect.DefaultDetector
 import org.apache.tika.metadata.Metadata
 import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
-import org.eclipse.jgit.api.errors.NoHeadException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -210,7 +209,7 @@ we were unable to create the revision directory '${modelRevDir.absolutePath}'"""
                     new File(modelRevDir, it.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING)
             }
             result = true
-        } catch (NoHeadException | VcsException e) {
+        } catch (VcsException e) {
             logger.error("""\
 There have been errors with VCS manager for the model $modelId, revision $revNum: $e.message""")
             result = false
