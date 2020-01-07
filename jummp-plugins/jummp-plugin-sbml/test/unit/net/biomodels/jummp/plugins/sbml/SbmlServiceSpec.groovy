@@ -160,4 +160,37 @@ against the document #documentPath""")
                                      "http://identifiers.org/biomodels.db/BIOMD0000000272"] as String[],
                                     ["http://identifiers.org/mamo/MAMO_0000009"] as String[]]
     }
+
+    def "can preserve UTF-8 characters when reading SBML documents"() {
+        when:
+        def modelFile = new File("test/files/MODEL1707110056.xml")
+        def name = service.extractName([modelFile])
+
+        then:
+        name == 'Uhlén2017 - TCGA-06-0139-01A - Glioblastoma Multiforme (male, 41 years)'
+    }
+
+    def "can preserve UTF-8 characters when updating SBML documents"() {
+        when: "a revision of a model whose name contains non-ASCII characters"
+        String documentPath = "test/files/MODEL1707110056.xml"
+        String originalName = "Uhlén2017 - TCGA-06-0139-01A - Glioblastoma Multiforme (male, 41 years)"
+        String newName = "'\u03A3\u03A3 Uhlén2017 \u03A3\u03A3''" // also include greek symbols alongside latin-1
+
+        def rf = new RepositoryFileTransportCommand(path: documentPath, mainFile: true,
+            description: "model file")
+        def model = new ModelTransportCommand(submissionId: "MODEL0123456789")
+        def format = new ModelFormatTransportCommand(identifier: "SBML")
+        RevisionTransportCommand rev = new RevisionTransportCommand(model: model,
+            state: ModelState.UNPUBLISHED, revisionNumber: 1, owner: "me", minorRevision: false,
+            validated: true, name: originalName, format: format, description: "desc",
+            uploadDate: new Date(), files: [rf], curationState: CurationState.CURATED)
+
+        then: "we update the name"
+        service.updateName(rev, newName)
+
+        and:
+        new SBMLReader().readSBML(documentPath).model.name == newName
+        service.updateName(rev, originalName)
+    }
+
 }

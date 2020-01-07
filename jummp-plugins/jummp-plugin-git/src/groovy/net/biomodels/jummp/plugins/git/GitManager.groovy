@@ -570,4 +570,38 @@ class GitManager implements VcsManager {
         }
         return revision
     }
+
+    String updateModel(Git git, List<File> files, List<File> deleted, String commitMessage) {
+        String revision
+        try {
+            //updateWorkingCopy(modelDirectory)
+//            Git git = initedRepositories.get(modelDirectory)
+            String repoDir = git.repository.directory.parent // parent of .git dir
+            File modelDirectory = new File(repoDir)
+            if (files) {
+                AddCommand add = git.add()
+                files.each {
+                    FileUtils.copyFile(it, new File(modelDirectory.absolutePath + File.separator + it.getName()))
+                    add = add.addFilepattern(it.getName())
+                }
+                add.call()
+            }
+            if (deleted) {
+                RmCommand rm = git.rm()
+                deleted.each {
+                    rm = rm.addFilepattern(it.getName())
+                }
+                rm.call()
+            }
+            RevCommit commit = git.commit().setMessage(commitMessage).call()
+            revision = commit.getId().getName()
+            /*if (hasRemote) {
+                  git.push().call()
+            }*/
+        } catch (Exception e) {
+            e.printStackTrace()
+            throw new IOException("Git command could not be executed", e)
+        }
+        return revision
+    }
 }
