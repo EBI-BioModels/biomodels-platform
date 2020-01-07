@@ -20,6 +20,7 @@
 
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.acl.AclUtilService
+import groovy.io.FileType
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovyx.gpars.GParsPool
@@ -170,15 +171,6 @@ class ModelLogger {
 
     String toString() {
         "out: $out, err: $err"
-    }
-}
-
-@CompileStatic
-class FolderFilter implements FileFilter {
-    public static final FolderFilter instance = new FolderFilter()
-
-    boolean accept(File candidate) {
-        candidate.isDirectory()
     }
 }
 
@@ -694,20 +686,10 @@ update Model m set m.deleted = true where m.submissionId in (
 
     @CompileDynamic
     private void processSubmissionsFolder(File root, Pattern modelFolderPattern) {
-        final int POOL_SIZE = Math.min(7, 2 * Runtime.getRuntime().availableProcessors())
-        println("Pool size is $POOL_SIZE, model folder is $modelFolder")
-        GParsPool.withPool(POOL_SIZE) {
-            GParsPool.runForkJoin(root) { File dir ->
-                final String dirName = dir.name
-                if (dirName ==~ modelFolderPattern) {
-                    submissionDetected dir
-                } else { // fork dedicated task for each sub-folder
-                    //descendIntoSubFolders(root)
-                    def subFolders = dir.listFiles(FolderFilter.instance)
-                    for (File child in subFolders) {
-                        forkOffChild child
-                    }
-                }
+        root.eachFileRecurse(FileType.DIRECTORIES) { File dir ->
+            final String dirName = dir.name
+            if (dirName ==~ modelFolderPattern) {
+                submissionDetected dir
             }
         }
     }
