@@ -346,7 +346,8 @@ class UhlenModelUpdater {
     /**
      * Atomically deletes a revision, its repository files and associated ACL permissions.
      *
-     * <p>Since {@link net.biomodels.jummp.core.ModelService#addValidatedRevision(java.util.List, java.util.List, net.biomodels.jummp.core.model.RevisionTransportCommand)}
+     * <p>Since {@link net.biomodels.jummp.core.ModelService#addRevision(java.util.List, java.util.List, net.biomodels
+        * .jummp.core.model.RevisionTransportCommand)}
      * inserts the new revision in a dedicated transaction which gets committed and flushed before the method returns, we
      * cannot use transaction rollback to undo that insertion &ndash; we need to use another dedicated transaction which
      * undoes that work.</p>
@@ -392,7 +393,7 @@ class UhlenModelUpdater {
      * Marks the current Hibernate session as rollback only and atomically deletes all entities associated with a revision.
      *
      * <p>To be used as the preferred rollback mechanism in code invoked after the new model revision has been created and
-     * persisted into the database via {@code modelService.addValidatedRevision( )}, assuming the insertion has been successful.</p>
+     * persisted into the database via {@code modelService.addRevision( )}, assuming the insertion has been successful.</p>
      *
      * @param revision the revision which should be deleted
      * @see UhlenModelUpdater#undoRevisionInsertion(net.biomodels.jummp.model.Revision)
@@ -438,7 +439,7 @@ class UhlenModelUpdater {
         try {
             modelService.addModellingApproachAsAnnotation(revisionCmd, UhlenScriptSupport.modellingApproach)
             addModelMsg(modelId, "Assigned modelling approach")
-            newRevision = modelService.addValidatedRevision(filesToAdd, filesToDelete, revisionCmd)
+            newRevision = modelService.addRevision(filesToAdd, filesToDelete, revisionCmd)
         } catch (ModelException e) {
             assert markSessionAsRollbackOnly(getCurrentSession()): "Adding revision ${revisionCmd.properties} failed but could not roll back"
             addModelError(modelId, "ModelException thrown when inserting the new revision: $e.message")
