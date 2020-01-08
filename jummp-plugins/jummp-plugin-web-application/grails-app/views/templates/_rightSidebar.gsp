@@ -5,17 +5,6 @@
 <g:if test="${models}">
     <g:if test="${actionName == 'search'}">
         <div class="element" id="rightSidebar">
-            <h4>Browse Path2Models content</h4>
-            <p>Models from this branch are classified in 3 distinct categories:</p>
-            <ul>
-                <li><a href="//www.ebi.ac.uk/biomodels-main/path2models?cat=metabolic">metabolic models</a></li>
-                <li><a href="//www.ebi.ac.uk/biomodels-main/path2models?cat=non-metabolic">non-metabolic models</a></li>
-                <li><a href="//www.ebi.ac.uk/biomodels-main/path2models?cat=genome-scale">whole genome metabolism models</a></li>
-            </ul>
-            <p>One can also browse those models by organism:</p>
-            <ul><li><a href="//www.ebi.ac.uk/biomodels-main/path2models?cat=organism">list of all organisms</a></li></ul>
-
-            <p>Learn more about <a href="//www.ebi.ac.uk/biomodels-main/path2models">Path2Models</a></p>
         </div>
     </g:if>
     <g:elseif test="${actionName == 'list'}">
@@ -33,8 +22,21 @@
         </g:if>
     </g:elseif>
     <div class="element">
-        <g:link controller="goChart"><h3>Browse models using GO Chart</h3></g:link>
+        <h4>Shortcuts to browse models</h4>
+        <h5><g:link controller="parameterSearch">Parameters Search</g:link></h5>
+        <p>BioModels Parameters is a resource that facilitates easy search and retrieval of parameter values used in
+        the SBML models stored in the BioModels repository.</p>
+        <h5><g:link controller="goChart">Using GO Chart</g:link></h5>
         <p>This is a chart view of the models in this Database based on <a href="http://www.geneontology.org/">Gene Ontology</a>.</p>
+
+        <h5><g:link controller="feature" action="agedbrain">Neurodegeneration models</g:link></h5>
+        <p>Mechanistic models describing neurodegenerative disease processes
+        </p>
+        <h5><g:link controller="p2m">Path2Models</g:link></h5>
+        <p>The approximately 140,000 models in the Path2Models project are now grouped taxonomically into 812 bundles,
+        typically one per genus.</p>
+        <h5><g:link controller="pdgsmm">Patient-derived genome metabolic models</g:link></h5>
+        <p>This section hosts models of metabolic pathways that are specific to individual patients</p>
     </div>
 </g:if>
 <g:else>
