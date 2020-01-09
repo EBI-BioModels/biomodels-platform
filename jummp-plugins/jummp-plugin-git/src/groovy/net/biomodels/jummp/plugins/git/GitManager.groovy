@@ -39,6 +39,10 @@ import org.eclipse.jgit.api.ResetCommand
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.channels.FileLock
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
@@ -388,16 +392,19 @@ class GitManager implements VcsManager {
     @Profiled(tag = "gitManager.downloadFiles")
     private void downloadFiles(File modelDirectory, List<File> addHere) {
         File[] repFiles = modelDirectory.listFiles()
-        File tempDir = new File(exchangeDirectory.absolutePath + System.getProperty("file.separator") + UUID.randomUUID().toString())
+        String path = exchangeDirectory.absolutePath + File.separator + UUID.randomUUID().toString()
+        File tempDir = new File(path)
         tempDir.mkdir()
-        repFiles.each
-            {
-                File destinationFile = new File(tempDir.absolutePath + System.getProperty("file.separator") + it.getName())
-                if (!it.isDirectory()) {
-                    FileUtils.copyFile(it, destinationFile)
-                    addHere.add(destinationFile)
-                }
+        repFiles.each {
+            String filePath = tempDir.absolutePath + File.separator + it.getName()
+            File targetFile = new File(filePath)
+            if (!it.isDirectory()) {
+                Path sourcePath = it.toPath()
+                Path targetPath = Paths.get(tempDir.absolutePath, it.getName())
+                Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING)
+                addHere.add(targetFile)
             }
+        }
         if (addHere.isEmpty()) throw new VcsException("Model directory is empty!")
 
     }
@@ -610,7 +617,9 @@ class GitManager implements VcsManager {
         if (files) {
             AddCommand add = git.add()
             files.each {
-                FileUtils.copyFile(it, new File(modelDirectory.absolutePath + File.separator + it.getName()))
+                Path sourcePath = it.toPath()
+                Path targetPath = Paths.get(modelDirectory.absolutePath, it.getName())
+                Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING)
                 add = add.addFilepattern(it.getName())
             }
             add.call()
