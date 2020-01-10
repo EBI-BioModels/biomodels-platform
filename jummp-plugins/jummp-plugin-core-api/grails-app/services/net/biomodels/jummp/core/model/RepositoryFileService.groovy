@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2019 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -245,5 +245,97 @@ IO exception encountered for model $modelId (revision $revNum): $e""")
             }
         }
         return repFiles
+    }
+
+    List<File> getFilesFromRF(List<RepositoryFileTransportCommand> files) {
+        List<File> modelFiles = []
+        if (files) {
+            for (rf in files) {
+                final def f = new File(rf.path)
+                modelFiles.add(f)
+            }
+        }
+        return modelFiles
+    }
+
+    /**
+     * Creates validated RepositoryFile objects from the corresponding RepositoryFileTransportCommands.
+     *
+     * This method is used to complement the validation mechanism available for domain
+     * classes because the latter is applied even for operations that don't change repository file
+     * objects such as deletion or publishing of models.
+     *
+     * This method throws ModelException if
+     *      there is at least one entry in the supplied list with an undefined or non-existent path,
+     *      there is at least one empty file, or
+     *      there are no main files.
+     *
+     * @param repoFileCmds  a list of RepositoryFileTransportCommand objects to validate and convert into
+     *                      domain objects.
+     * @param revision      a Revision object
+     * @return a list of RepositoryFile domain objects
+     */
+    List<RepositoryFile> convertRFTCToRF(List<RepositoryFileTransportCommand> repoFileCmds,
+                                         Revision revision) {
+        List<RepositoryFile> results = []
+        boolean foundValidMainFile = false
+        for (rf in repoFileCmds) {
+            // validate
+            String filePath = rf.path
+            if (!filePath) {
+                logger.error("Missing path for RepositoryFile ${rf.dump()} from ${repoFileCmds.dump()}")
+                throw new ModelException("We lost track of one of the files you provided for this revision.")
+            }
+            File f = new File(filePath)
+            boolean fileExists = f.exists()
+            if (!fileExists) {
+                logger.error("Non-existent path for RepositoryFile ${rf.dump()} from ${repoFileCmds.dump()}")
+                throw new ModelException("There was a problem saving file ${f.name} for this revision.".toString())
+            }
+            boolean fileIsEmpty = !f.length()
+            if (fileIsEmpty) {
+                logger.warn("Empty file ${f.name} included in ${repoFileCmds}")
+            }
+            if (rf.mainFile) {
+                foundValidMainFile = true
+            }
+            // work out MIME type
+            def sherlock = new DefaultDetector()
+            def is = new BufferedInputStream(new FileInputStream(f))
+            String mimeType = sherlock.detect(is, new Metadata()).toString()
+
+            // create the domain object
+            final String fileName = f.name
+            final def domain = new RepositoryFile(path: fileName, description: rf.description,
+                mimeType: mimeType, revision: revision)
+            if (rf.mainFile) {
+                domain.mainFile = rf.mainFile
+            }
+            if (rf.userSubmitted) {
+                domain.userSubmitted = rf.userSubmitted
+            }
+            if (rf.hidden) {
+                domain.hidden = rf.hidden
+            }
+            if (!domain.validate()) {
+                final def m = new ModelAdapter(model: revision.model).toCommandObject()
+                def msg = new StringBuffer("Invalid file ${rf.properties} uploaded for model ${m.properties}.")
+                msg.append("The file failed due to ${domain.errors.allErrors.inspect()}")
+                logger.error(msg)
+                msg = """\
+Your submission appears to contain invalid file ${fileName}. Please review it and try again."""
+                throw new ModelException(m, msg)
+            } else {
+                results.add(domain)
+            }
+        }
+        if (!foundValidMainFile) {
+            final def m = new ModelAdapter(model: revision.model).toCommandObject()
+            def msg = """\
+Can't persist repository files ${repoFileCmds.dump()} for revision ${revision.dump()} without main file"""
+            logger.error(msg)
+            throw new ModelException(m, "Missing main file for the new model revision ${revision.name}")
+        }
+        results
     }
 }
