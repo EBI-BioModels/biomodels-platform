@@ -24,12 +24,15 @@
 
 package net.biomodels.jummp.core;
 
+import java.nio.file.Path;
+
 /**
  * Interface for a service handling the structure of the folder where all models are stored.
  *
- * VcsManager implementations should rely on it 
+ * VcsManager implementations should rely on it
  *
- * @author Mihai Glonț <mglont@ebi.ac.uk>
+ * @author  Mihai Glonț <mglont@ebi.ac.uk>
+ * @author  Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 public interface IFileSystemService {
     //public createModelFolderStructure(File parent, long id);
@@ -37,11 +40,11 @@ public interface IFileSystemService {
      * Returns the path of the subfolder where models are currently created.
      *
      * Most filesystems struggle to handle more than a few thousand entries in a single folder.
-     * Therefore, in the interest of scalability, we should divide the main folder for storing 
+     * Therefore, in the interest of scalability, we should divide the main folder for storing
      * models into sub-directories called containers.
      *
      * Implementations of this service are free to choose the naming convention for containers,
-     * as well as the maximum number of entries that should be available in 
+     * as well as the maximum number of entries that should be available in
      *
      * Given the following folder structure for the models
      *      /
@@ -53,5 +56,13 @@ public interface IFileSystemService {
      *              model2001
      * this method would return the absolute path to container3
      */
-    public String findCurrentModelContainer();
+    String findCurrentModelContainer();
+
+    /**
+     * Deletes a directory recursively
+     * This method will delete the directory in the location indicated by the argument path
+     *
+     * @param path  A Path object indicating the place where the directory is
+     */
+    void deleteDirectory(Path path);
 }

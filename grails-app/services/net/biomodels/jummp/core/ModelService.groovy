@@ -49,8 +49,6 @@ import net.biomodels.jummp.model.*
 import net.biomodels.jummp.plugins.security.User
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
-import org.apache.tika.detect.DefaultDetector
-import org.apache.tika.metadata.Metadata
 import org.perf4j.aop.Profiled
 import org.perf4j.log4j.Log4JStopWatch
 import org.springframework.beans.factory.ObjectFactory
@@ -67,8 +65,6 @@ import org.springframework.security.core.Authentication
 import org.springframework.transaction.TransactionDefinition
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Propagation
-
-import java.util.concurrent.locks.ReentrantLock
 
 /**
  * Service class for managing Models.
@@ -161,10 +157,6 @@ class ModelService {
     ObjectFactory<ModelIdentifierGeneratorRegistryService> idGeneratorRegistryFactoryBean
 
     final boolean MAKE_PUBLICATION_ID = !(publicationIdGenerator instanceof NullModelIdentifierGenerator)
-    /**
-     * Guard insertion of ACL entries from concurrent access.
-     */
-    final ReentrantLock aclInsertionLock = new ReentrantLock()
 
     /**
      * Provides a prototype-scoped submission id generator bean.
@@ -987,154 +979,31 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         model
     }
 
+    @PostLogging(LoggingEventType.CREATION)
+    @Profiled(tag="modelService.doUploadValidatedModel")
     Model doUploadValidatedModel(final List<RepositoryFileTransportCommand> repoFiles,
             RevisionTransportCommand rev) throws ModelException {
-        def stopWatch = new Log4JStopWatch("modelService.uploadValidatedModel.catchDuplicate")
-        if (IS_DEBUG_ENABLED) {
-            log.debug "About to store the following model: ${rev.name}"
-        }
-        // TODO: to support anonymous submissions this method has to be changed
+        log.debug "About to store the following model: ${rev.name}"
+        // TODO: to support anonymous submissions, this method has to be changed
         if (Revision.findByName(rev.name)) {
             final String msg = "There is already a Model with name ${rev.name}".toString()
             log.warn(msg)
-            /*log.error(msg)
-            throw new ModelException(rev.model, msg)*/
         }
-        stopWatch.lap("Finished checking for model duplicates.")
-        stopWatch.setTag("modelService.uploadValidatedModel.addFiles")
-        Model model = new Model()
-        List<File> modelFiles = getFilesFromRF(repoFiles)
-        stopWatch.lap("Finished adding RepositoryFiles to the Model")
-        stopWatch.setTag("modelService.uploadValidatedModel.prepareVcsStorage")
-        ModelFormat format = ModelFormat.findByIdentifierAndFormatVersion(rev.format.identifier, rev.format.formatVersion)
-        model.modellingApproach = rev.model.modellingApproach
-        model.otherInfo = rev.model.otherInfo
-        // vcs identifier is container name + upload date + submissionId - this should by all means be unique
-        String timestamp = new Date().format("yyyy-MM-dd'T'HH-mm-ss-SSS")
-        final String submissionId = getSubmissionIdGenerator().generate()
-        String modelPath = new StringBuilder(timestamp).append("_").append(submissionId).
-                append(File.separator).toString()
-        String container = fileSystemService.findCurrentModelContainer()
-        String containerName = new File(container).name
-        File modelFolder = new File(container, modelPath)
-        boolean success = modelFolder.mkdirs()
-        if (!success) {
-            def err = "Cannot create the directory where the ${rev.name} should be stored"
-            log.error(err)
-            throw new ModelException(rev.model, err.toString())
-        }
-        model.vcsIdentifier = new StringBuilder(containerName).append(File.separator).
-                append(modelPath).toString()
-
-        if (IS_DEBUG_ENABLED) {
-            log.debug "The new model will be stored in $modelPath"
-        }
-        model.submissionId = submissionId
-        Revision revision = new Revision(model: model,
-                revisionNumber: 1,
-                owner: User.findByUsername(springSecurityService.authentication.name),
-                minorRevision: false,
-                validated: rev.validated,
-                name: rev.name,
-                description: rev.description,
-                comment: rev.comment,
-                uploadDate: new Date(),
-                format: format)
-
-        // keep a list of RFs closeby, as we may need to discard all of them
-        List<RepositoryFile> domainObjects =
-                convertRepositoryFilesFromTransportCommands(repoFiles, revision)
-        stopWatch.lap("Finished preparing what to store in the VCS.")
-        stopWatch.setTag("modelService.uploadValidatedModel.doVcsStorage")
-        try {
-            String vcsId = vcsService.importModel(model, modelFiles)
-            revision.vcsId = vcsId
-            if (IS_DEBUG_ENABLED) {
-                log.debug "First commit for ${revision.model.vcsIdentifier} is $vcsId"
-            }
-        } catch (VcsException e) {
-            revision.discard()
-            domainObjects.each { it.discard() }
-            model.discard()
-            //TODO undo the addition of the files to the VCS.
-            def errMsg = new StringBuffer("Exception occurred while storing new Model ")
-           // errMsg.append("${model.toCommandObject().properties} to VCS: ${e.getMessage()}.\n")
-            errMsg.append("${model.errors.allErrors.inspect()}\n")
-            errMsg.append("${revision.errors.allErrors.inspect()}\n")
-            log.error(errMsg.toString())
-            stopWatch.stop()
-            ModelTransportCommand m = new ModelAdapter(model: model).toCommandObject()
-            throw new ModelException(m, "Could not store new Model ${m.properties} in VCS", e)
-        }
-        stopWatch.lap("Finished importing the model into the VCS.")
-        stopWatch.setTag("modelService.uploadValidatedModel.gormValidation")
-        domainObjects.each {
-           revision.addToRepoFiles(it)
-        }
+        ModelBuilder modelBuilder = new ModelBuilder(repoFiles, rev).build()
+        Model model = modelBuilder.model
+        Revision revision = modelBuilder.revision
         if (revision.validate()) {
             model.addToRevisions(revision)
-            if (rev.model.publication) {
-                model.publication = publicationService.fromCommandObject(rev.model.publication)
-            }
             if (!model.validate()) {
-                // TODO: this means we have imported the file into the VCS, but it failed to be saved in the database, which is pretty bad
-                revision.discard()
-                model.discard()
-                def msg = new StringBuffer("New Model ${rev.name} does not validate:\n")
-                msg.append("${model.errors.allErrors.inspect()}\n")
-                msg.append("${revision.errors.allErrors.inspect()}\n")
-                log.error(msg)
-                stopWatch.stop()
-                throw new ModelException(new ModelAdapter(model: model).toCommandObject(), "New model does not validate")
+                modelBuilder.discard()
+            } else {
+                modelBuilder.persist()
             }
-            model.save(flush: true)
-            domainObjects.each { rf ->
-                if (!rf.isAttached()) {
-                    rf.attach()
-                }
-                String path = rf.path
-                String sep = File.separator.equals("/") ? "/" : "\\\\"
-                if (path.contains(sep)) {
-                    String fileName = path.split(sep).last()
-                    rf.path = fileName
-                }
-                rf.save()
-            }
-            stopWatch.lap("Finished GORM validation.")
-            stopWatch.setTag("modelService.uploadValidatedModel.grantPermissions")
-            // let's add the required rights
-            final String username = revision.owner.username
-            aclInsertionLock.lock()
-            try {
-                aclUtilService.addPermission(model, username, BasePermission.ADMINISTRATION)
-                aclUtilService.addPermission(model, username, BasePermission.DELETE)
-                aclUtilService.addPermission(model, username, BasePermission.READ)
-                aclUtilService.addPermission(model, username, BasePermission.WRITE)
-                aclUtilService.addPermission(revision, username, BasePermission.ADMINISTRATION)
-                aclUtilService.addPermission(revision, username, BasePermission.DELETE)
-                aclUtilService.addPermission(revision, username, BasePermission.READ)
-            } catch (Throwable e) {
-                log.error("failed to insert permissions for $model and $revision", e)
-            } finally {
-                aclInsertionLock.unlock()
-            }
-            stopWatch.stop()
-
-            if (IS_DEBUG_ENABLED) {
-                log.debug("Model $submissionId stored with id ${model.id}")
-            }
-
-            // don't broadcast event yet,wait for the current tx to commit
+            // don't broadcast event yet, wait for the current tx to commit
             /*grailsApplication.mainContext.publishEvent(new ModelCreatedEvent(this,
                                 new ModelAdapter(model: model).toCommandObject(), modelFiles))*/
         } else {
-            // TODO: this means we have imported the file into the VCS, but it failed to be saved in the database, which is pretty bad
-            revision.discard()
-            domainObjects.each {it.discard()}
-            model.discard()
-            log.error("New Model does not validate:${revision.errors.allErrors.inspect()}")
-            stopWatch.stop()
-            throw new ModelException(new ModelAdapter(model: model).toCommandObject(), "Sorry, but the new Model does not seem to be valid.")
+            modelBuilder.discard()
         }
         return model
     }
@@ -1384,7 +1253,8 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         boolean valid = true
         if (!modelFileFormatService.validate(modelFiles, format, [])) {
             final def m = new ModelAdapter(model: model).toCommandObject()
-            log.warn("New revision of model ${m.properties} containing ${modelFiles.inspect()} does not comprise valid ${format.identifier}")
+            log.warn("""\
+New revision of model ${m.properties} containing ${modelFiles.inspect()} does not comprise valid ${format.identifier}""")
             //throw new ModelException(m, "The file list does not comprise valid ${format.identifier}")
             valid = false
         }
