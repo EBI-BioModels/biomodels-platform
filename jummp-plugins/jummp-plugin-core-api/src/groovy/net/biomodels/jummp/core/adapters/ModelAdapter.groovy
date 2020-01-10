@@ -63,7 +63,7 @@ class ModelAdapter {
             }
         } else {
             // if the model is not saved, there can only be at most one revision
-            latestRev = revisions.first()
+            latestRev = revisions?.first()
             firstRev = latestRev
         }
 

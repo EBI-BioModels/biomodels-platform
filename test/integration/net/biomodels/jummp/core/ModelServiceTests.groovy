@@ -1,50 +1,39 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
-* Deutsches Krebsforschungszentrum (DKFZ)
-*
-* This file is part of Jummp.
-*
-* Jummp is free software; you can redistribute it and/or modify it under the
-* terms of the GNU Affero General Public License as published by the Free
-* Software Foundation; either version 3 of the License, or (at your option) any
-* later version.
-*
-* Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
-* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-* A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
-* details.
-*
-* You should have received a copy of the GNU Affero General Public License along
-* with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
-*
-* Additional permission under GNU Affero GPL version 3 section 7
-*
-* If you modify Jummp, or any covered work, by linking or combining it with
-* JGit, Apache Commons, JUnit, Spring Security (or a modified version of that library), containing parts
-* covered by the terms of Common Public License, Apache License v2.0, Eclipse Distribution License v1.0, the licensors of this
-* Program grant you additional permission to convey the resulting work.
-* {Corresponding Source for a non-source form of such a combination shall
-* include the source code for the parts of JGit, Apache Commons, JUnit, Spring Security used as well as
-* that of the covered work.}
-**/
-
-
-
-
+ * Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Deutsches Krebsforschungszentrum (DKFZ)
+ *
+ * This file is part of Jummp.
+ *
+ * Jummp is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation; either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along
+ * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
+ *
+ * Additional permission under GNU Affero GPL version 3 section 7
+ *
+ * If you modify Jummp, or any covered work, by linking or combining it with
+ * JGit, Apache Commons, JUnit, Spring Security (or a modified version of that library),
+ * containing parts covered by the terms of Common Public License, Apache License v2.0,
+ * Eclipse Distribution License v1.0, the licensors of this Program grant you additional
+ * permission to convey the resulting work {Corresponding Source for a non-source form
+ * of such a combination shall include the source code for the parts of JGit, Apache
+ * Commons, JUnit, Spring Security used as well as that of the covered work.}
+ */
 
 package net.biomodels.jummp.core
 
-import net.biomodels.jummp.core.adapters.RevisionAdapter
-
-import static org.junit.Assert.*
-import grails.test.mixin.Mock
 import grails.test.mixin.TestMixin
 import grails.test.mixin.integration.IntegrationTestMixin
-import net.biomodels.jummp.core.model.ModelFormatTransportCommand
-import net.biomodels.jummp.core.model.ModelState
-import net.biomodels.jummp.core.model.ModelTransportCommand
-import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
-import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.core.adapters.ModelFormatAdapter
+import net.biomodels.jummp.core.adapters.RevisionAdapter
+import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.util.JummpXmlUtils
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelFormat
@@ -53,17 +42,20 @@ import net.biomodels.jummp.plugins.git.GitManagerFactory
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.webapp.ModelController
 import org.apache.commons.io.FileUtils
-import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
-import org.junit.*
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.acls.domain.BasePermission
-import net.biomodels.jummp.core.adapters.ModelFormatAdapter
+import org.springframework.transaction.TransactionDefinition
+
+import static org.junit.Assert.*
 
 @TestMixin(IntegrationTestMixin)
 class ModelServiceTests extends JummpIntegrationTest {
@@ -93,7 +85,12 @@ class ModelServiceTests extends JummpIntegrationTest {
         modelService.vcsService.vcsManager = gitFactory.getInstance()
         modelService.vcsService.vcsManager.exchangeDirectory = exchange
         assertTrue(modelService.vcsService.isValid())
-        createUserAndRoles()
+        def txDefinition = [propagationBehavior: TransactionDefinition.PROPAGATION_REQUIRES_NEW]
+        // wrap this method in a separate transaction to ensure that
+        // mocking users and roles are persisted
+        User.withTransaction(txDefinition) {
+            createUserAndRoles()
+        }
     }
 
     @After
@@ -1352,77 +1349,84 @@ class ModelServiceTests extends JummpIntegrationTest {
     @Test
     void testDeleteModel() {
         Model upped = null
-        shouldFail(IllegalArgumentException) {
+        String outMsg
+        outMsg = shouldFail(IllegalArgumentException) {
             modelService.deleteModel(upped)
         }
-        upped = new Model(deleted: true)
-        shouldFail(AccessDeniedException) {
-            modelService.deleteModel(upped)
-        }
+        assert "Cannot delete a null model" == outMsg
 
-        def exchg = "target/vcs/exchange"
-        def wd ="target/vcs/git"
-        GitManagerFactory gitService = new GitManagerFactory()
-        gitService.grailsApplication = grailsApplication
-        grailsApplication.config.jummp.plugins.git.enabled = true
-        grailsApplication.config.jummp.vcs.exchangeDirectory = exchg
-        grailsApplication.config.jummp.vcs.workingDirectory = wd
-        modelService.vcsService.vcsManager = gitService.getInstance()
-        modelService.vcsService.vcsManager.exchangeDirectory = new File(exchg)
+        upped = new Model(deleted: true)
+        outMsg = shouldFail(IllegalArgumentException) {
+            modelService.deleteModel(upped)
+        }
+        assert "The model null has been already deleted" == outMsg
+
+        upped.deleted = false
         def modelPath = "test/files/JUM-84/pharmml/testPharmML.xml"
         def modelFile = new File(modelPath)
         assertTrue modelFile.exists()
         // upload the model
-        def model = new RepositoryFileTransportCommand(path: modelFile.absolutePath,
+        def repoFiles = new RepositoryFileTransportCommand(path: modelFile.absolutePath,
                 mainFile: true, description: "")
-        authenticateAsTestUser()
+        authenticateAsAdmin()
         def fmt = new ModelFormatTransportCommand(identifier: "PharmML", formatVersion: "0.3.1")
+        User owner = User.findByUsername("admin")
         def rtc = new RevisionTransportCommand(format: fmt, name: "Test model", validated: true,
-                comment: "initial commit", description: "Test model description",
+                comment: "initial commit", description: "Test model description", owner: owner.username,
                 model: new ModelTransportCommand())
         def count = Revision.count()
-        upped = modelService.uploadValidatedModel([model], rtc)
+        assertEquals(0, count)
+        upped = modelService.uploadValidatedModel([repoFiles], rtc)
+        assert modelService.canDelete(upped)
         assertNotNull upped
         assertFalse upped.hasErrors()
-        assertEquals count + 1, Revision.count()
-        def firstRevision = Revision.last()
-        assertEquals "Test model", firstRevision.name
+        assertEquals(count + 1, Revision.count)
+
+        // test the model having two revisions
+        Revision firstRevision = Revision.last()
+        assertEquals("Test model", firstRevision.name)
         println "first revision: ${firstRevision.dump()}"
         def secondRevision = new RevisionAdapter(revision: firstRevision).toCommandObject()
         secondRevision.name = "Some other name"
         secondRevision.description = "Some other description"
         secondRevision.comment = "Some important change"
-        def r2 = modelService.addRevision([model], [], secondRevision)
+        def r2 = modelService.addRevision([repoFiles], [], secondRevision)
         assertNotNull r2
         assertFalse r2.hasErrors()
 
-        //wait a bit for the model to be indexed
+        // wait a bit for the model to be indexed
         Thread.sleep(30000)
 
+        // Hibernate current session was out of date, then we have to clear and reload the model
+        Model.withSession { def s ->
+            s.clear()
+        }
+        upped = Model.get(upped.id)
         assertTrue modelService.deleteModel(upped)
         assertTrue upped.deleted
         upped = Model.read(upped.id)
         assertTrue upped.deleted
-        assertTrue searchService.isDeleted(upped)
+        //assertTrue searchService.isDeleted(upped)
 
         // set model state back to initial state
         upped.deleted = false
-        upped.save(flush: true)
-        searchService.setDeleted(upped, false)
-        assertFalse searchService.isDeleted(upped)
-
+        upped.save()
+        /*searchService.setDeleted(upped, false)
+        assertFalse searchService.isDeleted(upped)*/
+        firstRevision = upped.revisions[0]
         firstRevision.state = ModelState.PUBLISHED
-        firstRevision.save(flush: true)
-        // can't delete once a revision is public
-        assertFalse modelService.canDelete(upped)
-        firstRevision.state = ModelState.UNPUBLISHED
-        firstRevision.save(flush: true)
+        firstRevision.save()
 
-        // user should not get access to the method
+        // administrators can delete the model which a revision is public
+        assertTrue modelService.canDelete(upped)
+        firstRevision.state = ModelState.UNPUBLISHED
+        firstRevision.save()
+
+        // users should not get access to the method
         authenticateAsUser()
         assertFalse modelService.canDelete(upped)
 
-        // admin should get access to the method
+        // admin should get access to the deleted model
         authenticateAsAdmin()
         assertTrue modelService.deleteModel(upped)
     }

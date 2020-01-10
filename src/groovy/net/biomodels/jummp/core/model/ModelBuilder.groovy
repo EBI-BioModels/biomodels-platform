@@ -213,9 +213,13 @@ class ModelBuilder {
         ModelFormat format = ModelFormat.
             findByIdentifierAndFormatVersion(this.revisionTC.format.identifier,
                 this.revisionTC.format.formatVersion)
+        User owner = User.findByUsername(springSecurityService.authentication.name)
+        if (!owner) {
+            owner = User.findByUsername(this.revisionTC.owner)
+        }
         this.revision = new Revision(model: this.model,
             revisionNumber: 1,
-            owner: User.findByUsername(springSecurityService.authentication.name),
+            owner: owner,
             minorRevision: false,
             validated: this.revisionTC.validated,
             name: this.revisionTC.name,

@@ -52,8 +52,8 @@ import grails.util.Holders
  * @author  Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
  */
 class JummpIntegrationTest {
-    def authenticationManager=Holders.applicationContext.getBean("authenticationManager")
-    def springSecurityService=Holders.applicationContext.getBean("springSecurityService")
+    def authenticationManager = Holders.applicationContext.getBean("authenticationManager")
+    def springSecurityService = Holders.applicationContext.getBean("springSecurityService")
 
     def shouldFail = { exception, code ->
         try {
@@ -76,7 +76,7 @@ class JummpIntegrationTest {
         User user, user2, admin, curator
         Person person
         if (!User.findByUsername("testuser")) {
-        	person=new Person(userRealName: "Test")
+        	person = new Person(userRealName: "Test")
         	user = new User(username: "testuser",
                     password: springSecurityService.encodePassword("secret"),
                     person: person,

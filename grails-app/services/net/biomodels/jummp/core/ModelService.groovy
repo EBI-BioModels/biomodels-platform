@@ -66,6 +66,8 @@ import org.springframework.transaction.TransactionDefinition
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Propagation
 
+import java.util.concurrent.locks.ReentrantLock
+
 /**
  * Service class for managing Models.
  *
@@ -157,6 +159,11 @@ class ModelService {
     ObjectFactory<ModelIdentifierGeneratorRegistryService> idGeneratorRegistryFactoryBean
 
     final boolean MAKE_PUBLICATION_ID = !(publicationIdGenerator instanceof NullModelIdentifierGenerator)
+
+    /**
+     * Guard insertion of ACL entries from concurrent access.
+     */
+    final ReentrantLock aclInsertionLock = new ReentrantLock()
 
     /**
      * Provides a prototype-scoped submission id generator bean.
@@ -1747,28 +1754,28 @@ New revision of model ${m.properties} containing ${modelFiles.inspect()} does no
     }
 
     /**
-    * Checks if the model can be deleted
-    *
-    * @param model The Model to be deleted
-    * @return @c true in case the Model can be deleted, @c false otherwise.
-    **/
+     * Checks if the model can be deleted.
+     *
+     * A model can be deleted when the model is not null and has not been deleted and meets one of the following
+     * criteria:
+     * - the user doing so is an administrator
+     * - the model does not have any public revision and the user doing so the right permissions
+     *   to delete it
+     *
+     * @param model The Model to be deleted
+     * @return @c true in case the Model can be deleted, @c false otherwise.
+     */
     @PostLogging(LoggingEventType.DELETION)
     @Profiled(tag="modelService.canDelete")
-    public boolean canDelete(Model model) {
-        if (!model) {
-            throw new IllegalArgumentException("Model may not be null")
-        }
-        if (model.deleted) {
-            return false
-        }
-        boolean publicRev = hasPublicRevision(model)
-        if (publicRev) {
+    boolean canDelete(Model model) {
+        if (!model || model.deleted) {
             return false
         }
         boolean isAdmin = SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")
+        boolean publicRev = hasPublicRevision(model)
         boolean hasDeleteRight = aclUtilService.hasPermission(
                 springSecurityService.authentication, model, BasePermission.DELETE)
-        return isAdmin || hasDeleteRight
+        return isAdmin || (hasDeleteRight && !publicRev)
     }
 
     /**
@@ -1791,47 +1798,42 @@ New revision of model ${m.properties} containing ${modelFiles.inspect()} does no
     }
 
     /**
-    * Deletes the @p model.
-    *
-    * Flags the @p model as deleted in the database and the search index.
-    *
-    * The corresponding revision objects are not set as deleted in the database
-    * because that would prevent users from being able to access archived models.
-    *
-    * Deletion of @p model is only possible if the model is neither under curation nor published.
-    * @param model The Model to be deleted
-    * @return @c true in case the Model has been deleted, @c false otherwise.
-    * @see ModelService#restoreModel(Model model)
-    **/
+     * Deletes the @p model.
+     *
+     * Flags the @p model as deleted in the database and the search index.
+     *
+     * The corresponding revision objects are not set as deleted in the database
+     * because that would prevent users from being able to access archived models.
+     *
+     * Updated: we relax the constraints of the model deletion in the sense of
+     * allowing administrators to archive models even if the model has public revisions
+     *
+     * Deletion of @p model is only possible if the model is neither under curation nor published.
+     * @param model The Model to be deleted
+     * @return @c true in case the Model has been deleted, @c false otherwise.
+     * @see ModelService#restoreModel(Model model)
+     */
     /*@PreAuthorize("hasPermission(#model, delete) or hasRole('ROLE_ADMIN')")*/ //Doesnt work
     @PostLogging(LoggingEventType.DELETION)
     @Profiled(tag="modelService.deleteModel")
-    public boolean deleteModel(Model model) {
+    boolean deleteModel(Model model) {
         if (!model) {
-            throw new IllegalArgumentException("Model may not be null")
-        }
-        if (!canDelete(model)) {
-            throw new AccessDeniedException("You do not have permission to delete this model")
+            throw new IllegalArgumentException("Cannot delete a null model")
         }
         if (model.deleted) {
-            return false
+            throw new IllegalArgumentException("The model ${model?.submissionId} has been already deleted")
         }
-        boolean modelAlreadyPublic = hasPublicRevision(model)
-        if (modelAlreadyPublic) {
-            if (IS_DEBUG_ENABLED) {
-                log.debug "Refusing to delete published model ${model.submissionId}"
-            }
-            return false
+        boolean canDelete = canDelete(model)
+        if (!canDelete) {
+            throw new IllegalStateException("Cannot delete the model ${model.submissionId}")
         }
-        if (IS_DEBUG_ENABLED) {
-            log.debug("Attempting to delete model ${model.submissionId}")
-        }
-
         model.deleted = true
-        model.save(flush: true)
-        grailsApplication.mainContext.publishEvent(new ModelDeletedEvent(this,
+        boolean succeed = model.save(flush: true)
+        if (succeed) {
+            grailsApplication.mainContext.publishEvent(new ModelDeletedEvent(this,
                 new ModelAdapter(model: model).toCommandObject()))
-        return true
+        }
+        return succeed
     }
 
     /*
