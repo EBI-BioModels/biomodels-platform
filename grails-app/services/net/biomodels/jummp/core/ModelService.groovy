@@ -1192,7 +1192,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @PreAuthorize("hasPermission(#model, write) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.addRevisionAsFile")
-    public Revision addRevisionAsFile(Model model, final RepositoryFileTransportCommand repoFile,
+    Revision addRevisionAsFile(Model model, final RepositoryFileTransportCommand repoFile,
             final ModelFormat format, final String comment) throws ModelException {
         return addRevisionAsList(model, [repoFile], format, comment)
     }
@@ -1217,51 +1217,53 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         if (!model) {
             throw new ModelException(null, "Model may not be null")
         }
+        ModelTransportCommand mtc = new ModelAdapter(model: model).toCommandObject(false)
         if (model.deleted) {
-            throw new ModelException(new ModelAdapter(model: model).toCommandObject(), "A new Revision cannot be added to a deleted model")
+            throw new ModelException(mtc, "A new Revision cannot be added to a deleted model")
         }
         if (comment == null) {
-            throw new ModelException(new ModelAdapter(model: model).toCommandObject(), "Comment may not be null, empty comment is allowed")
+
+            throw new ModelException(mtc, "Comment may not be null, empty comment is allowed")
         }
         if (!repoFiles || repoFiles.size() == 0) {
             log.error("No files were provided as part of the update of model ${model.properties}")
-            throw new ModelException(new ModelAdapter(model: model).toCommandObject(), "A new version of the model must contain at least one file.")
+            throw new ModelException(mtc, "A new version of the model must contain at least one file.")
         }
         List<File> modelFiles = []
         for (rf in repoFiles) {
             if (!rf || !rf.path) {
                 log.error("No file was provided as part of the update of model ${model.properties}")
-                throw new ModelException(new ModelAdapter(model: model).toCommandObject(), "Please supply at least one file for the new version of this model.")
+                throw new ModelException(mtc, "Please supply at least one file for the new version of this model.")
             }
             final String path = rf.path
             if (!path || path.isEmpty()) {
                 log.error("Null file encountered while uploading a new revision for ${model.properties}: ${repoFiles.properties}")
-                throw new ModelException(new ModelAdapter(model: model).toCommandObject(),
+                throw new ModelException(mtc,
                     "Sorry, there was something wrong with one of the files you submitted. Please refine the files you wish to upload and try again.")
             }
             final def f = new File(path)
             if (!f.exists()) {
                 log.error("Non-existent file detected while uploading a new revision for ${model.properties}: ${f.properties}")
-                throw new ModelException(new ModelAdapter(model: model).toCommandObject(),
+                throw new ModelException(mtc,
                     "Sorry, one of the files you submitted does not appear to exist. Please refine the files you wish to upload and try again")
             }
             if (f.isDirectory()) {
                 log.error("Folder detected while uploading a new revision for ${model.properties}: ${repoFiles.properties}")
-                throw new ModelException(new ModelAdapter(model: model).toCommandObject(),
+                throw new ModelException(mtc,
                     "Sorry, we currently do not accept model organised into sub-folders.")
             }
             if (rf.mainFile && f.length() == 0) {
                 def err = "File ${f.name} cannot be empty because it is the main file of the submission."
                 log.error err
-                throw new ModelException(new ModelAdapter(model: model).toCommandObject(), err)
+                throw new ModelException(mtc, err)
             }
             modelFiles.add(f)
         }
         boolean valid = true
         if (!modelFileFormatService.validate(modelFiles, format, [])) {
-            final def m = new ModelAdapter(model: model).toCommandObject()
             log.warn("""\
-New revision of model ${m.properties} containing ${modelFiles.inspect()} does not comprise valid ${format.identifier}""")
+New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does not comprise valid ${format
+                .identifier}""")
             //throw new ModelException(m, "The file list does not comprise valid ${format.identifier}")
             valid = false
         }
@@ -1283,7 +1285,7 @@ New revision of model ${m.properties} containing ${modelFiles.inspect()} does no
             revision.discard()
             domainObjects.each{ it.discard() }
             log.error("Exception occurred during uploading a new Model Revision to VCS: ${e.getMessage()}")
-            throw new ModelException(new ModelAdapter(model: model).toCommandObject(),
+            throw new ModelException(mtc,
                 "Could not store new Model Revision for Model ${model.id} with VcsIdentifier ${model.vcsIdentifier} in VCS", e)
         }
         domainObjects.each {
@@ -1313,9 +1315,8 @@ New revision of model ${m.properties} containing ${modelFiles.inspect()} does no
         } else {
             // TODO: this means we have imported the revision into the VCS, but it failed to be saved in the database, which is pretty bad
             revision.discard()
-            final def m = new ModelAdapter(model: model).toCommandObject()
-            log.error("New Revision containing ${repoFiles.inspect()} for Model ${m} with VcsIdentifier ${model.vcsIdentifier} added to VCS, but not stored in database")
-            throw new ModelException(m, "Revision stored in VCS, but not in database")
+            log.error("New Revision containing ${repoFiles.inspect()} for Model ${mtc} with VcsIdentifier ${model.vcsIdentifier} added to VCS, but not stored in database")
+            throw new ModelException(mtc, "Revision stored in VCS, but not in database")
         }
         return revision
     }
