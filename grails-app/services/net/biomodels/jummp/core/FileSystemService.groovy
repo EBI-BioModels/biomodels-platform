@@ -35,11 +35,7 @@ import org.apache.commons.logging.LogFactory
 import org.perf4j.aop.Profiled
 import org.springframework.beans.factory.InitializingBean
 
-import java.nio.file.FileVisitResult
-import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.SimpleFileVisitor
-import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantLock
 
@@ -169,19 +165,10 @@ particularly for network file systems."""
 
     @Override
     void deleteDirectory(Path path) {
-        // the following solution is based on the answer here https://stackoverflow.com/a/27917071/865603
-        Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
-            @Override
-            FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                Files.delete(file)
-                return FileVisitResult.CONTINUE
-            }
-            @Override
-            FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                Files.delete(dir)
-                return FileVisitResult.CONTINUE
-            }
-        })
+        boolean succeed = path.deleteDir()
+        if (!succeed) {
+            log.error("Cannot delete the directory ${path.getName()}")
+        }
     }
     /**
      * Updates the model container name.
@@ -260,7 +247,7 @@ particularly for network file systems."""
             if (rootLocation) {
                 root = new File(rootLocation).getCanonicalFile()
             }
-       } catch(IOException ex) {
+        } catch(IOException ex) {
             log.error(ex.message, ex)
         } catch(SecurityException e) {
             log.error(e.message, e)
