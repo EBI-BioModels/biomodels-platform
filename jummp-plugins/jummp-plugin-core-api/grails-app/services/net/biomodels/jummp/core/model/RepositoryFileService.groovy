@@ -279,18 +279,19 @@ IO exception encountered for model $modelId (revision $revNum): $e""")
                                          Revision revision) {
         List<RepositoryFile> results = []
         boolean foundValidMainFile = false
+        final def m = new ModelAdapter(model: revision.model).toCommandObject(false)
         for (rf in repoFileCmds) {
             // validate
             String filePath = rf.path
             if (!filePath) {
                 logger.error("Missing path for RepositoryFile ${rf.dump()} from ${repoFileCmds.dump()}")
-                throw new ModelException("We lost track of one of the files you provided for this revision.")
+                throw new ModelException(m, "We lost track of one of the files you provided for this revision.")
             }
             File f = new File(filePath)
             boolean fileExists = f.exists()
             if (!fileExists) {
                 logger.error("Non-existent path for RepositoryFile ${rf.dump()} from ${repoFileCmds.dump()}")
-                throw new ModelException("There was a problem saving file ${f.name} for this revision.".toString())
+                throw new ModelException(m, "There was a problem saving file ${f.name} for this revision.".toString())
             }
             boolean fileIsEmpty = !f.length()
             if (fileIsEmpty) {
@@ -318,7 +319,6 @@ IO exception encountered for model $modelId (revision $revNum): $e""")
                 domain.hidden = rf.hidden
             }
             if (!domain.validate()) {
-                final def m = new ModelAdapter(model: revision.model).toCommandObject()
                 def msg = new StringBuffer("Invalid file ${rf.properties} uploaded for model ${m.properties}.")
                 msg.append("The file failed due to ${domain.errors.allErrors.inspect()}")
                 logger.error(msg)
@@ -330,7 +330,6 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             }
         }
         if (!foundValidMainFile) {
-            final def m = new ModelAdapter(model: revision.model).toCommandObject()
             def msg = """\
 Can't persist repository files ${repoFileCmds.dump()} for revision ${revision.dump()} without main file"""
             logger.error(msg)
