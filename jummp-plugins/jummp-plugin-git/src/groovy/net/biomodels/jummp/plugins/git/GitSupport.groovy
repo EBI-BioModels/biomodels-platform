@@ -29,13 +29,18 @@
 
 package net.biomodels.jummp.plugins.git
 
+import org.apache.log4j.Logger
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.Constants
+import org.eclipse.jgit.lib.FileMode
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
+import org.eclipse.jgit.treewalk.TreeWalk
+
+import java.util.logging.Level
 
 /**
  * This class provides tools and utils that support git manager, especially for testing purpose
@@ -84,6 +89,57 @@ class GitSupport {
     static getLatestCommitHashString(Repository repository) {
         RevCommit revCommit = parseCommit(repository)
         revCommit.name
+    }
+
+    static List<String> lsFiles(Git git, RevCommit commit) {
+        List<String> files = new ArrayList<String>()
+        try {
+            TreeWalk treeWalk = new TreeWalk(git.repository)
+            treeWalk.addTree(new RevWalk(git.repository).parseTree(	commit))
+
+            while (treeWalk.next()) {
+                files.add(treeWalk.getPathString())
+            }
+        } finally {
+            return files
+        }
+    }
+
+    static List<String> lsFiles(Git git, String commitId) {
+        Collection<String> result = new ArrayList<String>()
+        try {
+            // create a tree walk to search for files
+            TreeWalk walk = new TreeWalk(git.getRepository())
+            if (walk != null) {
+
+                // recursively search fo files
+                walk.setRecursive(true)
+                // add the tree the specified commit belongs to
+                walk.addTree(walk.getTree())
+
+                // walk through the tree
+                while (walk.next()) {
+
+                    // TODO: is it a problem if mode is treemode?
+                    final FileMode mode = walk.getFileMode(0)
+                    if (mode == FileMode.TREE) {
+                        println "GitSupport.lsFiles(): FileMode unexpected!"
+                    }
+
+                    // retrieve the path name of the current element
+                    String fileName = walk.getPathString()
+
+                    // we do not want to commit/checkout this file
+                    result.add(fileName)
+
+                }
+            }
+
+        } catch (IOException ex) {
+            Logger.getLogger(this.getClass().getName()).
+                log(Level.SEVERE, null, ex)
+        }
+        result
     }
 
     private static RevCommit parseCommit(Repository repository) {

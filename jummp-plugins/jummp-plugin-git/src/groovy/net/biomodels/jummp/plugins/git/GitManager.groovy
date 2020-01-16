@@ -31,10 +31,15 @@
 
 package net.biomodels.jummp.plugins.git
 
-import net.biomodels.jummp.core.vcs.InvalidVcsRepositoryException
-import net.biomodels.jummp.core.vcs.VcsAlreadyInitedException
-import net.biomodels.jummp.core.vcs.VcsNotInitedException
-import org.eclipse.jgit.api.ResetCommand
+import net.biomodels.jummp.core.vcs.*
+import org.apache.commons.io.FileUtils
+import org.eclipse.jgit.api.*
+import org.eclipse.jgit.api.errors.GitAPIException
+import org.eclipse.jgit.lib.*
+import org.eclipse.jgit.revwalk.DepthWalk.RevWalk
+import org.eclipse.jgit.revwalk.RevCommit
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder
+import org.perf4j.aop.Profiled
 
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
@@ -46,23 +51,6 @@ import java.nio.file.StandardCopyOption
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
-import net.biomodels.jummp.core.vcs.VcsManager
-import net.biomodels.jummp.core.vcs.VcsException
-import net.biomodels.jummp.core.vcs.VcsFileDetails
-import org.apache.commons.io.FileUtils
-import org.eclipse.jgit.api.AddCommand
-import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.api.InitCommand
-import org.eclipse.jgit.api.LogCommand
-import org.eclipse.jgit.api.RmCommand
-import org.eclipse.jgit.lib.Config
-import org.eclipse.jgit.lib.ConfigConstants
-import org.eclipse.jgit.lib.Constants
-import org.eclipse.jgit.lib.Repository
-import org.eclipse.jgit.revwalk.DepthWalk.RevWalk
-import org.eclipse.jgit.revwalk.RevCommit
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder
-import org.perf4j.aop.Profiled
 
 /**
  * @short GitManager provides the interface to a local git clone.
@@ -355,7 +343,9 @@ class GitManager implements VcsManager {
         try {
             FileRepositoryBuilder builder = new FileRepositoryBuilder()
             Repository repository
-            repository = builder.setGitDir(new File(".git", modelDirectory)).readEnvironment()
+            repository = builder
+                .setGitDir(new File(".git", modelDirectory))
+                .readEnvironment()
                 .findGitDir().build()
 
             Git git = new Git(repository)
@@ -376,12 +366,26 @@ class GitManager implements VcsManager {
                 detail.msg = commit.getFullMessage()
                 fileDetails.add(detail)
             }
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             throw new IOException("Git command could not be executed", ex)
         }
         return fileDetails
     }
+
+    @Override
+    boolean resetModelRepository(File modelDirectory, String commitId) throws VcsException, GitAPIException {
+        Repository repository = GitSupport.buildRepository(modelDirectory)
+        Git git = new Git(repository)
+        git.init().setDirectory(modelDirectory).call()
+
+        ResetCommand resetCmd = git.reset()
+        resetCmd.setRef(commitId)
+        resetCmd.setMode(ResetCommand.ResetType.HARD)
+        Ref ref = resetCmd.call()
+        boolean result = ref.objectId.name == commitId
+        return result
+    }
+
     /**
      * Convenience function for copying files from a given directory
      * to exchange, and passing the file objects back

@@ -139,4 +139,18 @@ public interface VcsManager {
      * Retrieves the creation and last modified dates for a file
      */
     List<VcsFileDetails> getFileDetails(File modelDirectory, String path);
+
+    /**
+     * Resets a given model repository from a specific commit ID
+     *
+     * Given a model directory denoting the git repository and a specific commit identifier,
+     * the method will reset the git repository to the given specific commit identifier.
+     * That means the commit identifier is the pointer to git HEAD.
+     *
+     * @param modelDirectory    A File object denoting the model repository
+     * @param commitId          A String object denoting the git commit identifier
+     *
+     * @return  true/false
+     */
+    boolean resetModelRepository(final File modelDirectory, final String commitId) throws VcsException;
 }
