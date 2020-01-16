@@ -223,7 +223,7 @@ IO exception encountered for model $modelId (revision $revNum): $e""")
 
     List<RepositoryFileTransportCommand> getRepositoryFilesForRevision(final Revision revision) {
         List<RepositoryFileTransportCommand> repFiles = new LinkedList<RepositoryFileTransportCommand>()
-        List<File> files = vcsService.retrieveFiles(revision)
+        List<File> files = retrieveFiles(revision)
         revision.repoFiles.each { rf ->
             File tmpFile = files.find { it.getName() == (new File(rf.path)).getName() }
             if (tmpFile != null) {
