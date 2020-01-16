@@ -113,6 +113,8 @@ class RevisionTransportCommand implements Serializable {
 
     QcInfoTransportCommand qcInfo
 
+    String readmeSubmission
+
     /**
      * The curation state of this revision
      */
@@ -134,7 +136,8 @@ class RevisionTransportCommand implements Serializable {
 
      String identifier() {
          final PERENNIAL_ID = model.publicationId ?: model.submissionId
-         return new StringBuffer(PERENNIAL_ID).append(".").append(revisionNumber).toString()
+         String retVal = PERENNIAL_ID ? new StringBuffer(PERENNIAL_ID).append(".").append(revisionNumber).toString() : null
+         return retVal
      }
 
     String modelIdentifier() {

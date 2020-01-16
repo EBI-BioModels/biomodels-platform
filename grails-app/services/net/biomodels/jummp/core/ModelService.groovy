@@ -156,6 +156,8 @@ class ModelService {
 
     def modelConversionService
 
+    def repositoryFileService
+
     ObjectFactory<ModelIdentifierGeneratorRegistryService> idGeneratorRegistryFactoryBean
 
     final boolean MAKE_PUBLICATION_ID = !(publicationIdGenerator instanceof NullModelIdentifierGenerator)
@@ -298,8 +300,8 @@ WHERE r.model = r2.model
                 if (type) {
                     log.warn("Ignoring unsupported permission level '$type'.")
                 } else if (!isAdmin) {
-                    query = """$query AND ((r.owner.id = ${u.id} AND r.state = '${ModelState.UNPUBLISHED}') 
-OR (r.owner.id != ${u.id} AND r.state = '${ModelState.UNPUBLISHED}') 
+                    query = """$query AND ((r.owner.id = ${u.id} AND r.state = '${ModelState.UNPUBLISHED}')
+OR (r.owner.id != ${u.id} AND r.state = '${ModelState.UNPUBLISHED}')
 OR (r.owner.id = ${u.id} AND r.state = '${ModelState.PUBLISHED}'))
 """
                 }
@@ -823,12 +825,13 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         final User currentUser = User.findByUsername(springSecurityService.authentication.name)
         final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
         Model model = getModel(PERENNIAL_ID)
-        final String formatVersion = modelFileFormatService.getFormatVersion(rev)
+        final String formatVersion = rev.format.formatVersion ?: modelFileFormatService.getFormatVersion(rev)
         Revision revision = new Revision(model: model, name: rev.name, description: rev.description,
                     comment: rev.comment, uploadDate: new Date(), owner: currentUser,
                     validated: rev.validated, curationState: rev.curationState, minorRevision: rev.minorRevision,
                     format: ModelFormat.findByIdentifierAndFormatVersion(rev.format.identifier, formatVersion),
-                    validationReport: rev.validationReport, validationLevel: rev.validationLevel)
+                    validationReport: rev.validationReport, validationLevel: rev.validationLevel, readmeSubmission:
+            rev.readmeSubmission)
         def stopWatch = new Log4JStopWatch("modelService.addValidatedRevision.rftcCreation")
         List<RepositoryFile> domainObjects = convertRepositoryFilesFromTransportCommands(repoFiles, revision)
 
@@ -854,6 +857,8 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
 
         if (revision.validate()) {
             model.addToRevisions(revision)
+            model.modellingApproach = rev.model.modellingApproach
+            model.otherInfo = rev.model.otherInfo
             PublicationTransportCommand publicationTC = rev.model.publication
             if (!publicationTC && model.publication) {
                 // delete db association if corresponding publication was removed in the UI
@@ -1084,7 +1089,8 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         stopWatch.lap("Finished adding RepositoryFiles to the Model")
         stopWatch.setTag("modelService.uploadValidatedModel.prepareVcsStorage")
         ModelFormat format = ModelFormat.findByIdentifierAndFormatVersion(rev.format.identifier, rev.format.formatVersion)
-
+        model.modellingApproach = rev.model.modellingApproach
+        model.otherInfo = rev.model.otherInfo
         // vcs identifier is container name + upload date + submissionId - this should by all means be unique
         String timestamp = new Date().format("yyyy-MM-dd'T'HH-mm-ss-SSS")
         final String submissionId = getSubmissionIdGenerator().generate()
@@ -1550,10 +1556,12 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         }
         List<File> files
         try {
-            files = vcsService.retrieveFiles(revision)
+            files = repositoryFileService.retrieveFiles(revision)
         } catch (VcsException e) {
-            log.error("Retrieving Revision ${revision.vcsId} for Model ${revision.name} from VCS failed.", e)
-            throw new ModelException(new ModelAdapter(model: revision.model).toCommandObject(), "Retrieving Revision ${revision.vcsId} from VCS failed.", e)
+            String message = "Retrieving Revision ${revision.vcsId} for Model ${revision.name} from VCS failed."
+            log.error(message, e)
+            ModelTransportCommand model = new ModelAdapter(model: revision.model).toCommandObject()
+            throw new ModelException(model, message, e)
         }
         return files
     }
@@ -1570,7 +1578,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
     List<RepositoryFileTransportCommand> retrieveModelFiles(final Revision revision) throws ModelException {
         if (aclUtilService.hasPermission(springSecurityService.authentication, revision, BasePermission.READ)
                 || SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')) {
-            return new RevisionAdapter(revision: revision).getRepositoryFilesForRevision()
+            return repositoryFileService.getRepositoryFilesForRevision(revision)
         } else {
             log.error "you can't access revision ${revision.id}!"
             throw new AccessDeniedException("Sorry you are not allowed to download this Model")
@@ -2550,7 +2558,7 @@ FROM
 Revision AS r1
 JOIN r1.model AS model
 WHERE
-    r1.revisionNumber = (select max(r2.revisionNumber) from Revision AS r2 
+    r1.revisionNumber = (select max(r2.revisionNumber) from Revision AS r2
                         where r2.model = model and r2.state = '${ModelState.PUBLISHED}')
     AND (model.submissionId IN (:mids) OR model.publicationId IN (:mids))
     AND r1.id IN (
@@ -2615,5 +2623,15 @@ Try to connect with Conversion service to export the model ${cmd.model.submissio
      */
     private boolean isCurated(Revision revision) {
         revision.curationState == CurationState.CURATED
+    }
+
+    void addModellingApproachAsAnnotation(RevisionTransportCommand revisionTC, ModellingApproach approach) throws
+            ModelException {
+        def sbmlService = grailsApplication.mainContext.getBean("sbmlService", ISbmlService.class)
+        boolean result = sbmlService.addModellingApproachAsAnnotation(revisionTC, approach)
+        if (!result) {
+            log.error("""\
+There has been error while adding $approach to the model ${revisionTC.identifier()}""")
+        }
     }
 }

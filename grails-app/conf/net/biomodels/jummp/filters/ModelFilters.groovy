@@ -24,6 +24,8 @@ import grails.converters.JSON
 import grails.converters.XML
 import grails.util.Holders
 import net.biomodels.jummp.deployment.biomodels.P2MMapping
+import net.biomodels.jummp.deployment.biomodels.UhlenModelMapping
+import net.biomodels.jummp.deployment.biomodels.AutoGenModelMapping
 
 /**
  * @short Filter to redirect users to ModelController for Path2Models models
@@ -41,14 +43,19 @@ import net.biomodels.jummp.deployment.biomodels.P2MMapping
  * @date 2019-06-14
  */
 class ModelFilters {
-    final Set SUPPORTED_FORMAT = ['json', 'xml']
+    final Set SUPPORTED_FORMAT = ['json', 'xml'] as HashSet
     final String serverURL = Holders.grailsApplication.config.grails.serverURL
     def filters = {
         showP2MModel(controller: "model", action: "show") {
             before = {
                 String modelId = params.id
-                if (modelId.contains("BMID")) {
-                    P2MMapping modelMap = P2MMapping.findByMember(modelId)
+                if (modelId.contains("BMID") || modelId.contains("MODEL170711")) {
+                    AutoGenModelMapping modelMap
+                    if (modelId.contains("MODEL170711")) {
+                        modelMap = UhlenModelMapping.findByMember(modelId)
+                    } else if (modelId.contains("BMID")) {
+                        modelMap = P2MMapping.findByMember(modelId)
+                    }
                     if (modelMap) {
                         String representative = modelMap.representative
                         String format = params.format
@@ -74,8 +81,13 @@ class ModelFilters {
         downloadP2MModel(controller: "model", action: "download") {
             before = {
                 String modelId = params.id
-                if (modelId.contains("BMID")) {
-                    P2MMapping modelMap = P2MMapping.findByMember(modelId)
+                if (modelId.contains("BMID") || modelId.contains("MODEL170711")) {
+                    AutoGenModelMapping modelMap
+                    if (modelId.contains("MODEL170711")) {
+                        modelMap = UhlenModelMapping.findByMember(modelId)
+                    } else if (modelId.contains("BMID")) {
+                        modelMap = P2MMapping.findByMember(modelId)
+                    }
                     if (modelMap) {
                         String representative = modelMap.representative
                         forward(controller: "model", action: "download", id: representative)
@@ -87,8 +99,13 @@ class ModelFilters {
         filesP2MModel(controller: "model", action: "files") {
             before = {
                 String modelId = params.id
-                if (modelId.contains("BMID")) {
-                    P2MMapping modelMap = P2MMapping.findByMember(modelId)
+                if (modelId.contains("BMID") || modelId.contains("MODEL170711")) {
+                    AutoGenModelMapping modelMap
+                    if (modelId.contains("MODEL170711")) {
+                        modelMap = UhlenModelMapping.findByMember(modelId)
+                    } else if (modelId.contains("BMID")) {
+                        modelMap = P2MMapping.findByMember(modelId)
+                    }
                     if (modelMap) {
                         String representative = modelMap.representative
                         String format = params.format

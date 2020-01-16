@@ -23,6 +23,7 @@ package net.biomodels.jummp.plugins.matlab
 import net.biomodels.jummp.core.model.FileFormatService
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.model.ModellingApproach
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.apache.tika.detect.DefaultDetector
@@ -110,6 +111,11 @@ class MatlabService implements FileFormatService {
 
     boolean doBeforeSavingAnnotations(File annoFile, RevisionTransportCommand newRevision) {
         true
+    }
+
+    @Override
+    ModellingApproach getModellingApproach(final RevisionTransportCommand revision) {
+        return null
     }
 
     private boolean isRevisionFormatSupported(RevisionTransportCommand revisionCmd) {

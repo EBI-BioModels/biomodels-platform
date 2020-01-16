@@ -64,8 +64,8 @@ grails.project.dependency.resolution = {
         mavenCentral()
         mavenRepo "http://mvn.sems.uni-rostock.de/snapshots/"
         mavenRepo "http://mvn.sems.uni-rostock.de/releases/"
-        mavenRepo "http://www.ebi.ac.uk/~maven/m2repo/"
-        mavenRepo "http://www.ebi.ac.uk/~maven/m2repo_snapshots/"
+        mavenRepo "https://www.ebi.ac.uk/~maven/m2repo/"
+        mavenRepo "https://www.ebi.ac.uk/~maven/m2repo_snapshots/"
         //mavenRepo "http://snapshots.repository.codehaus.org"
         //mavenRepo "http://repository.codehaus.org"
         //mavenRepo "http://download.java.net/maven/2/"

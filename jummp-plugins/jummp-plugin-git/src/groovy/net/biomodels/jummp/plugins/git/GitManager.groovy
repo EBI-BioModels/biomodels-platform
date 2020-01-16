@@ -34,6 +34,7 @@ package net.biomodels.jummp.plugins.git
 import net.biomodels.jummp.core.vcs.InvalidVcsRepositoryException
 import net.biomodels.jummp.core.vcs.VcsAlreadyInitedException
 import net.biomodels.jummp.core.vcs.VcsNotInitedException
+import org.eclipse.jgit.api.ResetCommand
 
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
@@ -525,6 +526,33 @@ class GitManager implements VcsManager {
         }
     }
 
+
+    /**
+     * This is used for testing the private method handleModification.
+     * handleModification is a core manipulation of GitManager where
+     * all add and rm git operations should get tackled. To ease testing,
+     * this method is doing to create a public service accepting a git instance
+     * without looking for a manually initialised git object from initedRepositories
+     * that are dependent on the model repositories.
+     *
+     * @param git   A Git object
+     * @param files A list of files to be added
+     * @param deleted A list of files to be removed
+     * @param commitMessage A string representing the commit message
+     *
+     * @return A String denoting the commit id of the newly made commit
+     */
+    String updateModel(Git git, List<File> files, List<File> deleted, String commitMessage) {
+        String revision
+        try {
+            revision = doGitUpdate(git, files, deleted, commitMessage)
+        } catch (Exception e) {
+            e.printStackTrace()
+            throw new IOException("Git command could not be executed", e)
+        }
+        return revision
+    }
+
     /**
      * Internal implementation for git add/git commit.
      *
@@ -532,6 +560,7 @@ class GitManager implements VcsManager {
      * This method contains the merged implementation for both import and update.
      * It locks the model directory, initialises if necessary
      * copies the files, does git add, git commit and finally a push
+     *
      * @param modelDirectory The model directory
      * @param files The files to copy into the directory
      * @param deleted The files that will be deleted
@@ -539,35 +568,58 @@ class GitManager implements VcsManager {
      * @return A String A string representing the commit hash of the recently created revision
      */
     @Profiled(tag = "gitManager.handleModification")
-    private String handleModification(File modelDirectory, List<File> files, List<File> deleted, String commitMessage) {
+    private String handleModification(File modelDirectory, List<File> files,
+                                      List<File> deleted,
+                                      String commitMessage) {
         String revision
         try {
-            //updateWorkingCopy(modelDirectory)
             Git git = initedRepositories.get(modelDirectory)
-            if (files) {
-                AddCommand add = git.add()
-                files.each {
-                    FileUtils.copyFile(it, new File(modelDirectory.absolutePath + File.separator + it.getName()))
-                    add = add.addFilepattern(it.getName())
-                }
-                add.call()
-            }
-            if (deleted) {
-                RmCommand rm = git.rm()
-                deleted.each {
-                    rm = rm.addFilepattern(it.getName())
-                }
-                rm.call()
-            }
-            RevCommit commit = git.commit().setMessage(commitMessage).call()
-            revision = commit.getId().getName()
-            /*if (hasRemote) {
-                  git.push().call()
-            }*/
+            revision = doGitUpdate(git, files, deleted, commitMessage)
         } catch (Exception e) {
             e.printStackTrace()
             throw new IOException("Git command could not be executed", e)
         }
         return revision
+    }
+
+    /**
+     * This method tries to remove the files which need to be remove and add the ones which
+     * are going to with the latest commit. Flipping around remove and add operation aims at
+     * preserving the files in the list of removed or added files which names are the same.
+     *
+     *
+     * @param git       A git object holding the model repository
+     * @param files     A list of the files to be added
+     * @param deleted   A list of the files to be removed
+     * @param commitMessage A string denoting the commit message
+     *
+     * @return A String denoting the commit id of the newly made commit
+     */
+    private String doGitUpdate(Git git,
+                               List<File> files, List<File> deleted, String commitMessage) {
+        String revision
+        String repoDir = git.repository.directory.parent // parent of .git dir
+        File modelDirectory = new File(repoDir)
+        if (deleted) {
+            RmCommand rm = git.rm()
+            deleted.each {
+                rm = rm.addFilepattern(it.getName())
+            }
+            rm.call()
+        }
+        if (files) {
+            AddCommand add = git.add()
+            files.each {
+                FileUtils.copyFile(it, new File(modelDirectory.absolutePath + File.separator + it.getName()))
+                add = add.addFilepattern(it.getName())
+            }
+            add.call()
+        }
+        RevCommit commit = git.commit().setMessage(commitMessage).call()
+        revision = commit.getId().getName()
+        /*if (hasRemote) {
+              git.push().call()
+        }*/
+        revision
     }
 }

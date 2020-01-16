@@ -29,6 +29,7 @@ import groovy.time.TimeCategory
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.model.Model
+import org.perf4j.aop.Profiled
 
 /**
  * @short Service responsible for retrieving necessary data to design front page and
@@ -39,56 +40,58 @@ import net.biomodels.jummp.model.Model
  *
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-@Transactional
+@Transactional(readOnly = true)
 class DecorationService {
     /**
-     * get 5 of the most accessed models from the last six months
+     * get 7 of the most accessed models from the last six months
      * @return A map of ModelTransportCommand associating with their hits
      */
-    Map<ModelTransportCommand, ModelHits> getRecentlyAccessedModels() {
-        String query = '''
-SELECT ma.model, COUNT(*) as hits, rev.name
-FROM ModelAudit AS ma
-JOIN ma.model AS model
-JOIN model.revisions rev
+    @Profiled(tag = 'decorationService.getRecentlyAccessedModels')
+    Map<String, String> getRecentlyAccessedModels() {
+        String query ='''
+SELECT
+    coalesce(m.publicationId, m.submissionId) as modelId,
+    rev.name
+FROM
+    ModelAudit AS ma
+    JOIN ma.model AS m
+    JOIN m.revisions AS rev
 WHERE
   ma.dateCreated BETWEEN :then AND :now AND
   ma.success = 1 AND
   rev.id IN(
      SELECT aoi.objectId
         FROM
-			AclEntry AS ace
-			JOIN ace.aclObjectIdentity AS aoi
+            AclEntry AS ace
+            JOIN ace.aclObjectIdentity AS aoi
             JOIN aoi.aclClass AS aclClass
             JOIN ace.sid AS sid
         WHERE
             aclClass.className = 'net.biomodels.jummp.model.Revision'
             AND sid.sid = 'ROLE_ANONYMOUS'
             AND ace.mask = 1)
-GROUP BY ma.model
-ORDER BY hits DESC
+GROUP BY rev.model
 '''
         def now = new Date()
-        def then
+        def then = null
         use(TimeCategory) {
             then = now - 6.months
         }
-        def matchedModels = Model.executeQuery(query, [then: then, now: now, max: 7])
-        Map<ModelTransportCommand, ModelHits> returnedModels = new HashMap<>()
-        matchedModels.each {
-            Model m = it[0]
-            int hits = it[1]
-            ModelTransportCommand mtc = new ModelAdapter(model: m).toCommandObject(false)
-            String modelName = it[2]
-            returnedModels.put(mtc, new ModelHits(modelName, hits))
+        def matchedModels = Model.executeQuery(query, [then: then, now: now, max: 7]) as List<List>
+        Map<String, String> returnedModels = new LinkedHashMap<>()
+        matchedModels.each { row ->
+            String id = row[0]
+            String name = row[1]
+            returnedModels.put(id, name)
         }
         returnedModels
     }
 
     /**
-     * get 5 of the most recently published models
+     * get 7 of the most recently published models
      * @return A map of ModelTransportCommand associating with latest published date
      */
+    @Profiled(tag = 'decorationService.getRecentlyPublishedModels')
     Map<ModelTransportCommand, ModelLatestPublished> getRecentlyPublishedModels() {
         String query = '''
 SELECT model, max(model.firstPublished), rev.name
@@ -118,16 +121,6 @@ ORDER BY model.firstPublished DESC'''
             returnedModels.put(mtc, new ModelLatestPublished(modelName, latestPublished))
         }
         returnedModels
-    }
-}
-
-class ModelHits {
-    String modelName
-    Integer hits
-
-    ModelHits(String modelName, Integer hits) {
-        this.modelName = modelName
-        this.hits = hits
     }
 }
 

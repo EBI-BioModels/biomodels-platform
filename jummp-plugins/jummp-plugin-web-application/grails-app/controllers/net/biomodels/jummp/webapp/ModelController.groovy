@@ -48,6 +48,7 @@ import net.biomodels.jummp.core.model.audit.AccessType
 import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
 import net.biomodels.jummp.deployment.biomodels.TagTransportCommand
 import net.biomodels.jummp.model.Model
+import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.Team
@@ -125,7 +126,7 @@ class ModelController {
      * The list of actions for which we should not automatically create an audit item.
      */
     final List<String> AUDIT_EXCEPTIONS = ['updateFlow', 'createFlow', 'uploadFlow',
-                'showWithMessage', 'share', 'getFileDetails', 'submitForPublication', 'updateCurationState']
+                'showWithMessage', 'share', 'getFileDetails', 'submitForPublication', 'updateCurationState', 'searchModellingApproach']
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
 
@@ -655,8 +656,12 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                 if (flow.isUpdate) {
                     String model_id = conversation.model_id
                     flow.workingMemory.put("model_id", model_id)
-                    flow.workingMemory.put("LastRevision",
-                                modelDelegateService.getLatestRevision(model_id, false))
+                    RevisionTransportCommand latest = modelDelegateService.getLatestRevision(model_id, false)
+                    flow.workingMemory.put("LastRevision", latest)
+                    ModellingApproach approach = latest.model.modellingApproach
+                    String modellingApproach = approach ? approach.name : ""
+                    flow.workingMemory.put("modelling_approach", modellingApproach)
+                    flow.workingMemory.put("other_info", latest.model.otherInfo ?: "")
                     /* Maintain reference to the previous revision in session
                        memory to ensure it is not overwritten. Do it with a
                        random variable name to allow updating of multiple
@@ -668,6 +673,9 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     }
                     flow.workingMemory.put("SafeReferenceVariable", variableName)
                     session."${variableName}" = flow.workingMemory.get("LastRevision")
+                } else {
+                    flow.workingMemory.put("modelling_approach", "")
+                    flow.workingMemory.put("other_info", "")
                 }
                 submissionService.initialise(flow.workingMemory)
                 if (flow.isUpdate) {
@@ -1006,17 +1014,25 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
             on("Continue") {
                 //populate modifications object with form data
                 Map<String,Object> modifications = new HashMap<String,Object>()
-                final String NAME = params.name
-                final String DESC = params.description
+                final String NAME = params.name.encodeAsHTML()
+                final String DESC = params.description.encodeAsHTML()
                 final String changeStatus = params.changed
+                final String modellingApproach = params.modelling_approach.encodeAsHTML()
+                final String readmeSubmission = params.readme_submission.encodeAsHTML()
+                final String otherInfo = params.other_info.encodeAsHTML()
+                final long modelFormat = params.getLong("model_format")
                 if (NAME && NAME.trim()) {
                     modifications.put("new_name", NAME.trim())
                 }
                 if (DESC && DESC.trim()) {
                     modifications.put("new_description", DESC.trim())
                 }
-                modifications.put("changeStatus", changeStatus);
+                modifications.put("changeStatus", changeStatus)
                 submissionService.refineModelInfo(flow.workingMemory, modifications)
+                flow.workingMemory.put("readme_submission", readmeSubmission)
+                flow.workingMemory.put("modelling_approach", modellingApproach)
+                flow.workingMemory.put("other_info", otherInfo)
+                flow.workingMemory.put("model_format", modelFormat)
             }.to "enterPublicationLink"
             on("Cancel").to "cleanUpAndTerminate"
             on("Back"){}.to "uploadFiles"
@@ -1397,6 +1413,42 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
         render([message: "You do not have right permissions to change the curation status"] as JSON)
     }
 
+    /**
+     * Search modelling approaches based what users are typing. The data populate the source of
+     * Autocomplete widgets. The data can be customised but they have to include two mandatory
+     * fields as label and value. These two fields are formed from the other ones. For example:
+     * label = MAMO accession: the friendly name
+     * Example: MAMO_0000009: constraint-based model
+     */
+    @Secured(['IS_AUTHENTICATED_FULLY'])
+    @grails.transaction.Transactional
+    def searchModellingApproach() {
+        Integer request = params.getInt("request")
+        String searchTerm = params.get("search")
+        if (request == RequestType.SEARCH_TERMS.value) {
+            List modellingApproaches = metadataDelegateService.searchModellingApproach(searchTerm)
+            List approaches = []
+            modellingApproaches.each { approach ->
+                long id = approach[0]
+                String accession = approach[1]
+                String name = approach[2]
+                String resource = approach[3]
+                String label = name
+                approaches << [id: id, name: name, resource: resource, value: id, label: label]
+            }
+            render(approaches as JSON)
+        } else if (request == RequestType.SELECT_VALUE.value) {
+            String approach = params.get("name")
+            ModellingApproach modellingApproach = metadataDelegateService.getModellingApproach(approach)
+            render([modellingApproach] as JSON)
+        } else {
+            String message = """\
+Please type a few first characters of your thinking words or select a modelling 
+approach from the list of suggested values. Otherwise, type 'Other'"""
+            render([message: message] as JSON)
+        }
+
+    }
 
     /**
      * Display basic information about the model

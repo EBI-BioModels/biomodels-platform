@@ -16,7 +16,7 @@
  *
  * You should have received a copy of the GNU Affero General Public License along
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
- **/
+ */
 
 
 
@@ -25,20 +25,54 @@
 package net.biomodels.jummp.core.model
 
 import grails.transaction.Transactional
+import net.biomodels.jummp.core.ModelException
+import net.biomodels.jummp.core.adapters.ModelAdapter
+import net.biomodels.jummp.core.vcs.VcsException
+import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.RepositoryFile
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
+import net.biomodels.jummp.model.Revision
 import org.apache.tika.detect.DefaultDetector
 import org.apache.tika.metadata.Metadata
+import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 
 /**
  * This class enables to handle services for manipulating repository files such as updating repository files,
  * retrieving these files from the file system, etc.
  *
  * @author  Tung Nguyen <tung.nguyen@ebi.ac.uk>
+ * @author  Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
-class RepositoryFileService {
-    private static final Log log = LogFactory.getLog(RepositoryFileService.class)
+class RepositoryFileService implements GrailsConfigurationAware {
+    static scope = "prototype"
+
+    private static final Logger logger = LoggerFactory.getLogger(RepositoryFileService.class)
+
+    def modelService
+
+    def vcsService
+
+    def grailsApplication
+
+    String MODEL_CACHE_DIR
+
+    /**
+     * Populate the model cache directory
+     */
+    @Override
+    void setConfiguration(ConfigObject co) {
+        MODEL_CACHE_DIR = grailsApplication.config.jummp.model.cache.dir
+        if (!MODEL_CACHE_DIR) {
+            String message = """\
+The configuration file is missing the property of jummp.model.cache.dir"""
+            logger.debug(message)
+        }
+    }
 
     /**
      * This method aims at updating the description of a given repository file.
@@ -56,11 +90,11 @@ class RepositoryFileService {
         if (rf) {
             rf.description = description
             if (rf.save(flush: true)) {
-                log.debug("""\
+                logger.debug("""\
 The repository file which is associated with the file $path has been updated its description: $description""")
                 return Boolean.TRUE
             } else {
-                log.debug("""\
+                logger.debug("""\
 There is an error when trying to update the description: $description --- of the repository file $path""")
                 return Boolean.FALSE
             }
@@ -90,5 +124,126 @@ There is an error when trying to update the description: $description --- of the
             results.add(command)
         }
         results
+    }
+
+    List retrieveFiles(final Revision revision) {
+        // look in the cache and either serve what's there, or fetch from VCS and update the cache
+        List files
+        try {
+            files = get(revision)
+        } catch (ModelException e) {
+            files = vcsService.retrieveFiles(revision)
+            // log the result
+            String message = """\
+Retrieving the revision ${revision.vcsId} for Model ${revision.model.submissionId} from the local model
+cache directory failed. The revision has been checked out from VCS instead."""
+            logger.debug(message)
+            // update the cache
+            boolean updated = updateModelRevisionCache(revision)
+            String modelId = revision.model.submissionId
+            if (updated) {
+                message = """\
+The model ${modelId} revision ${revision.revisionNumber} has been populated them to the  cache successfully"""
+                logger.info(message)
+            } else {
+                message = """\
+There have been errors when updating the cache directory for the model ${modelId} revision ${revision.revisionNumber}"""
+                logger.error(message)
+            }
+        }
+        return files
+    }
+
+    List<File> get(long revisionId) throws ModelException {
+        get(Revision.get(revisionId))
+    }
+
+    List<File> get(Revision revision) throws ModelException {
+        get(revision.model.submissionId, revision.revisionNumber)
+    }
+
+    List<File> get(String modelId, int revisionNumber) throws ModelException {
+        File modelDirectory = new File(MODEL_CACHE_DIR, modelId)
+        File revisionDirectory
+        List returnedFiles = new LinkedList<File>()
+        try {
+            revisionDirectory = new File(modelDirectory, revisionNumber.toString())
+            if (!revisionDirectory.exists()) {
+                throw new FileNotFoundException()
+            } else {
+                returnedFiles = revisionDirectory.listFiles().toList()
+            }
+        } catch (FileNotFoundException me) {
+            Model model = modelService.getModel(modelId)
+            boolean saveHistory = false
+            ModelTransportCommand modelTC = new ModelAdapter(model: model).toCommandObject(saveHistory)
+            String message = """\
+The files associated with this model ${modelId}, revision ${revisionNumber} has been cached yet"""
+            throw new ModelException(modelTC, message)
+        }
+        return returnedFiles
+    }
+
+    boolean updateModelRevisionCache(final Revision revision) {
+        String modelId = revision.model.submissionId
+        String revNum = revision.revisionNumber.toString()
+        logger.info("""\
+Copying the files associated with the revision ${revision.vcsId} (${revision.id}): ${modelId}.${revNum}""")
+        File modelRevDir = Paths.get(MODEL_CACHE_DIR, modelId, revNum).toFile()
+        boolean created = modelRevDir.mkdirs()
+        if (!created) {
+            if (!modelRevDir.exists()) {
+                String message = """\
+we were unable to create the revision directory '${modelRevDir.absolutePath}'"""
+                logger.warn(message)
+                return false
+            } else {
+                logger.info("The directory '${modelRevDir.absolutePath}' exists")
+            }
+        }
+        boolean result = false
+        try {
+            List<File> files = vcsService.retrieveFiles(revision)
+            for (File it: files) {
+                Files.copy(it.toPath(),
+                    new File(modelRevDir, it.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING)
+            }
+            result = true
+        } catch (VcsException e) {
+            logger.error("""\
+There have been errors with VCS manager for the model $modelId, revision $revNum: $e.message""")
+            result = false
+        } catch (IOException e) {
+            logger.error("""\
+IO exception encountered for model $modelId (revision $revNum): $e""")
+            result = false
+        }
+        return result
+    }
+
+    List<RepositoryFileTransportCommand> getRepositoryFilesForRevision(final Revision revision) {
+        List<RepositoryFileTransportCommand> repFiles = new LinkedList<RepositoryFileTransportCommand>()
+        List<File> files = vcsService.retrieveFiles(revision)
+        revision.repoFiles.each { rf ->
+            File tmpFile = files.find { it.getName() == (new File(rf.path)).getName() }
+            if (tmpFile != null) {
+                long size = tmpFile.length()
+                long configPreviewSize = grailsApplication.config.jummp.web.file.preview
+                boolean showPreview = size > configPreviewSize ? true : false
+                RepositoryFileTransportCommand rftc = new RepositoryFileTransportCommand(
+                    id: rf.id,
+                    path: tmpFile.absolutePath,
+                    filename: rf.path,
+                    size: size,
+                    showPreview: showPreview,
+                    description: rf.description,
+                    hidden: rf.hidden,
+                    mainFile: rf.mainFile,
+                    userSubmitted: rf.userSubmitted,
+                    mimeType: rf.mimeType)
+                repFiles.add(rftc)
+            }
+        }
+        return repFiles
     }
 }

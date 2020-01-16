@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2019 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -23,6 +23,7 @@ package net.biomodels.jummp.core
 import eu.ddmore.metadata.service.ValidationException
 import grails.async.Promises
 import net.biomodels.jummp.annotation.SectionContainer
+import net.biomodels.jummp.annotationstore.ElementAnnotation
 import net.biomodels.jummp.annotationstore.ResourceReference
 import net.biomodels.jummp.annotationstore.RevisionAnnotation
 import net.biomodels.jummp.annotationstore.Statement
@@ -32,6 +33,7 @@ import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
 import net.biomodels.jummp.deployment.biomodels.TagTransportCommand
+import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.model.Revision
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
@@ -47,6 +49,7 @@ import org.perf4j.aop.Profiled
  * transactional behaviour.
  *
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 class MetadataDelegateService implements IMetadataService {
     private final Log log = LogFactory.getLog(getClass())
@@ -227,15 +230,12 @@ class MetadataDelegateService implements IMetadataService {
     }
 
     Map<String, String> fetchModellingApproaches(RevisionTransportCommand rev) {
-        List<StatementTransportCommand> statements = getModelLevelAnnotations(rev)
+        ModellingApproach modellingApproach =  rev.model.modellingApproach
         Map result = [:]
-        statements.each { StatementTransportCommand s ->
-            final ResourceReferenceTransportCommand xref = s.object
-            if (MODELLING_APPROACHES.containsKey(xref.accession)) {
-                result.put(xref.accession, MODELLING_APPROACHES.get(xref.accession))
-            }
+        if (modellingApproach) {
+            result.put(modellingApproach.accession, modellingApproach.name)
         }
-        result
+        return result
     }
 
     List<String> fetchOriginalModels(RevisionTransportCommand rev) {
@@ -253,24 +253,52 @@ class MetadataDelegateService implements IMetadataService {
         modelTagService.getTagsByModelId(modelSubmissionId) as Set
     }
 
+    @Override
+    List searchModellingApproach(String searchTerm) {
+        metadataService.searchModellingApproach(searchTerm)
+    }
+
+    @Override
+    ModellingApproach getModellingApproach(String name) {
+        metadataService.getModellingApproach(name)
+    }
+
+    @Override
+    ModellingApproach getModellingApproach(ModelTransportCommand model) {
+        return model.modellingApproach
+    }
+
     Set<TagTransportCommand> findTagsByModel(ModelTransportCommand model) {
         modelTagService.findTagsByModel(model)
     }
 
-    private List<StatementTransportCommand> getModelLevelAnnotations(RevisionTransportCommand rev) {
+
+    List<StatementTransportCommand> getModelLevelAnnotations(RevisionTransportCommand rev) {
+        getModelLevelAnnotations(rev?.id)
+    }
+
+    List<StatementTransportCommand> getModelLevelAnnotations(long revisionId) {
         // By default, fetching generic annotations means to grab model-level annotations
         // The specific levels of annotations should be invoked within another methods
+        if (!revisionId) {
+            return null
+        }
         def modelRAs = RevisionAnnotation.where {
-            revision.id == rev.id && elementAnnotation.modelElementType.name == 'model'
+            revision.id == revisionId && elementAnnotation.modelElementType.name == 'model'
         }
         List<RevisionAnnotation> revisionAnnotations = modelRAs.list()
-        List<ElementAnnotationTransportCommand> annotations
-        use(ElementAnnotationCategory) {
-            annotations = revisionAnnotations.collect { RevisionAnnotation ra ->
-                ra.elementAnnotation.toCommandObject()
+        List<ElementAnnotation> annotationList = revisionAnnotations.collect { RevisionAnnotation ra ->
+            ra.elementAnnotation
+        }
+        List<ElementAnnotationTransportCommand> annotations = new ArrayList<>()
+        annotationList.collect { ElementAnnotation ea ->
+            use(ElementAnnotationCategory) {
+                annotations.add(ea.toCommandObject())
             }
         }
-        List<StatementTransportCommand> statements = annotations*.statement
+        List<StatementTransportCommand> statements = annotations.collect {
+            it.statement
+        }
         statements
     }
 }

@@ -68,8 +68,8 @@ grails.project.dependency.resolution = {
 
         mavenLocal()
         mavenCentral()
-        mavenRepo "http://www.ebi.ac.uk/~maven/m2repo"
-        mavenRepo "http://www.ebi.ac.uk/~maven/m2repo_snapshots/"
+        mavenRepo "https://www.ebi.ac.uk/~maven/m2repo"
+        mavenRepo "https://www.ebi.ac.uk/~maven/m2repo_snapshots/"
         mavenRepo "http://download.eclipse.org/jgit/maven"
         mavenRepo "http://www.biojava.org/download/maven/"
         mavenRepo "http://repo.spring.io/milestone"
@@ -94,7 +94,7 @@ grails.project.dependency.resolution = {
         compile "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.5.2"
 
         // remember to update this setting in jummp-plugin-configuration, jummp-plugin-core-api
-        compile "net.biomodels.jummp:AnnotationStore:0.3.4"
+        compile "net.biomodels.jummp:AnnotationStore:0.3.5"
         compile "org.apache.solr:solr-solrj:5.4.1"
         //required by both JSBML and SolrJ
         compile "org.codehaus.woodstox:woodstox-core-lgpl:4.4.1"

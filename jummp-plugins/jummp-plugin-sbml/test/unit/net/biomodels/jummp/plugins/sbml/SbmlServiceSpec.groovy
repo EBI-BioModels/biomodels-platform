@@ -1,6 +1,15 @@
 package net.biomodels.jummp.plugins.sbml
 
 import grails.test.mixin.TestFor
+import net.biomodels.jummp.core.model.CurationState
+import net.biomodels.jummp.core.model.ModelFormatTransportCommand
+import net.biomodels.jummp.core.model.ModelState
+import net.biomodels.jummp.core.model.ModelTransportCommand
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
+import net.biomodels.jummp.core.model.RevisionTransportCommand
+import org.sbml.jsbml.CVTerm
+import org.sbml.jsbml.SBMLDocument
+import org.sbml.jsbml.SBMLReader
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -92,4 +101,96 @@ class SbmlServiceSpec extends Specification {
         "EQUAL" == fb.getOperation().name()
         10 == fb.getValue()
     }
+
+    @Unroll("""\
+run this test with arguments #targetQualifier, #identifiersToBeInserted, #origIdentifiers, #updated and #nbOrigQuals 
+against the document #documentPath""")
+    void "test model annotations get inserted"(String documentPath,
+                                               CVTerm.Qualifier targetQualifier,
+                                               String accessionPattern,
+                                               List origIdentifiers,
+                                               List updated,
+                                               int nbOrigQuals,
+                                               String... identifiersToBeInserted) {
+        when:
+        SBMLDocument orig = new SBMLReader().readSBML(documentPath)
+        List<CVTerm> origQualifierList = orig.model.annotation.filterCVTerms(targetQualifier)
+        List<String> origAnnotations = origQualifierList*.resources.flatten()
+
+        then:
+        origQualifierList.size() == nbOrigQuals
+        origAnnotations == origIdentifiers
+
+        when:
+        def rf = new RepositoryFileTransportCommand(path: documentPath, mainFile: true, description: "model file")
+        def model = new ModelTransportCommand(submissionId: "MODEL0123456789")
+        def format = new ModelFormatTransportCommand(identifier: "SBML")
+        RevisionTransportCommand rev = new RevisionTransportCommand(model: model, state: ModelState.UNPUBLISHED,
+            revisionNumber: 1, owner: "me", minorRevision: false, validated: true, name: "my model", format: format,
+            description: "desc", uploadDate: new Date(), files: [rf], curationState: CurationState.CURATED)
+
+        SBMLDocument doc = new SBMLReader().readSBML(documentPath)
+        boolean isOk = service.addAnnotationsIfNeeded(rev, doc, targetQualifier,
+            accessionPattern, identifiersToBeInserted)
+        def modifiedQualifiers = doc.model.annotation.filterCVTerms(targetQualifier)
+        then:
+        isOk
+        modifiedQualifiers.size() == 1
+        modifiedQualifiers.resources.flatten() == updated
+
+        where: "samples"
+        documentPath << ["test/files/BIOMD0000000272.xml",
+                         "test/files/BIOMD0000000654.xml"]
+        targetQualifier << [CVTerm.Qualifier.BQM_IS, CVTerm.Qualifier.BQB_HAS_PROPERTY]
+        accessionPattern << ["biomodels.db[/:](BIOMD|MODEL)[0-9]{10}",
+                             "mamo[/:]MAMO_[0-9]{7}"]
+        origIdentifiers << [["http://identifiers.org/biomodels.db/MODEL1005260001",
+                             "http://identifiers.org/biomodels.db/BIOMD0000000272"],
+                            ["http://identifiers.org/mamo/MAMO_0000046",
+                             "http://identifiers.org/teddy/TEDDY456",
+                             "http://identifiers.org/teddy/TEDDY123",
+                             "http://identifiers.org/mamo/MAMO_0000007",]]
+        updated << [["http://identifiers.org/biomodels.db/MODEL1005260001",
+                     "http://identifiers.org/biomodels.db/BIOMD0000000272"],
+                    ["http://identifiers.org/teddy/TEDDY456",
+                     "http://identifiers.org/teddy/TEDDY123",
+                     "http://identifiers.org/mamo/MAMO_0000009"]]
+        nbOrigQuals << [2, 3]
+        identifiersToBeInserted << [["http://identifiers.org/biomodels.db/MODEL1005260001",
+                                     "http://identifiers.org/biomodels.db/BIOMD0000000272"] as String[],
+                                    ["http://identifiers.org/mamo/MAMO_0000009"] as String[]]
+    }
+
+    def "can preserve UTF-8 characters when reading SBML documents"() {
+        when:
+        def modelFile = new File("test/files/MODEL1707110056.xml")
+        def name = service.extractName([modelFile])
+
+        then:
+        name == 'Uhlén2017 - TCGA-06-0139-01A - Glioblastoma Multiforme (male, 41 years)'
+    }
+
+    def "can preserve UTF-8 characters when updating SBML documents"() {
+        when: "a revision of a model whose name contains non-ASCII characters"
+        String documentPath = "test/files/MODEL1707110056.xml"
+        String originalName = "Uhlén2017 - TCGA-06-0139-01A - Glioblastoma Multiforme (male, 41 years)"
+        String newName = "'\u03A3\u03A3 Uhlén2017 \u03A3\u03A3''" // also include greek symbols alongside latin-1
+
+        def rf = new RepositoryFileTransportCommand(path: documentPath, mainFile: true,
+            description: "model file")
+        def model = new ModelTransportCommand(submissionId: "MODEL0123456789")
+        def format = new ModelFormatTransportCommand(identifier: "SBML")
+        RevisionTransportCommand rev = new RevisionTransportCommand(model: model,
+            state: ModelState.UNPUBLISHED, revisionNumber: 1, owner: "me", minorRevision: false,
+            validated: true, name: originalName, format: format, description: "desc",
+            uploadDate: new Date(), files: [rf], curationState: CurationState.CURATED)
+
+        then: "we update the name"
+        service.updateName(rev, newName)
+
+        and:
+        new SBMLReader().readSBML(documentPath).model.name == newName
+        service.updateName(rev, originalName)
+    }
+
 }

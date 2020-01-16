@@ -64,8 +64,8 @@ grails.project.dependency.resolution = {
         //mavenRepo "http://repository.codehaus.org"
         //mavenRepo "http://download.java.net/maven/2/"
         //mavenRepo "http://repository.jboss.com/maven2/"
-        mavenRepo "http://www.ebi.ac.uk/~maven/m2repo"
-        mavenRepo "http://www.ebi.ac.uk/~maven/m2repo_snapshots/"
+        mavenRepo "https://www.ebi.ac.uk/~maven/m2repo"
+        mavenRepo "https://www.ebi.ac.uk/~maven/m2repo_snapshots/"
         //flatDir name: "jummpLibs", dirs: "../../lib/"
     }
     dependencies {

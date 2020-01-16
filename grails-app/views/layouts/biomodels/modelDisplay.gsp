@@ -461,9 +461,12 @@
                     "width": REACTOME_WEIGHT,
                     "height": REACTOME_HEIGHT
                 });
-                //Initialising it to the "Hemostasis" pathway
                 diagram.loadDiagram(reactomeId);
 
+                // store this in a global variable so we can call resetSelection() from
+                // the callback for opening the Reactome popup. Calling it here results
+                // in a popup window with an invisible pathway, even though the widget
+                // control buttons are rendered just fine.
                 //Adding different listeners
                 global_diagram = diagram;
 

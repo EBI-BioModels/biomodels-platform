@@ -41,6 +41,7 @@ import de.unirostock.sems.cbext.Formatizer
 import net.biomodels.jummp.core.model.FileFormatService
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.model.ModellingApproach
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.apache.tika.detect.DefaultDetector
@@ -200,7 +201,11 @@ class OmexService implements FileFormatService {
         return true
     }
 
-    /**
+    @Override
+    ModellingApproach getModellingApproach(RevisionTransportCommand revision) {
+        return null
+    }
+/**
      * Create a combine archive from a list of RepositoryFileTransportCommand objects
      * associated with an individual model given by the model submission identifier
      * @argument a list of RepositoryFileTransportCommand objects
