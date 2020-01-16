@@ -1338,18 +1338,19 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
 
     /**
      * Retrieves the model files for the @p revision.
+     *
+     * This service is currently being used to retrieve the files of the public models.
+     * The other use is to retrieve the files of work flows where the authentication was established.
+     * Therefore, we do not need to check security before fetching the resources.
+     *
      * @param revision The Model Revision for which the files should be retrieved.
      * @return Byte Array of the content of the Model files for the revision.
      * @throws ModelException In case retrieving from VCS fails.
      */
     //@PreAuthorize("hasPermission(#revision, read) or hasRole('ROLE_ADMIN')") Not working. Seems related to: https://bitbucket.org/jummp/jummp/issue/23/spring-security-doesnt-work-as-expected-in
     @PostLogging(LoggingEventType.RETRIEVAL)
-    @Profiled(tag="modelService.retrieveModelRepFiles")
-    List<File> retrieveModelRepFiles(final Revision revision) throws ModelException {
-        if (!aclUtilService.hasPermission(springSecurityService.authentication, revision, BasePermission.READ)
-                && !SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')) {
-            throw new AccessDeniedException("Sorry you are not allowed to download this Model.")
-        }
+    @Profiled(tag="modelService.retrieveFiles")
+    List<File> retrieveFiles(final Revision revision) throws ModelException {
         List<File> files
         try {
             files = repositoryFileService.retrieveFiles(revision)
@@ -2334,7 +2335,14 @@ Failed to update audit $itemId to $success: ${audit.errors.allErrors.inspect()}"
     }
 
     /**
-     * Retrieves the main file of the models given in a list
+     * Retrieves the main file of the models given in a list of their identifiers
+     *
+     * This service is currently used to fetch the requested main files to
+     * @{ModelDelegateService.serveModelFilesAsZip(modelIds)} which is being participated to
+     * download a bulk of the model main files chosen from the search results.
+     * The search result always contains downloadable public models, therefore,
+     * these chain of methods do not need to check ACLs
+     *
      * @param modelIDs The list of model identities being retrieved
      * @return either the list of RepositoryFileTransportCommand objects or null
      *         if there is no model files available
@@ -2366,7 +2374,7 @@ WHERE
         List revisions = Model.executeQuery(query, [mids: mids])
 
         revisions.each { Revision revision ->
-            List<File> files = retrieveModelRepFiles(revision)
+            List<File> files = retrieveFiles(revision)
             RepositoryFile rf = revision.repoFiles.find { RepositoryFile rf -> rf.mainFile }
             File f = files.find { it.name == rf.path }
             if (!f) {
