@@ -137,9 +137,9 @@ class MetadataDelegateService implements IMetadataService {
         metadataService.saveMetadata(model, statements)
     }
 
-    @Profiled(tag = "metadataDelegateService.getPathwayForModelId")
-    String getPathwayForModelId(String modelId) {
-        metadataService.getPathwayForModelId(modelId)
+    @Profiled(tag = "metadataDelegateService.getPathwaysForModelId")
+    List<String> getPathwaysForModelId(String modelId) {
+        metadataService.getPathwaysForModelId(modelId)
     }
 
     @Profiled(tag = "metadataDelegateService.persistAnnotationSchema")
