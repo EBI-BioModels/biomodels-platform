@@ -13,6 +13,9 @@ import org.sbml.jsbml.SBMLReader
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.time.Duration
+import java.time.LocalTime
+
 @TestFor(SbmlService)
 class SbmlServiceSpec extends Specification {
 
@@ -73,6 +76,40 @@ class SbmlServiceSpec extends Specification {
         sbmlFileName                    | expectedErrors
         "Phan2017.xml"                  | 'Undeclared namespace prefix "bqbio"'
         "tiny_example_12.xml"           | 'Unexpected close tag </bqmodel:are>; expected </bqmodel:is>'
+    }
+
+    void profileConsistencyChecks() {
+        when: "we have a large model"
+        File f = new File("test/files/MODEL1707110056.xml")
+        SBMLDocument d = new SBMLReader().readSBML(f)
+        Map offlineResponse = timeIt { d.checkConsistencyOffline() }
+        println "offline $offlineResponse"
+
+        then: "the model's offline consistency checks complete within 10 seconds"
+        0 == offlineResponse['result']
+        10_000L > offlineResponse['time']
+
+        when: "we perform the consistency checks through http://sbml.org/Facilities/Validator/"
+        Map remoteResponse = timeIt { d.checkConsistency() }
+        println "online $remoteResponse"
+
+        then: "we get the same result, but it takes longer"
+        0 == remoteResponse['result']
+        30_000 > remoteResponse['time']
+        offlineResponse['time'] < remoteResponse['time']
+    }
+
+    private static Map timeIt(Closure c) {
+        LocalTime start = LocalTime.now()
+        def response = [:]
+        try {
+            def result = c.call()
+            response['result'] = result
+        } finally {
+            Duration time = Duration.between(start, LocalTime.now())
+            response['time'] = time.toMillis()
+        }
+        response
     }
 
     void "we can extract FBC-related stuff without errors"() {
