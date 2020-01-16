@@ -51,7 +51,8 @@
             });
             $("#collapse-all").click(function(){
                 $(".header").next().slideUp(500);
-            })
+            });
+
         });
     </script>
     <script type="text/x-mathjax-config">
@@ -377,7 +378,12 @@
                 });
             });
         });
-
+        function setReactomeId(reactomeId) {
+            this.reactomeId = reactomeId;
+        }
+        function openDialogBox() {
+            $("#dialog").dialog("open");
+        }
         function displayToolbar(show, firstTime) {
             if (show) {
                 $("#panelToggle").data("showing", '1');
@@ -416,9 +422,8 @@
             height: window.innerHeight || document.body.clientHeight
         };
 
-        if("${reactomeId}") {
-            var reactomeId = "${reactomeId}";
             var global_diagram;
+            var reactomeId ="";
             var base_height = Math.floor(size.height/2);
             var base_width = Math.floor(size.width/2);
             var REACTOME_HEIGHT = base_height;
@@ -438,16 +443,19 @@
                     },
                     autoOpen: false
                 });
-                $("#opener").on("click", function () {
-                    $("#dialog").dialog("open");
+
+                $("#opener").on("change", function () {
+                    setReactomeId(this.value);
+                    if(reactomeId) {
+                        loadDiagram();
+                        openDialogBox();
+                    }
                 });
             });
 
-
             //Creating the Reactome Diagram widget
             //Take into account a proxy needs to be set up in your server side pointing to www.reactome.org
-            function onReactomeDiagramReady() {  //This function is automatically called when the widget code is ready to be used
-
+            function loadDiagram() {
                 var diagram = Reactome.Diagram.create({
                     "placeHolder": "diagramHolder",
                     "width": REACTOME_WEIGHT,
@@ -457,11 +465,10 @@
                 diagram.loadDiagram(reactomeId);
 
                 //Adding different listeners
-                global_diagram =diagram;
+                global_diagram = diagram;
 
                 diagram.onDiagramLoaded(function (loaded) {
                     diagram.flagItems("FYN");
-                    // if (loaded == reactomeId) diagram.selectItem(reactomeId);
                 });
 
                 diagram.onObjectHovered(function (hovered) {
@@ -472,9 +479,6 @@
                     console.info("Selected ", selected);
                 });
             }
-        } else {
-            $("#opener").attr("disabled", "disabled");
-        }
     </script>
     <g:layoutHead/>
 </head>
@@ -626,9 +630,18 @@
                              src="${grailsApplication.config.grails.serverURL}/images/lock.png"/>
                     </g:else>
                 </div>
+            <g:if test="${reactomeIds}">
+
                 <div style="margin-right: 50%;">
-                    <a class="readmore button" id="opener" >View Reactome pathway</a>
+                    <g:select name="reactome_pathways"
+                              id="opener"
+                              onchange="setReactomeId(this.value);"
+                              from="${reactomeIds}"
+                              noSelection="['':'Choose Reactome Pathway']"
+                              optionKey = "${{null != it && !((String)it).isEmpty()?((String)it).split('\\|')[1]:((String)it).split('\\|')[0]}}"
+                              optionValue="${{((String)it).split('\\|')[0]}}" />
                 </div>
+            </g:if>
             </div>
 
             <div id="tablewrapper">
