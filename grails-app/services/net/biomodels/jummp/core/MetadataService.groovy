@@ -140,9 +140,9 @@ class MetadataService {
         return result
     }
 
-    @Profiled(tag = "metadataService.getPathwayForModelId")
-    String getPathwayForModelId(String modelId) {
-        return reactomeService.getPathwayForModelId(modelId)
+    @Profiled(tag = "metadataService.getPathwaysForModelId")
+    List<String> getPathwaysForModelId(String modelId) {
+        return reactomeService.getPathwaysForModelId(modelId)
     }
 
     /**
