@@ -35,6 +35,7 @@ import net.biomodels.jummp.core.vcs.*
 import org.apache.commons.io.FileUtils
 import org.eclipse.jgit.api.*
 import org.eclipse.jgit.api.errors.GitAPIException
+import org.eclipse.jgit.errors.CheckoutConflictException
 import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.revwalk.DepthWalk.RevWalk
 import org.eclipse.jgit.revwalk.RevCommit
@@ -373,17 +374,21 @@ class GitManager implements VcsManager {
     }
 
     @Override
-    boolean resetModelRepository(File modelDirectory, String commitId) throws VcsException, GitAPIException {
+    void resetModelRepository(File modelDirectory, String commitId) throws VcsException {
         Repository repository = GitSupport.buildRepository(modelDirectory)
         Git git = new Git(repository)
         git.init().setDirectory(modelDirectory).call()
-
-        ResetCommand resetCmd = git.reset()
-        resetCmd.setRef(commitId)
-        resetCmd.setMode(ResetCommand.ResetType.HARD)
-        Ref ref = resetCmd.call()
-        boolean result = ref.objectId.name == commitId
-        return result
+        try {
+            ResetCommand resetCmd = git.reset()
+            resetCmd.setRef(commitId)
+            resetCmd.setMode(ResetCommand.ResetType.HARD)
+            resetCmd.call()
+        } catch (GitAPIException | CheckoutConflictException ex) {
+            String errMsg = "Exception thrown during git reset $commitId in ${modelDirectory.name}"
+            throw new VcsException(errMsg, ex)
+        } finally {
+            repository.close()
+        }
     }
 
     /**
@@ -410,7 +415,6 @@ class GitManager implements VcsManager {
             }
         }
         if (addHere.isEmpty()) throw new VcsException("Model directory is empty!")
-
     }
 
     /**

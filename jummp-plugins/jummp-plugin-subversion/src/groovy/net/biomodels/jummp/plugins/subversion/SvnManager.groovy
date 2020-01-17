@@ -311,8 +311,8 @@ public class SvnManager implements VcsManager {
     }
 
     @Override
-    boolean resetModelRepository(File modelDirectory, String commitId) throws VcsException {
-        return null
+    void resetModelRepository(File modelDirectory, String commitId) throws VcsException {
+        throw new UnsupportedOperationException("Not implemented yet")
     }
 /*
      * Initializes the library to work with a repository via

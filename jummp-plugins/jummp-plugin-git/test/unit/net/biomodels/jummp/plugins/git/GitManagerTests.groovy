@@ -177,8 +177,7 @@ class GitManagerTests extends GrailsUnitTestCase {
         assertEquals(3, files.size())
 
         // reset hard to the third commit
-        boolean succeed = gitManager.resetModelRepository(clone, thirdCommitHashId)
-        assertTrue(succeed)
+        gitManager.resetModelRepository(clone, thirdCommitHashId)
         head = git.repository.resolve(Constants.HEAD)
         assertEquals(thirdCommitHashId, head.name)
         revCommit = revWalk.parseCommit(head)
