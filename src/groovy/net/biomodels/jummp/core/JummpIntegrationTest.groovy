@@ -34,6 +34,8 @@
 
 package net.biomodels.jummp.core
 
+import groovy.sql.Sql
+
 import static org.junit.Assert.*
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.plugins.security.Person
@@ -54,6 +56,9 @@ import grails.util.Holders
 class JummpIntegrationTest {
     def authenticationManager = Holders.applicationContext.getBean("authenticationManager")
     def springSecurityService = Holders.applicationContext.getBean("springSecurityService")
+    def grailsApplication
+    def sessionFactory
+    def dataSource
 
     def shouldFail = { exception, code ->
         try {
@@ -233,5 +238,41 @@ class JummpIntegrationTest {
     protected def authenticateAsCurator() {
         modelAdminUser(false)
         return authenticate("curator", "extremelysecret")
+    }
+
+    /**
+     * Clean up data which were persisted into H2
+     * in order to make sure the following tests won't be polluted
+     *
+     * This method will be called in tearDown() of tests
+     * Reuse the public source code: https://gist.github.com/ntung/636d0a22afcea5d3f0ae39d477222568
+     */
+    void cleanupDatabase() {
+        sessionFactory.currentSession.flush()
+        assert UserRole.count() > 0
+        assert Role.count() > 0
+        assert User.count() > 0
+        def db = new Sql(dataSource)
+        db.withBatch { stmt ->
+            stmt.addBatch("SET REFERENTIAL_INTEGRITY FALSE")
+            def domainClasses = grailsApplication.domainClasses*.clazz
+            domainClasses.each { domainClass ->
+                def metadata = sessionFactory.getClassMetadata(domainClass)
+                String tableName = metadata.tableName
+                if (!tableName.equalsIgnoreCase("model_format") &&
+                    !tableName.equalsIgnoreCase("publication_link_provider")) {
+                    stmt.addBatch("TRUNCATE TABLE ${metadata.tableName}")
+                }
+            }
+            stmt.addBatch("SET REFERENTIAL_INTEGRITY TRUE")
+        }
+        sessionFactory.currentSession.clear()
+        int urCnt = 0, rCnt = 0, uCnt = 0
+        urCnt = UserRole.count
+        rCnt = Role.count
+        uCnt = User.count
+        assertEquals(0, urCnt)
+        assertEquals(0, rCnt)
+        assertEquals(0, uCnt)
     }
 }

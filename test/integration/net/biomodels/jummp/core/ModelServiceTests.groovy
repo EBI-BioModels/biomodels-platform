@@ -39,9 +39,7 @@ import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.git.GitManagerFactory
-import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
-import net.biomodels.jummp.plugins.security.UserRole
 import net.biomodels.jummp.webapp.ModelController
 import org.apache.commons.io.FileUtils
 import org.eclipse.jgit.lib.Constants
@@ -65,8 +63,9 @@ class ModelServiceTests extends JummpIntegrationTest {
     def modelService
     def modelFileFormatService
     def fileSystemService
-    def grailsApplication
     def searchService
+    def txSettings = [propagationBehavior: TransactionDefinition.PROPAGATION_REQUIRES_NEW,
+                      isolationLevel     : TransactionDefinition.ISOLATION_READ_COMMITTED]
 
     @Before
     void setUp() {
@@ -89,10 +88,9 @@ class ModelServiceTests extends JummpIntegrationTest {
         modelService.vcsService.vcsManager = gitFactory.getInstance()
         modelService.vcsService.vcsManager.exchangeDirectory = exchange
         assertTrue(modelService.vcsService.isValid())
-        def txDefinition = [propagationBehavior: TransactionDefinition.PROPAGATION_REQUIRES_NEW]
         // wrap this method in a separate transaction to ensure that
         // mocking users and roles are persisted
-        User.withTransaction(txDefinition) {
+        User.withTransaction(txSettings) {
             createUserAndRoles()
         }
     }
@@ -108,6 +106,7 @@ class ModelServiceTests extends JummpIntegrationTest {
         modelService.modelFileFormatService = modelFileFormatService
         modelService.vcsService.modelContainerRoot = null
         fileSystemService.currentModelContainer.set(null)
+        cleanupDatabase()
     }
 
     @Test
