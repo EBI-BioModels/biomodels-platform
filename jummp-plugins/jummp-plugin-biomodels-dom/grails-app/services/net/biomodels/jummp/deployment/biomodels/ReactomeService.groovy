@@ -41,7 +41,6 @@ class ReactomeService implements ApplicationContextAware {
     }
 
     List<String> getPathwaysForModelId(String modelId) {
-        print( modelPathwayMapping.get(modelId))
         modelPathwayMapping.get(modelId)
     }
 }
