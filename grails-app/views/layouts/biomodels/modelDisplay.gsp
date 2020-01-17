@@ -470,10 +470,6 @@
                 //Adding different listeners
                 global_diagram = diagram;
 
-                diagram.onDiagramLoaded(function (loaded) {
-                    diagram.flagItems("FYN");
-                });
-
                 diagram.onObjectHovered(function (hovered) {
                     console.info("Hovered ", hovered);
                 });
