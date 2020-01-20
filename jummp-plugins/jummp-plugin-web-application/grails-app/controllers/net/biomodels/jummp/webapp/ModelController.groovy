@@ -257,7 +257,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
             // TODO need to establish if the requested model revision exists in a way that bypasses
             // ACLs and that doesn't rely on accessing domain objects from the controller
             Revision revision = revisionNumber >= 0 ?
-                    model.revisions.getAt(revisionNumber-1) : model.revisions.last()
+                model.revisions[revisionNumber - 1] : model.revisions.last()
             if (!revision) {
                 forward(controller: 'errors', action: 'error404')
                 return
@@ -1443,7 +1443,7 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
             render([modellingApproach] as JSON)
         } else {
             String message = """\
-Please type a few first characters of your thinking words or select a modelling 
+Please type a few first characters of your thinking words or select a modelling
 approach from the list of suggested values. Otherwise, type 'Other'"""
             render([message: message] as JSON)
         }

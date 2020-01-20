@@ -83,36 +83,16 @@ class ModelBuilder {
         return model
     }
 
-    ModelBuilder setModel(Model model) {
-        this.model = model
-        return this
-    }
-
     Revision getRevision() {
         return revision
-    }
-
-    ModelBuilder setRevision(Revision revision) {
-        this.revision = revision
-        return this
     }
 
     RevisionTransportCommand getRevisionTC() {
         return revisionTC
     }
 
-    ModelBuilder setRevisionTC(RevisionTransportCommand revision) {
-        this.revisionTC = revision
-        return this
-    }
-
     List<RepositoryFileTransportCommand> getRepoFiles() {
         this.repoFiles
-    }
-
-    ModelBuilder setRepoFiles(List<RepositoryFileTransportCommand> repoFiles) {
-        this.repoFiles = repoFiles
-        return this
     }
 
     ModelBuilder(List<RepositoryFileTransportCommand> repoFiles,
