@@ -31,11 +31,17 @@ package net.biomodels.jummp.plugins.git
 
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.Constants
+import org.eclipse.jgit.lib.FileMode
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
+import org.eclipse.jgit.treewalk.TreeWalk
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
+import java.util.logging.Level
 
 /**
  * This class provides tools and utils that support git manager, especially for testing purpose
@@ -44,6 +50,8 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
 class GitSupport {
+    private static final Logger logger = LoggerFactory.getLogger(this.getClass())
+
     static Repository buildRepository(File clone) {
         FileRepositoryBuilder builder = new FileRepositoryBuilder()
         Repository repository = builder.setWorkTree(clone)
@@ -84,6 +92,57 @@ class GitSupport {
     static getLatestCommitHashString(Repository repository) {
         RevCommit revCommit = parseCommit(repository)
         revCommit.name
+    }
+
+    static List<String> lsFiles(Git git, RevCommit commit) {
+        List<String> files = new ArrayList<String>()
+        TreeWalk treeWalk = new TreeWalk(git.repository)
+        try {
+            treeWalk.addTree(new RevWalk(git.repository).parseTree(	commit))
+            while (treeWalk.next()) {
+                files.add(treeWalk.getPathString())
+            }
+        } finally {
+            treeWalk.close()
+            return files
+        }
+    }
+
+    static List<String> lsFiles(Git git, String commitId) {
+        Collection<String> result = new ArrayList<String>()
+        // create a tree walk to search for files
+        TreeWalk walk = new TreeWalk(git.getRepository())
+        try {
+            if (walk != null) {
+
+                // recursively search fo files
+                walk.setRecursive(true)
+                // add the tree the specified commit belongs to
+                walk.addTree(walk.getTree())
+
+                // walk through the tree
+                while (walk.next()) {
+
+                    // TODO: is it a problem if mode is treemode?
+                    final FileMode mode = walk.getFileMode(0)
+                    if (mode == FileMode.TREE) {
+                        logger.error("GitSupport.lsFiles(): FileMode unexpected!")
+                    }
+
+                    // retrieve the path name of the current element
+                    String fileName = walk.getPathString()
+
+                    // we do not want to commit/checkout this file
+                    result.add(fileName)
+                }
+            }
+
+        } catch (IOException ex) {
+            logger.error(null, ex)
+        } finally {
+            walk.close()
+        }
+        result
     }
 
     private static RevCommit parseCommit(Repository repository) {

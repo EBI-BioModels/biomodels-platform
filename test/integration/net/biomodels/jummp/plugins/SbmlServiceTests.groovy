@@ -36,6 +36,8 @@ package net.biomodels.jummp.plugins
 
 import com.ctc.wstx.api.ReaderConfig
 import com.ctc.wstx.stax.WstxInputFactory
+import grails.test.mixin.TestMixin
+import grails.test.mixin.integration.IntegrationTestMixin
 import net.biomodels.jummp.core.JummpIntegrationTest
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand
@@ -46,14 +48,14 @@ import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.plugins.git.GitManagerFactory
 import org.apache.commons.io.FileUtils
-import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.lib.Repository
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder
-import org.junit.*
-import grails.test.mixin.TestMixin
-import grails.test.mixin.integration.IntegrationTestMixin
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
+
 import javax.xml.stream.XMLInputFactory
+
 import static org.junit.Assert.*
+
 /**
  * Test for SbmlService parts which require a running core to retrieve Models.
  */

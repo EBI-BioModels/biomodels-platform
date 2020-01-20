@@ -30,12 +30,17 @@ package net.biomodels.jummp.core.vcs
  * Small wrapper to encapsulate file details.
  *
  * The object can also be used as a command object for the web interface.
+ * For example: The information shown in the History tab of the model display page
  *
  * @author Raza Ali <raza.ali@ebi.ac.uk>
+ * @author Tung Nguyen <tnguyen@ebi.ac.uk>
  */
 class VcsFileDetails implements Serializable {
     private static final long serialVersionUID = 1L
+    // this property is equivalent to commit hash id
     String revisionId
+    // this property is equivalent to the timestamp
     long commit
+    // this property holds the commit message
     String msg
 }
