@@ -31,14 +31,13 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="layout" content="${session['branding.style']}/main" />
-        <title>Forgot Password</title>
-        <link rel="stylesheet" href="${resource(dir: 'css', file: 'jstree.css')}" />
+        <title>Forgot Password | BioModels</title>
     </head>
      <body>
         <div id="requestResetPassword" class="row">
-            <p style="text-align: center"><g:message code="user.forgot.ui.explanation"/></p>
-            <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
-            <g:form name="passwordForm" action="requestPassword">
+            <div class="small-12 medium-6 medium-centered large-6 large-centered columns">
+            <p><g:message code="user.forgot.ui.explanation"/></p>
+            <g:form name="passwordForm" action="requestPassword" useToken="true">
                 <div class="row column request-reset-password-form">
                     <label class="required"><g:message code="user.forgot.ui.username"/></label>
                     <g:textField name="username" placeholder="Enter your username"/>

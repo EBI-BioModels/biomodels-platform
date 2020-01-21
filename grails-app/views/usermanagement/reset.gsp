@@ -43,7 +43,7 @@
         <div class="row">
             <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
             <h3 class="text-center">Reset your password</h3>
-            <g:form name="resetForm" action="newPassword" class="log-in-form">
+            <g:form name="resetForm" action="newPassword" class="log-in-form" useToken="true">
                 <label for="username">
                     <span class="required"><g:message code="user.signup.ui.username"/></span>
                     <g:textField name="username"/>

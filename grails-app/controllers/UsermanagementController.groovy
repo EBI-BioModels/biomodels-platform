@@ -171,21 +171,23 @@ class UsermanagementController {
      */
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def newPassword() {
-    	ResetPasswordCommand cmd=new ResetPasswordCommand()
-    	if (!validateUserData(cmd, params)) {
-    		flash.hashCode=params.hashCode
-    		return redirect(action:"reset")
-    	}
-        try
-    	{
-    		userService.resetPassword(cmd.hashCode, cmd.username, cmd.newPassword)
-    	}
-    	catch(Exception e) {
-    		flash.message="password.reset.service.error"
-   			return redirect(action:"reset")
-    	}
-    	flash.flashMessage="Password for ${cmd.username} was updated successfully. Please try logging in now"
-    	redirect(controller: "login", action:"auth")
+        withForm {
+            ResetPasswordCommand cmd = new ResetPasswordCommand()
+            if (!validateUserData(cmd, params)) {
+                flash.hashCode = params.hashCode.encodeAsHTML()
+                return redirect(action: "reset")
+            }
+            try {
+                userService.resetPassword(cmd.hashCode, cmd.username, cmd.newPassword)
+            } catch (Exception e) {
+                flash.message = "password.reset.service.error"
+                return redirect(action: "reset")
+            }
+            flash.flashMessage = "Password for ${cmd.username} was updated successfully. Please try logging in now"
+            redirect(controller: "login", action: "auth")
+        }.invalidToken {
+            render(controller: "errors", action: "error405")
+        }
     }
 
     /**
@@ -195,51 +197,55 @@ class UsermanagementController {
      */
     @Secured(["IS_AUTHENTICATED_FULLY"])
     def updatePassword() {
-    	UpdatePasswordCommand cmd=new UpdatePasswordCommand()
-    	if (!validateUserData(cmd, params)) {
-    		return redirect(action:"editPassword")
-    	}
-        try
-    	{
-    		userService.changePassword(cmd.oldPassword, cmd.newPassword)
-    	}
-    	catch(Exception e) {
-    		flash.message=e.getMessage();
-   			return redirect(action:"editPassword")
-    	}
-    	flash.message="Password was updated successfully"
-    	redirect(action:"show")
+        withForm {
+            UpdatePasswordCommand cmd = new UpdatePasswordCommand()
+            if (!validateUserData(cmd, params)) {
+                return redirect(action: "editPassword")
+            }
+            try {
+                userService.changePassword(cmd.oldPassword, cmd.newPassword)
+            } catch (Exception e) {
+                flash.message = e.getMessage();
+                return redirect(action: "editPassword")
+            }
+            flash.message = "Password was updated successfully"
+            redirect(action: "show")
+        }.invalidToken {
+            render(controller: "errors", action: "error405")
+        }
     }
 
     /**
-    * Requests a password link from the user service, hiding the exception thrown
-    * if the username provided does not exist.
-    **/
+     * Requests a password link from the user service, hiding the exception thrown
+     * if the username provided does not exist.
+     */
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def requestPassword() {
-        String username = params.username
-        boolean usernameExists = true
-        if (username) {
-            try {
-                userService.requestPassword(username)
-            }
-            catch(Exception e) {
-                log.warn(e.message, e)
-                usernameExists = false
-            }
-            if (usernameExists) {
-                flash.message = "Thank you. Please check the email associated with ${username}'s account"
+        withForm {
+            String username = params.username.encodeAsHTML()
+            boolean usernameExists = true
+            if (username) {
+                try {
+                    userService.requestPassword(username)
+                } catch (Exception e) {
+                    log.warn(e.message, e)
+                    usernameExists = false
+                }
+                if (usernameExists) {
+                    flash.message = "Thank you. Please check the email associated with ${username}'s account"
+                } else {
+                    flash.message = "Username ${username} does not exist."
+                }
             } else {
-                flash.message = "Username ${username} does not exist."
+                flash.message = "Please provide a username."
             }
+            redirect(action: "forgot")
+        }.invalidToken {
+            render(controller: "errors", action: "error405")
         }
-        else {
-            flash.message = "Please provide a username."
-        }
-        redirect(action:"forgot")
     }
 
-     /**
+    /**
      * Performs validation on the captcha, ensures that the empty security parameter is not
      * filled (as is commonly done by robots), validates the command object and then uses
      * the user service to create a user. If an error occurs at any point, the method redirects
@@ -247,29 +253,31 @@ class UsermanagementController {
      */
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def signUp() {
-        RegistrationCommand cmd = new RegistrationCommand()
-        if (!validateUserData(cmd, params)) {
-            return redirect(action:"create")
+        withForm {
+            RegistrationCommand cmd = new RegistrationCommand()
+            if (!validateUserData(cmd, params)) {
+                return redirect(action: "create")
+            }
+            boolean captchaValid = simpleCaptchaService.validateCaptcha(params.captcha)
+            if (!captchaValid) {
+                flash.message = "The text entered did not match the image. Please try again"
+                return redirect(action: "create")
+            }
+            if (params.verysecure) {
+                flash.message = "I hope you are a robot. Otherwise something has gone wrong."
+                return redirect(action: "create")
+            }
+            try {
+                userService.register(cmd.toUser())
+            } catch (Exception e) {
+                flash.message = e.getMessage()
+                log.error e.message, e
+                return redirect(action: "create")
+            }
+            render(view: "successfulregistration", model: [email: cmd.email])
+        }.invalidToken {
+            render(controller: "errors", view: "error405")
         }
-        boolean captchaValid = simpleCaptchaService.validateCaptcha(params.captcha)
-        if (!captchaValid) {
-            flash.message="The text entered did not match the image. Please try again"
-            return redirect(action:"create")
-        }
-        if (params.verysecure) {
-            flash.message="I hope you are a robot. Otherwise something has gone wrong."
-            return redirect(action:"create")
-        }
-        try
-    	{
-    		userService.register(cmd.toUser())
-    	}
-    	catch(Exception e) {
-    		flash.message=e.getMessage()
-            log.error e.message, e
-   			return redirect(action:"create")
-    	}
-    	render(view: "successfulregistration", model: [email: cmd.email])
     }
 
     /**

@@ -31,7 +31,7 @@
         <div class="row">
             <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
                 <h3>Change your password</h3>
-                <g:form action="updatePassword">
+                <g:form action="updatePassword" useToken="true">
                     <div class="row column edit-password-form">
                         <label class="required"><g:message code="user.administration.updatePassword.oldPassword"/></label>
                         <g:passwordField name="oldPassword"/>

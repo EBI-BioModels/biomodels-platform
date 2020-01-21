@@ -41,7 +41,7 @@
     <body>
         <div id="register" class="row">
             <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
-                <g:form name="registerForm" action="signUp" onkeypress="return event.keyCode != 13;">
+                <g:form name="registerForm" action="signUp" onkeypress="return event.keyCode != 13;" useToken="true">
                     <div class="row column register-form">
                         <g:render template="userInforInput" model="[user: null]"/>
 
