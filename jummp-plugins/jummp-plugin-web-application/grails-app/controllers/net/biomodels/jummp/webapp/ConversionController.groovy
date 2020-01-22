@@ -45,15 +45,15 @@ class ConversionController {
     def convert() {
         RevisionTransportCommand revisionTC
         try {
-            String modelId = params.id
-            String revisionId = params.revisionId
+            String modelId = params.id.encodeAsHTML()
+            String revisionId = params.revisionId.encodeAsHTML()
             revisionTC = modelDelegateService.getRevisionFromParams(modelId, revisionId)
             boolean isServiceOn = modelConversionService.isAlive()
             if (isServiceOn) {
                 modelConversionService.generateExports(revisionTC)
                 redirect(controller: "model", action: "showWithMessage",
                     id: revisionTC.identifier(),
-                    params: [flashMessage: """The request of converting the model ${revisionTC.identifier()} 
+                    params: [flashMessage: """The request of converting the model ${revisionTC.identifier()}
 to the other formats has been sent to the external conversion service."""])
             } else {
                 redirect(controller: "model", action: "showWithMessage",
@@ -77,10 +77,10 @@ to the other formats has been sent to the external conversion service."""])
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def download() {
         final String EXPORT_FOLDER = modelConversionService.EXPORT_FOLDER
-        String modelId = params.id
-        String revisionId = params.revisionId
-        String fileName = params.fileName
-        String mimeType = params.mimeType
+        String modelId = params.id.encodeAsHTML()
+        String revisionId = params.revisionId.encodeAsHTML()
+        String fileName = params.fileName.encodeAsHTML()
+        String mimeType = params.mimeType.encodeAsHTML()
         String revisionFolder = "${EXPORT_FOLDER}${File.separator}"
         revisionFolder += "${modelId}${File.separator}${revisionId}${File.separator}"
         File file = new File(revisionFolder, fileName)

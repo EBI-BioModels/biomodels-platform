@@ -109,7 +109,7 @@
             });
             /* build up a publication transport command object */
             function buildPublicationTC() {
-                let id = ${params.id};
+                let id = ${params.id.encodeAsHTML()};
                 let linkProvider = {
                     "linkType": $('#linkProvider').val(),
                     "pattern": ""
@@ -173,7 +173,7 @@
                     type: "POST",
                     url: "${createLink(controller: "publication", action: "refreshPubMedData")}",
                     data: {
-                        id: ${params.id},
+                        id: ${params.id.encodeAsHTML()},
                         pubmed: $('#link').val()
                     }
                 }).done(function(data) {

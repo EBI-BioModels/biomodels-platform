@@ -34,11 +34,13 @@ class PublicationController {
     }
 
     def refreshPubMedData() {
-        PublicationTransportCommand pubTC = pubMedService.fetchPublicationData(params.pubmed)
+        PublicationTransportCommand pubTC = pubMedService.fetchPublicationData(params.pubmed.encodeAsHTML())
         pubTC.id = params.long("id")
         render template: "/templates/publication/publicationEditableElements",
             plugin: "jummp-plugin-web-application",
-            model: [id: params.id, publication: pubTC, authorListContainerSize: 4, controllerName: "publication", actionName: "show"]
+            model: [id: params.id.encodeAsHTML(), publication: pubTC,
+                    authorListContainerSize: 4, controllerName: "publication",
+                    actionName: "show"]
     }
 
     def save(PublicationTransportCommand pubCmd) {

@@ -75,14 +75,14 @@ class UserAdministrationController {
     def dataTableSource = {
         int start = 0
         int length = 10
-        if (params.iDisplayStart) {
-            start = params.iDisplayStart as int
+        if (params.iDisplayStart.encodeAsHTML()) {
+            start = params.iDisplayStart.encodeAsHTML() as int
         }
-        if (params.iDisplayLength) {
-            length = Math.min(100, params.iDisplayLength as int)
+        if (params.iDisplayLength.encodeAsHTML()) {
+            length = Math.min(100, params.iDisplayLength.encodeAsHTML() as int)
         }
         def dataToRender = [:]
-        dataToRender.sEcho = params.sEcho
+        dataToRender.sEcho = params.sEcho.encodeAsHTML()
         dataToRender.aaData = []
 
         dataToRender.iTotalRecords = userService.getTotalUserCount()
@@ -100,7 +100,8 @@ class UserAdministrationController {
      */
     def enable = {
         try {
-            def data = [success: userService.enableUser(params.id as Long, Boolean.parseBoolean(params.value))]
+            def data = [success: userService.enableUser(params.id.encodeAsHTML() as Long,
+                Boolean.parseBoolean(params.value.encodeAsHTML()))]
             render data as JSON
         } catch (UserNotFoundException e) {
             def data = [error: true, message: e.message]
@@ -113,7 +114,8 @@ class UserAdministrationController {
      */
     def lockAccount = {
         try {
-            def data = [success: userService.lockAccount(params.id as Long, Boolean.parseBoolean(params.value))]
+            def data = [success: userService.lockAccount(params.id.encodeAsHTML() as Long,
+                Boolean.parseBoolean(params.value.encodeAsHTML()))]
             render data as JSON
         } catch (UserNotFoundException e) {
             def data = [error: true, message: e.message]
@@ -126,7 +128,8 @@ class UserAdministrationController {
      */
     def expireAccount = {
         try {
-            def data = [success: userService.expireAccount(params.id as Long, Boolean.parseBoolean(params.value))]
+            def data = [success: userService.expireAccount(params.id.encodeAsHTML() as Long,
+                Boolean.parseBoolean(params.value.encodeAsHTML()))]
             render data as JSON
         } catch (UserNotFoundException e) {
             def data = [error: true, message: e.message]
@@ -139,7 +142,8 @@ class UserAdministrationController {
      */
     def expirePassword = {
         try {
-            def data = [success: userService.expirePassword(params.id as Long, Boolean.parseBoolean(params.value))]
+            def data = [success: userService.expirePassword(params.id.encodeAsHTML() as Long,
+                Boolean.parseBoolean(params.value.encodeAsHTML()))]
             render data as JSON
         } catch (UserNotFoundException e) {
             def data = [error: true, message: e.message]
@@ -155,7 +159,9 @@ class UserAdministrationController {
             render(template: "/templates/page", model: [link: g.createLink(action: "show", id: params.id), callback: "loadAdminUserCallback"])
             return
         }*/
-        [user: userService.getUser(params.id as Long), roles: userService.getAllRoles(), userRoles: userService.getRolesForUser(params.id as Long)]
+        [user: userService.getUser(params.id.encodeAsHTML() as Long),
+         roles: userService.getAllRoles(),
+         userRoles: userService.getRolesForUser(params.id.encodeAsHTML() as Long)]
     }
 
     /**

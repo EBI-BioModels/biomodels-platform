@@ -22,10 +22,7 @@
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.plugins.security.User
-import net.biomodels.jummp.webapp.EditUserCommand
-import net.biomodels.jummp.webapp.RegistrationCommand
-import net.biomodels.jummp.webapp.ResetPasswordCommand
-import net.biomodels.jummp.webapp.UpdatePasswordCommand
+import net.biomodels.jummp.webapp.*
 
 /*
 * @short Controller for managing user registrations
@@ -288,9 +285,9 @@ class UsermanagementController {
      */
     @Secured(["IS_AUTHENTICATED_FULLY"])
     def fetchUsers() {
-        def request = params.request
-        def searchTerm = params.search
-        if (Integer.parseInt(request) == 1) {
+        String request = params.request.encodeAsHTML()
+        String searchTerm = params.search.encodeAsHTML()
+        if (Integer.parseInt(request) == RequestType.SEARCH_TERMS) {
             List users = userService.searchUsers(searchTerm)
             def usersMap = []
             users.each {user ->
@@ -305,8 +302,8 @@ class UsermanagementController {
                              userRealname: userRealName]
             }
             render(usersMap as JSON)
-        } else {
-            def username = params.username
+        } else { // request == RequestType.SELECT_VALUE
+            String username = params.username.encodeAsHTML()
             User user = userService.getUser(username)
             render([user] as JSON)
         }
@@ -320,10 +317,10 @@ class UsermanagementController {
      *
      * @return JSON string  the query if an user matches with, or an empty string in otherwise.
      */
-    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY", "IS_AUTHENTICATED_FULLY"])
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def lookupUser() {
-        String query = params?.query
-        int column = Integer.parseInt(params?.column)
+        String query = params?.query.encodeAsHTML()
+        int column = Integer.parseInt(params?.column?.encodeAsHTML())
         User user = userService.lookupUser(query, column)
         String response = ""
         if (user) {
