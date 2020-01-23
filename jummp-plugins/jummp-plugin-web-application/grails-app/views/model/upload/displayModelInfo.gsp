@@ -249,7 +249,7 @@
                 let element = $('#readme_submission_div');
                 let selectedFormat = $opt.val();
                 let selectedText = $opt.text();
-                let comparableText = 'Original code *';
+                let comparableText = "${unknownFormat.name} *";
                 showOrHideBox(element, selectedText, comparableText, definedModelFormatNames);
             }
 
