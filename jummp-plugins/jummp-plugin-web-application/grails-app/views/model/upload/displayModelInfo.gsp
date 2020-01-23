@@ -59,39 +59,6 @@
         <p><g:message code="submission.biomodels.model.information.explanation" locale="${Locale.getDefault()}"/></p>
         <g:form>
             <div class="row">
-                <div class="small-12 medium-6 large-6 columns">
-                    <label for="model_format" class="required">Model Format</label>
-                    <g:if test="${workingMemory['model_type']}">
-                    </g:if>
-                    <g:select name="model_format" id="model_format" required=""
-                              from="${modelFormatsSortedByName}"
-                              value="${selectedValue}"
-                              optionKey="id"
-                              optionValue="${{it?.name + ' ' + it?.formatVersion}}"/>
-                    <div id="readme_submission_div" style="display: none">
-                    <label for="readme_submission" class="required">Describe more exactly your model format</label>
-                    <g:textField name="readme_submission" id="readme_submission"
-                                 value="${readmeSubmission}"
-                                 placeholder="Please describe here more accurately what is your model format" /></div>
-                </div>
-                <div class="small-12 medium-6 large-6 columns">
-                    <label for="modelling_approach" class="required">Modelling Approach</label>
-                    <g:textField name="modelling_approach" id="modelling_approach" value="${modellingApproach}"
-                                 placeholder="Enter your modelling approach" required="true"
-                                 aria-describedby="modellingApproachHelp"/>
-                    <p class="help-text" id="modellingApproachHelp">Find the appropriate one by typing a few more
-                first characters of your words. The system will suggest you our defined modelling approaches. If you
-                are not sure your modelling approach, please type Other for now.</p>
-
-                    <div id="model_other_info_div" style="display: none">
-                    <label for="other_info" class="required">Describe more exactly your modelling approach</label>
-                    <g:textField name="other_info" id="other_info"
-                                 value="${otherInfo}"
-                                 placeholder="Please enter here what is your modelling approach"/></div>
-                </div>
-            </div>
-
-            <div class="row">
             <div class="small-12 medium-12 large-12 columns">
             <label for="name" class="required">Name</label>
             <g:if test="${workingMemory['new_name']}">
@@ -119,6 +86,38 @@
                             placeholder="Enter a brief description for your model revision, for example: what are the  differences to the previous ones"/>
             </g:else>
             </div></div>
+            <div class="row">
+                <div class="small-12 medium-6 large-6 columns">
+                    <label for="model_format" class="required">Model Format</label>
+                    <g:if test="${workingMemory['model_type']}">
+                    </g:if>
+                    <g:select name="model_format" id="model_format" required=""
+                              from="${modelFormatsSortedByName}"
+                              value="${selectedValue}"
+                              optionKey="id"
+                              optionValue="${{it?.name + ' ' + it?.formatVersion}}"/>
+                    <div id="readme_submission_div" style="display: none">
+                        <label for="readme_submission" class="required">Describe more exactly your model format</label>
+                        <g:textField name="readme_submission" id="readme_submission"
+                                     value="${readmeSubmission}"
+                                     placeholder="Please describe here more accurately what is your model format" /></div>
+                </div>
+                <div class="small-12 medium-6 large-6 columns">
+                    <label for="modelling_approach" class="required">Modelling Approach</label>
+                    <g:textField name="modelling_approach" id="modelling_approach" value="${modellingApproach}"
+                                 placeholder="Enter your modelling approach" required="true"
+                                 aria-describedby="modellingApproachHelp"/>
+                    <p class="help-text" id="modellingApproachHelp">Find the appropriate one by typing a few more
+                    first characters of your words. The system will suggest you our defined modelling approaches. If you
+                    are not sure your modelling approach, please type Other for now.</p>
+
+                    <div id="model_other_info_div" style="display: none">
+                        <label for="other_info" class="required">Describe more exactly your modelling approach</label>
+                        <g:textField name="other_info" id="other_info"
+                                     value="${otherInfo}"
+                                     placeholder="Please enter here what is your modelling approach"/></div>
+                </div>
+            </div>
             <input type='hidden' value='false' name='changed' id="changeStatus"/>
             <div class="buttons">
                 <g:submitButton name="Cancel" class="button" value="Abort" />
@@ -237,7 +236,7 @@
                 let comparableText = 'Original code *';
                 showOrHideBox(element, selectedText, comparableText, definedModelFormatNames);
             }
-            
+
             function showWarningMessageIfNecessary(inputVal, definedModellingApproachNames) {
                 inputVal = $.trim(inputVal);
                 let existed = $.inArray(inputVal, definedModellingApproachNames) >= 0;
