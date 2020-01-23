@@ -17,23 +17,15 @@
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
-
-
-
-
-
-
-
-
-
-
 <%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page import="net.biomodels.jummp.model.ModelFormat" %>
 <%@ page import="net.biomodels.jummp.core.model.ModelFormatTransportCommand" %>
 <%@ page import="net.biomodels.jummp.core.model.RevisionTransportCommand" %>
 <%
     List modelFormatsSortedByName = workingMemory['sorted_model_formats']
     ModelFormatTransportCommand format = workingMemory['model_type']
-    Integer selectedValue = format ? format.id : ModelFormat.findByName("UNKNOWN")?.id
+    ModelFormat unknownFormat = ModelFormat.findByIdentifier("UNKNOWN")
+    Integer selectedValue = format ? format.id : unknownFormat?.id
     String readmeSubmission = workingMemory['readme_submission']
     String modellingApproach = workingMemory['modelling_approach']
     String otherInfo = workingMemory['other_info']
@@ -175,9 +167,19 @@
             $(document).ready(function () {
                 associateEventHandlers("description");
                 associateEventHandlers("name");
+                handleModelFormatBoxState();
                 handleShowOrHideModelFormatExtraInfo($('#model_format'));
                 handleShowOrHideModellingApproachExtraInfo($('#modelling_approach'), false)
             });
+
+            function handleModelFormatBoxState() {
+                let mf = $('#model_format');
+                if (${format.name != unknownFormat?.name}) {
+                    mf.attr('disabled', true);
+                } else {
+                    mf.attr('disabled', false);
+                }
+            }
 
             $('#modelling_approach').on('keydown', function () {
                 $(this).autocomplete({
@@ -275,4 +277,3 @@
     </body>
     <g:render template="/templates/decorateSubmission" />
     <g:render template="/templates/subFlowContextHelp" />
-
