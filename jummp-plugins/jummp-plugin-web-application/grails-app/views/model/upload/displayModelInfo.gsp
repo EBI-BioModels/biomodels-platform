@@ -53,6 +53,13 @@
                 definedModelFormatNames.push("${fmt?.name + ' ' + fmt?.formatVersion}");
             </g:each>
         </g:javascript>
+        <style type="text/css">
+            .assistive-example {
+                font-size: small;
+                font-style: italic;
+                color: darkgray
+            }
+        </style>
     </head>
     <body>
         <h2><g:message code="submission.biomodels.model.information.heading" locale="${Locale.getDefault()}"/></h2>
@@ -60,7 +67,9 @@
         <g:form>
             <div class="row">
             <div class="small-12 medium-12 large-12 columns">
-            <label for="name" class="required">Name</label>
+                <label for="name">
+                    <span class="required">Name</span>&nbsp;
+                    <span class="assistive-example">[e.g. Launna2020 - T-Cell signalling model]</span></label>
             <g:if test="${workingMemory['new_name']}">
                 <g:textField id="name" name="name" required=""
                              value="${workingMemory['new_name']}"
@@ -88,7 +97,9 @@
             </div></div>
             <div class="row">
                 <div class="small-12 medium-6 large-6 columns">
-                    <label for="model_format" class="required">Model Format</label>
+                    <label for="model_format">
+                        <span class="required">Model Format</span>&nbsp;
+                        <span class="assistive-example">[e.g. SBML L3V2, Python 2.7, C/C++]</span></label>
                     <g:if test="${workingMemory['model_type']}">
                     </g:if>
                     <g:select name="model_format" id="model_format" required=""
@@ -97,13 +108,16 @@
                               optionKey="id"
                               optionValue="${{it?.name + ' ' + it?.formatVersion}}"/>
                     <div id="readme_submission_div" style="display: none">
-                        <label for="readme_submission" class="required">Describe more exactly your model format</label>
+                        <label for="readme_submission" class="required">
+                            Describe more exactly your model format (e.g. SBML L3V2, Python 2.7, C/C++)</label>
                         <g:textField name="readme_submission" id="readme_submission"
                                      value="${readmeSubmission}"
                                      placeholder="Please describe here more accurately what is your model format" /></div>
                 </div>
                 <div class="small-12 medium-6 large-6 columns">
-                    <label for="modelling_approach" class="required">Modelling Approach</label>
+                    <label for="modelling_approach">
+                        <span class="required">Modelling Approach</span>&nbsp;
+                        <span class="assistive-example">[e.g. Constraint-based modelling, Logical model, Markov model,...]</span></label>
                     <g:textField name="modelling_approach" id="modelling_approach" value="${modellingApproach}"
                                  placeholder="Enter your modelling approach" required="true"
                                  aria-describedby="modellingApproachHelp"/>
