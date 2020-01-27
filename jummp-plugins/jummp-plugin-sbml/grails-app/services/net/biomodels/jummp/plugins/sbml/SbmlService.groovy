@@ -82,7 +82,7 @@ import java.util.regex.Pattern
  */
 class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
     static transactional = true
-    def bpToModelDisplayService
+    def modelDisplayService
     private static final Log log = LogFactory.getLog(this)
     private static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
     /**
@@ -383,7 +383,12 @@ the user has attempted to update an blank value for the name attribute.""")
     }
 
     def extractComponentsFromBP(String modelId) {
-        return bpToModelDisplayService.getComponentsFromBP(modelId)
+        return modelDisplayService.getComponentsFromBP(modelId)
+
+    }
+    @Profiled(tag="sbmlService.extract")
+    def extract(String modelId) {
+        return modelDisplayService.getComponentsFromModelDisplay(modelId)
     }
     /**
      * Extracts the SBML model notes.
