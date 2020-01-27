@@ -29,9 +29,7 @@
 **/
 
 
-
-
-
+import net.biomodels.jummp.plugins.sbml.ModelDisplayService
 import org.springframework.beans.factory.NoSuchBeanDefinitionException
 import net.biomodels.jummp.plugins.configuration.ConfigurationService
 
@@ -83,6 +81,11 @@ Brief description of the plugin.
             application.config.jummp.plugins.sbml.validation = false
         }
 */
+
+        modelDisplayService(ModelDisplayService) { bean ->
+            bean.scope = 'singleton'
+            accessUrl = "http://localhost:8887/api/access"
+        }
    }
 
     def doWithDynamicMethods = { ctx ->
