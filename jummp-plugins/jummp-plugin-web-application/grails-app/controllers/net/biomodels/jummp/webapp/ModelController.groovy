@@ -281,9 +281,9 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     return
                 } else {
                     final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
-                    def components = [:]
+                    def components;
                     try {
-                        components = sbmlService.extractComponentsFromBP(PERENNIAL_ID)
+                        components = sbmlService.extract(PERENNIAL_ID)
                     }catch(RuntimeException re){
                         log.error("Error while extracting components from BP")
                         log.error(re)
