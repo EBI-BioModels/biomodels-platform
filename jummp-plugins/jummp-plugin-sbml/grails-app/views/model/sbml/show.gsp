@@ -60,14 +60,18 @@
 
 
                     <div class="content">
-                        <g:if test="${components.species?.size() > 0}">
+                        <g:if test="${null != components && components.species?.size() > 0}">
                             <table>
                                 <th>Species</th>
                                 <th>Initial Concentration/Amount</th>
-                                <g:each var="a" in="${components.species}">
+                                <g:each var="speciesComponent" in="${components.species}">
                                     <tr style="text-align: center">
-                                        <td>${a.value.speciesAnnotationShow}</td>
-                                        <td>${a.value.initialData}</td>
+                                        <td>
+                                            <span style="color: green">${speciesComponent.speciesId}</span>
+                                            <br/>
+                                            <span>${speciesComponent.resolvedAccessionUrlsShow}</span>
+                                        </td>
+                                        <td>${speciesComponent.initialData}</td>
                                     </tr>
                                 </g:each>
                             </table>
@@ -82,16 +86,24 @@
                     </div>
 
                     <div class="content small-12 medium-4 large-8 columns">
-                        <g:if test="${components.reactions?.size() > 0}">
+                        <g:if test="${null != components && components.reactions?.size() > 0}">
                             <table style="width: 100%">
                                 <th>Reactions</th>
                                 <th>Rate</th>
                                 <th>Parameters</th>
-                                <g:each var="a" in="${components.reactions}">
+                                <g:each var="reactionComponent" in="${components.reactions}">
                                     <tr style="text-align: center">
-                                        <td>${a.value.reactionShow}</td>
-                                        <td>${a.value.rateShow}</td>
-                                        <td>${a.value.parameters}</td>
+                                        <td>
+                                            <span style="color: green">${reactionComponent.unResolvedReaction}</span>
+                                            <br/>
+                                            <span>${reactionComponent.resolvedReaction}</span>
+                                        </td>
+                                        <td>
+                                            <span style="color: green">${reactionComponent.unResolvedRate}</span>
+                                            <br/>
+                                            <span>${reactionComponent.resolvedRate}</span>
+                                        </td>
+                                        <td>${reactionComponent.parameters}</td>
                                     </tr>
                                 </g:each>
                             </table>
