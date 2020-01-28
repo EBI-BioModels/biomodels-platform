@@ -35,8 +35,8 @@ grails.project.dependency.resolution = {
         //mavenRepo "http://repository.jboss.com/maven2/"
     }
     dependencies {
-        compile "org.apache.tika:tika-core:1.14"
-        runtime 'org.apache.tika:tika-parsers:1.14'
+        compile "org.apache.tika:tika-core:1.23"
+        runtime 'org.apache.tika:tika-parsers:1.23'
     }
 
     plugins {

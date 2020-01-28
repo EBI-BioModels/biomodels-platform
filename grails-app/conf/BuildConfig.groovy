@@ -120,7 +120,7 @@ grails.project.dependency.resolution = {
                     'xml-apis'
         }*/
         compile 'log4j:log4j:1.2.17'
-        compile "org.apache.tika:tika-core:1.14"
+        compile "org.apache.tika:tika-core:1.23"
         /**
          * Weceem lists it as a runtime dependency, while jsbml needs it during compilation.
          * Unfortunately, Grails misbehaves and leaves xstream out at compile time unless we
@@ -205,6 +205,7 @@ grails.plugin.location.'jummp-plugin-configuration' = "jummp-plugins/jummp-plugi
 grails.plugin.location.'jummp-plugin-git' = "jummp-plugins/jummp-plugin-git"
 // Disconnect SVN for now because of the changes to the VcsManager interface and lack of time
 //grails.plugin.location.'jummp-plugin-subversion' = "jummp-plugins/jummp-plugin-subversion"
+grails.plugin.location.'jummp-plugin-common-format' = "jummp-plugins/jummp-plugin-common-format"
 grails.plugin.location.'jummp-plugin-sbml' = "jummp-plugins/jummp-plugin-sbml"
 grails.plugin.location.'jummp-plugin-combine-archive' = "jummp-plugins/jummp-plugin-combine-archive"
 grails.plugin.location.'jummp-plugin-matlab' = "jummp-plugins/jummp-plugin-matlab"
