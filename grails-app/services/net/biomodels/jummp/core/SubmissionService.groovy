@@ -282,6 +282,9 @@ class SubmissionService {
          */
         void performValidation(Map<String, Object> workingMemory) {
             if (processingRequired(workingMemory)) {
+                ModelFormat unknownFormat = ModelFormat.findByIdentifier("UNKNOWN")
+                MFTC unknownFormatTC = new ModelFormatAdapter(format: unknownFormat).toCommandObject()
+                workingMemory.put("unknown_format_command", unknownFormatTC)
                 workingMemory.remove("validationErrorList")
                 List<File> modelFiles = getFilesFromMemory(workingMemory, false)
                 modelFiles.each { File it ->
