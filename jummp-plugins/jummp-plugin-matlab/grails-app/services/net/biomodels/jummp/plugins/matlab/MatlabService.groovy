@@ -55,9 +55,9 @@ class MatlabService implements FileFormatService {
         if (IS_DEBUG_ENABLED) {
             def names = mainFiles.collect {it.name}
             if (result) {
-                log.debug "Treating ${names} as a Matlab submission"
+                log.info "Treating ${names} as a Matlab submission"
             } else {
-                log.debug "Submission ${names} does not contain Matlab scripts."
+                log.info "Submission ${names} does not contain Matlab scripts."
             }
         }
         null != result
