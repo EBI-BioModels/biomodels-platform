@@ -18,13 +18,12 @@
 --%>
 
 <%@ page contentType="text/html;charset=UTF-8" %>
-<%@ page import="net.biomodels.jummp.model.ModelFormat" %>
 <%@ page import="net.biomodels.jummp.core.model.ModelFormatTransportCommand" %>
 <%@ page import="net.biomodels.jummp.core.model.RevisionTransportCommand" %>
 <%
     List modelFormatsSortedByName = workingMemory['sorted_model_formats']
     ModelFormatTransportCommand format = workingMemory['model_type']
-    ModelFormat unknownFormat = ModelFormat.findByIdentifier("UNKNOWN")
+    ModelFormatTransportCommand unknownFormat = workingMemory['unknown_format_command']
     Integer selectedValue = format ? format.id : unknownFormat?.id
     String readmeSubmission = workingMemory['readme_submission']
     String modellingApproach = workingMemory['modelling_approach']
