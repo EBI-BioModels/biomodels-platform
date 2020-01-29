@@ -17,6 +17,7 @@
  * You should have received a copy of the GNU Affero General Public License along
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
  */
+
 import org.springframework.beans.factory.NoSuchBeanDefinitionException
 
 class JummpPluginCommonFormatGrailsPlugin {
@@ -29,7 +30,6 @@ class JummpPluginCommonFormatGrailsPlugin {
         "grails-app/views/error.gsp"
     ]
 
-    // TODO Fill in these fields
     def title = "Common Model Format Plugin" // Headline display name of the plugin
     def author = "Tung Nguyen"
     def authorEmail = "tnguyen@ebi.ac.uk"

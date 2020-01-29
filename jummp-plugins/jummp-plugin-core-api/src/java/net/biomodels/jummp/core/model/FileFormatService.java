@@ -31,13 +31,18 @@ import java.io.File;
 import java.util.List;
 
 /**
- * Service interface for handling a specific ModelFormat.
- * The interface needs to be implemented by a plugin providing support for a Model format
+ * <p>Service interface for handling a specific ModelFormat.</p>
+ * <p>The interface needs to be implemented by a plugin providing support for a Model format
  * like SBML. The core application uses this interface to resolve the service which provides
- * the functionality to handle a specific format.
- * @author Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
- * @author Raza Ali <raza.ali@ebi.ac.uk>
- * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * the functionality to handle a specific format.</p>
+ *
+ * <p>Authors:</p>
+ * <ul>
+ *   <li>Martin Gräßlin &nbsp;<a href="mailto:m.graesslin@dkfz-heidelberg.de">m.graesslin@dkfz-heidelberg.de</a></li>
+ *   <li>Raza Ali&nbsp;<a href="mailto:raza.ali@ebi.ac.uk">raza.ali@ebi.ac.uk</a></li>
+ *   <li>Mihai Glonț&nbsp;<a href="mailto:mihai.glont@ebi.ac.uk">mihai.glont@ebi.ac.uk</a></li>
+ *   <li>Tung Nguyen&nbsp;<a href="mailto:tung.nguyen@ebi.ac.uk">tung.nguyen@ebi.ac.uk</a></li>
+ * </ul>
  */
 public interface FileFormatService {
 
