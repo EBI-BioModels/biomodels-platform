@@ -97,7 +97,7 @@ class ModelFileFormatService {
 
         String match = services.keySet().find {
             if (it == "UNKNOWN") return false
-            String serviceName = services.getAt(it)
+            String serviceName = services[it]
             def ffs = grailsApplication.mainContext.getBean(serviceName, FileFormatService)
             return ffs.areFilesThisFormat(fileList)
         }
@@ -105,15 +105,13 @@ class ModelFileFormatService {
             return new ModelFormatAdapter(format:
                 ModelFormat.findByIdentifierAndFormatVersion("UNKNOWN", "*")).toCommandObject()
         } else {
-            MFTC unknownVersionFormat =
-                    new ModelFormatAdapter(format:ModelFormat.findByIdentifierAndFormatVersion(match, "*"))
-                                                        .toCommandObject()
-            RTC rev = new RTC(files: modelFiles,
-                                                                        format: unknownVersionFormat)
+            ModelFormat format = ModelFormat.findByIdentifierAndFormatVersion(match, "*")
+            MFTC unknownVersionFormat = new MFTC(identifier: match, formatVersion: '*')
+            RTC rev = new RTC(files: modelFiles, format: unknownVersionFormat)
             String formatVersion = getFormatVersion(rev)
             ModelFormat knownVersionFormat = ModelFormat.findByIdentifierAndFormatVersion(match, formatVersion);
             if (knownVersionFormat) {
-                return new ModelFormatAdapter(format:knownVersionFormat).toCommandObject()
+                return new ModelFormatAdapter(format: knownVersionFormat).toCommandObject()
             }
             return unknownVersionFormat
         }
@@ -181,7 +179,8 @@ class ModelFileFormatService {
      */
     @Profiled(tag = "modelFileFormatService.handleModelFormat")
     void handleModelFormat(MFTC format, String service, String controller) {
-        ModelFormat modelFormat = ModelFormat.findByIdentifierAndFormatVersion(format.identifier, "*")
+        String formatVersion = format.formatVersion ?: "*"
+        ModelFormat modelFormat = ModelFormat.findByIdentifierAndFormatVersion(format.identifier, formatVersion)
         if (!modelFormat) {
             throw new IllegalArgumentException("ModelFormat ${format.properties} not registered in database")
         }
