@@ -76,11 +76,20 @@ class ModelFileFormatService {
     def grailsApplication
 
     /**
-     * Extracts the format of the supplied @p modelFiles.
-     * Returns the default ModelFormat representation with an empty formatVersion, since this is expected to exist
-     * for every format that is handled.
-     * @param modelFiles the list of files corresponding to a model
-     * @returns the corresponding model format, or unknown if this cannot be inferred.
+     * <p>Extracts the representative format of the supplied @p modelFiles.</p>
+     *
+     * <p>Scans mime types of the supplied files to guess the typical format identifier of these files. Then,
+     * looks up this identifier in the database so as to form a corresponding ModelFormatTransportCommand object.</p>
+     *
+     * <p><strong>Notes</strong>: the default ModelFormat representation with an empty formatVersion (i.e. the
+     * formatVersion denotes as asterisk) is first looked up, since this is expected to exist for every format that is handled.</p>
+     * <p><strong>Parameters:</strong></p>
+     * <ul>
+     *   <li>modelFiles: the list of RepositoryFileTransportCommand objects corresponding to a model</li>
+     * </ul>
+     * <p><strong>Returns</strong>: the corresponding model format transport command object or unknown if this cannot
+     * be inferred. This command object must be converted from an specific domain object of model format so that it
+     * makes sure that the inferred model format is existing one associated with an auto identifier. </p>
      */
     @Profiled(tag = "modelFileFormatService.inferModelFormat")
     MFTC inferModelFormat(List<RFTC> modelFiles) {
@@ -106,10 +115,10 @@ class ModelFileFormatService {
                 ModelFormat.findByIdentifierAndFormatVersion("UNKNOWN", "*")).toCommandObject()
         } else {
             ModelFormat format = ModelFormat.findByIdentifierAndFormatVersion(match, "*")
-            MFTC unknownVersionFormat = new MFTC(identifier: match, formatVersion: '*')
+            MFTC unknownVersionFormat = new ModelFormatAdapter(format: format).toCommandObject()
             RTC rev = new RTC(files: modelFiles, format: unknownVersionFormat)
             String formatVersion = getFormatVersion(rev)
-            ModelFormat knownVersionFormat = ModelFormat.findByIdentifierAndFormatVersion(match, formatVersion);
+            ModelFormat knownVersionFormat = ModelFormat.findByIdentifierAndFormatVersion(match, formatVersion)
             if (knownVersionFormat) {
                 return new ModelFormatAdapter(format: knownVersionFormat).toCommandObject()
             }
