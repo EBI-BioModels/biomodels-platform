@@ -32,11 +32,14 @@ import net.biomodels.jummp.models.ReactomeServiceFactoryBean
 class ReactomeServiceSpec {
     private final String reactomeId = "R-HSA-1250196"
     private final String modelId = "BIOMD0000000255"
-    private final Map<String, String> reactomeMapping = [
-        modelId: reactomeId
-    ]
+
 
     def doWithSpring = {
+        List<String> reactomeIds = new ArrayList<>()
+        reactomeIds << reactomeId + "|" + "label"
+        final Map<String, List<String>> reactomeMapping = [
+            "BIOMD0000000255": reactomeIds
+        ]
         reactomeService(DummyReactomeServiceFactoryBean, reactomeMapping) {
             it.scope = 'prototype'
         }
@@ -46,21 +49,22 @@ class ReactomeServiceSpec {
         when: "Asked for reactome Id for a known model"
         def service = grailsApplication.mainContext.reactomeService
 
-        String actualReactomeId = service.getPathwayForModelId(modelId)
+        List<String> actualReactomeIds = service.getPathwaysForModelId(modelId)
+        actualReactomeIds != null
         then: "reactomeId string shouldn't be empty"
-        actualReactomeId == reactomeId
+        actualReactomeIds.contains(reactomeId);
 
         and: "asking for a pathway id for a model that does not exist should return null"
-        service.getPathwayForModelId("THIS-DOES-NOT-EXIST") == null
-        service.getPathwayForModelId("") == null
-        service.getPathwayForModelId(null) == null
+        service.getPathwaysForModelId("THIS-DOES-NOT-EXIST") == null
+        service.getPathwaysForModelId("") == null
+        service.getPathwaysForModelId(null) == null
     }
 }
 
 class DummyReactomeServiceFactoryBean extends ReactomeServiceFactoryBean {
-    final Map<String, String> mockModelPathwayMapping
+    final Map<String, List<String>> mockModelPathwayMapping
 
-    DummyReactomeServiceFactoryBean(Map<String, String> mapping) {
+    DummyReactomeServiceFactoryBean(Map<String, List<String>> mapping) {
         this.mockModelPathwayMapping = mapping
     }
 

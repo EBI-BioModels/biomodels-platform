@@ -77,7 +77,7 @@ class BootStrap {
     def init = { servletContext ->
         ModelFormat format = ModelFormat.findByIdentifierAndFormatVersion("UNKNOWN", "*")
         if (!format) {
-            format = new ModelFormat(identifier: "UNKNOWN", name: "Original code", formatVersion: "*")
+            format = new ModelFormat(identifier: "UNKNOWN", name: "Other", formatVersion: "*")
             format.save(flush: true)
         }
         def ctx = servletContext.getAttribute(ApplicationAttributes.APPLICATION_CONTEXT)

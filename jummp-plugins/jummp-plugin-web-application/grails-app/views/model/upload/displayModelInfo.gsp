@@ -17,23 +17,14 @@
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
-
-
-
-
-
-
-
-
-
-
 <%@ page contentType="text/html;charset=UTF-8" %>
 <%@ page import="net.biomodels.jummp.core.model.ModelFormatTransportCommand" %>
 <%@ page import="net.biomodels.jummp.core.model.RevisionTransportCommand" %>
 <%
     List modelFormatsSortedByName = workingMemory['sorted_model_formats']
     ModelFormatTransportCommand format = workingMemory['model_type']
-    Integer selectedValue = format ? format.id : ModelFormat.findByName("UNKNOWN")?.id
+    ModelFormatTransportCommand unknownFormat = workingMemory['unknown_format_command']
+    Integer selectedValue = format ? format.id : unknownFormat?.id
     String readmeSubmission = workingMemory['readme_submission']
     String modellingApproach = workingMemory['modelling_approach']
     String otherInfo = workingMemory['other_info']
@@ -53,47 +44,23 @@
                 definedModelFormatNames.push("${fmt?.name + ' ' + fmt?.formatVersion}");
             </g:each>
         </g:javascript>
+        <style type="text/css">
+            .assistive-example {
+                font-size: small;
+                font-style: italic;
+                color: darkgray
+            }
+        </style>
     </head>
     <body>
         <h2><g:message code="submission.biomodels.model.information.heading" locale="${Locale.getDefault()}"/></h2>
         <p><g:message code="submission.biomodels.model.information.explanation" locale="${Locale.getDefault()}"/></p>
         <g:form>
             <div class="row">
-                <div class="small-12 medium-6 large-6 columns">
-                    <label for="model_format" class="required">Model Format</label>
-                    <g:if test="${workingMemory['model_type']}">
-                    </g:if>
-                    <g:select name="model_format" id="model_format" required=""
-                              from="${modelFormatsSortedByName}"
-                              value="${selectedValue}"
-                              optionKey="id"
-                              optionValue="${{it?.name + ' ' + it?.formatVersion}}"/>
-                    <div id="readme_submission_div" style="display: none">
-                    <label for="readme_submission" class="required">Describe more exactly your model format</label>
-                    <g:textField name="readme_submission" id="readme_submission"
-                                 value="${readmeSubmission}"
-                                 placeholder="Please describe here more accurately what is your model format" /></div>
-                </div>
-                <div class="small-12 medium-6 large-6 columns">
-                    <label for="modelling_approach" class="required">Modelling Approach</label>
-                    <g:textField name="modelling_approach" id="modelling_approach" value="${modellingApproach}"
-                                 placeholder="Enter your modelling approach" required="true"
-                                 aria-describedby="modellingApproachHelp"/>
-                    <p class="help-text" id="modellingApproachHelp">Find the appropriate one by typing a few more
-                first characters of your words. The system will suggest you our defined modelling approaches. If you
-                are not sure your modelling approach, please type Other for now.</p>
-
-                    <div id="model_other_info_div" style="display: none">
-                    <label for="other_info" class="required">Describe more exactly your modelling approach</label>
-                    <g:textField name="other_info" id="other_info"
-                                 value="${otherInfo}"
-                                 placeholder="Please enter here what is your modelling approach"/></div>
-                </div>
-            </div>
-
-            <div class="row">
             <div class="small-12 medium-12 large-12 columns">
-            <label for="name" class="required">Name</label>
+                <label for="name">
+                    <span class="required">Name</span>&nbsp;
+                    <span class="assistive-example">[e.g. Launna2020 - T-Cell signalling model]</span></label>
             <g:if test="${workingMemory['new_name']}">
                 <g:textField id="name" name="name" required=""
                              value="${workingMemory['new_name']}"
@@ -119,6 +86,43 @@
                             placeholder="Enter a brief description for your model revision, for example: what are the  differences to the previous ones"/>
             </g:else>
             </div></div>
+            <div class="row">
+                <div class="small-12 medium-6 large-6 columns">
+                    <label for="model_format">
+                        <span class="required">Model Format</span>&nbsp;
+                        <span class="assistive-example">[e.g. SBML L3V2, Python 2.7, C/C++]</span></label>
+                    <g:if test="${workingMemory['model_type']}">
+                    </g:if>
+                    <g:select name="model_format" id="model_format" required=""
+                              from="${modelFormatsSortedByName}"
+                              value="${selectedValue}"
+                              optionKey="id"
+                              optionValue="${{it?.name + ' ' + it?.formatVersion}}"/>
+                    <div id="readme_submission_div" style="display: none">
+                        <label for="readme_submission" class="required">
+                            Describe more exactly your model format (e.g. SBML L3V2, Python 2.7, C/C++)</label>
+                        <g:textField name="readme_submission" id="readme_submission"
+                                     value="${readmeSubmission}"
+                                     placeholder="Please describe here more accurately what is your model format" /></div>
+                </div>
+                <div class="small-12 medium-6 large-6 columns">
+                    <label for="modelling_approach">
+                        <span class="required">Modelling Approach</span>&nbsp;
+                        <span class="assistive-example">[e.g. Constraint-based modelling, Logical model, Markov model,...]</span></label>
+                    <g:textField name="modelling_approach" id="modelling_approach" value="${modellingApproach}"
+                                 placeholder="Enter your modelling approach" required="true"
+                                 aria-describedby="modellingApproachHelp"/>
+                    <p class="help-text" id="modellingApproachHelp">Find the appropriate one by typing a few more
+                    first characters of your words. The system will suggest you our defined modelling approaches. If you
+                    are not sure your modelling approach, please type Other for now.</p>
+
+                    <div id="model_other_info_div" style="display: none">
+                        <label for="other_info" class="required">Describe more exactly your modelling approach</label>
+                        <g:textField name="other_info" id="other_info"
+                                     value="${otherInfo}"
+                                     placeholder="Please enter here what is your modelling approach"/></div>
+                </div>
+            </div>
             <input type='hidden' value='false' name='changed' id="changeStatus"/>
             <div class="buttons">
                 <g:submitButton name="Cancel" class="button" value="Abort" />
@@ -162,9 +166,19 @@
             $(document).ready(function () {
                 associateEventHandlers("description");
                 associateEventHandlers("name");
+                handleModelFormatBoxState();
                 handleShowOrHideModelFormatExtraInfo($('#model_format'));
                 handleShowOrHideModellingApproachExtraInfo($('#modelling_approach'), false)
             });
+
+            function handleModelFormatBoxState() {
+                let mf = $('#model_format');
+                if (${format.name != unknownFormat?.name}) {
+                    mf.attr('disabled', true);
+                } else {
+                    mf.attr('disabled', false);
+                }
+            }
 
             $('#modelling_approach').on('keydown', function () {
                 $(this).autocomplete({
@@ -234,10 +248,10 @@
                 let element = $('#readme_submission_div');
                 let selectedFormat = $opt.val();
                 let selectedText = $opt.text();
-                let comparableText = 'Original code *';
+                let comparableText = "${unknownFormat.name} *";
                 showOrHideBox(element, selectedText, comparableText, definedModelFormatNames);
             }
-            
+
             function showWarningMessageIfNecessary(inputVal, definedModellingApproachNames) {
                 inputVal = $.trim(inputVal);
                 let existed = $.inArray(inputVal, definedModellingApproachNames) >= 0;
@@ -262,4 +276,3 @@
     </body>
     <g:render template="/templates/decorateSubmission" />
     <g:render template="/templates/subFlowContextHelp" />
-

@@ -34,13 +34,13 @@ import org.springframework.context.ApplicationContextAware
  */
 class ReactomeService implements ApplicationContextAware {
     ApplicationContext applicationContext
-    Map<String, String> modelPathwayMapping
+    Map<String, List<String>> modelPathwayMapping
 
-    ReactomeService(Map<String, String> modelPathwayMapping) {
+    ReactomeService(Map<String, List<String>> modelPathwayMapping) {
         this.modelPathwayMapping = modelPathwayMapping
     }
 
-    String getPathwayForModelId(String modelId) {
+    List<String> getPathwaysForModelId(String modelId) {
         modelPathwayMapping.get(modelId)
     }
 }

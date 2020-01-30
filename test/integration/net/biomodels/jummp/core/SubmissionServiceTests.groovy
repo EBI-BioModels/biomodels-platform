@@ -178,7 +178,7 @@ class SubmissionServiceTests extends JummpIntegrationTest {
 
     private void confirmFile(String modelID, String confirmationText,
                 String fileName = "addFile.txt") {
-        List<File> files = modelService.retrieveModelRepFiles(
+        List<File> files = modelService.retrieveFiles(
                 modelService.getLatestRevision(modelService.getModel(modelID)))
         if (!confirmationText) { //no confirmation text means the file shouldnt exist
             assertNull(files.find { it.getName() == fileName})
