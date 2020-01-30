@@ -24,6 +24,7 @@
 
 package net.biomodels.jummp.plugins.sbml
 
+import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.annotation.QualifierTransportCommand
 import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand
@@ -36,14 +37,20 @@ import org.springframework.security.access.AccessDeniedException
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
+@Secured("IS_AUTHENTICATED_ANONYMOUSLY")
 class SbmlController {
     def modelDelegateService
     def metadataDelegateService
     def sbmlService
 
+    def fetchComponents() {
+        def components = sbmlService.extract(params.id, params.int('skip'), params.int('limit'), params.typeName)
+        render([components: components] as JSON)
+    }
+
     def show = {
         Map model = flash.genericModel
-        RevisionTransportCommand r = model.revision
+        RevisionTransportCommand r = model.revision as RevisionTransportCommand
         Map<QualifierTransportCommand, List<ResourceReferenceTransportCommand>> genericAnno =
                 metadataDelegateService.fetchGenericAnnotations r
         if (genericAnno) {
