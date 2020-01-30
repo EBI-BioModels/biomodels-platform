@@ -16,17 +16,6 @@
  You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
-
-
-
-
-
-
-
-
-
-
-
 <meta name="layout" content="${session['branding.style']}/modelDisplay"/>
 <content tag="genericAnnotations">
     <anno:renderGenericAnnotations annotations="${genericAnnotations}"/>
@@ -58,61 +47,14 @@
                     <div class="header"><span>Species</span>
                     </div>
 
-
-                    <div class="content">
-                        <g:if test="${null != components && components.species?.size() > 0}">
-                            <table>
-                                <th>Species</th>
-                                <th>Initial Concentration/Amount</th>
-                                <g:each var="speciesComponent" in="${components.species}">
-                                    <tr style="text-align: center">
-                                        <td>
-                                            <span style="color: green">${speciesComponent.speciesId}</span>
-                                            <br/>
-                                            <span>${speciesComponent.resolvedAccessionUrlsShow}</span>
-                                        </td>
-                                        <td>${speciesComponent.initialData}</td>
-                                    </tr>
-                                </g:each>
-                            </table>
-                        </g:if>
-                        <g:else>
-                            No records to display
-                        </g:else>
-                    </div>
+                    <table  id="table_id1">
+                    </table>
 
                     <div class="header"><span>Reactions</span>
-
                     </div>
 
-                    <div class="content small-12 medium-4 large-8 columns">
-                        <g:if test="${null != components && components.reactions?.size() > 0}">
-                            <table style="width: 100%">
-                                <th>Reactions</th>
-                                <th>Rate</th>
-                                <th>Parameters</th>
-                                <g:each var="reactionComponent" in="${components.reactions}">
-                                    <tr style="text-align: center">
-                                        <td>
-                                            <span style="color: green">${reactionComponent.unResolvedReaction}</span>
-                                            <br/>
-                                            <span>${reactionComponent.resolvedReaction}</span>
-                                        </td>
-                                        <td>
-                                            <span style="color: green">${reactionComponent.unResolvedRate}</span>
-                                            <br/>
-                                            <span>${reactionComponent.resolvedRate}</span>
-                                        </td>
-                                        <td>${reactionComponent.parameters}</td>
-                                    </tr>
-                                </g:each>
-                            </table>
-                        </g:if>
-                        <g:else>
-                            No records to display
-                        </g:else>
-
-                    </div>
+                    <table  id="table_id2">
+                    </table>
 
                 </div>
 
@@ -121,18 +63,85 @@
 
     </div>
 
-    <g:javascript>
-        $(".header").click(function () {
+    <script>
 
-            $header = $(this);
-            //getting the next element
-            $content = $header.next();
-            //open up the content needed - toggle the slide- if visible, slide up, if not slidedown.
-            $content.slideToggle(500, function () {
+        var columnConfig1 = [
+            {
+                title: 'Species',
+                data: 'species',
+                orderable: false,
+                render: function (data, type, full, meta) {
+                    return "<span style=\"color:green;\">"
+                        + full.speciesId
+                        + "</span><br/><span>"
+                        + full.resolvedAccessionUrlsShow
+                        + "</span>"
+                }
+            },
+            {
+                title: 'Initial Data',
+                data: 'initialData',
+                orderable: false
+            }];
+
+        var columnConfig2 = [
+            {
+                title: 'Reactions',
+                data: 'reactions',
+                orderable: false,
+                render: function (data, type, full, meta) {
+                    return "<span style=\"color:green;\">"
+                        + full.unResolvedReaction
+                        + "</span><br/><span>"
+                        + full.resolvedReaction
+                        + "</span>"
+                }
+            },
+            {
+                title: 'Rate',
+                data: 'rates',
+                orderable: false,
+                render: function (data, type, full, meta) {
+                    return "<span style=\"color:green;\">"
+                        + full.unResolvedRate
+                        + "</span><br/><span>"
+                        + full.resolvedRate
+                        + "</span>"
+                }
+            },
+            {
+                title: 'Parameters',
+                data: 'parameters',
+                orderable: false
+            }];
+
+        (function(){
+            var url = "${g.createLink(controller: "sbml", action: "fetchComponents", absolute: true)}";
+            displayModelComponents("${revision.modelIdentifier()}",
+                "species",
+                "#table_id1",
+                columnConfig1,
+                url
+            );
+            displayModelComponents("${revision.modelIdentifier()}",
+                "reactions",
+                "#table_id2",
+                columnConfig2,
+                url
+            );
+            $("#Components").hide();
+            $(".header").click(function () {
+
+                $header = $(this);
+                //getting the next element
+                $content = $header.next();
+                //open up the content needed - toggle the slide- if visible, slide up, if not slidedown.
+                $content.slideToggle(500, function () {
+                });
+
             });
-
-        });
-    </g:javascript>
+        }());
+    </script>
 
 </content>
 
