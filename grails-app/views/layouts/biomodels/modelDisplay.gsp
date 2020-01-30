@@ -99,9 +99,17 @@
     <link rel="stylesheet" href="${resource(dir: 'css/syntax', file: 'shThemeDefault.css')}"/>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'toastr.min.css')}"/>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'model-display.css')}"/>
+    <link rel="stylesheet"
+          href="${resource(contextPath: "${grailsApplication.config.grails.serverURL}",
+              dir: '/css', file: 'jquery.dataTables.min.css')}" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/css/select2.min.css"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.min.js"></script>
     <script type="text/javascript" language="javascript" src="https://reactome.org/DiagramJs/diagram/diagram.nocache.js"></script>
+
+    <g:javascript contextPath="" src="jquery/jquery.dataTables.min.js"/>
+    <g:javascript contextPath="" src="ModelDisplay/ModelDisplay.js"/>
+    %{--<g:javascript contextPath="" src="jquery/dataTables.responsive.min.js"/>--}%
+
     <script>
         $(function() {
             $( "#tabs" ).tabs({
