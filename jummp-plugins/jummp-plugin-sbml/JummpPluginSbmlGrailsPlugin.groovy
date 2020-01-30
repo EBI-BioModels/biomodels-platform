@@ -30,6 +30,7 @@
 
 
 import net.biomodels.jummp.plugins.sbml.ModelDisplayService
+import net.biomodels.jummp.plugins.sbml.SbmlService
 import org.springframework.beans.factory.NoSuchBeanDefinitionException
 import net.biomodels.jummp.plugins.configuration.ConfigurationService
 
@@ -58,7 +59,7 @@ Brief description of the plugin.
     def documentation = "http://grails.org/plugin/jummp-plugin-sbml"
 
     def doWithWebDescriptor = { xml ->
-        // TODO Implement additions to web.xml (optional), this event occurs before 
+        // TODO Implement additions to web.xml (optional), this event occurs before
     }
 
     def doWithSpring = {
@@ -84,7 +85,17 @@ Brief description of the plugin.
 
         modelDisplayService(ModelDisplayService) { bean ->
             bean.scope = 'singleton'
+            bean.autowire = 'byName'
             accessUrl = "http://localhost:8887/api/access"
+        }
+
+        sbmlService(SbmlService) { bean ->
+            bean.scope = 'singleton'
+            bean.autowire = 'byName'
+
+            modelDisplayService = ref'modelDisplayService'
+            miriamService = ref 'miriamService'
+            grailsApplication = ref 'grailsApplication'
         }
    }
 
