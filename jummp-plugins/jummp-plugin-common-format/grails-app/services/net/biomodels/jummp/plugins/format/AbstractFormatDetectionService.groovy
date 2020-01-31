@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory
 
 /**
  * <p>Abstract class for handling multiple format services sharing many common methods</p>
- * <p>Authors:</p>
+ * <p style="font-weight: bold">Authors:</p>
  * <ul>
  *   <li>Mihai Glonț&nbsp;<a href="mailto:mihai.glont@ebi.ac.uk">mihai.glont@ebi.ac.uk</a></li>
  *   <li>Tung Nguyen&nbsp;<a href="mailto:tung.nguyen@ebi.ac.uk">tung.nguyen@ebi.ac.uk</a></li>

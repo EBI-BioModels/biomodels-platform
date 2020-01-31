@@ -23,8 +23,11 @@ package net.biomodels.jummp.plugins.format
 /**
  * <p>Individual class for handling detection of R format</p>
  *
- * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
- * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * <p style="font-weight: bold">Authors:</p>
+ * <ul>
+ *     <li><a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a></li>
+ *     <li><a href="mailto:mihai.glont@ebi.ac.uk">Mihai Glonț</a></li>
+ * </ul>
  */
 class RlangFormatService extends AbstractFormatDetectionService {
     @Override
