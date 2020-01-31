@@ -20,15 +20,42 @@
 
 package net.biomodels.jummp.plugins.format
 
+import org.apache.commons.io.FilenameUtils
+
 /**
  * <p>Individual class for handling detection of Mathematica format</p>
  *
- * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
- * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * <p style="font-weight: bold">Authors:</p>
+ * <ul>
+ *     <li><a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a></li>
+ *     <li><a href="mailto:mihai.glont@ebi.ac.uk">Mihai Glonț</a></li>
+ * </ul>
  */
 class MathematicaFormatService extends AbstractFormatDetectionService {
+    /**
+     * <p>This implementation does not invoke the corresponding method of the parent class as its sibling classes.
+     * The reason is that Tika library seemingly detects such files incorrectly where it always returns 'text/plain'.
+     * We have raised an <a href="https://issues.apache.org/jira/browse/TIKA-3034">issue</a> on the
+     * <a href="https://issues.apache.org/jira/projects/TIKA/issues/TIKA-3034?filter=allopenissues">Tika issue tracker</a></p>
+     *
+     * <p>While waiting for Tika's developer team considering this issue, we simplify this implementation by checking
+     * the file extension and will be improve once the issue is fixed. According to the <a href="https://reference
+     * .wolfram.com/language/guide/WolframLanguageFileFormats.html">documentation</a> in Wolfram website, the
+     * extension of Mathematica files can be one of these:  .wl, .m, .nb, .ma, .wxf, .wdx, .mx, .wlnet. </p>
+     * <p style="font-weight: bold">Parameters:</p>
+     * <ul>
+     *   <li>files: the list of files to detect format</li>
+     * </ul>
+     * <p><span style="font-weight: bold">Returns:</span> a boolean value denoting there is at least one file which
+     * extension belongs to the set of defined formats above</p>
+     */
     @Override
     boolean areFilesThisFormat(List<File> files) {
-        areTheseFilesInThisFormat(TARGET_MIME_TYPES["mathematica"] as String, files)
+        final Set<String> SUPPORT_FORMATS = ["wl", "m", "nb", "ma", "wxf", "wdx", "mx", "wlnet"] as HashSet<String>
+        boolean result = files.any { File file ->
+            String ext = FilenameUtils.getExtension(file.name)
+            ext in SUPPORT_FORMATS
+        }
+        return result
     }
 }
