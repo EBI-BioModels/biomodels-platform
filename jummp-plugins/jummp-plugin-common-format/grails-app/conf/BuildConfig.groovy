@@ -48,3 +48,4 @@ grails.project.dependency.resolution = {
         }
     }
 }
+grails.plugin.location.'jummp-plugin-core-api'="../jummp-plugin-core-api"
