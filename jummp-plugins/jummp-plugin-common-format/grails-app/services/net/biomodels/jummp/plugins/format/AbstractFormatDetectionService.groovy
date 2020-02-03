@@ -24,6 +24,7 @@ import net.biomodels.jummp.core.model.FileFormatService
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.model.ModellingApproach
 import org.apache.tika.detect.DefaultDetector
+import org.apache.tika.io.TikaInputStream
 import org.apache.tika.metadata.Metadata
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -114,8 +115,12 @@ abstract class AbstractFormatDetectionService implements FileFormatService {
         Metadata metadata = new Metadata()
         metadata.set(Metadata.RESOURCE_NAME_KEY, f.name)
         boolean result = f.withInputStream { InputStream stream ->
+            // Must cast to TikaInputStream in order to use all available detectors,
+            // not just MimeTypeDetector. See https://tika.apache.org/1.4/detection.html
+            // and https://issues.apache.org/jira/browse/TIKA-3034
+            TikaInputStream tikaStream = TikaInputStream.cast stream
             try {
-                String detectedMime = mimeDetector.detect(stream, metadata)?.toString()
+                String detectedMime = mimeDetector.detect(tikaStream, metadata)?.toString()
                 logger.debug("File $f has media type $detectedMime")
                 return detectedMime == mimeType
             } catch (IOException e) {
