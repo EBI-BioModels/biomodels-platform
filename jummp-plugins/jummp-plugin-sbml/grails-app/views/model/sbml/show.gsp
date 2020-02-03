@@ -118,12 +118,14 @@
         (function(){
             var url = "${g.createLink(controller: "sbml", action: "fetchComponents", absolute: true)}";
             displayModelComponents("${revision.modelIdentifier()}",
+                "${revision.revisionNumber}",
                 "species",
                 "#table_id1",
                 columnConfig1,
                 url
             );
             displayModelComponents("${revision.modelIdentifier()}",
+                "${revision.revisionNumber}",
                 "reactions",
                 "#table_id2",
                 columnConfig2,

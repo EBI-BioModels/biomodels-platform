@@ -1,8 +1,9 @@
-function displayModelComponents(id, typeName, table_id, columnConfig, url) {
+function displayModelComponents(id, revisionNumber, typeName, table_id, columnConfig, url) {
 
     function prepareParams(dataTableArg) {
         var data = {};
         data.id = id;
+        data.revisionNumber = revisionNumber;
         data.limit = dataTableArg.length;
         data.skip = dataTableArg.start;
         data.typeName = typeName;
