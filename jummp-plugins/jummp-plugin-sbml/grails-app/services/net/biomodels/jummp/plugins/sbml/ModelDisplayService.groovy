@@ -12,8 +12,11 @@ class ModelDisplayService {
 
     String accessUrl
 
-    def getComponentsFromModelDisplay(String modelId, int skip, int limit, String typeName) throws IOException {
+    def getComponentsFromModelDisplay(String modelId, int revisionNumber, int skip, int limit, String typeName) throws IOException {
         String url = "$accessUrl?publicationId=$modelId&skip=$skip&limit=$limit&typeName=$typeName"
+        if (revisionNumber>0) {
+            url = "$url&revisionNumber=$revisionNumber"
+        }
         def rawComponents = null
         try {
             rawComponents = new URL(url).text

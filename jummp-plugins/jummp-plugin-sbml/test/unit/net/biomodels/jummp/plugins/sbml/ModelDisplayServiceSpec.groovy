@@ -29,7 +29,7 @@ class ModelDisplayServiceSpec extends Specification {
     void "test getComponentsFromModelDisplay"() {
 
         when: "The service method's getComponentsFromModelDisplay is called"
-        def result = service.getComponentsFromModelDisplay("BIOMD0000000001",0,10,"species")
+        def result = service.getComponentsFromModelDisplay("BIOMD0000000001",1,0,10,"species")
 
         then: "it should contain records"
         result.species.size() > 0
@@ -41,7 +41,7 @@ class ModelDisplayServiceSpec extends Specification {
         }
 
         when: "Tested with reactions"
-        result = service.getComponentsFromModelDisplay("BIOMD0000000001",0,10,"reactions")
+        result = service.getComponentsFromModelDisplay("BIOMD0000000001",1,0,10,"reactions")
 
         then: "it should have atleast one reaction"
         result.reactions.size() > 0
