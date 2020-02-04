@@ -86,7 +86,7 @@ Brief description of the plugin.
         modelDisplayService(ModelDisplayService) { bean ->
             bean.scope = 'singleton'
             bean.autowire = 'byName'
-            accessUrl = "http://localhost:8887/api/access"
+            grailsApplication = ref 'grailsApplication'
         }
 
         sbmlService(SbmlService) { bean ->
