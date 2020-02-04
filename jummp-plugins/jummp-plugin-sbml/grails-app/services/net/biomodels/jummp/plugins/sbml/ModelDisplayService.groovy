@@ -3,16 +3,20 @@ package net.biomodels.jummp.plugins.sbml
 import grails.converters.JSON
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import groovy.transform.TypeCheckingMode
+import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.codehaus.groovy.grails.web.json.JSONElement
 
 @CompileStatic
 class ModelDisplayService {
     static transactional = false
     static String DELIMITER = '; '
-
+    GrailsApplication grailsApplication
     String accessUrl
 
+    @CompileStatic(TypeCheckingMode.SKIP)
     def getComponentsFromModelDisplay(String modelId, int revisionNumber, int skip, int limit, String typeName) throws IOException {
+        accessUrl = grailsApplication.config.jummp.model.modeldisplay.server.access
         String url = "$accessUrl?publicationId=$modelId&skip=$skip&limit=$limit&typeName=$typeName"
         if (revisionNumber>0) {
             url = "$url&revisionNumber=$revisionNumber"
@@ -20,7 +24,7 @@ class ModelDisplayService {
         def rawComponents = null
         try {
             rawComponents = new URL(url).text
-        }catch (FileNotFoundException fe) {
+        } catch (FileNotFoundException fe) {
             throw new IOException("Could not fetch components for model $modelId: ${fe.getMessage()}", fe)
         }
 
