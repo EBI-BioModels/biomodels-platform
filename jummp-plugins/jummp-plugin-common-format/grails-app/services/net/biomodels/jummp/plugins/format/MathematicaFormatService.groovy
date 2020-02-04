@@ -30,6 +30,7 @@ package net.biomodels.jummp.plugins.format
  * </ul>
  */
 class MathematicaFormatService extends AbstractFormatDetectionService {
+    static transactional = false
     /**
      * <p>Detects whether any of the supplied list of files is encoded in Mathematica.</p>
      *

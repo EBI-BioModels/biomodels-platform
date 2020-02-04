@@ -30,6 +30,7 @@ package net.biomodels.jummp.plugins.format
  * </ul>
  */
 class RlangFormatService extends AbstractFormatDetectionService {
+    static transactional = false
     @Override
     boolean areFilesThisFormat(final List<File> files) {
         areTheseFilesInThisFormat(TARGET_MIME_TYPES["R"] as String, files)

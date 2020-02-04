@@ -30,6 +30,7 @@ package net.biomodels.jummp.plugins.format
  * </ul>
  */
 class JavaFormatService extends AbstractFormatDetectionService {
+    static transactional = false
     @Override
     boolean areFilesThisFormat(List<File> files) {
         areTheseFilesInThisFormat(TARGET_MIME_TYPES["java"] as String, files)

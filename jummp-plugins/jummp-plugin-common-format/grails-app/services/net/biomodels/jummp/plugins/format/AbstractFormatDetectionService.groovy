@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory
  *  </ul>
  */
 abstract class AbstractFormatDetectionService implements FileFormatService {
+    static transactional = false
     final protected Logger logger = LoggerFactory.getLogger(this.getClass())
     final protected static Map<String, String> TARGET_MIME_TYPES = ["java": "text/x-java-source",
                              "c_cpp": "text/x-csrc",
