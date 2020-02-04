@@ -127,6 +127,7 @@ environments {
     }
     development {
         grails.serverURL = jummpConfig.jummp.server.url //"http://localhost:8080/${appName}"
+        jummp.model.modeldisplay.server.access = jummpConfig.jummp.modeldisplay.server.access
     }
     test {
         grails.serverURL = "http://localhost:8080/${appName}"
