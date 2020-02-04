@@ -93,7 +93,7 @@ Brief description of the plugin.
             bean.scope = 'singleton'
             bean.autowire = 'byName'
 
-            modelDisplayService = ref'modelDisplayService'
+            modelDisplayService = ref 'modelDisplayService'
             miriamService = ref 'miriamService'
             grailsApplication = ref 'grailsApplication'
         }
