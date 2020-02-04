@@ -21,7 +21,7 @@
 package net.biomodels.jummp.plugins.format
 
 /**
- * <p>Individual class for handling detection of Java format</p>
+ * <p>Define name of common formats</p>
  *
  * <p style="font-weight: bold">Authors:</p>
  * <ul>
@@ -29,12 +29,21 @@ package net.biomodels.jummp.plugins.format
  *     <li><a href="mailto:mihai.glont@ebi.ac.uk">Mihai Glonț</a></li>
  * </ul>
  */
-class JavaFormatService extends AbstractFormatDetectionService {
-    static transactional = false
-    @Override
-    boolean areFilesThisFormat(List<File> files) {
-        String format = CommonFormat.JAVA.name
-        String mimeType = TARGET_MIME_TYPES[format]
-        areTheseFilesInThisFormat(mimeType, files)
+enum CommonFormat {
+    C_CPP("C_CPP"),
+    JAVA("Java"),
+    MATHEMATICA("Mathematica"),
+    MATLAB("Matlab"),
+    PYTHON("Python"),
+    R("R")
+
+    private String name
+
+    String getName() {
+        this.name
+    }
+
+    private CommonFormat(String name) {
+        this.name = name
     }
 }

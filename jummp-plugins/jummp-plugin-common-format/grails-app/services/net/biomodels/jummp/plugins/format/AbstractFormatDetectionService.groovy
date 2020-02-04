@@ -40,11 +40,12 @@ import org.slf4j.LoggerFactory
 abstract class AbstractFormatDetectionService implements FileFormatService {
     static transactional = false
     final protected Logger logger = LoggerFactory.getLogger(this.getClass())
-    final protected static Map<String, String> TARGET_MIME_TYPES = ["java": "text/x-java-source",
-                             "c_cpp": "text/x-csrc",
-                             "python": "text/x-python",
-                             "R": "text/x-rsrc",
-                             "mathematica": "application/mathematica"]
+    final protected static
+        Map<String, String> TARGET_MIME_TYPES = ["C_CPP": "text/x-csrc",
+                                                 "Java": "text/x-java-source",
+                                                 "Python": "text/x-python",
+                                                 "R": "text/x-rsrc",
+                                                 "Mathematica": "application/mathematica"]
     @Override
     boolean validate(List<File> model, List<String> errors) {
         return false

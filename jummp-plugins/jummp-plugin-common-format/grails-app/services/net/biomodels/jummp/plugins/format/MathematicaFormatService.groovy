@@ -43,6 +43,8 @@ class MathematicaFormatService extends AbstractFormatDetectionService {
      */
     @Override
     boolean areFilesThisFormat(List<File> files) {
-        areTheseFilesInThisFormat TARGET_MIME_TYPES['mathematica'], files
+        String format = CommonFormat.MATHEMATICA.name
+        String mimeType = TARGET_MIME_TYPES[format]
+        areTheseFilesInThisFormat(mimeType, files)
     }
 }
