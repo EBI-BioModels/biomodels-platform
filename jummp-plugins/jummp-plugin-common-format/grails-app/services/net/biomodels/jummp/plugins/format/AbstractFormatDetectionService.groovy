@@ -115,7 +115,7 @@ abstract class AbstractFormatDetectionService implements FileFormatService {
         DefaultDetector mimeDetector = new DefaultDetector()
         Metadata metadata = new Metadata()
         metadata.set(Metadata.RESOURCE_NAME_KEY, f.name)
-        boolean result = f.withInputStream { InputStream stream ->
+        f.withInputStream { InputStream stream ->
             // Must cast to TikaInputStream in order to use all available detectors,
             // not just MimeTypeDetector. See https://tika.apache.org/1.4/detection.html
             // and https://issues.apache.org/jira/browse/TIKA-3034
@@ -128,7 +128,7 @@ abstract class AbstractFormatDetectionService implements FileFormatService {
                 String n = f.name
                 logger.error("Could not probe $n for MIME type detection.", e)
             }
+            return false
         }
-        result
     }
 }
