@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory
  * <p>Abstract class for handling multiple format services sharing many common methods</p>
  * <p style="font-weight: bold">Authors:</p>
  * <ul>
- *   <li>Mihai Glonț&nbsp;<a href="mailto:mihai.glont@ebi.ac.uk">mihai.glont@ebi.ac.uk</a></li>
+ *   <li>Mihai Glon&#x021b;&nbsp;<a href="mailto:mihai.glont@ebi.ac.uk">mihai.glont@ebi.ac.uk</a></li>
  *   <li>Tung Nguyen&nbsp;<a href="mailto:tung.nguyen@ebi.ac.uk">tung.nguyen@ebi.ac.uk</a></li>
  *  </ul>
  */
@@ -45,65 +45,15 @@ abstract class AbstractFormatDetectionService implements FileFormatService {
         this.expectedFormat = expectedFormat
     }
 
-    @Override
-    boolean validate(List<File> model, List<String> errors) {
-        return false
-    }
-
-
-    @Override
-    String extractName(List<File> model) {
-        return null
-    }
-
-    @Override
-    String extractDescription(List<File> model) {
-        return null
-    }
-
-    @Override
-    boolean updateName(RevisionTransportCommand revision, String name) {
-        return false
-    }
-
-    @Override
-    boolean updateDescription(RevisionTransportCommand revision, String description) {
-        return false
-    }
-
-    @Override
-    List<String> getAllAnnotationURNs(RevisionTransportCommand revision) {
-        return null
-    }
-
-    @Override
-    List<String> getPubMedAnnotation(RevisionTransportCommand revision) {
-        return null
-    }
-
-    @Override
-    String getFormatVersion(RevisionTransportCommand revision) {
-        return null
-    }
-
-    @Override
-    boolean doBeforeSavingAnnotations(File annoFile, RevisionTransportCommand newRevision) {
-        return false
-    }
-
-    @Override
-    ModellingApproach getModellingApproach(RevisionTransportCommand revision) {
-        return null
-    }
-
     /**
-     * <p>Check whether the files in questions are in a set of the specific mime types or not</p>
+     * <p>Check whether any of the supplied files matches the mime types of the expected format.</p>
      *
-     * <p>This service tries to verify a list of files matching with the specific mime type in a set of ones or
-     * not.</p>
+     * <p>This method returns true if at least one of the supplied files has a MIME type registered for
+     * {@code expectedFormat} and false otherwise.</p>
      *
-     * @param files     A List of File objects denoting a collection of files included in a certain submission.
+     * @param files A List of {@linkplain File}s (typically, included in a certain submission)
      * @return  true/false
+     * @throws NullPointerException if {@code expectedFormat} has not been initialised.
      */
     boolean areFilesThisFormat(final List<File> files) {
         Set<String> mimeTypes = Objects.requireNonNull(expectedFormat, EXPECTED_FORMAT_REQUIRED)
