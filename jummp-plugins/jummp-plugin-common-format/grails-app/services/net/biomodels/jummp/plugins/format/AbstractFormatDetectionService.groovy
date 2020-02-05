@@ -58,12 +58,19 @@ abstract class AbstractFormatDetectionService extends FileFormatServiceAdapter {
         Set<String> mimeTypes = Objects.requireNonNull(expectedFormat, EXPECTED_FORMAT_REQUIRED)
             .acceptedMimeTypes
         def result = files.any { File f ->
-            isWellKnownFile(f, mimeTypes)
+            fileMimeTypeMatches(f, mimeTypes)
         }
         return result
     }
 
-    protected boolean isWellKnownFile(final File f, Set<String> mimeTypes) {
+    /**
+     * <p>Utility method for checking whether a file's MIME type falls in a given set.</p>
+     *
+     * @param f The file whose MIME type should be detected.
+     * @param mimeTypes A non-null set of registered MIME types
+     * @return true if the file's MIME type is any of the ones provided, false otherwise
+     */
+    protected boolean fileMimeTypeMatches(final File f, Set<String> mimeTypes) {
         try {
             String detectedMime = new Tika().detect(f)
             logger.debug("File $f has media type $detectedMime")

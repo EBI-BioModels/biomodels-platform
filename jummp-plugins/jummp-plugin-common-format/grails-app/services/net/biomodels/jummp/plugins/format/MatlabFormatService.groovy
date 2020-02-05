@@ -68,6 +68,6 @@ class MatlabFormatService extends AbstractFormatDetectionService {
     }
 
     private boolean isMatlabFile(File f) {
-        isWellKnownFile(f, expectedFormat.acceptedMimeTypes)
+        fileMimeTypeMatches(f, expectedFormat.acceptedMimeTypes)
     }
 }
