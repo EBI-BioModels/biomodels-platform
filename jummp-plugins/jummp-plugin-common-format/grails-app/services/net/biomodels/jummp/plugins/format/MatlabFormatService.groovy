@@ -38,14 +38,9 @@ import net.biomodels.jummp.core.model.RevisionTransportCommand
 class MatlabFormatService extends AbstractFormatDetectionService {
     static transactional = false
     final String FORMAT_VERSION = '*'
-    static final Set<String> MATLAB_MIME_TYPES = ["application/x-matlab",
-                                                  "application/matlab",
-                                                  "text/x-matlab",
-                                                  "text/matlab"] as Set<String>
 
-    boolean areFilesThisFormat(final List<File> files) {
-        Set<String> mimeTypes = CommonFormat.MATLAB.acceptedMimeTypes
-        areTheseFilesInThisFormat(mimeTypes, files)
+    MatlabFormatService() {
+        super(CommonFormat.MATLAB)
     }
 
     String getFormatVersion(RevisionTransportCommand revision) {
@@ -73,10 +68,6 @@ class MatlabFormatService extends AbstractFormatDetectionService {
     }
 
     private boolean isMatlabFile(File f) {
-        checkMatlabFormat([f])
-    }
-
-    private boolean checkMatlabFormat(List<File> mainFiles) {
-        areTheseFilesInThisFormat(CommonFormat.MATLAB.acceptedMimeTypes, mainFiles)
+        isWellKnownFile(f, expectedFormat.acceptedMimeTypes)
     }
 }

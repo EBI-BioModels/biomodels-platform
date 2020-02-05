@@ -31,9 +31,8 @@ package net.biomodels.jummp.plugins.format
  */
 class PythonFormatService extends AbstractFormatDetectionService {
     static transactional = false
-    @Override
-    boolean areFilesThisFormat(List<File> files) {
-        Set<String> mimeTypes = CommonFormat.PYTHON.acceptedMimeTypes
-        areTheseFilesInThisFormat(mimeTypes, files)
+
+    PythonFormatService() {
+        super(CommonFormat.PYTHON)
     }
 }

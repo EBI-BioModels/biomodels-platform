@@ -23,10 +23,7 @@ package net.biomodels.jummp.plugins.format
 import net.biomodels.jummp.core.model.FileFormatService
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.model.ModellingApproach
-import org.apache.tika.detect.DefaultDetector
-import org.apache.tika.io.TemporaryResources
-import org.apache.tika.io.TikaInputStream
-import org.apache.tika.metadata.Metadata
+import org.apache.tika.Tika
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -40,17 +37,19 @@ import org.slf4j.LoggerFactory
  */
 abstract class AbstractFormatDetectionService implements FileFormatService {
     static transactional = false
-    final protected Logger logger = LoggerFactory.getLogger(this.getClass())
-    final protected static
-        Map<String, String> TARGET_MIME_TYPES = ["C_CPP": "text/x-csrc",
-                                                 "Java": "text/x-java-source",
-                                                 "Python": "text/x-python",
-                                                 "R": "text/x-rsrc",
-                                                 "Mathematica": "application/mathematica"]
+    public static final String EXPECTED_FORMAT_REQUIRED = "Please set expectedFormat before calling this method"
+    protected final Logger logger = LoggerFactory.getLogger(this.getClass())
+    protected final CommonFormat expectedFormat
+
+    AbstractFormatDetectionService(CommonFormat expectedFormat) {
+        this.expectedFormat = expectedFormat
+    }
+
     @Override
     boolean validate(List<File> model, List<String> errors) {
         return false
     }
+
 
     @Override
     String extractName(List<File> model) {
@@ -103,52 +102,28 @@ abstract class AbstractFormatDetectionService implements FileFormatService {
      * <p>This service tries to verify a list of files matching with the specific mime type in a set of ones or
      * not.</p>
      *
-     * @param mimeTypes  A Set of String objects denoting the accepted mime types
      * @param files     A List of File objects denoting a collection of files included in a certain submission.
      * @return  true/false
      */
-    protected boolean areTheseFilesInThisFormat(final Set<String> mimeTypes, final List<File> files) {
+    boolean areFilesThisFormat(final List<File> files) {
+        Set<String> mimeTypes = Objects.requireNonNull(expectedFormat, EXPECTED_FORMAT_REQUIRED)
+            .acceptedMimeTypes
         def result = files.any { File f ->
-            isWellKnownFile(mimeTypes, f)
+            isWellKnownFile(f, mimeTypes)
         }
         return result
     }
 
-    private boolean isWellKnownFile(final Set<String> mimeTypes, final File f) {
-        DefaultDetector mimeDetector = new DefaultDetector()
-        Metadata metadata = new Metadata()
-        metadata.set(Metadata.RESOURCE_NAME_KEY, f.name)
-        f.withInputStream { InputStream stream ->
-            // Must cast to TikaInputStream in order to use all available detectors,
-            // not just MimeTypeDetector. See https://tika.apache.org/1.4/detection.html
-            // and https://issues.apache.org/jira/browse/TIKA-3034
-            //TikaInputStream tikaStream = createTikaInputStream(stream)
-            TikaInputStream tikaStream = TikaInputStream.cast(stream)
-            println "${tikaStream?.class?.name}"
-            try {
-                String detectedMime = mimeDetector.detect(stream, metadata)?.toString()
-                String detectedMime2 = mimeDetector.detect(tikaStream, metadata)?.toString()
-                println "$detectedMime vs $detectedMime2"
-                logger.debug("File $f has media type $detectedMime")
-                boolean result = detectedMime in mimeTypes
-                return result
-            } catch (IOException e) {
-                String n = f.name
-                logger.error("Could not probe $n for MIME type detection.", e)
-            } finally {
-                try {
-                    tikaStream?.close()
-                } catch (IOException e) {
-                    logger.error("Failed to close Tika stream for $f while probing for $mimeType", e)
-                }
-            }
-            return false
+    protected boolean isWellKnownFile(final File f, Set<String> mimeTypes) {
+        try {
+            String detectedMime = new Tika().detect(f)
+            logger.debug("File $f has media type $detectedMime")
+            boolean result = detectedMime in mimeTypes
+            return result
+        } catch (IOException e) {
+            String n = f.name
+            logger.error("Could not probe $n for MIME type detection.", e)
         }
-    }
-
-    private static TikaInputStream createTikaInputStream(InputStream stream) {
-        TemporaryResources deferredCloseables = new TemporaryResources()
-        deferredCloseables.addResource(stream)
-        TikaInputStream.get stream, deferredCloseables
+        return false
     }
 }

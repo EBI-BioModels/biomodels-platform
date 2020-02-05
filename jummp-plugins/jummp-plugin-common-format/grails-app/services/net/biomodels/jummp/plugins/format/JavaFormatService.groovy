@@ -31,9 +31,8 @@ package net.biomodels.jummp.plugins.format
  */
 class JavaFormatService extends AbstractFormatDetectionService {
     static transactional = false
-    @Override
-    boolean areFilesThisFormat(List<File> files) {
-        Set<String> mimeTypes = CommonFormat.JAVA.acceptedMimeTypes
-        areTheseFilesInThisFormat(mimeTypes, files)
+
+    JavaFormatService() {
+        super(CommonFormat.JAVA)
     }
 }

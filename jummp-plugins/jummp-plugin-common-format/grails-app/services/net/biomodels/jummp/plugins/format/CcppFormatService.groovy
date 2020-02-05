@@ -31,9 +31,8 @@ package net.biomodels.jummp.plugins.format
  */
 class CcppFormatService extends AbstractFormatDetectionService {
     static transactional = false
-    @Override
-    boolean areFilesThisFormat(List<File> files) {
-        Set<String> mimeTypes = CommonFormat.C_CPP.acceptedMimeTypes
-        areTheseFilesInThisFormat(mimeTypes, files)
+
+    CcppFormatService() {
+        super(CommonFormat.C_CPP)
     }
 }
