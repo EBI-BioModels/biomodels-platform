@@ -30,6 +30,7 @@ package net.biomodels.jummp.plugins.format
  * </ul>
  */
 class MathematicaFormatService extends AbstractFormatDetectionService {
+    static transactional = false
     /**
      * <p>Detects whether any of the supplied list of files is encoded in Mathematica.</p>
      *
@@ -42,6 +43,8 @@ class MathematicaFormatService extends AbstractFormatDetectionService {
      */
     @Override
     boolean areFilesThisFormat(List<File> files) {
-        areTheseFilesInThisFormat TARGET_MIME_TYPES['mathematica'], files
+        String format = CommonFormat.MATHEMATICA.name
+        String mimeType = TARGET_MIME_TYPES[format]
+        areTheseFilesInThisFormat(mimeType, files)
     }
 }

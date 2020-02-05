@@ -39,12 +39,14 @@ import org.slf4j.LoggerFactory
  *  </ul>
  */
 abstract class AbstractFormatDetectionService implements FileFormatService {
+    static transactional = false
     final protected Logger logger = LoggerFactory.getLogger(this.getClass())
-    final protected static Map<String, String> TARGET_MIME_TYPES = ["java": "text/x-java-source",
-                             "c_cpp": "text/x-csrc",
-                             "python": "text/x-python",
-                             "R": "text/x-rsrc",
-                             "mathematica": "application/mathematica"]
+    final protected static
+        Map<String, String> TARGET_MIME_TYPES = ["C_CPP": "text/x-csrc",
+                                                 "Java": "text/x-java-source",
+                                                 "Python": "text/x-python",
+                                                 "R": "text/x-rsrc",
+                                                 "Mathematica": "application/mathematica"]
     @Override
     boolean validate(List<File> model, List<String> errors) {
         return false
@@ -115,7 +117,7 @@ abstract class AbstractFormatDetectionService implements FileFormatService {
         DefaultDetector mimeDetector = new DefaultDetector()
         Metadata metadata = new Metadata()
         metadata.set(Metadata.RESOURCE_NAME_KEY, f.name)
-        boolean result = f.withInputStream { InputStream stream ->
+        f.withInputStream { InputStream stream ->
             // Must cast to TikaInputStream in order to use all available detectors,
             // not just MimeTypeDetector. See https://tika.apache.org/1.4/detection.html
             // and https://issues.apache.org/jira/browse/TIKA-3034
@@ -138,8 +140,8 @@ abstract class AbstractFormatDetectionService implements FileFormatService {
                     logger.error("Failed to close Tika stream for $f while probing for $mimeType", e)
                 }
             }
+            return false
         }
-        result
     }
 
     private static TikaInputStream createTikaInputStream(InputStream stream) {
