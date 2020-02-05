@@ -97,7 +97,7 @@ This plugin supports to handle commonly well-known formats such as C/C++, Python
             [identifier: "R", name: "R", version: "*", service: "rlangFormatService"],
             [identifier: "Java", name: "Java", version: "*", service: "javaFormatService"],
             [identifier: "Mathematica", name: "Mathematica", version: "*", service: "mathematicaFormatService"],
-            [identifier: "matlab", name: "MATLAB (Octave)", version: "*", service: "matlabFormatService"]
+            [identifier: "matlab", name: "MATLAB (Octave)", version: "*", service: "matlabFormatService", controller: "matlab"]
         ]
         try {
             def service = ctx.getBean("modelFileFormatService")
@@ -106,8 +106,9 @@ This plugin supports to handle commonly well-known formats such as C/C++, Python
                 String name = it["name"]
                 String version = it["version"]
                 String formatService = it["service"]
+                String formatController = it["controller"] ?: "commonFormat"
                 def formatCmd = service.registerModelFormat(identifier, name, version)
-                service.handleModelFormat(formatCmd, formatService, "commonFormat")
+                service.handleModelFormat(formatCmd, formatService, formatController)
             }
         } catch (NoSuchBeanDefinitionException ignored) {
             // running as standalone plugin

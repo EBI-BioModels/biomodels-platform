@@ -24,6 +24,7 @@ import net.biomodels.jummp.core.model.FileFormatService
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.model.ModellingApproach
 import org.apache.tika.detect.DefaultDetector
+import org.apache.tika.io.TemporaryResources
 import org.apache.tika.io.TikaInputStream
 import org.apache.tika.metadata.Metadata
 import org.slf4j.Logger
@@ -118,16 +119,32 @@ abstract class AbstractFormatDetectionService implements FileFormatService {
             // Must cast to TikaInputStream in order to use all available detectors,
             // not just MimeTypeDetector. See https://tika.apache.org/1.4/detection.html
             // and https://issues.apache.org/jira/browse/TIKA-3034
-            TikaInputStream tikaStream = TikaInputStream.cast stream
+            //TikaInputStream tikaStream = createTikaInputStream(stream)
+            TikaInputStream tikaStream = TikaInputStream.cast(stream)
+            println "${tikaStream?.class?.name}"
             try {
-                String detectedMime = mimeDetector.detect(tikaStream, metadata)?.toString()
+                String detectedMime = mimeDetector.detect(stream, metadata)?.toString()
+                String detectedMime2 = mimeDetector.detect(tikaStream, metadata)?.toString()
+                println "$detectedMime vs $detectedMime2"
                 logger.debug("File $f has media type $detectedMime")
                 return detectedMime == mimeType
             } catch (IOException e) {
                 String n = f.name
                 logger.error("Could not probe $n for MIME type detection.", e)
+            } finally {
+                try {
+                    tikaStream?.close()
+                } catch (IOException e) {
+                    logger.error("Failed to close Tika stream for $f while probing for $mimeType", e)
+                }
             }
         }
         result
+    }
+
+    private static TikaInputStream createTikaInputStream(InputStream stream) {
+        TemporaryResources deferredCloseables = new TemporaryResources()
+        deferredCloseables.addResource(stream)
+        TikaInputStream.get stream, deferredCloseables
     }
 }

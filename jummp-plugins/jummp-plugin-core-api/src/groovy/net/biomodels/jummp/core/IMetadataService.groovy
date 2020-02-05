@@ -20,6 +20,7 @@
 
 package net.biomodels.jummp.core
 
+import net.biomodels.jummp.core.annotation.QualifierTransportCommand
 import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand
 import net.biomodels.jummp.core.annotation.StatementTransportCommand
 import net.biomodels.jummp.core.model.ModelTransportCommand
@@ -79,6 +80,9 @@ interface IMetadataService {
      */
     List<StatementTransportCommand> findAllStatementsForSubject(RevisionTransportCommand
             revision, String subject)
+
+    Map<QualifierTransportCommand, List<ResourceReferenceTransportCommand>> fetchGenericAnnotations(
+            RevisionTransportCommand rev)
 
     List<String> getMetadataNamespaces()
 

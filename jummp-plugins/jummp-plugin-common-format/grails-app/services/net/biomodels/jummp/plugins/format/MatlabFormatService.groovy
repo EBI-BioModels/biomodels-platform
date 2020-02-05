@@ -20,11 +20,10 @@
 
 package net.biomodels.jummp.plugins.format
 
+import groovy.transform.CompileStatic
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.model.ModellingApproach
-import org.apache.tika.detect.DefaultDetector
-import org.apache.tika.metadata.Metadata
 
 /**
  * <p>Individual class for handling detection of Matlab format</p>
@@ -35,21 +34,20 @@ import org.apache.tika.metadata.Metadata
  *     <li><a href="mailto:mihai.glont@ebi.ac.uk">Mihai Glonț</a></li>
  * </ul>
  */
+@CompileStatic
 class MatlabFormatService extends AbstractFormatDetectionService {
     static transactional = false
     final String FORMAT_VERSION = '*'
-    final static Set<String> MATLAB_MIME_TYPES = ["application/x-matlab",
+    static final Set<String> MATLAB_MIME_TYPES = ["application/x-matlab",
                                                   "application/matlab",
                                                   "text/x-matlab",
-                                                  "text/matlab"]
+                                                  "text/matlab"] as Set<String>
 
     boolean areFilesThisFormat(List<File> mainFiles) {
         if (!mainFiles) {
             return false
         }
-        File result = mainFiles.find { File f ->
-            isMatlabFile f
-        }
+        boolean result = checkMatlabFormat(mainFiles)
         def names = mainFiles.collect {it.name}
         if (result) {
             logger.info "Treating ${names} as a Matlab submission"
@@ -57,7 +55,7 @@ class MatlabFormatService extends AbstractFormatDetectionService {
             logger.info "Submission ${names} does not contain Matlab scripts."
         }
 
-        null != result
+        result
     }
 
     String getFormatVersion(RevisionTransportCommand revision) {
@@ -68,8 +66,9 @@ class MatlabFormatService extends AbstractFormatDetectionService {
     }
 
     Set<File> getMatlabFilesFromRevision(RevisionTransportCommand r) {
-        def files = new LinkedHashSet()
-        r?.files?.each { rf ->
+        Set<File> files = new LinkedHashSet<>()
+        List<RepositoryFileTransportCommand> repoFiles = r?.files
+        for (RepositoryFileTransportCommand rf: repoFiles) {
             def f = new File(rf.path)
             if (isMatlabFile(f)) {
                 files.add(f)
@@ -78,25 +77,18 @@ class MatlabFormatService extends AbstractFormatDetectionService {
         files
     }
 
-    private boolean isRevisionFormatSupported(RevisionTransportCommand revisionCmd) {
+    private static boolean isRevisionFormatSupported(RevisionTransportCommand revisionCmd) {
         ModelFormatTransportCommand fmt = revisionCmd?.format
         return fmt?.identifier == "matlab"
     }
 
     private boolean isMatlabFile(File f) {
-        def mimeDetector = new DefaultDetector()
-        def metadata = new Metadata()
-        metadata.set(Metadata.RESOURCE_NAME_KEY, f.name)
-        boolean result = f.withInputStream { InputStream stream ->
-            try {
-                String mime = mimeDetector.detect(stream, metadata)?.toString()
-                log.debug "File $f has media type $mime"
-                return mime in MATLAB_MIME_TYPES
-            } catch (IOException e) {
-                String n = f.name
-                log.error("Could not probe $n for MIME type detection.", e)
-            }
+        checkMatlabFormat([f])
+    }
+
+    private boolean checkMatlabFormat(List<File> mainFiles) {
+        MATLAB_MIME_TYPES.any { String mime ->
+            areTheseFilesInThisFormat(mime, mainFiles)
         }
-        result
     }
 }
