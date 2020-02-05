@@ -33,8 +33,7 @@ class PythonFormatService extends AbstractFormatDetectionService {
     static transactional = false
     @Override
     boolean areFilesThisFormat(List<File> files) {
-        String format = CommonFormat.PYTHON.name
-        String mimeType = TARGET_MIME_TYPES[format]
-        areTheseFilesInThisFormat(mimeType, files)
+        Set<String> mimeTypes = CommonFormat.PYTHON.acceptedMimeTypes
+        areTheseFilesInThisFormat(mimeTypes, files)
     }
 }

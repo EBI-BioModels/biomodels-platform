@@ -33,8 +33,7 @@ class JavaFormatService extends AbstractFormatDetectionService {
     static transactional = false
     @Override
     boolean areFilesThisFormat(List<File> files) {
-        String format = CommonFormat.JAVA.name
-        String mimeType = TARGET_MIME_TYPES[format]
-        areTheseFilesInThisFormat(mimeType, files)
+        Set<String> mimeTypes = CommonFormat.JAVA.acceptedMimeTypes
+        areTheseFilesInThisFormat(mimeTypes, files)
     }
 }

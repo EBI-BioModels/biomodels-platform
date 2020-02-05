@@ -43,19 +43,9 @@ class MatlabFormatService extends AbstractFormatDetectionService {
                                                   "text/x-matlab",
                                                   "text/matlab"] as Set<String>
 
-    boolean areFilesThisFormat(List<File> mainFiles) {
-        if (!mainFiles) {
-            return false
-        }
-        boolean result = checkMatlabFormat(mainFiles)
-        def names = mainFiles.collect {it.name}
-        if (result) {
-            logger.info "Treating ${names} as a Matlab submission"
-        } else {
-            logger.info "Submission ${names} does not contain Matlab scripts."
-        }
-
-        result
+    boolean areFilesThisFormat(final List<File> files) {
+        Set<String> mimeTypes = CommonFormat.MATLAB.acceptedMimeTypes
+        areTheseFilesInThisFormat(mimeTypes, files)
     }
 
     String getFormatVersion(RevisionTransportCommand revision) {
@@ -87,8 +77,6 @@ class MatlabFormatService extends AbstractFormatDetectionService {
     }
 
     private boolean checkMatlabFormat(List<File> mainFiles) {
-        MATLAB_MIME_TYPES.any { String mime ->
-            areTheseFilesInThisFormat(mime, mainFiles)
-        }
+        areTheseFilesInThisFormat(CommonFormat.MATLAB.acceptedMimeTypes, mainFiles)
     }
 }

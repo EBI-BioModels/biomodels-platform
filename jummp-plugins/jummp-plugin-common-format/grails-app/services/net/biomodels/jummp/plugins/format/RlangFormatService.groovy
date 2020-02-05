@@ -33,8 +33,7 @@ class RlangFormatService extends AbstractFormatDetectionService {
     static transactional = false
     @Override
     boolean areFilesThisFormat(final List<File> files) {
-        String format = CommonFormat.R.name
-        String mimeType = TARGET_MIME_TYPES[format]
-        areTheseFilesInThisFormat(mimeType, files)
+        Set<String> mimeTypes = CommonFormat.R.acceptedMimeTypes
+        areTheseFilesInThisFormat(mimeTypes, files)
     }
 }

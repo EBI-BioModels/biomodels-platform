@@ -98,22 +98,23 @@ abstract class AbstractFormatDetectionService implements FileFormatService {
     }
 
     /**
-     * <p>Check whether the files in questions are in a given mime type or not</p>
+     * <p>Check whether the files in questions are in a set of the specific mime types or not</p>
      *
-     * <p>This service tries to verify a list of files matching with the given mime type or not.</p>
+     * <p>This service tries to verify a list of files matching with the specific mime type in a set of ones or
+     * not.</p>
      *
-     * @param mimeType  A String object denoting the mime type
+     * @param mimeTypes  A Set of String objects denoting the accepted mime types
      * @param files     A List of File objects denoting a collection of files included in a certain submission.
-     * @return  boolean true/false
+     * @return  true/false
      */
-    protected boolean areTheseFilesInThisFormat(final String mimeType, final List<File> files) {
+    protected boolean areTheseFilesInThisFormat(final Set<String> mimeTypes, final List<File> files) {
         def result = files.any { File f ->
-            isWellKnownFile(mimeType, f)
+            isWellKnownFile(mimeTypes, f)
         }
         return result
     }
 
-    private boolean isWellKnownFile(final String mimeType, final File f) {
+    private boolean isWellKnownFile(final Set<String> mimeTypes, final File f) {
         DefaultDetector mimeDetector = new DefaultDetector()
         Metadata metadata = new Metadata()
         metadata.set(Metadata.RESOURCE_NAME_KEY, f.name)
@@ -129,7 +130,8 @@ abstract class AbstractFormatDetectionService implements FileFormatService {
                 String detectedMime2 = mimeDetector.detect(tikaStream, metadata)?.toString()
                 println "$detectedMime vs $detectedMime2"
                 logger.debug("File $f has media type $detectedMime")
-                return detectedMime == mimeType
+                boolean result = detectedMime in mimeTypes
+                return result
             } catch (IOException e) {
                 String n = f.name
                 logger.error("Could not probe $n for MIME type detection.", e)

@@ -33,8 +33,7 @@ class CcppFormatService extends AbstractFormatDetectionService {
     static transactional = false
     @Override
     boolean areFilesThisFormat(List<File> files) {
-        String format = CommonFormat.C_CPP.name
-        String mimeType = TARGET_MIME_TYPES[format]
-        areTheseFilesInThisFormat(mimeType, files)
+        Set<String> mimeTypes = CommonFormat.C_CPP.acceptedMimeTypes
+        areTheseFilesInThisFormat(mimeTypes, files)
     }
 }

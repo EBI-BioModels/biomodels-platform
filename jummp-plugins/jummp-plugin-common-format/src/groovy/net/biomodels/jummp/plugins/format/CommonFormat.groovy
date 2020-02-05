@@ -30,20 +30,26 @@ package net.biomodels.jummp.plugins.format
  * </ul>
  */
 enum CommonFormat {
-    C_CPP("C_CPP"),
-    JAVA("Java"),
-    MATHEMATICA("Mathematica"),
-    MATLAB("Matlab"),
-    PYTHON("Python"),
-    R("R")
+    C_CPP("C_CPP", ["text/x-csrc", "text/x-c++src"] as Set<String>),
+    JAVA("Java", ["text/x-java-source"] as Set<String>),
+    MATHEMATICA("Mathematica", ["application/mathematica"] as Set<String>),
+    MATLAB("Matlab", ["application/x-matlab", "application/matlab", "text/x-matlab", "text/matlab"] as Set<String>),
+    PYTHON("Python", ["text/x-python"] as Set<String>),
+    R("R", ["text/x-rsrc"] as Set<String>)
 
     private String name
+    private Set<String> acceptedMimeTypes
 
     String getName() {
         this.name
     }
 
-    private CommonFormat(String name) {
+    Set<String> getAcceptedMimeTypes() {
+        this.acceptedMimeTypes
+    }
+
+    private CommonFormat(String name, Set<String> acceptedMimeTypes) {
         this.name = name
+        this.acceptedMimeTypes = acceptedMimeTypes
     }
 }
