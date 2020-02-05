@@ -20,9 +20,7 @@
 
 package net.biomodels.jummp.plugins.format
 
-import net.biomodels.jummp.core.model.FileFormatService
-import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.model.ModellingApproach
+import net.biomodels.jummp.core.model.FileFormatServiceAdapter
 import org.apache.tika.Tika
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -35,7 +33,7 @@ import org.slf4j.LoggerFactory
  *   <li>Tung Nguyen&nbsp;<a href="mailto:tung.nguyen@ebi.ac.uk">tung.nguyen@ebi.ac.uk</a></li>
  *  </ul>
  */
-abstract class AbstractFormatDetectionService implements FileFormatService {
+abstract class AbstractFormatDetectionService extends FileFormatServiceAdapter {
     static transactional = false
     public static final String EXPECTED_FORMAT_REQUIRED = "Please set expectedFormat before calling this method"
     protected final Logger logger = LoggerFactory.getLogger(this.getClass())
@@ -55,6 +53,7 @@ abstract class AbstractFormatDetectionService implements FileFormatService {
      * @return  true/false
      * @throws NullPointerException if {@code expectedFormat} has not been initialised.
      */
+    @Override
     boolean areFilesThisFormat(final List<File> files) {
         Set<String> mimeTypes = Objects.requireNonNull(expectedFormat, EXPECTED_FORMAT_REQUIRED)
             .acceptedMimeTypes
