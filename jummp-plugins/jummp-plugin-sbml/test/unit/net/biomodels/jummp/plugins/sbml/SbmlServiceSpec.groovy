@@ -1,5 +1,6 @@
 package net.biomodels.jummp.plugins.sbml
 
+import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import net.biomodels.jummp.core.model.CurationState
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand
@@ -7,6 +8,7 @@ import net.biomodels.jummp.core.model.ModelState
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.model.ModellingApproach
 import org.sbml.jsbml.CVTerm
 import org.sbml.jsbml.SBMLDocument
 import org.sbml.jsbml.SBMLReader
@@ -17,7 +19,17 @@ import java.time.Duration
 import java.time.LocalTime
 
 @TestFor(SbmlService)
+@Mock([ModellingApproach])
 class SbmlServiceSpec extends Specification {
+    static Map odeModelArgs = [
+        accession: "MAMO_0000046",
+        resource: "http://identifiers.org/mamo/MAMO_0000046",
+        name: "ordinary differential equation model"
+    ]
+
+    def setup() {
+        assert ModellingApproach.findOrSaveWhere(odeModelArgs)
+    }
 
     @Unroll("run this method areFilesThisFormat() with file #sbmlFile: #expected")
     void "test areFilesThisFormat() with different sbmlFile"(String sbmlFile, boolean expected) {
@@ -230,4 +242,28 @@ against the document #documentPath""")
         service.updateName(rev, originalName)
     }
 
+    @Unroll("extracting the modelling approach for #documentPath yields #expectedName")
+    def "can extract modelling approaches"(String documentPath, String expectedName) {
+        when:
+        def rf = new RepositoryFileTransportCommand(path: "test/files/$documentPath", mainFile: true,
+            description: "model file")
+        def model = new ModelTransportCommand(submissionId: "MODEL0123456789")
+        def format = new ModelFormatTransportCommand(identifier: "SBML")
+        RevisionTransportCommand rev = new RevisionTransportCommand(model: model,
+            state: ModelState.UNPUBLISHED, revisionNumber: 1, owner: "me", minorRevision: false,
+            validated: true, name: "name", format: format, description: "desc",
+            uploadDate: new Date(), files: [rf], curationState: CurationState.CURATED)
+        ModellingApproach result = service.getModellingApproach(rev)
+
+        then:
+        result?.name == expectedName
+
+        where:
+        documentPath << [ "incompleteMAMO.xml", "BIOMD0000000654.xml" ]
+        expectedName << [
+            null,
+            // could not get Grails to reference a domain class instance here
+            odeModelArgs['name']
+        ]
+    }
 }
