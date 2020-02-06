@@ -103,6 +103,7 @@ class SubmissionService {
          *
          * @param workingMemory a Map containing all objects exchanged throughout the flow.
          */
+        @CompileStatic(TypeCheckingMode.SKIP)
         @Cacheable('sortedModelFormats')
         //@Cacheable('definedModellingApproaches') // should split it into two methods so as to apply cacheable
         void initialise(Map<String, Object> workingMemory) {
@@ -110,6 +111,9 @@ class SubmissionService {
             workingMemory.put("sorted_model_formats", sortedModelFormats)
             List<ModellingApproach> definedModellingApproaches = ModellingApproach.list()
             workingMemory.put("defined_modelling_approaches", definedModellingApproaches)
+            ModelFormat unknownFormat = ModelFormat.findByIdentifier("UNKNOWN")
+            MFTC unknownFormatTC = new ModelFormatAdapter(format: unknownFormat).toCommandObject()
+            workingMemory.put("unknown_format_command", unknownFormatTC)
         }
 
         /**
@@ -282,9 +286,6 @@ class SubmissionService {
          */
         void performValidation(Map<String, Object> workingMemory) {
             if (processingRequired(workingMemory)) {
-                ModelFormat unknownFormat = ModelFormat.findByIdentifier("UNKNOWN")
-                MFTC unknownFormatTC = new ModelFormatAdapter(format: unknownFormat).toCommandObject()
-                workingMemory.put("unknown_format_command", unknownFormatTC)
                 workingMemory.remove("validationErrorList")
                 List<File> modelFiles = getFilesFromMemory(workingMemory, false)
                 modelFiles.each { File it ->

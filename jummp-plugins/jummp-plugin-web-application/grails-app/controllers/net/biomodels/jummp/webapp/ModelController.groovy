@@ -37,6 +37,7 @@ package net.biomodels.jummp.webapp
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.InvalidPublicationAuthorsException
+import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
@@ -959,11 +960,15 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                 flow.workingMemory.remove("changedMainFiles")
                 submissionService.performValidation(flow.workingMemory)
                 MFTC format = flow.workingMemory.get("model_type")
+                boolean ignoreCheckingVersion = ModelFormatAdapter.ignoreCheckingVersion(format)
                 if (format && format.identifier == "UNKNOWN") {
                     UnknownFormat()
-                } else if (format && format.identifier !="UNKNOWN" && format.formatVersion == "*") {
+                } else if (format && format.identifier !="UNKNOWN" &&
+                    format.formatVersion == "*" && !ignoreCheckingVersion) {
                     UnknownFormatVersion()
-                } else if (!flow.workingMemory.containsKey("validation_error")) {
+                } else if (!flow.workingMemory.containsKey("validation_error") ||
+                    (format && format.identifier !="UNKNOWN" &&
+                    format.formatVersion == "*" && ignoreCheckingVersion)) {
                     Valid()
                 } else {
                     String errorAsString = flow.workingMemory.remove("validation_error") as String

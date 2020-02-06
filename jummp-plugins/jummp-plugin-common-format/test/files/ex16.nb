@@ -1,0 +1,474 @@
+(************** Content-type: application/mathematica **************
+
+                    Mathematica-Compatible Notebook
+
+This notebook can be used with any Mathematica-compatible
+application, such as Mathematica, MathReader or Publicon. The data
+for the notebook starts with the line containing stars above.
+
+To get the notebook into a Mathematica-compatible application, do
+one of the following:
+
+* Save the data starting with the line of stars above into a file
+  with a name ending in .nb, then open the file inside the
+  application;
+
+* Copy the data starting with the line of stars above to the
+  clipboard, then use the Paste menu command inside the application.
+
+Data for notebooks contains only printable 7-bit ASCII and can be
+sent directly in email or through ftp in text mode.  Newlines can be
+CR, LF or CRLF (Unix, Macintosh or MS-DOS style).
+
+NOTE: If you modify the data for this notebook not in a Mathematica-
+compatible application, you must delete the line below containing
+the word CacheID, otherwise Mathematica-compatible applications may
+try to use invalid cache data.
+
+For more information on notebooks and Mathematica-compatible 
+applications, contact Wolfram Research:
+  web: http://www.wolfram.com
+  email: info@wolfram.com
+  phone: +1-217-398-0700 (U.S.)
+
+Notebook reader applications are available free of charge from 
+Wolfram Research.
+*******************************************************************)
+
+(*CacheID: 232*)
+
+
+(*NotebookFileLineBreakTest
+NotebookFileLineBreakTest*)
+(*NotebookOptionsPosition[     10607,        377]*)
+(*NotebookOutlinePosition[     11466,        408]*)
+(*  CellTagsIndexPosition[     11422,        404]*)
+(*WindowFrame->Normal*)
+
+
+
+Notebook[{
+
+
+Cell[CellGroupData[{Cell["\<\
+Example 16
+Surface, Contour, and Density Plots\
+\>", "Title",
+  ImageRegion->{{0, 1}, {0, 1}}],
+
+Cell[TextData[{
+  "Copyright ",
+  StyleBox["\[Copyright]",
+    FontSlant->"Plain"],
+  " 1993 by Bill Titus, Carleton College, \nDepartment of Physics and \
+Astronomy, Northfield, MN  55057-4025\nSeptember 6, 1993"
+}], "Subsubtitle",
+  ImageRegion->{{0, 1}, {0, 1}}],
+
+Cell[CellGroupData[{Cell["Topics and Skills", "Section",
+  ImageRegion->{{0, 1}, {0, 1}}],
+
+Cell[TextData[{
+  "1.  ",
+  StyleBox["Plot3D[]",
+    FontFamily->"Courier"],
+  " with options:  ",
+  StyleBox["LightSource",
+    FontFamily->"Courier"],
+  ",  ",
+  StyleBox["AxesLabel",
+    FontFamily->"Courier"],
+  ",  ",
+  StyleBox["Boxed",
+    FontFamily->"Courier"],
+  ",  ",
+  StyleBox["Axes",
+    FontFamily->"Courier"],
+  ",  ",
+  StyleBox["PlotPoints",
+    FontFamily->"Courier"],
+  ",  and  ",
+  StyleBox["ViewPoint",
+    FontFamily->"Courier"],
+  ".\n2.  ",
+  StyleBox["ContourPlot[]",
+    FontFamily->"Courier"],
+  "  with various options.\n3.  ",
+  StyleBox["DensityPlot[]",
+    FontFamily->"Courier"],
+  "  with various options."
+}], "Special1",
+  ImageRegion->{{0, 1}, {0, 1}}]}, Open]],
+
+Cell[CellGroupData[{Cell["Problem", "Section",
+  ImageRegion->{{0, 1}, {0, 1}}],
+
+Cell["\<\
+A rubber sheet is stretched tight over the square boundary   0 < x < a   and  \
+    
+0 < y < a.  The normal modes of oscillation for such a sheet are of the \
+form\
+\>", "Special1",
+  ImageRegion->{{0, 1}, {0, 1}}],
+
+Cell[TextData[{
+  "        ",
+  StyleBox[" z[x, y] = cos(",
+    FontFamily->"Courier"],
+  "\[Omega]",
+  StyleBox["t + ",
+    FontFamily->"Courier"],
+  "\[Alpha]",
+  StyleBox[") sin(k",
+    FontFamily->"Courier"],
+  StyleBox["1",
+    FontFamily->"Courier",
+    FontVariations->{"CompatibilityType"->"Subscript"}],
+  StyleBox["x) sin(k",
+    FontFamily->"Courier"],
+  StyleBox["2",
+    FontFamily->"Courier",
+    FontVariations->{"CompatibilityType"->"Subscript"}],
+  StyleBox["y)",
+    FontFamily->"Courier"]
+}], "Special1",
+  ImageRegion->{{0, 1}, {0, 1}}],
+
+Cell["\<\
+Here  \[Alpha]  is a phase constant and\
+\>", "Special1",
+  ImageRegion->{{0, 1}, {0, 1}}],
+
+Cell[TextData[{
+  "          ",
+  StyleBox["k",
+    FontFamily->"Courier"],
+  StyleBox["1",
+    FontFamily->"Courier",
+    FontVariations->{"CompatibilityType"->"Subscript"}],
+  StyleBox[" = 2",
+    FontFamily->"Courier"],
+  "\[Pi]",
+  StyleBox["n/a,  k",
+    FontFamily->"Courier"],
+  StyleBox["2",
+    FontFamily->"Courier",
+    FontVariations->{"CompatibilityType"->"Subscript"}],
+  StyleBox[" = 2",
+    FontFamily->"Courier"],
+  "\[Pi]",
+  StyleBox["m/a,  ",
+    FontFamily->"Courier"],
+  "\[Omega]",
+  StyleBox["2",
+    FontFamily->"Courier",
+    FontVariations->{"CompatibilityType"->"Superscript"}],
+  StyleBox[" = c",
+    FontFamily->"Courier"],
+  StyleBox["2",
+    FontFamily->"Courier",
+    FontVariations->{"CompatibilityType"->"Superscript"}],
+  StyleBox["(k",
+    FontFamily->"Courier"],
+  StyleBox["1",
+    FontFamily->"Courier",
+    FontVariations->{"CompatibilityType"->"Subscript"}],
+  StyleBox["2",
+    FontFamily->"Courier",
+    FontVariations->{"CompatibilityType"->"Superscript"}],
+  StyleBox[" + k",
+    FontFamily->"Courier"],
+  StyleBox["2",
+    FontFamily->"Courier",
+    FontVariations->{"CompatibilityType"->"Subscript"}],
+  StyleBox["2",
+    FontFamily->"Courier",
+    FontVariations->{"CompatibilityType"->"Superscript"}],
+  StyleBox["), ",
+    FontFamily->"Courier"],
+  "                     "
+}], "Special1",
+  ImageRegion->{{0, 1}, {0, 1}}],
+
+Cell[TextData[{
+  "where  ",
+  StyleBox["n",
+    FontFamily->"Courier"],
+  "  and  ",
+  StyleBox["m",
+    FontFamily->"Courier"],
+  "  are positive integers, and  ",
+  StyleBox["c",
+    FontFamily->"Courier"],
+  "  is the wave speed.  Examine graphically some of the normal modes of \
+oscillation for this system."
+}], "Special1",
+  ImageRegion->{{0, 1}, {0, 1}}]}, Open]],
+
+Cell[CellGroupData[{Cell["Solution", "Section",
+  ImageRegion->{{0, 1}, {0, 1}}],
+
+Cell[TextData[{
+  "Step 1 - For simplicity, assume that  a = 1,   c = 1,  and  ",
+  StyleBox["\[Alpha]",
+    FontWeight->"Plain"],
+  " = 0.  Use the MMA command  ",
+  StyleBox["Plot3D[]",
+    FontFamily->"Courier"],
+  "  to plot the surface of the sheet at time  t = 0  for the normal mode \
+corresponding to  n = 1  and  m = 2.  Don't include any options in the plot \
+command. "
+}], "Subsection",
+  ImageRegion->{{0, 1}, {0, 1}}],
+
+Cell[CellGroupData[{Cell["Comment 1", "Subsection",
+  ImageRegion->{{0, 1}, {0, 1}}],
+
+Cell[TextData[{
+  "1.  Why might you want to evaluate  w  numerically before calling  ",
+  StyleBox["Plot3D[]",
+    FontFamily->"Courier"],
+  "?"
+}], "Special1",
+  ImageRegion->{{0, 1}, {0, 1}}]}, Open]],
+
+Cell[TextData[{
+  "Step 2 - Examine the options for  ",
+  StyleBox["Plot3D[]",
+    FontFamily->"Courier"],
+  "  and use some of them to label your axes and change to surface color to \
+red. "
+}], "Subsection",
+  ImageRegion->{{0, 1}, {0, 1}}],
+
+Cell[TextData[{
+  "Step 3 - Now choose options to remove the axes and the bounding box so \
+that the sheet just sits there in free space.  Keep the surface color red, \
+but increase the number of  ",
+  StyleBox["PlotPoints",
+    FontFamily->"Courier"],
+  "  to  ",
+  StyleBox["30",
+    FontFamily->"Courier"],
+  "  so that the surface is smoother."
+}], "Subsection",
+  ImageRegion->{{0, 1}, {0, 1}}],
+
+Cell[CellGroupData[{Cell["Comment 3", "Subsection",
+  ImageRegion->{{0, 1}, {0, 1}}],
+
+Cell[TextData[{
+  "1.  Note that if  ",
+  StyleBox["Axes",
+    FontFamily->"Courier"],
+  "  is set to  ",
+  StyleBox["False",
+    FontFamily->"Courier"],
+  ", then  ",
+  StyleBox["AxesLabel",
+    FontFamily->"Courier"],
+  "  is simply ignored.\n2.  The points are sampled uniformly.  The default \
+number of points sampled is  15 ",
+  StyleBox["x",
+    FontFamily->"Helvetica"],
+  " 15  so that  30 ",
+  StyleBox["x",
+    FontFamily->"Helvetica"],
+  " 30  is four times as many sample points."
+}], "Special1",
+  ImageRegion->{{0, 1}, {0, 1}}]}, Open]],
+
+Cell["\<\
+Step 4 -  Practice changing the viewpoint at which you observe the free \
+surface.  You might want to use the 3D ViewPoint Selector to help you out.\
+\>", "Subsection",
+  ImageRegion->{{0, 1}, {0, 1}}],
+
+Cell[TextData[{
+  "Step 5 - Create a table of ten plots for  ",
+  StyleBox["t",
+    FontFamily->"Courier"],
+  "   going from  ",
+  StyleBox["0",
+    FontFamily->"Courier"],
+  "  to  ",
+  StyleBox["2Pi/w",
+    FontFamily->"Courier"],
+  ".  Then animate your surface's motion as a function of time.  To speed up \
+the drawing, set  ",
+  StyleBox["PlotPoints",
+    FontFamily->"Courier"],
+  "  to  ",
+  StyleBox["15",
+    FontFamily->"Courier"],
+  "."
+}], "Subsection",
+  ImageRegion->{{0, 1}, {0, 1}}],
+
+Cell[TextData[{
+  "Step 6 - Now make a contour plot of the surface at time  t = 0  for the \
+normal mode corresponding to  n = 1  and  m = 1.  As before, assume that  a = \
+1,  c = 1,  and  ",
+  StyleBox["\[Alpha]",
+    FontWeight->"Plain"],
+  " = 0.  Locate the appropriate MMA command to accomplish this task, and \
+apply it without any of its options."
+}], "Subsection",
+  ImageRegion->{{0, 1}, {0, 1}}],
+
+Cell[TextData[{
+  "Step 7 -  Play with some of the options to  ",
+  StyleBox["ContourPlot[]",
+    FontFamily->"Courier"],
+  "  to enchance the appearance of the normal mode plot."
+}], "Subsection",
+  ImageRegion->{{0, 1}, {0, 1}}],
+
+Cell[CellGroupData[{Cell["Comment 7", "Subsection",
+  ImageRegion->{{0, 1}, {0, 1}}],
+
+Cell[TextData[{
+  "1.  The options  ",
+  StyleBox["ContourSmoothing",
+    FontFamily->"Courier"],
+  "  may significantly increases the time it takes to produce the contour \
+plot."
+}], "Special1",
+  ImageRegion->{{0, 1}, {0, 1}}]}, Open]],
+
+Cell[TextData[{
+  "Step 8 - Repeat Step 7, but now use the MMA command  ",
+  StyleBox["DensityPlot[]",
+    FontFamily->"Courier"],
+  "  and some of its options.   "
+}], "Subsection",
+  ImageRegion->{{0, 1}, {0, 1}}],
+
+Cell[CellGroupData[{Cell["Comment 8 ", "Subsection",
+  ImageRegion->{{0, 1}, {0, 1}}],
+
+Cell[TextData[{
+  "1.  Be sure to try the option  ",
+  StyleBox["Mesh -> False",
+    FontFamily->"Courier"],
+  "  and see what happens when you increase the number of  ",
+  StyleBox["PlotPoints",
+    FontFamily->"Courier"],
+  "  to  ",
+  StyleBox["100",
+    FontFamily->"Courier"],
+  ".\n2.  Note that for printing to the laser printer that doesn't print in \
+color, it's best to use shades of grays and not colors for your plots."
+}], "Special1",
+  ImageRegion->{{0, 1}, {0, 1}}]}, Open]]}, Open]],
+
+Cell[CellGroupData[{Cell["Save Your Notebook", "Section",
+  ImageRegion->{{0, 1}, {0, 1}}],
+
+Cell[TextData[{
+  "Remove any output cells from this notebook and then use  ",
+  StyleBox["Save As",
+    FontFamily->"Helvetica"],
+  "  to store your notebook under the name   ",
+  StyleBox["myEx16",
+    FontFamily->"Helvetica"],
+  "."
+}], "Special1",
+  ImageRegion->{{0, 1}, {0, 1}}]}, Open]]}, Open]]
+},
+FrontEndVersion->"4.1 for Microsoft Windows",
+ScreenRectangle->{{0, 1024}, {0, 695}},
+WindowToolbars->{},
+CellGrouping->Manual,
+WindowSize->{499, 599},
+WindowMargins->{{91, Automatic}, {Automatic, 0}},
+PrivateNotebookOptions->{"ColorPalette"->{RGBColor, -1}},
+ShowCellLabel->True,
+ShowCellTags->False,
+RenderingOptions->{"ObjectDithering"->True,
+"RasterDithering"->False}
+]
+
+
+(*******************************************************************
+Cached data follows.  If you edit this Notebook file directly, not
+using Mathematica, you must remove the line containing CacheID at
+the top of  the file.  The cache data will then be recreated when
+you save this file from within Mathematica.
+*******************************************************************)
+
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+
+(*NotebookFileOutline
+Notebook[{
+
+Cell[CellGroupData[{
+Cell[1727, 52, 104, 4, 70, "Title"],
+Cell[1834, 58, 265, 7, 70, "Subsubtitle"],
+
+Cell[CellGroupData[{
+Cell[2122, 67, 69, 1, 70, "Section"],
+Cell[2194, 70, 691, 30, 70, "Special1"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+Cell[2917, 102, 59, 1, 70, "Section"],
+Cell[2979, 105, 224, 6, 70, "Special1"],
+Cell[3206, 113, 556, 21, 70, "Special1"],
+Cell[3765, 136, 100, 3, 70, "Special1"],
+Cell[3868, 141, 1372, 49, 70, "Special1"],
+Cell[5243, 192, 363, 13, 70, "Special1"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+Cell[5638, 207, 60, 1, 70, "Section"],
+Cell[5701, 210, 431, 11, 70, "Subsection"],
+
+Cell[CellGroupData[{
+Cell[6155, 223, 64, 1, 70, "Subsection"],
+Cell[6222, 226, 194, 6, 70, "Special1"]
+}, Open  ]],
+Cell[6428, 234, 242, 7, 70, "Subsection"],
+Cell[6673, 243, 399, 11, 70, "Subsection"],
+
+Cell[CellGroupData[{
+Cell[7095, 256, 64, 1, 70, "Subsection"],
+Cell[7162, 259, 542, 19, 70, "Special1"]
+}, Open  ]],
+Cell[7716, 280, 211, 4, 70, "Subsection"],
+Cell[7930, 286, 499, 19, 70, "Subsection"],
+Cell[8432, 307, 406, 9, 70, "Subsection"],
+Cell[8841, 318, 230, 6, 70, "Subsection"],
+
+Cell[CellGroupData[{
+Cell[9094, 326, 64, 1, 70, "Subsection"],
+Cell[9161, 329, 229, 7, 70, "Special1"]
+}, Open  ]],
+Cell[9402, 338, 215, 6, 70, "Subsection"],
+
+Cell[CellGroupData[{
+Cell[9640, 346, 65, 1, 70, "Subsection"],
+Cell[9708, 349, 480, 13, 70, "Special1"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+Cell[10229, 364, 70, 1, 70, "Section"],
+Cell[10302, 367, 284, 9, 70, "Special1"]
+}, Open  ]]
+}, Open  ]]
+}
+]
+*)
+
+
+
+(*******************************************************************
+End of Mathematica Notebook file.
+*******************************************************************)
