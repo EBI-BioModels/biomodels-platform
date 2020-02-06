@@ -63,7 +63,7 @@ grails.project.dependency.resolution = {
             excludes "slf4j-log4j12"
         }
         runtime("commons-jexl:commons-jexl:1.1") { excludes 'junit', 'commons-logging' }
-        compile "org.apache.tika:tika-core:1.14"
+        compile "org.apache.tika:tika-core:1.23"
     }
 
     plugins {
