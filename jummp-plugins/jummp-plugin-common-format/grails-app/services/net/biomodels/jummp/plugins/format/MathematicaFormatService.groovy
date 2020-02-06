@@ -20,6 +20,8 @@
 
 package net.biomodels.jummp.plugins.format
 
+import org.apache.commons.io.FilenameUtils
+
 /**
  * <p>Individual class for handling detection of Mathematica format</p>
  *
@@ -30,9 +32,30 @@ package net.biomodels.jummp.plugins.format
  * </ul>
  */
 class MathematicaFormatService extends AbstractFormatDetectionService {
+    static final String[] SUPPORT_EXTENSIONS =
+            ["wl", "m", "nb", "ma", "wxf", "wdx", "mx", "wlnet"] as String[]
     static transactional = false
+
+    static {
+        // so that we can use binary search inside isSupportedExtension(String)
+        Arrays.sort(SUPPORT_EXTENSIONS)
+    }
 
     MathematicaFormatService() {
         super(CommonFormat.MATHEMATICA)
+    }
+
+    @Override
+    // TODO remove this once a fix for https://issues.apache.org/jira/browse/TIKA-3034 is released
+    boolean areFilesThisFormat(List<File> files) {
+        boolean result = files.any { File file ->
+            String ext = FilenameUtils.getExtension(file.name)
+            isSupportedExtension(ext)
+        }
+        result
+    }
+
+    private static boolean isSupportedExtension(String ext) {
+        Arrays.binarySearch(SUPPORT_EXTENSIONS, ext) >= 0
     }
 }
