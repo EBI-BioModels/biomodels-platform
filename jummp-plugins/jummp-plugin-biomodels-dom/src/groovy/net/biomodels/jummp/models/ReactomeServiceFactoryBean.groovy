@@ -90,11 +90,9 @@ class ReactomeServiceFactoryBean implements FactoryBean<ReactomeService>, Applic
             if(null == reactomeIds) {
                 reactomeIds = new ArrayList<>()
             }
-            print("inside key exists")
             reactomeIds.add(label)
             modelPathwayMap[modelId] = reactomeIds
         } else {
-            print("inside key does not  exists")
             List<String> reactomeIds = new ArrayList<String>()
             reactomeIds.add(label)
             modelPathwayMap[modelId] = reactomeIds
