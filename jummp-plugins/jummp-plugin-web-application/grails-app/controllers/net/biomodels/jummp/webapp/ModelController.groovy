@@ -124,7 +124,7 @@ class ModelController {
 
     def messageSource
 
-   /**
+    /**
      * The list of actions for which we should not automatically create an audit item.
      */
     final List<String> AUDIT_EXCEPTIONS = ['updateFlow', 'createFlow', 'uploadFlow',
