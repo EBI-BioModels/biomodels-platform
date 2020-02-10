@@ -382,10 +382,6 @@ the user has attempted to update an blank value for the name attribute.""")
         }
     }
 
-    def extractComponentsFromBP(String modelId) {
-        return modelDisplayService.getComponentsFromBP(modelId)
-
-    }
     @Profiled(tag="sbmlService.extract")
     Map<Object, Object> extract(String modelId, int revisionNumber, int skip, int limit, String typeName) {
         Map<Object, Object> result = new LinkedHashMap<>()
