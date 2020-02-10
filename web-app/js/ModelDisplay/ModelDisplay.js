@@ -47,15 +47,15 @@ function displayModelComponents(id, revisionNumber, typeName, table_id, columnCo
 
     $(table_id).DataTable(
         {
-            "ordering": false,
-            "searching": false,
-            "columns": columnConfig,
-            "processing": false,
-            "serverSide": true,
-            "infoCallback": infoCallback,
-            "ajax": getAjaxConfig(),
+            ordering: false,
+            searching: false,
+            columns: columnConfig,
+            processing: false,
+            serverSide: true,
+            infoCallback: infoCallback,
+            ajax: getAjaxConfig(),
 
-            "language": {
+            language: {
                 paginate: {
                     previous: '<',
                     next: '>'
