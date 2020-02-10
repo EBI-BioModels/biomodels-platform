@@ -1,6 +1,7 @@
 package net.biomodels.jummp.plugins.sbml
 
 import grails.converters.JSON
+import grails.plugin.cache.Cacheable
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
@@ -19,6 +20,7 @@ class ModelDisplayService {
     String accessUrl
 
     @CompileStatic(TypeCheckingMode.SKIP)
+    @Cacheable(value = "formattedComponents")
     def getComponents(String modelId, int revisionNumber, int skip, int limit, String typeName) throws IOException {
         accessUrl = grailsApplication.config.jummp.model.modeldisplay.server.access
         String url = "$accessUrl?publicationId=$modelId&skip=$skip&limit=$limit&typeName=$typeName"
