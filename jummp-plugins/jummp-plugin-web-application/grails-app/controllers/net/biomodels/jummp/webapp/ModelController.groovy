@@ -308,7 +308,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     List<RFTC> repoFiles = modelDelegateService.retrieveModelFiles(rev)
                     List<RevisionTransportCommand> revs =
                         modelDelegateService.getAllRevisions(PERENNIAL_ID)
-                    List<String> reactomeIds = metadataDelegateService.getPathwaysForModelId("BIOMD0000000457")
+                    List<String> reactomeIds = metadataDelegateService.getPathwaysForModelId(PERENNIAL_ID)
                     CurationNotesTransportCommand curationNotes =
                         metadataDelegateService.fetchCurationNotes(rev)
                     String curationState = rev.curationState.name()
