@@ -36,6 +36,7 @@ import org.springframework.security.access.AccessDeniedException
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author Chinmay Arankalle <carankalle@ebi.ac.uk>
  */
 @Secured("IS_AUTHENTICATED_ANONYMOUSLY")
 class SbmlController {

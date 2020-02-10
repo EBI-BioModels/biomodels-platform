@@ -7,6 +7,9 @@ import spock.lang.Specification
 
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
+ * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author Chinmay Arankalle <carankalle@ebi.ac.uk>
+ *
  */
 @TestMixin(ServiceUnitTestMixin)
 class ModelDisplayServiceSpec extends Specification {

@@ -6,7 +6,11 @@ import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.codehaus.groovy.grails.web.json.JSONElement
-
+/**
+ * Service for accessing Model Display data.
+ * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author Chinmay Arankalle <carankalle@ebi.ac.uk>
+ */
 @CompileStatic
 class ModelDisplayService {
     static transactional = false
