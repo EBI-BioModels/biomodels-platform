@@ -19,7 +19,7 @@ class ModelDisplayService {
     String accessUrl
 
     @CompileStatic(TypeCheckingMode.SKIP)
-    def getComponentsFromModelDisplay(String modelId, int revisionNumber, int skip, int limit, String typeName) throws IOException {
+    def getComponents(String modelId, int revisionNumber, int skip, int limit, String typeName) throws IOException {
         accessUrl = grailsApplication.config.jummp.model.modeldisplay.server.access
         String url = "$accessUrl?publicationId=$modelId&skip=$skip&limit=$limit&typeName=$typeName"
         if (revisionNumber>0) {

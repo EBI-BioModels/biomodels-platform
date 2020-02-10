@@ -21,18 +21,15 @@ class ModelDisplayServiceSpec extends Specification {
 
     static doWithSpring = {
         modelDisplayService(ModelDisplayService) { bean ->
-            accessUrl = "http://localhost:8887/api/access"
+            grailsApplication = ref 'grailsApplication'
         }
     }
-    void 'service instances are wired correctly'() {
-        expect:
-        service.accessUrl == 'http://localhost:8887/api/access'
-    }
 
-    void "test getComponentsFromModelDisplay"() {
+    void "test getComponents"() {
 
-        when: "The service method's getComponentsFromModelDisplay is called"
-        def result = service.getComponentsFromModelDisplay("BIOMD0000000001",1,0,10,"species")
+        when: "The service method's getComponents is called"
+        grailsApplication.config.jummp.model.modeldisplay.server.access = "http://localhost:8887/api/access"
+        def result = service.getComponents("BIOMD0000000001",1,0,10,"species")
 
         then: "it should contain records"
         result.species.size() > 0
@@ -44,7 +41,7 @@ class ModelDisplayServiceSpec extends Specification {
         }
 
         when: "Tested with reactions"
-        result = service.getComponentsFromModelDisplay("BIOMD0000000001",1,0,10,"reactions")
+        result = service.getComponents("BIOMD0000000001",1,0,10,"reactions")
 
         then: "it should have atleast one reaction"
         result.reactions.size() > 0
