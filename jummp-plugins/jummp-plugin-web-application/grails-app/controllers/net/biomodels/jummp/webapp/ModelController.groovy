@@ -36,6 +36,7 @@ package net.biomodels.jummp.webapp
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
+import grails.util.Environment
 import net.biomodels.jummp.core.InvalidPublicationAuthorsException
 import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
@@ -123,7 +124,10 @@ class ModelController {
 
     def messageSource
 
-    /**
+    final String REACTOME_DEV_URL = "https://dev.reactome.org/DiagramJs/diagram/diagram.nocache.js"
+    final String REACTOME_PROD_URL = "https://reactome.org/DiagramJs/diagram/diagram.nocache.js"
+
+   /**
      * The list of actions for which we should not automatically create an audit item.
      */
     final List<String> AUDIT_EXCEPTIONS = ['updateFlow', 'createFlow', 'uploadFlow',
@@ -304,7 +308,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     List<RFTC> repoFiles = modelDelegateService.retrieveModelFiles(rev)
                     List<RevisionTransportCommand> revs =
                         modelDelegateService.getAllRevisions(PERENNIAL_ID)
-                    List<String> reactomeIds = metadataDelegateService.getPathwaysForModelId(PERENNIAL_ID)
+                    List<String> reactomeIds = metadataDelegateService.getPathwaysForModelId("BIOMD0000000457")
                     CurationNotesTransportCommand curationNotes =
                         metadataDelegateService.fetchCurationNotes(rev)
                     String curationState = rev.curationState.name()
@@ -316,8 +320,13 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     boolean supportedForConversion = modelConversionService.isSupportedForConversion(rev)
                     List<RFTC> convertedFilesTC = modelConversionService.getConvertedFiles(rev)
                     Set<TagTransportCommand> tags = metadataDelegateService.findTagsByModel(rev.model)
+                    String reactomeUrl = REACTOME_DEV_URL
+                    if(Environment.current == Environment.PRODUCTION) {
+                        reactomeUrl = REACTOME_PROD_URL
+                    }
                     def model = [revision               : rev,
-                                 reactomeIds             : reactomeIds,
+                                 reactomeIds            : reactomeIds,
+                                 reactomeUrl            : reactomeUrl,
                                  authors                : rev.model.creators,
                                  allRevs                : revs,
                                  flashMessage           : flashMessage,
