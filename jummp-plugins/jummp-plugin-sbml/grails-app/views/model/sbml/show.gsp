@@ -47,13 +47,13 @@
                     <div class="header"><span>Species</span>
                     </div>
 
-                    <table  id="table_id1">
+                    <table  id="species_components">
                     </table>
 
                     <div class="header"><span>Reactions</span>
                     </div>
 
-                    <table  id="table_id2">
+                    <table  id="reaction_components">
                     </table>
 
                 </div>
@@ -120,14 +120,14 @@
             displayModelComponents("${revision.modelIdentifier()}",
                 "${revision.revisionNumber}",
                 "species",
-                "#table_id1",
+                "#species_components",
                 columnConfig1,
                 url
             );
             displayModelComponents("${revision.modelIdentifier()}",
                 "${revision.revisionNumber}",
                 "reactions",
-                "#table_id2",
+                "#reaction_components",
                 columnConfig2,
                 url
             );
