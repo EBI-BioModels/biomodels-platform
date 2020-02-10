@@ -83,7 +83,7 @@ class ModelDisplayService {
             for (String url : urls) {
                 String[] urlParts = url.split(labelDelimiter)
                 if (urlParts.length > 1) {
-                    urlList.add("<a style=\"color:black\" href=\"" + urlParts[0] + "\" target=\"_blank\">" + urlParts[1] + "</a>")
+                    urlList.add('<a style="color:black" href="' + urlParts[0] + '" target="_blank">' + urlParts[1] + '</a>')
                 } else {
                     urlList.add(url)
                 }
