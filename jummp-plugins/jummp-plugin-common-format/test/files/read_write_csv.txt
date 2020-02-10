@@ -1,0 +1,26 @@
+#!/usr/bin/python
+
+import sys
+import numpy as np
+#import pandas as pd
+import csv
+
+
+print(sys.argv[1])
+#mydata = np.genfromtxt(sys.argv[1],delimiter=',',names=True)
+#print("\nPrinting the data from the csv file.\n")
+#print(mydata)
+
+n = 5 # number of columns
+max = [0]*n
+with open(sys.argv[1],'rU') as f:
+	reader = csv.reader(f)
+	for row in reader:
+		print(row)
+		for i in range(n):
+			if (row[i] > max[i]):
+				max[i] = row[i]
+		print(max)
+
+print('The max values should be returned:\n')
+print(max)

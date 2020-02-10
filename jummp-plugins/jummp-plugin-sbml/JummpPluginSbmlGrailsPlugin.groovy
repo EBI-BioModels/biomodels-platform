@@ -116,7 +116,7 @@ Brief description of the plugin.
                     service.registerModelElementType(modelFormat, type)
                 }
             }
-        } catch(NoSuchBeanDefinitionException e) {
+        } catch (NoSuchBeanDefinitionException e) {
             println("ModelFileFormatService is not available!")
         } catch (IllegalStateException ignored) {
             println "cannot insert known SBML element types until the modelElementType table exists."
