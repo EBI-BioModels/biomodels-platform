@@ -45,7 +45,15 @@ class SbmlController {
     def sbmlService
 
     def fetchComponents() {
-        def components = sbmlService.extract(params.id, params.int('revisionNumber'), params.int('skip'), params.int('limit'), params.typeName)
+        String id = params.id
+        int revisionNumber = params.int('revisionNumber')
+        int skip = params.int('skip')
+        int limit = params.int('limit')
+        String typeName = params.typeName
+        if(null == id || null == typeName) {
+            render([components: []] as JSON)
+        }
+        def components = sbmlService.extract(id, revisionNumber, skip, limit, typeName)
         render([components: components] as JSON)
     }
 
