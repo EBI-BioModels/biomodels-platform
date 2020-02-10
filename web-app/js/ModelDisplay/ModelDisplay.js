@@ -22,13 +22,13 @@ function displayModelComponents(id, revisionNumber, typeName, table_id, columnCo
 
     function getAjaxConfig() {
         ajaxConfig = {
-            "url": url,
-            "data": prepareParams,
-            "dataFilter": customizeData,
-            "dataSrc": function (data) {
+            url: url,
+            data: prepareParams,
+            dataFilter: customizeData,
+            dataSrc: function (data) {
                 return data.data
             },
-            "error": function (xhr, error, code) {
+            error: function (xhr, error, code) {
                 console.log(error);
             }
         };
