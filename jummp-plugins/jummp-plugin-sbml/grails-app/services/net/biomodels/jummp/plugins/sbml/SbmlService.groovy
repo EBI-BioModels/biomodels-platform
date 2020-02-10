@@ -390,7 +390,7 @@ the user has attempted to update an blank value for the name attribute.""")
     Map<Object, Object> extract(String modelId, int revisionNumber, int skip, int limit, String typeName) {
         Map<Object, Object> result = new LinkedHashMap<>()
         try {
-           result = modelDisplayService.getComponentsFromModelDisplay(modelId, revisionNumber, skip, limit, typeName)
+           result = modelDisplayService.getComponents(modelId, revisionNumber, skip, limit, typeName)
         } catch (IOException e) {
             log.error("Extraction error for $modelId $revisionNumber skip $skip page size $limit", e)
         }
