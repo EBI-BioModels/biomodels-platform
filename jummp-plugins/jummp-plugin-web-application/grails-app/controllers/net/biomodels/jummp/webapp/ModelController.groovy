@@ -36,7 +36,6 @@ package net.biomodels.jummp.webapp
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
-import grails.util.Environment
 import net.biomodels.jummp.core.InvalidPublicationAuthorsException
 import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
@@ -54,6 +53,7 @@ import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.Team
+import net.biomodels.jummp.core.util.ReactomeEnvironment
 import net.biomodels.jummp.webapp.rest.errors.Error
 import net.biomodels.jummp.webapp.rest.model.show.Model as RestfulModel
 import net.biomodels.jummp.webapp.rest.model.show.ModelFiles
@@ -123,9 +123,6 @@ class ModelController {
     def userService
 
     def messageSource
-
-    final String REACTOME_DEV_URL = "https://dev.reactome.org/DiagramJs/diagram/diagram.nocache.js"
-    final String REACTOME_PROD_URL = "https://reactome.org/DiagramJs/diagram/diagram.nocache.js"
 
    /**
      * The list of actions for which we should not automatically create an audit item.
@@ -320,10 +317,8 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     boolean supportedForConversion = modelConversionService.isSupportedForConversion(rev)
                     List<RFTC> convertedFilesTC = modelConversionService.getConvertedFiles(rev)
                     Set<TagTransportCommand> tags = metadataDelegateService.findTagsByModel(rev.model)
-                    String reactomeUrl = REACTOME_DEV_URL
-                    if(Environment.current == Environment.PRODUCTION) {
-                        reactomeUrl = REACTOME_PROD_URL
-                    }
+                    String reactomeUrl = ReactomeEnvironment.getUrlForThisEnvironment()
+
                     def model = [revision               : rev,
                                  reactomeIds            : reactomeIds,
                                  reactomeUrl            : reactomeUrl,
