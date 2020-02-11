@@ -37,9 +37,9 @@ enum ReactomeEnvironment {
 
     static String getUrlForThisEnvironment() {
         if(Environment.current == Environment.PRODUCTION) {
-            PROD_URL.diagramJSUrl
+            return PROD_URL.diagramJSUrl
         } else {
-            DEV_URL.diagramJSUrl
+            return DEV_URL.diagramJSUrl
         }
     }
 }
