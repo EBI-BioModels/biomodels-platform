@@ -54,6 +54,6 @@ class ModelFileFormatConfig {
     public void status() {
         println("MODEL FILE FORMAT CONFIG STATUS:")
         println("SERVICES: ${services.inspect()}")
-        println("PLUGINS: ${controllers.inspect()}")
+        println("CONTROLLERS: ${controllers.inspect()}")
     }
 }
