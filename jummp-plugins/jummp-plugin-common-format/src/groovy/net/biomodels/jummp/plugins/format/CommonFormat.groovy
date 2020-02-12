@@ -79,6 +79,15 @@ enum CommonFormat {
         return controller
     }
 
+    static CommonFormat fromIdentifier(String id) {
+        values().find { it.identifier == id }
+    }
+
+    static boolean hasDefaultVersion(String id) {
+        CommonFormat self = fromIdentifier id
+        self?.versions == DEFAULT_VERSIONS
+    }
+
     private CommonFormat(String name, String identifier, String[] versions,
             Set<String> acceptedMimeTypes, String service, String controller) {
         this.name = name
