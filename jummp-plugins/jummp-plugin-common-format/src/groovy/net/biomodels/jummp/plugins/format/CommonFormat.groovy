@@ -21,7 +21,7 @@
 package net.biomodels.jummp.plugins.format
 
 /**
- * <p>Define name of common formats</p>
+ * <p>Define properties of common formats</p>
  *
  * <p style="font-weight: bold">Authors:</p>
  * <ul>
@@ -30,26 +30,83 @@ package net.biomodels.jummp.plugins.format
  * </ul>
  */
 enum CommonFormat {
-    C_CPP("C_CPP", ["text/x-csrc", "text/x-c++src"] as Set<String>),
-    JAVA("Java", ["text/x-java-source"] as Set<String>),
-    MATHEMATICA("Mathematica", ["application/mathematica"] as Set<String>),
-    MATLAB("Matlab", ["application/x-matlab", "application/matlab", "text/x-matlab", "text/matlab"] as Set<String>),
-    PYTHON("Python", ["text/x-python"] as Set<String>),
-    R("R", ["text/x-rsrc"] as Set<String>)
+    C_CPP("C/C++", "C_CPP", C_CPP_MIME, "ccppFormatService"),
+    JAVA("Java", "Java", JAVA_MIME),
+    MATHEMATICA("Mathematica", "Mathematica", MATHEMATICA_MIME),
+    MATLAB("MATLAB (Octave)", "matlab", DEFAULT_VERSIONS, MATLAB_MIME, "matlabFormatService", "matlab"),
+    PYTHON("Python", "Python", PYTHON_VERSIONS, PYTHON_MIME),
+    R("R", "R", DEFAULT_VERSIONS, R_MIME, "rlangFormatService", DEFAULT_CONTROLLER)
+
+    public static final Set<String> C_CPP_MIME = ["text/x-csrc", "text/x-c++src"] as Set<String>
+    public static final Set<String> JAVA_MIME = ["text/x-java-source"] as Set<String>
+    public static final Set<String> MATHEMATICA_MIME = ["application/mathematica"] as Set<String>
+    public static final Set<String> MATLAB_MIME = ["application/x-matlab", "application/matlab",
+            "text/x-matlab", "text/matlab"] as Set<String>
+    public static final Set<String> PYTHON_MIME = ["text/x-python"] as Set<String>
+    public static final String[] PYTHON_VERSIONS = ['2.7', '3.6'] as String[]
+    public static final Set<String> R_MIME = ["text/x-rsrc"] as Set<String>
+    public static final String[] DEFAULT_VERSIONS = ['*'] as String[]
+    public static final String DEFAULT_CONTROLLER = "commonFormat"
 
     private String name
+    private String identifier
     private Set<String> acceptedMimeTypes
+    private String[] versions
+    private String service
+    private String controller
 
     String getName() {
         this.name
+    }
+
+    String getIdentifier() {
+        this.identifier
     }
 
     Set<String> getAcceptedMimeTypes() {
         this.acceptedMimeTypes
     }
 
-    private CommonFormat(String name, Set<String> acceptedMimeTypes) {
+    String[] getVersions() {
+        return versions
+    }
+
+    String getService() {
+        return service
+    }
+
+    String getController() {
+        return controller
+    }
+
+    private CommonFormat(String name, String identifier, String[] versions,
+            Set<String> acceptedMimeTypes, String service, String controller) {
         this.name = name
+        this.identifier = identifier
+        this.versions = versions
         this.acceptedMimeTypes = acceptedMimeTypes
+        this.service = service
+        this.controller = controller
+    }
+
+    private CommonFormat(String name, String identifier, Set<String> acceptedMimeTypes) {
+        this(name, identifier, DEFAULT_VERSIONS, acceptedMimeTypes,
+                defaultServiceNameForFormat(identifier), DEFAULT_CONTROLLER)
+    }
+
+    private CommonFormat(String name, String identifier, String[] versions,
+            Set<String> acceptedMimeTypes) {
+        this(name, identifier, versions, acceptedMimeTypes, defaultServiceNameForFormat(identifier),
+                DEFAULT_CONTROLLER)
+    }
+
+    private CommonFormat(String name, String identifier, Set<String> acceptedMimeTypes,
+            String service) {
+        this(name, identifier, DEFAULT_VERSIONS, acceptedMimeTypes, service, DEFAULT_CONTROLLER)
+    }
+
+    private static String defaultServiceNameForFormat(String identifier) {
+        String lower = identifier.toLowerCase()
+        "${lower}FormatService"
     }
 }
