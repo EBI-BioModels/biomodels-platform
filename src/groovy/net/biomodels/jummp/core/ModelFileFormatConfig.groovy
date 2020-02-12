@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2017 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -43,15 +43,15 @@ class ModelFileFormatConfig {
      */
     static final Map<String, String> controllers = new HashMap()
 
-    public Map<String, String> getServices() {
+    static Map<String, String> getServices() {
         services
     }
 
-    public Map<String, String> getControllers() {
+    static Map<String, String> getControllers() {
         controllers
     }
 
-    public void status() {
+    static void status() {
         println("MODEL FILE FORMAT CONFIG STATUS:")
         println("SERVICES: ${services.inspect()}")
         println("CONTROLLERS: ${controllers.inspect()}")
