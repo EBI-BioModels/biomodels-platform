@@ -102,7 +102,6 @@ This plugin supports to handle commonly well-known formats such as C/C++, Python
                 for (String version: versions) {
                     def formatCmd = service.registerModelFormat(identifier, name, version)
                     service.handleModelFormat(formatCmd, formatService, formatController)
-                    println "registered $name $version $formatService $formatController"
                 }
             }
         } catch (NoSuchBeanDefinitionException ignored) {
