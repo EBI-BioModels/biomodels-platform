@@ -94,11 +94,11 @@ This plugin supports to handle commonly well-known formats such as C/C++, Python
         try {
             def service = ctx.getBean("modelFileFormatService")
             for (CommonFormat f: CommonFormat.values()) {
-                String identifier = f.identifier
-                String name = f.name
-                String[] versions = f.versions
-                String formatService = f.service
-                String formatController = f.controller
+                String identifier = f.getIdentifier()
+                String name = f.getName()
+                String[] versions = f.getVersions()
+                String formatService = f.getService()
+                String formatController = f.getController()
                 for (String version: versions) {
                     def formatCmd = service.registerModelFormat(identifier, name, version)
                     service.handleModelFormat(formatCmd, formatService, formatController)
