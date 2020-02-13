@@ -46,7 +46,7 @@ class ModelFormatAdapter {
     }
 
     private static boolean ignoreVersion(final String identifier) {
-        // TODO switch to CommonFormat.hasDe
+        // TODO switch to CommonFormat.hasDefaultVersion()
         boolean retVal = false
         switch (identifier.toLowerCase()) {
             case "c_cpp":
