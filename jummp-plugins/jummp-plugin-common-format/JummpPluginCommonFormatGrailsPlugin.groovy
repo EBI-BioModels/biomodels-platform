@@ -18,6 +18,8 @@
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
  */
 
+
+import net.biomodels.jummp.plugins.format.CommonFormat
 import org.springframework.beans.factory.NoSuchBeanDefinitionException
 
 class JummpPluginCommonFormatGrailsPlugin {
@@ -88,27 +90,19 @@ This plugin supports to handle commonly well-known formats such as C/C++, Python
         // TODO Implement code that is executed when the application shuts down (optional)
     }
 
-    private void registerFormatSupport(def ctx) {
-        def formats = [
-            [identifier: "C_CPP", name: "C/C++", version: "*", service: "ccppFormatService"],
-            [identifier: "Python", name: "Python", version: "*", service: "pythonFormatService"],
-            [identifier: "Python", name: "Python", version: "2.7", service: "pythonFormatService"],
-            [identifier: "Python", name: "Python", version: "3.6", service: "pythonFormatService"],
-            [identifier: "R", name: "R", version: "*", service: "rlangFormatService"],
-            [identifier: "Java", name: "Java", version: "*", service: "javaFormatService"],
-            [identifier: "Mathematica", name: "Mathematica", version: "*", service: "mathematicaFormatService"],
-            [identifier: "matlab", name: "MATLAB (Octave)", version: "*", service: "matlabFormatService", controller: "matlab"]
-        ]
+    private static void registerFormatSupport(def ctx) {
         try {
             def service = ctx.getBean("modelFileFormatService")
-            formats.each {
-                String identifier = it["identifier"]
-                String name = it["name"]
-                String version = it["version"]
-                String formatService = it["service"]
-                String formatController = it["controller"] ?: "commonFormat"
-                def formatCmd = service.registerModelFormat(identifier, name, version)
-                service.handleModelFormat(formatCmd, formatService, formatController)
+            for (CommonFormat f: CommonFormat.values()) {
+                String identifier = f.getIdentifier()
+                String name = f.getName()
+                String[] versions = f.getVersions()
+                String formatService = f.getService()
+                String formatController = f.getController()
+                for (String version: versions) {
+                    def formatCmd = service.registerModelFormat(identifier, name, version)
+                    service.handleModelFormat(formatCmd, formatService, formatController)
+                }
             }
         } catch (NoSuchBeanDefinitionException ignored) {
             // running as standalone plugin

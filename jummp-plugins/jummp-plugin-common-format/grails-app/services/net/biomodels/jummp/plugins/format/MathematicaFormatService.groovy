@@ -33,7 +33,7 @@ import org.apache.commons.io.FilenameUtils
  */
 class MathematicaFormatService extends AbstractFormatDetectionService {
     static final String[] SUPPORT_EXTENSIONS =
-            ["wl", "m", "nb", "ma", "wxf", "wdx", "mx", "wlnet"] as String[]
+            ["wl", "nb", "ma", "wxf", "wdx", "mx", "wlnet"] as String[]
     static transactional = false
 
     static {

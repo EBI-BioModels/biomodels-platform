@@ -50,6 +50,10 @@
                 font-style: italic;
                 color: darkgray
             }
+            .disable{
+                pointer-events: none;
+                background: #bfbfbf;
+            }
         </style>
     </head>
     <body>
@@ -174,9 +178,9 @@
             function handleModelFormatBoxState() {
                 let mf = $('#model_format');
                 if (${format.name != unknownFormat?.name}) {
-                    mf.attr('disabled', true);
+                    mf.addClass("disable");
                 } else {
-                    mf.attr('disabled', false);
+                    mf.removeClass("disable");
                 }
             }
 

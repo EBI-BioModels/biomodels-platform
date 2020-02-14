@@ -46,25 +46,16 @@ class ModelFormatAdapter {
     }
 
     private static boolean ignoreVersion(final String identifier) {
+        // TODO switch to CommonFormat.hasDefaultVersion()
         boolean retVal = false
         switch (identifier.toLowerCase()) {
-            case "python":
-                retVal = true
-                break
             case "c_cpp":
-                retVal = true
-                break
+            case "java":
+            case "mathematica":
+            case "matlab":
+            case "python":
             case "r":
                 retVal = true
-                break
-            case "java":
-                retVal = true
-                break
-            case "mathematica":
-                retVal = true
-                break
-            default:
-                retVal = false
                 break
         }
         return retVal
