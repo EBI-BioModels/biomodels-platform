@@ -1,16 +1,16 @@
-FROM openjdk:8
+FROM jummp-biomodels:1.2-dependencies
 LABEL maintainer="biomodels-developers@lists.sf.net"
 
-# install sdkman and Grails
-RUN apt-get update && apt-get install -y --no-install-recommends zip
-RUN curl -s "https://get.sdkman.io" | bash
-RUN ["/bin/bash", "-lc", "source $HOME/.sdkman/bin/sdkman-init.sh"]
-RUN ["/bin/bash", "-lc", "sdk install grails 2.5.5"]
+# set environment options
+ENV JAVA_OPTS="-Xms64m -Xmx256m -XX:MaxMetaspaceSize=128m"
+ENV GRAILS_OPTS="-server -Xmx768M -Xms64M -XX:PermSize=32m -XX:MaxPermSize=256m -Dfile.encoding=UTF-8"
+
+RUN mkdir -p /home/biomodels/jummp-biomodels
+COPY . /home/biomodels/jummp-biomodels
+WORKDIR /home/biomodels/jummp-biomodels
 
 # expected database port
 EXPOSE 3306
 
-COPY . /usr/src/jummp-biomodels
-WORKDIR /usr/src/jummp-biomodels
-
-ENTRYPOINT ["/bin/bash", "-lc", "grails"]
+RUN chmod +x /home/biomodels/jummp-biomodels/grailsw
+ENTRYPOINT /home/biomodels/jummp-biomodels/grailsw run-war
