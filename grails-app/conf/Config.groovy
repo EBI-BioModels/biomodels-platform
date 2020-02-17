@@ -801,3 +801,12 @@ elasticSearch.maxBulkRequest = 10
 
 def dateFormats = ["yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd HH:mm:ss", 'MMddyyyy', 'yyyy-MM-dd HH:mm:ss.S', "yyyy-MM-dd'T'hh:mm:ss'Z'" ]
 grails.databinding.dateFormats = dateFormats
+
+// settings for spring-session
+if (Environment.isDevelopmentMode()) {
+    springsession.redis.connectionFactory.hostName = "localhost"
+} else {
+    // this value should be complied with the service name of Redis on K8S
+    // TODO: externalise this value
+    springsession.redis.connectionFactory.hostName = "redis-master"
+}
