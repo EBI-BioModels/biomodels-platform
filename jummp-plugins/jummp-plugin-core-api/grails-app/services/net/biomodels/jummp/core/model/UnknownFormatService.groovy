@@ -25,7 +25,6 @@
 package net.biomodels.jummp.core.model
 
 import net.biomodels.jummp.core.annotation.ElementAnnotationTransportCommand
-import net.biomodels.jummp.model.ModellingApproach
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.perf4j.aop.Profiled
@@ -35,7 +34,7 @@ import org.perf4j.aop.Profiled
  * interface. Everything is a valid unknown format.
  * @author raza
  */
-class UnknownFormatService implements FileFormatService {
+class UnknownFormatService extends FileFormatServiceAdapter {
     private static final Log log = LogFactory.getLog(this)
     private static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
     private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
@@ -90,11 +89,6 @@ class UnknownFormatService implements FileFormatService {
         return true
     }
 
-    @Override
-    ModellingApproach getModellingApproach(RevisionTransportCommand revision) {
-        return null
-    }
-
     @Profiled(tag="unknownFormatService.getModelOntologyTerm")
     String getModelOntologyTerm(RevisionTransportCommand revisionTC) {
         // TODO: replace it by a correct url. Here we keep it similar to PharmML's one
@@ -113,22 +107,6 @@ class UnknownFormatService implements FileFormatService {
         return false
     }
 
-    /**
-     * Retrieves all annotation URNs in the model file referenced by @p revision.
-     * @param revision The Revision identifying a model file
-     * @return List of all URNs in the model file.
-     */
-    public final List<String> getAllAnnotationURNs(RevisionTransportCommand revision) {
-        return new LinkedList<String>()
-    }
-    /**
-     * Retrieves all pubmed annotations in the model file referenced by @p revision.
-     * @param revision  The Revision identifying a model file
-     * @return List of all pubmeds used in the Revision
-     */
-    public final List<String> getPubMedAnnotation(RevisionTransportCommand revision) {
-        return new LinkedList<String>()
-    }
     /*
      * Checks whether the files passed comprise a model of this format
      * @param files The files comprising a potential model of this format

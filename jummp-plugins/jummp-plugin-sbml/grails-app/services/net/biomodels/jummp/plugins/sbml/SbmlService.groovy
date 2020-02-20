@@ -41,7 +41,7 @@ import com.thoughtworks.xstream.converters.ConversionException
 import grails.util.Environment
 import net.biomodels.jummp.core.ISbmlService
 import net.biomodels.jummp.core.ModelException
-import net.biomodels.jummp.core.model.FileFormatService
+import net.biomodels.jummp.core.model.FileFormatServiceAdapter
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.model.ModellingApproach
@@ -80,7 +80,7 @@ import java.util.regex.Pattern
  * @author  Mihai Glonț <mihai.glont@ebi.ac.uk>
  * @author  Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
+class SbmlService extends FileFormatServiceAdapter implements ISbmlService, InitializingBean {
     static transactional = true
     def bpToModelDisplayService
     private static final Log log = LogFactory.getLog(this)
@@ -231,7 +231,7 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
         long actualSize = model.length()
         if (0 >= actualSize || actualSize > MAX_SIZE) {
             errorMsg = """\
-Your file exceeds the maximum upload size limit that our system currently supports. The consistency check for your 
+Your file exceeds the maximum upload size limit that our system currently supports. The consistency check for your
 model is being ignored."""
             errors.add(errorMsg)
             return doc
@@ -376,7 +376,7 @@ Could not check if SBML files ${files.inspect()} are valid or not.""")
             return true
         } else {
             log.warn("""\
-Revision ${revision.id} of the model ${revision.model.submissionId} is null or 
+Revision ${revision.id} of the model ${revision.model.submissionId} is null or
 the user has attempted to update an blank value for the name attribute.""")
             return false
         }
