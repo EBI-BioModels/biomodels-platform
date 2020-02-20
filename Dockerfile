@@ -1,4 +1,4 @@
-FROM jummp-biomodels:1.2-dependencies
+FROM biomodels/jummp-biomodels:1.2-dependencies
 LABEL maintainer="biomodels-developers@lists.sf.net"
 
 # set environment options
