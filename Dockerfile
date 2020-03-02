@@ -13,4 +13,4 @@ WORKDIR /home/biomodels/jummp-biomodels
 EXPOSE 3306
 
 RUN chmod +x /home/biomodels/jummp-biomodels/grailsw
-ENTRYPOINT /home/biomodels/jummp-biomodels/grailsw run-war
+ENTRYPOINT /home/biomodels/jummp-biomodels/grailsw run-war --non-interactive
