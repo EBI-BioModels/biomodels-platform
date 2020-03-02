@@ -317,6 +317,20 @@ grails.plugin.springsecurity.authority.className = 'net.biomodels.jummp.plugins.
 grails.plugin.springsecurity.securityConfigType = "Annotation" // "Annotation", "InterceptUrlMap", "Requestmap"
 grails.plugin.springsecurity.successHandler.alwaysUseDefaultTargetUrl = false
 
+String healthCheckIpRestrictions = null
+if (jummpConfig.jummp.healthcheck.ipRestrictions instanceof String) {
+    healthCheckIpRestrictions = jummpConfig.jummp.healthcheck.ipRestrictions
+} else {
+    healthCheckIpRestrictions = "127.0.0.1"
+}
+println "The health check endpoint will only be available from '$healthCheckIpRestrictions'"
+
+// IPv4 IP addresses and ranges allowed to access specific URLs
+// requests from localhost are always allowed: http://grails-plugins.github.io/grails-spring-security-core/2.0.x/guide/ip.html
+grails.plugin.springsecurity.ipRestrictions = [
+    '/healthCheck/**': ipRestrictions
+]
+
 jummp.controllerAnnotations = [
     // /model/create and /model/create?execution=e.*s1 show the display the submission guidelines, which should be visible without logging in
     '/model/create': ["request.getParameter('execution') == null ? permitAll : (request.getParameter('execution').matches('^e.*?s1\$') ? permitAll: fullyAuthenticated)"],
