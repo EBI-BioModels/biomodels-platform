@@ -138,18 +138,8 @@ There is an error when trying to update the description: $description --- of the
 Retrieving the revision ${revision.vcsId} for Model ${revision.model.submissionId} from the local model
 cache directory failed. The revision has been checked out from VCS instead."""
             logger.debug(message)
-            // update the cache
-            boolean updated = updateModelRevisionCache(revision)
-            String modelId = revision.model.submissionId
-            if (updated) {
-                message = """\
-The model ${modelId} revision ${revision.revisionNumber} has been populated them to the  cache successfully"""
-                logger.info(message)
-            } else {
-                message = """\
-There have been errors when updating the cache directory for the model ${modelId} revision ${revision.revisionNumber}"""
-                logger.error(message)
-            }
+            // update the cache directory of this revision
+            doUpdateModelRevisionCacheDirectory(revision)
         }
         return files
     }
@@ -336,5 +326,20 @@ Can't persist repository files ${repoFileCmds.dump()} for revision ${revision.du
             throw new ModelException(m, "Missing main file for the new model revision ${revision.name}")
         }
         results
+    }
+
+    private void doUpdateModelRevisionCacheDirectory(final Revision revision) {
+        boolean updated = updateModelRevisionCache(revision)
+        String modelId = revision.model.submissionId
+        String message = ""
+        if (updated) {
+            message = """\
+The model ${modelId} revision ${revision.revisionNumber} has been populated them to the  cache successfully"""
+            logger.info(message)
+        } else {
+            message = """\
+There have been errors when updating the cache directory for the model ${modelId} revision ${revision.revisionNumber}"""
+            logger.error(message)
+        }
     }
 }
