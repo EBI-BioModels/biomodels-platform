@@ -163,12 +163,23 @@ cache directory failed. The revision has been checked out from VCS instead."""
             } else {
                 returnedFiles = revisionDirectory.listFiles().toList()
             }
+            if (returnedFiles?.isEmpty()) {
+                Model model = modelService.getModel(modelId)
+                boolean saveHistory = false
+                ModelTransportCommand modelTC = new ModelAdapter(model: model).toCommandObject(saveHistory)
+                String message = """\
+The cache directory of this model ${modelId} revision ${revisionNumber} is empty. The model cache builder will be
+launched again."""
+                logger.info(message)
+                throw new ModelException(modelTC, message)
+            }
         } catch (FileNotFoundException me) {
             Model model = modelService.getModel(modelId)
             boolean saveHistory = false
             ModelTransportCommand modelTC = new ModelAdapter(model: model).toCommandObject(saveHistory)
             String message = """\
 The files associated with this model ${modelId}, revision ${revisionNumber} has been cached yet"""
+            logger.info(message)
             throw new ModelException(modelTC, message)
         }
         return returnedFiles
@@ -184,7 +195,7 @@ Copying the files associated with the revision ${revision.vcsId} (${revision.id}
         if (!created) {
             if (!modelRevDir.exists()) {
                 String message = """\
-we were unable to create the revision directory '${modelRevDir.absolutePath}'"""
+We were unable to create the revision directory '${modelRevDir.absolutePath}'"""
                 logger.warn(message)
                 return false
             } else {
@@ -195,8 +206,10 @@ we were unable to create the revision directory '${modelRevDir.absolutePath}'"""
         try {
             List<File> files = vcsService.retrieveFiles(revision)
             for (File it: files) {
+                String fileName = it.getName()
+                logger.info("File ${fileName} is being copied")
                 Files.copy(it.toPath(),
-                    new File(modelRevDir, it.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING)
+                    new File(modelRevDir, fileName).toPath(), StandardCopyOption.REPLACE_EXISTING)
             }
             result = true
         } catch (VcsException e) {
