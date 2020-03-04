@@ -1,67 +1,49 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import grails.test.mixin.TestMixin
-import grails.test.mixin.services.ServiceUnitTestMixin
+import grails.test.mixin.support.GrailsUnitTestMixin
 import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchCommand
 import spock.lang.Specification
 
-/**
- * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
- */
-@TestMixin(ServiceUnitTestMixin)
-
+@TestMixin(GrailsUnitTestMixin)
 class ParameterSearchCommandSpec extends Specification {
-
     private static ParameterSearchCommand prepareCommandObject(Map bindingMap) {
         return new ParameterSearchCommand(bindingMap)
-
     }
 
     void "test ParameterSearchCommand Positively"() {
-
-        given: "A parameter search command object is defined with basic criteria"
+        when: "A parameter search command object is defined with basic criteria"
         ParameterSearchCommand command = prepareCommandObject([query: "E4P*", size: 10, start: 0, sort: "entity:ascending"])
 
-        when: "When command is validated with positive criteria"
-        then: "Validation should return true"
+        then: "The command is valid"
         command.validate()
     }
 
-
     void "test ParameterSearchCommand Negatively with size and start"() {
-
-        given: "A parameter search command object is defined with negative criteria"
+        when: "A parameter search command object is defined with negative criteria"
         ParameterSearchCommand command = prepareCommandObject([query: "E4P*", size: 13, start: -5, sort: "entity:ascending"])
 
-        when: "When command is validated with negative criteria"
         then: "Validation should return false"
         !command.validate()
     }
 
     void "test ParameterSearchCommand positively with query = *"() {
-
-        given: "A parameter search command object is defined with negative criteria"
+        when: "A parameter search command object without a query is created"
         ParameterSearchCommand command = prepareCommandObject([query: null, size: 10, start: 0, sort: "entity:ascending"])
 
-        when: "When command is validated with negative criteria"
-
-        then: "Validation should return false"
+        then: "it is valid, and we fall back on the default query -- *:*"
         command.validate()
-        assertEquals("*:*",command.query)
+        assertEquals("*:*", command.query)
     }
 
-
     void "test ParameterSearchCommand URL"() {
-
-        given: "A parameter search command object is defined with negative criteria"
+        when: "a parameter search command object for 'E4*' is created"
         ParameterSearchCommand command = prepareCommandObject([query: "E4P*", size: 10, start: 0, sort: "entity:ascending"])
 
-        when: "When command is validated with positive criteria"
-        then: "Validation should return true"
+        then: "the command is valid"
         command.validate()
 
-        and : "It should form correct url"
-
+        and: "it should form correct url"
         String expectedSearchUrl = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters?fields=entity_RAW," +
             "entity_id,initial_data_RAW,reaction_RAW,reaction_original_RAW,model,organism,publication,rate_RAW,rate_original_RAW," +
             "parameters_RAW,entity_accession_url,reaction_sbo_term_link,entity_sbo_term_link,external_links&query=E4P*+AND+is_curated:true&" +
@@ -71,17 +53,13 @@ class ParameterSearchCommandSpec extends Specification {
     }
 
     void "test ParameterSearchCommand URL with special character for accession"() {
-
-        given: "A parameter search command object is defined with negative criteria"
+        when: "A ParameterSearchCommand is created for a query containing a ':' character"
         ParameterSearchCommand command = prepareCommandObject([query: "GO:0005892", size: 10, start: 0, sort: "entity:ascending"])
 
-        when: "When command is validated with positive criteria"
-        then: "Validation should return true"
+        then: "The command is valid"
         command.validate()
 
-        and : "It should form correct url"
-
-
+        and: "It should form correct url"
         String expectedSearchUrl = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters?" +
             "fields=entity_RAW,entity_id,initial_data_RAW,reaction_RAW,reaction_original_RAW,model,organism,publication," +
                 "rate_RAW,rate_original_RAW,parameters_RAW,entity_accession_url,reaction_sbo_term_link,entity_sbo_term_link,external_links" +
@@ -91,35 +69,27 @@ class ParameterSearchCommandSpec extends Specification {
     }
 
     void "test ParameterSearchCommand for default options"() {
-
-        given: "A parameter search command object is defined with negative criteria"
+        when: "A parameter search command object is defined without specifying pagination criteria or curation status"
         ParameterSearchCommand command = prepareCommandObject([query: "E4P*", size: null, start: null, sort: "model:ascending", is_curated:null])
 
-        when: "When command is validated with positive criteria"
-        then: "Validation should return true"
+        then: "it is valid"
         command.validate()
 
-        and : "It should return default command object"
-
+        and : "the default field values should be used"
         command.size == 10
         command.start == 0
         command.is_curated
-
     }
 
-    void "test ParameterSearchCommand for Cross side scripting"() {
+    void "test ParameterSearchCommand for cross-site scripting"() {
+        when: "A parameter search command object contains a malicious query"
+        ParameterSearchCommand command = prepareCommandObject([query: "<script>alert('hi')</script>", size: null, start: null, sort: "<script>alert('hi')</script>"])
 
-        given: "A parameter search command object is defined with negative criteria"
-        ParameterSearchCommand command =prepareCommandObject([query: "<script>alert('hi')</script>", size: null, start: null, sort: "<script>alert('hi')</script>"])
-
-        when: "When command is validated with positive criteria"
-        then: "Validation should return true"
+        then: "it passes validation"
         command.validate()
 
-        and : "It should return default command object"
-
+        and: "the query is HTML-encoded"
         command.query == "&lt;script&gt;alert(&#39;hi&#39;)&lt;/script&gt;"
         command.sort == "&lt;script&gt;alert(&#39;hi&#39;)&lt;/script&gt;"
-
     }
 }
