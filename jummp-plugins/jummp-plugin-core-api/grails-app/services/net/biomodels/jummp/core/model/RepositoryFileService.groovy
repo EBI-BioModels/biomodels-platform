@@ -164,23 +164,15 @@ cache directory failed. The revision has been checked out from VCS instead."""
                 returnedFiles = revisionDirectory.listFiles().toList()
             }
             if (returnedFiles?.isEmpty()) {
-                Model model = modelService.getModel(modelId)
-                boolean saveHistory = false
-                ModelTransportCommand modelTC = new ModelAdapter(model: model).toCommandObject(saveHistory)
                 String message = """\
 The cache directory of this model ${modelId} revision ${revisionNumber} is empty. The model cache builder will be
 launched again."""
-                logger.info(message)
-                throw new ModelException(modelTC, message)
+                throwModelException(modelId, message)
             }
         } catch (FileNotFoundException me) {
-            Model model = modelService.getModel(modelId)
-            boolean saveHistory = false
-            ModelTransportCommand modelTC = new ModelAdapter(model: model).toCommandObject(saveHistory)
             String message = """\
 The files associated with this model ${modelId}, revision ${revisionNumber} has been cached yet"""
-            logger.info(message)
-            throw new ModelException(modelTC, message)
+            throwModelException(modelId, message)
         }
         return returnedFiles
     }
@@ -354,5 +346,13 @@ The model ${modelId} revision ${revision.revisionNumber} has been populated them
 There have been errors when updating the cache directory for the model ${modelId} revision ${revision.revisionNumber}"""
             logger.error(message)
         }
+    }
+
+    private void throwModelException(final String modelId, final String message) {
+        Model model = modelService.getModel(modelId)
+        boolean saveHistory = false
+        ModelTransportCommand modelTC = new ModelAdapter(model: model).toCommandObject(saveHistory)
+        logger.info(message)
+        throw new ModelException(modelTC, message)
     }
 }
