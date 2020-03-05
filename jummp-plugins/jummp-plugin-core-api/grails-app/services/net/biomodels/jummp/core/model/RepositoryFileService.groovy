@@ -59,15 +59,14 @@ class RepositoryFileService implements GrailsConfigurationAware {
 
     def grailsApplication
 
-    String MODEL_CACHE_DIR
+    private String modelCacheDir
 
     /**
      * Populate the model cache directory
      */
-    @Override
     void setConfiguration(ConfigObject co) {
-        MODEL_CACHE_DIR = grailsApplication.config.jummp.model.cache.dir
-        if (!MODEL_CACHE_DIR) {
+        modelCacheDir = co.jummp.model.cache.dir
+        if (!modelCacheDir) {
             String message = """\
 The configuration file is missing the property of jummp.model.cache.dir"""
             logger.debug(message)
@@ -153,7 +152,7 @@ cache directory failed. The revision has been checked out from VCS instead."""
     }
 
     List<File> get(String modelId, int revisionNumber) throws ModelException {
-        File modelDirectory = new File(MODEL_CACHE_DIR, modelId)
+        File modelDirectory = new File(modelCacheDir, modelId)
         File revisionDirectory
         List returnedFiles = new LinkedList<File>()
         try {
@@ -182,7 +181,7 @@ The files associated with this model ${modelId}, revision ${revisionNumber} has 
         String revNum = revision.revisionNumber.toString()
         logger.info("""\
 Copying the files associated with the revision ${revision.vcsId} (${revision.id}): ${modelId}.${revNum}""")
-        File modelRevDir = Paths.get(MODEL_CACHE_DIR, modelId, revNum).toFile()
+        File modelRevDir = Paths.get(modelCacheDir, modelId, revNum).toFile()
         boolean created = modelRevDir.mkdirs()
         if (!created) {
             if (!modelRevDir.exists()) {
