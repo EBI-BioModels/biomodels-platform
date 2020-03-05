@@ -428,6 +428,10 @@ if (jummpConfig.jummp.vcs.workingDirectory) {
 }
 if (jummpConfig.jummp.model.cache.dir) {
     jummp.model.cache.dir = jummpConfig.jummp.model.cache.dir
+} else {
+    throw new IllegalArgumentException("""\
+Please add the setting 'jummp.model.cache.dir', pointing to a directory where model files are cached, to your
+configuration.""")
 }
 // search config
 // model search strategy setting: "omicsdi" or "solr"
