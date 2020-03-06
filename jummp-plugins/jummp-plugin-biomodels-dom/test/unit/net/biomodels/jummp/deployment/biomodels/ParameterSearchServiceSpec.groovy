@@ -119,7 +119,7 @@ class ParameterSearchServiceSpec extends Specification {
      @Timeout(value = 120, unit = TimeUnit.SECONDS)
     void "concurrent requests to fetch CSV data complete successfully"() {
         given:
-        final int WORKER_COUNT = 10
+        final int WORKER_COUNT = 4
         CountDownLatch start = new CountDownLatch(1)
         CountDownLatch end  = new CountDownLatch(WORKER_COUNT)
         final List queries = [ "*:*", "E4P*", "acetyl", "yeast" ]
