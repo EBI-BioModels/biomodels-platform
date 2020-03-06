@@ -6,6 +6,8 @@ import groovy.transform.CompileStatic
 import groovy.transform.ToString
 import org.codehaus.groovy.grails.plugins.codecs.HTMLEncoder
 
+import java.util.regex.Pattern
+
 /**
  * @author carankalle on 31/10/2018.
  */
@@ -17,6 +19,10 @@ class ParameterSearchCommand {
     public static final String EBI_SEARCH_DEV_BASE_URL = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters"
     public static final String EBI_SEARCH_BASE_URL = "https://www.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters"
     public static final String EBI_SEARCH_FIELDS_CSV = "entity_RAW,entity_id,initial_data_RAW,reaction_RAW,reaction_original_RAW,model,organism,publication,rate_RAW,rate_original_RAW,parameters_RAW,entity_accession_url,reaction_sbo_term_link,entity_sbo_term_link,external_links"
+    // catch queries like entity_accession_url:CHEBI:12345 or SBO:1234567, but not organism:Homo*
+    private static final Pattern shouldEscapeColonPattern = ~/([a-zA-Z0-9_]+:)?([A-Z]+):(\d+)/
+    // put a backslash (\) before the last colon so that Lucene doesn't treat it as a special character
+    private static final String escapedColonReplacement = '$1$2\\\\:$3' // note the single quotes to avoid Groovy string interpolation
 
     String query
     Integer size
@@ -82,14 +88,12 @@ class ParameterSearchCommand {
 
     @CompileStatic
     URL getSearchUrl(String format) {
-        String is_curated_param = "is_curated:${is_curated}"
         def params = [
-            query : query.equals("*:*")
-                ?URLEncoder.encode(query+" AND ","UTF-8") + is_curated_param
-                :URLEncoder.encode(query.replace(":", $/\:/$).replace("/", $/\\/$) + ' AND ',"UTF-8") +  is_curated_param,
+            query : calculateQueryString(),
             size  : size,
             start : start,
-            sort  : sort
+            sort  : sort,
+            format : format
         ]
         StringBuilder url = new StringBuilder(getEbiSearchUrl())
         for (element in params) {
@@ -98,7 +102,32 @@ class ParameterSearchCommand {
             if (v != null)
                 url.append('&').append(k).append('=').append(v)
         }
-        new URL(url.toString() + "&format=" + format)
+        new URL(url.toString())
+    }
+
+    private String calculateQueryString() {
+        String decoded = URLDecoder.decode(query, "UTF-8") // prevent double encoding
+        final String andCurated = " AND is_curated:${is_curated}"
+        String queryAnd = new StringBuilder(decoded.length() + andCurated.length())
+            .append(decoded)
+            .append(andCurated)
+            .toString()
+        if (query != DEFAULT_QUERY) {
+            queryAnd = escapeLuceneFieldSeparator(queryAnd.toString())
+        }
+        URLEncoder.encode(queryAnd, "UTF-8")
+    }
+
+    @CompileStatic
+    private static String escapeLuceneFieldSeparator(String query) {
+        def matcher = query =~ shouldEscapeColonPattern
+        def out = new StringBuffer()
+
+        while (matcher) {
+            matcher.appendReplacement(out, escapedColonReplacement)
+        }
+        matcher.appendTail(out)
+        out.toString()
     }
 
 
