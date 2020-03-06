@@ -11,6 +11,7 @@
 </span>
 <table  id="table_id" class="display">
     <thead>
+    <tr>
     <th>Entity</th>
     <th>Reaction</th>
     <th>Model</th>
@@ -22,6 +23,7 @@
     <th>Reaction SBO Link</th>
     <th>Initial Concentration/<br/>Amount</th>
     <th>External Links</th>
+    </tr>
     </thead>
 </table>
 <div class="pull-element-left">
