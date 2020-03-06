@@ -13,11 +13,10 @@ import org.codehaus.groovy.grails.plugins.codecs.HTMLEncoder
 @ToString(includes = ['query', 'size', 'start', 'sort', 'is_curated'])
 class ParameterSearchCommand {
     public static final String DEFAULT_QUERY = '*:*'
-    public static
-    final String BASE_URL_PARAMS = "fields=entity_RAW,entity_id,initial_data_RAW,reaction_RAW,reaction_original_RAW,model,organism,publication,rate_RAW," +
-    "rate_original_RAW,parameters_RAW,entity_accession_url,reaction_sbo_term_link,entity_sbo_term_link,external_links"
-    final String EBI_SEARCH_DEV_BASE_URL = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters"
-    final String EBI_SEARCH_BASE_URL = "https://www.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters"
+    public static final String BASE_URL_PARAMS = "fields=$EBI_SEARCH_FIELDS_CSV".toString()
+    public static final String EBI_SEARCH_DEV_BASE_URL = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters"
+    public static final String EBI_SEARCH_BASE_URL = "https://www.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters"
+    public static final String EBI_SEARCH_FIELDS_CSV = "entity_RAW,entity_id,initial_data_RAW,reaction_RAW,reaction_original_RAW,model,organism,publication,rate_RAW,rate_original_RAW,parameters_RAW,entity_accession_url,reaction_sbo_term_link,entity_sbo_term_link,external_links"
 
     String query
     Integer size
@@ -73,12 +72,12 @@ class ParameterSearchCommand {
     }
 
     @CompileStatic
-    static htmlEncodeValue(def object) {
+    static def htmlEncodeValue(def object) {
         if (null == object) {
             return null
         }
-        HTMLEncoder htmlEncoder = new HTMLEncoder();
-        return htmlEncoder.encode(object)
+        HTMLEncoder htmlEncoder = new HTMLEncoder()
+        htmlEncoder.encode(object)
     }
 
     @CompileStatic
@@ -104,22 +103,22 @@ class ParameterSearchCommand {
 
 
     @Override
-    public String toString() {
-        return "Request {" +
+    String toString() {
+        "Request {" +
             "query='" + query + '\'' +
             ", size=" + size +
             ", start=" + start +
             ", sort='" + sort + '\'' +
             ", is_curated='" + is_curated + '\'' +
-            '}';
+            '}'
     }
 
     @CompileStatic
-    String getEbiSearchUrl() {
-        if(Environment.current == Environment.PRODUCTION) {
-            return "$EBI_SEARCH_BASE_URL?$BASE_URL_PARAMS"
-        }else{
-            return "$EBI_SEARCH_DEV_BASE_URL?$BASE_URL_PARAMS"
+    static String getEbiSearchUrl() {
+        String base = EBI_SEARCH_BASE_URL
+        if (Environment.current != Environment.PRODUCTION) {
+            base = EBI_SEARCH_DEV_BASE_URL
         }
+        return "$base?$BASE_URL_PARAMS"
     }
 }
