@@ -26,6 +26,7 @@ package net.biomodels.jummp.core.model
 
 import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin
+import net.biomodels.jummp.core.ModelException
 import spock.lang.Specification
 
 import java.nio.file.Path
@@ -62,5 +63,16 @@ class RepositoryFileServiceSpec extends Specification {
         String cacheDirectory = service.modelCacheDir
         then: "the bean sets the model cache directory effectively"
         cacheDirectory
+    }
+
+    void "test get method against non-existent model"() {
+        given: "give a model identifier and a revision number"
+        String modelId = "MODEL2003050001"
+        int revisionNumber = 1
+        when: "call get() method"
+        service.get(modelId, revisionNumber)
+        then: "catch an exception"
+        final ModelException exception = thrown()
+        "The model ${modelId} does not exist" == exception.message
     }
 }

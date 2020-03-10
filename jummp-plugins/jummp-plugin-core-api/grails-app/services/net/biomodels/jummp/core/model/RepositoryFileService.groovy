@@ -66,11 +66,30 @@ class RepositoryFileService implements GrailsConfigurationAware {
      */
     void setConfiguration(ConfigObject co) {
         modelCacheDir = co.jummp.model.cache.dir
+        modelCacheDir = modelCacheDir.trim()
         if (!modelCacheDir) {
             String message = """\
 The configuration file is missing the property of jummp.model.cache.dir"""
             logger.debug(message)
         }
+    }
+
+    /**
+     * Gets the model cache directory
+     *
+     * @return A string denoting the model cache directory
+     */
+    String getModelCacheDir() {
+        return modelCacheDir
+    }
+
+    /**
+     * Sets the given string in the argument as the model cache directory
+     *
+     * @param location A string denoting the directory of the model cache
+     */
+    void setModelCacheDir(final String location) {
+        modelCacheDir = location
     }
 
     /**
@@ -170,7 +189,7 @@ launched again."""
             }
         } catch (FileNotFoundException me) {
             String message = """\
-The files associated with this model ${modelId}, revision ${revisionNumber} has been cached yet"""
+The files associated with this model ${modelId}, revision ${revisionNumber} hasn't been cached yet"""
             throwModelException(modelId, message)
         }
         return returnedFiles
@@ -348,7 +367,11 @@ There have been errors when updating the cache directory for the model ${modelId
     }
 
     private void throwModelException(final String modelId, final String message) {
-        Model model = modelService.getModel(modelId)
+        Model model = modelService?.getModel(modelId)
+        if (!model) {
+            String errMsg = "The model ${modelId} does not exist"
+            throw new ModelException(errMsg)
+        }
         boolean saveHistory = false
         ModelTransportCommand modelTC = new ModelAdapter(model: model).toCommandObject(saveHistory)
         logger.info(message)
