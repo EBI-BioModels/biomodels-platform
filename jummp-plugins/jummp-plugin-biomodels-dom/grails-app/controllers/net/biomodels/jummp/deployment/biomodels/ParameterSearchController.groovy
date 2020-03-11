@@ -28,6 +28,7 @@ import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchResult
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import grails.rest.*
+import org.perf4j.aop.Profiled
 import org.springframework.validation.FieldError
 
 import java.nio.charset.StandardCharsets
@@ -49,6 +50,7 @@ class ParameterSearchController {
 Unable to retrieve data from EBI Search due to some problems with the request parameters, 
 please use the suitable request parameters and try again."""
 
+    @Profiled
     def index(ParameterSearchCommand command) {
         if (!command.validate()) {
             def msg = "Invalid request $command.query, ${command.errors.allErrors.inspect().toString()}"
@@ -58,6 +60,7 @@ please use the suitable request parameters and try again."""
         render(view: "index", model: [command: command])
     }
 
+    @Profiled
     def search(ParameterSearchCommand command) {
         String commandErrorMessage
         final def NoMatchesFoundMessage = "No matches found"
@@ -123,6 +126,7 @@ please use the suitable request parameters and try again."""
         }
     }
 
+    @Profiled
     def export(ParameterSearchCommand command) {
         String format = "csv"
         if (!validateCommandObject(command, format)) {
@@ -160,6 +164,7 @@ please use the suitable request parameters and try again."""
         return errorObject
     }
 
+    @Profiled
     private boolean validateCommandObject(ParameterSearchCommand command, String format) {
         if (!command.validate()) {
             response.status = 400
@@ -172,6 +177,7 @@ please use the suitable request parameters and try again."""
         return true
     }
 
+    @Profiled
     private void renderErrorMessage(String msg, String format, int statusCode) {
         response.status = statusCode
         if (format == "json") {
