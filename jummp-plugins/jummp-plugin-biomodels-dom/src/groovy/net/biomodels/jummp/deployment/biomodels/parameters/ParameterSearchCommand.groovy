@@ -78,6 +78,11 @@ class ParameterSearchCommand {
     }
 
     @CompileStatic
+    boolean isDefaultQuery() {
+        DEFAULT_QUERY == query
+    }
+
+    @CompileStatic
     static def htmlEncodeValue(def object) {
         if (null == object) {
             return null
