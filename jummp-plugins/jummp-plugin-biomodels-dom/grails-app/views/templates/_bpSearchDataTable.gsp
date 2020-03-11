@@ -12,17 +12,9 @@
 <table data-stripe-classes="[]" id="table_id" class="display">
     <thead>
     <tr>
-    <th>Entity</th>
-    <th>Reaction</th>
-    <th>Model</th>
-    <th>Organism</th>
-    <th>Publication</th>
-    <th>Rate</th>
-    <th>Parameters</th>
-    <th>Entity SBO Link</th>
-    <th>Reaction SBO Link</th>
-    <th>Initial Concentration/<br/>Amount</th>
-    <th>External Links</th>
+    <th data-class-name="large-2 medium-2 small-2 align-top line-height-100 small">Entity</th>
+    <th data-class-name="large-7 medium-7 small-7 align-top line-height-100 small">Reaction</th>
+    <th data-class-name="large-3 medium-3 small-3 line-height-150 small word-break">External Links</th>
     </tr>
     </thead>
 </table>
@@ -46,73 +38,24 @@
         var columnConfig = [
             {
                 data: 'fields.entity_show',
-                orderable: false
+                orderable: false,
+                render: function (entity, type, row) {
+                    return formatEntity(entity, row);
+                }
             },
             {
                 data: 'fields.reaction_show',
-                orderable: false
-            },
-            {
-                data: 'fields.model',
-                render: function (rawdata, type, row) {
-                    var formattedData;
-                    if (rawdata === undefined || rawdata.length === 0) {
-                        return null;
-                    }
-                    formattedData = "<a target='_blank' href='https://www.ebi.ac.uk/biomodels/" + rawdata + "'>" + rawdata + "</a>";
-                    return formattedData
-                }
-            },
-            {
-                data: 'fields.organism',
-                orderable: false
-            },
-            {
-                data: 'fields.publication',
                 orderable: false,
-                render: function (href, type, row) {
-
-                    if (href === undefined || href.length === 0) {
-                        return null;
-                    }
-                    var formattedData;
-                        if (href.includes(FIELD_SEPARATOR)) {
-                            var formattedArray = [];
-                            var separatedLinks = href.split(FIELD_SEPARATOR);
-                            separatedLinks.forEach(function (subHref) {
-                                formattedArray.push(generatePublicationLink(subHref));
-                            });
-                            formattedData = formattedArray.join(FIELD_SEPARATOR+' ');
-                        } else {
-                            formattedData = generatePublicationLink(href);
-                        }
-
-                    return formattedData;
+                render: function (data, type, row) {
+                    return formatReaction(data, row);
                 }
-            },
-            {
-                data: 'fields.rate_show',
-                orderable: false
-            },
-            {
-                data: 'fields.parameters',
-                orderable: false
-            },
-            {
-                data: 'fields.entity_sbo_term_link',
-                orderable: false
-            },
-            {
-                data: 'fields.reaction_sbo_term_link',
-                orderable: false
-            },
-            {
-                data: 'fields.initial_data',
-                orderable: false
             },
             {
                 data: 'fields.external_links_show',
-                orderable: false
+                orderable: false,
+                render: function (data, type, row) {
+                    return formatExternalLinks(data, type, row);
+                }
             }
         ];
 
@@ -161,11 +104,146 @@
             isDirectionBack = false;
         };
 
+        function formatSboTerms(termArray) {
+            let result = '';
+            if (termArray !== undefined && termArray.length > 0) {
+                result = '<span class="size-100">'
+                    + '<abbr title="Systems Biology Ontology">SBO</abbr> term:</span>'
+                    + '<span class="size-75 grey">' + termArray + '</span>';
+            }
+            return result;
+        }
+
+        function formatEntity(entityHTML, row) {
+            let result = '';
+            let entityRow = '';
+            const entity = row.fields.entity_id;
+            const initialValue = row.fields.initial_data;
+            entityRow += '<span class="legend-green size-150">' + entity;
+
+            if (initialValue !== undefined && initialValue !== '') {
+                entityRow += '</span>' + '&nbsp;=&nbsp;' + initialValue;
+            }
+            result = asEntityRow(entityRow);
+
+            const sboTerms = row.fields.entity_sbo_term_link;
+            if (sboTerms.length > 0) {
+                result += asEntityRow(formatSboTerms(sboTerms));
+            }
+
+            let urls = row.fields.entity_accession_url;
+            if (urls.length > 0) {
+                let tagsIcon = ebiFontIcon("common", "icon-tags", "padding-right-small");
+                result += asEntityRow(tagsIcon + urls);
+            }
+
+            return result;
+        }
+
+        function asEntityRow(text) {
+            return asDiv(text, "line-height-150 padding-top-small padding-bottom-small");
+        }
+
+        function asReactionRow(text) {
+            return asDiv(text, "padding-top-medium padding-bottom-medium");
+        }
+
+        function formatModel(accession) {
+            let formattedData;
+            if (accession === undefined || accession.length === 0) {
+                return null;
+            }
+            formattedData = "<a target='_blank' href='https://www.ebi.ac.uk/biomodels/" + accession + "'>" + accession + "</a>";
+            return formattedData
+        }
+
         function generatePublicationLink(href) {
             href = href.replace(/\\/g, "");
-            var linkData = href.split('|');
+            let linkData = href.split('|');
             href = "<a target='_blank' href='" + linkData[0] + "'>" + linkData[1] + "</a>";
             return href;
+        }
+
+        function formatReaction(data, row) {
+            const reactionIcon = ebiFontIcon("common", "icon-flask", 'margin-right-medium', 'reaction (using entity IDs from the model)');
+            const reaction = "<span class='legend-green size-125'>" + row.fields.reaction_original_RAW + "</span>";
+            const sbo = formatSboTerms(row.fields.reaction_sbo_term_link);
+            const resolvedReaction = row.fields.reaction;
+            let out = asReactionRow(reactionIcon + reaction);
+            out += asReactionRow(sbo);
+            const tagsIcon = ebiFontIcon("common", "icon-tags", "margin-right-medium", 'reaction (using cross reference information where applicable)');
+            out += asReactionRow(tagsIcon + resolvedReaction);
+
+            const rateIcon = ebiFontIcon("common", "icon-tachometer-alt", 'margin-right-medium', 'rate');
+            const rate = "<span class='blue size-100'>" + row.fields.rate_original_RAW + "</span>";
+            out += asReactionRow(rateIcon + rate);
+
+            const paramsIcon = ebiFontIcon("common", "icon-sliders-h", 'margin-right-medium', 'parameters');
+            const params = "<span class='darkgrey'>" + row.fields.parameters + "</span>";
+            out += asReactionRow(paramsIcon + params);
+
+            // TODO include modifiers such as catalysts and inhibitors using icon-plug
+            return asDiv(out, "box-shadow");
+        }
+
+        function formatPublication(href) {
+            if (href === undefined || href.length === 0) {
+                return null;
+            }
+            var formattedData;
+            if (href.includes(FIELD_SEPARATOR)) {
+                var formattedArray = [];
+                var separatedLinks = href.split(FIELD_SEPARATOR);
+                separatedLinks.forEach(function (subHref) {
+                    formattedArray.push(generatePublicationLink(subHref));
+                });
+                formattedData = formattedArray.join(FIELD_SEPARATOR+' ');
+            } else {
+                formattedData = generatePublicationLink(href);
+            }
+
+            return formattedData;
+        }
+
+        function asDiv(text, styles = '') {
+            if (undefined === text || text === '') {
+                return "";
+            }
+            return "<div class='" + styles + "'>" + text + "</div>";
+        }
+
+        function ebiFontIcon(fontSet, letter, styles = 'margin-right-medium', title = '') {
+            const fontClass = "icon-" + fontSet.toLocaleLowerCase();
+            return '<i title="' + title + '" class="' + styles + ' icon ' + fontClass + ' ' + letter + '"></i>';
+        }
+
+        function textAndEbiFontIcon(text, fontSet, letter, fontStyles, fontTitle = '') {
+            const icon = ebiFontIcon(fontSet, letter, fontStyles, fontTitle);
+            const content = icon + text;
+            return asDiv(content);
+        }
+
+        function formatExternalLinks(links, type, row) {
+            let output = "<div>";
+
+            const modelAccession = row.fields.model;
+            const m = textAndEbiFontIcon(formatModel(modelAccession), "common", "icon-unreviewed-data", 'margin-right-medium', 'model');
+            output += m;
+
+            const pub = row.fields.publication;
+            const p = textAndEbiFontIcon(formatPublication(pub), "common", "icon-publication", 'margin-right-medium', 'manuscript');
+            output += p;
+
+            const org = row.fields.organism;
+            const o = textAndEbiFontIcon(org, "conceptual", "icon-dna", 'margin-right-medium', 'organism');
+            output += o;
+
+            if (links !== undefined && links !== "") {
+                const l = textAndEbiFontIcon(links, "common", "icon-external-systems", 'margin-right-medium', 'cross references');
+                output += l;
+            }
+
+            return output + "</div>";
         }
 
         // Function called for showing the data pagination stats

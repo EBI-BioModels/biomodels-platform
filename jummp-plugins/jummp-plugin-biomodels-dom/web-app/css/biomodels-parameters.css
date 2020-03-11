@@ -1,0 +1,48 @@
+.legend-green {
+    color: #01a252;
+}
+
+.grey {
+    color: lightgray;
+}
+
+.darkgrey {
+    color: darkgray;
+}
+
+.box-shadow {
+    border-radius: 5px;
+    box-shadow: 0 2px 2px 2px rgba(222,222,222,1);
+    padding: .5em 1em;
+}
+
+.word-break {
+    word-break: break-word;
+}
+
+.blue {
+    color: blue;
+}
+
+.legend-green-block {
+    width: 20px;
+    height: 10px;
+    display: inline-block;
+    background-color: #01a252;
+}
+
+.pull-element-left {
+    float: left;
+}
+
+.pull_element_right {
+    float: right;
+}
+
+.line-height-100 {
+    line-height: 1;
+}
+
+.line-height-150 {
+    line-height: 1.5;
+}
