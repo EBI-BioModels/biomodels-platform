@@ -186,6 +186,7 @@ please use the suitable request parameters and try again."""
         }
     }
 
+    @Profiled
     private static String parseErrors(List<FieldError> fieldErrors) {
         String errorString = ""
         for (int i = 0; i < fieldErrors.size(); i++) {
