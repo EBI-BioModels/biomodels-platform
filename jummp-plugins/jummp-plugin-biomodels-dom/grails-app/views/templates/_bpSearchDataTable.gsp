@@ -9,7 +9,7 @@
         <input id="non_curated_id" type="radio"  name="curation" value="non-curated" > <label for="non_curated_id" >Non-Curated</label>
     </span>
 </span>
-<table  id="table_id" class="display">
+<table data-stripe-classes="[]" id="table_id" class="display">
     <thead>
     <tr>
     <th>Entity</th>
