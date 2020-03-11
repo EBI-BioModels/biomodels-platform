@@ -5,8 +5,8 @@
 </div>
 <span>
     <span class="pull_element_right" >
-        <input id="curated_id" type="radio"  name="curation" value="curated"><label for="curated_id">Curated</label>
-        <input id="non_curated_id" type="radio"  name="curation" value="non-curated" > <label for="non_curated_id" >Non-Curated</label>
+        <input id="curated_id" type="radio" name="curation" value="curated"><label for="curated_id">Curated</label>
+        <input id="non_curated_id" type="radio" name="curation" value="non-curated"><label for="non_curated_id" >Non-Curated</label>
     </span>
 </span>
 <table data-stripe-classes="[]" id="table_id" class="display">
