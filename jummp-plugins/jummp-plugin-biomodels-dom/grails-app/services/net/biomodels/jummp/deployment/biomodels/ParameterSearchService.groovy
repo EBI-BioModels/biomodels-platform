@@ -98,7 +98,7 @@ class ParameterSearchService {
         try {
             records = url.text
         } catch (SocketException se) {
-            log.error("Error while retrieving records from EBI Search ${se.getMessage()}, command - ${command}")
+            log.error("Error while retrieving records from EBI Search ${se.getMessage()}, command - ${command}", se)
         }
         return replaceFieldNames(records).replaceAll("\\\\","")
     }
