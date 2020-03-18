@@ -35,6 +35,7 @@ import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.authentication.GrailsAnonymousAuthenticationToken
 import grails.transaction.NotTransactional
 import grails.transaction.Transactional
+import groovy.sql.Sql
 import groovy.transform.CompileStatic
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
@@ -462,9 +463,28 @@ WHERE
      **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getMyModels")
-    List<Model> getMyModels(String filter = null, boolean deletedOnly = false) {
-        ModelListSorting sorting
-        getAllModels(-1, 0, false, sorting, filter, false)
+    List<Model> getMyModels() {
+        String query = """\
+SELECT distinct m.id
+FROM Revision AS r JOIN r.model AS m
+WHERE
+    r.deleted = false
+    AND m.deleted = false
+    AND r.owner.id = :userId
+ORDER BY m.id desc, r.revisionNumber desc
+"""
+        User u = springSecurityService.currentUser
+        String username = u.username
+        Long userId = u.id
+        String message = "User $userId : $username is accessing their models at ${new Date()}"
+        log.debug(message)
+        println message
+        Map namedParams = [
+            "userId": userId
+        ]
+        Map metaParams = ["max": 100, "offset": 0]
+        List models = Model.getAll(Model.executeQuery(query, namedParams, metaParams))
+        return models
     }
 
     /** convenience method to check if our filter is OK */

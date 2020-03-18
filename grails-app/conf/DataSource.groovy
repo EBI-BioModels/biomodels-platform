@@ -116,7 +116,6 @@ try {
                 url = databaseConfig.jummp.database.url
 //                logSql = true
 //                dbCreate = "create"
-                logSql = true
             }
         }
         test {
