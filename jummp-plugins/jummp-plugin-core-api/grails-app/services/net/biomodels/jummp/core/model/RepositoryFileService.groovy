@@ -366,7 +366,7 @@ There have been errors when updating the cache directory for the model ${modelId
         }
     }
 
-    private void throwModelException(final String modelId, final String message) {
+    private void throwModelException(final String modelId, final String message) throws ModelException {
         Model model = modelService?.getModel(modelId)
         if (!model) {
             String errMsg = "The model ${modelId} does not exist"
