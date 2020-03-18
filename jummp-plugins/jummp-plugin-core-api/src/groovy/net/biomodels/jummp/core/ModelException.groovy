@@ -40,6 +40,10 @@ class ModelException extends JummpException implements Serializable {
      */
     private ModelTransportCommand model
 
+    ModelException(final String message) {
+        super(message)
+    }
+
     public ModelException(ModelTransportCommand model) {
         this(model, "Failed to manipulate Model ${model?.id}".toString())
     }
