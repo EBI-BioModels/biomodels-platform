@@ -264,7 +264,7 @@ class ModelService {
                                          List filteredFormats, List filteredUsers,
                                          String sortingDirection, boolean isAdmin = false) {
         String query = """\
-SELECT m.id
+SELECT distinct m.id
 FROM Revision AS r RIGHT OUTER JOIN r.model AS m
 WHERE
     r.deleted = false
@@ -277,7 +277,7 @@ WHERE
         } else {
             query = """\
 $query AND r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2, AclEntry ace
-WHERE r.model = r2.model
+  WHERE r.model = r2.model
     AND r2.id = ace.aclObjectIdentity.objectId
     AND ace.aclObjectIdentity.aclClass.className = :className
     AND ace.sid.sid IN (:roles)
@@ -299,10 +299,8 @@ WHERE r.model = r2.model
                 if (type) {
                     log.warn("Ignoring unsupported permission level '$type'.")
                 } else if (!isAdmin) {
-                    query = """$query AND ((r.owner.id = ${u.id} AND r.state = '${ModelState.UNPUBLISHED}')
-OR (r.owner.id != ${u.id} AND r.state = '${ModelState.UNPUBLISHED}')
-OR (r.owner.id = ${u.id} AND r.state = '${ModelState.PUBLISHED}'))
-"""
+                    query = """$query AND ((r.owner.id = ${u.id}) OR (r.owner.id != ${u.id}
+AND r.state = '${ModelState.UNPUBLISHED}'))"""
                 }
                 break
         }
