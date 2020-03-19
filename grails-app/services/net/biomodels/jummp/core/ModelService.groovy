@@ -49,8 +49,6 @@ import net.biomodels.jummp.model.*
 import net.biomodels.jummp.plugins.security.User
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
-import org.apache.tika.detect.DefaultDetector
-import org.apache.tika.metadata.Metadata
 import org.perf4j.aop.Profiled
 import org.perf4j.log4j.Log4JStopWatch
 import org.springframework.beans.factory.ObjectFactory
@@ -161,6 +159,7 @@ class ModelService {
     ObjectFactory<ModelIdentifierGeneratorRegistryService> idGeneratorRegistryFactoryBean
 
     final boolean MAKE_PUBLICATION_ID = !(publicationIdGenerator instanceof NullModelIdentifierGenerator)
+
     /**
      * Guard insertion of ACL entries from concurrent access.
      */
@@ -629,7 +628,9 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         }*/
         // exclude deleted revisions
         modelHistoryService.addModelToHistory(model)
-        return model.revisions.toList().findAll { !it.deleted }.sort {it.revisionNumber}
+        List<Revision> revisions = model.revisions.toList().findAll { !it.deleted }.sort {it.revisionNumber}
+        log.debug("All Domain Revision Objects: ${revisions.dump()}")
+        return revisions
     }
 
     /**
@@ -717,7 +718,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @PreAuthorize("hasRole('ROLE_USER')")
     @PostLogging(LoggingEventType.CREATION)
     @Profiled(tag="modelService.uploadModelAsFile")
-    public Model uploadModelAsFile(final RepositoryFileTransportCommand repoFile, ModelTransportCommand meta)
+    Model uploadModelAsFile(final RepositoryFileTransportCommand repoFile, ModelTransportCommand meta)
             throws ModelException {
         if (repoFile) {
            return uploadModelAsList([repoFile], meta)
@@ -726,38 +727,29 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         throw new ModelException(meta, "The new version of the model does not have any files.")
     }
 
-    private List<File> getFilesFromRF(List<RepositoryFileTransportCommand> files) {
-        List<File> modelFiles = []
-        if (files) {
-            for (rf in files) {
-                final def f = new File(rf.path)
-                modelFiles.add(f)
-            }
-        }
-        return modelFiles
-    }
-
     /**
-    * Adds a new Revision to the model, to be used by SubmissionService
-    * The provided @p modelFiles will be stored in the VCS as an update to the existing files of the same @p model.
-    * A new Revision will be created and appended to the list of Revisions of the @p model.
-    * The revision will not be validated, as the checks are assumed to have been conducted
-    * already
-    * @param model The Model the revision should be added
-    * @param modelFiles The model files to be stored in the VCS as a new revision
-    * @param format The format of the model files
-    * @param comment The commit message for the new revision
-    * @return The newly-added Revision. In case an error occurred while accessing the VCS @c null will be returned.
-    * @throws ModelException If either @p model, @p modelFiles or @p comment are null or if the files do not exist or are directories.
-    **/
-//    @PreAuthorize("hasPermission(#model, write) or hasRole('ROLE_ADMIN')")
+     * @short Adds a new Revision to the model, to be used by SubmissionService
+     *
+     * The provided @p modelFiles will be stored in the VCS as an update to the existing files of the same @p model.
+     * A new Revision will be created and appended to the list of Revisions of the @p model.
+     * The revision will not be validated, as the checks are assumed to have been already conducted. The revision
+     * will be also indexed if it is successfully added to the model.
+     *
+     * @param repoFiles     The model files to be stored in the VCS as a new revision
+     * @param deleteFiles   The list of files to be deleted from the VCS
+     * @param rev           The revision to be added the model which the revision is being associated with
+     *
+     * @return The newly-added Revision. In case an error occurred while accessing the VCS @c null will be returned.
+     * @throws ModelException If either @p model, @p modelFiles or @p comment are null or if the files do not exist
+     * or are directories.
+     */
     @PreAuthorize("hasRole('ROLE_USER')")
     @PostLogging(LoggingEventType.UPDATE)
-    @Profiled(tag="modelService.addValidatedRevision")
+    @Profiled(tag="modelService.addRevision")
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public Revision addValidatedRevision(final List<RepositoryFileTransportCommand> repoFiles,
-                final List<RepositoryFileTransportCommand> deleteFiles, RevisionTransportCommand rev) throws
-                ModelException {
+    Revision addRevision(final List<RepositoryFileTransportCommand> repoFiles,
+                         final List<RepositoryFileTransportCommand> deleteFiles,
+                         final RevisionTransportCommand rev) throws ModelException {
         Revision revision
         def txDefinition = [
             // this tx will use a different session than the current one
@@ -765,7 +757,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         ]
         Revision.withTransaction(txDefinition) {
             // the returned revision is detached from the Hibernate session
-            revision = doAddValidatedRevision(repoFiles, deleteFiles, rev)
+            revision = persistRevision(repoFiles, deleteFiles, rev)
         }
         if (revision) {
             /*
@@ -794,21 +786,22 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     }
 
     /**
-     * Persists a new model revision in the database.
+     * Persists a new model revision in the database and upload the repository files in VCS.
      *
      * This unit of work is performed in a dedicated transaction.so as to ensure that it is
      * committed before the [synchronous] indexing process tries to load the revision from the
      * database.
-     * @param repoFiles the files of the revision
-     * @param deleteFiles the files that should be deleted compared to the previous revision
-     * @param rev the transport command from which to construct the new revision
+     * @param repoFiles         the files to be associated with the revision
+     * @param deleteFiles       the files to be deleted and compared to the previous revision
+     * @param rev               the transport command from which to construct the new revision
+     *
      * @return the new revision
      * @throws ModelException if there is no model associated with @p rev, if its model has
      * been deleted or if the comment is null.
      */
-    Revision doAddValidatedRevision(List<RepositoryFileTransportCommand> repoFiles,
-            List<RepositoryFileTransportCommand> deleteFiles, RevisionTransportCommand rev)
-            throws ModelException {
+    Revision persistRevision(List<RepositoryFileTransportCommand> repoFiles,
+                             List<RepositoryFileTransportCommand> deleteFiles,
+                             RevisionTransportCommand rev) throws ModelException {
         // TODO: the method should be thread safe, add a lock
         if (!rev.model) {
             throw new ModelException(null, "Model may not be null")
@@ -819,8 +812,8 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         if (rev.comment == null) {
             throw new ModelException(rev.model, "Comment may not be null, empty comment is allowed")
         }
-        List<File> modelFiles = getFilesFromRF(repoFiles)
-        List<File> filesToDelete = getFilesFromRF(deleteFiles)
+        List<File> modelFiles = repositoryFileService.getFilesFromRF(repoFiles)
+        List<File> filesToDelete = repositoryFileService.getFilesFromRF(deleteFiles)
 
         final User currentUser = User.findByUsername(springSecurityService.authentication.name)
         final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
@@ -832,12 +825,12 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
                     format: ModelFormat.findByIdentifierAndFormatVersion(rev.format.identifier, formatVersion),
                     validationReport: rev.validationReport, validationLevel: rev.validationLevel, readmeSubmission:
             rev.readmeSubmission)
-        def stopWatch = new Log4JStopWatch("modelService.addValidatedRevision.rftcCreation")
-        List<RepositoryFile> domainObjects = convertRepositoryFilesFromTransportCommands(repoFiles, revision)
+        def stopWatch = new Log4JStopWatch("modelService.addRevision.rftcCreation")
+        List<RepositoryFile> domainObjects = repositoryFileService.convertRFTCToRF(repoFiles, revision)
 
         stopWatch.lap("RepositoryFileTransportCommands created.")
         // save the new model in the database
-        stopWatch.setTag("modelService.addValidatedRevision.persistModel")
+        stopWatch.setTag("modelService.addRevision.persistModel")
         try {
             String vcsId = vcsService.updateModel(model, modelFiles, filesToDelete, revision.comment)
             revision.vcsId = vcsId
@@ -875,7 +868,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             revision.save()
             model.save(flush: true)
             stopWatch.lap("Model persisted to the database.")
-            stopWatch.setTag("modelService.addValidatedRevision.grantPermissions")
+            stopWatch.setTag("modelService.addRevision.grantPermissions")
             aclInsertionLock.lock()
             try {
                 aclUtilService.addPermission(revision, currentUser.username, BasePermission.ADMINISTRATION)
@@ -917,82 +910,6 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             throw new ModelException(m, "Revision stored in VCS, but not in database")
         }
         return revision
-    }
-
-    /*
-     * Creates validated RepositoryFile objects from corresponding RepositoryFileTransportCommands.
-     *
-     * This method is used to complement the validation mechanism available for domain
-     * classes because the latter is applied even for operations that don't change repository file
-     * objects such as deletion or publishing of models.
-     *
-     * This method throws ModelException if
-     *      there is at least one entry in the supplied list with an undefined or inexistent path,
-     *      there is at least one empty file, or
-     *      there are no main files.
-     *
-     * @param repoFiles a list of RepositoryFileTransportCommand objects to validate and convert into
-     * domain objects.
-     */
-    private List<RepositoryFile> convertRepositoryFilesFromTransportCommands(
-            List<RepositoryFileTransportCommand> repoFileCmds, Revision revision) {
-        def results = []
-        boolean foundValidMainFile = false
-        for (rf in repoFileCmds) {
-            // validate
-            String filePath = rf.path
-            if (!filePath) {
-                log.error("Missing path for RepositoryFile ${rf.dump()} from ${repoFileCmds.dump()}")
-                throw new ModelException("We lost track of one of the files you provided for this revision.")
-            }
-            File f = new File(filePath)
-            boolean fileExists = f.exists()
-            if (!fileExists) {
-                log.error("Non-existent path for RepositoryFile ${rf.dump()} from ${repoFileCmds.dump()}")
-                throw new ModelException("There was a problem saving file ${f.name} for this revision.".toString())
-            }
-            boolean fileIsEmpty = !f.length()
-            if (fileIsEmpty) {
-                log.warn("Empty file ${f.name} included in ${repoFileCmds}")
-            }
-            if (rf.mainFile) {
-                foundValidMainFile = true
-            }
-            // work out MIME type
-            def sherlock = new DefaultDetector()
-            def is = new BufferedInputStream(new FileInputStream(f))
-            String mimeType = sherlock.detect(is, new Metadata()).toString()
-
-            // create the domain object
-            final String fileName = f.name
-            final def domain = new RepositoryFile(path: fileName, description: rf.description,
-                    mimeType: mimeType, revision: revision)
-            if (rf.mainFile) {
-                domain.mainFile = rf.mainFile
-            }
-            if (rf.userSubmitted) {
-                domain.userSubmitted = rf.userSubmitted
-            }
-            if (rf.hidden) {
-                domain.hidden = rf.hidden
-            }
-            if (!domain.validate()) {
-                final def m = new ModelAdapter(model: revision.model).toCommandObject()
-                def msg = new StringBuffer("Invalid file ${rf.properties} uploaded for model ${m.properties}.")
-                msg.append("The file failed due to ${domain.errors.allErrors.inspect()}")
-                log.error(msg)
-                throw new ModelException(m, """\
-Your submission appears to contain invalid file ${fileName}. Please review it and try again.""".toString())
-            } else {
-                results.add(domain)
-            }
-        }
-        if (!foundValidMainFile) {
-            final def m = new ModelAdapter(model: revision.model).toCommandObject()
-            log.error("Can't persist repository files ${repoFileCmds.dump()} for revision ${revision.dump()} without main file")
-            throw new ModelException(m, "Missing main file for the new model revision ${revision.name}")
-        }
-        results
     }
 
     /**
@@ -1046,7 +963,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
     @PostLogging(LoggingEventType.CREATION)
     @Profiled(tag="modelService.uploadValidatedModel")
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public Model uploadValidatedModel(final List<RepositoryFileTransportCommand> repoFiles,
+    Model uploadValidatedModel(final List<RepositoryFileTransportCommand> repoFiles,
             RevisionTransportCommand rev) throws ModelException {
         Model model
         // this tx will use a different session than the current one
@@ -1069,154 +986,31 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         model
     }
 
+    @PostLogging(LoggingEventType.CREATION)
+    @Profiled(tag="modelService.doUploadValidatedModel")
     Model doUploadValidatedModel(final List<RepositoryFileTransportCommand> repoFiles,
             RevisionTransportCommand rev) throws ModelException {
-        def stopWatch = new Log4JStopWatch("modelService.uploadValidatedModel.catchDuplicate")
-        if (IS_DEBUG_ENABLED) {
-            log.debug "About to store the following model: ${rev.name}"
-        }
-        // TODO: to support anonymous submissions this method has to be changed
+        log.debug "About to store the following model: ${rev.name}"
+        // TODO: to support anonymous submissions, this method has to be changed
         if (Revision.findByName(rev.name)) {
             final String msg = "There is already a Model with name ${rev.name}".toString()
             log.warn(msg)
-            /*log.error(msg)
-            throw new ModelException(rev.model, msg)*/
         }
-        stopWatch.lap("Finished checking for model duplicates.")
-        stopWatch.setTag("modelService.uploadValidatedModel.addFiles")
-        Model model = new Model()
-        List<File> modelFiles = getFilesFromRF(repoFiles)
-        stopWatch.lap("Finished adding RepositoryFiles to the Model")
-        stopWatch.setTag("modelService.uploadValidatedModel.prepareVcsStorage")
-        ModelFormat format = ModelFormat.findByIdentifierAndFormatVersion(rev.format.identifier, rev.format.formatVersion)
-        model.modellingApproach = rev.model.modellingApproach
-        model.otherInfo = rev.model.otherInfo
-        // vcs identifier is container name + upload date + submissionId - this should by all means be unique
-        String timestamp = new Date().format("yyyy-MM-dd'T'HH-mm-ss-SSS")
-        final String submissionId = getSubmissionIdGenerator().generate()
-        String modelPath = new StringBuilder(timestamp).append("_").append(submissionId).
-                append(File.separator).toString()
-        String container = fileSystemService.findCurrentModelContainer()
-        String containerName = new File(container).name
-        File modelFolder = new File(container, modelPath)
-        boolean success = modelFolder.mkdirs()
-        if (!success) {
-            def err = "Cannot create the directory where the ${rev.name} should be stored"
-            log.error(err)
-            throw new ModelException(rev.model, err.toString())
-        }
-        model.vcsIdentifier = new StringBuilder(containerName).append(File.separator).
-                append(modelPath).toString()
-
-        if (IS_DEBUG_ENABLED) {
-            log.debug "The new model will be stored in $modelPath"
-        }
-        model.submissionId = submissionId
-        Revision revision = new Revision(model: model,
-                revisionNumber: 1,
-                owner: User.findByUsername(springSecurityService.authentication.name),
-                minorRevision: false,
-                validated: rev.validated,
-                name: rev.name,
-                description: rev.description,
-                comment: rev.comment,
-                uploadDate: new Date(),
-                format: format)
-
-        // keep a list of RFs closeby, as we may need to discard all of them
-        List<RepositoryFile> domainObjects =
-                convertRepositoryFilesFromTransportCommands(repoFiles, revision)
-        stopWatch.lap("Finished preparing what to store in the VCS.")
-        stopWatch.setTag("modelService.uploadValidatedModel.doVcsStorage")
-        try {
-            String vcsId = vcsService.importModel(model, modelFiles)
-            revision.vcsId = vcsId
-            if (IS_DEBUG_ENABLED) {
-                log.debug "First commit for ${revision.model.vcsIdentifier} is $vcsId"
-            }
-        } catch (VcsException e) {
-            revision.discard()
-            domainObjects.each { it.discard() }
-            model.discard()
-            //TODO undo the addition of the files to the VCS.
-            def errMsg = new StringBuffer("Exception occurred while storing new Model ")
-           // errMsg.append("${model.toCommandObject().properties} to VCS: ${e.getMessage()}.\n")
-            errMsg.append("${model.errors.allErrors.inspect()}\n")
-            errMsg.append("${revision.errors.allErrors.inspect()}\n")
-            log.error(errMsg.toString())
-            stopWatch.stop()
-            ModelTransportCommand m = new ModelAdapter(model: model).toCommandObject()
-            throw new ModelException(m, "Could not store new Model ${m.properties} in VCS", e)
-        }
-        stopWatch.lap("Finished importing the model into the VCS.")
-        stopWatch.setTag("modelService.uploadValidatedModel.gormValidation")
-        domainObjects.each {
-           revision.addToRepoFiles(it)
-        }
+        ModelBuilder modelBuilder = new ModelBuilder(repoFiles, rev).build()
+        Model model = modelBuilder.model
+        Revision revision = modelBuilder.revision
         if (revision.validate()) {
             model.addToRevisions(revision)
-            if (rev.model.publication) {
-                model.publication = publicationService.fromCommandObject(rev.model.publication)
-            }
             if (!model.validate()) {
-                // TODO: this means we have imported the file into the VCS, but it failed to be saved in the database, which is pretty bad
-                revision.discard()
-                model.discard()
-                def msg = new StringBuffer("New Model ${rev.name} does not validate:\n")
-                msg.append("${model.errors.allErrors.inspect()}\n")
-                msg.append("${revision.errors.allErrors.inspect()}\n")
-                log.error(msg)
-                stopWatch.stop()
-                throw new ModelException(new ModelAdapter(model: model).toCommandObject(), "New model does not validate")
+                modelBuilder.discard()
+            } else {
+                modelBuilder.persist()
             }
-            model.save(flush: true)
-            domainObjects.each { rf ->
-                if (!rf.isAttached()) {
-                    rf.attach()
-                }
-                String path = rf.path
-                String sep = File.separator.equals("/") ? "/" : "\\\\"
-                if (path.contains(sep)) {
-                    String fileName = path.split(sep).last()
-                    rf.path = fileName
-                }
-                rf.save()
-            }
-            stopWatch.lap("Finished GORM validation.")
-            stopWatch.setTag("modelService.uploadValidatedModel.grantPermissions")
-            // let's add the required rights
-            final String username = revision.owner.username
-            aclInsertionLock.lock()
-            try {
-                aclUtilService.addPermission(model, username, BasePermission.ADMINISTRATION)
-                aclUtilService.addPermission(model, username, BasePermission.DELETE)
-                aclUtilService.addPermission(model, username, BasePermission.READ)
-                aclUtilService.addPermission(model, username, BasePermission.WRITE)
-                aclUtilService.addPermission(revision, username, BasePermission.ADMINISTRATION)
-                aclUtilService.addPermission(revision, username, BasePermission.DELETE)
-                aclUtilService.addPermission(revision, username, BasePermission.READ)
-            } catch (Throwable e) {
-                log.error("failed to insert permissions for $model and $revision", e)
-            } finally {
-                aclInsertionLock.unlock()
-            }
-            stopWatch.stop()
-
-            if (IS_DEBUG_ENABLED) {
-                log.debug("Model $submissionId stored with id ${model.id}")
-            }
-
-            // don't broadcast event yet,wait for the current tx to commit
+            // don't broadcast event yet, wait for the current tx to commit
             /*grailsApplication.mainContext.publishEvent(new ModelCreatedEvent(this,
                                 new ModelAdapter(model: model).toCommandObject(), modelFiles))*/
         } else {
-            // TODO: this means we have imported the file into the VCS, but it failed to be saved in the database, which is pretty bad
-            revision.discard()
-            domainObjects.each {it.discard()}
-            model.discard()
-            log.error("New Model does not validate:${revision.errors.allErrors.inspect()}")
-            stopWatch.stop()
-            throw new ModelException(new ModelAdapter(model: model).toCommandObject(), "Sorry, but the new Model does not seem to be valid.")
+            modelBuilder.discard()
         }
         return model
     }
@@ -1314,7 +1108,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
 
         // keep a list of RFs closeby, as we may need to discard all of them
         List<RepositoryFile> domainObjects =
-                convertRepositoryFilesFromTransportCommands(repoFiles, revision)
+            repositoryFileService.convertRFTCToRF(repoFiles, revision)
         String formatVersion = modelFileFormatService.getFormatVersion(revision)
         revision.format = ModelFormat.findByIdentifierAndFormatVersion(meta.format.identifier, formatVersion)
         assert formatVersion != null && revision.format != null
@@ -1398,7 +1192,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
     @PreAuthorize("hasPermission(#model, write) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.addRevisionAsFile")
-    public Revision addRevisionAsFile(Model model, final RepositoryFileTransportCommand repoFile,
+    Revision addRevisionAsFile(Model model, final RepositoryFileTransportCommand repoFile,
             final ModelFormat format, final String comment) throws ModelException {
         return addRevisionAsList(model, [repoFile], format, comment)
     }
@@ -1423,50 +1217,53 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         if (!model) {
             throw new ModelException(null, "Model may not be null")
         }
+        ModelTransportCommand mtc = new ModelAdapter(model: model).toCommandObject(false)
         if (model.deleted) {
-            throw new ModelException(new ModelAdapter(model: model).toCommandObject(), "A new Revision cannot be added to a deleted model")
+            throw new ModelException(mtc, "A new Revision cannot be added to a deleted model")
         }
         if (comment == null) {
-            throw new ModelException(new ModelAdapter(model: model).toCommandObject(), "Comment may not be null, empty comment is allowed")
+
+            throw new ModelException(mtc, "Comment may not be null, empty comment is allowed")
         }
         if (!repoFiles || repoFiles.size() == 0) {
             log.error("No files were provided as part of the update of model ${model.properties}")
-            throw new ModelException(new ModelAdapter(model: model).toCommandObject(), "A new version of the model must contain at least one file.")
+            throw new ModelException(mtc, "A new version of the model must contain at least one file.")
         }
         List<File> modelFiles = []
         for (rf in repoFiles) {
             if (!rf || !rf.path) {
                 log.error("No file was provided as part of the update of model ${model.properties}")
-                throw new ModelException(new ModelAdapter(model: model).toCommandObject(), "Please supply at least one file for the new version of this model.")
+                throw new ModelException(mtc, "Please supply at least one file for the new version of this model.")
             }
             final String path = rf.path
             if (!path || path.isEmpty()) {
                 log.error("Null file encountered while uploading a new revision for ${model.properties}: ${repoFiles.properties}")
-                throw new ModelException(new ModelAdapter(model: model).toCommandObject(),
+                throw new ModelException(mtc,
                     "Sorry, there was something wrong with one of the files you submitted. Please refine the files you wish to upload and try again.")
             }
             final def f = new File(path)
             if (!f.exists()) {
                 log.error("Non-existent file detected while uploading a new revision for ${model.properties}: ${f.properties}")
-                throw new ModelException(new ModelAdapter(model: model).toCommandObject(),
+                throw new ModelException(mtc,
                     "Sorry, one of the files you submitted does not appear to exist. Please refine the files you wish to upload and try again")
             }
             if (f.isDirectory()) {
                 log.error("Folder detected while uploading a new revision for ${model.properties}: ${repoFiles.properties}")
-                throw new ModelException(new ModelAdapter(model: model).toCommandObject(),
+                throw new ModelException(mtc,
                     "Sorry, we currently do not accept model organised into sub-folders.")
             }
             if (rf.mainFile && f.length() == 0) {
                 def err = "File ${f.name} cannot be empty because it is the main file of the submission."
                 log.error err
-                throw new ModelException(new ModelAdapter(model: model).toCommandObject(), err)
+                throw new ModelException(mtc, err)
             }
             modelFiles.add(f)
         }
         boolean valid = true
         if (!modelFileFormatService.validate(modelFiles, format, [])) {
-            final def m = new ModelAdapter(model: model).toCommandObject()
-            log.warn("New revision of model ${m.properties} containing ${modelFiles.inspect()} does not comprise valid ${format.identifier}")
+            log.warn("""\
+New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does not comprise valid ${format
+                .identifier}""")
             //throw new ModelException(m, "The file list does not comprise valid ${format.identifier}")
             valid = false
         }
@@ -1476,7 +1273,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
                         description: modelFileFormatService.extractDescription(modelFiles, format), comment: comment,
                         uploadDate: new Date(), owner: currentUser,
                 minorRevision: false, validated:valid)
-        List<RepositoryFile> domainObjects = convertRepositoryFilesFromTransportCommands(repoFiles, revision)
+        List<RepositoryFile> domainObjects = repositoryFileService.convertRFTCToRF(repoFiles, revision)
         String formatVersion = modelFileFormatService.getFormatVersion(revision)
         revision.format = ModelFormat.findByIdentifierAndFormatVersion(format.identifier, formatVersion)
 
@@ -1488,7 +1285,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             revision.discard()
             domainObjects.each{ it.discard() }
             log.error("Exception occurred during uploading a new Model Revision to VCS: ${e.getMessage()}")
-            throw new ModelException(new ModelAdapter(model: model).toCommandObject(),
+            throw new ModelException(mtc,
                 "Could not store new Model Revision for Model ${model.id} with VcsIdentifier ${model.vcsIdentifier} in VCS", e)
         }
         domainObjects.each {
@@ -1518,9 +1315,8 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
         } else {
             // TODO: this means we have imported the revision into the VCS, but it failed to be saved in the database, which is pretty bad
             revision.discard()
-            final def m = new ModelAdapter(model: model).toCommandObject()
-            log.error("New Revision containing ${repoFiles.inspect()} for Model ${m} with VcsIdentifier ${model.vcsIdentifier} added to VCS, but not stored in database")
-            throw new ModelException(m, "Revision stored in VCS, but not in database")
+            log.error("New Revision containing ${repoFiles.inspect()} for Model ${mtc} with VcsIdentifier ${model.vcsIdentifier} added to VCS, but not stored in database")
+            throw new ModelException(mtc, "Revision stored in VCS, but not in database")
         }
         return revision
     }
@@ -1542,18 +1338,19 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
 
     /**
      * Retrieves the model files for the @p revision.
+     *
+     * This service is currently being used to retrieve the files of the public models.
+     * The other use is to retrieve the files of work flows where the authentication was established.
+     * Therefore, we do not need to check security before fetching the resources.
+     *
      * @param revision The Model Revision for which the files should be retrieved.
      * @return Byte Array of the content of the Model files for the revision.
      * @throws ModelException In case retrieving from VCS fails.
      */
     //@PreAuthorize("hasPermission(#revision, read) or hasRole('ROLE_ADMIN')") Not working. Seems related to: https://bitbucket.org/jummp/jummp/issue/23/spring-security-doesnt-work-as-expected-in
     @PostLogging(LoggingEventType.RETRIEVAL)
-    @Profiled(tag="modelService.retrieveModelRepFiles")
-    List<File> retrieveModelRepFiles(final Revision revision) throws ModelException {
-        if (!aclUtilService.hasPermission(springSecurityService.authentication, revision, BasePermission.READ)
-                && !SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')) {
-            throw new AccessDeniedException("Sorry you are not allowed to download this Model.")
-        }
+    @Profiled(tag="modelService.retrieveFiles")
+    List<File> retrieveFiles(final Revision revision) throws ModelException {
         List<File> files
         try {
             files = repositoryFileService.retrieveFiles(revision)
@@ -1959,28 +1756,28 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
     }
 
     /**
-    * Checks if the model can be deleted
-    *
-    * @param model The Model to be deleted
-    * @return @c true in case the Model can be deleted, @c false otherwise.
-    **/
+     * Checks if the model can be deleted.
+     *
+     * A model can be deleted when the model is not null and has not been deleted and meets one of the following
+     * criteria:
+     * - the user doing so is an administrator
+     * - the model does not have any public revision and the user doing so the right permissions
+     *   to delete it
+     *
+     * @param model The Model to be deleted
+     * @return @c true in case the Model can be deleted, @c false otherwise.
+     */
     @PostLogging(LoggingEventType.DELETION)
     @Profiled(tag="modelService.canDelete")
-    public boolean canDelete(Model model) {
-        if (!model) {
-            throw new IllegalArgumentException("Model may not be null")
-        }
-        if (model.deleted) {
-            return false
-        }
-        boolean publicRev = hasPublicRevision(model)
-        if (publicRev) {
+    boolean canDelete(Model model) {
+        if (!model || model.deleted) {
             return false
         }
         boolean isAdmin = SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")
+        boolean publicRev = hasPublicRevision(model)
         boolean hasDeleteRight = aclUtilService.hasPermission(
                 springSecurityService.authentication, model, BasePermission.DELETE)
-        return isAdmin || hasDeleteRight
+        return isAdmin || (hasDeleteRight && !publicRev)
     }
 
     /**
@@ -2003,47 +1800,42 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
     }
 
     /**
-    * Deletes the @p model.
-    *
-    * Flags the @p model as deleted in the database and the search index.
-    *
-    * The corresponding revision objects are not set as deleted in the database
-    * because that would prevent users from being able to access archived models.
-    *
-    * Deletion of @p model is only possible if the model is neither under curation nor published.
-    * @param model The Model to be deleted
-    * @return @c true in case the Model has been deleted, @c false otherwise.
-    * @see ModelService#restoreModel(Model model)
-    **/
+     * Deletes the @p model.
+     *
+     * Flags the @p model as deleted in the database and the search index.
+     *
+     * The corresponding revision objects are not set as deleted in the database
+     * because that would prevent users from being able to access archived models.
+     *
+     * Updated: we relax the constraints of the model deletion in the sense of
+     * allowing administrators to archive models even if the model has public revisions
+     *
+     * Deletion of @p model is only possible if the model is neither under curation nor published.
+     * @param model The Model to be deleted
+     * @return @c true in case the Model has been deleted, @c false otherwise.
+     * @see ModelService#restoreModel(Model model)
+     */
     /*@PreAuthorize("hasPermission(#model, delete) or hasRole('ROLE_ADMIN')")*/ //Doesnt work
     @PostLogging(LoggingEventType.DELETION)
     @Profiled(tag="modelService.deleteModel")
-    public boolean deleteModel(Model model) {
+    boolean deleteModel(Model model) {
         if (!model) {
-            throw new IllegalArgumentException("Model may not be null")
-        }
-        if (!canDelete(model)) {
-            throw new AccessDeniedException("You do not have permission to delete this model")
+            throw new IllegalArgumentException("Cannot delete a null model")
         }
         if (model.deleted) {
-            return false
+            throw new IllegalArgumentException("The model ${model?.submissionId} has been already deleted")
         }
-        boolean modelAlreadyPublic = hasPublicRevision(model)
-        if (modelAlreadyPublic) {
-            if (IS_DEBUG_ENABLED) {
-                log.debug "Refusing to delete published model ${model.submissionId}"
-            }
-            return false
+        boolean canDelete = canDelete(model)
+        if (!canDelete) {
+            throw new IllegalStateException("Cannot delete the model ${model.submissionId}")
         }
-        if (IS_DEBUG_ENABLED) {
-            log.debug("Attempting to delete model ${model.submissionId}")
-        }
-
         model.deleted = true
-        model.save(flush: true)
-        grailsApplication.mainContext.publishEvent(new ModelDeletedEvent(this,
+        boolean succeed = model.save(flush: true)
+        if (succeed) {
+            grailsApplication.mainContext.publishEvent(new ModelDeletedEvent(this,
                 new ModelAdapter(model: model).toCommandObject()))
-        return true
+        }
+        return succeed
     }
 
     /*
@@ -2400,7 +2192,7 @@ Your submission appears to contain invalid file ${fileName}. Please review it an
             }
             revisionTC.minorRevision = true
             revisionTC.comment = "Automatically added model identifier $publicationId"
-            Revision toPublish = doAddValidatedRevision(revisionTC.files, [], revisionTC)
+            Revision toPublish = persistRevision(revisionTC.files, [], revisionTC)
             RevisionTransportCommand toPublishTC = new RevisionAdapter(revision: toPublish).toCommandObject()
             indexModelRevision(toPublishTC)
             return toPublish
@@ -2543,7 +2335,14 @@ Failed to update audit $itemId to $success: ${audit.errors.allErrors.inspect()}"
     }
 
     /**
-     * Retrieves the main file of the models given in a list
+     * Retrieves the main file of the models given in a list of their identifiers
+     *
+     * This service is currently used to fetch the requested main files to
+     * @{ModelDelegateService.serveModelFilesAsZip(modelIds)} which is being participated to
+     * download a bulk of the model main files chosen from the search results.
+     * The search result always contains downloadable public models, therefore,
+     * these chain of methods do not need to check ACLs
+     *
      * @param modelIDs The list of model identities being retrieved
      * @return either the list of RepositoryFileTransportCommand objects or null
      *         if there is no model files available
@@ -2575,7 +2374,7 @@ WHERE
         List revisions = Model.executeQuery(query, [mids: mids])
 
         revisions.each { Revision revision ->
-            List<File> files = retrieveModelRepFiles(revision)
+            List<File> files = retrieveFiles(revision)
             RepositoryFile rf = revision.repoFiles.find { RepositoryFile rf -> rf.mainFile }
             File f = files.find { it.name == rf.path }
             if (!f) {

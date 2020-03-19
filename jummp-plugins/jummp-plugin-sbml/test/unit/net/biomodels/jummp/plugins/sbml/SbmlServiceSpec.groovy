@@ -1,5 +1,6 @@
 package net.biomodels.jummp.plugins.sbml
 
+import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import net.biomodels.jummp.core.model.CurationState
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand
@@ -7,14 +8,28 @@ import net.biomodels.jummp.core.model.ModelState
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.model.ModellingApproach
 import org.sbml.jsbml.CVTerm
 import org.sbml.jsbml.SBMLDocument
 import org.sbml.jsbml.SBMLReader
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.time.Duration
+import java.time.LocalTime
+
 @TestFor(SbmlService)
+@Mock([ModellingApproach])
 class SbmlServiceSpec extends Specification {
+    static Map odeModelArgs = [
+        accession: "MAMO_0000046",
+        resource: "http://identifiers.org/mamo/MAMO_0000046",
+        name: "ordinary differential equation model"
+    ]
+
+    def setup() {
+        assert ModellingApproach.findOrSaveWhere(odeModelArgs)
+    }
 
     @Unroll("run this method areFilesThisFormat() with file #sbmlFile: #expected")
     void "test areFilesThisFormat() with different sbmlFile"(String sbmlFile, boolean expected) {
@@ -73,6 +88,40 @@ class SbmlServiceSpec extends Specification {
         sbmlFileName                    | expectedErrors
         "Phan2017.xml"                  | 'Undeclared namespace prefix "bqbio"'
         "tiny_example_12.xml"           | 'Unexpected close tag </bqmodel:are>; expected </bqmodel:is>'
+    }
+
+    void profileConsistencyChecks() {
+        when: "we have a large model"
+        File f = new File("test/files/MODEL1707110056.xml")
+        SBMLDocument d = new SBMLReader().readSBML(f)
+        Map offlineResponse = timeIt { d.checkConsistencyOffline() }
+        println "offline $offlineResponse"
+
+        then: "the model's offline consistency checks complete within 10 seconds"
+        0 == offlineResponse['result']
+        10_000L > offlineResponse['time']
+
+        when: "we perform the consistency checks through http://sbml.org/Facilities/Validator/"
+        Map remoteResponse = timeIt { d.checkConsistency() }
+        println "online $remoteResponse"
+
+        then: "we get the same result, but it takes longer"
+        0 == remoteResponse['result']
+        30_000 > remoteResponse['time']
+        offlineResponse['time'] < remoteResponse['time']
+    }
+
+    private static Map timeIt(Closure c) {
+        LocalTime start = LocalTime.now()
+        def response = [:]
+        try {
+            def result = c.call()
+            response['result'] = result
+        } finally {
+            Duration time = Duration.between(start, LocalTime.now())
+            response['time'] = time.toMillis()
+        }
+        response
     }
 
     void "we can extract FBC-related stuff without errors"() {
@@ -159,5 +208,62 @@ against the document #documentPath""")
         identifiersToBeInserted << [["http://identifiers.org/biomodels.db/MODEL1005260001",
                                      "http://identifiers.org/biomodels.db/BIOMD0000000272"] as String[],
                                     ["http://identifiers.org/mamo/MAMO_0000009"] as String[]]
+    }
+
+    def "can preserve UTF-8 characters when reading SBML documents"() {
+        when:
+        def modelFile = new File("test/files/MODEL1707110056.xml")
+        def name = service.extractName([modelFile])
+
+        then:
+        name == 'Uhlén2017 - TCGA-06-0139-01A - Glioblastoma Multiforme (male, 41 years)'
+    }
+
+    def "can preserve UTF-8 characters when updating SBML documents"() {
+        when: "a revision of a model whose name contains non-ASCII characters"
+        String documentPath = "test/files/MODEL1707110056.xml"
+        String originalName = "Uhlén2017 - TCGA-06-0139-01A - Glioblastoma Multiforme (male, 41 years)"
+        String newName = "'\u03A3\u03A3 Uhlén2017 \u03A3\u03A3''" // also include greek symbols alongside latin-1
+
+        def rf = new RepositoryFileTransportCommand(path: documentPath, mainFile: true,
+            description: "model file")
+        def model = new ModelTransportCommand(submissionId: "MODEL0123456789")
+        def format = new ModelFormatTransportCommand(identifier: "SBML")
+        RevisionTransportCommand rev = new RevisionTransportCommand(model: model,
+            state: ModelState.UNPUBLISHED, revisionNumber: 1, owner: "me", minorRevision: false,
+            validated: true, name: originalName, format: format, description: "desc",
+            uploadDate: new Date(), files: [rf], curationState: CurationState.CURATED)
+
+        then: "we update the name"
+        service.updateName(rev, newName)
+
+        and:
+        new SBMLReader().readSBML(documentPath).model.name == newName
+        service.updateName(rev, originalName)
+    }
+
+    @Unroll("extracting the modelling approach for #documentPath yields #expectedName")
+    def "can extract modelling approaches"(String documentPath, String expectedName) {
+        when:
+        def rf = new RepositoryFileTransportCommand(path: "test/files/$documentPath", mainFile: true,
+            description: "model file")
+        def model = new ModelTransportCommand(submissionId: "MODEL0123456789")
+        def format = new ModelFormatTransportCommand(identifier: "SBML")
+        RevisionTransportCommand rev = new RevisionTransportCommand(model: model,
+            state: ModelState.UNPUBLISHED, revisionNumber: 1, owner: "me", minorRevision: false,
+            validated: true, name: "name", format: format, description: "desc",
+            uploadDate: new Date(), files: [rf], curationState: CurationState.CURATED)
+        ModellingApproach result = service.getModellingApproach(rev)
+
+        then:
+        result?.name == expectedName
+
+        where:
+        documentPath << [ "incompleteMAMO.xml", "BIOMD0000000654.xml" ]
+        expectedName << [
+            null,
+            // could not get Grails to reference a domain class instance here
+            odeModelArgs['name']
+        ]
     }
 }

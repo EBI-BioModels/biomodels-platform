@@ -35,6 +35,7 @@ import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PubLinkProvTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorRegistryService
+import net.biomodels.jummp.healthcheck.HealthCheckUtil
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.plugins.security.Person
@@ -75,9 +76,10 @@ class BootStrap {
     }
 
     def init = { servletContext ->
+        HealthCheckUtil.registerObjectMarshaller()
         ModelFormat format = ModelFormat.findByIdentifierAndFormatVersion("UNKNOWN", "*")
         if (!format) {
-            format = new ModelFormat(identifier: "UNKNOWN", name: "Original code", formatVersion: "*")
+            format = new ModelFormat(identifier: "UNKNOWN", name: "Other", formatVersion: "*")
             format.save(flush: true)
         }
         def ctx = servletContext.getAttribute(ApplicationAttributes.APPLICATION_CONTEXT)

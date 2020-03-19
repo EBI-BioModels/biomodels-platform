@@ -60,7 +60,7 @@ Brief description of the plugin.
     def documentation = "http://grails.org/plugin/jummp-plugin-sbml"
 
     def doWithWebDescriptor = { xml ->
-        // TODO Implement additions to web.xml (optional), this event occurs before 
+        // TODO Implement additions to web.xml (optional), this event occurs before
     }
 
     def doWithSpring = {
@@ -102,7 +102,7 @@ Brief description of the plugin.
                     service.registerModelElementType(modelFormat, type)
                 }
             }
-        } catch(NoSuchBeanDefinitionException e) {
+        } catch (NoSuchBeanDefinitionException e) {
             println("ModelFileFormatService is not available!")
         } catch (IllegalStateException ignored) {
             println "cannot insert known SBML element types until the modelElementType table exists."

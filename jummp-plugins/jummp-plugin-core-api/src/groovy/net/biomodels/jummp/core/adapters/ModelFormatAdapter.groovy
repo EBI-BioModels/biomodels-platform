@@ -26,10 +26,38 @@ import net.biomodels.jummp.core.model.ModelFormatTransportCommand
  *
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  */
-public class ModelFormatAdapter {
+class ModelFormatAdapter {
     ModelFormat format
 
     ModelFormatTransportCommand toCommandObject() {
-        return new ModelFormatTransportCommand(id: format.id, identifier: format.identifier, name: format.name, formatVersion: format.formatVersion)
+        Map argsMap = [id: format.id,
+                       identifier: format.identifier,
+                       name: format.name,
+                       formatVersion: format.formatVersion]
+        return new ModelFormatTransportCommand(argsMap)
+    }
+
+    boolean ignoreCheckingVersion() {
+        ignoreVersion(format.identifier)
+    }
+
+    static boolean ignoreCheckingVersion(final ModelFormatTransportCommand command) {
+        ignoreVersion(command.identifier)
+    }
+
+    private static boolean ignoreVersion(final String identifier) {
+        // TODO switch to CommonFormat.hasDefaultVersion()
+        boolean retVal = false
+        switch (identifier.toLowerCase()) {
+            case "c_cpp":
+            case "java":
+            case "mathematica":
+            case "matlab":
+            case "python":
+            case "r":
+                retVal = true
+                break
+        }
+        return retVal
     }
 }

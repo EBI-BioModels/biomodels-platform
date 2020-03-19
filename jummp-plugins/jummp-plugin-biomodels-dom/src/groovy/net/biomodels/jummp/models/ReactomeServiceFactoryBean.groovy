@@ -39,7 +39,7 @@ import org.springframework.context.ApplicationContextAware
  */
 @CompileStatic
 class ReactomeServiceFactoryBean implements FactoryBean<ReactomeService>, ApplicationContextAware, InitializingBean {
-    Map<String, String> modelPathwayMap = new HashMap<String, String>()
+    Map<String, List<String>> modelPathwayMap = new HashMap<>()
     ApplicationContext applicationContext
 
     @Override
@@ -76,8 +76,26 @@ class ReactomeServiceFactoryBean implements FactoryBean<ReactomeService>, Applic
 
     private void parseLineAndPrepareMap(String line) {
         String[] lineArr = line.split('\t')
-        if (!modelPathwayMap.containsKey(lineArr[0])) {
-            modelPathwayMap[lineArr[0]] = lineArr[1]
+        String modelId = lineArr[0]
+        String reactomeId = lineArr[1]
+        String pathwayName = lineArr[4]
+        String label
+        if(null != pathwayName) {
+            label = pathwayName + "|" + reactomeId
+        } else {
+            label = reactomeId
+        }
+        if (modelPathwayMap.containsKey(modelId)) {
+            List<String> reactomeIds = modelPathwayMap[modelId]
+            if(null == reactomeIds) {
+                reactomeIds = new ArrayList<>()
+            }
+            reactomeIds.add(label)
+            modelPathwayMap[modelId] = reactomeIds
+        } else {
+            List<String> reactomeIds = new ArrayList<String>()
+            reactomeIds.add(label)
+            modelPathwayMap[modelId] = reactomeIds
         }
 
     }

@@ -1251,7 +1251,7 @@ addRevision = { branch, modelId, parent, model, commitMessage ->
     try {
         // clear current persistence context -- it will be stale after adding second revision
         Revision.withSession { s -> s.clear() }
-        revision = modelService.addValidatedRevision(revisionInfo.files, [], revisionInfo.revision)
+        revision = modelService.addRevision(revisionInfo.files, [], revisionInfo.revision)
         model = Model.get(revision.model.id)
 
         addModelMsg modelId, "Added revision $revision"

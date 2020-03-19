@@ -35,16 +35,26 @@
 package net.biomodels.jummp.plugins.git
 
 import grails.test.GrailsUnitTestCase
+import net.biomodels.jummp.core.vcs.InvalidVcsRepositoryException
+import net.biomodels.jummp.core.vcs.VcsAlreadyInitedException
+import net.biomodels.jummp.core.vcs.VcsException
+import net.biomodels.jummp.core.vcs.VcsFileDetails
 import org.apache.commons.io.FileUtils
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.lib.Constants
+import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.lib.Repository
+import org.eclipse.jgit.revwalk.RevCommit
+import org.eclipse.jgit.revwalk.RevWalk
 import org.junit.Test
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 
-import static org.junit.Assert.*
+import static org.junit.Assert.assertNotEquals
 
 class GitManagerTests extends GrailsUnitTestCase {
     private File clone
@@ -78,6 +88,7 @@ class GitManagerTests extends GrailsUnitTestCase {
             FileUtils.touch(noDirectory)
             gitManager.init(noDirectory)
         }
+
         shouldFail VcsException, {
             // test that we cannot initialise into a non-existing directory
             gitManager.init(new File("target/vcs/tmp2"))
@@ -93,11 +104,88 @@ class GitManagerTests extends GrailsUnitTestCase {
 
     @Test
     void testGetFileDetails() {
-        File clone = new File("target/vcs/clone")
-        assertNull new File(".git", clone).canonicalPath
+        shouldFail IOException, {
+            // the 'clone' directory has been created and initialised without any commit
+            gitManager.getFileDetails(clone, ".git")
+        }
+
+        gitManager.init(clone)
+        // import the first file
+        File firstFile = new File(clone, "test.txt")
+        firstFile.append("This is the test file")
+        FileUtils.touch(firstFile)
+        GitSupport.importFile(git, firstFile.name)
+        String authorName = "Admin"
+        String authorEmail = "admin@example.com"
+        String commitMessage = "Upload the first files"
+        GitSupport.makeCommit(git, authorName, authorEmail, commitMessage)
+
+        List<VcsFileDetails> details = gitManager.getFileDetails(clone, "test.txt")
+        assertNotNull(details)
+        assertEquals(1, details.size())
+        VcsFileDetails vcsFileDetails = details.first()
+        assertEquals(commitMessage, vcsFileDetails.msg)
+        String commitId = git.getRepository().resolve(Constants.HEAD).name
+        assertEquals(commitId, vcsFileDetails.revisionId)
     }
 
+    @Test
+    void testResetModelDirectory() {
+        gitManager.init(clone)
+        shouldFail Exception, {
+            // commitId does not exist
+            gitManager.resetModelRepository(clone, "aaaabbbb")
+        }
+        // make the first commit
+        File firstFile = new File(clone, "test.txt")
+        firstFile.append("This is the test file")
+        FileUtils.touch(firstFile)
+        GitSupport.importFile(git, firstFile.name)
+        String authorName = "Admin"
+        String authorEmail = "admin@example.com"
+        String commitMessage = "Upload the first files"
+        GitSupport.makeCommit(git, authorName, authorEmail, commitMessage)
 
+        // make the second commit
+        File secondFile = new File(clone, "raw.dat")
+        secondFile.append("001 002 003")
+        FileUtils.touch(secondFile)
+        GitSupport.importFile(git, secondFile.name)
+        commitMessage = "Add the data file"
+        GitSupport.makeCommit(git, authorName, authorEmail, commitMessage)
+
+        // make the third commit
+        secondFile.append("004 005 006")
+        FileUtils.touch(secondFile)
+        GitSupport.importFile(git, secondFile.name)
+        commitMessage = "Update the data file"
+        GitSupport.makeCommit(git, authorName, authorEmail, commitMessage)
+        String thirdCommitHashId = git.getRepository().resolve(Constants.HEAD).name
+
+        // mame the fourth commit: add another new file
+        File thirdFile = new File(clone, "importData.bak")
+        thirdFile.text = "This is used to back up data"
+        FileUtils.touch(thirdFile)
+        GitSupport.importFile(git, thirdFile.name)
+        commitMessage = "Upload backup file"
+        GitSupport.makeCommit(git, authorName, authorEmail, commitMessage)
+        ObjectId head = git.repository.resolve(Constants.HEAD)
+
+        RevWalk revWalk = new RevWalk(git.repository)
+        RevCommit revCommit = revWalk.parseCommit(head)
+        List<String> files = GitSupport.lsFiles(git, revCommit)
+        assertEquals(3, files.size())
+
+        // reset hard to the third commit
+        gitManager.resetModelRepository(clone, thirdCommitHashId)
+        head = git.repository.resolve(Constants.HEAD)
+        assertEquals(thirdCommitHashId, head.name)
+        revCommit = revWalk.parseCommit(head)
+        files = GitSupport.lsFiles(git, revCommit)
+        assertEquals(2, files.size())
+    }
+
+    @Test
     void testRetrieveModel() {
         println ">> Running testRetrieveModel()"
         shouldFail VcsException, {
@@ -161,6 +249,62 @@ class GitManagerTests extends GrailsUnitTestCase {
         // For this case, we test with the first commit
         files = gitManager.retrieveModel(clone, firstCommitHash)
         assertEquals(1, files.size())
+    }
+
+    @Test
+    void testUpdateModel() {
+        assert gitManager != null
+        assertEquals(clone.listFiles().size(), 1) // .git directory
+        // make the first commit
+        List addFiles = []
+        List removeFiles = []
+        Path tmpGitTestDir
+        tmpGitTestDir = Files.createTempDirectory("gitTest1")
+        File MODEL001 = new File(tmpGitTestDir.toString(), "MODEL001.txt")
+        MODEL001.text = "This is the first commit for MODEL001"
+        addFiles << MODEL001
+        String ciMsg = "Make the first commit"
+        gitManager.updateModel(git, addFiles, removeFiles, ciMsg)
+        assertEquals(clone.listFiles().size(), 2) // .git and MODEL001.txt
+        println "After making the first commit:"
+        clone.listFiles().each {
+            println "Item: ${it.getName()}"
+        }
+        // make the second commit
+        /**
+         * create a file having the identical name to MODEL001.txt
+         * under /tmp
+         */
+        tmpGitTestDir = Files.createTempDirectory("gitTest2")
+        assert Files.isDirectory(tmpGitTestDir)
+        Path newMODEL001 = Paths.get(tmpGitTestDir.toString(), "MODEL001.txt")
+        String data = "This is the second commit for MODEL001"
+        Files.write(newMODEL001, data.getBytes())
+        data = "123 456 789"
+        Path dat = Paths.get(tmpGitTestDir.toString(), "simulation.dat")
+        Files.write(dat, data.getBytes())
+
+        /**
+         * add/remove files
+         */
+        addFiles.clear()
+        addFiles.add(newMODEL001.toFile())
+        addFiles.add(dat.toFile())
+        removeFiles.clear()
+        removeFiles.add(MODEL001)
+        assert addFiles
+        assert removeFiles
+        /**
+         * commit
+         */
+        ciMsg = "Make the second commit"
+        gitManager.updateModel(git, addFiles, removeFiles, ciMsg)
+        assertEquals(clone.listFiles().size(), 3) // .git, MODEL001.txt and simulation.dat
+        println "After making the second commit:"
+        clone.listFiles().each {
+            println "Item: ${it.getName()}"
+        }
+        println "Finish!"
     }
 
     @Test

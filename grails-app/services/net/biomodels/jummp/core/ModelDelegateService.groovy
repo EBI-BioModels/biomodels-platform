@@ -37,12 +37,10 @@ package net.biomodels.jummp.core
 import com.google.common.io.Files
 import grails.transaction.NotTransactional
 import grails.transaction.Transactional
-import groovy.transform.CompileStatic
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.PublicationAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.*
-import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorRegistryService
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import net.biomodels.jummp.core.vcs.VcsFileDetails
 import net.biomodels.jummp.model.Flag
@@ -53,8 +51,6 @@ import net.biomodels.jummp.plugins.security.User
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.springframework.security.access.AccessDeniedException
-import org.springframework.transaction.NoTransactionException
-import org.springframework.transaction.interceptor.TransactionAspectSupport
 import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.util.zip.ZipEntry
@@ -176,7 +172,7 @@ class ModelDelegateService implements IModelService {
         def model = modelService.findByPerennialIdentifier(modelId)
         def revs = modelService.getAllRevisions(model)
         def msg = """Fetching revisions ${revs*.id} for $modelId. Attachment to current session: ${revs*.isAttached()}
-transactionStatus: ${transactionStatus /* injected by org.codehaus.groovy.grails.transaction.transform.TransactionalTransform*/} ; 
+transactionStatus: ${transactionStatus /* injected by org.codehaus.groovy.grails.transaction.transform.TransactionalTransform*/} ;
 session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.applicationContext.sessionFactory)
             .session.persistenceContext.entitiesByKey.collect {
             def instance = it.value
@@ -188,6 +184,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         revs.each {
             revisions << new RevisionAdapter(revision: it).toCommandObject()
         }
+        log.debug("All Revision Transport Command Objects: ${revisions.dump()}")
         return revisions
     }
 
@@ -222,6 +219,14 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
             format.formatVersion)
         Revision revision = modelService.addRevisionAsFile(model, file, modelFormat, comment)
         return new RevisionAdapter(revision: revision).toCommandObject()
+    }
+
+    RevisionTransportCommand addRevision(final List<RepositoryFileTransportCommand> repoFiles,
+                                         final List<RepositoryFileTransportCommand> deleteFiles,
+                                         final RevisionTransportCommand rev) throws ModelException {
+        Revision revision = modelService.addRevision(repoFiles, deleteFiles, rev)
+        RevisionTransportCommand revisionTC = new RevisionAdapter(revision: revision).toCommandObject()
+        return revisionTC
     }
 
     @NotTransactional

@@ -70,7 +70,7 @@ grails.project.dependency.resolution = {
         compile "commons-io:commons-io:2.1"
         compile 'xml-apis:xml-apis:1.4.01'
         // mime-type detection
-        compile "org.apache.tika:tika-core:1.14"
+        compile "org.apache.tika:tika-core:1.23"
     }
 
     plugins {

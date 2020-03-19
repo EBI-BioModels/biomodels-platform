@@ -310,7 +310,11 @@ public class SvnManager implements VcsManager {
         throw new UnsupportedOperationException("This is a stub.")
     }
 
-    /*
+    @Override
+    void resetModelRepository(File modelDirectory, String commitId) throws VcsException {
+        throw new UnsupportedOperationException("Not implemented yet")
+    }
+/*
      * Initializes the library to work with a repository via
      * different protocols.
      */

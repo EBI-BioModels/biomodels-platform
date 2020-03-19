@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -20,6 +20,7 @@
 
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.acl.AclUtilService
+import groovy.io.FileType
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import groovyx.gpars.GParsPool
@@ -31,7 +32,6 @@ import net.biomodels.jummp.core.model.CurationState
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.ModelState
-import net.biomodels.jummp.core.model.RepositoryFileService
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.core.model.ValidationState
@@ -171,15 +171,6 @@ class ModelLogger {
 
     String toString() {
         "out: $out, err: $err"
-    }
-}
-
-@CompileStatic
-class FolderFilter implements FileFilter {
-    public static final FolderFilter instance = new FolderFilter()
-
-    boolean accept(File candidate) {
-        candidate.isDirectory()
     }
 }
 
@@ -355,7 +346,8 @@ class UhlenModelUpdater {
     /**
      * Atomically deletes a revision, its repository files and associated ACL permissions.
      *
-     * <p>Since {@link net.biomodels.jummp.core.ModelService#addValidatedRevision(java.util.List, java.util.List, net.biomodels.jummp.core.model.RevisionTransportCommand)}
+     * <p>Since {@link net.biomodels.jummp.core.ModelService#addRevision(java.util.List, java.util.List, net.biomodels
+        * .jummp.core.model.RevisionTransportCommand)}
      * inserts the new revision in a dedicated transaction which gets committed and flushed before the method returns, we
      * cannot use transaction rollback to undo that insertion &ndash; we need to use another dedicated transaction which
      * undoes that work.</p>
@@ -401,7 +393,7 @@ class UhlenModelUpdater {
      * Marks the current Hibernate session as rollback only and atomically deletes all entities associated with a revision.
      *
      * <p>To be used as the preferred rollback mechanism in code invoked after the new model revision has been created and
-     * persisted into the database via {@code modelService.addValidatedRevision( )}, assuming the insertion has been successful.</p>
+     * persisted into the database via {@code modelService.addRevision( )}, assuming the insertion has been successful.</p>
      *
      * @param revision the revision which should be deleted
      * @see UhlenModelUpdater#undoRevisionInsertion(net.biomodels.jummp.model.Revision)
@@ -447,7 +439,7 @@ class UhlenModelUpdater {
         try {
             modelService.addModellingApproachAsAnnotation(revisionCmd, UhlenScriptSupport.modellingApproach)
             addModelMsg(modelId, "Assigned modelling approach")
-            newRevision = modelService.addValidatedRevision(filesToAdd, filesToDelete, revisionCmd)
+            newRevision = modelService.addRevision(filesToAdd, filesToDelete, revisionCmd)
         } catch (ModelException e) {
             assert markSessionAsRollbackOnly(getCurrentSession()): "Adding revision ${revisionCmd.properties} failed but could not roll back"
             addModelError(modelId, "ModelException thrown when inserting the new revision: $e.message")
@@ -508,7 +500,8 @@ class UhlenModelUpdater {
         //addModelMsg id, "real mtc created"
 
         def repoFileCommands = [modelFile] + additionals
-        def filesToDelete = getRepoFilesOfLastRevision(model)
+        // GitManager needs filesToDelete and repoFileCommands to not have any overlapping files.
+        def filesToDelete = []
         def revisionCmd = new RevisionTransportCommand(files: repoFileCommands, format: fmtCmd, validated: isValid,
             name: modelName, description: modelDesc, validationLevel: ValidationState.APPROVED,
             curationState: CurationState.NON_CURATED, minorRevision: false,
@@ -546,12 +539,6 @@ class UhlenModelUpdater {
             }
         }
         [main: modelFile, additionals: additionals]
-    }
-
-    List<RepositoryFileTransportCommand> getRepoFilesOfLastRevision(Model model) {
-        Revision latest = model.revisions.max { it.revisionNumber }
-        RepositoryFileService service = ctx.getBean("repositoryFileService", RepositoryFileService)
-        service.getRepositoryFilesForRevision latest
     }
 
     /**
@@ -700,20 +687,10 @@ update Model m set m.deleted = true where m.submissionId in (
 
     @CompileDynamic
     private void processSubmissionsFolder(File root, Pattern modelFolderPattern) {
-        final int POOL_SIZE = Math.min(7, 2 * Runtime.getRuntime().availableProcessors())
-        println("Pool size is $POOL_SIZE, model folder is $modelFolder")
-        GParsPool.withPool(POOL_SIZE) {
-            GParsPool.runForkJoin(root) { File dir ->
-                final String dirName = dir.name
-                if (dirName ==~ modelFolderPattern) {
-                    submissionDetected dir
-                } else { // fork dedicated task for each sub-folder
-                    //descendIntoSubFolders(root)
-                    def subFolders = dir.listFiles(FolderFilter.instance)
-                    for (File child in subFolders) {
-                        forkOffChild child
-                    }
-                }
+        root.eachFileRecurse(FileType.DIRECTORIES) { File dir ->
+            final String dirName = dir.name
+            if (dirName ==~ modelFolderPattern) {
+                submissionDetected dir
             }
         }
     }

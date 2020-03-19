@@ -20,7 +20,7 @@
  * Additional permission under GNU Affero GPL version 3 section 7
  *
  * If you modify Jummp, or any covered work, by linking or combining it with
- * Apache Commons, Spring Framework, Perf4j, Grails (or a modified version of that library), 
+ * Apache Commons, Spring Framework, Perf4j, Grails (or a modified version of that library),
  * containing parts covered by the terms of Apache License v2.0, the licensors of this
  * Program grant you additional permission to convey the resulting work.
  * {Corresponding Source for a non-source form of such a combination shall
@@ -30,19 +30,21 @@
 
 package net.biomodels.jummp.core
 
-import java.io.FilenameFilter
-import java.util.concurrent.locks.ReentrantLock
-import java.util.concurrent.atomic.AtomicReference
-import org.apache.commons.logging.LogFactory
 import org.apache.commons.logging.Log
+import org.apache.commons.logging.LogFactory
 import org.perf4j.aop.Profiled
 import org.springframework.beans.factory.InitializingBean
+
+import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.locks.ReentrantLock
 
 /**
  * Provides an implementation of IFileSystemService. VcsManager implementations should use it
  * to fetch the location where a new repository should be created.
  *
  * @author Mihai Glonț <mglont@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 class FileSystemService implements IFileSystemService, InitializingBean {
     static transactional = false
@@ -161,7 +163,14 @@ particularly for network file systems."""
         }
     }
 
-    /*
+    @Override
+    void deleteDirectory(Path path) {
+        boolean succeed = path.deleteDir()
+        if (!succeed) {
+            log.error("Cannot delete the directory ${path.getName()}")
+        }
+    }
+    /**
      * Updates the model container name.
      *
      * aaa becomes aab, aaz becomes aba, zzz becomes aaaa.
@@ -221,7 +230,7 @@ particularly for network file systems."""
         }
     }
 
-    /*
+    /**
      * Locates the folder where all models should reside based on user's settings.
      */
     private File findRoot() {
@@ -238,7 +247,7 @@ particularly for network file systems."""
             if (rootLocation) {
                 root = new File(rootLocation).getCanonicalFile()
             }
-       } catch(IOException ex) {
+        } catch(IOException ex) {
             log.error(ex.message, ex)
         } catch(SecurityException e) {
             log.error(e.message, e)
@@ -249,7 +258,7 @@ particularly for network file systems."""
         return root
     }
 
-    /*
+    /**
      * Creates a folder with a given path. Does not overwrite existing files or folders.
      * @param   path the absolute where the folder should be created.
      * @return  true if the folder has been created or if it already existed, false otherwise.
