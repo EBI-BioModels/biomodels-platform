@@ -131,7 +131,7 @@ grails.project.dependency.resolution = {
         runtime("commons-jexl:commons-jexl:1.1") {
             excludes 'junit', 'commons-logging'
         }
-        test "org.grails:grails-datastore-test-support:1.0-grails-2.3"
+        test "org.grails:grails-datastore-test-support:1.0-grails-2.4"
 
         // for spock-reports
         test "com.athaydes:spock-reports:1.3.0"

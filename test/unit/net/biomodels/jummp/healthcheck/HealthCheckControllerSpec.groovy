@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
@@ -18,27 +18,26 @@
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
  */
 
-
-
-
-
-package net.biomodels.jummp.plugins.core
+package net.biomodels.jummp.healthcheck
 
 import grails.test.mixin.TestFor
 import spock.lang.Specification
 
-/**
- * See the API for {@link grails.test.mixin.web.ControllerUnitTestMixin} for usage instructions
- */
-@TestFor(RepositoryFileController)
-class RepositoryFileControllerSpec extends Specification {
+@TestFor(HealthCheckController)
+class HealthCheckControllerSpec extends Specification {
+    def "should return a health check status"() {
+        given:
+        def service = mockFor(HealthCheckService)
+        service.demand.getStatus { ->
+            new HealthCheck(type: HealthCheck.TYPE.DATABASE, status: HealthCheck.STATUS.UNKNOWN)
+        }
+        controller.healthCheckService = service.createMock()
+        HealthCheckUtil.registerObjectMarshaller()
 
-    def setup() {
-    }
+        when:
+        controller.status()
 
-    def cleanup() {
-    }
-
-    void "test something"() {
+        then:
+        response.text == '[{"database":"unknown"}]'
     }
 }

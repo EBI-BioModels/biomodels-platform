@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
@@ -18,27 +18,20 @@
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
  */
 
+package net.biomodels.jummp.healthcheck
 
+import org.springframework.security.access.annotation.Secured
 
+@Secured('permitAll')
+class HealthCheckController {
+    static allowedMethods = ['GET']
+    static defaultAction = 'status'
+    def healthCheckService
 
-
-package net.biomodels.jummp.plugins.core
-
-import grails.test.mixin.TestFor
-import spock.lang.Specification
-
-/**
- * See the API for {@link grails.test.mixin.web.ControllerUnitTestMixin} for usage instructions
- */
-@TestFor(RepositoryFileController)
-class RepositoryFileControllerSpec extends Specification {
-
-    def setup() {
-    }
-
-    def cleanup() {
-    }
-
-    void "test something"() {
+    def status() {
+        HealthCheck[] result = healthCheckService.status
+        render(contentType: "application/json") {
+            result
+        }
     }
 }

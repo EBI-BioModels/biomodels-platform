@@ -59,19 +59,37 @@ class RepositoryFileService implements GrailsConfigurationAware {
 
     def grailsApplication
 
-    String MODEL_CACHE_DIR
+    private String modelCacheDir
 
     /**
      * Populate the model cache directory
      */
-    @Override
     void setConfiguration(ConfigObject co) {
-        MODEL_CACHE_DIR = grailsApplication.config.jummp.model.cache.dir
-        if (!MODEL_CACHE_DIR) {
+        modelCacheDir = co.jummp.model.cache.dir
+        modelCacheDir = modelCacheDir.trim()
+        if (!modelCacheDir) {
             String message = """\
 The configuration file is missing the property of jummp.model.cache.dir"""
             logger.debug(message)
         }
+    }
+
+    /**
+     * Gets the model cache directory
+     *
+     * @return A string denoting the model cache directory
+     */
+    String getModelCacheDir() {
+        return modelCacheDir
+    }
+
+    /**
+     * Sets the given string in the argument as the model cache directory
+     *
+     * @param location A string denoting the directory of the model cache
+     */
+    void setModelCacheDir(final String location) {
+        modelCacheDir = location
     }
 
     /**
@@ -138,18 +156,8 @@ There is an error when trying to update the description: $description --- of the
 Retrieving the revision ${revision.vcsId} for Model ${revision.model.submissionId} from the local model
 cache directory failed. The revision has been checked out from VCS instead."""
             logger.debug(message)
-            // update the cache
-            boolean updated = updateModelRevisionCache(revision)
-            String modelId = revision.model.submissionId
-            if (updated) {
-                message = """\
-The model ${modelId} revision ${revision.revisionNumber} has been populated them to the  cache successfully"""
-                logger.info(message)
-            } else {
-                message = """\
-There have been errors when updating the cache directory for the model ${modelId} revision ${revision.revisionNumber}"""
-                logger.error(message)
-            }
+            // update the cache directory of this revision
+            doUpdateModelRevisionCacheDirectory(revision)
         }
         return files
     }
@@ -163,7 +171,7 @@ There have been errors when updating the cache directory for the model ${modelId
     }
 
     List<File> get(String modelId, int revisionNumber) throws ModelException {
-        File modelDirectory = new File(MODEL_CACHE_DIR, modelId)
+        File modelDirectory = new File(modelCacheDir, modelId)
         File revisionDirectory
         List returnedFiles = new LinkedList<File>()
         try {
@@ -173,13 +181,16 @@ There have been errors when updating the cache directory for the model ${modelId
             } else {
                 returnedFiles = revisionDirectory.listFiles().toList()
             }
+            if (returnedFiles?.isEmpty()) {
+                String message = """\
+The cache directory of this model ${modelId} revision ${revisionNumber} is empty. The model cache builder will be
+launched again."""
+                throwModelException(modelId, message)
+            }
         } catch (FileNotFoundException me) {
-            Model model = modelService.getModel(modelId)
-            boolean saveHistory = false
-            ModelTransportCommand modelTC = new ModelAdapter(model: model).toCommandObject(saveHistory)
             String message = """\
-The files associated with this model ${modelId}, revision ${revisionNumber} has been cached yet"""
-            throw new ModelException(modelTC, message)
+The files associated with this model ${modelId}, revision ${revisionNumber} hasn't been cached yet"""
+            throwModelException(modelId, message)
         }
         return returnedFiles
     }
@@ -189,12 +200,12 @@ The files associated with this model ${modelId}, revision ${revisionNumber} has 
         String revNum = revision.revisionNumber.toString()
         logger.info("""\
 Copying the files associated with the revision ${revision.vcsId} (${revision.id}): ${modelId}.${revNum}""")
-        File modelRevDir = Paths.get(MODEL_CACHE_DIR, modelId, revNum).toFile()
+        File modelRevDir = Paths.get(modelCacheDir, modelId, revNum).toFile()
         boolean created = modelRevDir.mkdirs()
         if (!created) {
             if (!modelRevDir.exists()) {
                 String message = """\
-we were unable to create the revision directory '${modelRevDir.absolutePath}'"""
+We were unable to create the revision directory '${modelRevDir.absolutePath}'"""
                 logger.warn(message)
                 return false
             } else {
@@ -205,8 +216,10 @@ we were unable to create the revision directory '${modelRevDir.absolutePath}'"""
         try {
             List<File> files = vcsService.retrieveFiles(revision)
             for (File it: files) {
+                String fileName = it.getName()
+                logger.info("File ${fileName} is being copied")
                 Files.copy(it.toPath(),
-                    new File(modelRevDir, it.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING)
+                    new File(modelRevDir, fileName).toPath(), StandardCopyOption.REPLACE_EXISTING)
             }
             result = true
         } catch (VcsException e) {
@@ -336,5 +349,32 @@ Can't persist repository files ${repoFileCmds.dump()} for revision ${revision.du
             throw new ModelException(m, "Missing main file for the new model revision ${revision.name}")
         }
         results
+    }
+
+    private void doUpdateModelRevisionCacheDirectory(final Revision revision) {
+        boolean updated = updateModelRevisionCache(revision)
+        String modelId = revision.model.submissionId
+        String message = ""
+        if (updated) {
+            message = """\
+The model ${modelId} revision ${revision.revisionNumber} has been populated them to the  cache successfully"""
+            logger.info(message)
+        } else {
+            message = """\
+There have been errors when updating the cache directory for the model ${modelId} revision ${revision.revisionNumber}"""
+            logger.error(message)
+        }
+    }
+
+    private void throwModelException(final String modelId, final String message) throws ModelException {
+        Model model = modelService?.getModel(modelId)
+        if (!model) {
+            String errMsg = "The model ${modelId} does not exist"
+            throw new ModelException(errMsg)
+        }
+        boolean saveHistory = false
+        ModelTransportCommand modelTC = new ModelAdapter(model: model).toCommandObject(saveHistory)
+        logger.info(message)
+        throw new ModelException(modelTC, message)
     }
 }
