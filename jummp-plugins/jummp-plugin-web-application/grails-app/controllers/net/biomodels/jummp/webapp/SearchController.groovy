@@ -375,7 +375,7 @@ Search terms: ${params.query}, requested from: ${clientIPAddress} under the form
                 sort = ModelListSorting.ID
                 break
         }
-        List modelsDomain = modelService.getAllModels(offset, length, sortDirection == "asc", sort, filter)
+        List modelsDomain = modelService.getMyModels()
         List models = []
         modelsDomain.each {
             models.add(new ModelAdapter(model: it).toCommandObject(false))
