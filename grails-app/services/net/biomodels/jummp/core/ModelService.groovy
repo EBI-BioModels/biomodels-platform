@@ -35,7 +35,6 @@ import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.authentication.GrailsAnonymousAuthenticationToken
 import grails.transaction.NotTransactional
 import grails.transaction.Transactional
-import groovy.sql.Sql
 import groovy.transform.CompileStatic
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
