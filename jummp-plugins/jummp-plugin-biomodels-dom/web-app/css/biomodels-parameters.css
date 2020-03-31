@@ -3,10 +3,6 @@
 }
 
 .grey {
-    color: lightgray;
-}
-
-.darkgrey {
     color: darkgray;
 }
 
@@ -45,4 +41,23 @@
 
 .line-height-150 {
     line-height: 1.5;
+}
+
+.foldable-info-tabs > li {
+    margin-bottom: .5rem;
+}
+
+.foldable-info-tabs > li > a:hover {
+    background: #DDD;
+    color: #222;
+}
+
+.foldable-info-tabs > li > a:before {
+    font-family: 'EBI-Common';
+    content: "\003f";
+    margin-right: .5rem;
+}
+
+.foldable-info-tabs > li.is-active > a:before {
+    content: "\0f11a";
 }
