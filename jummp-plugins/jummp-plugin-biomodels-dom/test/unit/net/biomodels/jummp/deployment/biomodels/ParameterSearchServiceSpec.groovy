@@ -17,22 +17,18 @@ import java.util.concurrent.TimeUnit
  */
 @TestFor(ParameterSearchService)
 @TestMixin(ServiceUnitTestMixin)
-
 class ParameterSearchServiceSpec extends Specification {
-
 
     private static ParameterSearchCommand prepareCommandObject(Map bindingMap) {
         return new ParameterSearchCommand(bindingMap)
-
     }
+
     private static isDataExists(String data) {
         String[] responseArray =  data.split("\n")
         return responseArray.length  > 1
-
     }
 
     void "test ParameterSearchService positively"() {
-
         given: "A parameter search command object is defined with basic criteria"
         ParameterSearchCommand command = prepareCommandObject([query: "BIOMD0000000292", size: 10, start: 0, sort: "entity:ascending", is_curated: true])
 
@@ -45,14 +41,7 @@ class ParameterSearchServiceSpec extends Specification {
         results.recordsTotal > 0
 
         and: "it should return correct records"
-
-
-        String expectedReaction = "([3-phospho-D-glyceric acid; D-ribulose 1,5-bisphosphate; 3-Phospho-D-glycerate; D-Ribulose " +
-            "1,5-bisphosphate] + [NADPH; C00005] + [ATP; C00002]) => ([dihydroxyacetone phosphate; aldehydo-D-ribose 5-phosphate; " +
-            "D-ribulose 5-phosphate; keto-D-fructose 1,6-bisphosphate; keto-D-fructose 6-phosphate; D-erythrose 4-phosphate; sedoheptulose 1,7-bisphosphate; sedoheptulose 7-phosphate; " +
-            "D-glyceraldehyde 3-phosphate; C00111; D-Ribose 5-phosphate;; D-Ribulose " +
-            "5-phosphate; Sedoheptulose 7-phosphate;; Sedoheptulose 1,7-bisphosphate; D-Erythrose 4-phosphate; C00085; " +
-            "C00354; C00118] + [C00008; ADP] + [NADP(+); C00006])"
+        String expectedReaction = "([3-phospho-D-glyceric acid; D-ribulose 1,5-bisphosphate; 3-Phospho-D-glycerate; D-Ribulose 1,5-bisphosphate] + [NADPH; NADPH] + [ATP; ATP]) => ([dihydroxyacetone phosphate; aldehydo-D-ribose 5-phosphate; D-ribulose 5-phosphate; keto-D-fructose 1,6-bisphosphate; keto-D-fructose 6-phosphate; D-erythrose 4-phosphate; sedoheptulose 1,7-bisphosphate; sedoheptulose 7-phosphate; D-glyceraldehyde 3-phosphate; Glycerone phosphate; D-Ribose 5-phosphate; D-Ribulose 5-phosphate; Sedoheptulose 7-phosphate; Sedoheptulose 1,7-bisphosphate; D-Erythrose 4-phosphate; D-Fructose 6-phosphate; D-Fructose 1,6-bisphosphate; D-Glyceraldehyde 3-phosphate] + [ADP; ADP] + [NADP(+); NADP+])"
         String expectedEntityId = "Y"
         String expectedModel = "BIOMD0000000292"
         String expectedOrganism = "Viridiplantae"
@@ -65,11 +54,9 @@ class ParameterSearchServiceSpec extends Specification {
         }
         and: "Number of records per page should be as per size value"
         10 == results.entries.size()
-
     }
 
     void "test ParameterSearchService Negatively"() {
-
         given: "A parameter search command object is defined with basic criteria"
         ParameterSearchCommand command = prepareCommandObject([query: "NON_MATCHING_QUERY", size: 10, start: 0, sort: "entity:ascending", is_curated: true])
 
@@ -83,7 +70,6 @@ class ParameterSearchServiceSpec extends Specification {
 
     }
     void "test ParameterSearchService with non-curated query"() {
-
         given: "A parameter search command object is defined with basic criteria"
         ParameterSearchCommand command = prepareCommandObject([query: "Mus musculus", size: 10, start: 0, sort: "entity:ascending", is_curated:false])
 
@@ -101,7 +87,6 @@ class ParameterSearchServiceSpec extends Specification {
     }
 
     void "test ParameterSearchService With CSV data"() {
-
         given: "A parameter search command object is defined with basic criteria"
         ParameterSearchCommand command = prepareCommandObject([query: "BIOMD0000000292", size: 10, start: 0, sort: "entity:ascending", is_curated: true])
 
@@ -111,7 +96,7 @@ class ParameterSearchServiceSpec extends Specification {
         String results = service.getCSVData(command)
 
         then: "it should return correct number of records"
-        results.indexOf("[C00008; ADP]") != -1
+        results.indexOf("[ADP; ADP]") != -1
         results.indexOf("entity_RAW") == -1
         results.indexOf("reaction_RAW") == -1
     }
