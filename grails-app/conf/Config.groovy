@@ -815,3 +815,24 @@ elasticSearch.maxBulkRequest = 10
 
 def dateFormats = ["yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd HH:mm:ss", 'MMddyyyy', 'yyyy-MM-dd HH:mm:ss.S', "yyyy-MM-dd'T'hh:mm:ss'Z'" ]
 grails.databinding.dateFormats = dateFormats
+
+/**
+ * Below are settings for Redis server
+ */
+if (!(jummpConfig.jummp.redis.host instanceof ConfigObject)) {
+    jummp.redis.host = jummpConfig.jummp.redis.host
+} else {
+    jummp.redis.host = "localhost"
+}
+
+if (!(jummpConfig.jummp.redis.port instanceof ConfigObject)) {
+    jummp.redis.port = jummpConfig.jummp.redis.port as int
+} else {
+    jummp.redis.port = 6379 // the default port
+}
+
+if (!(jummpConfig.jummp.redis.timeout instanceof ConfigObject)) {
+    jummp.redis.timeout = jummpConfig.jummp.redis.timeout as int
+} else {
+    jummp.redis.timeout = 3600 // the default port
+}

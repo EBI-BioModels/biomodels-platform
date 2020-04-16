@@ -29,10 +29,14 @@ import grails.transaction.Transactional
 import groovy.time.TimeCategory
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.model.Model
+import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
 import org.perf4j.aop.Profiled
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.weceem.content.WcmContent
+import redis.clients.jedis.Jedis
+import redis.clients.jedis.JedisPool
+import redis.clients.jedis.JedisPoolConfig
 
 import java.text.SimpleDateFormat
 
@@ -46,10 +50,23 @@ import java.text.SimpleDateFormat
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 @Transactional(readOnly = true)
-class DecorationService {
+class DecorationService implements GrailsConfigurationAware {
     private static final Logger logger = LoggerFactory.getLogger(DecorationService.class)
+    def grailsApplication
+    static String REDIS_SRV_HOST //= grailsApplication.config.jummp.redis.host
+    static int REDIS_SRV_PORT //= grailsApplication.config.jummp.redis.host.port
+    static int REDIS_SRV_TIMEOUT //= grailsApplication.config.jummp.redis.timeout
+
     final String EBI_BM_URL = "https://www.ebi.ac.uk/ebisearch/ws/rest/biomodels"
     final String SVC_URL_PREFIX = "${EBI_BM_URL}?query=domain_source:biomodels&size=0&facetfields"
+
+    @Override
+    void setConfiguration(ConfigObject co) {
+        REDIS_SRV_HOST = co.jummp.redis.host
+        REDIS_SRV_PORT = co.jummp.redis.port as int
+        REDIS_SRV_TIMEOUT = co.jummp.redis.timeout as int
+    }
+
     /**
      * gets 7 of the most accessed models from the last six months
      *
@@ -135,6 +152,139 @@ ORDER BY model.firstPublished DESC'''
         logger.debug("Extracting the list of recently PUBLISHED models from the database")
         returnedModels
     }
+
+    void refreshRecentlyAccessedModelsRedisCache() {
+        Map<String, String> models = getRecentlyAccessedModels()
+        logger.debug("Populating the list of recently ACCESSED models to Redis Server at ${new Date().toString()}")
+        JedisPool pool = new JedisPool(new JedisPoolConfig(),
+                                REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
+        Jedis jedis = null
+        try {
+            jedis = pool.getResource()
+            models.each { String key, String value ->
+                jedis.hset("recently-accessed-models", key, value)
+            }
+        } finally {
+            if (jedis) { jedis.close() }
+        }
+        pool.close()
+    }
+
+    void refreshRecentlyPublishedModelsRedisCache() {
+        Map<String, String> mapModels = getRecentlyPublishedModels()
+        logger.debug("Populating the list of recently PUBLISHED models to Redis Server at ${new Date().toString()}")
+        JedisPool pool = new JedisPool(new JedisPoolConfig(),
+                                REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
+        Jedis jedis = null
+        try {
+            jedis = pool.getResource()
+            mapModels.each { String modelId, String modelName ->
+                jedis.hset("recently-published-models", modelId, modelName)
+            }
+        } finally {
+            if (jedis) { jedis.close() }
+        }
+        pool.close()
+    }
+
+    void refreshModelOfTheMonthEntryRedisCache() {
+        JedisPool pool = new JedisPool(new JedisPoolConfig(),
+                                REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
+        pool.getResource().withCloseable { Jedis jedis ->
+            Map momEntry = buildModelOfTheMonthEntry()
+            final String MOM_ENTRY_KEY = "the-latest-mom-entry"
+            for (Map.Entry<String, String> entry : momEntry) {
+                jedis.hset(MOM_ENTRY_KEY, entry.key, entry.value)
+            }
+        }
+        pool.close()
+    }
+
+    /**
+     * Fetches the statistical data on the chart of the curation states shown on Home Page
+     *
+     * <p>This service is being used in {@link BioModelsTagLib} for rendering the Curation State chart
+     * in the slideshow/carousel.
+     *
+     * @return A {@link Map} holding curation states and their corresponding counts
+     */
+    Map<String, Integer> fetchStatisticsCurationState() {
+        Map<String, Integer> curationStateMap = fetchStatisticsDataFromRedisCache("hp-statistics-curation-state")
+        return curationStateMap
+    }
+
+    /**
+     * Fetches the statistical data for the chart of the modelling approaches shown on Home Page.
+     *
+     * <p>This service is being used in {@link BioModelsTagLib} for rendering the Modelling Approaches
+     * chart in the slideshow/carousel.
+     *
+     * @return A {@link Map} holding modelling approaches and their corresponding counts
+     */
+    Map<String, Integer>  fetchStatisticsModellingApproaches() {
+        Map<String, Integer> approachesMap = fetchStatisticsDataFromRedisCache("hp-statistics-modelling-approaches")
+        return approachesMap
+    }
+
+    Map fetchStatisticsOrganisms() {
+        Map organismsMap = fetchStatisticsOrganismsFromRedisCache("hp-statistics-organisms")
+        Map returnedMap = [:]
+        if (!organismsMap) {
+            // call the fallback
+            returnedMap = buildStatisticsOrganisms()
+        } else {
+            // rebuild the map which @see buildStatisticsOrganisms() returns
+            returnedMap["children"] = organismsMap.collect { entry ->
+                String[] parts = entry.value.split(";")
+                String count = parts[0] as String
+                String taxonomy = parts[1] as String
+                [Name: entry.key, Count: count, Taxonomy: taxonomy]
+            }
+        }
+        return returnedMap
+    }
+
+    Map<String, Integer> fetchStatisticsJournals() {
+        Map<String, Integer> journalsMap = fetchStatisticsDataFromRedisCache("hp-statistics-journals")
+        return journalsMap
+    }
+
+    Map<String, String> fetchRecentlyAccessedModels() {
+        Map models = doRedisHGetAll("recently-accessed-models")
+        if (!models) {
+            // call the fallback
+            models = getRecentlyAccessedModels()
+        }
+        return models
+    }
+
+    Map<String, String> fetchRecentlyPublishedModels() {
+        Map models = doRedisHGetAll("recently-published-models")
+        if (!models) {
+            // call the fallback
+            models = getRecentlyPublishedModels()
+        }
+        return models
+    }
+
+    Map<String, String> fetchMomEntry() {
+        Map momEntryMap = doRedisHGetAll("the-latest-mom-entry")
+        if (!momEntryMap) {
+            // call the fallback
+            momEntryMap = buildModelOfTheMonthEntry()
+        }
+        return momEntryMap
+    }
+
+    Map<String, String> fetchDataNewsWidget() {
+        Map news = doRedisHGetAll("hp-news-widget")
+        if (!news) {
+            // call the fallback
+            news = buildDataForNewsWidget()
+        }
+        return news
+    }
+
     Map<String, Integer> buildStatisticsCurationState() {
         String serviceURL = "${SVC_URL_PREFIX}=curationstatus&facetcount=10&format=json"
         RestBuilder restBuilder = new RestBuilder(connectTimeout: 10000, readTimeout: 100000, proxy: null)
@@ -203,6 +353,81 @@ GROUP BY p.journal
         }
         data
     }
+
+    void refreshDataForNewsWidgetRedisCache() {
+        Map data = buildDataForNewsWidget()
+        doRedisHSet("hp-news-widget", data)
+    }
+
+    void refreshDataForChartsRedisCache() {
+        doRedisHSet("curation-state-based-statistic", ["curated": '900', "non-curated": '2500'])
+    }
+
+    void refreshStatisticsCurationStateRedisCache() {
+        Map<String, Integer> curationState = buildStatisticsCurationState()
+        Map<String, String> curationSateMap = convert2RedisMap(curationState)
+        doRedisHSet("hp-statistics-curation-state", curationSateMap)
+    }
+
+    void refreshStatisticsModellingApproachesRedisCache() {
+        Map modellingApproachesMap = buildStatisticsModellingApproaches()
+        Map approachesMap = convert2RedisMap(modellingApproachesMap)
+        doRedisHSet("hp-statistics-modelling-approaches", approachesMap)
+    }
+
+    void refreshStatisticsOrganismsRedisCache() {
+        Map organismsMap = buildStatisticsOrganisms()
+        def organisms = organismsMap["children"]
+        Map<String, String> taxons = new HashMap<>()
+        organisms.each {
+            taxons.put(it["Name"] as String, "${it['Count']};${it['Taxonomy']}" as String)
+        }
+        doRedisHSet("hp-statistics-organisms", taxons)
+    }
+
+    void refreshStatisticsJournalsRedisCache() {
+        Map pubsMap = buildStatisticsJournals()
+        Map pubsRedisMap = convert2RedisMap(pubsMap)
+        doRedisHSet("hp-statistics-journals", pubsRedisMap)
+    }
+
+    void doRedisHSet(final String key, Map data) {
+        JedisPool pool = new JedisPool(new JedisPoolConfig(),
+                                REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
+        pool.getResource().withCloseable { Jedis jedis ->
+            jedis.hset(key, data)
+            jedis.close()
+        }
+        pool.close()
+    }
+
+    String doRedisHGet(final String key) {
+        JedisPool pool = new JedisPool(new JedisPoolConfig(),
+                            REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
+        String cachedData
+        pool.getResource().withCloseable { Jedis jedis ->
+            cachedData = jedis.hget(key)
+            jedis.close()
+        }
+        pool.close()
+        cachedData
+    }
+
+    Map doRedisHGetAll(final String key) {
+        JedisPool pool = new JedisPool(new JedisPoolConfig(),
+                            REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
+        Jedis jedis = null
+        Map returnedMap = new HashMap()
+        try {
+            jedis = pool.getResource()
+            returnedMap = jedis.hgetAll(key)
+        } finally {
+            if (jedis) { jedis.close() }
+        }
+        pool.close()
+        returnedMap
+    }
+
     private Map buildModelOfTheMonthEntry() {
         final String query = "from ModelOfTheMonth order by publicationDate desc"
         ModelOfTheMonth theLatestMoM = ModelOfTheMonth.find(query)
@@ -268,6 +493,48 @@ GROUP BY p.journal
             organismData.add(d)
         }
         return organismData
+    }
+
+    private Map<String, Integer> fetchStatisticsDataFromRedisCache(final String key) {
+        Map<String, String> redisMap = doRedisHGetAll(key)
+        Map<String, Integer> returnedMap = new HashMap<>()
+        if (!redisMap) {
+            // call the fallback
+            switch (key) {
+                case "hp-statistics-curation-state":
+                    returnedMap = buildStatisticsCurationState()
+                    break
+                case "hp-statistics-modelling-approaches":
+                    returnedMap = buildStatisticsModellingApproaches()
+                    break
+                case "hp-statistics-journals":
+                    returnedMap = buildStatisticsJournals()
+                    break
+            }
+        } else {
+            returnedMap = convertFromRedisMap(redisMap)
+        }
+        return returnedMap
+    }
+
+    private Map fetchStatisticsOrganismsFromRedisCache(final String key = "hp-statistics-organisms") {
+        doRedisHGetAll(key)
+    }
+
+    private static Map<String, String> convert2RedisMap(final Map<String, Integer> inputMap) {
+        Map<String, String> returnedMap = new HashMap<>()
+        for (entry in inputMap) {
+            returnedMap.put(entry.key, Integer.toString(entry.value))
+        }
+        returnedMap
+    }
+
+    private static Map<String, Integer> convertFromRedisMap(final Map<String, String> inputMap) {
+        Map<String, Integer> returnedMap = new HashMap<>()
+        for (entry in inputMap) {
+            returnedMap.put(entry.key, Integer.parseInt(entry.value))
+        }
+        returnedMap
     }
 }
 

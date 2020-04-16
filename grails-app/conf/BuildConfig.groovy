@@ -159,6 +159,7 @@ grails.project.dependency.resolution = {
             excludes 'spring-context','spring-core','spring-test', 'jena', 'slf4j-log4j12'
         }
         compile "com.rometools:rome:1.11.1"
+        compile "redis.clients:jedis:3.2.0"
     }
 
     plugins {
