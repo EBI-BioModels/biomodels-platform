@@ -164,7 +164,7 @@ grails.project.dependency.resolution = {
     plugins {
         build ":tomcat:7.0.55.3"
         build ":codenarc:1.2"
-
+        compile":rest-client-builder:2.1.1"
         // plugins for the compile step
         compile ":cache:1.1.8"
         compile ":cache-ehcache:1.0.5"

@@ -24,6 +24,7 @@
 
 package net.biomodels.jummp.deployment.biomodels
 
+import grails.plugins.rest.client.RestBuilder
 import grails.transaction.Transactional
 import groovy.time.TimeCategory
 import net.biomodels.jummp.core.adapters.ModelAdapter
@@ -42,6 +43,8 @@ import org.perf4j.aop.Profiled
  */
 @Transactional(readOnly = true)
 class DecorationService {
+    final String EBI_BM_URL = "https://www.ebi.ac.uk/ebisearch/ws/rest/biomodels"
+    final String SVC_URL_PREFIX = "${EBI_BM_URL}?query=domain_source:biomodels&size=0&facetfields"
     /**
      * get 7 of the most accessed models from the last six months
      * @return A map of ModelTransportCommand associating with their hits
@@ -122,6 +125,71 @@ ORDER BY model.firstPublished DESC'''
         }
         returnedModels
     }
+    Map<String, Integer> buildStatisticsCurationState() {
+        String serviceURL = "${SVC_URL_PREFIX}=curationstatus&facetcount=10&format=json"
+        RestBuilder restBuilder = new RestBuilder(connectTimeout: 10000, readTimeout: 100000, proxy: null)
+        def response = restBuilder.get(serviceURL) {
+            accept("application/json")
+            contentType("application/json;charset=UTF-8")
+        }
+        def totalHitCount = response.json.hitCount as Integer
+        // the total hit count is always greater than the sum of two below values
+        // because it includes private models.
+        Map<String, Integer> curationStateMap = ["totalHitCount": totalHitCount]
+        def facetValues = response.json.facets[0].facetValues
+        def facetCurated = facetValues[0]
+        def facetNoncurated = facetValues[1]
+        curationStateMap.put(facetCurated["label"] as String, facetCurated["count"] as Integer)
+        curationStateMap.put(facetNoncurated["label"] as String, facetNoncurated["count"] as Integer)
+        return curationStateMap
+    }
+
+    Map<String, Integer> buildStatisticsModellingApproaches() {
+        String serviceURL = "${SVC_URL_PREFIX}=modellingapproach&facetcount=10&format=json"
+        RestBuilder restBuilder = new RestBuilder(connectTimeout: 10000, readTimeout: 100000, proxy: null)
+        def response = restBuilder.get(serviceURL) {
+            accept("application/json")
+            contentType("application/json;charset=UTF-8")
+        }
+        def totalHitCount = response.json.hitCount
+        // the total hit count is always greater than the sum of these below values
+        // because it includes private models.
+        def totalFacets = response.json.facets[0].total
+        def facetValues = response.json.facets[0].facetValues
+        Map<String, Integer> approachesMap = [:] //["totalHitCount": totalHitCount]
+        for (int i = 0; i < totalFacets; i++) {
+            String key = facetValues[i]["label"] as String
+            Integer value = facetValues[i]["count"] as Integer
+            approachesMap.put(key, value)
+        }
+        return approachesMap
+    }
+    /**
+     * Makes a statistic about models with names of the publication journal
+     *
+     * @return a {@link List} of Organism objects
+     */
+    private List makeStatisticsOnOrganisms() {
+        String queryLink = "search?domain=biomodels&query=*:* AND NOT isprivate:true&format=json"
+        String serverURL = grailsApplication.config.grails.serverURL
+        String queryURL = "${serverURL}/${queryLink}"
+        RestBuilder rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000, proxy: null)
+        def response = rest.get(queryURL) {
+            accept("application/json")
+            contentType("application/json;charset=UTF-8")
+        }
+
+        def taxons = response.json.facets.findAll { it['id'] == 'TAXONOMY' }
+        taxons = taxons.facetValues.flatten()
+        StringBuilder result = new StringBuilder()
+        List<OrganismData> organismData = new ArrayList<OrganismData>()
+        for (tax in taxons) {
+            OrganismData d = new OrganismData(name: "${tax['label']} (${tax['value']})",
+                count: tax['count'] as int, taxonomy: tax['value'])
+            organismData.add(d)
+        }
+        return organismData
+    }
 }
 
 class ModelLatestPublished {
@@ -131,5 +199,15 @@ class ModelLatestPublished {
     ModelLatestPublished(String modelName, Date latestAccessedDate) {
         this.modelName = modelName
         this.latestAccessedDate = latestAccessedDate
+    }
+}
+
+class OrganismData {
+    String name
+    String taxonomy
+    int count
+
+    String toString() {
+        "$name ($taxonomy): $count"
     }
 }
