@@ -27,10 +27,14 @@ package net.biomodels.jummp.deployment.biomodels
 import grails.plugins.rest.client.RestBuilder
 import grails.transaction.Transactional
 import groovy.time.TimeCategory
-import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.model.Model
 import org.perf4j.aop.Profiled
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.weceem.content.WcmContent
+
+import java.text.SimpleDateFormat
 
 /**
  * @short Service responsible for retrieving necessary data to design front page and
@@ -43,11 +47,13 @@ import org.perf4j.aop.Profiled
  */
 @Transactional(readOnly = true)
 class DecorationService {
+    private static final Logger logger = LoggerFactory.getLogger(DecorationService.class)
     final String EBI_BM_URL = "https://www.ebi.ac.uk/ebisearch/ws/rest/biomodels"
     final String SVC_URL_PREFIX = "${EBI_BM_URL}?query=domain_source:biomodels&size=0&facetfields"
     /**
-     * get 7 of the most accessed models from the last six months
-     * @return A map of ModelTransportCommand associating with their hits
+     * gets 7 of the most accessed models from the last six months
+     *
+     * @return A {@link Map} of {@link ModelTransportCommand} associating with their hits
      */
     @Profiled(tag = 'decorationService.getRecentlyAccessedModels')
     Map<String, String> getRecentlyAccessedModels() {
@@ -80,24 +86,29 @@ GROUP BY rev.model
         use(TimeCategory) {
             then = now - 6.months
         }
-        def matchedModels = Model.executeQuery(query, [then: then, now: now, max: 7]) as List<List>
+        def matchedModels = Model.executeQuery(query, [then: then, now: now, max: 12]) as List<List>
         Map<String, String> returnedModels = new LinkedHashMap<>()
         matchedModels.each { row ->
             String id = row[0]
             String name = row[1]
             returnedModels.put(id, name)
         }
+        logger.debug("Extracting the list of recently ACCESSED models from the database")
         returnedModels
     }
 
     /**
-     * get 7 of the most recently published models
-     * @return A map of ModelTransportCommand associating with latest published date
+     * gets 7 of the most recently published models
+     *
+     * @return A {@link Map} of {@link ModelTransportCommand} associating with latest published date
      */
     @Profiled(tag = 'decorationService.getRecentlyPublishedModels')
-    Map<ModelTransportCommand, ModelLatestPublished> getRecentlyPublishedModels() {
+    Map<String, String> getRecentlyPublishedModels() {
         String query = '''
-SELECT model, max(model.firstPublished), rev.name
+SELECT
+    coalesce(model.publicationId, model.submissionId) as modelId,
+    max(model.firstPublished),
+    rev.name
 FROM Model AS model
 JOIN model.revisions AS rev
 WHERE
@@ -112,17 +123,16 @@ WHERE
             aclClass.className = 'net.biomodels.jummp.model.Revision'
             AND sid.sid = 'ROLE_ANONYMOUS'
             AND ace.mask = 1)
-GROUP BY model
+GROUP BY rev.model
 ORDER BY model.firstPublished DESC'''
-        def matchedModels = Model.executeQuery(query, [max: 7])
-        Map<ModelTransportCommand, ModelLatestPublished> returnedModels = new HashMap<ModelTransportCommand, ModelLatestPublished>()
+        def matchedModels = Model.executeQuery(query, [max: 14])
+        Map<String, String> returnedModels = new HashMap<String, String>()
         matchedModels.each {
-            Model model = it[0]
-            Date latestPublished = it[1]
-	        ModelTransportCommand mtc = new ModelAdapter(model: model).toCommandObject(false)
+            String modelId = it[0]
             String modelName = it[2]
-            returnedModels.put(mtc, new ModelLatestPublished(modelName, latestPublished))
+            returnedModels.put(modelId, modelName)
         }
+        logger.debug("Extracting the list of recently PUBLISHED models from the database")
         returnedModels
     }
     Map<String, Integer> buildStatisticsCurationState() {
@@ -164,6 +174,75 @@ ORDER BY model.firstPublished DESC'''
         }
         return approachesMap
     }
+
+    Map buildStatisticsJournals() {
+        String query ='''
+SELECT
+    p.id, p.journal, count(m.submissionId)
+FROM
+    Model AS m
+    JOIN m.publication AS p
+WHERE
+    m.deleted = 0
+GROUP BY p.journal
+'''
+        def matchedModels = Model.executeQuery(query)
+        Map<String, Integer> publications = new HashMap<>()
+        matchedModels.each {
+            publications.put(it[1] as String, it[2] as Integer)
+        }
+        publications
+    }
+
+    Map buildDataForNewsWidget() {
+        def newsQuery = "from WcmContent where parent.aliasURI = :aliasuri"
+        def newsEntries = WcmContent.executeQuery(newsQuery, [aliasuri: 'news'])
+        Map<String, String> data = [:]
+        for (def entry : newsEntries) {
+            data.put(entry.aliasURI, entry.title)
+        }
+        data
+    }
+    private Map buildModelOfTheMonthEntry() {
+        final String query = "from ModelOfTheMonth order by publicationDate desc"
+        ModelOfTheMonth theLatestMoM = ModelOfTheMonth.find(query)
+        String shortDescription = theLatestMoM.shortDescription
+        String previewImage = Base64.encoder.encodeToString(theLatestMoM.previewImage)
+        Date theLatestPublicationDate = theLatestMoM.publicationDate
+        def monthNumStr = new SimpleDateFormat("MM").format(theLatestPublicationDate)
+        def monthString = new SimpleDateFormat("MMMMM").format(theLatestPublicationDate)
+        def yearString = new SimpleDateFormat("YYYY").format(theLatestPublicationDate)
+        final String prefixLink = "${grailsApplication.config.grails.serverURL}/content/model-of-the-month"
+        def link = "${prefixLink}?year=${yearString}&month=${monthNumStr}"
+        def linkAll = "${prefixLink}?all=yes"
+        String titlePreviewImage = "Model of the month: ${monthString} ${yearString}"
+        Map momEntry = [:]
+        momEntry.put("shortDescription", shortDescription)
+        momEntry.put("previewImage", previewImage)
+        momEntry.put("monthNumStr", monthNumStr)
+        momEntry.put("monthString", monthString)
+        momEntry.put("yearString", yearString)
+        momEntry.put("momEntryLink", link)
+        momEntry.put("momEntryLinkAll", linkAll)
+        momEntry.put("titlePreviewImage", titlePreviewImage)
+        return momEntry
+    }
+
+    /**
+     * Builds statistical data for Organisms chart
+     *
+     * @return a {@link Map} containing an element mapping "children" as the key and the value is a
+     * {@link List} of customised map which the properties are Name, Count, and Taxonomy.
+     */
+    private Map buildStatisticsOrganisms() {
+        List result = makeStatisticsOnOrganisms()
+        Map returned = new HashMap()
+        returned["children"] = result.collect { OrganismData d ->
+            [Name: d.name, Count: d.count, Taxonomy: d.taxonomy]
+        }
+        returned
+    }
+
     /**
      * Makes a statistic about models with names of the publication journal
      *
