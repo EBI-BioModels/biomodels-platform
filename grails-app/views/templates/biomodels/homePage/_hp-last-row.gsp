@@ -21,7 +21,7 @@
                  title="Seventh Framework Programme (FP7)" alt="FP7 logo" /></a>
         <a href="https://europa.eu/european-union/index_en" title="European Union (EU)">
             <img style="height: 100px"
-                src="${grailsApplication.config.grails.serverURL}/images/biomodels/hp/european_flag_blueyellow_standard.jpg"
+                src="https://www.ebi.ac.uk/biomodels/content/Image/european_flag_blueyellow_standard.jpg"
                 title="European Union (EU)" alt="EU logo" /></a>
     </div>
 </div>
