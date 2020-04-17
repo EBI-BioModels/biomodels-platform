@@ -6,7 +6,7 @@
 
 <div class="row">
     <div class="small-12 medium-12 large-7 columns">
-        <p style="font-size: 87%; text-align: justify">${shortDescription}</p>
+        <p class="widget-body-text" style="text-align: justify">${shortDescription}</p>
     </div>
     <div class="small-12 medium-12 large-5 columns">
         <img src="data:image/jpeg;base64,${previewImage}" title="${titlePreviewImage}"/>

@@ -139,5 +139,5 @@
 </div>
 <div id="hp-statistics-published-recently" class="large-6 medium-12 small-12 columns">
     <div class="homepage_info_box"><h3>Recently published</h3></div>
-    <div style="font-size: 85%; text-align: left"><biomd:renderRecentlyPublishedModels/></div>
+    <div class="widget-body-text" style="text-align: left"><biomd:renderRecentlyPublishedModels/></div>
 </div>
