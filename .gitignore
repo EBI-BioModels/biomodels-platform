@@ -58,3 +58,8 @@ Doxyfile
 
 ## patches
 *.patch
+.project
+build.gradle
+.gradle/
+.settings/
+k8s/
