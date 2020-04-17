@@ -27,9 +27,7 @@ package net.biomodels.jummp.deployment.biomodels
 
 import grails.plugin.springsecurity.annotation.Secured
 
-@Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
-// TODO: switch to the more secured setting before moving to the prod
-// @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
+@Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
 class HomePageController {
     def decorationService
 
@@ -74,36 +72,55 @@ class HomePageController {
         render(view: "update-recently-published-models", model: [models: models])
     }
 
+    /**
+     * Updates the latest entry of Model Of The Month
+     */
     def updateMoMEntryOnRedisCache() {
         decorationService.refreshModelOfTheMonthEntryRedisCache()
         render "OK"
     }
-
+    /**
+     * Updates statistical data for the widgets shown on the home page
+     */
     def updateStatisticsDataForCharts() {
         decorationService.updateDataForWidgetsOnHomePage()
         render "updated statistics data for all charts"
     }
 
+    /**
+     * Updates statistic of models relied on curation state
+     */
     def updateStatisticsCurationState() {
         decorationService.refreshStatisticsCurationStateRedisCache()
         render "updated statistics curation state"
     }
-
+    /**
+     * Updates statistic of models replied on modelling approach
+     */
     def updateStatisticsModellingApproaches() {
         decorationService.refreshStatisticsModellingApproachesRedisCache()
         render "updated statistics modelling approaches"
     }
 
+    /**
+     * Updates statistic of models replied on organism
+     */
     def updateStatisticsOrganisms() {
         decorationService.refreshStatisticsOrganismsRedisCache()
         render "updated statistics organisms"
     }
 
+    /**
+     * Updates statistic of models replied journal
+     */
     def updateStatisticsJournals() {
         decorationService.refreshStatisticsJournalsRedisCache()
         render "updated statistics journals"
     }
 
+    /**
+     * Updates data for News widget
+     */
     def updateDataNewsWidget() {
         decorationService.refreshDataForNewsWidgetRedisCache()
         render  "updated data for News Widget"
