@@ -272,7 +272,7 @@ Search terms: ${params.query}, requested from: ${clientIPAddress} under the form
     }
 
     private def searchCore(String query, String domain, String sortBy, String sortDirection, int offset, int length) {
-        Map<String, Integer> paginationCriteria = ["start": offset, "length": length, "facetCount": 100]
+        Map<String, Integer> paginationCriteria = ["start": offset, "length": length, "facetCount": 1000]
         SortOrder sortOrder = new SortOrder(sortBy, sortDirection)
         List<MTC> models = []
         List<Facet> facets = []
