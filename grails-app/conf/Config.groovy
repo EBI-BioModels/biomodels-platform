@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -298,7 +298,8 @@ log4j.main = {
         'net.biomodels.jummp.core.model.identifier.generator',
         'net.biomodels.jummp.core.model.identifier.support',
         'net.biomodels.jummp.plugins.pharmml',
-        'net.biomodels.jummp.search'
+        'net.biomodels.jummp.search',
+        'net.biomodels.jummp.deployment.biomodels'
     ]
     warn hibernateAppender: [
         'org.codehaus.groovy.grails.orm.hibernate',

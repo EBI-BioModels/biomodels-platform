@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -23,7 +23,6 @@ package net.biomodels.jummp.deployment.biomodels
 import grails.converters.JSON
 import net.biomodels.jummp.core.model.FlagTransportCommand
 import net.biomodels.jummp.core.model.ModelState
-import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.model.PublicationLinkProvider
 
@@ -33,27 +32,25 @@ import java.text.SimpleDateFormat
 /**
  * @short General purpose helper for rendering BioModels pages.
  *
- * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
- * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
+ * @author <a href="mailto:mihai.glont@ebi.ac.uk">Mihai Glonț</a>
+ * @author <a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a>
  */
 class BioModelsTagLib {
     static defaultEncodeAs = [taglib:'none']
     static namespace = 'biomd'
-
     /**
      * Declare dependency injections
      */
     def decorationService
     def modelOfTheMonthService
-    def modelDelegateService
     def tagService
-    def springSecurityService
     def p2mService
+
     /**
-     * Displays the Model of the Month (MoM) entry for the given model.
+     * <p>Displays the Model of the Month (MoM) entry for the given model.
      *
-     * @attr modelId REQUIRED the id of the model for which to render
-     * the MoM entry.
+     * <p>modelId REQUIRED the id of the model for which to render
+     * the {@link ModelOfTheMonth} entry.
      */
     def renderModelOfMonth = { attrs ->
         Long id = attrs.modelId
@@ -227,9 +224,11 @@ class BioModelsTagLib {
     def renderAllMoMEntriesPage = {
         Map sortedEntries = modelOfTheMonthService.buildAllEntries()
         DateFormatSymbols dfs = new java.text.DateFormatSymbols()
-        out << render(template: "/templates/momIntroAllEntriesPage", plugin: "jummp-plugin-biomodels-dom", model: ['years': sortedEntries.keySet()])
+        out << render(template: "/templates/momIntroAllEntriesPage", plugin: "jummp-plugin-biomodels-dom",
+            model: ['years': sortedEntries.keySet()])
         sortedEntries.each { String year, Set values ->
-            out << render(template: "/templates/momYearTitleInAllEntriesPage", plugin: "jummp-plugin-biomodels-dom", model:['year': year])
+            out << render(template: "/templates/momYearTitleInAllEntriesPage", plugin: "jummp-plugin-biomodels-dom",
+                model:['year': year])
             out << "<ul>"
             values.each { ModelOfTheMonthTransportCommand cmd ->
                 int month = cmd.publicationMonth

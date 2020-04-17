@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2017 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -44,10 +44,11 @@ import java.text.SimpleDateFormat
  * @short Service responsible for retrieving necessary data to design front page and
  * other static pages.
  *
- * This class  is used for accessing database and resulting required data aiming to
+ * <p>This class  is used for accessing database and resulting required data aiming to
  * populate in home page. The example of this use is to get the recently published and accessed models.
  *
- * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
+ * @author <a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a>
+ * @author <a href="mailto:mihai.glont@ebi.ac.uk">Mihai Glont</a>
  */
 @Transactional(readOnly = true)
 class DecorationService implements GrailsConfigurationAware {
