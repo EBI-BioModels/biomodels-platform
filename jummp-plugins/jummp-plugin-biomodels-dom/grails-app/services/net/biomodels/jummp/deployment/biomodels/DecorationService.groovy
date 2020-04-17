@@ -103,7 +103,7 @@ GROUP BY rev.model
         use(TimeCategory) {
             then = now - 6.months
         }
-        def matchedModels = Model.executeQuery(query, [then: then, now: now, max: 12]) as List<List>
+        def matchedModels = Model.executeQuery(query, [then: then, now: now, max: 10]) as List<List>
         Map<String, String> returnedModels = new LinkedHashMap<>()
         matchedModels.each { row ->
             String id = row[0]
@@ -142,7 +142,7 @@ WHERE
             AND ace.mask = 1)
 GROUP BY rev.model
 ORDER BY model.firstPublished DESC'''
-        def matchedModels = Model.executeQuery(query, [max: 14])
+        def matchedModels = Model.executeQuery(query, [max: 10])
         Map<String, String> returnedModels = new HashMap<String, String>()
         matchedModels.each {
             String modelId = it[0]
@@ -154,16 +154,14 @@ ORDER BY model.firstPublished DESC'''
     }
 
     void refreshRecentlyAccessedModelsRedisCache() {
-        Map<String, String> models = getRecentlyAccessedModels()
+        Map<String, String> mapModels = getRecentlyAccessedModels()
         logger.debug("Populating the list of recently ACCESSED models to Redis Server at ${new Date().toString()}")
         JedisPool pool = new JedisPool(new JedisPoolConfig(),
                                 REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
         Jedis jedis = null
         try {
             jedis = pool.getResource()
-            models.each { String key, String value ->
-                jedis.hset("recently-accessed-models", key, value)
-            }
+            jedis.hset("hp-recently-accessed-models", mapModels)
         } finally {
             if (jedis) { jedis.close() }
         }
@@ -178,9 +176,7 @@ ORDER BY model.firstPublished DESC'''
         Jedis jedis = null
         try {
             jedis = pool.getResource()
-            mapModels.each { String modelId, String modelName ->
-                jedis.hset("recently-published-models", modelId, modelName)
-            }
+            jedis.hset("hp-recently-published-models", mapModels)
         } finally {
             if (jedis) { jedis.close() }
         }
@@ -250,7 +246,7 @@ ORDER BY model.firstPublished DESC'''
     }
 
     Map<String, String> fetchRecentlyAccessedModels() {
-        Map models = doRedisHGetAll("recently-accessed-models")
+        Map models = doRedisHGetAll("hp-recently-accessed-models")
         if (!models) {
             // call the fallback
             models = getRecentlyAccessedModels()
@@ -259,7 +255,7 @@ ORDER BY model.firstPublished DESC'''
     }
 
     Map<String, String> fetchRecentlyPublishedModels() {
-        Map models = doRedisHGetAll("recently-published-models")
+        Map models = doRedisHGetAll("hp-recently-published-models")
         if (!models) {
             // call the fallback
             models = getRecentlyPublishedModels()

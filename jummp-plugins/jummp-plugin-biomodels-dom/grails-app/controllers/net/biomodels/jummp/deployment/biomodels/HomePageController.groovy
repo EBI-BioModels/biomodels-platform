@@ -61,7 +61,7 @@ class HomePageController {
      */
     def updateRecentlyAccessedModels() {
         decorationService.refreshRecentlyAccessedModelsRedisCache()
-        Map<String, String> models = decorationService.doRedisHGetAll("recently-accessed-models")
+        Map<String, String> models = decorationService.doRedisHGetAll("hp-recently-accessed-models")
         render(view: "update-recently-accessed-models", model: [models: models])
     }
 
@@ -70,7 +70,7 @@ class HomePageController {
      */
     def updateRecentlyPublishedModels() {
         decorationService.refreshRecentlyPublishedModelsRedisCache()
-        Map<String, String> models = decorationService.doRedisHGetAll("recently-published-models")
+        Map<String, String> models = decorationService.doRedisHGetAll("hp-recently-published-models")
         render(view: "update-recently-published-models", model: [models: models])
     }
 
