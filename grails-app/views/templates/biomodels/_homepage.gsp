@@ -48,6 +48,9 @@
     #hp-features a, a:visited {
         border-bottom-style: none;
     }
+    .widget-body-text {
+        font-size: 89%;
+    }
 </style>
 
 <div id="hp-intro" class="row text-center top-widget-area">
