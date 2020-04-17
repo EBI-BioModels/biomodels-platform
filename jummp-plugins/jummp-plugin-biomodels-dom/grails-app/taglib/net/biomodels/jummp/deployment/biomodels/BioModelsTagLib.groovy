@@ -20,6 +20,7 @@
 
 package net.biomodels.jummp.deployment.biomodels
 
+import grails.converters.JSON
 import net.biomodels.jummp.core.model.FlagTransportCommand
 import net.biomodels.jummp.core.model.ModelState
 import net.biomodels.jummp.core.model.ModelTransportCommand
@@ -135,8 +136,44 @@ class BioModelsTagLib {
             plugin: 'jummp-plugin-biomodels-dom', var: 'source')
     }
 
+    /**
+     * Renders plot for the statistical data of curation states
+     */
+    def renderHomePageStatisticsCurationState = {
+        // get data for the curation state chart either Redis Cache or BioModels database directly
+        Map<String, Integer> curationState = decorationService.fetchStatisticsCurationState()
+        def nbManuallyCurated = curationState.get("Manually curated")
+        def nbNoncurated = curationState.get("Non-curated")
+        out << render(template: "/templates/biomodels/homePage/hp-statistics-curation-state-d3",
+            model: [nbManuallyCurated: nbManuallyCurated, nbNoncurated: nbNoncurated])
+    }
+
+    def renderHomePageStatisticsModellingApproaches = {
+        def fetchedApproaches = decorationService.fetchStatisticsModellingApproaches()
+        def approaches = fetchedApproaches.collect { entry ->
+            [label: entry.key, count: entry.value]
+        } as JSON
+        out << render(template: "/templates/biomodels/homePage/hp-statistics-modelling-approaches-d3",
+            model: [approaches: approaches])
+    }
+
+    def renderHomePageStatisticsOrganisms = {
+        def organisms = decorationService.fetchStatisticsOrganisms() as JSON
+        out << render(template: "/templates/biomodels/homePage/hp-statistics-organisms-d3",
+            model: [organisms: organisms])
+    }
+
+    def renderHomePageStatisticsJournals = {
+        def journalsMap = decorationService.fetchStatisticsJournals()
+        def journals = journalsMap.collect { entry ->
+            [name: entry.key, value: entry.value]
+        } as JSON
+        out << render(template: "/templates/biomodels/homePage/hp-statistics-journals-d3",
+            model: [journals: journals])
+    }
+
     def renderRecentlyAccessedModels = {
-        Map<String, String> models = decorationService.getRecentlyAccessedModels()
+        Map<String, String> models = decorationService.fetchRecentlyAccessedModels()
         StringBuilder result = new StringBuilder("<ul style='list-style: none; " +
             "list-style-position: inside; padding: 0; margin-left: 0'>")
         models?.each { String modelId, String modelName ->
@@ -151,20 +188,31 @@ class BioModelsTagLib {
     }
 
     def renderRecentlyPublishedModels = {
-        Map<ModelTransportCommand, ModelLatestPublished> models = decorationService.getRecentlyPublishedModels()
+        Map<String, String> models = decorationService.fetchRecentlyPublishedModels()
         StringBuilder result = new StringBuilder("<ul style='list-style: none; " +
             "list-style-position: inside; padding: 0; margin-left: 0'>")
         models?.each {
-            ModelTransportCommand mtc = it.key
-            String modelId = mtc.publicationId ?: mtc.submissionId
+            String modelId = it.key
             String modelURI = g.createLink(controller: 'model', id: modelId, action: 'show')
-            String modelLink= "<li style='text-indent: -1.2em; padding-left: 1em'>" +
+            String modelLink= "<li style='text-indent: -1.2em; padding-left: 3em'>" +
                 "<span class='icon icon-functional' data-icon='U'>&nbsp;</span>" +
-                "<a href='${modelURI}'>${it.value.modelName}</a></li>"
+                "<a href='${modelURI}'>${it.value}</a><br/><span>Submitter: Administrator | Published date: ${new Date()}" +
+                "</span>Publication title: Yeast GPCR Signaling Reflects the Fraction of Occupied Receptors, Not the " +
+                "Number; Published in: 2020; Mol Sys Biol.....</li>"
             result.append(modelLink)
         }
         result.append("</ul>")
         out << result.toString()
+    }
+
+    def renderNewsWidget = {
+        Map<String, String> newsItems = decorationService.fetchDataNewsWidget()
+        out << render(template: "/templates/biomodels/homePage/hp-news-widget", model: [newsItems: newsItems])
+    }
+
+    def renderTheLatestMoMEntryWidget = {
+        Map<String, String> momEntry = decorationService.fetchMomEntry()
+        out << render(template: "/templates/biomodels/homePage/theLatestMomEntryWidget", model: momEntry)
     }
 
     def renderConvertedFiles = { attrs ->
