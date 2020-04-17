@@ -73,8 +73,8 @@ class DecorationService implements GrailsConfigurationAware {
      *
      * @return A {@link Map} of {@link ModelTransportCommand} associating with their hits
      */
-    @Profiled(tag = 'decorationService.getRecentlyAccessedModels')
-    Map<String, String> getRecentlyAccessedModels() {
+    @Profiled(tag = 'decorationService.buildListOfRecentlyAccessedModels')
+    private Map<String, String> buildListOfRecentlyAccessedModels() {
         String query ='''
 SELECT
     coalesce(m.publicationId, m.submissionId) as modelId,
@@ -120,8 +120,8 @@ GROUP BY rev.model
      *
      * @return A {@link Map} of {@link ModelTransportCommand} associating with latest published date
      */
-    @Profiled(tag = 'decorationService.getRecentlyPublishedModels')
-    Map<String, String> getRecentlyPublishedModels() {
+    @Profiled(tag = 'decorationService.buildListOfRecentlyPublishedModels')
+    private Map<String, String> buildListOfRecentlyPublishedModels() {
         String query = '''
 SELECT
     coalesce(model.publicationId, model.submissionId) as modelId,
@@ -155,7 +155,7 @@ ORDER BY model.firstPublished DESC'''
     }
 
     void refreshRecentlyAccessedModelsRedisCache() {
-        Map<String, String> mapModels = getRecentlyAccessedModels()
+        Map<String, String> mapModels = buildListOfRecentlyAccessedModels()
         logger.debug("Populating the list of recently ACCESSED models to Redis Server at ${new Date().toString()}")
         JedisPool pool = new JedisPool(new JedisPoolConfig(),
                                 REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
@@ -170,7 +170,7 @@ ORDER BY model.firstPublished DESC'''
     }
 
     void refreshRecentlyPublishedModelsRedisCache() {
-        Map<String, String> mapModels = getRecentlyPublishedModels()
+        Map<String, String> mapModels = buildListOfRecentlyPublishedModels()
         logger.debug("Populating the list of recently PUBLISHED models to Redis Server at ${new Date().toString()}")
         JedisPool pool = new JedisPool(new JedisPoolConfig(),
                                 REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
@@ -250,7 +250,7 @@ ORDER BY model.firstPublished DESC'''
         Map models = doRedisHGetAll("hp-recently-accessed-models")
         if (!models) {
             // call the fallback
-            models = getRecentlyAccessedModels()
+            models = buildListOfRecentlyAccessedModels()
         }
         return models
     }
@@ -259,7 +259,7 @@ ORDER BY model.firstPublished DESC'''
         Map models = doRedisHGetAll("hp-recently-published-models")
         if (!models) {
             // call the fallback
-            models = getRecentlyPublishedModels()
+            models = buildListOfRecentlyPublishedModels()
         }
         return models
     }
