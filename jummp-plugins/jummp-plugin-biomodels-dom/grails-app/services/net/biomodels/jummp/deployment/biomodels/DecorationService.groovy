@@ -388,6 +388,17 @@ GROUP BY p.journal
         doRedisHSet("hp-statistics-journals", pubsRedisMap)
     }
 
+    void updateDataForWidgetsOnHomePage() {
+        refreshStatisticsCurationStateRedisCache()
+        refreshStatisticsModellingApproachesRedisCache()
+        refreshStatisticsOrganismsRedisCache()
+        refreshStatisticsJournalsRedisCache()
+        refreshRecentlyAccessedModelsRedisCache()
+        refreshRecentlyPublishedModelsRedisCache()
+        refreshModelOfTheMonthEntryRedisCache()
+        refreshDataForNewsWidgetRedisCache()
+    }
+
     void doRedisHSet(final String key, Map data) {
         JedisPool pool = new JedisPool(new JedisPoolConfig(),
                                 REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)

@@ -80,8 +80,7 @@ class HomePageController {
     }
 
     def updateStatisticsDataForCharts() {
-        decorationService.refreshDataForChartsRedisCache()
-        decorationService.refreshStatisticsCurationStateRedisCache()
+        decorationService.updateDataForWidgetsOnHomePage()
         render "updated statistics data for all charts"
     }
 
@@ -94,6 +93,7 @@ class HomePageController {
         decorationService.refreshStatisticsModellingApproachesRedisCache()
         render "updated statistics modelling approaches"
     }
+
     def updateStatisticsOrganisms() {
         decorationService.refreshStatisticsOrganismsRedisCache()
         render "updated statistics organisms"
