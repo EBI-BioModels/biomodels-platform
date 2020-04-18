@@ -403,6 +403,7 @@ GROUP BY p.journal
         JedisPool pool = new JedisPool(new JedisPoolConfig(),
                                 REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
         pool.getResource().withCloseable { Jedis jedis ->
+            deleteAllByPattern(jedis, key)
             jedis.hset(key, data)
             jedis.close()
         }
@@ -414,6 +415,7 @@ GROUP BY p.journal
                             REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
         String cachedData
         pool.getResource().withCloseable { Jedis jedis ->
+            // TODO: fix: hget(key, field)
             cachedData = jedis.hget(key)
             jedis.close()
         }
@@ -434,6 +436,13 @@ GROUP BY p.journal
         }
         pool.close()
         returnedMap
+    }
+
+    private deleteAllByPattern(final Jedis jedis, final String pattern) {
+        Set<String> keys = jedis.keys(pattern)
+        for (String key : keys) {
+            jedis.del(key)
+        }
     }
 
     private Map buildModelOfTheMonthEntry() {
