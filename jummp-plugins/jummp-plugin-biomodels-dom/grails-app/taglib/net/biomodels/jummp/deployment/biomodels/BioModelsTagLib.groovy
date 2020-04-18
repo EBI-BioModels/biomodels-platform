@@ -41,6 +41,7 @@ class BioModelsTagLib {
     /**
      * Declare dependency injections
      */
+    def grailsApplication
     def decorationService
     def modelOfTheMonthService
     def tagService
@@ -171,35 +172,15 @@ class BioModelsTagLib {
 
     def renderRecentlyAccessedModels = {
         Map<String, String> models = decorationService.fetchRecentlyAccessedModels()
-        StringBuilder result = new StringBuilder("<ul style='list-style: none; " +
-            "list-style-position: inside; padding: 0; margin-left: 0'>")
-        models?.each { String modelId, String modelName ->
-            String modelURI = g.createLink(controller: 'model', id: modelId, action: 'show')
-            String modelLink = "<li style='text-indent: -1.2em; padding-left: 1em'>" +
-                "<span class='icon icon-functional' data-icon='4'>&nbsp;</span>" +
-                "<a href='${modelURI}'>${modelName}</a></li>"
-            result.append(modelLink)
-        }
-        result.append("</ul>")
-        out << result.toString()
+        out << render(template: "/templates/biomodels/homePage/hp-recently-accessed-models-widget",
+            model: [models: models])
     }
 
     def renderRecentlyPublishedModels = {
         Map<String, RecentlyPublishedModel> models = decorationService.fetchRecentlyPublishedModels()
-        StringBuilder result = new StringBuilder("<ul style='list-style: none; " +
-            "list-style-position: inside; padding: 0; margin-left: 0'>")
-        models?.each {
-            String modelId = it.key
-            String modelURI = g.createLink(controller: 'model', id: modelId, action: 'show')
-            String modelLink= "<li style='text-indent: -1.2em; padding-left: 3em'>" +
-                "<span class='icon icon-functional' data-icon='U'>&nbsp;</span>" +
-                "<a href='${modelURI}'>${it.value.title}</a><br/><span>Submitter: ${it.value.submitter} | Published date: " +
-                "${it.value.lastPublished}" +
-                "</span> &nbsp;| Publication title: ${it.value.pubTitle}, ${it.value.pubJournal} (${it.value.pubYear})</li>"
-            result.append(modelLink)
-        }
-        result.append("</ul>")
-        out << result.toString()
+        String serverURL = grailsApplication.config.grails.serverURL
+        out << render(template: "/templates/biomodels/homePage/hp-recently-published-models-widget",
+                      model: [models: models, serverURL: serverURL])
     }
 
     def renderNewsWidget = {
