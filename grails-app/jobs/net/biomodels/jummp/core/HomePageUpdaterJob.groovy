@@ -37,9 +37,9 @@ class HomePageUpdaterJob {
     static triggers = {
         // execute job once in 10 seconds for development;
         // has to be set an appropriate repeat interval later
-        simple name: "refreshDataOnRedisServer", startDelay: 10000, repeatInterval: 7_200_000L
+        // simple name: "refreshDataOnRedisServer", startDelay: 10000, repeatInterval: 7_200_000L
 
-        // the job is run at 02:00 AM every days
+        // the job is run at 02:00 AM every day
         cron name: "refreshDataOnRedisServer", cronExpression: "0 0 2 * * ?"
     }
 
