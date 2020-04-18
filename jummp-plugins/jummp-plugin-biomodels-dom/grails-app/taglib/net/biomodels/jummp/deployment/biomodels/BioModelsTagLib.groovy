@@ -185,7 +185,7 @@ class BioModelsTagLib {
     }
 
     def renderRecentlyPublishedModels = {
-        Map<String, String> models = decorationService.fetchRecentlyPublishedModels()
+        Map<String, RecentlyPublishedModel> models = decorationService.fetchRecentlyPublishedModels()
         StringBuilder result = new StringBuilder("<ul style='list-style: none; " +
             "list-style-position: inside; padding: 0; margin-left: 0'>")
         models?.each {
@@ -193,9 +193,9 @@ class BioModelsTagLib {
             String modelURI = g.createLink(controller: 'model', id: modelId, action: 'show')
             String modelLink= "<li style='text-indent: -1.2em; padding-left: 3em'>" +
                 "<span class='icon icon-functional' data-icon='U'>&nbsp;</span>" +
-                "<a href='${modelURI}'>${it.value}</a><br/><span>Submitter: Administrator | Published date: ${new Date()}" +
-                "</span>Publication title: Yeast GPCR Signaling Reflects the Fraction of Occupied Receptors, Not the " +
-                "Number; Published in: 2020; Mol Sys Biol.....</li>"
+                "<a href='${modelURI}'>${it.value.title}</a><br/><span>Submitter: ${it.value.submitter} | Published date: " +
+                "${it.value.lastPublished}" +
+                "</span> &nbsp;| Publication title: ${it.value.pubTitle}, ${it.value.pubJournal} (${it.value.pubYear})</li>"
             result.append(modelLink)
         }
         result.append("</ul>")

@@ -27,8 +27,8 @@ package net.biomodels.jummp.deployment.biomodels
 import grails.plugins.rest.client.RestBuilder
 import grails.transaction.Transactional
 import groovy.time.TimeCategory
-import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.model.Model
+import net.biomodels.jummp.plugins.security.User
 import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
 import org.perf4j.aop.Profiled
 import org.slf4j.Logger
@@ -57,7 +57,6 @@ class DecorationService implements GrailsConfigurationAware {
     static String REDIS_SRV_HOST //= grailsApplication.config.jummp.redis.host
     static int REDIS_SRV_PORT //= grailsApplication.config.jummp.redis.host.port
     static int REDIS_SRV_TIMEOUT //= grailsApplication.config.jummp.redis.timeout
-
     final String EBI_BM_URL = "https://www.ebi.ac.uk/ebisearch/ws/rest/biomodels"
     final String SVC_URL_PREFIX = "${EBI_BM_URL}?query=domain_source:biomodels&size=0&facetfields"
 
@@ -69,9 +68,9 @@ class DecorationService implements GrailsConfigurationAware {
     }
 
     /**
-     * gets 7 of the most accessed models from the last six months
+     * gets 10 of the most accessed models from the last six months
      *
-     * @return A {@link Map} of {@link ModelTransportCommand} associating with their hits
+     * @return A {@link Map} constructed by model identifiers associating with their names
      */
     @Profiled(tag = 'decorationService.buildListOfRecentlyAccessedModels')
     private Map<String, String> buildListOfRecentlyAccessedModels() {
@@ -116,17 +115,18 @@ GROUP BY rev.model
     }
 
     /**
-     * gets 7 of the most recently published models
-     *
-     * @return A {@link Map} of {@link ModelTransportCommand} associating with latest published date
+     * gets 10 of the most recently published models
+     * Due to needing more fields to be shown on the widget, this service will have to include
+     * some fields like revision owner as submitter, publication title, publication journal and year.
+     * @return A {@link Map} of {@link RecentlyPublishedModel} objects
      */
     @Profiled(tag = 'decorationService.buildListOfRecentlyPublishedModels')
-    private Map<String, String> buildListOfRecentlyPublishedModels() {
+    private Map<String, RecentlyPublishedModel> buildListOfRecentlyPublishedModels() {
         String query = '''
 SELECT
     coalesce(model.publicationId, model.submissionId) as modelId,
     max(model.firstPublished),
-    rev.name
+    rev.name, rev.owner, model.publication.title, model.publication.journal, model.publication.year
 FROM Model AS model
 JOIN model.revisions AS rev
 WHERE
@@ -144,13 +144,21 @@ WHERE
 GROUP BY rev.model
 ORDER BY model.firstPublished DESC'''
         def matchedModels = Model.executeQuery(query, [max: 10])
-        Map<String, String> returnedModels = new HashMap<String, String>()
+        Map<String, RecentlyPublishedModel> returnedModels = new HashMap<String, RecentlyPublishedModel>()
         matchedModels.each {
-            String modelId = it[0]
-            String modelName = it[2]
-            returnedModels.put(modelId, modelName)
+            User owner = it[3] as User
+            RecentlyPublishedModel rpm = new RecentlyPublishedModel(id: it[0],
+                title: it[2],
+                lastPublished: (it[1] as Date).format("yyyy-MM-dd"),
+                submitter: owner.person.userRealName,
+                pubTitle: it[4],
+                pubJournal: it[5],
+                pubYear: it[6])
+            returnedModels.put(it[0], rpm)
         }
-        logger.debug("Extracting the list of recently PUBLISHED models from the database")
+        if (returnedModels) {
+            logger.debug("Extracting the list of recently PUBLISHED models from the database")
+        }
         returnedModels
     }
 
@@ -170,14 +178,25 @@ ORDER BY model.firstPublished DESC'''
     }
 
     void refreshRecentlyPublishedModelsRedisCache() {
-        Map<String, String> mapModels = buildListOfRecentlyPublishedModels()
+        Map<String, RecentlyPublishedModel> mapModels = buildListOfRecentlyPublishedModels()
         logger.debug("Populating the list of recently PUBLISHED models to Redis Server at ${new Date().toString()}")
         JedisPool pool = new JedisPool(new JedisPoolConfig(),
                                 REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
         Jedis jedis = null
         try {
             jedis = pool.getResource()
-            jedis.hset("hp-recently-published-models", mapModels)
+            String key = "hp-recently-published-models"
+            deleteAllByPattern(jedis, key)
+            Map models = [:]
+            for (Map.Entry<String, RecentlyPublishedModel> entry : mapModels) {
+                RecentlyPublishedModel m = entry.value
+                Map value = ["id": m.id, "title": m.title, "submitter": m.submitter,
+                             "lastPublished": m.lastPublished, "pubTitle": m.pubTitle,
+                             "pubJournal": m.pubJournal, "pubYear": m.pubYear]
+                jedis.hset("$key-${m.id}" as String, value)
+                models.put(m.id, m.title)
+            }
+            jedis.hset(key, models)
         } finally {
             if (jedis) { jedis.close() }
         }
@@ -255,13 +274,25 @@ ORDER BY model.firstPublished DESC'''
         return models
     }
 
-    Map<String, String> fetchRecentlyPublishedModels() {
-        Map models = doRedisHGetAll("hp-recently-published-models")
+    Map<String, RecentlyPublishedModel> fetchRecentlyPublishedModels() {
+        final String key = "hp-recently-published-models"
+        Map models = doRedisHGetAll(key)
+        Map returnedMap = [:]
         if (!models) {
             // call the fallback
-            models = buildListOfRecentlyPublishedModels()
+            returnedMap = buildListOfRecentlyPublishedModels()
+        } else {
+            for (String modelId in models.keySet()) {
+                Map rpm = doRedisHGetAll("$key-$modelId" as String)
+                RecentlyPublishedModel model =
+                    new RecentlyPublishedModel(id: rpm.get("id"), submitter: rpm.get("submitter"),
+                        lastPublished: rpm.get("lastPublished"),
+                        title: rpm.get("title"), pubJournal: rpm.get("pubJournal"),
+                        pubTitle: rpm.get("pubTitle"), pubYear: rpm.get("pubYear"))
+                returnedMap.put(model.id, model)
+            }
         }
-        return models
+        return returnedMap
     }
 
     Map<String, String> fetchMomEntry() {
@@ -572,5 +603,19 @@ class OrganismData {
 
     String toString() {
         "$name ($taxonomy): $count"
+    }
+}
+
+class RecentlyPublishedModel {
+    String id
+    String title
+    String submitter
+    String lastPublished
+    String pubTitle
+    String pubJournal
+    String pubYear
+
+    String toString() {
+        "$id: $title (${submitter}, ${lastPublished})\n${pubTitle}: ${pubJournal} (${pubYear})"
     }
 }
