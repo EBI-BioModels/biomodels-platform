@@ -42,7 +42,7 @@ grails.project.fork = [
     // configure settings for the run-app JVM
     run: [maxMemory: 2048, minMemory: 64, debug: false, maxPerm: 512, forkReserve:false, jvmArgs: customJvmArgs],
     // configure settings for the run-war JVM
-    war: [maxMemory: 2048, minMemory: 64, debug: false, maxPerm: 512, forkReserve:false, jvmArgs: customJvmArgs],
+    war: [maxMemory: 8192, minMemory: 64, debug: false, maxPerm: 512, forkReserve:false, jvmArgs: customJvmArgs],
     // configure settings for the Console UI JVM
     console: [maxMemory: 1024, minMemory: 64, debug: false, maxPerm: 256, jvmArgs: customJvmArgs]
 ]
@@ -195,6 +195,7 @@ grails.project.dependency.resolution = {
         runtime ":jquery-datatables:1.7.5"
         runtime ":jquery-ui:1.10.4"
         runtime ":console:1.5.8"
+        runtime ":spring-session:1.2"
     }
 }
 

@@ -373,7 +373,6 @@ class GitManager implements VcsManager {
         return fileDetails
     }
 
-    @Override
     void resetModelRepository(File modelDirectory, String commitId) throws VcsException {
         Repository repository = GitSupport.buildRepository(modelDirectory)
         Git git = new Git(repository)

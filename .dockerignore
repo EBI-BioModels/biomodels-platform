@@ -1,0 +1,11 @@
+.idea/
+.gradle/
+.settings/
+build/
+data/
+documentation/
+log/
+logs/
+target/
+tmp/
+k8s/

@@ -220,7 +220,7 @@ log4j.main = {
             fileName: "${logsDir}/perfGraphs.log",
             layout: pattern(conversionPattern: '%m%n')
         )
-        appender name: 'performanceGraphFileAppender', performanceGraphFileAppender
+        appender name: 'performanceGraphFileAppender', performanceGraphFileAppender, additivity: false
 
         // this appender creates the Google Chart API graphs
         def performanceGraphAppender = new org.perf4j.log4j.GraphingStatisticsAppender(
@@ -237,7 +237,7 @@ log4j.main = {
             fileName: "${logsDir}/perfStats.log",
             layout: pattern(conversionPattern: '%m%n')  // alternatively use the StatisticsCsvLayout to generate CSV
         )
-        appender name: 'performanceStatsFileAppender', performanceStatsFileAppender
+        appender name: 'performanceStatsFileAppender', performanceStatsFileAppender, additivity: false
 
 
         // this is the most important appender and first in the appender chain. it aggregates all profiling data withing a certain time frame.
@@ -247,20 +247,23 @@ log4j.main = {
         )
         performanceStatsAppender.addAppender(performanceStatsFileAppender)
         performanceStatsAppender.addAppender(performanceGraphAppender)
-        appender name: 'performanceStatsAppender', performanceStatsAppender
+        appender name: 'performanceStatsAppender', performanceStatsAppender, additivity: false
 
-        rollingFile name: "jummpAppender", file: "${logsDir}/jummp-core.log", threshold: org.apache.log4j.Level.WARN
-        rollingFile name: "eventsAppender", file: "${logsDir}/jummp-events.log", threshold: org.apache.log4j.Level.DEBUG
+        rollingFile name: "jummpAppender", file: "${logsDir}/jummp-core.log",
+            threshold: org.apache.log4j.Level.WARN, additivity: false
+        rollingFile name: "eventsAppender",
+            file: "${logsDir}/jummp-events.log",
+            threshold: org.apache.log4j.Level.DEBUG, additivity: false
 
         // change the threshold to DEBUG to have debug output in development mode
-        console name: "stdout", threshold: org.apache.log4j.Level.WARN
+        console name: "stdout", threshold: org.apache.log4j.Level.WARN, additivity: false
 
         rollingFile name: "stacktrace", maxFileSize: 1024,
-                    file: "${logsDir}/stacktrace.log"
+                    file: "${logsDir}/stacktrace.log", additivity: false
     }
 
     // configure the performanceStatsAppender to log at INFO level
-    info   performanceStatsAppender: 'org.perf4j.TimingLogger'
+    info   performanceStatsAppender: 'org.perf4j.TimingLogger', additivity: false
     error  jummpAppender: [
         'org.codehaus.groovy.grails.web.servlet',  //  controllers
         'org.codehaus.groovy.grails.web.pages', //  GSP
@@ -274,7 +277,7 @@ log4j.main = {
         'org.hibernate',
         'net.sf.ehcache.hibernate',
         'org.weceem'
-    ]
+    ], additivity: false
 
     warn   jummpAppender: 'org.mortbay.log'
     // Simple Logging goes to its own file
@@ -283,10 +286,12 @@ log4j.main = {
         'net.biomodels.jummp.core.events',
         'net.biomodels.jummp.plugins.bives',
         'net.biomodels.jummp.search'
-    ]
+    ], additivity: false
 
-    rollingFile name: "debugAppender", file: "${logsDir}/jummp-debug.log", threshold: org.apache.log4j.Level.DEBUG
-    rollingFile name: "hibernateAppender", file: "${logsDir}/jummp-hibernate.log", threshold: org.apache.log4j.Level.WARN
+    rollingFile name: "debugAppender", file: "${logsDir}/jummp-debug.log",
+        threshold: org.apache.log4j.Level.DEBUG, additivity: false
+    rollingFile name: "hibernateAppender", file: "${logsDir}/jummp-hibernate.log",
+        threshold: org.apache.log4j.Level.WARN, additivity: false
 
     debug debugAppender: [
         'net.biomodels.jummp',
@@ -300,15 +305,15 @@ log4j.main = {
         'net.biomodels.jummp.plugins.pharmml',
         'net.biomodels.jummp.search',
         'net.biomodels.jummp.deployment.biomodels'
-    ]
+    ], additivity: false
     warn hibernateAppender: [
         'org.codehaus.groovy.grails.orm.hibernate',
         'org.codehaus.groovy.grails.orm.support',
         'org.hibernate.SQL',
         'org.springframework.orm.hibernate4.support'
 
-    ]
-    info console: "net.biomodels.jummp.core"
+    ], additivity: false
+    info console: "net.biomodels.jummp.core", additivity: false
 }
 
 // Added by the Spring Security Core plugin:
@@ -424,6 +429,10 @@ if (jummpConfig.jummp.vcs.workingDirectory) {
 }
 if (jummpConfig.jummp.model.cache.dir) {
     jummp.model.cache.dir = jummpConfig.jummp.model.cache.dir
+} else {
+    throw new IllegalArgumentException("""\
+Please add the setting 'jummp.model.cache.dir', pointing to a directory where model files are cached, to your
+configuration.""")
 }
 // search config
 // model search strategy setting: "omicsdi" or "solr"
@@ -820,6 +829,8 @@ grails.databinding.dateFormats = dateFormats
 /**
  * Below are settings for Redis server
  */
+// TODO: rewrite the validation to Redis properties. If there is any mismatch, throw an exception
+// because this setting is crucial to start the application properly
 if (!(jummpConfig.jummp.redis.host instanceof ConfigObject)) {
     jummp.redis.host = jummpConfig.jummp.redis.host
 } else {
@@ -835,5 +846,6 @@ if (!(jummpConfig.jummp.redis.port instanceof ConfigObject)) {
 if (!(jummpConfig.jummp.redis.timeout instanceof ConfigObject)) {
     jummp.redis.timeout = jummpConfig.jummp.redis.timeout as int
 } else {
-    jummp.redis.timeout = 3600 // the default port
+    jummp.redis.timeout = 3600 // the default timeout
 }
+springsession.redis.connectionFactory.hostName = jummp.redis.host
