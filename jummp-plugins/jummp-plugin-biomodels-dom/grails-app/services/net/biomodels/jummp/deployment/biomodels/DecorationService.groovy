@@ -455,13 +455,12 @@ GROUP BY p.journal
         pool.close()
     }
 
-    String doRedisHGet(final String key) {
+    String doRedisHGet(final String key, final String field) {
         JedisPool pool = new JedisPool(new JedisPoolConfig(),
                             REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
         String cachedData
         pool.getResource().withCloseable { Jedis jedis ->
-            // TODO: fix: hget(key, field)
-            cachedData = jedis.hget(key)
+            cachedData = jedis.hget(key, field)
             jedis.close()
         }
         pool.close()
