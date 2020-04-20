@@ -65,7 +65,7 @@
         // console.log(slideDesc[activeNum]);
         $('#slide-introduction #slide-title').html(slideDesc[activeNum]["title"]);
         $('#slide-introduction #slide-description').html(slideDesc[activeNum]["description"]);
-        console.log(activeNum);
+        // console.log(activeNum);
         //setTabActive(activeNum);
     }
     document.addEventListener("DOMContentLoaded", function () {
