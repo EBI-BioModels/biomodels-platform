@@ -57,14 +57,20 @@ class DecorationService implements GrailsConfigurationAware {
     static String REDIS_SRV_HOST //= grailsApplication.config.jummp.redis.host
     static int REDIS_SRV_PORT //= grailsApplication.config.jummp.redis.host.port
     static int REDIS_SRV_TIMEOUT //= grailsApplication.config.jummp.redis.timeout
-    final String EBI_BM_URL = "https://www.ebi.ac.uk/ebisearch/ws/rest/biomodels"
-    final String SVC_URL_PREFIX = "${EBI_BM_URL}?query=domain_source:biomodels&size=0&facetfields"
+    static String EBI_SEARCH_URL = "https://www.ebi.ac.uk/ebisearch/ws/rest"
+    static String FIXED_PARAMS = "biomodels?query=domain_source:biomodels&size=0&facetfields"
+    static String EBI_SEARCH_BM_URL = "${EBI_SEARCH_URL}/${FIXED_PARAMS}"
+    static String BM_SVR_URL //= grailsApplication.config.grails.serverURL
 
     @Override
     void setConfiguration(ConfigObject co) {
         REDIS_SRV_HOST = co.jummp.redis.host
         REDIS_SRV_PORT = co.jummp.redis.port as int
         REDIS_SRV_TIMEOUT = co.jummp.redis.timeout as int
+        BM_SVR_URL = co.grails.serverURL
+        EBI_SEARCH_URL = "https://www.ebi.ac.uk/ebisearch/ws/rest"
+        FIXED_PARAMS = "biomodels?query=domain_source:biomodels&size=0&facetfields"
+        EBI_SEARCH_BM_URL = "${EBI_SEARCH_URL}/${FIXED_PARAMS}"
     }
 
     /**
@@ -314,7 +320,8 @@ ORDER BY model.firstPublished DESC'''
     }
 
     Map<String, Integer> buildStatisticsCurationState() {
-        String serviceURL = "${SVC_URL_PREFIX}=curationstatus&facetcount=10&format=json"
+        String serviceURL = "${EBI_SEARCH_BM_URL}=curationstatus&facetcount=10&format=json"
+        logger.debug("Connecting to the service at $serviceURL")
         RestBuilder restBuilder = new RestBuilder(connectTimeout: 10000, readTimeout: 100000, proxy: null)
         def response = restBuilder.get(serviceURL) {
             accept("application/json")
@@ -333,7 +340,7 @@ ORDER BY model.firstPublished DESC'''
     }
 
     Map<String, Integer> buildStatisticsModellingApproaches() {
-        String serviceURL = "${SVC_URL_PREFIX}=modellingapproach&facetcount=10&format=json"
+        String serviceURL = "${EBI_SEARCH_BM_URL}=modellingapproach&facetcount=10&format=json"
         RestBuilder restBuilder = new RestBuilder(connectTimeout: 10000, readTimeout: 100000, proxy: null)
         def response = restBuilder.get(serviceURL) {
             accept("application/json")
