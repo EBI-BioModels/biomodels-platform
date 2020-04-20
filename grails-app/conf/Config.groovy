@@ -849,3 +849,5 @@ if (!(jummpConfig.jummp.redis.timeout instanceof ConfigObject)) {
     jummp.redis.timeout = 3600 // the default timeout
 }
 springsession.redis.connectionFactory.hostName = jummp.redis.host
+springsession.redis.connectionFactory.port = jummp.redis.port
+springsession.redis.connectionFactory.timeout = jummp.redis.timeout
