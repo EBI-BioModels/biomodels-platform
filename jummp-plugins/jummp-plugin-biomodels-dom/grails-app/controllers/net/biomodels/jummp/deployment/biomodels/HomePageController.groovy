@@ -83,7 +83,7 @@ class HomePageController {
      * Updates statistical data for the widgets shown on the home page
      */
     def updateStatisticsDataForCharts() {
-        decorationService.updateDataForWidgetsOnHomePage()
+        decorationService.updateDataForChartsOnHomePage()
         render "updated statistics data for all charts"
     }
 

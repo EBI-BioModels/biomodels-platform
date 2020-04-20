@@ -430,6 +430,13 @@ GROUP BY p.journal
         refreshDataForNewsWidgetRedisCache()
     }
 
+    void updateDataForChartsOnHomePage() {
+        refreshStatisticsCurationStateRedisCache()
+        refreshStatisticsModellingApproachesRedisCache()
+        refreshStatisticsOrganismsRedisCache()
+        refreshStatisticsJournalsRedisCache()
+    }
+
     void doRedisHSet(final String key, Map data) {
         JedisPool pool = new JedisPool(new JedisPoolConfig(),
                                 REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
