@@ -32,6 +32,7 @@ class HomePageController {
     def decorationService
 
     def index() {
+        String hpStatisticsDataForFeatures = createLink(controller: "homePage", action: "updateStatisticsDataForFeatures")
         String hpStatisticsDataForCharts = createLink(controller: "homePage", action: "updateStatisticsDataForCharts")
         String hpStatisticsCurationState = createLink(controller: "homePage", action: "updateStatisticsCurationState")
         String hpStatisticsModellingApproaches = createLink(controller: "homePage", action: "updateStatisticsModellingApproaches")
@@ -42,6 +43,7 @@ class HomePageController {
         String hpDataNewsWidget = createLink(controller: "homePage", action: "updateDataNewsWidget")
         String latestMomEntry = createLink(controller: "homePage", action: "updateMoMEntryOnRedisCache")
         Map links = [:]
+        links.put("hpStatisticsDataForFeatures", hpStatisticsDataForFeatures)
         links.put("hpStatisticsForCharts", hpStatisticsDataForCharts)
         links.put("hpStatisticsCurationState", hpStatisticsCurationState)
         links.put("hpStatisticsModellingApproaches", hpStatisticsModellingApproaches)
@@ -54,6 +56,13 @@ class HomePageController {
         links
     }
 
+    /**
+     * Updates statistical figures of the widgets in Features section of the home page
+     */
+    def updateStatisticsDataForFeatures() {
+        decorationService.refreshStatisticsDataForFeatures()
+        render "updated statistics data for the feature widgets"
+    }
     /**
      * Updates the list of recently accessed models on Redis Cache
      */

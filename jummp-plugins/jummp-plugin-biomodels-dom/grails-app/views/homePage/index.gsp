@@ -38,6 +38,8 @@ with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
         <div class="small-12 medium-12 large-12 columns">
             <h1>Update Redis Server</h1>
             <ul>
+                <li><a href="${hpStatisticsDataForFeatures}">
+                    Refresh the statistics data for the feature widgets</a></li>
                 <li><a href="${hpStatisticsDataForCharts}">
                     Refresh statistics for the charts on Home Page (once click for updating the whole)</a><br/>Or click
                 on each individual link from the list below
