@@ -149,6 +149,7 @@ Failed to add author $person to $publication: ${tmp.errors.allErrors.inspect()}"
     Publication fromCommandObject(PubTC cmd) {
         Publication publication = findByPublicationTransportCommand(cmd)
         if (publication) {
+            publication.link = cmd.link
             publication.title = cmd.title
             publication.affiliation = cmd.affiliation
             publication.synopsis = cmd.synopsis
