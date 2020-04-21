@@ -55,7 +55,7 @@ import java.util.regex.Pattern
  * @date created on 08/06/2016.
  */
 
-class PublicationService {
+class PublicationService implements IPublicationService {
     final Log log = LogFactory.getLog(getClass())
     static transactional = false
 
