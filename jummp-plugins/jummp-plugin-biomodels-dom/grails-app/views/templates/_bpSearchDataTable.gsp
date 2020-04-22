@@ -18,16 +18,6 @@
     </tr>
     </thead>
 </table>
-<div class="pull-element-left">
-    <hr/>
-    <i>
-        <strong>Legends</strong><br/>
-        <span class="legend-green-block">
-        </span>
-        <span>
-            : Variable used inside SBML models</span>
-    </i>
-</div>
 <script>
     $(document).ready(function () {
         const FIELD_SEPARATOR = ';';
@@ -119,7 +109,7 @@
             let entityRow = '';
             const entity = row.fields.entity_id;
             const initialValue = row.fields.initial_data;
-            entityRow += '<span class="legend-green size-150">' + entity;
+            entityRow += '<span class="green size-150">' + entity;
 
             if (initialValue !== undefined && initialValue !== '') {
                 entityRow += '</span>' + '&nbsp;=&nbsp;' + initialValue;
@@ -166,7 +156,7 @@
 
         function formatReaction(data, row) {
             const reactionIcon = ebiFontIcon("common", "icon-flask", 'margin-right-medium', 'reaction (using entity IDs from the model)');
-            const reaction = "<span class='legend-green size-125'>" + row.fields.reaction_original_RAW + "</span>";
+            const reaction = "<span class='green size-125'>" + row.fields.reaction_original_RAW + "</span>";
             const sbo = formatSboTerms(row.fields.reaction_sbo_term_link);
             const resolvedReaction = row.fields.reaction;
             let out = asReactionRow(reactionIcon + reaction);
