@@ -334,7 +334,7 @@ println "The health check endpoint will only be available from '$healthCheckIpRe
 // IPv4 IP addresses and ranges allowed to access specific URLs
 // requests from localhost are always allowed: http://grails-plugins.github.io/grails-spring-security-core/2.0.x/guide/ip.html
 grails.plugin.springsecurity.ipRestrictions = [
-    '/healthCheck/**': ipRestrictions
+    '/healthCheck/**': healthCheckIpRestrictions
 ]
 
 jummp.controllerAnnotations = [

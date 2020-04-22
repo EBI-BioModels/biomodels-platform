@@ -164,7 +164,8 @@ class PublicationServiceSpec extends IntegrationSpec {
 {"authors":[{"userRealName":"Abroudi A","institution":"","orcid":""},{"userRealName":"","institution":"","orcid":"0000-0003-2943-4331"},{"userRealName":"Kulasiri D","institution":"","orcid":"0000#0001#8744#1578"}]}"""
         publicationService.assembleAuthors(ptc, invalidAuthorsInJSONString)
         then: "publication is till invalid because of invalid JSON string has an empty real user name and an invalid orcid. The method will throw an exception"
-        !ptc.validate() // due to there are two bad authors which one has no real name and the other has an invalid orcid
+        !ptc.validate() // because there are two bad authors which one has no real name and the other has an invalid
+        // orcid
         thrown(InvalidPublicationAuthorsException)
 
         when: "assemble again the authors parsed from an invalid JSON string into the publication"
