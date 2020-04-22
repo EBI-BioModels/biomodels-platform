@@ -221,12 +221,14 @@
             output += m;
 
             const pub = row.fields.publication;
-            const p = textAndEbiFontIcon(formatPublication(pub), "common", "icon-publication", 'margin-right-medium', 'manuscript');
-            output += p;
+            if (pub !== undefined && pub.length !== 0) {
+                output += textAndEbiFontIcon(formatPublication(pub), "common", "icon-publication", 'margin-right-medium', 'manuscript');
+            }
 
             const org = row.fields.organism;
-            const o = textAndEbiFontIcon(org, "conceptual", "icon-dna", 'margin-right-medium', 'organism');
-            output += o;
+            if (org !== undefined && org.length !== 0) {
+                output += textAndEbiFontIcon(org, "conceptual", "icon-dna", 'margin-right-medium', 'organism');
+            }
 
             if (links !== undefined && links !== "") {
                 output += textAndEbiFontIcon(links, "common", "icon-external-systems", 'margin-right-medium', 'cross references');
