@@ -169,7 +169,7 @@
             out += asReactionRow(rateIcon + rate);
 
             const paramsIcon = ebiFontIcon("common", "icon-sliders-h", 'margin-right-medium', 'parameters');
-            const params = "<span class='darkgrey'>" + row.fields.parameters + "</span>";
+            const params = "<span class='grey'>" + row.fields.parameters + "</span>";
             out += asReactionRow(paramsIcon + params);
 
             // TODO include modifiers such as catalysts and inhibitors using icon-plug
