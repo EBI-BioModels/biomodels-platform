@@ -16,6 +16,7 @@ class ParameterSearchService {
 
     static final Log log = LogFactory.getLog(ParameterSearchService.class)
     static List<String> columnNames = ["entity", "entity_id", "initial concentration/amount", "reaction with entity labels", "reaction with entity ids",
+                                        "reactants", "products", "modifiers",
                                        "model", "organism", "publication",
                                        "rate with entity labels", "rate with entity ids","parameters", "entity access url", "reaction SBO link",
                                        "entity SBO link","external links"]

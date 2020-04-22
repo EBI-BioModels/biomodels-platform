@@ -147,23 +147,111 @@
             return formattedData
         }
 
-        function generatePublicationLink(href) {
+        function createXrefHyperlink(href) {
             href = href.replace(/\\/g, "");
             let linkData = href.split('|');
+            if (linkData.length === 1) return href;
+
             href = "<a target='_blank' href='" + linkData[0] + "'>" + linkData[1] + "</a>";
             return href;
+        }
+
+        function constructReactionLegend(row) {
+            const reactants = row.fields.reactants_RAW;
+            const products  = row.fields.products_RAW;
+            const modifiers = row.fields.modifiers_RAW;
+
+            let table = "<table>\n" +
+                "  <thead><tr>\n" +
+                "    <th class='text-center'>role</th>\n" +
+                "    <th>id</th>\n" +
+                "    <th>name</th>\n" +
+                "    <th class='text-center'>references</th>\n" +
+                "    </tr>\n" +
+                "  </thead>\n" +
+                "  <tbody>";
+            table += asReactionLegendRows(reactants, "Reactant", "icon-download");
+            table += asReactionLegendRows(products,  "Product", "icon-upload");
+            table += asReactionLegendRows(modifiers, "Modifier", "icon-plug");
+            table += "</tbody></table>";
+
+
+            return asDiv(table, "margin-top-small margin-bottom-small");
+        }
+
+        function createOptionalLegendCell(contents) {
+            return (contents === undefined || contents.length === 0) ? "<td></td>" : "<td>" + contents + "</td>";
+        }
+
+        // show reactants, products and modifiers as a table
+        function asReactionLegendRows(entries, type, icon) {
+            let out = "";
+            let rows = undefined;
+            if (Array.isArray(entries)) {
+                rows = entries;
+            } else {
+                rows = entries.split("£");
+            }
+            const count = rows.length;
+            if (count === 0) return out;
+
+            const typeIcon = ebiFontIcon("common", icon, 'margin-right-medium', type);
+
+            out += "<tr class='size-75'>"
+                + "<td>"
+                + '<span>' + typeIcon + type + "</span>"
+                + "</td>";
+             rows.forEach(function(row, idx, allRows) {
+                const cells = row.split("$");
+                const id = cells[0];
+                const name = cells[1];
+                const refs = formatLegendXref(cells[2]);
+                let thisRow = "<td>"
+                    + id + "</td>";
+                thisRow += createOptionalLegendCell(name);
+                thisRow += createOptionalLegendCell(refs);
+                thisRow += "</tr>";
+
+                if (idx !== count - 1) {
+                    thisRow += "<tr class='size-75'>"
+                        + "<td>"
+                        + '<span>' + typeIcon + type + "</span>"
+                        + "</td>";
+                }
+                 out += thisRow;
+            });
+            return out;
+        }
+
+        function formatLegendXref(xrefCsv) {
+            const XREF_DELIMITER = "; ";
+            const refs = xrefCsv.split(XREF_DELIMITER);
+            let result = "";
+            const count = refs.length;
+            if (0 === count) return result;
+
+            refs.forEach(function(ref, idx, ignored) {
+                if (ref !== undefined && ref.length > 0) {
+                    const refAnchor = createXrefHyperlink(ref);
+                    if (refAnchor.length > 0) {
+                        result += refAnchor;
+                        if (idx !== count - 1) {
+                            result += XREF_DELIMITER;
+                        }
+                    }
+                }
+            });
+            return result;
         }
 
         function formatReaction(data, row) {
             const reactionIcon = ebiFontIcon("common", "icon-flask", 'margin-right-medium', 'reaction (using entity IDs from the model)');
             const reaction = "<span class='green size-125'>" + row.fields.reaction_original_RAW + "</span>";
             const sbo = formatSboTerms(row.fields.reaction_sbo_term_link);
-            const resolvedReaction = row.fields.reaction;
+            const reactionLegend = constructReactionLegend(row);
             let out = asReactionRow(reactionIcon + reaction);
             out += asReactionRow(sbo);
-            const tagsIcon = ebiFontIcon("common", "icon-tags", "margin-right-medium", 'reaction (using cross reference information where applicable)');
-            out += asReactionRow(tagsIcon + resolvedReaction);
-
+            out += asReactionRow(reactionLegend);
             const rateIcon = ebiFontIcon("common", "icon-tachometer-alt", 'margin-right-medium', 'rate');
             const rate = "<span class='blue size-100'>" + row.fields.rate_original_RAW + "</span>";
             out += asReactionRow(rateIcon + rate);
@@ -172,24 +260,23 @@
             const params = "<span class='grey'>" + row.fields.parameters + "</span>";
             out += asReactionRow(paramsIcon + params);
 
-            // TODO include modifiers such as catalysts and inhibitors using icon-plug
             return asDiv(out, "box-shadow");
         }
 
         function formatPublication(href) {
             if (href === undefined || href.length === 0) {
-                return null;
+                return undefined;
             }
             var formattedData;
             if (href.includes(FIELD_SEPARATOR)) {
                 var formattedArray = [];
                 var separatedLinks = href.split(FIELD_SEPARATOR);
                 separatedLinks.forEach(function (subHref) {
-                    formattedArray.push(generatePublicationLink(subHref));
+                    formattedArray.push(createXrefHyperlink(subHref));
                 });
                 formattedData = formattedArray.join(FIELD_SEPARATOR+' ');
             } else {
-                formattedData = generatePublicationLink(href);
+                formattedData = createXrefHyperlink(href);
             }
 
             return formattedData;

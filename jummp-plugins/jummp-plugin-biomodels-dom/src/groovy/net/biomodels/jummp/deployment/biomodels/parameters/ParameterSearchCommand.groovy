@@ -18,7 +18,7 @@ class ParameterSearchCommand {
     public static final String BASE_URL_PARAMS = "fields=$EBI_SEARCH_FIELDS_CSV".toString()
     public static final String EBI_SEARCH_DEV_BASE_URL = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters"
     public static final String EBI_SEARCH_BASE_URL = "https://www.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters"
-    public static final String EBI_SEARCH_FIELDS_CSV = "entity_RAW,entity_id,initial_data_RAW,reaction_RAW,reaction_original_RAW,model,organism,publication,rate_RAW,rate_original_RAW,parameters_RAW,entity_accession_url,reaction_sbo_term_link,entity_sbo_term_link,external_links"
+    public static final String EBI_SEARCH_FIELDS_CSV = "entity_RAW,entity_id,initial_data_RAW,reaction_RAW,reaction_original_RAW,reactants_RAW,products_RAW,modifiers_RAW,model,organism,publication,rate_RAW,rate_original_RAW,parameters_RAW,entity_accession_url,reaction_sbo_term_link,entity_sbo_term_link,external_links"
     // catch queries like entity_accession_url:CHEBI:12345 or SBO:1234567, but not organism:Homo*
     private static final Pattern shouldEscapeColonPattern = ~/([a-zA-Z0-9_]+:)?([A-Z]+):(\d+)/
     // put a backslash (\) before the last colon so that Lucene doesn't treat it as a special character

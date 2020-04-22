@@ -193,7 +193,6 @@ class ParameterSearchResults {
                 parsedFields[fieldName] = values
             }
         }
-        combineReactionAndReactionOriginal(parsedFields)
         combineEnityAndEntityIdFields(parsedFields)
         combineRateAndRateOriginal(parsedFields)
         processExternalLinks(parsedFields)
