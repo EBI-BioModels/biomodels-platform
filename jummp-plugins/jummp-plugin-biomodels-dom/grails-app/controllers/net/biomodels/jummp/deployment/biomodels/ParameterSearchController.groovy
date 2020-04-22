@@ -57,6 +57,8 @@ please use the suitable request parameters and try again."""
             log.error(msg)
             return ["message": msg, "command": command]
         }
+        response.setHeader("Access-Control-Allow-Origin", "https://ebi.emblstatic.net")
+        response.setHeader("Vary", "Origin")
         render(view: "index", model: [command: command])
     }
 
