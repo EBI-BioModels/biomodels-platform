@@ -12,7 +12,7 @@
 <table data-stripe-classes="[]" id="table_id" class="display">
     <thead>
     <tr>
-    <th data-class-name="large-2 medium-2 small-2 align-top line-height-100 small">Entity</th>
+    <th data-class-name="large-2 medium-2 small-2 align-top line-height-100 small word-break">Entity</th>
     <th data-class-name="large-7 medium-7 small-7 align-top line-height-100 small">Reaction</th>
     <th data-class-name="large-3 medium-3 small-3 line-height-150 small word-break">External Links</th>
     </tr>
@@ -163,10 +163,10 @@
 
             let table = "<table>\n" +
                 "  <thead><tr>\n" +
-                "    <th class='text-center'>role</th>\n" +
-                "    <th>id</th>\n" +
-                "    <th>name</th>\n" +
-                "    <th class='text-center'>references</th>\n" +
+                "    <th class='text-center word-break'>role</th>\n" +
+                "    <th class='word-break'>id</th>\n" +
+                "    <th class='word-break'>name</th>\n" +
+                "    <th class='text-center word-break'>references</th>\n" +
                 "    </tr>\n" +
                 "  </thead>\n" +
                 "  <tbody>";
@@ -179,8 +179,18 @@
             return asDiv(table, "margin-top-small margin-bottom-small");
         }
 
-        function createOptionalLegendCell(contents) {
-            return (contents === undefined || contents.length === 0) ? "<td></td>" : "<td>" + contents + "</td>";
+        function createOptionalLegendCell(contents, classes = '') {
+            const suffix = "</td>";
+            let prefix = "<td";
+            if (classes !== undefined && classes.length > 0) {
+                prefix += " class='" + classes + "'";
+            }
+            prefix += ">";
+            let result = prefix;
+            if (contents !== undefined && contents.length !== 0) {
+                result += contents;
+            }
+            return result + suffix;
         }
 
         // show reactants, products and modifiers as a table
@@ -208,8 +218,8 @@
                 const refs = formatLegendXref(cells[2]);
                 let thisRow = "<td>"
                     + id + "</td>";
-                thisRow += createOptionalLegendCell(name);
-                thisRow += createOptionalLegendCell(refs);
+                thisRow += createOptionalLegendCell(name, "word-wrap");
+                thisRow += createOptionalLegendCell(refs, "word-wrap");
                 thisRow += "</tr>";
 
                 if (idx !== count - 1) {
