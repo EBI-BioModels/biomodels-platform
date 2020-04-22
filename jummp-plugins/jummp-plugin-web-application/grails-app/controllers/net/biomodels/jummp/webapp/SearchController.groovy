@@ -44,7 +44,6 @@ import net.biomodels.jummp.search.SearchResponse
 import net.biomodels.jummp.search.SortOrder
 import net.biomodels.jummp.webapp.rest.search.BrowseResults
 import net.biomodels.jummp.webapp.rest.search.SearchResults
-import org.weceem.security.AccessDeniedException
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Facet
 
 @Secured(['IS_AUTHENTICATED_FULLY'])
