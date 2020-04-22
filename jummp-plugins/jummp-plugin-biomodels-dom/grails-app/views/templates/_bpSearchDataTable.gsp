@@ -229,8 +229,7 @@
             output += o;
 
             if (links !== undefined && links !== "") {
-                const l = textAndEbiFontIcon(links, "common", "icon-external-systems", 'margin-right-medium', 'cross references');
-                output += l;
+                output += textAndEbiFontIcon(links, "common", "icon-external-systems", 'margin-right-medium', 'cross references');
             }
 
             return output + "</div>";
