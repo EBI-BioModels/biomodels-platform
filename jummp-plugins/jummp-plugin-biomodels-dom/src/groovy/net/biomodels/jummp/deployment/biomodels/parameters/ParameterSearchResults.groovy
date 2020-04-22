@@ -88,36 +88,23 @@ class ParameterSearchResults {
     }
 
 
-        if (parsedFields['reaction'] == null ||
-            parsedFields['reaction'] instanceof JSONArray &&
-            parsedFields['reaction'].size()==0  ||
-            parsedFields['reaction_original_RAW'] == null) {
-
-            parsedFields['reaction_show'] = ""
-        }else{
-            parsedFields['reaction_show'] = buildShowString(parsedFields['reaction_original_RAW'].toString(), parsedFields['reaction'].toString())
-        }
+    private static boolean haveNoField(parsedFields, String fieldName, String fallbackFieldName) {
+        parsedFields[fieldName] == null ||
+            parsedFields[fieldName] instanceof JSONArray &&
+            parsedFields[fieldName].size() == 0 ||
+            parsedFields[fallbackFieldName] == null
+    }
 
     private static combineEnityAndEntityIdFields(def parsedFields) {
-
-        if (parsedFields['entity_accession_url'] == null ||
-            parsedFields['entity_accession_url'] instanceof JSONArray &&
-            parsedFields['entity_accession_url'].size()==0  ||
-            parsedFields['entity_id'] == null) {
-
-            parsedFields['entity_show'] = buildShowString(parsedFields['entity_id'].toString(),"")
-        }else{
+        if (haveNoField(parsedFields, 'entity_accession_url', 'entity_id')) {
+            parsedFields['entity_show'] = buildShowString(parsedFields['entity_id'].toString(), "")
+        } else {
             parsedFields['entity_show'] = buildShowString(parsedFields['entity_id'].toString(), parsedFields['entity_accession_url'].toString())
         }
     }
 
     private static combineRateAndRateOriginal(def parsedFields) {
-
-        if (parsedFields['rate'] == null ||
-            parsedFields['rate'] instanceof JSONArray &&
-            parsedFields['rate'].size()==0  ||
-            parsedFields['rate_original_RAW'] == null) {
-
+        if (haveNoField(parsedFields, 'rate', 'rate_original_RAW')) {
             parsedFields['rate_show'] = ""
         } else {
             parsedFields['rate_show'] = buildShowString(parsedFields['rate_original_RAW'].toString(), parsedFields['rate'].toString())
