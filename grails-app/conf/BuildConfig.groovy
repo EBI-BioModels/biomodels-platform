@@ -159,7 +159,12 @@ grails.project.dependency.resolution = {
             excludes 'spring-context','spring-core','spring-test', 'jena', 'slf4j-log4j12'
         }
         compile "com.rometools:rome:1.11.1"
-        compile "redis.clients:jedis:3.2.0"
+        /* Jedis and spring-data-redis clash in Grails2,
+           though not Grails 3 https://stackoverflow.com/a/30776364 */
+        compile("org.springframework.data:spring-data-redis:1.8.10.RELEASE") {
+            excludes("spring-context", "spring-context-support", "spring-aop")
+        }
+        compile "redis.clients:jedis:2.9.0"
     }
 
     plugins {
@@ -183,6 +188,9 @@ grails.project.dependency.resolution = {
         //compile ":svn:1.0.2"
         compile ":locale-variant:0.1"
         compile ":webflow:2.1.0"
+        compile (":spring-session:1.2") {
+            excludes "spring-data-redis"
+        }
 
         runtime (":weceem:1.4") {
             /* feeds plugin clashes with rome api rendering Model of The Month RSS feed */
