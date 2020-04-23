@@ -44,7 +44,7 @@ class HomePageController {
         String latestMomEntry = createLink(controller: "homePage", action: "updateMoMEntryOnRedisCache")
         Map links = [:]
         links.put("hpStatisticsDataForFeatures", hpStatisticsDataForFeatures)
-        links.put("hpStatisticsForCharts", hpStatisticsDataForCharts)
+        links.put("hpStatisticsDataForCharts", hpStatisticsDataForCharts)
         links.put("hpStatisticsCurationState", hpStatisticsCurationState)
         links.put("hpStatisticsModellingApproaches", hpStatisticsModellingApproaches)
         links.put("hpStatisticsOrganisms", hpStatisticsOrganisms)

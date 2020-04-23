@@ -180,7 +180,7 @@ ORDER BY model.firstPublished DESC'''
         Jedis jedis = null
         try {
             jedis = pool.getResource()
-            jedis.hset("hp-recently-accessed-models", mapModels)
+            jedis.hmset("hp-recently-accessed-models", mapModels)
         } finally {
             if (jedis) { jedis.close() }
         }
@@ -203,10 +203,10 @@ ORDER BY model.firstPublished DESC'''
                 Map value = ["id": m.id, "title": m.title, "submitter": m.submitter,
                              "lastPublished": m.lastPublished, "pubTitle": m.pubTitle,
                              "pubJournal": m.pubJournal, "pubYear": m.pubYear]
-                jedis.hset("$key-${m.id}" as String, value)
+                jedis.hmset("$key-${m.id}" as String, value)
                 models.put(m.id, m.title)
             }
-            jedis.hset(key, models)
+            jedis.hmset(key, models)
         } finally {
             if (jedis) { jedis.close() }
         }
@@ -467,7 +467,7 @@ GROUP BY p.journal
                                 REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
         pool.getResource().withCloseable { Jedis jedis ->
             deleteAllByPattern(jedis, key)
-            jedis.hset(key, data)
+            jedis.hmset(key, data)
         }
         pool.close()
     }
@@ -659,7 +659,6 @@ GROUP BY p.journal
         Long total = doRedisHGet(HP_STAT_TOTAL_FIGURE, "total-parameters-entries") as Long
         if (!total) {
             // call the fall back
-            println "falled back here"
             total = retrieveTotalParametersEntriesFromEBISearchServer()
         }
         total
@@ -722,7 +721,6 @@ GROUP BY p.journal
     private long retrieveTotalParametersEntriesFromEBISearchServer() {
         String query = "biomodels_parameters?query=is_curated:false&size=1&fields=id&format=json"
         def response = hitRemoteService(EBI_SEARCH_URL, query)
-        println response.dump()
         return response.json.hitCount as long
     }
 
