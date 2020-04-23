@@ -195,7 +195,6 @@ grails.project.dependency.resolution = {
         runtime ":jquery-datatables:1.7.5"
         runtime ":jquery-ui:1.10.4"
         runtime ":console:1.5.8"
-        runtime ":spring-session:1.2"
     }
 }
 
