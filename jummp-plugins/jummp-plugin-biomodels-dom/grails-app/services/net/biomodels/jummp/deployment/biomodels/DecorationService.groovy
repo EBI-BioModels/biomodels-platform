@@ -468,7 +468,6 @@ GROUP BY p.journal
         pool.getResource().withCloseable { Jedis jedis ->
             deleteAllByPattern(jedis, key)
             jedis.hset(key, data)
-            jedis.close()
         }
         pool.close()
     }
@@ -479,7 +478,6 @@ GROUP BY p.journal
         String cachedData
         pool.getResource().withCloseable { Jedis jedis ->
             cachedData = jedis.hget(key, field)
-            jedis.close()
         }
         pool.close()
         cachedData
