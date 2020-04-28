@@ -175,7 +175,6 @@
             table += asReactionLegendRows(modifiers, "Modifier", "icon-plug");
             table += "</tbody></table>";
 
-
             return asDiv(table, "margin-top-small margin-bottom-small");
         }
 
@@ -196,12 +195,11 @@
             if (count === 0) return out;
 
             const typeIcon = ebiFontIcon("common", icon, 'margin-right-medium', type);
-
             out += "<tr class='size-75'>"
                 + "<td>"
                 + '<span>' + typeIcon + type + "</span>"
                 + "</td>";
-             rows.forEach(function(row, idx, allRows) {
+            rows.forEach(function (row, idx, allRows) {
                 const cells = row.split("$");
                 const id = cells[0];
                 const name = cells[1];
@@ -218,7 +216,7 @@
                         + '<span>' + typeIcon + type + "</span>"
                         + "</td>";
                 }
-                 out += thisRow;
+                out += thisRow;
             });
             return out;
         }
@@ -325,12 +323,13 @@
         }
 
         // Function called for showing the data pagination stats
-        function infoCallback(settings, start, end, max, total, pre) {
+        function infoCallback(settings, start, end, max, total) {
+            let text = "Showing ";
             return (!isNaN(total))
-                ? "Showing " + start + " to " + end
+                ? text + start + " to " + end
                 + " of " + total + " entries"
                 + ((total !== max) ? " (filtered from " + max + " total entries)" : "")
-                : "Showing " + start + " to " + (start + this.api().data().length - 1) + " entries";
+                : text + start + " to " + (start + this.api().data().length - 1) + " entries";
         }
 
         // Function to update table as per the state
@@ -360,7 +359,7 @@
                     self = $("#table_id").dataTable().api(),
                     $downloadButton = $('<button id="downloadButton" class="button">')
                         .text(DOWNLOAD_LABEL)
-                        .click(function () {
+                        .click(function (message) {
                             if(pageState.dataTable.hasOwnProperty("query") &&
                                 pageState.dataTable.query !== "") {
                                 var buttonSelector = $("#downloadButton");
@@ -370,7 +369,7 @@
                                 try {
                                     downloadFile(pageState.dataTable.query, pageState.dataTable.is_curated);
                                 } catch (e) {
-                                    alert("Something went wrong. Please try again later: ", e);
+                                    alert("Something went wrong. Please try again later: " + e);
                                 }
                                 buttonSelector
                                     .text(DOWNLOAD_LABEL)
@@ -463,7 +462,7 @@
                 }
             });
 
-        // Function to preapare sort parameters
+        // Function to prepare sort parameters
         function prepareSortParams(dataTableArg, sort) {
             $("#errors").empty();
             if (sort === undefined || sort === "" || sort === null) {
@@ -518,12 +517,12 @@
                 size = dataTableArg.length;
             }
 
-            // Setting radioboxes
+            // Setting radio boxes
             if (is_curated===undefined) {
                 is_curated = $('input[name="curation"]:checked')[0].value === "curated";
             } else if(is_curated === true) {
                 $("#curated_id").prop("checked",true);
-            }else if (is_curated === false) {
+            } else if (is_curated === false) {
                 $("#non_curated_id").prop("checked",true);
             }
 

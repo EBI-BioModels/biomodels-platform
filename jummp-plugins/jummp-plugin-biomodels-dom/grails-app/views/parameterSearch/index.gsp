@@ -1,6 +1,6 @@
 <%@ page import="grails.util.Environment" %>
 <%--
- Copyright (C) 2018 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ Copyright (C) 2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
  Deutsches Krebsforschungszentrum (DKFZ)
 
  This file is part of Jummp.
