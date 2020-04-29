@@ -69,7 +69,19 @@
     legend.append("text")
         .text(function(d){return d[0];})
         .attr('x', legendSize + legendSpacing)
-        .attr('y', legendSize - legendSpacing + 6); // 2 -- remove 6
+        .attr('y', legendSize - legendSpacing + 6); // 2 -- remove
+
+    gs.append("text")
+        .attr("transform", function (d) {
+            return "translate(" + arc.centroid(d) + ")";
+        })
+        .attr("text-anchor", "middle")
+        .attr("fill", "white")
+        .attr("font-family", "sans-serif")
+        .style("font-size", "1.5em")
+        .text(function (d) {
+            return d.data[1];
+        });
 
     // add  tooltip to paths
     var tooltip = d3.select("#curationStateChart").append("div").attr("class","tooltip");

@@ -60,10 +60,12 @@
         .attr("transform", function (d) {
             return "translate(" + labelArc.centroid(d) + ")";
         })
-        .attr("dy", ".35em")
+        .attr("text-anchor", "middle")
+        .attr("fill", "white")
+        .style("font-size", "1.5em")
         .text(function (d) {
-        return d.data["count"];
-    });
+            return d.data["count"];
+        });
 
     var tooltip2 = d3.select("div#modellingApproachesChart")
         .append("div")
