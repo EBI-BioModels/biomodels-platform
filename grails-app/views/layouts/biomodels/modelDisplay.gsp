@@ -853,7 +853,8 @@
                     <g:pageProperty name="page.modelspecifictabscontent" />
                     <g:if test="${curationNotes != null || hasCuratorRole}">
                         <biomd:renderCurationNotesTab curationNotes="${curationNotes}"
-                                                      model="${revision.model}" modelName="${revision.name}"
+                                                      model="${revision.modelIdentifier()}"
+                                                      modelName="${revision.name}"
                                                       hasCuratorRole="${hasCuratorRole}"/>
                     </g:if>
                 </div>

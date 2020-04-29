@@ -81,7 +81,10 @@ class BioModelsTagLib {
      * Rendering CurationNotes tab for the curated models
      */
     def renderCurationNotesTab = { attrs ->
+        println "All properties of curation notes: ${attrs.dump()}"
         out << "<div id='Curation' class='row'>"
+        def modelId =  attrs.model
+        Map requiredParams = ["model": modelId]
         if (attrs.curationNotes != null) {
             SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy, HH:mm:ss");
             def base64CurationNotes = attrs.curationNotes?.collect { CurationNotesTransportCommand cmd ->
@@ -95,6 +98,7 @@ class BioModelsTagLib {
                     curationImage: cmd.curationImage ? Base64.encoder.encodeToString(cmd.curationImage) : null
                 ]
             }
+            requiredParams.put("cnId", attrs.curationNotes.id)
             // use class 'row' specifically designed by EBI Visual Framework to gain responsive design performance
             out << render(collection: base64CurationNotes, template: '/templates/curationNotes',
                     plugin: 'jummp-plugin-biomodels-dom', var: 'curaRec')
@@ -102,12 +106,6 @@ class BioModelsTagLib {
             out << "<h3>The simulation result for this model is not present</h3>"
         }
         boolean hasCuratorRole = attrs.hasCuratorRole
-        boolean havePublicationId = attrs.model?.publicationId != null
-        def model =  havePublicationId ? attrs.model.publicationId : attrs.model.submissionId
-        Map requiredParams = ["model": model]
-        if (attrs.curationNotes) {
-            requiredParams.put("cnId", attrs.curationNotes.id)
-        }
         if (hasCuratorRole) {
             def btnLabel = attrs.curationNotes ? "Edit" : "Add"
             def actionName = "show"
