@@ -1,5 +1,6 @@
+<%@ page import="grails.util.Environment" %>
 <%--
- Copyright (C) 2018 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ Copyright (C) 2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
  Deutsches Krebsforschungszentrum (DKFZ)
 
  This file is part of Jummp.
@@ -20,13 +21,12 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="${session['branding.style']}/main"/>
-
-    <title>BioModels Parameters | BioModels</title>
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/pretty-checkbox@3.0/dist/pretty-checkbox.min.css"/>
-    <link rel="stylesheet"
-          href="${resource(dir: 'css', file: 'toastr.min.css',
-              contextPath: "${grailsApplication.config.grails.serverURL}")}"/>
+    <g:if test="${Environment.current == Environment.DEVELOPMENT}">
+        %{-- preempt DNS lookup so that it doesn't block the loading of EBI Visual Framework assets on local dev --}%
+        <link rel="dns-prefetch" href="https://www.ebi.ac.uk/" />
+    </g:if>
+    <link rel="dns-prefetch" href="https://ebi.emblstatic.net" />
+    <title>${command.isDefaultQuery() ? '' : "${command.query} | "}BioModels Parameters</title>
     <link rel="stylesheet"
           href="${resource(dir: 'css/', file: 'jquery.dataTables.min.css',
               contextPath: "${grailsApplication.config.grails.serverURL}")}"
@@ -34,19 +34,10 @@
     <link rel="stylesheet"
           href="${resource(dir: 'css/datatable', file: 'buttons.dataTables.min.css',
               contextPath: "${grailsApplication.config.grails.serverURL}")}"
-          type="text/css">
+          type="text/css"/>
+
     <link rel="stylesheet"
-          href="${resource(dir: 'css/datatable', file: 'select.dataTables.min.css',
-              contextPath: "${grailsApplication.config.grails.serverURL}")}"
-          type="text/css">
-    <link rel="stylesheet"
-          href="${resource(dir: 'css', file: 'easy-autocomplete.min.css')}"
-          type="text/css">
-    <link rel="stylesheet"
-          href="${resource(dir: 'css', file: 'common.css')}"
-          type="text/css">
-    <link rel="stylesheet"
-          href="${resource(dir: 'css', file: 'easy-autocomplete.themes.min.css')}"
+          href="${resource(dir: 'css', file: 'biomodels-parameters.css')}"
           type="text/css">
 </head>
 

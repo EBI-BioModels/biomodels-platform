@@ -34,7 +34,7 @@
     <!-- EBML-EBI menu items will be rendered by the script in script.js -->
 </header>
 
-<div id="content" data-sticky-container="" lass="sticky-container">
+<div id="content" data-sticky-container="" class="sticky-container">
     <!-- Suggested layout containers -->
     <header id="masthead" class="masthead sticky is-anchored is-at-top" data-sticky="42dzxn-sticky"
             data-sticky-on="large" data-top-anchor="content:top" data-btm-anchor="content:bottom"
