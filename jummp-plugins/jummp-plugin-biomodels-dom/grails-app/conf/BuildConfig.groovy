@@ -38,13 +38,19 @@ grails.project.dependency.resolution = {
         // specify dependencies here under either 'build', 'compile', 'runtime', 'test' or 'provided' scopes eg.
         // runtime 'mysql:mysql-connector-java:5.1.27'
         compile "com.rometools:rome:1.11.1"
+        /* Jedis and spring-data-redis clash in Grails2,
+           though not Grails 3 https://stackoverflow.com/a/30776364 */
+        compile("org.springframework.data:spring-data-redis:1.8.10.RELEASE") {
+            excludes("spring-context", "spring-context-support", "spring-aop")
+        }
+        compile "redis.clients:jedis:2.9.0"
     }
 
     plugins {
-        build(":release:3.0.1",
-              ":rest-client-builder:1.0.3") {
+        build(":release:3.0.1") {
             export = false
         }
+        compile":rest-client-builder:2.1.1"
         compile ":cache:1.1.8"
         compile ":cache-ehcache:1.0.5"
     }

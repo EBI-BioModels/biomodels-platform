@@ -347,7 +347,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
             throws ModelException {
         Revision theRevision = Revision.get(revision.id)
         List<RepositoryFileTransportCommand> files = modelService.retrieveModelFiles(theRevision)
-        if (files && !files.isEmpty()) {
+        if (!files?.isEmpty()) {
             files.each { it.revision = revision }
             /*
              * Add revision to the weak reference data structures, so its files are released

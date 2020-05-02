@@ -165,11 +165,15 @@ class VcsService implements InitializingBean {
             }
         }
         final File MODEL_FOLDER = new File(modelContainerRoot, revision.model.vcsIdentifier)
-        if (revision.revisionNumber == latestRevId) {
-            return vcsManager.retrieveModel(MODEL_FOLDER)
+        String requestedRevision = revision.revisionNumber == latestRevId ? null : revision.vcsId
+        List<File> files = new ArrayList<>()
+        try {
+            files = vcsManager.retrieveModel(MODEL_FOLDER, requestedRevision)
+        } catch (VcsException e) {
+            log.debug(e.message)
+            files = null
         }
-
-        return vcsManager.retrieveModel(MODEL_FOLDER, revision.vcsId)
+        files
     }
 
     public List<VcsFileDetails> getFileDetails(final Revision revision, String path)

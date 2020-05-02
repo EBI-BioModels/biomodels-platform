@@ -1,3 +1,9 @@
+body {
+    /* set these styles to sure charts fitted in the fixed viewport */
+    min-width: 560px;        /* Suppose you want minimum width of 560px */
+    width: auto !important;  /* Firefox will set width as auto */
+    width: 560px;            /* As IE6 ignores !important it will set width as 560px; */
+}
 #mainframe {
 	position: relative;
 }

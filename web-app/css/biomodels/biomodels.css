@@ -475,3 +475,14 @@ a.external:hover, a.external:active {
     font-weight: bold;
     color: rgb(0,124,130)
 }
+
+.pubauthors {
+    font-size: 100%;
+}
+.pubtitle {
+    font-weight: bold;
+}
+
+.pubjournal {
+    font-style: italic;
+}
