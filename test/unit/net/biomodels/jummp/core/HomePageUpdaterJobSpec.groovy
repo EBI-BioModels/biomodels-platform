@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -16,18 +16,26 @@
  *
  * You should have received a copy of the GNU Affero General Public License along
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
- **/
+ */
 
-package net.biomodels.jummp.webapp.rest.search
+package net.biomodels.jummp.core
 
-class Results {
-    RequestParameters queryParameters
-    List<ModelSummary> models = []
+import grails.test.mixin.TestMixin
+import grails.test.mixin.support.GrailsUnitTestMixin
+import spock.lang.Specification
 
-    Results(def results) {
-        results.models.each {
-            models.add(new net.biomodels.jummp.webapp.rest.search.ModelSummary(it))
-        }
-        queryParameters = new RequestParameters(results)
+/**
+ * See the API for {@link grails.test.mixin.support.GrailsUnitTestMixin} for usage instructions
+ */
+@TestMixin(GrailsUnitTestMixin)
+class HomePageUpdaterJobSpec extends Specification {
+
+    def setup() {
+    }
+
+    def cleanup() {
+    }
+
+    void "test something"() {
     }
 }

@@ -797,10 +797,7 @@
                         </div>
                     </div>
                     <div id="Files" class="row">
-                        <%
-                            Map model = [:]
-                            model["repoFiles"] = repoFiles
-                        %>
+                        <% Map model = ["repoFiles": repoFiles] %>
                         <g:render template="/templates/biomodels/modelDisplay/tabFiles"
                                   model="${model}" />
                     </div>
@@ -856,7 +853,8 @@
                     <g:pageProperty name="page.modelspecifictabscontent" />
                     <g:if test="${curationNotes != null || hasCuratorRole}">
                         <biomd:renderCurationNotesTab curationNotes="${curationNotes}"
-                                                      model="${revision.model}" modelName="${revision.name}"
+                                                      model="${revision.modelIdentifier()}"
+                                                      modelName="${revision.name}"
                                                       hasCuratorRole="${hasCuratorRole}"/>
                     </g:if>
                 </div>

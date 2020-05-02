@@ -384,7 +384,7 @@ WHERE
     /**
     * Convenient method for sorting by the id column.
     *
-    * @return List of Models sorted ascending
+    * @return List of {@link Model}s sorted ascending
     * @see ModelService#getAllModels(int offset, int count, boolean sortOrder)
     **/
     @PostLogging(LoggingEventType.RETRIEVAL)

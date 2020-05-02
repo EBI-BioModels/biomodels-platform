@@ -74,9 +74,6 @@ relevant mechanistic models in standard formats."/>
 <link rel="stylesheet" type="text/css"
       href="//ebi.emblstatic.net/web_guidelines/EBI-Icon-fonts/v1.3/fonts.css"
       media="none" onload="if(media!=='all') media='all'">
-<link rel="stylesheet" type="text/css"
-      href="//ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/css/theme-embl-petrol.css"
-      media="none" onload="if(media!=='all') media='all'">
 
 <!-- you can replace this with [projectname]-colours.css. See http://frontier.ebi.ac.uk/web/style/colour
 for details of how to do this -->

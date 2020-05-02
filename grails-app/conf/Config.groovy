@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -303,7 +303,8 @@ log4j.main = {
         'net.biomodels.jummp.core.model.identifier.generator',
         'net.biomodels.jummp.core.model.identifier.support',
         'net.biomodels.jummp.plugins.pharmml',
-        'net.biomodels.jummp.search'
+        'net.biomodels.jummp.search',
+        'net.biomodels.jummp.deployment.biomodels'
     ], additivity: false
     warn hibernateAppender: [
         'org.codehaus.groovy.grails.orm.hibernate',
@@ -825,11 +826,28 @@ elasticSearch.maxBulkRequest = 10
 def dateFormats = ["yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd HH:mm:ss", 'MMddyyyy', 'yyyy-MM-dd HH:mm:ss.S', "yyyy-MM-dd'T'hh:mm:ss'Z'" ]
 grails.databinding.dateFormats = dateFormats
 
-// settings for spring-session
-if (Environment.isDevelopmentMode()) {
-    springsession.redis.connectionFactory.hostName = "localhost"
+/**
+ * Below are settings for Redis server
+ */
+// TODO: rewrite the validation to Redis properties. If there is any mismatch, throw an exception
+// because this setting is crucial to start the application properly
+if (!(jummpConfig.jummp.redis.host instanceof ConfigObject)) {
+    jummp.redis.host = jummpConfig.jummp.redis.host
 } else {
-    // this value should be complied with the service name of Redis on K8S
-    // TODO: externalise this value
-    springsession.redis.connectionFactory.hostName = "redis-master"
+    jummp.redis.host = "localhost"
 }
+
+if (!(jummpConfig.jummp.redis.port instanceof ConfigObject)) {
+    jummp.redis.port = jummpConfig.jummp.redis.port as int
+} else {
+    jummp.redis.port = 6379 // the default port
+}
+
+if (!(jummpConfig.jummp.redis.timeout instanceof ConfigObject)) {
+    jummp.redis.timeout = jummpConfig.jummp.redis.timeout as int
+} else {
+    jummp.redis.timeout = 3600 // the default timeout
+}
+springsession.redis.connectionFactory.hostName = jummp.redis.host
+springsession.redis.connectionFactory.port = jummp.redis.port
+springsession.redis.connectionFactory.timeout = jummp.redis.timeout
