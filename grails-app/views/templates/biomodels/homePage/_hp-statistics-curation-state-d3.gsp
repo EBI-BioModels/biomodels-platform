@@ -58,7 +58,7 @@
         .attr("transform",function(d,i){
             var legendH = color.domain().length*(legendSize+legendSpacing);//total height of legends
             var legendY = i*(legendSize+legendSpacing) - legendH/2;//
-            var legendX = -(legendSize + 60); // add 60 to move legend left
+            var legendX = -(legendSize + 90); // add 60 to move legend left
             return "translate("+legendX+","+legendY+")";
         });
     legend.append("rect")
@@ -92,11 +92,11 @@
     var totalModels = d3.sum(dataset, d => d[1]);
     paths.on("mouseover", function(d) {
         // var total = d3.sum(dataset, d => d[1]);
-        var percent = Math.round(1000 * d.data[1] / totalModels) / 10;
+        /*var percent = Math.round(1000 * d.data[1] / totalModels) / 10;
         tooltip.select(".name").html(d.data[0]);
         tooltip.select(".count").html(d.data[1]);
         tooltip.select(".percentage").html(percent + '%');
-        tooltip.style("display", "block");
+        tooltip.style("display", "block");*/
         $('#item-on-focus').html(d.data[0] + ": " + d.data[1] + " models");
     });
     paths.on("mouseout", function(d){

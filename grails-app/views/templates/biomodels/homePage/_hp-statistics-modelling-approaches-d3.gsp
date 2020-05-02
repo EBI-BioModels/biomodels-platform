@@ -47,14 +47,35 @@
         .data(pie(data))
         .enter()
         .append("g")
-        .attr("class", "arc")
-        .attr("class", "biggerText");
+        .attr("class", "arc");
 
     var path = g.append("path")
         .attr("d", arc)
         .style("fill", function (d) {
             return color(d.data["label"]);
         });
+
+    var legendSize = 15;
+    var legendSpacing = 8; // 2
+    var legend = svg.selectAll(".legend")
+        .data(color.domain())
+        .enter()
+        .append("g")
+        .attr("transform",function(d,i){
+            var legendH = color.domain().length*(legendSize+legendSpacing);//total height of legends
+            var legendY = i*(legendSize+legendSpacing) - legendH/2;//
+            var legendX = -(legendSize + 90); // add 60 to move legend left
+            return "translate("+legendX+","+legendY+")";
+        });
+    legend.append("rect")
+        .attr("width",legendSize)
+        .attr("height",legendSize)
+        .attr("fill",color)
+        .attr("stroke",color);
+    legend.append("text")
+        .text(function(d){console.log(d); return d;})
+        .attr('x', legendSize + legendSpacing)
+        .attr('y', legendSize - legendSpacing + 6); // 2 -- remove
 
     g.append("text")
         .attr("transform", function (d) {
