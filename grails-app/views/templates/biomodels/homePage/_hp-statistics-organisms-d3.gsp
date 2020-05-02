@@ -71,6 +71,12 @@
         var queryURL = prefixSearchURL + taxonomy;
         window.open(queryURL, '_blank');
     });
+    node.on("mouseout", function(d) {
+        var label = d["data"]["Name"];
+        var value = d["data"]["Count"];
+        var taxonomy = d["data"]["Taxonomy"];
+        $('#item-on-focus').html(label + ": " + value + " models");
+    });
 
 </g:javascript>
 

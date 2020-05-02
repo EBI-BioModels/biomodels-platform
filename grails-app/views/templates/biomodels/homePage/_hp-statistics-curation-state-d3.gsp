@@ -97,6 +97,7 @@
         tooltip.select(".count").html(d.data[1]);
         tooltip.select(".percentage").html(percent + '%');
         tooltip.style("display", "block");
+        $('#item-on-focus').html(d.data[0] + ": " + d.data[1] + " models");
     });
     paths.on("mouseout", function(d){
         tooltip.style("display", "none");

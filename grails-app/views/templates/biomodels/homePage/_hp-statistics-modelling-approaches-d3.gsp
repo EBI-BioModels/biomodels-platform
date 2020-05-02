@@ -76,6 +76,7 @@
         tooltip2.select(".label").html(d.data["label"]);
         tooltip2.select(".count").html(d.data["count"]);
         tooltip2.style("display", "block");
+        $('#item-on-focus').html(d.data["label"] + ": " + d.data["count"] + " models");
     });
     path.on("mouseout", function(d) {
         tooltip2.style("display", "none");

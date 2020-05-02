@@ -105,7 +105,8 @@
 <div id="item" class="large-6 medium-12 small-12 columns chart-placeholder">
     <div id="slide-introduction">
         <div class="homepage_info_box"><h3 id="slide-title"></h3></div>
-        <p id="slide-description"></p>
+        <p><span id="slide-description"></span><br/>
+            <span id="item-on-focus" style="font-weight: bold"></span></p>
     </div>
     <div class="orbit" role="region" aria-label="Favorite Statistics" data-orbit
          data-options="autoPlay:true; animInFromLeft:fade-in; animInFromRight:fade-in; animOutToLeft:fade-out; animOutToRight:fade-out;">

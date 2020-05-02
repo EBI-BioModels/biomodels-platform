@@ -113,6 +113,9 @@
                 .style('font-size', 10)
                 .text(d => d.name + '(' + d.value + ')');
 
+            elements.on("mouseout", function(d) {
+                $('#item-on-focus').html(d.name + ": " + d.value + " models");
+            });
             // set simulation's nodes to our newly created nodes array
             // simulation starts running automatically once nodes are set
             simulation.nodes(nodes)
