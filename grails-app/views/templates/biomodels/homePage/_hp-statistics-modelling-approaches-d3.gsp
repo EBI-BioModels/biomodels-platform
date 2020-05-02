@@ -73,7 +73,7 @@
         .attr("fill",color)
         .attr("stroke",color);
     legend.append("text")
-        .text(function(d){console.log(d); return d;})
+        .text(function(d){return d;})
         .attr('x', legendSize + legendSpacing)
         .attr('y', legendSize - legendSpacing + 6); // 2 -- remove
 

@@ -10,8 +10,7 @@ import org.springframework.web.util.JavaScriptUtils
  * @author carankalle on 31/10/2018.
  */
 class ParameterSearchResults {
-    static
-    final Logger logger = LoggerFactory.getLogger(ParameterSearchResults.class)
+    static final Logger logger = LoggerFactory.getLogger(ParameterSearchResults.class)
     static final String fieldSeparator = ';'
     int recordsTotal
     int recordsFiltered
@@ -20,7 +19,7 @@ class ParameterSearchResults {
     static ParameterSearchResults fromJson(JSONElement json) {
         Objects.requireNonNull(json)
         int hitCount = json.hitCount
-        if(hitCount == 0) {
+        if (hitCount == 0) {
             return new ParameterSearchResults(recordsFiltered: hitCount, recordsTotal: hitCount,
                 entries: [])
         }
@@ -46,21 +45,20 @@ class ParameterSearchResults {
                     links.add(subvalue)
                 }
             }
-            return links.join(fieldSeparator+" ")
+            return links.join(fieldSeparator + " ")
         } else {
             return value
         }
     }
 
     private static processExternalLinks(def parsedFields) {
-
         final String sabioRKPrefix = "http://sabiork.h-its.org/newSearch?q="
         final String reactomePrefix = "https://reactome.org/content/query?q="
         List<String> displayLinks = new ArrayList<>()
         if (parsedFields['external_links'] != null && parsedFields['external_links'].size() > 0) {
             String[] links = parsedFields['external_links'].toString().split(fieldSeparator)
             links.each { value ->
-                String finalLink = "";
+                String finalLink = ""
                 String suffixValue = value
                 String[] suffixValues = value.split(':')
 
@@ -72,118 +70,98 @@ class ParameterSearchResults {
 
                 if (value.contains("reactome")) {
                     finalLink = reactomePrefix + suffixValue
-                } else if(value.contains("sabiork")) {
+                } else if (value.contains("sabiork")) {
                     finalLink = sabioRKPrefix + suffixValue
                 }
 
-                if(finalLink != "") {
+                if (finalLink != "") {
                     displayLinks.add("<a href=\"${finalLink}\" target=\"_blank\">${value}</a>")
                 }
             }
 
         }
         if (displayLinks.size() > 0) {
-            parsedFields['external_links_show'] = displayLinks.join(fieldSeparator+" ")
+            parsedFields['external_links_show'] = displayLinks.join(fieldSeparator + " ")
         } else {
             parsedFields['external_links_show'] = ""
-
         }
-
     }
 
-    private static combineReactionAndReactionOriginal(def parsedFields) {
 
-
-        if (parsedFields['reaction'] == null ||
-            parsedFields['reaction'] instanceof JSONArray &&
-            parsedFields['reaction'].size()==0  ||
-            parsedFields['reaction_original_RAW'] == null) {
-
-            parsedFields['reaction_show'] = ""
-        }else{
-            parsedFields['reaction_show'] = buildShowString(parsedFields['reaction_original_RAW'].toString(), parsedFields['reaction'].toString())
-        }
-
+    private static boolean haveNoField(parsedFields, String fieldName, String fallbackFieldName) {
+        parsedFields[fieldName] == null ||
+            parsedFields[fieldName] instanceof JSONArray &&
+            parsedFields[fieldName].size() == 0 ||
+            parsedFields[fallbackFieldName] == null
     }
+
     private static combineEnityAndEntityIdFields(def parsedFields) {
-
-        if (parsedFields['entity_accession_url'] == null ||
-            parsedFields['entity_accession_url'] instanceof JSONArray &&
-            parsedFields['entity_accession_url'].size()==0  ||
-            parsedFields['entity_id'] == null) {
-
-            parsedFields['entity_show'] = buildShowString(parsedFields['entity_id'].toString(),"")
-        }else{
+        if (haveNoField(parsedFields, 'entity_accession_url', 'entity_id')) {
+            parsedFields['entity_show'] = buildShowString(parsedFields['entity_id'].toString(), "")
+        } else {
             parsedFields['entity_show'] = buildShowString(parsedFields['entity_id'].toString(), parsedFields['entity_accession_url'].toString())
         }
     }
 
     private static combineRateAndRateOriginal(def parsedFields) {
-
-        if (parsedFields['rate'] == null ||
-            parsedFields['rate'] instanceof JSONArray &&
-            parsedFields['rate'].size()==0  ||
-            parsedFields['rate_original_RAW'] == null) {
-
+        if (haveNoField(parsedFields, 'rate', 'rate_original_RAW')) {
             parsedFields['rate_show'] = ""
-        }else{
+        } else {
             parsedFields['rate_show'] = buildShowString(parsedFields['rate_original_RAW'].toString(), parsedFields['rate'].toString())
         }
-
     }
 
     private static buildShowString(String authorGivenValues, String resolvedValues) {
         if ("" != resolvedValues) {
             return "<span class='legend-green'>" + authorGivenValues + "</span><br/><br/>" + resolvedValues
-        }else{
+        } else {
             return "<span class='legend-green'>" + authorGivenValues + "</span>"
         }
     }
-    private static isLink(String fieldName) {
 
+    private static isLink(String fieldName) {
         return (fieldName.equalsIgnoreCase("entity_accession_url")
             || fieldName.equalsIgnoreCase("reaction_sbo_term_link")
             || fieldName.equalsIgnoreCase("entity_sbo_term_link"))
-
     }
 
     private static String prepareHrefAndLabel(String href) {
         href = href.replaceAll("\\\\", "")
-        int lastIndexofUrlPrefix = "http://identifiers.org/".lastIndexOf("/") + 1;
-        String urlSuffix = href.substring(lastIndexofUrlPrefix, href.length())
+        int lastIndexOfUrlPrefix = "http://identifiers.org/".lastIndexOf("/") + 1
+        String urlSuffix = href.substring(lastIndexOfUrlPrefix, href.length())
         int firstIndexOfUrlSuffix = urlSuffix.indexOf("/") + 1
         href = href + "|" + urlSuffix.substring(firstIndexOfUrlSuffix, urlSuffix.length())
         return href
     }
 
     private static String escapeHtmlFieldValue(String fieldName, String fieldValue) {
-
         if (fieldValue == null && fieldValue?.length() == 0) {
             return ""
         }
-        if(fieldName == "initial_data_RAW" || fieldName == "parameters" ) {
+        if (fieldName == "initial_data_RAW" || fieldName == "parameters") {
             JavaScriptUtils.javaScriptEscape(fieldValue)
         }
         return fieldValue
     }
+
     private static String generatePublicationLink(String fieldName, String fieldValue) {
         if (fieldValue == null && fieldValue?.length() == 0) {
             return ""
         }
         String formattedData
-        if(fieldName == "publication") {
+        if (fieldName == "publication") {
             if (fieldValue.contains(fieldSeparator)) {
                 List<String> formattedList = new ArrayList<>()
                 String[] commaSeparatedLinks = fieldValue.split(fieldSeparator)
                 commaSeparatedLinks.each { value ->
-                    formattedList.add(prepareHrefAndLabel(value));
+                    formattedList.add(prepareHrefAndLabel(value))
                 }
                 formattedData = formattedList.join(fieldSeparator)
             } else {
-                formattedData = prepareHrefAndLabel(fieldValue);
+                formattedData = prepareHrefAndLabel(fieldValue)
             }
             return formattedData
-        }else{
+        } else {
             return fieldValue
         }
     }
@@ -202,25 +180,23 @@ class ParameterSearchResults {
                 }
 
                 String value
-                if(values instanceof String){
+                if (values instanceof String) {
                     value = values
-                }else {
+                } else {
                     value = values.first()
                 }
-                value = convertToLink(fieldName,(String)value)
-                value = generatePublicationLink(fieldName, (String)value)
-                value = escapeHtmlFieldValue(fieldName, (String)value)
-                parsedFields[fieldName] = value.replaceAll("\\\\","")
-            }else{
+                value = convertToLink(fieldName, (String) value)
+                value = generatePublicationLink(fieldName, (String) value)
+                value = escapeHtmlFieldValue(fieldName, (String) value)
+                parsedFields[fieldName] = value.replaceAll("\\\\", "")
+            } else {
                 parsedFields[fieldName] = values
             }
         }
-        combineReactionAndReactionOriginal(parsedFields)
         combineEnityAndEntityIdFields(parsedFields)
         combineRateAndRateOriginal(parsedFields)
         processExternalLinks(parsedFields)
         new SearchResultEntry(fields: parsedFields)
     }
-
 }
 

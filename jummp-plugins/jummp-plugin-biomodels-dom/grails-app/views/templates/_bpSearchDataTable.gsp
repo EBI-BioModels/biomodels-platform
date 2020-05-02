@@ -5,35 +5,19 @@
 </div>
 <span>
     <span class="pull_element_right" >
-        <input id="curated_id" type="radio"  name="curation" value="curated"><label for="curated_id">Curated</label>
-        <input id="non_curated_id" type="radio"  name="curation" value="non-curated" > <label for="non_curated_id" >Non-Curated</label>
+        <input id="curated_id" type="radio" name="curation" value="curated"><label for="curated_id">Curated</label>
+        <input id="non_curated_id" type="radio" name="curation" value="non-curated"><label for="non_curated_id" >Non-Curated</label>
     </span>
 </span>
-<table  id="table_id" class="display">
+<table data-stripe-classes="[]" id="table_id" class="display">
     <thead>
-    <th>Entity</th>
-    <th>Reaction</th>
-    <th>Model</th>
-    <th>Organism</th>
-    <th>Publication</th>
-    <th>Rate</th>
-    <th>Parameters</th>
-    <th>Entity SBO Link</th>
-    <th>Reaction SBO Link</th>
-    <th>Initial Concentration/<br/>Amount</th>
-    <th>External Links</th>
+    <tr>
+    <th data-class-name="large-2 medium-2 small-2 align-top line-height-100 small">Entity</th>
+    <th data-class-name="large-7 medium-7 small-7 align-top line-height-100 small">Reaction</th>
+    <th data-class-name="large-3 medium-3 small-3 line-height-150 small word-break">External Links</th>
+    </tr>
     </thead>
 </table>
-<div class="pull-element-left">
-    <hr/>
-    <i>
-        <strong>Legends</strong><br/>
-        <span class="legend-green-block">
-        </span>
-        <span>
-            : Variable used inside SBML models</span>
-    </i>
-</div>
 <script>
     $(document).ready(function () {
         const FIELD_SEPARATOR = ';';
@@ -44,73 +28,24 @@
         var columnConfig = [
             {
                 data: 'fields.entity_show',
-                orderable: false
+                orderable: false,
+                render: function (entity, type, row) {
+                    return formatEntity(entity, row);
+                }
             },
             {
                 data: 'fields.reaction_show',
-                orderable: false
-            },
-            {
-                data: 'fields.model',
-                render: function (rawdata, type, row) {
-                    var formattedData;
-                    if (rawdata === undefined || rawdata.length === 0) {
-                        return null;
-                    }
-                    formattedData = "<a target='_blank' href='https://www.ebi.ac.uk/biomodels/" + rawdata + "'>" + rawdata + "</a>";
-                    return formattedData
-                }
-            },
-            {
-                data: 'fields.organism',
-                orderable: false
-            },
-            {
-                data: 'fields.publication',
                 orderable: false,
-                render: function (href, type, row) {
-
-                    if (href === undefined || href.length === 0) {
-                        return null;
-                    }
-                    var formattedData;
-                        if (href.includes(FIELD_SEPARATOR)) {
-                            var formattedArray = [];
-                            var separatedLinks = href.split(FIELD_SEPARATOR);
-                            separatedLinks.forEach(function (subHref) {
-                                formattedArray.push(generatePublicationLink(subHref));
-                            });
-                            formattedData = formattedArray.join(FIELD_SEPARATOR+' ');
-                        } else {
-                            formattedData = generatePublicationLink(href);
-                        }
-
-                    return formattedData;
+                render: function (data, type, row) {
+                    return formatReaction(data, row);
                 }
-            },
-            {
-                data: 'fields.rate_show',
-                orderable: false
-            },
-            {
-                data: 'fields.parameters',
-                orderable: false
-            },
-            {
-                data: 'fields.entity_sbo_term_link',
-                orderable: false
-            },
-            {
-                data: 'fields.reaction_sbo_term_link',
-                orderable: false
-            },
-            {
-                data: 'fields.initial_data',
-                orderable: false
             },
             {
                 data: 'fields.external_links_show',
-                orderable: false
+                orderable: false,
+                render: function (data, type, row) {
+                    return formatExternalLinks(data, type, row);
+                }
             }
         ];
 
@@ -159,20 +94,240 @@
             isDirectionBack = false;
         };
 
-        function generatePublicationLink(href) {
+        function formatSboTerms(termArray) {
+            let result = '';
+            if (termArray !== undefined && termArray.length > 0) {
+                result = "${bp.renderSboTerms(termArray: termArray)}";
+            }
+            return result;
+        }
+
+        function formatEntity(entityHTML, row) {
+            let result = '';
+            let entityRow = '';
+            const entity = row.fields.entity_id;
+            const initialValue = row.fields.initial_data;
+            entityRow += '<span class="green size-150">' + entity;
+
+            if (initialValue !== undefined && initialValue !== '') {
+                entityRow += '</span>' + '&nbsp;=&nbsp;' + initialValue;
+            }
+            result = asEntityRow(entityRow);
+
+            const sboTerms = row.fields.entity_sbo_term_link;
+            if (sboTerms.length > 0) {
+                result += asEntityRow(formatSboTerms(sboTerms));
+            }
+
+            let urls = row.fields.entity_accession_url;
+            if (urls.length > 0) {
+                let tagsIcon = ebiFontIcon("common", "icon-tags", "padding-right-small");
+                result += asEntityRow(tagsIcon + urls);
+            }
+
+            return result;
+        }
+
+        function asEntityRow(text) {
+            return asDiv(text, "line-height-150 padding-top-small padding-bottom-small");
+        }
+
+        function asReactionRow(text) {
+            return asDiv(text, "padding-top-medium padding-bottom-medium");
+        }
+
+        function formatModel(accession) {
+            let formattedData;
+            if (accession === undefined || accession.length === 0) {
+                return null;
+            }
+            formattedData = "<a target='_blank' href='https://www.ebi.ac.uk/biomodels/" + accession + "'>" + accession + "</a>";
+            return formattedData
+        }
+
+        function createXrefHyperlink(href) {
             href = href.replace(/\\/g, "");
-            var linkData = href.split('|');
+            let linkData = href.split('|');
+            if (linkData.length === 1) return href;
+
             href = "<a target='_blank' href='" + linkData[0] + "'>" + linkData[1] + "</a>";
             return href;
         }
 
+        function constructReactionLegend(row) {
+            const reactants = row.fields.reactants_RAW;
+            const products  = row.fields.products_RAW;
+            const modifiers = row.fields.modifiers_RAW;
+
+            let table = "<table>\n" +
+                "  <thead><tr>\n" +
+                "    <th class='text-center'>role</th>\n" +
+                "    <th>id</th>\n" +
+                "    <th>name</th>\n" +
+                "    <th class='text-center'>references</th>\n" +
+                "    </tr>\n" +
+                "  </thead>\n" +
+                "  <tbody>";
+            table += asReactionLegendRows(reactants, "Reactant", "icon-download");
+            table += asReactionLegendRows(products,  "Product", "icon-upload");
+            table += asReactionLegendRows(modifiers, "Modifier", "icon-plug");
+            table += "</tbody></table>";
+
+            return asDiv(table, "margin-top-small margin-bottom-small");
+        }
+
+        function createOptionalLegendCell(contents) {
+            return (contents === undefined || contents.length === 0) ? "<td></td>" : "<td>" + contents + "</td>";
+        }
+
+        // show reactants, products and modifiers as a table
+        function asReactionLegendRows(entries, type, icon) {
+            let out = "";
+            let rows = undefined;
+            if (Array.isArray(entries)) {
+                rows = entries;
+            } else {
+                rows = entries.split("£");
+            }
+            const count = rows.length;
+            if (count === 0) return out;
+
+            const typeIcon = ebiFontIcon("common", icon, 'margin-right-medium', type);
+            out += "<tr class='size-75'>"
+                + "<td>"
+                + '<span>' + typeIcon + type + "</span>"
+                + "</td>";
+            rows.forEach(function (row, idx, allRows) {
+                const cells = row.split("$");
+                const id = cells[0];
+                const name = cells[1];
+                const refs = formatLegendXref(cells[2]);
+                let thisRow = "<td>"
+                    + id + "</td>";
+                thisRow += createOptionalLegendCell(name);
+                thisRow += createOptionalLegendCell(refs);
+                thisRow += "</tr>";
+
+                if (idx !== count - 1) {
+                    thisRow += "<tr class='size-75'>"
+                        + "<td>"
+                        + '<span>' + typeIcon + type + "</span>"
+                        + "</td>";
+                }
+                out += thisRow;
+            });
+            return out;
+        }
+
+        function formatLegendXref(xrefCsv) {
+            const XREF_DELIMITER = "; ";
+            const refs = xrefCsv.split(XREF_DELIMITER);
+            let result = "";
+            const count = refs.length;
+            if (0 === count) return result;
+
+            refs.forEach(function(ref, idx, ignored) {
+                if (ref !== undefined && ref.length > 0) {
+                    const refAnchor = createXrefHyperlink(ref);
+                    if (refAnchor.length > 0) {
+                        result += refAnchor;
+                        if (idx !== count - 1) {
+                            result += XREF_DELIMITER;
+                        }
+                    }
+                }
+            });
+            return result;
+        }
+
+        function formatReaction(data, row) {
+            const reactionIcon = ebiFontIcon("common", "icon-flask", 'margin-right-medium', 'reaction (using entity IDs from the model)');
+            const reaction = "<span class='green size-125'>" + row.fields.reaction_original_RAW + "</span>";
+            const sbo = formatSboTerms(row.fields.reaction_sbo_term_link);
+            const reactionLegend = constructReactionLegend(row);
+            let out = asReactionRow(reactionIcon + reaction);
+            out += asReactionRow(sbo);
+            out += asReactionRow(reactionLegend);
+            const rateIcon = ebiFontIcon("common", "icon-tachometer-alt", 'margin-right-medium', 'rate');
+            const rate = "<span class='blue size-100'>" + row.fields.rate_original_RAW + "</span>";
+            out += asReactionRow(rateIcon + rate);
+
+            const paramsIcon = ebiFontIcon("common", "icon-sliders-h", 'margin-right-medium', 'parameters');
+            const params = "<span class='grey'>" + row.fields.parameters + "</span>";
+            out += asReactionRow(paramsIcon + params);
+
+            return asDiv(out, "box-shadow");
+        }
+
+        function formatPublication(href) {
+            if (href === undefined || href.length === 0) {
+                return undefined;
+            }
+            var formattedData;
+            if (href.includes(FIELD_SEPARATOR)) {
+                var formattedArray = [];
+                var separatedLinks = href.split(FIELD_SEPARATOR);
+                separatedLinks.forEach(function (subHref) {
+                    formattedArray.push(createXrefHyperlink(subHref));
+                });
+                formattedData = formattedArray.join(FIELD_SEPARATOR+' ');
+            } else {
+                formattedData = createXrefHyperlink(href);
+            }
+
+            return formattedData;
+        }
+
+        function asDiv(text, styles = '') {
+            if (undefined === text || text === '') {
+                return "";
+            }
+            return "<div class='" + styles + "'>" + text + "</div>";
+        }
+
+        function ebiFontIcon(fontSet, letter, styles = 'margin-right-medium', title = '') {
+            const fontClass = "icon-" + fontSet.toLocaleLowerCase();
+            return '<i title="' + title + '" class="' + styles + ' icon ' + fontClass + ' ' + letter + '"></i>';
+        }
+
+        function textAndEbiFontIcon(text, fontSet, letter, fontStyles, fontTitle = '') {
+            const icon = ebiFontIcon(fontSet, letter, fontStyles, fontTitle);
+            const content = icon + text;
+            return asDiv(content);
+        }
+
+        function formatExternalLinks(links, type, row) {
+            let output = "<div>";
+
+            const modelAccession = row.fields.model;
+            const m = textAndEbiFontIcon(formatModel(modelAccession), "common", "icon-unreviewed-data", 'margin-right-medium', 'model');
+            output += m;
+
+            const pub = row.fields.publication;
+            if (pub !== undefined && pub.length !== 0) {
+                output += textAndEbiFontIcon(formatPublication(pub), "common", "icon-publication", 'margin-right-medium', 'manuscript');
+            }
+
+            const org = row.fields.organism;
+            if (org !== undefined && org.length !== 0) {
+                output += textAndEbiFontIcon(org, "conceptual", "icon-dna", 'margin-right-medium', 'organism');
+            }
+
+            if (links !== undefined && links !== "") {
+                output += textAndEbiFontIcon(links, "common", "icon-external-systems", 'margin-right-medium', 'cross references');
+            }
+
+            return output + "</div>";
+        }
+
         // Function called for showing the data pagination stats
-        function infoCallback(settings, start, end, max, total, pre) {
+        function infoCallback(settings, start, end, max, total) {
+            let text = "Showing ";
             return (!isNaN(total))
-                ? "Showing " + start + " to " + end
+                ? text + start + " to " + end
                 + " of " + total + " entries"
                 + ((total !== max) ? " (filtered from " + max + " total entries)" : "")
-                : "Showing " + start + " to " + (start + this.api().data().length - 1) + " entries";
+                : text + start + " to " + (start + this.api().data().length - 1) + " entries";
         }
 
         // Function to update table as per the state
@@ -202,7 +357,7 @@
                     self = $("#table_id").dataTable().api(),
                     $downloadButton = $('<button id="downloadButton" class="button">')
                         .text(DOWNLOAD_LABEL)
-                        .click(function () {
+                        .click(function (message) {
                             if(pageState.dataTable.hasOwnProperty("query") &&
                                 pageState.dataTable.query !== "") {
                                 var buttonSelector = $("#downloadButton");
@@ -212,7 +367,7 @@
                                 try {
                                     downloadFile(pageState.dataTable.query, pageState.dataTable.is_curated);
                                 } catch (e) {
-                                    alert("Something went wrong. Please try again later: ", e);
+                                    alert("Something went wrong. Please try again later: " + e);
                                 }
                                 buttonSelector
                                     .text(DOWNLOAD_LABEL)
@@ -305,7 +460,7 @@
                 }
             });
 
-        // Function to preapare sort parameters
+        // Function to prepare sort parameters
         function prepareSortParams(dataTableArg, sort) {
             $("#errors").empty();
             if (sort === undefined || sort === "" || sort === null) {
@@ -360,12 +515,12 @@
                 size = dataTableArg.length;
             }
 
-            // Setting radioboxes
+            // Setting radio boxes
             if (is_curated===undefined) {
                 is_curated = $('input[name="curation"]:checked')[0].value === "curated";
             } else if(is_curated === true) {
                 $("#curated_id").prop("checked",true);
-            }else if (is_curated === false) {
+            } else if (is_curated === false) {
                 $("#non_curated_id").prop("checked",true);
             }
 
