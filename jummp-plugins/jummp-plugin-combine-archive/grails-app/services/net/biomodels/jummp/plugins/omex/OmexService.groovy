@@ -38,7 +38,7 @@ import com.hp.hpl.jena.rdf.model.Model
 import com.hp.hpl.jena.rdf.model.Resource
 import com.hp.hpl.jena.vocabulary.DCTerms
 import de.unirostock.sems.cbext.Formatizer
-import net.biomodels.jummp.core.model.FileFormatService
+import net.biomodels.jummp.core.model.FileFormatServiceAdapter
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.model.ModellingApproach
@@ -60,7 +60,7 @@ import java.nio.file.*
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-class OmexService implements FileFormatService {
+class OmexService extends FileFormatServiceAdapter {
     private static final Log log = LogFactory.getLog(this)
     private static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
 
@@ -68,11 +68,6 @@ class OmexService implements FileFormatService {
     public boolean validate(final List<File> model, final List<String> errors) {
         //TODO delegate the validation to libCombineArchive API
         return areFilesThisFormat(model)
-    }
-
-    @Profiled(tag="omexService.extractName")
-    public String extractName(final List<File> model) {
-        return ""
     }
 
     /**
@@ -88,11 +83,6 @@ class OmexService implements FileFormatService {
         return false
     }
 
-    @Profiled(tag="omexService.extractDescription")
-    public String extractDescription(final List<File> model) {
-        return ""
-    }
-
     /**
      * {@inheritDoc}
      */
@@ -104,16 +94,6 @@ class OmexService implements FileFormatService {
             return true
         }
         return false
-    }
-
-    @Profiled(tag="omexService.getAllAnnotationURNs")
-    public List<String> getAllAnnotationURNs(RevisionTransportCommand revision) {
-        return []
-    }
-
-    @Profiled(tag="omexService.getPubMedAnnotation")
-    public List<String> getPubMedAnnotation(RevisionTransportCommand revision) {
-        return []
     }
 
     /**
@@ -200,12 +180,7 @@ class OmexService implements FileFormatService {
     boolean doBeforeSavingAnnotations(File annoFile, RevisionTransportCommand rev) {
         return true
     }
-
-    @Override
-    ModellingApproach getModellingApproach(RevisionTransportCommand revision) {
-        return null
-    }
-/**
+    /**
      * Create a combine archive from a list of RepositoryFileTransportCommand objects
      * associated with an individual model given by the model submission identifier
      * @argument a list of RepositoryFileTransportCommand objects

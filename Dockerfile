@@ -1,4 +1,4 @@
-FROM jummp-biomodels:1.2-dependencies
+FROM biomodels/jummp-biomodels:1.2-dependencies
 LABEL maintainer="biomodels-developers@lists.sf.net"
 
 # set environment options
@@ -13,4 +13,4 @@ WORKDIR /home/biomodels/jummp-biomodels
 EXPOSE 3306
 
 RUN chmod +x /home/biomodels/jummp-biomodels/grailsw
-ENTRYPOINT /home/biomodels/jummp-biomodels/grailsw run-war
+ENTRYPOINT /home/biomodels/jummp-biomodels/grailsw run-war --non-interactive

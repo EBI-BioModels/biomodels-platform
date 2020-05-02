@@ -29,9 +29,14 @@
 
 <footer id="local-footer" class="local-footer">
     <!-- Optional local footer (insert citation / project-specific copyright / etc here -->
-    <div class="row">
-        <div id="footer" class="float-left">
-            Build: <g:render template="/templates/version"/>
+    <div  id="footer" class="row">
+        <div>
+            <div class="small-12 medium-6 large-6 columns">
+                <span style="font-size: small">Build: <g:render template="/templates/version"/></span>
+            </div>
+            <div class="small-12 medium-6 large-6 columns" style="text-align: right">
+                <span style="font-size: small">Rendered from: ${java.net.InetAddress.getLocalHost()}</span>
+            </div>
         </div>
         <div class="clear"></div>
     </div>
