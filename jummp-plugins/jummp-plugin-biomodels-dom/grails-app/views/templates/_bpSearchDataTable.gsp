@@ -211,8 +211,10 @@
                 + "<td>"
                 + '<span>' + typeIcon + type + "</span>"
                 + "</td>";
-             rows.forEach(function(row, idx, allRows) {
-                const cells = row.split("$");
+            rows.forEach(function (row, idx, allRows) {
+                // row structure is <entity_id>$<entity_name>$<entity_cross_references>
+                const cellDelimiter = "$";
+                const cells = row.split(cellDelimiter);
                 const id = cells[0];
                 const name = cells[1];
                 const refs = formatLegendXref(cells[2]);
