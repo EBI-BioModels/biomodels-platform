@@ -1,6 +1,6 @@
 <%@ page import="grails.util.Environment" %>
 <%--
- Copyright (C) 2018 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ Copyright (C) 2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
  Deutsches Krebsforschungszentrum (DKFZ)
 
  This file is part of Jummp.
@@ -39,14 +39,11 @@
     <link rel="stylesheet"
           href="${resource(dir: 'css', file: 'biomodels-parameters.css')}"
           type="text/css">
+    <g:javascript src="datatable/jquery.dataTables.min.js" contextPath=""/>
+    <g:javascript src="datatable/dataTables.buttons.min.js" contextPath=""/>
 </head>
 
 <body>
-<g:javascript contextPath="" src="toastr.min.js"/>
-<g:javascript src="datatable/jquery.dataTables.min.js" contextPath=""/>
-<g:javascript src="datatable/dataTables.buttons.min.js" contextPath=""/>
-
-
 <div id="remote" class="body">
     <h2>BioModels Parameters</h2>
 
