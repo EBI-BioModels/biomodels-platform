@@ -7,6 +7,7 @@
 <g:render template="/templates/parameterSearch/searchTips"
           model="['tips': [
               'BIOMD*292',
+              'Cyclin',
               'organism:Homo Sapiens',
               'publication:16838084',
               'modifiers:cyclin OR reactants:cyclin OR products:cyclin'
@@ -22,7 +23,8 @@
     <tr>
     <th data-class-name="large-2 medium-2 small-2 align-top line-height-100 small word-break">Entity</th>
     <th data-class-name="large-7 medium-7 small-7 align-top line-height-100 small">Reaction</th>
-    <th data-class-name="large-3 medium-3 small-3 line-height-150 small word-break">More information</th>
+    <th data-class-name="large-3 medium-3 small-3 line-height-150 small word-break"
+        title="model, manuscript, organism, cross references, etc.">More information</th>
     </tr>
     </thead>
 </table>
@@ -49,6 +51,8 @@
                 }
             },
             {
+                // this has been renamed to More Information
+                // TODO: make this field name consistent with More information
                 data: 'fields.external_links_show',
                 orderable: false,
                 render: function (data, type, row) {
@@ -272,13 +276,12 @@
             out += asReactionRow(sbo);
             out += asReactionRow(reactionLegend);
             const rateIcon = ebiFontIcon("common", "icon-tachometer-alt", 'margin-right-medium', 'rate');
-            const rate = "<span class='blue size-100'>" + row.fields.rate_original_RAW + "</span>";
+            const rate = "Rate: <span class='blue size-100'>" + row.fields.rate_original_RAW + "</span>";
             out += asReactionRow(rateIcon + rate);
 
             const paramsIcon = ebiFontIcon("common", "icon-sliders-h", 'margin-right-medium', 'parameters');
-            const params = "<span class='grey'>" + row.fields.parameters + "</span>";
+            const params = "Parameter: <span class='grey'>" + row.fields.parameters + "</span>";
             out += asReactionRow(paramsIcon + params);
-
             return asDiv(out, "box-shadow");
         }
 
