@@ -32,6 +32,8 @@ grails.project.war.file = "target/${appName}.war"
 grails.project.groupId = "net.biomodels.jummp"
 grails.project.source.level = 1.8
 grails.project.target.level = 1.8
+grails.server.host="0.0.0.0"
+grails.server.port=8080
 grails.project.dependency.resolver = "maven"
 
 customJvmArgs = ["-server", "-noverify", "-XX:+UseConcMarkSweepGC", "-XX:+UseParNewGC" ]
