@@ -98,9 +98,11 @@
         tooltip2.select(".count").html(d.data["count"]);
         tooltip2.style("display", "block");
         $('#item-on-focus').html(d.data["label"] + ": " + d.data["count"] + " models");
+        $('#item-on-focus').css("color", "#000000");
     });
     path.on("mouseout", function(d) {
         tooltip2.style("display", "none");
+        $('#item-on-focus').css("color", "#e2e1e1");
     });
     path.on("click", function (d) {
         var coords = d3.mouse(this);

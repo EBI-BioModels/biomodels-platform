@@ -24,7 +24,7 @@
         1: {
             name: "curationState",
             title: "Statistics on Curation States",
-            description: "This shows the number of manually curatted and non-curated models"
+            description: "This shows the number of manually curated and non-curated models"
         },
         2: {
             name: "modellingApproach",
