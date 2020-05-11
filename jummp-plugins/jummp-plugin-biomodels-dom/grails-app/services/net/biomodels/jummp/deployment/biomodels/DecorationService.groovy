@@ -64,6 +64,10 @@ class DecorationService implements GrailsConfigurationAware {
     static String BM_SVR_URL //= grailsApplication.config.grails.serverURL
     static String CLASSIFIER_SVR_URL //= grailsApplication.config.jummp.classification.endpoint
 
+    private String httpProxyHost
+    private int httpProxyPort
+    private Proxy proxy
+
     @Override
     void setConfiguration(ConfigObject co) {
         REDIS_SRV_HOST = co.jummp.redis.host
@@ -75,6 +79,9 @@ class DecorationService implements GrailsConfigurationAware {
         FIXED_PARAMS = "biomodels?query=domain_source:biomodels&size=0&facetfields"
         EBI_SEARCH_BM_URL = "${EBI_SEARCH_URL}/${FIXED_PARAMS}"
         HP_STAT_TOTAL_FIGURE = "hp-statistics-total-figures"
+        httpProxyHost = co.jummp.http.host
+        httpProxyPort = co.jummp.http.port as int
+        proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(this.httpProxyHost, this.httpProxyPort))
     }
 
     /**
@@ -554,7 +561,7 @@ GROUP BY p.journal
         String queryLink = "search?domain=biomodels&query=*:* AND NOT isprivate:true&format=json"
         String serverURL = grailsApplication.config.grails.serverURL
         String queryURL = "${serverURL}/${queryLink}"
-        RestBuilder rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000, proxy: null)
+        RestBuilder rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000, proxy: proxy)
         def response = rest.get(queryURL) {
             accept("application/json")
             contentType("application/json;charset=UTF-8")
@@ -734,7 +741,7 @@ GROUP BY p.journal
     private def hitRemoteService(final String serverURL, final String query) {
         String queryURL = "${serverURL}/${query}"
         logger.debug("Connecting to the service at $queryURL")
-        RestBuilder rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000, proxy: null)
+        RestBuilder rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000, proxy: proxy)
         def response = rest.get(queryURL) {
             accept("application/json")
             contentType("application/json;charset=UTF-8")

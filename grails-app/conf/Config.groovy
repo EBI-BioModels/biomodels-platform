@@ -851,3 +851,15 @@ if (!(jummpConfig.jummp.redis.timeout instanceof ConfigObject)) {
 springsession.redis.connectionFactory.hostName = jummp.redis.host
 springsession.redis.connectionFactory.port = jummp.redis.port
 springsession.redis.connectionFactory.timeout = jummp.redis.timeout
+
+// HTTP PROXY (used for k8s deployment
+if (!(jummpConfig.jummp.http.proxy.host instanceof ConfigObject)) {
+    jummp.http.proxy.host = jummpConfig.jummp.http.proxy.host
+} else {
+    jummp.http.proxy.host = "localhost"
+}
+if (!(jummpConfig.jummp.http.proxy.port instanceof ConfigObject)) {
+    jummp.http.proxy.port = jummpConfig.jummp.http.proxy.port
+} else {
+    jummp.http.proxy.port = 80
+}
