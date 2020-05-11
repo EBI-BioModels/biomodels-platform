@@ -158,6 +158,7 @@ WHERE
             aclClass.className = 'net.biomodels.jummp.model.Revision'
             AND sid.sid = 'ROLE_ANONYMOUS'
             AND ace.mask = 1)
+  AND model.firstPublished IS NOT NULL
 GROUP BY rev.model
 ORDER BY model.firstPublished DESC'''
         def matchedModels = Model.executeQuery(query, [max: 10])
