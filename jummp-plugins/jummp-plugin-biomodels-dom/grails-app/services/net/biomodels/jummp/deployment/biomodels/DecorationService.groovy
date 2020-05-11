@@ -79,8 +79,8 @@ class DecorationService implements GrailsConfigurationAware {
         FIXED_PARAMS = "biomodels?query=domain_source:biomodels&size=0&facetfields"
         EBI_SEARCH_BM_URL = "${EBI_SEARCH_URL}/${FIXED_PARAMS}"
         HP_STAT_TOTAL_FIGURE = "hp-statistics-total-figures"
-        httpProxyHost = co.jummp.http.host
-        httpProxyPort = co.jummp.http.port as int
+        httpProxyHost = co.jummp.http.proxy.host
+        httpProxyPort = co.jummp.http.proxy.port as int
         proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(this.httpProxyHost, this.httpProxyPort))
     }
 

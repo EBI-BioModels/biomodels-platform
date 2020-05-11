@@ -134,8 +134,8 @@ class OmicsdiBasedSearch implements GrailsConfigurationAware, ModelSearchStrateg
 
     @Override
     void setConfiguration(ConfigObject co) {
-        httpProxyHost = co.jummp.http.host
-        httpProxyPort = co.jummp.http.port as int
+        httpProxyHost = co.jummp.http.proxy.host
+        httpProxyPort = co.jummp.http.proxy.port as int
     }
 
     @NotTransactional

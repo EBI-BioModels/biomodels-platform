@@ -859,7 +859,7 @@ if (!(jummpConfig.jummp.http.proxy.host instanceof ConfigObject)) {
     jummp.http.proxy.host = "localhost"
 }
 if (!(jummpConfig.jummp.http.proxy.port instanceof ConfigObject)) {
-    jummp.http.proxy.port = jummpConfig.jummp.http.proxy.port
+    jummp.http.proxy.port = jummpConfig.jummp.http.proxy.port as int
 } else {
     jummp.http.proxy.port = 80
 }
