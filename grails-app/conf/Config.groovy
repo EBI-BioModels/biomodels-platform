@@ -329,7 +329,7 @@ if (jummpConfig.jummp.healthcheck.ipRestrictions instanceof String) {
 } else {
     healthCheckIpRestrictions = "127.0.0.1"
 }
-println "The health check endpoint will only be available from '$healthCheckIpRestrictions'"
+println "INFO\tThe health check endpoint will only be available from '$healthCheckIpRestrictions'"
 
 // IPv4 IP addresses and ranges allowed to access specific URLs
 // requests from localhost are always allowed: http://grails-plugins.github.io/grails-spring-security-core/2.0.x/guide/ip.html
