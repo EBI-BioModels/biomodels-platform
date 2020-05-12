@@ -14,18 +14,11 @@ EXPOSE 3306
 EXPOSE 4372
 EXPOSE 8080
 
-# Add an app user so our program doesn't run as root.
-### this is ur virtual users: $USER_NAME
-ARG USER_NAME_ENV
-ARG USER_ID_ENV
-ARG GROUP_NAME_ENV
-ARG GROUP_ID_ENV
-
-ENV UID=$USER_ID_ENV
-ENV USERNAME=$USER_NAME_ENV
-### this is virtual group: pst_pub
-ENV GID=$GROUP_ID_ENV
-ENV GROUP=GROUP_NAME_ENV
+ARG UID
+ARG USERNAME
+ARG GID
+ARG GROUP
+RUN echo "$GROUP ($GID) - $USERNAME ($UID)"
 ENV HOME=/home/$USERNAME
 RUN mkdir -p $HOME
 RUN addgroup --gid "$GID" "$USERNAME" \
@@ -34,7 +27,7 @@ RUN addgroup --gid "$GID" "$USERNAME" \
    --disabled-password \
    --gecos "" \
    --ingroup "$USERNAME" \
-   --home $HOME \
+   --no-create-home \
    "$USERNAME"
 
 ENV APP_HOME=/home/$USERNAME/biomodels
