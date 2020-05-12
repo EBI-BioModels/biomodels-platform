@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y mysql-client && rm -rf /var/lib/apt
 # set environment options
 ENV MAVEN_OPTS="-Xmx1024m"
 ENV JAVA_OPTS="-Xms64m -Xmx1024m -XX:MaxMetaspaceSize=128m"
-ENV GRAILS_OPTS="-server -Xmx2g -Xms2g -XX:PermSize=32m -XX:MaxPermSize=2g -Dfile.encoding=UTF-8"
+ENV GRAILS_OPTS="-server -Xmx2g -Xms2g -Dfile.encoding=UTF-8"
 ENV ANT_OPTS="-Xmx2g -XX:MaxPermSize=1024m"
 # expected database port
 EXPOSE 3306
