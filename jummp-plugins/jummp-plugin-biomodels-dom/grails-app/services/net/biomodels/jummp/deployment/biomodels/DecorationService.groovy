@@ -81,7 +81,15 @@ class DecorationService implements GrailsConfigurationAware {
         HP_STAT_TOTAL_FIGURE = "hp-statistics-total-figures"
         httpProxyHost = co.jummp.http.proxy.host
         httpProxyPort = co.jummp.http.proxy.port as int
-        proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(this.httpProxyHost, this.httpProxyPort))
+        boolean isSetProxyHost = !httpProxyHost.equalsIgnoreCase("localhost") || httpProxyHost != null
+        boolean isSetProxyPort = httpProxyPort != 80 || httpProxyPort != null
+        boolean hasHttpProxy = isSetProxyHost && isSetProxyPort
+        if (hasHttpProxy) {
+            proxy = new Proxy(Proxy.Type.HTTP,
+                            new InetSocketAddress(this.httpProxyHost, this.httpProxyPort))
+        } else {
+            proxy = null
+        }
     }
 
     /**
@@ -740,6 +748,7 @@ GROUP BY p.journal
      * @return a JSON object
      */
     private def hitRemoteService(final String serverURL, final String query) {
+        logger.debug("HTTP PROXY: ${proxy?.dump()}")
         String queryURL = "${serverURL}/${query}"
         logger.debug("Connecting to the service at $queryURL")
         RestBuilder rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000, proxy: proxy)
