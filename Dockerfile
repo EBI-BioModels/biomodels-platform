@@ -5,10 +5,10 @@ LABEL maintainer="biomodels-developers@lists.sf.net"
 RUN apt-get update && apt-get install -y mysql-client && rm -rf /var/lib/apt
 
 # set environment options
-ENV MAVEN_OPTS="-Xmx1024m"
+#ENV MAVEN_OPTS="-Xmx1024m"
 ENV JAVA_OPTS="-Xms64m -Xmx1024m -XX:MaxMetaspaceSize=128m"
 ENV GRAILS_OPTS="-server -Xmx2g -Xms2g -Dfile.encoding=UTF-8"
-ENV ANT_OPTS="-Xmx2g -XX:MaxPermSize=1024m"
+#ENV ANT_OPTS="-Xmx2g -XX:MaxPermSize=1024m"
 # expected database port
 EXPOSE 3306
 EXPOSE 4372
