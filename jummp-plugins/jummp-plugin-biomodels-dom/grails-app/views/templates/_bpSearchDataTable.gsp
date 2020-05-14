@@ -153,16 +153,16 @@
             if (accession === undefined || accession.length === 0) {
                 return null;
             }
-            formattedData = "<a target='_blank' href='https://www.ebi.ac.uk/biomodels/" + accession + "'>" + accession + "</a>";
+            formattedData = "<a target='_blank' title='Access the model containing this reaction'  href='https://www.ebi.ac.uk/biomodels/" + accession + "'>" + accession + "</a>";
             return formattedData
         }
 
-        function createXrefHyperlink(href) {
+        function createXrefHyperlink(href, title = '') {
             href = href.replace(/\\/g, "");
             let linkData = href.split('|');
             if (linkData.length === 1) return href;
 
-            href = "<a target='_blank' href='" + linkData[0] + "'>" + linkData[1] + "</a>";
+            href = "<a title='" + title + "' target='_blank' href='" + linkData[0] + "'>" + linkData[1] + "</a>";
             return href;
         }
 
@@ -294,7 +294,7 @@
                 var formattedArray = [];
                 var separatedLinks = href.split(FIELD_SEPARATOR);
                 separatedLinks.forEach(function (subHref) {
-                    formattedArray.push(createXrefHyperlink(subHref));
+                    formattedArray.push(createXrefHyperlink(subHref, "Access the associated manuscript"));
                 });
                 formattedData = formattedArray.join(FIELD_SEPARATOR + ' ');
             } else {
