@@ -81,14 +81,14 @@ class DecorationService implements GrailsConfigurationAware {
         HP_STAT_TOTAL_FIGURE = "hp-statistics-total-figures"
         httpProxyHost = co.jummp.http.proxy.host
         httpProxyPort = co.jummp.http.proxy.port as int
-        boolean isSetProxyHost = !httpProxyHost.equalsIgnoreCase("localhost") || httpProxyHost != null
-        boolean isSetProxyPort = httpProxyPort != 80 || httpProxyPort != null
-        boolean hasHttpProxy = isSetProxyHost && isSetProxyPort
-        if (hasHttpProxy) {
-            proxy = new Proxy(Proxy.Type.HTTP,
-                            new InetSocketAddress(this.httpProxyHost, this.httpProxyPort))
-        } else {
+        boolean noSetProxyHost = httpProxyHost.equalsIgnoreCase("localhost") || httpProxyHost == null
+        boolean notSetProxyPort = httpProxyPort == 80 || httpProxyPort == null
+        boolean noHttpProxy = noSetProxyHost && notSetProxyPort
+        if (noHttpProxy) {
             proxy = null
+        } else {
+            proxy = new Proxy(Proxy.Type.HTTP,
+                new InetSocketAddress(this.httpProxyHost, this.httpProxyPort))
         }
     }
 
