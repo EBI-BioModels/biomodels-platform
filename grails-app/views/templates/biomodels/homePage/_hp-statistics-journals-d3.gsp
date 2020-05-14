@@ -82,8 +82,7 @@
             // create svg element inside provided selector
             svg = d3.select(selector)
                 .append('svg')
-                .attr('width', width)
-                .attr('height', height);
+                .attr("viewBox", "0 0 " + width.toString() + " " + height.toString());
 
             // bind nodes data to circle elements
             const elements = svg.selectAll('.bubble')

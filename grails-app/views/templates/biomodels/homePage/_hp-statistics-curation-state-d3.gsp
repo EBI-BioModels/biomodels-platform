@@ -26,8 +26,7 @@
     var color = d3.scaleOrdinal(d3.schemeCategory20);
     var svg = d3.select("div#curationStateChart")
         .append("svg")
-        .attr("width", width)
-        .attr("height", height)
+        .attr("viewBox", "0 0 " + width.toString() + " " + height.toString())
         .append("g")
         .attr("transform","translate("+width/2+","+height/2+")");
 

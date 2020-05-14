@@ -10,8 +10,7 @@
 
     var svg = d3.select("#organismsChart")
         .append("svg")
-        .attr("width", diameter)
-        .attr("height", height)
+        .attr("viewBox", "0 0 " + width.toString() + " " + diameter.toString())
         .attr("class", "bubble");
 
     var nodes = d3.hierarchy(dataset)
