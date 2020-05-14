@@ -567,15 +567,8 @@ GROUP BY p.journal
      * @return a {@link List} of Organism objects
      */
     private List makeStatisticsOnOrganisms() {
-        String queryLink = "search?domain=biomodels&query=*:* AND NOT isprivate:true&format=json"
-        String serverURL = grailsApplication.config.grails.serverURL
-        String queryURL = "${serverURL}/${queryLink}"
-        RestBuilder rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000, proxy: proxy)
-        def response = rest.get(queryURL) {
-            accept("application/json")
-            contentType("application/json;charset=UTF-8")
-        }
-
+        String query = "search?domain=biomodels&query=*:* AND NOT isprivate:true&format=json"
+        def response = hitRemoteService(BM_SVR_URL, query)
         def taxons = response.json.facets.findAll { it['id'] == 'TAXONOMY' }
         taxons = taxons.facetValues.flatten()
         StringBuilder result = new StringBuilder()
