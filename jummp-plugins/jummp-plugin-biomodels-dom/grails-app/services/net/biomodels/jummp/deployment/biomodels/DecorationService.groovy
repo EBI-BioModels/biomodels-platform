@@ -64,6 +64,10 @@ class DecorationService implements GrailsConfigurationAware {
     static String BM_SVR_URL //= grailsApplication.config.grails.serverURL
     static String CLASSIFIER_SVR_URL //= grailsApplication.config.jummp.classification.endpoint
 
+    private String httpProxyHost
+    private int httpProxyPort
+    private Proxy proxy
+
     @Override
     void setConfiguration(ConfigObject co) {
         REDIS_SRV_HOST = co.jummp.redis.host
@@ -75,6 +79,17 @@ class DecorationService implements GrailsConfigurationAware {
         FIXED_PARAMS = "biomodels?query=domain_source:biomodels&size=0&facetfields"
         EBI_SEARCH_BM_URL = "${EBI_SEARCH_URL}/${FIXED_PARAMS}"
         HP_STAT_TOTAL_FIGURE = "hp-statistics-total-figures"
+        httpProxyHost = co.jummp.http.proxy.host
+        httpProxyPort = co.jummp.http.proxy.port as int
+        boolean noSetProxyHost = httpProxyHost.equalsIgnoreCase("localhost") || httpProxyHost == null
+        boolean notSetProxyPort = httpProxyPort == 80 || httpProxyPort == null
+        boolean noHttpProxy = noSetProxyHost && notSetProxyPort
+        if (noHttpProxy) {
+            proxy = null
+        } else {
+            proxy = new Proxy(Proxy.Type.HTTP,
+                new InetSocketAddress(this.httpProxyHost, this.httpProxyPort))
+        }
     }
 
     /**
@@ -151,6 +166,7 @@ WHERE
             aclClass.className = 'net.biomodels.jummp.model.Revision'
             AND sid.sid = 'ROLE_ANONYMOUS'
             AND ace.mask = 1)
+  AND model.firstPublished IS NOT NULL
 GROUP BY rev.model
 ORDER BY model.firstPublished DESC'''
         def matchedModels = Model.executeQuery(query, [max: 10])
@@ -551,15 +567,8 @@ GROUP BY p.journal
      * @return a {@link List} of Organism objects
      */
     private List makeStatisticsOnOrganisms() {
-        String queryLink = "search?domain=biomodels&query=*:* AND NOT isprivate:true&format=json"
-        String serverURL = grailsApplication.config.grails.serverURL
-        String queryURL = "${serverURL}/${queryLink}"
-        RestBuilder rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000, proxy: null)
-        def response = rest.get(queryURL) {
-            accept("application/json")
-            contentType("application/json;charset=UTF-8")
-        }
-
+        String query = "search?domain=biomodels&query=*:* AND NOT isprivate:true&format=json"
+        def response = hitRemoteService(BM_SVR_URL, query)
         def taxons = response.json.facets.findAll { it['id'] == 'TAXONOMY' }
         taxons = taxons.facetValues.flatten()
         StringBuilder result = new StringBuilder()
@@ -732,9 +741,10 @@ GROUP BY p.journal
      * @return a JSON object
      */
     private def hitRemoteService(final String serverURL, final String query) {
+        logger.debug("HTTP PROXY: ${proxy?.dump()}")
         String queryURL = "${serverURL}/${query}"
         logger.debug("Connecting to the service at $queryURL")
-        RestBuilder rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000, proxy: null)
+        RestBuilder rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000, proxy: proxy)
         def response = rest.get(queryURL) {
             accept("application/json")
             contentType("application/json;charset=UTF-8")

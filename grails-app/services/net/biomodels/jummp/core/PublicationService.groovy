@@ -64,9 +64,11 @@ class PublicationService implements IPublicationService {
 
     List<PubTC> getAll() {
         List pubs = Publication.all
+        List pubCmds= new ArrayList()
         pubs.each {
-            new PublicationAdapter(publication: it).toCommandObject()
+            pubCmds.add new PublicationAdapter(publication: it).toCommandObject()
         }
+        pubCmds
     }
 
     PubTC createPTCWithMinimalInformation(String pubLinkProvider, String pubLink, List<PersonTC> authors) {

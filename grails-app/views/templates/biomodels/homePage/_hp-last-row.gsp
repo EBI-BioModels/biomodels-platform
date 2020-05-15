@@ -41,7 +41,7 @@
                                          target="_blank">
                     BioModels — 15 years of sharing computational models in life science.</a></div>
 
-                <div class="pubjournal"><em>Nucl. Acids Res.</em> 2019</div>
+                <div class="pubjournal"><em>Nucl. Acids Res.</em> 2020</div>
             </dd>
         </dl>
         <dl>

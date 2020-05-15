@@ -98,9 +98,11 @@
         tooltip.select(".percentage").html(percent + '%');
         tooltip.style("display", "block");*/
         $('#item-on-focus').html(d.data[0] + ": " + d.data[1] + " models");
+        $('#item-on-focus').css("color", "#000000");
     });
     paths.on("mouseout", function(d){
         tooltip.style("display", "none");
+        $('#item-on-focus').css("color", "#e2e1e1");
     });
     paths.on("click", function(d) {
         // var coords = d3.mouse(this);

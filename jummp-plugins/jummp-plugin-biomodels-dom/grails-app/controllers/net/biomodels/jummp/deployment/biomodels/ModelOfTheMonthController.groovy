@@ -54,13 +54,16 @@ class ModelOfTheMonthController {
     }
 
     def show(ModelOfTheMonth entry) {
+        String errMsg = ""
         if (!entry) {
             // render out the error
+            errMsg = entry.errors.toString()
+            [errMsg: errMsg]
         }
         ModelOfTheMonthTransportCommand command = entry.toCommandObject()
         command.formattedEntryDate = command.publicationDate.format(ModelOfTheMonth.DATE_FORMAT_PATTERN)
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
-        [entry: command, dateFormat: dateFormat]
+        [entry: command, dateFormat: dateFormat, errMsg: errMsg]
     }
 
     def save(ModelOfTheMonthTransportCommand command) {

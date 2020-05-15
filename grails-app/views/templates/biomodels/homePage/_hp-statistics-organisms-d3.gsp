@@ -71,12 +71,15 @@
         var queryURL = prefixSearchURL + taxonomy;
         window.open(queryURL, '_blank');
     });
-    node.on("mouseout", function(d) {
+    node.on("mouseover", function(d) {
         var label = d["data"]["Name"];
         var value = d["data"]["Count"];
         var taxonomy = d["data"]["Taxonomy"];
         $('#item-on-focus').html(label + ": " + value + " models");
+        $('#item-on-focus').css("color", "#000000");
     });
-
+    node.on("mouseout", function(d) {
+        $('#item-on-focus').css("color", "#e2e1e1");
+    });
 </g:javascript>
 
