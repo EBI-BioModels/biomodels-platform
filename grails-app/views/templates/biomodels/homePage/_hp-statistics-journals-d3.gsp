@@ -1,159 +1,72 @@
-<style type="text/css">
-.bar {
-    fill: steelblue;
-}
-</style>
 <div id="journalsChart" class="div-center-content"></div>
 <g:javascript>
-    $(document).ready(function() {
-        display(${journals});
-    });
-    // bubbleChart creation function;
-    // instantiate new bubble chart given a DOM element to display it in and a dataset to visualise
-    function bubbleChart() {
-        const width = 600;
-        const height = 600;
+    var dataset = {
+        'children': ${journals}
+    };
 
-        // location to centre the bubbles
-        const centre = { x: width/2, y: height/2 };
+    var color = d3
+        .scaleOrdinal(d3.schemeCategory20c);
 
-        // strength to apply to the position forces
-        const forceStrength = 0.03;
+    var bubble = d3
+        .pack()
+        .size([diameter, diameter])
+        .padding(1.5);
 
-        // these will be set in createNodes and chart functions
-        let svg = null;
-        let bubbles = null;
-        let labels = null;
-        let nodes = [];
+    var svg = d3
+        .select('#journalsChart')
+        .append('svg')
+        .attr('viewBox','0 0 ' + (diameter) + ' ' + diameter);
 
-        // charge is dependent on size of the bubble, so bigger towards the middle
-        function charge(d) {
-            return Math.pow(d.radius, 2.0) * 0.05
-        }
+    var root = d3
+        .hierarchy(dataset)
+        .sum(function(d) { return d.value; })
+        .sort(function(a, b) { return b.value - a.value; });
 
-        // create a force simulation and add forces to it
-        const simulation = d3.forceSimulation()
-            .force('charge', d3.forceManyBody().strength(charge))
-            // .force('center', d3.forceCenter(centre.x, centre.y))
-            .force('x', d3.forceX().strength(forceStrength).x(centre.x))
-            .force('y', d3.forceY().strength(forceStrength).y(centre.y))
-            .force('collision', d3.forceCollide().radius(d => d.radius + 1));
+    bubble(root);
 
-        // force simulation starts up automatically, which we don't want as there aren't any nodes yet
-        simulation.stop();
+    var node = svg
+        .selectAll('.node')
+        .data(root.children)
+        .enter()
+        .append('g').attr('class', 'node')
+        .attr('transform', function(d) { return 'translate(' + d.x + ' ' + d.y + ')'; })
+        .append('g').attr('class', 'graph');
 
-        // set up colour scale
-        const fillColour = d3.scaleOrdinal(d3.schemeCategory10);
-            /*.domain(["1", "2", "3", "5", "99"])
-            .range(["#0074D9", "#7FDBFF", "#39CCCC", "#3D9970", "#AAAAAA"]); */
+    node
+        .append("circle")
+        .attr("r", function(d) { return d.r; })
+        .style("fill", function(d) {
+            return color(d.data.name);
+        });
 
-        // data manipulation function takes raw data from csv and converts it into an array of node objects
-        // each node will store data and visualisation values to draw a bubble
-        // rawData is expected to be an array of data objects, read in d3.csv
-        // function returns the new node array, with a node for each element in the rawData input
-        function createNodes(rawData) {
-            // use max size in the data as the max in the scale's domain
-            // note we have to ensure that size is a number
-            const maxSize = d3.max(rawData, d => +d.value);
+    node
+        .append("title")
+        .text(function(d) { return d.data.name + ": " + d.data.value; });
 
-            // size bubbles based on area
-            const radiusScale = d3.scaleSqrt()
-                .domain([0, maxSize])
-                .range([0, 80])
+    node
+        .append("text")
+        .attr("dy", ".3em")
+        .style("text-anchor", "middle")
+        .text(function(d) { return d.data.name.substring(0, d.r / 3); })
+        .style("fill", "#ffffff")
+        .style("font-size", function(d) {
+            //return d.r/5;
+            return Math.min(2 * d.r, (2 * d.r - 8) / this.getComputedTextLength() * 14) + "px";
+        });
 
-            // use map() to convert raw data into node data
-            const myNodes = rawData.map(d => ({
-                ...d,
-                radius: radiusScale(+d.value),
-                size: +d.value,
-                x: Math.random() * 900,
-                y: Math.random() * 800
-            }));
-
-            return myNodes;
-        }
-
-        // main entry point to bubble chart, returned by parent closure
-        // prepares rawData for visualisation and adds an svg element to the provided selector and starts the visualisation process
-        let chart = function chart(selector, rawData) {
-            // convert raw data into nodes data
-            nodes = createNodes(rawData);
-
-            // create svg element inside provided selector
-            svg = d3.select(selector)
-                .append('svg')
-                .attr("viewBox", "0 0 " + width.toString() + " " + height.toString());
-
-            // bind nodes data to circle elements
-            const elements = svg.selectAll('.bubble')
-                .data(nodes, d => d.name)
-                .enter()
-                .append('g');
-
-            bubbles = elements
-                .append('circle')
-                .classed('bubble', true)
-                .attr('r', d => d.radius)
-                .attr('fill', d => fillColour(d.name));
-
-            // labels
-            labels = elements
-                .append('text')
-                .attr('dy', '.3em')
-                .style('text-anchor', 'middle')
-                .style('font-size', 10)
-                .text(d => d.value);
-
-            // titles
-            titles = elements
-                .append('title')
-                .attr('dy', '.3em')
-                .style('text-anchor', 'middle')
-                .style('font-size', 10)
-                .text(d => d.name + '(' + d.value + ')');
-
-            elements.on("mouseover", function(d) {
-                $('#item-on-focus').html(d.name + ": " + d.value + " models");
+    node
+        .on("mouseover", function(d) {
+                $('#item-on-focus').html(d.data.name + ": " + d.data.value + " models");
                 $('#item-on-focus').css("color", "#000000");
             });
-            elements.on("mouseout", function(d) {
-                $('#item-on-focus').css("color", "#e2e1e1");
-            });
-            // set simulation's nodes to our newly created nodes array
-            // simulation starts running automatically once nodes are set
-            simulation.nodes(nodes)
-                .on('tick', ticked)
-                .restart();
-        };
+    node
+        .on("mouseout", function(d) {
+            $('#item-on-focus').css("color", "#e2e1e1");
+        });
 
-        // callback function called after every tick of the force simulation
-        // here we do the actual repositioning of the circles based on current x and y value of their bound node data
-        // x and y values are modified by the force simulation
-        function ticked() {
-            bubbles
-                .attr('cx', d => d.x)
-                .attr('cy', d => d.y)
-
-            labels
-                .attr('x', d => d.x)
-                .attr('y', d => d.y)
-        }
-
-        // return chart function from closure
-        return chart;
-    }
-
-    // new bubble chart instance
-    let myBubbleChart = bubbleChart();
-
-    // function called once promise is resolved and data is loaded from csv
-    // calls bubble chart function to display inside #journalsChart div
-    function display(data) {
-        // console.log("Journals: ", data);
-        myBubbleChart('#journalsChart', data);
-    }
-
-    // load data
-    //d3.csv('nodes-data.csv').then(display);
+ /*   svg
+        .append("g")
+        .attr("class", "legendOrdinal")
+        .attr("transform", "translate(600,40)");*/
 </g:javascript>
 

@@ -4,13 +4,12 @@
 <div id="organismsChart" class="div-center-content"></div>
 <g:javascript>
     var dataset = ${organisms};
-    var width = 600, height = 600, diameter = 600;
     var color = d3.scaleOrdinal(d3.schemeCategory20);
     var bubble = d3.pack(dataset).size([diameter, diameter]).padding(1.5);
 
     var svg = d3.select("#organismsChart")
         .append("svg")
-        .attr("viewBox", "0 0 " + width.toString() + " " + diameter.toString())
+        .attr("viewBox", "0 0 " + diameter + " " + diameter)
         .attr("class", "bubble");
 
     var nodes = d3.hierarchy(dataset)
