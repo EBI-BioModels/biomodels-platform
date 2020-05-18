@@ -22,21 +22,16 @@
         radius = Math.min(width, height) / 2 - margin.bottom;
     var slideDesc = {
         1: {
-            name: "curationState",
-            title: "Statistics on Curation States",
-            description: "This shows the number of manually curated and non-curated models"
-        },
-        2: {
             name: "modellingApproach",
             title: "Statistics on Modelling Approaches",
             description: "This shows models distribution based on modelling approaches"
         },
-        3: {
+        2: {
             name: "organism",
             title: "Statistics on Organisms",
             description: "This shows models distribution based on organisms"
         },
-        4: {
+        3: {
             name: "journal",
             title: "Statistics on Journals",
             description: "This shows models distribution based on publication journals"
@@ -116,9 +111,6 @@
             <button class="orbit-next" aria-label="next" style="background-color: #008080">
                 <span class="show-for-sr">Next Slide</span>&#9654;</button>
             <li class="is-active orbit-slide">
-                <biomd:renderHomePageStatisticsCurationState/>
-            </li>
-            <li class="orbit-slide">
                 <biomd:renderHomePageStatisticsModellingApproaches/>
             </li>
             <li class="orbit-slide">
@@ -134,7 +126,6 @@
                 <span class="show-for-sr">Current Slide</span></button>
             <button data-slide="1"><span class="show-for-sr">Second slide details.</span></button>
             <button data-slide="2"><span class="show-for-sr">Third slide details.</span></button>
-            <button data-slide="3"><span class="show-for-sr">Fourth slide details.</span></button>
         </nav>
     </div>
 </div>

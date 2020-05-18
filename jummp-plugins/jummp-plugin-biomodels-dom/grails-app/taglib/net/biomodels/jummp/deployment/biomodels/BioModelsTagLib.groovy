@@ -172,19 +172,7 @@ class BioModelsTagLib {
         out << render(template: "/templates/biomodels/homePage/hp-features-parameters-search",
             model: [totalRecords: totalRecords])
     }
-
-    /**
-     * Renders plot for the statistical data of curation states
-     */
-    def renderHomePageStatisticsCurationState = {
-        // get data for the curation state chart either Redis Cache or BioModels database directly
-        Map<String, Integer> curationState = decorationService.fetchStatisticsCurationState()
-        def nbManuallyCurated = curationState.get("Manually curated")
-        def nbNoncurated = curationState.get("Non-curated")
-        out << render(template: "/templates/biomodels/homePage/hp-statistics-curation-state-d3",
-            model: [nbManuallyCurated: nbManuallyCurated, nbNoncurated: nbNoncurated])
-    }
-
+    
     def renderHomePageStatisticsModellingApproaches = {
         def fetchedApproaches = decorationService.fetchStatisticsModellingApproaches()
         def approaches = fetchedApproaches.collect { entry ->

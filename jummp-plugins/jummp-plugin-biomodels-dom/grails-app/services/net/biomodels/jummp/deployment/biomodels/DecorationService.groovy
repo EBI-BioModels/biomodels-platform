@@ -243,19 +243,6 @@ ORDER BY model.firstPublished DESC'''
     }
 
     /**
-     * Fetches the statistical data on the chart of the curation states shown on Home Page
-     *
-     * <p>This service is being used in {@link BioModelsTagLib} for rendering the Curation State chart
-     * in the slideshow/carousel.
-     *
-     * @return A {@link Map} holding curation states and their corresponding counts
-     */
-    Map<String, Integer> fetchStatisticsCurationState() {
-        Map<String, Integer> curationStateMap = fetchStatisticsDataFromRedisCache("hp-statistics-curation-state")
-        return curationStateMap
-    }
-
-    /**
      * Fetches the statistical data for the chart of the modelling approaches shown on Home Page.
      *
      * <p>This service is being used in {@link BioModelsTagLib} for rendering the Modelling Approaches
@@ -339,21 +326,6 @@ ORDER BY model.firstPublished DESC'''
         return news
     }
 
-    Map<String, Integer> buildStatisticsCurationState() {
-        String query = "${FIXED_PARAMS}=curationstatus&facetcount=10&format=json"
-        def response = hitRemoteService(EBI_SEARCH_URL, query)
-        def totalHitCount = response.json.hitCount as Integer
-        // the total hit count is always greater than the sum of two below values
-        // because it includes private models.
-        Map<String, Integer> curationStateMap = ["totalHitCount": totalHitCount]
-        def facetValues = response.json.facets[0].facetValues
-        def facetCurated = facetValues[0]
-        def facetNoncurated = facetValues[1]
-        curationStateMap.put(facetCurated["label"] as String, facetCurated["count"] as Integer)
-        curationStateMap.put(facetNoncurated["label"] as String, facetNoncurated["count"] as Integer)
-        return curationStateMap
-    }
-
     Map<String, Integer> buildStatisticsModellingApproaches() {
         String query = "${FIXED_PARAMS}=modellingapproach&facetcount=10&format=json"
         def response = hitRemoteService(EBI_SEARCH_URL, query)
@@ -403,16 +375,6 @@ GROUP BY p.journal
     void refreshDataForNewsWidgetRedisCache() {
         Map data = buildDataForNewsWidget()
         doRedisHSet("hp-news-widget", data)
-    }
-
-    void refreshDataForChartsRedisCache() {
-        doRedisHSet("curation-state-based-statistic", ["curated": '900', "non-curated": '2500'])
-    }
-
-    void refreshStatisticsCurationStateRedisCache() {
-        Map<String, Integer> curationState = buildStatisticsCurationState()
-        Map<String, String> curationSateMap = convert2RedisMap(curationState)
-        doRedisHSet("hp-statistics-curation-state", curationSateMap)
     }
 
     void refreshStatisticsModellingApproachesRedisCache() {
@@ -476,7 +438,6 @@ GROUP BY p.journal
     }
 
     void updateDataForChartsOnHomePage() {
-        refreshStatisticsCurationStateRedisCache()
         refreshStatisticsModellingApproachesRedisCache()
         refreshStatisticsOrganismsRedisCache()
         refreshStatisticsJournalsRedisCache()
@@ -591,9 +552,6 @@ GROUP BY p.journal
         if (!redisMap) {
             // call the fallback
             switch (key) {
-                case "hp-statistics-curation-state":
-                    returnedMap = buildStatisticsCurationState()
-                    break
                 case "hp-statistics-modelling-approaches":
                     returnedMap = buildStatisticsModellingApproaches()
                     break
