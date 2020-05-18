@@ -16,15 +16,10 @@
     }
 
     .svg-container {
-        /*display: inline-block;
-        position: relative;
-        width: 100%;
-        padding-bottom: 100%;
-        vertical-align: top;
-        overflow: hidden;*/
         margin: 0 auto;
         display: inline-block;
     }
+
     .orbit-bullets button.is-active {
         background-color: #008080;
     }
@@ -35,7 +30,7 @@
     var width = 600,
         height = 600,
         diameter = 600,
-        radius = Math.min(width, height) / 2 - margin.bottom, 
+        radius = Math.min(width, height) / 2 - margin.bottom,
         default_ratio = width/height;
     var slideDesc = {
         1: {

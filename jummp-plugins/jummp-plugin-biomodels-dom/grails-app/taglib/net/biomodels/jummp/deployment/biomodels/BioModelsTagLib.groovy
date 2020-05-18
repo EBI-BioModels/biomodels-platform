@@ -25,6 +25,7 @@ import net.biomodels.jummp.core.model.FlagTransportCommand
 import net.biomodels.jummp.core.model.ModelState
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.model.PublicationLinkProvider
+import net.biomodels.jummp.statistic.RecentlyPublishedModel
 
 import java.text.DateFormatSymbols
 import java.text.SimpleDateFormat
@@ -85,7 +86,7 @@ class BioModelsTagLib {
         def modelId =  attrs.model
         Map requiredParams = ["model": modelId]
         if (attrs.curationNotes != null) {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy, HH:mm:ss");
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy, HH:mm:ss")
             def base64CurationNotes = attrs.curationNotes?.collect { CurationNotesTransportCommand cmd ->
                 [
                     model: cmd.model,
@@ -172,7 +173,7 @@ class BioModelsTagLib {
         out << render(template: "/templates/biomodels/homePage/hp-features-parameters-search",
             model: [totalRecords: totalRecords])
     }
-    
+
     def renderHomePageStatisticsModellingApproaches = {
         def fetchedApproaches = decorationService.fetchStatisticsModellingApproaches()
         def approaches = fetchedApproaches.collect { entry ->

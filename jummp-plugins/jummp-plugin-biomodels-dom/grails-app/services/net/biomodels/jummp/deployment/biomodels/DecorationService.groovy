@@ -29,6 +29,8 @@ import grails.transaction.Transactional
 import groovy.time.TimeCategory
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.plugins.security.User
+import net.biomodels.jummp.statistic.OrganismData
+import net.biomodels.jummp.statistic.RecentlyPublishedModel
 import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
 import org.perf4j.aop.Profiled
 import org.slf4j.Logger
@@ -143,7 +145,7 @@ GROUP BY rev.model
      * gets 10 of the most recently published models
      * Due to needing more fields to be shown on the widget, this service will have to include
      * some fields like revision owner as submitter, publication title, publication journal and year.
-     * @return A {@link Map} of {@link RecentlyPublishedModel} objects
+     * @return A {@link Map} of {@link net.biomodels.jummp.statistic.RecentlyPublishedModel} objects
      */
     @Profiled(tag = 'decorationService.buildListOfRecentlyPublishedModels')
     private Map<String, RecentlyPublishedModel> buildListOfRecentlyPublishedModels() {
@@ -265,9 +267,10 @@ ORDER BY model.firstPublished DESC'''
             // rebuild the map which @see buildStatisticsOrganisms() returns
             returnedMap["children"] = organismsMap.collect { entry ->
                 String[] parts = entry.value.split(";")
-                String count = parts[0] as String
+                int count = parts[0] as int
                 String taxonomy = parts[1] as String
-                [Name: entry.key, Count: count, Taxonomy: taxonomy]
+                int normalisedCount = parts[2] as int
+                [Name: entry.key, Count: count, Taxonomy: taxonomy, NormalisedCount: normalisedCount]
             }
         }
         return returnedMap
@@ -388,8 +391,10 @@ GROUP BY p.journal
         def organisms = organismsMap["children"]
         Map<String, String> taxons = new HashMap<>()
         organisms.each {
-            taxons.put(it["Name"] as String, "${it['Count']};${it['Taxonomy']}" as String)
+            String value = "${it['Count']};${it['Taxonomy']};${it['NormalisedCount']}" as String
+            taxons.put(it["Name"] as String, value)
         }
+        logger.info("Organism Statistic has been updated on Redis on ${new Date()}")
         doRedisHSet("hp-statistics-organisms", taxons)
     }
 
@@ -521,7 +526,7 @@ GROUP BY p.journal
         List result = makeStatisticsOnOrganisms()
         Map returned = new HashMap()
         returned["children"] = result.collect { OrganismData d ->
-            [Name: d.name, Count: d.count, Taxonomy: d.taxonomy]
+            [Name: d.name, Count: d.count, Taxonomy: d.taxonomy, NormalisedCount: d.normalisedCount]
         }
         returned
     }
@@ -536,14 +541,25 @@ GROUP BY p.journal
         def response = hitRemoteService(BM_SVR_URL, query)
         def taxons = response.json.facets.findAll { it['id'] == 'TAXONOMY' }
         taxons = taxons.facetValues.flatten()
-        StringBuilder result = new StringBuilder()
         List<OrganismData> organismData = new ArrayList<OrganismData>()
         for (tax in taxons) {
-            OrganismData d = new OrganismData(name: "${tax['label']} (${tax['value']})",
-                count: tax['count'] as int, taxonomy: tax['value'])
+            // initialise the normalised count as the count
+            int normalisedCount = tax['count'] as int
+            OrganismData d = new OrganismData(name: "${tax['label']}",
+                count: tax['count'] as int, normalisedCount: normalisedCount, taxonomy: tax['value'])
             organismData.add(d)
         }
-        return organismData
+
+        logger.info("Sorting the organism list before normalising counts")
+        Collections.sort(organismData, new Comparator<OrganismData>() {
+            @Override
+            int compare(OrganismData o1, OrganismData o2) {
+                return o2.count <=> o1.count
+            }
+        })
+        List returnedList = normaliseOrganismCount(organismData)
+
+        return returnedList
     }
 
     private Map<String, Integer> fetchStatisticsDataFromRedisCache(final String key) {
@@ -726,6 +742,43 @@ GROUP BY p.journal
         response
     }
 
+    private List<OrganismData> normaliseOrganismCount(final List<OrganismData> organismData) {
+        // Take into account the fact that the input list was sorted in descending order
+        logger.debug("Scaling the counts of Organisms")
+        ArrayList<OrganismData> originalData = new ArrayList<OrganismData>(organismData)
+        ArrayList<OrganismData> normalisedData = new ArrayList<OrganismData>()
+        ArrayList<Float> delta = new ArrayList<Float>()
+        for (int i = 0; i < originalData.size() - 1; i++) {
+            normalisedData.add(originalData[i])
+            Integer normalisedCount = originalData[i].count
+            Float d = originalData[i].count / originalData[i+1].count
+            delta.add(d)
+            normalisedCount = scaleDelta(normalisedCount, d)
+            normalisedData[i].normalisedCount = (int) normalisedCount
+        }
+        OrganismData lastElement = originalData[originalData.size() - 1]
+        normalisedData.add(lastElement)
+        logger.debug("Nb. elements: ${originalData.size()} -- ${normalisedData.size()}")
+        List l1 = originalData.collect { OrganismData it ->
+            it.count
+        }
+        List l2 = normalisedData.collect { OrganismData it ->
+            it.normalisedCount
+        }
+        normalisedData.toList()
+    }
+
+    private Integer scaleDelta(Integer normalisedCount, final Float d) {
+        if (d > 2.0) {
+            // decrease the count the i_th element just time, for example, 80% - 90% of
+            // the delta between it and the closest lower count
+            normalisedCount = normalisedCount / (d * 0.50)
+        } else if (normalisedCount == 1 || normalisedCount == 2) {
+            normalisedCount = normalisedCount * 2
+        }
+        normalisedCount
+    }
+
     long fetchStatisticsCuratedModels() {
         // fetch the figure from Redis cache
         Long total = doRedisHGet(HP_STAT_TOTAL_FIGURE, "total-curated-models") as Long
@@ -744,39 +797,5 @@ GROUP BY p.journal
             total = retrieveTotalIndividualModelsFromEBISearchServer()
         }
         total
-    }
-}
-
-class ModelLatestPublished {
-    String modelName
-    Date latestAccessedDate
-
-    ModelLatestPublished(String modelName, Date latestAccessedDate) {
-        this.modelName = modelName
-        this.latestAccessedDate = latestAccessedDate
-    }
-}
-
-class OrganismData {
-    String name
-    String taxonomy
-    int count
-
-    String toString() {
-        "$name ($taxonomy): $count"
-    }
-}
-
-class RecentlyPublishedModel {
-    String id
-    String title
-    String submitter
-    String lastPublished
-    String pubTitle
-    String pubJournal
-    String pubYear
-
-    String toString() {
-        "$id: $title (${submitter}, ${lastPublished})\n${pubTitle}: ${pubJournal} (${pubYear})"
     }
 }

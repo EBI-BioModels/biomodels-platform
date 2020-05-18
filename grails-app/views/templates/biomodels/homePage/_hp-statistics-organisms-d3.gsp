@@ -14,7 +14,7 @@
 
     var nodes = d3.hierarchy(dataset)
         .sum(function(d) {
-            return d.Count; });
+            return d.NormalisedCount; });
 
     var node = svg.selectAll(".node")
         .data(bubble(nodes).descendants())
