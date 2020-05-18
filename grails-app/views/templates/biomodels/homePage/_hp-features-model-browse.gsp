@@ -1,22 +1,22 @@
 <div class="row">
     <div class="large-3 medium-3 small-12 columns">
         <g:link controller="search" action="search"
-                params="${[query: "*:* AND curationstatus:'Manually curated'", domain: "biomodels"]}"
-                title="Browse all individual models">
+                params="${[query: '*:* AND curationstatus:"Manually curated"', domain: "biomodels"]}"
+                title="Browse all manually curated models">
             <span class="size-400 icon icon-common icon-reviewed-data hide-for-small-only"></span></g:link>
         <h4><g:link controller="search" action="search"
-                    params="${[query: "*:* AND curationstatus:'Manually curated'", domain: "biomodels"]}"
-                    title="Browse all individual models">Curated</g:link></h4>
+                    params="${[query: '*:* AND curationstatus:"Manually curated"', domain: "biomodels"]}"
+                    title="Browse all manually curated models">Manually Curated</g:link></h4>
         <h5>${totalCuratedModels} models</h5>
     </div>
     <div class="large-3 medium-3 small-12 columns">
         <g:link controller="search" action="search"
-                params="${[query: "*:* AND curationstatus:'Non-curated'", domain: "biomodels"]}"
-                title="Browse all individual models">
+                params="${[query: '*:* AND curationstatus:"Non-curated"', domain: "biomodels"]}"
+                title="Browse all non-curated models">
             <span class="size-400 icon icon-common icon-unreviewed-data hide-for-small-only"></span></g:link>
         <h4><g:link controller="search" action="search"
-                    params="${[query: "*:* AND curationstatus:'Non-curated'", domain: "biomodels"]}"
-                    title="Browse all individual models">Non-curated</g:link></h4>
+                    params="${[query: '*:* AND curationstatus:"Non-curated"', domain: "biomodels"]}"
+                    title="Browse all non-curated models">Non-curated</g:link></h4>
         <h5>${totalNonCuratedModels} models</h5>
     </div>
     <div class="large-3 medium-3 small-12 columns">
