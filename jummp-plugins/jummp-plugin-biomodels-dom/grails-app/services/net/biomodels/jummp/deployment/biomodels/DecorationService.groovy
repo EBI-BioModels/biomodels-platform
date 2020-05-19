@@ -355,6 +355,8 @@ FROM
     JOIN m.publication AS p
 WHERE
     m.deleted = 0
+    and m.submissionId NOT LIKE 'MODEL170711%'
+    and m.submissionId NOT LIKE 'BMID%'
 GROUP BY p.journal
 '''
         def matchedModels = Model.executeQuery(query)
