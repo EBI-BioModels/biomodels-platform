@@ -28,13 +28,19 @@ package net.biomodels.jummp.deployment.biomodels
 import grails.plugin.springsecurity.annotation.Secured
 
 @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
-class HomePageController {
+class HomePageController extends CommonController {
     def decorationService
+    private static PRE_TITLE
+
+    @Override
+    void setConfiguration(ConfigObject co) {
+        super.setConfiguration(co)
+        PRE_TITLE = "Report of updating"
+    }
 
     def index() {
         String hpStatisticsDataForFeatures = createLink(controller: "homePage", action: "updateStatisticsDataForFeatures")
         String hpStatisticsDataForCharts = createLink(controller: "homePage", action: "updateStatisticsDataForCharts")
-        String hpStatisticsCurationState = createLink(controller: "homePage", action: "updateStatisticsCurationState")
         String hpStatisticsModellingApproaches = createLink(controller: "homePage", action: "updateStatisticsModellingApproaches")
         String hpStatisticsOrganisms = createLink(controller: "homePage", action: "updateStatisticsOrganisms")
         String hpStatisticsJournals = createLink(controller: "homePage", action: "updateStatisticsJournals")
@@ -42,10 +48,10 @@ class HomePageController {
         String recentlyPublishedModels = createLink(controller: "homePage", action: "updateRecentlyPublishedModels")
         String hpDataNewsWidget = createLink(controller: "homePage", action: "updateDataNewsWidget")
         String latestMomEntry = createLink(controller: "homePage", action: "updateMoMEntryOnRedisCache")
-        Map links = [:]
+        String title = "Admin Board to update data on Home Page | BioModels"
+        Map links = ["layout": layout, "title": title]
         links.put("hpStatisticsDataForFeatures", hpStatisticsDataForFeatures)
         links.put("hpStatisticsDataForCharts", hpStatisticsDataForCharts)
-        links.put("hpStatisticsCurationState", hpStatisticsCurationState)
         links.put("hpStatisticsModellingApproaches", hpStatisticsModellingApproaches)
         links.put("hpStatisticsOrganisms", hpStatisticsOrganisms)
         links.put("hpStatisticsJournals", hpStatisticsJournals)
@@ -61,7 +67,9 @@ class HomePageController {
      */
     def updateStatisticsDataForFeatures() {
         decorationService.refreshStatisticsDataForFeatures()
-        render "updated statistics data for the feature widgets"
+        String title = "${PRE_TITLE} Statistics For Features | BioModels"
+        String message = "Updated statistics data for the feature widgets successfully"
+        render(view: "report", model: [message: message, title: title, layout: layout])
     }
     /**
      * Updates the list of recently accessed models on Redis Cache
@@ -69,7 +77,9 @@ class HomePageController {
     def updateRecentlyAccessedModels() {
         decorationService.refreshRecentlyAccessedModelsRedisCache()
         Map<String, String> models = decorationService.doRedisHGetAll("hp-recently-accessed-models")
-        render(view: "update-recently-accessed-models", model: [models: models])
+        String title = "${PRE_TITLE} recently accessed models | BioModels"
+        render(view: "update-recently-accessed-models",
+            model: [models: models, title: title, layout: layout])
     }
 
     /**
@@ -78,7 +88,9 @@ class HomePageController {
     def updateRecentlyPublishedModels() {
         decorationService.refreshRecentlyPublishedModelsRedisCache()
         Map<String, String> models = decorationService.doRedisHGetAll("hp-recently-published-models")
-        render(view: "update-recently-published-models", model: [models: models])
+        String title = "${PRE_TITLE} recently published models | BioModels"
+        render(view: "update-recently-published-models",
+            model: [models: models, title: title, layout: layout])
     }
 
     /**
@@ -86,29 +98,28 @@ class HomePageController {
      */
     def updateMoMEntryOnRedisCache() {
         decorationService.refreshModelOfTheMonthEntryRedisCache()
-        render "OK"
+        String title = "${PRE_TITLE} Statistics For MoM Entry | BioModels"
+        String message = "Updated statistics data for the MoM widget successfully"
+        render(view: "report", model: [message: message, title: title, layout: layout])
     }
     /**
      * Updates statistical data for the widgets shown on the home page
      */
     def updateStatisticsDataForCharts() {
         decorationService.updateDataForChartsOnHomePage()
-        render "updated statistics data for all charts"
+        String title = "${PRE_TITLE} Statistics For Charts | BioModels"
+        String message = "Updated statistics data for the charts successfully"
+        render(view: "report", model: [message: message, title: title, layout: layout])
     }
 
-    /**
-     * Updates statistic of models relied on curation state
-     */
-    def updateStatisticsCurationState() {
-        decorationService.refreshStatisticsCurationStateRedisCache()
-        render "updated statistics curation state"
-    }
     /**
      * Updates statistic of models replied on modelling approach
      */
     def updateStatisticsModellingApproaches() {
         decorationService.refreshStatisticsModellingApproachesRedisCache()
-        render "updated statistics modelling approaches"
+        String title = "${PRE_TITLE} Statistics For Modelling Approaches Chart | BioModels"
+        String message = "Updated statistics data for the modelling approach chart successfully"
+        render(view: "report", model: [message: message, title: title, layout: layout])
     }
 
     /**
@@ -116,7 +127,9 @@ class HomePageController {
      */
     def updateStatisticsOrganisms() {
         decorationService.refreshStatisticsOrganismsRedisCache()
-        render "updated statistics organisms"
+        String title = "${PRE_TITLE} Statistics For Organisms | BioModels"
+        String message = "Updated statistics data for the organisms successfully"
+        render(view: "report", model: [message: message, title: title, layout: layout])
     }
 
     /**
@@ -124,7 +137,9 @@ class HomePageController {
      */
     def updateStatisticsJournals() {
         decorationService.refreshStatisticsJournalsRedisCache()
-        render "updated statistics journals"
+        String title = "${PRE_TITLE} Statistics For Journals | BioModels"
+        String message = "Updated statistics data for the journals successfully"
+        render(view: "report", model: [message: message, title: title, layout: layout])
     }
 
     /**
@@ -132,6 +147,8 @@ class HomePageController {
      */
     def updateDataNewsWidget() {
         decorationService.refreshDataForNewsWidgetRedisCache()
-        render  "updated data for News Widget"
+        String title = "${PRE_TITLE} Statistics For News Widget | BioModels"
+        String message = "Updated statistics data for the News widgets successfully"
+        render(view: "report", model: [message: message, title: title, layout: layout])
     }
 }
