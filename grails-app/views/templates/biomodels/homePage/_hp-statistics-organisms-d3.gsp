@@ -1,6 +1,3 @@
-<style type="text/css">
-
-</style>
 <div id="organismsChart" class="div-center-content"></div>
 <g:javascript>
     var dataset = ${organisms};

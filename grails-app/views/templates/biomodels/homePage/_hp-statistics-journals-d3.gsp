@@ -63,10 +63,5 @@
         .on("mouseout", function(d) {
             $('#item-on-focus').css("color", "#e2e1e1");
         });
-
- /*   svg
-        .append("g")
-        .attr("class", "legendOrdinal")
-        .attr("transform", "translate(600,40)");*/
 </g:javascript>
 

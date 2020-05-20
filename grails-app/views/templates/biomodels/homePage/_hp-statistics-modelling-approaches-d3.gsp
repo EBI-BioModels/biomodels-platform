@@ -13,9 +13,6 @@
         width: 250px;
         z-index: 10;
     }
-    .biggerText {
-        font-size: 18px;
-    }
 </style>
 
 <div id="modellingApproachesChart" class="div-center-content"></div>
@@ -118,10 +115,4 @@
         var queryURL = prefixSearchURL + modellingapproach;
         window.open(queryURL, '_blank');
     });
-    /*window.addEventListener('resize', function (event) {
-        var innerWidth = $('.orbit').width;
-        var innerHeight = $('.orbit').height;
-        $("#modellingApproachesChart").width(innerWidth * 0.9);
-        $("#modellingApproachesChart").height(innerHeight);
-    });*/
 </g:javascript>

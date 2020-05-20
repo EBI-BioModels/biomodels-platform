@@ -7,19 +7,6 @@
         text-align: center;
         width: 100%;
     }
-
-    .svg-content {
-        /*display: inline-block;
-        position: absolute;
-        top: 0;
-        left: 0;*/
-    }
-
-    .svg-container {
-        margin: 0 auto;
-        display: inline-block;
-    }
-
     .orbit-bullets button.is-active {
         background-color: #008080;
     }
