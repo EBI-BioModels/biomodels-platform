@@ -25,7 +25,7 @@
     }
 </style>
 <script>
-    var donutWidth = 100;
+    var donutWidth = 120;
     var margin = {top: 10, right: 10, bottom: 10, left: 10};
     var width = 600,
         height = 600,
