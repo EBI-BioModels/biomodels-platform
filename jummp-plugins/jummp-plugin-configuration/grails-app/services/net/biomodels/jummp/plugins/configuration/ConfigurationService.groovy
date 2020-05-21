@@ -34,7 +34,7 @@
 
 package net.biomodels.jummp.plugins.configuration
 
-
+import org.codehaus.groovy.grails.exceptions.GrailsConfigurationException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
@@ -105,7 +105,9 @@ class ConfigurationService implements InitializingBean {
             logger.debug("The app is loading the configuration file ${configPath}")
             configurationFile = new File(configPath)
         } else {
-            logger.error("Cannot find neither .jummp.properties nor alternative")
+            String errMsg = "Cannot find neither .jummp.properties nor alternative"
+            logger.error(errMsg)
+            throw new GrailsConfigurationException(errMsg)
         }
     }
 
