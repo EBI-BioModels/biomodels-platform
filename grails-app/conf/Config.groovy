@@ -45,7 +45,7 @@ grails.plugin.springsecurity.fii.rejectPublicInvocations = false
 Properties jummpProperties = new Properties()
 try {
 	def service = new net.biomodels.jummp.plugins.configuration.ConfigurationService()
-    String pathToConfig=service.getConfigFilePath()
+    String pathToConfig = service.getConfigFilePath()
     if (pathToConfig) {
     	jummpProperties.load(new FileInputStream(pathToConfig))
     }
@@ -276,7 +276,8 @@ log4j.main = {
         'org.springframework',
         'org.hibernate',
         'net.sf.ehcache.hibernate',
-        'org.weceem'
+        'org.weceem',
+        'net.biomodels.jummp.plugins.configuration'
     ], additivity: false
 
     warn   jummpAppender: 'org.mortbay.log'
@@ -303,6 +304,7 @@ log4j.main = {
         'net.biomodels.jummp.core.model.identifier.generator',
         'net.biomodels.jummp.core.model.identifier.support',
         'net.biomodels.jummp.plugins.pharmml',
+        'net.biomodels.jummp.plugins.configuration',
         'net.biomodels.jummp.search',
         'net.biomodels.jummp.deployment.biomodels'
     ], additivity: false
