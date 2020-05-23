@@ -780,6 +780,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             RevisionTransportCommand cmd = revisionAdapter.toCommandObject()
             indexModelRevision(cmd)
             //convertModelToOtherFormats(cmd)
+            grailsApplication.mainContext.publishEvent(new RevisionCreatedEvent(this, cmd))
             return attachedRevision
         }
         revision
