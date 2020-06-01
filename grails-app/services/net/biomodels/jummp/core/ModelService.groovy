@@ -46,6 +46,7 @@ import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGe
 import net.biomodels.jummp.core.vcs.VcsException
 import net.biomodels.jummp.core.vcs.VcsFileDetails
 import net.biomodels.jummp.model.*
+import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
@@ -780,7 +781,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             RevisionTransportCommand cmd = revisionAdapter.toCommandObject()
             indexModelRevision(cmd)
             //convertModelToOtherFormats(cmd)
-            grailsApplication.mainContext.publishEvent(new RevisionCreatedEvent(this, cmd))
+            shareRevision2FellowCurators(cmd)
             return attachedRevision
         }
         revision
@@ -982,6 +983,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             RevisionTransportCommand cmd = new RevisionAdapter(revision: r).toCommandObject()
             indexModelRevision(cmd)
             //convertModelToOtherFormats(cmd)
+            shareRevision2FellowCurators(cmd)
             return attachedModel
         }
         model
@@ -2196,6 +2198,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
             Revision toPublish = persistRevision(revisionTC.files, [], revisionTC)
             RevisionTransportCommand toPublishTC = new RevisionAdapter(revision: toPublish).toCommandObject()
             indexModelRevision(toPublishTC)
+            shareRevision2FellowCurators(toPublishTC)
             return toPublish
         } else {
             log.warn("""We are publishing $revision encoded in $format, but won't be able to add \
@@ -2425,6 +2428,12 @@ Try to connect with Conversion service to export the model ${cmd.model.submissio
         revision.curationState == CurationState.CURATED
     }
 
+    /**
+     * Adds a {@link ModellingApproach} considered as an annotation to a specific revision.
+     * @param revisionTC    a {@link RevisionTransportCommand} object representing the revision.
+     * @param approach      a {@link ModellingApproach} object representing the modelling approach.
+     * @throws ModelException
+     */
     void addModellingApproachAsAnnotation(RevisionTransportCommand revisionTC, ModellingApproach approach) throws
             ModelException {
         def sbmlService = grailsApplication.mainContext.getBean("sbmlService", ISbmlService.class)
@@ -2432,6 +2441,28 @@ Try to connect with Conversion service to export the model ${cmd.model.submissio
         if (!result) {
             log.error("""\
 There has been error while adding $approach to the model ${revisionTC.identifier()}""")
+        }
+    }
+
+    /**
+     * Publishes an event to a specific subscriber. The method checks criteria to publish a
+     * {@link RevisionCreatedEvent} so that the subscriber {@link ShareRevisionToFellowCurators}
+     * can detect and share the newly created revision to the fellow curators with the writable permission.
+     *
+     * @param command {@link RevisionTransportCommand} object
+     */
+    private void shareRevision2FellowCurators(RevisionTransportCommand command) {
+        Revision revision = Revision.get(command.id)
+        // Check authorities
+        User owner = revision.owner
+        Set roles = owner.authorities
+        Role curaRole = Role.findByAuthority("ROLE_CURATOR")
+        boolean shouldShare = curaRole in roles
+        if (shouldShare) {
+            log.debug("Publishing the event to share the revision ${command.identifier()}")
+            grailsApplication.mainContext.publishEvent(new RevisionCreatedEvent(this, command))
+        } else {
+            log.debug("cannot share the model ${command.identifier()} to fellow curators")
         }
     }
 }

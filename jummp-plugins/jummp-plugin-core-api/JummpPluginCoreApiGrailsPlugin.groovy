@@ -19,6 +19,7 @@
 **/
 
 import net.biomodels.jummp.core.annotation.EnvironmentAwareAnnotationRender
+import net.biomodels.jummp.core.subscribers.ShareRevisionToFellowCurators
 
 class JummpPluginCoreApiGrailsPlugin {
     // the plugin version
@@ -54,6 +55,11 @@ All other plugins providing core functionality depend on this plugin and the cor
     def doWithSpring = {
         annotationRenderingTemplateProvider(EnvironmentAwareAnnotationRender) {
             grailsApplication = ref("grailsApplication")
+        }
+        shareRevisionToFellowCurators(ShareRevisionToFellowCurators) { bean ->
+            bean.autowire = "byName"
+            bean.singleton = true
+            modelDelegateService = ref("modelDelegateService")
         }
     }
 
