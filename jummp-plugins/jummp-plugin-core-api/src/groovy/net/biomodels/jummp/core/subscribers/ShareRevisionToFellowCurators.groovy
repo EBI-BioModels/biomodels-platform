@@ -65,8 +65,9 @@ Curator ${owner} has shared the model ${modelId} to other curators with writable
                 modelDelegateService.submitModelRevisionForPublication(command)
             } else {
                 String message = """\
-Unknown error has happened when trying to share a model submitted by a curator to fellow curators"""
-                logger.debug(message)
+Unknown error (i.e. model revision is null) has happened when trying to share a model submitted by a curator to fellow
+curators"""
+                logger.error(message)
             }
         }
     }
