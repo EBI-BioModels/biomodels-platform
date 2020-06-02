@@ -3,18 +3,28 @@
 
 <div id="errors">
 </div>
-<span>
-    <span class="pull_element_right" >
-        <input id="curated_id" type="radio" name="curation" value="curated"><label for="curated_id">Curated</label>
-        <input id="non_curated_id" type="radio" name="curation" value="non-curated"><label for="non_curated_id" >Non-Curated</label>
-    </span>
+
+<g:render template="/templates/parameterSearch/searchTips"
+          model="['tips': [
+              'BIOMD*292',
+              'Cyclin',
+              'organism:Homo Sapiens',
+              'publication:16838084',
+              'modifiers:cyclin OR reactants:cyclin OR products:cyclin'
+          ]]" />
+
+<span class="pull_element_right">
+    <input id="curated_id" type="radio" name="curation" value="curated"><label for="curated_id" class="size-75 line-height-75">Curated</label>
+    <input id="non_curated_id" type="radio" name="curation" value="non-curated"><label for="non_curated_id" class="size-75 line-height-75">Non-Curated</label>
 </span>
+
 <table data-stripe-classes="[]" id="table_id" class="display">
     <thead>
     <tr>
-    <th data-class-name="large-2 medium-2 small-2 align-top line-height-100 small">Entity</th>
+    <th data-class-name="large-2 medium-2 small-2 align-top line-height-100 small word-break">Entity</th>
     <th data-class-name="large-7 medium-7 small-7 align-top line-height-100 small">Reaction</th>
-    <th data-class-name="large-3 medium-3 small-3 line-height-150 small word-break">External Links</th>
+    <th data-class-name="large-3 medium-3 small-3 line-height-150 small word-break"
+        title="model, manuscript, organism, cross references, etc.">More information</th>
     </tr>
     </thead>
 </table>
@@ -41,6 +51,8 @@
                 }
             },
             {
+                // this has been renamed to More Information
+                // TODO: make this field name consistent with More information
                 data: 'fields.external_links_show',
                 orderable: false,
                 render: function (data, type, row) {
@@ -156,38 +168,51 @@
 
         function constructReactionLegend(row) {
             const reactants = row.fields.reactants_RAW;
-            const products  = row.fields.products_RAW;
+            const products = row.fields.products_RAW;
             const modifiers = row.fields.modifiers_RAW;
 
             let table = "<table>\n" +
                 "  <thead><tr>\n" +
-                "    <th class='text-center'>role</th>\n" +
-                "    <th>id</th>\n" +
-                "    <th>name</th>\n" +
-                "    <th class='text-center'>references</th>\n" +
+                "    <th class='text-center word-break'>role</th>\n" +
+                "    <th class='word-break'>id</th>\n" +
+                "    <th class='word-break'>name</th>\n" +
+                "    <th class='text-center word-break'>references</th>\n" +
                 "    </tr>\n" +
                 "  </thead>\n" +
                 "  <tbody>";
             table += asReactionLegendRows(reactants, "Reactant", "icon-download");
-            table += asReactionLegendRows(products,  "Product", "icon-upload");
-            table += asReactionLegendRows(modifiers, "Modifier", "icon-plug");
+            table += asReactionLegendRows(products, "Product", "icon-upload");
+            table += asReactionLegendRows(modifiers, "Modifier", "icon-cog");
             table += "</tbody></table>";
 
             return asDiv(table, "margin-top-small margin-bottom-small");
         }
 
-        function createOptionalLegendCell(contents) {
-            return (contents === undefined || contents.length === 0) ? "<td></td>" : "<td>" + contents + "</td>";
+        function createOptionalLegendCell(contents, classes = '') {
+            const suffix = "</td>";
+            let prefix = "<td";
+            if (classes !== undefined && classes.length > 0) {
+                prefix += " class='" + classes + "'";
+            }
+            prefix += ">";
+            let result = prefix;
+            if (contents !== undefined && contents.length !== 0) {
+                result += contents;
+            }
+            return result + suffix;
         }
 
         // show reactants, products and modifiers as a table
         function asReactionLegendRows(entries, type, icon) {
             let out = "";
             let rows = undefined;
+            // modifiers are arrays
             if (Array.isArray(entries)) {
                 rows = entries;
             } else {
-                rows = entries.split("£");
+                // products and reactants are CSV strings with rows delimited by '£'
+                const rowDelimiter = "£";
+                rows = entries.split(rowDelimiter);
             }
             const count = rows.length;
             if (count === 0) return out;
@@ -198,14 +223,16 @@
                 + '<span>' + typeIcon + type + "</span>"
                 + "</td>";
             rows.forEach(function (row, idx, allRows) {
-                const cells = row.split("$");
+                // row structure is <entity_id>$<entity_name>$<entity_cross_references>
+                const cellDelimiter = "$";
+                const cells = row.split(cellDelimiter);
                 const id = cells[0];
                 const name = cells[1];
                 const refs = formatLegendXref(cells[2]);
                 let thisRow = "<td>"
                     + id + "</td>";
-                thisRow += createOptionalLegendCell(name);
-                thisRow += createOptionalLegendCell(refs);
+                thisRow += createOptionalLegendCell(name, "word-wrap");
+                thisRow += createOptionalLegendCell(refs, "word-wrap");
                 thisRow += "</tr>";
 
                 if (idx !== count - 1) {
@@ -226,7 +253,7 @@
             const count = refs.length;
             if (0 === count) return result;
 
-            refs.forEach(function(ref, idx, ignored) {
+            refs.forEach(function (ref, idx, ignored) {
                 if (ref !== undefined && ref.length > 0) {
                     const refAnchor = createXrefHyperlink(ref);
                     if (refAnchor.length > 0) {
@@ -249,13 +276,12 @@
             out += asReactionRow(sbo);
             out += asReactionRow(reactionLegend);
             const rateIcon = ebiFontIcon("common", "icon-tachometer-alt", 'margin-right-medium', 'rate');
-            const rate = "<span class='blue size-100'>" + row.fields.rate_original_RAW + "</span>";
+            const rate = "Rate: <span class='blue size-100'>" + row.fields.rate_original_RAW + "</span>";
             out += asReactionRow(rateIcon + rate);
 
             const paramsIcon = ebiFontIcon("common", "icon-sliders-h", 'margin-right-medium', 'parameters');
-            const params = "<span class='grey'>" + row.fields.parameters + "</span>";
+            const params = "Parameter: <span class='grey'>" + row.fields.parameters + "</span>";
             out += asReactionRow(paramsIcon + params);
-
             return asDiv(out, "box-shadow");
         }
 
@@ -270,7 +296,7 @@
                 separatedLinks.forEach(function (subHref) {
                     formattedArray.push(createXrefHyperlink(subHref));
                 });
-                formattedData = formattedArray.join(FIELD_SEPARATOR+' ');
+                formattedData = formattedArray.join(FIELD_SEPARATOR + ' ');
             } else {
                 formattedData = createXrefHyperlink(href);
             }
@@ -343,18 +369,30 @@
         function downloadFile(query, is_curated) {
             if (query) {
                 var base = "${g.createLink(controller: "parameterSearch", action: "export", absolute: true)}";
-                var uri = base + '?query=' + encodeURIComponent(query) + '&is_curated='+is_curated;
+                var uri = base + '?query=' + encodeURIComponent(query) + '&is_curated=' + is_curated;
                 $.jummp.openPage(uri);
             } else {
                 alert("undefined query " + query);
             }
         }
 
+        function performSearch(query) {
+            const dataTable = $("#table_id").dataTable().api();
+            dataTable.search(query).draw();
+            pageState.dataTable.query = query;
+        }
+
+        // allow the performSearch function to be called from outside of this block
+        window.search = function(query) {
+            performSearch(query);
+        };
+
         // Function to add Search and Clear button
         function addActionButtons() {
             if ($("#searchButton").length === 0) {
+                // DataTables offers 'search as you type' by default
+                // replace with a dedicated search button when the page loads
                 var input = $('.dataTables_filter input').unbind(),
-                    self = $("#table_id").dataTable().api(),
                     $downloadButton = $('<button id="downloadButton" class="button">')
                         .text(DOWNLOAD_LABEL)
                         .click(function (message) {
@@ -377,8 +415,8 @@
                     $searchButton = $('<button id="searchButton" class="button icon icon-functional">')
                         .text('Search')
                         .click(function () {
-                            self.search(input.val()).draw();
-                            pageState.dataTable.query = input.val();
+                            const query = input.val();
+                            performSearch(query);
                         }),
                     $clearButton = $('<button id="clearButton" class="button">')
                         .text('Clear')
@@ -390,7 +428,7 @@
                             if (!isDirectionBack) setBrowserUrl();
                         });
 
-                $('.dataTables_filter').append($downloadButton, '&nbsp;', $searchButton, '&nbsp;', $clearButton);
+                $('.dataTables_filter').append($searchButton, '&nbsp;', $downloadButton, '&nbsp;', $clearButton);
             }
         }
 
@@ -516,12 +554,12 @@
             }
 
             // Setting radio boxes
-            if (is_curated===undefined) {
+            if (is_curated === undefined) {
                 is_curated = $('input[name="curation"]:checked')[0].value === "curated";
-            } else if(is_curated === true) {
-                $("#curated_id").prop("checked",true);
+            } else if (is_curated === true) {
+                $("#curated_id").prop("checked", true);
             } else if (is_curated === false) {
-                $("#non_curated_id").prop("checked",true);
+                $("#non_curated_id").prop("checked", true);
             }
 
             // Sorting

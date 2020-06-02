@@ -1,3 +1,6 @@
+Dockerfile
+*.log
+build-push-docker-image.sh
 .idea/
 .gradle/
 .settings/

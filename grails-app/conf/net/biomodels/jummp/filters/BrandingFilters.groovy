@@ -19,6 +19,7 @@
 **/
 
 
+package net.biomodels.jummp.filters
 
 import net.biomodels.jummp.plugins.configuration.BrandingCommand
 

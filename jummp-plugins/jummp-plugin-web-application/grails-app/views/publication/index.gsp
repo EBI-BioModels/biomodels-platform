@@ -28,7 +28,7 @@
 <html>
 <head>
     <meta name="layout" content="${session['branding.style']}/main" />
-    <title>${title} | BioModels</title>
+    <title>${title}</title>
     <style type="text/css">
     .underline {
         border-bottom: 1px solid grey;

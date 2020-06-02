@@ -27,6 +27,14 @@
     background-color: #01a252;
 }
 
+#searchTips {
+    padding: 1.25rem 0;
+}
+
+#table_id_filter {
+    width: 33%;
+}
+
 .pull-element-left {
     float: left;
 }
@@ -35,29 +43,14 @@
     float: right;
 }
 
+.line-height-75 {
+    line-height: 0.75;
+}
+
 .line-height-100 {
     line-height: 1;
 }
 
 .line-height-150 {
     line-height: 1.5;
-}
-
-.foldable-info-tabs > li {
-    margin-bottom: .5rem;
-}
-
-.foldable-info-tabs > li > a:hover {
-    background: #DDD;
-    color: #222;
-}
-
-.foldable-info-tabs > li > a:before {
-    font-family: 'EBI-Common';
-    content: "\003f";
-    margin-right: .5rem;
-}
-
-.foldable-info-tabs > li.is-active > a:before {
-    content: "\0f11a";
 }

@@ -1,7 +1,3 @@
-%{--<div class="small-12 medium-4 large-4 columns">
-    <div class="homepage_info_box"><h3>Recently published</h3></div>
-    <div style="font-size: 85%"><biomd:renderRecentlyPublishedModels/></div>
-</div>--}%
 <div class="small-12 medium-16 large-4 columns">
     <div class="homepage_info_box"><h3>Recently accessed</h3></div>
     <div class="widget-body-text"><biomd:renderRecentlyAccessedModels/></div>

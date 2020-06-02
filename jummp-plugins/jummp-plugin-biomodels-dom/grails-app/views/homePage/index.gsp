@@ -29,8 +29,8 @@ with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <meta name="layout" content="${grailsApplication.config.jummp.branding.style}/main"/>
-    <title>Administrative Interface of Home Page settings | BioModels</title>
+    <meta name="layout" content="${layout}"/>
+    <title>${title}</title>
 </head>
 
 <body>
@@ -44,7 +44,6 @@ with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
                     Refresh statistics for the charts on Home Page (once click for updating the whole)</a><br/>Or click
                 on each individual link from the list below
                     <ul style="list-style-type: square">
-                        <li><a href="${hpStatisticsCurationState}">Refresh statistics for Curation State</a></li>
                         <li><a href="${hpStatisticsModellingApproaches}">Refresh statistics for Modelling
                                                                             Approaches</a></li>
                         <li><a href="${hpStatisticsOrganisms}">Refresh statistics for Organisms</a></li>

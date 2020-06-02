@@ -1,22 +1,17 @@
-<style type="text/css">
-
-</style>
 <div id="organismsChart" class="div-center-content"></div>
 <g:javascript>
     var dataset = ${organisms};
-    var width = 600, height = 600, diameter = 600;
     var color = d3.scaleOrdinal(d3.schemeCategory20);
     var bubble = d3.pack(dataset).size([diameter, diameter]).padding(1.5);
 
     var svg = d3.select("#organismsChart")
         .append("svg")
-        .attr("width", diameter)
-        .attr("height", height)
+        .attr("viewBox", "0 0 " + diameter + " " + diameter)
         .attr("class", "bubble");
 
     var nodes = d3.hierarchy(dataset)
         .sum(function(d) {
-            return d.Count; });
+            return d.NormalisedCount; });
 
     var node = svg.selectAll(".node")
         .data(bubble(nodes).descendants())
@@ -71,12 +66,15 @@
         var queryURL = prefixSearchURL + taxonomy;
         window.open(queryURL, '_blank');
     });
-    node.on("mouseout", function(d) {
+    node.on("mouseover", function(d) {
         var label = d["data"]["Name"];
         var value = d["data"]["Count"];
         var taxonomy = d["data"]["Taxonomy"];
         $('#item-on-focus').html(label + ": " + value + " models");
+        $('#item-on-focus').css("color", "#000000");
     });
-
+    node.on("mouseout", function(d) {
+        $('#item-on-focus').css("color", "#e2e1e1");
+    });
 </g:javascript>
 
