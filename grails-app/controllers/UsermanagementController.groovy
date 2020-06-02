@@ -21,20 +21,24 @@
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
+import net.biomodels.jummp.core.user.UserNotFoundException
 import net.biomodels.jummp.plugins.security.User
+import net.biomodels.jummp.utils.InputParameterSanitizer
 import net.biomodels.jummp.webapp.EditUserCommand
 import net.biomodels.jummp.webapp.RegistrationCommand
 import net.biomodels.jummp.webapp.ResetPasswordCommand
 import net.biomodels.jummp.webapp.UpdatePasswordCommand
+import org.springframework.mail.MailAuthenticationException
 
-/*
-* @short Controller for managing user registrations
-* @author Raza Ali <raza.ali@ebi.ac.uk>
-* @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
-*/
+import javax.mail.AuthenticationFailedException
 
-
-
+/**
+ * @short Controller for managing user registrations
+ *
+ * @author <a href="mailto:raza.ali@ebi.ac.uk">Raza Ali</a>
+ * @author <a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a>
+ * @author <a href="mailto:mihai.glont@ebi.ac.uk">Mihai Glont</a>
+ */
 class UsermanagementController {
     /**
      * Dependency injection for the springSecurityService.
@@ -212,31 +216,41 @@ class UsermanagementController {
     }
 
     /**
-    * Requests a password link from the user service, hiding the exception thrown
-    * if the username provided does not exist.
-    **/
+     * Requests a password link from the user service, hiding the exception thrown
+     * if the username provided does not exist.
+     */
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def requestPassword() {
-        String username = params.username
+        String username = InputParameterSanitizer.encodeAsHTML(params.username)
+        boolean succeeded = true
         boolean usernameExists = true
+        String message = ""
         if (username) {
             try {
                 userService.requestPassword(username)
-            }
-            catch(Exception e) {
-                log.warn(e.message, e)
+            } catch (UserNotFoundException e) {
+                log.error(e.message, e)
+                succeeded = false
                 usernameExists = false
+            } catch (MailAuthenticationException | AuthenticationFailedException e) {
+                log.error(e.message, e)
+                succeeded = false
             }
-            if (usernameExists) {
-                flash.message = "Thank you. Please check the email associated with ${username}'s account"
+            if (succeeded) {
+                message = "Thank you. Please check the email associated with ${username}'s account"
             } else {
-                flash.message = "Username ${username} does not exist."
+                if (!usernameExists) {
+                    message = "Username ${username} does not exist."
+                } else {
+                    message = "Cannot send a reset password link to your email due to authentication error from the mail server"
+                }
             }
+        } else {
+            message = "Please provide a username."
         }
-        else {
-            flash.message = "Please provide a username."
-        }
-        redirect(action:"forgot")
+        log.debug(message)
+        flash.message = message
+        redirect(action: "forgot")
     }
 
      /**
@@ -260,14 +274,12 @@ class UsermanagementController {
             flash.message="I hope you are a robot. Otherwise something has gone wrong."
             return redirect(action:"create")
         }
-        try
-    	{
-    		userService.register(cmd.toUser())
-    	}
-    	catch(Exception e) {
-    		flash.message=e.getMessage()
+        try {
+            userService.register(cmd.toUser())
+        } catch (Exception e) {
+    		flash.message = e.getMessage()
             log.error e.message, e
-   			return redirect(action:"create")
+   			return redirect(action: "create")
     	}
     	render(view: "successfulregistration", model: [email: cmd.email])
     }
