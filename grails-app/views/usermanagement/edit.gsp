@@ -81,7 +81,6 @@
             var currentRealName = "${user.person.userRealName}";
             var currentOrcid = "${user.person.orcid}";
         </g:javascript>
-        <script type="application/javascript" src="${resource(dir: 'js', file: 'common.js')}"></script>
    </body>
 </html>
 <content tag="title">
