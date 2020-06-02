@@ -2,27 +2,33 @@
     <div class="homepage_info_box">
         <h3>Acknowledgements</h3>
     </div>
-    <div id="acknowledgements">
-        <a href="http://www.embl.org/">
-            <img src="//www.ebi.ac.uk/compneur-srv/biomodels/GRAPHICS/EMBL_logo_lo_res_0.jpg"
-                 title="European Molecular Biology Laboratory (EMBL)" alt="EMBL logo" border="0"/></a>
-        <a href="http://www.bbsrc.ac.uk/" title="Biotechnology and Biological Sciences Research Council (BBSRC)">
-            <img src="//www.ebi.ac.uk/compneur-srv/biomodels/GRAPHICS/bbsrc_logo.png"
-                 title="Biotechnology and Biological Sciences Research Council (BBSRC)" alt="BBSRC logo" /></a>
-        <a href="http://agedbrainsysbio.eu/" title="AgedBrainSYSBIO">
-            <img src="//www.ebi.ac.uk/compneur-srv/biomodels/GRAPHICS/AgedBrainSYSBIO_logo-small.png"
-                 title="AgedBrainSYSBIO" alt="AgedBrainSYSBIO logo" /></a>
-        <br/><br/>
-        <a href="http://www.imi.europa.eu/" title="Innovative Medicines Initiative (IMI)">
-            <img src="//www.ebi.ac.uk/biomodels-static/GRAPHICS/IMI_logo-small.png"
-                 title="Innovative Medicines Initiative (IMI)" alt="IMI logo" /></a>
-        <a href="http://cordis.europa.eu/fp7/" title="Seventh Framework Programme (FP7)">
-            <img src="//www.ebi.ac.uk/biomodels-static/GRAPHICS/FP7_logo-small.png"
-                 title="Seventh Framework Programme (FP7)" alt="FP7 logo" /></a>
-        <a href="https://europa.eu/european-union/index_en" title="European Union (EU)">
-            <img style="height: 100px"
-                src="https://www.ebi.ac.uk/biomodels/content/Image/european_flag_blueyellow_standard.jpg"
-                title="European Union (EU)" alt="EU logo" /></a>
+    <div id="acknowledgements" class="widget-body-text">
+        <dl>
+            <dt  class="widget-body-text">
+                BioModels is supported by the <a href="//www.embl.org/" class="external">European Molecular Biology Laboratory</a>,
+            the <a href="http://www.bbsrc.ac.uk/" class="external">Biotechnology and Biological Sciences Research Council</a> (Multimod, BB/N019482/1) and
+            the <a href="//www.imi.europa.eu/" title="Innovative Medicines Initiative (IMI)">Innovative Medicines Initiative</a>
+                (<a href="http://transqst.org/" title="This project has received funding from the Innovative Medicines Initiative 2 Joint Undertaking under grant agreement No 116030. This Joint Undertaking receives support from the European Union’s Horizon 2020 research and innovation programme and EFPIA.">TransQST, 116030</a>).
+            </dt>
+            <dd>
+                <a href="http://www.embl.org/">
+                    <img src="//www.ebi.ac.uk/compneur-srv/biomodels/GRAPHICS/EMBL_logo_lo_res_0.jpg"
+                         title="European Molecular Biology Laboratory (EMBL)" alt="EMBL logo" border="0"/></a>
+                <a href="http://www.bbsrc.ac.uk/" title="Biotechnology and Biological Sciences Research Council (BBSRC)">
+                    <img src="//www.ebi.ac.uk/compneur-srv/biomodels/GRAPHICS/bbsrc_logo.png"
+                         title="Biotechnology and Biological Sciences Research Council (BBSRC)" alt="BBSRC logo" /></a>
+                <a href="http://www.imi.europa.eu/" title="Innovative Medicines Initiative (IMI)">
+                    <img src="//www.ebi.ac.uk/biomodels-static/GRAPHICS/IMI_logo-small.png"
+                         title="Innovative Medicines Initiative (IMI)" alt="IMI logo" /></a>
+                <a href="http://cordis.europa.eu/fp7/" title="Seventh Framework Programme (FP7)">
+                    <img src="//www.ebi.ac.uk/biomodels-static/GRAPHICS/FP7_logo-small.png"
+                         title="Seventh Framework Programme (FP7)" alt="FP7 logo" /></a>
+            </dd>
+        </dl>
+
+        <p class="padding-top-2">
+            <a href="${g.createLink(controller: 'jummp', action: 'acknowledgements')}">Read more...</a>
+        </p>
     </div>
 </div>
 <div class="small-12 medium-12 large-4 columns">
