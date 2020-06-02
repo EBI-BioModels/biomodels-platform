@@ -25,7 +25,6 @@
     <head>
         <title><g:message code="user.administration.ui.heading.user"/></title>
         <meta name="layout" content="${session['branding.style']}/main" />
-        <link rel="stylesheet" href="${resource(dir: 'css', file: 'jstree.css')}" />
      </head>
     <body>
         <div class="row">

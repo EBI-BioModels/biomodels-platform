@@ -37,7 +37,6 @@
         		visibility:hidden;
         	}
         </style>
-        <link rel="stylesheet" href="${resource(dir: 'css', file: 'jstree.css')}" />
     </head>
      <body>
         <div class="row">
@@ -63,7 +62,7 @@
             </g:form>
             </div>
         </div>
-        </body>
+     </body>
 </html>
 <content tag="title">
 	<g:message code="user.resetpassword.ui.heading"/>

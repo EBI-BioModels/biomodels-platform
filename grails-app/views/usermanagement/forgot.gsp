@@ -32,7 +32,6 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="layout" content="${session['branding.style']}/main" />
         <title>Forgot Password</title>
-        <link rel="stylesheet" href="${resource(dir: 'css', file: 'jstree.css')}" />
     </head>
      <body>
         <div id="requestResetPassword" class="row">
