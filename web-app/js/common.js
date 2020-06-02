@@ -113,9 +113,18 @@ $('input[name=username]').blur(function() {
             url: $.jummp.createLink("usermanagement", "lookupUser"),
             success: function (response) {
                 username = response[0];
-                if (username.trim()) {
-                    message = "A user with this username " + username.trim() + " already exists. Please try another one."
+                username = username.trim();
+                if (username) {
+                    message = "A user with this username " + username + " already exists. Please try another one."
+                } else {
+                    message = "This username does not exist. Please check typos and spelling or try again."
+                }
+                if ("forgot" !== actionName) {
                     showNotification(message);
+                } else if (username === "") {
+                    showNotification(message);
+                } else {
+                    hideNow();
                 }
             }
         });

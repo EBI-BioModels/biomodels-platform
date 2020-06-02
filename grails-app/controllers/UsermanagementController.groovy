@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -21,22 +21,25 @@
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
+import net.biomodels.jummp.core.user.UserNotFoundException
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.webapp.*
+import net.biomodels.jummp.utils.InputParameterSanitizer
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.mail.MailAuthenticationException
 
-/*
-* @short Controller for managing user registrations
-* @author Raza Ali <raza.ali@ebi.ac.uk>
-* @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
-*/
+import javax.mail.AuthenticationFailedException
 
-
-
+/**
+ * @short Controller for managing user registrations
+ *
+ * @author <a href="mailto:raza.ali@ebi.ac.uk">Raza Ali</a>
+ * @author <a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a>
+ * @author <a href="mailto:mihai.glont@ebi.ac.uk">Mihai Glont</a>
+ */
 class UsermanagementController {
-    /**
-     * Dependency injection for the springSecurityService.
-     */
-    //def springSecurityService
+    private static Logger log = LoggerFactory.getLogger(this.getClass())
     def simpleCaptchaService
     def userService
     def springSecurityService
@@ -63,7 +66,7 @@ class UsermanagementController {
      */
     @Secured(["isAnonymous()"])
     def create() {
-        render view: "register", model: [postUrl: "", flashMessage: checkForMessage(),
+        render view: "register", model: [postUrl: "", flashMessage: checkForMessage(), title: "Register | BioModels",
     									validationErrorOn: checkForErrorBean()]
     }
 
@@ -79,10 +82,11 @@ class UsermanagementController {
 
     @Secured(["isAuthenticated()"])
     def editPassword() {
+        String username = springSecurityService.principal.username as String
         render  view: "editPassword",
-                model: [postUrl: "", flashMessage: checkForMessage(),
+                model: [postUrl: "", flashMessage: checkForMessage(), title: "Edit Password | BioModels",
                         validationErrorOn: checkForErrorBean(),
-                        user: userService.getUser(springSecurityService.principal.username)]
+                        user: userService.getUser(username)]
     }
 
     @Secured(["isAuthenticated()"])
@@ -98,7 +102,7 @@ class UsermanagementController {
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def forgot() {
         render  view: "forgot",
-                model: [postUrl: "", flashMessage: checkForMessage(),
+                model: [postUrl: "", flashMessage: checkForMessage(), title: "Forgot Password | BioModels",
                         validationErrorOn: checkForErrorBean()]
     }
 
@@ -113,8 +117,8 @@ class UsermanagementController {
     }
 
     /**
-    * Password reset based on the unique code sent to the user
-    **/
+     * Password reset based on the unique code sent to the user
+     */
     @Secured(["isAnonymous()"])
     def reset() {
     	render view: "reset", model: [postUrl: "", flashMessage:checkForMessage(),
@@ -126,7 +130,7 @@ class UsermanagementController {
     boolean validateUserData(def cmd, def params) {
         bindData(cmd, params)
         if (!cmd.validate()) {
-            cmd.errors?.allErrors?.each{
+            cmd.errors?.allErrors?.each {
                 log.error(messageSource.getMessage(it, Locale.ENGLISH))
             }
             flash.validationError = cmd
@@ -219,23 +223,35 @@ class UsermanagementController {
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def requestPassword() {
         withForm {
-            String username = params.username.encodeAsHTML()
+            String username = InputParameterSanitizer.encodeAsHTML(params.username)
+            boolean succeeded = true
             boolean usernameExists = true
+            String message = ""
             if (username) {
                 try {
                     userService.requestPassword(username)
-                } catch (Exception e) {
-                    log.warn(e.message, e)
+                } catch (UserNotFoundException e) {
+                    log.error(e.message, e)
+                    succeeded = false
                     usernameExists = false
+                } catch (MailAuthenticationException | AuthenticationFailedException e) {
+                    log.error(e.message, e)
+                    succeeded = false
                 }
-                if (usernameExists) {
-                    flash.message = "Thank you. Please check the email associated with ${username}'s account"
+                if (succeeded) {
+                    message = "Thank you. Please check the email associated with ${username}'s account"
                 } else {
-                    flash.message = "Username ${username} does not exist."
+                    if (!usernameExists) {
+                        message = "Username ${username} does not exist."
+                    } else {
+                        message = "Cannot send a reset password link to your email due to authentication error from the mail server"
+                    }
                 }
             } else {
-                flash.message = "Please provide a username."
+                message = "Please provide a username."
             }
+            log.debug(message)
+            flash.message = message
             redirect(action: "forgot")
         }.invalidToken {
             render(controller: "errors", action: "error405")

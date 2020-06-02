@@ -39,7 +39,6 @@ import grails.converters.JSON
 import net.biomodels.jummp.core.JummpException
 import net.biomodels.jummp.core.user.UserNotFoundException
 import net.biomodels.jummp.core.user.RoleNotFoundException
-import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.webapp.RegistrationCommand
 import net.biomodels.jummp.webapp.EditUserCommand
 

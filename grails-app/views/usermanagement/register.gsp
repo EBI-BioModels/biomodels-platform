@@ -31,7 +31,7 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="layout" content="${session['branding.style']}/main" />
-        <title>Register</title>
+        <title>${title}</title>
         <style>
         	.verysecure {
         		visibility:hidden;
@@ -65,6 +65,7 @@
             var currentEmail = "";
             var currentRealName = "";
             var currentOrcid = "";
+            var actionName = "${params.action}";
         </g:javascript>
         <script type="application/javascript" src="${resource(dir: 'js', file: 'common.js')}"></script>
     </body>
