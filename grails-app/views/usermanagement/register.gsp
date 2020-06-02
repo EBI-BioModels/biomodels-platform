@@ -65,6 +65,7 @@
             var currentEmail = "";
             var currentRealName = "";
             var currentOrcid = "";
+            var actionName = "${params.action}";
         </g:javascript>
         <script type="application/javascript" src="${resource(dir: 'js', file: 'common.js')}"></script>
     </body>

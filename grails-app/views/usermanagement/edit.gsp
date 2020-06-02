@@ -80,6 +80,7 @@
             var currentEmail = "${user.email}";
             var currentRealName = "${user.person.userRealName}";
             var currentOrcid = "${user.person.orcid}";
+            var actionName = "${params.action}";
         </g:javascript>
    </body>
 </html>

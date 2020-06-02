@@ -32,6 +32,14 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="layout" content="${session['branding.style']}/main" />
         <title>Forgot Password</title>
+        <g:javascript>
+            // define the variables tighted on the working user for later usages in common.js
+            var currentUsername = "";
+            var currentEmail = "";
+            var currentRealName = "";
+            var currentOrcid = "";
+            var actionName = "${params.action}";
+        </g:javascript>
     </head>
      <body>
         <div id="requestResetPassword" class="row">
