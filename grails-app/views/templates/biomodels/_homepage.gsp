@@ -30,7 +30,7 @@
         border-bottom-style: none;
     }
     .widget-body-text {
-        font-size: 89%;
+        font-size: 16px;
     }
 </style>
 
