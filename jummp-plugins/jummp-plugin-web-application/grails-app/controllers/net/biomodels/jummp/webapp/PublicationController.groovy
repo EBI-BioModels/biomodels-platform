@@ -6,31 +6,47 @@ import net.biomodels.jummp.core.adapters.PublicationAdapter
 import net.biomodels.jummp.model.Publication
 
 import net.biomodels.jummp.core.model.PublicationTransportCommand
+import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 @Secured(['IS_AUTHENTICATED_FULLY'])
-class PublicationController {
+class PublicationController implements GrailsConfigurationAware {
+    private static final Logger logger = LoggerFactory.getLogger(PublicationController.class)
     def publicationService
     def pubMedService
+    String style
+    String serverUrl
 
     def index() {
         List<PublicationTransportCommand> publications = new ArrayList<>()
         publications = publicationService.getAll()
-        [publications: publications, title: "List of all publications"]
+        [publications: publications, title: "List of all publications | BioModels", style: style, serverUrl: serverUrl]
     }
 
     def add(Publication publication) {
         PublicationTransportCommand pubTC = publicationService.createPTCWithMinimalInformation("PubMed ID", null, null)
         pubTC.id = null
-        [publication: pubTC, title: "A a new publication"]
+        [publication: pubTC, title: "A a new publication | BioModels", style: style, serverUrl: serverUrl]
     }
 
     def show(Publication publication) {
         if (!publication) {
-            render(view: "error404")
-            return false
+            showError404()
         }
         PublicationTransportCommand pubCmd = new PublicationAdapter(publication: publication).toCommandObject()
-        [publication: pubCmd, authorListContainerSize: 4, title: "Show a publication"]
+        [publication: pubCmd, title: "Show the publication ${pubCmd.id} | BioModels",
+         style: style, serverUrl: serverUrl]
+    }
+
+    def edit(Publication publication) {
+        if (!publication) {
+            logger.error("Publication (with id: ${publication?.id}) cannot be found in the database.")
+            showError404()
+        }
+        PublicationTransportCommand pubCmd = new PublicationAdapter(publication: publication).toCommandObject()
+        [publication: pubCmd, authorListContainerSize: 4, title: "Edit the publication ${pubCmd.id} | BioModels",
+         style: style, serverUrl: serverUrl]
     }
 
     def refreshPubMedData() {
@@ -65,5 +81,16 @@ class PublicationController {
             result.status = 500
         }
         render(result as JSON)
+    }
+
+    private def showError404() {
+        render(view: "error404")
+        return false
+    }
+
+    @Override
+    void setConfiguration(ConfigObject co) {
+        style = co.jummp.branding.style
+        serverUrl = co.grails.serverURL
     }
 }

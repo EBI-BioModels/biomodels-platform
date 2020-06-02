@@ -101,7 +101,7 @@
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'model-display.css')}"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/css/select2.min.css"/>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.5/js/select2.min.js"></script>
-    <script type="text/javascript" language="javascript" src="https://reactome.org/DiagramJs/diagram/diagram.nocache.js"></script>
+    <script  defer="defer" type="text/javascript" language="javascript" src="${reactomeUrl}"></script>
     <script>
         $(function() {
             $( "#tabs" ).tabs({
@@ -797,10 +797,7 @@
                         </div>
                     </div>
                     <div id="Files" class="row">
-                        <%
-                            Map model = [:]
-                            model["repoFiles"] = repoFiles
-                        %>
+                        <% Map model = ["repoFiles": repoFiles] %>
                         <g:render template="/templates/biomodels/modelDisplay/tabFiles"
                                   model="${model}" />
                     </div>
@@ -856,7 +853,8 @@
                     <g:pageProperty name="page.modelspecifictabscontent" />
                     <g:if test="${curationNotes != null || hasCuratorRole}">
                         <biomd:renderCurationNotesTab curationNotes="${curationNotes}"
-                                                      model="${revision.model}" modelName="${revision.name}"
+                                                      model="${revision.modelIdentifier()}"
+                                                      modelName="${revision.name}"
                                                       hasCuratorRole="${hasCuratorRole}"/>
                     </g:if>
                 </div>

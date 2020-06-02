@@ -373,7 +373,6 @@ class GitManager implements VcsManager {
         return fileDetails
     }
 
-    @Override
     void resetModelRepository(File modelDirectory, String commitId) throws VcsException {
         Repository repository = GitSupport.buildRepository(modelDirectory)
         Git git = new Git(repository)
@@ -471,7 +470,10 @@ class GitManager implements VcsManager {
                 }
             }
         } catch (VcsException e) {
-            throw new VcsNotInitedException()
+            String errMsg = """\
+The working directory of the revision ${revision} at ${modelDirectory.absolutePath} hasn't been initialised any VCS yet
+"""
+            throw new VcsNotInitedException(errMsg)
         } finally {
             unlockModelRepository(modelDirectory)
         }

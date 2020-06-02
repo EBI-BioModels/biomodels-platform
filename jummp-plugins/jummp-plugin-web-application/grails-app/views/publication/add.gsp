@@ -14,7 +14,7 @@
 <html>
 <head>
     <meta name="layout" content="biomodels/main" />
-    <title>${title} | BioModels</title>
+    <title>${title}</title>
     <link rel="stylesheet"
           href="${resource(contextPath: "${serverUrl}", dir: "/css/${style}", file: 'publicationPageStyle.css')}" />
     <link rel="stylesheet"

@@ -65,17 +65,14 @@ relevant mechanistic models in standard formats."/>
 <meta name="theme-color" content="#ffffff">
 
 <!-- If you link to any other sites frequently, consider optimising performance with a DNS prefetch -->
-<link rel="dns-prefetch" href="//embl.de" />
+<link rel="dns-prefetch" href="https://ebi.emblstatic.net/" />
 <!-- CSS: implied media=all -->
 <!-- CSS concatenated and minified via ant build script -->
 <link rel="stylesheet" type="text/css"
-      href="//ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/css/ebi-global.css"
+      href="https://ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/css/ebi-global.css"
       media="none" onload="if(media!=='all') media='all'">
 <link rel="stylesheet" type="text/css"
-      href="//ebi.emblstatic.net/web_guidelines/EBI-Icon-fonts/v1.3/fonts.css"
-      media="none" onload="if(media!=='all') media='all'">
-<link rel="stylesheet" type="text/css"
-      href="//ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/css/theme-embl-petrol.css"
+      href="https://ebi.emblstatic.net/web_guidelines/EBI-Icon-fonts/v1.3/fonts.css"
       media="none" onload="if(media!=='all') media='all'">
 
 <!-- you can replace this with [projectname]-colours.css. See http://frontier.ebi.ac.uk/web/style/colour
@@ -93,7 +90,6 @@ for details of how to do this -->
         background: rgb(0,124,130);
     }
 </style>
-<link rel="stylesheet" type="text/css" href="<g:resource dir="css" file="biomodels/biomodels.css"/>">
 <link rel="stylesheet" type="text/css" href="<g:resource dir="css" file="common.css"/>">
 <!-- end CSS-->
 

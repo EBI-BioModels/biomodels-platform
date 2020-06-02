@@ -20,24 +20,21 @@
 
 package net.biomodels.jummp.plugins.mdl
 
-import net.biomodels.jummp.core.model.FileFormatService
+import net.biomodels.jummp.core.model.FileFormatServiceAdapter
 import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.core.util.JummpXmlUtils
 import net.biomodels.jummp.model.ModellingApproach
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.apache.tika.detect.DefaultDetector
 import org.apache.tika.metadata.Metadata
 import org.perf4j.aop.Profiled
-import java.util.Map
-import java.util.List
 
 /**
  * Service class containing the logic to handle models encoded in MDL.
  * @see net.biomodels.jummp.core.model.FileFormatService
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
-class MdlService implements FileFormatService {
+class MdlService extends FileFormatServiceAdapter {
     /**
      * Disable the default transactional behaviour of Grails Services.
      */
@@ -105,13 +102,6 @@ class MdlService implements FileFormatService {
      * {@inheritDoc}
      */
     @Override
-    @Profiled(tag="mdlService.extractDescription")
-    public String extractDescription(List<File> modelFiles) { return "" }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     @Profiled(tag="mdlService.updateDescription")
     public boolean updateDescription(RevisionTransportCommand revision, final String DESC) {
         if (revision && DESC.trim()) {
@@ -120,20 +110,6 @@ class MdlService implements FileFormatService {
         }
         return false
     }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    @Profiled(tag="mdlService.getAllAnnotationURNs")
-    public List<String> getAllAnnotationURNs(RevisionTransportCommand revision) { return [] }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    @Profiled(tag="mdlService.getPubMedAnnotation")
-    public List<String> getPubMedAnnotation(RevisionTransportCommand revision) { return [] }
 
     /**
      * Filters the MDL files from a given revision.
@@ -245,14 +221,5 @@ class MdlService implements FileFormatService {
     private boolean isDataFile(final File FILE) {
         final String FORMAT = detectMimeType(FILE)
         return ("text/csv" == FORMAT || "text/plain" == FORMAT) && FILE.name.endsWith(".csv")
-    }
-
-    boolean doBeforeSavingAnnotations(File annoFile, RevisionTransportCommand rev) {
-        return true
-    }
-
-    @Override
-    ModellingApproach getModellingApproach(final RevisionTransportCommand revision) {
-        return null
     }
 }

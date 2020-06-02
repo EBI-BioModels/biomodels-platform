@@ -36,4 +36,28 @@ class ModelFormatAdapter {
                        formatVersion: format.formatVersion]
         return new ModelFormatTransportCommand(argsMap)
     }
+
+    boolean ignoreCheckingVersion() {
+        ignoreVersion(format.identifier)
+    }
+
+    static boolean ignoreCheckingVersion(final ModelFormatTransportCommand command) {
+        ignoreVersion(command.identifier)
+    }
+
+    private static boolean ignoreVersion(final String identifier) {
+        // TODO switch to CommonFormat.hasDefaultVersion()
+        boolean retVal = false
+        switch (identifier.toLowerCase()) {
+            case "c_cpp":
+            case "java":
+            case "mathematica":
+            case "matlab":
+            case "python":
+            case "r":
+                retVal = true
+                break
+        }
+        return retVal
+    }
 }

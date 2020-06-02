@@ -41,7 +41,7 @@ import com.thoughtworks.xstream.converters.ConversionException
 import grails.util.Environment
 import net.biomodels.jummp.core.ISbmlService
 import net.biomodels.jummp.core.ModelException
-import net.biomodels.jummp.core.model.FileFormatService
+import net.biomodels.jummp.core.model.FileFormatServiceAdapter
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.model.ModellingApproach
@@ -80,7 +80,7 @@ import java.util.regex.Pattern
  * @author  Mihai Glonț <mihai.glont@ebi.ac.uk>
  * @author  Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
+class SbmlService extends FileFormatServiceAdapter implements ISbmlService, InitializingBean {
     static transactional = true
     def bpToModelDisplayService
     private static final Log log = LogFactory.getLog(this)
@@ -231,13 +231,13 @@ class SbmlService implements FileFormatService, ISbmlService, InitializingBean {
         long actualSize = model.length()
         if (0 >= actualSize || actualSize > MAX_SIZE) {
             errorMsg = """\
-Your file exceeds the maximum upload size limit that our system currently supports. The consistency check for your 
+Your file exceeds the maximum upload size limit that our system currently supports. The consistency check for your
 model is being ignored."""
             errors.add(errorMsg)
             return doc
         }
         try {
-            final int CONSISTENCY_ERRORS = doc.checkConsistency()
+            final int CONSISTENCY_ERRORS = doc.checkConsistencyOffline()
             if (CONSISTENCY_ERRORS == -1) {
                 errorMsg ="Internal error in online SBML Validator while validating ${doc.inspect()}\t${doc.properties}"
                 errors.add(errorMsg)
@@ -376,7 +376,7 @@ Could not check if SBML files ${files.inspect()} are valid or not.""")
             return true
         } else {
             log.warn("""\
-Revision ${revision.id} of the model ${revision.model.submissionId} is null or 
+Revision ${revision.id} of the model ${revision.model.submissionId} is null or
 the user has attempted to update an blank value for the name attribute.""")
             return false
         }
@@ -1145,27 +1145,31 @@ the user has attempted to update an blank value for the name attribute.""")
             if(!annotation) {
                 return null
             }
-            List<CVTerm> filters = annotation.filterCVTerms(CVTerm.Qualifier.BQB_HAS_PROPERTY)
-            List<List<String>> mamoTerms = []
+            List<CVTerm> filters = annotation.filterCVTerms(Qualifier.BQB_HAS_PROPERTY)
+            List<String> mamoTerms = []
             filters.each { filter ->
                 CVTerm cvTerm = new CVTerm(filter)
                 List<String> resources = cvTerm.filterResources("MAMO", "mamo")
-                if (resources.size()) {
-                    mamoTerms.add(resources)
+                if (!resources.isEmpty()) {
+                    mamoTerms.addAll(resources)
                 }
             }
-            if (mamoTerms == null || mamoTerms?.isEmpty()) {
+            if (mamoTerms.isEmpty()) {
+                log.info("No modelling approach MAMO terms found in $rID")
                 return null
             }
-            def first = mamoTerms.find { it != null || !it?.isEmpty() }
+            def first = mamoTerms.find { it != null && !it?.isEmpty() }
             if (!first) {
+                log.warn("Expected to have MAMO terms. Bug in JSBML filterCVTerms")
                 return null
             }
-            String[] parts = first[0].split("/mamo/")
-            if (!parts[0]) {
+            String[] parts = first.split("/mamo/")
+            if (!parts[0] || parts.length != 2) {
+                log.warn("Revision $rID has invalid modelling approach '$first'")
                 return null
             }
             ModellingApproach approach = ModellingApproach.findByResourceOrAccession(first, parts[1])
+            log.info("Revision $rID declares modelling approach ${approach?.name}")
             return approach
         }
     }

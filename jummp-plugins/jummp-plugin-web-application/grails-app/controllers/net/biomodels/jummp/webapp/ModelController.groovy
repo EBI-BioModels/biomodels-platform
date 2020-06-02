@@ -37,6 +37,7 @@ package net.biomodels.jummp.webapp
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.InvalidPublicationAuthorsException
+import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
@@ -52,6 +53,7 @@ import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.Team
+import net.biomodels.jummp.core.util.ReactomeEnvironment
 import net.biomodels.jummp.webapp.rest.errors.Error
 import net.biomodels.jummp.webapp.rest.model.show.Model as RestfulModel
 import net.biomodels.jummp.webapp.rest.model.show.ModelFiles
@@ -315,8 +317,11 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     boolean supportedForConversion = modelConversionService.isSupportedForConversion(rev)
                     List<RFTC> convertedFilesTC = modelConversionService.getConvertedFiles(rev)
                     Set<TagTransportCommand> tags = metadataDelegateService.findTagsByModel(rev.model)
+                    String reactomeUrl = ReactomeEnvironment.getUrlForThisEnvironment()
+
                     def model = [revision               : rev,
-                                 reactomeIds             : reactomeIds,
+                                 reactomeIds            : reactomeIds,
+                                 reactomeUrl            : reactomeUrl,
                                  authors                : rev.model.creators,
                                  allRevs                : revs,
                                  flashMessage           : flashMessage,
@@ -959,11 +964,15 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                 flow.workingMemory.remove("changedMainFiles")
                 submissionService.performValidation(flow.workingMemory)
                 MFTC format = flow.workingMemory.get("model_type")
+                boolean ignoreCheckingVersion = ModelFormatAdapter.ignoreCheckingVersion(format)
                 if (format && format.identifier == "UNKNOWN") {
                     UnknownFormat()
-                } else if (format && format.identifier !="UNKNOWN" && format.formatVersion == "*") {
+                } else if (format && format.identifier !="UNKNOWN" &&
+                    format.formatVersion == "*" && !ignoreCheckingVersion) {
                     UnknownFormatVersion()
-                } else if (!flow.workingMemory.containsKey("validation_error")) {
+                } else if (!flow.workingMemory.containsKey("validation_error") ||
+                    (format && format.identifier !="UNKNOWN" &&
+                    format.formatVersion == "*" && ignoreCheckingVersion)) {
                     Valid()
                 } else {
                     String errorAsString = flow.workingMemory.remove("validation_error") as String
