@@ -48,7 +48,7 @@ class RevisionCreatedEvent extends ModelOperationEvent {
      */
     final List<File> files
 
-    RevisionCreatedEvent(Object source, final RevisionTransportCommand revision, final List<File> files) {
+    RevisionCreatedEvent(Object source, final RevisionTransportCommand revision, final List<File> files = null) {
         super(source)
         this.revision = revision
         this.files = files

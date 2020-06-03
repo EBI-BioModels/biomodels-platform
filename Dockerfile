@@ -1,16 +1,55 @@
-FROM jummp-biomodels:1.2-dependencies
+FROM biomodels/jummp-biomodels:1.2-dependencies
 LABEL maintainer="biomodels-developers@lists.sf.net"
 
+# install tools and utilities
+RUN apt-get update && apt-get install -y mysql-client && rm -rf /var/lib/apt
+
 # set environment options
-ENV JAVA_OPTS="-Xms64m -Xmx256m -XX:MaxMetaspaceSize=128m"
-ENV GRAILS_OPTS="-server -Xmx768M -Xms64M -XX:PermSize=32m -XX:MaxPermSize=256m -Dfile.encoding=UTF-8"
-
-RUN mkdir -p /home/biomodels/jummp-biomodels
-COPY . /home/biomodels/jummp-biomodels
-WORKDIR /home/biomodels/jummp-biomodels
-
+#ENV MAVEN_OPTS="-Xmx1024m"
+ENV JAVA_OPTS="-Xms64m -Xmx1024m -XX:MaxMetaspaceSize=128m"
+ENV GRAILS_OPTS="-server -Xmx2g -Xms2g -Dfile.encoding=UTF-8"
+#ENV ANT_OPTS="-Xmx2g -XX:MaxPermSize=1024m"
 # expected database port
 EXPOSE 3306
+EXPOSE 4372
+EXPOSE 8080
 
-RUN chmod +x /home/biomodels/jummp-biomodels/grailsw
-ENTRYPOINT /home/biomodels/jummp-biomodels/grailsw run-war
+ARG UID
+ARG USERNAME
+ARG GID
+ARG GROUP
+RUN echo "$GROUP ($GID) - $USERNAME ($UID)"
+ENV HOME=/home/$USERNAME
+RUN mkdir -p $HOME
+RUN addgroup --gid "$GID" "$USERNAME" \
+   && adduser \
+   --uid "$UID" \
+   --disabled-password \
+   --gecos "" \
+   --ingroup "$USERNAME" \
+   --no-create-home \
+   "$USERNAME"
+
+ENV APP_HOME=/home/$USERNAME/biomodels
+
+## SETTING UP THE APP ##
+RUN mkdir -p $APP_HOME
+RUN chown -R $USERNAME:$USERNAME $HOME
+
+# ***
+# Do any custom logic needed prior to adding your code here
+# ***
+
+# Copy in the application code.
+#ADD . $APP_HOME
+# Chown all the files to the app user.
+#RUN chown -R "$USERNAME":"$USERNAME" $APP_HOME
+
+# Below is equivalent to the above commands, just speeds up and reduces image size
+COPY --chown=$USERNAME:$USERNAME . $APP_HOME
+
+# Change to the app user.
+USER $USERNAME
+WORKDIR $APP_HOME
+RUN ["chmod", "+x", "grailsw"]
+ENTRYPOINT ["/bin/bash", "-lc", "./grailsw prod run-app --non-interactive --stacktrace"]

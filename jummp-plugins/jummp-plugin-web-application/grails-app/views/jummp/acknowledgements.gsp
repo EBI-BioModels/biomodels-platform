@@ -1,5 +1,5 @@
 <%--
- Copyright (C) 2010-2017 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
  Deutsches Krebsforschungszentrum (DKFZ)
 
  This file is part of Jummp.
@@ -35,12 +35,10 @@
 
 <h2>Acknowledgements</h2>
 
-BioModels is developed by the <a href="https://www.ebi.ac.uk/about/people/henning-hermjakob" title="Molecular Networks team">Molecular Networks team</a> (<a href="//www.ebi.ac.uk/" title="European Bioinformatics Institute">EMBL-EBI</a>, UK), the <a href="//lenoverelab.org/" title="Le Novère lab">Le Novère lab</a> (<a href="//www.babraham.ac.uk/" title="Babraham Institute">Babraham Institute</a>, UK) and the <a href="http://www.sbml.org/" title="Systems Biology Markup Language (SBML)" class="external">SBML Team</a> (<a href="//www.caltech.edu/" title="California Institute of Technology">Caltech</a>, USA).
+BioModels is developed by the <a href="https://www.ebi.ac.uk/about/people/henning-hermjakob" title="Molecular Networks team">Molecular Networks team</a> (<a href="//www.ebi.ac.uk/" title="European Bioinformatics Institute">EMBL-EBI</a>, UK) and the <a href="http://www.sbml.org/" title="Systems Biology Markup Language (SBML)" class="external">SBML Team</a> (<a href="//www.caltech.edu/" title="California Institute of Technology">Caltech</a>, USA).
 
 <div style="text-align:center; padding-top: 8px;">
   <a href="//www.ebi.ac.uk/" title="EMBL - European Bioinformatics Institute (EBI)"><img border="0" title="EMBL-EBI" alt="EMBL-EBI logo" src="//www.ebi.ac.uk/biomodels-static/GRAPHICS/EMBL_EBI_logo-small.png" style="vertical-align:middle;" /></a>
-  <a href="www.babraham.ac.uk/" title="Babraham Institute" style="padding-left:60px;">
-      <img border="0" title="Babraham Institute" alt="Babraham Institute logo" src="//www.ebi.ac.uk/biomodels-static/GRAPHICS/BI_logo-small.png" style="vertical-align:middle;" /></a>
   <a href="http://sbml.org/" title="SBML" style="padding-left:60px;"><img border="0" title="SBML" alt="SBML logo" src="//www.ebi.ac.uk/biomodels-static/icons/SBML.png" style="vertical-align:middle;" /></a>
 </div>
 

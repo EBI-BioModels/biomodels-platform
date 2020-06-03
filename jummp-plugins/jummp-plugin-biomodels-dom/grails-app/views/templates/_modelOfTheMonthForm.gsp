@@ -5,15 +5,16 @@
             <div class="small-12 medium-6 large-6 columns">
                 <label for="authors" class="required">Authors</label>
                 <input type="text" id="authors" name="authors" required
-                       placeholder="Authors of MoM"
+                       placeholder="Authors of the MoM entry who is mainly creating and editing it"
                        value="${entry?.authors}">
                 <label for="title" class="required">Title</label>
                 <input type="text" id="title" name="title" required
-                       placeholder="Title of MoM"
+                       placeholder="Title of the MoM entry which will be displayed on the MoM page"
                        value="${entry?.title}">
-                <label>Short Description</label>
-                <textarea id="shortDescription"
-                          placeholder="Enter a short description for this entry"
+                <label for="shortDescription" class="required">Short Description</label>
+                <textarea id="shortDescription" required
+                          placeholder="Enter a short description for this MoM entry.
+                          This description will be shown on the MoM widget. It shouldn't be left empty."
                           aria-multiline="true" rows="5"
                           style="white-space: pre-wrap">${entry?.shortDescription}</textarea>
                 <textarea id="tmpShortDescription"
@@ -22,7 +23,8 @@
                     ${entry?.shortDescription}</textarea>
                 <label for="models" class="required">Models associated with (separated by commas)</label>
                 <input type="text" id="models" name="models" required
-                       placeholder="Model identifiers associated with this entry separated by commas"
+                       placeholder="Model identifiers associated with this entry separated by commas.
+                       These identifiers must be determined to create backlinks to be shown underneath the model name on the model display page"
                        value="${entry?.models}">
                 <div class="row">
                     <div class="small-12 medium-6 large-6 columns">

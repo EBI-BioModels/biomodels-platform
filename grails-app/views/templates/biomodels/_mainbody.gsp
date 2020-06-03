@@ -42,7 +42,7 @@
 
     <div id="content" role="main" class="row">
         <div data-sticky-container class="sticky-container">
-            <section>
+            <div>
                 <g:if test="${facetSearchContent}">
                     <div class="medium-2 large-2 columns show-for-medium hide-for-small-only">
                         ${raw(facetSearchContent)}
@@ -86,6 +86,6 @@
                         </div>
                     </g:else>
                 </g:else>
-            </section>
+            </div>
         </div>
     </div>
