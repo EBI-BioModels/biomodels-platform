@@ -14,31 +14,12 @@
         color: white !important;
         font-weight: bold;
     }
-    div.homepage_news_content {
-        clear: both;
-        background-color: white;
-        color: black;
-    }
-    div.homepage_news_content p {
-        color: black;
-    }
-    h3 {
-        font-size: 145%;
-    }
     div#acknowledgements a:visited {
         border-bottom-width: 0px;
         border-bottom-style: none;
         border-bottom-color: inherit;
     }
     #acknowledgements img {
-        max-width: 100%;
-        height: auto;
-    }
-    .avoidOverlapping {
-        padding-left: 30px;
-        padding-right: 30px;
-    }
-    .img-responsive {
         max-width: 100%;
         height: auto;
     }
@@ -49,7 +30,7 @@
         border-bottom-style: none;
     }
     .widget-body-text {
-        font-size: 89%;
+        font-size: 16px;
     }
 </style>
 

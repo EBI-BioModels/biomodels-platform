@@ -20,8 +20,13 @@
 
 package net.biomodels.jummp.webapp.rest.search
 
+import net.biomodels.jummp.core.adapters.ModelFormatAdapter
+import net.biomodels.jummp.core.model.ModelFormatTransportCommand
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
+import net.biomodels.jummp.model.ModelFormat
 import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 class ModelSummary {
     String id
@@ -32,12 +37,23 @@ class ModelSummary {
     Date submissionDate
     Date lastModified
 
-    public ModelSummary(MTC model) {
+    private final static Logger logger = LoggerFactory.getLogger(ModelSummary.class)
+
+    ModelSummary(MTC model) {
         id = (model.publicationId) ?: (model.submissionId)
         def linker = new ApplicationTagLib()
         url = linker.createLink(controller: 'model', action: 'show', absolute: 'true', id: id)
         name = model.name
-        format = model.format.name
+
+        ModelFormatTransportCommand modelFormat
+        if (model.format) {
+            modelFormat = model.format
+        } else {
+            logger.debug("Model ${id} (${name}) was not assigned any format")
+            ModelFormat other = ModelFormat.findByIdentifier("UNKNOWN")
+            modelFormat = new ModelFormatAdapter(format: other).toCommandObject()
+        }
+        format = modelFormat.name
         submitter = model.submitter
         submissionDate = model.submissionDate
         lastModified = model.lastModifiedDate

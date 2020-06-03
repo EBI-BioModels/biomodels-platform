@@ -29,6 +29,8 @@ import grails.transaction.Transactional
 import groovy.time.TimeCategory
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.plugins.security.User
+import net.biomodels.jummp.statistic.OrganismData
+import net.biomodels.jummp.statistic.RecentlyPublishedModel
 import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
 import org.perf4j.aop.Profiled
 import org.slf4j.Logger
@@ -64,6 +66,10 @@ class DecorationService implements GrailsConfigurationAware {
     static String BM_SVR_URL //= grailsApplication.config.grails.serverURL
     static String CLASSIFIER_SVR_URL //= grailsApplication.config.jummp.classification.endpoint
 
+    private String httpProxyHost
+    private int httpProxyPort
+    private Proxy proxy
+
     @Override
     void setConfiguration(ConfigObject co) {
         REDIS_SRV_HOST = co.jummp.redis.host
@@ -75,6 +81,17 @@ class DecorationService implements GrailsConfigurationAware {
         FIXED_PARAMS = "biomodels?query=domain_source:biomodels&size=0&facetfields"
         EBI_SEARCH_BM_URL = "${EBI_SEARCH_URL}/${FIXED_PARAMS}"
         HP_STAT_TOTAL_FIGURE = "hp-statistics-total-figures"
+        httpProxyHost = co.jummp.http.proxy.host
+        httpProxyPort = co.jummp.http.proxy.port as int
+        boolean noSetProxyHost = httpProxyHost.equalsIgnoreCase("localhost") || httpProxyHost == null
+        boolean notSetProxyPort = httpProxyPort == 80 || httpProxyPort == null
+        boolean noHttpProxy = noSetProxyHost && notSetProxyPort
+        if (noHttpProxy) {
+            proxy = null
+        } else {
+            proxy = new Proxy(Proxy.Type.HTTP,
+                new InetSocketAddress(this.httpProxyHost, this.httpProxyPort))
+        }
     }
 
     /**
@@ -128,7 +145,7 @@ GROUP BY rev.model
      * gets 10 of the most recently published models
      * Due to needing more fields to be shown on the widget, this service will have to include
      * some fields like revision owner as submitter, publication title, publication journal and year.
-     * @return A {@link Map} of {@link RecentlyPublishedModel} objects
+     * @return A {@link Map} of {@link net.biomodels.jummp.statistic.RecentlyPublishedModel} objects
      */
     @Profiled(tag = 'decorationService.buildListOfRecentlyPublishedModels')
     private Map<String, RecentlyPublishedModel> buildListOfRecentlyPublishedModels() {
@@ -151,6 +168,7 @@ WHERE
             aclClass.className = 'net.biomodels.jummp.model.Revision'
             AND sid.sid = 'ROLE_ANONYMOUS'
             AND ace.mask = 1)
+  AND model.firstPublished IS NOT NULL
 GROUP BY rev.model
 ORDER BY model.firstPublished DESC'''
         def matchedModels = Model.executeQuery(query, [max: 10])
@@ -227,19 +245,6 @@ ORDER BY model.firstPublished DESC'''
     }
 
     /**
-     * Fetches the statistical data on the chart of the curation states shown on Home Page
-     *
-     * <p>This service is being used in {@link BioModelsTagLib} for rendering the Curation State chart
-     * in the slideshow/carousel.
-     *
-     * @return A {@link Map} holding curation states and their corresponding counts
-     */
-    Map<String, Integer> fetchStatisticsCurationState() {
-        Map<String, Integer> curationStateMap = fetchStatisticsDataFromRedisCache("hp-statistics-curation-state")
-        return curationStateMap
-    }
-
-    /**
      * Fetches the statistical data for the chart of the modelling approaches shown on Home Page.
      *
      * <p>This service is being used in {@link BioModelsTagLib} for rendering the Modelling Approaches
@@ -262,9 +267,10 @@ ORDER BY model.firstPublished DESC'''
             // rebuild the map which @see buildStatisticsOrganisms() returns
             returnedMap["children"] = organismsMap.collect { entry ->
                 String[] parts = entry.value.split(";")
-                String count = parts[0] as String
+                int count = parts[0] as int
                 String taxonomy = parts[1] as String
-                [Name: entry.key, Count: count, Taxonomy: taxonomy]
+                int normalisedCount = parts[2] as int
+                [Name: entry.key, Count: count, Taxonomy: taxonomy, NormalisedCount: normalisedCount]
             }
         }
         return returnedMap
@@ -323,21 +329,6 @@ ORDER BY model.firstPublished DESC'''
         return news
     }
 
-    Map<String, Integer> buildStatisticsCurationState() {
-        String query = "${FIXED_PARAMS}=curationstatus&facetcount=10&format=json"
-        def response = hitRemoteService(EBI_SEARCH_URL, query)
-        def totalHitCount = response.json.hitCount as Integer
-        // the total hit count is always greater than the sum of two below values
-        // because it includes private models.
-        Map<String, Integer> curationStateMap = ["totalHitCount": totalHitCount]
-        def facetValues = response.json.facets[0].facetValues
-        def facetCurated = facetValues[0]
-        def facetNoncurated = facetValues[1]
-        curationStateMap.put(facetCurated["label"] as String, facetCurated["count"] as Integer)
-        curationStateMap.put(facetNoncurated["label"] as String, facetNoncurated["count"] as Integer)
-        return curationStateMap
-    }
-
     Map<String, Integer> buildStatisticsModellingApproaches() {
         String query = "${FIXED_PARAMS}=modellingapproach&facetcount=10&format=json"
         def response = hitRemoteService(EBI_SEARCH_URL, query)
@@ -364,6 +355,8 @@ FROM
     JOIN m.publication AS p
 WHERE
     m.deleted = 0
+    and m.submissionId NOT LIKE 'MODEL170711%'
+    and m.submissionId NOT LIKE 'BMID%'
 GROUP BY p.journal
 '''
         def matchedModels = Model.executeQuery(query)
@@ -389,16 +382,6 @@ GROUP BY p.journal
         doRedisHSet("hp-news-widget", data)
     }
 
-    void refreshDataForChartsRedisCache() {
-        doRedisHSet("curation-state-based-statistic", ["curated": '900', "non-curated": '2500'])
-    }
-
-    void refreshStatisticsCurationStateRedisCache() {
-        Map<String, Integer> curationState = buildStatisticsCurationState()
-        Map<String, String> curationSateMap = convert2RedisMap(curationState)
-        doRedisHSet("hp-statistics-curation-state", curationSateMap)
-    }
-
     void refreshStatisticsModellingApproachesRedisCache() {
         Map modellingApproachesMap = buildStatisticsModellingApproaches()
         Map approachesMap = convert2RedisMap(modellingApproachesMap)
@@ -410,8 +393,10 @@ GROUP BY p.journal
         def organisms = organismsMap["children"]
         Map<String, String> taxons = new HashMap<>()
         organisms.each {
-            taxons.put(it["Name"] as String, "${it['Count']};${it['Taxonomy']}" as String)
+            String value = "${it['Count']};${it['Taxonomy']};${it['NormalisedCount']}" as String
+            taxons.put(it["Name"] as String, value)
         }
+        logger.info("Organism Statistic has been updated on Redis on ${new Date()}")
         doRedisHSet("hp-statistics-organisms", taxons)
     }
 
@@ -424,12 +409,16 @@ GROUP BY p.journal
     void refreshStatisticsDataForFeatures() {
         long totalSubmissions = retrieveTotalSubmissionsFromEBISearchServer()
         long totalIndividualModels = retrieveTotalIndividualModelsFromEBISearchServer()
+        long totalCuratedModels = retrieveTotalCuratedModelsFromEBISearchServer()
+        long totalNonCuratedModels = retrieveTotalNonCuratedModelsFromEBISearchServer()
         long totalAutoGenModels = retrieveTotalAutoGeneratedModelsFromEBISearchServer()
         long totalGoClasses = retrieveTotalGOClassesFromBioModels()
         long totalParametersEntries = retrieveTotalParametersEntriesFromEBISearchServer()
         Map figuresRedisMap = [:]
         figuresRedisMap.put("total-submissions", totalSubmissions.toString())
         figuresRedisMap.put("total-individual-models", totalIndividualModels.toString())
+        figuresRedisMap.put("total-curated-models", totalCuratedModels.toString())
+        figuresRedisMap.put("total-non-curated-models", totalNonCuratedModels.toString())
         figuresRedisMap.put("total-auto-generated-models", totalAutoGenModels.toString())
         figuresRedisMap.put("total-go-classes", totalGoClasses.toString())
         figuresRedisMap.put("total-parameters-entries", totalParametersEntries.toString())
@@ -456,7 +445,6 @@ GROUP BY p.journal
     }
 
     void updateDataForChartsOnHomePage() {
-        refreshStatisticsCurationStateRedisCache()
         refreshStatisticsModellingApproachesRedisCache()
         refreshStatisticsOrganismsRedisCache()
         refreshStatisticsJournalsRedisCache()
@@ -540,7 +528,7 @@ GROUP BY p.journal
         List result = makeStatisticsOnOrganisms()
         Map returned = new HashMap()
         returned["children"] = result.collect { OrganismData d ->
-            [Name: d.name, Count: d.count, Taxonomy: d.taxonomy]
+            [Name: d.name, Count: d.count, Taxonomy: d.taxonomy, NormalisedCount: d.normalisedCount]
         }
         returned
     }
@@ -551,25 +539,29 @@ GROUP BY p.journal
      * @return a {@link List} of Organism objects
      */
     private List makeStatisticsOnOrganisms() {
-        String queryLink = "search?domain=biomodels&query=*:* AND NOT isprivate:true&format=json"
-        String serverURL = grailsApplication.config.grails.serverURL
-        String queryURL = "${serverURL}/${queryLink}"
-        RestBuilder rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000, proxy: null)
-        def response = rest.get(queryURL) {
-            accept("application/json")
-            contentType("application/json;charset=UTF-8")
-        }
-
+        String query = "search?domain=biomodels&query=*:* AND NOT isprivate:true&format=json"
+        def response = hitRemoteService(BM_SVR_URL, query)
         def taxons = response.json.facets.findAll { it['id'] == 'TAXONOMY' }
         taxons = taxons.facetValues.flatten()
-        StringBuilder result = new StringBuilder()
         List<OrganismData> organismData = new ArrayList<OrganismData>()
         for (tax in taxons) {
-            OrganismData d = new OrganismData(name: "${tax['label']} (${tax['value']})",
-                count: tax['count'] as int, taxonomy: tax['value'])
+            // initialise the normalised count as the count
+            int normalisedCount = tax['count'] as int
+            OrganismData d = new OrganismData(name: "${tax['label']}",
+                count: tax['count'] as int, normalisedCount: normalisedCount, taxonomy: tax['value'])
             organismData.add(d)
         }
-        return organismData
+
+        logger.info("Sorting the organism list before normalising counts")
+        Collections.sort(organismData, new Comparator<OrganismData>() {
+            @Override
+            int compare(OrganismData o1, OrganismData o2) {
+                return o2.count <=> o1.count
+            }
+        })
+        List returnedList = normaliseOrganismCount(organismData)
+
+        return returnedList
     }
 
     private Map<String, Integer> fetchStatisticsDataFromRedisCache(final String key) {
@@ -578,9 +570,6 @@ GROUP BY p.journal
         if (!redisMap) {
             // call the fallback
             switch (key) {
-                case "hp-statistics-curation-state":
-                    returnedMap = buildStatisticsCurationState()
-                    break
                 case "hp-statistics-modelling-approaches":
                     returnedMap = buildStatisticsModellingApproaches()
                     break
@@ -686,6 +675,18 @@ GROUP BY p.journal
         return response.json.matches as Long
     }
 
+    private long retrieveTotalCuratedModelsFromEBISearchServer() {
+        String query = "search?domain=biomodels&query=*:* AND curationstatus:'Manually curated'&format=json"
+        def response = hitRemoteService(BM_SVR_URL, query)
+        return response.json.matches as Long
+    }
+
+    private long retrieveTotalNonCuratedModelsFromEBISearchServer() {
+        String query = "search?domain=biomodels&query=*:* AND curationstatus:'Non-curated&format=json"
+        def response = hitRemoteService(BM_SVR_URL, query)
+        return response.json.matches as Long
+    }
+
     /**
      * Hits EBI Search Server via BioModels web service to get this figure
      *
@@ -732,47 +733,71 @@ GROUP BY p.journal
      * @return a JSON object
      */
     private def hitRemoteService(final String serverURL, final String query) {
+        logger.debug("HTTP PROXY: ${proxy?.dump()}")
         String queryURL = "${serverURL}/${query}"
         logger.debug("Connecting to the service at $queryURL")
-        RestBuilder rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000, proxy: null)
+        RestBuilder rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000, proxy: proxy)
         def response = rest.get(queryURL) {
             accept("application/json")
             contentType("application/json;charset=UTF-8")
         }
         response
     }
-}
 
-class ModelLatestPublished {
-    String modelName
-    Date latestAccessedDate
-
-    ModelLatestPublished(String modelName, Date latestAccessedDate) {
-        this.modelName = modelName
-        this.latestAccessedDate = latestAccessedDate
+    private List<OrganismData> normaliseOrganismCount(final List<OrganismData> organismData) {
+        // Take into account the fact that the input list was sorted in descending order
+        logger.debug("Scaling the counts of Organisms")
+        ArrayList<OrganismData> originalData = new ArrayList<OrganismData>(organismData)
+        ArrayList<OrganismData> normalisedData = new ArrayList<OrganismData>()
+        ArrayList<Float> delta = new ArrayList<Float>()
+        for (int i = 0; i < originalData.size() - 1; i++) {
+            normalisedData.add(originalData[i])
+            Integer normalisedCount = originalData[i].count
+            Float d = originalData[i].count / originalData[i+1].count
+            delta.add(d)
+            normalisedCount = scaleDelta(normalisedCount, d)
+            normalisedData[i].normalisedCount = (int) normalisedCount
+        }
+        OrganismData lastElement = originalData[originalData.size() - 1]
+        normalisedData.add(lastElement)
+        logger.debug("Nb. elements: ${originalData.size()} -- ${normalisedData.size()}")
+        List l1 = originalData.collect { OrganismData it ->
+            it.count
+        }
+        List l2 = normalisedData.collect { OrganismData it ->
+            it.normalisedCount
+        }
+        normalisedData.toList()
     }
-}
 
-class OrganismData {
-    String name
-    String taxonomy
-    int count
-
-    String toString() {
-        "$name ($taxonomy): $count"
+    private Integer scaleDelta(Integer normalisedCount, final Float d) {
+        if (d > 2.0) {
+            // decrease the count the i_th element just time, for example, 80% - 90% of
+            // the delta between it and the closest lower count
+            normalisedCount = normalisedCount / (d * 0.50)
+        } else if (normalisedCount == 1 || normalisedCount == 2) {
+            normalisedCount = normalisedCount * 2
+        }
+        normalisedCount
     }
-}
 
-class RecentlyPublishedModel {
-    String id
-    String title
-    String submitter
-    String lastPublished
-    String pubTitle
-    String pubJournal
-    String pubYear
+    long fetchStatisticsCuratedModels() {
+        // fetch the figure from Redis cache
+        Long total = doRedisHGet(HP_STAT_TOTAL_FIGURE, "total-curated-models") as Long
+        if (!total) {
+            // call the fall back
+            total = retrieveTotalIndividualModelsFromEBISearchServer()
+        }
+        total
+    }
 
-    String toString() {
-        "$id: $title (${submitter}, ${lastPublished})\n${pubTitle}: ${pubJournal} (${pubYear})"
+    long fetchStatisticsNonCuratedModels() {
+        // fetch the figure from Redis cache
+        Long total = doRedisHGet(HP_STAT_TOTAL_FIGURE, "total-non-curated-models") as Long
+        if (!total) {
+            // call the fall back
+            total = retrieveTotalIndividualModelsFromEBISearchServer()
+        }
+        total
     }
 }

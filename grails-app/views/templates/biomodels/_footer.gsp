@@ -35,7 +35,10 @@
                 <span style="font-size: small">Build: <g:render template="/templates/version"/></span>
             </div>
             <div class="small-12 medium-6 large-6 columns" style="text-align: right">
-                <span style="font-size: small">Rendered from: ${java.net.InetAddress.getLocalHost()}</span>
+                <span style="font-size: small">
+                    <g:if test="${grails.util.Environment.isDevelopmentMode()}">
+                        <g:render template="/templates/biomodels/renderedFrom"/></span>
+                    </g:if>
             </div>
         </div>
         <div class="clear"></div>
@@ -101,7 +104,6 @@
         </section>
     </div>
      <g:render template="/templates/feedback" plugin="jummp-plugin-web-application"/>
-     <g:render template="/templates/switchClassicBioModels" plugin="jummp-plugin-web-application"/>
      <g:render template="/templates/biomodels/searchTips" />
      <g:render template="/templates/biomodels/domainSwitcherExplanation" />
 </footer>

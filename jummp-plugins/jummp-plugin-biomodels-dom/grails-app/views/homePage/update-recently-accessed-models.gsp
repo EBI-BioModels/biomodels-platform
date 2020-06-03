@@ -29,8 +29,8 @@ with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <meta name="layout" content="${grailsApplication.config.jummp.branding.style}/main"/>
-    <title>Administrative Interface of Home Page settings | BioModels</title>
+    <meta name="layout" content="${layout}"/>
+    <title>${title}</title>
 </head>
 
 <body>
@@ -49,6 +49,7 @@ with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
                 <p>There has been an error when trying to update the list of the recently accessed models on Redis
                 Server</p>
             </g:else>
+            <p><a href="${createLink(controller: "homePage", action: "index")}">Back Admin Board</a></p>
         </div>
     </div>
 </body>

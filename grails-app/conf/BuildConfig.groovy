@@ -32,6 +32,8 @@ grails.project.war.file = "target/${appName}.war"
 grails.project.groupId = "net.biomodels.jummp"
 grails.project.source.level = 1.8
 grails.project.target.level = 1.8
+grails.server.host="0.0.0.0"
+grails.server.port=8080
 grails.project.dependency.resolver = "maven"
 
 customJvmArgs = ["-server", "-noverify", "-XX:+UseConcMarkSweepGC", "-XX:+UseParNewGC" ]
@@ -83,7 +85,7 @@ grails.project.dependency.resolution = {
         runtime 'mysql:mysql-connector-java:5.1.34'
         runtime "postgresql:postgresql:9.1-901.jdbc4"
 
-        compile "uk.ac.ebi.ddi:ddi-ebe-ws-dao:1.0"
+        compile "uk.ac.ebi.ddi:ddi-ebe-ws-dao:1.2"
         // Jackson DataBinder has 'provided' scope in DDI: See
         //      https://github.com/BD2K-DDI/ddi-base-master/blob/2326b4/pom.xml
         //      https://github.com/BD2K-DDI/ddi-ebeye-ws-dao/blob/8bd08f/pom.xml

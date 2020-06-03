@@ -26,161 +26,24 @@
 
 <%@ page contentType="text/html;charset=UTF-8" %>
 <%@ page import="grails.converters.JSON;" %>
-<%
-    def style = grailsApplication.config.jummp.branding.style
-    def serverUrl = grailsApplication.config.grails.serverURL
-%>
 <html>
 <head>
     <meta name="layout" content="${session['branding.style']}/main" />
-    <title>${title} | BioModels</title>
+    <title>${title}</title>
     <link rel="stylesheet"
           href="${resource(contextPath: "${serverUrl}", dir: "css/${style}", file: 'publicationPageStyle.css')}" />
-    <link rel="stylesheet"
-          href="${resource(contextPath: "${serverUrl}", dir: "css", file: 'toastr.min.css')}"/>
-
-    <g:javascript src="toastr.min.js" contextPath=""/>
-    <g:javascript>
-        // Indeed, we don't need to check whether the authors is null or not because if case of the model has
-        // no publication yet, we always create an empty PersonTransportCommand to maintain authors
-        // during the submission flow.
-        if (${publication != null}) {
-            var authorMap = {"authors": ${publication?.authors?.collect {
-                String userRealName = it.userRealName ?: ""
-                String institution = it.institution ?: ""
-                String orcid = it.orcid ?: ""
-                def id = it.id ?: "undefined"
-                if (id == "undefined") {
-                    [userRealName: userRealName, institution: institution, orcid: orcid]
-                } else {
-                    [id: id, userRealName: userRealName, institution: institution, orcid: orcid]
-                }
-            } as JSON}};
-            var authorList = authorMap["authors"];
-        } /*else {
-            var authorMap = {"authors": []};
-            var authorList = {};
-        }*/
-    </g:javascript>
-    <g:javascript src="${style}/publicationSubmission.js" contextPath="" />
 </head>
 
 <body>
     <h2>Publication Details</h2>
     <g:if test="${publication}">
-        <g:render template="/templates/publication/refreshPubMedDataButton"
-                  plugin="jummp-plugin-web-application"
-                  model="['publication': publication]"/>
         <div id="publicationForm">
-            <g:render template="/templates/publication/publicationEditableElements"
+            <g:render template="/templates/publication/tableView"
                       plugin="jummp-plugin-web-application"
-                      model="['publication': publication, 'authorListContainerSize': authorListContainerSize]"/>
-            <g:render template="/templates/publication/publicationButtonsForm"
-                      plugin="jummp-plugin-web-application"/>
+                      model="['publication': publication]"/>
+            %{--<g:render template="/templates/publication/publicationButtonsForm"
+                      plugin="jummp-plugin-web-application"/>--}%
         </div>
-        <g:javascript>
-            $('#btnSave').on("click", function(event) {
-                "use strict";
-                event.preventDefault();
-                $.ajax({
-                    type: "POST",
-                    url: $.jummp.createLink("publication", "save"),
-                    cache: true,
-                    processData: true,
-                    async: true,
-                    data: JSON.stringify(buildPublicationTC()),
-                    contentType: "application/json",
-                    beforeSend: function() {
-                        toastr.info("The publication details are being saved. Please wait...");
-                    },
-                    success: function(response) {
-                        toastr.clear();
-                        if (response['status'] === 200) {
-                            toastr.success(response['message']);
-                        } else if (response['status'] === 500) {
-                            toastr.error(response['message']);
-                        }
-                    },
-                    error: function(jqXHR, textStatus, errorThrown) {
-                        toastr.clear();
-                        toastr.error("Error: ", jqXHR.responseText + textStatus + errorThrown + JSON.stringify(jqXHR));
-                    }
-                });
-            });
-            /* build up a publication transport command object */
-            function buildPublicationTC() {
-                let id = ${params.id};
-                let linkProvider = {
-                    "linkType": $('#linkProvider').val(),
-                    "pattern": ""
-                };
-                let link = $('#link').val();
-                let title = $('#title').val();
-                let journal = $('#journal').val();
-                let affiliation = $('#affiliation').val();
-                let synopsis = $('#synopsis').val();
-                let year = $('#year').val();
-                let month = $('#month').val();
-                let day = $('#day').val();
-                let volume = $('#volume').val();
-                let issue = $('#issue').val();
-                let pages = $('#pages').val();
-                let opts = $('#authorList option');
-                let authors  = $.map(opts, function(opt) {
-                    if ($(opt).attr("data-person-id") === "undefined") {
-                        return {
-                            "userRealName": $(opt).attr("data-person-realname"),
-                            "orcid": $(opt).attr("data-person-orcid"),
-                            "institution": $(opt).attr("data-person-institution")
-                        };
-                    } else {
-                        return {
-                            "id": $(opt).attr("data-person-id"),
-                            "userRealName": $(opt).attr("data-person-realname"),
-                            "orcid": $(opt).attr("data-person-orcid"),
-                            "institution": $(opt).attr("data-person-institution")
-                        };
-                    }
-                });
-
-                let pubCmd = {
-                    'id': id,
-                    'linkProvider': linkProvider,
-                    'link': link,
-                    'title': title,
-                    'journal': journal,
-                    'affiliation': affiliation,
-                    'synopsis': synopsis,
-                    'year': year,
-                    'month': month,
-                    'day': day,
-                    'volume': volume,
-                    'issue': issue,
-                    'pages': pages,
-                    'authors': authors
-                };
-                return pubCmd;
-            }
-
-            $('input[name="Back"]').on("click", function() {
-                // The following function is defined in publicationSubmission.js
-                backAway();
-            });
-
-            $(document).on('click', '#refreshPublicationFromPubMed', {}, function(e) {
-                e.preventDefault();
-                $.ajax({
-                    type: "POST",
-                    url: "${createLink(controller: "publication", action: "refreshPubMedData")}",
-                    data: {
-                        id: ${params.id},
-                        pubmed: $('#link').val()
-                    }
-                }).done(function(data) {
-                    $('.editablePart').html(data);
-                });
-            });
-        </g:javascript>
     </g:if>
     <g:else>
         <p>Could not find the publication ${params?.id}</p>
