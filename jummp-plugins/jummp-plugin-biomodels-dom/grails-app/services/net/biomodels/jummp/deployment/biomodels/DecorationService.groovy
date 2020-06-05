@@ -321,10 +321,20 @@ ORDER BY model.firstPublished DESC'''
     }
 
     Map<String, String> fetchDataNewsWidget() {
-        Map news = doRedisHGetAll("hp-news-widget")
+        Map<String, String> news = doRedisHGetAll("hp-news-widget")
         if (!news) {
             // call the fallback
             news = buildDataForNewsWidget()
+        } else {
+            Map sortedNews = new LinkedHashMap()
+            sortedNews = news.sort { n1, n2 ->
+                String strDate1 = n1.value.take(10)
+                String strDate2 = n2.value.take(10)
+                Date date1 = new Date().parse("dd/MM/yyyy", strDate1)
+                Date date2 = new Date().parse("dd/MM/yyyy", strDate2)
+                return date2 <=> date1
+            }
+            news = sortedNews
         }
         return news
     }
@@ -368,11 +378,14 @@ GROUP BY p.journal
     }
 
     Map buildDataForNewsWidget() {
-        def newsQuery = "from WcmContent where parent.aliasURI = :aliasuri"
-        def newsEntries = WcmContent.executeQuery(newsQuery, [aliasuri: 'news'])
+        // only select the published News items and ignore ones under the other statuses
+        def newsQuery = """\
+from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order by createdOn desc"""
+        def newsEntries = WcmContent.executeQuery(newsQuery, [aliasuri: 'news', code: 400])
         Map<String, String> data = [:]
         for (def entry : newsEntries) {
-            data.put(entry.aliasURI, entry.title)
+            data.put(entry.aliasURI,
+                "${entry.createdOn.format('dd/MM/yyyy')}: ${entry.title}" as String)
         }
         data
     }
