@@ -13,6 +13,7 @@ import org.grails.async.factory.gpars.LoggingPoolFactory
 
 class ParameterSearchService {
     static transactional = false
+    def static configurationService
 
     static final Log log = LogFactory.getLog(ParameterSearchService.class)
     static List<String> columnNames = ["entity", "entity_id", "initial concentration/amount", "reaction with entity labels", "reaction with entity ids",
@@ -95,11 +96,26 @@ class ParameterSearchService {
             throw new IllegalArgumentException("Couldn't read the request parameters");
         }
         def url = command.getSearchUrl(format)
+
         String records = ""
+        HttpURLConnection conn
+        Proxy proxy = configurationService.verifyHttpProxy()
         try {
-            records = url.text
+            if (proxy) {
+                conn = (HttpURLConnection) url.openConnection(proxy)
+            } else {
+                conn = (HttpURLConnection) url.openConnection()
+            }
+            if (conn.responseCode < 400) {
+                records = url.text
+            } else {
+                log.error(conn.getErrorStream().inspect())
+                return null
+            }
         } catch (SocketException se) {
             log.error("Error while retrieving records from EBI Search ${se.getMessage()}, command - ${command}", se)
+        } catch (IllegalArgumentException ile) {
+            log.error("The proxy setting cannot be null")
         }
         return replaceFieldNames(records).replaceAll("\\\\","")
     }
