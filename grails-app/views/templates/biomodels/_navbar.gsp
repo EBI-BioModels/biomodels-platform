@@ -91,7 +91,7 @@
        whichever one will show up last...
        For example: -->
     <sec:ifLoggedIn>
-        <li class="functional first float-right" role="menuitem">
+        <li class="functional first float-right opens-left" role="menuitem" id="menu-item-myaccount">
             <a>My Account</a>
             <ul class="menu">
                 <li><a href="${grailsApplication.config.grails.serverURL}/user"><i class="icon icon-common icon-user-circle"></i>
