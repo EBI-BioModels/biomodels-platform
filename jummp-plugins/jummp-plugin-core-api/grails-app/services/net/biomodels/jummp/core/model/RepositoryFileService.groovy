@@ -50,15 +50,10 @@ import java.nio.file.StandardCopyOption
  */
 class RepositoryFileService implements GrailsConfigurationAware {
     static scope = "prototype"
-
     private static final Logger logger = LoggerFactory.getLogger(RepositoryFileService.class)
-
     def modelService
-
     def vcsService
-
     def grailsApplication
-
     private String modelCacheDir
 
     /**
@@ -152,12 +147,17 @@ There is an error when trying to update the description: $description --- of the
         } catch (ModelException e) {
             files = vcsService.retrieveFiles(revision)
             // log the result
-            String message = """\
-Retrieving the revision ${revision.vcsId} for Model ${revision.model.submissionId} from the local model
-cache directory failed. The revision has been checked out from VCS instead."""
+            String modelId = "${revision.model.submissionId}.${revision.revisionNumber}"
+            String message = """Retrieving the revision ${modelId} from the local model cache directory failed. The
+revision has been checked out from VCS instead."""
             logger.debug(message)
-            // update the cache directory of this revision
-            doUpdateModelRevisionCacheDirectory(revision)
+            if (files?.size()) {
+                // update the cache directory of this revision
+                doUpdateModelRevisionCacheDirectory(revision)
+            } else {
+                message = """The revision ${modelId} (commit id:${revision.vcsId}) has no files"""
+                logger.debug(message)
+            }
         }
         return files
     }
@@ -182,14 +182,13 @@ cache directory failed. The revision has been checked out from VCS instead."""
                 returnedFiles = revisionDirectory.listFiles().toList()
             }
             if (returnedFiles?.isEmpty()) {
-                String message = """\
-The cache directory of this model ${modelId} revision ${revisionNumber} is empty. The model cache builder will be
-launched again."""
+                String message = """The cache directory of this model ${modelId} revision ${revisionNumber} is empty.
+ The model cache builder will be launched again."""
                 throwModelException(modelId, message)
             }
         } catch (FileNotFoundException me) {
-            String message = """\
-The files associated with this model ${modelId}, revision ${revisionNumber} hasn't been cached yet"""
+            String message = """The files associated with this model ${modelId}, revision ${revisionNumber} hasn't
+been cached yet"""
             throwModelException(modelId, message)
         }
         return returnedFiles
@@ -198,18 +197,17 @@ The files associated with this model ${modelId}, revision ${revisionNumber} hasn
     boolean updateModelRevisionCache(final Revision revision) {
         String modelId = revision.model.submissionId
         String revNum = revision.revisionNumber.toString()
-        logger.info("""\
-Copying the files associated with the revision ${revision.vcsId} (${revision.id}): ${modelId}.${revNum}""")
+        logger.debug("""Copying the files associated with the revision ${revision.vcsId} (${revision.id}):
+${modelId}.${revNum}""")
         File modelRevDir = Paths.get(modelCacheDir, modelId, revNum).toFile()
         boolean created = modelRevDir.mkdirs()
         if (!created) {
             if (!modelRevDir.exists()) {
-                String message = """\
-We were unable to create the revision directory '${modelRevDir.absolutePath}'"""
-                logger.warn(message)
+                String message = """We were unable to create the revision directory '${modelRevDir.absolutePath}'"""
+                logger.debug(message)
                 return false
             } else {
-                logger.info("The directory '${modelRevDir.absolutePath}' exists")
+                logger.debug("The directory '${modelRevDir.absolutePath}' exists")
             }
         }
         boolean result = false
@@ -217,18 +215,17 @@ We were unable to create the revision directory '${modelRevDir.absolutePath}'"""
             List<File> files = vcsService.retrieveFiles(revision)
             for (File it: files) {
                 String fileName = it.getName()
-                logger.info("File ${fileName} is being copied")
+                logger.debug("File ${fileName} is being copied")
                 Files.copy(it.toPath(),
                     new File(modelRevDir, fileName).toPath(), StandardCopyOption.REPLACE_EXISTING)
             }
             result = true
         } catch (VcsException e) {
-            logger.error("""\
-There have been errors with VCS manager for the model $modelId, revision $revNum: $e.message""")
+            logger.error("""There have been errors with VCS manager for the model $modelId, revision $revNum: ${e
+                .message}""")
             result = false
         } catch (IOException e) {
-            logger.error("""\
-IO exception encountered for model $modelId (revision $revNum): $e""")
+            logger.error("""IO exception encountered for model $modelId (revision $revNum): $e""")
             result = false
         }
         return result
@@ -308,7 +305,7 @@ IO exception encountered for model $modelId (revision $revNum): $e""")
             }
             boolean fileIsEmpty = !f.length()
             if (fileIsEmpty) {
-                logger.warn("Empty file ${f.name} included in ${repoFileCmds}")
+                logger.debug("Empty file ${f.name} included in ${repoFileCmds}")
             }
             if (rf.mainFile) {
                 foundValidMainFile = true
@@ -335,16 +332,15 @@ IO exception encountered for model $modelId (revision $revNum): $e""")
                 def msg = new StringBuffer("Invalid file ${rf.properties} uploaded for model ${m.properties}.")
                 msg.append("The file failed due to ${domain.errors.allErrors.inspect()}")
                 logger.error(msg)
-                msg = """\
-Your submission appears to contain invalid file ${fileName}. Please review it and try again."""
+                msg = """Your submission appears to contain invalid file ${fileName}. Please review it and try again."""
                 throw new ModelException(m, msg)
             } else {
                 results.add(domain)
             }
         }
         if (!foundValidMainFile) {
-            def msg = """\
-Can't persist repository files ${repoFileCmds.dump()} for revision ${revision.dump()} without main file"""
+            def msg = """Can't persist repository files ${repoFileCmds.dump()} for revision ${revision.dump()}
+without main file"""
             logger.error(msg)
             throw new ModelException(m, "Missing main file for the new model revision ${revision.name}")
         }
@@ -356,12 +352,12 @@ Can't persist repository files ${repoFileCmds.dump()} for revision ${revision.du
         String modelId = revision.model.submissionId
         String message = ""
         if (updated) {
-            message = """\
-The model ${modelId} revision ${revision.revisionNumber} has been populated them to the  cache successfully"""
-            logger.info(message)
+            message = """The model ${modelId} revision ${revision.revisionNumber} has been populated them to the
+cache successfully"""
+            logger.debug(message)
         } else {
-            message = """\
-There have been errors when updating the cache directory for the model ${modelId} revision ${revision.revisionNumber}"""
+            message = """There have been errors when updating the cache directory for the model ${modelId} revision
+${revision.revisionNumber}"""
             logger.error(message)
         }
     }
@@ -374,7 +370,7 @@ There have been errors when updating the cache directory for the model ${modelId
         }
         boolean saveHistory = false
         ModelTransportCommand modelTC = new ModelAdapter(model: model).toCommandObject(saveHistory)
-        logger.info(message)
+        logger.error(message)
         throw new ModelException(modelTC, message)
     }
 }
