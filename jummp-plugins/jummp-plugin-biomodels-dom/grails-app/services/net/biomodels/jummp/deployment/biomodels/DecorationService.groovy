@@ -749,7 +749,16 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
         logger.debug("HTTP PROXY: ${proxy?.dump()}")
         String queryURL = "${serverURL}/${query}"
         logger.debug("Connecting to the service at $queryURL")
-        RestBuilder rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000, proxy: proxy)
+        RestBuilder rest
+        HttpURLConnection conn
+        URL url = new URL(queryURL)
+        if (proxy) {
+            rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000, proxy: proxy)
+            conn = (HttpURLConnection) url.openConnection(proxy)
+        } else {
+            rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000)
+            conn = (HttpURLConnection) url.openConnection()
+        }
         def response = rest.get(queryURL) {
             accept("application/json")
             contentType("application/json;charset=UTF-8")
