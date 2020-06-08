@@ -858,7 +858,13 @@ if (!(jummpConfig.jummp.redis.timeout instanceof ConfigObject)) {
  * Notes: reuse Redis Server properties above
  */
 // common properties
-springsession.maxInactiveIntervalInSeconds = 3600                   // Session timeout. default is 1800 seconds
+if (!(jummpConfig.jummp.springsession.maxInactiveIntervalInSeconds instanceof ConfigObject)) {
+    jummp.springsession.maxInactiveIntervalInSeconds = jummpConfig.jummp.springsession.maxInactiveIntervalInSeconds
+        as long
+} else {
+    jummp.springsession.maxInactiveIntervalInSeconds = 3600
+}
+springsession.maxInactiveIntervalInSeconds = jummp.springsession.maxInactiveIntervalInSeconds // Session timeout. default is 1800 seconds
 
 // Redis store specific properties
 springsession.redis.connectionFactory.hostName = jummp.redis.host
