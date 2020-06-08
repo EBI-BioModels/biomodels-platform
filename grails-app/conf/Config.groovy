@@ -859,8 +859,8 @@ if (!(jummpConfig.jummp.redis.timeout instanceof ConfigObject)) {
  */
 // common properties
 if (!(jummpConfig.jummp.springsession.maxInactiveIntervalInSeconds instanceof ConfigObject)) {
-    jummp.springsession.maxInactiveIntervalInSeconds = jummpConfig.jummp.springsession.maxInactiveIntervalInSeconds
-        as long
+    long interval = jummpConfig.jummp.springsession.maxInactiveIntervalInSeconds as long
+    jummp.springsession.maxInactiveIntervalInSeconds = interval
 } else {
     jummp.springsession.maxInactiveIntervalInSeconds = 3600
 }
