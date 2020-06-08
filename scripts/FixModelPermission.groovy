@@ -18,6 +18,7 @@
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
  */
 
+
 import groovyx.gpars.GParsPool
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Revision
@@ -31,7 +32,7 @@ import java.time.Duration
 import java.time.Instant
 
 /**
- * Grants writeable permission for fellow curators on models submitted by other curators
+ * Grants writable permission for fellow curators on models submitted by other curators
  * @author <a href="mailto:nvntung@gmail.com">Tung Nguyen</a> on 04/06/20.
  */
 class ModelPermissionRepairer {
@@ -47,42 +48,36 @@ class ModelPermissionRepairer {
         String query = """select M.id, M.submissionId, R.id, R.owner.id
 from Revision As R JOIN R.model As M
 where R.owner.id IN (select U.id from UserRole AS UR JOIN UR.role AS RO JOIN UR.user AS U where RO.authority =
-'ROLE_CURATOR') group by M.id"""
+'ROLE_CURATOR') and R.revisionNumber = 1 group by M.id"""
         List models = Model.executeQuery(query)
         models
     }
 
-    List getAllCurators() {
-        String query = """select U.id, U.username from UserRole AS UR JOIN UR.role as Ro JOIN UR.user AS U
-where Ro.authority = 'ROLE_CURATOR'
-"""
-        List curators = Model.executeQuery(query)
-        curators
-    }
+    void grantWritablePermission(final Authentication adminAuth, final Model model) {
+        RunScriptHelper.simpleRunAs(adminAuth, {
+            println("""Granting writable permission for ROLE_CURATOR on the model ${model.submissionId}""")
+            // similar to ctx.modelService.submitModelRevisionForPublication(revision)
+            // via the model directly
+            // grant permissions to ROLE_CURATOR
+            if (!ctx.modelService.hasPermission(model, "ROLE_CURATOR", BasePermission.READ)) {
+                ctx.aclUtilService.addPermission(model, "ROLE_CURATOR", BasePermission.READ)
+            }
+            if (!ctx.modelService.hasPermission(model, "ROLE_CURATOR", BasePermission.WRITE)) {
+                ctx.aclUtilService.addPermission(model, "ROLE_CURATOR", BasePermission.WRITE)
+            }
+            if (!ctx.modelService.hasPermission(model, "ROLE_CURATOR", BasePermission.ADMINISTRATION)) {
+                ctx.aclUtilService.addPermission(model, "ROLE_CURATOR", BasePermission.ADMINISTRATION)
+            }
 
-    void grantWritablePermission(Authentication authentication, Model model, Revision revision) {
-        final Authentication modelOwnerAuth = RunScriptHelper.createTokenForUser(revision.owner.username)
-        RunScriptHelper.simpleRunAs(modelOwnerAuth, {
-            ctx.modelService.submitModelRevisionForPublication(revision)
-        })
-    }
-
-    void fixPermission(Authentication authentication, Model model, Revision revision) {
-        boolean canUpdate = false
-        if (model.deleted) {
-            canUpdate = false
-        } else {
-            canUpdate = ctx.aclUtilService.hasPermission(authentication, model, BasePermission.WRITE)
-            if (!canUpdate) {
-                println("""Curator ${authentication.principal} has no write permission on the model ${model
-                    .submissionId}.${revision.revisionNumber}""")
-                if (model.submissionId == 'MODEL1804030001') { //MODEL1805010003
-                    println("""Granting writable permission for curator ${authentication.principal} on the model
-${model.submissionId}.${revision.revisionNumber}""")
-                    grantWritablePermission(authentication, model, revision)
+            model.revisions.each { Revision rev ->
+                if (!ctx.modelService.hasPermission(rev, "ROLE_CURATOR", BasePermission.READ)) {
+                    ctx.aclUtilService.addPermission(rev, "ROLE_CURATOR", BasePermission.READ)
+                }
+                if (!ctx.modelService.hasPermission(rev, "ROLE_CURATOR", BasePermission.ADMINISTRATION)) {
+                    ctx.aclUtilService.addPermission(rev, "ROLE_CURATOR", BasePermission.ADMINISTRATION)
                 }
             }
-        }
+        })
     }
 
     void runJob() {
@@ -92,32 +87,24 @@ ${model.submissionId}.${revision.revisionNumber}""")
         ctx.persistenceInterceptor?.init()
         try {
             List revisions = getAllModelsSubmittedByCurators()
-            List curators = getAllCurators()
+            println "Nb. models: ${revisions?.size()}"
             final int POOL_SIZE = 2
             GParsPool.withPool(POOL_SIZE) {
-                curators.each { u ->
-                    long userID = u[0] as long
-                    String username = u[1] as String
-                    Authentication authentication = RunScriptHelper.createTokenForUser(username)
-                    revisions.eachParallel { entry ->
-                        long modelOwnerID = entry[3] as long
-                        if (userID != modelOwnerID) {
-                            RunScriptHelper.simpleRunAs(authentication, {
-                                ctx.persistenceInterceptor?.init()
-                                Model model = Model.get(entry[0])
-                                Revision revision = Revision.get(entry[2])
-                                try {
-                                    fixPermission(authentication, model, revision)
-                                } catch (Exception e) {
-                                    String message = """Cannot fix permission on the model: ${model.submissionId}, revision: ${entry[2]} for user ${username} because of the below error:${e}"""
-                                    logger.error(message)
-                                    e.printStackTrace()
-                                } finally {
-                                    ctx.persistenceInterceptor?.destroy()
-                                }
-                            })
+                revisions.eachParallel { entry ->
+                    RunScriptHelper.simpleRunAs(adminAuth, {
+                        ctx.persistenceInterceptor?.init()
+                        Model model = Model.get(entry[0])
+                        try {
+                            grantWritablePermission(adminAuth, model)
+                        } catch (Exception e) {
+                            String message = """Cannot fix writable permission on the revision: ${entry[2]} and
+admin rights on the model: ${model.submissionId} for ROLE_CURATOR because of the below error: ${e}"""
+                            logger.error(message)
+                            e.printStackTrace()
+                        } finally {
+                            ctx.persistenceInterceptor?.destroy()
                         }
-                    }
+                    })
                 }
             }
         } finally {

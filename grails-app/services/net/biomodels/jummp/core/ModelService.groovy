@@ -1693,8 +1693,8 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
     private boolean hasAdminPermission(def modelOrRevision, String username) {
         Acl acl = aclUtilService.readAcl(modelOrRevision)
         return null != acl.entries.find { ace ->
-            if (!(ace instanceof PrincipalSid)) {
-                return
+            if (!(ace.sid instanceof PrincipalSid)) {
+                return null
             }
             def aceAsPrincipalSid = ace.sid as PrincipalSid
             aceAsPrincipalSid.principal == username &&
@@ -1702,6 +1702,36 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
         }
     }
 
+    /**
+     * Determines whether a user or role has a specific permission on a given model or revision or not
+     *
+     * @param modelOrRevision   A domain object which is either {@link Revision} or {@link Model}
+     * @param usernameOrRole    A string representing the username or authority (i.e. role)
+     * @param perm              An object representing a permission which the type is of {@link BasePermission}
+     * @return                  true/false
+     */
+    boolean hasPermission(def modelOrRevision, final String usernameOrRole, final BasePermission perm) {
+        Acl acl = aclUtilService.readAcl(modelOrRevision)
+        return null != acl.entries.find { ace ->
+            if (!(ace.sid instanceof PrincipalSid) || !(ace.sid instanceof GrantedAuthoritySid)) {
+                return false
+            }
+            def sid
+            String currentUsernameOrRole
+            if (ace.sid instanceof PrincipalSid) {
+                sid = ace.sid as PrincipalSid
+                currentUsernameOrRole = sid.principal
+            } else if (ace.sid instanceof GrantedAuthoritySid) {
+                sid = ace.sid as GrantedAuthoritySid
+                currentUsernameOrRole = sid.grantedAuthority
+            } else {
+                sid = null
+            }
+            boolean value = ace.permission == perm && currentUsernameOrRole == usernameOrRole
+            boolean doesItHasPermission = sid == null ? false : value
+            return doesItHasPermission
+        }
+    }
     /**
     * Revokes write access for @p model from @p collaborator.
     *
