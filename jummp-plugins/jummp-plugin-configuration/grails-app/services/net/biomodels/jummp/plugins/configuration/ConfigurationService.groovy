@@ -266,7 +266,7 @@ class ConfigurationService implements InitializingBean {
      * Verifies the current configuration having HTTP Proxy information or not
      * @return A command object {@link Proxy} encapsulating HTTP Proxy information
      */
-    static Proxy verifyHttpProxy() {
+    Proxy verifyHttpProxy() {
         HttpProxyCommand command = loadHttpProxy()
         String host = command.host
         int port = command.port as int

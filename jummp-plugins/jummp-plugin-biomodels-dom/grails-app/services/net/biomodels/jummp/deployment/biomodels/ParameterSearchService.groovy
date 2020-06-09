@@ -108,8 +108,11 @@ class ParameterSearchService {
             }
             if (conn.responseCode < 400) {
                 records = url.text
+                return replaceFieldNames(records).replaceAll("\\\\","")
             } else {
-                log.error(conn.getErrorStream().inspect())
+                log.error("""Couldn't fetch data from the resource ${url.dump()} because of the error caused by ${conn
+                    .getErrorStream()
+                    .inspect()}""")
                 return null
             }
         } catch (SocketException se) {
@@ -117,6 +120,6 @@ class ParameterSearchService {
         } catch (IllegalArgumentException ile) {
             log.error("The proxy setting cannot be null")
         }
-        return replaceFieldNames(records).replaceAll("\\\\","")
+        return null
     }
 }

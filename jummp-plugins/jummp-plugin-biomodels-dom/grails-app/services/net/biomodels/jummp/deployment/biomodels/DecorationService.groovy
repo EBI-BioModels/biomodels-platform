@@ -759,9 +759,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
             rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000)
             conn = (HttpURLConnection) url.openConnection()
         }
-        rest.restTemplate.messageConverters.removeAll {
-            it.class.name == 'org.springframework.http.converter.json.GsonHttpMessageConverter'
-        }
+
         def response = rest.get(queryURL) {
             accept("application/json")
             contentType("application/json;charset=UTF-8")

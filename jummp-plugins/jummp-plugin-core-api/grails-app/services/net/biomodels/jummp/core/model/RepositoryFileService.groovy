@@ -156,7 +156,7 @@ revision has been checked out from VCS instead."""
                 doUpdateModelRevisionCacheDirectory(revision)
             } else {
                 message = """The revision ${modelId} (commit id:${revision.vcsId}) has no files"""
-                logger.debug(message)
+                logger.error(message)
             }
         }
         return files
