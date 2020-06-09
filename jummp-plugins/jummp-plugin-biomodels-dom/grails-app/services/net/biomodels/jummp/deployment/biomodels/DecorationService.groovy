@@ -56,6 +56,7 @@ import java.text.SimpleDateFormat
 class DecorationService implements GrailsConfigurationAware {
     private static final Logger logger = LoggerFactory.getLogger(DecorationService.class)
     def grailsApplication
+    def configurationService
     static String REDIS_SRV_HOST //= grailsApplication.config.jummp.redis.host
     static int REDIS_SRV_PORT //= grailsApplication.config.jummp.redis.host.port
     static int REDIS_SRV_TIMEOUT //= grailsApplication.config.jummp.redis.timeout
@@ -66,8 +67,6 @@ class DecorationService implements GrailsConfigurationAware {
     static String BM_SVR_URL //= grailsApplication.config.grails.serverURL
     static String CLASSIFIER_SVR_URL //= grailsApplication.config.jummp.classification.endpoint
 
-    private String httpProxyHost
-    private int httpProxyPort
     private Proxy proxy
 
     @Override
@@ -81,17 +80,7 @@ class DecorationService implements GrailsConfigurationAware {
         FIXED_PARAMS = "biomodels?query=domain_source:biomodels&size=0&facetfields"
         EBI_SEARCH_BM_URL = "${EBI_SEARCH_URL}/${FIXED_PARAMS}"
         HP_STAT_TOTAL_FIGURE = "hp-statistics-total-figures"
-        httpProxyHost = co.jummp.http.proxy.host
-        httpProxyPort = co.jummp.http.proxy.port as int
-        boolean noSetProxyHost = httpProxyHost.equalsIgnoreCase("localhost") || httpProxyHost == null
-        boolean notSetProxyPort = httpProxyPort == 80 || httpProxyPort == null
-        boolean noHttpProxy = noSetProxyHost && notSetProxyPort
-        if (noHttpProxy) {
-            proxy = null
-        } else {
-            proxy = new Proxy(Proxy.Type.HTTP,
-                new InetSocketAddress(this.httpProxyHost, this.httpProxyPort))
-        }
+        proxy = configurationService.verifyHttpProxy()
     }
 
     /**
