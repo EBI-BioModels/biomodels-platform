@@ -738,14 +738,10 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
         String queryURL = "${serverURL}/${query}"
         logger.debug("Connecting to the service at $queryURL")
         RestBuilder rest
-        HttpURLConnection conn
-        URL url = new URL(queryURL)
         if (proxy) {
             rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000, proxy: proxy)
-            conn = (HttpURLConnection) url.openConnection(proxy)
         } else {
             rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000)
-            conn = (HttpURLConnection) url.openConnection()
         }
 
         def response = rest.get(queryURL) {
@@ -772,12 +768,6 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
         OrganismData lastElement = originalData[originalData.size() - 1]
         normalisedData.add(lastElement)
         logger.debug("Nb. elements: ${originalData.size()} -- ${normalisedData.size()}")
-        List l1 = originalData.collect { OrganismData it ->
-            it.count
-        }
-        List l2 = normalisedData.collect { OrganismData it ->
-            it.normalisedCount
-        }
         normalisedData.toList()
     }
 
