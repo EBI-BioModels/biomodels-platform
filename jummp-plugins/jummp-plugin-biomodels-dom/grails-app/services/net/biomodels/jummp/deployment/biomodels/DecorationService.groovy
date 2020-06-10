@@ -498,17 +498,22 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
     private Map buildModelOfTheMonthEntry() {
         final String query = "from ModelOfTheMonth order by publicationDate desc"
         ModelOfTheMonth theLatestMoM = ModelOfTheMonth.find(query)
+        String entryTitle = theLatestMoM.title
         String shortDescription = theLatestMoM.shortDescription
         String previewImage = Base64.encoder.encodeToString(theLatestMoM.previewImage)
         Date theLatestPublicationDate = theLatestMoM.publicationDate
         def monthNumStr = new SimpleDateFormat("MM").format(theLatestPublicationDate)
         def monthString = new SimpleDateFormat("MMMMM").format(theLatestPublicationDate)
         def yearString = new SimpleDateFormat("YYYY").format(theLatestPublicationDate)
-        final String prefixLink = "${grailsApplication.config.grails.serverURL}/content/model-of-the-month"
+        final String prefixLink = "${BM_SVR_URL}/content/model-of-the-month"
         def link = "${prefixLink}?year=${yearString}&month=${monthNumStr}"
         def linkAll = "${prefixLink}?all=yes"
         String titlePreviewImage = "Model of the month: ${monthString} ${yearString}"
+        String lastUpdatedBy = theLatestMoM.authors
+        Set models = theLatestMoM.models
+        String modelIds = models.collect { it.publicationId ?: it.submissionId }.join(";")
         Map momEntry = [:]
+        momEntry.put("entryTitle", entryTitle)
         momEntry.put("shortDescription", shortDescription)
         momEntry.put("previewImage", previewImage)
         momEntry.put("monthNumStr", monthNumStr)
@@ -517,6 +522,8 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
         momEntry.put("momEntryLink", link)
         momEntry.put("momEntryLinkAll", linkAll)
         momEntry.put("titlePreviewImage", titlePreviewImage)
+        momEntry.put("lastUpdatedBy", lastUpdatedBy)
+        momEntry.put("models", modelIds)
         return momEntry
     }
 

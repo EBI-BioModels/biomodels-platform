@@ -96,7 +96,7 @@
     </div>
 </div>--}%
 %{--https://www.ebi.ac.uk/style-lab/websites/patterns/tabs.html--}%
-<div id="item" class="large-6 medium-12 small-12 columns chart-placeholder">
+<div id="item" class="large-4 medium-12 small-12 columns chart-placeholder">
     <div id="slide-introduction">
         <div class="homepage_info_box"><h3 id="slide-title"></h3></div>
         <p><span id="slide-description"></span><br/>
@@ -128,7 +128,15 @@
         </nav>
     </div>
 </div>
-<div id="hp-statistics-published-recently" class="large-6 medium-12 small-12 columns">
+<div class="large-4 medium-12 small-12 columns">
+    <div id="mom-right-entry">
+        <div class="homepage_info_box"><h3>Model of The Month
+            <a href="//www.ebi.ac.uk/biomodels/modelOfTheMonth/rss" style="margin-right:0.25em"
+               class="icon icon-socialmedia float-right no-underline" data-icon="R"></a></h3></div>
+        <div class="widget-body-text"><biomd:renderTheLatestMoMEntryWidget/></div>
+    </div>
+</div>
+<div id="hp-statistics-published-recently" class="large-4 medium-12 small-12 columns">
     <div class="homepage_info_box"><h3>Recently published</h3></div>
     <div class="widget-body-text" style="text-align: left"><biomd:renderRecentlyPublishedModels/></div>
 </div>

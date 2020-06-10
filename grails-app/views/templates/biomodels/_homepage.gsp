@@ -34,6 +34,24 @@
     }
 </style>
 
+<script type="text/javascript">
+    $(window).on("resize", function () {
+        showOrHidePublicationInfo();
+    });
+    $(document).ready(function () {
+        showOrHidePublicationInfo();
+    });
+
+    function showOrHidePublicationInfo() {
+        var innerWidth = window.innerWidth;
+        console.log("Inner Width " + innerWidth + "px");
+        if (innerWidth < 2000) {
+            $('.publication-info').hide();
+        } else {
+            $('.publication-info').show();
+        }
+    }
+</script>
 <div id="hp-intro" class="row text-center top-widget-area">
     <div class="large-12 medium-12 small-12 columns">
     <p class="welcome-message" style="margin-top: 0.5em;">
