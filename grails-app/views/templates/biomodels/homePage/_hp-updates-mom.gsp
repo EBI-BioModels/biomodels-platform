@@ -7,7 +7,7 @@
     <div class="widget-body-text">
         <div class="row">
             <div class="small-12 medium-1 large-1 columns hide-for-small-only">
-                <i class="icon icon-common icon-question-circle" style="font-size: 40px"></i>
+                <i class="icon icon-common icon-question-circle" style="font-size: 2em"></i>
             </div>
             <div class="small-12 medium-11 large-11 columns">
                 <h4>Frequently Asked Questions (FAQs)</h4>
@@ -22,7 +22,7 @@
 
         <div class="row">
             <div class="small-12 medium-1 large-1 columns hide-for-small-only">
-                <i class="icon icon-common icon-documentation" style="font-size: 40px"></i>
+                <i class="icon icon-common icon-documentation" style="font-size: 2em"></i>
             </div>
             <div class="small-12 medium-11 large-11 columns">
                 <h4>Developers' Guide</h4>
@@ -44,7 +44,7 @@
 
         <div class="row">
             <div class="small-12 medium-1 large-1 columns hide-for-small-only">
-                <i class="icon icon-common icon-tutorial" style="font-size: 40px"></i>
+                <i class="icon icon-common icon-tutorial" style="font-size: 2em"></i>
             </div>
             <div class="small-12 medium-11 large-11 columns">
                 <h4>Courses</h4>
