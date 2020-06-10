@@ -69,9 +69,9 @@
 </div>
 <div class="small-12 medium-12 large-4 columns">
     <div class="homepage_info_box">
-        <h3>Find us on Tweeter</h3>
+        <h3>Find us on Twitter</h3>
     </div>
     <div class="widget-body-text"><a class="twitter-timeline" data-lang="en" data-height="400"
-       href="https://twitter.com/biomodels?ref_src=twsrc%5Etfw">Tweets by biomodels</a>
+       href="https://twitter.com/biomodels">Tweets by @biomodels</a>
     <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script></div>
 </div>
