@@ -831,7 +831,7 @@ def dateFormats = ["yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd HH:mm:ss", 'MMddyyyy', '
 grails.databinding.dateFormats = dateFormats
 
 /**
- * Below are settings for Redis server
+ * BELOW ARE SETTINGS FOR REDIS SERVER
  */
 // TODO: rewrite the validation to Redis properties. If there is any mismatch, throw an exception
 // because this setting is crucial to start the application properly
@@ -852,11 +852,26 @@ if (!(jummpConfig.jummp.redis.timeout instanceof ConfigObject)) {
 } else {
     jummp.redis.timeout = 3600 // the default timeout
 }
+
+/**
+ * SPRING SESSION CONFIGURATION
+ * Notes: reuse Redis Server properties above
+ */
+// common properties
+if (!(jummpConfig.jummp.springsession.maxInactiveIntervalInSeconds instanceof ConfigObject)) {
+    long interval = jummpConfig.jummp.springsession.maxInactiveIntervalInSeconds as long
+    jummp.springsession.maxInactiveIntervalInSeconds = interval
+} else {
+    jummp.springsession.maxInactiveIntervalInSeconds = 3600
+}
+springsession.maxInactiveIntervalInSeconds = jummp.springsession.maxInactiveIntervalInSeconds // Session timeout. default is 1800 seconds
+
+// Redis store specific properties
 springsession.redis.connectionFactory.hostName = jummp.redis.host
-springsession.redis.connectionFactory.port = jummp.redis.port
+springsession.redis.connectionFactory.port = jummp.redis.port       // Redis server connection timeout
 springsession.redis.connectionFactory.timeout = jummp.redis.timeout
 
-// HTTP PROXY (used for k8s deployment
+// HTTP PROXY (used for k8s deployment)
 if (!(jummpConfig.jummp.http.proxy.host instanceof ConfigObject)) {
     jummp.http.proxy.host = jummpConfig.jummp.http.proxy.host
 } else {

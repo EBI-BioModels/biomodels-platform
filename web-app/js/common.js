@@ -258,3 +258,15 @@ function previewImage(input, imageHolder) {
     }
     return imgData;
 }
+
+/**
+ * Patches the issue of hiding dropdown menu partially. Foundation dropdown menu script adds opens-inner class
+ * improperly causing this problem.
+ */
+$('#menu-item-myaccount').on('mouseover', function (event) {
+    event.preventDefault();
+    if ($(this).hasClass("opens-inner")) {
+        $(this).removeClass("opens-inner");
+        $(this).addClass("opens-left");
+    }
+});

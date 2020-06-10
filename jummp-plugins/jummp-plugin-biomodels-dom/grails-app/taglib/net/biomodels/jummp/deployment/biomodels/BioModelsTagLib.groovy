@@ -213,7 +213,9 @@ class BioModelsTagLib {
 
     def renderNewsWidget = {
         Map<String, String> newsItems = decorationService.fetchDataNewsWidget()
-        out << render(template: "/templates/biomodels/homePage/hp-news-widget", model: [newsItems: newsItems])
+        String serverURL = grailsApplication.config.grails.serverURL
+        out << render(template: "/templates/biomodels/homePage/hp-news-widget",
+            model: [newsItems: newsItems, serverURL: serverURL])
     }
 
     def renderTheLatestMoMEntryWidget = {
