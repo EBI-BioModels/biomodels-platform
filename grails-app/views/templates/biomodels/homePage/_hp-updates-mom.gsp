@@ -3,7 +3,7 @@
     <div class="widget-body-text"><biomd:renderRecentlyAccessedModels/></div>
 </div>
 <div class="small-12 medium-12 large-4 columns">
-    <div class="homepage_info_box"><h3>Other supports</h3></div>
+    <div class="homepage_info_box"><h3>Documentation</h3></div>
     <div class="widget-body-text">
         <div class="row">
             <div class="small-12 medium-1 large-1 columns hide-for-small-only">
