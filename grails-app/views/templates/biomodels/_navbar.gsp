@@ -1,3 +1,4 @@
+<%@ page import="grails.plugin.springsecurity.SpringSecurityUtils" %>
 <%--
  Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
  Deutsches Krebsforschungszentrum (DKFZ)
@@ -108,6 +109,22 @@
                         <span id="notificationLink">My Notifications</span>
                     </a>
                 </li>
+
+                <g:if test="${SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')}">
+                <li class="divider"></li>
+                <li><a href="${g.createLink(controller: 'admin', action: 'dashboard')}"
+                       title="Administration Dashboard"><span class="icon icon-common icon-user-md">&nbsp;</span>Admin
+                    Dashboard</a></li>
+                </g:if>
+
+                <g:if test="${SpringSecurityUtils.ifAnyGranted('ROLE_CURATOR')}">
+                <li class="divider"></li>
+                <li><a href="${g.createLink(controller: 'curation', action: 'dashboard')}"
+                       title="Curation Dashboard">
+                    <span class="icon icon-common icon-reviewed-data hide-for-small-only">&nbsp;</span>
+                    Curation Dashboard</a></li>
+                </g:if>
+
                 <li class="divider"></li>
                 <li class="functional last float-right" role="menuitem">
                     <a href="${grailsApplication.config.grails.serverURL}/logout">
