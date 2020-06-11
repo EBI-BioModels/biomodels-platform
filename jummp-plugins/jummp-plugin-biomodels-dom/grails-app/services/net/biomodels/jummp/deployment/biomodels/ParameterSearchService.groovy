@@ -96,19 +96,28 @@ class ParameterSearchService {
             throw new IllegalArgumentException("Couldn't read the request parameters");
         }
         def url = command.getSearchUrl(format)
-
-        String records = ""
         HttpURLConnection conn
         Proxy proxy = configurationService.verifyHttpProxy()
         try {
             if (proxy) {
                 conn = (HttpURLConnection) url.openConnection(proxy)
+                log.debug("via HTTP PROXY: ${proxy.dump()}")
             } else {
                 conn = (HttpURLConnection) url.openConnection()
+                log.debug("No HTTP PROXY")
             }
+            conn.setConnectTimeout(1000)
+            conn.setReadTimeout(1000)
+            conn.connect()
             if (conn.responseCode < 400) {
-                records = url.text
-                return replaceFieldNames(records).replaceAll("\\\\","")
+                try {
+                    String records = conn.getInputStream().text
+                    return replaceFieldNames(records).replaceAll("\\\\","")
+                } catch (IOException e) {
+                    log.error("""Error while getting data from HttpUrlConnection ${conn.dump()} because of the error ${e
+                        .message}""")
+                    return null
+                }
             } else {
                 log.error("""Couldn't fetch data from the resource ${url.dump()} because of the error caused by ${conn
                     .getErrorStream()
