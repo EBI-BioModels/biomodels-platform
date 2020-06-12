@@ -7,7 +7,7 @@
 
 <div class="row">
     <div class="small-12 medium-12 large-12 columns">
-        <h5 class="text-left">${entryTitle}</h5>
+        <h5 class="text-left"><strong>${entryTitle}</strong></h5>
         <p class="widget-body-text" style="text-align: left">${shortDescription}</p>
         <p class="text-left">Model(s) associated with this Model of the Month:
             <g:each in="${models?.split(";")}" var="id">
