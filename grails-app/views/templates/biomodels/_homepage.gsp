@@ -37,15 +37,40 @@
 <script type="text/javascript">
     $(window).on("resize", function () {
         showOrHidePublicationInfo();
+        setTwitterHeight();
     });
     $(document).ready(function () {
         showOrHidePublicationInfo();
+        setTwitterHeight();
     });
 
+    $(window).on('load', function() {
+        setTwitterHeight();
+    });
+
+    function setTwitterHeight() {
+        /**
+         * Because D3 charts are automatically responsive so that
+         * we set the height of Twitter widget equal to theirs.
+         * @type {*|jQuery}
+         * See the solution was posted here https://stackoverflow.com/a/18390628/865603
+         */
+        //setTwitterHeight();
+        if ($('.twitter-timeline').length) {
+            //Timeline exists is it rendered ?
+            interval_timeline = false;
+            interval_timeline = setInterval(function(){
+                if ($('.twitter-timeline').hasClass('twitter-timeline-rendered')) {
+                    clearInterval(interval_timeline);
+                    var chartAreaHeight = $('.chart-placeholder').height();
+                    $('#twitter-widget-0').height(chartAreaHeight);
+                }
+            }, 50);
+        }
+    }
     function showOrHidePublicationInfo() {
         var innerWidth = window.innerWidth;
-        console.log("Inner Width " + innerWidth + "px");
-        if (innerWidth < 2000) {
+        if (innerWidth < 2000 || innerWidth > 2100) {
             $('.publication-info').hide();
         } else {
             $('.publication-info').show();
