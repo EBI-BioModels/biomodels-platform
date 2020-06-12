@@ -160,7 +160,7 @@ WHERE
   AND model.firstPublished IS NOT NULL
 GROUP BY rev.model
 ORDER BY model.firstPublished DESC'''
-        def matchedModels = Model.executeQuery(query, [max: 10])
+        def matchedModels = Model.executeQuery(query, [max: 7])
         Map<String, RecentlyPublishedModel> returnedModels = new HashMap<String, RecentlyPublishedModel>()
         matchedModels.each {
             User owner = it[3] as User
