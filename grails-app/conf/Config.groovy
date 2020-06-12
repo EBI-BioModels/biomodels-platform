@@ -882,3 +882,18 @@ if (!(jummpConfig.jummp.http.proxy.port instanceof ConfigObject)) {
 } else {
     jummp.http.proxy.port = 80
 }
+
+// HOME PAGE CONFIGURATION
+if (!(jummpConfig.jummp.homepage.recently.accessed.models.maxRecords instanceof ConfigObject)) {
+    int maxRecords = jummpConfig.jummp.homepage.recently.accessed.models.maxRecords as int
+    jummp.homepage.recently.accessed.models.maxRecords = maxRecords
+} else {
+    jummp.homepage.recently.accessed.models.maxRecords = 7
+}
+
+if (!(jummpConfig.jummp.homepage.recently.published.models.maxRecords instanceof ConfigObject)) {
+    int maxRecords = jummpConfig.jummp.homepage.recently.published.models.maxRecords as int
+    jummp.homepage.recently.published.models.maxRecords = maxRecords
+} else {
+    jummp.homepage.recently.published.models.maxRecords = 7
+}

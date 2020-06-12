@@ -66,7 +66,8 @@ class DecorationService implements GrailsConfigurationAware {
     static String HP_STAT_TOTAL_FIGURE = "hp-statistics-total-figures"
     static String BM_SVR_URL //= grailsApplication.config.grails.serverURL
     static String CLASSIFIER_SVR_URL //= grailsApplication.config.jummp.classification.endpoint
-
+    static int ACCESSED_MAX_RECORDS
+    static int PUBLISHED_MAX_RECORDS
     private Proxy proxy
 
     @Override
@@ -81,6 +82,8 @@ class DecorationService implements GrailsConfigurationAware {
         EBI_SEARCH_BM_URL = "${EBI_SEARCH_URL}/${FIXED_PARAMS}"
         HP_STAT_TOTAL_FIGURE = "hp-statistics-total-figures"
         proxy = configurationService.verifyHttpProxy()
+        ACCESSED_MAX_RECORDS = co.jummp.homepage.recently.accessed.models.maxRecords
+        PUBLISHED_MAX_RECORDS = co.jummp.homepage.recently.published.models.maxRecords
     }
 
     /**
@@ -119,7 +122,8 @@ GROUP BY rev.model
         use(TimeCategory) {
             then = now - 6.months
         }
-        def matchedModels = Model.executeQuery(query, [then: then, now: now, max: 10]) as List<List>
+        def matchedModels = Model.executeQuery(query,
+            [then: then, now: now, max: ACCESSED_MAX_RECORDS]) as List<List>
         Map<String, String> returnedModels = new LinkedHashMap<>()
         matchedModels.each { row ->
             String id = row[0]
@@ -160,7 +164,7 @@ WHERE
   AND model.firstPublished IS NOT NULL
 GROUP BY rev.model
 ORDER BY model.firstPublished DESC'''
-        def matchedModels = Model.executeQuery(query, [max: 7])
+        def matchedModels = Model.executeQuery(query, [max: PUBLISHED_MAX_RECORDS])
         Map<String, RecentlyPublishedModel> returnedModels = new HashMap<String, RecentlyPublishedModel>()
         matchedModels.each {
             User owner = it[3] as User
