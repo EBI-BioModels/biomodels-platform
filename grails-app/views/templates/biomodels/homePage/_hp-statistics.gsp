@@ -22,18 +22,22 @@
     var slideDesc = {
         1: {
             name: "modellingApproach",
-            title: "Statistics on Modelling Approaches",
-            description: "This shows models distribution based on modelling approaches"
+            title: "Browse by Modelling Approach",
+            description:
+                "This shows models distribution based on modelling approaches. Click a slice to display models."
         },
         2: {
             name: "organism",
-            title: "Statistics on Organisms",
-            description: "This shows models distribution based on organisms"
+            title: "Browse by Organism",
+            description: "This shows models distribution based on organisms. Click a bubble to display models."
         },
         3: {
             name: "journal",
-            title: "Statistics on Journals",
-            description: "This shows models distribution based on publication journals"
+            title: "Browse by Journal",
+            description:
+                "This shows models distribution based on journals. Move the mouse over a bubble to see the information."
+            /*Click a bubble to display models.
+            TODO: index publication journals and turn it searchable, then implement searching on this field */
         }
     };
     function setTabActive(current) {
