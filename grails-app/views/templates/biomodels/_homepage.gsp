@@ -67,14 +67,14 @@
 <div id="hp-features" class="row text-center top-widget-area">
     <g:render template="/templates/biomodels/homePage/hp-features"/>
 </div>
-<div id="hp-statistics" class="row text-center top-widget-area">
-    <g:render template="/templates/biomodels/homePage/hp-statistics"/>
+<div id="hp-row-1" class="row text-center top-widget-area">
+    <g:render template="/templates/biomodels/homePage/hp-row-1"/>
 </div>
-<div id="hp-updates-mom" class="row top-widget-area">
-    <g:render template="/templates/biomodels/homePage/hp-updates-mom"/>
+<div id="hp-row-2" class="row top-widget-area">
+    <g:render template="/templates/biomodels/homePage/hp-row-2"/>
 </div>
-<div id="hp-citations-acknowledgements-tweets" class="row top-widget-area">
-    <g:render template="/templates/biomodels/homePage/hp-last-row"/>
+<div id="hp-last-row" class="row top-widget-area">
+    <g:render template="/templates/biomodels/homePage/hp-row-3"/>
 </div>
 
 

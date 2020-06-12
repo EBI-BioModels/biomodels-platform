@@ -100,6 +100,15 @@
     </div>
 </div>--}%
 %{--https://www.ebi.ac.uk/style-lab/websites/patterns/tabs.html--}%
+<div class="large-4 medium-12 small-12 columns">
+    <div id="mom-right-entry">
+        <div class="homepage_info_box"><h3>Model of The Month
+            <a href="//www.ebi.ac.uk/biomodels/modelOfTheMonth/rss" style="margin-right:0.25em"
+               class="icon icon-socialmedia float-right no-underline" data-icon="R"></a></h3></div>
+        <div class="widget-body-text"><biomd:renderTheLatestMoMEntryWidget/></div>
+    </div>
+</div>
+
 <div id="item" class="large-4 medium-12 small-12 columns chart-placeholder">
     <div id="slide-introduction">
         <div class="homepage_info_box"><h3 id="slide-title"></h3></div>
@@ -132,15 +141,12 @@
         </nav>
     </div>
 </div>
-<div class="large-4 medium-12 small-12 columns">
-    <div id="mom-right-entry">
-        <div class="homepage_info_box"><h3>Model of The Month
-            <a href="//www.ebi.ac.uk/biomodels/modelOfTheMonth/rss" style="margin-right:0.25em"
-               class="icon icon-socialmedia float-right no-underline" data-icon="R"></a></h3></div>
-        <div class="widget-body-text"><biomd:renderTheLatestMoMEntryWidget/></div>
+
+<div class="small-12 medium-12 large-4 columns">
+    <div class="homepage_info_box">
+        <h3>Find us on Twitter</h3>
     </div>
-</div>
-<div id="hp-statistics-published-recently" class="large-4 medium-12 small-12 columns">
-    <div class="homepage_info_box"><h3>Recently published</h3></div>
-    <div class="widget-body-text" style="text-align: left"><biomd:renderRecentlyPublishedModels/></div>
+    <div class="widget-body-text"><a class="twitter-timeline" data-lang="en" data-height="820"
+                                     href="https://twitter.com/biomodels">Tweets by @biomodels</a>
+        <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script></div>
 </div>
