@@ -24,19 +24,19 @@
             name: "modellingApproach",
             title: "Browse by Modelling Approach",
             description:
-                "This shows models distribution based on modelling approaches. Click a slice to display models."
+                "This shows models distribution based on modelling approaches. Click on a slice to display models."
         },
         2: {
             name: "organism",
             title: "Browse by Organism",
-            description: "This shows models distribution based on organisms. Click a bubble to display models."
+            description: "This shows models distribution based on organisms. Click on a bubble to display models."
         },
         3: {
             name: "journal",
             title: "Browse by Journal",
             description:
                 "This shows models distribution based on journals. Move the mouse over a bubble to see the information."
-            /*Click a bubble to display models.
+            /*Click on a bubble to display models.
             TODO: index publication journals and turn it searchable, then implement searching on this field */
         }
     };
