@@ -1,13 +1,13 @@
 <div class="row">
     <div class="small-12 medium-12 large-12 columns">
-        <p style="color: orange; font-size: x-large; font-weight: bold; padding: 2px 10px 2px 10px">${monthString},
+        <p style="color: orange; font-size: x-large; font-weight: bold;">${monthString},
         &nbsp;${yearString}</p>
     </div>
 </div>
 
 <div class="row">
     <div class="small-12 medium-12 large-12 columns">
-        <h4 class="text-left">${entryTitle}</h4>
+        <h5 class="text-left"><strong>${entryTitle}</strong></h5>
         <p class="widget-body-text" style="text-align: left">${shortDescription}</p>
         <p class="text-left">Model(s) associated with this Model of the Month:
             <g:each in="${models?.split(";")}" var="id">

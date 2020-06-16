@@ -70,7 +70,7 @@ grails.project.dependency.resolution = {
         mavenRepo "https://www.ebi.ac.uk/~maven/m2repo_snapshots/"
     }
     dependencies {
-        compile("eu.ddmore.pharmml:libPharmML:0.4-beta-b3")
+        compile("eu.ddmore.pharmml:libPharmML:0.4.5-b1")
         compile("net.biomodels.jummp:AnnotationStore:0.3.5") {
             excludes 'slf4j-log4j12'
         }
