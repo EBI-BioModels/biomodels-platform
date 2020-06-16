@@ -36,14 +36,14 @@ import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationListener
 
 /**
- * @short Subscribes to the event of creating a new revision
+ * @short Subscribes to the event of creating a new revision and new model
  *
- * <p>This class implements a Subscriber of Publisher/Subscriber pattern which is used to
+ * <p>This class implements Subscriber of Publisher/Subscriber pattern which is used to
  * grant writable permission to fellow curators if the revision is created and submitted
  * by a curator. The model and revision will be shared to our curators when users submit
  * for a publication. However, a curator submitting and publishing a model naturally does
- * not need to so by himself. Therefore, an automatic process granting writable permission
- * fellow curators is reasonable.
+ * not need to so by himself. Therefore, an automatic process of granting writable permission
+ * to the fellow curators is reasonable.
  *
  * @author <a href="mailto:nvntung@gmail.com">Tung Nguyen</a>
  * @date 22/05/2020
@@ -54,18 +54,17 @@ class ShareRevisionToFellowCurators implements ApplicationListener<RevisionCreat
 
     void onApplicationEvent(RevisionCreatedEvent event) {
         if (event instanceof RevisionCreatedEvent) {
-            logger.debug("""\
-The event identified by $event has been exposed at creating the revision ${event.revision?.identifier()}""")
+            logger.debug("""The event identified by $event has been exposed at creating the revision ${event
+                .revision?.identifier()}""")
             RevisionTransportCommand command = ((RevisionCreatedEvent) event).revision
             if (command) {
                 String owner = command.owner
                 String modelId = command.identifier()
-                logger.debug("""\
-Curator ${owner} has shared the model ${modelId} to other curators with writable access""")
+                logger.debug("""Curator ${owner} has shared the model ${modelId} to other curators with writable access""")
                 modelDelegateService.submitModelRevisionForPublication(command)
             } else {
-                String message = """\
-Unknown error (i.e. model revision is null) has happened when trying to share a model submitted by a curator to fellow
+                String message = """Unknown error (i.e. model revision is null) has happened when trying to share a
+model submitted by a curator to fellow
 curators"""
                 logger.error(message)
             }

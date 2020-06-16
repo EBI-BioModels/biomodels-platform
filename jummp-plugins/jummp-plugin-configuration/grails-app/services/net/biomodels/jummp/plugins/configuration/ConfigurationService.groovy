@@ -251,6 +251,39 @@ class ConfigurationService implements InitializingBean {
     }
 
     /**
+     * Loads the current information of HTTP Proxy
+     * @return A command object {@link HttpProxyCommand} encapsulating HTTP Proxy information
+     */
+    HttpProxyCommand loadHttpProxy() {
+        Properties properties = loadProperties()
+        HttpProxyCommand proxyCommand = new HttpProxyCommand()
+        proxyCommand.host = properties.getProperty("jummp.http.proxy.host")
+        proxyCommand.port = Integer.parseInt(properties.getProperty("jummp.http.proxy.port"))
+        return proxyCommand
+    }
+
+    /**
+     * Verifies the current configuration having HTTP Proxy information or not
+     * @return A command object {@link Proxy} encapsulating HTTP Proxy information
+     */
+    Proxy verifyHttpProxy() {
+        HttpProxyCommand command = loadHttpProxy()
+        String host = command.host
+        int port = command.port as int
+        boolean noSetProxyHost = host.equalsIgnoreCase("localhost") || host == null
+        boolean notSetProxyPort = port == 80 || port == null
+        boolean noHttpProxy = noSetProxyHost && notSetProxyPort
+        Proxy proxy
+        if (noHttpProxy) {
+            proxy = null
+        } else {
+            proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(host, port))
+        }
+        proxy
+    }
+
+
+    /**
      * Loads the current Remote Configuration.
      * @return A command object encapsulating the current Remote Configuration
      */

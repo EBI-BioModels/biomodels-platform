@@ -3,7 +3,7 @@ package net.biomodels.jummp.plugins.sbml.parameters
 /**
  * @author carankalle on 13/08/2019.
  */
-class BPComponentReactions {
+class BPComponentReactions implements Serializable {
 
     String reactionShow
     String rateShow

@@ -3,7 +3,7 @@ package net.biomodels.jummp.plugins.sbml.parameters
 /**
  * @author carankalle on 13/08/2019.
  */
-class BPComponentSpecies {
+class BPComponentSpecies implements Serializable {
 
     String initialData
     String speciesAnnotationShow

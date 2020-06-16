@@ -25,6 +25,8 @@
  */
 package net.biomodels.jummp.deployment.biomodels
 
+import grails.converters.JSON
+import grails.converters.XML
 import grails.plugin.springsecurity.annotation.Secured
 
 @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
@@ -150,5 +152,29 @@ class HomePageController extends CommonController {
         String title = "${PRE_TITLE} Statistics For News Widget | BioModels"
         String message = "Updated statistics data for the News widgets successfully"
         render(view: "report", model: [message: message, title: title, layout: layout])
+    }
+
+    /**
+     * Updates the Redis Cache
+     */
+    def updateRedisCache() {
+        String title = "${PRE_TITLE} data for widgets | BioModels"
+        decorationService.updateDataForWidgetsOnHomePage()
+        String message = "Updated data for widgets on the Home Page successfully"
+        Map output = [message: message, title: title, layout: layout]
+        withFormat {
+            html {
+                render(view: "report", model: output)
+            }
+            json {
+                render(output as JSON)
+            }
+            xml {
+                render(output as XML)
+            }
+            '*' {
+                render view: '/errors/error415', status: 415
+            }
+        }
     }
 }

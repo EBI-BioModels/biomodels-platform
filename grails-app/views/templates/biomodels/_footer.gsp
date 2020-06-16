@@ -36,7 +36,8 @@
             </div>
             <div class="small-12 medium-6 large-6 columns" style="text-align: right">
                 <span style="font-size: small">
-                    <g:if test="${grails.util.Environment.isDevelopmentMode()}">
+                    <g:if test="${grails.util.Environment.isDevelopmentMode() ||
+                        grails.plugin.springsecurity.SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')}">
                         <g:render template="/templates/biomodels/renderedFrom"/></span>
                     </g:if>
             </div>

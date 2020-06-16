@@ -31,7 +31,7 @@ import java.text.SimpleDateFormat
  * @author  Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 @Validateable
-class TagTransportCommand {
+class TagTransportCommand implements Serializable {
     Long id
     String name
     String description

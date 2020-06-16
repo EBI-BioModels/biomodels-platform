@@ -13,6 +13,7 @@ import org.grails.async.factory.gpars.LoggingPoolFactory
 
 class ParameterSearchService {
     static transactional = false
+    def static configurationService
 
     static final Log log = LogFactory.getLog(ParameterSearchService.class)
     static List<String> columnNames = ["entity", "entity_id", "initial concentration/amount", "reaction with entity labels", "reaction with entity ids",
@@ -95,12 +96,39 @@ class ParameterSearchService {
             throw new IllegalArgumentException("Couldn't read the request parameters");
         }
         def url = command.getSearchUrl(format)
-        String records = ""
+        HttpURLConnection conn
+        Proxy proxy = configurationService.verifyHttpProxy()
         try {
-            records = url.text
+            if (proxy) {
+                conn = (HttpURLConnection) url.openConnection(proxy)
+                log.debug("via HTTP PROXY: ${proxy.dump()}")
+            } else {
+                conn = (HttpURLConnection) url.openConnection()
+                log.debug("No HTTP PROXY")
+            }
+            conn.setConnectTimeout(1000)
+            conn.setReadTimeout(1000)
+            conn.connect()
+            if (conn.responseCode < 400) {
+                try {
+                    String records = conn.getInputStream().text
+                    return replaceFieldNames(records).replaceAll("\\\\","")
+                } catch (IOException e) {
+                    log.error("""Error while getting data from HttpUrlConnection ${conn.dump()} because of the error ${e
+                        .message}""")
+                    return null
+                }
+            } else {
+                log.error("""Couldn't fetch data from the resource ${url.dump()} because of the error caused by ${conn
+                    .getErrorStream()
+                    .inspect()}""")
+                return null
+            }
         } catch (SocketException se) {
             log.error("Error while retrieving records from EBI Search ${se.getMessage()}, command - ${command}", se)
+        } catch (IllegalArgumentException ile) {
+            log.error("The proxy setting cannot be null")
         }
-        return replaceFieldNames(records).replaceAll("\\\\","")
+        return null
     }
 }

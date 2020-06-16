@@ -22,18 +22,22 @@
     var slideDesc = {
         1: {
             name: "modellingApproach",
-            title: "Statistics on Modelling Approaches",
-            description: "This shows models distribution based on modelling approaches"
+            title: "Browse by Modelling Approach",
+            description:
+                "This shows models distribution based on modelling approaches. Click on a slice to display models."
         },
         2: {
             name: "organism",
-            title: "Statistics on Organisms",
-            description: "This shows models distribution based on organisms"
+            title: "Browse by Organism",
+            description: "This shows models distribution based on organisms. Click on a bubble to display models."
         },
         3: {
             name: "journal",
-            title: "Statistics on Journals",
-            description: "This shows models distribution based on publication journals"
+            title: "Browse by Journal",
+            description:
+                "This shows models distribution based on journals. Move the mouse over a bubble to see the information."
+            /*Click on a bubble to display models.
+            TODO: index publication journals and turn it searchable, then implement searching on this field */
         }
     };
     function setTabActive(current) {
@@ -96,7 +100,16 @@
     </div>
 </div>--}%
 %{--https://www.ebi.ac.uk/style-lab/websites/patterns/tabs.html--}%
-<div id="item" class="large-6 medium-12 small-12 columns chart-placeholder">
+<div class="large-4 medium-12 small-12 columns">
+    <div id="mom-right-entry">
+        <div class="homepage_info_box"><h3>Model of The Month
+            <a href="//www.ebi.ac.uk/biomodels/modelOfTheMonth/rss" style="margin-right:0.25em"
+               class="icon icon-socialmedia float-right no-underline" data-icon="R"></a></h3></div>
+        <div class="widget-body-text"><biomd:renderTheLatestMoMEntryWidget/></div>
+    </div>
+</div>
+
+<div id="item" class="large-4 medium-12 small-12 columns chart-placeholder">
     <div id="slide-introduction">
         <div class="homepage_info_box"><h3 id="slide-title"></h3></div>
         <p><span id="slide-description"></span><br/>
@@ -128,7 +141,12 @@
         </nav>
     </div>
 </div>
-<div id="hp-statistics-published-recently" class="large-6 medium-12 small-12 columns">
-    <div class="homepage_info_box"><h3>Recently published</h3></div>
-    <div class="widget-body-text" style="text-align: left"><biomd:renderRecentlyPublishedModels/></div>
+
+<div class="small-12 medium-12 large-4 columns">
+    <div class="homepage_info_box">
+        <h3>Find us on Twitter</h3>
+    </div>
+    <div class="widget-body-text"><a class="twitter-timeline" data-lang="en" data-height="820"
+                                     href="https://twitter.com/biomodels">Tweets by @biomodels</a>
+        <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script></div>
 </div>

@@ -34,6 +34,49 @@
     }
 </style>
 
+<script type="text/javascript">
+    $(window).on("resize", function () {
+        showOrHidePublicationInfo();
+        setTwitterHeight();
+    });
+    $(document).ready(function () {
+        showOrHidePublicationInfo();
+        setTwitterHeight();
+    });
+
+    $(window).on('load', function() {
+        setTwitterHeight();
+    });
+
+    function setTwitterHeight() {
+        /**
+         * Because D3 charts are automatically responsive so that
+         * we set the height of Twitter widget equal to theirs.
+         * @type {*|jQuery}
+         * See the solution was posted here https://stackoverflow.com/a/18390628/865603
+         */
+        //setTwitterHeight();
+        if ($('.twitter-timeline').length) {
+            //Timeline exists is it rendered ?
+            interval_timeline = false;
+            interval_timeline = setInterval(function(){
+                if ($('.twitter-timeline').hasClass('twitter-timeline-rendered')) {
+                    clearInterval(interval_timeline);
+                    var chartAreaHeight = $('.chart-placeholder').height();
+                    $('#twitter-widget-0').height(chartAreaHeight);
+                }
+            }, 50);
+        }
+    }
+    function showOrHidePublicationInfo() {
+        var innerWidth = window.innerWidth;
+        if (innerWidth < 2000 || innerWidth > 2100) {
+            $('.publication-info').hide();
+        } else {
+            $('.publication-info').show();
+        }
+    }
+</script>
 <div id="hp-intro" class="row text-center top-widget-area">
     <div class="large-12 medium-12 small-12 columns">
     <p class="welcome-message" style="margin-top: 0.5em;">
@@ -49,14 +92,14 @@
 <div id="hp-features" class="row text-center top-widget-area">
     <g:render template="/templates/biomodels/homePage/hp-features"/>
 </div>
-<div id="hp-statistics" class="row text-center top-widget-area">
-    <g:render template="/templates/biomodels/homePage/hp-statistics"/>
+<div id="hp-row-1" class="row text-center top-widget-area">
+    <g:render template="/templates/biomodels/homePage/hp-row-1"/>
 </div>
-<div id="hp-updates-mom" class="row top-widget-area">
-    <g:render template="/templates/biomodels/homePage/hp-updates-mom"/>
+<div id="hp-row-2" class="row top-widget-area">
+    <g:render template="/templates/biomodels/homePage/hp-row-2"/>
 </div>
-<div id="hp-citations-acknowledgements-tweets" class="row top-widget-area">
-    <g:render template="/templates/biomodels/homePage/hp-last-row"/>
+<div id="hp-last-row" class="row top-widget-area">
+    <g:render template="/templates/biomodels/homePage/hp-row-3"/>
 </div>
 
 

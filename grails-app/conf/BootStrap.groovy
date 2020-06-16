@@ -30,11 +30,11 @@
 
 
 import grails.plugin.springsecurity.acl.AclSid
+import grails.plugins.rest.client.RestBuilder
 import grails.util.Environment
 import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PubLinkProvTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorRegistryService
 import net.biomodels.jummp.healthcheck.HealthCheckUtil
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.model.PublicationLinkProvider
@@ -204,6 +204,16 @@ class BootStrap {
 	        }
         ]
         RevisionTransportCommand.context = ctx
+
+        // Below is the provisional solution as suggested at
+        // https://github.com/grails-plugins/grails-rest-client-builder/issues/40
+        RestBuilder.metaClass.constructor = { ->
+            def constructor = RestBuilder.class.getConstructor()
+            def instance = constructor.newInstance()
+            instance.restTemplate.messageConverters.removeAll {
+                it.class.name == 'org.springframework.http.converter.json.GsonHttpMessageConverter' }
+            instance
+        }
     }
 
     def destroy = {

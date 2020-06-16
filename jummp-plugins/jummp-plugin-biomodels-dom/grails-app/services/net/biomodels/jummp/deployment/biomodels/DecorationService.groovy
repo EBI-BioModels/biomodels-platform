@@ -56,6 +56,7 @@ import java.text.SimpleDateFormat
 class DecorationService implements GrailsConfigurationAware {
     private static final Logger logger = LoggerFactory.getLogger(DecorationService.class)
     def grailsApplication
+    def configurationService
     static String REDIS_SRV_HOST //= grailsApplication.config.jummp.redis.host
     static int REDIS_SRV_PORT //= grailsApplication.config.jummp.redis.host.port
     static int REDIS_SRV_TIMEOUT //= grailsApplication.config.jummp.redis.timeout
@@ -65,9 +66,8 @@ class DecorationService implements GrailsConfigurationAware {
     static String HP_STAT_TOTAL_FIGURE = "hp-statistics-total-figures"
     static String BM_SVR_URL //= grailsApplication.config.grails.serverURL
     static String CLASSIFIER_SVR_URL //= grailsApplication.config.jummp.classification.endpoint
-
-    private String httpProxyHost
-    private int httpProxyPort
+    static int ACCESSED_MAX_RECORDS
+    static int PUBLISHED_MAX_RECORDS
     private Proxy proxy
 
     @Override
@@ -81,17 +81,9 @@ class DecorationService implements GrailsConfigurationAware {
         FIXED_PARAMS = "biomodels?query=domain_source:biomodels&size=0&facetfields"
         EBI_SEARCH_BM_URL = "${EBI_SEARCH_URL}/${FIXED_PARAMS}"
         HP_STAT_TOTAL_FIGURE = "hp-statistics-total-figures"
-        httpProxyHost = co.jummp.http.proxy.host
-        httpProxyPort = co.jummp.http.proxy.port as int
-        boolean noSetProxyHost = httpProxyHost.equalsIgnoreCase("localhost") || httpProxyHost == null
-        boolean notSetProxyPort = httpProxyPort == 80 || httpProxyPort == null
-        boolean noHttpProxy = noSetProxyHost && notSetProxyPort
-        if (noHttpProxy) {
-            proxy = null
-        } else {
-            proxy = new Proxy(Proxy.Type.HTTP,
-                new InetSocketAddress(this.httpProxyHost, this.httpProxyPort))
-        }
+        proxy = configurationService.verifyHttpProxy()
+        ACCESSED_MAX_RECORDS = co.jummp.biomodels.homepage.recently.accessed.models.maxRecords
+        PUBLISHED_MAX_RECORDS = co.jummp.biomodels.homepage.recently.published.models.maxRecords
     }
 
     /**
@@ -130,7 +122,8 @@ GROUP BY rev.model
         use(TimeCategory) {
             then = now - 6.months
         }
-        def matchedModels = Model.executeQuery(query, [then: then, now: now, max: 10]) as List<List>
+        def matchedModels = Model.executeQuery(query,
+            [then: then, now: now, max: ACCESSED_MAX_RECORDS]) as List<List>
         Map<String, String> returnedModels = new LinkedHashMap<>()
         matchedModels.each { row ->
             String id = row[0]
@@ -171,7 +164,7 @@ WHERE
   AND model.firstPublished IS NOT NULL
 GROUP BY rev.model
 ORDER BY model.firstPublished DESC'''
-        def matchedModels = Model.executeQuery(query, [max: 10])
+        def matchedModels = Model.executeQuery(query, [max: PUBLISHED_MAX_RECORDS])
         Map<String, RecentlyPublishedModel> returnedModels = new HashMap<String, RecentlyPublishedModel>()
         matchedModels.each {
             User owner = it[3] as User
@@ -321,10 +314,20 @@ ORDER BY model.firstPublished DESC'''
     }
 
     Map<String, String> fetchDataNewsWidget() {
-        Map news = doRedisHGetAll("hp-news-widget")
+        Map<String, String> news = doRedisHGetAll("hp-news-widget")
         if (!news) {
             // call the fallback
             news = buildDataForNewsWidget()
+        } else {
+            Map sortedNews = new LinkedHashMap()
+            sortedNews = news.sort { n1, n2 ->
+                String strDate1 = n1.value.take(10)
+                String strDate2 = n2.value.take(10)
+                Date date1 = new Date().parse("dd/MM/yyyy", strDate1)
+                Date date2 = new Date().parse("dd/MM/yyyy", strDate2)
+                return date2 <=> date1
+            }
+            news = sortedNews
         }
         return news
     }
@@ -368,11 +371,14 @@ GROUP BY p.journal
     }
 
     Map buildDataForNewsWidget() {
-        def newsQuery = "from WcmContent where parent.aliasURI = :aliasuri"
-        def newsEntries = WcmContent.executeQuery(newsQuery, [aliasuri: 'news'])
+        // only select the published News items and ignore ones under the other statuses
+        def newsQuery = """\
+from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order by createdOn desc"""
+        def newsEntries = WcmContent.executeQuery(newsQuery, [aliasuri: 'news', code: 400], [max: 15])
         Map<String, String> data = [:]
         for (def entry : newsEntries) {
-            data.put(entry.aliasURI, entry.title)
+            data.put(entry.aliasURI,
+                "${entry.createdOn.format('dd/MM/yyyy')}: ${entry.title}" as String)
         }
         data
     }
@@ -496,17 +502,22 @@ GROUP BY p.journal
     private Map buildModelOfTheMonthEntry() {
         final String query = "from ModelOfTheMonth order by publicationDate desc"
         ModelOfTheMonth theLatestMoM = ModelOfTheMonth.find(query)
+        String entryTitle = theLatestMoM.title
         String shortDescription = theLatestMoM.shortDescription
         String previewImage = Base64.encoder.encodeToString(theLatestMoM.previewImage)
         Date theLatestPublicationDate = theLatestMoM.publicationDate
         def monthNumStr = new SimpleDateFormat("MM").format(theLatestPublicationDate)
         def monthString = new SimpleDateFormat("MMMMM").format(theLatestPublicationDate)
         def yearString = new SimpleDateFormat("YYYY").format(theLatestPublicationDate)
-        final String prefixLink = "${grailsApplication.config.grails.serverURL}/content/model-of-the-month"
+        final String prefixLink = "${BM_SVR_URL}/content/model-of-the-month"
         def link = "${prefixLink}?year=${yearString}&month=${monthNumStr}"
         def linkAll = "${prefixLink}?all=yes"
         String titlePreviewImage = "Model of the month: ${monthString} ${yearString}"
+        String lastUpdatedBy = theLatestMoM.authors
+        Set models = theLatestMoM.models
+        String modelIds = models.collect { it.publicationId ?: it.submissionId }.join(";")
         Map momEntry = [:]
+        momEntry.put("entryTitle", entryTitle)
         momEntry.put("shortDescription", shortDescription)
         momEntry.put("previewImage", previewImage)
         momEntry.put("monthNumStr", monthNumStr)
@@ -515,6 +526,8 @@ GROUP BY p.journal
         momEntry.put("momEntryLink", link)
         momEntry.put("momEntryLinkAll", linkAll)
         momEntry.put("titlePreviewImage", titlePreviewImage)
+        momEntry.put("lastUpdatedBy", lastUpdatedBy)
+        momEntry.put("models", modelIds)
         return momEntry
     }
 
@@ -539,10 +552,9 @@ GROUP BY p.journal
      * @return a {@link List} of Organism objects
      */
     private List makeStatisticsOnOrganisms() {
-        String query = "search?domain=biomodels&query=*:* AND NOT isprivate:true&format=json"
-        def response = hitRemoteService(BM_SVR_URL, query)
-        def taxons = response.json.facets.findAll { it['id'] == 'TAXONOMY' }
-        taxons = taxons.facetValues.flatten()
+        String query = "biomodels?query=domain_source:biomodels&facetcount=1000&facetfields=TAXONOMY&format=json"
+        def response = hitRemoteService(EBI_SEARCH_URL, query)
+        def taxons = response.json.facets[0].facetValues
         List<OrganismData> organismData = new ArrayList<OrganismData>()
         for (tax in taxons) {
             // initialise the normalised count as the count
@@ -654,52 +666,52 @@ GROUP BY p.journal
     }
 
     /**
-     * Hits EBI Search Server via BioModels web service to get this figure
+     * Hits EBI Search Server to get this figure
      *
      * @return a long number as the total models
      */
     private long retrieveTotalSubmissionsFromEBISearchServer() {
-        String query = "search?domain=biomodels_all&query=*:*&format=json"
-        def response = hitRemoteService(BM_SVR_URL, query)
-        return response.json.matches as Long
+        String query = "biomodels_all?query=*:*&format=json"
+        def response = hitRemoteService(EBI_SEARCH_URL, query)
+        return response.json.hitCount as Long
     }
 
     /**
-     * Hits EBI Search Server via BioModels web service to get this figure
+     * Hits EBI Search Server to get this figure
      *
      * @return a long number as the total models
      */
     private long retrieveTotalIndividualModelsFromEBISearchServer() {
-        String query = "search?domain=biomodels&query=*:*&format=json"
-        def response = hitRemoteService(BM_SVR_URL, query)
-        return response.json.matches as Long
+        String query = "biomodels?&query=*:*&format=json"
+        def response = hitRemoteService(EBI_SEARCH_URL, query)
+        return response.json.hitCount as Long
     }
 
     private long retrieveTotalCuratedModelsFromEBISearchServer() {
-        String query = "search?domain=biomodels&query=*:* AND curationstatus:'Manually curated'&format=json"
-        def response = hitRemoteService(BM_SVR_URL, query)
-        return response.json.matches as Long
+        String query = "biomodels?query=*:* AND curationstatus:'Manually curated'&format=json"
+        def response = hitRemoteService(EBI_SEARCH_URL, query)
+        return response.json.hitCount as Long
     }
 
     private long retrieveTotalNonCuratedModelsFromEBISearchServer() {
-        String query = "search?domain=biomodels&query=*:* AND curationstatus:'Non-curated&format=json"
-        def response = hitRemoteService(BM_SVR_URL, query)
-        return response.json.matches as Long
+        String query = "biomodels?query=*:* AND curationstatus:'Non-curated&format=json"
+        def response = hitRemoteService(EBI_SEARCH_URL, query)
+        return response.json.hitCount as Long
     }
 
     /**
-     * Hits EBI Search Server via BioModels web service to get this figure
+     * Hits EBI Search Server to get this figure
      *
      * @return a long number as the total models
      */
     private long retrieveTotalAutoGeneratedModelsFromEBISearchServer() {
-        String query = "search?domain=biomodels_autogen&query=*:*&format=json"
-        def response = hitRemoteService(BM_SVR_URL, query)
-        return response.json.matches as Long
+        String query = "biomodels_autogen?query=*:*&format=json"
+        def response = hitRemoteService(EBI_SEARCH_URL, query)
+        return response.json.hitCount as Long
     }
 
     /**
-     * Hits Model Classifier Service via BioModels web service to get this figure
+     * Hits Model Classifier Service to get this figure
      *
      * @return a long number as the total classes
      */
@@ -736,7 +748,13 @@ GROUP BY p.journal
         logger.debug("HTTP PROXY: ${proxy?.dump()}")
         String queryURL = "${serverURL}/${query}"
         logger.debug("Connecting to the service at $queryURL")
-        RestBuilder rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000, proxy: proxy)
+        RestBuilder rest
+        if (proxy) {
+            rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000, proxy: proxy)
+        } else {
+            rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000)
+        }
+
         def response = rest.get(queryURL) {
             accept("application/json")
             contentType("application/json;charset=UTF-8")
@@ -761,12 +779,6 @@ GROUP BY p.journal
         OrganismData lastElement = originalData[originalData.size() - 1]
         normalisedData.add(lastElement)
         logger.debug("Nb. elements: ${originalData.size()} -- ${normalisedData.size()}")
-        List l1 = originalData.collect { OrganismData it ->
-            it.count
-        }
-        List l2 = normalisedData.collect { OrganismData it ->
-            it.normalisedCount
-        }
         normalisedData.toList()
     }
 
