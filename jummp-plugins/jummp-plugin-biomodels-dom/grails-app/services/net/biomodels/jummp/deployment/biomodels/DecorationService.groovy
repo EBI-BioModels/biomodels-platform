@@ -82,8 +82,8 @@ class DecorationService implements GrailsConfigurationAware {
         EBI_SEARCH_BM_URL = "${EBI_SEARCH_URL}/${FIXED_PARAMS}"
         HP_STAT_TOTAL_FIGURE = "hp-statistics-total-figures"
         proxy = configurationService.verifyHttpProxy()
-        ACCESSED_MAX_RECORDS = co.jummp.homepage.recently.accessed.models.maxRecords
-        PUBLISHED_MAX_RECORDS = co.jummp.homepage.recently.published.models.maxRecords
+        ACCESSED_MAX_RECORDS = co.jummp.biomodels.homepage.recently.accessed.models.maxRecords
+        PUBLISHED_MAX_RECORDS = co.jummp.biomodels.homepage.recently.published.models.maxRecords
     }
 
     /**

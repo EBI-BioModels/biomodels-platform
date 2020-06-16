@@ -884,16 +884,16 @@ if (!(jummpConfig.jummp.http.proxy.port instanceof ConfigObject)) {
 }
 
 // HOME PAGE CONFIGURATION
-if (!(jummpConfig.jummp.homepage.recently.accessed.models.maxRecords instanceof ConfigObject)) {
-    int maxRecords = jummpConfig.jummp.homepage.recently.accessed.models.maxRecords as int
-    jummp.homepage.recently.accessed.models.maxRecords = maxRecords
+if (!(jummpConfig.jummp.biomodels.homepage.recently.accessed.models.maxRecords instanceof ConfigObject)) {
+    int maxRecords = jummpConfig.jummp.biomodels.homepage.recently.accessed.models.maxRecords as int
+    jummp.biomodels.homepage.recently.accessed.models.maxRecords = maxRecords
 } else {
-    jummp.homepage.recently.accessed.models.maxRecords = 7
+    jummp.biomodels.homepage.recently.accessed.models.maxRecords = 7
 }
 
-if (!(jummpConfig.jummp.homepage.recently.published.models.maxRecords instanceof ConfigObject)) {
-    int maxRecords = jummpConfig.jummp.homepage.recently.published.models.maxRecords as int
-    jummp.homepage.recently.published.models.maxRecords = maxRecords
+if (!(jummpConfig.jummp.biomodels.homepage.recently.published.models.maxRecords instanceof ConfigObject)) {
+    int maxRecords = jummpConfig.jummp.biomodels.homepage.recently.published.models.maxRecords as int
+    jummp.biomodels.homepage.recently.published.models.maxRecords = maxRecords
 } else {
-    jummp.homepage.recently.published.models.maxRecords = 7
+    jummp.biomodels.homepage.recently.published.models.maxRecords = 7
 }
