@@ -45,9 +45,12 @@
             <div class="small-12 medium-11 large-11 columns">
                 <h4>Frequently Asked Questions (FAQs)</h4>
                 <ul>
-                    <li>How to browse and search models in BioModels?</li>
-                    <li>How to submit a model?</li>
-                    <li>Can I submit a model before it is described in a published paper?</li>
+                    <li><a href="${g.createLink(controller: 'jummp', action: 'faq')}#BROWSE_BIOMDB">
+                        How to browse and search models in BioModels?</a></li>
+                    <li><a href="${g.createLink(controller: 'jummp', action: 'faq')}#MODEL_SUBMISSION">
+                        How to submit a model?</a></li>
+                    <li><a href="${g.createLink(controller: 'jummp', action: 'faq')}#SUBMIT_BEFORE_PAPER">
+                        Can I submit a model before it is described in a published paper?</a></li>
                     <li><a href="${g.createLink(controller: 'jummp', action: 'faq')}">Read more</a></li>
                 </ul>
             </div>
