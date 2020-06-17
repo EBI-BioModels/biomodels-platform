@@ -55,7 +55,6 @@ import java.text.SimpleDateFormat
 @Transactional(readOnly = true)
 class DecorationService implements GrailsConfigurationAware {
     private static final Logger logger = LoggerFactory.getLogger(DecorationService.class)
-    def grailsApplication
     def configurationService
     static String REDIS_SRV_HOST //= grailsApplication.config.jummp.redis.host
     static int REDIS_SRV_PORT //= grailsApplication.config.jummp.redis.host.port
@@ -66,7 +65,8 @@ class DecorationService implements GrailsConfigurationAware {
     static String HP_STAT_TOTAL_FIGURE = "hp-statistics-total-figures"
     static String BM_SVR_URL //= grailsApplication.config.grails.serverURL
     static String CLASSIFIER_SVR_URL //= grailsApplication.config.jummp.classification.endpoint
-
+    static int ACCESSED_MAX_RECORDS
+    static int PUBLISHED_MAX_RECORDS
     private Proxy proxy
 
     @Override
@@ -81,6 +81,8 @@ class DecorationService implements GrailsConfigurationAware {
         EBI_SEARCH_BM_URL = "${EBI_SEARCH_URL}/${FIXED_PARAMS}"
         HP_STAT_TOTAL_FIGURE = "hp-statistics-total-figures"
         proxy = configurationService.verifyHttpProxy()
+        ACCESSED_MAX_RECORDS = co.biomodels.homepage.recently.accessed.models.maxRecords as int
+        PUBLISHED_MAX_RECORDS = co.biomodels.homepage.recently.published.models.maxRecords as int
     }
 
     /**
@@ -119,7 +121,8 @@ GROUP BY rev.model
         use(TimeCategory) {
             then = now - 6.months
         }
-        def matchedModels = Model.executeQuery(query, [then: then, now: now, max: 10]) as List<List>
+        def matchedModels = Model.executeQuery(query,
+            [then: then, now: now, max: ACCESSED_MAX_RECORDS]) as List<List>
         Map<String, String> returnedModels = new LinkedHashMap<>()
         matchedModels.each { row ->
             String id = row[0]
@@ -160,7 +163,7 @@ WHERE
   AND model.firstPublished IS NOT NULL
 GROUP BY rev.model
 ORDER BY model.firstPublished DESC'''
-        def matchedModels = Model.executeQuery(query, [max: 10])
+        def matchedModels = Model.executeQuery(query, [max: PUBLISHED_MAX_RECORDS])
         Map<String, RecentlyPublishedModel> returnedModels = new HashMap<String, RecentlyPublishedModel>()
         matchedModels.each {
             User owner = it[3] as User
@@ -370,7 +373,7 @@ GROUP BY p.journal
         // only select the published News items and ignore ones under the other statuses
         def newsQuery = """\
 from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order by createdOn desc"""
-        def newsEntries = WcmContent.executeQuery(newsQuery, [aliasuri: 'news', code: 400])
+        def newsEntries = WcmContent.executeQuery(newsQuery, [aliasuri: 'news', code: 400], [max: 15])
         Map<String, String> data = [:]
         for (def entry : newsEntries) {
             data.put(entry.aliasURI,

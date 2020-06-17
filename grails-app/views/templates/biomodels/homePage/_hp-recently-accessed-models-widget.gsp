@@ -1,3 +1,5 @@
+<div class="homepage_info_box"><h3>Recently accessed</h3></div>
+<div class="widget-body-text">
 <ul style="list-style: none inside none; padding: 0; margin-left: 0">
     <g:each in="${models}" var="it">
         <%
@@ -10,3 +12,4 @@
                 <a href='${modelURI}'>${modelName}</a></li>
     </g:each>
 </ul>
+</div>

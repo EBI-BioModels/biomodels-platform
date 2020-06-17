@@ -882,3 +882,18 @@ if (!(jummpConfig.jummp.http.proxy.port instanceof ConfigObject)) {
 } else {
     jummp.http.proxy.port = 80
 }
+
+// HOME PAGE CONFIGURATION
+if (!(jummpConfig.biomodels.homepage.recently.accessed.models.maxRecords instanceof ConfigObject)) {
+    int maxRecords = jummpConfig.biomodels.homepage.recently.accessed.models.maxRecords as int
+    biomodels.homepage.recently.accessed.models.maxRecords = maxRecords
+} else {
+    biomodels.homepage.recently.accessed.models.maxRecords = 7
+}
+
+if (!(jummpConfig.biomodels.homepage.recently.published.models.maxRecords instanceof ConfigObject)) {
+    int maxRecords = jummpConfig.biomodels.homepage.recently.published.models.maxRecords as int
+    biomodels.homepage.recently.published.models.maxRecords = maxRecords
+} else {
+    biomodels.homepage.recently.published.models.maxRecords = 7
+}
