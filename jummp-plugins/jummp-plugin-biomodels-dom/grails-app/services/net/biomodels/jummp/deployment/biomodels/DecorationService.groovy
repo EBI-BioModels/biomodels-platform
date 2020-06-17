@@ -55,7 +55,6 @@ import java.text.SimpleDateFormat
 @Transactional(readOnly = true)
 class DecorationService implements GrailsConfigurationAware {
     private static final Logger logger = LoggerFactory.getLogger(DecorationService.class)
-    def grailsApplication
     def configurationService
     static String REDIS_SRV_HOST //= grailsApplication.config.jummp.redis.host
     static int REDIS_SRV_PORT //= grailsApplication.config.jummp.redis.host.port
@@ -82,8 +81,8 @@ class DecorationService implements GrailsConfigurationAware {
         EBI_SEARCH_BM_URL = "${EBI_SEARCH_URL}/${FIXED_PARAMS}"
         HP_STAT_TOTAL_FIGURE = "hp-statistics-total-figures"
         proxy = configurationService.verifyHttpProxy()
-        ACCESSED_MAX_RECORDS = co.jummp.biomodels.homepage.recently.accessed.models.maxRecords as int
-        PUBLISHED_MAX_RECORDS = co.jummp.biomodels.homepage.recently.published.models.maxRecords as int
+        ACCESSED_MAX_RECORDS = co.biomodels.homepage.recently.accessed.models.maxRecords as int
+        PUBLISHED_MAX_RECORDS = co.biomodels.homepage.recently.published.models.maxRecords as int
     }
 
     /**
