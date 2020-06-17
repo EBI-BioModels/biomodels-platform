@@ -1,5 +1,5 @@
 <%--
- Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
  Deutsches Krebsforschungszentrum (DKFZ)
 
  This file is part of Jummp.
@@ -35,6 +35,7 @@ relevant mechanistic models in standard formats."/>
     public domain">
 <meta name="author" content="BioModels"/>
 <meta name="google" content="notranslate" />
+<meta name="google-site-verification" content="Lw3ylc1DHWxe6umaxo3tA-Dm-QWs5YsG1b1EXIhNmPw" />
 <meta name="ebi:masthead-color" content="#254146">
 <meta name="ebi:masthead-image"
       content="//ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/images/backgrounds/embl-ebi-background.jpg"/>
