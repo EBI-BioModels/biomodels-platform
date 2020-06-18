@@ -26,6 +26,7 @@ import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGenera
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.support.GeneratorDetails
 import net.biomodels.jummp.core.model.identifier.support.ModelIdentifierGeneratorInitializer
+import net.biomodels.jummp.utils.redis.Operations
 import org.springframework.beans.BeansException
 import org.springframework.beans.factory.FactoryBean
 import org.springframework.context.ApplicationContext
@@ -98,6 +99,18 @@ class ModelIdentifierGeneratorFactoryBean implements FactoryBean<ModelIdentifier
         }
 
         String seed = Objects.requireNonNull(initializer).lastUsedValue
+        String cachedSeed = ""
+        synchronized(this) {
+            cachedSeed = Operations.doRedisGet('model-id-last-used-value')
+        }
+        if (!cachedSeed) {
+            cachedSeed = seed
+            synchronized (this) {
+                Operations.doRedisSet('model-id-last-used-value', seed)
+            }
+        } else {
+            seed = cachedSeed
+        }
         GeneratorDetails details = ModelIdentifierUtils.buildDecoratorsFromSettings(idSettings,
                 seed, shouldComputeRegex)
 

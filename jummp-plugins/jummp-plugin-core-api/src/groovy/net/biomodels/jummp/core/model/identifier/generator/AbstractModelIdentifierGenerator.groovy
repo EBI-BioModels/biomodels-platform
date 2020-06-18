@@ -30,6 +30,7 @@ import net.biomodels.jummp.core.model.identifier.decorator.VariableDigitAppendin
 import net.biomodels.jummp.core.model.identifier.support.GeneratorDetails
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+import net.biomodels.jummp.utils.redis.Operations
 
 /**
  * @short Abstract implementation for producing model identifiers.
@@ -122,6 +123,9 @@ abstract class AbstractModelIdentifierGenerator implements ModelIdentifierGenera
                 } as VariableDigitAppendingDecorator
                 if (d) {
                     d.reset()
+                    synchronized (this) {
+                        Operations.doRedisSet(redisKey, 'true')
+                    }
                     if (IS_DEBUG_ENABLED) {
                         log.debug "Attribute 'nextValue' of $d has been reset to ${d.nextValue.get()}."
                     }
