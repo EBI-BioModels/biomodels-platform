@@ -105,9 +105,7 @@ class ModelIdentifierGeneratorFactoryBean implements FactoryBean<ModelIdentifier
         }
         if (!cachedSeed) {
             cachedSeed = seed
-            synchronized (this) {
-                Operations.doRedisSet('model-id-last-used-value', seed)
-            }
+            Operations.doRedisSet('model-id-last-used-value', seed)
         } else {
             seed = cachedSeed
         }

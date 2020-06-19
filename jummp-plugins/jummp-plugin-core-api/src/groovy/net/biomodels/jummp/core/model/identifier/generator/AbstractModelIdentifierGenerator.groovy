@@ -123,9 +123,6 @@ abstract class AbstractModelIdentifierGenerator implements ModelIdentifierGenera
                 } as VariableDigitAppendingDecorator
                 if (d) {
                     d.reset()
-                    synchronized (this) {
-                        Operations.doRedisSet(redisKey, 'true')
-                    }
                     if (IS_DEBUG_ENABLED) {
                         log.debug "Attribute 'nextValue' of $d has been reset to ${d.nextValue.get()}."
                     }

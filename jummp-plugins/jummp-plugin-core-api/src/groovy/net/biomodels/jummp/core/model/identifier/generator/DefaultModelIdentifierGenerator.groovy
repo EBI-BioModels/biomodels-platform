@@ -72,9 +72,7 @@ class DefaultModelIdentifierGenerator extends AbstractModelIdentifierGenerator {
         if (IS_DEBUG_ENABLED) {
             log.debug "Produced a new model identifier $MODEL_ID."
         }
-        synchronized(this) {
-            Operations.doRedisSet('model-id-last-used-value', MODEL_ID)
-        }
+        Operations.doRedisSet('model-id-last-used-value', MODEL_ID)
         return MODEL_ID
     }
 
