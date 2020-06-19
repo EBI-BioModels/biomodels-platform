@@ -1086,7 +1086,10 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         String container = fileSystemService.findCurrentModelContainer()
         String containerName = new File(container).name
         String timestamp = new Date().format("yyyy-MM-dd'T'HH-mm-ss-SSS")
-        final String submissionId = submissionIdGenerator.generate()
+        final String submissionId
+        synchronized (this) {
+            submissionId = submissionIdGenerator.generate()
+        }
         String modelPath = new StringBuilder(timestamp).append("_").append(submissionId).
                 append(File.separator).toString()
         File modelFolder = new File(container, modelPath)
@@ -2204,7 +2207,9 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
     private Revision doBeforePublishingCuratedRevision(Revision revision) throws ModelException {
         String publicationId
         if (null == revision.model.publicationId) {
-            revision.model.publicationId = getPublicationIdGenerator().generate()
+            synchronized (this) {
+                revision.model.publicationId = getPublicationIdGenerator().generate()
+            }
         }
         publicationId = revision.model.publicationId
 

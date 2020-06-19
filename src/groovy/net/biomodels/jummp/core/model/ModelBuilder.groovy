@@ -147,8 +147,10 @@ class ModelBuilder {
     }
 
     private ModelBuilder generateModelIdentifier() {
-        String submissionId = getSubmissionIdGenerator().generate()
-        this.model.submissionId = submissionId
+        synchronized (this) {
+            String submissionId = getSubmissionIdGenerator().generate()
+            this.model.submissionId = submissionId
+        }
         return this
     }
 
