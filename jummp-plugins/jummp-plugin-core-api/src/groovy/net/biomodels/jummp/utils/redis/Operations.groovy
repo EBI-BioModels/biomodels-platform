@@ -20,7 +20,7 @@
 
 package net.biomodels.jummp.utils.redis
 
-import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
+import org.springframework.beans.factory.InitializingBean
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisPool
 import redis.clients.jedis.JedisPoolConfig
@@ -32,17 +32,12 @@ import redis.clients.jedis.JedisPoolConfig
  *
  * @author <a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a>
  */
-class Operations implements GrailsConfigurationAware {
+class Operations implements InitializingBean {
     static String REDIS_SRV_HOST
     static Integer REDIS_SRV_PORT
     static Integer REDIS_SRV_TIMEOUT
 
-    @Override
-    void setConfiguration(ConfigObject co) {
-        REDIS_SRV_HOST = REDIS_SRV_HOST ?: co.jummp.redis.host as String
-        REDIS_SRV_PORT = REDIS_SRV_PORT ?: co.jummp.redis.port as Integer
-        REDIS_SRV_TIMEOUT = REDIS_SRV_TIMEOUT ?: co.jummp.redis.timeout as Integer
-    }
+    def grailsApplication
 
     static String doRedisHGet(final String key, final String field) {
         JedisPool pool = new JedisPool(new JedisPoolConfig(), REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
@@ -96,5 +91,12 @@ class Operations implements GrailsConfigurationAware {
                 jedis.del(key)
             }
         }
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        REDIS_SRV_HOST = grailsApplication.config.jummp.redis.host ?: "localhost"
+        REDIS_SRV_PORT = grailsApplication.config.jummp.redis.port ?: 6379
+        REDIS_SRV_TIMEOUT = grailsApplication.config.jummp.redis.timeout ?: 3600
     }
 }

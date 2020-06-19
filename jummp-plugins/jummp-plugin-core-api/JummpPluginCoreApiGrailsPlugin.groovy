@@ -20,6 +20,7 @@
 
 import net.biomodels.jummp.core.annotation.EnvironmentAwareAnnotationRender
 import net.biomodels.jummp.core.subscribers.ShareRevisionToFellowCurators
+import net.biomodels.jummp.utils.redis.Operations
 
 class JummpPluginCoreApiGrailsPlugin {
     // the plugin version
@@ -60,6 +61,11 @@ All other plugins providing core functionality depend on this plugin and the cor
             bean.autowire = "byName"
             bean.singleton = true
             modelDelegateService = ref("modelDelegateService")
+        }
+        redisService(Operations) { bean ->
+            bean.autowire = "byName"
+            bean.scope = "singleton"
+            grailsApplication = ref("grailsApplication")
         }
     }
 
