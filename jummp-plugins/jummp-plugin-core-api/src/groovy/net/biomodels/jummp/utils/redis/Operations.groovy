@@ -39,6 +39,10 @@ class Operations implements InitializingBean {
 
     def grailsApplication
 
+    static JedisPool instantiateJedisPool() {
+        new JedisPool(new JedisPoolConfig(), REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
+    }
+
     static String doRedisHGet(final String key, final String field) {
         JedisPool pool = new JedisPool(new JedisPoolConfig(), REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
         String cachedData
