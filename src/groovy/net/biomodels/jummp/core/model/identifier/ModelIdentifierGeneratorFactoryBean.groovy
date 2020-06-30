@@ -94,25 +94,28 @@ class ModelIdentifierGeneratorFactoryBean implements FactoryBean<ModelIdentifier
      */
     @Override
     ModelIdentifierGenerator getObject() throws Exception {
-        if (!idSettings || idSettings.isEmpty()) {
-            return new NullModelIdentifierGenerator()
-        }
-
-        String seed = Objects.requireNonNull(initializer).lastUsedValue
-        String cachedSeed = ""
         synchronized(this) {
-            cachedSeed = Operations.doRedisGet('model-id-last-used-value')
-        }
-        if (!cachedSeed) {
-            cachedSeed = seed
-            Operations.doRedisSet('model-id-last-used-value', seed)
-        } else {
-            seed = cachedSeed
-        }
-        GeneratorDetails details = ModelIdentifierUtils.buildDecoratorsFromSettings(idSettings,
+            if (!idSettings || idSettings.isEmpty()) {
+                return new NullModelIdentifierGenerator()
+            }
+            // get the last used value from the database
+            String seed = Objects.requireNonNull(initializer).lastUsedValue
+            String cachedSeed = Operations.doRedisGet('model-id-last-used-value')
+            String type
+            if (!cachedSeed) {
+                Operations.doRedisSet('model-id-last-used-value', seed)
+                type = "from database"
+            } else {
+                seed = cachedSeed
+                type = "from redis cache"
+            }
+            println "Seed: $seed --- type: $type"
+
+            GeneratorDetails details = ModelIdentifierUtils.buildDecoratorsFromSettings(idSettings,
                 seed, shouldComputeRegex)
 
-        new DefaultModelIdentifierGenerator(details)
+            new DefaultModelIdentifierGenerator(details)
+        }
     }
 
     @Override

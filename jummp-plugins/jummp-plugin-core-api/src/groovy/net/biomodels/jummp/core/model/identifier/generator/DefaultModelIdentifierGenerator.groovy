@@ -23,8 +23,10 @@ package net.biomodels.jummp.core.model.identifier.generator
 import groovy.transform.CompileStatic
 import net.biomodels.jummp.core.model.identifier.decorator.OrderedModelIdentifierDecorator
 import net.biomodels.jummp.core.model.identifier.ModelIdentifier
+import net.biomodels.jummp.core.model.identifier.decorator.VariableDigitAppendingDecorator
 import net.biomodels.jummp.core.model.identifier.support.GeneratorDetails
 import net.biomodels.jummp.utils.redis.Operations
+import net.biomodels.jummp.utils.redis.PublishClient
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 
@@ -68,11 +70,11 @@ class DefaultModelIdentifierGenerator extends AbstractModelIdentifierGenerator {
                 identifier.decorate(decorator)
             }
             MODEL_ID = identifier.getCurrentId()
+            PublishClient.publish("model-id-last-used-value", MODEL_ID)
         }
         if (IS_DEBUG_ENABLED) {
             log.debug "Produced a new model identifier $MODEL_ID."
         }
-        Operations.doRedisSet('model-id-last-used-value', MODEL_ID)
         return MODEL_ID
     }
 

@@ -21,6 +21,7 @@
 package net.biomodels.jummp.core.model.identifier.decorator
 
 import groovy.transform.CompileStatic
+import net.biomodels.jummp.utils.redis.Operations
 
 import java.util.concurrent.atomic.AtomicLong
 import net.biomodels.jummp.core.events.ModelIdentifierDecoratorUpdatedEvent
@@ -81,22 +82,21 @@ class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
      */
     ModelIdentifier decorate(ModelIdentifier modelIdentifier) {
         updateNextValueIfNeeded()
-        if (modelIdentifier) {
-            String currentId = modelIdentifier.getCurrentId()
-            final String next = nextValue.get()
-            if (IS_DEBUG_ENABLED) {
-                log.debug "Decorating $currentId with $next."
-            }
-            modelIdentifier.append(next)
-            lastUsedSuffix.set(nextSuffix.get())
-            return modelIdentifier
-        } else {
-            log.warn "Undefined model identifier encountered - decorating a new one instead."
-            ModelIdentifier result = new ModelIdentifier()
-            result.append(nextValue.get())
-            lastUsedSuffix.set(nextSuffix.get())
-            return result
+        final String lastCount = Operations.doRedisGet("model-id-last-count")
+        Integer nextCount = !lastCount ? 1 : (Integer.parseInt(lastCount) + 1)
+        Operations.doRedisSet("model-id-last-count", "$nextCount".toString())
+        final String next = addLeadingZero(nextCount)
+        if (!modelIdentifier) {
+            log.debug "Undefined model identifier encountered - decorating a new one instead."
+            modelIdentifier = new ModelIdentifier()
         }
+        String currentId = modelIdentifier.getCurrentId()
+        if (IS_DEBUG_ENABLED) {
+            log.debug "Decorating $currentId with $next."
+        }
+        modelIdentifier.append(next)
+        return modelIdentifier
+
     }
 
     /**
@@ -124,6 +124,10 @@ class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
         lastUsedSuffix.set(-1)
     }
 
+    private String addLeadingZero(final int newSuffix) {
+        String newValue = "${newSuffix}".padLeft(WIDTH, '0')
+        newValue
+    }
     private void updateNextValueIfNeeded() {
         if (lastUsedSuffix.get() == nextSuffix.get()) {
             long newSuffix = nextSuffix.incrementAndGet()

@@ -20,6 +20,7 @@
 
 package net.biomodels.jummp.core.model.identifier.support
 
+import net.biomodels.jummp.utils.redis.Operations
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -34,7 +35,7 @@ import java.sql.SQLException
  */
 class SubmissionIdGeneratorInitializer extends AbstractModelIdentifierGeneratorInitializer {
     private static final String query = """select submission_id from model where id = (
-        select model_id 
+        select model_id
         from revision
         where upload_date = (select max(upload_date) from revision where revision_number = 1)
         limit 1
@@ -49,14 +50,16 @@ class SubmissionIdGeneratorInitializer extends AbstractModelIdentifierGeneratorI
 
     @Override
     String getLastUsedValue() {
-        String result
-        try {
-            result = executeQuery()
-        } catch (SQLException e) {
-            throw new IllegalStateException('Unable to extract the latest submission id', e)
-        }
+        synchronized (this) {
+            String result
+            try {
+                result = executeQuery()
+            } catch (SQLException e) {
+                throw new IllegalStateException('Unable to extract the latest submission id', e)
+            }
 
-        log.debug("Most recent submission id is $result")
-        result
+            log.debug("Most recent submission id is $result")
+            result
+        }
     }
 }
