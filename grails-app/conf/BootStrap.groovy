@@ -42,9 +42,12 @@ import net.biomodels.jummp.plugins.security.Person
 import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.plugins.security.UserRole
+import net.biomodels.jummp.utils.redis.ModelIdGenerationListener
+import net.biomodels.jummp.utils.redis.SubscribeClient
 import org.codehaus.groovy.grails.commons.ApplicationAttributes
 import org.codehaus.groovy.grails.commons.GrailsClass
 import org.codehaus.groovy.grails.plugins.DomainClassGrailsPlugin
+import redis.clients.jedis.JedisPubSub
 
 class BootStrap {
     def springSecurityService
@@ -214,6 +217,12 @@ class BootStrap {
                 it.class.name == 'org.springframework.http.converter.json.GsonHttpMessageConverter' }
             instance
         }
+
+        SubscribeClient subClient = new SubscribeClient()
+        JedisPubSub listener = new ModelIdGenerationListener()
+        subClient.setChannelAndListener("model-id-last-used-value", listener)
+        // Message recipient starts subscribing
+        subClient.start()
     }
 
     def destroy = {
