@@ -37,6 +37,7 @@ import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.core.model.identifier.decorator.VariableDigitAppendingDecorator as VDAD
 import net.biomodels.jummp.core.model.identifier.generator.DefaultModelIdentifierGenerator as DMIG
+import net.biomodels.jummp.core.subscribers.ModelIdGenerationListener
 import net.biomodels.jummp.core.subscribers.VariableDigitAppendingSubscriber
 import net.biomodels.jummp.healthcheck.HealthCheckUtil
 import net.biomodels.jummp.model.ModelFormat
@@ -45,7 +46,6 @@ import net.biomodels.jummp.plugins.security.Person
 import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.plugins.security.UserRole
-import net.biomodels.jummp.core.subscribers.ModelIdGenerationListener
 import net.biomodels.jummp.utils.redis.SubscribeClient
 import org.codehaus.groovy.grails.commons.ApplicationAttributes
 import org.codehaus.groovy.grails.commons.GrailsClass
@@ -173,7 +173,6 @@ class BootStrap {
             format = new ModelFormat(identifier: "UNKNOWN", name: "Other", formatVersion: "*")
             format.save(flush: true)
         }
-        def ctx = servletContext.getAttribute(ApplicationAttributes.APPLICATION_CONTEXT)
         def modelFormat = modelFileFormatService.registerModelFormat("UNKNOWN", "UNKNOWN")
 
         modelFileFormatService.handleModelFormat(modelFormat, "unknownFormatService", "unknown")
@@ -247,6 +246,7 @@ class BootStrap {
         def generatorRegistry = idGeneratorRegistryFactoryBean.object
         println "Using model id generators ${generatorRegistry?.generatorMap}"
 
+        def ctx = servletContext.getAttribute(ApplicationAttributes.APPLICATION_CONTEXT)
         RevisionTransportCommand.context = ctx
 
         registerDefaultModelElementTypes()
