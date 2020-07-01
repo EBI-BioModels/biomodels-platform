@@ -56,6 +56,48 @@ class BootStrap {
     def modelFileFormatService
     def idGeneratorRegistryFactoryBean
 
+    void doInitialiseSomeUsersAndRoles() {
+        if (Environment.getCurrent() != Environment.TEST) {
+            ["ROLE_USER", "ROLE_CURATOR", "ROLE_ADMIN", "ROLE_QC_PROVIDER", "ROLE_REVIEWER"].each {
+                if (!Role.findByAuthority(it)) {
+                    new Role(authority: it).save(flush: true)
+                }
+            }
+            if (!User.findByUsername("administrator")) {
+                def person = new Person(userRealName: "administrator")
+                person.save(flush: true)
+                def user = new User(username: "administrator",
+                    password: springSecurityService.encodePassword("administrator"),
+                    email: "user@test.com",
+                    person: person,
+                    enabled: true,
+                    accountExpired: false,
+                    accountLocked: false,
+                    passwordExpired: false)
+                user.save(flush: true)
+                new AclSid(sid: user.username, principal: true).save(flush: true)
+                Role userRole = Role.findByAuthority("ROLE_USER")
+                UserRole.create(user, userRole, true)
+                userRole = Role.findByAuthority("ROLE_ADMIN")
+                UserRole.create(user, userRole, true)
+            }
+
+            if (!User.findByUsername("anonymous")) {
+                def person = new Person(userRealName: "anonymous")
+                person.save(flush: true)
+                def user = new User(username: "anonymous",
+                    password: springSecurityService.encodePassword("anonymous"),
+                    email: "user@anoymous.com",
+                    person: person,
+                    enabled: false,
+                    accountExpired: true,
+                    accountLocked: true,
+                    passwordExpired: true)
+                user.save(flush: true)
+            }
+        }
+    }
+
     void addPublicationLinkProvider(PubLinkProvTC cmd) {
         def publinkType=PublicationLinkProvider.LinkType.valueOf(cmd.linkType)
         if (!PublicationLinkProvider.findByLinkType(publinkType)) {
@@ -65,44 +107,14 @@ class BootStrap {
         }
     }
 
-    void registerDefaultModelElementTypes() {
-        def modelFormats = ModelFormat.list().each { ModelFormat fmt ->
-            def fmtCmd = new ModelFormatAdapter(format: fmt).toCommandObject()
-            try {
-                modelFileFormatService.registerModelElementType(fmtCmd, "model")
-            } catch (IllegalStateException e) {
-                String id = fmt.identifier
-                String v = fmt.formatVersion
-                println "Cannot register default model element type for $id $v"
-            }
-        }
-    }
-
-    def init = { servletContext ->
-        HealthCheckUtil.registerObjectMarshaller()
-        ModelFormat format = ModelFormat.findByIdentifierAndFormatVersion("UNKNOWN", "*")
-        if (!format) {
-            format = new ModelFormat(identifier: "UNKNOWN", name: "Other", formatVersion: "*")
-            format.save(flush: true)
-        }
-        def ctx = servletContext.getAttribute(ApplicationAttributes.APPLICATION_CONTEXT)
-        def modelFormat = modelFileFormatService.registerModelFormat("UNKNOWN", "UNKNOWN")
-
-        modelFileFormatService.handleModelFormat(modelFormat, "unknownFormatService", "unknown")
-        registerDefaultModelElementTypes()
-
-        grailsApplication.domainClasses.each { GrailsClass gc ->
-             DomainClassGrailsPlugin.addValidationMethods(grailsApplication, gc,
-                    grailsApplication.mainContext)
-        }
-
+    void doInitialisePublicationLinkProvider() {
         addPublicationLinkProvider(new PubLinkProvTC(linkType:PublicationLinkProvider.LinkType.PUBMED,
-                         pattern:"^\\d+",
-                         identifiersPrefix:"http://identifiers.org/pubmed/"))
+            pattern:"^\\d+",
+            identifiersPrefix:"http://identifiers.org/pubmed/"))
 
         addPublicationLinkProvider(new PubLinkProvTC(linkType:PublicationLinkProvider.LinkType.DOI,
-                         pattern:"^(doi\\:)?\\d{2}\\.\\d{4}.*",
-                         identifiersPrefix:"http://identifiers.org/doi/"))
+            pattern:"^(doi\\:)?\\d{2}\\.\\d{4}.*",
+            identifiersPrefix:"http://identifiers.org/doi/"))
 
         /* ignore until we fix the integration with the annotation UI.
         addPublicationLinkProvider(new PubLinkProvTC(linkType:PublicationLinkProvider.LinkType.ARXIV,
@@ -134,53 +146,44 @@ class BootStrap {
                          identifiersPrefix:"http://identifiers.org/pmc/"))
         */
         addPublicationLinkProvider(new PubLinkProvTC(linkType: PublicationLinkProvider.LinkType.CUSTOM,
-                pattern: "^(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]"))
+            pattern: "^(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]"))
         addPublicationLinkProvider(new PubLinkProvTC(linkType: PublicationLinkProvider.LinkType.MANUAL_ENTRY,
-                pattern: "\\A\\z" /* i.e. start of input then end of input -- ignored */))
+            pattern: "\\A\\z" /* i.e. start of input then end of input -- ignored */))
+    }
 
-        def generatorRegistry = idGeneratorRegistryFactoryBean.object
-        println "Using model id generators ${generatorRegistry?.generatorMap}"
-
-        if (Environment.getCurrent() != Environment.TEST) {
-            ["ROLE_USER", "ROLE_CURATOR", "ROLE_ADMIN", "ROLE_QC_PROVIDER", "ROLE_REVIEWER"].each {
-                if (!Role.findByAuthority(it)) {
-                    new Role(authority: it).save(flush: true)
-                }
-            }
-            if (!User.findByUsername("administrator")) {
-                def person = new Person(userRealName: "administrator")
-                person.save(flush: true)
-                def user = new User(username: "administrator",
-                        password: springSecurityService.encodePassword("administrator"),
-                        email: "user@test.com",
-                        person: person,
-                        enabled: true,
-                        accountExpired: false,
-                        accountLocked: false,
-                        passwordExpired: false)
-                user.save(flush: true)
-                new AclSid(sid: user.username, principal: true).save(flush: true)
-                Role userRole = Role.findByAuthority("ROLE_USER")
-                UserRole.create(user, userRole, true)
-                userRole = Role.findByAuthority("ROLE_ADMIN")
-                UserRole.create(user, userRole, true)
-            }
-
-            if (!User.findByUsername("anonymous")) {
-                def person = new Person(userRealName: "anonymous")
-                person.save(flush: true)
-                def user = new User(username: "anonymous",
-                        password: springSecurityService.encodePassword("anonymous"),
-                        email: "user@anoymous.com",
-                        person: person,
-                        enabled: false,
-                        accountExpired: true,
-                        accountLocked: true,
-                        passwordExpired: true)
-                user.save(flush: true)
+    void registerDefaultModelElementTypes() {
+        def modelFormats = ModelFormat.list().each { ModelFormat fmt ->
+            def fmtCmd = new ModelFormatAdapter(format: fmt).toCommandObject()
+            try {
+                modelFileFormatService.registerModelElementType(fmtCmd, "model")
+            } catch (IllegalStateException e) {
+                String id = fmt.identifier
+                String v = fmt.formatVersion
+                println "Cannot register default model element type for $id $v"
             }
         }
+    }
 
+    void doInitialiseModelFormatAndRelated() {
+        ModelFormat format = ModelFormat.findByIdentifierAndFormatVersion("UNKNOWN", "*")
+        if (!format) {
+            format = new ModelFormat(identifier: "UNKNOWN", name: "Other", formatVersion: "*")
+            format.save(flush: true)
+        }
+        def ctx = servletContext.getAttribute(ApplicationAttributes.APPLICATION_CONTEXT)
+        def modelFormat = modelFileFormatService.registerModelFormat("UNKNOWN", "UNKNOWN")
+
+        modelFileFormatService.handleModelFormat(modelFormat, "unknownFormatService", "unknown")
+    }
+
+    void doAddValidationMethods2DomainClass() {
+        grailsApplication.domainClasses.each { GrailsClass gc ->
+            DomainClassGrailsPlugin.addValidationMethods(grailsApplication, gc,
+                grailsApplication.mainContext)
+        }
+    }
+
+    void doCustomiseMappingForWeceem() {
         // custom mapping for weceem as it fails to work with an LDAPUserDetailsImpl
         wcmSecurityService.securityDelegate = [
             getUserName : { ->
@@ -204,10 +207,11 @@ class BootStrap {
             },
             getUserPrincipal : { ->
                 springSecurityService.principal
-	        }
+            }
         ]
-        RevisionTransportCommand.context = ctx
+    }
 
+    void doCustomiseRestBuilderConstructor() {
         // Below is the provisional solution as suggested at
         // https://github.com/grails-plugins/grails-rest-client-builder/issues/40
         RestBuilder.metaClass.constructor = { ->
@@ -217,12 +221,31 @@ class BootStrap {
                 it.class.name == 'org.springframework.http.converter.json.GsonHttpMessageConverter' }
             instance
         }
+    }
 
+    void doSubscribeRedisChannelsRelated2ModelIdentifierGeneration() {
         SubscribeClient subClient = new SubscribeClient()
         JedisPubSub listener = new ModelIdGenerationListener()
         subClient.setChannelAndListener("model-id-last-used-value", listener)
-        // Message recipient starts subscribing
         subClient.start()
+    }
+
+    def init = { servletContext ->
+        HealthCheckUtil.registerObjectMarshaller()
+
+        def generatorRegistry = idGeneratorRegistryFactoryBean.object
+        println "Using model id generators ${generatorRegistry?.generatorMap}"
+
+        RevisionTransportCommand.context = ctx
+
+        registerDefaultModelElementTypes()
+        doInitialiseModelFormatAndRelated()
+        doAddValidationMethods2DomainClass()
+        doInitialisePublicationLinkProvider()
+        doInitialiseSomeUsersAndRoles()
+        doCustomiseMappingForWeceem()
+        doCustomiseRestBuilderConstructor()
+        doSubscribeRedisChannelsRelated2ModelIdentifierGeneration()
     }
 
     def destroy = {
