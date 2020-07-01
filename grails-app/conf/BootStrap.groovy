@@ -35,6 +35,9 @@ import grails.util.Environment
 import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PubLinkProvTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.core.model.identifier.decorator.VariableDigitAppendingDecorator as VDAD
+import net.biomodels.jummp.core.model.identifier.generator.DefaultModelIdentifierGenerator as DMIG
+import net.biomodels.jummp.core.subscribers.VariableDigitAppendingSubscriber
 import net.biomodels.jummp.healthcheck.HealthCheckUtil
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.model.PublicationLinkProvider
@@ -42,7 +45,7 @@ import net.biomodels.jummp.plugins.security.Person
 import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.plugins.security.UserRole
-import net.biomodels.jummp.utils.redis.ModelIdGenerationListener
+import net.biomodels.jummp.core.subscribers.ModelIdGenerationListener
 import net.biomodels.jummp.utils.redis.SubscribeClient
 import org.codehaus.groovy.grails.commons.ApplicationAttributes
 import org.codehaus.groovy.grails.commons.GrailsClass
@@ -224,10 +227,18 @@ class BootStrap {
     }
 
     void doSubscribeRedisChannelsRelated2ModelIdentifierGeneration() {
+        JedisPubSub listener
+        /* subscribe model identifier's last used value channel */
+        listener = new ModelIdGenerationListener()
         SubscribeClient subClient = new SubscribeClient()
-        JedisPubSub listener = new ModelIdGenerationListener()
-        subClient.setChannelAndListener("model-id-last-used-value", listener)
+        subClient.setChannelAndListener(DMIG.REDIS_MODEL_ID_LAST_USED_VALUE, listener)
         subClient.start()
+
+        /* subscribe model identifier's last counter */
+        listener = new VariableDigitAppendingSubscriber()
+        SubscribeClient lastCountSubClient = new SubscribeClient()
+        lastCountSubClient.setChannelAndListener(VDAD.REDIS_MODEL_ID_LAST_COUNT, listener)
+        lastCountSubClient.start()
     }
 
     def init = { servletContext ->

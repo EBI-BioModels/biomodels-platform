@@ -26,11 +26,10 @@ import net.biomodels.jummp.core.events.DateModelIdentifierDecoratorUpdatedEvent
 import net.biomodels.jummp.core.events.ModelIdentifierDecoratorUpdatedEvent
 import net.biomodels.jummp.core.model.identifier.decorator.AbstractAppendingDecorator
 import net.biomodels.jummp.core.model.identifier.decorator.OrderedModelIdentifierDecorator
-import net.biomodels.jummp.core.model.identifier.decorator.VariableDigitAppendingDecorator
+import net.biomodels.jummp.core.model.identifier.decorator.VariableDigitAppendingDecorator as VDAD
 import net.biomodels.jummp.core.model.identifier.support.GeneratorDetails
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
-import net.biomodels.jummp.utils.redis.Operations
 
 /**
  * @short Abstract implementation for producing model identifiers.
@@ -118,9 +117,9 @@ abstract class AbstractModelIdentifierGenerator implements ModelIdentifierGenera
         synchronized(ModelIdentifier.class) {
             if (event instanceof DateModelIdentifierDecoratorUpdatedEvent) {
                 // finds the first variable digit decorator and reset its value.
-                VariableDigitAppendingDecorator d = decoratorRegistry.find {
-                    it instanceof VariableDigitAppendingDecorator
-                } as VariableDigitAppendingDecorator
+                VDAD d = decoratorRegistry.find {
+                    it instanceof VDAD
+                } as VDAD
                 if (d) {
                     d.reset()
                     if (IS_DEBUG_ENABLED) {

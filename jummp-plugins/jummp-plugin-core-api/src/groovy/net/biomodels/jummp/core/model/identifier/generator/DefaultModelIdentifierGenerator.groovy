@@ -23,9 +23,7 @@ package net.biomodels.jummp.core.model.identifier.generator
 import groovy.transform.CompileStatic
 import net.biomodels.jummp.core.model.identifier.decorator.OrderedModelIdentifierDecorator
 import net.biomodels.jummp.core.model.identifier.ModelIdentifier
-import net.biomodels.jummp.core.model.identifier.decorator.VariableDigitAppendingDecorator
 import net.biomodels.jummp.core.model.identifier.support.GeneratorDetails
-import net.biomodels.jummp.utils.redis.Operations
 import net.biomodels.jummp.utils.redis.PublishClient
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
@@ -33,15 +31,16 @@ import org.apache.commons.logging.LogFactory
 /**
  * @short Default ModelIdentifierGenerator implementation for producing model identifiers.
  *
- * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
- */
+ * @author <a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a>
+ * @author <a href="mailto:mihai.glont@ebi.ac.uk">Mihai Glont</a> */
 @CompileStatic
 class DefaultModelIdentifierGenerator extends AbstractModelIdentifierGenerator {
     /* the class logger */
     private static final Log log = LogFactory.getLog(this)
     /* semaphore for the log threshold */
     private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
-
+    /* REDIS key/channel string for model identifier's last used value */
+    static final String REDIS_MODEL_ID_LAST_USED_VALUE = "model-id-last-used-value"
     @SuppressWarnings("GroovyUnusedDeclaration")
     DefaultModelIdentifierGenerator() {
     }
@@ -70,7 +69,7 @@ class DefaultModelIdentifierGenerator extends AbstractModelIdentifierGenerator {
                 identifier.decorate(decorator)
             }
             MODEL_ID = identifier.getCurrentId()
-            PublishClient.publish("model-id-last-used-value", MODEL_ID)
+            PublishClient.publish(REDIS_MODEL_ID_LAST_USED_VALUE, MODEL_ID)
         }
         if (IS_DEBUG_ENABLED) {
             log.debug "Produced a new model identifier $MODEL_ID."

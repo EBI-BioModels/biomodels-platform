@@ -22,6 +22,7 @@ package net.biomodels.jummp.core.model.identifier.decorator
 
 import groovy.transform.CompileStatic
 import net.biomodels.jummp.utils.redis.Operations
+import net.biomodels.jummp.utils.redis.PublishClient
 
 import java.util.concurrent.atomic.AtomicLong
 import net.biomodels.jummp.core.events.ModelIdentifierDecoratorUpdatedEvent
@@ -32,7 +33,8 @@ import org.apache.commons.logging.LogFactory
 /**
  * ModelIdentifierDecorator implementation that adds a numerical suffix to a model id.
  *
- * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author <a href="mailto:mihai.glont@ebi.ac.uk">Mihai Glont</a>
+ * @author <a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a>
  */
 @CompileStatic
 class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
@@ -46,6 +48,8 @@ class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
     private static final Log log = LogFactory.getLog(this)
     /* semaphore for the log threshold */
     private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
+    /* REDIS key/channel string for model identifier's last counter */
+    static final String REDIS_MODEL_ID_LAST_COUNT = "model-id-last-count"
 
     /**
      * Throws an IllegalArgumentException if @p seed is below 1 or @p width is narrower than
@@ -81,13 +85,12 @@ class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
      * Modify model identifier @p modelIdentifier.
      */
     ModelIdentifier decorate(ModelIdentifier modelIdentifier) {
-        updateNextValueIfNeeded()
-        final String lastCount = Operations.doRedisGet("model-id-last-count")
+        final String lastCount = Operations.doRedisGet(REDIS_MODEL_ID_LAST_COUNT)
         Integer nextCount = !lastCount ? 1 : (Integer.parseInt(lastCount) + 1)
-        Operations.doRedisSet("model-id-last-count", "$nextCount".toString())
+        PublishClient.publish(REDIS_MODEL_ID_LAST_COUNT, "$nextCount".toString())
         final String next = addLeadingZero(nextCount)
         if (!modelIdentifier) {
-            log.debug "Undefined model identifier encountered - decorating a new one instead."
+            log.warn "Undefined model identifier encountered - decorating a new one instead."
             modelIdentifier = new ModelIdentifier()
         }
         String currentId = modelIdentifier.getCurrentId()
@@ -118,10 +121,8 @@ class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
      * Resets this decorator's internal counter.
      */
     void reset() {
-        final String NEW_VALUE = "1".padLeft(WIDTH, '0')
-        nextValue.set(NEW_VALUE)
-        nextSuffix.set(1)
-        lastUsedSuffix.set(-1)
+        // Resets the last counter to 0
+        PublishClient.publish(REDIS_MODEL_ID_LAST_COUNT, "0")
     }
 
     private String addLeadingZero(final int newSuffix) {
