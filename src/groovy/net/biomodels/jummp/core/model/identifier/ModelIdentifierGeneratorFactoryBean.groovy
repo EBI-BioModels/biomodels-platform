@@ -100,10 +100,10 @@ class ModelIdentifierGeneratorFactoryBean implements FactoryBean<ModelIdentifier
             }
             // get the last used value from the database
             String seed = Objects.requireNonNull(initializer).lastUsedValue
-            String cachedSeed = Operations.doRedisGet('model-id-last-used-value')
+            String cachedSeed = Operations.doRedisGet(DMIG.REDIS_MODEL_ID_LAST_USED_VALUE)
             String type
             if (!cachedSeed) {
-                Operations.doRedisSet('model-id-last-used-value', seed)
+                PublishClient.publish(DMIG.REDIS_MODEL_ID_LAST_USED_VALUE, seed)
                 type = "from database"
             } else {
                 seed = cachedSeed

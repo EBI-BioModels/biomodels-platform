@@ -87,7 +87,16 @@ class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
     ModelIdentifier decorate(ModelIdentifier modelIdentifier) {
         final String lastCount = Operations.doRedisGet(REDIS_MODEL_ID_LAST_COUNT)
         Integer nextCount = !lastCount ? 1 : (Integer.parseInt(lastCount) + 1)
+        log.debug "Last used suffix: $lastUsedSuffix <---> Next suffix: $nextCount"
         PublishClient.publish(REDIS_MODEL_ID_LAST_COUNT, "$nextCount".toString())
+        /**
+         * publishing the next count as a message, then subscribers can see the message
+         * The subscriber which updates the last counter is probably out of the synchronisation
+         * process applied for the entire ModelIdentifier.class. The statement below aims to update
+         * the last counter straightaway.
+         * {@see DefaultModelIdentifierGenerator.generate()}
+         */
+        Operations.doRedisSet(REDIS_MODEL_ID_LAST_COUNT, "$nextCount".toString())
         final String next = addLeadingZero(nextCount)
         if (!modelIdentifier) {
             log.warn "Undefined model identifier encountered - decorating a new one instead."
@@ -129,6 +138,7 @@ class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
         String newValue = "${newSuffix}".padLeft(WIDTH, '0')
         newValue
     }
+
     private void updateNextValueIfNeeded() {
         if (lastUsedSuffix.get() == nextSuffix.get()) {
             long newSuffix = nextSuffix.incrementAndGet()
