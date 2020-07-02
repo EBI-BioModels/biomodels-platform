@@ -870,6 +870,9 @@ springsession.maxInactiveIntervalInSeconds = jummp.springsession.maxInactiveInte
 springsession.redis.connectionFactory.hostName = jummp.redis.host
 springsession.redis.connectionFactory.port = jummp.redis.port       // Redis server connection timeout
 springsession.redis.connectionFactory.timeout = jummp.redis.timeout
+// This is crucial to make sure flash messages to be displayed
+// See: https://github.com/jeetmp3/spring-session/issues/5
+springsession.allow.persist.mutable = true
 
 // HTTP PROXY (used for k8s deployment)
 if (!(jummpConfig.jummp.http.proxy.host instanceof ConfigObject)) {
