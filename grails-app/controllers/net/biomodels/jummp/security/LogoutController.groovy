@@ -28,9 +28,7 @@
 * that of the covered work.}
 **/
 
-
-
-
+package net.biomodels.jummp.security
 
 import grails.plugin.springsecurity.SpringSecurityUtils
 import org.springframework.security.access.annotation.Secured

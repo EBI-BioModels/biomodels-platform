@@ -305,10 +305,11 @@ log4j.main = {
         'net.biomodels.jummp.core.model.identifier.support',
         'net.biomodels.jummp.core.events',
         'net.biomodels.jummp.core.subscribers',
+        'net.biomodels.jummp.deployment.biomodels',
         'net.biomodels.jummp.plugins.pharmml',
         'net.biomodels.jummp.plugins.configuration',
         'net.biomodels.jummp.search',
-        'net.biomodels.jummp.deployment.biomodels'
+        'net.biomodels.jummp.security'
     ], additivity: false
     warn hibernateAppender: [
         'org.codehaus.groovy.grails.orm.hibernate',

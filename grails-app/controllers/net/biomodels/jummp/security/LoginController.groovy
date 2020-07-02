@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -28,9 +28,7 @@
 * that of the covered work.}
 **/
 
-
-
-
+package net.biomodels.jummp.security
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.SpringSecurityUtils
