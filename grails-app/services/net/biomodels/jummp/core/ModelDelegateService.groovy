@@ -184,7 +184,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         revs.each {
             revisions << new RevisionAdapter(revision: it).toCommandObject()
         }
-        log.debug("All Revision Transport Command Objects: ${revisions.dump()}")
+        log.info("All Revision Transport Command Objects: ${revisions.dump()}")
         return revisions
     }
 
