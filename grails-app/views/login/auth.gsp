@@ -38,7 +38,6 @@
             <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
                 <form action='${postUrl}' method='POST' id='loginForm' class='cssform' autocomplete='on'>
                     <div class="row column log-in-form">
-                        <p>${flash.message}</p>
                         <h3 class="text-center">Log in to your account</h3>
                         <label><g:message code="login.form.label"/>
                             <input type='text' name='j_username' id='username' placeholder="Username">
