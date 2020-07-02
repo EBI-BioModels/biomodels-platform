@@ -31,7 +31,6 @@ import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.utils.ModelSubmissionHelper
 import net.biomodels.jummp.utils.RunScriptHelper
 import org.apache.camel.CamelContext
-import org.springframework.orm.hibernate4.SessionHolder
 import org.springframework.security.core.Authentication
 
 import java.time.Duration

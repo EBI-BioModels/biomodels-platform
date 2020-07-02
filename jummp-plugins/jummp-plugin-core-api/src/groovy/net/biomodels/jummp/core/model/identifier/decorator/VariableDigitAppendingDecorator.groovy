@@ -88,6 +88,7 @@ class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
         final String lastCount = Operations.doRedisGet(REDIS_MODEL_ID_LAST_COUNT)
         Integer nextCount = !lastCount ? 1 : (Integer.parseInt(lastCount) + 1)
         log.debug "Last used suffix: $lastUsedSuffix <---> Next suffix: $nextCount"
+        // TODO: get rid of the following statement if we don't need to handle the next count
         PublishClient.publish(REDIS_MODEL_ID_LAST_COUNT, "$nextCount".toString())
         /**
          * publishing the next count as a message, then subscribers can see the message
@@ -97,6 +98,7 @@ class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
          * {@see DefaultModelIdentifierGenerator.generate()}
          */
         Operations.doRedisSet(REDIS_MODEL_ID_LAST_COUNT, "$nextCount".toString())
+        // TODO: maintain the map of the used counts each day and clean it on the next day
         final String next = addLeadingZero(nextCount)
         if (!modelIdentifier) {
             log.warn "Undefined model identifier encountered - decorating a new one instead."
