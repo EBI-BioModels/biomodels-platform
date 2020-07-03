@@ -20,7 +20,6 @@
 
 
 import groovyx.gpars.GParsPool
-import net.biomodels.jummp.core.ModelFileFormatService
 import net.biomodels.jummp.core.model.CurationState
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
 import net.biomodels.jummp.core.model.ModelTransportCommand
@@ -92,9 +91,9 @@ class ConcurrentModelSubmitter {
     }
 
     Map buildDataSubmission() {
-        ModelFileFormatService modelFileFormatService = ctx.getBean "modelFileFormatService", ModelFileFormatService
         Map data = [:]
-        File location = new File("${ctx.grailsApplication.config.jummp.logs.location}/tmp")
+        String tmpDir = System.getProperty("java.io.tmpdir")
+        File location = new File(tmpDir)
         for (int i = 1; i <= 10; i++) {
             File mainFile = createSimpleMatlabModel("MODEL$i", location)
             String desc = "This is a sample Matlab model $i"
