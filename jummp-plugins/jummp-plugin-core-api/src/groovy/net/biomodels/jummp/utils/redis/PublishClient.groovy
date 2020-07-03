@@ -35,7 +35,7 @@ class PublishClient {
 
     static void publish(String channel, String message){
         LOGGER.debug("> Publish> channel: $channel  > Message sent: $message")
-        Operations.instantiateJedisPool().getResource().withCloseable { Jedis jedis ->
+        Operations.jedisPool.getResource().withCloseable { Jedis jedis ->
             jedis.publish(channel, message)
         }
     }
@@ -43,7 +43,7 @@ class PublishClient {
     void close(String channel) {
         LOGGER.debug(">>> PUBLISH End > Channel: $channel > Message:quit")
         // The message publisher stops sending by sending a "quit" message
-        Operations.instantiateJedisPool().getResource().withCloseable { Jedis jedis ->
+        Operations.jedisPool.getResource().withCloseable { Jedis jedis ->
             jedis.publish(channel, "quit")
         }
     }

@@ -20,6 +20,9 @@
 
 package net.biomodels.jummp.utils.redis
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.DisposableBean
 import org.springframework.beans.factory.InitializingBean
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisPool
@@ -32,60 +35,47 @@ import redis.clients.jedis.JedisPoolConfig
  *
  * @author <a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a>
  */
-class Operations implements InitializingBean {
-    static String REDIS_SRV_HOST
-    static Integer REDIS_SRV_PORT
-    static Integer REDIS_SRV_TIMEOUT
-
+class Operations implements InitializingBean, DisposableBean {
+    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
+    private static String REDIS_SRV_HOST
+    private static Integer REDIS_SRV_PORT
+    private static Integer REDIS_SRV_TIMEOUT
+    static JedisPool jedisPool
     def grailsApplication
 
-    static JedisPool instantiateJedisPool() {
-        new JedisPool(new JedisPoolConfig(), REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
-    }
-
     static String doRedisHGet(final String key, final String field) {
-        JedisPool pool = new JedisPool(new JedisPoolConfig(), REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
         String cachedData
-        pool.getResource().withCloseable { Jedis jedis ->
+        jedisPool.getResource().withCloseable { Jedis jedis ->
             cachedData = jedis.hget(key, field)
         }
-        pool.close()
         cachedData
     }
 
     static String doRedisGet(final String key) {
-        JedisPool pool = new JedisPool(new JedisPoolConfig(), REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
         String cachedData
-        pool.getResource().withCloseable { Jedis jedis ->
+        jedisPool.getResource().withCloseable { Jedis jedis ->
             cachedData = jedis.get(key)
         }
-        pool.close()
         cachedData
     }
 
     static void doRedisHSet(final String key, Map data) {
-        JedisPool pool = new JedisPool(new JedisPoolConfig(), REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
-        pool.getResource().withCloseable { Jedis jedis ->
+        jedisPool.getResource().withCloseable { Jedis jedis ->
             deleteAllByPattern(jedis, key)
             jedis.hmset(key, data)
         }
-        pool.close()
     }
 
     static void doRedisSet(final String key, final String value) {
-        JedisPool pool = new JedisPool(new JedisPoolConfig(), REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
-        pool.getResource().withCloseable { Jedis jedis ->
+        jedisPool.getResource().withCloseable { Jedis jedis ->
             jedis.set(key, value)
         }
-        pool.close()
     }
 
     static void deleteAllByPattern(final String pattern) {
-        JedisPool pool = new JedisPool(new JedisPoolConfig(), REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
-        pool.getResource().withCloseable { Jedis jedis ->
+        jedisPool.getResource().withCloseable { Jedis jedis ->
             deleteAllByPattern(jedis, pattern)
         }
-        pool.close()
     }
 
     static void deleteAllByPattern(final Jedis jedis, final String pattern) {
@@ -102,5 +92,15 @@ class Operations implements InitializingBean {
         REDIS_SRV_HOST = grailsApplication.config.jummp.redis.host ?: "localhost"
         REDIS_SRV_PORT = grailsApplication.config.jummp.redis.port ?: 6379
         REDIS_SRV_TIMEOUT = grailsApplication.config.jummp.redis.timeout ?: 3600
+    @Override
+    void destroy() throws Exception {
+        try {
+            jedisPool.close()
+            LOGGER.debug("Jedis Pool is being destroyed within 5 seconds...")
+            Thread.sleep(5000)
+        } catch(InterruptedException ex) {
+            LOGGER.error("Errors while trying to destroy Jedis Pool ${ex.message}")
+            Thread.currentThread().interrupt()
+        }
     }
 }

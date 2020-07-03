@@ -50,14 +50,14 @@ class SubscribeClient extends Thread {
         LOGGER.debug(">>> SUBSCRIBE > Channel: $channel")
         // When the recipient is listening for subscribed messages, the process is blocked until the quit message is
         // received (passively) or the subscription is canceled actively
-        Operations.instantiateJedisPool().getResource().withCloseable { Jedis jedis ->
+        Operations.jedisPool.getResource().withCloseable { Jedis jedis ->
             jedis.subscribe(listener, channel)
         }
     }
 
     void unsubscribe(final String channel) {
         LOGGER.debug(">>> UNSUBSCRIBE > Channel: $channel")
-        Operations.instantiateJedisPool().getResource().withCloseable {
+        Operations.jedisPool.getResource().withCloseable {
             listener.unsubscribe(channel)
         }
     }
