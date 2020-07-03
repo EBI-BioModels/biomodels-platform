@@ -20,22 +20,23 @@
 
 package net.biomodels.jummp.utils.redis
 
+import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.DisposableBean
-import org.springframework.beans.factory.InitializingBean
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisPool
 import redis.clients.jedis.JedisPoolConfig
 
 /**
- * @short Implementations of basic operations on Redis Server with Jedis
- * <p>This class gathers essential operations to get and set values with their
- * keys from and on Redis Server.
+ * @short Implementations of basic operations on Redis Server with Jedis library
+ *
+ * <p>This class gathers essential operations, for example, get and set values with their
+ * keys from and on Redis Server via using Jedis library.
  *
  * @author <a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a>
  */
-class Operations implements InitializingBean, DisposableBean {
+class Operations implements GrailsConfigurationAware, DisposableBean {
     private final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
     private static String REDIS_SRV_HOST
     private static Integer REDIS_SRV_PORT
@@ -88,10 +89,18 @@ class Operations implements InitializingBean, DisposableBean {
     }
 
     @Override
-    void afterPropertiesSet() throws Exception {
-        REDIS_SRV_HOST = grailsApplication.config.jummp.redis.host ?: "localhost"
-        REDIS_SRV_PORT = grailsApplication.config.jummp.redis.port ?: 6379
-        REDIS_SRV_TIMEOUT = grailsApplication.config.jummp.redis.timeout ?: 3600
+    void setConfiguration(ConfigObject co) {
+        REDIS_SRV_HOST = co.jummp.redis.host
+        REDIS_SRV_PORT = co.jummp.redis.port
+        REDIS_SRV_TIMEOUT = co.jummp.redis.timeout
+        jedisPool = new JedisPool(new JedisPoolConfig(), REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
+        if (jedisPool) {
+            LOGGER.debug("Jedis Pool has been initialised successfully")
+        } else {
+            // Grails Runtime throws BeanCreationException preventing from starting the application
+        }
+    }
+
     @Override
     void destroy() throws Exception {
         try {
