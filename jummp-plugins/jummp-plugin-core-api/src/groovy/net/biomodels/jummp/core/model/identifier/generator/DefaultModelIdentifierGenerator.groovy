@@ -24,6 +24,7 @@ import groovy.transform.CompileStatic
 import net.biomodels.jummp.core.model.identifier.decorator.OrderedModelIdentifierDecorator
 import net.biomodels.jummp.core.model.identifier.ModelIdentifier
 import net.biomodels.jummp.core.model.identifier.support.GeneratorDetails
+import net.biomodels.jummp.utils.redis.Operations
 import net.biomodels.jummp.utils.redis.PublishClient
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
@@ -69,6 +70,8 @@ class DefaultModelIdentifierGenerator extends AbstractModelIdentifierGenerator {
                 identifier.decorate(decorator)
             }
             MODEL_ID = identifier.getCurrentId()
+            Operations.doRedisSet(REDIS_MODEL_ID_LAST_USED_VALUE, MODEL_ID)
+            // TODO: fix Pub/Sub thread run
             PublishClient.publish(REDIS_MODEL_ID_LAST_USED_VALUE, MODEL_ID)
         }
         if (IS_DEBUG_ENABLED) {
