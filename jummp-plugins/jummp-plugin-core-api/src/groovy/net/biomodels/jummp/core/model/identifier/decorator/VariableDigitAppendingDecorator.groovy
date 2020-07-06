@@ -51,6 +51,8 @@ class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
     /* REDIS key/channel string for model identifier's last counter */
     static final String REDIS_MODEL_ID_LAST_COUNT = "model-id-last-count"
 
+    Operations redisService
+
     /**
      * Throws an IllegalArgumentException if @p seed is below 1 or @p width is narrower than
      * the width of @p seed.
@@ -133,7 +135,9 @@ class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
      */
     void reset() {
         // Resets the last counter to 0
+        log.debug("Resetting the counter to 0")
         PublishClient.publish(REDIS_MODEL_ID_LAST_COUNT, "0")
+        redisService.doRedisSet(REDIS_MODEL_ID_LAST_COUNT, "0")
     }
 
     private String addLeadingZero(final int newSuffix) {
