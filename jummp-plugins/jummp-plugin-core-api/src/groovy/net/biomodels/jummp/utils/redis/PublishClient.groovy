@@ -33,7 +33,7 @@ import redis.clients.jedis.Jedis
 class PublishClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(this.getClass().name)
 
-    static void publish(String channel, String message){
+    synchronized static void publish(String channel, String message){
         LOGGER.debug("> Publish> channel: $channel  > Message sent: $message")
         Operations.jedisPool.getResource().withCloseable { Jedis jedis ->
             jedis.publish(channel, message)

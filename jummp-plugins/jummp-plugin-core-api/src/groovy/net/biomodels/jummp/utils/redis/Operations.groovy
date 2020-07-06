@@ -44,7 +44,7 @@ class Operations implements GrailsConfigurationAware, DisposableBean {
     static JedisPool jedisPool
     def grailsApplication
 
-    static String doRedisHGet(final String key, final String field) {
+    synchronized static String doRedisHGet(final String key, final String field) {
         String cachedData
         jedisPool.getResource().withCloseable { Jedis jedis ->
             cachedData = jedis.hget(key, field)
@@ -52,7 +52,7 @@ class Operations implements GrailsConfigurationAware, DisposableBean {
         cachedData
     }
 
-    static String doRedisGet(final String key) {
+    synchronized static String doRedisGet(final String key) {
         String cachedData
         jedisPool.getResource().withCloseable { Jedis jedis ->
             cachedData = jedis.get(key)
@@ -60,26 +60,26 @@ class Operations implements GrailsConfigurationAware, DisposableBean {
         cachedData
     }
 
-    static void doRedisHSet(final String key, Map data) {
+    synchronized static void doRedisHSet(final String key, Map data) {
         jedisPool.getResource().withCloseable { Jedis jedis ->
             deleteAllByPattern(jedis, key)
             jedis.hmset(key, data)
         }
     }
 
-    static void doRedisSet(final String key, final String value) {
+    synchronized static void doRedisSet(final String key, final String value) {
         jedisPool.getResource().withCloseable { Jedis jedis ->
             jedis.set(key, value)
         }
     }
 
-    static void deleteAllByPattern(final String pattern) {
+    synchronized static void deleteAllByPattern(final String pattern) {
         jedisPool.getResource().withCloseable { Jedis jedis ->
             deleteAllByPattern(jedis, pattern)
         }
     }
 
-    static void deleteAllByPattern(final Jedis jedis, final String pattern) {
+    synchronized static void deleteAllByPattern(final Jedis jedis, final String pattern) {
         Set<String> keys = jedis.keys(pattern)
         for (String key : keys) {
             if (jedis.exists(key)) {
