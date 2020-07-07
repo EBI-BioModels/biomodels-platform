@@ -116,7 +116,7 @@ class DateAppendingDecorator extends AbstractAppendingDecorator {
                 log.debug "Updating nextValue from $currentDate to $expectedDate."
             }
             nextValue.compareAndSet(currentDate, expectedDate)
-            super.informOfChange(new DateModelIdentifierDecoratorUpdatedEvent(this, currentDate))
+            super.informOfChange(new DateModelIdentifierDecoratorUpdatedEvent(this, expectedDate))
         }
     }
 }
