@@ -60,6 +60,8 @@ import net.biomodels.jummp.webapp.rest.model.show.ModelFiles
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONObject
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.multipart.MultipartFile
 
@@ -69,6 +71,7 @@ import java.util.zip.ZipOutputStream
 
 @Secured(['IS_AUTHENTICATED_FULLY'])
 class ModelController {
+    private final Logger log = LoggerFactory.getLogger(this.getClass())
     /**
      * Flag that checks whether the dynamically-inserted logger is set to DEBUG or higher.
      */

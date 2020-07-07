@@ -312,7 +312,9 @@ log4j.main = {
         'net.biomodels.jummp.plugins.configuration',
         'net.biomodels.jummp.search',
         'net.biomodels.jummp.security',
-        'net.biomodels.jummp.utils.redis'
+        'net.biomodels.jummp.utils.redis',
+        'net.biomodels.jummp.webapp',
+        'grails.app.conf.BootStrap'
     ], additivity: false
 
     debug irreproducibleAppender: [

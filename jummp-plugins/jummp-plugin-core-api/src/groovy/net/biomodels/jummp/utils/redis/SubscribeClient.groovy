@@ -21,8 +21,6 @@
 
 package net.biomodels.jummp.utils.redis
 
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisPubSub
 
@@ -33,7 +31,6 @@ import redis.clients.jedis.JedisPubSub
  * @author <a href="mailto:mihai.glont@ebi.ac.uk">Mihai Glont</a>
  */
 class SubscribeClient extends Thread {
-    private static final Logger LOGGER = LoggerFactory.getLogger(this.getClass().name)
 
     private String channel
     private JedisPubSub listener

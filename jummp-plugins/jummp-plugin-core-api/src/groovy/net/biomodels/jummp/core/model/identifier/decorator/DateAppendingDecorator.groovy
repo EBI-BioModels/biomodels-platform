@@ -113,7 +113,7 @@ class DateAppendingDecorator extends AbstractAppendingDecorator {
         boolean needsUpdating = expectedDate != currentDate
         if (needsUpdating) {
             if (IS_DEBUG_ENABLED) {
-                log.debug "Updating nextValue from $currentDate to $expectedDate."
+                log.debug "Updating nextValue from $currentDate to $expectedDate"
             }
             nextValue.compareAndSet(currentDate, expectedDate)
             super.informOfChange(new DateModelIdentifierDecoratorUpdatedEvent(this, expectedDate))

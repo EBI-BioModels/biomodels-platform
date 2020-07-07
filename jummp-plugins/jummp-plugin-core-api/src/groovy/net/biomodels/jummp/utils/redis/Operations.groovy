@@ -110,6 +110,8 @@ class Operations implements GrailsConfigurationAware, DisposableBean {
         } catch(InterruptedException ex) {
             LOGGER.error("Errors while trying to destroy Jedis Pool ${ex.message}")
             Thread.currentThread().interrupt()
+        } finally {
+            LOGGER.debug("Jedis Pool has been shutdown successfully")
         }
     }
 }

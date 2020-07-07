@@ -50,9 +50,12 @@ import net.biomodels.jummp.utils.redis.SubscribeClient
 import org.codehaus.groovy.grails.commons.ApplicationAttributes
 import org.codehaus.groovy.grails.commons.GrailsClass
 import org.codehaus.groovy.grails.plugins.DomainClassGrailsPlugin
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import redis.clients.jedis.JedisPubSub
 
 class BootStrap {
+    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
     def springSecurityService
     def wcmSecurityService
     def grailsApplication
