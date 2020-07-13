@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -35,10 +35,6 @@ import grails.util.Environment
 import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PubLinkProvTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.core.model.identifier.decorator.VariableDigitAppendingDecorator as VDAD
-import net.biomodels.jummp.core.model.identifier.generator.DefaultModelIdentifierGenerator as DMIG
-import net.biomodels.jummp.core.subscribers.ModelIdGenerationListener
-import net.biomodels.jummp.core.subscribers.VariableDigitAppendingSubscriber
 import net.biomodels.jummp.healthcheck.HealthCheckUtil
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.model.PublicationLinkProvider
@@ -46,13 +42,11 @@ import net.biomodels.jummp.plugins.security.Person
 import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.plugins.security.UserRole
-import net.biomodels.jummp.utils.redis.SubscribeClient
 import org.codehaus.groovy.grails.commons.ApplicationAttributes
 import org.codehaus.groovy.grails.commons.GrailsClass
 import org.codehaus.groovy.grails.plugins.DomainClassGrailsPlugin
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import redis.clients.jedis.JedisPubSub
 
 class BootStrap {
     private final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
@@ -61,6 +55,7 @@ class BootStrap {
     def grailsApplication
     def modelFileFormatService
     def idGeneratorRegistryFactoryBean
+    def subscribeClientService
 
     void doInitialiseSomeUsersAndRoles() {
         if (Environment.getCurrent() != Environment.TEST) {
@@ -229,18 +224,12 @@ class BootStrap {
     }
 
     void doSubscribeRedisChannelsRelated2ModelIdentifierGeneration() {
-        JedisPubSub listener
-        /* subscribe model identifier's last used value channel */
-        listener = new ModelIdGenerationListener()
-        SubscribeClient subClient = new SubscribeClient()
-        subClient.setChannelAndListener(DMIG.REDIS_MODEL_ID_LAST_USED_VALUE, listener)
-        subClient.start()
+        subscribeClientService.init()
+        LOGGER.debug("Background process successfully started")
+    }
 
-        /* subscribe model identifier's last counter */
-        listener = new VariableDigitAppendingSubscriber()
-        SubscribeClient lastCountSubClient = new SubscribeClient()
-        lastCountSubClient.setChannelAndListener(VDAD.REDIS_MODEL_ID_LAST_COUNT, listener)
-        lastCountSubClient.start()
+    void doDestroyRedisPubSubClients() {
+        subscribeClientService.destroy()
     }
 
     def init = { servletContext ->
@@ -251,9 +240,8 @@ class BootStrap {
 
         def ctx = servletContext.getAttribute(ApplicationAttributes.APPLICATION_CONTEXT)
         RevisionTransportCommand.context = ctx
-
-        registerDefaultModelElementTypes()
         doInitialiseModelFormatAndRelated()
+        registerDefaultModelElementTypes()
         doAddValidationMethods2DomainClass()
         doInitialisePublicationLinkProvider()
         doInitialiseSomeUsersAndRoles()
@@ -262,6 +250,8 @@ class BootStrap {
         doSubscribeRedisChannelsRelated2ModelIdentifierGeneration()
     }
 
-    def destroy = {
+    def destroy = { servletContext ->
+        doDestroyRedisPubSubClients()
+        LOGGER.debug("Background process successfully destroyed")
     }
 }

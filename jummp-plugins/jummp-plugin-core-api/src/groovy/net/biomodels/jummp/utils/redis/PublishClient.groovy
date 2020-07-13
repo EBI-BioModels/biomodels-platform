@@ -33,14 +33,14 @@ import redis.clients.jedis.Jedis
 class PublishClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
 
-    synchronized static void publish(String channel, String message){
-        LOGGER.debug("> Publish> channel: $channel  > Message sent: $message")
+    synchronized void publish(String channel, String message){
+        LOGGER.debug("> Publish > channel: $channel  > Message sent: $message")
         Operations.jedisPool.getResource().withCloseable { Jedis jedis ->
             jedis.publish(channel, message)
         }
     }
 
-    static void close(String channel) {
+    synchronized void close(String channel) {
         LOGGER.debug(">>> PUBLISH End > Channel: $channel > Message:quit")
         // The message publisher stops sending by sending a "quit" message
         Operations.jedisPool.getResource().withCloseable { Jedis jedis ->

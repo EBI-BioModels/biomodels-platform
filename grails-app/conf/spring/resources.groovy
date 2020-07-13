@@ -33,14 +33,11 @@ import grails.persistence.Entity
 import grails.util.Environment
 import net.biomodels.jummp.core.WebflowAclBeanDefinitionProcessor
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorFactoryBean
-import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorRegistryFactory
+import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 import net.biomodels.jummp.core.model.identifier.support.NullModelIdentifierGeneratorInitializer
 import net.biomodels.jummp.core.model.identifier.support.PublicationIdGeneratorInitializer
 import net.biomodels.jummp.core.model.identifier.support.SubmissionIdGeneratorInitializer
-import net.biomodels.jummp.utils.interprocess.PubSubTest
-import net.biomodels.jummp.utils.redis.PublishClient
-import net.biomodels.jummp.utils.redis.SubscribeClient
 import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
 import org.codehaus.groovy.grails.commons.spring.GrailsApplicationContext
 import org.springframework.beans.factory.config.BeanDefinition
@@ -129,16 +126,6 @@ beans = {
         it.initMethod = "init"
     }
 
-    publishClient(PublishClient) { bean ->
-        bean.scope  = 'prototype'
-    }
-    subscribeClient(SubscribeClient) { bean ->
-        bean.scope  = 'prototype'
-    }
-    pubSubTest(PubSubTest) { bean ->
-        bean.scope = 'prototype'
-        grailsApplication = ref('grailsApplication')
-    }
     //myBeanPostProcessor(net.biomodels.jummp.core.NosyBeanPostProcessor)
 
     // This section defines model identifier related beans.
@@ -195,6 +182,7 @@ beans = {
         idSettings  = idGeneratorSettings.get('submission')
         initializerBeanName = "submissionIdGeneratorInitializer"
         shouldComputeRegex  = !regexPresent
+        publishClientService = ref('publishClientService')
     }
 
     Map<String, ConfigObject> optionalGeneratorBeanDefs = [:]

@@ -34,7 +34,8 @@ import redis.clients.jedis.JedisPubSub
  * @author <a href="mailto:mihai.glont@ebi.ac.uk">Mihai Glont</a>
  */
 class VariableDigitAppendingSubscriber extends JedisPubSub implements AbstractSubscriber {
-    void onMessage(final String channel, final String message) {
+    void onMessage(final String channel = VDAD.REDIS_MODEL_ID_LAST_COUNT, final String message) {
+        super.onMessage(channel, message)
         LOGGER.debug("< Subscribe < channel: $channel > Message received: $message")
         // Update the last counter on Redis Cache
         // Operations.doRedisSet(VDAD.REDIS_MODEL_ID_LAST_COUNT, message)
@@ -42,5 +43,30 @@ class VariableDigitAppendingSubscriber extends JedisPubSub implements AbstractSu
         if (message.equalsIgnoreCase("quit")) {
             this.unsubscribe(channel)
         }
+    }
+
+    @Override
+    public void onPMessage(String pattern, String channel, String message) {
+
+    }
+
+    @Override
+    public void onSubscribe(String channel, int subscribedChannels) {
+
+    }
+
+    @Override
+    public void onUnsubscribe(String channel, int subscribedChannels) {
+
+    }
+
+    @Override
+    public void onPUnsubscribe(String pattern, int subscribedChannels) {
+
+    }
+
+    @Override
+    public void onPSubscribe(String pattern, int subscribedChannels) {
+
     }
 }

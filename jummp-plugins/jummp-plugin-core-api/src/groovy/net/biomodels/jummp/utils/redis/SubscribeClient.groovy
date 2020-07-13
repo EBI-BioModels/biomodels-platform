@@ -21,8 +21,16 @@
 
 package net.biomodels.jummp.utils.redis
 
+import net.biomodels.jummp.core.subscribers.ModelIdGenerationListener
+import net.biomodels.jummp.core.subscribers.ModelViewSubscriber
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisPubSub
+
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
 
 /**
  * @short An implementation for Subscribers in Redis Pub/Sub mechanism
@@ -30,17 +38,20 @@ import redis.clients.jedis.JedisPubSub
  * @author <a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a>
  * @author <a href="mailto:mihai.glont@ebi.ac.uk">Mihai Glont</a>
  */
-class SubscribeClient extends Thread {
-
+class SubscribeClient {
+    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
     private String channel
-    private JedisPubSub listener
+    JedisPubSub listener = new ModelViewSubscriber()
 
-    void setChannelAndListener(final String channel, final JedisPubSub listener){
+    ExecutorService executor
+    Future future = null
+
+    void setChannelAndListener(final String channel, final JedisPubSub listener) {
         this.listener = listener
         this.channel = channel
     }
 
-    private void subscribe() {
+    void subscribe() {
         if (listener==null || channel==null){
             LOGGER.error("Error: SubClient > listener or channel is null")
         }
@@ -59,14 +70,59 @@ class SubscribeClient extends Thread {
         }
     }
 
-    @Override
-    void run() {
-        try {
-            LOGGER.debug("---------Subscription begins-------")
-            subscribe()
-            LOGGER.debug("---------Subscription ends-------")
-        } catch (Exception e){
-            e.printStackTrace()
+    synchronized void init() {
+        executor = Executors.newFixedThreadPool(2)
+        if (!executor.isTerminated()) {
+            LOGGER.debug("Start background thread for getting responses from backend through Redis")
+            executor = Executors.newFixedThreadPool(2)
+            Runnable task = new RedisListenerTask(new ModelViewSubscriber(), KeyCollection.REDIS_CHANNEL_MODEL_VIEW)
+            executor.execute(task)
+            executor.execute(new RedisListenerTask(new ModelIdGenerationListener(),
+                KeyCollection.REDIS_CHANNEL_MODEL_ID_LAST_USED_VALUE))
+        } else {
+            LOGGER.debug("Cannot start threading subscribers to poll Redis responses")
+        }
+    }
+
+    synchronized void destroy() {
+        if (future != null) {
+            try {
+                listener.unsubscribe()
+                executor.shutdownNow()
+                future = null
+                executor = null
+                LOGGER.debug("Background thread for getting responses through Redis closed")
+            } catch (Exception ex) {
+                LOGGER.error("Error in destroying Redis listener", ex)
+            }
+        }
+    }
+
+    class RedisListenerTask implements Runnable {
+        private final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
+        private JedisPubSub listener
+        private String channel
+
+        RedisListenerTask(final JedisPubSub listener, final String channel) {
+            this.listener = listener
+            this.channel = channel
+        }
+
+        void run() {
+            Jedis jedis = null
+            try {
+                Operations.jedisPool.getResource().withCloseable { Jedis jedis1 ->
+                    jedis = jedis1
+                    LOGGER.debug("Subscribing to the channel $channel")
+                    jedis.subscribe(listener, channel)
+                }
+            } catch (Exception ex) {
+                LOGGER.error("Error", ex)
+            } finally {
+                if (jedis != null)
+                    jedis.quit()
+                jedis = null
+            }
         }
     }
 }
