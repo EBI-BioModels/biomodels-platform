@@ -132,6 +132,10 @@ class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
         updateNextValueIfNeeded(lastUsedValue)
     }
 
+    String data(final String modelIdentifier) {
+        modelIdentifier[11..14]
+    }
+
     /**
      * Resets this decorator's internal counter.
      */

@@ -106,6 +106,10 @@ class DateAppendingDecorator extends AbstractAppendingDecorator {
         updateNextValueIfNeeded(lastUsedValue)
     }
 
+    String data(final String modelIdentifier) {
+        modelIdentifier[5..10]
+    }
+
     private String updateNextValueIfNeeded(String lastUsedValue) {
         String expectedDate = new Date().format(FORMAT)
         String currentDate = nextValue.get()

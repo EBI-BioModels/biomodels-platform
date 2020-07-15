@@ -96,5 +96,9 @@ class FixedLiteralAppendingDecorator extends AbstractAppendingDecorator {
     void refresh(final String lastUsedValue) {
         // Do nothing
     }
+
+    String data(final String modelIdentifier) {
+        modelIdentifier[0..4]
+    }
 }
 

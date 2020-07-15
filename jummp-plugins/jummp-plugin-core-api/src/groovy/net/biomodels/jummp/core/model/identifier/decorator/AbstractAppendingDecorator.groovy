@@ -61,6 +61,8 @@ abstract class AbstractAppendingDecorator implements OrderedModelIdentifierDecor
 
     abstract void refresh(final String lastUsedValue)
 
+    abstract String data(final String modelIdentifier)
+
     /**
      * Informs the generator of a change to this decorator's value.
      */

@@ -98,5 +98,9 @@ class FixedDigitAppendingDecorator extends AbstractAppendingDecorator {
      * Nothing to do.
      */
     void refresh(final String lastUsedValue) {}
+
+    String data(final String modelIdentifier) {
+        null
+    }
 }
 
