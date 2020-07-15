@@ -29,6 +29,7 @@ import net.biomodels.jummp.core.model.ValidationState
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.utils.ModelSubmissionHelper
 import net.biomodels.jummp.utils.RunScriptHelper
+import net.biomodels.jummp.utils.redis.Operations
 import org.apache.camel.CamelContext
 import org.springframework.security.core.Authentication
 
@@ -160,5 +161,26 @@ disp(ar_st_titles);
         tempFile.write(content)
         return tempFile
     }
+
+    void startBatchSubmissionWithTrigger() {
+        while (!(Operations.doRedisGet("run-batch-submission") as Boolean)) {
+            // sleep for 1 second
+            println("Waiting 1 second...")
+            Thread.sleep(1000)
+        }
+        // ready to go
+        runBatchSubmission()
+    }
 }
-new ConcurrentModelSubmitter(ctx: ctx).runBatchSubmission()
+/**
+ * Steps to enable the trigger
+ * 1. Run this script on different terminals to simulate BioModels' multiple concurrent running instances
+ * ./grailsw run-script scripts/SubmitModelsConcurrently.groovy >> logs/run-script-`date +%F`.log
+ *
+ * 2. When the lines 'Waiting 1 second...' begin appearing in the log file, it's time to make a bang by running the
+ * following from Redis CLI
+ * SET run-batch-submission true
+ *
+ * 3. Take your coffee and watch the log file
+ */
+new ConcurrentModelSubmitter(ctx: ctx).startBatchSubmissionWithTrigger()
