@@ -196,8 +196,6 @@ class ModelIdentifierUtils {
                         d = new FixedDigitAppendingDecorator(i, suffix, width)
                     } else {
                         d = new VariableDigitAppendingDecorator(i, suffix, width)
-                        // trigger decorator update
-                        d.lastUsedSuffix.set(suffix)
                     }
                     if (shouldComputeRegexes)
                         partitionRegex = ModelIdentifierPartitionRegexFactory.forNumericalPartition width

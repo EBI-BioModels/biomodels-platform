@@ -20,14 +20,23 @@
 
 package net.biomodels.jummp.core.model.identifier.generator
 
+import grails.util.Holders
 import groovy.transform.CompileStatic
+import net.biomodels.jummp.core.model.identifier.decorator.DateAppendingDecorator
 import net.biomodels.jummp.core.model.identifier.decorator.OrderedModelIdentifierDecorator
 import net.biomodels.jummp.core.model.identifier.ModelIdentifier
+import net.biomodels.jummp.core.model.identifier.decorator.VariableDigitAppendingDecorator
 import net.biomodels.jummp.core.model.identifier.support.GeneratorDetails
+import net.biomodels.jummp.utils.redis.KeyCollection
 import net.biomodels.jummp.utils.redis.Operations
 import net.biomodels.jummp.utils.redis.PublishClient
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+import redis.clients.jedis.Jedis
+import redis.clients.jedis.Transaction
+
+//import static org.junit.Assert.assertEquals
+//import static org.junit.Assert.assertNotNull
 
 /**
  * @short Default ModelIdentifierGenerator implementation for producing model identifiers.
@@ -40,8 +49,9 @@ class DefaultModelIdentifierGenerator extends AbstractModelIdentifierGenerator {
     private static final Log log = LogFactory.getLog(this)
     /* semaphore for the log threshold */
     private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
-    /* REDIS key/channel string for model identifier's last used value */
-    static final String REDIS_MODEL_ID_LAST_USED_VALUE = "model-id-last-used-value"
+
+    PublishClient publishClientService = Holders.grailsApplication.mainContext.getBean("publishClientService") as PublishClient
+
     @SuppressWarnings("GroovyUnusedDeclaration")
     DefaultModelIdentifierGenerator() {
     }
@@ -63,16 +73,33 @@ class DefaultModelIdentifierGenerator extends AbstractModelIdentifierGenerator {
     String generate() {
         ModelIdentifier identifier = new ModelIdentifier()
         final String MODEL_ID
-        def iterator = getDecoratorRegistry().iterator()
-        synchronized(ModelIdentifier.class) {
-            while (iterator.hasNext()) {
-                def decorator = iterator.next()
-                identifier.decorate(decorator)
+        synchronized (ModelIdentifier.class) {
+            Operations.jedisPool.getResource().withCloseable { Jedis jedis ->
+                Transaction t = jedis.multi()
+                jedis.watch(KeyCollection.MODEL_ID_LAST_USED_VALUE, KeyCollection.MODEL_ID_LAST_COUNT)
+                String lastUsedIdentifier = Operations.doRedisGet(KeyCollection.MODEL_ID_LAST_USED_VALUE)
+                log.debug("IDENTIFIER BASED ON $lastUsedIdentifier")
+                this.update(lastUsedIdentifier)
+                def iterator = getDecoratorRegistry().iterator()
+                while (iterator.hasNext()) {
+                    def decorator = iterator.next()
+                    identifier.decorate(decorator, lastUsedIdentifier)
+                }
+                MODEL_ID = identifier.getCurrentId()
+                if (MODEL_ID) {
+                    Operations.doRedisSet(KeyCollection.MODEL_ID_LAST_USED_VALUE, MODEL_ID)
+                    t.set(KeyCollection.MODEL_ID_LAST_USED_VALUE, MODEL_ID)
+                    String count = MODEL_ID[11..14]
+                    Operations.doRedisSet(KeyCollection.MODEL_ID_LAST_COUNT, count)
+                    t.set(KeyCollection.MODEL_ID_LAST_USED_VALUE, MODEL_ID)
+                    // TODO: use Pub/Sub in place of Get/Set
+                    // publishClientService?.publish(KeyCollection.REDIS_CHANNEL_MODEL_ID_LAST_USED_VALUE, MODEL_ID)
+                }
+                List<Object> resp = t.exec()
+                if (resp.size() != 2) {
+                    log.debug("Redis transaction cannot commit properly")
+                }
             }
-            MODEL_ID = identifier.getCurrentId()
-            Operations.doRedisSet(REDIS_MODEL_ID_LAST_USED_VALUE, MODEL_ID)
-            // TODO: fix Pub/Sub thread run
-            PublishClient.publish(REDIS_MODEL_ID_LAST_USED_VALUE, MODEL_ID)
         }
         if (IS_DEBUG_ENABLED) {
             log.debug "Produced a new model identifier $MODEL_ID."

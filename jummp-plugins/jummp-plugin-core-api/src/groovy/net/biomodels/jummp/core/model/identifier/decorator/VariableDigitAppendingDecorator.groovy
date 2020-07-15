@@ -20,11 +20,12 @@
 
 package net.biomodels.jummp.core.model.identifier.decorator
 
+import grails.util.Holders
 import groovy.transform.CompileStatic
+import net.biomodels.jummp.utils.redis.KeyCollection
 import net.biomodels.jummp.utils.redis.Operations
 import net.biomodels.jummp.utils.redis.PublishClient
 
-import java.util.concurrent.atomic.AtomicLong
 import net.biomodels.jummp.core.events.ModelIdentifierDecoratorUpdatedEvent
 import net.biomodels.jummp.core.model.identifier.ModelIdentifier
 import org.apache.commons.logging.Log
@@ -40,18 +41,14 @@ import org.apache.commons.logging.LogFactory
 class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
     /* the width of the suffix used to decorate model identifiers. */
     Integer WIDTH
-    /* the number used in the last model id, without padding. */
-    private final AtomicLong lastUsedSuffix = new AtomicLong(-1)
-    /* the value to use in the next id, without padding. Effectively, the dual of nextValue */
-    private final AtomicLong nextSuffix = new AtomicLong()
     /* the class logger */
     private static final Log log = LogFactory.getLog(this)
     /* semaphore for the log threshold */
     private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
-    /* REDIS key/channel string for model identifier's last counter */
-    static final String REDIS_MODEL_ID_LAST_COUNT = "model-id-last-count"
 
     Operations redisService
+
+    PublishClient publishClientService = Holders.grailsApplication.mainContext.getBean("publishClientService") as PublishClient
 
     /**
      * Throws an IllegalArgumentException if @p seed is below 1 or @p width is narrower than
@@ -75,8 +72,6 @@ class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
             log.warn("Minimum padding for fixed decorator '$seed' is $SUFFIX_WIDTH, not $width")
             width = SUFFIX_WIDTH
         }
-        nextSuffix.compareAndSet(0, seed)
-        nextValue.compareAndSet(null, "$seed".padLeft(width, '0'))
         WIDTH = width
         if (IS_DEBUG_ENABLED) {
             log.debug "Creating ${WIDTH}-digit $this"
@@ -86,31 +81,15 @@ class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
     /**
      * Modify model identifier @p modelIdentifier.
      */
-    ModelIdentifier decorate(ModelIdentifier modelIdentifier) {
-        final String lastCount = Operations.doRedisGet(REDIS_MODEL_ID_LAST_COUNT)
-        Integer nextCount = !lastCount ? 1 : (Integer.parseInt(lastCount) + 1)
-        log.debug "Last used suffix: $lastUsedSuffix <---> Next suffix: $nextCount"
-        // TODO: get rid of the following statement if we don't need to handle the next count
-        PublishClient.publish(REDIS_MODEL_ID_LAST_COUNT, "$nextCount".toString())
-        /**
-         * publishing the next count as a message, then subscribers can see the message
-         * The subscriber which updates the last counter is probably out of the synchronisation
-         * process applied for the entire ModelIdentifier.class. The statement below aims to update
-         * the last counter straightaway.
-         * {@see DefaultModelIdentifierGenerator.generate()}
-         */
-        Operations.doRedisSet(REDIS_MODEL_ID_LAST_COUNT, "$nextCount".toString())
     ModelIdentifier decorate(ModelIdentifier modelIdentifier, String lastUsedIdentifier) {
-        final String lastUsedCount = lastUsedIdentifier[11..14]
-        // TODO: maintain the map of the used counts each day and clean it on the next day
-        final String next = addLeadingZero(nextCount)
         if (!modelIdentifier) {
             log.warn "Undefined model identifier encountered - decorating a new one instead."
             modelIdentifier = new ModelIdentifier()
         }
         String currentId = modelIdentifier.getCurrentId()
+        String next = updateNextValueIfNeeded(lastUsedIdentifier)
         if (IS_DEBUG_ENABLED) {
-            log.debug "Decorating $currentId with $next."
+            log.debug "Decorating $currentId with $next"
         }
         modelIdentifier.append(next)
         return modelIdentifier
@@ -141,9 +120,9 @@ class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
      */
     void reset() {
         // Resets the last counter to 0
-        log.debug("Resetting the counter to 0")
-        PublishClient.publish(REDIS_MODEL_ID_LAST_COUNT, "0")
-        redisService.doRedisSet(REDIS_MODEL_ID_LAST_COUNT, "0")
+        log.debug("Resetting the last counter to 0000")
+        publishClientService.publish(KeyCollection.REDIS_CHANNEL_MODEL_ID_LAST_COUNT, "0000")
+        redisService.doRedisSet(KeyCollection.MODEL_ID_LAST_COUNT, "0000")
     }
 
     private String addLeadingZero(final int newSuffix) {
@@ -151,15 +130,16 @@ class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
         newValue
     }
 
-    private void updateNextValueIfNeeded(final String lastUsedValue) {
-        if (lastUsedSuffix.get() == nextSuffix.get()) {
-            long newSuffix = nextSuffix.incrementAndGet()
-            String newValue = "${newSuffix}".padLeft(WIDTH, '0')
-            nextValue.set(newValue)
-            if (IS_DEBUG_ENABLED) {
-                log.debug "Incremented nextValue to ${newValue}"
-            }
-            super.informOfChange(new ModelIdentifierDecoratorUpdatedEvent(this, newValue))
-        }
+    private String updateNextValueIfNeeded(final String lastUsedValue) {
+        final String lastUsedCount = data(lastUsedValue)
+        final String lastCount = Operations.doRedisGet(KeyCollection.MODEL_ID_LAST_COUNT)
+        log.debug("Last Count (from Redis): $lastCount")
+        // The next counter will be either 1 (when the date segment has been reset and the counter has been reset)
+        // or the next value of the last used count (when the date segment was reset)
+        Integer nextCount = (lastCount == "0000") ? 1 : (Integer.parseInt(lastUsedCount) + 1)
+        final String newValue = addLeadingZero(nextCount)
+        log.debug("Last used suffix (extracted from $lastUsedValue): $lastUsedCount <---> Next suffix: $newValue")
+        super.informOfChange(new ModelIdentifierDecoratorUpdatedEvent(this, newValue))
+        return newValue
     }
 }

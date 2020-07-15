@@ -182,7 +182,6 @@ beans = {
         idSettings  = idGeneratorSettings.get('submission')
         initializerBeanName = "submissionIdGeneratorInitializer"
         shouldComputeRegex  = !regexPresent
-        publishClientService = ref('publishClientService')
     }
 
     Map<String, ConfigObject> optionalGeneratorBeanDefs = [:]

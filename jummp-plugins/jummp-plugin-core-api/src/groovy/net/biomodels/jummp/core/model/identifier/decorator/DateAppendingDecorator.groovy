@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2018 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -67,15 +67,14 @@ class DateAppendingDecorator extends AbstractAppendingDecorator {
         if (IS_DEBUG_ENABLED) {
             log.debug "Creating $this that formats ${new Date()} as $sampleDate"
         }
-        nextValue.compareAndSet(null, sampleDate)
         FORMAT = format
     }
 
     /**
      * Modify model identifier @p modelIdentifier.
      */
-    ModelIdentifier decorate(ModelIdentifier modelIdentifier, String lastUsed) {
-        String next = updateNextValueIfNeeded(lastUsed)
+    ModelIdentifier decorate(ModelIdentifier modelIdentifier, String lastUsedIdentifier) {
+        String next = updateNextValueIfNeeded(lastUsedIdentifier)
         if (modelIdentifier) {
             String currentId = modelIdentifier.getCurrentId()
             if (IS_DEBUG_ENABLED) {
@@ -112,14 +111,16 @@ class DateAppendingDecorator extends AbstractAppendingDecorator {
 
     private String updateNextValueIfNeeded(String lastUsedValue) {
         String expectedDate = new Date().format(FORMAT)
-        String currentDate = nextValue.get()
-        boolean needsUpdating = expectedDate != currentDate
+        lastUsedValue = data(lastUsedValue)
+        boolean needsUpdating = expectedDate != lastUsedValue
         if (needsUpdating) {
             if (IS_DEBUG_ENABLED) {
-                log.debug "Updating nextValue from $currentDate to $expectedDate"
+                log.debug "Updating nextValue from $lastUsedValue to $expectedDate"
             }
-            nextValue.compareAndSet(currentDate, expectedDate)
             super.informOfChange(new DateModelIdentifierDecoratorUpdatedEvent(this, expectedDate))
+            return expectedDate
+        } else {
+            return lastUsedValue
         }
     }
 }
