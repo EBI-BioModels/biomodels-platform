@@ -48,7 +48,7 @@ interface ModelIdentifierDecorator {
     /**
      * Modify model identifier @p modelIdentifier.
      */
-    ModelIdentifier decorate(ModelIdentifier modelIdentifier)
+    ModelIdentifier decorate(ModelIdentifier modelIdentifier, String lastUsed)
     /**
      * States whether a decorator implementation appends the same suffix to all
      * model identifiers, in which case it is considered fixed, or a different
@@ -59,7 +59,7 @@ interface ModelIdentifierDecorator {
      * Updates the value of the suffix that a decorator implementation will use
      * the next time its decorate() method is called.
      */
-    void refresh()
+    void refresh(final String lastUsedValue)
     /**
      * Sets the generator to which this decorator instance belongs.
      *

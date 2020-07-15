@@ -76,7 +76,7 @@ final class ChecksumAppendingDecorator extends FixedLiteralAppendingDecorator {
      * the argument must not be undefined.
      */
     @Override
-    ModelIdentifier decorate(ModelIdentifier modelIdentifier) {
+    ModelIdentifier decorate(ModelIdentifier modelIdentifier, String lastUsedIdentifier) {
         if (!modelIdentifier) {
             //the checksum for "" is always the same
             log.error "Undefined model identifier encountered - cannot compute checksum."

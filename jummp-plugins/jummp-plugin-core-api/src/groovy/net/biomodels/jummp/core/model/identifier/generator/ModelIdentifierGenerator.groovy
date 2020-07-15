@@ -35,7 +35,7 @@ interface ModelIdentifierGenerator {
     /**
      * Asks its variable decorators to prepare the values they will use for the next identifier.
      */
-    void update()
+    void update(final String lastUsedValue)
 
     /**
      * Callback for ModelIdentifierDecorator updates.

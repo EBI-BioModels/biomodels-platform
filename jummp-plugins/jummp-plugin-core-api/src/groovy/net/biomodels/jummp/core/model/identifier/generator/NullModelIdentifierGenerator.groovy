@@ -52,7 +52,7 @@ final class NullModelIdentifierGenerator extends AbstractModelIdentifierGenerato
     /**
      * Nothing to do.
      */
-    void update() {
+    void update(final String lastUsedValue) {
     }
 
     @Override

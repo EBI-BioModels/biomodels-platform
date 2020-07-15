@@ -55,11 +55,11 @@ abstract class AbstractAppendingDecorator implements OrderedModelIdentifierDecor
      */
     ModelIdentifierGenerator generator
 
-    abstract ModelIdentifier decorate(ModelIdentifier modelIdentifier)
+    abstract ModelIdentifier decorate(ModelIdentifier modelIdentifier, String lastUsedIdentifier)
 
     abstract boolean isFixed()
 
-    abstract void refresh()
+    abstract void refresh(final String lastUsedValue)
 
     /**
      * Informs the generator of a change to this decorator's value.

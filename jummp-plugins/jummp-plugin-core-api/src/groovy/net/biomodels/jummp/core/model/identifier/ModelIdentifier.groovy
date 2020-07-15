@@ -31,7 +31,7 @@ import org.apache.commons.logging.LogFactory
  * ModelIdentifierDecorator interface.
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
-public class ModelIdentifier {
+class ModelIdentifier {
     /* the class logger */
     private static final Log log = LogFactory.getLog(this)
     /* semaphore for the log threshold */
@@ -43,7 +43,7 @@ public class ModelIdentifier {
         id = new StringBuffer()
     }
 
-    ModelIdentifier decorate(ModelIdentifierDecorator decorator) {
+    ModelIdentifier decorate(ModelIdentifierDecorator decorator, String lastUsed) {
         if (!decorator) {
             log.warn "Undefined decorator asked to append $this"
             return this
@@ -51,7 +51,7 @@ public class ModelIdentifier {
         if (IS_DEBUG_ENABLED) {
             log.debug "Asking $decorator to decorate $this."
         }
-        decorator.decorate(this)
+        decorator.decorate(this, lastUsed)
     }
 
     ModelIdentifier append(String snippet) {
@@ -71,7 +71,7 @@ public class ModelIdentifier {
         return "ModelIdentifier $id"
     }
 
-    public String getCurrentId() {
+    String getCurrentId() {
         return id.toString()
     }
 

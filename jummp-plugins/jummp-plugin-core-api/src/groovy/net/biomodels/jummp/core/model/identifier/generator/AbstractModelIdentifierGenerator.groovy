@@ -88,7 +88,7 @@ abstract class AbstractModelIdentifierGenerator implements ModelIdentifierGenera
 
     abstract String generate()
 
-    abstract void update()
+    abstract void update(final String lastUsedValue)
 
     @CompileStatic
     SortedSet<? extends OrderedModelIdentifierDecorator> getDecoratorRegistry() {

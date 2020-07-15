@@ -100,6 +100,8 @@ class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
          * {@see DefaultModelIdentifierGenerator.generate()}
          */
         Operations.doRedisSet(REDIS_MODEL_ID_LAST_COUNT, "$nextCount".toString())
+    ModelIdentifier decorate(ModelIdentifier modelIdentifier, String lastUsedIdentifier) {
+        final String lastUsedCount = lastUsedIdentifier[11..14]
         // TODO: maintain the map of the used counts each day and clean it on the next day
         final String next = addLeadingZero(nextCount)
         if (!modelIdentifier) {
@@ -126,8 +128,8 @@ class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
     /**
      * Updates the value that will be appended to the next model identifier if necessary.
      */
-    void refresh() {
-        updateNextValueIfNeeded()
+    void refresh(final String lastUsedValue) {
+        updateNextValueIfNeeded(lastUsedValue)
     }
 
     /**
@@ -145,7 +147,7 @@ class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
         newValue
     }
 
-    private void updateNextValueIfNeeded() {
+    private void updateNextValueIfNeeded(final String lastUsedValue) {
         if (lastUsedSuffix.get() == nextSuffix.get()) {
             long newSuffix = nextSuffix.incrementAndGet()
             String newValue = "${newSuffix}".padLeft(WIDTH, '0')

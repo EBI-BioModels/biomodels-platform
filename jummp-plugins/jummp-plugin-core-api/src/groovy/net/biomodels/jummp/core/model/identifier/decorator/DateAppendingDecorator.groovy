@@ -74,20 +74,19 @@ class DateAppendingDecorator extends AbstractAppendingDecorator {
     /**
      * Modify model identifier @p modelIdentifier.
      */
-    ModelIdentifier decorate(ModelIdentifier modelIdentifier) {
-        updateNextValueIfNeeded()
+    ModelIdentifier decorate(ModelIdentifier modelIdentifier, String lastUsed) {
+        String next = updateNextValueIfNeeded(lastUsed)
         if (modelIdentifier) {
             String currentId = modelIdentifier.getCurrentId()
-            final String next = nextValue.get()
             if (IS_DEBUG_ENABLED) {
-                log.debug "Decorating $currentId with $next."
+                log.debug "Decorating $currentId with $next"
             }
             modelIdentifier.append(next)
             return modelIdentifier
         } else {
-            log.warn "Undefined model identifier encountered - decorating a new one instead."
+            log.warn "Undefined model identifier encountered - decorating a new one instead"
             ModelIdentifier result = new ModelIdentifier()
-            result.append(nextValue.get())
+            result.append(next)
             return result
         }
     }
@@ -103,11 +102,11 @@ class DateAppendingDecorator extends AbstractAppendingDecorator {
     /**
      * Updates the value that will be appended to the next model identifier if necessary.
      */
-    void refresh() {
-        updateNextValueIfNeeded()
+    void refresh(final String lastUsedValue) {
+        updateNextValueIfNeeded(lastUsedValue)
     }
 
-    private void updateNextValueIfNeeded() {
+    private String updateNextValueIfNeeded(String lastUsedValue) {
         String expectedDate = new Date().format(FORMAT)
         String currentDate = nextValue.get()
         boolean needsUpdating = expectedDate != currentDate

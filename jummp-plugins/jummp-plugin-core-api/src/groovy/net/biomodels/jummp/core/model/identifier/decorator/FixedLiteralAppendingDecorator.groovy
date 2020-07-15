@@ -68,7 +68,7 @@ class FixedLiteralAppendingDecorator extends AbstractAppendingDecorator {
     /**
      * Modify model identifier @p modelIdentifier.
      */
-    ModelIdentifier decorate(ModelIdentifier modelIdentifier) {
+    ModelIdentifier decorate(ModelIdentifier modelIdentifier, String lastUsedIdentifier) {
         if (modelIdentifier) {
             String currentId = modelIdentifier.getCurrentId()
             final String next = nextValue.get()
@@ -93,7 +93,8 @@ class FixedLiteralAppendingDecorator extends AbstractAppendingDecorator {
     /**
      * Nothing to do.
      */
-    void refresh() {
+    void refresh(final String lastUsedValue) {
+        // Do nothing
     }
 }
 

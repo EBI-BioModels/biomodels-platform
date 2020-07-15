@@ -83,11 +83,11 @@ class DefaultModelIdentifierGenerator extends AbstractModelIdentifierGenerator {
     /**
      * Asks decorators in DECORATOR_REGISTRY to prepare new values for the next identifier.
      */
-    void update() {
+    void update(final String lastUsedValue) {
         def iterator = getDecoratorRegistry().iterator()
         while (iterator.hasNext()) {
             def decorator = iterator.next()
-            decorator.isFixed() ?: decorator.refresh()
+            decorator.isFixed() ?: decorator.refresh(lastUsedValue)
         }
     }
 }
