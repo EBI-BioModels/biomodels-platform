@@ -91,11 +91,16 @@ class UsermanagementController {
     @Secured(["isAuthenticated()"])
     def show() {
         User currentUser = userService.getCurrentUser()
+        String username = currentUser.username
+        List notifications = notificationService.getNotificationPermissions(username)
+        String titlePage = "${userService.getRealName(username)} | BioModels"
         render  view: "show",
-                model: [postUrl: "", flashMessage: checkForMessage(),
+                model: [postUrl: "",
+                        flashMessage: checkForMessage(),
                         validationErrorOn: checkForErrorBean(),
                         user: currentUser,
-                        notificationPermissions: notificationService.getNotificationPermissions(currentUser.username)]
+                        titlePage: titlePage,
+                        notificationPermissions: notifications]
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
