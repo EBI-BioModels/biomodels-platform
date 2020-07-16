@@ -28,4 +28,9 @@ class NullModelIdentifierGeneratorInitializer implements ModelIdentifierGenerato
     String getLastUsedValue() {
         return null
     }
+
+    @Override
+    String getRedisKeyForLastUsedValue() {
+        return null
+    }
 }

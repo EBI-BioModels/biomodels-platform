@@ -39,7 +39,9 @@ final class KeyCollection {
 
     // The key pattern for the model publication identifier's last used value,
     // for example, BIOMD0000000915
-    public static final String PUB_ID_LAST_USED_VALUE = "model-pub-id-last-used-value"
+    public static final String PUBLICATION_ID_LAST_USED_VALUE = "publication-id-last-used-value"
+    public static final String PUBLICATION_ID_LAST_USED_COUNT = "publication-id-last-used-count"
+
     public static final String REDIS_CHANNEL_MODEL_VIEW = "ModelView"
     public static final String REDIS_CHANNEL_MODEL_ID_LAST_USED_VALUE = "RedisChannelModelIdLastUsedValue"
     public static final String REDIS_CHANNEL_MODEL_ID_LAST_COUNT = "RedisChannelModelIdLastCount"

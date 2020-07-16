@@ -67,4 +67,12 @@ please initialise the dataSource bean prior to invoking this method""")
 
         result
     }
+
+
+    /**
+     * Returns Redis key of the last used value
+     *
+     * @return A {@link String} representing Redis key which is capturing the last used value
+     */
+    String getRedisKeyForLastUsedValue() {}
 }

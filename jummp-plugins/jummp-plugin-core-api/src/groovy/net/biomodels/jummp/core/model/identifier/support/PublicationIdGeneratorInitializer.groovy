@@ -20,6 +20,7 @@
 
 package net.biomodels.jummp.core.model.identifier.support
 
+import net.biomodels.jummp.utils.redis.KeyCollection
 import org.springframework.beans.factory.annotation.Autowired
 
 import javax.sql.DataSource
@@ -49,5 +50,10 @@ class PublicationIdGeneratorInitializer extends AbstractModelIdentifierGenerator
         }
 
         result
+    }
+
+    @Override
+    String getRedisKeyForLastUsedValue() {
+        KeyCollection.PUBLICATION_ID_LAST_USED_VALUE
     }
 }

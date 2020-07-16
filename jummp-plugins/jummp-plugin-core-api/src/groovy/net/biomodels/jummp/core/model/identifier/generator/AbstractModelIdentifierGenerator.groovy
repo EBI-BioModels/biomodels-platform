@@ -25,6 +25,7 @@ import net.biomodels.jummp.core.model.identifier.ModelIdentifier
 import net.biomodels.jummp.core.events.DateModelIdentifierDecoratorUpdatedEvent
 import net.biomodels.jummp.core.events.ModelIdentifierDecoratorUpdatedEvent
 import net.biomodels.jummp.core.model.identifier.decorator.AbstractAppendingDecorator
+import net.biomodels.jummp.core.model.identifier.decorator.FixedLiteralAppendingDecorator as FLAD
 import net.biomodels.jummp.core.model.identifier.decorator.OrderedModelIdentifierDecorator
 import net.biomodels.jummp.core.model.identifier.decorator.VariableDigitAppendingDecorator as VDAD
 import net.biomodels.jummp.core.model.identifier.support.GeneratorDetails
@@ -128,6 +129,24 @@ abstract class AbstractModelIdentifierGenerator implements ModelIdentifierGenera
                 }
             }
         }
+    }
+
+    /**
+     * Determines type of generators. It is either submission or publication identifier generator.
+     * The manner to detect is based decorators making up identifiers in which there is at least a fixed literal
+     * appending decorator.
+     *
+     * @return A {@link String} representing type of identifier generator (i.e. BIOMD or MODEL)
+     */
+    String typeOfIdentifierGenerator() {
+        String type = ""
+        FLAD f = decoratorRegistry.find {
+            it instanceof FLAD
+        } as FLAD
+        if (f) {
+            type = f.SUFFIX
+        }
+        return type
     }
 
     @CompileStatic

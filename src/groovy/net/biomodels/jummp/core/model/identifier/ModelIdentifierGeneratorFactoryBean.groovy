@@ -26,7 +26,6 @@ import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGenera
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.support.GeneratorDetails
 import net.biomodels.jummp.core.model.identifier.support.ModelIdentifierGeneratorInitializer as MIGI
-import net.biomodels.jummp.utils.redis.KeyCollection
 import net.biomodels.jummp.utils.redis.Operations
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -103,10 +102,10 @@ class ModelIdentifierGeneratorFactoryBean implements FactoryBean<ModelIdentifier
             }
             // get the last used value from the database
             String seed = Objects.requireNonNull(initializer).lastUsedValue
-            String cachedSeed = Operations.doRedisGet(KeyCollection.MODEL_ID_LAST_USED_VALUE)
+            String cachedSeed = Operations.doRedisGet(initializer.redisKeyForLastUsedValue)
             String type
             if (!cachedSeed) {
-                Operations.doRedisSet(KeyCollection.MODEL_ID_LAST_USED_VALUE, seed)
+                Operations.doRedisSet(initializer.redisKeyForLastUsedValue, seed)
                 type = "from database"
             } else {
                 seed = cachedSeed
