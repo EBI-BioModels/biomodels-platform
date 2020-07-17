@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -28,12 +28,12 @@
 * that of the covered work.}
 **/
 
-
-
-
+package net.biomodels.jummp.security
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.SpringSecurityUtils
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.security.access.annotation.Secured
 import org.springframework.security.authentication.AccountExpiredException
 import org.springframework.security.authentication.CredentialsExpiredException
@@ -58,6 +58,7 @@ class LoginController {
      */
     def springSecurityService
 
+    private Logger logger = LoggerFactory.getLogger(this.getClass())
     /**
      * Default action; redirects to 'defaultTargetUrl' if logged in, /login/auth otherwise.
      */
@@ -118,25 +119,20 @@ class LoginController {
         if (exception) {
             if (exception instanceof AccountExpiredException) {
                 msg = g.message(code: "springSecurity.errors.login.expired")
-            }
-            else if (exception instanceof CredentialsExpiredException) {
+            } else if (exception instanceof CredentialsExpiredException) {
                 msg = g.message(code: "springSecurity.errors.login.passwordExpired")
-            }
-            else if (exception instanceof DisabledException) {
+            } else if (exception instanceof DisabledException) {
                 msg = g.message(code: "springSecurity.errors.login.disabled")
-            }
-            else if (exception instanceof LockedException) {
+            } else if (exception instanceof LockedException) {
                 msg = g.message(code: "springSecurity.errors.login.locked")
-            }
-            else {
+            } else {
                 msg = g.message(code: "springSecurity.errors.login.fail")
             }
         }
-
+        logger.debug("${msg} --- Login payload: ${params}: ${session}")
         if (springSecurityService.isAjax(request)) {
             render([error: msg] as JSON)
-        }
-        else {
+        } else {
             flash.flashMessage = msg
             redirect action: 'auth', params: params
         }

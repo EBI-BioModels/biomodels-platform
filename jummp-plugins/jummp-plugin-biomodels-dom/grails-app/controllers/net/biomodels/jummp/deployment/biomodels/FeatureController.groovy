@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2018 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -26,6 +26,8 @@ import grails.plugin.springsecurity.annotation.Secured
  * This controller aims to serve special features
  */
 class FeatureController {
+    def featureService
+
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def agedbrain() {
     }
@@ -33,5 +35,10 @@ class FeatureController {
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def path2models() {
 
+    }
+
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def covid19() {
+        [content: featureService.covid19PageContent]
     }
 }
