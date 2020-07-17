@@ -47,6 +47,7 @@
             </li>
             <li><g:link mapping="agedbrain">Neurodegeneration models</g:link></li>
             <li><g:link mapping="path2models">Path2Models models</g:link></li>
+            <li><g:link mapping="covid19">COVID-19</g:link></li>
             <li>
                 <a href="${g.createLink(controller: 'pdgsmm', action: 'index')}">
                     PDGSM models
