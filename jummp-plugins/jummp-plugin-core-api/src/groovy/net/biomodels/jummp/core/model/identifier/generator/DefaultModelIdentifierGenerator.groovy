@@ -66,54 +66,67 @@ class DefaultModelIdentifierGenerator extends AbstractModelIdentifierGenerator {
      * Generates a unique model identifier.
      */
     String generate() {
-        ModelIdentifier identifier = new ModelIdentifier()
-        final String MODEL_ID
         synchronized (ModelIdentifier.class) {
-            Operations.jedisPool.getResource().withCloseable { Jedis jedis ->
-                Transaction t = jedis.multi()
-                String generatorType = typeOfIdentifierGenerator()
-                String modelIdLastUsedValue
-                String modelIdLastUsedCount
-                if (generatorType == "BIOMD") {
-                    modelIdLastUsedValue = KeyCollection.PUBLICATION_ID_LAST_USED_VALUE
-                    modelIdLastUsedCount = KeyCollection.PUBLICATION_ID_LAST_USED_COUNT
-                } else {
-                    modelIdLastUsedValue = KeyCollection.MODEL_ID_LAST_USED_VALUE
-                    modelIdLastUsedCount = KeyCollection.MODEL_ID_LAST_COUNT
-                }
-                jedis.watch(modelIdLastUsedValue, modelIdLastUsedCount)
-                String lastUsedIdentifier = Operations.doRedisGet(modelIdLastUsedValue)
-                log.debug("IDENTIFIER BASED ON $lastUsedIdentifier")
-                this.update(lastUsedIdentifier)
-                def iterator = getDecoratorRegistry().iterator()
-                while (iterator.hasNext()) {
-                    def decorator = iterator.next()
-                    identifier.decorate(decorator, lastUsedIdentifier)
-                }
-                MODEL_ID = identifier.getCurrentId()
-                if (MODEL_ID) {
-                    Operations.doRedisSet(modelIdLastUsedValue, MODEL_ID)
-                    t.set(modelIdLastUsedValue, MODEL_ID)
-                    String count
-                    // TODO: refactor this using ModelIdentifierPartitionManager or Decorator
-                    // using the variable appending decorator to guess the last used count
-                    if (generatorType == "BIOMD") {
-                        count = MODEL_ID[5..14]
-                    } else {
-                        count = MODEL_ID[11..14]
+            int times = 0
+            int maxTries = 5
+            while (true) {
+                try {
+                    ModelIdentifier identifier = new ModelIdentifier()
+                    final String MODEL_ID
+                    Operations.jedisPool.getResource().withCloseable { Jedis jedis ->
+                        Transaction t = jedis.multi()
+                        String generatorType = typeOfIdentifierGenerator()
+                        String modelIdLastUsedValue
+                        String modelIdLastUsedCount
+                        if (generatorType == "BIOMD") {
+                            modelIdLastUsedValue = KeyCollection.PUBLICATION_ID_LAST_USED_VALUE
+                            modelIdLastUsedCount = KeyCollection.PUBLICATION_ID_LAST_USED_COUNT
+                        } else {
+                            modelIdLastUsedValue = KeyCollection.MODEL_ID_LAST_USED_VALUE
+                            modelIdLastUsedCount = KeyCollection.MODEL_ID_LAST_COUNT
+                        }
+                        jedis.watch(modelIdLastUsedValue, modelIdLastUsedCount)
+                        String lastUsedIdentifier = Operations.doRedisGet(modelIdLastUsedValue)
+                        log.debug("IDENTIFIER BASED ON $lastUsedIdentifier")
+                        this.update(lastUsedIdentifier)
+                        def iterator = getDecoratorRegistry().iterator()
+                        while (iterator.hasNext()) {
+                            def decorator = iterator.next()
+                            identifier.decorate(decorator, lastUsedIdentifier)
+                        }
+                        MODEL_ID = identifier.getCurrentId()
+                        if (MODEL_ID) {
+                            Operations.doRedisSet(modelIdLastUsedValue, MODEL_ID)
+                            t.set(modelIdLastUsedValue, MODEL_ID)
+                            String count
+                            // TODO: refactor this using ModelIdentifierPartitionManager or Decorator
+                            // using the variable appending decorator to guess the last used count
+                            if (generatorType == "BIOMD") {
+                                count = MODEL_ID[5..14]
+                            } else {
+                                count = MODEL_ID[11..14]
+                            }
+                            Operations.doRedisSet(modelIdLastUsedCount, count)
+                        }
+                        List<Object> resp = t.exec()
+                        if (resp.size() != 2) {
+                            log.debug("Redis transaction cannot commit properly")
+                        }
                     }
-                    Operations.doRedisSet(modelIdLastUsedCount, count)
-                }
-                List<Object> resp = t.exec()
-                if (resp.size() != 2) {
-                    log.debug("Redis transaction cannot commit properly")
+
+                    if (IS_DEBUG_ENABLED) {
+                        log.debug "Produced a new model identifier $MODEL_ID."
+                    }
+                    return MODEL_ID
+                } catch (Exception e) {
+                    log.debug("Trying to generate model identifier $times...")
+                    if (++times == maxTries) {
+                        log.error("Cannot produce a model identifier")
+                        throw e
+                    }
                 }
             }
         }
-        if (IS_DEBUG_ENABLED) {
-            log.debug "Produced a new model identifier $MODEL_ID."
-        }
-        return MODEL_ID
     }
 
     /**
