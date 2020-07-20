@@ -22,6 +22,7 @@ package net.biomodels.jummp.core.model.identifier.generator
 
 import grails.util.Holders
 import groovy.transform.CompileStatic
+import net.biomodels.jummp.core.model.identifier.decorator.AbstractAppendingDecorator
 import net.biomodels.jummp.core.model.identifier.decorator.OrderedModelIdentifierDecorator
 import net.biomodels.jummp.core.model.identifier.ModelIdentifier
 import net.biomodels.jummp.core.model.identifier.support.GeneratorDetails
@@ -89,23 +90,20 @@ class DefaultModelIdentifierGenerator extends AbstractModelIdentifierGenerator {
                         String lastUsedIdentifier = Operations.doRedisGet(modelIdLastUsedValue)
                         log.debug("IDENTIFIER BASED ON $lastUsedIdentifier")
                         this.update(lastUsedIdentifier)
+                        Map<Integer, String> iDParts = new LinkedHashMap<>()
                         def iterator = getDecoratorRegistry().iterator()
                         while (iterator.hasNext()) {
-                            def decorator = iterator.next()
+                            def decorator = iterator.next() as AbstractAppendingDecorator
+                            iDParts.put(decorator.order, decorator.partition.value)
                             identifier.decorate(decorator, lastUsedIdentifier)
                         }
+                        log.debug "Map of the identifier partitions: ${iDParts.dump()}"
                         MODEL_ID = identifier.getCurrentId()
                         if (MODEL_ID) {
                             Operations.doRedisSet(modelIdLastUsedValue, MODEL_ID)
                             t.set(modelIdLastUsedValue, MODEL_ID)
-                            String count
-                            // TODO: refactor this using ModelIdentifierPartitionManager or Decorator
-                            // using the variable appending decorator to guess the last used count
-                            if (generatorType == "BIOMD") {
-                                count = MODEL_ID[5..14]
-                            } else {
-                                count = MODEL_ID[11..14]
-                            }
+                            // the last decorator is considered as the counter
+                            String count = iDParts.values().last()
                             Operations.doRedisSet(modelIdLastUsedCount, count)
                         }
                         List<Object> resp = t.exec()

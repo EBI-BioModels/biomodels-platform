@@ -29,8 +29,6 @@ import org.apache.commons.logging.LogFactory
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
 class FixedDigitAppendingDecorator extends AbstractAppendingDecorator {
-    /* the width of the suffix used to decorate model identifiers. */
-    final int WIDTH
     /* the class logger */
     private static final Log log = LogFactory.getLog(this)
     /* semaphore for the log threshold */
@@ -71,18 +69,22 @@ class FixedDigitAppendingDecorator extends AbstractAppendingDecorator {
      * Modify model identifier @p modelIdentifier.
      */
     ModelIdentifier decorate(ModelIdentifier modelIdentifier, String lastUsedIdentifier) {
+        String next
         if (modelIdentifier) {
             String currentId = modelIdentifier.getCurrentId()
-            final String next = nextValue.get()
+            next = nextValue.get()
             if (IS_DEBUG_ENABLED) {
                 log.debug "Decorating $currentId with $next"
             }
             modelIdentifier.append(next)
+            partition.value = next
             return modelIdentifier
         } else {
             log.warn "Undefined model identifier encountered - decorating a new one instead."
             ModelIdentifier result = new ModelIdentifier()
-            result.append(nextValue.get())
+            next = nextValue.get()
+            result.append(next)
+            partition.value = next
             return result
         }
     }
@@ -98,9 +100,5 @@ class FixedDigitAppendingDecorator extends AbstractAppendingDecorator {
      * Nothing to do.
      */
     void refresh(final String lastUsedValue) {}
-
-    String data(final String modelIdentifier) {
-        null
-    }
 }
 

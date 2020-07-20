@@ -68,6 +68,7 @@ class DateAppendingDecorator extends AbstractAppendingDecorator {
             log.debug "Creating $this that formats ${new Date()} as $sampleDate"
         }
         FORMAT = format
+        WIDTH = format.length()
     }
 
     /**
@@ -81,11 +82,13 @@ class DateAppendingDecorator extends AbstractAppendingDecorator {
                 log.debug "Decorating $currentId with $next"
             }
             modelIdentifier.append(next)
+            partition.value = next
             return modelIdentifier
         } else {
             log.warn "Undefined model identifier encountered - decorating a new one instead"
             ModelIdentifier result = new ModelIdentifier()
             result.append(next)
+            partition.value = next
             return result
         }
     }
@@ -103,10 +106,6 @@ class DateAppendingDecorator extends AbstractAppendingDecorator {
      */
     void refresh(final String lastUsedValue) {
         updateNextValueIfNeeded(lastUsedValue)
-    }
-
-    String data(final String modelIdentifier) {
-        modelIdentifier[5..10]
     }
 
     private String updateNextValueIfNeeded(String lastUsedValue) {

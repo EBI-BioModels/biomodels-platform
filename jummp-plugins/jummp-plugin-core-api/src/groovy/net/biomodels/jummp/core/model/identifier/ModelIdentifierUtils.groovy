@@ -172,6 +172,7 @@ class ModelIdentifierUtils {
                     d = new DateAppendingDecorator(i, format)
                     // don't lose the last value used by this decorator
                     d.nextValue.set(p.value)
+                    d.setPartition(p)
                     if (shouldComputeRegexes)
                         partitionRegex = ModelIdentifierPartitionRegexFactory.forDatePartition format
                     break
@@ -185,6 +186,7 @@ class ModelIdentifierUtils {
                 case LiteralModelIdentifierPartition:
                     String suffix = p.value
                     d = new FixedLiteralAppendingDecorator(i, suffix)
+                    d.setPartition(p)
                     if (shouldComputeRegexes)
                         partitionRegex = ModelIdentifierPartitionRegexFactory.forLiteral suffix
                     // this is a fixed decorator, so nextValue does not need updating
@@ -197,6 +199,7 @@ class ModelIdentifierUtils {
                     } else {
                         d = new VariableDigitAppendingDecorator(i, suffix, width)
                     }
+                    d.setPartition(p)
                     if (shouldComputeRegexes)
                         partitionRegex = ModelIdentifierPartitionRegexFactory.forNumericalPartition width
                     break

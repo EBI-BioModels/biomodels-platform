@@ -39,8 +39,6 @@ import org.apache.commons.logging.LogFactory
  */
 @CompileStatic
 class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
-    /* the width of the suffix used to decorate model identifiers. */
-    Integer WIDTH
     /* the class logger */
     private static final Log log = LogFactory.getLog(this)
     /* semaphore for the log threshold */
@@ -92,6 +90,7 @@ class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
             log.debug "Decorating $currentId with $next"
         }
         modelIdentifier.append(next)
+        partition.value = next
         return modelIdentifier
 
     }
@@ -109,10 +108,6 @@ class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
      */
     void refresh(final String lastUsedValue) {
         updateNextValueIfNeeded(lastUsedValue)
-    }
-
-    String data(final String modelIdentifier) {
-        modelIdentifier[11..14]
     }
 
     /**
