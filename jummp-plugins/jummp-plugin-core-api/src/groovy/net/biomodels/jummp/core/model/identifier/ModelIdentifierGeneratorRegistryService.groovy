@@ -165,10 +165,10 @@ the id generators '$generatorNames' have computed the pattern for the identifier
      * @return a map with keys being bean names and values denoting instances of those beans.
      */
     Map<String, ? extends ModelIdentifierGenerator> getGeneratorMap() {
-        def result = [:]
+        Map<String, ? extends ModelIdentifierGenerator> result = [:]
         generatorNames.each { name ->
             result.put(name, lookup(name))
         }
-        result as Map<String, ? extends ModelIdentifierGenerator>
+        result
     }
 }
