@@ -42,6 +42,7 @@ import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.search.OrderedFacet
 import net.biomodels.jummp.search.SearchResponse
 import net.biomodels.jummp.search.SortOrder
+import net.biomodels.jummp.utils.redis.KeyCollection
 import net.biomodels.jummp.webapp.rest.search.BrowseResults
 import net.biomodels.jummp.webapp.rest.search.SearchResults
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Facet
@@ -66,6 +67,8 @@ class SearchController {
      * Dependency injection of modelHistoryService.
     **/
     def modelHistoryService
+
+    def publishClientService
 
     def index = {
         redirect action: 'search'
@@ -170,6 +173,7 @@ class SearchController {
      */
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def search() {
+        publishClientService.publish(KeyCollection.REDIS_CHANNEL_MODEL_ID_LAST_USED_VALUE, "MODEL1234")
         sanitiseParams()
         if (!params.query) {
             params.query = ""
