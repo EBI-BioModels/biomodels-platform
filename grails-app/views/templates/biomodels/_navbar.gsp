@@ -43,7 +43,8 @@
                 href="${g.createLink(controller: 'goChart', action: 'index', plugin: 'jummp-plugin-biomodels-dom')}">GO categories</a>
             </li>
             <li><a
-                href="${g.createLink(controller: 'parameterSearch', action: 'index', plugin: 'jummp-plugin-biomodels-dom')}">Parameter Search</a>
+                href="${g.createLink(controller: 'parameterSearch', action: 'index', plugin:
+                    'jummp-plugin-biomodels-dom')}">BioModels Parameters Search</a>
             </li>
             <li><g:link mapping="agedbrain">Neurodegeneration models</g:link></li>
             <li><g:link mapping="path2models">Path2Models models</g:link></li>

@@ -56,12 +56,10 @@ class UrlMappings {
             controller = "feature"
             action = 'path2models'
         }
-        if (Holders.config.grails.serverURL.contains("wwwdev") || Environment.isDevelopmentMode()) {
-            name covid19 : "/covid-19" {
+        name covid19 : "/covid-19" {
                 controller = "feature"
                 action = 'covid19'
             }
-        }
         // used for web services
         "/$controller/$action?/$id?(.$format)?"{
             constraints {
