@@ -30,6 +30,6 @@ package net.biomodels.jummp.utils
 class InputParameterSanitizer {
 
     static String encodeAsHTML(def param) {
-        param.encodeAsHTML()
+        param?.encodeAsHTML()
     }
 }
