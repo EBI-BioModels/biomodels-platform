@@ -244,7 +244,8 @@ class UsermanagementController {
                     if (!usernameExists) {
                         message = "Username ${username} does not exist."
                     } else {
-                        message = "Cannot send a reset password link to your email due to authentication error from the mail server"
+                        message = """Cannot send a reset password link to your email. Please contact \
+with us asap for further instructions"""
                     }
                 }
             } else {
