@@ -104,12 +104,15 @@ class ModelIdentifierGeneratorFactoryBean implements FactoryBean<ModelIdentifier
             String seed = Objects.requireNonNull(initializer).lastUsedValue
             String cachedSeed = Operations.doRedisGet(initializer.redisKeyForLastUsedValue)
             String type
-            if (!cachedSeed) {
+            if (!cachedSeed && seed) {
                 Operations.doRedisSet(initializer.redisKeyForLastUsedValue, seed)
                 type = "from database"
-            } else {
+            } else if (cachedSeed) {
                 seed = cachedSeed
                 type = "from redis cache"
+            } else {
+                seed = ""
+                type = "from the initial value because the database is fresh"
             }
             LOGGER.debug("Seed: $seed --- type: $type")
 

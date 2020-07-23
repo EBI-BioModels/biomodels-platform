@@ -88,6 +88,9 @@ class DefaultModelIdentifierGenerator extends AbstractModelIdentifierGenerator {
                         }
                         jedis.watch(modelIdLastUsedValue, modelIdLastUsedCount)
                         String lastUsedIdentifier = Operations.doRedisGet(modelIdLastUsedValue)
+                        if (!lastUsedIdentifier) {
+                            lastUsedIdentifier = getDefaultIdentifier()
+                        }
                         log.debug("IDENTIFIER BASED ON $lastUsedIdentifier")
                         this.update(lastUsedIdentifier)
                         Map<Integer, String> iDParts = new LinkedHashMap<>()
@@ -136,5 +139,15 @@ class DefaultModelIdentifierGenerator extends AbstractModelIdentifierGenerator {
             def decorator = iterator.next()
             decorator.isFixed() ?: decorator.refresh(lastUsedValue)
         }
+    }
+
+    String getDefaultIdentifier() {
+        String result = ""
+        def iterator = getDecoratorRegistry().iterator()
+        while (iterator.hasNext()) {
+            AbstractAppendingDecorator decorator = iterator.next() as AbstractAppendingDecorator
+            result += decorator.initialValue
+        }
+        return result
     }
 }

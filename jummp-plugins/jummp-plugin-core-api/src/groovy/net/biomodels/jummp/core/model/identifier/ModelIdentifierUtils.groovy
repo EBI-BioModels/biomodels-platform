@@ -173,6 +173,9 @@ class ModelIdentifierUtils {
                     // don't lose the last value used by this decorator
                     d.nextValue.set(p.value)
                     d.setPartition(p)
+                    if (!mostRecentId) {
+                        d.setInitialValue(p.value)
+                    }
                     if (shouldComputeRegexes)
                         partitionRegex = ModelIdentifierPartitionRegexFactory.forDatePartition format
                     break
@@ -190,6 +193,9 @@ class ModelIdentifierUtils {
                     if (shouldComputeRegexes)
                         partitionRegex = ModelIdentifierPartitionRegexFactory.forLiteral suffix
                     // this is a fixed decorator, so nextValue does not need updating
+                    if (!mostRecentId) {
+                        d.initialValue = p.value
+                    }
                     break
                 case NumericalModelIdentifierPartition:
                     long suffix = Long.parseLong(p.value)
@@ -200,6 +206,9 @@ class ModelIdentifierUtils {
                         d = new VariableDigitAppendingDecorator(i, suffix, width)
                     }
                     d.setPartition(p)
+                    if (!mostRecentId) {
+                        d.initialValue = p.value
+                    }
                     if (shouldComputeRegexes)
                         partitionRegex = ModelIdentifierPartitionRegexFactory.forNumericalPartition width
                     break

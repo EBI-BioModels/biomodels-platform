@@ -66,6 +66,20 @@ abstract class AbstractAppendingDecorator implements OrderedModelIdentifierDecor
     }
 
     /**
+     * This initial value is used for the fresh database when
+     * there is no record in the database and no cached value on Redis
+     */
+    String initialValue
+
+    String getInitialValue() {
+        return initialValue
+    }
+
+    void setInitialValue(final String initialValue) {
+        this.initialValue = initialValue
+    }
+
+    /**
      * The generator to which this decorator belongs.
      */
     ModelIdentifierGenerator generator

@@ -134,6 +134,7 @@ class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
         Integer nextCount = (lastCount == "0000") ? 1 : (Integer.parseInt(lastUsedCount) + 1)
         final String newValue = addLeadingZero(nextCount)
         log.debug("Last used suffix (extracted from $lastUsedValue): $lastUsedCount <---> Next suffix: $newValue")
+        partition.setValue(newValue)
         super.informOfChange(new ModelIdentifierDecoratorUpdatedEvent(this, newValue))
         return newValue
     }
