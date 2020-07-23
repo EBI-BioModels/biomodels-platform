@@ -67,6 +67,8 @@ import org.springframework.transaction.TransactionDefinition
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Propagation
 
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.concurrent.locks.ReentrantLock
 
 /**
@@ -1874,6 +1876,12 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
         return succeed
     }
 
+    void deleteModelWorkingDirectory(final Model model) throws IOException {
+        String workingDirectory = grailsApplication.config.jummp.vcs.workingDirectory
+        String modelDirectory = model.vcsIdentifier
+        Path absModelDir = Paths.get(workingDirectory, modelDirectory)
+        fileSystemService.deleteDirectory(absModelDir)
+    }
     /*
      * Convenience method that checks whether a model has any publicly-available revision.
      *
