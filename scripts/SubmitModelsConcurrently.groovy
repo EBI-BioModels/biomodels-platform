@@ -163,10 +163,12 @@ disp(ar_st_titles);
     }
 
     void startBatchSubmissionWithTrigger() {
-        while (!(Operations.doRedisGet("run-batch-submission") as Boolean)) {
+        Boolean running = false
+        while (!running) {
             // sleep for 1 second
             println("Waiting 1 second...")
             Thread.sleep(1000)
+            running = Operations.doRedisGet("run-batch-submission").toBoolean()
         }
         // ready to go
         runBatchSubmission()
