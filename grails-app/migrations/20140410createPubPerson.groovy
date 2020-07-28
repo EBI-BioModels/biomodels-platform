@@ -103,7 +103,18 @@ databaseChangeLog = {
 	}	
 	changeSet(author: "raza and mihai", id: "import non pubmed authors manually") {
 		grailsChange {
-			change{
+			preConditions(onFail: 'MARK_RAN') {
+				grailsPrecondition {
+					check {
+						def result = sql.firstRow "select COUNT(*) as pubs from publication"
+						assert result.pubs > 0 : "publication table empty, no authors to process manually"
+					}
+				}
+			}
+			change {
+				//def pubCount = sql.firstRow "select COUNT(*) as pubs from publication"
+				//if (pubCount.pubs == 0) return;
+
 				def customImport = { publicationID, alias, position ->
 					Publication publication=Publication.get(publicationID)
 					def person = new Person(userRealName: alias)

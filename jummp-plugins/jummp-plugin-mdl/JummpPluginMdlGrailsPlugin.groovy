@@ -88,7 +88,7 @@ Provides functionality to support models encoded in MDL.
                         "MDL", it)
                 service.handleModelFormat(modelFormat, "mdlService", "mdl")
             }
-        } catch(NoSuchBeanDefinitionException e) {
+        } catch(Exception e) {
             println("Cannot register MDL handler because ModelFileFormatService is not available!")
         }
     }

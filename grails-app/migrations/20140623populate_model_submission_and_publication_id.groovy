@@ -3,6 +3,14 @@ import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGe
 databaseChangeLog = {
     changeSet(author: "Mihai Glont", id: "populate-submission-id-20140624") {
         grailsChange {
+			preConditions(onFail: 'MARK_RAN') {
+				grailsPrecondition {
+					check {
+						def result = sql.firstRow "select COUNT(*) as total from model"
+						assert result.total > 0
+					}
+				}
+			}
             change {
                 def sig = ctx.getBean("submissionIdGenerator")
                 def modelTable = sql.dataSet("model")

@@ -93,7 +93,7 @@ try {
                 validationInterval = 15000
             }
         } else {
-            dbCreate = 'update'
+            //dbCreate = 'update'
         }
     }
     hibernate {
