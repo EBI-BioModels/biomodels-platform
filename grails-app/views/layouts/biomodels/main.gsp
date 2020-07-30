@@ -78,7 +78,7 @@
                 $( "#helpPanel" ).hide();
                 helpHidden=1;
                 helpWidth=-1;
-                $('#toggleHelp').text("Help");
+                $('#toggleHelp').text("More about this page");
                 $('#toggleHelp').attr("title", "Access help for this page");
             }
 
@@ -243,7 +243,7 @@
 
     <g:if test="${contextHelpLocation}">
         <div id="helpbutton">
-            <a id="toggleHelp" title="Access help for this page" href="#">Help</a>
+            <a id="toggleHelp" title="Access help for this page" href="#">More about this page</a>
         </div>
         <div id="helpPanel">
             <div id="toolbar" class="ui-widget-header ui-corner-all">
