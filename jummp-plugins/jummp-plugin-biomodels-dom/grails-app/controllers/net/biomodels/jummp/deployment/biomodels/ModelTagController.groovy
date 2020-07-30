@@ -42,7 +42,7 @@ class ModelTagController {
     def springSecurityService
 
     def fetchTagsForSelect2() {
-        String term = params.get("search").encodeAsHTML()
+        String term = params.get("search")
         List<String> tags = tagService.search(term)
         List result = []
         tags.eachWithIndex { String value, Long index ->
@@ -55,7 +55,7 @@ class ModelTagController {
     def updateModelTag() {
         def tagParams = params.list("updatedTags")[0].encodeAsHTML()
         Set<String> updatedTags = tagParams != "" ? tagParams.split(",") : [].toSet()
-        def modelId = params.get("modelId").encodeAsHTML()
+        def modelId = params.get("modelId")
         def user = springSecurityService.currentUser
         def result = modelTagService.update(updatedTags, modelId, user)
         response.status = result["status"]

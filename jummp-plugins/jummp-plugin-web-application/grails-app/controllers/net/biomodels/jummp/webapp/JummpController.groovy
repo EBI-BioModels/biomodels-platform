@@ -112,10 +112,10 @@ class JummpController {
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def feedback() {
-        if (params.star.encodeAsHTML()) {
+        if (params.star) {
             byte star = params.byte("star")
-            String email = params.email.encodeAsHTML()
-            String comment = params.comment.encodeAsHTML()
+            String email = params.email
+            String comment = params.comment
             if (star < 1 && star > 5) {
                 render([status: '500', message: "Please rate between 1 and 5 stars."] as JSON)
             } else {
@@ -140,8 +140,8 @@ class JummpController {
     }
 
     def lookupUser = {
-        if (params.name.encodeAsHTML()) {
-            String user = userService.getUsername(params.name.encodeAsHTML())
+        if (params.name) {
+            String user = userService.getUsername(params.name)
             if (user) {
                 render (['found': true, 'username':user] as JSON)
             }
@@ -150,12 +150,12 @@ class JummpController {
     }
 
     def autoCompleteUser = {
-        def usersFound = userService.searchUsers(params.term.encodeAsHTML())
+        def usersFound = userService.searchUsers(params.term)
         render (usersFound as JSON)
     }
 
     def teamLookup = {
-		if (params.teamID.encodeAsHTML()) {
+		if (params.teamID) {
 			long teamID;
 			try {
 				teamID = params.long("teamID")

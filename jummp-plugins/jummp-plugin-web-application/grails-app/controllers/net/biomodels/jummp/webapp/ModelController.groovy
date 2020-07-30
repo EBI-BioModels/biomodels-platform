@@ -155,9 +155,8 @@ class ModelController {
     private boolean auditBefore() {
         try {
             // XSS guard for the actions from this controller (excluding submission)
-            params.id = params.id?.encodeAsHTML()
-            params.revisionId = params.revisionId?.encodeAsHTML()
-
+            params.id = params.id
+            params.revisionId = params.revisionId
             String modelIdParam = params.id
             String revisionIdParam = params.revisionId
             String modelId = null
@@ -1023,12 +1022,12 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
             on("Continue") {
                 //populate modifications object with form data
                 Map<String,Object> modifications = new HashMap<String,Object>()
-                final String NAME = params.name.encodeAsHTML()
-                final String DESC = params.description.encodeAsHTML()
+                final String NAME = params.name
+                final String DESC = params.description
                 final String changeStatus = params.changed
-                final String modellingApproach = params.modelling_approach.encodeAsHTML()
-                final String readmeSubmission = params.readme_submission.encodeAsHTML()
-                final String otherInfo = params.other_info.encodeAsHTML()
+                final String modellingApproach = params.modelling_approach
+                final String readmeSubmission = params.readme_submission
+                final String otherInfo = params.other_info
                 final long modelFormat = params.getLong("model_format")
                 if (NAME && NAME.trim()) {
                     modifications.put("new_name", NAME.trim())
@@ -1285,7 +1284,7 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                 }
             } else {
                 PublicationTransportCommand retrieved
-                retrieved = publicationService.createPTCWithMinimalInformation(params.PubLinkProvider?.encodeAsHTML(), params.PublicationLink?.encodeAsHTML(), [])
+                retrieved = publicationService.createPTCWithMinimalInformation(params.PubLinkProvider, params.PublicationLink, [])
                 publicationContext.publication = retrieved
                 publicationContext.comesFromDatabase = false
             }
@@ -1351,7 +1350,7 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
             if (params.containsKey("id")) {
                 def modelId = params.id
                 def revisionId = params.revisionId
-                String fileName = params.filename?.encodeAsHTML()
+                String fileName = params.filename
                 if (!fileName) {
                     final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(
                         modelDelegateService.getRevisionFromParams(modelId, revisionId))

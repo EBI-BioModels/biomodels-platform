@@ -175,7 +175,7 @@ class UsermanagementController {
         withForm {
             ResetPasswordCommand cmd = new ResetPasswordCommand()
             if (!validateUserData(cmd, params)) {
-                flash.hashCode = params.hashCode.encodeAsHTML()
+                flash.hashCode = params.hashCode
                 return redirect(action: "reset")
             }
             try {
@@ -223,7 +223,7 @@ class UsermanagementController {
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def requestPassword() {
         withForm {
-            String username = InputParameterSanitizer.encodeAsHTML(params.username)
+            String username = params.username
             boolean succeeded = true
             boolean usernameExists = true
             String message = ""
@@ -272,7 +272,8 @@ with us asap for further instructions"""
             if (!validateUserData(cmd, params)) {
                 return redirect(action: "create")
             }
-            boolean captchaValid = simpleCaptchaService.validateCaptcha(params.captcha)
+            String captcha = params.captcha
+            boolean captchaValid = simpleCaptchaService.validateCaptcha(captcha)
             if (!captchaValid) {
                 flash.message = "The text entered did not match the image. Please try again"
                 return redirect(action: "create")
@@ -302,8 +303,8 @@ with us asap for further instructions"""
      */
     @Secured(["IS_AUTHENTICATED_FULLY"])
     def fetchUsers() {
-        String request = params.request.encodeAsHTML()
-        String searchTerm = params.search.encodeAsHTML()
+        String request = params.request
+        String searchTerm = params.search
         if (Integer.parseInt(request) == RequestType.SEARCH_TERMS) {
             List users = userService.searchUsers(searchTerm)
             def usersMap = []
@@ -320,7 +321,7 @@ with us asap for further instructions"""
             }
             render(usersMap as JSON)
         } else { // request == RequestType.SELECT_VALUE
-            String username = params.username.encodeAsHTML()
+            String username = params.username
             User user = userService.getUser(username)
             render([user] as JSON)
         }
@@ -336,8 +337,9 @@ with us asap for further instructions"""
      */
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def lookupUser() {
-        String query = params?.query.encodeAsHTML()
-        int column = Integer.parseInt(params?.column?.encodeAsHTML())
+        String query = params?.query
+        String col = params?.column
+        int column = Integer.parseInt(col)
         User user = userService.lookupUser(query, column)
         String response = ""
         if (user) {

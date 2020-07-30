@@ -50,11 +50,11 @@ class PublicationController implements GrailsConfigurationAware {
     }
 
     def refreshPubMedData() {
-        PublicationTransportCommand pubTC = pubMedService.fetchPublicationData(params.pubmed.encodeAsHTML())
+        PublicationTransportCommand pubTC = pubMedService.fetchPublicationData(params.pubmed)
         pubTC.id = params.long("id")
         render template: "/templates/publication/publicationEditableElements",
             plugin: "jummp-plugin-web-application",
-            model: [id: params.id.encodeAsHTML(), publication: pubTC,
+            model: [id: params.id, publication: pubTC,
                     authorListContainerSize: 4, controllerName: "publication",
                     actionName: "show"]
     }

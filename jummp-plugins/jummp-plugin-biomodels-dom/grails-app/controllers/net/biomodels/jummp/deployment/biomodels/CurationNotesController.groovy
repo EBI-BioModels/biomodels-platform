@@ -88,8 +88,11 @@ class CurationNotesController {
 
     def doAddOrUpdate() {
         def curationNotes = params.curationNotes
+        /**
+         * {@link ParameterFilters} automatically encoded the curation notes as HTML, therefore, we have to decode it
+         */
+        curationNotes = curationNotes.decodeHTML()
         String model = params.model
-        model = model.encodeAsHTML()
         CurationNotesTransportCommand command = parseCuratioNotes(curationNotes, model)
         // get the latest timestamp
         command.lastModified = new Date()

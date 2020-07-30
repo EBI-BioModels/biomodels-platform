@@ -37,7 +37,7 @@ class NotificationController {
 
 	@Secured(["isAuthenticated()"])
 	def list() {
-		if (params.all.encodeAsHTML()) {
+		if (params.all) {
 			return [notifications: notificationService.list(userService.getCurrentUser().username), partial: false]
 		}
 		else {

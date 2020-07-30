@@ -54,7 +54,7 @@ class TeamController {
     	String description = ""
     	Set<User> users=new HashSet<User>()
     	try {
-    		def map = JSON.parse(params.teamData.encodeAsHTML())
+    		def map = JSON.parse(params.teamData)
     		name = map.getString("name")
     		description = map.getString("description")
     		def collabs = map.getJSONArray("members")
