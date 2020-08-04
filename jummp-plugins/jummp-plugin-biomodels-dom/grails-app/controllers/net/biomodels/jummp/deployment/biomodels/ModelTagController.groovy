@@ -65,11 +65,14 @@ class ModelTagController {
     def saveModelTag(ModelTagTransportCommand command) {
         Map result = [:]
         /* Manually bind data for command.tags */
-        def tags = JSON.parse(params.tags)
+        def tagsData = params.tags.decodeHTML()
+        def tags = JSON.parse(tagsData)
         List list = tags.collect {
-            TagTransportCommand cmd = new TagTransportCommand(name: it.name)
+            String idStr = it.id
+            String tagName = it.name
+            TagTransportCommand cmd = new TagTransportCommand(name: tagName)
             if (it.id.matches("[0-9]+")) {
-                cmd.id = Long.parseLong(it.id)
+                cmd.id = Long.parseLong(idStr)
             }
             cmd
         }

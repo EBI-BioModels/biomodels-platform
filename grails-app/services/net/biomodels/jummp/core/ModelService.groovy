@@ -1445,7 +1445,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
                 }
             }
         }
-        def notification = [
+        Map notification = [
                 model: new ModelAdapter(model: model).toCommandObject(),
                 user: springSecurityService.currentUser,
                 grantedTo: collaborator,

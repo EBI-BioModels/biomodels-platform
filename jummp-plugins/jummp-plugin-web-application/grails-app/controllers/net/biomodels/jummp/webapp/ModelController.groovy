@@ -535,7 +535,8 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
         boolean valid = params.collabMap
         if (valid) {
             try {
-                def map = JSON.parse(params.collabMap)
+                def collabData = params.collabMap.decodeHTML()
+                def map = JSON.parse(collabData)
                 List<PermissionTransportCommand> collabsNew = new LinkedList<PermissionTransportCommand>()
                 for (int i = 0; i < map.length(); i++) {
                     JSONObject perm = map.getJSONObject(i)
