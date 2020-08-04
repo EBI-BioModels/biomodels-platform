@@ -44,10 +44,13 @@ import net.biomodels.jummp.search.SearchResponse
 import net.biomodels.jummp.search.SortOrder
 import net.biomodels.jummp.webapp.rest.search.BrowseResults
 import net.biomodels.jummp.webapp.rest.search.SearchResults
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Facet
 
 @Secured(['IS_AUTHENTICATED_FULLY'])
 class SearchController {
+    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
     /**
      * Dependency Injection of Spring Security Service
      */
@@ -187,9 +190,8 @@ class SearchController {
          * Check whether the request isn't re-processed by Load Balancer
          */
         String clientIPAddress = request.getHeader("X-Forwarded-For") ?: request.getRemoteAddr()
-        String searchInfo = """\
-Search terms: ${params.query}, requested from: ${clientIPAddress} under the format: ${response.format}"""
-        println searchInfo
+        String searchInfo = """Search terms: ${params.query}, requested from: ${clientIPAddress} \
+under the format: ${response.format}"""
         def results = searchCore(params.query, params.domain, params.sortBy, params.sortDir, params.offset, params
             .numResults)
         if (response.format=="html") {
@@ -282,14 +284,14 @@ Search terms: ${params.query}, requested from: ${clientIPAddress} under the form
             ArrayList<MTC> res = response.results
             totalCount = response.totalCount
             if (res.size() > 0) {
-                println "Found(s): ${res.size()} records."
+                LOGGER.info("Found(s): ${res.size()} records.")
                 res.each {
                     models.add(it)
                 }
             }
             LinkedHashMap<String, OrderedFacet> respondedFacets = response.facets
             if (respondedFacets.size() > 0) {
-                println "Found(s): ${respondedFacets.size()} facets."
+                LOGGER.info("Found(s): ${respondedFacets.size()} facets.")
                 respondedFacets.each {
                     facets.add(it.value.facet)
                 }
