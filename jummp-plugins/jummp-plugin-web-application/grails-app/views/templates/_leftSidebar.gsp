@@ -39,7 +39,7 @@
                         jsMethod = "runFacetSearch"
                     } else {
                         selectedFacet = "${facet.id}:${fv.value}"
-                        isAsked = params.query.encodeAsHTML()?.contains("${facet.id}:${escapedFacetValue}")
+                        isAsked = params.query?.contains("${facet.id}:${escapedFacetValue}")
                     }
                 %>
                 <g:if test="${isAsked}">
@@ -59,7 +59,7 @@
                         }
                         def newParams = [:]
                         if (params.domain.encodeAsHTML()) {
-                            newParams['domain'] = params.domain.encodeAsHTML()
+                            newParams['domain'] = params.domain
                         } else {
                             newParams['domain'] = 'biomodels'
                         }
@@ -69,13 +69,13 @@
                             newParams["query"] = "${selectedFacet}"
                         }
                         if (params.offset.encodeAsHTML()) {
-                            newParams["offset"] = params.offset.encodeAsHTML()
+                            newParams["offset"] = params.offset
                         }
                         if (params.numResults.encodeAsHTML()) {
-                            newParams["numResults"] = params.numResults.encodeAsHTML()
+                            newParams["numResults"] = params.numResults
                         }
                         if (params.sort.encodeAsHTML()) {
-                            newParams["sort"] = params.sort.encodeAsHTML()
+                            newParams["sort"] = params.sort
                         }
                     %>
                     <input type="checkbox" id="choosenFacetValue"
@@ -124,29 +124,29 @@
             facetValue = '"' + facetValue + '"';
         }
         let lastQueryString = " AND " + facetGroupId + ":" + facetValue;
-        let currentQuery = "${params.query.encodeAsHTML()}";
+        let currentQuery = "${params.query}";
         if (e[0].checked) {
             currentQuery += lastQueryString;
         } else {
             // remove the search term out the query string, update newSearchURI
             currentQuery = currentQuery.replace(lastQueryString, "")
         }
-        let otherParams = "domain=${params.domain.encodeAsHTML()}";
-        if ("${params.offset.encodeAsHTML()}") {
-            otherParams += "&offset=${params.offset.encodeAsHTML()}";
+        let otherParams = "domain=${params.domain}";
+        if ("${params.offset}") {
+            otherParams += "&offset=${params.offset}";
         }
-        if ("${params.numResults.encodeAsHTML()}") {
-            otherParams += "&numResults=${params.numResults.encodeAsHTML()}";
+        if ("${params.numResults}") {
+            otherParams += "&numResults=${params.numResults}";
         }
-        if ("${params.sort.encodeAsHTML()}") {
-            otherParams += "&sort=${params.sort.encodeAsHTML()}";
+        if ("${params.sort}") {
+            otherParams += "&sort=${params.sort}";
         }
         newSearchURI += encodeURIComponent(currentQuery) + "&" + otherParams;
         window.location.href = newSearchURI;
     }
 
     function runFacetList(e, facetGroupId, facetValue) {
-        let currentQueryString = "${params.query?.encodeAsHTML().replaceAll('"', '\\\\"')}";
+        let currentQueryString = "${params.query?.replaceAll('"', '\\\\"')}";
         facetValue = escapeSpecialLuceneCharacters(facetValue);
         /* the above utility function is defined in common.js which is already included in the footer section */
         let latestQueryString = facetGroupId + ":" + facetValue;
@@ -170,15 +170,15 @@
             // why don't we need to check empty of the currentQueryString?
             currentQueryString = currentQueryString.replace(latestQueryString, "");
         }
-        let otherParams = "domain=${params.domain.encodeAsHTML()}";
-        if ("${params.offset.encodeAsHTML()}") {
-            otherParams += "&amp;offset=${params.offset.encodeAsHTML()}";
+        let otherParams = "domain=${params.domain}";
+        if ("${params.offset}") {
+            otherParams += "&amp;offset=${params.offset}";
         }
-        if ("${params.numResults.encodeAsHTML()}") {
-            otherParams += "&amp;numResults=${params.numResults.encodeAsHTML()}";
+        if ("${params.numResults}") {
+            otherParams += "&amp;numResults=${params.numResults}";
         }
-        if ("${params.sort.encodeAsHTML()}") {
-            otherParams += "&amp;sort=${params.sort.encodeAsHTML()}";
+        if ("${params.sort}") {
+            otherParams += "&amp;sort=${params.sort}";
         }
         let newSearchURL = "${grailsApplication.config.grails.serverURL}/models"
         currentQueryString = encodeURIComponent(currentQueryString);

@@ -48,8 +48,8 @@ class CurationNotesController {
 
     private parseCuratioNotes(def curationNotes, def modelId) {
         curationNotes = new JsonSlurper().parseText(curationNotes)
-        String comment = curationNotes["comment"].encodeAsHTML()
-	    String internalComment = curationNotes["internalComment"].encodeAsHTML()
+        String comment = curationNotes["comment"]
+	    String internalComment = curationNotes["internalComment"]
         String submitterUsername = curationNotes["submitter"]
         User submitter = User.findByUsername(submitterUsername)
         String lastModifierUsername = curationNotes["lastModifier"]

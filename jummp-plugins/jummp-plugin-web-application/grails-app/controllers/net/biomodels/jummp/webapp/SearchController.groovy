@@ -90,8 +90,8 @@ class SearchController {
     private void sanitiseParams() {
         if (params.sort) {
             def sortVal = params.sort.split("-")
-            params.sortBy = sortVal[0].encodeAsHTML()
-            params.sortDir = sortVal[1].encodeAsHTML()
+            params.sortBy = sortVal[0]
+            params.sortDir = sortVal[1]
         } else {
             params.sortBy = "relevance"
             params.sortDir = "desc"
@@ -109,8 +109,9 @@ class SearchController {
         final int MAXRESULTS = 100
         final int MINRESULTS = 10
         User user
-        if (!(springSecurityService.principal.username == GrailsAnonymousAuthenticationToken.USERNAME)) {
-            user = User.findByUsername(springSecurityService.principal.username)
+        String username = springSecurityService.principal.username
+        if (!(username == GrailsAnonymousAuthenticationToken.USERNAME)) {
+            user = User.findByUsername(username)
         }
         Preferences prefs
         if (user) {
@@ -143,7 +144,7 @@ class SearchController {
         sanitiseParams()
         def results = browseCore(params.sortBy, params.sortDir, params.offset, params.numResults, params.query)
 
-        if (response.format=="html") {
+        if (response.format == "html") {
             results["history"] = modelHistoryService.history()
             return results
         }

@@ -74,10 +74,10 @@ class UserAdministrationController {
     def dataTableSource = {
         int start = 0
         int length = 10
-        if (params.iDisplayStart.encodeAsHTML()) {
+        if (params.iDisplayStart) {
             start = params.iDisplayStart as int
         }
-        if (params.iDisplayLength.encodeAsHTML()) {
+        if (params.iDisplayLength) {
             length = Math.min(100, params.iDisplayLength as int)
         }
         def dataToRender = [:]
@@ -100,7 +100,7 @@ class UserAdministrationController {
     def enable = {
         try {
             def data = [success: userService.enableUser(params.id as Long,
-                Boolean.parseBoolean(params.value.encodeAsHTML()))]
+                Boolean.parseBoolean(params.value))]
             render data as JSON
         } catch (UserNotFoundException e) {
             def data = [error: true, message: e.message]
@@ -114,7 +114,7 @@ class UserAdministrationController {
     def lockAccount = {
         try {
             def data = [success: userService.lockAccount(params.id as Long,
-                Boolean.parseBoolean(params.value.encodeAsHTML()))]
+                Boolean.parseBoolean(params.value))]
             render data as JSON
         } catch (UserNotFoundException e) {
             def data = [error: true, message: e.message]
@@ -128,7 +128,7 @@ class UserAdministrationController {
     def expireAccount = {
         try {
             def data = [success: userService.expireAccount(params.id as Long,
-                Boolean.parseBoolean(params.value.encodeAsHTML()))]
+                Boolean.parseBoolean(params.value))]
             render data as JSON
         } catch (UserNotFoundException e) {
             def data = [error: true, message: e.message]

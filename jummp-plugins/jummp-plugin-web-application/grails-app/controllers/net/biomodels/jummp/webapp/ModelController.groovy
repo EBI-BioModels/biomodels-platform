@@ -760,7 +760,8 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                         // - the main files have been removed and added again
                         cmd.mainFile.eachWithIndex{ MultipartFile entry, int index ->
                             String originalFilename = entry.originalFilename
-                            String description = cmd.mainFileDescription[index].encodeAsHTML()
+                            String description = cmd.mainFileDescription[index]
+                            println description
                             mainFiles.put(originalFilename, description)
                         }
                     } else if (params.mainFileUpload && params.mainFileDescription) {
@@ -770,7 +771,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                         List fileNames = params.list("mainFileUpload")
                         List descriptions = params.list("mainFileDescription")
                         fileNames.eachWithIndex { String fileName, int index ->
-                            mainFiles.put(fileName, descriptions[index].encodeAsHTML())
+                            mainFiles.put(fileName, descriptions[index] as String)
                         }
                     }
                     flow.workingMemory.put("mains_in_working", mainFiles)
@@ -784,13 +785,13 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                         List fileNames = params.list("existedExtraFiles")
                         List descriptions = params.list("existedExtraFileDescriptions")
                         fileNames.eachWithIndex { String fileName, int index ->
-                            additionalFiles.put(fileName, descriptions[index].encodeAsHTML())
+                            additionalFiles.put(fileName, descriptions[index] as String)
                         }
                     }
                     // add the recently uploaded files
                     if (cmd.extraFiles && cmd.description) {
                         cmd.extraFiles.eachWithIndex { MultipartFile f, int index ->
-                            additionalFiles.put(f.originalFilename, cmd.description[index].encodeAsHTML())
+                            additionalFiles.put(f.originalFilename, cmd.description[index] as String)
                         }
                     }
                     flow.workingMemory.put("additionals_in_working", additionalFiles)
@@ -1193,7 +1194,7 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
             on("Continue") {
                 Map<String,String> modifications = new HashMap<String,String>()
                 if (params.RevisionComments) {
-                    modifications.put("RevisionComments", params.RevisionComments?.encodeAsHTML())
+                    modifications.put("RevisionComments", params.RevisionComments)
                 } else {
                     modifications.put("RevisionComments", "Model revised without commit message")
                 }

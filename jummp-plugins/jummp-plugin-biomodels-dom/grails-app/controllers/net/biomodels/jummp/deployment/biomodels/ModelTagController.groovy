@@ -53,7 +53,7 @@ class ModelTagController {
     }
 
     def updateModelTag() {
-        def tagParams = params.list("updatedTags")[0].encodeAsHTML()
+        List tagParams = params.list("updatedTags")[0]
         Set<String> updatedTags = tagParams != "" ? tagParams.split(",") : [].toSet()
         def modelId = params.get("modelId")
         def user = springSecurityService.currentUser
