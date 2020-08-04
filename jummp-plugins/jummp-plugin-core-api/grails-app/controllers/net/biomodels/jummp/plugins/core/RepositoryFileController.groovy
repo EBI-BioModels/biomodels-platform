@@ -36,12 +36,12 @@ class RepositoryFileController {
     def index() { }
 
     def updateDescription() {
-        Long repoFileId = Long.parseLong(params?.repoFileId)
-        def fileName = params?.path
-        def revisionId = params?.revision
-        Long revision = Long.parseLong(params?.revision)
+        String repoFile = params?.repoFileId
+        Long repoFileId = Long.parseLong(repoFile)
+        String fileName = params?.path
+        String revisionId = params?.revision
+        Long revision = Long.parseLong(revisionId)
         String description = params?.description
-        description = description.encodeAsHTML()
         Boolean response = repositoryFileService.updateDescription(repoFileId, revision, fileName, description)
         String message = "The description has been updated successfully"
         if (response == Boolean.FALSE) {

@@ -286,7 +286,8 @@ log4j.main = {
         'net.biomodels.jummp.plugins.simplelogging',
         'net.biomodels.jummp.core.events',
         'net.biomodels.jummp.plugins.bives',
-        'net.biomodels.jummp.search'
+        'net.biomodels.jummp.search',
+        'net.biomodels.jummp.webapp'
     ], additivity: false
 
     rollingFile name: "debugAppender", file: "${logsDir}/jummp-debug.log",

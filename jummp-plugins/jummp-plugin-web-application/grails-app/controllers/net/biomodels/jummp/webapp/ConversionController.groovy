@@ -53,7 +53,7 @@ class ConversionController {
                 modelConversionService.generateExports(revisionTC)
                 redirect(controller: "model", action: "showWithMessage",
                     id: revisionTC.identifier(),
-                    params: [flashMessage: """The request of converting the model ${revisionTC.identifier()} 
+                    params: [flashMessage: """The request of converting the model ${revisionTC.identifier()}
 to the other formats has been sent to the external conversion service."""])
             } else {
                 redirect(controller: "model", action: "showWithMessage",

@@ -34,7 +34,7 @@ class ErrorsController {
                          messageSource.getMessage("error.${code}.explanation",args, Locale.getDefault()))
     }
 
-    def error400 = {
+    def error400() {
         response.status = HttpServletResponse.SC_BAD_REQUEST
         withFormat {
             html { [resource: request.forwardURI, errorDescription: params?.errorDescription] }
@@ -42,7 +42,7 @@ class ErrorsController {
         }
     }
 
-    def error403 = {
+    def error403() {
         response.setStatus HttpServletResponse.SC_FORBIDDEN
         withFormat {
             html { [authenticated: springSecurityService.isLoggedIn()] }
@@ -50,7 +50,7 @@ class ErrorsController {
         }
     }
 
-    def error404 = {
+    def error404() {
         response.status = HttpServletResponse.SC_NOT_FOUND
         withFormat {
             html { [resource: request.forwardURI] }
@@ -58,7 +58,15 @@ class ErrorsController {
         }
     }
 
-    def error500 = {
+    def error405() {
+        response.status = HttpServletResponse.SC_METHOD_NOT_ALLOWED
+        withFormat {
+            html { [resource: request.forwardURI] }
+            '*' { respond getError("405", [request.forwardURI]) }
+        }
+    }
+
+    def error500() {
         response.status = HttpServletResponse.SC_INTERNAL_SERVER_ERROR
         def exception = request.getAttribute('exception')
         String digest = ''
