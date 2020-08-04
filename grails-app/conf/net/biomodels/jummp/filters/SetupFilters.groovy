@@ -60,9 +60,9 @@ class SetupFilters implements InitializingBean {
     def grailsApplication
 
     public void afterPropertiesSet() throws Exception {
-        String configPath=configurationService.getConfigFilePath()
+        String configPath = configurationService.getConfigFilePath()
         if (configPath) {
-        	configFileExists=true
+            configFileExists = true
             Properties props = new Properties()
             props.load(new FileInputStream(configPath))
            // firstRun = Boolean.parseBoolean(props.getProperty("jummp.firstRun"))
@@ -78,7 +78,7 @@ class SetupFilters implements InitializingBean {
     			before = {
     				if (grailsApplication.mainContext.getBean("maintenanceMode").getMode()) {
     					redirect(controller: 'maintenance', action:"index" )
-    					return true; 
+    					return true;
     				}
     			}
     		}

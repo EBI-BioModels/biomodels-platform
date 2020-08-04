@@ -30,11 +30,11 @@
 
 package net.biomodels.jummp.core
 
+import grails.plugin.springsecurity.SpringSecurityUtils
+import grails.plugin.springsecurity.acl.AclSid
 import net.biomodels.jummp.core.events.LoggingEventType
 import net.biomodels.jummp.core.events.PostLogging
 import net.biomodels.jummp.core.user.*
-import grails.plugin.springsecurity.SpringSecurityUtils
-import grails.plugin.springsecurity.acl.AclSid
 import net.biomodels.jummp.plugins.security.Person
 import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
@@ -42,6 +42,7 @@ import net.biomodels.jummp.plugins.security.UserRole
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.perf4j.aop.Profiled
+import org.springframework.mail.MailAuthenticationException
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.authentication.AnonymousAuthenticationToken
@@ -49,6 +50,8 @@ import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.transaction.TransactionStatus
+
+import javax.mail.AuthenticationFailedException
 
 /**
  * @short Service for User administration.
@@ -512,10 +515,12 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="userService.requestPassword")
     @PreAuthorize("isAnonymous()")
-    void requestPassword(String username) throws UserNotFoundException {
+    void requestPassword(String username)
+        throws UserNotFoundException, AuthenticationFailedException, MailAuthenticationException  {
         User user = User.findByUsername(username)
         if (!user) {
             throw new UserNotFoundException(username)
+            return
         }
         String passwordCode = String.valueOf(random.nextInt()) + user.username
         user.passwordForgottenCode = passwordCode.encodeAsMD5()

@@ -124,7 +124,6 @@ class JummpController {
                 render([status: '500', message: "Please rate between 1 and 5 stars."] as JSON)
             } else {
                 // save the data to the database
-                comment = comment.encodeAsHTML()
                 boolean result = feedbackService.persist(star, email, comment)
                 if (result) {
                     def notification = [
