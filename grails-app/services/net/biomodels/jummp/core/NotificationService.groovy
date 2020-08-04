@@ -186,7 +186,7 @@ class NotificationService {
             String withPubMsgCode = "notification.model.created.emailToSubmitter.body.withPublicationProvided"
             String noPubMsgCode = "notification.model.created.emailToSubmitter.body.noPublicationProvided"
             String withPublicationProvided = messageSource.getMessage(withPubMsgCode, [] as String[],  null)
-            String noPublicationProvided = messageSource.getMessage(noPubMsgCode, [] as String[], null)
+            String noPublicationProvided = messageSource.getMessage(noPubMsgCode, [model.submissionId] as String[], null)
             String askAcknowledgement = model.publication ? withPublicationProvided : noPublicationProvided
             String[] args = [salutation, model.name, model.submissionId, askAcknowledgement, modelLink]
             emailBody = messageSource.getMessage("notification.model.created.emailToSubmitter.body", args, null)

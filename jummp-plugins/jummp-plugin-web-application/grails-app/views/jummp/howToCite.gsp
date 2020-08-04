@@ -121,6 +121,37 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
     </dd>
 </dl>
 
+<h3 id="biomodels-parameters">BioModels Parameters</h3>
+<dl>
+    <dt>
+        Mihai Glont, Chinmay Arankalle, Krishna Tiwari, Tung V N Nguyen, Henning Hermjakob, Rahuman S Malik Sheriff
+    </dt>
+    <dd style="margin-left:0;">
+        <div class="pubtitle">BioModels Parameters: a treasure trove of parameter values from published systems biology models</div>
+        <div class="pubjournal"><em>Bioinformatics</em> 2020</div>
+        [<a href="https://academic.oup.com/bioinformatics/article/doi/10.1093/bioinformatics/btaa560/5861527"
+            title="Publication on Bioinformatics">Bioinformatics</a>]
+    [<a href="javascript:toggleDisplayById('bib_Glont2020');"
+        title="Display/hide the BibTeX entry for this publication">
+        <img src="//www.ebi.ac.uk/biomodels-static/icons/plus.gif" alt="+ icon" style="padding-right: 5px;" />BibTeX entry</a>]
+        <pre id="bib_Glont2020" class="hidden">
+        @article{10.1093/bioinformatics/btaa560,
+        author = {Glont, Mihai and Arankalle, Chinmay and Tiwari, Krishna and Nguyen, Tung V N and Hermjakob, Henning and Malik Sheriff, Rahuman S},
+        title = "{BioModels Parameters: a treasure trove of parameter values from published systems biology models}",
+        journal = {Bioinformatics},
+        year = {2020},
+        month = {06},
+        abstract = "{One of the major bottlenecks in building systems biology models is identification and estimation of model parameters for model calibration. Searching for model parameters from published literature and models is an essential, yet laborious task.We have developed a new service, BioModels Parameters, to facilitate search and retrieval of parameter values from the SBML models stored in BioModels. Modelers can now directly search for a model entity (e.g. a protein or drug) to retrieve the rate equations describing it; the associated parameter values (e.g. degradation rate, production rate, Kcat, Michaelis-Menten constant, etc) and the initial concentrations. Currently, BioModels Parameters contains entries from over 75,000 reactions and 60 different taxa with cross-references. The retrieved rate equations and parameters can be used for scanning parameter ranges, model fitting and model extension. Thus, BioModels Parameters will be a valuable service for systems biology modelers.The data is accessible via web interface and API. BioModels Parameters is free to use and is publicly available at https://www.ebi.ac.uk/biomodels/parameterSearch.}",
+        issn = {1367-4803},
+        doi = {10.1093/bioinformatics/btaa560},
+        url = {https://doi.org/10.1093/bioinformatics/btaa560},
+        note = {btaa560},
+        eprint = {https://academic.oup.com/bioinformatics/article-pdf/doi/10.1093/bioinformatics/btaa560/33420759/btaa560.pdf},
+        }
+        </pre>
+    </dd>
+</dl>
+
 <h3 id="others">Other publications</h3>
 
 <dl>
