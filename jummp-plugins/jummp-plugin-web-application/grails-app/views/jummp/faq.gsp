@@ -47,7 +47,7 @@
     </div>
 </div>
 
-<div class="row faq-section-box">
+<div id="what-is-biomodels" class="row faq-section-box">
     <div class="columns small-12 medium-2 large-2">
         <ol start="1" type="I">
             <li class="faq_title">What is BioModels and how does it differ from other resources?
@@ -111,7 +111,7 @@
     &nbsp;
 </div>
 
-<div class="row faq-section-box">
+<div id="citation-contact-info" class="row faq-section-box">
     <div class="columns small-12 medium-2 large-2">
         <ol start="2" type="I" class="topic">
             <li class="faq_title">Citations and contact information
@@ -164,7 +164,7 @@
     &nbsp;
 </div>
 
-<div class="row faq-section-box">
+<div id="model-correctness-reuse" class="row faq-section-box">
     <div class="columns small-12 medium-2 large-2">
         <ol start="3" type="I">
             <li class="faq_title">Questions dealing with model correctness, reuse and distribution
@@ -237,7 +237,7 @@
     &nbsp;
 </div>
 
-<div class="row faq-section-box">
+<div id="provided-features" class="row faq-section-box">
     <div class="columns small-12 medium-2 large-2">
         <ol start="4" type="I">
             <li class="faq_title">Questions dealing with the provided features of BioModels Database
@@ -331,7 +331,7 @@
     &nbsp;
 </div>
 
-<div class="row faq-section-box">
+<div id="model-submission" class="row faq-section-box">
     <div class="columns small-12 medium-2 large-2">
         <ol start="5" type="I">
             <li class="faq_title">Questions dealing with model submission
@@ -494,7 +494,7 @@
     &nbsp;
 </div>
 
-<div class="row faq-section-box">
+<div id="model-curation" class="row faq-section-box">
     <div class="columns small-12 medium-2 large-2">
         <ol start="6" type="I">
             <li class="faq_title">Questions dealing with the curation of the models
@@ -712,7 +712,7 @@
     &nbsp;
 </div>
 
-<div class="row faq-section-box">
+<div id="software-infrastructure" class="row faq-section-box">
     <div class="columns small-12 medium-2 large-2">
         <ol start="7" type="I">
             <li class="faq_title">Questions dealing with the underlying software infrastructure
@@ -770,7 +770,7 @@
     &nbsp;
 </div>
 
-<div class="row faq-section-box">
+<div id="misc-questions" class="row faq-section-box">
     <div class="columns small-12 medium-2 large-2">
         <ol start="8" type="I">
             <li class="faq_title">Miscellaneous questions
