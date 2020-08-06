@@ -59,8 +59,13 @@ class JummpController {
         detectTheme()
         String titlePage = messageSource.getMessage("jummp.faq.${theme}.title", null, Locale.ENGLISH)
         titlePage += " | BioModels"
+        String manualUrl = grailsApplication.config.jummp.context.help.root
+        String serverUrl = grailsApplication.config.grails.serverURL
         render(view: "faq",
-            model: [titleCode: "jummp.faq.${theme}.title", titlePage: titlePage])
+            model: [
+                titleCode: "jummp.faq.${theme}.title",
+                titlePage: titlePage,
+                manualUrl: manualUrl, serverUrl: serverUrl])
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])

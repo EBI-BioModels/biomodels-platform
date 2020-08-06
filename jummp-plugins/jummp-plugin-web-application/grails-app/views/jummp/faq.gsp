@@ -26,6 +26,9 @@
     <meta name="layout" content="${session['branding.style']}/main"/>
     <title>${titlePage}</title>
     <style type="text/css">
+        .level3 {
+            color: #0e90d2 !important;
+        }
         .row {
 
         }
@@ -116,7 +119,7 @@
         <ol start="2" type="I" class="topic">
             <li class="faq_title">Citations and contact information
                 <ol class="faq_subheading" style="list-style-type: decimal;">
-                    <li><a href="#QUOTE_BIOMDB">How to cite BioModels Database?</a></li>
+                    <li><a href="#quote-biomodels">How to cite BioModels Database?</a></li>
                     <li><a href="#QUOTE_MODEL">How to cite a model present in BioModels Database?</a></li>
                     <li><a href="#TEAM_CONTACT">How to contact the team behind BioModels Database?</a></li>
                     <li><a
@@ -336,13 +339,37 @@
         <ol start="5" type="I">
             <li class="faq_title">Questions dealing with model submission
                 <ol class="faq_subheading">
-                    <li><a href="#MODEL_SUBMISSION">How to submit a model?</a></li>
-                    <li><a href="#SUBMIT_BEFORE_PAPER">Can I submit a model before it is described in a published paper?</a>
+                    <li><a href="#SUBMIT_MODEL">What do I need to submit a new model?</a>
+                        <ol type="a">
+                            <li><a href="#REGISTER_NEW_ACCOUNT" class="level3">How to register for a new user account?</a></li>
+                            <li><a href="#HOW_TO_SUBMIT" class="level3">How to submit a new model?</a></li>
+                        </ol>
                     </li>
+                    <li>
+                        <a href="#MODEL_UPDATE_EXISTING">Can I update an existing model details?</a>
+                        <ol type="a">
+                            <li><a href="#UPDATE_MODEL" class="level3">How to update model files or revised version of a
+                            model, model name and description?</a></li>
+                            <li><a href="#UPDATE_PUBLICATION" class="level3">How to update the model associated publication
+                            details?</a></li>
+                            <li><a href="#SUBMIT_NO_PUB" class="level3">What will happen if I submit the model without
+                            Publication details?</a></li>
+                            <li><a href="#SUBMIT_BEFORE_PAPER" class="level3">Can I submit a model before it is
+                            described in a published paper?</a>
+                            <li><a href="#MAINTAINED_REVS" class="level3">Are the model changes maintained as revisions?</a></li>
+                        </ol>
+                    </li>
+                    </li>
+
                     <li><a
                         href="#ACCESS_AFTER_SUBMISSION">Will a model be publicly accessible immediately after its submission?</a>
+                        <ol type="a">
+                            <li><a href="#make-model-public" class="level3">What need to be done to make model public?</a></li>
+                            <li><a href="#what-will-happen-model-nonpublic" class="level3">What will happen if don’t make model
+                            public?</a></li>
+                        </ol>
                     </li>
-                    <li><a href="#REVIEWER_ACCESS">Can reviewers access unpublished models?</a></li>
+                    <li><a href="#REVIEWER_ACCESS">How can reviewers access unpublished models?</a></li>
                     <li><a href="#SUPPORTED_FORMATS">What are the supported model encoding formats?</a></li>
                     <li><a href="#MODEL_UPDATE">How to submit a revised version of a model?</a></li>
                     <li><a
@@ -354,7 +381,23 @@
         </ol>
     </div>
     <div class="columns small-12 medium-10 large-10">
-        <h3 id="MODEL_SUBMISSION">How to submit a model?</h3>
+        <h3 id="SUBMIT_MODEL">What do I need to submit a new model?</h3>
+        <p>First, one need to register with BioModel to get a user credentials
+        (account and password), model files, publication details and few
+        additional details (requested during submission process). Using
+        credentials, one can login for their account and can submit model to
+        BioModels. For more guidance, please refer:
+            <a href="${manualUrl}/getting-started.html#slide4"
+               target="_blank">Model Submission guidelines (Slide 4)</a></p>
+        <h4 id="REGISTER_NEW_ACCOUNT" class="level3">How to register for a new user account?</h4>
+        <p>For registering with BioModels, please visit the <a href="${serverUrl}">BioModels
+        website</a> and click on Register. Follow the on-screen instruction for the next
+        steps. For more guidance, please refer:
+            <a href="${manualUrl}/getting-started.html#slide5"
+               target="_blank">Model
+            Submission guidelines (Slide 5-8)</a></p>
+
+        <h4 id="HOW_TO_SUBMIT" class="level3">How to submit a new model?</h4>
 
         <p>Anybody can submit a model to BioModels Database by creating an account on BioModels. Even if you are not the
         actual author or encoder of a model you can submit it for inclusion in BioModels Database. If you do so, you will be
@@ -362,8 +405,20 @@
         original authors to be sure they are happy with the submission.
         </p>
 
-        <p>If a model is encoded in <a title="Systems Biology Markup Language (SBML)" href="http://sbml.org/">SBML</a> or <a
-            title="CellML language" href="http://www.cellml.org/">CellML</a>, the submission is entirely processed, via the <a
+        <p>
+            To submit a new model, user has to login to BioModels
+            using their user credentials. Post login, click on “Submit”
+            tab and proceed with model submission. For details,
+            please refer:  <a href="${manualUrl}/getting-started.html#slide9"
+                              target="_blank">Model Submission guidelines
+            (Slide 9-16)</a>
+        </p>
+
+        <p>If a model is encoded in
+            <a title="Systems Biology Markup Language (SBML)"
+               href="http://sbml.org/">SBML</a> or <a
+            title="CellML language" href="http://www.cellml.org/">CellML</a>, the submission is entirely processed,
+        via the <a
             title="Model submission page"
             href="submit">submission page</a>. If the model is encoded using a different format, please read the section
         of this FAQ about the <a
@@ -384,11 +439,73 @@
         available on BioModels Database once the paper has been published.</p>
 
         <p>In order to access a model, knowing it submission identifier, you can use the URL: <strong>https://www.ebi.ac
-        .uk/biomodels/</strong> followed by the identifier. For example: <a title="Access to the model: MODEL1002160000"
-                                                                            href="https://www.ebi.ac.uk/biomodels/MODEL1002160000">https://www.ebi.ac.uk/biomodels/MODEL1002160000</a>.
+        .uk/biomodels/</strong> followed
+        by the identifier. For example: <a title="Access to the model: MODEL1002160000"
+                                           href="https://www.ebi.ac.uk/biomodels/MODEL1002160000"
+                                           target="_blank">https://www.ebi.ac.uk/biomodels/MODEL1002160000</a>.
         </p>
 
-        <h3 id="SUBMIT_BEFORE_PAPER">Can I submit a model before it is described in a published paper?</h3>
+        <h3 id="MODEL_UPDATE_EXISTING">Can I update an existing model details?</h3>
+        <p>Models submitted to BioModels remains private to the user until
+        user publish it from form his/her side. User can update the model
+        files, model name, publication details etc at any time point before
+        making the model public. All the changes are revision controlled.</p>
+        <h4 id="UPDATE_MODEL" class="level3">How to update model files or revised version of a
+        model, model name and description?</h4>
+        <p>
+            User need to login using their user credentials and go to
+            “My Account” &rightarrow; “My Models”. This will display the list of
+            models submitted by user. Click on the model for which
+            you want to update the files. On the left of side of the
+            page, you will find option to “Update”, “Publish”, “Convert”
+            etc. Click on “Update” and follow the on-screen
+            instructions. For details, please refer: <a href="${manualUrl}/getting-started.html#slide20"
+                                                        target="_blank">Model
+            Submission guidelines (Slide 20-28)</a>
+        </p>
+        <h4 id="UPDATE_PUBLICATION" class="level3">How to update the model associated publication
+        details?</h4>
+        <p>
+            <strong>Method 1:</strong> This method is very similar to updating Model
+            files. User need to login using their user credentials and
+            go to "My Account", choose "My Models". This will display the
+            list of models submitted by user. Click on the model for
+            which you want to update the publication. On the left of
+            side of the page, you will find option to "Update",
+            "Publish", "Convert", etc. Click on "Update" and continue
+            clicking "next" to go to Publication page. Follow the onscreen
+            instructions further. For details, please refer:
+            <a href="${manualUrl}/getting-started.html#slide20"
+               target="_blank">Model Submission guidelines (Slide 20-28)</a>
+        </p>
+        <p>
+            <strong>Method 2:</strong> This method is direct method for updating
+            publication details. User need to login using their user
+            credentials and go to “My Account” &rightarrow; “My Models”. This
+            will display the list of models submitted by user. Click on
+            the model for which you want to update the publication. In
+            the model overview tab, you will find the all the basic
+            information of the model along with publication details.
+            You will find a small tab called “Edit” next to publication.
+            Click on Edit and you will be directed to a different page
+            for publication editing option. Enter the details of new
+            publication (ID), click “Update” and “save” post crosschecking
+            the details. For details, please refer: <a href="${manualUrl}/getting-started.html#slide31"
+                                                       target="_blank">
+            Model Submission guidelines (Slide 31-33)</a>
+        </p>
+
+        <h4 id="SUBMIT_NO_PUB" class="level3">What will happen if I submit the model without
+        Publication details?</h4>
+        <p>
+            Model updated without publication details will be tagged
+            accordingly and carry a message reflecting the same.
+            Citation or Usability of model with Publication details are
+            significantly higher than models with non-publication
+            details.
+        </p>
+
+        <h4 id="SUBMIT_BEFORE_PAPER" class="level3">Can I submit a model before it is described in a published paper?</h4>
 
         <p>Yes. Models can be submitted prior to the publication of the associated paper(s). It is actually strongly
         advised to do so: at the submission time, each model is assigned a unique and perennial identifier which allows
@@ -402,7 +519,11 @@
 
         <p>When submitting your paper, we encourage you to&nbsp;include the submission identifier in your&nbsp;publication&nbsp;and cite
         BioModels by referring to the guidelines on <a
-            href="#QUOTE_BIOMDB">how to cite BioModels Database</a>.</p>
+            href="#quote-biomodels">how to cite BioModels Database</a>.</p>
+
+        <h4 id="MAINTAINED_REVS" class="level3">Are the model changes maintained as revisions?</h4>
+        <p>All the updating or changes done are maintained as
+        revisions.</p>
 
         <h3 id="ACCESS_AFTER_SUBMISSION">Will a model be publicly accessible immediately after its submission?</h3>
 
@@ -410,6 +531,7 @@
         Database. From submission to their public release, all models undergo various automated and manually performed
         curation and annotation steps to ensure a consistent level of quality and accuracy.</p>
 
+        <!-- TODO: review the passage below -->
         <p>Moreover, all models are only made publicly available from BioModels Database after the publication of the
         corresponding papers. Please refer to the section of this FAQ about the <a
             title="Will a model be publicly accessible immediately after its submission?"
@@ -421,7 +543,27 @@
         of the database a year. Please <a
             title="Contact BioModels.net Team" href="contact">contact us</a> if you need your model to be available earlier.</p>
 
-        <h3 id="REVIEWER_ACCESS">Can reviewers access unpublished models?</h3>
+        <h4 id="make-model-public" class="level3">What need to be done to make model public?</h4>
+        <p>User need to login using their user credentials and go to
+        “My Account” &rightarrow; “My Models”. This will display the list of
+        models submitted by user. Click on the model for which
+        you want to Publish. On the left of side of the page, you
+        will find option to “Update”, “Publish”, “Convert” etc. Click
+        on “Publish” to request to make model public. Our
+        database curators will take a quick look and publish the
+        model if all well. If not, curator will contact back to the
+        model submitter. For details, please refer: BioModels
+            model Submission guidelines (<a href="${manualUrl}/getting-started.html#slide17"
+                                            target="_blank">Slide 17-19 (New model)</a>
+        or <a href="${manualUrl}/getting-started.html#slide28"
+              target="_blank">28-30 (existing model)</a>).</p>
+
+        <h4 id="what-will-happen-model-nonpublic" class="level3">What will happen if don’t make model public?</h4>
+        <p>If the model is not made public, it will remain private and
+        it will not be listed in BioModels Public models. Also no
+        one else can access any details about the model.</p>
+
+        <h3 id="REVIEWER_ACCESS">How can reviewers access unpublished models?</h3>
 
         <p>BioModels Database can provide access to unpublished models to reviewers. This is not automatic, so the model
         submitter needs to request it (for example emailing us at
@@ -483,7 +625,6 @@
         any information.</p>
 
         <h3 id="SUBMIT">What do I do if I receive error messages when trying to submit a model?</h3>
-
         <p>Any validation issues detected during the submission process will be reported as warnings, making it possible to
         proceed with the submission in spite of the encoding problems. It may be perfectly possible to submit a model that
         is incorrectly encoded in SBML and then share it with someone that can help fix the SBML representation.</p>
