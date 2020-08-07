@@ -50,26 +50,26 @@
     </div>
 </div>
 
-<div id="what-is-biomodels" class="row faq-section-box">
+<div id="what-is-biomodels-section" class="row faq-section-box">
     <div class="columns small-12 medium-2 large-2">
         <ol start="1" type="I">
             <li class="faq_title">What is BioModels and how does it differ from other resources?
                 <ol class="faq_subheading">
-                    <li><a href="#WHAT_IS_BIOMDB">What is BioModels Database?</a></li>
-                    <li><a href="#DIFFER_MOD">How does BioModels Database differ from other databases of models?</a></li>
+                    <li><a href="#what-is-biomodels">What is BioModels Database?</a></li>
+                    <li><a href="#differ-mod">How does BioModels Database differ from other databases of models?</a></li>
                 </ol>
             </li>
         </ol>
     </div>
     <div class="columns small-12 medium-10 large-10">
-        <h3 id="WHAT_IS_BIOMDB">What is BioModels?</h3>
+        <h3 id="what-is-biomodels">What is BioModels?</h3>
 
         <p>BioModels Database is a repository of mathematical models representing biological systems.&nbsp It currently hosts
         a range of models describing processes like signalling; protein-drug interaction interactions; metabolic pathways;
         epidemic models and many more. The&nbsp;models that BioModels hosts are&nbsp;usually described in peer-reviewed
         scientific literature and in some cases, they are generated automatically from pathway resources (Path2Models). These
-        models are manually <a title="More about model curation (in this FAQ)" href="#MODEL_CURATION">curated</a> and <a
-            title="More about annotation (in this FAQ)" href="#ANNOTATION">semantically enriched with
+        models are manually <a title="More about model curation (in this FAQ)" href="#model-curation">curated</a> and <a
+            title="More about annotation (in this FAQ)" href="#annotation">semantically enriched with
             cross-references</a>&nbsp to external data resources (such as publications, databases of compounds and pathways, ontologies, etc.). BiModels allows the scientific community to store, search and retrieve mathematical models of their interest. In addition to offering support for supporting models in different formats and enabling their conversion between&nbsp;different representational formats, the database offers&nbsp;<a
             title="Programmatic access via web services"
             href="https://bitbucket.org/biomodels/jummp-biomodels/wiki/Web%20Services">programmatic access</a>&nbsp;to developers via web services.
@@ -91,7 +91,7 @@
         <p>More information can be found in the associated <a title="BioModels Database publications"
                                                               href="citation">publications</a>.</p>
 
-        <h3 id="DIFFER_MOD">How does BioModels Database differ from other databases of models?</h3>
+        <h3 id="differ-mod">How does BioModels Database differ from other databases of models?</h3>
 
         <p>Unlike other pathway databases like&nbsp;<a title="Reactome"
                                                        href="https://www.reactome.org/">Reactome</a>, BioModels contains
@@ -120,10 +120,10 @@
             <li class="faq_title">Citations and contact information
                 <ol class="faq_subheading" style="list-style-type: decimal;">
                     <li><a href="#quote-biomodels">How to cite BioModels Database?</a></li>
-                    <li><a href="#QUOTE_MODEL">How to cite a model present in BioModels Database?</a></li>
-                    <li><a href="#TEAM_CONTACT">How to contact the team behind BioModels Database?</a></li>
+                    <li><a href="#quote-model">How to cite a model present in BioModels Database?</a></li>
+                    <li><a href="#team-contact">How to contact the team behind BioModels Database?</a></li>
                     <li><a
-                        href="#ORIGINAL_AUTHOR">I wish to contact the original author(s) of a model, but the listed email does not work. What should I do?</a>
+                        href="#original-author">I wish to contact the original author(s) of a model, but the listed email does not work. What should I do?</a>
                     </li>
                 </ol>
             </li>
@@ -140,7 +140,7 @@
         <p>The best way to cite a model present in BioModels Database is to state the reference publication associated
         with the model. You can also mention the model's identifier (of the form "BIOMD" or "MODEL" followed by 10 digits).</p>
 
-        <h3 id="TEAM_CONTACT">How to contact the team behind BioModels Database?</h3>
+        <h3 id="team-contact">How to contact the team behind BioModels Database?</h3>
 
         <p>The easiest way to contact the team developing and maintaining the software infrastructure and the content of
         BioModels Database is to use the following email address:
@@ -150,7 +150,7 @@
         <p>You can also refer to the information provided on the <a title="contact us page" href="contact">contact us</a> page.
         </p>
 
-        <h3 id="ORIGINAL_AUTHOR">I wish to contact the original author(s) of a model, but the listed email does not
+        <h3 id="original-author">I wish to contact the original author(s) of a model, but the listed email does not
         work.
         What should I do?</h3>
 
@@ -172,46 +172,46 @@
         <ol start="3" type="I">
             <li class="faq_title">Questions dealing with model correctness, reuse and distribution
                 <ol class="faq_subheading">
-                    <li><a href="#MODEL_RELIABILITY">How reliable are the models hosted in BioModels Database?</a></li>
-                    <li><a href="#REPORT_ERROR">What should I do if I find an error in a model?</a></li>
+                    <li><a href="#model-reliability">How reliable are the models hosted in BioModels Database?</a></li>
+                    <li><a href="#report-error">What should I do if I find an error in a model?</a></li>
                     <li><a
-                        href="#MODEL_REUSE">What are the conditions of use and distribution for unmodified models originating from BioModels Database?</a>
+                        href="#model-reuse">What are the conditions of use and distribution for unmodified models originating from BioModels Database?</a>
                     </li>
                     <li><a
-                        href="#MODEL_MODIFY">What are the conditions of use and distribution for modified models that originated from BioModels Database?</a>
+                        href="#model-modify">What are the conditions of use and distribution for modified models that originated from BioModels Database?</a>
                     </li>
-                    <li><a href="#MODEL_CONVERSION">Can I convert a model from BioModels Database into another SBML version?</a>
+                    <li><a href="#model-conversion">Can I convert a model from BioModels Database into another SBML version?</a>
                     </li>
                 </ol>
             </li>
         </ol>
     </div>
     <div class="columns small-12 medium-10 large-10">
-        <h3 id="MODEL_RELIABILITY">How reliable are the models hosted in BioModels Database?</h3>
+        <h3 id="model-reliability">How reliable are the models hosted in BioModels Database?</h3>
 
         <p>Before being publicly available on BioModels Database, a model passes through a stringent curation pipeline. This
         ensures its syntactic correctness, semantic soundness, and its correspondence with its reference publication, both in
         terms of model structure and simulation results. Consequently the structure of a model would not normally change,
         while its annotation is expected to improve constantly over time.</p>
 
-        <h3 id="REPORT_ERROR">What should I do if I find an error in a model?</h3>
+        <h3 id="report-error">What should I do if I find an error in a model?</h3>
 
         <p>The models present in BioModels Database have already been extensively checked and corrected. However, it remains
         possible that some errors may have crept through our rigorous curation pipeline. If you discover any errors with a
         specific model, or have any potential concerns, please do <a
             title="How to contact the team behind BioModels Database?"
-            href="#TEAM_CONTACT">contact us</a>. Comments and bugs for specific models may be submitted directly from the menu
+            href="#team-contact">contact us</a>. Comments and bugs for specific models may be submitted directly from the menu
         bar at the top of the web page describing each model, where you will find a "Submit Model Comment/Bug" link.
         </p>
 
-        <h3 id="MODEL_REUSE">What are the conditions of use and distribution for unmodified models originating from
+        <h3 id="model-reuse">What are the conditions of use and distribution for unmodified models originating from
         BioModels
         Database?</h3>
 
         <p>You can use and freely distribute the models present in BioModels Database in their current form. Please refer to the <a
             href="termsofuse">legal terms of use</a> for more details.</p>
 
-        <h3 id="MODEL_MODIFY">What are the conditions of use and distribution for modified models that originated from
+        <h3 id="model-modify">What are the conditions of use and distribution for modified models that originated from
         BioModels Database?</h3>
 
         <p>You can modify and freely distribute a modified version a model that is present in BioModels Database,&nbsp;in whole
@@ -225,7 +225,7 @@
 
         <p>Please refer to the <a href="termsofuse">legal terms of use</a> for more details.</p>
 
-        <h3 id="MODEL_CONVERSION">Can I convert a model from BioModels Database into another SBML version?</h3>
+        <h3 id="model-conversion">Can I convert a model from BioModels Database into another SBML version?</h3>
 
         <p>Conversion of SBML model files between different levels/versions is necessary for&nbsp;&nbsp;users who use tools that do
         not support the versions/levels of the original SBML file. The current version of BioModels does not provide an
@@ -245,17 +245,17 @@
         <ol start="4" type="I">
             <li class="faq_title">Questions dealing with the provided features of BioModels Database
                 <ol class="faq_subheading">
-                    <li><a href="#BROWSE_BIOMDB">How to browse and search BioModels Database?</a></li>
-                    <li><a href="#TAB_INFO">What information can be found using the model tabs?</a></li>
-                    <li><a href="#DOWNLOAD_MODEL">How to download a model from BioModels Database?</a></li>
-                    <li><a href="#SBGN">Does BioModels Database provide SBGN maps?</a></li>
-                    <li><a href="#MATLAB">Does&nbsp;BioModels Database export models under the MATLAB format?</a></li>
+                    <li><a href="#browse-models">How to browse and search BioModels Database?</a></li>
+                    <li><a href="#tab-info">What information can be found using the model tabs?</a></li>
+                    <li><a href="#download-model">How to download a model from BioModels Database?</a></li>
+                    <li><a href="#sbgn">Does BioModels Database provide sbgn maps?</a></li>
+                    <li><a href="#matlab">Does&nbsp;BioModels Database export models under the matlab format?</a></li>
                 </ol>
             </li>
         </ol>
     </div>
     <div class="columns small-12 medium-10 large-10">
-        <h3 id="BROWSE_BIOMDB">How to browse and search BioModels Database?</h3>
+        <h3 id="browse-models">How to browse and search BioModels Database?</h3>
 
         <p>One of the&nbsp;main&nbsp;classification of models on BioModels is based on their curation status i.e. manually curated
         and&nbsp;non-curated models. By clicking on&nbsp;<a
@@ -272,7 +272,7 @@
         to reach the model description page.
         </p>
 
-        <h3 id="TAB_INFO">What information can be found using the model tabs?</h3>
+        <h3 id="tab-info">What information can be found using the model tabs?</h3>
 
         <p>Here is a brief description of the information available through the tabs available on each curated model's
         description page:</p>
@@ -287,7 +287,7 @@
             </li>
         </ol>
 
-        <h3 id="DOWNLOAD_MODEL">How to download a model from BioModels Database?</h3>
+        <h3 id="download-model">How to download a model from BioModels Database?</h3>
 
         <p>There are several way to download the models:</p>
         <ul class="faq_list">
@@ -299,7 +299,7 @@
                 href="https://bitbucket.org/biomodels/jummp-biomodels/wiki/Web%20Services">Web Services</a>.</li>
         </ul>
 
-        <h3 id="SBGN">Does BioModels Database provide SBGN maps?</h3>
+        <h3 id="sbgn">Does BioModels Database provide sbgn maps?</h3>
 
         <p>BioModels Database provides graphical representations of the models in various formats (PNG and SVG). These files
         are available from the "Files" tab on a model's description page.</p>
@@ -312,7 +312,7 @@
         support it as much, and as quickly, as possible.
         </p>
 
-        <h3 id="MATLAB">Does&nbsp;BioModels Database export models under MATLAB format?</h3>
+        <h3 id="matlab">Does&nbsp;BioModels Database export models under matlab format?</h3>
 
         <p>BioModels Database developers are doing their best to provide a variety of export formats. BioModels Database is a
         public resource, and is totally committed to support open standard formats. Therefore, our first priority is the
@@ -339,49 +339,49 @@
         <ol start="5" type="I">
             <li class="faq_title">Questions dealing with model submission
                 <ol class="faq_subheading">
-                    <li><a href="#SUBMIT_MODEL">What do I need to submit a new model?</a>
+                    <li><a href="#submit-model">What do I need to submit a new model?</a>
                         <ol type="a">
-                            <li><a href="#REGISTER_NEW_ACCOUNT" class="level3">How to register for a new user account?</a></li>
-                            <li><a href="#HOW_TO_SUBMIT" class="level3">How to submit a new model?</a></li>
+                            <li><a href="#register-new-account" class="level3">How to register for a new user account?</a></li>
+                            <li><a href="#how-to-submit-a-new-model" class="level3">How to submit a new model?</a></li>
                         </ol>
                     </li>
                     <li>
-                        <a href="#MODEL_UPDATE_EXISTING">Can I update an existing model details?</a>
+                        <a href="#update-existing-model">Can I update an existing model details?</a>
                         <ol type="a">
-                            <li><a href="#UPDATE_MODEL" class="level3">How to update model files or revised version of a
+                            <li><a href="#how-to-update-model" class="level3">How to update model files or revised version of a
                             model, model name and description?</a></li>
-                            <li><a href="#UPDATE_PUBLICATION" class="level3">How to update the model associated publication
+                            <li><a href="#update-publication" class="level3">How to update the model associated publication
                             details?</a></li>
-                            <li><a href="#SUBMIT_NO_PUB" class="level3">What will happen if I submit the model without
+                            <li><a href="#submit-no-publication" class="level3">What will happen if I submit the model without
                             Publication details?</a></li>
-                            <li><a href="#SUBMIT_BEFORE_PAPER" class="level3">Can I submit a model before it is
+                            <li><a href="#submit-before-paper" class="level3">Can I submit a model before it is
                             described in a published paper?</a>
-                            <li><a href="#MAINTAINED_REVS" class="level3">Are the model changes maintained as revisions?</a></li>
+                            <li><a href="#changes-stored-revisions" class="level3">Are the model changes maintained as revisions?</a></li>
                         </ol>
                     </li>
                     </li>
 
                     <li><a
-                        href="#ACCESS_AFTER_SUBMISSION">Will a model be publicly accessible immediately after its submission?</a>
+                        href="#access-after-submission">Will a model be publicly accessible immediately after its submission?</a>
                         <ol type="a">
                             <li><a href="#make-model-public" class="level3">What need to be done to make model public?</a></li>
                             <li><a href="#what-will-happen-model-nonpublic" class="level3">What will happen if don’t make model
                             public?</a></li>
                         </ol>
                     </li>
-                    <li><a href="#REVIEWER_ACCESS">How can reviewers access unpublished models?</a></li>
-                    <li><a href="#SUPPORTED_FORMATS">What are the supported model encoding formats?</a></li>
-                    <li><a href="#MODEL_UPDATE">How to submit a revised version of a model?</a></li>
+                    <li><a href="#reviewer-access">How can reviewers access unpublished models?</a></li>
+                    <li><a href="#supported-formats">What are the supported model encoding formats?</a></li>
+                    <li><a href="#how-to-submit-revised-version">How to submit a revised version of a model?</a></li>
                     <li><a
-                        href="#CELLML_CONV">Why does my SBML model contain no species or reactions after a conversion from CellML?</a>
+                        href="#cellml-conversion">Why does my SBML model contain no species or reactions after a conversion from CellML?</a>
                     </li>
-                    <li><a href="#SUBMIT">What do I do if I receive error messages when trying to submit a model?</a></li>
+                    <li><a href="#submission-error">What do I do if I receive error messages when trying to submit a model?</a></li>
                 </ol>
             </li>
         </ol>
     </div>
     <div class="columns small-12 medium-10 large-10">
-        <h3 id="SUBMIT_MODEL">What do I need to submit a new model?</h3>
+        <h3 id="submit-model">What do I need to submit a new model?</h3>
         <p>First, one need to register with BioModel to get a user credentials
         (account and password), model files, publication details and few
         additional details (requested during submission process). Using
@@ -389,7 +389,7 @@
         BioModels. For more guidance, please refer:
             <a href="${manualUrl}/getting-started.html#slide4"
                target="_blank">Model Submission guidelines (Slide 4)</a></p>
-        <h4 id="REGISTER_NEW_ACCOUNT" class="level3">How to register for a new user account?</h4>
+        <h4 id="register-new-account" class="level3">How to register for a new user account?</h4>
         <p>For registering with BioModels, please visit the <a href="${serverUrl}">BioModels
         website</a> and click on Register. Follow the on-screen instruction for the next
         steps. For more guidance, please refer:
@@ -397,7 +397,7 @@
                target="_blank">Model
             Submission guidelines (Slide 5-8)</a></p>
 
-        <h4 id="HOW_TO_SUBMIT" class="level3">How to submit a new model?</h4>
+        <h4 id="how-to-submit-a-new-model" class="level3">How to submit a new model?</h4>
 
         <p>Anybody can submit a model to BioModels Database by creating an account on BioModels. Even if you are not the
         actual author or encoder of a model you can submit it for inclusion in BioModels Database. If you do so, you will be
@@ -423,7 +423,7 @@
             href="submit">submission page</a>. If the model is encoded using a different format, please read the section
         of this FAQ about the <a
             title="Could BioModels Database accept models encoded using my own software-specific format?"
-            href="#SUPPORTED_FORMATS">supported formats</a>. If the model can be converted into SBML or CellML, please <a
+            href="#supported-formats">supported formats</a>. If the model can be converted into SBML or CellML, please <a
             title="Contact BioModels.net Team" href="contact">contact us</a>.</p>
 
         <p>Once the model has been submitted, the submitter will receive an email notification with a unique, stable and
@@ -445,12 +445,12 @@
                                            target="_blank">https://www.ebi.ac.uk/biomodels/MODEL1002160000</a>.
         </p>
 
-        <h3 id="MODEL_UPDATE_EXISTING">Can I update an existing model details?</h3>
+        <h3 id="update-existing-model">Can I update an existing model details?</h3>
         <p>Models submitted to BioModels remains private to the user until
         user publish it from form his/her side. User can update the model
         files, model name, publication details etc at any time point before
         making the model public. All the changes are revision controlled.</p>
-        <h4 id="UPDATE_MODEL" class="level3">How to update model files or revised version of a
+        <h4 id="how-to-update-model" class="level3">How to update model files or revised version of a
         model, model name and description?</h4>
         <p>
             User need to login using their user credentials and go to
@@ -463,7 +463,7 @@
                                                         target="_blank">Model
             Submission guidelines (Slide 20-28)</a>
         </p>
-        <h4 id="UPDATE_PUBLICATION" class="level3">How to update the model associated publication
+        <h4 id="update-publication" class="level3">How to update the model associated publication
         details?</h4>
         <p>
             <strong>Method 1:</strong> This method is very similar to updating Model
@@ -495,7 +495,7 @@
             Model Submission guidelines (Slide 31-33)</a>
         </p>
 
-        <h4 id="SUBMIT_NO_PUB" class="level3">What will happen if I submit the model without
+        <h4 id="submit-no-publication" class="level3">What will happen if I submit the model without
         Publication details?</h4>
         <p>
             Model updated without publication details will be tagged
@@ -505,7 +505,7 @@
             details.
         </p>
 
-        <h4 id="SUBMIT_BEFORE_PAPER" class="level3">Can I submit a model before it is described in a published paper?</h4>
+        <h4 id="submit-before-paper" class="level3">Can I submit a model before it is described in a published paper?</h4>
 
         <p>Yes. Models can be submitted prior to the publication of the associated paper(s). It is actually strongly
         advised to do so: at the submission time, each model is assigned a unique and perennial identifier which allows
@@ -521,11 +521,11 @@
         BioModels by referring to the guidelines on <a
             href="#quote-biomodels">how to cite BioModels Database</a>.</p>
 
-        <h4 id="MAINTAINED_REVS" class="level3">Are the model changes maintained as revisions?</h4>
+        <h4 id="changes-stored-revisions" class="level3">Are the model changes maintained as revisions?</h4>
         <p>All the updating or changes done are maintained as
         revisions.</p>
 
-        <h3 id="ACCESS_AFTER_SUBMISSION">Will a model be publicly accessible immediately after its submission?</h3>
+        <h3 id="access-after-submission">Will a model be publicly accessible immediately after its submission?</h3>
 
         <p>No. Models are not directly visible and retrievable by the public as soon as they are submitted to BioModels
         Database. From submission to their public release, all models undergo various automated and manually performed
@@ -535,7 +535,7 @@
         <p>Moreover, all models are only made publicly available from BioModels Database after the publication of the
         corresponding papers. Please refer to the section of this FAQ about the <a
             title="Will a model be publicly accessible immediately after its submission?"
-            href="#ACCESS_AFTER_SUBMISSION">access to a model after its submission</a> for more information about when a
+            href="#access-after-submission">access to a model after its submission</a> for more information about when a
         model will be publicly available from BioModels Database.
         </p>
 
@@ -563,7 +563,7 @@
         it will not be listed in BioModels Public models. Also no
         one else can access any details about the model.</p>
 
-        <h3 id="REVIEWER_ACCESS">How can reviewers access unpublished models?</h3>
+        <h3 id="reviewer-access">How can reviewers access unpublished models?</h3>
 
         <p>BioModels Database can provide access to unpublished models to reviewers. This is not automatic, so the model
         submitter needs to request it (for example emailing us at
@@ -576,7 +576,7 @@
         please do not hesitate to <a
             title="Contact BioModels.net Team" href="contact">contact us</a>.</p>
 
-        <h3 id="SUPPORTED_FORMATS">What are the supported model encoding formats?</h3>
+        <h3 id="supported-formats">What are the supported model encoding formats?</h3>
 
         <p>Currently BioModels Database only provides full support for a subset of the modelling formats landscape. This is
         mainly due to the fact that we strongly believe in interoperability, which requires distributing to the community
@@ -591,7 +591,7 @@
         from other generic modelling platforms. So, if you cannot convert your model(s) to one of the fully supported formats,
         please do contact us (at biomodels-cura AT ebi.ac.uk, which is a non public mailing list dedicated to our curators).</p>
 
-        <h3 id="MODEL_UPDATE">How to submit a revised version of a model?</h3>
+        <h3 id="how-to-submit-revised-version">How to submit a revised version of a model?</h3>
         <dl>
             <dt><strong>If the model is not yet published in BioModels Database</strong></dt>
             <dd>
@@ -610,7 +610,7 @@
             </dd>
         </dl>
 
-        <h3 id="CELLML_CONV">Why does my SBML model contain no species or reactions after a conversion from CellML?</h3>
+        <h3 id="cellml-conversion">Why does my SBML model contain no species or reactions after a conversion from CellML?</h3>
 
         <p>The issue is that there is no annotation in the <a title="CellML"
                                                               href="http://www.cellml.org">CellML</a> file that could help
@@ -624,7 +624,7 @@
         to be able to do a round-trip conversion, starting either from a SBML model or a CellML model, without loosing
         any information.</p>
 
-        <h3 id="SUBMIT">What do I do if I receive error messages when trying to submit a model?</h3>
+        <h3 id="submission-error">What do I do if I receive error messages when trying to submit a model?</h3>
         <p>Any validation issues detected during the submission process will be reported as warnings, making it possible to
         proceed with the submission in spite of the encoding problems. It may be perfectly possible to submit a model that
         is incorrectly encoded in SBML and then share it with someone that can help fix the SBML representation.</p>
@@ -635,26 +635,26 @@
     &nbsp;
 </div>
 
-<div id="model-curation" class="row faq-section-box">
+<div id="model-curation-section" class="row faq-section-box">
     <div class="columns small-12 medium-2 large-2">
         <ol start="6" type="I">
             <li class="faq_title">Questions dealing with the curation of the models
                 <ol class="faq_subheading">
-                    <li><a href="#MODEL_CURATION">What checks are performed to ensure model correctness?</a></li>
-                    <li><a href="#MIRIAM">What is MIRIAM?</a></li>
-                    <li><a href="#MIRIAM_COMPLIANCE">How is MIRIAM compliance ensured?</a></li>
-                    <li><a href="#ANNOTATION">What is annotation, and what purpose does it serve in a model?</a></li>
-                    <li><a href="#ANNOTATORS">Who annotates the models?</a></li>
-                    <li><a href="#ANNOT_IN_SBML">How are annotations stored in SBML?</a></li>
-                    <li><a href="#FULL_ANNOTATION">When is a model completely annotated?</a></li>
-                    <li><a href="#CURATION_TOOLS">What are the tools used by the curators of BioModels Database?</a></li>
-                    <li><a href="#NON_CURA_BRANCH">What is the non-curated branch of BioModels Database?</a></li>
+                    <li><a href="#model-curation">What checks are performed to ensure model correctness?</a></li>
+                    <li><a href="#miriam">What is MIRIAM?</a></li>
+                    <li><a href="#miriam-compliance">How is MIRIAM compliance ensured?</a></li>
+                    <li><a href="#annotation">What is annotation, and what purpose does it serve in a model?</a></li>
+                    <li><a href="#annotators">Who annotates the models?</a></li>
+                    <li><a href="#annotations-stored-in-sbml">How are annotations stored in SBML?</a></li>
+                    <li><a href="#full-annotation">When is a model completely annotated?</a></li>
+                    <li><a href="#curation-tools">What are the tools used by the curators of BioModels Database?</a></li>
+                    <li><a href="#non-cura-branch">What is the non-curated branch of BioModels Database?</a></li>
                 </ol>
             </li>
         </ol>
     </div>
     <div class="columns small-12 medium-10 large-10">
-        <h3 id="MODEL_CURATION">What checks are performed to ensure model correctness?</h3>
+        <h3 id="model-curation">What checks are performed to ensure model correctness?</h3>
 
         <p>Before being made publicly available through BioModels Database, models are thoroughly verified. This involves
         several types of checks, some automated and some manually performed by a team of curators.
@@ -671,9 +671,9 @@
             the results.</li>
         </ul>
 
-        <p>These checks come from the <a title="MIRIAM guidelines" href="#MIRIAM">MIRIAM</a> set of guidelines.</p>
+        <p>These checks come from the <a title="MIRIAM guidelines" href="#miriam">MIRIAM</a> set of guidelines.</p>
 
-        <h3 id="MIRIAM">What is MIRIAM?</h3>
+        <h3 id="miriam">What is MIRIAM?</h3>
 
         <p>MIRIAM is the <a title="More information about MIRIAM"
                             href="http://co.mbine.org/standards/miriam">Minimum Information Required in the Annotation of
@@ -699,13 +699,13 @@
         </p>
 
         <p>All models stored in the curated branch of BioModels Database are <a title="How is MIRIAM compliance ensured?"
-                                                                                href="#MIRIAM_COMPLIANCE">MIRIAM-compliant</a>.
+                                                                                href="#miriam-compliance">MIRIAM-compliant</a>.
         </p>
 
-        <h3 id="MIRIAM_COMPLIANCE">How is MIRIAM compliance ensured?</h3>
+        <h3 id="miriam-compliance">How is MIRIAM compliance ensured?</h3>
 
         <p>All the models in the curated branch are fully <a title="Go to the 'MIRIAM' section of this FAQ"
-                                                             href="#MIRIAM">MIRIAM</a> compliant. Each of the MIRIAM
+                                                             href="#miriam">MIRIAM</a> compliant. Each of the MIRIAM
         requirements is satisfied in the following way:
         </p>
         <dl>
@@ -733,7 +733,7 @@
             </dd>
         </dl>
 
-        <h3 id="ANNOTATION">What is annotation, and what purpose does it serve in a model?</h3>
+        <h3 id="annotation">What is annotation, and what purpose does it serve in a model?</h3>
 
         <p>Once we ensure a model's correctness, we annotate the model with biological information. Model elements can
         describe a plethora of different entities, such as genes, proteins or metabolites. The usage of free text or
@@ -760,7 +760,7 @@
                href="https://www.ebi.ac.uk/biomodels/annotation">general introduction to the annotation of models</a>.
         </p>
 
-        <h3 id="ANNOTATORS">Who annotates the models?</h3>
+        <h3 id="annotators">Who annotates the models?</h3>
 
         <p>Models can be submitted to BioModels Database already annotated. In this case, any existing annotations encoded
         using the annotation scheme developed for <a
@@ -775,7 +775,7 @@
         This will help us&nbsp;accelerate the model&nbsp;curation process.
         </p>
 
-        <h3 id="ANNOT_IN_SBML">How are annotations stored in SBML?</h3>
+        <h3 id="annotations-stored-in-sbml">How are annotations stored in SBML?</h3>
 
         <p>The annotation of each model component is stored in the corresponding SBML element using the a scheme initially
         designed by Nicolas Le Nov&egrave;re and Andrew Finney, and now part of <a
@@ -795,7 +795,7 @@
         about the annotation scheme.
         </p>
 
-        <h3 id="FULL_ANNOTATION">When is a model completely annotated?</h3>
+        <h3 id="full-annotation">When is a model completely annotated?</h3>
 
         <p>Annotating each model component with the most relevant resource records takes great efforts, especially since
         the number of submitted models has grown rapidly. For example, the 25th release of BioModels Database (18th June 2013)
@@ -813,7 +813,7 @@
         abstraction if the required precise term does not currently exist. Most often, one can always add some information,
         even if not optimal. Hence, model annotation needs to be, and indeed is, a continuous process.</p>
 
-        <h3 id="CURATION_TOOLS">What are the tools used by the curators of BioModels Database?</h3>
+        <h3 id="curation-tools">What are the tools used by the curators of BioModels Database?</h3>
 
         <p>Our curators use a wide range of tools to perform their curation tasks: <a
             href="http://www.celldesigner.org/">CellDesigner</a>, <a href="http://www.copasi.org/">COPASI</a>, <a
@@ -828,7 +828,7 @@
         <p>Moreover, they also use tools such as <a title="Gnuplot"
                                                     href="http://www.gnuplot.info/">Gnuplot</a> and various custom scripts.</p>
 
-        <h3 id="NON_CURA_BRANCH">What is the non-curated branch of BioModels Database?</h3>
+        <h3 id="non-cura-branch">What is the non-curated branch of BioModels Database?</h3>
 
         <p>The success and rapid growth of BioModels databases has led to a couple of issues, both of which are handled using
         the non-curated branch of BioModels Database. Firstly, BioModels Database faces an ever-growing, and increasingly
@@ -839,7 +839,7 @@
         <ol class="faq_list">
             <li>Models that are perfectly fine, but have yet to be curated.</li>
             <li>Models that are not curatable, since they are not <a title="Go to the 'MIRIAM' section of this FAQ"
-                                                                     href="#MIRIAM">MIRIAM</a> compliant.</li>
+                                                                     href="#miriam">MIRIAM</a> compliant.</li>
             <li>Models that are not currently curatable, since they are not kinetic models (e.g. logical models and Flux Balance Analysis models).</li>
             <li>Models for which SBML supports only part of the description, most of it being in annotation (e.g. spatial models).</li>
         </ol>
@@ -859,15 +859,15 @@
             <li class="faq_title">Questions dealing with the underlying software infrastructure
                 <ol class="faq_subheading">
                     <li><a
-                        href="#BIOMDB_SOFTWARE">What are the tools used to develop and run the software infrastructure behind BioModels Database?</a>
+                        href="#biomd-software">What are the tools used to develop and run the software infrastructure behind BioModels Database?</a>
                     </li>
-                    <li><a href="#BIOMDB_SOFTWARE_REUSE">Can I install my own version of BioModels Database?</a></li>
+                    <li><a href="#biomd-software-reuse">Can I install my own version of BioModels Database?</a></li>
                 </ol>
             </li>
         </ol>
     </div>
     <div class="columns small-12 medium-10 large-10">
-        <h3 id="BIOMDB_SOFTWARE">What are the tools used to develop and run the software infrastructure behind BioModels
+        <h3 id="biomd-software">What are the tools used to develop and run the software infrastructure behind BioModels
         Database?</h3>
 
         <p>The beta system is based on <a
@@ -884,14 +884,14 @@
             href="http://www.pharmml.org/tools/libpharmml">libPharmML</a>, <a
             href="https://github.com/mglont/CombineArchive">libCOMBINEArchive</a>.</p>
 
-        <h3 id="BIOMDB_SOFTWARE_REUSE">Can I install my own version of BioModels Database?</h3>
+        <h3 id="biomd-software-reuse">Can I install my own version of BioModels Database?</h3>
 
         <p>The models can be <a
             title="What are the conditions of use and distribution for unmodified models originating from BioModels Database?"
-            href="#MODEL_REUSE">freely reused</a> and the software running BioModels Database itself is an open source project
+            href="#model-reuse">freely reused</a> and the software running BioModels Database itself is an open source project
         distributed under the GNU General Public License. For more information, please refer to the <a
             title="What are the tools used to develop and run the software infrastructure behind BioModels Database?"
-            href="#BIOMDB_SOFTWARE">software infrastructure</a> entry of this FAQ.</p>
+            href="#biomd-software">software infrastructure</a> entry of this FAQ.</p>
 
         <p>All converters are also available under an open source license and can be downloaded from the <a
             title="Download files from BioModels SF project"
@@ -916,19 +916,20 @@
         <ol start="8" type="I">
             <li class="faq_title">Miscellaneous questions
                 <ol class="faq_subheading">
-                    <li><a href="#ID_SCHEME">What is the naming and identifier scheme used in BioModels Database?</a></li>
-                    <li><a href="#MODEL_AUTHORS">Who are the authors of a model?</a></li>
-                    <li><a href="#MODEL_SUBMITTER">Who is the submitter of a model?</a></li>
-                    <li><a href="#MODEL_CREATORS">Who are the encoders of a model?</a></li>
+                    <li><a href="#id-scheme">What is the naming and identifier scheme used in BioModels Database?</a></li>
+                    <li><a href="#model-authors">Who are the authors of a model?</a></li>
+                    <li><a href="#model-submitter">Who is the submitter of a model?</a></li>
+                    <li><a href="#model-creators">Who are the encoders of a model?</a></li>
                     <li><a
-                        href="#ERROR_REACTION">Why do I get an error message stating some reaction modifiers are not declared?</a>
+                        href="#error-reaction">Why do I get an error message stating some reaction modifiers are not
+                        declared?</a>
                     </li>
                 </ol>
             </li>
         </ol>
     </div>
     <div class="columns small-12 medium-10 large-10">
-        <h3 id="ID_SCHEME">What is the naming and identifier scheme used in BioModels Database?</h3>
+        <h3 id="id-scheme">What is the naming and identifier scheme used in BioModels Database?</h3>
 
         <p>At the time of submission, a unique submission identifier assigned to the model. It is composed of the character
         sequence "MODEL" followed by ten digits extracted from the timestamp of submission. When a model is moved to the
@@ -937,7 +938,7 @@
         for the 216th model successfully curated).</p>
 
         <p>During the <a title="Go to: curators"
-                         href="#MODEL_CURATION">curation process</a>, the <em>curators</em> will also give an appropriate
+                         href="#model-curation">curation process</a>, the <em>curators</em> will also give an appropriate
         name to each model. This follows the general scheme: <em>AuthorYear - Topic Method</em>.
         For example, Edelstein1996 - EPSP ACh Event refers to the model <a
             title="Go to model: BIOMD0000000001" href="https://www.ebi.ac.uk/biomodels/BIOMD0000000001">BIOMD0000000001</a>.</p>
@@ -946,26 +947,27 @@
         reason a particular model must be retracted from the database. Both identifiers can be used to retrieve the model
         and quoted in subsequent publications.</p>
 
-        <h3 id="MODEL_AUTHORS">Who are the authors of a model?</h3>
+        <h3 id="model-authors">Who are the authors of a model?</h3>
 
         <p>The <em>authors</em> of a model are the individuals who initially described the model in a peer-reviewed publication.
         </p>
 
-        <h3 id="MODEL_SUBMITTER">Who is the submitter of a model?</h3>
+        <h3 id="model-submitter">Who is the submitter of a model?</h3>
 
         <p>The <em>submitter</em> of a model is the person who actually submitted the model and therefore requested its
         addition in BioModels Database. Anybody can submit a model to BioModels Database. Please refer to <a
-            title="Model submission procedure" href="#MODEL_SUBMISSION">the submission procedure</a>, if you want to know more.
+            title="Model submission procedure" href="#model-submission">the submission procedure</a>, if you want to know
+        more.
         </p>
 
-        <h3 id="MODEL_CREATORS">Who are the encoders of a model?</h3>
+        <h3 id="model-creators">Who are the encoders of a model?</h3>
 
         <p>The <em>encoders</em> of a model are the individuals who actually encoded the model in its present form, based on
         the published article. These individuals could be the authors of the publication, members of the curation team, or
         any other scientists who decided to encode the published article.
         </p>
 
-        <h3 id="ERROR_REACTION">Why do I get an error message stating some reaction modifiers are not declared?</h3>
+        <h3 id="error-reaction">Why do I get an error message stating some reaction modifiers are not declared?</h3>
 
         <p>Some models contain reactions where the kinetics are modified by compounds that are not themselves reactants. These
         compounds are not consumed or produced by the reaction, and are known as modifiers. This error occurs when some

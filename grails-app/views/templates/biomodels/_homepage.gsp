@@ -86,9 +86,9 @@
         modelling community with reproducible, high-quality,
         <a href="http://creativecommons.org/publicdomain/zero/1.0/" target="_blank">freely-accessible</a>
         models published in the scientific literature. More information about using BioModels such as <a
-        href="faq#SUBMIT_MODEL"
-        class="tag">model submission</a> <a href="faq#MODEL_UPDATE_EXISTING"
-        class="tag">update</a> <a href="faq#ACCESS_AFTER_SUBMISSION"
+        href="faq#submit-model"
+        class="tag">model submission</a> <a href="faq#update-existing-model"
+        class="tag">update</a> <a href="faq#access-after-submission"
         class="tag">publication</a> can be found in the <a href="faq">FAQ</a>.
     </p></div>
 </div>
