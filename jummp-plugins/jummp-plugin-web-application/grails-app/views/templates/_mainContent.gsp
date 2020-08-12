@@ -9,14 +9,14 @@
     def imagePath = "/images"
     def resultOptions = net.biomodels.jummp.webapp.Preferences.getOptions("numResults")
     resultOptions = resultOptions.reverse()
-    if (!params.sort.encodeAsHTML()) {
+    if (!params.sort) {
         params.sort = "relevance-desc"
     }
-    def domain = params.domain.encodeAsHTML()
+    def domain = params.domain
     if (!domain) {
         domain = "biomodels"
     }
-    String queryString = params.query?.encodeAsHTML().replaceAll('([^\\\\])"', '$1\\\\"')
+    String queryString = params.query?.replaceAll('([^\\\\])"', '$1\\\\"')
 %>
 <div class="content">
     <g:if test="${models}">
@@ -41,10 +41,10 @@
                     </sec:ifLoggedIn>
                 </g:if>
                 <g:else>
-                    <g:if test="${params.flashMessage.encodeAsHTML()}">
+                    <g:if test="${params.flashMessage}">
                         <div class="alert warning">
                             <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
-                            <h5>${params.flashMessage.encodeAsHTML()}</h5>
+                            <h5>${params.flashMessage}</h5>
                         </div>
                     </g:if>
                     <span id="flashMessage"></span>
@@ -137,8 +137,8 @@
                             var query = "${queryString}";
                             $('#local-searchbox').val(query);
                             $('#searchString').text(query);
-                            if ("${params.sort.encodeAsHTML()}") {
-                                $('div#sorting > label > select').val("${params.sort.encodeAsHTML()}");
+                            if ("${params.sort}") {
+                                $('div#sorting > label > select').val("${params.sort}");
                             }
                         });
 
@@ -147,11 +147,11 @@
                                 var selectedValue = $(this).val();
                                 var url = "${createLink(controller: 'search', action: "${action}",
                             params: [query: "${query}"])}";
-                                if ("${params.offset.encodeAsHTML()}") {
-                                    url += "&offset=${params.offset.encodeAsHTML()}";
+                                if ("${params.offset}") {
+                                    url += "&offset=${params.offset}";
                                 }
-                                if ("${params.numResults.encodeAsHTML()}") {
-                                    url += "&numResults=${params.numResults.encodeAsHTML()}";
+                                if ("${params.numResults}") {
+                                    url += "&numResults=${params.numResults}";
                                 }
                                 url += "&sort=" + selectedValue;
                                 window.location.href = url;
@@ -247,10 +247,10 @@
             %>
             <g:if test="${currentPage != 1 && numPages > stepPagination}">
                 <%
-                    pagedParams = [offset: 0, numResults: length, sort: params.sort.encodeAsHTML()]
+                    pagedParams = [offset: 0, numResults: length, sort: params.sort]
                     if (query) {
                         pagedParams["query"] = query
-                        pagedParams["domain"] = params.domain.encodeAsHTML()
+                        pagedParams["domain"] = params.domain
                     }
                 %>
                 <a href="${createLink(controller: 'search', action: action, params: pagedParams)}">First</a>

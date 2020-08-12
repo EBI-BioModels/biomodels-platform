@@ -58,23 +58,23 @@
                             newQuery = selectedFacet
                         }
                         def newParams = [:]
-                        if (params.domain.encodeAsHTML()) {
+                        if (params.domain) {
                             newParams['domain'] = params.domain
                         } else {
                             newParams['domain'] = 'biomodels'
                         }
-                        if (params.query.encodeAsHTML()) {
+                        if (params.query) {
                             newParams["query"] = newQuery
                         } else {
                             newParams["query"] = "${selectedFacet}"
                         }
-                        if (params.offset.encodeAsHTML()) {
+                        if (params.offset) {
                             newParams["offset"] = params.offset
                         }
-                        if (params.numResults.encodeAsHTML()) {
+                        if (params.numResults) {
                             newParams["numResults"] = params.numResults
                         }
-                        if (params.sort.encodeAsHTML()) {
+                        if (params.sort) {
                             newParams["sort"] = params.sort
                         }
                     %>
