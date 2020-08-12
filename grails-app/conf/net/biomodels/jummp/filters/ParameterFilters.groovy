@@ -25,6 +25,7 @@
 package net.biomodels.jummp.filters
 
 import net.biomodels.jummp.utils.InputParameterSanitizer
+import org.codehaus.groovy.grails.commons.GrailsClass
 
 /**
  * Filters for user input and parameters
@@ -35,15 +36,28 @@ import net.biomodels.jummp.utils.InputParameterSanitizer
  * @author <a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a>
  */
 class ParameterFilters {
+    def grailsApplication
 
     def filters = {
         all(controller:'*', action:'*') {
             before = {
+                String controllerName = params["controller"]
+                GrailsClass clazz = grailsApplication.getArtefactByLogicalPropertyName("Controller", controllerName)
+                String fullClassName = clazz?.getFullName()
+                if (!fullClassName) {
+                    List allClasses = grailsApplication.artefactHandlersByName["Controller"].artefactInfo.classes*.name
+                    fullClassName = allClasses.find { String cls ->
+                        cls.contains(".${controllerName}Controller")
+                    }
+                }
                 params.each {
                     if (it.value instanceof String
                         && !it.key.equalsIgnoreCase("controller")
-                        && !it.key.equalsIgnoreCase("action")) {
-                        params[it.key] = InputParameterSanitizer.encodeAsHTML(it.value)
+                        && !it.key.equalsIgnoreCase("action")
+                        && fullClassName
+                        && fullClassName.contains("net.biomodels.jummp")) {
+                        String encodedValue = InputParameterSanitizer.encodeAsHTML(it.value)
+                        params[it.key] = encodedValue
                     }
                 }
             }
