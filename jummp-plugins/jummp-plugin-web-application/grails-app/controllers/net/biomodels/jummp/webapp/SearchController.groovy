@@ -112,8 +112,8 @@ class SearchController {
         final int MAXRESULTS = 100
         final int MINRESULTS = 10
         User user
-        String username = springSecurityService.principal.username
-        if (!(username == GrailsAnonymousAuthenticationToken.USERNAME)) {
+        String username = springSecurityService?.principal?.username
+        if (!(username == GrailsAnonymousAuthenticationToken.USERNAME) && !username) {
             user = User.findByUsername(username)
         }
         Preferences prefs
@@ -254,9 +254,10 @@ under the format: ${response.format}"""
             forward action: 'search', params: params
             return // don't continue any further with this.
         }
-        String[] models = params.models.split(',')
-        if (models.size() > 100) {
-            def params = [query: "*:*", flashMessage: g.message(code: "jummp.search.download.exceededThreshold.warningMessage")]
+        String[] models = params.models?.split(',')
+        if (models?.size() > 100) {
+            def params = [query: "*:*",
+                          flashMessage: g.message(code: "jummp.search.download.exceededThreshold.warningMessage")]
             forward(action: 'search', params: params)
             return params
         }
@@ -283,14 +284,14 @@ under the format: ${response.format}"""
             SearchResponse response = searchService.searchModels(query, domain, sortOrder, paginationCriteria)
             ArrayList<MTC> res = response.results
             totalCount = response.totalCount
-            if (res.size() > 0) {
+            if (res?.size() > 0) {
                 LOGGER.info("Found(s): ${res.size()} records.")
                 res.each {
                     models.add(it)
                 }
             }
             LinkedHashMap<String, OrderedFacet> respondedFacets = response.facets
-            if (respondedFacets.size() > 0) {
+            if (respondedFacets?.size() > 0) {
                 LOGGER.info("Found(s): ${respondedFacets.size()} facets.")
                 respondedFacets.each {
                     facets.add(it.value.facet)
@@ -299,12 +300,12 @@ under the format: ${response.format}"""
         }
         JsonBuilder builder = new JsonBuilder(facets)
 
-        if (offset > 0 && offset < models.size()) {
+        if (offset > 0 && offset < models?.size()) {
             models = models[offset..-1]
         } else {
             offset = 0
         }
-        if (models.size() > length) {
+        if (models?.size() > length) {
             models = models[0..length-1]
         }
 
