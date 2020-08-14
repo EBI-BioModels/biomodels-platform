@@ -39,7 +39,7 @@
                         jsMethod = "runFacetSearch"
                     } else {
                         selectedFacet = "${facet.id}:${fv.value}"
-                        isAsked = params.query?.contains("${facet.id}:${escapedFacetValue}")
+                        isAsked = query?.contains("${facet.id}:${escapedFacetValue}")
                     }
                 %>
                 <g:if test="${isAsked}">
@@ -63,7 +63,7 @@
                         } else {
                             newParams['domain'] = 'biomodels'
                         }
-                        if (params.query) {
+                        if (query) {
                             newParams["query"] = newQuery
                         } else {
                             newParams["query"] = "${selectedFacet}"
@@ -124,12 +124,12 @@
             facetValue = '"' + facetValue + '"';
         }
         let lastQueryString = " AND " + facetGroupId + ":" + facetValue;
-        let currentQuery = "${params.query}";
+        let currentQuery = "${query}";
         if (e[0].checked) {
             currentQuery += lastQueryString;
         } else {
             // remove the search term out the query string, update newSearchURI
-            currentQuery = currentQuery.replace(lastQueryString, "")
+            currentQuery = currentQuery.replace(lastQueryString, "");
         }
         let otherParams = "domain=${params.domain}";
         if ("${params.offset}") {
@@ -146,7 +146,7 @@
     }
 
     function runFacetList(e, facetGroupId, facetValue) {
-        let currentQueryString = "${params.query?.replaceAll('"', '\\\\"')}";
+        let currentQueryString = "${query?.replaceAll('"', '\\\\"')}";
         facetValue = escapeSpecialLuceneCharacters(facetValue);
         /* the above utility function is defined in common.js which is already included in the footer section */
         let latestQueryString = facetGroupId + ":" + facetValue;
