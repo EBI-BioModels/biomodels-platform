@@ -170,7 +170,9 @@ class SearchController {
 
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def searchRedir() {
-        redirect action: 'search', params: [query: params.search_block_form, domain: params.chosenDomain]
+        // avoid encoding as HTML twice
+        String query = params.search_block_form.decodeHTML()
+        redirect action: 'search', params: [query: query, domain: params.chosenDomain]
     }
 
     /**
