@@ -316,6 +316,13 @@ under the format: ${response.format}"""
             models = models[0..length-1]
         }
 
+        /**
+         * By default, the query was encoded as HTML due to security vulnerability until here.
+         * After using encoded query into search modules, we should decode it into the original
+         * value that helps displaying it in a human readable form. Pay attention to the fact that
+         * the query has been decoded in searchService.searchModels.
+         */
+        query = query.decodeHTML()
         return [models: models, facets: facets, matches: totalCount,
                 offset: paginationCriteria['start'],
                 length: paginationCriteria['length'],
