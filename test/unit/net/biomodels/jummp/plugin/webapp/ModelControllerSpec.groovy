@@ -1,17 +1,18 @@
 package net.biomodels.jummp.plugin.webapp
 
 import grails.test.mixin.Mock
+import grails.test.mixin.TestFor
 import net.biomodels.jummp.core.ModelDelegateService
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.PermissionTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.filters.ParameterFilters
 import net.biomodels.jummp.model.Revision
-
-import grails.test.mixin.TestFor
+import net.biomodels.jummp.webapp.ModelController
 import spock.lang.Specification
 
-@TestFor(net.biomodels.jummp.webapp.ModelController)
-@Mock([Revision])
+@TestFor(ModelController)
+@Mock([Revision, ParameterFilters])
 class ModelControllerSpec extends Specification {
     def setup() {
     }
@@ -52,11 +53,11 @@ class ModelControllerSpec extends Specification {
         }
         def springSecurityService = new Object()
         springSecurityService.metaClass.getCurrentUser = {
-        	return null;
+            return null
         }
-        
+
         controller.modelDelegateService = mds.createMock()
-        controller.springSecurityService = springSecurityService;
+        controller.springSecurityService = springSecurityService
 
         when: "the access permissions of that model are checked"
         controller.request.parameters = [id: "MODEL123.4"]
@@ -67,7 +68,31 @@ class ModelControllerSpec extends Specification {
         grails.converters.JSON perms = model.permissions
         String jsonPerms = perms.toString(false)
         String expected = """\
-[{"disabledEdit":false,"id":"0","name":"Me","read":true,"show":true,"write":true},{"disabledEdit":false,"id":"1","name":"Myself","read":true,"show":true,"write":false},{"disabledEdit":false,"id":"2","name":"I","read":true,"show":true,"write":false}]"""
+[{"disabledEdit":false,"id":"0","name":"Me","read":true,"show":true,"write":true},\
+{"disabledEdit":false,"id":"1","name":"Myself","read":true,"show":true,"write":false},\
+{"disabledEdit":false,"id":"2","name":"I","read":true,"show":true,"write":false}]"""
         jsonPerms == expected
+    }
+
+    void "test show action is filtered"() {
+        given: "given parameters and mock objects to the show action"
+        params.controller = "Model"
+        String modelId = "<em>MODEL12345</em>"
+        params.id = modelId
+        params.revisionId = "1"
+
+        def modelDelegateService = mockFor(ModelDelegateService)
+        modelDelegateService.metaClass.getRevisionFromParams = { String id, String revisionId ->
+            return null
+        }
+        controller.modelDelegateService = modelDelegateService
+
+        when: "the show action is called"
+        withFilters(action: "show") {
+            controller.show()
+        }
+
+        then: "the id param is encoded"
+        params.id == "&lt;em&gt;MODEL12345&lt;/em&gt;"
     }
 }
