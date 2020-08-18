@@ -55,8 +55,8 @@ class DefaultModelIdentifierGenerator extends AbstractModelIdentifierGenerator {
     /**
      * Initialises the decorators that should be used by this class instance.
      */
-    DefaultModelIdentifierGenerator(SortedSet<? extends OrderedModelIdentifierDecorator> decorators) {
-        super(decorators)
+    DefaultModelIdentifierGenerator(String generatorType, SortedSet<? extends OrderedModelIdentifierDecorator> decorators) {
+        super(generatorType, decorators)
     }
 
     DefaultModelIdentifierGenerator(GeneratorDetails details) {
@@ -76,16 +76,9 @@ class DefaultModelIdentifierGenerator extends AbstractModelIdentifierGenerator {
                     final String MODEL_ID
                     Operations.jedisPool.getResource().withCloseable { Jedis jedis ->
                         Transaction t = jedis.multi()
-                        String generatorType = typeOfIdentifierGenerator()
-                        String modelIdLastUsedValue
-                        String modelIdLastUsedCount
-                        if (generatorType == "BIOMD") {
-                            modelIdLastUsedValue = KeyCollection.PUBLICATION_ID_LAST_USED_VALUE
-                            modelIdLastUsedCount = KeyCollection.PUBLICATION_ID_LAST_USED_COUNT
-                        } else {
-                            modelIdLastUsedValue = KeyCollection.MODEL_ID_LAST_USED_VALUE
-                            modelIdLastUsedCount = KeyCollection.MODEL_ID_LAST_COUNT
-                        }
+                        String modelIdLastUsedValue = KeyCollection.getLastUsedIdValueKey(type)
+                        String modelIdLastUsedCount = KeyCollection.getLastUsedIdCountKey(type)
+
                         jedis.watch(modelIdLastUsedValue, modelIdLastUsedCount)
                         String lastUsedIdentifier = Operations.doRedisGet(modelIdLastUsedValue)
                         if (!lastUsedIdentifier) {

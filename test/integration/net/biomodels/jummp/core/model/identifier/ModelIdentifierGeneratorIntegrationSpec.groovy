@@ -21,10 +21,12 @@
 package net.biomodels.jummp.core.model.identifier
 
 import grails.spring.BeanBuilder
+import grails.test.runtime.DirtiesRuntime
 import grails.test.spock.IntegrationSpec
 import net.biomodels.jummp.core.model.identifier.generator.DefaultModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.support.NullModelIdentifierGeneratorInitializer
+import net.biomodels.jummp.utils.redis.Operations
 import org.codehaus.groovy.grails.commons.spring.GrailsApplicationContext
 
 class ModelIdentifierGeneratorIntegrationSpec extends IntegrationSpec {
@@ -42,8 +44,6 @@ class ModelIdentifierGeneratorIntegrationSpec extends IntegrationSpec {
         ["submissionIdGenerator", "publicationIdGenerator"].each { bean ->
             ctx.removeBeanDefinition(bean)
         }
-        ModelIdentifierUtils.perennialFields = null
-        ModelIdentifierUtils.MODEL_ID_REGEXES.clear()
 
         def subCfg = new ConfigSlurper().parse('''
             part1 {
@@ -52,7 +52,7 @@ class ModelIdentifierGeneratorIntegrationSpec extends IntegrationSpec {
             }
             part2 {
                 type   = 'date'
-                format = 'yyMMdd' 
+                format = 'yyMMdd'
             }
             part3 {
                 type   = 'numerical'
@@ -79,7 +79,7 @@ class ModelIdentifierGeneratorIntegrationSpec extends IntegrationSpec {
             }
             part2 {
                 type   = 'date'
-                format = 'yyyy' 
+                format = 'yyyy'
             }
             part3 {
                 type  = 'numerical'
@@ -97,11 +97,11 @@ class ModelIdentifierGeneratorIntegrationSpec extends IntegrationSpec {
             barIdInitializer(DummyModelIdentifierInitializer, "YEARLY${y}123456")
 
             submissionIdGenerator(ModelIdentifierGeneratorFactoryBean, subCfg,
-                'submissionIdInitializer', false)
+                'submissionIdInitializer', false, 'submission')
             publicationIdGenerator(ModelIdentifierGeneratorFactoryBean, pubCfg,
-                'publicationIdInitializer', true)
-            fooIdGenerator(ModelIdentifierGeneratorFactoryBean, null, 'fooIdInitializer', false)
-            barIdGenerator(ModelIdentifierGeneratorFactoryBean, barCfg, 'barIdInitializer', true)
+                'publicationIdInitializer', true, 'publication')
+            fooIdGenerator(ModelIdentifierGeneratorFactoryBean, null, 'fooIdInitializer', false, 'foo')
+            barIdGenerator(ModelIdentifierGeneratorFactoryBean, barCfg, 'barIdInitializer', true, 'bar')
         }
         bb.beanDefinitions.each { name, beanDef ->
             ctx.registerBeanDefinition(name, beanDef)
@@ -111,7 +111,13 @@ class ModelIdentifierGeneratorIntegrationSpec extends IntegrationSpec {
     def cleanup() {
     }
 
+    @DirtiesRuntime
     void 'should cope with multiple types of id generators'() {
+        given: 'the redis calls are bypassed without knock-on effects on model id generation'
+        Operations.metaClass.static.doRedisGet = { key ->
+            println "doRedisGet $key"
+            key
+        }
         when:
         def submissionIdGenerator  = ctx.submissionIdGenerator
         def publicationIdGenerator = ctx.publicationIdGenerator
@@ -125,6 +131,7 @@ class ModelIdentifierGeneratorIntegrationSpec extends IntegrationSpec {
         then:
         submissionIdGenerator.generate() == "MODEL${ymd}0001"
         !submissionIdGenerator.regex
+        submissionFactory.generatorType  == 'submission'
         !submissionFactory.shouldComputeRegex
 
         publicationIdGenerator.generate() == "PUBL1234554322"

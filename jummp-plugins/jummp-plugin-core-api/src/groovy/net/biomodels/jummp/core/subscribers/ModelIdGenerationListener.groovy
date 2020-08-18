@@ -20,8 +20,6 @@
 
 package net.biomodels.jummp.core.subscribers
 
-import net.biomodels.jummp.core.model.identifier.generator.DefaultModelIdentifierGenerator as DMIG
-import net.biomodels.jummp.utils.redis.Operations
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import redis.clients.jedis.JedisPubSub

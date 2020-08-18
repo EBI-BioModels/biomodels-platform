@@ -54,11 +54,12 @@ abstract class AbstractModelIdentifierGenerator implements ModelIdentifierGenera
      */
     String regex
 
+    String type
     /**
      * Default constructor
      */
     protected AbstractModelIdentifierGenerator() {
-        this((SortedSet) null)
+        this(null, (SortedSet) null)
     }
 
     /**
@@ -66,8 +67,9 @@ abstract class AbstractModelIdentifierGenerator implements ModelIdentifierGenera
      *
      * @param decorators an ordered set of model id decorators.
      */
-    protected AbstractModelIdentifierGenerator(
+    protected AbstractModelIdentifierGenerator(String type,
             SortedSet<? extends OrderedModelIdentifierDecorator> decorators) {
+        this.type = type
         doSetDecoratorRegistry(decorators)
         regex = null
     }
@@ -83,7 +85,7 @@ abstract class AbstractModelIdentifierGenerator implements ModelIdentifierGenera
          * NoSuchMethodError: GeneratorDetails.getDecorators()Ljava/util/TreeSet
          * No idea why, but I left @CompileStatic on the often-used methods of this class
          */
-        this(details?.decorators)
+        this(details?.generatorType, details?.decorators)
         regex = details?.regex
     }
 
@@ -133,12 +135,10 @@ abstract class AbstractModelIdentifierGenerator implements ModelIdentifierGenera
 
     /**
      * Determines type of generators. It is either submission or publication identifier generator.
-     * The manner to detect is based decorators making up identifiers in which there is at least a fixed literal
-     * appending decorator.
      *
-     * @return A {@link String} representing type of identifier generator (i.e. BIOMD or MODEL)
+     * @return A {@link String} representing type of identifier generator
      */
-    String typeOfIdentifierGenerator() {
+    String typeOfIdentifierGenerator() { // FIXME
         String type = ""
         FLAD f = decoratorRegistry.find {
             it instanceof FLAD

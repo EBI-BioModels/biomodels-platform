@@ -71,18 +71,24 @@ class ModelIdentifierGeneratorFactoryBean implements FactoryBean<ModelIdentifier
      */
     ConfigObject idSettings
 
+    /**
+     * The type of model id generator produced by this factory bean instance (e.g. submission)
+     */
+    String generatorType
+
     @SuppressWarnings("GroovyUnusedDeclaration")
     ModelIdentifierGeneratorFactoryBean() {
-        this(null, null, false)
+        this(null, null, false, null)
     }
 
     ModelIdentifierGeneratorFactoryBean(ConfigObject config,
             String initializerBeanName,
-            boolean computeRegex) {
+            boolean computeRegex, String generatorType) {
         idSettings = config
         this.initializerBeanName = Optional.ofNullable(initializerBeanName)
             .orElse(defaultInitializerBeanName)
         shouldComputeRegex = computeRegex
+        this.generatorType = generatorType
     }
 
     /**
@@ -116,8 +122,8 @@ class ModelIdentifierGeneratorFactoryBean implements FactoryBean<ModelIdentifier
             }
             LOGGER.debug("Seed: $seed --- type: $type")
 
-            GeneratorDetails details = ModelIdentifierUtils.buildDecoratorsFromSettings(idSettings,
-                seed, shouldComputeRegex)
+            GeneratorDetails details = ModelIdentifierUtils.buildDecoratorsFromSettings(generatorType,
+                idSettings, seed, shouldComputeRegex)
 
             new DMIG(details)
         }

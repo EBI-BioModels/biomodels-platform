@@ -182,6 +182,7 @@ beans = {
         idSettings  = idGeneratorSettings.get('submission')
         initializerBeanName = "submissionIdGeneratorInitializer"
         shouldComputeRegex  = !regexPresent
+        generatorType       = 'submission'
     }
 
     Map<String, ConfigObject> optionalGeneratorBeanDefs = [:]
@@ -205,6 +206,7 @@ beans = {
                 // the initializer bean should exist, even if it's a NullModelIdGeneratorInitializer
                 initializerBeanName = initializerBean
                 shouldComputeRegex  = !regexPresent
+                generatorType       = name - ModelIdentifierUtils.GENERATOR_BEAN_SUFFIX
             }
         }
     }

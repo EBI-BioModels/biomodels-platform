@@ -29,20 +29,57 @@ package net.biomodels.jummp.utils.redis
  * @author <a href="mailto:mihai.glont@ebi.ac.uk">Mihai Glont</a>
  */
 final class KeyCollection {
-    // The key pattern for the model identifier's last used value,
-    // for example, MODEL2007030024
-    public static final String MODEL_ID_LAST_USED_VALUE = "model-id-last-used-value"
+    /**
+     * The suffix of the Redis key storing the last value produced by an identifier
+     * generator of a given type - e.g. MODEL2007030024, BIOMD0000000915
+     */
+    public static final String MODEL_ID_LAST_USED_VALUE_KEY_SUFFIX = "-id-last-used-value"
+    /**
+     * The suffix of the Redis key for the last count produced by the VariableDigitAppendingDecorator
+     * of a given model id generator
+     */
+    public static final String MODEL_ID_LAST_COUNT_VALUE_KEY_SUFFIX = "-id-last-count"
 
     // The key pattern for the model identifier's last counter,
     // for example, 1, 2, 3...
     public static final String MODEL_ID_LAST_COUNT = "model-id-last-count"
 
-    // The key pattern for the model publication identifier's last used value,
-    // for example, BIOMD0000000915
-    public static final String PUBLICATION_ID_LAST_USED_VALUE = "publication-id-last-used-value"
-    public static final String PUBLICATION_ID_LAST_USED_COUNT = "publication-id-last-used-count"
-
     public static final String REDIS_CHANNEL_MODEL_VIEW = "ModelView"
     public static final String REDIS_CHANNEL_MODEL_ID_LAST_USED_VALUE = "RedisChannelModelIdLastUsedValue"
+    public static final String REDIS_CHANNEL_MODEL_ID_LAST_USED_VALUE_SUFFIX = ":lastUsedValue"
     public static final String REDIS_CHANNEL_MODEL_ID_LAST_COUNT = "RedisChannelModelIdLastCount"
+    public static final String REDIS_CHANNEL_MODEL_ID_LAST_COUNT_SUFFIX = ":lastIdCount"
+
+    private KeyCollection() {}
+
+    static String getLastModelIdValueChannelForType(String idType) {
+        appendIdTypeToKeySuffix(idType, REDIS_CHANNEL_MODEL_ID_LAST_USED_VALUE_SUFFIX)
+    }
+
+    static String getLastModelIdCountForType(String idType) {
+        appendIdTypeToKeySuffix(idType, REDIS_CHANNEL_MODEL_ID_LAST_COUNT_SUFFIX)
+    }
+
+    /**
+     *
+     * @param idType
+     * @return never null;
+     */
+    static String getLastUsedIdValueKey(String idType) {
+        appendIdTypeToKeySuffix idType, MODEL_ID_LAST_USED_VALUE_KEY_SUFFIX
+    }
+
+    static String getLastUsedIdCountKey(String idType) {
+        appendIdTypeToKeySuffix idType, MODEL_ID_LAST_COUNT_VALUE_KEY_SUFFIX
+    }
+
+    private static String appendIdTypeToKeySuffix(String idType, String keySuffix) {
+        if (null == idType || idType.isAllWhitespace()) {
+            throw new IllegalArgumentException("No empty or null id type allowed")
+        }
+        if (null == keySuffix) {
+            throw new IllegalArgumentException("Key suffix cannot be null")
+        }
+        return "${idType}${keySuffix}"
+    }
 }

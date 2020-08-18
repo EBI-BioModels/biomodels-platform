@@ -84,18 +84,16 @@ class ModelIdentifierPartitionManager {
                     switch(TYPE) {
                         case 'date':
                             String dateFormat
-                            boolean dateFormatMissing = config.format instanceof ConfigObject ||
-                                        config.format.isEmpty()
+                            boolean dateFormatMissing = !config.containsKey('format')
                             if (!dateFormatMissing) {
                                 dateFormat = config.format
-                            }
+                            } // TODO else throw an error!!!
                             partition = new DateModelIdentifierPartition()
                             partition.format = dateFormat
                             break
                         case 'literal':
                             String suffix
-                            boolean suffixMissing = config.suffix instanceof ConfigObject ||
-                                        config.suffix.isEmpty()
+                            boolean suffixMissing = !config.containsKey('suffix')
                             if (!suffixMissing) {
                                 suffix = config.suffix
                             }
@@ -103,13 +101,12 @@ class ModelIdentifierPartitionManager {
                             partition = new LiteralModelIdentifierPartition(isFixed, suffix)
                             break
                         case 'numerical':
-                            String width
-                            boolean widthMissing = config.width instanceof ConfigObject ||
-                                        config.width.isEmpty()
-                            if (!widthMissing) {
+                            String width = null
+                            boolean widthMissing = !config.containsKey('width')
+                                if (!widthMissing) {
                                 width = config.width
                             }
-                            String isFixed = config.fixed ?: 'true'
+                            String isFixed = config.containsKey('fixed') ? config.fixed : 'true'
                             partition = new NumericalModelIdentifierPartition(isFixed, width)
                             break
                         default:
@@ -125,7 +122,7 @@ class ModelIdentifierPartitionManager {
             boolean partitionAdded = addPartition(partition)
             if (!partitionAdded) {
                 String err = "Partition ${partition.inspect()} was not added to the registry!"
-                log.error err
+                 log.error err
                 throw new Exception(err)
             }
         }

@@ -67,6 +67,12 @@ interface ModelIdentifierDecorator {
      */
     void setGenerator(ModelIdentifierGenerator generator)
     /**
+     * Returns the model id generator to which this decorator instance belongs.
+     *
+     * @return null if {@link net.biomodels.jummp.core.model.identifier.decorator.ModelIdentifierDecorator#setGenerator(net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGenerator)} has not been called yet.
+     */
+    ModelIdentifierGenerator getGenerator()
+    /**
      * Informs the generator of a change to this model id decorator's value.
      *
      * @param event A description of the changes to this model id decorator's value.

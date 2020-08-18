@@ -20,7 +20,7 @@
 
 package net.biomodels.jummp.core.model.identifier.support
 
-import net.biomodels.jummp.utils.redis.KeyCollection
+import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -45,7 +45,7 @@ class SubmissionIdGeneratorInitializer extends AbstractModelIdentifierGeneratorI
 
     @Autowired
     SubmissionIdGeneratorInitializer(DataSource dataSource) {
-        super(dataSource, query, column)
+        super(dataSource, query, column, ModelIdentifierUtils.DEFAULT_GENERATOR_TYPE)
     }
 
     @Override
@@ -61,10 +61,5 @@ class SubmissionIdGeneratorInitializer extends AbstractModelIdentifierGeneratorI
             log.debug("Most recent submission id is $result")
             result
         }
-    }
-
-    @Override
-    String getRedisKeyForLastUsedValue() {
-        KeyCollection.MODEL_ID_LAST_USED_VALUE
     }
 }

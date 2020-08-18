@@ -21,6 +21,7 @@
 package net.biomodels.jummp.core.model.identifier.generator
 
 import net.biomodels.jummp.core.events.ModelIdentifierDecoratorUpdatedEvent
+import net.biomodels.jummp.core.model.identifier.decorator.OrderedModelIdentifierDecorator
 
 /**
  * @short Interface defining the contract for components that wish to produce model identifiers.
@@ -53,4 +54,13 @@ interface ModelIdentifierGenerator {
      * @see net.biomodels.jummp.core.model.identifier.support.ModelIdentifierPartitionRegexFactory
      */
     String getRegex()
+
+    String getType()
+
+    /**
+     * Returns the generator's {@link net.biomodels.jummp.core.model.identifier.decorator.OrderedModelIdentifierDecorator decorators}.
+     *
+     * @return the model id decorators in the order in which they were defined.
+     */
+    SortedSet<? extends OrderedModelIdentifierDecorator> getDecoratorRegistry()
 }

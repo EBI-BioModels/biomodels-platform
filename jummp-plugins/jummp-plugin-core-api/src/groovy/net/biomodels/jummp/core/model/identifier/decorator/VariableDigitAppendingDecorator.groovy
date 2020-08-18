@@ -117,7 +117,7 @@ class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
         // Resets the last counter to 0
         log.debug("Resetting the last counter to 0000")
         publishClientService.publish(KeyCollection.REDIS_CHANNEL_MODEL_ID_LAST_COUNT, "0000")
-        redisService.doRedisSet(KeyCollection.MODEL_ID_LAST_COUNT, "0000")
+        redisService.doRedisSet(KeyCollection.getLastUsedIdCountKey(generator.type), "0000")
     }
 
     private String addLeadingZero(final int newSuffix) {
@@ -127,7 +127,7 @@ class VariableDigitAppendingDecorator extends AbstractAppendingDecorator {
 
     private String updateNextValueIfNeeded(final String lastUsedValue) {
         final String lastUsedCount = data(lastUsedValue)
-        final String lastCount = Operations.doRedisGet(KeyCollection.MODEL_ID_LAST_COUNT)
+        final String lastCount = Operations.doRedisGet(KeyCollection.getLastUsedIdCountKey(generator.type))
         log.debug("Last Count (from Redis): $lastCount")
         // The next counter will be either 1 (when the date segment has been reset and the counter has been reset)
         // or the next value of the last used count (when the date segment was reset)
