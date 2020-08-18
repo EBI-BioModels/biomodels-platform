@@ -42,7 +42,7 @@ class RunScriptHelper {
      * @return the authentication token which, if placed in the security context of the current thread, would allow us
      *      to log in as the given user.
      */
-    private static UsernamePasswordAuthenticationToken createTokenForUser(User u) {
+    static UsernamePasswordAuthenticationToken createTokenForUser(User u) {
         assert u
         def authorities = UserRole.findAllByUser(u)*.role*.authority.join(",")
         List<GrantedAuthority> roles = SpringSecurityUtils.parseAuthoritiesString authorities
@@ -56,7 +56,7 @@ class RunScriptHelper {
      * @return an authentication token for the given user
      * @see {@link createTokenForUser(net.biomodels.jummp.plugins.security.User)}
      */
-    private static UsernamePasswordAuthenticationToken createTokenForUser(String username) {
+    static UsernamePasswordAuthenticationToken createTokenForUser(String username) {
         assert username : "Username required but not defined"
         createTokenForUser(User.findByUsername(username))
     }
