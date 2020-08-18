@@ -93,7 +93,11 @@ class Operations implements GrailsConfigurationAware, DisposableBean {
         REDIS_SRV_HOST = co.jummp.redis.host
         REDIS_SRV_PORT = co.jummp.redis.port
         REDIS_SRV_TIMEOUT = co.jummp.redis.timeout
-        jedisPool = new JedisPool(new JedisPoolConfig(), REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
+        def config = new JedisPoolConfig()
+        config.setJmxEnabled(true)
+        config.setMaxTotal(50)
+        config.setMaxIdle(50)
+        jedisPool = new JedisPool(config, REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
         if (jedisPool) {
             LOGGER.debug("Jedis Pool has been initialised successfully")
         } else {
@@ -108,7 +112,7 @@ class Operations implements GrailsConfigurationAware, DisposableBean {
             LOGGER.debug("Jedis Pool is being destroyed within 5 seconds...")
             Thread.sleep(5000)
         } catch(InterruptedException ex) {
-            LOGGER.error("Errors while trying to destroy Jedis Pool ${ex.message}")
+            LOGGER.error("Errors while trying to destroy Jedis Pool ${ex.message}. Closed ${jedisPool.isClosed()}")
             Thread.currentThread().interrupt()
         } finally {
             LOGGER.debug("Jedis Pool has been shutdown successfully")
