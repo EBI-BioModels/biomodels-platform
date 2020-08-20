@@ -74,6 +74,7 @@
                 <g:textField id="name" name="name" required=""
                              value="${(workingMemory.get("RevisionTC") as RevisionTransportCommand).name}"
                              placeholder="Enter a simple sentence summarising title for your model or leave the title of the publication."/>
+                <p class="help-text" id="nameHelp" style="color: red">&nbsp;</p>
             </g:else>
 
             <jummp:displayModelDescriptionLabel>
@@ -107,7 +108,9 @@
                             Describe more exactly your model format (e.g. SBML L3V2, Python 2.7, C/C++)</label>
                         <g:textField name="readme_submission" id="readme_submission"
                                      value="${readmeSubmission}"
-                                     placeholder="Please describe here more accurately what is your model format" /></div>
+                                     placeholder="Please describe here more accurately what is your model format" />
+                        <p class="help-text" id="readmeSubmissionHelp" style="color: red">&nbsp;</p>
+                    </div>
                 </div>
                 <div class="small-12 medium-6 large-6 columns">
                     <label for="modelling_approach">
@@ -125,6 +128,7 @@
                         <g:textField name="other_info" id="other_info"
                                      value="${otherInfo}"
                                      placeholder="Please enter here what is your modelling approach"/></div>
+                        <p class="help-text" id="otherInfoHelp" style="color: red">&nbsp;</p>
                 </div>
             </div>
             <input type='hidden' value='false' name='changed' id="changeStatus"/>
@@ -172,8 +176,27 @@
                 associateEventHandlers("name");
                 handleModelFormatBoxState();
                 handleShowOrHideModelFormatExtraInfo($('#model_format'));
-                handleShowOrHideModellingApproachExtraInfo($('#modelling_approach'), false)
+                handleShowOrHideModellingApproachExtraInfo($('#modelling_approach'), false);
+                validateInputLength('#name', 5, 255, '#nameHelp');
+                validateInputLength('#readme_submission', 5, 2048, '#readmeSubmissionHelp');
+                validateInputLength('#other_info', 5, 255, '#otherInfoHelp');
             });
+
+            function validateInputLength(element, minLength, maxLength, messageHolder) {
+                $(element).on('keydown keyup change', function(){
+                    var char = $(this).val();
+                    var charLength = $(this).val().length;
+                    if (charLength < minLength){
+                        $(messageHolder).text('Length is short, minimum '+minLength+' characters required.');
+                        setTimeout(function() { $(this).focus(); }, 0);
+                    } else if (charLength > maxLength){
+                        $(messageHolder).text('Length is not valid, maximum '+maxLength+' characters allowed.');
+                        $(this).val(char.substring(0, maxLength));
+                    } else {
+                        $(messageHolder).text('');
+                    }
+                });
+            }
 
             function handleModelFormatBoxState() {
                 let mf = $('#model_format');
