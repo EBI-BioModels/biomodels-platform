@@ -279,3 +279,19 @@ $('#menu-item-myaccount').on('mouseover', function (event) {
         $(this).addClass("opens-left");
     }
 });
+
+function validateInputLength(element, minLength, maxLength, messageHolder) {
+    $(element).on('keydown keyup change', function(){
+        var char = $(this).val();
+        var charLength = $(this).val().length;
+        if (charLength < minLength){
+            $(messageHolder).text('Length is short, minimum '+minLength+' characters required.');
+            setTimeout(function() { $(this).focus(); }, 0);
+        } else if (charLength > maxLength){
+            $(messageHolder).text('Length is not valid, maximum '+maxLength+' characters allowed.');
+            $(this).val(char.substring(0, maxLength));
+        } else {
+            $(messageHolder).text('');
+        }
+    });
+}

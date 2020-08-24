@@ -177,26 +177,11 @@
                 handleModelFormatBoxState();
                 handleShowOrHideModelFormatExtraInfo($('#model_format'));
                 handleShowOrHideModellingApproachExtraInfo($('#modelling_approach'), false);
+                // The validateInputLength function is defined in common.js loading with the footer construction
                 validateInputLength('#name', 5, 255, '#nameHelp');
                 validateInputLength('#readme_submission', 5, 2048, '#readmeSubmissionHelp');
                 validateInputLength('#other_info', 5, 255, '#otherInfoHelp');
             });
-
-            function validateInputLength(element, minLength, maxLength, messageHolder) {
-                $(element).on('keydown keyup change', function(){
-                    var char = $(this).val();
-                    var charLength = $(this).val().length;
-                    if (charLength < minLength){
-                        $(messageHolder).text('Length is short, minimum '+minLength+' characters required.');
-                        setTimeout(function() { $(this).focus(); }, 0);
-                    } else if (charLength > maxLength){
-                        $(messageHolder).text('Length is not valid, maximum '+maxLength+' characters allowed.');
-                        $(this).val(char.substring(0, maxLength));
-                    } else {
-                        $(messageHolder).text('');
-                    }
-                });
-            }
 
             function handleModelFormatBoxState() {
                 let mf = $('#model_format');
