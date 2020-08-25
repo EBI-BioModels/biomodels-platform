@@ -231,8 +231,8 @@
         not support the versions/levels of the original SBML file. The current version of BioModels does not provide an
         automatic conversion between different SBML levels/versions. You can do this offline using tools like COPASI.</p>
 
-        <p>In the next release of BioModels, we aim to provide automatic SBML convertors which will allow you to download
-        the model file in different SBML versions.</p>
+        <p>In a future release of BioModels, we aim to provide automatic SBML convertors which will allow you to
+        download the model file in different SBML versions.</p>
     </div>
 </div>
 
@@ -289,14 +289,12 @@
 
         <h3 id="download-model">How to download a model from BioModels?</h3>
 
-        <p>There are several way to download the models:</p>
+        <p>There are several ways to download the models:</p>
         <ul class="faq_list">
-            <li>Each model can be downloaded from its own description page, via a "Download Model" link on&nbsp;the side bar menu which is active only when examining a model's description page and on all its tabs.</li>
-            <li>All the models can be downloaded in one single archive. Several archives are available: two per release (one with only the SBML files, one with the SBML and all the export files) and one automatically generated every week (only contains the SBML files). The archives are available on the <a
-                title="BioModels archives via FTP" href="ftp://ftp.ebi.ac.uk/pub/databases/biomodels/">FTP server</a>.
-            </li>
-            <li>SBML version of the models can be obtained using the <a
-                href="https://bitbucket.org/biomodels/jummp-biomodels/wiki/Web%20Services">Web Services</a>.</li>
+            <li>Each model can be downloaded from its own description page, via a "Download Model" link on&nbsp;the
+            side bar menu which is active only when examining a model's description page and on all its tabs.</li>
+            <li>SBML version of the models can be programmatically obtained using the <a
+                href="https://www.ebi.ac.uk/biomodels/docs/">RESTful API</a>.</li>
         </ul>
 
         <h3 id="sbgn">Does BioModels provide sbgn maps?</h3>
@@ -346,12 +344,12 @@
                         </ol>
                     </li>
                     <li>
-                        <a href="#update-existing-model">Can I update an existing model details?</a>
+                        <a href="#update-existing-model">Can I update the details of an existing model?</a>
                         <ol type="a">
                             <li><a href="#how-to-update-model" class="level3">How to update model files or revised version of a
                             model, model name and description?</a></li>
-                            <li><a href="#update-publication" class="level3">How to update the model associated publication
-                            details?</a></li>
+                            <li><a href="#update-publication" class="level3">How to update the publication
+                            details associated with a model?</a></li>
                             <li><a href="#submit-no-publication" class="level3">What will happen if I submit the model without
                             Publication details?</a></li>
                             <li><a href="#submit-before-paper" class="level3">Can I submit a model before it is
@@ -382,17 +380,16 @@
     </div>
     <div class="columns small-12 medium-10 large-10">
         <h3 id="submit-model">What do I need to submit a new model?</h3>
-        <p>First, one need to register with BioModel to get a user credentials
-        (account and password), model files, publication details and few
-        additional details (requested during submission process). Using
+        <p>First, users need to register with BioModel to get user credentials
+        (account and password). Using
         credentials, one can login for their account and can submit model to
         BioModels. For more guidance, please refer:
             <a href="${manualUrl}/getting-started.html#slide4"
-               target="_blank">Model Submission guidelines (Slide 4)</a></p>
+               target="_blank">Model Submission guidelines (Slide 4)</a>.</p>
         <h4 id="register-new-account" class="level3">How to register for a new user account?</h4>
         <p>For registering with BioModels, please visit the <a href="${serverUrl}">BioModels
-        website</a> and click on Register. Follow the on-screen instruction for the next
-        steps. For more guidance, please refer:
+        website</a> and click on <a href="${serverUrl}/registration">Register</a> link from the right side the main
+        menu. Follow the on-screen instruction for the next steps. For more guidance, please refer:
             <a href="${manualUrl}/getting-started.html#slide5"
                target="_blank">Model
             Submission guidelines (Slide 5-8)</a></p>
@@ -411,7 +408,7 @@
             tab and proceed with model submission. For details,
             please refer:  <a href="${manualUrl}/getting-started.html#slide9"
                               target="_blank">Model Submission guidelines
-            (Slide 9-16)</a>
+            (Slide 9-16)</a>.
         </p>
 
         <p>If a model is encoded in
@@ -423,14 +420,13 @@
             href="submit">submission page</a>. If the model is encoded using a different format, please read the section
         of this FAQ about the <a
             title="Could BioModels accept models encoded using my own software-specific format?"
-            href="#supported-formats">supported formats</a>. If the model can be converted into SBML or CellML, please <a
-            title="Contact BioModels.net Team" href="contact">contact us</a>.</p>
+            href="#supported-formats">supported formats</a>.</p>
 
         <p>Once the model has been submitted, the submitter will receive an email notification with a unique, stable and
         perennial <em>submission identifier</em>. This identifier is composed of the string "MODEL" followed by 10 digits,
-        for example <strong>MODEL1003250000</strong> (these digits are actually based on the submission date and time).
-        This identifier can be used to reference the model in publications, and once the model is publicly available on
-        BioModels, users can directly access the model using this identifier.
+        for example <strong>MODEL1003250000</strong>. This identifier can be used to reference the model in
+        publications, and once the model is publicly available on BioModels, users can directly access the model
+        using this identifier.
         </p>
 
         <p>BioModels currently only publishes models which have been described in a peer reviewed scientific
@@ -445,10 +441,10 @@
                                            target="_blank">https://www.ebi.ac.uk/biomodels/MODEL1002160000</a>.
         </p>
 
-        <h3 id="update-existing-model">Can I update an existing model details?</h3>
-        <p>Models submitted to BioModels remains private to the user until
-        user publish it from form his/her side. User can update the model
-        files, model name, publication details etc at any time point before
+        <h3 id="update-existing-model">Can I update the details of an existing model?</h3>
+        <p>Models submitted to BioModels remain personally private to the submitter until
+        they want to publish them from their side. User can update the model
+        files, model name, publication details, etc at any point in time before
         making the model public. All the changes are revision controlled.</p>
         <h4 id="how-to-update-model" class="level3">How to update model files or revised version of a
         model, model name and description?</h4>
@@ -463,17 +459,17 @@
                                                         target="_blank">Model
             Submission guidelines (Slide 20-28)</a>
         </p>
-        <h4 id="update-publication" class="level3">How to update the model associated publication
-        details?</h4>
+        <h4 id="update-publication" class="level3">How to update the publication
+        details associated with a model?</h4>
         <p>
             <strong>Method 1:</strong> This method is very similar to updating Model
             files. User need to login using their user credentials and
-            go to "My Account", choose "My Models". This will display the
+        go to <strong>My Account</strong>, choose <strong>My Models</strong>. This will display the
             list of models submitted by user. Click on the model for
             which you want to update the publication. On the left of
-            side of the page, you will find option to "Update",
-            "Publish", "Convert", etc. Click on "Update" and continue
-            clicking "next" to go to Publication page. Follow the onscreen
+            side of the page, you will find option to <strong>Update</strong>,
+            <strong>Publish</strong> <strong>Convert</strong>, etc. Click on <strong>Update</strong> and continue
+            clicking "Next" to go to the Publication page. Follow the onscreen
             instructions further. For details, please refer:
             <a href="${manualUrl}/getting-started.html#slide20"
                target="_blank">Model Submission guidelines (Slide 20-28)</a>
@@ -481,32 +477,33 @@
         <p>
             <strong>Method 2:</strong> This method is direct method for updating
             publication details. User need to login using their user
-            credentials and go to “My Account” &rightarrow; “My Models”. This
+        credentials and go to <strong>My Account</strong> &rightarrow; <strong>My Models</strong>. This
             will display the list of models submitted by user. Click on
             the model for which you want to update the publication. In
             the model overview tab, you will find the all the basic
             information of the model along with publication details.
-            You will find a small tab called “Edit” next to publication.
+            You will find a small tab called <strong>Edit</strong> next to publication.
             Click on Edit and you will be directed to a different page
             for publication editing option. Enter the details of new
-            publication (ID), click “Update” and “save” post crosschecking
+            publication (ID), click <strong>Update</strong> and “Save” post crosschecking
             the details. For details, please refer: <a href="${manualUrl}/getting-started.html#slide31"
                                                        target="_blank">
             Model Submission guidelines (Slide 31-33)</a>
         </p>
 
-        <h4 id="submit-no-publication" class="level3">What will happen if I submit the model without
-        Publication details?</h4>
+        <h4 id="submit-no-publication" class="level3">What will happen if I submit the model without publication
+        details?</h4>
         <p>
-            Model updated without publication details will be tagged
-            accordingly and carry a message reflecting the same.
-            Citation or Usability of model with Publication details are
-            significantly higher than models with non-publication
+            You and your model will not get into any trouble although your submission cannot provide any reviewed
+            publication. Your model is only accessible to you and some authorised accounts like collaborators,
+            reviewers. To ensure submissions to BioModels qualified and meet conventional standards, models on the publication requests without providing a
+            peer reviewed publication will be published with caution and be flagged with an exclamation to notify users.
+            The citation as well as usability of a model with the publication details are
+            significantly higher than those without associating with any publication
             details.
         </p>
 
         <h4 id="submit-before-paper" class="level3">Can I submit a model before it is described in a published paper?</h4>
-
         <p>Yes. Models can be submitted prior to the publication of the associated paper(s). It is actually strongly
         advised to do so: at the submission time, each model is assigned a unique and perennial identifier which allows
         users to access and retrieve it. This identifier can be used by authors as a reference in their publications.</p>
@@ -551,7 +548,7 @@
         will find option to “Update”, “Publish”, “Convert” etc. Click
         on “Publish” to request to make model public. Our
         database curators will take a quick look and publish the
-        model if all well. If not, curator will contact back to the
+        model if all is well. If not, curator will contact the
         model submitter. For details, please refer: BioModels
             model Submission guidelines (<a href="${manualUrl}/getting-started.html#slide17"
                                             target="_blank">Slide 17-19 (New model)</a>
@@ -559,25 +556,23 @@
               target="_blank">28-30 (existing model)</a>).</p>
 
         <h4 id="what-will-happen-model-nonpublic" class="level3">What will happen if don’t make model public?</h4>
-        <p>If the model is not made public, it will remain private and
-        it will not be listed in BioModels Public models. Also no
-        one else can access any details about the model.</p>
+        <p>The model will remain inaccessible to anyone except those with an authorised account (author,
+        collaborators, reviewers). If a peer reviewed publication references the model identifier, BioModels will
+        release the model as soon as technically possible, even without notification from the author. However, we
+        appreciate if authors send us an update once they know the publication date of the associated publication.</p>
 
         <h3 id="reviewer-access">How can reviewers access unpublished models?</h3>
-
         <p>BioModels can provide access to unpublished models to reviewers. This is not automatic, so the model
         submitter needs to request it (for example emailing us at
             <strong>biomodels-cura</strong> AT <strong>ebi.ac.uk</strong>). In this case, we will provide the submitter
         with a URL which can be used to download the model encoded in SBML. If security is a concern, we can supply a
         protected access, where reviewers will be asked for a password to access the model.
         </p>
-
         <p>In future updates to BioModels, we plan to automate this process. If you have more specific needs,
         please do not hesitate to <a
             title="Contact BioModels.net Team" href="contact">contact us</a>.</p>
 
         <h3 id="supported-formats">What are the supported model encoding formats?</h3>
-
         <p>Currently, BioModels only provides full support for a subset of the modelling formats landscape. This is
         mainly due to the fact that we strongly believe in interoperability, which requires distributing to the community
         models in semantically rich, standard formats. The full list of supported modelling formats is available on the <a
@@ -674,27 +669,26 @@
         <p>These checks come from the <a title="MIRIAM guidelines" href="#miriam">MIRIAM</a> set of guidelines.</p>
 
         <h3 id="miriam">What is MIRIAM?</h3>
-
         <p>MIRIAM is the <a title="More information about MIRIAM"
                             href="http://co.mbine.org/standards/miriam">Minimum Information Required in the Annotation of
             Models</a> (<a
             title="Access to the 2005 publication in Nature Biotechnology about MIRIAM"
-            href="http://identifiers.org/pubmed/16333295">publication</a> and
-            <a title="PDF version of the press release"
-               href="https://www.ebi.ac.uk/biomodels-static/doc/MIRIAM_06Decr2005.pdf">press Release</a>). Initiated by the
+            href="http://identifiers.org/pubmed/16333295">publication</a>). Initiated by the
             <a title="BioModels.net initiative"
                href="http://biomodels.net/">BioModels.net</a> project, it is a set of guidelines defining how a model should
         be encoded and annotated in order to be successfully distributed, exchanged and ultimately reused.
         </p>
 
-        <p>In particular MIRIAM requires that a model provides all the information necessary to instantiated in a simulation,
+        <p>In particular MIRIAM requires that a model provides all the information necessary to be instantiated in a
+        simulation,
         such as the initial conditions. In addition, the reaction graph generated from this simulation must reproduce the
         results of the original publication, in which the model was first described.
         Moreover, the MIRIAM guidelines require that all model components contain sufficient controlled annotation such
         that <em>each</em> component can be unambiguously identified. The <a
-            title="MIRIAM Registry" href="https://www.ebi.ac.uk/miriam/">MIRIAM Registry</a> and
+            title="MIRIAM Registry" href="https://www.ebi.ac.uk/miriam/">MIRIAM Registry</a> has been merged into
             <a title="Identifiers.org"
-               href="http://identifiers.org/">Identifiers.org</a> have been developed specifically to provide generation
+               href="http://identifiers.org/">Identifiers.org</a> which has been developed specifically to provide
+        generation
         and resolution services for unique and perennial identifiers to be used in controlled annotations.
         </p>
 
@@ -734,7 +728,6 @@
         </dl>
 
         <h3 id="annotation">What is annotation, and what purpose does it serve in a model?</h3>
-
         <p>Once we ensure a model's correctness, we annotate the model with biological information. Model elements can
         describe a plethora of different entities, such as genes, proteins or metabolites. The usage of free text or
         non-standard nomenclature to identify those elements is not reliable, as it can introduce ambiguity to the model
@@ -747,9 +740,7 @@
         users search for models of interest).</p>
 
         <p>Models in BioModels are provided with consistent annotation using unambiguous identifiers. Those
-        identifiers are generated by the <a
-            title="MIRIAM Registry" href="https://www.ebi.ac.uk/miriam/">MIRIAM Registry</a> and
-            <a title="Identifiers.org"
+        identifiers are generated by the <a title="Identifiers.org"
                href="http://identifiers.org/">Identifiers.org</a> services. They can be used to reference records from
         external databases (such as Taxonomy, EMBL-Bank or UniProt), terms from ontologies
         (such as Gene Ontology, SBO or ChEBI), publications, etc.
@@ -814,16 +805,22 @@
         even if not optimal. Hence, model annotation needs to be, and indeed is, a continuous process.</p>
 
         <h3 id="curation-tools">What are the tools used by the curators of BioModels?</h3>
-
-        <p>Our curators use a wide range of tools to perform their curation tasks: <a
-            href="http://www.celldesigner.org/">CellDesigner</a>, <a href="http://www.copasi.org/">COPASI</a>, <a
-            href="http://sbw.kgi.edu/software/jarnac.htm">Jarnac</a>, <a
-            href="http://sbml.org/Software/MathSBML">MathSBML</a>, <a
-            href="http://sbw.kgi.edu/Simulation2005/">RoadRunner</a>, <a
-            href="http://www.tbi.univie.ac.at/~raim/odeSolver/">SBMLOdeSolver</a>, <a
-            href="https://www.ebi.ac.uk/compneur-srv/SBMLeditor.html">SBMLeditor</a>, <a
-            href="http://www.semanticsbml.org/">SemanticSBML</a>, <a href="http://jigcell.cs.vt.edu/">JigCell</a>, <a
-            href="http://www.math.pitt.edu/%7Ebard/xpp/xpp.html">XPP-Aut</a>, ...</p>
+        <p>Our curators use a wide range of tools to perform their curation tasks:
+            <a href="http://www.celldesigner.org/">CellDesigner</a>,
+            <a href="http://www.copasi.org/">COPASI</a>,
+            <a href="http://sbw.kgi.edu/software/jarnac.htm">Jarnac</a>,
+            <a
+            href="http://sbml.org/Software/MathSBML">MathSBML</a>,
+            <a
+            href="http://sbw.kgi.edu/Simulation2005/">RoadRunner</a>,
+            <a
+            href="http://www.tbi.univie.ac.at/~raim/odeSolver/">SBMLOdeSolver</a>,
+            <a
+            href="https://www.ebi.ac.uk/compneur-srv/SBMLeditor.html">SBMLeditor</a>,
+            <a
+            href="http://www.semanticsbml.org/">SemanticSBML</a>,
+            <a href="http://jigcell.cs.vt.edu/">JigCell</a>,
+            <a href="http://www.math.pitt.edu/%7Ebard/xpp/xpp.html">XPP-Aut</a>,...</p>
 
         <p>Moreover, they also use tools such as <a title="Gnuplot"
                                                     href="http://www.gnuplot.info/">Gnuplot</a> and various custom scripts.</p>
