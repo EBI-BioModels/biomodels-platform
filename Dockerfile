@@ -1,24 +1,51 @@
-FROM biomodels/jummp-biomodels:1.2-dependencies
+##
+# Docker build file for BioModels.
+#
+# Defines three stages
+#   * base: for general purpose development/testing
+#   * prod: for running in production
+#   * debug: for debugging over JPDA
+#
+# See https://bitbucket.org/biomodels/jummp-biomodels/src/master/docker-build.sh
+##
+FROM openjdk:8-jdk AS base
 LABEL maintainer="biomodels-developers@lists.sf.net"
 
-# install tools and utilities
-RUN apt-get update && apt-get install -y mysql-client && rm -rf /var/lib/apt
+# install Java and Grails based on
+# https://github.com/mozart-analytics/grails-docker/blob/c65d488/grails-2/Dockerfile
+ENV GRAILS_VERSION 2.5.5
+
+# Install Grails
+WORKDIR /usr/lib/jvm
+RUN wget https://github.com/grails/grails-core/releases/download/v$GRAILS_VERSION/grails-$GRAILS_VERSION.zip && \
+    unzip grails-$GRAILS_VERSION.zip && \
+    rm -rf grails-$GRAILS_VERSION.zip && \
+    ln -s grails-$GRAILS_VERSION grails
+
+# Setup Grails path.
+ENV GRAILS_HOME /usr/lib/jvm/grails
+ENV PATH $GRAILS_HOME/bin:$PATH
+# map $PWD to /app when running this image
+# don't forget to also mount the folder containing the runtime configuration file
+WORKDIR /app/
+
+# the docker image to be used in production
+FROM tomcat:7-jre8 AS prod
+LABEL maintainer="biomodels-developers@lists.sf.net"
 
 # set environment options
-#ENV MAVEN_OPTS="-Xmx1024m"
-ENV JAVA_OPTS="-Xms64m -Xmx1024m -XX:MaxMetaspaceSize=128m"
-ENV GRAILS_OPTS="-server -Xmx2g -Xms2g -Dfile.encoding=UTF-8"
-#ENV ANT_OPTS="-Xmx2g -XX:MaxPermSize=1024m"
-# expected database port
+ENV JAVA_OPTS="-Xms64m -Xmx1024m -XX:MaxMetaspaceSize=128m -server -noverify -XX:+UseConcMarkSweepGC -XX:+UseParNewGC"
+
 EXPOSE 3306
 EXPOSE 4372
+EXPOSE 6379
 EXPOSE 8080
 
 ARG UID
 ARG USERNAME
 ARG GID
 ARG GROUP
-RUN echo "$GROUP ($GID) - $USERNAME ($UID)"
+
 ENV HOME=/home/$USERNAME
 RUN mkdir -p $HOME
 RUN addgroup --gid "$GID" "$USERNAME" \
@@ -30,26 +57,23 @@ RUN addgroup --gid "$GID" "$USERNAME" \
    --no-create-home \
    "$USERNAME"
 
-ENV APP_HOME=/home/$USERNAME/biomodels
-
-## SETTING UP THE APP ##
-RUN mkdir -p $APP_HOME
-RUN chown -R $USERNAME:$USERNAME $HOME
-
-# ***
-# Do any custom logic needed prior to adding your code here
-# ***
-
-# Copy in the application code.
-#ADD . $APP_HOME
-# Chown all the files to the app user.
-#RUN chown -R "$USERNAME":"$USERNAME" $APP_HOME
-
-# Below is equivalent to the above commands, just speeds up and reduces image size
-COPY --chown=$USERNAME:$USERNAME . $APP_HOME
+RUN rm -rf /usr/local/tomcat/webapps/*
+COPY ./target/jummp-biomodels.war /usr/local/tomcat/webapps/ROOT.war
 
 # Change to the app user.
 USER $USERNAME
-WORKDIR $APP_HOME
-RUN ["chmod", "+x", "grailsw"]
-ENTRYPOINT ["/bin/bash", "-lc", "./grailsw prod run-app --non-interactive --stacktrace"]
+
+CMD ["catalina.sh", "run"]
+
+
+# the docker image for troubleshooting/debugging
+FROM prod as debug
+ARG JPDA_PORT=8089
+
+EXPOSE $JPDA_PORT
+
+# use address=*:$JPDA_PORT on java 9+
+ENV JAVA_DEBUG_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=$JPDA_PORT"
+ENV JAVA_OPTS="$JAVA_OPTS $JAVA_DEBUG_OPTS"
+
+CMD ["catalina.sh", "run"]

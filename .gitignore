@@ -70,3 +70,4 @@ k8s/
 wrapper/grails-wrapper.properties
 ## utility scripts
 *.sh
+!docker-build.sh
