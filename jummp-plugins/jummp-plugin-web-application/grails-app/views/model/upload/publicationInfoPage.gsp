@@ -31,7 +31,7 @@
     <meta name="layout" content="${session['branding.style']}/main" />
     <title>
         <g:if test="${isUpdate}">
-            <g:message code="submission.publicationInfoPage.update.title" args="${ [params.id] }" />
+            <g:message code="submission.publicationInfoPage.update.title" args="${ [params.id.encodeAsHTML()] }" />
         </g:if>
         <g:else>
             <g:message code="submission.publicationInfoPage.create.title"/>

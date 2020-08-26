@@ -56,7 +56,7 @@ class QcInfoController {
             return
         }
 
-        String comment = params.comment?.encodeAsHTML()
+        String comment = params.comment
         def qcInfo = qcInfoDelegateService.createQcInfo(flag, comment)
         boolean certified = qcInfoDelegateService.addQcInfo(params.revision, qcInfo)
         if (certified) {

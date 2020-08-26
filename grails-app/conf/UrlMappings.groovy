@@ -18,8 +18,9 @@
 * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 **/
 
+
+import grails.util.Environment
 import grails.util.Holders
-import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorRegistryService
 
 import java.util.regex.Pattern
 
@@ -55,6 +56,10 @@ class UrlMappings {
             controller = "feature"
             action = 'path2models'
         }
+        name covid19 : "/covid-19" {
+                controller = "feature"
+                action = 'covid19'
+            }
         // used for web services
         "/$controller/$action?/$id?(.$format)?"{
             constraints {

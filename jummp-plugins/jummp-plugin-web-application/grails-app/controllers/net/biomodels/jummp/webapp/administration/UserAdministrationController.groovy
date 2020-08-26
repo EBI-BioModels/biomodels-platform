@@ -39,7 +39,6 @@ import grails.converters.JSON
 import net.biomodels.jummp.core.JummpException
 import net.biomodels.jummp.core.user.UserNotFoundException
 import net.biomodels.jummp.core.user.RoleNotFoundException
-import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.webapp.RegistrationCommand
 import net.biomodels.jummp.webapp.EditUserCommand
 
@@ -100,7 +99,8 @@ class UserAdministrationController {
      */
     def enable = {
         try {
-            def data = [success: userService.enableUser(params.id as Long, Boolean.parseBoolean(params.value))]
+            def data = [success: userService.enableUser(params.id as Long,
+                Boolean.parseBoolean(params.value))]
             render data as JSON
         } catch (UserNotFoundException e) {
             def data = [error: true, message: e.message]
@@ -113,7 +113,8 @@ class UserAdministrationController {
      */
     def lockAccount = {
         try {
-            def data = [success: userService.lockAccount(params.id as Long, Boolean.parseBoolean(params.value))]
+            def data = [success: userService.lockAccount(params.id as Long,
+                Boolean.parseBoolean(params.value))]
             render data as JSON
         } catch (UserNotFoundException e) {
             def data = [error: true, message: e.message]
@@ -126,7 +127,8 @@ class UserAdministrationController {
      */
     def expireAccount = {
         try {
-            def data = [success: userService.expireAccount(params.id as Long, Boolean.parseBoolean(params.value))]
+            def data = [success: userService.expireAccount(params.id as Long,
+                Boolean.parseBoolean(params.value))]
             render data as JSON
         } catch (UserNotFoundException e) {
             def data = [error: true, message: e.message]
@@ -139,7 +141,8 @@ class UserAdministrationController {
      */
     def expirePassword = {
         try {
-            def data = [success: userService.expirePassword(params.id as Long, Boolean.parseBoolean(params.value))]
+            def data = [success: userService.expirePassword(params.id as Long,
+                Boolean.parseBoolean(params.value))]
             render data as JSON
         } catch (UserNotFoundException e) {
             def data = [error: true, message: e.message]
@@ -155,7 +158,9 @@ class UserAdministrationController {
             render(template: "/templates/page", model: [link: g.createLink(action: "show", id: params.id), callback: "loadAdminUserCallback"])
             return
         }*/
-        [user: userService.getUser(params.id as Long), roles: userService.getAllRoles(), userRoles: userService.getRolesForUser(params.id as Long)]
+        [user: userService.getUser(params.id as Long),
+         roles: userService.getAllRoles(),
+         userRoles: userService.getRolesForUser(params.id as Long)]
     }
 
     /**

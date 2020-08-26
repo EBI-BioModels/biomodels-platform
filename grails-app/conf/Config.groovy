@@ -286,11 +286,14 @@ log4j.main = {
         'net.biomodels.jummp.plugins.simplelogging',
         'net.biomodels.jummp.core.events',
         'net.biomodels.jummp.plugins.bives',
-        'net.biomodels.jummp.search'
+        'net.biomodels.jummp.search',
+        'net.biomodels.jummp.webapp'
     ], additivity: false
 
     rollingFile name: "debugAppender", file: "${logsDir}/jummp-debug.log",
         threshold: org.apache.log4j.Level.DEBUG, additivity: false
+    rollingFile name: "irreproducibleAppender", file: "${logsDir}/jummp-irreproducible.log",
+        threshold: org.apache.log4j.Level.INFO, additivity: false
     rollingFile name: "hibernateAppender", file: "${logsDir}/jummp-hibernate.log",
         threshold: org.apache.log4j.Level.WARN, additivity: false
 
@@ -305,10 +308,17 @@ log4j.main = {
         'net.biomodels.jummp.core.model.identifier.support',
         'net.biomodels.jummp.core.events',
         'net.biomodels.jummp.core.subscribers',
+        'net.biomodels.jummp.deployment.biomodels',
         'net.biomodels.jummp.plugins.pharmml',
         'net.biomodels.jummp.plugins.configuration',
         'net.biomodels.jummp.search',
-        'net.biomodels.jummp.deployment.biomodels'
+        'net.biomodels.jummp.security'
+    ], additivity: false
+
+    debug irreproducibleAppender: [
+        'net.biomodels.jummp.core.adapters.RevisionAdapter',
+        'net.biomodels.jummp.core.ModelDelegateService'
+
     ], additivity: false
     warn hibernateAppender: [
         'org.codehaus.groovy.grails.orm.hibernate',
@@ -864,6 +874,9 @@ springsession.maxInactiveIntervalInSeconds = jummp.springsession.maxInactiveInte
 springsession.redis.connectionFactory.hostName = jummp.redis.host
 springsession.redis.connectionFactory.port = jummp.redis.port       // Redis server connection timeout
 springsession.redis.connectionFactory.timeout = jummp.redis.timeout
+// This is crucial to make sure flash messages to be displayed
+// See: https://github.com/jeetmp3/spring-session/issues/5
+springsession.allow.persist.mutable = true
 
 // HTTP PROXY (used for k8s deployment)
 if (!(jummpConfig.jummp.http.proxy.host instanceof ConfigObject)) {

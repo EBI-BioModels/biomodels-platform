@@ -16,29 +16,20 @@
  *
  * You should have received a copy of the GNU Affero General Public License along
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
- **/
-
-package net.biomodels.jummp.deployment.biomodels
-
-import grails.plugin.springsecurity.annotation.Secured
+ */
+package net.biomodels.jummp.utils
 
 /**
- * This controller aims to serve special features
+ * @short Sanitises user input in a systematical way
+ *
+ * This wrapper class encodes user parameters to a range of codecs so as to prevent XSS attack.
+ *
+ * @author <a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a>
+ * @author <a href="mailto:mihai.glont@ebi.ac.uk">Mihai Glont</a>
  */
-class FeatureController {
-    def featureService
+class InputParameterSanitizer {
 
-    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
-    def agedbrain() {
-    }
-
-    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
-    def path2models() {
-
-    }
-
-    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
-    def covid19() {
-        [content: featureService.covid19PageContent]
+    static String encodeAsHTML(def param) {
+        param?.encodeAsHTML()
     }
 }

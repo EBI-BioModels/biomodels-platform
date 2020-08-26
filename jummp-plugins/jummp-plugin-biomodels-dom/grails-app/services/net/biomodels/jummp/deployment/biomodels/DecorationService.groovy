@@ -372,12 +372,12 @@ GROUP BY p.journal
     Map buildDataForNewsWidget() {
         // only select the published News items and ignore ones under the other statuses
         def newsQuery = """\
-from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order by createdOn desc"""
+from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order by publishFrom desc"""
         def newsEntries = WcmContent.executeQuery(newsQuery, [aliasuri: 'news', code: 400], [max: 15])
         Map<String, String> data = [:]
         for (def entry : newsEntries) {
             data.put(entry.aliasURI,
-                "${entry.createdOn.format('dd/MM/yyyy')}: ${entry.title}" as String)
+                "${entry.publishFrom.format('dd/MM/yyyy')}: ${entry.title}" as String)
         }
         data
     }
