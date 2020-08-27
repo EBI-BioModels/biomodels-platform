@@ -5,7 +5,7 @@
     <div class="small-12 medium-6 large-8 columns">
         <g:each in="${bmTags}" var="bmTag">
             <%
-                String query = "modeltag:${bmTag.name}"
+                String query = "submitter_keywords:${bmTag.name}"
                 def href = g.createLink(controller: 'search', action: 'search', params: ['query': query])
                 href = "${href}&domain=biomodels_all"
             %>
