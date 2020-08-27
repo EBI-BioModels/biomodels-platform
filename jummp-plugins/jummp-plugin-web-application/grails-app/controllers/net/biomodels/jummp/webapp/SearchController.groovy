@@ -91,6 +91,8 @@ class SearchController {
     }
 
     private void sanitiseParams() {
+        // the statements below only perform an extraction and analyse parameters
+        // the sanitization of the parameters was performed earlier in ParameterFilters
         if (params.sort) {
             def sortVal = params.sort.split("-")
             params.sortBy = sortVal[0]
@@ -112,8 +114,8 @@ class SearchController {
         final int MAXRESULTS = 100
         final int MINRESULTS = 10
         User user
-        String username = springSecurityService.principal.username
-        if (!(username == GrailsAnonymousAuthenticationToken.USERNAME)) {
+        String username = springSecurityService?.principal?.username
+        if (!(username == GrailsAnonymousAuthenticationToken.USERNAME) && !username) {
             user = User.findByUsername(username)
         }
         Preferences prefs
@@ -145,7 +147,9 @@ class SearchController {
     @Secured(['IS_AUTHENTICATED_FULLY'])
     def list() {
         sanitiseParams()
-        def results = browseCore(params.sortBy, params.sortDir, params.offset, params.numResults, params.query)
+        def results = browseCore(params.sortBy as String,
+            params.sortDir as String, params.offset as int,
+            params.numResults as int, params.query as String)
 
         if (response.format == "html") {
             results["history"] = modelHistoryService.history()
@@ -166,7 +170,9 @@ class SearchController {
 
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def searchRedir() {
-        redirect action: 'search', params: [query: params.search_block_form, domain: params.chosenDomain]
+        // avoid encoding as HTML twice
+        String query = params.search_block_form.decodeHTML()
+        redirect action: 'search', params: [query: query, domain: params.chosenDomain]
     }
 
     /**
@@ -192,9 +198,11 @@ class SearchController {
         String clientIPAddress = request.getHeader("X-Forwarded-For") ?: request.getRemoteAddr()
         String searchInfo = """Search terms: ${params.query}, requested from: ${clientIPAddress} \
 under the format: ${response.format}"""
-        def results = searchCore(params.query, params.domain, params.sortBy, params.sortDir, params.offset, params
-            .numResults)
-        if (response.format=="html") {
+        LOGGER.debug(searchInfo)
+        Map results = searchCore(params.query as String,
+            params.domain as String, params.sortBy as String,
+            params.sortDir as String, params.offset as int, params.numResults as int)
+        if (response.format == "html") {
             return results
         }
         respond new SearchResults(results)
@@ -254,9 +262,10 @@ under the format: ${response.format}"""
             forward action: 'search', params: params
             return // don't continue any further with this.
         }
-        String[] models = params.models.split(',')
-        if (models.size() > 100) {
-            def params = [query: "*:*", flashMessage: g.message(code: "jummp.search.download.exceededThreshold.warningMessage")]
+        String[] models = params.models?.split(',')
+        if (models?.size() > 100) {
+            def params = [query: "*:*",
+                          flashMessage: g.message(code: "jummp.search.download.exceededThreshold.warningMessage")]
             forward(action: 'search', params: params)
             return params
         }
@@ -273,7 +282,8 @@ under the format: ${response.format}"""
         }
     }
 
-    private def searchCore(String query, String domain, String sortBy, String sortDirection, int offset, int length) {
+    private Map searchCore(String query, String domain, String sortBy,
+                           String sortDirection, int offset, int length) {
         Map<String, Integer> paginationCriteria = ["start": offset, "length": length, "facetCount": 1000]
         SortOrder sortOrder = new SortOrder(sortBy, sortDirection)
         List<MTC> models = []
@@ -283,14 +293,14 @@ under the format: ${response.format}"""
             SearchResponse response = searchService.searchModels(query, domain, sortOrder, paginationCriteria)
             ArrayList<MTC> res = response.results
             totalCount = response.totalCount
-            if (res.size() > 0) {
+            if (res?.size() > 0) {
                 LOGGER.info("Found(s): ${res.size()} records.")
                 res.each {
                     models.add(it)
                 }
             }
             LinkedHashMap<String, OrderedFacet> respondedFacets = response.facets
-            if (respondedFacets.size() > 0) {
+            if (respondedFacets?.size() > 0) {
                 LOGGER.info("Found(s): ${respondedFacets.size()} facets.")
                 respondedFacets.each {
                     facets.add(it.value.facet)
@@ -299,15 +309,22 @@ under the format: ${response.format}"""
         }
         JsonBuilder builder = new JsonBuilder(facets)
 
-        if (offset > 0 && offset < models.size()) {
+        if (offset > 0 && offset < models?.size()) {
             models = models[offset..-1]
         } else {
             offset = 0
         }
-        if (models.size() > length) {
+        if (models?.size() > length) {
             models = models[0..length-1]
         }
 
+        /**
+         * By default, the query was encoded as HTML due to security vulnerability until here.
+         * After using encoded query into search modules, we should decode it into the original
+         * value that helps displaying it in a human readable form. Pay attention to the fact that
+         * the query has been decoded in searchService.searchModels.
+         */
+        query = query.decodeHTML()
         return [models: models, facets: facets, matches: totalCount,
                 offset: paginationCriteria['start'],
                 length: paginationCriteria['length'],
@@ -316,67 +333,19 @@ under the format: ${response.format}"""
     }
 
     private def archiveCore(String sortBy, String sortDirection, int offset, int length) {
-        int sortDir = 1
-        if (sortDirection == "asc") {
-            sortDir = -1
-        }
-        ModelListSorting sort
-        switch (sortBy) {
-            case "name":
-                sort = ModelListSorting.NAME
-                break
-            case "format":
-                sort = ModelListSorting.FORMAT
-                break
-            case "submitter":
-                sort = ModelListSorting.SUBMITTER
-                break
-            case "submitted":
-                sort = ModelListSorting.SUBMISSION_DATE
-                break
-            case "modified":
-                sort = ModelListSorting.LAST_MODIFIED
-                break
-            default:
-                sort = ModelListSorting.ID
-                break
-        }
+        ModelListSorting sort = inferSortedColumn(sortBy)
         List modelsDomain =
                 modelService.getAllModels(offset, length, sortDirection == "asc", sort, null, true)
         List models = []
         modelsDomain.each {
             models.add(new ModelAdapter(model: it).toCommandObject())
         }
-        return [models: models, modelsAvailable: modelService.getModelCount(null, true), sortBy: sortBy,
-                    sortDirection: sortDirection, offset: offset, length: length]
+        return [models: models, modelsAvailable: modelService.getModelCount(null, true),
+                sortBy: sortBy, sortDirection: sortDirection, offset: offset, length: length]
     }
 
     private def browseCore(String sortBy, String sortDirection, int offset, int length, String filter) {
-        int sortDir = 1
-        if (sortDirection == "asc") {
-            sortDir = -1
-        }
-        ModelListSorting sort
-        switch (sortBy) {
-            case "name":
-                sort = ModelListSorting.NAME
-                break
-            case "format":
-                sort = ModelListSorting.FORMAT
-                break
-            case "submitter":
-                sort = ModelListSorting.SUBMITTER
-                break
-            case "submitted":
-                sort = ModelListSorting.SUBMISSION_DATE
-                break
-            case "modified":
-                sort = ModelListSorting.LAST_MODIFIED
-                break
-            default:
-                sort = ModelListSorting.ID
-                break
-        }
+        ModelListSorting sort = inferSortedColumn(sortBy)
         List modelsDomain = modelService.getAllModels(offset, length, sortDirection == "asc", sort, filter)
         List models = []
         modelsDomain.each {
@@ -388,26 +357,29 @@ under the format: ${response.format}"""
                 sortDirection: sortDirection, offset: offset, length: length, query: filter]
     }
 
-    private String getSortColumn(int sc) {
-        String sortBy="name"
-        switch (sc) {
-            case 0:
-                sortBy="name"
+    private ModelListSorting inferSortedColumn(final String sortBy) {
+        ModelListSorting sort
+        switch (sortBy) {
+            case "name":
+                sort = ModelListSorting.NAME
                 break
-            case 1:
-                sortBy="format"
+            case "format":
+                sort = ModelListSorting.FORMAT
                 break
-            case 2:
-                sortBy="submitter"
+            case "submitter":
+                sort = ModelListSorting.SUBMITTER
                 break
-            case 3:
-                sortBy="submitted"
+            case "submitted":
+                sort = ModelListSorting.SUBMISSION_DATE
                 break
-            case 4:
-                sortBy="modified"
+            case "modified":
+                sort = ModelListSorting.LAST_MODIFIED
+                break
+            default:
+                sort = ModelListSorting.ID
                 break
         }
-        return sortBy
+        sort
     }
 
     def lastAccessedModels = {

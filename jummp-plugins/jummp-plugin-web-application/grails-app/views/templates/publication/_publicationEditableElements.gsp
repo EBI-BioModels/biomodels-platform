@@ -21,6 +21,7 @@
         <g:message code="submission.publication.title"/>
     </label>
     <g:textField class="input50" name="title" id="title" value="${publication.title}"/>
+    <p class="help-text" id="titleHelp" style="color: red">&nbsp;</p>
     <label for="journal" class="required">
         <g:message code="submission.publication.journal"/>
     </label>
@@ -73,6 +74,7 @@ Select any author in the list so as to <strong>Update</strong> or <strong>Delete
                 <label for="newAuthorInstitution"
                        style="display:block;margin-left:0px">Institution</label>
                 <span><input class="input40" size="40" type="text" id="newAuthorInstitution"/></span>
+                <p class="help-text" id="institutionHelp" style="color: red">&nbsp;</p>
             </li>
             <li>
                 <a href="#" id="addButton" class="button">Add</a>
@@ -86,6 +88,7 @@ Select any author in the list so as to <strong>Update</strong> or <strong>Delete
     </label>
     <g:textArea name="affiliation" id="affiliation" rows="5" cols="32"
                 value="${publication.affiliation}"/>
+    <p class="help-text" id="affiliationHelp" style="color: red">&nbsp;</p>
 </div>
 <div class="small-6 medium-6 columns">
     <label class="required" for="synopsis">
@@ -93,6 +96,7 @@ Select any author in the list so as to <strong>Update</strong> or <strong>Delete
     </label>
     <g:textArea name="synopsis" id="synopsis" rows="13" cols="32"
                 value="${publication.synopsis}"/>
+    <p class="help-text" id="synopsisHelp" style="color: red">&nbsp;</p>
     <label>
         <g:message code="submission.publication.pubDetails"/>
     </label>
