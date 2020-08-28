@@ -57,6 +57,7 @@ RUN addgroup --gid "$GID" "$USERNAME" \
    --no-create-home \
    "$USERNAME"
 
+# Tomcat manager and host-manager can be copied from webapps.dist if needed
 RUN rm -rf /usr/local/tomcat/webapps/*
 COPY ./target/jummp-biomodels.war /usr/local/tomcat/webapps/ROOT.war
 RUN mkdir webapps/ROOT; \
