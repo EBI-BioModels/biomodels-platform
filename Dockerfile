@@ -30,7 +30,7 @@ ENV PATH $GRAILS_HOME/bin:$PATH
 WORKDIR /app/
 
 # the docker image to be used in production
-FROM tomcat:7-jre8 AS prod
+FROM tomcat:7-jdk8-openjdk-slim AS prod
 LABEL maintainer="biomodels-developers@lists.sf.net"
 
 # set environment options
@@ -59,6 +59,12 @@ RUN addgroup --gid "$GID" "$USERNAME" \
 
 RUN rm -rf /usr/local/tomcat/webapps/*
 COPY ./target/jummp-biomodels.war /usr/local/tomcat/webapps/ROOT.war
+RUN mkdir webapps/ROOT; \
+    cd webapps/ROOT; \
+    jar xf ../ROOT.war; \
+    cd - ; \
+    mkdir log data; \
+    chown -R $USERNAME /usr/local/tomcat/data /usr/local/tomcat/log;
 
 # Change to the app user.
 USER $USERNAME
