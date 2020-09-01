@@ -17,7 +17,7 @@ function errorOut {
 }
 
 function usage {
-    errorOut "Usage: $0 <user_id> <username> <group_id> <group> <jpda_port>" 1
+    errorOut "Usage: $0 <user_id> <username> <group_id> <group> <jpda_port> <version>" 1
 }
 
 function requiredParam {
@@ -38,12 +38,12 @@ USERNAME=${2?`usage`}
 GID=${3?`usage`}
 GROUP=${4?`usage`}
 JPDA_PORT=${5?`usage`}
+VERSION=${6?`usage`}
 
 # image metadata
 REGISTRY_URL=dockerhub.ebi.ac.uk/
 REGISTRY_USERNAME="biomodels"
 IMAGE_NAME=webapp
-VERSION=5.2
 BASE_STAGE=base
 PROD_STAGE=prod
 DEBUG_STAGE=debug
@@ -89,7 +89,7 @@ function buildAndPush {
 
 # run this on the host directly, as the container would first
 # need to pull the dependencies, which is sloooow
-time ./grailsw --offline prod war
+#time ./grailsw --offline prod war
 
 echo 'Building prod and debug images...'
 time buildAndPush $PROD_STAGE
