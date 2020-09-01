@@ -34,7 +34,8 @@ FROM tomcat:7-jdk8-openjdk-slim AS prod
 LABEL maintainer="biomodels-developers@lists.sf.net"
 
 # set environment options
-ENV JAVA_OPTS="-Xms64m -Xmx1024m -XX:MaxMetaspaceSize=128m -server -noverify -XX:+UseConcMarkSweepGC -XX:+UseParNewGC"
+# see https://stackoverflow.com/a/59097932 for more information about potentially needing to use -Djava.security.egd=file:/dev/./urandom in JDK9+
+ENV JAVA_OPTS="-Xms64m -Xmx2048m -XX:MaxMetaspaceSize=256m -server -noverify -XX:+UseConcMarkSweepGC -XX:+UseParNewGC -Djava.net.preferIPv4Stack=true -XX:MaxJavaStackTraceDepth=100"
 
 EXPOSE 3306
 EXPOSE 4372
