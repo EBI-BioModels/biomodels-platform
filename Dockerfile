@@ -55,7 +55,8 @@ RUN addgroup --gid "$GID" "$USERNAME" \
    --gecos "" \
    --ingroup "$USERNAME" \
    --no-create-home \
-   "$USERNAME"
+   "$USERNAME"; \
+   chown -R $USERNAME:$USERNAME $HOME
 
 # Tomcat manager and host-manager can be copied from webapps.dist if needed
 RUN rm -rf /usr/local/tomcat/webapps/*
