@@ -61,10 +61,10 @@ RUN addgroup --gid "$GID" "$USERNAME" \
 
 # Tomcat manager and host-manager can be copied from webapps.dist if needed
 RUN rm -rf /usr/local/tomcat/webapps/*
-COPY ./target/jummp-biomodels.war /usr/local/tomcat/webapps/ROOT.war
-RUN mkdir webapps/ROOT; \
-    cd webapps/ROOT; \
-    jar xf ../ROOT.war; \
+COPY ./target/jummp-biomodels.war /usr/local/tomcat/webapps/jummp-biomodels.war
+RUN mkdir webapps/jummp-biomodels; \
+    cd webapps/jummp-biomodels; \
+    jar xf ../jummp-biomodels.war; \
     cd - ; \
     mkdir log data; \
     chown -R $USERNAME /usr/local/tomcat/data /usr/local/tomcat/log;
