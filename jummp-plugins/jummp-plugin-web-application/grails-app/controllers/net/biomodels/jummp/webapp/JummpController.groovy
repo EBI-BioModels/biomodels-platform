@@ -114,6 +114,12 @@ class JummpController {
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def curatorZone() {
+        detectTheme()
+        render(view: "curatorZone", model: [titleCode: "jummp.curatorZone.${theme}.title"])
+    }
+
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def developerZone() {
         detectTheme()
         render(view: "developerZone", model: [titleCode: "jummp.developerZone.${theme}.title"])
