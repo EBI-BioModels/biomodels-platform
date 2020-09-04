@@ -18,6 +18,6 @@
     <h3>General introduction to the annotation of models</h3>
     <p>Read more from the document: <a
         href="https://drive.google.com/file/d/1JqjcH0T0UTWMuBj-scIMwsyt2z38A0vp/view?usp=sharing">
-        https://drive.google.com/file/d/1JqjcH0T0UTWMuBj-scIMwsyt2z38A0vp/view?usp=sharing</a></p>
+        https://drive.google.com/file/d/1JqjcH0T0UTWMuBj-scIMwsyt2z38A0vp/view</a></p>
 </body>
 </html>
