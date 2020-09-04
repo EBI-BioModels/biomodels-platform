@@ -40,6 +40,19 @@
         .faq_subheading li {
             font-weight: normal;
         }
+
+        figure {
+            border: 1px #cccccc solid;
+            padding: 4px;
+            margin: auto;
+        }
+
+        figcaption {
+            background-color: #007c82;
+            color: white;
+            font-style: italic;
+            padding: 2px;
+        }
     </style>
 </head>
 
@@ -787,7 +800,6 @@
         </p>
 
         <h3 id="annotations-stored-in-sbml">How are annotations stored in SBML?</h3>
-
         <p>The annotation of each model component is stored in the corresponding SBML element using the a scheme initially
         designed by Nicolas Le Nov&egrave;re and Andrew Finney, and now part of <a
             title="SBML specs" href="http://sbml.org/Documents">SBML</a> (since Level 2 Version 2). It relies on the use of <a
@@ -796,9 +808,12 @@
             title="vCard" href="http://www.w3.org/TR/vcard-rdf/">vCard</a> and the <a
             href="http://biomodels.net/qualifiers/">BioModels.net qualifiers</a>.</p>
 
-        <p><img class="screenshot" title="SBML scheme for annotation encoding"
+        <figure>
+            <img class="screenshot" title="SBML scheme for annotation encoding"
                 src="//www.ebi.ac.uk/biomodels-static/FAQ/img/MIRIAM_annotations.png"
-                alt="Piece of SBML showing some annotation"/></p>
+                alt="Piece of SBML showing some annotation"/>
+            <figcaption>Fig. 1 - Piece of SBML showing some annotation</figcaption>
+        </figure>
 
         <p>Please refer to the
             <a title="SBML Specifications"
@@ -808,25 +823,26 @@
 
         <h3 id="full-annotation">When is a model completely annotated?</h3>
         <p>Annotating each model component with the most relevant resource records takes great efforts, especially since
-        the number of submitted models has grown rapidly. For example, the 25th release of BioModels (18th June 2013)
-        contains <strong>171,432</strong> cross-references (links to external resources contained in the annotations). This
-        number need to be compared with the total number of species (156,665) and relationships (174,986 this number including
-        reactions, rate rules, events and assignment rules) involved in the existing 963 models. Therefore current annotations
-        do not cover all model elements.
+        the number of submitted models has grown rapidly.
         </p>
 
         <p>Besides manpower limitations, this discrepancy is sometimes due to a lack of adequate or suitable resources for
         annotation, for instance for molecular entities which are created only for simulation purposes. Moreover, biological
         data resources are often slightly lagging behind newly generated knowledge, and it is possible that a particular
         resource does not offer the relevant information at the time the model is annotated. In the case of hierarchical
-        controlled vocabularies, such as Gene Ontology or ChEBI, there is the option to use a term at a higher level of
-        abstraction if the required precise term does not currently exist. Most often, one can always add some information,
-        even if not optimal. Hence, model annotation needs to be, and indeed is, a continuous process.</p>
+        controlled vocabularies (see Fig. 2), such as Gene Ontology or ChEBI, there is the option to use a term at a
+        higher level of abstraction if the required precise term does not currently exist. Most often, one can always
+        add some information, even if not optimal. Hence, model annotation needs to be, and indeed is, a continuous
+        process.</p>
 
-        <p>
+        <figure>
             <img src="${resource(contextPath: "${grailsApplication.config.grails.serverURL}", dir: 'images/biomodels',
                 file: 'annotation.png')}" />
-        </p>
+            <figcaption>Fig. 2 - Semantic enrichment of models involves cross-referencing model entities (left) with
+            controlled vocabularies and data resources (right) using COMBINE qualifiers (middle) that define the
+            inter-relationship. See <a href="https://academic.oup.com/nar/article/48/D1/D407/5614569">the full
+            explanation</a>.</figcaption>
+        </figure>
         <h3 id="curation-tools">What are the tools used by the curators of BioModels?</h3>
         <p>Our curators have been making use of a wide range of tools to perform their curation tasks:
             <a href="http://www.celldesigner.org/">CellDesigner</a>,
