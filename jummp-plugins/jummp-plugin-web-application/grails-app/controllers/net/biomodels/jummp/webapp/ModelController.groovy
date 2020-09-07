@@ -130,7 +130,7 @@ class ModelController {
      */
     final List<String> AUDIT_EXCEPTIONS = ['updateFlow', 'createFlow', 'uploadFlow',
                 'showWithMessage', 'share', 'getFileDetails', 'submitForPublication', 'updateCurationState',
-                                           'searchModellingApproach', 'submit']
+                                           'searchModellingApproach', 'submit', 'terms']
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
 
@@ -483,6 +483,11 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
         render(view: "submit", model: [serverURL: serverURL, submissionCssHref: submissionCssHref])
     }
 
+
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def terms() {
+        [serverURL: grailsApplication.config.grails.serverURL]
+    }
     def delete() {
         try {
             boolean deleted = modelDelegateService.deleteModel(params.id)

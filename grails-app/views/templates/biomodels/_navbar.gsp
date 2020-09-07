@@ -59,6 +59,10 @@
     <li <g:if test="${g.pageProperty(name:'page.submit')?.length()}"> class="active" </g:if> role="menuitem">
         <a href="${g.createLink(controller: 'model', action: 'create')}"><i class="icon icon-common icon-submit"></i> Submit</a>
     </li>
+    <li <g:if test="${g.pageProperty(name:'page.submit')?.length()}"> class="active" </g:if> role="menuitem">
+        <a href="${g.createLink(controller: 'model', action: 'submission-guidelines-and-agreement')}"><i class="icon icon-common icon-submit"></i>
+            New Submit</a>
+    </li>
     <li <g:if test="${selectedSupportItems}"> class="active" </g:if> role="menuitem">
         <a><i class="icon icon-common icon-support"></i> <g:message code="jummp.support.biomodels.title"/></a>
         <ul class="menu">
