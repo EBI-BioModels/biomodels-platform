@@ -30,6 +30,7 @@ class UrlMappings {
     def grailsApplication
 
     static mappings = {
+        "/model/submit"(controller: "model", action: "submit")
         "/model/create"(controller: "model", action: "create")
         "/model/update"(controller: "model", action: "update")
         "/model/publish"(controller: "model", action: "publish")

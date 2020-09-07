@@ -59,6 +59,7 @@ import net.biomodels.jummp.webapp.rest.model.show.Model as RestfulModel
 import net.biomodels.jummp.webapp.rest.model.show.ModelFiles
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
+import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
 import org.codehaus.groovy.grails.web.json.JSONObject
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.multipart.MultipartFile
@@ -128,7 +129,8 @@ class ModelController {
      * The list of actions for which we should not automatically create an audit item.
      */
     final List<String> AUDIT_EXCEPTIONS = ['updateFlow', 'createFlow', 'uploadFlow',
-                'showWithMessage', 'share', 'getFileDetails', 'submitForPublication', 'updateCurationState', 'searchModellingApproach']
+                'showWithMessage', 'share', 'getFileDetails', 'submitForPublication', 'updateCurationState',
+                                           'searchModellingApproach', 'submit']
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
 
@@ -471,6 +473,14 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                 id: modelDelegateService.getRevisionFromParams(params.id).identifier(),
                 params: [flashMessage: message])
         }
+    }
+
+    def submit() {
+        String serverURL = grailsApplication.config.grails.serverURL
+        Map submissionCssMap = [contextPath: serverURL, dir: '/css/biomodels', file: 'submission.css']
+        ApplicationTagLib appTagLib = new ApplicationTagLib()
+        String submissionCssHref = appTagLib.resource(submissionCssMap)
+        render(view: "submit", model: [serverURL: serverURL, submissionCssHref: submissionCssHref])
     }
 
     def delete() {
