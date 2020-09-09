@@ -63,6 +63,7 @@ import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
 import org.codehaus.groovy.grails.web.json.JSONObject
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.multipart.MultipartFile
+import org.springframework.web.multipart.commons.CommonsMultipartFile
 
 import javax.servlet.http.HttpServletResponse
 import java.util.zip.ZipEntry
@@ -130,7 +131,7 @@ class ModelController {
      */
     final List<String> AUDIT_EXCEPTIONS = ['updateFlow', 'createFlow', 'uploadFlow',
                 'showWithMessage', 'share', 'getFileDetails', 'submitForPublication', 'updateCurationState',
-                                           'searchModellingApproach', 'submit', 'terms']
+                                           'searchModellingApproach', 'submit', 'terms', 'uploadFile']
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
 
@@ -483,6 +484,19 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
         render(view: "submit", model: [serverURL: serverURL, submissionCssHref: submissionCssHref])
     }
 
+    def uploadFile() {
+        println "come here in uploadFile"
+        CommonsMultipartFile uploadFile = request.getMultiFileMap().file?.first()
+        println uploadFile.originalFilename
+        println uploadFile.storageDescription
+        println uploadFile.fileItem.name
+        println uploadFile.size
+
+        params.modelFiles.each { File file ->
+            println(file.originalFilename) // persistence logic or logic as per requirement.
+        }
+        render([message: "Uploaded files successfully"] as JSON)
+    }
 
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def terms() {
