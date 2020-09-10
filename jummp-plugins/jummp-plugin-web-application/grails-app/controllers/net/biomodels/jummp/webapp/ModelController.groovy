@@ -60,7 +60,9 @@ import net.biomodels.jummp.webapp.rest.model.show.ModelFiles
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
+import org.codehaus.groovy.grails.web.json.JSONElement
 import org.codehaus.groovy.grails.web.json.JSONObject
+import org.json.JSONArray
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.multipart.commons.CommonsMultipartFile
@@ -131,7 +133,7 @@ class ModelController {
      */
     final List<String> AUDIT_EXCEPTIONS = ['updateFlow', 'createFlow', 'uploadFlow',
                 'showWithMessage', 'share', 'getFileDetails', 'submitForPublication', 'updateCurationState',
-                                           'searchModellingApproach', 'submit', 'terms', 'uploadFile']
+                                           'searchModellingApproach', 'submit', 'terms', 'uploadFile', 'reconcileUploadingFiles']
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
 
@@ -485,17 +487,19 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
     }
 
     def uploadFile() {
-        println "come here in uploadFile"
         CommonsMultipartFile uploadFile = request.getMultiFileMap().file?.first()
-        println uploadFile.originalFilename
-        println uploadFile.storageDescription
-        println uploadFile.fileItem.name
-        println uploadFile.size
+        String originalFilename = uploadFile.originalFilename
+        render([message: "Uploaded files successfully", status: "OK", path: originalFilename] as JSON)
+    }
 
-        params.modelFiles.each { File file ->
-            println(file.originalFilename) // persistence logic or logic as per requirement.
+    def reconcileUploadingFiles() {
+        String uploadingFiles = params.uploadingFiles.decodeHTML()
+        def filesMap = JSON.parse(uploadingFiles)
+        for (def e : filesMap) {
+            println e
         }
-        render([message: "Uploaded files successfully"] as JSON)
+        render([message: "Success"] as JSON)
+    }
     }
 
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])

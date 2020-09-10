@@ -35,6 +35,7 @@ class UrlMappings {
         "/model/create"(controller: "model", action: "create")
         "/model/update"(controller: "model", action: "update")
         "/model/uploadFile"(controller: "model", action: "uploadFile")
+        "/model/reconcileUploadingFiles"(controller: "model", action: "reconcileUploadingFiles")
         "/model/publish"(controller: "model", action: "publish")
         "/share"(controller: "model", action: "share")
         "/model/$action/$id(.$revisionId)?" {

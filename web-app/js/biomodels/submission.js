@@ -3,10 +3,8 @@ $(document).ready(function () {
     let opacity;
     let current = 1;
     let steps = $("fieldset").length;
-    console.log("Steps: " + steps);
     steps = 5;
     setProgressBar(current);
-    console.log("Started current step: " + current);
     $(".next").click(function () {
         current_fs = $(this).parent();
         next_fs = current_fs.next();
@@ -44,8 +42,6 @@ $(document).ready(function () {
 
         // show the previous fieldset
         previous_fs.show();
-        console.log($("fieldset")[current]);
-        console.log(previous_fs.context.form);
         // hide the current fieldset with style
         current_fs.animate({opacity: 0}, {
             step: function (now) {
@@ -67,7 +63,6 @@ $(document).ready(function () {
     function setProgressBar(curStep) {
         let percent = (100 / steps) * curStep;
         percent = percent.toFixed();
-        console.log("Percent " + percent);
         $(".progress-meter").css("width", percent + "%")
     }
 
