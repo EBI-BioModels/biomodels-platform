@@ -28,7 +28,6 @@ $(document).ready(function () {
             duration: 500
         });
         setProgressBar(current);
-        console.log("Next: current step: " + current);
     });
 
     $(".previous").click(function () {
@@ -56,7 +55,6 @@ $(document).ready(function () {
             },
             duration: 500
         });
-        console.log("Previous: current step: " + current);
         setProgressBar(current);
     });
 

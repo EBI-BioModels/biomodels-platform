@@ -1,0 +1,262 @@
+<g:javascript>
+    let definedModellingApproachNames = [];
+    <g:each in="${definedModellingApproachNames}" var="name">
+        definedModellingApproachNames.push("${name}");
+    </g:each>
+    let definedModelFormatNames = [];
+    <g:each in="${modelFormatsSortedByName}" var="fmt">
+        definedModelFormatNames.push("${fmt?.name + ' ' + fmt?.formatVersion}");
+    </g:each>
+</g:javascript>
+<style type="text/css">
+    .assistive-example {
+        font-size: small;
+        font-style: italic;
+        color: darkgray
+    }
+    .disable{
+        pointer-events: none;
+        background: #bfbfbf;
+    }
+</style>
+<div class="row">
+    <div class="columns small-12 medium-10 large-10">
+        <h2 class="fs-title"><g:message code="submission.biomodels.model.information.heading"
+                                 locale="${Locale.getDefault()}"/></h2>
+        <p><g:message code="submission.biomodels.model.information.explanation" locale="${Locale.getDefault()}"/></p>
+    </div>
+    <div class="columns small-12 medium-2 large-2">
+        <h2 class="steps">Step 2 - 5</h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="small-12 medium-6 large-6 columns">
+        <label for="name">
+            <span class="required">Name</span>&nbsp;
+            <span class="assistive-example">[e.g. Launna2020 - T-Cell signalling model]</span></label>
+    %{--            <g:if test="${workingMemory['new_name']}">--}%
+        <g:if test="${"new_name"}">
+        %{--<g:textField id="name" name="name" required=""
+                     value="${workingMemory['new_name']}"
+                     placeholder="Enter a simple sentence summarising title for your model or leave the title of the publication."/>--}%
+            <g:textField id="name" name="name" required=""
+                         value=""
+                         placeholder="Enter a simple sentence summarising title for your model or leave the title of the publication."/>
+        </g:if>
+        <g:else>
+        %{--<g:textField id="name" name="name" required=""
+                     value="${(workingMemory.get("RevisionTC") as RevisionTransportCommand).name}"
+                     placeholder="Enter a simple sentence summarising title for your model or leave the title of the publication."/>--}%
+            <g:textField id="name" name="name" required=""
+                         value=""
+                         placeholder="Enter a simple sentence summarising title for your model or leave the title of the publication."/>
+            <p class="help-text" id="nameHelp" style="color: red">&nbsp;</p>
+        </g:else>
+
+        <jummp:displayModelDescriptionLabel>
+            <label for="description">${description}</label>
+        </jummp:displayModelDescriptionLabel>
+    %{--            <g:if test="${workingMemory['new_description']}">--}%
+        <g:if test="${""}">
+        %{--<g:textArea id="description" cols="70" rows="10" name="description"
+                    value="${workingMemory['new_description']}"
+                    placeholder="Enter a brief description for your model revision, for example: what are the  differences to the previous ones"/>--}%
+            <g:textArea id="description" cols="70" rows="10" name="description"
+                        value=""
+                        placeholder="Enter a brief description for your model revision, for example: what are the  differences to the previous ones"/>
+        </g:if>
+        <g:else>
+        %{--<g:textArea id="description" cols="70" rows="10" name="description"
+                    value='${(workingMemory.get("RevisionTC") as RevisionTransportCommand).description}'
+                    placeholder="Enter a brief description for your model revision, for example: what are the  differences to the previous ones"/>--}%
+            <g:textArea id="description" cols="70" rows="10" name="description"
+                        value=""
+                        placeholder="Enter a brief description for your model revision, for example: what are the  differences to the previous ones"/>
+        </g:else>
+    </div>
+    <div class="small-12 medium-6 large-6 columns">
+        <label for="model_format">
+            <span class="required">Model Format</span>&nbsp;
+            <span class="assistive-example">[e.g. SBML L3V2, Python 2.7, C/C++]</span></label>
+        %{--            <g:if test="${workingMemory['model_type']}">--}%
+        <g:if test="${"test"}">
+        </g:if>
+        %{--<g:select name="model_format" id="model_format" required=""
+                  from="${modelFormatsSortedByName}"
+                  value="${selectedValue}"
+                  optionKey="id"
+                  optionValue="${{it?.name + ' ' + it?.formatVersion}}"/>--}%
+        <g:select name="model_format" id="model_format" required="" from="${['aa', 'bb', 'bb']}"/>
+        <div id="readme_submission_div" style="display: none">
+            <label for="readme_submission" class="required">
+                Describe more exactly your model format (e.g. SBML L3V2, Python 2.7, C/C++)</label>
+            <g:textField name="readme_submission" id="readme_submission"
+                         value="${readmeSubmission}"
+                         placeholder="Please describe here more accurately what is your model format" />
+            <p class="help-text" id="readmeSubmissionHelp" style="color: red">&nbsp;</p>
+        </div>
+        <label for="modelling_approach">
+            <span class="required">Modelling Approach</span>&nbsp;
+            <span class="assistive-example">[e.g. Constraint-based modelling, Logical model, Markov model,...]</span></label>
+        <g:textField name="modelling_approach" id="modelling_approach" value="${modellingApproach}"
+                     placeholder="Enter your modelling approach" required="true"
+                     aria-describedby="modellingApproachHelp"/>
+        <p class="help-text" id="modellingApproachHelp">Find the appropriate one by typing a few more
+        first characters of your words. The system will suggest you our defined modelling approaches. If you
+        are not sure your modelling approach, please type Other for now.</p>
+
+        <div id="model_other_info_div" style="display: none">
+            <label for="other_info" class="required">Describe more exactly your modelling approach</label>
+            <g:textField name="other_info" id="other_info"
+                         value="${otherInfo}"
+                         placeholder="Please enter here what is your modelling approach"/></div>
+        <p class="help-text" id="otherInfoHelp" style="color: red">&nbsp;</p>
+    </div>
+</div>
+<input type="hidden" value="false" name="changed" id="changeStatus"/>
+
+<!-- warning model popup -->
+<div class="reveal" id="modellingApproachWarningPopup" data-reveal>
+<h3 id="messageTitle"
+    style="border-bottom: 1px solid grey">Attention!</h3>
+<button class="close-button" data-close aria-label="Close modal" type="button">
+    <span aria-hidden="true">&times;</span>
+</button>
+<div class="contact-panel" id="feedback_panel" data-toggler=".is-active">
+    <p class="lead">You have entered a value as your modelling approach which does not exist in our system.
+    Please check your spelling or try again. Otherwise, type 'Other' and enter what is your modelling
+    approach in the box below.</p>
+</div>
+</div>
+
+<input type="button" name="next" class="next action-button" value="Next"/>
+<input type="button" name="previous" class="previous action-button-previous" value="Previous"/>
+<g:javascript>
+    function associateEventHandlers(id) {
+        let descBox = document.getElementById(id);
+
+        if ("onpropertychange" in descBox) {
+            descBox.attachEvent("onpropertychange", $.proxy(function () {
+                if (event.propertyName === "value")
+                    $("#changeStatus").val(true);
+            }, descBox));
+        } else {
+            descBox.addEventListener("input", function () {
+                $("#changeStatus").val(true);
+            });
+        }
+    }
+    $(document).ready(function () {
+        associateEventHandlers("description");
+        associateEventHandlers("name");
+        handleModelFormatBoxState();
+        handleShowOrHideModelFormatExtraInfo($('#model_format'));
+        handleShowOrHideModellingApproachExtraInfo($('#modelling_approach'), false);
+        // The validateInputLength function is defined in common.js loading with the footer construction
+        validateInputLength('#name', 5, 255, '#nameHelp');
+        validateInputLength('#readme_submission', 5, 2048, '#readmeSubmissionHelp');
+        validateInputLength('#other_info', 5, 255, '#otherInfoHelp');
+    });
+
+    function handleModelFormatBoxState() {
+        let mf = $('#model_format');
+        if (%{--${format.name != unknownFormat?.name}--}%true) {
+            mf.addClass("disable");
+        } else {
+            mf.removeClass("disable");
+        }
+    }
+
+    $('#modelling_approach').on('keydown', function () {
+        $(this).autocomplete({
+            source: function (request, response) {
+                $.ajax({
+                    url: $.jummp.createLink('model', 'searchModellingApproach'),
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        search: request.term,
+                        request: ${net.biomodels.jummp.webapp.RequestType.SEARCH_TERMS.value}
+                    },
+                    success: function (data) {
+                        response(data);
+                    }
+                });
+            },
+            select: function (event, ui) {
+                let label = ui.item.label;
+                $(this).val(label);   // display the selected text
+                let id = ui.item.id; // selected value
+                $.ajax({
+                    url: $.jummp.createLink('model', 'searchModellingApproach'),
+                    type: 'POST',
+                    data: {
+                        id: id,
+                        name: label,
+                        request: ${net.biomodels.jummp.webapp.RequestType.SELECT_VALUE.value}
+                    },
+                    dataType: 'json',
+                    success: function (response) {
+                        let len = response.length;
+                        if (len > 0) {
+                            let id = response[0]['id'];
+                            let accession = response[0]['accession'];
+                            let name = response[0]['name'];
+                            let resource = response[0]['resource'];
+                        }
+                    }
+                });
+                return false;
+            }
+        });
+    });
+
+    $('#modelling_approach').on('change', function () {
+        handleShowOrHideModellingApproachExtraInfo(this, true);
+    });
+
+    $('#model_format').on("change", function () {
+        handleShowOrHideModelFormatExtraInfo(this);
+    });
+
+
+    function handleShowOrHideModellingApproachExtraInfo(selector, flag) {
+        let element = $('#model_other_info_div');
+        let inputVal = $(selector).val();
+        let comparableVal = 'Other';
+        if (flag) {
+            showWarningMessageIfNecessary(inputVal, definedModellingApproachNames);
+        }
+        showOrHideBox(element, inputVal, comparableVal, definedModellingApproachNames);
+    }
+
+    function handleShowOrHideModelFormatExtraInfo(selector) {
+        let $opt = $(selector).find('option:selected');
+        let element = $('#readme_submission_div');
+        let selectedFormat = $opt.val();
+        let selectedText = $opt.text();
+        let comparableText = "${/*unknownFormat.name*/"dsdsds"} *";
+        showOrHideBox(element, selectedText, comparableText, definedModelFormatNames);
+    }
+
+    function showWarningMessageIfNecessary(inputVal, definedModellingApproachNames) {
+        inputVal = $.trim(inputVal);
+        let existed = $.inArray(inputVal, definedModellingApproachNames) >= 0;
+        if (!existed) {
+            console.log("show dialog box");
+            let popup = new Foundation.Reveal($('#modellingApproachWarningPopup'));
+            popup.open();
+        }
+    }
+
+    function showOrHideBox(element, selectedText, comparableText, listOfDefinedValues) {
+        selectedText = $.trim(selectedText);
+        let existed = $.inArray(selectedText, listOfDefinedValues) >= 0;
+        if (selectedText.toLowerCase() === comparableText.toLowerCase() || !existed) {
+            $(element).removeAttr("style").show();
+        } else {
+            $(element).hide();
+        }
+    }
+</g:javascript>

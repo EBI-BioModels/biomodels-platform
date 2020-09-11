@@ -483,7 +483,12 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
         Map submissionCssMap = [contextPath: serverURL, dir: '/css/biomodels', file: 'submission.css']
         ApplicationTagLib appTagLib = new ApplicationTagLib()
         String submissionCssHref = appTagLib.resource(submissionCssMap)
-        render(view: "submit", model: [serverURL: serverURL, submissionCssHref: submissionCssHref])
+        PublicationTransportCommand publication
+        List definedModellingApproachNames = ["sbml", "matlab"]
+        render(view: "submit", model: [serverURL: serverURL, submissionCssHref: submissionCssHref, otherInfo:
+            "otherinfo", modellingApproach: "Other", readmeSubmission: "readme submission",
+                                       definedModellingApproachNames: definedModellingApproachNames, publication:
+                                           publication])
     }
 
     def uploadFile() {

@@ -37,25 +37,34 @@ hr {
 
     border-style: solid;
 }
+.card-section {
+    border: 0.25rem solid #A5A5C7;
+    overflow: scroll;
+}
 </style>
 <div class="row">
-    <div class="columns small-12 medium-7 large-7">
+    <div class="columns small-12 medium-10 large-10">
         <h2 class="fs-title">Select and upload your model files</h2>
+        <p style="padding-bottom:1em"><g:message code="submission.biomodels.upload.explanation"/></p>
     </div>
 
-    <div class="columns small-12 medium-5 large-5">
+    <div class="columns small-12 medium-2 large-2">
         <h2 class="steps">Step 1 - 5</h2>
     </div>
 </div>
 <div class="row">
     <div class="columns small-12 medium-6 large-4">
         <!-- Our markup, the important part here! -->
-        <div id="drag-and-drop-zone" class="dm-uploader p-5">
-            <div class="padding-3 margin-3"><h3 class="text-muted">Drag &amp; drop files here</h3></div>
+        <div id="drag-and-drop-zone" class="dm-uploader" style="padding: 3rem!important;">
+            <div class="padding-3 margin-3">
+                <h3 class="text-muted" style="margin-top: 3rem!important; margin-bottom: 3rem!important;">Drag
+            &amp; drop files here</h3></div>
 
-            <div class="">
+            <div class="padding-3 margin-3 btn button" style="margin-bottom: 3rem!important; display: block; width:
+            100%">
                 <span>Open the file Browser</span>
-                <input type="file" title='Click to add Files' class="btn btn-primary" name="modelFiles[]" multiple />
+                <input type="file" title='Click to add Files' class="btn btn-primary" name="modelFiles[]" multiple
+                       style="opacity: 0" />
             </div>
         </div><!-- /uploader -->
 
@@ -65,8 +74,8 @@ hr {
             <div class="card-header">
                 <h3>Model File List</h3>
             </div>
-            <div class="card-section">
-                <ul class="list-unstyled p-2 d-flex flex-column col" id="files">
+            <div class="card-section" style="overflow-scrolling: auto">
+                <ul class="list-unstyled" id="files">
                     <li class="empty">No files uploaded.</li>
                 </ul>
             </div>

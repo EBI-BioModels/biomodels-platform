@@ -8,7 +8,7 @@ html {
 }
 
 p {
-    color: grey
+    /*color: grey*/
 }
 
 #heading {
@@ -18,7 +18,7 @@ p {
 }
 
 #msform {
-    text-align: center;
+    /*text-align: center;*/
     position: relative;
     margin-top: 20px
 }
@@ -42,7 +42,7 @@ p {
     display: none
 }
 
-#msform input,
+/*#msform input,
 #msform textarea {
     padding: 8px 15px 8px 15px;
     border: 1px solid #ccc;
@@ -51,12 +51,11 @@ p {
     margin-top: 2px;
     width: 100%;
     box-sizing: border-box;
-    font-family: montserrat;
     color: #2C3E50;
     background-color: #ECEFF1;
     font-size: 16px;
     letter-spacing: 1px
-}
+}*/
 
 #msform input:focus,
 #msform textarea:focus {
@@ -153,7 +152,8 @@ p {
     width: 20%;
     float: left;
     position: relative;
-    font-weight: 400
+    font-weight: 400;
+    text-align: center;
 }
 
 #progressbar #upload-file:before {
@@ -211,7 +211,8 @@ p {
 }
 
 .progress {
-    height: 20px
+    height: 20px;
+    margin-right: .35rem;
 }
 
 .progress-bar {

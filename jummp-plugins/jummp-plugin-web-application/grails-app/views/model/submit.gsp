@@ -47,26 +47,10 @@
     </fieldset>
 
     <fieldset>
-        <div class="form-card">
-            <div class="row">
-                <div class="columns small-12 medium-7 large-7">
-                    <h2 class="fs-title">Personal Information:</h2>
-                </div>
-
-                <div class="columns small-12 medium-5 large-5">
-                    <h2 class="steps">Step 2 - 5</h2>
-                </div>
-            </div> <label class="fieldlabels">First Name: *</label> <input type="text" name="fname"
-                                                                           placeholder="First Name"/> <label
-            class="fieldlabels">Last Name: *</label> <input type="text" name="lname"
-                                                            placeholder="Last Name"/> <label
-            class="fieldlabels">Contact No.: *</label> <input type="text" name="phno"
-                                                              placeholder="Contact No."/> <label
-            class="fieldlabels">Alternate Contact No.: *</label> <input type="text" name="phno_2"
-                                                                        placeholder="Alternate Contact No."/>
-        </div> <input type="button" name="next" class="next action-button" value="Next"/> <input
-        type="button" name="previous" class="previous action-button-previous" value="Previous"/>
+        <g:render template="/templates/model/submit/addingModelInfo"
+                  plugin="jummp-plugin-web-application"/>
     </fieldset>
+
     <fieldset>
         <div class="form-card">
             <div class="row">
