@@ -2,7 +2,7 @@
 <%
     linkSourceTypes = PublicationLinkProvider.LinkType.values().collect { it.label }
 %>
-<div class="editablePart">
+<div class="editablePart row">
 <div class="small-6 medium-6 columns">
     <g:if test="${controllerName == "publication" && actionName in ["add", "edit"]}">
     <div class="row">

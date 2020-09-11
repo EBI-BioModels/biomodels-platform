@@ -11,19 +11,17 @@
     <meta name="layout" content="biomodels/main"/>
     <title>Submit a new model | BioModels</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css"/>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/12.1.2/css/intlTelInput.css"/>
-    <script src='https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js'></script>
-    <link href='https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css'>
     <link rel="stylesheet" href="${submissionCssHref}"/>
+    <link rel="stylesheet" href="${publicationCssHref}"/>
     <link rel="stylesheet"
           href="${resource(contextPath: serverURL, dir: 'css/biomodels/uploader-1.0.2', file:
               'jquery.dm-uploader.min.css')}">
 </head>
 
 <body>
-<h2 id="heading">Submit a new model</h2>
+%{--<h2 id="heading">Submit a new model</h2>
 
-<p>Fill all form field to go to next step</p>
+<p>Fill all form field to go to next step</p>--}%
 
 <form id="msform">
     <!-- progressbar -->
@@ -52,22 +50,10 @@
     </fieldset>
 
     <fieldset>
-        <div class="form-card">
-            <div class="row">
-                <div class="columns small-12 medium-7 large-7">
-                    <h2 class="fs-title">Image Upload:</h2>
-                </div>
-
-                <div class="columns small-12 medium-5 large-5">
-                    <h2 class="steps">Step 3 - 5</h2>
-                </div>
-            </div> <label class="fieldlabels">Upload Your Photo:</label> <input type="file" name="pic"
-                                                                                accept="image/*"> <label
-            class="fieldlabels">Upload Signature Photo:</label> <input type="file" name="pic"
-                                                                       accept="image/*">
-        </div> <input type="button" name="next" class="next action-button" value="Next"/> <input
-        type="button" name="previous" class="previous action-button-previous" value="Previous"/>
+        <g:render template="/templates/model/submit/addingPublicationInfo"
+                  plugin="jummp-plugin-web-application"/>
     </fieldset>
+
     <fieldset>
         <div class="form-card">
             <div class="row">
@@ -84,6 +70,7 @@
         <input type="button" name="next" class="next action-button" value="Submit"/>
         <input type="button" name="previous" class="previous action-button-previous" value="Previous"/>
     </fieldset>
+
     <fieldset>
         <div class="form-card">
             <div class="row">

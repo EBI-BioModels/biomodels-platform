@@ -38,6 +38,7 @@ import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.InvalidPublicationAuthorsException
 import net.biomodels.jummp.core.adapters.ModelFormatAdapter
+import net.biomodels.jummp.core.adapters.PublicationAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
@@ -50,6 +51,7 @@ import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
 import net.biomodels.jummp.deployment.biomodels.TagTransportCommand
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModellingApproach
+import net.biomodels.jummp.model.Publication
 import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.Team
@@ -481,11 +483,17 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
     def submit() {
         String serverURL = grailsApplication.config.grails.serverURL
         Map submissionCssMap = [contextPath: serverURL, dir: '/css/biomodels', file: 'submission.css']
+        Map publicationCssMap = [contextPath: serverURL, dir: '/css/biomodels', file: 'publicationPageStyle.css']
         ApplicationTagLib appTagLib = new ApplicationTagLib()
         String submissionCssHref = appTagLib.resource(submissionCssMap)
-        PublicationTransportCommand publication
+        String publicationCssHref = appTagLib.resource(publicationCssMap)
+        PublicationTransportCommand publication = new PublicationAdapter(publication: Publication.get(10))
+            .toCommandObject()
+        println publication.dump()
+
         List definedModellingApproachNames = ["sbml", "matlab"]
-        render(view: "submit", model: [serverURL: serverURL, submissionCssHref: submissionCssHref, otherInfo:
+        render(view: "submit", model: [serverURL: serverURL, submissionCssHref: submissionCssHref,
+                                       publicationCssHref: publicationCssHref, otherInfo:
             "otherinfo", modellingApproach: "Other", readmeSubmission: "readme submission",
                                        definedModellingApproachNames: definedModellingApproachNames, publication:
                                            publication])
