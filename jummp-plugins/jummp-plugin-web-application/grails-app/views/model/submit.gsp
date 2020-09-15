@@ -55,20 +55,8 @@
     </fieldset>
 
     <fieldset>
-        <div class="form-card">
-            <div class="row">
-                <div class="columns small-12 medium-7 large-7">
-                    <h2 class="fs-title">Summary of submission</h2>
-                </div>
-
-                <div class="columns small-12 medium-5 large-5">
-                    <h2 class="steps">Step 4 - 5</h2>
-                </div>
-            </div>
-
-        </div>
-        <input type="button" name="next" class="next action-button" value="Submit"/>
-        <input type="button" name="previous" class="previous action-button-previous" value="Previous"/>
+        <g:render template="/templates/model/submit/displayingSummaryOfChanges"
+                  plugin="jummp-plugin-web-application"/>
     </fieldset>
 
     <fieldset>
