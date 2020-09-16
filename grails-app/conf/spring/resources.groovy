@@ -33,8 +33,8 @@ import grails.persistence.Entity
 import grails.util.Environment
 import net.biomodels.jummp.core.WebflowAclBeanDefinitionProcessor
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorFactoryBean
-import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorRegistryFactory
+import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 import net.biomodels.jummp.core.model.identifier.support.NullModelIdentifierGeneratorInitializer
 import net.biomodels.jummp.core.model.identifier.support.PublicationIdGeneratorInitializer
 import net.biomodels.jummp.core.model.identifier.support.SubmissionIdGeneratorInitializer
@@ -182,6 +182,7 @@ beans = {
         idSettings  = idGeneratorSettings.get('submission')
         initializerBeanName = "submissionIdGeneratorInitializer"
         shouldComputeRegex  = !regexPresent
+        generatorType       = 'submission'
     }
 
     Map<String, ConfigObject> optionalGeneratorBeanDefs = [:]
@@ -205,6 +206,7 @@ beans = {
                 // the initializer bean should exist, even if it's a NullModelIdGeneratorInitializer
                 initializerBeanName = initializerBean
                 shouldComputeRegex  = !regexPresent
+                generatorType       = name - ModelIdentifierUtils.GENERATOR_BEAN_SUFFIX
             }
         }
     }

@@ -78,7 +78,7 @@ class OmicsdiService {
         String dbPassword = dsConfig?.password
         def dbSettings = ['url': dbUrl, 'username': dbUsername, 'password': dbPassword]
         def builder = new JsonBuilder()
-        String serverUrl = "http://www.ebi.ac.uk/biomodels-main"
+        String serverUrl = "https://www.ebi.ac.uk/biomodels"
         if (Environment.current != Environment.PRODUCTION) {
             serverUrl = grailsApplication.config.grails.serverURL
         }

@@ -54,12 +54,15 @@ import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.Team
 import net.biomodels.jummp.core.util.ReactomeEnvironment
+import net.biomodels.jummp.utils.redis.KeyCollection
 import net.biomodels.jummp.webapp.rest.errors.Error
 import net.biomodels.jummp.webapp.rest.model.show.Model as RestfulModel
 import net.biomodels.jummp.webapp.rest.model.show.ModelFiles
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONObject
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.multipart.MultipartFile
 
@@ -69,6 +72,7 @@ import java.util.zip.ZipOutputStream
 
 @Secured(['IS_AUTHENTICATED_FULLY'])
 class ModelController {
+    private final Logger log = LoggerFactory.getLogger(this.getClass())
     /**
      * Flag that checks whether the dynamically-inserted logger is set to DEBUG or higher.
      */
@@ -123,6 +127,8 @@ class ModelController {
     def userService
 
     def messageSource
+
+    def publishClientService
 
     /**
      * The list of actions for which we should not automatically create an audit item.
@@ -277,6 +283,8 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     forward(controller: 'errors', action: 'error404')
                     return
                 }
+                publishClientService.publish(KeyCollection.REDIS_CHANNEL_MODEL_VIEW,
+                    "Accessing the model: ${rev.identifier()}")
                 if (isPrivateModel) {
                     render(view: "showBasicView", model: [id: rev.model.submissionId, description: rev.description])
                     return

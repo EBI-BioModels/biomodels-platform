@@ -38,4 +38,9 @@ class DummyModelIdentifierInitializer implements ModelIdentifierGeneratorInitial
     DummyModelIdentifierInitializer(String lastUsedValue) {
         this.lastUsedValue = lastUsedValue
     }
+
+    @Override
+    String getRedisKeyForLastUsedValue() {
+        return lastUsedValue // mock Operations.doRedisGet to ensure both the key and the value are not null in tests
+    }
 }

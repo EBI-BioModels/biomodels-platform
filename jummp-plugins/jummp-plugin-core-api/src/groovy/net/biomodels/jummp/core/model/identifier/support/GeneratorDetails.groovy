@@ -5,6 +5,7 @@ import net.biomodels.jummp.core.model.identifier.decorator.OrderedModelIdentifie
 
 @CompileStatic
 class GeneratorDetails {
+    String generatorType
     SortedSet<? extends OrderedModelIdentifierDecorator> decorators
     String regex
 }

@@ -21,11 +21,14 @@
 package net.biomodels.jummp.core.model.identifier
 
 import groovy.transform.CompileStatic
-import net.biomodels.jummp.core.model.identifier.generator.DefaultModelIdentifierGenerator
+import net.biomodels.jummp.core.model.identifier.generator.DefaultModelIdentifierGenerator as DMIG
 import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.support.GeneratorDetails
-import net.biomodels.jummp.core.model.identifier.support.ModelIdentifierGeneratorInitializer
+import net.biomodels.jummp.core.model.identifier.support.ModelIdentifierGeneratorInitializer as MIGI
+import net.biomodels.jummp.utils.redis.Operations
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.BeansException
 import org.springframework.beans.factory.FactoryBean
 import org.springframework.context.ApplicationContext
@@ -43,7 +46,7 @@ import org.springframework.context.ApplicationContextAware
  * constructor will make this factory bean create a {@link NullModelIdentifierGenerator}. This can
  * be used when no new identifiers need to be generated when a model is published.
  *
- * A {@link ModelIdentifierGeneratorInitializer} can be used to indicate the last used value for
+ * A {@link MIGI} can be used to indicate the last used value for
  * identifiers of this type if consecutive identifiers are needed. A no-op
  * {@link net.biomodels.jummp.core.model.identifier.support.NullModelIdentifierGeneratorInitializer}
  * can be used when this is not required.
@@ -57,7 +60,7 @@ import org.springframework.context.ApplicationContextAware
 @CompileStatic
 class ModelIdentifierGeneratorFactoryBean implements FactoryBean<ModelIdentifierGenerator>,
         ApplicationContextAware {
-
+    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass().name)
     protected final String defaultInitializerBeanName = "nullModelIdGeneratorInitializer"
     ApplicationContext applicationContext
     String initializerBeanName
@@ -68,18 +71,24 @@ class ModelIdentifierGeneratorFactoryBean implements FactoryBean<ModelIdentifier
      */
     ConfigObject idSettings
 
+    /**
+     * The type of model id generator produced by this factory bean instance (e.g. submission)
+     */
+    String generatorType
+
     @SuppressWarnings("GroovyUnusedDeclaration")
     ModelIdentifierGeneratorFactoryBean() {
-        this(null, null, false)
+        this(null, null, false, null)
     }
 
     ModelIdentifierGeneratorFactoryBean(ConfigObject config,
             String initializerBeanName,
-            boolean computeRegex) {
+            boolean computeRegex, String generatorType) {
         idSettings = config
         this.initializerBeanName = Optional.ofNullable(initializerBeanName)
             .orElse(defaultInitializerBeanName)
         shouldComputeRegex = computeRegex
+        this.generatorType = generatorType
     }
 
     /**
@@ -93,15 +102,31 @@ class ModelIdentifierGeneratorFactoryBean implements FactoryBean<ModelIdentifier
      */
     @Override
     ModelIdentifierGenerator getObject() throws Exception {
-        if (!idSettings || idSettings.isEmpty()) {
-            return new NullModelIdentifierGenerator()
+        synchronized(this) {
+            if (!idSettings || idSettings.isEmpty()) {
+                return new NullModelIdentifierGenerator()
+            }
+            // get the last used value from the database
+            String seed = Objects.requireNonNull(initializer).lastUsedValue
+            String cachedSeed = Operations.doRedisGet(initializer.redisKeyForLastUsedValue)
+            String type
+            if (!cachedSeed && seed) {
+                Operations.doRedisSet(initializer.redisKeyForLastUsedValue, seed)
+                type = "from database"
+            } else if (cachedSeed) {
+                seed = cachedSeed
+                type = "from redis cache"
+            } else {
+                seed = ""
+                type = "from the initial value because the database is fresh"
+            }
+            LOGGER.debug("Seed: $seed --- type: $type")
+
+            GeneratorDetails details = ModelIdentifierUtils.buildDecoratorsFromSettings(generatorType,
+                idSettings, seed, shouldComputeRegex)
+
+            new DMIG(details)
         }
-
-        String seed = Objects.requireNonNull(initializer).lastUsedValue
-        GeneratorDetails details = ModelIdentifierUtils.buildDecoratorsFromSettings(idSettings,
-                seed, shouldComputeRegex)
-
-        new DefaultModelIdentifierGenerator(details)
     }
 
     @Override
@@ -132,7 +157,7 @@ class ModelIdentifierGeneratorFactoryBean implements FactoryBean<ModelIdentifier
      * Spring to always fetch the initializer from the application context. We need to know the
      * name of the initializer bean name because normally several initializer beans are defined.</p>
      *
-     * @return a (prototype-scoped) {@link ModelIdentifierGeneratorInitializer}
+     * @return a (prototype-scoped) {@link MIGI}
      * @throws org.springframework.beans.factory.NoSuchBeanDefinitionException
      *              if there is no such bean definition
      * @throws org.springframework.beans.factory.BeanNotOfRequiredTypeException
@@ -142,8 +167,9 @@ class ModelIdentifierGeneratorFactoryBean implements FactoryBean<ModelIdentifier
      * @throws NullPointerException
      *              if the applicationContext is not defined
      */
-    ModelIdentifierGeneratorInitializer getInitializer() throws BeansException {
-        Objects.requireNonNull(applicationContext)
-            .getBean(initializerBeanName, ModelIdentifierGeneratorInitializer.class)
+    MIGI getInitializer() throws BeansException {
+        Objects
+            .requireNonNull(applicationContext)
+            .getBean(initializerBeanName, MIGI.class)
     }
 }

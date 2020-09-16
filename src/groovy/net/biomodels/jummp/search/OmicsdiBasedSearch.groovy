@@ -339,7 +339,7 @@ There was a problem obtaining search result from EBI search server. The root cau
             int versionNumber = revision.revisionNumber
             boolean isCertified = null != revision.qcInfo
             final String uniqueId = "${submissionId}.${versionNumber}"
-            String exchangeFolder = new File(revision.files.first().path).getParent()
+            String exchangeFolder = new File(revision?.files?.first().path).getParent()
             String registryExport = miriamService.registryExport.canonicalPath
             def dsConfig = grailsApplication.config.dataSource
             def searchStrategy = grailsApplication.config.jummp.search.strategy
@@ -349,7 +349,7 @@ There was a problem obtaining search result from EBI search server. The root cau
             String dbUsername = dsConfig?.username
             String dbPassword = dsConfig?.password
             def dbSettings = [ 'url': dbUrl, 'username': dbUsername, 'password': dbPassword ]
-            def tags = modelTagService.getTagsByModelId(revision.model.submissionId)
+            def tags = modelTagService.getTagsByModelId(revision?.model?.submissionId)
             def partialData = [
                 'submissionId': submissionId,
                 'publicationId' :publicationId,
