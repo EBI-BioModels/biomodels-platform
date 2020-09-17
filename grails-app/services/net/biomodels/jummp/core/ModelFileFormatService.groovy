@@ -139,13 +139,11 @@ class ModelFileFormatService {
     @Profiled(tag = "modelFileFormatService.registerModelFormat")
     MFTC registerModelFormat(final String identifier, final String name, String version) {
         ModelFormat modelFormat = ModelFormat.findByIdentifierAndFormatVersion(identifier, version)
-        if (modelFormat) {
-            return new ModelFormatAdapter(format:modelFormat).toCommandObject()
-        } else {
+        if (!modelFormat) {
             modelFormat = new ModelFormat(identifier: identifier, name: name, formatVersion: version)
             modelFormat.save(flush: true)
-            return new ModelFormatAdapter(format:modelFormat).toCommandObject()
         }
+        return new ModelFormatAdapter(format:modelFormat).toCommandObject()
     }
 
     MFTC registerModelFormat(final String identifier, final String name) {

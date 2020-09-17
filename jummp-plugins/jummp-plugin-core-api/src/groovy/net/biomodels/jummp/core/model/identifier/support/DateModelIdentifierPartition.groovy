@@ -20,6 +20,9 @@
 
 package net.biomodels.jummp.core.model.identifier.support
 
+import org.apache.commons.logging.Log
+import org.apache.commons.logging.LogFactory
+
 import java.util.regex.Pattern
 
 /**
@@ -27,6 +30,7 @@ import java.util.regex.Pattern
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
 class DateModelIdentifierPartition extends ModelIdentifierPartition {
+    private static final Log log = LogFactory.getLog(this.getClass())
     /* The pattern that the date must follow. */
     String format
     private static final List<Pattern> EXCLUSIONS = [

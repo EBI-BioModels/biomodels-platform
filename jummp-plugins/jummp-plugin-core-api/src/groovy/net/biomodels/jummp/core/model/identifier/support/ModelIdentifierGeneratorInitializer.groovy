@@ -32,4 +32,11 @@ package net.biomodels.jummp.core.model.identifier.support
  */
 interface ModelIdentifierGeneratorInitializer {
     String getLastUsedValue()
+
+    /**
+     * Returns Redis key of the last used value
+     *
+     * @return A {@link String} representing Redis key which is capturing the last used value
+     */
+    String getRedisKeyForLastUsedValue()
 }

@@ -63,23 +63,28 @@ class FixedLiteralAppendingDecorator extends AbstractAppendingDecorator {
         }
         nextValue.set(suffix)
         SUFFIX = suffix
+        WIDTH = SUFFIX.length()
     }
 
     /**
      * Modify model identifier @p modelIdentifier.
      */
-    ModelIdentifier decorate(ModelIdentifier modelIdentifier) {
+    ModelIdentifier decorate(ModelIdentifier modelIdentifier, String lastUsedIdentifier) {
+        String next
         if (modelIdentifier) {
             String currentId = modelIdentifier.getCurrentId()
-            final String next = nextValue.get()
+            next = nextValue.get()
             if (IS_DEBUG_ENABLED) {
                 log.debug "Decorating $currentId with $next"
             }
+            partition.value = next
             return modelIdentifier.append(next)
         } else {
             log.warn "Undefined model identifier encountered - decorating a new one instead."
             ModelIdentifier result = new ModelIdentifier()
-            return result.append(nextValue.get())
+            next = nextValue.get()
+            partition.value = next
+            return result.append(next)
         }
     }
 
@@ -93,7 +98,8 @@ class FixedLiteralAppendingDecorator extends AbstractAppendingDecorator {
     /**
      * Nothing to do.
      */
-    void refresh() {
+    void refresh(final String lastUsedValue) {
+        // Do nothing
     }
 }
 

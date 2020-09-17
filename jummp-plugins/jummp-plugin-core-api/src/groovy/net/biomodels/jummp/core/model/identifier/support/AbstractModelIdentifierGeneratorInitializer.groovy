@@ -21,6 +21,7 @@
 package net.biomodels.jummp.core.model.identifier.support
 
 import groovy.sql.Sql
+import net.biomodels.jummp.utils.redis.KeyCollection
 import org.codehaus.groovy.grails.exceptions.DefaultStackTraceFilterer
 
 import javax.sql.DataSource
@@ -37,14 +38,16 @@ abstract class AbstractModelIdentifierGeneratorInitializer implements ModelIdent
     DataSource dataSource
     String queryToRun
     String columnToSelect
+    String generatorType;
 
     protected AbstractModelIdentifierGeneratorInitializer() {}
 
     AbstractModelIdentifierGeneratorInitializer(DataSource dataSource, String queryToRun,
-            String columnToSelect) {
+            String columnToSelect, String generatorType) {
         this.dataSource     = dataSource
         this.queryToRun     = queryToRun
         this.columnToSelect = columnToSelect
+        this.generatorType  = generatorType
     }
 
     def executeQuery() throws SQLException {
@@ -66,5 +69,15 @@ please initialise the dataSource bean prior to invoking this method""")
         }
 
         result
+    }
+
+
+    /**
+     * Returns Redis key of the last used value
+     *
+     * @return A {@link String} representing Redis key which is capturing the last used value
+     */
+    String getRedisKeyForLastUsedValue() {
+        KeyCollection.getLastUsedIdValueKey(generatorType)
     }
 }

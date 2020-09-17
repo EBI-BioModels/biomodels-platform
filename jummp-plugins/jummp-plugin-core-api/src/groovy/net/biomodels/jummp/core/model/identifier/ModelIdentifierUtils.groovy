@@ -61,6 +61,7 @@ class ModelIdentifierUtils {
     static final String GENERATOR_FIELD_SUFFIX = 'Id'
     static final String GENERATOR_BEAN_SUFFIX  = 'IdGenerator'
     static final String DEFAULT_GENERATOR_TYPE = 'submission'
+    static final String PUBLICATION_GENERATOR_TYPE = 'publication'
     static final String DEFAULT_GENERATOR_BEAN = 'submissionIdGenerator'
     static final String DEFAULT_URL =
                 "jdbc:h2:tempDb;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE"
@@ -145,7 +146,7 @@ class ModelIdentifierUtils {
      * If @p mostRecentId is specified, the returned decorators will use it to adjust their
      * initial values.
      */
-    static GeneratorDetails buildDecoratorsFromSettings(
+    static GeneratorDetails buildDecoratorsFromSettings(String type,
                 ConfigObject c, String mostRecentId = null, boolean shouldComputeRegexes = true) {
         ModelIdentifierPartitionManager partitionManager =
                     new ModelIdentifierPartitionManager(c, mostRecentId)
@@ -172,6 +173,10 @@ class ModelIdentifierUtils {
                     d = new DateAppendingDecorator(i, format)
                     // don't lose the last value used by this decorator
                     d.nextValue.set(p.value)
+                    d.setPartition(p)
+                    if (!mostRecentId) {
+                        d.setInitialValue(p.value)
+                    }
                     if (shouldComputeRegexes)
                         partitionRegex = ModelIdentifierPartitionRegexFactory.forDatePartition format
                     break
@@ -185,9 +190,13 @@ class ModelIdentifierUtils {
                 case LiteralModelIdentifierPartition:
                     String suffix = p.value
                     d = new FixedLiteralAppendingDecorator(i, suffix)
+                    d.setPartition(p)
                     if (shouldComputeRegexes)
                         partitionRegex = ModelIdentifierPartitionRegexFactory.forLiteral suffix
                     // this is a fixed decorator, so nextValue does not need updating
+                    if (!mostRecentId) {
+                        d.initialValue = p.value
+                    }
                     break
                 case NumericalModelIdentifierPartition:
                     long suffix = Long.parseLong(p.value)
@@ -196,8 +205,10 @@ class ModelIdentifierUtils {
                         d = new FixedDigitAppendingDecorator(i, suffix, width)
                     } else {
                         d = new VariableDigitAppendingDecorator(i, suffix, width)
-                        // trigger decorator update
-                        d.lastUsedSuffix.set(suffix)
+                    }
+                    d.setPartition(p)
+                    if (!mostRecentId) {
+                        d.initialValue = p.value
                     }
                     if (shouldComputeRegexes)
                         partitionRegex = ModelIdentifierPartitionRegexFactory.forNumericalPartition width
@@ -215,7 +226,7 @@ class ModelIdentifierUtils {
             if (shouldComputeRegexes)
                 regexForThisIdentifier.append partitionRegex
         }
-        boolean haveVariableDecorator = decorators.find{ it.isFixed() == false } != null
+        boolean haveVariableDecorator = decorators.find{ (!it.isFixed()) } != null
         if (!haveVariableDecorator) {
             log.error "All Decorators in ${decorators} are fixed!"
             def err = """The model identifier settings would yield duplicates. \
@@ -232,6 +243,6 @@ Consider introducing variable digit patterns or dates into the identifier scheme
         if (IS_DEBUG_ENABLED) {
             log.debug "Identifier settings ${c.inspect()} converted to ${decorators.inspect()} and regex $regexForThisIdentifier"
         }
-        new GeneratorDetails(decorators: decorators, regex: regex)
+        new GeneratorDetails(generatorType: type, decorators: decorators, regex: regex)
     }
 }

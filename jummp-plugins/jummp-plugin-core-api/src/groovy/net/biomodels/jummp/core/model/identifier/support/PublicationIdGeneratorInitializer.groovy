@@ -20,6 +20,7 @@
 
 package net.biomodels.jummp.core.model.identifier.support
 
+import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 import org.springframework.beans.factory.annotation.Autowired
 
 import javax.sql.DataSource
@@ -36,7 +37,7 @@ class PublicationIdGeneratorInitializer extends AbstractModelIdentifierGenerator
 
     @Autowired
     PublicationIdGeneratorInitializer(DataSource dataSource) {
-        super(dataSource, query, column)
+        super(dataSource, query, column, ModelIdentifierUtils.PUBLICATION_GENERATOR_TYPE)
     }
 
     @Override

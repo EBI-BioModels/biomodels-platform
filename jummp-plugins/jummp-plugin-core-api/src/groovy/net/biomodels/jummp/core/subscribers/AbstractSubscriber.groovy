@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -16,18 +16,13 @@
  *
  * You should have received a copy of the GNU Affero General Public License along
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
- **/
-
-package net.biomodels.jummp.core.model.identifier.decorator
-
-/**
- * @short Abstract ModelIdentifierDecorator for appending variable literal suffixes to a model id.
- * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
-abstract class AbstractVariableLiteralAppendingDecorator extends AbstractAppendingDecorator {
 
-    @Override
-    boolean isFixed() {
-        return false
-    }
+package net.biomodels.jummp.core.subscribers
+
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
+interface AbstractSubscriber {
+    static final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
 }

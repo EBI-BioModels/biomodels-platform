@@ -20,85 +20,54 @@
 
 package net.biomodels.jummp.core.model.identifier
 
-import static org.junit.Assert.*
-
-import grails.test.mixin.*
 import grails.test.mixin.support.*
 import net.biomodels.jummp.core.model.identifier.decorator.DateAppendingDecorator
 import net.biomodels.jummp.core.model.identifier.decorator.FixedLiteralAppendingDecorator
 import net.biomodels.jummp.core.model.identifier.decorator.VariableDigitAppendingDecorator
+import net.biomodels.jummp.core.model.identifier.generator.AbstractModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.generator.DefaultModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
+import net.biomodels.jummp.core.model.identifier.support.GeneratorDetails
 import org.junit.*
+
+import static org.junit.Assert.*
 
 /**
  * See the API for {@link grails.test.mixin.support.GrailsUnitTestMixin} for usage instructions
  */
 @TestMixin(GrailsUnitTestMixin)
 class ModelIdentifierUtilsSpec {
-    Set<String> actualIdentifierSchemeRegexes
-
-    @Before
-    void setUp() {
-        actualIdentifierSchemeRegexes = ModelIdentifierUtils.MODEL_ID_REGEXES
-        ModelIdentifierUtils.MODEL_ID_REGEXES.clear()
-    }
-
-    @After
-    void tearDown() {
-        ModelIdentifierUtils.MODEL_ID_REGEXES.addAll(actualIdentifierSchemeRegexes)
-    }
-
     void testParseSettingsExpectsPartsToBeConsecutive() {
         def conf = '''
-            model {
-                submission {
-                    id {
-                        part1 {
-                            type = "literal"
-                            suffix = "MODEL"
-                        }
-                        part2 {
-                            type = 'date'
-                            suffix = 'dd'
-                        }
-                        part3 {
-                            type = 'numerical'
-                            width = 12
-                        }
-                    }
-                }
+            part1 {
+                type = "literal"
+                suffix = "MODEL"
             }
-            database {
-                    username = 'sa'
-                    password = ''
-                    type = 'h2'
-                    // fall back to an in-memory H2 database instance
-                }
+            part2 {
+                type = 'date'
+                format = 'dd' // was suffix = 'dd'
+            }
+            part3 {
+                type = 'numerical'
+                width = 12
+            }
         '''
         ConfigObject settings = new ConfigSlurper().parse(conf)
         try {
-            ModelIdentifierUtils.processGeneratorSettings(settings)
+            ModelIdentifierUtils.buildDecoratorsFromSettings('random', settings)
             fail("The previous call should have thrown an exception.")
         } catch (Exception e) {
-            String expected = """\
-The configuration settings lack the rules for generating model identifiers!"""
+            String expected = "Please use strictly positive values in model ids."
             assertEquals(expected, e.message)
         }
     }
 
     void testParseSettingsExpectsPartsToStartFromOne() {
         ConfigObject settings = new ConfigObject()
-        settings.model.id.submission.part2.type = 'literal'
-        settings.model.id.submission.part2.suffix = 'MODEL'
-        settings.database.username = 'jummp'
-        settings.database.password = 'jummpHigher'
-        settings.database.server = 'localhost'
-        settings.database.port = '3306'
-        settings.database.database = 'ddmore-live'
-        settings.database.type = null
+        settings.part2.type = 'literal'
+        settings.part2.suffix = 'MODEL'
         try {
-            ModelIdentifierUtils.processGeneratorSettings(settings)
+            ModelIdentifierUtils.buildDecoratorsFromSettings("RANDOM", settings)
             fail("The previous call should have thrown an exception.")
         } catch (Exception e) {
             String expected = """\
@@ -109,16 +78,10 @@ Model id part order invalid: Expected part1, not part2. Please review the settin
 
     void testParseSettingsPrunesInvalidPartTypes() {
         ConfigObject settings = new ConfigObject()
-        settings.model.id.submission.part1.type = 'unknown'
-        settings.model.id.submission.part1.suffix = 'MODEL'
-        settings.database.username = 'jummp'
-        settings.database.password = 'jummpHigher'
-        settings.database.server = 'localhost'
-        settings.database.port = '3306'
-        settings.database.database = 'ddmore-live'
-        settings.database.type = null
+        settings.part1.type = 'unknown'
+        settings.part1.suffix = 'MODEL'
         try {
-            ModelIdentifierUtils.processGeneratorSettings(settings)
+            ModelIdentifierUtils.buildDecoratorsFromSettings('submission', settings)
             fail("The previous call should have thrown an exception.")
         } catch (Exception e) {
             String expected = "Unknown model id part type for part1: unknown"
@@ -128,113 +91,70 @@ Model id part order invalid: Expected part1, not part2. Please review the settin
 
     void testParseSettingsCreatesTheCorrectDecorators() {
         def conf = '''
-            model {
-                id {
-                    submission {
-                        part1 {
-                            type = "literal"
-                            suffix = "MODEL"
-                        }
-                        part2 {
-                            type = 'date'
-                            format = 'yyMMdd'
-                        }
-                        part3 {
-                            type = 'numerical'
-                            fixed = 'false'
-                            width = '12'
-                        }
-                    }
-                }
+            part1 {
+                type = "literal"
+                suffix = "MODEL"
             }
-            database {
-                username = 'sa'
-                password = ''
-                type = 'h2'
-                // fall back to an in-memory H2 database instance
+            part2 {
+                type = 'date'
+                format = 'yyMMdd'
+            }
+            part3 {
+                type = 'numerical'
+                fixed = 'false'
+                width = '12'
             }'''
         ConfigObject settings = new ConfigSlurper().parse(conf)
-        def results = ModelIdentifierUtils.processGeneratorSettings(settings)
+        GeneratorDetails results = ModelIdentifierUtils.buildDecoratorsFromSettings('submission', settings)
         assertNotNull results
-        def generators = ['submissionIdGenerator' : DefaultModelIdentifierGenerator.class,
-                          'publicationIdGenerator': NullModelIdentifierGenerator.class
-        ]
-        assertEquals generators.keySet(), results.keySet()
-        assertEquals generators.size(), results.size()
-        results.each { name, generator ->
-            Class clazz = generators[name]
-            assertEquals clazz, generator.getClass()
-        }
-        def actualDecorators = results.values().toList().first().DECORATOR_REGISTRY
+
+        def actualDecorators = results.decorators.first().generator.getDecoratorRegistry()
         assertEquals 3, actualDecorators.size()
-        def literalDecorator = actualDecorators.first()
-        assertTrue literalDecorator instanceof FixedLiteralAppendingDecorator
+        def literalDecorator = ((FixedLiteralAppendingDecorator) actualDecorators.first())
         assertEquals 0, literalDecorator.ORDER
         assertEquals 'MODEL', literalDecorator.nextValue.get()
-        def dateDecorator = actualDecorators.getAt(1)
-        assertTrue dateDecorator instanceof DateAppendingDecorator
+        def dateDecorator = actualDecorators.getAt(1) as DateAppendingDecorator
         assertEquals 1, dateDecorator.ORDER
         String FORMAT = 'yyMMdd'
         assertEquals FORMAT, dateDecorator.FORMAT
         assertEquals new Date().format(FORMAT), dateDecorator.nextValue.get()
-        def numericalDecorator = actualDecorators.last()
-        assertTrue numericalDecorator instanceof VariableDigitAppendingDecorator
+        def numericalDecorator = actualDecorators.last() as VariableDigitAppendingDecorator
         assertEquals 2, numericalDecorator.ORDER
         final int WIDTH = 12
         assertEquals WIDTH, numericalDecorator.WIDTH
         assertEquals "0".padLeft(12, '0'), numericalDecorator.nextValue.get()
-        assertEquals 1, ModelIdentifierUtils.MODEL_ID_REGEXES.size()
-        assertEquals "\\QMODEL\\E\\d{2}?\\d{2}?\\d{2}?\\d{12}?",
-            ModelIdentifierUtils.MODEL_ID_REGEXES.first()
-
-        ModelIdentifierUtils.MODEL_ID_REGEXES.add("BIOMD\\d{10}")
-        String p = ModelIdentifierUtils.MODEL_ID_REGEXES.join('|')
-        assertTrue "BIOMD0000000001".matches(p)
-        assertTrue "MODEL987789123456123456".matches(p)
     }
 
     void testParseSettingsHasMandatoryConfigAttribute() {
         try {
-            def results = ModelIdentifierUtils.processGeneratorSettings(null)
+            def results = ModelIdentifierUtils.buildDecoratorsFromSettings("", null)
             fail("I was expecting an exception to be thrown!!")
         } catch (Exception e) {
             assertTrue(e instanceof Exception)
             String firstLine = e.message.split(System.properties["line.separator"])[0]
-            String expected = "The settings for the model identification scheme are missing."
+            String expected = "The model identification scheme settings are not defined."
             assertTrue e.message.startsWith(expected)
         }
     }
 
     void testParseSettingsRejectsTrickyDateFormats() {
         def conf = '''
-            model {
-                id {
-                    submission {
-                        part1 {
-                            type = "literal"
-                            suffix = "MODEL"
-                        }
-                        part2 {
-                            type = 'date'
-                            format = 'yy.MM ddZZ'
-                        }
-                        part3 {
-                            type = 'numerical'
-                            fixed = 'false'
-                            width = '12'
-                        }
-                    }
-                }
+            part1 {
+                type = "literal"
+                suffix = "MODEL"
             }
-            database {
-                username = 'sa'
-                password = ''
-                type = 'h2'
-                // fall back to an in-memory H2 database instance
+            part2 {
+                type = 'date'
+                format = 'yy.MM ddZZ'
+            }
+            part3 {
+                type = 'numerical'
+                fixed = 'false'
+                width = '12'
             }'''
         ConfigObject settings = new ConfigSlurper().parse(conf)
         try {
-            ModelIdentifierUtils.processGeneratorSettings(settings)
+            ModelIdentifierUtils.buildDecoratorsFromSettings("submission", settings)
             fail("An exception should have been thrown by DateModelIdentifierPartition.")
         } catch (Exception e) {
             assertTrue e instanceof Exception
@@ -246,34 +166,22 @@ Model id part order invalid: Expected part1, not part2. Please review the settin
 
     void testParseSettingsRejectsTrickyLiteralSuffixFormats() {
         def conf = '''
-            model {
-                id {
-                    submission {
-                        part1 {
-                            type = "literal"
-                            suffix = "S\tMILE"
-                        }
-                        part2 {
-                            type = 'date'
-                            format = 'yyMMdd'
-                        }
-                        part3 {
-                            type = 'numerical'
-                            fixed = 'false'
-                            width = '12'
-                        }
-                    }
-                }
+            part1 {
+                type = "literal"
+                suffix = "S\tMILE"
             }
-            database {
-                username = 'sa'
-                password = ''
-                type = 'h2'
-                // fall back to an in-memory H2 database instance
+            part2 {
+                type = 'date'
+                format = 'yyMMdd'
+            }
+            part3 {
+                type = 'numerical'
+                fixed = 'false'
+                width = '12'
             }'''
         ConfigObject settings = new ConfigSlurper().parse(conf)
         try {
-            ModelIdentifierUtils.processGeneratorSettings(settings)
+            ModelIdentifierUtils.buildDecoratorsFromSettings('submission', settings)
             fail("An exception should have been thrown by LiteralModelIdentifierPartition.")
         } catch (Exception e) {
             assertTrue e instanceof Exception
@@ -284,97 +192,23 @@ Model id part order invalid: Expected part1, not part2. Please review the settin
 
     void testParseSettingsCopesWithLongValues() {
         def conf = '''
-            model {
-                id {
-                    submission {
-                        part1 {
-                            type = "literal"
-                            suffix = "MODEL"
-                        }
-                        part2 {
-                            type = 'numerical'
-                            fixed = 'false'
-                            width = '10'
-                        }
-                    }
-                }
+            part1 {
+                type = "literal"
+                suffix = "MODEL"
             }
-            database {
-                username = 'sa'
-                password = ''
-                type = 'h2'
-                // fall back to an in-memory H2 database instance
+            part2 {
+                type = 'numerical'
+                fixed = 'false'
+                width = '10'
             }'''
         ConfigObject settings = new ConfigSlurper().parse(conf)
-        ConfigObject submissionSettings = settings.model.id.submission
         try {
-            def result = ModelIdentifierUtils.buildDecoratorsFromSettings(submissionSettings,
-                "MODEL6687654321")
+            def result = ModelIdentifierUtils.buildDecoratorsFromSettings("submission",
+                settings, "MODEL6687654321")
             assertNotNull result
             println result.properties
         } catch (Exception e) {
             fail("Should have not encountered an exception while processing MODEL6687654321: $e")
         }
-    }
-
-    void testExplicitSettingOfModelIdentifierRegex() {
-        def conf = '''
-            model {
-                id {
-                    submission {
-                        part1 {
-                            type = "literal"
-                            suffix = "MYMODEL"
-                        }
-                        part2 {
-                            type = "numerical"
-                            fixed = "false"
-                            width = "22"
-                        }
-                    }
-                    regex = "MYMODEL\\\\d{22}"
-                }
-            }
-            database {
-                username = "sa"
-                password = ""
-                type = "h2"
-                // fall back to an in-memory H2 database instance
-            }
-        '''
-        ConfigObject config = new ConfigSlurper().parse(conf)
-        ModelIdentifierUtils.processGeneratorSettings(config)
-        assertEquals 1, ModelIdentifierUtils.MODEL_ID_REGEXES.size()
-        assertEquals "MYMODEL\\d{22}", ModelIdentifierUtils.MODEL_ID_REGEXES.first()
-    }
-
-    @Test(expected = IllegalArgumentException)
-    void testInvalidRegexSetting() {
-        def conf = '''
-            model {
-                id {
-                    submission {
-                        part1 {
-                            type = "literal"
-                            suffix = "ABC"
-                        }
-                        part2 {
-                            type = "numerical"
-                            fixed = "false"
-                            width = "2"
-                        }
-                    }
-                    regex = "\\\\"
-                }
-            }
-            database {
-                username = "sa"
-                password = ""
-                type = "h2"
-                // fall back to an in-memory H2 database instance
-            }
-        '''
-        ConfigObject config = new ConfigSlurper().parse(conf)
-        ModelIdentifierUtils.processGeneratorSettings(config)
     }
 }
