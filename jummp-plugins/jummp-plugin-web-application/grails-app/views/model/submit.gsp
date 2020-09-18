@@ -16,6 +16,11 @@
     <link rel="stylesheet"
           href="${resource(contextPath: serverURL, dir: 'css/biomodels/uploader-1.0.2', file:
               'jquery.dm-uploader.min.css')}">
+    <script type="text/javascript">
+        var currentValidation = false;
+        var errorMessages = new Array();
+        var modelFile;
+    </script>
 </head>
 
 <body>
