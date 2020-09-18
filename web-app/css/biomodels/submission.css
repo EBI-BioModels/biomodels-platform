@@ -156,6 +156,22 @@ p {
     text-align: center;
 }
 
+#form-validation-bar {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+#form-validation-bar li {
+    list-style-type: none;
+    font-size: 25px;
+    width: 20%;
+    float: left;
+    position: relative;
+    font-weight: 400;
+    text-align: center;
+}
+
 #progressbar #upload-file:before {
     font-family: FontAwesome;
     content: "\f15b"

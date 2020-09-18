@@ -32,7 +32,24 @@
         <li id="summary-submission"><strong>Summary of submission</strong></li>
         <li id="confirm-submission"><strong>Finish</strong></li>
     </ul>
-
+    <ul id="form-validation-bar">
+        <li id="step1">
+            <i class="fa fa-check-circle-o" aria-hidden="true" style="color: #01a252"></i>
+            <i class="fa fa-times-circle" aria-hidden="true" style="color: red"></i>
+        </li>
+        <li id="step2">
+            <i class="fa fa-check-circle-o" aria-hidden="true" style="color: #01a252"></i>
+            <i class="fa fa-times-circle" aria-hidden="true" style="color: red"></i></li>
+        <li id="step3">
+            <i class="fa fa-check-circle-o" aria-hidden="true" style="color: #01a252"></i>
+            <i class="fa fa-times-circle" aria-hidden="true" style="color: red"></i></li>
+        <li id="step4">
+            <i class="fa fa-check-circle-o" aria-hidden="true" style="color: #01a252"></i>
+            <i class="fa fa-times-circle" aria-hidden="true" style="color: red"></i></li>
+        <li id="step5">
+            <i class="fa fa-check-circle-o" aria-hidden="true" style="color: #01a252"></i>
+            <i class="fa fa-times-circle" aria-hidden="true" style="color: red"></i></li>
+    </ul>
     <div class="progress" role="progressbar" tabindex="0" aria-valuenow="50" aria-valuemin="0"
          aria-valuetext="50 percent" aria-valuemax="100">
         <div class="progress-meter" style="width: 0%"></div>
