@@ -49,7 +49,7 @@ class BpToModelDisplayService {
         int count = 0
         for (SearchResultEntry searchResultEntry : results.entries) {
             BPComponentReactions bmpComponentReactions = new BPComponentReactions(
-                reactionShow: searchResultEntry.fields["reaction_show"],
+                reactionShow: searchResultEntry.fields["reaction"],
                 rateShow : searchResultEntry.fields["rate_show"],
                 parameters : searchResultEntry.fields["parameters"])
             map[searchResultEntry.fields["reaction"]] = bmpComponentReactions
