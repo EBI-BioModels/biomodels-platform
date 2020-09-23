@@ -30,13 +30,16 @@ import net.biomodels.jummp.core.adapters.PublicationAdapter
 import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter as PLPA
 import net.biomodels.jummp.core.model.PublicationDetailExtractionContext as PDEC
 import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
+import net.biomodels.jummp.core.user.PersonTransportCommand
 import net.biomodels.jummp.model.Publication
+import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PLPTC
 import net.biomodels.jummp.model.PublicationLinkProvider as PLP
 import net.biomodels.jummp.model.PublicationPerson
 import net.biomodels.jummp.plugins.security.Person
 import net.biomodels.jummp.core.user.PersonTransportCommand as PersonTC
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+import org.codehaus.groovy.grails.web.json.JSONArray
 import org.springframework.validation.ObjectError
 
 import java.util.regex.Matcher
@@ -98,6 +101,15 @@ class PublicationService implements IPublicationService {
         Pattern p = Pattern.compile(pubLinkProvider.pattern);
         Matcher m = p.matcher(link);
         return m.matches()
+    }
+
+    PLPTC inferPublicationLinkProvider(final String linkTypeAsString) {
+        PLP.LinkType linkProvider = PLP.LinkType.findLinkTypeByLabel(linkTypeAsString)
+        PLP pubLinkProvider = PLP.withCriteria(uniqueResult: true) {
+            eq("linkType", linkProvider)
+        }
+        PLPTC transportCommand = new PLPA(linkProvider: pubLinkProvider).toCommandObject()
+        return transportCommand
     }
 
     PDEC getPublicationExtractionContext(PubTC cmd) throws JummpException {
@@ -314,12 +326,17 @@ where pp.publication = :publication and pp.person = :person and pp.position = :o
 
     private List<PersonTC> parseAuthorsJSON(def jsonData) {
         List<PersonTC> validatedAuthors = new LinkedList<>()
-        def slurper = new JsonSlurper()
-        def parsedJson = slurper.parseText(jsonData)
-        if (!parsedJson['authors']) {
-            return []
+        def authorList
+        if (jsonData instanceof String) {
+            def slurper = new JsonSlurper()
+            def parsedJson = slurper.parseText(jsonData)
+            if (!parsedJson['authors']) {
+                return []
+            }
+            authorList = parsedJson['authors']
+        } else if (jsonData instanceof JSONArray) {
+            authorList = jsonData
         }
-        def authorList = parsedJson['authors']
         InvalidPublicationAuthorsException invalidAuthorsException = new InvalidPublicationAuthorsException()
         for (Object authorJson : authorList) {
             if (!authorJson) {
