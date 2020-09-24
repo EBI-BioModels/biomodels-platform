@@ -2,10 +2,13 @@ package net.biomodels.jummp.webapp
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
+import net.biomodels.jummp.core.InvalidPublicationAuthorsException
 import net.biomodels.jummp.core.adapters.PublicationAdapter
+import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter
 import net.biomodels.jummp.model.Publication
 
 import net.biomodels.jummp.core.model.PublicationTransportCommand
+import net.biomodels.jummp.model.PublicationLinkProvider as PLP
 import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -15,6 +18,7 @@ class PublicationController implements GrailsConfigurationAware {
     private static final Logger logger = LoggerFactory.getLogger(PublicationController.class)
     def publicationService
     def pubMedService
+    def messageSource
     String style
     String serverUrl
 
@@ -81,6 +85,72 @@ class PublicationController implements GrailsConfigurationAware {
             result.status = 500
         }
         render(result as JSON)
+    }
+
+    def doVerifyPubLinkAndFetchData() {
+        PublicationTransportCommand cmd = new PublicationTransportCommand()
+        String pubLinkProvider = params.list("pubLinkProvider")[0]
+        String pubLink = params.list("pubLink")[0]
+        String message
+        String status
+        println "pub link provider: $pubLinkProvider"
+        println "pub link: $pubLink"
+        if (pubLinkProvider == "NoPub" && pubLink) {
+            message = "Please select a publication link type."
+            status: "Failed"
+        }
+        if (!publicationService.verifyLink(pubLinkProvider, pubLink)) {
+            message = "The link is not a valid ${pubLinkProvider}"
+            status = "Failed"
+        } else {
+            message = "The publication link provider and link are valid"
+            status = "OK"
+            if (pubLinkProvider == "PubMed ID") {
+                cmd = pubMedService.fetchPublicationData(pubLink)
+            } else {
+                def provider = PLP.LinkType.findLinkTypeByLabel(pubLinkProvider)
+                PLP publicationLinkProvider = PLP.withCriteria(uniqueResult: true) {
+                    eq("linkType", provider)
+                } as PLP
+                cmd.link = pubLink
+                cmd.linkProvider = new PublicationLinkProviderAdapter(linkProvider:
+                    publicationLinkProvider).toCommandObject()
+            }
+        }
+        render(["message": message, "status": status, "publication": cmd] as JSON)
+    }
+
+    def validatePublicationDetails() {
+        //PDEC pubContext = publicationMap.get(flow.workingMemory.get("SelectedPubLinkProvider"))
+        PublicationTransportCommand tempPTC = new PublicationTransportCommand()//pubContext.publication
+        def pubDetails = JSON.parse(params.pubDetails.decodeHTML())
+        bindData(tempPTC, pubDetails, [exclude: ['authors', 'linkProvider']])
+        println pubDetails
+        tempPTC.linkProvider = publicationService.inferPublicationLinkProvider(pubDetails.linkProvider)
+        String message = ""
+        String status = ""
+        List errors = new ArrayList()
+        try  {
+            publicationService.assembleAuthors(tempPTC, pubDetails.authors)
+            message = "Authors have been successfully assembled"
+            status = "Success"
+        } catch (InvalidPublicationAuthorsException e) {
+            String errMsg = e.getI18nErrorMessage4InvalidAuthor()
+            message = "There have been errors while parsing authors of the publication:<br/>${errMsg}"
+            status = "Error"
+        }
+        if (tempPTC.hasErrors()) {
+            def locale = Locale.getDefault()
+            for (fieldErrors in tempPTC.errors) {
+                for (error in fieldErrors.allErrors) {
+                    message = messageSource.getMessage(error, locale)
+                    errors.add(message)
+                    logger.error(message)
+                }
+            }
+            status = "Error"
+        }
+        render(["message": message, "status": status, "errors": errors] as JSON)
     }
 
     private def showError404() {

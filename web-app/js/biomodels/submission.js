@@ -6,6 +6,7 @@ $(document).ready(function () {
     steps = 5;
     setProgressBar(current);
     $(".next").click(function () {
+        validateData(current);
         let step;
         current_fs = $(this).parent();
         next_fs = current_fs.next();
@@ -132,5 +133,13 @@ $(document).ready(function () {
 
     function updateModelInfoForm(modelFile) {
 
+    function validateData(step) {
+        switch (step) {
+            case 3:
+                validatePublicationInfo();
+                break;
+            default:
+                break;
+        }
     }
 });

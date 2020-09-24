@@ -495,7 +495,6 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
         String publicationCssHref = appTagLib.resource(publicationCssMap)
         PublicationTransportCommand publication = new PublicationAdapter(publication: Publication.get(10))
             .toCommandObject()
-        println publication.dump()
 
         List definedModellingApproachNames = ["sbml", "matlab"]
         render(view: "submit", model: [serverURL: serverURL, submissionCssHref: submissionCssHref,

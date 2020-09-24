@@ -5,9 +5,9 @@ function addAuthor() {
         var orcid = $('#newAuthorOrcid').val() || "";
         var institution = $('#newAuthorInstitution').val() || "";
         if (authorList.filter(function(v) {
-            return v["userRealName"] == userRealName &&
-                   v["orcid"] == orcid &&
-                   v["institution"] == institution;
+            return v["userRealName"] === userRealName &&
+                   v["orcid"] === orcid &&
+                   v["institution"] === institution;
             })[0]) {
             showNotification("The author named " + userRealName + " already exists. Please change it or enter an another name.");
         } else {
@@ -42,15 +42,15 @@ function deleteAuthor() {
     var orcid = $('#newAuthorOrcid').val() || "";
     var institution = $('#newAuthorInstitution').val() || "";
     var deletedAuthor = authorList.filter(function(v) {
-        return v["userRealName"] == userRealName &&
-               v["orcid"] == orcid &&
-               v["institution"] == institution;
+        return v["userRealName"] === userRealName &&
+               v["orcid"] === orcid &&
+               v["institution"] === institution;
     })[0];
     if (deletedAuthor) {
         for (index in authorList)
-            if (authorList[index].userRealName == userRealName &&
-                authorList[index].orcid == orcid &&
-                authorList[index].institution == institution) {
+            if (authorList[index].userRealName === userRealName &&
+                authorList[index].orcid === orcid &&
+                authorList[index].institution === institution) {
                 authorList.splice(index, 1);
             }
         showNotification("The author has been deleted.")
@@ -120,8 +120,9 @@ function updateAuthor() {
  * This content is formed at a JSON string that could be parsed by JsonSlurper on server side.
  */
 function updateTempDataDivElement() {
-    var input = "<textarea name='authorListContainer' style='width: 200%; height: 40px'>"
-    input += JSON.stringify(authorMap) + "</textarea>";
+    let input = "<textarea name='authorListContainer' style='width: 200%; height: 40px'>"
+    const authors = authorMap.authors.length ? JSON.stringify(authorMap) : "";
+    input += authors + "</textarea>";
     document.getElementById("authorListTemp").innerHTML = input;
 }
 function updateData() {
