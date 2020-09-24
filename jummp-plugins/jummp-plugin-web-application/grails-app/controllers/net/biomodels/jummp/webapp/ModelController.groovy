@@ -291,13 +291,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     return
                 } else {
                     final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
-                    def components = [:]
-                    try {
-                        components = sbmlService.extractComponentsFromBP(PERENNIAL_ID)
-                    }catch(RuntimeException re){
-                        log.error("Error while extracting components from BP")
-                        log.error(re)
-                    }
+
                     RevisionTransportCommand revision = modelDelegateService.getLatestRevision(PERENNIAL_ID)
                     boolean showPublishOption = modelDelegateService.canPublish(revision)
                     boolean canSubmitForPublication = modelDelegateService.canSubmitForPublication(revision)
@@ -351,8 +345,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                                  hasCuratorRole         : hasCuratorRole,
                                  supportedForConversion : supportedForConversion,
                                  convertedFilesTC       : convertedFilesTC,
-                                 bmTags                 : tags,
-                                 components             : components
+                                 bmTags                 : tags
                     ]
                     if (rev.id == revision.id) {
                         flash.genericModel = model
