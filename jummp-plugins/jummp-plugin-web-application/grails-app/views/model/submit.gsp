@@ -15,16 +15,16 @@
     <link rel="stylesheet"
           href="${resource(contextPath: serverURL, dir: 'css/biomodels/uploader-1.0.2', file:
               'jquery.dm-uploader.min.css')}">
+    <link rel="stylesheet"
+          href="${resource(contextPath: serverURL, dir: 'css/font-awesome-4.7.0/css', file: 'font-awesome.css')}"/>
     <g:javascript src="toastr.min.js" contextPath=""/>
     <link rel="stylesheet"
-          href="${resource(contextPath: "${grailsApplication.config.grails.serverURL}", dir: 'css', file: 'font-awesome.css')}"/>
-    <link rel="stylesheet"
-          href="${resource(contextPath: "${grailsApplication.config.grails.serverURL}", dir: 'css', file: 'toastr.min.css')}"/>
+          href="${resource(contextPath: serverURL, dir: 'css', file: 'toastr.min.css')}"/>
     <script type="text/javascript">
         var currentValidation = false;
         var errorMessages = new Array();
         var modelFile;
-        var authorMap = { authors: []};
+        var authorMap = { authors: [] };
         var authorList = authorMap.authors;
         var publication;
     </script>
