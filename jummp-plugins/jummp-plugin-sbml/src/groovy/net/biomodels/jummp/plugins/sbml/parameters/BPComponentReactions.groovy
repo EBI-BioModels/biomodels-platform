@@ -5,15 +5,15 @@ package net.biomodels.jummp.plugins.sbml.parameters
  */
 class BPComponentReactions implements Serializable {
 
-    String reactionShow
-    String rateShow
+    String reaction
+    String rate
     String parameters
 
     @Override
     public String toString() {
         return "BPComponentReactions{" +
-            "reactionShow='" + reactionShow + '\'' +
-            ", rateShow='" + rateShow + '\'' +
+            "reaction='" + reaction + '\'' +
+            ", rate='" + rate + '\'' +
             ", parameters='" + parameters + '\'' +
             '}';
     }

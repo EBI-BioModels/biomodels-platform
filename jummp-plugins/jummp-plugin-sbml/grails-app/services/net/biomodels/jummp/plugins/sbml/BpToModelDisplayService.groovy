@@ -49,8 +49,8 @@ class BpToModelDisplayService {
         int count = 0
         for (SearchResultEntry searchResultEntry : results.entries) {
             BPComponentReactions bmpComponentReactions = new BPComponentReactions(
-                reactionShow: searchResultEntry.fields["reaction"],
-                rateShow : searchResultEntry.fields["rate"],
+                reaction: searchResultEntry.fields["reaction"],
+                rate: searchResultEntry.fields["rate"],
                 parameters : searchResultEntry.fields["parameters"])
             map[searchResultEntry.fields["reaction"]] = bmpComponentReactions
             if(++count > 200) {
