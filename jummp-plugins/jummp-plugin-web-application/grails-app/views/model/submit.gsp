@@ -10,13 +10,14 @@
 <head>
     <meta name="layout" content="biomodels/main"/>
     <title>Submit a new model | BioModels</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css"/>
     <link rel="stylesheet" href="${submissionCssHref}"/>
     <link rel="stylesheet" href="${publicationCssHref}"/>
     <link rel="stylesheet"
           href="${resource(contextPath: serverURL, dir: 'css/biomodels/uploader-1.0.2', file:
               'jquery.dm-uploader.min.css')}">
     <g:javascript src="toastr.min.js" contextPath=""/>
+    <link rel="stylesheet"
+          href="${resource(contextPath: "${grailsApplication.config.grails.serverURL}", dir: 'css', file: 'font-awesome.css')}"/>
     <link rel="stylesheet"
           href="${resource(contextPath: "${grailsApplication.config.grails.serverURL}", dir: 'css', file: 'toastr.min.css')}"/>
     <script type="text/javascript">
