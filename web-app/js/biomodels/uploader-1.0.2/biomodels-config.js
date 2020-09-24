@@ -22,7 +22,7 @@ $(function () {
         },
         onComplete: function () {
             // All files in the queue are processed (success or error)
-            ui_add_log('All pending tranfers finished');
+            ui_add_log('All pending transfers finished');
         },
         onNewFile: function (id, file) {
             // When a new file is added using the file selector or the DnD area
@@ -30,7 +30,7 @@ $(function () {
             ui_multi_add_file(id, file);
         },
         onBeforeUpload: function (id) {
-            // about tho start uploading a file
+            // about the start uploading a file
             ui_add_log('Starting the upload of #' + id);
             ui_multi_update_file_status(id, 'uploading', 'Uploading...');
             ui_multi_update_file_progress(id, 0, '', true);
@@ -57,7 +57,7 @@ $(function () {
         },
         onFallbackMode: function () {
             // When the browser doesn't support this plugin :(
-            ui_add_log('Plugin cant be used here, running Fallback callback', 'danger');
+            ui_add_log('Plugin can\'t be used here, running Fallback callback', 'danger');
         },
         onFileSizeError: function (file) {
             ui_add_log('File \'' + file.name + '\' cannot be added: size excess limit', 'danger');

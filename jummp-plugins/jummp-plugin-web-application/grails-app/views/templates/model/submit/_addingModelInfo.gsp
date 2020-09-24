@@ -82,12 +82,11 @@
         %{--            <g:if test="${workingMemory['model_type']}">--}%
         <g:if test="${"test"}">
         </g:if>
-        %{--<g:select name="model_format" id="model_format" required=""
+        <g:select name="model_format" id="model_format" required=""
                   from="${modelFormatsSortedByName}"
-                  value="${selectedValue}"
+                  value="${selectedModelFormat}"
                   optionKey="id"
-                  optionValue="${{it?.name + ' ' + it?.formatVersion}}"/>--}%
-        <g:select name="model_format" id="model_format" required="" from="${['aa', 'bb', 'bb']}"/>
+                  optionValue="${{it?.name + ' ' + it?.formatVersion}}"/>
         <div id="readme_submission_div" style="display: none">
             <label for="readme_submission" class="required">
                 Describe more exactly your model format (e.g. SBML L3V2, Python 2.7, C/C++)</label>
@@ -130,9 +129,46 @@
 </div>
 </div>
 
-<input type="button" name="next" class="next action-button" value="Next"/>
+<input type="button" name="next" class="next action-button" value="Next" />
 <input type="button" name="previous" class="previous action-button-previous" value="Previous"/>
-<g:javascript>
+<script>
+    function validateModelInfo() {
+        console.log("validate the form before moving to the next step");
+        errorMessages = [];
+        let isNameValid = true;
+        if ($('input[id="name"]').val().length === 0) {
+            errorMessages.push("The model name text box is empty. Please enter a meaningful name.")
+            isNameValid = false;
+        } else if ($('input[id="name"]').val().length < 5 || $('input[id="name"]').val().length > 255) {
+            errorMessages.push("Length of the model name is greater 4 and less 256 characters.")
+            isNameValid = false;
+        }
+
+        let modelFormat = $("#model_format option:selected").text();
+        let isMFDetected = definedModelFormatNames.filter(e => e === modelFormat).length === 1;
+        let isFMMatched = true;
+        if (modelFormat === "Original code *") {
+            isFMMatched = $('#readme_submission').val().length > 0
+        }
+        if (!isFMMatched) {
+            errorMessages.push("Please explain what is your model format in the corresponding box.");
+        }
+
+        let modellingApproach = $('#modelling_approach').val();
+        let isMARecognisable = definedModellingApproachNames.filter(ma => ma === modellingApproach).length === 1;
+        if (!isMARecognisable) {
+            errorMessages.push("Please type to choose a modelling approaches from the pre-defined values.")
+        }
+        let isMAMatched = true;
+        if (modellingApproach === "Other") {
+            isMAMatched = $('#other_info').val().length > 0;
+        }
+        if (!isMAMatched) {
+            errorMessages.push("Please explain what is your modelling approach in the corresponding box.");
+        }
+        currentValidation = isNameValid && isMFDetected && isFMMatched && isMARecognisable && isMAMatched;
+    }
+
     function associateEventHandlers(id) {
         let descBox = document.getElementById(id);
 
@@ -150,7 +186,7 @@
     $(document).ready(function () {
         associateEventHandlers("description");
         associateEventHandlers("name");
-        handleModelFormatBoxState();
+        // handleModelFormatBoxState();
         handleShowOrHideModelFormatExtraInfo($('#model_format'));
         handleShowOrHideModellingApproachExtraInfo($('#modelling_approach'), false);
         // The validateInputLength function is defined in common.js loading with the footer construction
@@ -236,7 +272,7 @@
         let element = $('#readme_submission_div');
         let selectedFormat = $opt.val();
         let selectedText = $opt.text();
-        let comparableText = "${/*unknownFormat.name*/"dsdsds"} *";
+        let comparableText = "${unknownFormat.name} *";
         showOrHideBox(element, selectedText, comparableText, definedModelFormatNames);
     }
 
@@ -259,4 +295,16 @@
             $(element).hide();
         }
     }
-</g:javascript>
+
+    function updateModelInfoForm(modelFile) {
+        $('input[id="name"]').val(modelFile.detectedModelInfo.name);
+        $('textarea[id="description"]').val(modelFile.detectedModelInfo.description);
+        $('#model_format').val(modelFile.detectedModelFormat.id).change();
+        $('#readme_submission').val(modelFile.detectedModelInfo.readmeSubmission);
+        $('#other_info').val(modelFile.detectedModelInfo.otherInfo);
+        $('#modelling_approach').val(modelFile.detectedModelInfo.modellingApproach);
+        // below are two functions defined in addingModelInfo template
+        handleShowOrHideModelFormatExtraInfo($('#model_format'));
+        handleShowOrHideModellingApproachExtraInfo($('#modelling_approach'), true);
+    }
+</script>

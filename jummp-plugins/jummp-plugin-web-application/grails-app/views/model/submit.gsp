@@ -30,11 +30,7 @@
 </head>
 
 <body>
-%{--<h2 id="heading">Submit a new model</h2>
-
-<p>Fill all form field to go to next step</p>--}%
-
-<form id="msform">
+<form id="msform" useToken="true" class="${submissionSessionId}">
     <!-- progressbar -->
     <ul id="progressbar">
         <li class="active" id="upload-file"><strong>Model Files</strong></li>
@@ -88,28 +84,26 @@
     </fieldset>
 
     <fieldset>
-        <div class="form-card">
-            <div class="row">
-                <div class="columns small-12 medium-7 large-7">
-                    <h2 class="fs-title">Finish:</h2>
-                </div>
-
-                <div class="columns small-12 medium-5 large-5">
-                    <h2 class="steps">Step 5 - 5</h2>
-                </div>
+        <div class="row">
+            <div class="columns small-12 medium-7 large-7">
+                <h2 class="fs-title">Finish:</h2>
             </div>
 
-            <h2 class="purple-text text-center"><strong>SUCCESS !</strong></h2>
-
-            <div class="row align-center">
-                <div class="columns small-12 medium-12 large-12" style="text-align: center">
-                    <img src="https://i.imgur.com/GwStPmg.png" class="fit-image" style="width: 25%"></div>
+            <div class="columns small-12 medium-5 large-5">
+                <h2 class="steps">Step 5 - 5</h2>
             </div>
+        </div>
 
-            <div class="row align-center">
-                <div class="columns small-12 medium-12 large-12">
-                    <h5 class="purple-text text-center">You Have Successfully Signed Up</h5>
-                </div>
+        <h2 class="purple-text text-center"><strong>SUCCESS !</strong></h2>
+
+        <div class="row align-center">
+            <div class="columns small-12 medium-12 large-12" style="text-align: center">
+                <img src="https://i.imgur.com/GwStPmg.png" class="fit-image" style="width: 25%"></div>
+        </div>
+
+        <div class="row align-center">
+            <div class="columns small-12 medium-12 large-12">
+                <h5 class="purple-text text-center">You Have Successfully Signed Up</h5>
             </div>
         </div>
     </fieldset>

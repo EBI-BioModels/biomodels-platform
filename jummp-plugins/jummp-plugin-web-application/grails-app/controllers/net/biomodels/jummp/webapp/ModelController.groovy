@@ -50,6 +50,7 @@ import net.biomodels.jummp.core.model.audit.AccessType
 import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
 import net.biomodels.jummp.deployment.biomodels.TagTransportCommand
 import net.biomodels.jummp.model.Model
+import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.model.Publication
 import net.biomodels.jummp.model.PublicationLinkProvider
@@ -63,6 +64,7 @@ import net.biomodels.jummp.webapp.rest.model.show.ModelFiles
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
+import org.codehaus.groovy.grails.web.json.JSONElement
 import org.codehaus.groovy.grails.web.json.JSONObject
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -487,6 +489,9 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
     }
 
     def submit() {
+        // Spring Session ID
+        String ssId = request.session.session.cached.id
+        Map submissionMap = submissionService.init(ssId)
         String serverURL = grailsApplication.config.grails.serverURL
         Map submissionCssMap = [contextPath: serverURL, dir: '/css/biomodels', file: 'submission.css']
         Map publicationCssMap = [contextPath: serverURL, dir: '/css/biomodels', file: 'publicationPageStyle.css']
@@ -496,27 +501,97 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
         PublicationTransportCommand publication = new PublicationAdapter(publication: Publication.get(10))
             .toCommandObject()
 
-        List definedModellingApproachNames = ["sbml", "matlab"]
-        render(view: "submit", model: [serverURL: serverURL, submissionCssHref: submissionCssHref,
-                                       publicationCssHref: publicationCssHref, otherInfo:
-            "otherinfo", modellingApproach: "Other", readmeSubmission: "readme submission",
-                                       definedModellingApproachNames: definedModellingApproachNames, publication:
-                                           publication])
+        List<ModellingApproach> definedModellingApproaches = ModellingApproach.list()
+        List definedModellingApproachNames = definedModellingApproaches.collect { it.name }
+
+        // TODO: reconcile init method
+        ModelFormat unknownFormat = ModelFormat.findByIdentifier("UNKNOWN")
+        MFTC unknownFormatTC = new ModelFormatAdapter(format: unknownFormat).toCommandObject()
+
+        String subSessId = submissionMap.get("submission-session-id")
+        String submissionFolder = submissionMap.get("submission-folder")
+
+        List<ModelFormat> sortedModelFormats = net.biomodels.jummp.model.ModelFormat.list().sort { it.name }
+        Integer selectedValue = 7//unknownFormat?.id
+
+        render(view: "submit", model: [submissionSessionId: subSessId,
+                                       submissionFolder: submissionFolder,
+                                       serverURL: serverURL,
+                                       submissionCssHref: submissionCssHref,
+                                       publicationCssHref: publicationCssHref,
+                                       otherInfo: "An exmple of the other info",
+                                       modellingApproach: "Other",
+                                       readmeSubmission: "readme submission",
+                                       definedModellingApproachNames: definedModellingApproachNames,
+                                       publication: publication,
+                                       unknownFormat: unknownFormatTC,
+                                       modelFormatsSortedByName: sortedModelFormats,
+                                       selectedModelFormat: selectedValue])
     }
 
     def uploadFile() {
+        String submissionFolder = params.get("submissionFolder")
+        log.debug("Submission folder: ${submissionFolder}")
         CommonsMultipartFile uploadFile = request.getMultiFileMap().file?.first()
         String originalFilename = uploadFile.originalFilename
+        File file = transferFileService(submissionFolder, uploadFile)
         render([message: "Uploaded files successfully", status: "OK", path: originalFilename] as JSON)
     }
 
     def reconcileUploadingFiles() {
+        String submissionFolder = params.get("submissionFolder")
+        log.debug("Submission folder: ${submissionFolder}")
+        String exchangeDir = grailsApplication.config.jummp.vcs.exchangeDirectory as String
+        File absSubFolder = new File(exchangeDir, submissionFolder)
+        List files = absSubFolder.listFiles()
+        Map uploadFilesMap = new HashMap()
+        for (File file : files) {
+            uploadFilesMap.put(file.name, file.canonicalPath)
+        }
         String uploadingFiles = params.uploadingFiles.decodeHTML()
         def filesMap = JSON.parse(uploadingFiles)
-        for (def e : filesMap) {
-            println e
+        for (JSONElement e : filesMap) {
+            e["path"] = uploadFilesMap.get(e["filename"])
+            if (e["isModelFile"]) {
+                println "Model File: ${e}"
+                List messages = validateModelFile(e)
+                e["messages"] = messages
+                Map detectedModelFormat = detectModelFormat(e)
+                e["detectedModelFormat"] = detectedModelFormat
+                Map detectedModelInfo = detectModelInfo(e)
+                e["detectedModelInfo"] = detectedModelInfo
+            }
         }
-        render([message: "Success"] as JSON)
+        render filesMap as JSON
+    }
+
+    private File transferFileService(final String uuid, final MultipartFile multipartFile) {
+        File submissionFolder = null
+        String sep = File.separator
+        String exchangeDir = grailsApplication.config.jummp.vcs.exchangeDirectory as String
+        submissionFolder = new File(exchangeDir, uuid)
+        submissionFolder.mkdirs()
+        List files = transferFiles(submissionFolder.canonicalPath + sep, multipartFile as List)
+        files?.first()
+    }
+
+    private List validateModelFile(final JSONElement modelFile) {
+        return(["All information is valid"])
+    }
+
+    private Map detectModelFormat(final JSONElement modelFile) {
+//        return ["identifier": "Unknown", "name": "Original code *", "id": 22]
+        return ["identifier": "SBML", "name": "SBML L2V4", "id": 7]
+    }
+
+    private Map detectModelInfo(final JSONElement modelFile) {
+        return ["name": "This is model name", "description": "<note>Sample description of John's</note>",
+                "readmeSubmission": "This is sample readme submission", "otherInfo": "Example of other info",
+                "modellingApproach": "steady-state model"]
+    }
+
+    def update() {
+
     }
 
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])

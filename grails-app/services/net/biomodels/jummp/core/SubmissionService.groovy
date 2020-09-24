@@ -52,6 +52,8 @@ import net.biomodels.jummp.model.Revision
 import org.hibernate.SessionFactory
 import org.perf4j.aop.Profiled
 import org.apache.commons.io.FilenameUtils
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * Service that provides model building functionality to a wizard-style model
@@ -65,6 +67,8 @@ import org.apache.commons.io.FilenameUtils
  */
 @CompileStatic
 class SubmissionService {
+    private final Logger log = LoggerFactory.getLogger(this.getClass())
+
     // concrete strategies for the submission state machine
     private final NewModelStateMachine newModel = new NewModelStateMachine()
     private final NewRevisionStateMachine newRevision = new NewRevisionStateMachine()
@@ -90,6 +94,9 @@ class SubmissionService {
      */
     transient SessionFactory sessionFactory
 
+    def redisService
+
+    def decorationService
     /**
      * Abstract state machine strategy, to be extended by the two concrete
      * strategy implementations
@@ -116,6 +123,36 @@ class SubmissionService {
             workingMemory.put("unknown_format_command", unknownFormatTC)
         }
 
+        /**
+         * Initialise required objects
+         */
+        @CompileStatic(TypeCheckingMode.SKIP)
+//        @Cacheable('sortedModelFormats')
+        Map init(final String springSessionId) {
+            long unixTime = System.currentTimeMillis() / 1000L
+            String submissionSessionId = "submission-$unixTime-$springSessionId"
+            println "Initialise the submission process with the session id: $submissionSessionId"
+
+            String uuid = UUID.randomUUID().toString()
+            log.debug("Generated submission UUID: ${uuid}")
+
+            ModelFormat unknownFormat = ModelFormat.findByIdentifier("UNKNOWN")
+            MFTC unknownFormatTC = new ModelFormatAdapter(format: unknownFormat).toCommandObject()
+            Map submissionMap =  ["submission-session-id": submissionSessionId,
+                                  "submission-folder": uuid]
+            return submissionMap
+            //workingMemory.put("unknown_format_command", unknownFormatTC)
+            // init the unknown format
+
+//            decorationService
+            /*List<ModelFormat> sortedModelFormats = net.biomodels.jummp.model.ModelFormat.list().sort { it.name }
+            workingMemory.put("sorted_model_formats", sortedModelFormats)
+            List<ModellingApproach> definedModellingApproaches = ModellingApproach.list()
+            workingMemory.put("defined_modelling_approaches", definedModellingApproaches)
+            ModelFormat unknownFormat = ModelFormat.findByIdentifier("UNKNOWN")
+            MFTC unknownFormatTC = new ModelFormatAdapter(format: unknownFormat).toCommandObject()
+            workingMemory.put("unknown_format_command", unknownFormatTC)*/
+        }
         /**
          * The method allows filtering out the files being added and the ones will be deleted.
          * At the same time, the cache system, i.e. workingMemory, is also made up-to-date.
@@ -662,6 +699,10 @@ class SubmissionService {
             super.initialise(workingMemory)
         }
 
+        Map init(final String springSessionId) {
+            super.init(springSessionId)
+        }
+
         void removeFromVCS(Map<String, Object> workingMemory, List<RFTC> filesToDelete) {
             //nothing in VCS, need to do nothing
         }
@@ -699,6 +740,10 @@ class SubmissionService {
             super.initialise(workingMemory)
             def publication_objects_in_working = initialisePublicationMap()
             workingMemory.put("publication_objects_in_working", publication_objects_in_working)
+        }
+
+        Map init(final String springSessionId) {
+            super.init(springSessionId)
         }
 
         void removeFromVCS(Map<String, Object> workingMemory, List<RFTC> filesToDelete) {
@@ -807,6 +852,10 @@ class SubmissionService {
             }
             workingMemory.put("publication_objects_in_working", publication_objects_in_working)
             sessionFactory.currentSession.clear()
+        }
+
+        Map init(final String springSessionId) {
+            super.init(springSessionId)
         }
 
         void removeFromVCS(Map<String, Object> workingMemory, List<RFTC> filesToDelete) {
@@ -940,6 +989,15 @@ class SubmissionService {
         getStrategyFromContext(workingMemory).initialise(workingMemory)
     }
 
+    @Profiled(tag = "submissionService.init")
+    Map init(final String springSessionId) {
+        // TODO; use getStrategyFromContext
+        newModel.init(springSessionId)
+    }
+
+    void writeUploadingFileToRedis(final File file) {
+        decorationService
+    }
     /**
      * Called by ModelController for adding or removing files from the working memory
      *

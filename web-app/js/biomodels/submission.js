@@ -33,7 +33,7 @@ $(document).ready(function () {
                 duration: 500
             });
             setProgressBar(current);
-            step = current-1;
+            step = current - 1;
             clearErrorMessages();
             updateSubFormAtStep(current);
         } else {
@@ -74,7 +74,7 @@ $(document).ready(function () {
     function setProgressBar(curStep) {
         let percent = (100 / steps) * curStep;
         percent = percent.toFixed();
-        $(".progress-meter").css("width", percent + "%")
+        $(".progress-meter").css("width", percent + "%");
     }
 
     $(".submit").click(function () {
@@ -100,7 +100,6 @@ $(document).ready(function () {
     hideAllInvalidIcons();
 
     function showErrorMessages() {
-        console.log(errorMessages);
         if (errorMessages.length) {
             let messages = "<ul>";
             for (i = 0; i < errorMessages.length; i++) {
@@ -122,6 +121,7 @@ $(document).ready(function () {
             case 1:
                 break;
             case 2:
+                // defined in the step 2
                 updateModelInfoForm(modelFile);
                 break;
             case 3:
@@ -131,10 +131,14 @@ $(document).ready(function () {
         }
     }
 
-    function updateModelInfoForm(modelFile) {
-
     function validateData(step) {
         switch (step) {
+            case 1:
+                validateFileUpload();
+                break;
+            case 2:
+                validateModelInfo();
+                break;
             case 3:
                 validatePublicationInfo();
                 break;

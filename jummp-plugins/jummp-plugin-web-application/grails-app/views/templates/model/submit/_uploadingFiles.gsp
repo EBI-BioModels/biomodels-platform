@@ -1,15 +1,4 @@
 <style>
-body {
-    padding-bottom: 2rem;
-    padding-top: 4rem;
-}
-.row {
-    margin-bottom: 1rem;
-}
-[class*="col-"] {
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-}
 hr {
     margin-top: 2rem;
     margin-bottom: 2rem;
@@ -39,7 +28,7 @@ hr {
 }
 .card-section {
     border: 0.25rem solid #A5A5C7;
-    overflow: scroll;
+    overflow-y: scroll; height: 279px
 }
 </style>
 <div class="row">
@@ -72,11 +61,17 @@ hr {
     <div class="columns small-12 medium-6 large-8">
         <div class="card">
             <div class="card-header">
-                <h3>Model File List</h3>
+                <h3>Model File List <span style="font-size: small; color: red">Important: </span><span
+                    style="font-size: small">Please
+                mark a
+                model file
+                by ticking the
+                Model file
+                checkbox</span></h3>
             </div>
-            <div class="card-section" style="overflow-scrolling: auto">
-                <ul class="list-unstyled" id="files">
-                    <li class="empty">No files uploaded.</li>
+            <div class="card-section">
+                <ul class="list-unstyled" id="files" style="margin-right: 1.25rem">
+                    <li class="empty" style="margin-left: 0">No files uploaded.</li>
                 </ul>
             </div>
         </div>
@@ -85,7 +80,8 @@ hr {
         <li class="media">
             <div class="media-body mb-1">
                 <p class="mb-2">
-                    <strong class="file-name">%%filename%%</strong> - Status: <span class="text-muted">Waiting</span>
+                    <strong class="file-name">%%filename%%</strong> - Size: 10000, Status: <span class="text-muted">
+                    Waiting</span>
                 </p>
                 <div class="progress mb-2">
                     <div class="progress progress-bar progress-bar-striped progress-bar-animated bg-primary"
@@ -112,62 +108,85 @@ hr {
         </script>
     </div>
 </div><!-- /file list -->
-<input type="button" name="next" id="uploadFileNext" class="next action-button" value="Next" onclick="clickNextOnFileUpload()"/>
+<input type="button" name="next" id="uploadFileNext" class="next action-button" value="Next" />
 <script
     src="${resource(contextPath: serverURL, dir: '/js/biomodels/uploader-1.0.2', file: 'biomodels-ui.js')}"></script>
-<script
-    src="${resource(contextPath: serverURL, dir: '/js/biomodels/uploader-1.0.2', file: 'biomodels-config.js')}"></script>
 <script type="text/javascript">
-    function uploadFiles() {
-        const file = document.getElementById("fileUploader"); // All files
-        for (let i = 0; i < file.files.length; i++) {
-            uploadSingleFile(file.files[i], i);
-        }
-    }
-    function uploadSingleFile(file, i) {
-        const fileId = i;
-        const ajax = new XMLHttpRequest();
-        // Progress Listener
-        ajax.upload.addEventListener("progress", function (e) {
-            const percent = (e.loaded / e.total) * 100;
-            $("#status_" + fileId).text(Math.round(percent) + "% uploaded, please wait...");
-            $('#progressbar_' + fileId).css("width", percent + "%")
-            $("#notify_" + fileId).text("Uploaded " + (e.loaded / 1048576).toFixed(2) + " MB of " + (e.total / 1048576).toFixed(2) + " MB ");
-        }, false);
-        // Load Listener
-        ajax.addEventListener("load", function (e) {
-            $("#status_" + fileId).text(e.target.responseText);
-            $('#progressbar_' + fileId).css("width", "100%")
+    $(function () {
+        /*
+         * For the sake keeping the code clean and the examples simple this file
+         * contains only the plugin configuration & callbacks.
+         *
+         * UI functions ui_* can be located in: demo-ui.js
+         */
+        $('#drag-and-drop-zone').dmUploader({ //
+            url: 'uploadFile',
+            maxFileSize: 12000000, // 12 Megs
+            extraData: {
+                "submissionFolder": "${submissionFolder}"
+            },
+            onDragEnter: function () {
+                // Happens when dragging something over the DnD area
+                this.addClass('active');
+            },
+            onDragLeave: function () {
+                // Happens when dragging something OUT of the DnD area
+                this.removeClass('active');
+            },
+            onInit: function () {
+                console.log("submission folder detected: ${submissionFolder}");
+                // Plugin is ready to use
+                ui_add_log('Penguin initialized :)', 'info');
+            },
+            onComplete: function () {
+                // All files in the queue are processed (success or error)
+                ui_add_log('All pending transfers finished');
+            },
+            onNewFile: function (id, file) {
+                // When a new file is added using the file selector or the DnD area
+                ui_add_log('New file added #' + id);
+                ui_multi_add_file(id, file);
+            },
+            onBeforeUpload: function (id) {
+                // about tho start uploading a file
+                ui_add_log('Starting the upload of #' + id);
+                ui_multi_update_file_status(id, 'uploading', 'Uploading...');
+                ui_multi_update_file_progress(id, 0, '', true);
+            },
+            onUploadCanceled: function (id) {
+                // Happens when a file is directly canceled by the user.
+                ui_multi_update_file_status(id, 'warning', 'Canceled by User');
+                ui_multi_update_file_progress(id, 0, 'warning', false);
+            },
+            onUploadProgress: function (id, percent) {
+                // Updating file progress
+                ui_multi_update_file_progress(id, percent);
+            },
+            onUploadSuccess: function (id, data) {
+                // A file was successfully uploaded
+                ui_add_log('Server Response for file #' + id + ': ' + JSON.stringify(data));
+                ui_add_log('Upload of file #' + id + ' COMPLETED', 'success');
+                ui_multi_update_file_status(id, 'success', 'Upload Complete');
+                ui_multi_update_file_progress(id, 100, 'success', false);
+            },
+            onUploadError: function (id, xhr, status, message) {
+                ui_multi_update_file_status(id, 'danger', message);
+                ui_multi_update_file_progress(id, 0, 'danger', false);
+            },
+            onFallbackMode: function () {
+                // When the browser doesn't support this plugin :(
+                ui_add_log('Plugin cant be used here, running Fallback callback', 'danger');
+            },
+            onFileSizeError: function (file) {
+                ui_add_log('File \'' + file.name + '\' cannot be added: size excess limit', 'danger');
+            }
+        });
+    });
 
-            // Hide cancel button
-            const _cancel = $('#cancel_' + fileId);
-            _cancel.hide();
-        }, false);
-        // Error Listener
-        ajax.addEventListener("error", function (e) {
-            $("#status_" + fileId).text("Upload Failed");
-        }, false);
-        //Abort Listener
-        ajax.addEventListener("abort", function (e) {
-            $("#status_" + fileId).text("Upload Aborted");
-        }, false);
-
-        ajax.open("POST", "${createLink(controller: "model", action: "uploadFile")}", true); // Your API .net, php
-
-        const uploaderForm = new FormData(); // Create new FormData
-        uploaderForm.append("file", file); // append the next file for upload
-        ajax.send(uploaderForm);
-
-        // Cancel button
-        const _cancel = $('#cancel_' + fileId);
-        _cancel.show();
-
-        _cancel.on('click', function () {
-            ajax.abort();
-        })
-    }
-
-    function clickNextOnFileUpload() {
+    function validateFileUpload() {
+        errorMessages = [];
+        currentValidation = false;
+        let nbModelFiles = 0;
         const allMediaElements = $('.media');
         const ids = allMediaElements.map(function () {
             let filename = $(this).find("strong.file-name").html();
@@ -179,37 +198,36 @@ hr {
             type: "POST",
             url: "${createLink(action: "reconcileUploadingFiles")}",
             data: {
+                submissionSessionId: "${submissionSessionId}",
+                submissionFolder: "${submissionFolder}",
                 uploadingFiles: JSON.stringify(ids)
             },
-            dataType: "application/json",
-            success: function (data) {
-                console.log("Data loaded: " + data);
+            async: false,
+            dataType: "JSON",
+            success: function(data) {
+                if (data.length) {
+                    const haveAllDescriptions = data.filter(e => e.description === "").length === 0;
+                    if (!haveAllDescriptions) {
+                        errorMessages.push("Please check the file description text boxes. They are not allowed empty.");
+                    }
+                    const hasOneModelFile = data.filter(e => e.isModelFile).length === 1;
+                    let modelFileWithNoErrors = true;
+                    if (!hasOneModelFile) {
+                        errorMessages.push("Please verify the Model file checkboxes. A submission has at least a model file.");
+                    } else {
+                        modelFile = data.filter(e => e.isModelFile)[0];
+                        if (!modelFile) { modelFileWithNoErrors = false; }
+                    }
+                    currentValidation = hasOneModelFile && haveAllDescriptions && modelFileWithNoErrors;
+                } else {
+                    currentValidation = false;
+                    errorMessages.push("A submission has at least a model file.")
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.log("inside error " + JSON.stringify(errorThrown));
+                console.log(textStatus);
             }
         });
     }
-
-    $(document).ready(function () {
-        $('input[type=file]').change(function () {
-            $('#btnUpload').show();
-            $('#divFiles').html('');
-            for (let i = 0; i < this.files.length; i++) {
-                // Progress bar and status label's for each file generate dynamically
-                const fileId = i;
-                $("#divFiles").append('<div class="col-md-12">' +
-                    '<div class="progress-bar progress-bar-striped active" id="progressbar_' + fileId + '" role="progressbar" aria-valuemin="0" aria-valuemax="100" style="width:0%"></div>' +
-                    '</div>' +
-                    '<div class="col-md-12">' +
-                    '<div class="col-md-6">' +
-                    '<input type="button" class="btn btn-danger" style="display:none;line-height:6px;height:25px" id="cancel_' + fileId + '" value="cancel">' +
-                    '</div>' +
-                    '<div class="col-md-6">' +
-                    '<p class="progress-status" style="text-align: right;margin-right:-15px;font-weight:bold;color:saddlebrown" id="status_' + fileId + '"></p>' +
-                    '</div>' +
-                    '</div>' +
-                    '<div class="col-md-12">' +
-                    '<p id="notify_' + fileId + '" style="text-align: right;"></p>' +
-                    '</div>');
-            }
-        });
-    });
 </script>

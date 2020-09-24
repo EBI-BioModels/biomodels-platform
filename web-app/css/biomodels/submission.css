@@ -7,10 +7,6 @@ html {
     height: 100%
 }
 
-p {
-    /*color: grey*/
-}
-
 #heading {
     text-transform: uppercase;
     color: #673AB7;
@@ -41,21 +37,6 @@ p {
 #msform fieldset:not(:first-of-type) {
     display: none
 }
-
-/*#msform input,
-#msform textarea {
-    padding: 8px 15px 8px 15px;
-    border: 1px solid #ccc;
-    border-radius: 0px;
-    margin-bottom: 25px;
-    margin-top: 2px;
-    width: 100%;
-    box-sizing: border-box;
-    color: #2C3E50;
-    background-color: #ECEFF1;
-    font-size: 16px;
-    letter-spacing: 1px
-}*/
 
 #msform input:focus,
 #msform textarea:focus {
@@ -109,10 +90,8 @@ p {
 }
 
 .fs-title {
-    font-size: 25px;
     color: #673AB7;
     margin-bottom: 15px;
-    font-weight: normal;
     text-align: left
 }
 
@@ -137,7 +116,7 @@ p {
 #progressbar {
     /* disable this setting go along with EBI visual framework */
     margin-left: 0;
-    margin-bottom: 30px;
+    margin-bottom: 0;
     overflow: hidden;
     color: lightgrey;
 }
@@ -228,7 +207,6 @@ p {
 
 .progress {
     height: 20px;
-    margin-right: .35rem;
 }
 
 .progress-bar {
