@@ -112,7 +112,7 @@
 <script
     src="${resource(contextPath: serverURL, dir: 'js/biomodels', file: 'submission.js')}"></script>
 <script
-    src="${resource(contextPath: serverURL, dir: 'js/biomodels/uploader-1.0.2/dist/js',
+    src="${resource(contextPath: serverURL, dir: 'js/biomodels/uploader-1.0.2',
         file: 'jquery.dm-uploader.min.js')}"></script>
 
 </body>
