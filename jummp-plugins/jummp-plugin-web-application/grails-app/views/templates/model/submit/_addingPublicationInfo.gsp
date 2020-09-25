@@ -96,8 +96,6 @@
             success: function (data) {
                 toastr.clear();
                 publication = data.publication;
-                console.log(JSON.stringify(data));
-                console.log(JSON.stringify(data.authors));
                 if (data.status === "Failed") {
                     errorMessages.push(data["message"]);
                     toastr.error(data["message"])
@@ -135,7 +133,6 @@
                 'data-person-orcid="' + (it.orcid !== null ? it.orcid : "") + '"' +
                 'data-person-institution="' + (it.institution !== null ? it.institution : "") + '">' +
                 it.userRealName + '</option>';
-                console.log("Op: " + option);
                 $('#authorList').append(option);
             });
             authorList = publication.authors;

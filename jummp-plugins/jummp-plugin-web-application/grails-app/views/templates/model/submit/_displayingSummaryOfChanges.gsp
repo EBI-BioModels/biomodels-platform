@@ -5,6 +5,12 @@
     /*ModelTransportCommand model = workingMemory.get("ModelTC")
     RevisionTransportCommand revision = workingMemory.get("RevisionTC")*/
 %>
+<style type="text/css">
+    .submission-prop {
+        font-weight: bold;
+        color: #0e0e0e;
+    }
+</style>
 <div class="row">
     <div class="columns small-12 medium-7 large-7">
         <h2 class="fs-title"><g:message code="submission.summary.header"/></h2>
@@ -15,8 +21,9 @@
     </div>
 </div>
 <div class="row">
-    <div class="columns small-12 medium-12 large-12">
-
+    <div class="columns small-12 medium-2 large-2">
+        <span class="submission-prop">
+            <g:message code="submission.summary.nameLabel"/></span>
         %{--<table class="formtable responsive-table">
             <tbody>
             <tr class="prop">
@@ -97,6 +104,119 @@
             </tbody>
         </table>--}%
     </div>
+    <div class="columns small-12 medium-10 large-10">
+        <span id="detectedModelName"></span>
+    </div>
 </div>
-<input type="button" name="next" class="next action-button" value="Submit"/>
-<input type="button" name="previous" class="previous action-button-previous" value="Previous"/>
+<div class="row">
+    <div class="columns small-12 medium-2 large-2">
+        <span class="submission-prop">
+            <jummp:displayModelDescriptionLabel>
+                ${description}
+            </jummp:displayModelDescriptionLabel>
+        </span>
+    </div>
+    <div class="columns small-12 medium-10 large-10">
+        <div id="detectedModelDescription"></div>
+    </div>
+</div>
+<div class="row">
+    <div class="columns small-12 medium-2 large-2">
+        <span class="submission-prop">
+            Model format
+        </span>
+    </div>
+    <div class="columns small-12 medium-10 large-10">
+        <div id="detectedModelFormat"></div>
+        <div id="detectedModelFormatReadme"></div>
+    </div>
+</div>
+<div class="row">
+    <div class="columns small-12 medium-2 large-2">
+        <span class="submission-prop">
+            Modelling approach
+        </span>
+    </div>
+    <div class="columns small-12 medium-10 large-10">
+        <div id="detectedModellingApproach"></div>
+        <div id="detectedModellingOtherInfo"></div>
+    </div>
+</div>
+<div class="row">
+    <div class="columns small-12 medium-2 large-2">
+        <span class="submission-prop">
+            Model file
+        </span>
+    </div>
+    <div class="columns small-12 medium-10 large-10">
+        <div id="detectedModelFileName" style="font-weight: bold"></div>
+        <div id="detectedModelFileDescription"></div>
+    </div>
+</div>
+<div class="row">
+    <div class="columns small-12 medium-2 large-2">
+        <span class="submission-prop">
+            Additional files
+        </span>
+    </div>
+    <div class="columns small-12 medium-10 large-10">
+        <div id="detectedAdditionalFiles">
+            <ol id="listAdditionalFiles"></ol>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="columns small-12 medium-2 large-2">
+        <span class="submission-prop">
+            Publication
+        </span>
+    </div>
+    <div class="columns small-12 medium-10 large-10">
+        <div id="detectedPublicationDetails">
+        </div>
+    </div>
+</div>
+<input type="button" name="next" class="next action-button" value="Submit" />
+<input type="button" name="previous" class="previous action-button-previous" value="Previous" />
+<script type="text/javascript">
+    function populateSummaryData() {
+        console.log("Displaying the summary of submission/changes");
+        $('#detectedModelName').text(modelInfo.detectedName);
+        $('#detectedModelDescription').text(modelInfo.detectedDescription);
+
+        $('#detectedModelFormat').text(modelInfo.detectedModelFormat.name);
+        $('#detectedModelFormatReadme').text(modelInfo.detectedModelFormat.readme);
+
+        $('#detectedModellingApproach').text(modelInfo.detectedModelling.approach);
+        $('#detectedModellingOtherInfo').text(modelInfo.detectedModelling.otherInfo);
+
+        // Files uploaded
+        $('#detectedModelFileName').text(modelFile.filename);
+        $('#detectedModelFileDescription').text(modelFile.description);
+        $('#listAdditionalFiles').empty();
+        $.each(additionalFiles, function(index, file) {
+            const item = "<li><strong>" + file.filename + "</strong><br/>" + file.description + "</li>";
+            $('#listAdditionalFiles').append(item);
+        });
+
+        // Publication details
+        // invoke an ajax call to the server to render _publication template
+        $.ajax({
+            url: "${createLink(controller: "publication", action: "renderPublicationDetails")}",
+            type: 'POST',
+            data: {
+                pubDetails: JSON.stringify(publication)
+            },
+            failure: function() {
+                alert("Failed loading content");
+            },
+            success: function(response) {
+                $('#detectedPublicationDetails').html(response);
+            }
+        });
+    }
+
+    function submitData() {
+        currentValidation = true;
+    }
+</script>

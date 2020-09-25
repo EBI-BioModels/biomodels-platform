@@ -167,6 +167,9 @@
             errorMessages.push("Please explain what is your modelling approach in the corresponding box.");
         }
         currentValidation = isNameValid && isMFDetected && isFMMatched && isMARecognisable && isMAMatched;
+        if (currentValidation) {
+            updateModelInfoObject();
+        }
     }
 
     function associateEventHandlers(id) {
@@ -296,15 +299,32 @@
         }
     }
 
-    function updateModelInfoForm(modelFile) {
+    function updateModelInfoForm() {
+        // the modelFile is the global variable
         $('input[id="name"]').val(modelFile.detectedModelInfo.name);
         $('textarea[id="description"]').val(modelFile.detectedModelInfo.description);
+
         $('#model_format').val(modelFile.detectedModelFormat.id).change();
         $('#readme_submission').val(modelFile.detectedModelInfo.readmeSubmission);
-        $('#other_info').val(modelFile.detectedModelInfo.otherInfo);
+
         $('#modelling_approach').val(modelFile.detectedModelInfo.modellingApproach);
+        $('#other_info').val(modelFile.detectedModelInfo.otherInfo);
         // below are two functions defined in addingModelInfo template
         handleShowOrHideModelFormatExtraInfo($('#model_format'));
         handleShowOrHideModellingApproachExtraInfo($('#modelling_approach'), true);
+    }
+
+    function updateModelInfoObject() {
+        modelInfo.detectedName = $('input[id="name"]').val();
+        modelInfo.detectedDescription = $('textarea[id="description"]').val();
+
+        modelInfo.detectedModelFormat = {};
+        modelInfo.detectedModelFormat.id = $('#model_format').val();
+        modelInfo.detectedModelFormat.name = $('#model_format option:selected').text();
+        modelInfo.detectedModelFormat.readme = $('#readme_submission').val();
+
+        modelInfo.detectedModelling = {};
+        modelInfo.detectedModelling.approach = $('#modelling_approach').val();
+        modelInfo.detectedModelling.otherInfo = $('#other_info').val();
     }
 </script>

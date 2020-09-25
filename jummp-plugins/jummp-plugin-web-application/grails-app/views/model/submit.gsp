@@ -23,7 +23,9 @@
     <script type="text/javascript">
         var currentValidation = false;
         var errorMessages = new Array();
+        var modelInfo = {};
         var modelFile;
+        var additionalFiles;
         var authorMap = { authors: [] };
         var authorList = authorMap.authors;
         var publication;

@@ -19,7 +19,7 @@
 --%>
 
 <%
-    def publication = model.publication
+    // the publication object is passed from the caller
     String publicationLinkLabel = ""
     String publicationLink = ""
     if (publication.link) {

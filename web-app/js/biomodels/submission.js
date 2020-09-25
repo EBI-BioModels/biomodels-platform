@@ -41,6 +41,11 @@ $(document).ready(function () {
             step = current;
         }
         setCheckList(step, currentValidation);
+        // next is the last step
+        if (step == steps - 1 && currentValidation) {
+            completeSubmission();
+            setCheckList(current, currentValidation);
+        }
     });
 
     $(".previous").click(function () {
@@ -82,7 +87,7 @@ $(document).ready(function () {
     })
 
     function setCheckList(curStep, isValid) {
-        console.log("C.S. " + curStep + " --- isValid: " + isValid);
+        console.log("ticked/crossed at the step " + curStep + " --- isValid: " + isValid);
         if (isValid) {
             $('#step' + curStep + ' .fa-times-circle').hide();
             $('#step' + curStep + ' .fa-check-circle-o').show();
@@ -122,9 +127,15 @@ $(document).ready(function () {
                 break;
             case 2:
                 // defined in the step 2
-                updateModelInfoForm(modelFile);
+                console.log("Updating the form at " + step);
+                updateModelInfoForm();
                 break;
             case 3:
+                break;
+            case 4:
+                // defined in the step 4
+                console.log("Updating the form at " + step);
+                populateSummaryData();
                 break;
             default:
                 break;
@@ -142,8 +153,15 @@ $(document).ready(function () {
             case 3:
                 validatePublicationInfo();
                 break;
+            case 4:
+                submitData();
+                break;
             default:
                 break;
         }
+    }
+
+    function completeSubmission() {
+        currentValidation = false;
     }
 });

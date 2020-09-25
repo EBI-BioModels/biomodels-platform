@@ -216,7 +216,11 @@ hr {
                         errorMessages.push("Please verify the Model file checkboxes. A submission has at least a model file.");
                     } else {
                         modelFile = data.filter(e => e.isModelFile)[0];
-                        if (!modelFile) { modelFileWithNoErrors = false; }
+                        if (!modelFile) {
+                            modelFileWithNoErrors = false;
+                        } else {
+                            additionalFiles = data.filter(e => !e.isModelFile);
+                        }
                     }
                     currentValidation = hasOneModelFile && haveAllDescriptions && modelFileWithNoErrors;
                 } else {
