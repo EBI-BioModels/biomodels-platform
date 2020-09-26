@@ -1,3 +1,11 @@
+const $loading = $('#loading');
+$(document)
+    .ajaxStart(function () {
+
+    })
+    .ajaxStop(function () {
+        $loading.hide();
+    });
 $(document).ready(function () {
     let current_fs, next_fs, previous_fs; //fieldsets
     let opacity;
@@ -41,7 +49,8 @@ $(document).ready(function () {
             step = current;
         }
         setCheckList(step, currentValidation);
-        // next is the last step
+        // next is the last step, therefore, we have to complete the submission
+        // and return the boolean result whether the submission passed or failed
         if (step == steps - 1 && currentValidation) {
             completeSubmission();
             setCheckList(current, currentValidation);
@@ -84,7 +93,7 @@ $(document).ready(function () {
 
     $(".submit").click(function () {
         return false;
-    })
+    });
 
     function setCheckList(curStep, isValid) {
         console.log("ticked/crossed at the step " + curStep + " --- isValid: " + isValid);
@@ -159,9 +168,5 @@ $(document).ready(function () {
             default:
                 break;
         }
-    }
-
-    function completeSubmission() {
-        currentValidation = false;
     }
 });

@@ -207,11 +207,11 @@
             data: {
                 pubDetails: JSON.stringify(publication)
             },
-            failure: function() {
-                alert("Failed loading content");
-            },
             success: function(response) {
                 $('#detectedPublicationDetails').html(response);
+            },
+            error: function() {
+                console.log("Failed loading content");
             }
         });
     }
