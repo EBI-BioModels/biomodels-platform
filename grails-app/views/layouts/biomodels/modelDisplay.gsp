@@ -717,7 +717,8 @@
                                 <span class="overview-tab-attribute"><g:message code="model.model.publication"/></span>
                             </div>
                             <div class="small-12 medium-10 large-10 columns">
-                                <g:render  model="[model:model]" template="/templates/showPublication" />
+                                <g:render  model="[publication: model?.publication]"
+                                           template="/templates/showPublication" />
                             </div>
                             </div>
                             </g:if>

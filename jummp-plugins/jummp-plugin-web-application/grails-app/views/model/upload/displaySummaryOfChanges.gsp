@@ -89,7 +89,8 @@
                                 </td>
                                 <td class="value" style="vertical-align:top;">
                                     <div class="displayDescription">
-                                        <g:render  model="[model:model]" template="/templates/showPublication" />
+                                        <g:render  model="[publication: model.publication]"
+                                                   template="/templates/showPublication" />
                                     </div>
                                 </td>
                             </tr>

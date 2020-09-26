@@ -59,7 +59,7 @@
         <g:if test="${publication}">
         <g:if test="${publication.title && (publication.affiliation || publication.synopsis)}">
             Currently, the model is associated with:
-            <g:render  model="[model: model]" template="/templates/showPublication" />
+            <g:render  model="[publication: model.publication]" template="/templates/showPublication" />
         </g:if>
         </g:if>
     <g:form>
