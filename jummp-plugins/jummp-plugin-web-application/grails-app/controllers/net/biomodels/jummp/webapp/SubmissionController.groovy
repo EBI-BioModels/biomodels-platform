@@ -37,10 +37,10 @@ import grails.plugin.springsecurity.annotation.Secured
 class SubmissionController {
 
     def completeSubmission() {
-        println params.modelFile
-        println params.additionalFiles
-        println params.modelInfo
-        println params.publication
+        println params.modelFile.decodeHTML()
+        println params.additionalFiles.decodeHTML()
+        println params.modelInfo.decodeHTML()
+        println params.publication.decodeHTML()
         String modelId = "MODEL2009260001"
         String modelURL = createLink(controller: "model", action: "show", params: [id: modelId])
         // wait 10s

@@ -84,12 +84,6 @@
     </div>
 </div>
 
-%{--<div class="row">
-    <div class="columns small-12 large-12">
-        <div class="loader text-center" id="loader"></div>
-    </div>
-</div>--}%
-
 <div class="row">
     <div class="columns small-12 large-12">
         <div class="text-center">
@@ -100,25 +94,25 @@
 
 <div class="row align-center">
     <div class="columns small-12 large-12">
-        <div style="display: none;" id="smgSuccess" class="animate-bottom">
-            <h2 class="purple-text text-center"><strong>Model Created!</strong></h2>
+        <div style="display: none;" id="smgSuccess" class="animate-bottom text-center">
+            <h4 class="purple-text"><strong>Model Created!</strong></h4>
             <h5>Your model has been deposited successfully!</h5>
             <img src="https://i.imgur.com/GwStPmg.png" class="fit-image" style="width: 15%">
-            <p class="purple-text text-center">
-                Thank you for submitting your model.
-            </p>
-            <p class="purple-text text-center">
+            <p class="purple-text">
                 It has been assigned perennial identifier <a href="" id="modelURL" target="_blank"></a>.
+            </p>
+            <p class="purple-text">
+                Thank you for submitting your model.
             </p>
         </div>
     </div>
 </div>
 
 <div class="row align-center">
-    <div class="columns small-12 medium-12 large-12" style="text-align: center">
-        <div style="display: none;" id="smgFailure" class="animate-bottom">
-            <h2 class="purple-text text-center"><strong>Failed!</strong></h2>
-            <h5>Your model has been failed to submit!</h5>
+    <div class="columns small-12 medium-12 large-12">
+        <div style="display: none;" id="smgFailure" class="animate-bottom text-center">
+            <h4 class="purple-text"><strong>Model Creation Failed!</strong></h4>
+            <h5>Your submisson has been unsuccessful!</h5>
         </div>
     </div>
 </div>
