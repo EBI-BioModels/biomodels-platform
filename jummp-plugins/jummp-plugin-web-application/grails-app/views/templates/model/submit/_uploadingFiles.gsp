@@ -79,31 +79,34 @@ hr {
         <script type="text/html" id="files-template">
         <li class="media">
             <div class="media-body mb-1">
-                <p class="mb-2">
-                    <strong class="file-name">%%filename%%</strong> - Size: 10000, Status: <span class="text-muted">
-                    Waiting</span>
-                </p>
-                <div class="progress mb-2">
-                    <div class="progress progress-bar progress-bar-striped progress-bar-animated bg-primary"
-                         role="progressbar"
-                         style="width: 0%"
-                         aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-                    </div>
-                </div>
                 <div class="row">
-                    <div class="small-12 medium-11 large-11 columns">
+                    <div class="columns small-12 medium-5 large-5">
+                        <p class="mb-2">
+                            <strong class="file-name">%%filename%%</strong> - Size: 10000, Status: <span class="text-muted">
+                            Waiting</span>
+                        </p>
+                        <div class="progress mb-2">
+                            <div class="progress progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                                 role="progressbar"
+                                 style="width: 0%"
+                                 aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="columns small-12 medium-6 large-6">
                         <label>File Description
                             <input type="text" name="fileDescription" class="file-description"
                                    placeholder="Describe this file. For example: What is this file used for?">
                         </label>
                     </div>
-                    <div class="small-12 medium-1 large-1 columns">
+                    <div class="columns small-12 medium-1 large-1">
                         <label>Model file
                             <input type="checkbox" name="isModelFile" class="is-model-file"></label>
                     </div>
                 </div>
-                <hr class="mt-1 mb-1" />
             </div>
+            <button type="button" name="removeFile" id="btnRemoveFile" class="button">Remove</button>
+            <hr class="mt-1 mb-1" style="color: lightgrey"/>
         </li>
         </script>
     </div>
@@ -234,4 +237,9 @@ hr {
             }
         });
     }
+
+    $('#files').on("click", '#btnRemoveFile', function () {
+       let parent = $(this).parent();
+       parent.remove();
+    });
 </script>
