@@ -105,7 +105,7 @@ hr {
                     </div>
                 </div>
             </div>
-            <button type="button" name="removeFile" id="btnRemoveFile" class="button">Remove</button>
+            <button type="button" name="removeFile" class="button btn-remove-file">Remove</button>
             <hr class="mt-1 mb-1" style="color: lightgrey"/>
         </li>
         </script>
@@ -238,7 +238,7 @@ hr {
         });
     }
 
-    $('#files').on("click", '#btnRemoveFile', function () {
+    $('#files').on("click", '.btn-remove-file', function () {
        let parent = $(this).parent();
        parent.remove();
     });
