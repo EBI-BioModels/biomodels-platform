@@ -49,8 +49,9 @@ html {
 
 #msform .action-button {
     width: 100px;
-    background: #673AB7;
-    font-weight: bold;
+    /*background: #673AB7;*/
+    background: #007c82;
+    /*font-weight: bold;*/
     color: white;
     border: 0 none;
     border-radius: 0px;
@@ -62,13 +63,14 @@ html {
 
 #msform .action-button:hover,
 #msform .action-button:focus {
-    background-color: #311B92
+    /*background-color: #311B92*/
+    background-color: #007c82
 }
 
 #msform .action-button-previous {
     width: 100px;
     background: #616161;
-    font-weight: bold;
+    /*font-weight: bold;*/
     color: white;
     border: 0 none;
     border-radius: 0px;
