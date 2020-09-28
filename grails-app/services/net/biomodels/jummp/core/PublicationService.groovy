@@ -30,7 +30,6 @@ import net.biomodels.jummp.core.adapters.PublicationAdapter
 import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter as PLPA
 import net.biomodels.jummp.core.model.PublicationDetailExtractionContext as PDEC
 import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
-import net.biomodels.jummp.core.user.PersonTransportCommand
 import net.biomodels.jummp.model.Publication
 import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PLPTC
 import net.biomodels.jummp.model.PublicationLinkProvider as PLP

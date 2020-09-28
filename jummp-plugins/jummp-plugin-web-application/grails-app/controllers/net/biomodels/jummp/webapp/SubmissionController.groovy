@@ -32,20 +32,122 @@ package net.biomodels.jummp.webapp
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
+import net.biomodels.jummp.core.InvalidPublicationAuthorsException
+import net.biomodels.jummp.core.model.ModelFormatTransportCommand
+import net.biomodels.jummp.core.model.PublicationTransportCommand
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
+import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
+import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
+import org.codehaus.groovy.grails.web.json.JSONElement
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 @Secured(['IS_AUTHENTICATED_FULLY'])
 class SubmissionController {
+    private static final Logger logger = LoggerFactory.getLogger(PublicationController.class)
+    def messageSource
+    def modelFileFormatService
+    def publicationService
+    def submissionService
 
     def completeSubmission() {
-        println params.modelFile.decodeHTML()
-        println params.additionalFiles.decodeHTML()
-        println params.modelInfo.decodeHTML()
-        println params.publication.decodeHTML()
-        String modelId = "MODEL2009260001"
+        Map working = new HashMap<String, Object>()
+        List<RFTC> rftcList = new ArrayList<RFTC>()
+        JSONElement mf = JSON.parse(params.modelFile.decodeHTML())
+        RFTC mfRFTC = createRFTC(mf["submissionFolder"], mf["filename"], true, mf["description"])
+        rftcList.add(mfRFTC)
+        def afs = JSON.parse(params.additionalFiles.decodeHTML())
+        for (def file : afs) {
+            mfRFTC = createRFTC(file["submissionFolder"], file["filename"], false, file["description"])
+            rftcList.add(mfRFTC)
+        }
+        working.put("repository_files", rftcList)
+        MFTC format = modelFileFormatService.inferModelFormat(rftcList)
+        MTC model = new MTC()
+
+
+        // populate model info
+        def modelInfoData = JSON.parse(params.modelInfo.decodeHTML())
+        model.name = modelInfoData["detectedName"] ?: "Test model (Tung)"
+        model.description = modelInfoData["detectedDescription"] ?: "This is a test model (Hard code)"
+        working.put("modelling_approach", modelInfoData["detectedModelling"]["approach"])
+        working.put("other_info", modelInfoData["detectedModelling"]["otherInfo"])
+        working.put("model_format", modelInfoData["detectedModelFormat"]["id"])
+        working.put("readme_submission", modelInfoData["detectedModelFormat"]["readme"])
+
+        // populate publication details
+        Map publicationData = buildPublicationFromJSONData(params.publication.decodeHTML())
+        model.publication = publicationData["publication"]
+        working.put("shouldCreateNewRevision", true)
+
+        RTC revision = new RTC(files: rftcList, model: model, format: format)
+
+        revision.model = model
+        revision.name = "The first revision"
+        revision.description = "The description of the first rev"
+        revision.validated = true
+        working.put("RevisionTC", revision)
+        HashSet<String> result = submissionService.handleSubmission(working)
+
+        String modelId = result.first()
         String modelURL = createLink(controller: "model", action: "show", params: [id: modelId])
         // wait 10s
-        sleep(10_000)
+//        sleep(10_000)
         render(["message": "Everything is fine", "status": "Success", "modelURL": modelURL, "modelIdentifier": modelId]
             as JSON)
+    }
+
+    Map buildPublicationFromJSONData(final String JSONData) {
+        // TODO: unite this method to the same in PublicationController
+        //PDEC pubContext = publicationMap.get(flow.workingMemory.get("SelectedPubLinkProvider"))
+        PublicationTransportCommand tempPTC = new PublicationTransportCommand()//pubContext.publication
+        def pubDetails = JSON.parse(JSONData)
+        bindData(tempPTC, pubDetails, [exclude: ['authors']])
+//        tempPTC.linkProvider = publicationService.inferPublicationLinkProvider(pubDetails.linkProvider)
+        String message = ""
+        String status = ""
+        List errors = new ArrayList()
+        try  {
+            publicationService.assembleAuthors(tempPTC, pubDetails.authors)
+            message = "Authors have been successfully assembled"
+            status = "Success"
+        } catch (InvalidPublicationAuthorsException e) {
+            String errMsg = e.getI18nErrorMessage4InvalidAuthor()
+            message = "There have been errors while parsing authors of the publication:<br/>${errMsg}"
+            status = "Error"
+        }
+        if (tempPTC.hasErrors()) {
+            def locale = Locale.getDefault()
+            for (fieldErrors in tempPTC.errors) {
+                for (error in fieldErrors.allErrors) {
+                    message = messageSource.getMessage(error, locale)
+                    errors.add(message)
+                    logger.error(message)
+                }
+            }
+            status = "Error"
+        }
+        ["message": message, "status": status, "errors": errors, "publication": tempPTC] as Map
+    }
+
+    /**
+     * Create {@see RepositoryFileTransportCommand} object being used in the submission process
+     *
+     * @param submissionFolder
+     * @param filename      A String denoting the file name
+     * @param isModelFile   A boolean value denoting the file is the model file or not
+     * @param description   A String denoting the file description
+     *
+     * @return {@see RepositoryFileTransportCommand} object
+     */
+    RFTC createRFTC(final String submissionFolder, final String filename,
+                    final boolean isModelFile, final String description) {
+        String exchangeDir = grailsApplication.config.jummp.vcs.exchangeDirectory
+        File subFolder = new File(exchangeDir, submissionFolder)
+        File modelFile = new File(subFolder, filename)
+
+        new RFTC(path: modelFile.getCanonicalPath(),
+            mainFile: isModelFile, userSubmitted: true, hidden: false, description: description)
     }
 }

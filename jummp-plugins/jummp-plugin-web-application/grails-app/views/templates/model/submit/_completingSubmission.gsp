@@ -118,6 +118,7 @@
 </div>
 
 <script>
+    // TODO: remove showWaitingIcon
     var myVar;
 
     function showWaitingIcon() {
@@ -168,7 +169,9 @@
                 }
             },
             error: function (jXHR, textStatus, thrown) {
-                console.log("Error: " + JSON.stringify(jXHR) + " textStatus: " + textStatus + " thrown: " + thrown);
+                console.log("Status: " + jXHR.status + " - " + jXHR.statusText);
+                $('#smgSuccess').css("display", "none");
+                $('#smgFailure').css("display", "block");
             }
         });
     }

@@ -539,6 +539,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
     }
 
     def reconcileUploadingFiles() {
+        // TODO: rename this method to processUploadingFiles and move it to SubmissionController
         String submissionFolder = params.get("submissionFolder")
         log.debug("Submission folder: ${submissionFolder}")
         String exchangeDir = grailsApplication.config.jummp.vcs.exchangeDirectory as String
@@ -551,9 +552,10 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
         String uploadingFiles = params.uploadingFiles.decodeHTML()
         def filesMap = JSON.parse(uploadingFiles)
         for (JSONElement e : filesMap) {
+            e["submissionFolder"] = submissionFolder
+            // TODO: remove the following property due to leaking secured info
             e["path"] = uploadFilesMap.get(e["filename"])
             if (e["isModelFile"]) {
-                println "Model File: ${e}"
                 List messages = validateModelFile(e)
                 e["messages"] = messages
                 Map detectedModelFormat = detectModelFormat(e)
@@ -566,6 +568,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
     }
 
     private File transferFileService(final String uuid, final MultipartFile multipartFile) {
+        // TODO: move this method to SubmissionController
         File submissionFolder = null
         String sep = File.separator
         String exchangeDir = grailsApplication.config.jummp.vcs.exchangeDirectory as String
@@ -887,7 +890,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                         cmd.mainFile.eachWithIndex{ MultipartFile entry, int index ->
                             String originalFilename = entry.originalFilename
                             String description = cmd.mainFileDescription[index]
-                            println description
+//                            println description
                             mainFiles.put(originalFilename, description)
                         }
                     } else if (params.mainFileUpload && params.mainFileDescription) {

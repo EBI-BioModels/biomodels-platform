@@ -121,9 +121,26 @@ class PublicationController implements GrailsConfigurationAware {
     }
 
     def validatePublicationDetails() {
-        //PDEC pubContext = publicationMap.get(flow.workingMemory.get("SelectedPubLinkProvider"))
+        Map result = buildPublicationFromJSONData(params.pubDetails.decodeHTML())
+        render(result as JSON)
+    }
+
+
+    def renderPublicationDetails() {
+        // this action is often called to display the publication which has ben validated
+        // so we don't need to handle exception
         PublicationTransportCommand tempPTC = new PublicationTransportCommand()//pubContext.publication
         def pubDetails = JSON.parse(params.pubDetails.decodeHTML())
+        bindData(tempPTC, pubDetails, [exclude: ['authors']])
+        //tempPTC.linkProvider = publicationService.inferPublicationLinkProvider(pubDetails.linkProvider)
+        publicationService.assembleAuthors(tempPTC, pubDetails.authors)
+        render(template: "/templates/showPublication", model: [publication: tempPTC, isUpdate: false])
+    }
+
+    Map buildPublicationFromJSONData(final String JSONData) {
+        //PDEC pubContext = publicationMap.get(flow.workingMemory.get("SelectedPubLinkProvider"))
+        PublicationTransportCommand tempPTC = new PublicationTransportCommand()//pubContext.publication
+        def pubDetails = JSON.parse(JSONData)
         bindData(tempPTC, pubDetails, [exclude: ['authors', 'linkProvider']])
         tempPTC.linkProvider = publicationService.inferPublicationLinkProvider(pubDetails.linkProvider)
         String message = ""
@@ -149,18 +166,7 @@ class PublicationController implements GrailsConfigurationAware {
             }
             status = "Error"
         }
-        render(["message": message, "status": status, "errors": errors] as JSON)
-    }
-
-    def renderPublicationDetails() {
-        // this action is often called to display the publication which has ben validated
-        // so we don't need to handle exception
-        PublicationTransportCommand tempPTC = new PublicationTransportCommand()//pubContext.publication
-        def pubDetails = JSON.parse(params.pubDetails.decodeHTML())
-        bindData(tempPTC, pubDetails, [exclude: ['authors']])
-        //tempPTC.linkProvider = publicationService.inferPublicationLinkProvider(pubDetails.linkProvider)
-        publicationService.assembleAuthors(tempPTC, pubDetails.authors)
-        render(template: "/templates/showPublication", model: [publication: tempPTC, isUpdate: false])
+        ["message": message, "status": status, "errors": errors, "publication": tempPTC] as Map
     }
 
     private def showError404() {

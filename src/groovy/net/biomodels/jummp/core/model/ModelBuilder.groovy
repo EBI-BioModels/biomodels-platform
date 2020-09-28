@@ -62,6 +62,7 @@ class ModelBuilder {
     def repositoryFileService = Holders.grailsApplication.mainContext.getBean('repositoryFileService')
     def springSecurityService = Holders.grailsApplication.mainContext.getBean('springSecurityService')
     def vcsService = Holders.grailsApplication.mainContext.getBean('vcsService')
+    def messageSource = Holders.grailsApplication.mainContext.getBean('messageSource')
 
     /**
      * Guard insertion of ACL entries from concurrent access.
@@ -126,6 +127,16 @@ class ModelBuilder {
         msg.append("${model.errors.allErrors.inspect()}\n")
         msg.append("${revision.errors.allErrors.inspect()}\n")
         logger.error(msg.toString())
+        def locale = Locale.getDefault()
+        List errors = new ArrayList()
+        String message
+        for (fieldErrors in this.model.errors) {
+            for (error in fieldErrors.allErrors) {
+                message = messageSource.getMessage(error, locale)
+                errors.add(message)
+                logger.error(message)
+            }
+        }
         throw new ModelException(new ModelAdapter(model: this.model).toCommandObject(), "New model does not validate")
     }
 

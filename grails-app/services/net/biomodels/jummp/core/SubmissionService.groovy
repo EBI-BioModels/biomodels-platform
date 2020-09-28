@@ -416,7 +416,7 @@ class SubmissionService {
             }
 
             // update model format
-            final long fmtId = workingMemory.get("model_format")
+            final long fmtId = workingMemory.get("model_format") as Long
             if (fmtId != revision.format.id) {
                 // the model format has been changed by the user
                 MFTC formatTC = new ModelFormatAdapter(format: ModelFormat.get(fmtId)).toCommandObject()
@@ -816,7 +816,8 @@ class SubmissionService {
             }
             String modelId = newModel.submissionId
             workingMemory.put("model_id", modelId)
-            return new HashSet<String>() //no need to track changes made during submission
+            HashSet<String> result = [modelId] as HashSet
+            return result
         }
     }
 
