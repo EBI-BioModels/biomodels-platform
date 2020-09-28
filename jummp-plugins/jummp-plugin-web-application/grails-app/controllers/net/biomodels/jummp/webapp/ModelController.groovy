@@ -539,22 +539,13 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
     }
 
     def reconcileUploadingFiles() {
-        // TODO: rename this method to processUploadingFiles and move it to SubmissionController
+        // TODO: rename this method to processUploadingFiles or something along those lines and move it to
+        //  SubmissionController
         String submissionFolder = params.get("submissionFolder")
-        log.debug("Submission folder: ${submissionFolder}")
-        String exchangeDir = grailsApplication.config.jummp.vcs.exchangeDirectory as String
-        File absSubFolder = new File(exchangeDir, submissionFolder)
-        List files = absSubFolder.listFiles()
-        Map uploadFilesMap = new HashMap()
-        for (File file : files) {
-            uploadFilesMap.put(file.name, file.canonicalPath)
-        }
         String uploadingFiles = params.uploadingFiles.decodeHTML()
         def filesMap = JSON.parse(uploadingFiles)
         for (JSONElement e : filesMap) {
             e["submissionFolder"] = submissionFolder
-            // TODO: remove the following property due to leaking secured info
-            e["path"] = uploadFilesMap.get(e["filename"])
             if (e["isModelFile"]) {
                 List messages = validateModelFile(e)
                 e["messages"] = messages
