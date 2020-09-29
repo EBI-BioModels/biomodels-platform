@@ -33,7 +33,7 @@ package net.biomodels.jummp.webapp
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.InvalidPublicationAuthorsException
-import net.biomodels.jummp.core.model.ModelFormatTransportCommand
+import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.model.PublicationTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
@@ -92,8 +92,6 @@ class SubmissionController {
 
         String modelId = result.first()
         String modelURL = createLink(controller: "model", action: "show", params: [id: modelId])
-        // wait 10s
-//        sleep(10_000)
         render(["message": "Everything is fine", "status": "Success", "modelURL": modelURL, "modelIdentifier": modelId]
             as JSON)
     }
@@ -149,5 +147,76 @@ class SubmissionController {
 
         new RFTC(path: modelFile.getCanonicalPath(),
             mainFile: isModelFile, userSubmitted: true, hidden: false, description: description)
+    }
+
+    def processUploadFiles() {
+        String submissionFolder = params.get("submissionFolder")
+        String uploadingFiles = params.uploadingFiles.decodeHTML()
+        def filesMap = JSON.parse(uploadingFiles)
+        for (JSONElement e : filesMap) {
+            e["submissionFolder"] = submissionFolder
+            if (e["isModelFile"]) {
+                List messages = validateModelFile(e)
+                e["validationMessages"] = messages
+                Map detectedModelFormat = detectModelFormat(e)
+                e["detectedModelFormat"] = detectedModelFormat
+                Map detectedModelInfo = detectModelInfo(e)
+                e["detectedModelInfo"] = detectedModelInfo
+            }
+        }
+        render filesMap as JSON
+    }
+
+
+    private List validateModelFile(final JSONElement modelFile) {
+
+
+        /*final boolean SHOULD_DETECT_FORMAT = flow.workingMemory["changedMainFiles"] ||
+            !flow.workingMemory.containsKey("model_type")*/
+
+        final boolean SHOULD_DETECT_FORMAT = true
+        if (SHOULD_DETECT_FORMAT) {
+            submissionService.inferModelFormat()
+        }
+        // clear changedMainFiles in case the user clicks back from displayModelInfo
+        flow.workingMemory.remove("changedMainFiles")
+        submissionService.performValidation(flow.workingMemory)
+        MFTC format = flow.workingMemory.get("model_type")
+        boolean ignoreCheckingVersion = ModelFormatAdapter.ignoreCheckingVersion(format)
+        if (format && format.identifier == "UNKNOWN") {
+            UnknownFormat()
+        } else if (format && format.identifier !="UNKNOWN" &&
+            format.formatVersion == "*" && !ignoreCheckingVersion) {
+            UnknownFormatVersion()
+        } else if (!flow.workingMemory.containsKey("validation_error") ||
+            (format && format.identifier !="UNKNOWN" &&
+                format.formatVersion == "*" && ignoreCheckingVersion)) {
+            Valid()
+        } else {
+            String errorAsString = flow.workingMemory.remove("validation_error") as String
+            if (errorAsString.contains("ModelValidationError")) {
+                ModelNotValid()
+            } else {
+                FilesNotValid()
+            }
+        }
+        return(["All information is valid"])
+    }
+
+    private Map detectModelFormat(final JSONElement modelFile) {
+//        return ["identifier": "Unknown", "name": "Original code *", "id": 22]
+        return ["identifier": "SBML", "name": "SBML L2V4", "id": 7]
+    }
+
+    private Map detectModelInfo(final JSONElement modelFile) {
+        String description = """
+<notes xmlns="http://www.sbml.org/sbml/level2/version4">
+
+        <pre>At the restriction point (R), mammalian cells irreversibly commit to divide. R has been viewed as a point in G1 that is passed when growth factor signaling initiates a positive feedback loop of Cdk activity. However, recent studies have cast doubt on this model by claiming R occurs prior to positive feedback activation in G1 or even before completion of the previous cell cycle. Here we reconcile these results and show that whereas many commonly used cell lines do not exhibit a G1 R, primary fibroblasts have a G1 R that is defined by a precise Cdk activity threshold and the activation of cell-cycle-dependent transcription. A simple threshold model, based solely on Cdk activity, predicted with more than 95% accuracy whether individual cells had passed R. That a single measurement accurately predicted cell fate shows that the state of complex regulatory networks can be assessed using a few critical protein activities.</pre>
+
+    </notes>"""
+        return ["name": "This is model name", "description": description,
+                "readmeSubmission": "This is sample readme submission", "otherInfo": "Example of other info",
+                "modellingApproach": "steady-state model"]
     }
 }

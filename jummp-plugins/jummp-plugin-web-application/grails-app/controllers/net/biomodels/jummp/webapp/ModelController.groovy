@@ -143,7 +143,7 @@ class ModelController {
      */
     final List<String> AUDIT_EXCEPTIONS = ['updateFlow', 'createFlow', 'uploadFlow',
                 'showWithMessage', 'share', 'getFileDetails', 'submitForPublication', 'updateCurationState',
-                                           'searchModellingApproach', 'submit', 'terms', 'uploadFile', 'reconcileUploadingFiles']
+                                           'searchModellingApproach', 'submit', 'terms', 'uploadFile']
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
 
@@ -552,41 +552,6 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
             returned.putAll([message: "Uploaded files unsuccessfully", status: "Failed"])
         }
         render(returned as JSON)
-    }
-
-    def reconcileUploadingFiles() {
-        // TODO: rename this method to processUploadingFiles or something along those lines and move it to
-        //  SubmissionController
-        String submissionFolder = params.get("submissionFolder")
-        String uploadingFiles = params.uploadingFiles.decodeHTML()
-        def filesMap = JSON.parse(uploadingFiles)
-        for (JSONElement e : filesMap) {
-            e["submissionFolder"] = submissionFolder
-            if (e["isModelFile"]) {
-                List messages = validateModelFile(e)
-                e["messages"] = messages
-                Map detectedModelFormat = detectModelFormat(e)
-                e["detectedModelFormat"] = detectedModelFormat
-                Map detectedModelInfo = detectModelInfo(e)
-                e["detectedModelInfo"] = detectedModelInfo
-            }
-        }
-        render filesMap as JSON
-    }
-
-    private List validateModelFile(final JSONElement modelFile) {
-        return(["All information is valid"])
-    }
-
-    private Map detectModelFormat(final JSONElement modelFile) {
-//        return ["identifier": "Unknown", "name": "Original code *", "id": 22]
-        return ["identifier": "SBML", "name": "SBML L2V4", "id": 7]
-    }
-
-    private Map detectModelInfo(final JSONElement modelFile) {
-        return ["name": "This is model name", "description": "<note>Sample description of John's</note>",
-                "readmeSubmission": "This is sample readme submission", "otherInfo": "Example of other info",
-                "modellingApproach": "steady-state model"]
     }
 
     def update() {

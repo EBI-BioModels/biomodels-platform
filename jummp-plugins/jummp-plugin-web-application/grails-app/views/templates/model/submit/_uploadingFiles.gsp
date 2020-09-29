@@ -206,7 +206,7 @@ hr {
         }).get();
         $.ajax({
             type: "POST",
-            url: "${createLink(action: "reconcileUploadingFiles")}",
+            url: "${createLink(controller: "submission", action: "processUploadFiles")}",
             data: {
                 submissionSessionId: "${submissionSessionId}",
                 submissionFolder: "${submissionFolder}",
@@ -230,6 +230,14 @@ hr {
                             modelFileWithNoErrors = false;
                         } else {
                             additionalFiles = data.filter(e => !e.isModelFile);
+                            if (data.validationMessages.length())  {
+                                modelFileWithNoErrors = false;
+                                $.each(data.validationMessages, function (index, msg) {
+                                   errorMessages.push(msg);
+                                });
+                            } else {
+                                modelFileWithNoErrors = true;
+                            }
                         }
                     }
                     currentValidation = hasOneModelFile && haveAllDescriptions && modelFileWithNoErrors;
