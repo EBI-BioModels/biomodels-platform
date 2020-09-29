@@ -82,7 +82,9 @@ hr {
                 <div class="row">
                     <div class="columns small-12 medium-5 large-5">
                         <p class="mb-2">
-                            <strong class="file-name">%%filename%%</strong> - Size: 10000, Status: <span class="text-muted">
+                            <strong class="file-name">%%filename%%</strong> - Size: <strong
+                        class="file-size">%%filesize%%</strong>, Status: <span
+                            class="text-muted">
                             Waiting</span>
                         </p>
                         <div class="progress mb-2">
@@ -120,11 +122,16 @@ hr {
          * For the sake keeping the code clean and the examples simple this file
          * contains only the plugin configuration & callbacks.
          *
-         * UI functions ui_* can be located in: demo-ui.js
+         * UI functions ui_* can be located in: biomodels-ui.js
          */
         $('#drag-and-drop-zone').dmUploader({ //
             url: 'uploadFile',
-            maxFileSize: 12000000, // 12 Megs
+            /**
+             * We have no max size limit. Notes: the default is 0 meaning no size limit.
+             * If we want to use this customisable property, please externalise its value in Config.groovy
+             * and refer it here.
+             */
+            // maxFileSize: 12000000, // 12 Megs
             extraData: {
                 "submissionFolder": "${submissionFolder}"
             },
