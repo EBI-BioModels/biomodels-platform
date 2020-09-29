@@ -50,6 +50,7 @@ class SubmissionController {
     def modelFileFormatService
     def publicationService
     def submissionService
+    def fileSystemService
 
     def completeSubmission() {
         Map working = new HashMap<String, Object>()
@@ -155,11 +156,13 @@ class SubmissionController {
         def filesMap = JSON.parse(uploadingFiles)
         for (JSONElement e : filesMap) {
             e["submissionFolder"] = submissionFolder
+            e["validateFileErrors"] = validateFile(e)
             if (e["isModelFile"]) {
-                List messages = validateModelFile(e)
-                e["validationMessages"] = messages
+                // Presumably the submission has a single (main) model file
                 Map detectedModelFormat = detectModelFormat(e)
                 e["detectedModelFormat"] = detectedModelFormat
+                List messages = validateSyntax(e, detectedModelFormat.identifier)
+                e["validateSyntaxErrors"] = messages
                 Map detectedModelInfo = detectModelInfo(e)
                 e["detectedModelInfo"] = detectedModelInfo
             }
@@ -168,39 +171,18 @@ class SubmissionController {
     }
 
 
-    private List validateModelFile(final JSONElement modelFile) {
+    private List validateFile(final JSONElement file) {
+        logger.debug("Validating the file: $file")
+        File modelFile = fileSystemService.retrieve(file)
+        List validationErrors = submissionService.validateFile(modelFile)
+        return validationErrors
+    }
 
-
-        /*final boolean SHOULD_DETECT_FORMAT = flow.workingMemory["changedMainFiles"] ||
-            !flow.workingMemory.containsKey("model_type")*/
-
-        final boolean SHOULD_DETECT_FORMAT = true
-        if (SHOULD_DETECT_FORMAT) {
-            submissionService.inferModelFormat()
-        }
-        // clear changedMainFiles in case the user clicks back from displayModelInfo
-        flow.workingMemory.remove("changedMainFiles")
-        submissionService.performValidation(flow.workingMemory)
-        MFTC format = flow.workingMemory.get("model_type")
-        boolean ignoreCheckingVersion = ModelFormatAdapter.ignoreCheckingVersion(format)
-        if (format && format.identifier == "UNKNOWN") {
-            UnknownFormat()
-        } else if (format && format.identifier !="UNKNOWN" &&
-            format.formatVersion == "*" && !ignoreCheckingVersion) {
-            UnknownFormatVersion()
-        } else if (!flow.workingMemory.containsKey("validation_error") ||
-            (format && format.identifier !="UNKNOWN" &&
-                format.formatVersion == "*" && ignoreCheckingVersion)) {
-            Valid()
-        } else {
-            String errorAsString = flow.workingMemory.remove("validation_error") as String
-            if (errorAsString.contains("ModelValidationError")) {
-                ModelNotValid()
-            } else {
-                FilesNotValid()
-            }
-        }
-        return(["All information is valid"])
+    private List<String> validateSyntax(final JSONElement file, final String format) {
+        logger.debug("Validating the file: $file")
+        File modelFile = fileSystemService.retrieve(file)
+        List validationErrors = submissionService.validateSyntax(modelFile, format)
+        return validationErrors
     }
 
     private Map detectModelFormat(final JSONElement modelFile) {

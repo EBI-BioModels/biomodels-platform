@@ -34,6 +34,7 @@ import net.biomodels.jummp.plugins.configuration.SvnCommand
 import net.biomodels.jummp.plugins.configuration.VcsCommand
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+import org.codehaus.groovy.grails.web.json.JSONElement
 import org.perf4j.aop.Profiled
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.web.multipart.MultipartFile
@@ -247,7 +248,13 @@ particularly for network file systems."""
         outcome
     }
 
-    /*
+    File retrieve(JSONElement jsonElement) {
+        String exchangeDir = configurationService.loadVcsConfiguration().exchangeDirectory
+        File uploadDir = new File(exchangeDir, jsonElement["submissionFolder"])
+        File modelFile = new File(uploadDir, jsonElement["filename"])
+        return modelFile
+    }
+/*
      * Finds the sub folders from a given parent.
      * @param parent    the location where to look for model folders
      * @return          an array of model folders

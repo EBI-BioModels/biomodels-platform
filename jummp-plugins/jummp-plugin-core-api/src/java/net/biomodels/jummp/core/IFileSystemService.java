@@ -24,6 +24,7 @@
 
 package net.biomodels.jummp.core;
 
+import org.codehaus.groovy.grails.web.json.JSONElement;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -88,4 +89,6 @@ public interface IFileSystemService {
      * @return                  A list of the physical file objects
      */
     List<File> transferFiles(String parent, List multipartFiles);
+
+    File retrieve(JSONElement jsonElement);
 }

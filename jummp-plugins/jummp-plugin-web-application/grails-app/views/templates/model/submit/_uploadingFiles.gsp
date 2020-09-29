@@ -229,14 +229,20 @@ hr {
                         if (!modelFile) {
                             modelFileWithNoErrors = false;
                         } else {
+                            // model file
+                            modelFileWithNoErrors = modelFile["validateFileErrors"].length === 0 &&
+                                                    modelFile["validateSyntaxErrors"].length === 0
+                            consolidateErrorMessages(modelFile["filename"], modelFile["validateFileErrors"]);
+                            consolidateErrorMessages(modelFile["filename"], modelFile["validateSyntaxErrors"]);
+                            // additional files
                             additionalFiles = data.filter(e => !e.isModelFile);
-                            if (data.validationMessages.length())  {
-                                modelFileWithNoErrors = false;
-                                $.each(data.validationMessages, function (index, msg) {
-                                   errorMessages.push(msg);
+                            if (additionalFiles.length > 0) {
+                                // there is no file having errors
+                                modelFileWithNoErrors = additionalFiles.filter(f => f["validateFileErrors"].length
+                                    > 0).length === 0;
+                                $.each(additionalFiles, function (i, f) {
+                                    consolidateErrorMessages(f["filename"], f["validateFileErrors"]);
                                 });
-                            } else {
-                                modelFileWithNoErrors = true;
                             }
                         }
                     }
@@ -257,4 +263,12 @@ hr {
        let parent = $(this).parent();
        parent.remove();
     });
+
+    function consolidateErrorMessages(filename, messages) {
+        if (messages.length > 0) {
+            $.each(messages, function (id, msg) {
+                errorMessages.push(filename + ": " + msg);
+            });
+        }
+    }
 </script>

@@ -694,6 +694,30 @@ class SubmissionService {
             }
             publication_objects_in_working
         }
+
+        List doValidateFile(final File file) {
+            List<String> errors = new ArrayList<>()
+            if (!file) {
+                errors.add("Null file is not allowed")
+            }
+            if (!file.exists()) {
+                errors.add("File does not exist")
+            }
+            if (file.isDirectory()) {
+                errors.add("The model file cannot be a directory")
+            }
+            return errors
+        }
+
+        List doValidateSyntax(final File file, final String format) {
+            List<String> errors = new ArrayList<>()
+            if (doValidateFile(file)?.size() > 0) {
+                errors.add("Couldn't validate syntax on the file having physical errors")
+            } else {
+                modelFileFormatService.validate([file], format, errors)
+            }
+            return errors
+        }
     }
 
     @CompileStatic
@@ -1105,6 +1129,32 @@ class SubmissionService {
     @Profiled(tag = "submissionService.cleanup")
     void cleanup(Map<String, Object> workingMemory) {
         getStrategyFromContext(workingMemory).cleanup(workingMemory)
+    }
+
+    /**
+     * Performs the validation on the upload file
+     *
+     * @param modelFile A File denoting the uploading file
+     *
+     * @return A list of error messages if the uploading file is invalid
+     */
+    @Profiled(tag = "submissionService.validateFile")
+    List validateFile(final File uploadFile) {
+        Map<String, Object> working = ["isUpdateOnExistingModel": false, "shouldCreateNewRevision": true] as Map<String, Object>
+        getStrategyFromContext(working).doValidateFile(uploadFile)
+    }
+
+    /**
+     * Performs the semantic validation on the model file
+     *
+     * @param modelFile A File denoting the uploading model file
+     *
+     * @return A list of error messages if the model file is invalid
+     */
+    @Profiled(tag = "submissionService.validateSyntax")
+    List validateSyntax(final File uploadFile, final String format) {
+        Map<String, Object> working = ["isUpdateOnExistingModel": false, "shouldCreateNewRevision": true] as Map<String, Object>
+        getStrategyFromContext(working).doValidateSyntax(uploadFile, format)
     }
 
     /**
