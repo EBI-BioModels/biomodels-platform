@@ -1,32 +1,32 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
-* Deutsches Krebsforschungszentrum (DKFZ)
-*
-* This file is part of Jummp.
-*
-* Jummp is free software; you can redistribute it and/or modify it under the
-* terms of the GNU Affero General Public License as published by the Free
-* Software Foundation; either version 3 of the License, or (at your option) any
-* later version.
-*
-* Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
-* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-* A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
-* details.
-*
-* You should have received a copy of the GNU Affero General Public License along
-* with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
-*
-* Additional permission under GNU Affero GPL version 3 section 7
-*
-* If you modify Jummp, or any covered work, by linking or combining it with
-* Spring Framework, Spring Security (or a modified version of that library), containing parts
-* covered by the terms of Apache License v2.0, the licensors of this
-* Program grant you additional permission to convey the resulting work.
-* {Corresponding Source for a non-source form of such a combination shall
-* include the source code for the parts of Spring Framework, Spring Security used as well as
-* that of the covered work.}
-**/
+ * Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Deutsches Krebsforschungszentrum (DKFZ)
+ *
+ * This file is part of Jummp.
+ *
+ * Jummp is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation; either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along
+ * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
+ *
+ * Additional permission under GNU Affero GPL version 3 section 7
+ *
+ * If you modify Jummp, or any covered work, by linking or combining it with
+ * Spring Framework, Spring Security (or a modified version of that library), containing parts
+ * covered by the terms of Apache License v2.0, the licensors of this
+ * Program grant you additional permission to convey the resulting work.
+ * {Corresponding Source for a non-source form of such a combination shall
+ * include the source code for the parts of Spring Framework, Spring Security used as well as
+ * that of the covered work.}
+ **/
 
 
 
@@ -36,6 +36,7 @@ package net.biomodels.jummp.webapp
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
+import net.biomodels.jummp.core.IFileSystemService
 import net.biomodels.jummp.core.InvalidPublicationAuthorsException
 import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.adapters.PublicationAdapter
@@ -83,6 +84,7 @@ class ModelController {
      * Flag that checks whether the dynamically-inserted logger is set to DEBUG or higher.
      */
     private final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
+    IFileSystemService fileSystemService
     /**
      * Dependency injection of springSecurityService.
      */
@@ -529,13 +531,27 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                                        selectedModelFormat: selectedValue])
     }
 
+    /**
+     * This action acts as the backend of the uploading file from dmuploader plugin.
+     *
+     * <p>Please see the documentation at <a href="https://github.com/ITersDesktop/uploader">jQuery Ajax File Uploader
+     * Widget</a>
+     * @return a JSON object to the client/caller
+     */
     def uploadFile() {
         String submissionFolder = params.get("submissionFolder")
         log.debug("Submission folder: ${submissionFolder}")
         CommonsMultipartFile uploadFile = request.getMultiFileMap().file?.first()
-        String originalFilename = uploadFile.originalFilename
-        File file = transferFileService(submissionFolder, uploadFile)
-        render([message: "Uploaded files successfully", status: "OK", path: originalFilename] as JSON)
+        String originalFilename = uploadFile?.originalFilename
+        File file = fileSystemService.transferFile(submissionFolder, uploadFile)
+        long length = file?.length()
+        Map returned = [path: originalFilename, length: length]
+        if (length) {
+            returned.putAll([message: "Uploaded files successfully", status: "OK"])
+        } else {
+            returned.putAll([message: "Uploaded files unsuccessfully", status: "Failed"])
+        }
+        render(returned as JSON)
     }
 
     def reconcileUploadingFiles() {
@@ -556,17 +572,6 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
             }
         }
         render filesMap as JSON
-    }
-
-    private File transferFileService(final String uuid, final MultipartFile multipartFile) {
-        // TODO: move this method to SubmissionController
-        File submissionFolder = null
-        String sep = File.separator
-        String exchangeDir = grailsApplication.config.jummp.vcs.exchangeDirectory as String
-        submissionFolder = new File(exchangeDir, uuid)
-        submissionFolder.mkdirs()
-        List files = transferFiles(submissionFolder.canonicalPath + sep, multipartFile as List)
-        files?.first()
     }
 
     private List validateModelFile(final JSONElement modelFile) {
@@ -1009,7 +1014,7 @@ Error in uploading files. Cmd did not validate: ${cmd.getProperties()}""")
                     List<File> mainFileList
                     if (cmd.mainFile?.first()?.size > 0) {
                         // the main files might be just uploaded
-                        mainFileList = transferFiles(parent, cmd.mainFile)
+                        mainFileList = fileSystemService.transferFiles(parent, cmd.mainFile)
                         if (mainFileList.size() == 0) {
                             log.error("""\
 There is an error while attempting to copy the main files
@@ -1030,7 +1035,7 @@ wrapped in ${cmd.mainFile.inspect()} to the exchanged folder""")
                     // Copy the recently uploaded files to the exchanged folder if they are available
                     List<File> extraFileList
                     if (cmd.extraFiles) {
-                        extraFileList = transferFiles(parent, cmd.extraFiles)
+                        extraFileList = submissionService.transferFiles(parent, cmd.extraFiles)
                         if (extraFileList.size() == 0) {
                             log.error("""\
 There is an error while attempting to copy the supplemental files
@@ -1633,22 +1638,6 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
         // TODO: set a proper name for the model
         response.setHeader("Content-disposition", "attachment;filename=\"model.xml\"")
         response.outputStream << new ByteArrayInputStream(bytes)
-    }
-
-    private List<File> transferFiles(String parent, List multipartFiles) {
-        List<File> outcome = []
-        multipartFiles.each { MultipartFile f ->
-            final String originalFilename = f.getOriginalFilename()
-            if (!originalFilename.isEmpty()) {
-                final def transferredFile = new File(parent + originalFilename)
-                if (IS_DEBUG_ENABLED) {
-                    log.debug "Transferring file ${transferredFile}"
-                }
-                f.transferTo(transferredFile)
-                outcome << transferredFile
-            }
-        }
-        outcome
     }
 
     private List getMainFiles(Map<String,Object> workingMemory) {

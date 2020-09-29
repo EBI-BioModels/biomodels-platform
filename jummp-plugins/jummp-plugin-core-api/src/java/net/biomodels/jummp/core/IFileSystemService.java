@@ -24,7 +24,11 @@
 
 package net.biomodels.jummp.core;
 
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
 import java.nio.file.Path;
+import java.util.List;
 
 /**
  * Interface for a service handling the structure of the folder where all models are stored.
@@ -65,4 +69,23 @@ public interface IFileSystemService {
      * @param path  A Path object indicating the place where the directory is
      */
     void deleteDirectory(Path path);
+
+    /**
+     * Transfer an uploading file given via a {@link MultipartFile} object to the dedicated submission directory
+     *
+     * @param submissionFolder  A string often given in an UUID string denoting the submission directory
+     * @param uploadFile        A MultipartFile object denoting the uploading file
+     *
+     * @return A File object denoting the physical file object stored in file system
+     */
+    File transferFile(final String submissionFolder, final MultipartFile uploadFile);
+
+    /**
+     * Transfers a list of the {@link MultipartFile} objects to a given location
+     *
+     * @param parent            A string denoting the location where the files are copied to
+     * @param multipartFiles    A list denoting the {@link MultipartFile} objects as the files
+     * @return                  A list of the physical file objects
+     */
+    List<File> transferFiles(String parent, List multipartFiles);
 }

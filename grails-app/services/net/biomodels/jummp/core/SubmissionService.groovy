@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -97,6 +97,9 @@ class SubmissionService {
     def redisService
 
     def decorationService
+
+    FileSystemService fileSystemService
+
     /**
      * Abstract state machine strategy, to be extended by the two concrete
      * strategy implementations
@@ -997,6 +1000,7 @@ class SubmissionService {
     }
 
     void writeUploadingFileToRedis(final File file) {
+        // TODO: implement me
         decorationService
     }
     /**
