@@ -80,4 +80,8 @@ public class FileFormatServiceAdapter implements FileFormatService {
     public ModellingApproach getModellingApproach(RevisionTransportCommand revision) {
         return null;
     }
+
+    public ModellingApproach guessModellingApproach(final File modelFile) {
+        return null;
+    }
 }

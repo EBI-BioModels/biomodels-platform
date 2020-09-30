@@ -162,7 +162,7 @@ class SubmissionController {
                 e["detectedModelFormat"] = detectedModelFormat
                 List messages = validateSyntax(e, detectedModelFormat.identifier)
                 e["validateSyntaxErrors"] = messages
-                Map detectedModelInfo = detectModelInfo(e)
+                Map detectedModelInfo = detectModelInfo(e, detectedModelFormat.identifier)
                 e["detectedModelInfo"] = detectedModelInfo
             }
         }
@@ -194,15 +194,10 @@ class SubmissionController {
         return ["identifier": format.identifier, "name": format.name, "id": format.id]
     }
 
-    private Map detectModelInfo(final JSONElement modelFile) {
-        String description = """
-<notes xmlns="http://www.sbml.org/sbml/level2/version4">
-
-        <pre>At the restriction point (R), mammalian cells irreversibly commit to divide. R has been viewed as a point in G1 that is passed when growth factor signaling initiates a positive feedback loop of Cdk activity. However, recent studies have cast doubt on this model by claiming R occurs prior to positive feedback activation in G1 or even before completion of the previous cell cycle. Here we reconcile these results and show that whereas many commonly used cell lines do not exhibit a G1 R, primary fibroblasts have a G1 R that is defined by a precise Cdk activity threshold and the activation of cell-cycle-dependent transcription. A simple threshold model, based solely on Cdk activity, predicted with more than 95% accuracy whether individual cells had passed R. That a single measurement accurately predicted cell fate shows that the state of complex regulatory networks can be assessed using a few critical protein activities.</pre>
-
-    </notes>"""
-        return ["name": "This is model name", "description": description,
-                "readmeSubmission": "This is sample readme submission", "otherInfo": "Example of other info",
-                "modellingApproach": "steady-state model"]
+    private Map detectModelInfo(final JSONElement fileJSONData, final String modelFormat) {
+        logger.debug("Detecting and extracting the model info from: $fileJSONData")
+        File modelFile = fileSystemService.retrieve(fileJSONData)
+        Map modelInfo = submissionService.detectModelInfo(modelFile, modelFormat)
+        return modelInfo
     }
 }

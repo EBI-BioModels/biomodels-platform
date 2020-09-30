@@ -319,6 +319,15 @@ class ModelFileFormatService {
         }
     }
 
+    ModellingApproach guessModellingApproachFromFiles(final File modelFile, final String formatIdentifier) {
+        FileFormatService service = serviceForFormat(formatIdentifier)
+        if (service) {
+            return service.guessModellingApproach(modelFile)
+        } else {
+            return null
+        }
+    }
+
 
     /**
      * Used to select the templates used to display the model of the @p format provided.
@@ -354,9 +363,15 @@ class ModelFileFormatService {
      */
     private FileFormatService serviceForFormat(final def format) {
         if (format) {
-            Map<String,String> services=getServices()
-            if (services.containsKey(format.identifier)) {
-                return grailsApplication.mainContext.getBean((String)services.getAt(format.identifier))
+            String formatIdentifier
+            if (format instanceof String) {
+                formatIdentifier = format
+            } else {
+                formatIdentifier = format.identifier
+            }
+            Map<String,String> services = getServices()
+            if (services.containsKey(formatIdentifier)) {
+                return grailsApplication.mainContext.getBean((String)services.getAt(formatIdentifier))
             }
         } else {
             return null

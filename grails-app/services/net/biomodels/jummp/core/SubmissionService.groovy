@@ -718,6 +718,16 @@ class SubmissionService {
             }
             return errors
         }
+
+        @TypeChecked(TypeCheckingMode.SKIP)
+        Map detectModelInfo(final File modelFile, final String modelFormat) {
+            ModelFormat format = ModelFormat.findByIdentifierAndFormatVersion(modelFormat, "*")
+            String name = modelFileFormatService.extractName([modelFile], format)
+            String description = modelFileFormatService.extractDescription([modelFile], format)
+            ModellingApproach approach = modelFileFormatService.guessModellingApproachFromFiles(modelFile, modelFormat)
+            String modellingApproach = approach ? approach.name : ""
+            ["name": name, "description": description, "modellingApproach": modellingApproach]
+        }
     }
 
     @CompileStatic
@@ -1072,6 +1082,20 @@ class SubmissionService {
     void inferModelInfo(Map<String, Object> workingMemory) {
         /* create RevisionTC, ModelTC, populate fields */
         getStrategyFromContext(workingMemory).inferModelInfo(workingMemory)
+    }
+
+    /**
+     * Guesses and extracts the model's information
+     *
+     * @param modelFile     A File object denoting the model file to inspect the meta information
+     * @param modelFormat   A String object denoting the format identifier
+     * @return              A Map of the name, description and modelling approach
+     */
+    @Profiled(tag = "submissionService.detectModelInfo")
+    Map detectModelInfo(final File modelFile, final String modelFormat) {
+        Map<String, Object> working = ["isUpdateOnExistingModel": false,
+                                       "shouldCreateNewRevision": true] as Map<String, Object>
+        getStrategyFromContext(working).detectModelInfo(modelFile, modelFormat)
     }
 
     /**

@@ -1136,6 +1136,17 @@ the user has attempted to update an blank value for the name attribute.""")
     ModellingApproach getModellingApproach(final RevisionTransportCommand revision) {
         SBMLDocument document = getFromCache(revision)
         def rID = revision.identifier() ? "revision ${revision.identifier()}" : "the provisional revision in the new submission"
+        guessModellingApproachFromSBMLDocument(document, rID)
+    }
+
+    ModellingApproach guessModellingApproach(final File modelFile) {
+        List<String> errors = new ArrayList<>()
+        SBMLDocument document = getFileAsValidatedSBMLDocument(modelFile, errors)
+        String rID = modelFile.name
+        guessModellingApproachFromSBMLDocument(document, rID)
+    }
+
+    private ModellingApproach guessModellingApproachFromSBMLDocument(final SBMLDocument document, final String rID) {
         if (null == document) {
             log.error("Cannot extract modelling approach from $rID as we could not parse its main files")
             return null
