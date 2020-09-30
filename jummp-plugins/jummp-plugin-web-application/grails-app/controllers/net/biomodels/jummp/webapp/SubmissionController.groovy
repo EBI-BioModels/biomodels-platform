@@ -33,7 +33,6 @@ package net.biomodels.jummp.webapp
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.InvalidPublicationAuthorsException
-import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.model.PublicationTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
@@ -185,9 +184,14 @@ class SubmissionController {
         return validationErrors
     }
 
-    private Map detectModelFormat(final JSONElement modelFile) {
-//        return ["identifier": "Unknown", "name": "Original code *", "id": 22]
-        return ["identifier": "SBML", "name": "SBML L2V4", "id": 7]
+    private Map detectModelFormat(final JSONElement jsonFileData) {
+        logger.debug("Detecting model format for the file $jsonFileData")
+        String submissionFolder = jsonFileData["submissionFolder"]
+        String filename = jsonFileData["filename"]
+        String description = jsonFileData["description"]
+        RFTC mfRFTC = createRFTC(submissionFolder, filename, true, description)
+        MFTC format = modelFileFormatService.inferModelFormat([mfRFTC])
+        return ["identifier": format.identifier, "name": format.name, "id": format.id]
     }
 
     private Map detectModelInfo(final JSONElement modelFile) {
