@@ -57,6 +57,8 @@ class PubMedService {
     final Log log = LogFactory.getLog(getClass())
     static transactional = false
 
+    def configurationService
+
     /**
      * Downloads the XML describing the PubMed resource and parses the Publication information.
      * @param id The PubMed Identifier
@@ -82,20 +84,55 @@ class PubMedService {
     GPathResult lookupPublicationDataInPubMed(String id) throws JummpException {
         URL url
         try {
-            url = new URL("https://www.ebi.ac.uk/europepmc/webservices/rest/search/query=ext_id:${id}%20src:med&resulttype=core")
+            String strURL = "https://www.ebi.ac.uk/europepmc/webservices/rest/search/query=ext_id:${id}%20src:med&resulttype=core"
+            url = new URL(strURL)
         } catch (MalformedURLException e) {
             // TODO: throw a specific exception
             throw new JummpException("PubMed URL is malformed", e)
         }
 
-        def slurper = null
+        // TODO: take the following snippet and the same in ParameterSearchService into a common service
+        HttpURLConnection conn
+        Proxy proxy = configurationService.verifyHttpProxy()
         try {
-            slurper = new XmlSlurper().parse(url.openStream())
-        } catch (SAXParseException e) {
-            throw new JummpException("Could not parse PubMed information", e)
-        } catch (Exception e) {
-            throw new JummpException("Error retrieving publication info", e)
+            if (proxy) {
+                conn = (HttpURLConnection) url.openConnection(proxy)
+                log.debug("via HTTP PROXY: ${proxy.dump()}")
+            } else {
+                conn = (HttpURLConnection) url.openConnection()
+                log.debug("No HTTP PROXY")
+            }
+            conn.setConnectTimeout(1000)
+            conn.setReadTimeout(1000)
+            conn.connect()
+            if (conn.responseCode < 400) {
+                try {
+                    String records = conn.getInputStream().text
+                    def slurper = null
+                    try {
+                        slurper = new XmlSlurper().parseText(records)
+                    } catch (SAXParseException e) {
+                        throw new JummpException("Could not parse PubMed information", e)
+                    } catch (Exception e) {
+                        throw new JummpException("Error retrieving publication info", e)
+                    }
+                    return slurper
+                } catch (IOException e) {
+                    log.error("""Error while getting data from HttpUrlConnection ${conn.dump()} because of the error ${e
+                        .message}""")
+                    return null
+                }
+            } else {
+                log.error("""Couldn't fetch data from the resource ${url.dump()} because of the error caused by ${conn
+                    .getErrorStream()
+                    .inspect()}""")
+                return null
+            }
+        } catch (SocketException se) {
+            log.error("Error while retrieving records from PubMed Centre", se)
+        } catch (IllegalArgumentException ile) {
+            log.error("The proxy setting cannot be null")
         }
-        slurper
+        return null
     }
 }
