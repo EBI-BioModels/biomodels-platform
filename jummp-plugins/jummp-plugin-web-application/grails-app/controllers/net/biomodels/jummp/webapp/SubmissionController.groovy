@@ -69,8 +69,8 @@ class SubmissionController {
 
         // populate model info
         def modelInfoData = JSON.parse(params.modelInfo.decodeHTML())
-        model.name = modelInfoData["detectedName"] ?: "Test model (Tung)"
-        model.description = modelInfoData["detectedDescription"] ?: "This is a test model (Hard code)"
+        model.name = modelInfoData["detectedName"] ?: mf["filename"]
+        model.description = modelInfoData["detectedDescription"] ?: ""
         working.put("modelling_approach", modelInfoData["detectedModelling"]["approach"])
         working.put("other_info", modelInfoData["detectedModelling"]["otherInfo"])
         working.put("model_format", modelInfoData["detectedModelFormat"]["id"])
@@ -84,8 +84,8 @@ class SubmissionController {
         RTC revision = new RTC(files: rftcList, model: model, format: format)
 
         revision.model = model
-        revision.name = "The first revision"
-        revision.description = "The description of the first rev"
+        revision.name = model.name
+        revision.description = model.description
         revision.validated = true
         working.put("RevisionTC", revision)
         HashSet<String> result = submissionService.handleSubmission(working)
