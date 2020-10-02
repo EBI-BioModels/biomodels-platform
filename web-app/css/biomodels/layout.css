@@ -12,9 +12,8 @@
 }
 #helpbutton a {
 	display: block;
-	background: gray;
+	background: limegreen;
 	height: 40px;
-	width: 90px;
 	padding: 10px;
 	text-align: center;
 	color: #fff;
