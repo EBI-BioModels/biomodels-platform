@@ -60,7 +60,7 @@
             </div>
         </div>
         <g:javascript>
-            // define the variables tighted on the working user for later usages in common.js
+            // define the variables tightened on the working user for later usages in common.js
             var currentUsername = "";
             var currentEmail = "";
             var currentRealName = "";

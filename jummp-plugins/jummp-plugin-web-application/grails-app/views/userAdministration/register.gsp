@@ -33,6 +33,14 @@
         <title><g:message code="user.administration.ui.heading.register"/></title>
         <meta name="layout" content="${session['branding.style']}/main" />
         <g:javascript contextPath="" src="useradministration.js"/>
+        <g:javascript>
+            // define the variables tightened on the working user for later usages in common.js
+            var currentUsername = "";
+            var currentEmail = "";
+            var currentRealName = "";
+            var currentOrcid = "";
+            var actionName = "${params.action}";
+        </g:javascript>
     </head>
     <body>
         <div id="userAdministrationRegister" class="row">
