@@ -1,5 +1,5 @@
 <%--
- Copyright (C) 2010-2019 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
  Deutsches Krebsforschungszentrum (DKFZ)
 
  This file is part of Jummp.
@@ -41,8 +41,6 @@
             <g:render template="/templates/publication/tableView"
                       plugin="jummp-plugin-web-application"
                       model="['publication': publication]"/>
-            %{--<g:render template="/templates/publication/publicationButtonsForm"
-                      plugin="jummp-plugin-web-application"/>--}%
         </div>
     </g:if>
     <g:else>

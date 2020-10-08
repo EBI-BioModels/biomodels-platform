@@ -31,7 +31,7 @@
     <meta name="layout" content="${session['branding.style']}/main" />
     <title>
         <g:if test="${isUpdate}">
-            <g:message code="submission.publicationInfoPage.update.title" args="${ [params.id] }" />
+            <g:message code="submission.publicationInfoPage.update.title" args="${ [params.id.encodeAsHTML()] }" />
         </g:if>
         <g:else>
             <g:message code="submission.publicationInfoPage.create.title"/>
@@ -58,6 +58,14 @@
             };
             var authorList = authorMap["authors"];
         }
+        $(document).ready(function() {
+            validateInputLength('#title', 5, 255, '#titleHelp');
+            // Below statement won't work if the delegation isn't applied
+            // The input is dynamically generated when adding or removing authors
+            validateInputLength('#newAuthorInstitution', 0, 255, '#institutionHelp');
+            validateInputLength('#affiliation', 5, 1000, '#affilicationHelp');
+            validateInputLength('#synopsis', 5, 5000, '#synopsisHelp');
+        });
     </g:javascript>
     <g:javascript contextPath="" src="${style}/publicationSubmission.js"/>
 </head>

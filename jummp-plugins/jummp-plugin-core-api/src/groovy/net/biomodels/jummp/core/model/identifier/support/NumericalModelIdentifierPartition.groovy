@@ -30,7 +30,8 @@ class NumericalModelIdentifierPartition extends ModelIdentifierPartition {
 
     NumericalModelIdentifierPartition(String fixedSetting, String widthSetting) {
         fixed = Boolean.parseBoolean(fixedSetting)
-        width = Integer.parseInt(widthSetting)
+        width = Integer.parseInt(Objects.requireNonNull(widthSetting,
+            'Numerical partition width required'))
         value = "0".padLeft(width, '0')
     }
 

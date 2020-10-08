@@ -20,8 +20,6 @@
 
 package net.biomodels.jummp.core.model.identifier.decorator
 
-import net.biomodels.jummp.core.model.identifier.ModelIdentifier
-
 /**
  * @short Abstract ModelIdentifierDecorator for appending variable literal suffixes to a model id.
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>

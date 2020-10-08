@@ -22,6 +22,7 @@ package net.biomodels.jummp.core.model.identifier.decorator
 
 import groovy.transform.CompileStatic
 import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGenerator
+import net.biomodels.jummp.core.model.identifier.support.ModelIdentifierPartition
 
 import java.util.concurrent.atomic.AtomicReference
 import net.biomodels.jummp.core.model.identifier.ModelIdentifier
@@ -50,16 +51,49 @@ abstract class AbstractAppendingDecorator implements OrderedModelIdentifierDecor
      * The position of the decorator in the queue of a ModelIdentifierGenerator.
      */
     protected volatile int ORDER
+
+    /* the width of the suffix used to decorate model identifiers. */
+    Integer WIDTH
+
+    ModelIdentifierPartition partition
+
+    ModelIdentifierPartition getPartition() {
+        return partition
+    }
+
+    void setPartition(ModelIdentifierPartition partition) {
+        this.partition = partition
+    }
+
+    /**
+     * This initial value is used for the fresh database when
+     * there is no record in the database and no cached value on Redis
+     */
+    String initialValue
+
+    String getInitialValue() {
+        return initialValue
+    }
+
+    void setInitialValue(final String initialValue) {
+        this.initialValue = initialValue
+    }
+
     /**
      * The generator to which this decorator belongs.
      */
     ModelIdentifierGenerator generator
 
-    abstract ModelIdentifier decorate(ModelIdentifier modelIdentifier)
+    abstract ModelIdentifier decorate(ModelIdentifier modelIdentifier, String lastUsedIdentifier)
 
     abstract boolean isFixed()
 
-    abstract void refresh()
+    abstract void refresh(final String lastUsedValue)
+
+    String data(final String modelIdentifier) {
+        ModelIdentifierPartition p = partition
+        modelIdentifier[p.beginIndex..p.endIndex]
+    }
 
     /**
      * Informs the generator of a change to this decorator's value.
@@ -100,6 +134,10 @@ abstract class AbstractAppendingDecorator implements OrderedModelIdentifierDecor
 
     protected void setOrder(int order) {
         ORDER = order
+    }
+
+    Integer getOrder() {
+        ORDER
     }
 }
 

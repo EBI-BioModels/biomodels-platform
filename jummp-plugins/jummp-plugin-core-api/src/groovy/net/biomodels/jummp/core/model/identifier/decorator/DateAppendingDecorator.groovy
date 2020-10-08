@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2018 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -67,27 +67,28 @@ class DateAppendingDecorator extends AbstractAppendingDecorator {
         if (IS_DEBUG_ENABLED) {
             log.debug "Creating $this that formats ${new Date()} as $sampleDate"
         }
-        nextValue.compareAndSet(null, sampleDate)
         FORMAT = format
+        WIDTH = format.length()
     }
 
     /**
      * Modify model identifier @p modelIdentifier.
      */
-    ModelIdentifier decorate(ModelIdentifier modelIdentifier) {
-        updateNextValueIfNeeded()
+    ModelIdentifier decorate(ModelIdentifier modelIdentifier, String lastUsedIdentifier) {
+        String next = updateNextValueIfNeeded(lastUsedIdentifier)
         if (modelIdentifier) {
             String currentId = modelIdentifier.getCurrentId()
-            final String next = nextValue.get()
             if (IS_DEBUG_ENABLED) {
-                log.debug "Decorating $currentId with $next."
+                log.debug "Decorating $currentId with $next"
             }
             modelIdentifier.append(next)
+            partition.value = next
             return modelIdentifier
         } else {
-            log.warn "Undefined model identifier encountered - decorating a new one instead."
+            log.warn "Undefined model identifier encountered - decorating a new one instead"
             ModelIdentifier result = new ModelIdentifier()
-            result.append(nextValue.get())
+            result.append(next)
+            partition.value = next
             return result
         }
     }
@@ -103,20 +104,22 @@ class DateAppendingDecorator extends AbstractAppendingDecorator {
     /**
      * Updates the value that will be appended to the next model identifier if necessary.
      */
-    void refresh() {
-        updateNextValueIfNeeded()
+    void refresh(final String lastUsedValue) {
+        updateNextValueIfNeeded(lastUsedValue)
     }
 
-    private void updateNextValueIfNeeded() {
+    private String updateNextValueIfNeeded(String lastUsedValue) {
         String expectedDate = new Date().format(FORMAT)
-        String currentDate = nextValue.get()
-        boolean needsUpdating = expectedDate != currentDate
+        lastUsedValue = data(lastUsedValue)
+        boolean needsUpdating = expectedDate != lastUsedValue
         if (needsUpdating) {
             if (IS_DEBUG_ENABLED) {
-                log.debug "Updating nextValue from $currentDate to $expectedDate."
+                log.debug "Updating nextValue from $lastUsedValue to $expectedDate"
             }
-            nextValue.compareAndSet(currentDate, expectedDate)
-            super.informOfChange(new DateModelIdentifierDecoratorUpdatedEvent(this, currentDate))
+            super.informOfChange(new DateModelIdentifierDecoratorUpdatedEvent(this, expectedDate))
+            return expectedDate
+        } else {
+            return lastUsedValue
         }
     }
 }

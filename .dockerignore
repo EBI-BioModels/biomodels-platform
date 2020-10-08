@@ -9,6 +9,5 @@ data/
 documentation/
 log/
 logs/
-target/
 tmp/
 k8s/

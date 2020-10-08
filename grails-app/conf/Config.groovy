@@ -286,7 +286,8 @@ log4j.main = {
         'net.biomodels.jummp.plugins.simplelogging',
         'net.biomodels.jummp.core.events',
         'net.biomodels.jummp.plugins.bives',
-        'net.biomodels.jummp.search'
+        'net.biomodels.jummp.search',
+        'net.biomodels.jummp.webapp'
     ], additivity: false
 
     rollingFile name: "debugAppender", file: "${logsDir}/jummp-debug.log",
@@ -311,7 +312,10 @@ log4j.main = {
         'net.biomodels.jummp.plugins.pharmml',
         'net.biomodels.jummp.plugins.configuration',
         'net.biomodels.jummp.search',
-        'net.biomodels.jummp.security'
+        'net.biomodels.jummp.security',
+        'net.biomodels.jummp.utils.redis',
+        'net.biomodels.jummp.webapp',
+        'grails.app.conf.BootStrap'
     ], additivity: false
 
     debug irreproducibleAppender: [
@@ -820,12 +824,6 @@ if (!(jummpConfig.jummp.metadata.officialDatabaseDescription instanceof ConfigOb
         BioModels Database is a repository of computational models of biological processes.
         Models described from literature are manually curated and enriched with cross-references.
         """
-}
-
-if (!(jummpConfig.jummp.ws.client.japi.docs instanceof ConfigObject)) {
-    jummp.ws.client.japi.docs = jummpConfig.config.jummp.ws.client.japi.docs
-} else {
-    jummp.ws.client.japi.docs = "https://bitbucket.org/biomodels/biomodelswsclient"
 }
 
 // elasticsearch settings for weceem

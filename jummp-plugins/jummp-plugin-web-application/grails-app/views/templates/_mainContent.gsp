@@ -16,7 +16,7 @@
     if (!domain) {
         domain = "biomodels"
     }
-    String queryString = params.query?.replaceAll('([^\\\\])"', '$1\\\\"')
+    String queryString = query?.replaceAll('([^\\\\])"', '$1\\\\"')
 %>
 <div class="content">
     <g:if test="${models}">

@@ -23,15 +23,14 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <html>
     <head>
-        <title><g:message code="user.administration.ui.heading.user"/></title>
+        <title>${title}</title>
         <meta name="layout" content="${session['branding.style']}/main" />
-        <link rel="stylesheet" href="${resource(dir: 'css', file: 'jstree.css')}" />
      </head>
     <body>
         <div class="row">
             <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
                 <h3>Change your password</h3>
-                <g:form action="updatePassword">
+                <g:form action="updatePassword" useToken="true">
                     <div class="row column edit-password-form">
                         <label class="required"><g:message code="user.administration.updatePassword.oldPassword"/></label>
                         <g:passwordField name="oldPassword"/>

@@ -23,7 +23,7 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <html>
     <head>
-        <title><g:message code="user.administration.ui.heading.user"/></title>
+        <title>${titlePage}</title>
         <meta name="layout" content="${session['branding.style']}/main" />
      </head>
     <body>

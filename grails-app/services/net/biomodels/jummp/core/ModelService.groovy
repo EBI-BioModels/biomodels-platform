@@ -67,6 +67,8 @@ import org.springframework.transaction.TransactionDefinition
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Propagation
 
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.concurrent.locks.ReentrantLock
 
 /**
@@ -1086,7 +1088,10 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         String container = fileSystemService.findCurrentModelContainer()
         String containerName = new File(container).name
         String timestamp = new Date().format("yyyy-MM-dd'T'HH-mm-ss-SSS")
-        final String submissionId = submissionIdGenerator.generate()
+        final String submissionId
+        synchronized (this) {
+            submissionId = submissionIdGenerator.generate()
+        }
         String modelPath = new StringBuilder(timestamp).append("_").append(submissionId).
                 append(File.separator).toString()
         File modelFolder = new File(container, modelPath)
@@ -1445,7 +1450,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
                 }
             }
         }
-        def notification = [
+        Map notification = [
                 model: new ModelAdapter(model: model).toCommandObject(),
                 user: springSecurityService.currentUser,
                 grantedTo: collaborator,
@@ -1871,6 +1876,12 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
         return succeed
     }
 
+    void deleteModelWorkingDirectory(final Model model) throws IOException {
+        String workingDirectory = grailsApplication.config.jummp.vcs.workingDirectory
+        String modelDirectory = model.vcsIdentifier
+        Path absModelDir = Paths.get(workingDirectory, modelDirectory)
+        fileSystemService.deleteDirectory(absModelDir)
+    }
     /*
      * Convenience method that checks whether a model has any publicly-available revision.
      *
@@ -2204,7 +2215,9 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
     private Revision doBeforePublishingCuratedRevision(Revision revision) throws ModelException {
         String publicationId
         if (null == revision.model.publicationId) {
-            revision.model.publicationId = getPublicationIdGenerator().generate()
+            synchronized (this) {
+                revision.model.publicationId = getPublicationIdGenerator().generate()
+            }
         }
         publicationId = revision.model.publicationId
 

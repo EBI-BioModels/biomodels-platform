@@ -1,6 +1,6 @@
 <%@ page import="grails.util.Environment" %>
 <%--
- Copyright (C) 2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
  Deutsches Krebsforschungszentrum (DKFZ)
 
  This file is part of Jummp.
@@ -62,6 +62,21 @@
     </g:if>
     <g:render template="/templates/bpSearchDataTable"
               plugin="jummp-plugin-biomodels-dom"/>
+
+    <!-- How to cite BioModels Parameters -->
+    <h2>Reference</h2>
+    <p>If you use BioModels Parameters, please cite:</p>
+    <p>
+        <span style="font-weight: bold">Mihai Glont, Chinmay Arankalle, Krishna Tiwari, Tung V N Nguyen, Henning
+        Hermjakob,
+        Rahuman S Malik
+        Sheriff<br/>
+        BioModels Parameters: a treasure trove of parameter values from published systems biology models
+        </span><br/>
+        <span style="font-style: italic">Bioinformatics, 2020, btaa560,
+            <a href="https://doi.org/10.1093/bioinformatics/btaa560">https://doi.org/10.1093/bioinformatics/btaa560</a>
+        </span>
+    </p>
 </div>
 </body>
 </html>

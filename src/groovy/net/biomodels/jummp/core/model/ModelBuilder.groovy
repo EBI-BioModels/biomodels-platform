@@ -36,6 +36,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.security.acls.domain.BasePermission
 
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.locks.ReentrantLock
@@ -146,9 +147,10 @@ class ModelBuilder {
         logger.debug("Model ${this.model.submissionId} stored with id ${this.model.id}")
     }
 
-    private ModelBuilder generateModelIdentifier() {
+    private synchronized ModelBuilder generateModelIdentifier() {
         String submissionId = getSubmissionIdGenerator().generate()
         this.model.submissionId = submissionId
+        logger.debug("Newly created submission id: ${this.model.submissionId}")
         return this
     }
 
@@ -165,7 +167,7 @@ class ModelBuilder {
         return this
     }
 
-    private ModelBuilder createVcsIdentifier() {
+    private synchronized ModelBuilder createVcsIdentifier() throws IOException {
         // vcs identifier is container name + upload date + submissionId
         // this should by all means be unique
         String timestamp = new Date().format("yyyy-MM-dd'T'HH-mm-ss-SSS")
@@ -175,9 +177,9 @@ class ModelBuilder {
         String container = fileSystemService.findCurrentModelContainer()
         String containerName = new File(container).name
         File modelFolder = new File(container, modelPath)
-        boolean success = modelFolder.mkdirs()
+        Path success = Files.createDirectory(modelFolder.toPath())
         if (!success) {
-            def err = "Cannot create the directory where the ${rev.name} should be stored"
+            def err = "Cannot create the directory where the ${revisionTC.name} should be stored"
             logger.error(err)
             throw new ModelException(this.revisionTC.model, err.toString())
         }

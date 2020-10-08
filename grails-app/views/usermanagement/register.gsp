@@ -31,7 +31,7 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="layout" content="${session['branding.style']}/main" />
-        <title>Register</title>
+        <title>${title}</title>
         <style>
         	.verysecure {
         		visibility:hidden;
@@ -39,9 +39,10 @@
         </style>
     </head>
     <body>
+        <g:render template="/templates/initRegistration" plugin="jummp-plugin-web-application" />
         <div id="register" class="row">
             <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
-                <g:form name="registerForm" action="signUp" onkeypress="return event.keyCode != 13;">
+                <g:form name="registerForm" action="signUp" onkeypress="return event.keyCode != 13;" useToken="true">
                     <div class="row column register-form">
                         <g:render template="userInforInput" model="[user: null]"/>
 
@@ -59,13 +60,7 @@
                 </g:form>
             </div>
         </div>
-        <g:javascript>
-            // define the variables tighted on the working user for later usages in common.js
-            var currentUsername = "";
-            var currentEmail = "";
-            var currentRealName = "";
-            var currentOrcid = "";
-        </g:javascript>
+
         <script type="application/javascript" src="${resource(dir: 'js', file: 'common.js')}"></script>
     </body>
 </html>

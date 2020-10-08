@@ -113,9 +113,18 @@ $('input[name=username]').blur(function() {
             url: $.jummp.createLink("usermanagement", "lookupUser"),
             success: function (response) {
                 username = response[0];
-                if (username.trim()) {
-                    message = "A user with this username " + username.trim() + " already exists. Please try another one."
+                username = username.trim();
+                if (username) {
+                    message = "A user with this username " + username + " already exists. Please try another one."
+                } else {
+                    message = "This username does not exist. Please check typos and spelling or try again."
+                }
+                if ("forgot" !== actionName) {
                     showNotification(message);
+                } else if (username === "") {
+                    showNotification(message);
+                } else {
+                    hideNow();
                 }
             }
         });
@@ -270,3 +279,19 @@ $('#menu-item-myaccount').on('mouseover', function (event) {
         $(this).addClass("opens-left");
     }
 });
+
+function validateInputLength(element, minLength, maxLength, messageHolder) {
+    $(element).on('keydown keyup change', function(){
+        var char = $(this).val();
+        var charLength = $(this).val().length;
+        if (charLength < minLength){
+            $(messageHolder).text('Length is short, minimum '+minLength+' characters required.');
+            setTimeout(function() { $(this).focus(); }, 0);
+        } else if (charLength > maxLength){
+            $(messageHolder).text('Length is not valid, maximum '+maxLength+' characters allowed.');
+            $(this).val(char.substring(0, maxLength));
+        } else {
+            $(messageHolder).text('');
+        }
+    });
+}

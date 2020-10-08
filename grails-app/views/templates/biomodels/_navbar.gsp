@@ -62,11 +62,17 @@
     <li <g:if test="${selectedSupportItems}"> class="active" </g:if> role="menuitem">
         <a><i class="icon icon-common icon-support"></i> <g:message code="jummp.support.biomodels.title"/></a>
         <ul class="menu">
-            <li><a href="${g.createLink(controller: 'jummp', action: 'faq')}">FAQ</a></li>
+            <li><a href="${g.createLink(controller: 'jummp', action: 'faq')}">FAQs</a></li>
+            <li class="divider"></li>
+            <li><a href="${grailsApplication.config.jummp.context.help.root}manual.html" target="_blank">User Manual</a></li>
+            <li class="divider"></li>
+            <li><a href="${createLink(controller: 'jummp', action: 'curatorZone')}">Curator's Zone</a></li>
+            <li class="divider"></li>
+            <li><a href="${createLink(controller: 'jummp', action: 'developerZone')}">Developer's Zone</a></li>
+            <li class="divider"></li>
             <li><a href="${g.createLink(controller: 'jummp', action: 'courses')}">Courses</a></li>
             <li><a href="//www.ebi.ac.uk/biomodels/tools/converters/" target="_blank">Online converters</a></li>
             <li><a href="//www.ebi.ac.uk/rdf/services/biomodels/sparql" target="_blank">SPARQL Endpoint</a></li>
-            <li><a href="${createLink(controller: 'jummp', action: 'developerZone')}">Developer's Zone</a></li>
         </ul>
     </li>
     <li <g:if test="${selectedAboutusItems}"> class="active" </g:if> role="menuitem">

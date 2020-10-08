@@ -54,12 +54,15 @@ import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.Team
 import net.biomodels.jummp.core.util.ReactomeEnvironment
+import net.biomodels.jummp.utils.redis.KeyCollection
 import net.biomodels.jummp.webapp.rest.errors.Error
 import net.biomodels.jummp.webapp.rest.model.show.Model as RestfulModel
 import net.biomodels.jummp.webapp.rest.model.show.ModelFiles
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONObject
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.web.multipart.MultipartFile
 
@@ -69,6 +72,7 @@ import java.util.zip.ZipOutputStream
 
 @Secured(['IS_AUTHENTICATED_FULLY'])
 class ModelController {
+    private final Logger log = LoggerFactory.getLogger(this.getClass())
     /**
      * Flag that checks whether the dynamically-inserted logger is set to DEBUG or higher.
      */
@@ -124,6 +128,8 @@ class ModelController {
 
     def messageSource
 
+    def publishClientService
+
     /**
      * The list of actions for which we should not automatically create an audit item.
      */
@@ -155,9 +161,8 @@ class ModelController {
     private boolean auditBefore() {
         try {
             // XSS guard for the actions from this controller (excluding submission)
-            params.id = params.id?.encodeAsHTML()
-            params.revisionId = params.revisionId?.encodeAsHTML()
-
+            params.id = params.id
+            params.revisionId = params.revisionId
             String modelIdParam = params.id
             String revisionIdParam = params.revisionId
             String modelId = null
@@ -278,6 +283,8 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     forward(controller: 'errors', action: 'error404')
                     return
                 }
+                publishClientService.publish(KeyCollection.REDIS_CHANNEL_MODEL_VIEW,
+                    "Accessing the model: ${rev.identifier()}")
                 if (isPrivateModel) {
                     render(view: "showBasicView", model: [id: rev.model.submissionId, description: rev.description])
                     return
@@ -536,7 +543,8 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
         boolean valid = params.collabMap
         if (valid) {
             try {
-                def map = JSON.parse(params.collabMap)
+                def collabData = params.collabMap.decodeHTML()
+                def map = JSON.parse(collabData)
                 List<PermissionTransportCommand> collabsNew = new LinkedList<PermissionTransportCommand>()
                 for (int i = 0; i < map.length(); i++) {
                     JSONObject perm = map.getJSONObject(i)
@@ -761,7 +769,8 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                         // - the main files have been removed and added again
                         cmd.mainFile.eachWithIndex{ MultipartFile entry, int index ->
                             String originalFilename = entry.originalFilename
-                            String description = cmd.mainFileDescription[index].encodeAsHTML()
+                            String description = cmd.mainFileDescription[index]
+                            println description
                             mainFiles.put(originalFilename, description)
                         }
                     } else if (params.mainFileUpload && params.mainFileDescription) {
@@ -771,7 +780,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                         List fileNames = params.list("mainFileUpload")
                         List descriptions = params.list("mainFileDescription")
                         fileNames.eachWithIndex { String fileName, int index ->
-                            mainFiles.put(fileName, descriptions[index].encodeAsHTML())
+                            mainFiles.put(fileName, descriptions[index] as String)
                         }
                     }
                     flow.workingMemory.put("mains_in_working", mainFiles)
@@ -785,13 +794,13 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                         List fileNames = params.list("existedExtraFiles")
                         List descriptions = params.list("existedExtraFileDescriptions")
                         fileNames.eachWithIndex { String fileName, int index ->
-                            additionalFiles.put(fileName, descriptions[index].encodeAsHTML())
+                            additionalFiles.put(fileName, descriptions[index] as String)
                         }
                     }
                     // add the recently uploaded files
                     if (cmd.extraFiles && cmd.description) {
                         cmd.extraFiles.eachWithIndex { MultipartFile f, int index ->
-                            additionalFiles.put(f.originalFilename, cmd.description[index].encodeAsHTML())
+                            additionalFiles.put(f.originalFilename, cmd.description[index] as String)
                         }
                     }
                     flow.workingMemory.put("additionals_in_working", additionalFiles)
@@ -1023,12 +1032,12 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
             on("Continue") {
                 //populate modifications object with form data
                 Map<String,Object> modifications = new HashMap<String,Object>()
-                final String NAME = params.name.encodeAsHTML()
-                final String DESC = params.description.encodeAsHTML()
+                final String NAME = params.name
+                final String DESC = params.description
                 final String changeStatus = params.changed
-                final String modellingApproach = params.modelling_approach.encodeAsHTML()
-                final String readmeSubmission = params.readme_submission.encodeAsHTML()
-                final String otherInfo = params.other_info.encodeAsHTML()
+                final String modellingApproach = params.modelling_approach
+                final String readmeSubmission = params.readme_submission
+                final String otherInfo = params.other_info
                 final long modelFormat = params.getLong("model_format")
                 if (NAME && NAME.trim()) {
                     modifications.put("new_name", NAME.trim())
@@ -1172,7 +1181,7 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                 PublicationTransportCommand tempPTC = pubContext.publication
                 bindData(tempPTC, params, [exclude: ['authors']])
                 try  {
-                    publicationService.assembleAuthors(tempPTC, params.authorListContainer)
+                    publicationService.assembleAuthors(tempPTC, params.authorListContainer.decodeHTML())
                 } catch (InvalidPublicationAuthorsException e) {
                     String errMsg = e.getI18nErrorMessage4InvalidAuthor()
                     flash.flashMessage = "There have been errors while parsing authors of the publication:<br/>${errMsg}"
@@ -1194,7 +1203,7 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
             on("Continue") {
                 Map<String,String> modifications = new HashMap<String,String>()
                 if (params.RevisionComments) {
-                    modifications.put("RevisionComments", params.RevisionComments?.encodeAsHTML())
+                    modifications.put("RevisionComments", params.RevisionComments)
                 } else {
                     modifications.put("RevisionComments", "Model revised without commit message")
                 }
@@ -1285,7 +1294,7 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
                 }
             } else {
                 PublicationTransportCommand retrieved
-                retrieved = publicationService.createPTCWithMinimalInformation(params.PubLinkProvider?.encodeAsHTML(), params.PublicationLink?.encodeAsHTML(), [])
+                retrieved = publicationService.createPTCWithMinimalInformation(params.PubLinkProvider, params.PublicationLink, [])
                 publicationContext.publication = retrieved
                 publicationContext.comesFromDatabase = false
             }
@@ -1351,7 +1360,7 @@ About to submit ${mainFilesMap.inspect()} and ${additionalFilesMap.inspect()}.""
             if (params.containsKey("id")) {
                 def modelId = params.id
                 def revisionId = params.revisionId
-                String fileName = params.filename?.encodeAsHTML()
+                String fileName = params.filename
                 if (!fileName) {
                     final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(
                         modelDelegateService.getRevisionFromParams(modelId, revisionId))
