@@ -151,6 +151,9 @@ Failed to add author $person to $publication: ${tmp.errors.allErrors.inspect()}"
     Publication fromCommandObject(PubTC cmd) {
         Publication publication = findByPublicationTransportCommand(cmd)
         if (publication) {
+            String linkTypeLabel = cmd.linkProvider.linkType
+            PLP.LinkType linkType = PLP.LinkType.findLinkTypeByLabel(linkTypeLabel)
+            publication.linkProvider = PLP.findByLinkType(linkType)
             publication.link = cmd.link
             publication.title = cmd.title
             publication.affiliation = cmd.affiliation

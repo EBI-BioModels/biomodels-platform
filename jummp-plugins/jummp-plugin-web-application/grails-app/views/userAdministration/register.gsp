@@ -35,6 +35,7 @@
         <g:javascript contextPath="" src="useradministration.js"/>
     </head>
     <body>
+        <g:render template="/templates/initRegistration" plugin="jummp-plugin-web-application" />
         <div id="userAdministrationRegister" class="row">
             <div class="medium-6 medium-centered large-6 large-centered columns">
             <form id="registerForm">

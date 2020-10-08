@@ -39,6 +39,7 @@
         </style>
     </head>
     <body>
+        <g:render template="/templates/initRegistration" plugin="jummp-plugin-web-application" />
         <div id="register" class="row">
             <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
                 <g:form name="registerForm" action="signUp" onkeypress="return event.keyCode != 13;" useToken="true">
@@ -59,14 +60,7 @@
                 </g:form>
             </div>
         </div>
-        <g:javascript>
-            // define the variables tighted on the working user for later usages in common.js
-            var currentUsername = "";
-            var currentEmail = "";
-            var currentRealName = "";
-            var currentOrcid = "";
-            var actionName = "${params.action}";
-        </g:javascript>
+
         <script type="application/javascript" src="${resource(dir: 'js', file: 'common.js')}"></script>
     </body>
 </html>
