@@ -1,5 +1,5 @@
 <%--
- Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
  Deutsches Krebsforschungszentrum (DKFZ)
 
  This file is part of Jummp.
@@ -34,6 +34,8 @@
         <title>Login</title>
     </head>
     <body>
+        <g:render template="/templates/initRegistration"
+                  plugin="jummp-plugin-web-application" />
         <div id="login" class="row">
             <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
                 <form action='${postUrl}' method='POST' id='loginForm' class='cssform' autocomplete='on'>

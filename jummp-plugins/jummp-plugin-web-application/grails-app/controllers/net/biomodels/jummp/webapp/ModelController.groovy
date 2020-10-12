@@ -463,10 +463,11 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
             def rev = modelDelegateService.getRevisionFromParams(params.id)
             modelDelegateService.submitModelRevisionForPublication(rev)
             def currentUser = springSecurityService.currentUser
+            def perms = modelDelegateService.getPermissionsMap(rev.model.submissionId)
             if (currentUser) {
                 def notification = [revision: rev,
                                     user    : currentUser,
-                                    perms   : modelDelegateService.getPermissionsMap(rev.model.submissionId)]
+                                    perms   : perms]
                 sendMessage("seda:model.sub4pub", notification)
             }
             redirect(action: "showWithMessage",

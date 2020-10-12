@@ -1,5 +1,5 @@
 <%--
- Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
  Deutsches Krebsforschungszentrum (DKFZ)
 
  This file is part of Jummp.
@@ -36,16 +36,35 @@
         	.verysecure {
         		visibility:hidden;
         	}
+            #announcementBox {
+                background-color: yellow;
+                border-style: solid;
+                border-color: #ffcc00;
+                border-width: 2px;
+                padding: 10px 10px 0px 10px;
+            }
         </style>
     </head>
     <body>
+        <div class="row">
+            <div class="columns small-12 medium-6 medium-centered large-6 large-centered">
+                <div id="announcementBox">
+                    <p>If you was already registered with us in
+                    <a href="https://www.ebi.ac.uk/biomodels/content/news/retirement-party-for-the-classic-biomodels">the retired platform</a> and haven't logged in this new one yet,
+                    please request a new password by
+                clicking <a href="${grailsApplication.config.grails.serverURL}/forgotpassword">forgot password</a>
+                        and entering your username.</p>
+                    <p>If you prefer, you can create a new account with BioModels by completing the form below.</p>
+                </div>
+            </div>
+        </div>
         <g:render template="/templates/initRegistration" plugin="jummp-plugin-web-application" />
         <div id="register" class="row">
             <div class="small-12 medium-6 medium-centered large-4 large-centered columns">
                 <g:form name="registerForm" action="signUp" onkeypress="return event.keyCode != 13;" useToken="true">
                     <div class="row column register-form">
-                        <g:render template="userInforInput" model="[user: null]"/>
-
+                        <g:render template="/templates/newAccountRegistrationForm"
+                                  plugin="jummp-plugin-web-application" model="[user: null]" />
                         <label class="required" for="captcha"><g:message code="user.signup.ui.captcha"/></label>
                         <img style="margin-top:0;float:none" src="${createLink(controller: 'simpleCaptcha', action: 'captcha')}"/>
                         <br/>
