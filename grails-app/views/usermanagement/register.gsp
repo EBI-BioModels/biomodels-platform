@@ -49,7 +49,7 @@
         <div class="row">
             <div class="columns small-12 medium-6 medium-centered large-6 large-centered">
                 <div id="announcementBox">
-                    <p>If you was already registered with us in
+                    <p>If you were already registered with us in
                     <a href="https://www.ebi.ac.uk/biomodels/content/news/retirement-party-for-the-classic-biomodels">the retired platform</a> and haven't logged in this new one yet,
                     please request a new password by
                 clicking <a href="${grailsApplication.config.grails.serverURL}/forgotpassword">forgot password</a>
