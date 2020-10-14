@@ -39,7 +39,10 @@ import org.perf4j.aop.Profiled
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.web.multipart.MultipartFile
 
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantLock
 
@@ -209,6 +212,26 @@ particularly for network file systems."""
     }
 
     /**
+     * Transfer an uploading file given via a {@link File} object to the dedicated submission directory
+     *
+     * @param submissionFolder  A string often given in an UUID string denoting the submission directory
+     * @param uploadFile        A File object denoting the uploading file
+     *
+     * @return A File object denoting the physical file object stored in file system
+     */
+    File transferFile(final String submissionFolder,
+                      final File uploadFile) {
+        String exchangeDir = configurationService.loadVcsConfiguration().exchangeDirectory
+        File uploadDir = new File(exchangeDir, submissionFolder)
+        uploadDir.mkdirs()
+
+        Path source = Paths.get(uploadFile.absolutePath)
+        Path target = Paths.get(uploadDir.canonicalPath, uploadFile.name)
+        Path transferredFile = Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING)
+        transferredFile.toFile()
+    }
+
+    /**
      * Transfer an uploading file given via a {@link MultipartFile} object to the dedicated submission directory
      *
      * @param submissionFolder  A string often given in an UUID string denoting the submission directory
@@ -223,7 +246,7 @@ particularly for network file systems."""
         String exchangeDir = configurationService.loadVcsConfiguration().exchangeDirectory
         File uploadDir = new File(exchangeDir, submissionFolder)
         uploadDir.mkdirs()
-        List files = transferFiles(uploadDir.canonicalPath + sep, uploadFile as List)
+        List files = transferMultipartFiles(uploadDir.canonicalPath + sep, uploadFile as List)
         files?.first()
     }
 
@@ -234,7 +257,7 @@ particularly for network file systems."""
      * @param multipartFiles    A list denoting the {@link MultipartFile} objects as the files
      * @return                  A list of the physical file objects
      */
-    List<File> transferFiles(String parent, List multipartFiles) {
+    List<File> transferMultipartFiles(String parent, List<MultipartFile> multipartFiles) {
         List<File> outcome = []
         multipartFiles.each { MultipartFile f ->
             final String originalFilename = f.getOriginalFilename()
@@ -243,6 +266,25 @@ particularly for network file systems."""
                 log.debug("Transferring file ${transferredFile}")
                 f.transferTo(transferredFile)
                 outcome << transferredFile
+            }
+        }
+        outcome
+    }
+
+    /**
+     * Transfers a list of the {@link File} objects to a given location
+     *
+     * @param parent            A string denoting the location where the files are copied to
+     * @param file              A list denoting the {@link File} objects as the files
+     * @return                  A list of the physical file objects
+     */
+    List<File> transferFiles(String parent, List<File> files) {
+        List<File> outcome = []
+        files.each { File f ->
+            final String filename = f.name
+            if (!filename.isEmpty()) {
+                log.debug("Transferring file ${f.absolutePath}")
+                outcome << transferFile(parent, f)
             }
         }
         outcome

@@ -72,6 +72,16 @@ public interface IFileSystemService {
     void deleteDirectory(Path path);
 
     /**
+     * Transfer an uploading file given via a {@link File} object to the dedicated submission directory
+     *
+     * @param submissionFolder  A string often given in an UUID string denoting the submission directory
+     * @param uploadFile        A File object denoting the uploading file
+     *
+     * @return A File object denoting the physical file object stored in file system
+     */
+    File transferFile(final String submissionFolder, final File uploadFile);
+
+    /**
      * Transfer an uploading file given via a {@link MultipartFile} object to the dedicated submission directory
      *
      * @param submissionFolder  A string often given in an UUID string denoting the submission directory
@@ -88,7 +98,16 @@ public interface IFileSystemService {
      * @param multipartFiles    A list denoting the {@link MultipartFile} objects as the files
      * @return                  A list of the physical file objects
      */
-    List<File> transferFiles(String parent, List multipartFiles);
+    List<File> transferMultipartFiles(String parent, List<MultipartFile> multipartFiles);
+
+    /**
+     * Transfers a list of the {@link File} objects to a given location
+     *
+     * @param parent            A string denoting the location where the files are copied to
+     * @param files             A list denoting the {@link File} objects as the files
+     * @return                  A list of the physical file objects
+     */
+    List<File> transferFiles(String parent, List<File> files);
 
     File retrieve(JSONElement jsonElement);
 }

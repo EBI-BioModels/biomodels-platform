@@ -1005,7 +1005,7 @@ Error in uploading files. Cmd did not validate: ${cmd.getProperties()}""")
                     List<File> mainFileList
                     if (cmd.mainFile?.first()?.size > 0) {
                         // the main files might be just uploaded
-                        mainFileList = fileSystemService.transferFiles(parent, cmd.mainFile)
+                        mainFileList = fileSystemService.transferMultipartFiles(parent, cmd.mainFile)
                         if (mainFileList.size() == 0) {
                             log.error("""\
 There is an error while attempting to copy the main files
@@ -1026,7 +1026,7 @@ wrapped in ${cmd.mainFile.inspect()} to the exchanged folder""")
                     // Copy the recently uploaded files to the exchanged folder if they are available
                     List<File> extraFileList
                     if (cmd.extraFiles) {
-                        extraFileList = submissionService.transferFiles(parent, cmd.extraFiles)
+                        extraFileList = submissionService.transferMultipartFiles(parent, cmd.extraFiles)
                         if (extraFileList.size() == 0) {
                             log.error("""\
 There is an error while attempting to copy the supplemental files
