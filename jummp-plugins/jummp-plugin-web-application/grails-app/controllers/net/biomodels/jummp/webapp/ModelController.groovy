@@ -65,7 +65,6 @@ import net.biomodels.jummp.webapp.rest.model.show.ModelFiles
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
-import org.codehaus.groovy.grails.web.json.JSONElement
 import org.codehaus.groovy.grails.web.json.JSONObject
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -142,8 +141,7 @@ class ModelController {
      * The list of actions for which we should not automatically create an audit item.
      */
     final List<String> AUDIT_EXCEPTIONS = ['updateFlow', 'createFlow', 'uploadFlow',
-                'showWithMessage', 'share', 'getFileDetails', 'submitForPublication', 'updateCurationState',
-                                           'searchModellingApproach', 'submit', 'terms', 'uploadFile']
+                'showWithMessage', 'share', 'getFileDetails', 'submitForPublication', 'updateCurationState', 'searchModellingApproach', 'submit', 'newUpdate', 'terms', 'uploadFile']
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
 
@@ -490,10 +488,14 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
         }
     }
 
-    def submit() {
+    Map initialiseSubmission() {
+        Map commonMaterials = new HashMap()
         // Spring Session ID
         String ssId = request.session.session.cached.id
         Map submissionMap = submissionService.init(ssId)
+        String subSessId = submissionMap.get("submission-session-id")
+        String submissionFolder = submissionMap.get("submission-folder")
+
         String serverURL = grailsApplication.config.grails.serverURL
         Map submissionCssMap = [contextPath: serverURL, dir: '/css/biomodels', file: 'submission.css']
         Map publicationCssMap = [contextPath: serverURL, dir: '/css/biomodels', file: 'publicationPageStyle.css']
@@ -502,7 +504,6 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
         String publicationCssHref = appTagLib.resource(publicationCssMap)
         PublicationTransportCommand publication = new PublicationAdapter(publication: Publication.get(10))
             .toCommandObject()
-
         List<ModellingApproach> definedModellingApproaches = ModellingApproach.list()
         List definedModellingApproachNames = definedModellingApproaches.collect { it.name }
 
@@ -510,25 +511,54 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
         ModelFormat unknownFormat = ModelFormat.findByIdentifier("UNKNOWN")
         MFTC unknownFormatTC = new ModelFormatAdapter(format: unknownFormat).toCommandObject()
 
-        String subSessId = submissionMap.get("submission-session-id")
-        String submissionFolder = submissionMap.get("submission-folder")
-
         List<ModelFormat> sortedModelFormats = net.biomodels.jummp.model.ModelFormat.list().sort { it.name }
         Integer selectedValue = 7//unknownFormat?.id
 
-        render(view: "submit", model: [submissionSessionId: subSessId,
-                                       submissionFolder: submissionFolder,
-                                       serverURL: serverURL,
-                                       submissionCssHref: submissionCssHref,
-                                       publicationCssHref: publicationCssHref,
-                                       otherInfo: "An exmple of the other info",
-                                       modellingApproach: "Other",
-                                       readmeSubmission: "readme submission",
-                                       definedModellingApproachNames: definedModellingApproachNames,
-                                       publication: publication,
-                                       unknownFormat: unknownFormatTC,
-                                       modelFormatsSortedByName: sortedModelFormats,
-                                       selectedModelFormat: selectedValue])
+        commonMaterials.put("subSessId", subSessId)
+        commonMaterials.put("submissionFolder", submissionFolder)
+        commonMaterials.put("serverURL", serverURL)
+        commonMaterials.put("submissionCssHref", submissionCssHref)
+        commonMaterials.put("publicationCssHref", publicationCssHref)
+        commonMaterials.put("publication", publication)
+        commonMaterials.put("definedModellingApproachNames", definedModellingApproachNames)
+        commonMaterials.put("unknownFormat", unknownFormatTC)
+        commonMaterials.put("modelFormatsSortedByName", sortedModelFormats)
+        commonMaterials.put("selectedModelFormat", selectedValue)
+        commonMaterials.put("otherInfo", "An exmple of the other info")
+        commonMaterials.put("modellingApproach", "Other")
+        commonMaterials.put("readmeSubmission", "readme submission")
+        commonMaterials
+    }
+
+    def submit() {
+        Map initials = initialiseSubmission()
+        initials.put("titlePage", "Submit a new model | BioModels")
+        initials.put("uploadingFilesHeading", g.message(code: "submission.upload.header"))
+        render(view: "submit", model: initials)
+    }
+
+    def newUpdate() {
+        Map initials = initialiseSubmission()
+        String modelId = params.id
+        String titlePage = "Update model ${modelId} | BioModels"
+        RevisionTransportCommand latest = modelDelegateService.getLatestRevision(modelId, false)
+        ModellingApproach approach = latest.model.modellingApproach
+        String modellingApproach = approach ? approach.name : ""
+        List files = new ArrayList()
+        latest.files.each {
+            files.add(["name": it.filename, "size": it.size,
+                       "description": it.description, "isModelFile": it.mainFile])
+            File file = new File(it.path)
+            fileSystemService.transferFile(initials.get("submissionFolder"), file)
+        }
+        initials.put("modelId", modelId)
+        initials.put("titlePage", titlePage)
+        initials.put("uploadingFilesHeading", g.message(code: "submission.upload.review.titlePage"))
+        initials.put("RevisionTC", latest)
+        initials.put("modellingApproach", modellingApproach)
+        initials.put("otherInfo", latest.model.otherInfo ?: "")
+        initials.put("files", files)
+        render(view: "submit", model: initials)
     }
 
     /**
@@ -552,10 +582,6 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
             returned.putAll([message: "Uploaded files unsuccessfully", status: "Failed"])
         }
         render(returned as JSON)
-    }
-
-    def update() {
-
     }
 
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])

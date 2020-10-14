@@ -9,7 +9,7 @@
 <html>
 <head>
     <meta name="layout" content="biomodels/main"/>
-    <title>Submit a new model | BioModels</title>
+    <title>${titlePage}</title>
     <link rel="stylesheet" href="${submissionCssHref}"/>
     <link rel="stylesheet" href="${publicationCssHref}"/>
     <link rel="stylesheet"

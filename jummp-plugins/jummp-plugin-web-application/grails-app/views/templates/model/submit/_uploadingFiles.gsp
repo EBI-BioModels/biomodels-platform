@@ -1,8 +1,4 @@
 <style>
-hr {
-    margin-top: 2rem;
-    margin-bottom: 2rem;
-}
 #files {
     overflow-y: scroll !important;
     min-height: 320px;
@@ -33,7 +29,7 @@ hr {
 </style>
 <div class="row">
     <div class="columns small-12 medium-10 large-10">
-        <h2 class="fs-title">Select and upload your model files</h2>
+        <h2 class="fs-title">${uploadingFilesHeading}</h2>
         <p style="padding-bottom:1em"><g:message code="submission.biomodels.upload.explanation"/></p>
     </div>
 
@@ -71,7 +67,12 @@ hr {
             </div>
             <div class="card-section">
                 <ul class="list-unstyled" id="files" style="margin-right: 1.25rem">
+                <g:if test="${files}">
+                    <jummp:renderExistingFiles files="${files}" />
+                </g:if>
+                <g:else>
                     <li class="empty" style="margin-left: 0">No files uploaded.</li>
+                </g:else>
                 </ul>
             </div>
         </div>
@@ -115,7 +116,8 @@ hr {
 </div><!-- /file list -->
 <input type="button" name="next" id="uploadFileNext" class="next action-button" value="Next" />
 <script
-    src="${resource(contextPath: serverURL, dir: '/js/biomodels/uploader-1.0.2', file: 'biomodels-ui.js')}"></script>
+    src="${resource(contextPath: serverURL, dir: '/js/biomodels/uploader-1.0.2', file: 'biomodels-ui.js')}">
+</script>
 <script type="text/javascript">
     $(function () {
         /*
@@ -125,7 +127,7 @@ hr {
          * UI functions ui_* can be located in: biomodels-ui.js
          */
         $('#drag-and-drop-zone').dmUploader({ //
-            url: 'uploadFile',
+            url: '${createLink(controller: "model", action: "uploadFile")}',
             /**
              * We have no max size limit. Notes: the default is 0 meaning no size limit.
              * If we want to use this customisable property, please externalise its value in Config.groovy
@@ -144,7 +146,6 @@ hr {
                 this.removeClass('active');
             },
             onInit: function () {
-                console.log("submission folder detected: ${submissionFolder}");
                 // Plugin is ready to use
                 ui_add_log('Penguin initialized :)', 'info');
             },

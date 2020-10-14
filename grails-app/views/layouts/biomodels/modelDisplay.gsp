@@ -492,7 +492,7 @@
                     <li>
                     <button class='toolbutton' id="update"
                             onclick="return $.jummp.openPage('${g.createLink(controller: 'model',
-                            action: 'update',
+                            action: 'newUpdate',
                             id: revision.modelIdentifier())}')">Update</button>
                     </li>
                 </g:if>
