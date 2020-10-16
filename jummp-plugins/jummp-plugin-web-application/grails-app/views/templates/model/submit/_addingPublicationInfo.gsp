@@ -40,7 +40,7 @@
                 <g:if test="${publication}">
                     <g:select name="PubLinkProvider" id="pubLinkProvider"
                               from="${linkSourceTypes}"
-                              value="${publication.linkProvider.linkType}"
+                              value="${publication?.linkProvider?.linkType}"
                               noSelection="['NoPub':'- No publication available -']"/>
                 </g:if>
                 <g:else>
@@ -52,7 +52,7 @@
                 </g:else>
             </div>
             <div class="columns small-12 medium-7 large-7">
-                <g:textField name="PublicationLink" id="publicationLink" value="${publication.link}"
+                <g:textField name="PublicationLink" id="publicationLink" value="${publication?.link}"
                              placeholder="Enter PubMed identifier, DOI or web link"/>
             </div>
             <div class="columns small-12 medium-2 large-2">
@@ -77,6 +77,13 @@
 <input type="button" name="next" class="next action-button" value="Next" />
 <input type="button" name="previous" class="previous action-button-previous" value="Previous"/>
 <script type="text/javascript">
+    $(document).ready(function () {
+        if ("${publication == null}") {
+            $('#publicationForm').hide();
+        } else {
+            $('#publicationForm').show();
+        }
+    });
     $('.publink-whatisit').on("click", function () {
         $('.publink-explanation').toggle("slow");
     });
@@ -145,6 +152,10 @@
         let selectedPubLinkProvider = $('#pubLinkProvider').val();
         console.log(selectedPubLinkProvider);
         let withoutPub = selectedPubLinkProvider === "NoPub";
+        if (withoutPub) {
+            currentValidation = true;
+            return;
+        }
         let isPubTCValidated = true;
         let authors = $('textarea[name="authorListContainer"]').val();
         let pubDetails = {};

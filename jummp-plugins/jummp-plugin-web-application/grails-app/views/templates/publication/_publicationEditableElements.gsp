@@ -10,29 +10,29 @@
             <label for="PubLinkProvider" class="required">Source</label>
             <g:select name="PubLinkProvider" id="linkProvider"
                       from="${linkSourceTypes}"
-                      value="${publication.linkProvider.linkType}"
+                      value="${publication?.linkProvider?.linkType}"
                       noSelection="['':'- No publication available -']"/>
         </div>
         <div class="small-12 medium-8 large-8 columns">
             <label for="link" class="required">Link</label>
-            <g:textField class="input25" name="link" value="${publication.link}"/></div></div>
+            <g:textField class="input25" name="link" value="${publication?.link}"/></div></div>
     </g:if>
     <label class="required" for="title">
         <g:message code="submission.publication.title"/>
     </label>
-    <g:textField class="input50" name="title" id="title" value="${publication.title}"/>
+    <g:textField class="input50" name="title" id="title" value="${publication?.title}"/>
     <p class="help-text" id="titleHelp" style="color: red">&nbsp;</p>
     <label for="journal" class="required">
         <g:message code="submission.publication.journal"/>
     </label>
-    <g:textField class="input50" name="journal" id="journal" value="${publication.journal}"/>
+    <g:textField class="input50" name="journal" id="journal" value="${publication?.journal}"/>
     <label class="required" for="authorList">
         <g:message code="submission.publication.authors"/></label>
     <div class="row">
         <div class="small-10 medium-9 columns">
             <select id="authorList" name="authorList"
                     size="${authorListContainerSize}" style="height: inherit">
-                <g:each in="${publication.authors}">
+                <g:each in="${publication?.authors}">
                     <option value="${it.id}|${it.userRealName}|${it.orcid ?: ""}|${it.institution ?: ""}"
                             data-person-id="${it.id}"
                             data-person-realname="${it.userRealName}"
@@ -87,7 +87,7 @@ Select any author in the list so as to <strong>Update</strong> or <strong>Delete
         <g:message code="submission.publication.affiliation"/>
     </label>
     <g:textArea name="affiliation" id="affiliation" rows="5" cols="32"
-                value="${publication.affiliation}"/>
+                value="${publication?.affiliation}"/>
     <p class="help-text" id="affiliationHelp" style="color: red">&nbsp;</p>
 </div>
 <div class="small-6 medium-6 columns">
@@ -95,7 +95,7 @@ Select any author in the list so as to <strong>Update</strong> or <strong>Delete
         <g:message code="submission.publication.synopsis"/>
     </label>
     <g:textArea name="synopsis" id="synopsis" rows="13" cols="32"
-                value="${publication.synopsis}"/>
+                value="${publication?.synopsis}"/>
     <p class="help-text" id="synopsisHelp" style="color: red">&nbsp;</p>
     <label>
         <g:message code="submission.publication.pubDetails"/>
@@ -107,9 +107,9 @@ Select any author in the list so as to <strong>Update</strong> or <strong>Delete
                     <g:message code="submission.publication.date"/></label>
                 <span>
                     <g:select name="month" from="${1..12}"
-                              value="${publication.month?:Calendar.instance.get(Calendar.MONTH)}"/>
+                              value="${publication?.month?:Calendar.instance.get(Calendar.MONTH)}"/>
                     <g:select name="year" from="${1800..Calendar.instance.get(Calendar.YEAR)}"
-                              value="${publication.year?:Calendar.instance.get(Calendar.YEAR)}"/>
+                              value="${publication?.year?:Calendar.instance.get(Calendar.YEAR)}"/>
                 </span>
             </li>
             <li>
@@ -117,13 +117,13 @@ Select any author in the list so as to <strong>Update</strong> or <strong>Delete
                     <g:message code="submission.publication.volume"/></label>
                 <span>
                     <g:textField class="input20" name="volume" size="20"
-                                 value="${publication.volume}"/>
+                                 value="${publication?.volume}"/>
                 </span>
                 <label style="display:block;margin-left:0px">
                     <g:message code="submission.publication.issue"/></label>
                 <span>
                     <g:textField class="input20" name="issue" size="20"
-                                 value="${publication.issue}"/>
+                                 value="${publication?.issue}"/>
                 </span>
             </li>
             <li>
@@ -131,7 +131,7 @@ Select any author in the list so as to <strong>Update</strong> or <strong>Delete
                     <g:message code="submission.publication.pages"/></label>
                 <span>
                     <g:textField class="input20" name="pages" size="20"
-                                 value="${publication.pages}"/>
+                                 value="${publication?.pages}"/>
                 </span>
             </li>
         </ul>

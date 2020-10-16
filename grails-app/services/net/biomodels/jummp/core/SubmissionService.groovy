@@ -881,6 +881,7 @@ class SubmissionService {
                 publication_objects_in_working.put(rev.model.publication.linkProvider.linkType, context)
             }
             workingMemory.put("publication_objects_in_working", publication_objects_in_working)
+            workingMemory.put("publicationContext", publication_objects_in_working)
             sessionFactory.currentSession.clear()
         }
 
@@ -1111,7 +1112,7 @@ class SubmissionService {
      *
      * @param workingMemory a Map containing all objects exchanged throughout the flow.
      */
-    @Profiled(tag = "submissionService.updateFromSummary")
+    @Profiled(tag = "submissionService.updatePublicationLink")
     void updatePublicationLink(Map<String, Object> workingMemory, Map<String, String> modifications) {
         getStrategyFromContext(workingMemory).updatePublicationLink(workingMemory, modifications)
     }

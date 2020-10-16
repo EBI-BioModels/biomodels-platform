@@ -127,14 +127,17 @@ class PublicationController implements GrailsConfigurationAware {
 
 
     def renderPublicationDetails() {
-        // this action is often called to display the publication which has ben validated
-        // so we don't need to handle exception
-        PublicationTransportCommand tempPTC = new PublicationTransportCommand()//pubContext.publication
-        def pubDetails = JSON.parse(params.pubDetails.decodeHTML())
-        bindData(tempPTC, pubDetails, [exclude: ['authors']])
-        //tempPTC.linkProvider = publicationService.inferPublicationLinkProvider(pubDetails.linkProvider)
-        publicationService.assembleAuthors(tempPTC, pubDetails.authors)
-        render(template: "/templates/showPublication", model: [publication: tempPTC, isUpdate: false])
+        if (!params.pubDetails) {
+            render("No publication provided")
+        } else {
+            // this action is often called to display the publication which has been validated
+            // so we don't need to handle exception
+            PublicationTransportCommand tempPTC = new PublicationTransportCommand()//pubContext.publication
+            def pubDetails = JSON.parse(params.pubDetails.decodeHTML())
+            bindData(tempPTC, pubDetails, [exclude: ['authors']])
+            publicationService.assembleAuthors(tempPTC, pubDetails.authors)
+            render(template: "/templates/showPublication", model: [publication: tempPTC, isUpdate: false])
+        }
     }
 
     Map buildPublicationFromJSONData(final String JSONData) {

@@ -77,8 +77,12 @@ class SubmissionController {
         working.put("readme_submission", modelInfoData["detectedModelFormat"]["readme"])
 
         // populate publication details
-        Map publicationData = buildPublicationFromJSONData(params.publication.decodeHTML())
-        model.publication = publicationData["publication"]
+        if (params.publication) {
+            Map publicationData = buildPublicationFromJSONData(params.publication.decodeHTML())
+            model.publication = publicationData["publication"]
+        } else {
+            model.publication = null
+        }
         working.put("shouldCreateNewRevision", true)
 
         RTC revision = new RTC(files: rftcList, model: model, format: format)
