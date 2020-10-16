@@ -39,7 +39,6 @@ import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.IFileSystemService
 import net.biomodels.jummp.core.InvalidPublicationAuthorsException
 import net.biomodels.jummp.core.adapters.ModelFormatAdapter
-import net.biomodels.jummp.core.adapters.PublicationAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
@@ -48,23 +47,20 @@ import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.audit.AccessFormat
 import net.biomodels.jummp.core.model.audit.AccessType
+import net.biomodels.jummp.core.util.ReactomeEnvironment
 import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
 import net.biomodels.jummp.deployment.biomodels.TagTransportCommand
 import net.biomodels.jummp.model.Model
-import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.model.ModellingApproach
-import net.biomodels.jummp.model.Publication
 import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.Team
-import net.biomodels.jummp.core.util.ReactomeEnvironment
 import net.biomodels.jummp.utils.redis.KeyCollection
 import net.biomodels.jummp.webapp.rest.errors.Error
 import net.biomodels.jummp.webapp.rest.model.show.Model as RestfulModel
 import net.biomodels.jummp.webapp.rest.model.show.ModelFiles
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
-import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
 import org.codehaus.groovy.grails.web.json.JSONObject
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -300,9 +296,9 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                     def components = [:]
                     try {
                         components = sbmlService.extractComponentsFromBP(PERENNIAL_ID)
-                    }catch(RuntimeException re){
+                    } catch (RuntimeException re){
                         log.error("Error while extracting components from BP")
-                        log.error(re)
+                        log.error(re.inspect())
                     }
                     RevisionTransportCommand revision = modelDelegateService.getLatestRevision(PERENNIAL_ID)
                     boolean showPublishOption = modelDelegateService.canPublish(revision)
@@ -489,49 +485,14 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
     }
 
     Map initialiseSubmission() {
-        Map commonMaterials = new HashMap()
-        // Spring Session ID
-        String ssId = request.session.session.cached.id
-        Map submissionMap = submissionService.init(ssId)
-        String subSessId = submissionMap.get("submission-session-id")
-        String submissionFolder = submissionMap.get("submission-folder")
-
-        String serverURL = grailsApplication.config.grails.serverURL
-        Map submissionCssMap = [contextPath: serverURL, dir: '/css/biomodels', file: 'submission.css']
-        Map publicationCssMap = [contextPath: serverURL, dir: '/css/biomodels', file: 'publicationPageStyle.css']
-        ApplicationTagLib appTagLib = new ApplicationTagLib()
-        String submissionCssHref = appTagLib.resource(submissionCssMap)
-        String publicationCssHref = appTagLib.resource(publicationCssMap)
-        PublicationTransportCommand publication = new PublicationAdapter(publication: Publication.get(10))
-            .toCommandObject()
-        List<ModellingApproach> definedModellingApproaches = ModellingApproach.list()
-        List definedModellingApproachNames = definedModellingApproaches.collect { it.name }
-
-        // TODO: reconcile init method
-        ModelFormat unknownFormat = ModelFormat.findByIdentifier("UNKNOWN")
-        MFTC unknownFormatTC = new ModelFormatAdapter(format: unknownFormat).toCommandObject()
-
-        List<ModelFormat> sortedModelFormats = net.biomodels.jummp.model.ModelFormat.list().sort { it.name }
-        Integer selectedValue = 7//unknownFormat?.id
-
-        commonMaterials.put("subSessId", subSessId)
-        commonMaterials.put("submissionFolder", submissionFolder)
-        commonMaterials.put("serverURL", serverURL)
-        commonMaterials.put("submissionCssHref", submissionCssHref)
-        commonMaterials.put("publicationCssHref", publicationCssHref)
-        commonMaterials.put("publication", publication)
-        commonMaterials.put("definedModellingApproachNames", definedModellingApproachNames)
-        commonMaterials.put("unknownFormat", unknownFormatTC)
-        commonMaterials.put("modelFormatsSortedByName", sortedModelFormats)
-        commonMaterials.put("selectedModelFormat", selectedValue)
-        commonMaterials.put("otherInfo", "An exmple of the other info")
-        commonMaterials.put("modellingApproach", "Other")
-        commonMaterials.put("readmeSubmission", "readme submission")
-        commonMaterials
+        Map<String, Object> initials = new HashMap<String, Object>()
+        submissionService.initialise(initials)
+        initials
     }
 
     def submit() {
         Map initials = initialiseSubmission()
+        initials.put("isUpdate", false)
         initials.put("titlePage", "Submit a new model | BioModels")
         initials.put("uploadingFilesHeading", g.message(code: "submission.upload.header"))
         render(view: "submit", model: initials)
@@ -551,13 +512,16 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
             File file = new File(it.path)
             fileSystemService.transferFile(initials.get("submissionFolder"), file)
         }
+        initials.put("isUpdate", true)
         initials.put("modelId", modelId)
         initials.put("titlePage", titlePage)
         initials.put("uploadingFilesHeading", g.message(code: "submission.upload.review.titlePage"))
         initials.put("RevisionTC", latest)
+        initials.put("publication", latest.model.publication)
         initials.put("modellingApproach", modellingApproach)
-        initials.put("otherInfo", latest.model.otherInfo ?: "")
+        initials.put("otherInfo", latest.model.otherInfo)
         initials.put("files", files)
+        // TODO: store the initial values (from initials) on Redis
         render(view: "submit", model: initials)
     }
 

@@ -49,6 +49,7 @@ import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.model.Revision
+import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
 import org.hibernate.SessionFactory
 import org.perf4j.aop.Profiled
 import org.apache.commons.io.FilenameUtils
@@ -67,7 +68,7 @@ import org.slf4j.LoggerFactory
  */
 @CompileStatic
 class SubmissionService {
-    private final Logger log = LoggerFactory.getLogger(this.getClass())
+    private static final Logger log = LoggerFactory.getLogger(SubmissionService.class)
 
     // concrete strategies for the submission state machine
     private final NewModelStateMachine newModel = new NewModelStateMachine()
@@ -77,6 +78,9 @@ class SubmissionService {
      * Disable transactional behaviour for this service.
      */
     static transactional = false
+
+    def grailsApplication
+
     /**
      * Dependency Injection of ModelFileFormatService
      */
@@ -117,45 +121,40 @@ class SubmissionService {
         @Cacheable('sortedModelFormats')
         //@Cacheable('definedModellingApproaches') // should split it into two methods so as to apply cacheable
         void initialise(Map<String, Object> workingMemory) {
+            // TODO: clean up this method when re-implementing submission process finished
             List<ModelFormat> sortedModelFormats = net.biomodels.jummp.model.ModelFormat.list().sort { it.name }
             workingMemory.put("sorted_model_formats", sortedModelFormats)
             List<ModellingApproach> definedModellingApproaches = ModellingApproach.list()
+            List definedModellingApproachNames = definedModellingApproaches.collect { it.name }
             workingMemory.put("defined_modelling_approaches", definedModellingApproaches)
             ModelFormat unknownFormat = ModelFormat.findByIdentifier("UNKNOWN")
             MFTC unknownFormatTC = new ModelFormatAdapter(format: unknownFormat).toCommandObject()
             workingMemory.put("unknown_format_command", unknownFormatTC)
-        }
 
-        /**
-         * Initialise required objects
-         */
-        @CompileStatic(TypeCheckingMode.SKIP)
-//        @Cacheable('sortedModelFormats')
-        Map init(final String springSessionId) {
-            long unixTime = System.currentTimeMillis() / 1000L
-            String submissionSessionId = "submission-$unixTime-$springSessionId"
-            println "Initialise the submission process with the session id: $submissionSessionId"
-
+            String serverURL = grailsApplication.config.grails.serverURL
+            Map submissionCssMap = [contextPath: serverURL, dir: '/css/biomodels', file: 'submission.css']
+            Map publicationCssMap = [contextPath: serverURL, dir: '/css/biomodels', file: 'publicationPageStyle.css']
+            ApplicationTagLib appTagLib = new ApplicationTagLib()
+            String submissionCssHref = appTagLib.resource(submissionCssMap)
+            String publicationCssHref = appTagLib.resource(publicationCssMap)
             String uuid = UUID.randomUUID().toString()
-            log.debug("Generated submission UUID: ${uuid}")
+            log.debug("Generated submission folder using UUID: ${uuid}")
+            Integer selectedValue = 7//unknownFormat?.id
 
-            ModelFormat unknownFormat = ModelFormat.findByIdentifier("UNKNOWN")
-            MFTC unknownFormatTC = new ModelFormatAdapter(format: unknownFormat).toCommandObject()
-            Map submissionMap =  ["submission-session-id": submissionSessionId,
-                                  "submission-folder": uuid]
-            return submissionMap
-            //workingMemory.put("unknown_format_command", unknownFormatTC)
-            // init the unknown format
-
-//            decorationService
-            /*List<ModelFormat> sortedModelFormats = net.biomodels.jummp.model.ModelFormat.list().sort { it.name }
-            workingMemory.put("sorted_model_formats", sortedModelFormats)
-            List<ModellingApproach> definedModellingApproaches = ModellingApproach.list()
-            workingMemory.put("defined_modelling_approaches", definedModellingApproaches)
-            ModelFormat unknownFormat = ModelFormat.findByIdentifier("UNKNOWN")
-            MFTC unknownFormatTC = new ModelFormatAdapter(format: unknownFormat).toCommandObject()
-            workingMemory.put("unknown_format_command", unknownFormatTC)*/
+            workingMemory.put("submissionFolder", uuid)
+            workingMemory.put("serverURL", serverURL)
+            workingMemory.put("submissionCssHref", submissionCssHref)
+            workingMemory.put("publicationCssHref", publicationCssHref)
+            workingMemory.put("publication", null)
+            workingMemory.put("definedModellingApproachNames", definedModellingApproachNames)
+            workingMemory.put("unknownFormat", unknownFormatTC)
+            workingMemory.put("modelFormatsSortedByName", sortedModelFormats)
+            workingMemory.put("selectedModelFormat", selectedValue)
+            workingMemory.put("otherInfo", "")
+            workingMemory.put("modellingApproach", "")
+            workingMemory.put("readmeSubmission", "readme submission")
         }
+
         /**
          * The method allows filtering out the files being added and the ones will be deleted.
          * At the same time, the cache system, i.e. workingMemory, is also made up-to-date.
@@ -736,10 +735,6 @@ class SubmissionService {
             super.initialise(workingMemory)
         }
 
-        Map init(final String springSessionId) {
-            super.init(springSessionId)
-        }
-
         void removeFromVCS(Map<String, Object> workingMemory, List<RFTC> filesToDelete) {
             //nothing in VCS, need to do nothing
         }
@@ -777,17 +772,14 @@ class SubmissionService {
             super.initialise(workingMemory)
             def publication_objects_in_working = initialisePublicationMap()
             workingMemory.put("publication_objects_in_working", publication_objects_in_working)
-        }
-
-        Map init(final String springSessionId) {
-            super.init(springSessionId)
+            workingMemory.put("publicationContext", publication_objects_in_working)
         }
 
         void removeFromVCS(Map<String, Object> workingMemory, List<RFTC> filesToDelete) {
             //nothing in VCS, need to do nothing
         }
 
-        //Always process files in create mode. Possibly needs optimisation.
+        // Always process files in create mode. Possibly needs optimisation.
         boolean processingRequired(Map<String, Object> workingMemory) {
             return true
         }
@@ -890,10 +882,6 @@ class SubmissionService {
             }
             workingMemory.put("publication_objects_in_working", publication_objects_in_working)
             sessionFactory.currentSession.clear()
-        }
-
-        Map init(final String springSessionId) {
-            super.init(springSessionId)
         }
 
         void removeFromVCS(Map<String, Object> workingMemory, List<RFTC> filesToDelete) {
@@ -1025,12 +1013,6 @@ class SubmissionService {
     @Profiled(tag = "submissionService.initialise")
     void initialise(Map<String, Object> workingMemory) {
         getStrategyFromContext(workingMemory).initialise(workingMemory)
-    }
-
-    @Profiled(tag = "submissionService.init")
-    Map init(final String springSessionId) {
-        // TODO; use getStrategyFromContext
-        newModel.init(springSessionId)
     }
 
     void writeUploadingFileToRedis(final File file) {
