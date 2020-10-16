@@ -944,7 +944,7 @@ class SubmissionService {
          * @param workingMemory     a Map containing all objects exchanged throughout the flow.
          * @param modifications     the revision comments (and any other info to be updated)
          */
-        @Profiled(tag = "submissionService.NewRevisionStateMachine.updateRevisionComments")
+        @Profiled(tag = "submissionService.NewRevisionStateMachine.updateFromSummary")
         void updateFromSummary(Map<String, Object> workingMemory, Map<String, String> modifications) {
             RTC revision = workingMemory.get("RevisionTC") as RTC
             revision.comment = modifications.get("RevisionComments")
@@ -994,7 +994,7 @@ class SubmissionService {
                 changes.add("Edited model description")
             }
             if (SHOULD_UPDATE) {
-                newlyCreatedRTC.comment = "Edited model metadata online."
+                newlyCreatedRTC.comment = "Edited model metadata online"
                 def updated = modelService.addRevision(newlyCreatedRTC.files, [], newlyCreatedRTC)
                 workingMemory.put("model_id", updated.model.submissionId)
             } else {
@@ -1173,6 +1173,7 @@ class SubmissionService {
         Boolean isUpdateOnExistingModel = (Boolean) workingMemory.get("isUpdateOnExistingModel")
         Boolean shouldCreateNewRevision = (Boolean) workingMemory.get("shouldCreateNewRevision")
         if (isUpdateOnExistingModel) {
+            // this check will be probably used in the future to ignore minor updates
             shouldCreateNewRevision = Boolean.TRUE
             if (!shouldCreateNewRevision) {
                 inPlaceMachine

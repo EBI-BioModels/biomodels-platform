@@ -33,20 +33,24 @@ package net.biomodels.jummp.webapp
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.InvalidPublicationAuthorsException
+import net.biomodels.jummp.core.model.CurationState
+import net.biomodels.jummp.core.model.ModelState
 import net.biomodels.jummp.core.model.PublicationTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
+import net.biomodels.jummp.core.model.ValidationState
 import org.codehaus.groovy.grails.web.json.JSONElement
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 @Secured(['IS_AUTHENTICATED_FULLY'])
 class SubmissionController {
-    private static final Logger logger = LoggerFactory.getLogger(PublicationController.class)
+    private static final Logger logger = LoggerFactory.getLogger(SubmissionController.class)
     def messageSource
     def modelFileFormatService
+    def modelDelegateService
     def publicationService
     def submissionService
     def fileSystemService
@@ -64,8 +68,12 @@ class SubmissionController {
         }
         working.put("repository_files", rftcList)
         MFTC format = modelFileFormatService.inferModelFormat(rftcList)
-        MTC model = new MTC()
 
+        boolean isUpdate = params.boolean("isUpdate")
+        MTC model = new MTC()
+        if (isUpdate && params.modelId) {
+            model = modelDelegateService.getLatestRevision(params.modelId, false).model
+        }
 
         // populate model info
         def modelInfoData = JSON.parse(params.modelInfo.decodeHTML())
@@ -83,6 +91,7 @@ class SubmissionController {
         } else {
             model.publication = null
         }
+        working.put("isUpdateOnExistingModel", isUpdate)
         working.put("shouldCreateNewRevision", true)
 
         RTC revision = new RTC(files: rftcList, model: model, format: format)
@@ -91,10 +100,16 @@ class SubmissionController {
         revision.name = model.name
         revision.description = model.description
         revision.validated = true
+        revision.minorRevision = false
+        revision.curationState = CurationState.NON_CURATED
+        revision.validationLevel = ValidationState.APPROVE
+        revision.comment = params.revisionComments.decodeHTML() ?: "Model revised without commit message"
         working.put("RevisionTC", revision)
         HashSet<String> result = submissionService.handleSubmission(working)
-
-        String modelId = result.first()
+        String modelId = params.modelId
+        if (!isUpdate) {
+            modelId = result.first()
+        }
         String modelURL = createLink(controller: "model", action: "show", params: [id: modelId])
         render(["message": "Everything is fine", "status": "Success", "modelURL": modelURL, "modelIdentifier": modelId]
             as JSON)

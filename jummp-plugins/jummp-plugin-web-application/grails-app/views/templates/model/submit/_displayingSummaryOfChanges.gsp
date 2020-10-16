@@ -176,6 +176,21 @@
         </div>
     </div>
 </div>
+<g:if test="${isUpdate}">
+<div class="row">
+    <div class="columns small-12 medium-2 large-2">
+        <span class="submission-prop">
+            <g:message code="submission.summary.revisionLabel"/>
+        </span>
+    </div>
+    <div class="columns small-12 medium-10 large-10">
+        <div id="whatYouHaveUpdated">
+            <g:textArea name="RevisionComments" id="revisionComments" rows="5" cols="70"
+                        placeholder="Explain what you have updated"/>
+        </div>
+    </div>
+</div>
+</g:if>
 <input type="button" name="next" class="next action-button" value="Submit" />
 <input type="button" name="previous" class="previous action-button-previous" value="Previous" />
 <script type="text/javascript">
@@ -193,11 +208,15 @@
         // Files uploaded
         $('#detectedModelFileName').text(modelFile.filename);
         $('#detectedModelFileDescription').text(modelFile.description);
-        $('#listAdditionalFiles').empty();
-        $.each(additionalFiles, function(index, file) {
-            const item = "<li><strong>" + file.filename + "</strong><br/>" + file.description + "</li>";
-            $('#listAdditionalFiles').append(item);
-        });
+        if (additionalFiles.length > 0) {
+            $('#listAdditionalFiles').empty();
+            $.each(additionalFiles, function (index, file) {
+                const item = "<li><strong>" + file.filename + "</strong><br/>" + file.description + "</li>";
+                $('#listAdditionalFiles').append(item);
+            });
+        } else {
+            $('#detectedAdditionalFiles').text("No additional files provided");
+        }
 
         // Publication details
         // invoke an ajax call to the server to render _publication template
@@ -218,5 +237,8 @@
 
     function submitData() {
         currentValidation = true;
+
+        // Explain what you have updated
+        revisionComments = $('#revisionComments').val();
     }
 </script>

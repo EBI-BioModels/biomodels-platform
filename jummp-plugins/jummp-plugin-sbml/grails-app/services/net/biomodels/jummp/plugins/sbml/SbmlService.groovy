@@ -400,7 +400,8 @@ the user has attempted to update an blank value for the name attribute.""")
             return ""
         }
         def description = new StringBuffer()
-        def nsList = ["http://www.sbml.org/sbml/level2/version4",
+        def nsList = ["http://www.sbml.org/sbml/level2/version5",
+                      "http://www.sbml.org/sbml/level2/version4",
                       "http://www.sbml.org/sbml/level2/version3",
                       "http://www.sbml.org/sbml/level2/version2",
                       "http://www.sbml.org/sbml/level2",

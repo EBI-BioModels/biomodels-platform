@@ -149,10 +149,13 @@
             type: "POST",
             url: url,
             data: {
+                isUpdate: isUpdate,
                 modelFile: JSON.stringify(modelFile),
                 additionalFiles: JSON.stringify(additionalFiles),
                 modelInfo: JSON.stringify(modelInfo),
-                publication: JSON.stringify(publication)
+                publication: JSON.stringify(publication),
+                revisionComments: revisionComments,
+                modelId: modelId
             },
             dataType: "json",
             success: function (response) {
