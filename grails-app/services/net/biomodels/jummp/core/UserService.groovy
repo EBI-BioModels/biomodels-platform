@@ -96,6 +96,15 @@ class UserService implements IUserService {
         return user.person.userRealName
     }
 
+    String getUsername() {
+        String username = "anonymous"
+        def principal = springSecurityService.principal
+        if (principal instanceof String) {
+            username = principal
+        }
+        return username
+    }
+
     String getUsername(String realName) {
         def usernames = User.withCriteria {
             projections {
@@ -120,6 +129,14 @@ class UserService implements IUserService {
             UserRole.findAllByRole(Role.findByAuthority(role)).collect {
                 it.user }
         return users
+    }
+
+    String getEmailAddress() {
+        def principal = springSecurityService.getCurrentUser()
+        if (principal) {
+            return principal.email
+        }
+        return null
     }
 
     @PostLogging(LoggingEventType.UPDATE)

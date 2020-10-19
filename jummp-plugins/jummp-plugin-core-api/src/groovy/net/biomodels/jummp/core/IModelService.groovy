@@ -375,4 +375,17 @@ interface IModelService {
      * publication etc.
      */
     boolean haveMultiplePerennialIdentifierTypes()
+
+    /**
+     * @short Creates a model audit object to update the history of activities on a specific model given by its identifier
+     * @param modelId       a String denoting the model identifier
+     * @param user          a String denoting the username
+     * @param accessType    a String denoting the type of accession, {@see AccessType}
+     * @param formatType    a String denoting the type of format. It is defined from ["json", "html"]
+     * @param changesMade   a String referring to comments what have been changed
+     * @param success       true/false
+     * @return an integer value indicating the id of ModelAudit record created successfully
+     */
+    int updateHistory(String modelId, String user, String accessType,
+                      String formatType, String changesMade, boolean success)
 }

@@ -41,6 +41,8 @@ import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.PublicationAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.*
+import net.biomodels.jummp.core.model.audit.AccessFormat
+import net.biomodels.jummp.core.model.audit.AccessType
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
 import net.biomodels.jummp.core.vcs.VcsFileDetails
 import net.biomodels.jummp.model.Flag
@@ -500,5 +502,25 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
             }
         }
         results
+    }
+
+    int updateHistory(String modelId, String user, String accessType,
+                      String formatType, String changesMade, boolean success = false) {
+        accessType = accessType.replace("/model/","")
+        AccessFormat format = AccessFormat.HTML
+        try {
+            format = AccessFormat.valueOf(formatType.toUpperCase())
+        } catch(Exception ignore) {
+
+        }
+        ModelTransportCommand model = findByPerennialIdentifier(modelId)
+        ModelAuditTransportCommand audit = new ModelAuditTransportCommand(
+            model: model,
+            username: user,
+            format: format,
+            type: AccessType.fromAction(accessType),
+            changesMade: changesMade,
+            success: success)
+        return createAuditItem(audit)
     }
 }

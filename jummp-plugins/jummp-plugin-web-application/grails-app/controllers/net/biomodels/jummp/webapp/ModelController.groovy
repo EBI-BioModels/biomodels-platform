@@ -143,23 +143,6 @@ class ModelController {
 
     def afterInterceptor = [action: this.&auditAfter, except: AUDIT_EXCEPTIONS]
 
-    private String getUsername() {
-        String username = "anonymous"
-        def principal = springSecurityService.principal
-        if (principal instanceof String) {
-            username = principal
-        }
-        return username
-    }
-
-    private String getUserEmailAddress() {
-        def principal = springSecurityService.getCurrentUser()
-        if (principal) {
-            return principal.email
-        }
-        return null
-    }
-
     // if this method returns false, the controller method is no longer called.
     private boolean auditBefore() {
         try {
@@ -169,7 +152,7 @@ class ModelController {
             String modelIdParam = params.id
             String revisionIdParam = params.revisionId
             String modelId = null
-            String username = getUsername()
+            String username = userService.getUsername()
             String accessType = actionUri
             String formatType = response.format
             String changesMade = null
@@ -193,7 +176,7 @@ class ModelController {
             }
             if (model) {
                 modelId = (model.publicationId) ?: model.submissionId
-                int historyItem = updateHistory(modelId, username, accessType, formatType, changesMade)
+                int historyItem = modelDelegateService.updateHistory(modelId, username, accessType, formatType, changesMade)
                 request.lastHistory = historyItem
                 return true
             } else {
@@ -218,25 +201,6 @@ class ModelController {
         } catch(Exception e) {
             log.error e.message, e
         }
-    }
-
-    private int updateHistory(String modelId, String user, String accessType,
-                String formatType, String changesMade, boolean success=false) {
-        accessType = accessType.replace("/model/","")
-        AccessFormat format = AccessFormat.HTML
-        try {
-            format = AccessFormat.valueOf(formatType.toUpperCase())
-        } catch(Exception ignore) {
-        }
-        ModelTransportCommand model = modelDelegateService.findByPerennialIdentifier(modelId)
-        ModelAuditTransportCommand audit = new ModelAuditTransportCommand(
-                    model: model,
-                    username: user,
-                    format: format,
-                    type: AccessType.fromAction(accessType),
-                    changesMade: changesMade,
-                    success: success)
-        return modelDelegateService.createAuditItem(audit)
     }
 
     @grails.transaction.Transactional
@@ -662,7 +626,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                 def model = modelDelegateService.findByPerennialIdentifier(params.id)
                 Long MODEL_ID = model?.id
                 if (params.id) {
-                    updateHistory(MODEL_ID, "something wrong", "update", "html", null, false)
+                    modelDelegateService.updateHistory(MODEL_ID, "something wrong", "update", "html", null, false)
                }
             }.to "displayAccessDenied"
         }
@@ -674,7 +638,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
                 String model = conversation.model_id
                 def currentUser = springSecurityService.currentUser
                 String username = currentUser?.username ?: 'anonymous'
-                updateHistory(session.result_submission, username, "update", "html", update, true)
+                modelDelegateService.updateHistory(session.result_submission, username, "update", "html", update, true)
                 if (currentUser && update != "") {
                     def notification = [
                             model: modelDelegateService.getModel(model),
@@ -697,11 +661,11 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
             subflow(controller: "model", action: "upload", input: [isUpdate:false])
             on("abort").to "abort"
             on("displayConfirmationPage") {
-                final String USERNAME = getUsername()
+                final String USERNAME = userService.getUsername()
                 final String AUDIT_ID = session.result_submission
-                updateHistory(AUDIT_ID, USERNAME, "create", "html", null, true)
+                modelDelegateService.updateHistory(AUDIT_ID, USERNAME, "create", "html", null, true)
                 final String biomodelsCuraMailingList = grailsApplication.config.jummp.model.curators.mailinglist
-                final String submitterEmail = getUserEmailAddress()
+                final String submitterEmail = userService.getEmailAddress()
                 if (submitterEmail && USERNAME) {
                     String model = session.result_submission
                     def notification = [
