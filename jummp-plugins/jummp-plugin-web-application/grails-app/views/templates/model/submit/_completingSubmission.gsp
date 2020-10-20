@@ -93,6 +93,12 @@
 </div>
 
 <div class="row align-center">
+    <div class="columns small-12 medium-12 large-12">
+        <div style="display: block;" id="completionMessage" class="animate-bottom text-center">
+        </div>
+    </div>
+</div>
+<div class="row align-center">
     <div class="columns small-12 large-12">
         <div style="display: none;" id="smgSuccess" class="animate-bottom text-center">
             <h4 class="purple-text"><strong>Model Created!</strong></h4>
@@ -148,6 +154,7 @@
         $.ajax({
             type: "POST",
             url: url,
+            async: false,
             data: {
                 isUpdate: isUpdate,
                 modelFile: JSON.stringify(modelFile),
@@ -157,25 +164,25 @@
                 revisionComments: revisionComments,
                 modelId: modelId
             },
-            dataType: "json",
-            success: function (response) {
-                console.log(response);
-                currentValidation = response.status === "Success" ? true : false;
-                if (currentValidation) {
-                    $('#modelURL').attr("href", response.modelURL);
-                    $('#modelURL').text(response.modelIdentifier);
-                    $('#smgSuccess').css("display", "block");
-                    $('#smgFailure').css("display", "none");
-                } else {
-                    $('#smgSuccess').css("display", "none");
-                    $('#smgFailure').css("display", "block");
-                }
-            },
-            error: function (jXHR, textStatus, thrown) {
-                console.log("Status: " + jXHR.status + " - " + jXHR.statusText);
+            dataType: "json"
+        })
+        .done(function (response) {
+            console.log(response);
+            currentValidation = response.status === "Success" ? true : false;
+            $('#completionMessage').html(response.message);
+            /*if (currentValidation) {
+                $('#modelURL').attr("href", response.modelURL);
+                $('#modelURL').text(response.modelIdentifier);
+                $('#smgSuccess').css("display", "block");
+                $('#smgFailure').css("display", "none");
+            } else {
                 $('#smgSuccess').css("display", "none");
                 $('#smgFailure').css("display", "block");
-            }
+            }*/
+        // }).fail(function (jXHR, textStatus, thrown) {
+        //     console.log("Status: " + jXHR.status + " - " + jXHR.statusText);
+        //     $('#completionMessage').html("There have been errors to prevent you from submitting or updating your model. Please try again or contact us for further help.");
+        //     // TODO: show cross icon
         });
     }
 </script>

@@ -29,6 +29,9 @@
         var authorMap = { authors: [] };
         var authorList = authorMap.authors;
         var publication;
+        var isUpdate = ${isUpdate};
+        var revisionComments = "";
+        var modelId = "${modelId}";
     </script>
 </head>
 

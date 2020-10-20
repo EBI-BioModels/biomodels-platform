@@ -64,6 +64,7 @@ import org.slf4j.LoggerFactory
  *
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author <a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a>
  * @date 20160216
  */
 @CompileStatic
@@ -79,30 +80,19 @@ class SubmissionService {
      */
     static transactional = false
 
+    def decorationService
     def grailsApplication
-
-    /**
-     * Dependency Injection of ModelFileFormatService
-     */
     ModelFileFormatService modelFileFormatService
-    /**
-     * Dependency Injection of ModelService
-     */
     ModelService modelService
-
     ModelDelegateService modelDelegateService
-
+    def springSecurityService
+    def userService
     /**
      * Dependency Injection of session factory to prevent serialisation of revision
      * domain object.
      */
     transient SessionFactory sessionFactory
 
-    def redisService
-
-    def decorationService
-
-    FileSystemService fileSystemService
 
     /**
      * Abstract state machine strategy, to be extended by the two concrete
@@ -727,6 +717,21 @@ class SubmissionService {
             String modellingApproach = approach ? approach.name : ""
             ["name": name, "description": description, "modellingApproach": modellingApproach]
         }
+
+        @TypeChecked(TypeCheckingMode.SKIP)
+        HashSet<String> processPostSubmission(Map<String, Object> working) {
+            HashSet<String> returned = new HashSet<String>()
+            // update the model history
+            String modelId = working.get("modelId")
+            String username = userService.getUsername()
+            String accessType = working.get("accessType")
+            String formatType = "html"
+            def changesMade = working.get("changesMade")
+            changesMade = changesMade.join(", ")
+            int result = modelDelegateService.updateHistory(modelId, username, accessType, formatType, changesMade)
+            returned.add(result.toString())
+            returned
+        }
     }
 
     @CompileStatic
@@ -847,6 +852,26 @@ class SubmissionService {
             workingMemory.put("model_id", modelId)
             HashSet<String> result = [modelId] as HashSet
             return result
+        }
+
+        @TypeChecked(TypeCheckingMode.SKIP)
+        HashSet<String> processPostSubmission(final Map working) {
+            HashSet<String> returned = super.processPostSubmission(working)
+
+            // send a confirmation email to the submitter
+            final String biomodelsCuraMailingList = grailsApplication.config.jummp.model.curators.mailinglist
+            final String submitterEmail = userService.getEmailAddress()
+            final String username = userService.getUsername()
+            if (submitterEmail && username) {
+                String model = working.get("modelId")
+                def notification = [
+                    model: modelDelegateService.getModel(model),
+                    user: springSecurityService.currentUser,
+                    emails: [biomodelsCuraMailingList, submitterEmail]]
+                sendMessage("seda:model.create", notification)
+            }
+
+            returned
         }
     }
 
@@ -1003,6 +1028,26 @@ class SubmissionService {
 
             return changes
         }
+
+        @TypeChecked(TypeCheckingMode.SKIP)
+        HashSet<String> processPostSubmission(final Map working) {
+            HashSet<String> returned = super.processPostSubmission(working)
+
+            // send a confirmation email to the subscribers
+            def currentUser = springSecurityService.currentUser
+            def changesMade = working.get("changesMade")
+            if (currentUser && changesMade) {
+                String model = working.get("modelId")
+                def notification = [
+                    model: modelDelegateService.getModel(model),
+                    user: currentUser,
+                    update: changesMade,
+                    perms : modelDelegateService.getPermissionsMap(model, false)]
+                sendMessage("seda:model.update", notification)
+            }
+
+            returned
+        }
     }
 
     /**
@@ -1126,6 +1171,18 @@ class SubmissionService {
     HashSet<String> handleSubmission(Map<String, Object> workingMemory) {
         def strategy = getStrategyFromContext(workingMemory)
         strategy.handleSubmission(workingMemory)
+    }
+
+    /**
+     * Processes the post submission
+     *
+     * @param workingMemory a Map containing all objects exchanged throughout the flow.
+     * @return a set of String objects containing the model audit identifier
+     */
+    @Profiled(tag = "submissionService.processPostSubmission")
+    HashSet<String> processPostSubmission(Map<String, Object> workingMemory) {
+        StateMachineStrategy strategy = getStrategyFromContext(workingMemory)
+        strategy.processPostSubmission(workingMemory)
     }
 
     /**

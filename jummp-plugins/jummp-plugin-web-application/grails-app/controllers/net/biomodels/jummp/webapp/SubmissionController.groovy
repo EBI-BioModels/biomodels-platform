@@ -30,15 +30,15 @@
 
 package net.biomodels.jummp.webapp
 
+import grails.async.Promises
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.InvalidPublicationAuthorsException
 import net.biomodels.jummp.core.model.CurationState
-import net.biomodels.jummp.core.model.ModelState
-import net.biomodels.jummp.core.model.PublicationTransportCommand
-import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
+import net.biomodels.jummp.core.model.PublicationTransportCommand
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import net.biomodels.jummp.core.model.ValidationState
 import org.codehaus.groovy.grails.web.json.JSONElement
@@ -48,14 +48,16 @@ import org.slf4j.LoggerFactory
 @Secured(['IS_AUTHENTICATED_FULLY'])
 class SubmissionController {
     private static final Logger logger = LoggerFactory.getLogger(SubmissionController.class)
+    def fileSystemService
+    def groovyPageRenderer
     def messageSource
     def modelFileFormatService
     def modelDelegateService
     def publicationService
     def submissionService
-    def fileSystemService
 
     def completeSubmission() {
+        /* The following statements aims at saving the new submission or updates */
         Map working = new HashMap<String, Object>()
         List<RFTC> rftcList = new ArrayList<RFTC>()
         JSONElement mf = JSON.parse(params.modelFile.decodeHTML())
@@ -106,13 +108,62 @@ class SubmissionController {
         revision.comment = params.revisionComments.decodeHTML() ?: "Model revised without commit message"
         working.put("RevisionTC", revision)
         HashSet<String> result = submissionService.handleSubmission(working)
+
+        /* Below is used for post processing submission and rendering the result to the callee */
         String modelId = params.modelId
+        working.put("accessType", "update")
+        working.put("changesMade", result)
         if (!isUpdate) {
             modelId = result.first()
+            working.put("accessType", "create")
+            working.put("changesMade", [])
         }
         String modelURL = createLink(controller: "model", action: "show", params: [id: modelId])
-        render(["message": "Everything is fine", "status": "Success", "modelURL": modelURL, "modelIdentifier": modelId]
-            as JSON)
+        working.putAll(["modelId": modelId, "modelURL": modelURL])
+        // test this first
+        submissionService.processPostSubmission(working)
+        // TODO: investigate why the following async block fails due to
+        /* org.springframework.jdbc.BadSqlGrammarException: Hibernate operation: could not extract ResultSet; bad SQL
+        grammar [n/a]; nested exception is com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException: You have an
+        error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right
+        syntax to use near ')) and (aclentry1_.mask in (1 , 16)) and aclentry1_.granting=1 group by revision'  at
+        line 17
+         */
+        /*Promises.task {
+            String auditId = submissionService.processPostSubmission(working)
+            Thread.sleep(5000)
+            return auditId
+        }.onComplete { auditId ->
+            logger.info("The submission/update flow has been recorded with the id ${auditId}")
+        }.onError { Throwable throwable ->
+            logger.error("Errors while processing post submission {}", throwable)
+        }*/
+
+        /* Build the right messages to show at the model owner/submitter */
+        String message = ""
+        String status = "Success"
+        if (isUpdate) {
+            if (working.get("changesMade")) {
+                status = "Success"
+                message = groovyPageRenderer.render(template: "/templates/model/submit/subviews/successUpdate",
+                    plugin: "jummp-plugin-web-application", model: ["modelURL": modelURL, "modelId": modelId])
+            } else {
+                status = "Failure"
+                message = groovyPageRenderer.render(template: "/templates/model/submit/subviews/failureUpdate",
+                    plugin: "jummp-plugin-web-application")
+            }
+        } else {
+            if (modelId) {
+                status = "Success"
+                message = groovyPageRenderer.render(template: "/templates/model/submit/subviews/successSubmission",
+                    plugin: "jummp-plugin-web-application", model: ["modelURL": modelURL, "modelId": modelId])
+            } else {
+                status = "Failure"
+                message = groovyPageRenderer.render(template: "/templates/model/submit/subviews/failureSubmission",
+                    plugin: "jummp-plugin-web-application")
+            }
+        }
+        render(["message": message, "status": status, "modelURL": modelURL, "modelIdentifier": modelId] as JSON)
     }
 
     Map buildPublicationFromJSONData(final String JSONData) {
@@ -187,7 +238,6 @@ class SubmissionController {
         }
         render filesMap as JSON
     }
-
 
     private List validateFile(final JSONElement file) {
         logger.debug("Validating the file: $file")
