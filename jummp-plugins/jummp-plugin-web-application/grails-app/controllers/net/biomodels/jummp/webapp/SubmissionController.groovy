@@ -106,6 +106,8 @@ class SubmissionController {
         revision.curationState = CurationState.NON_CURATED
         revision.validationLevel = ValidationState.APPROVE
         revision.comment = params.revisionComments.decodeHTML() ?: "Model revised without commit message"
+        working.put("new_name", revision.name)
+        working.put("new_description", revision.description)
         working.put("RevisionTC", revision)
         HashSet<String> result = submissionService.handleSubmission(working)
 

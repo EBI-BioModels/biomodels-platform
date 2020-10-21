@@ -829,25 +829,18 @@ class SubmissionService {
             // update model format, modelling approach and readme info if they're provided
             storeReadmeInfo(revision, workingMemory)
             revision.comment = "Import of ${revision.name}".toString()
-            Model newModel = modelService.uploadValidatedModel(repoFiles, revision)
-            Revision latest = modelService.getLatestRevision(newModel, false)
-            RTC latestRTC = new RevisionAdapter(revision: latest).toCommandObject()
 
             final String NEW_NAME = workingMemory["new_name"]
             final String NEW_DESCRIPTION = workingMemory["new_description"]
-            final boolean SHOULD_UPDATE = NEW_NAME || NEW_DESCRIPTION
             if (NEW_NAME) {
-                latestRTC.name = NEW_NAME
-                modelFileFormatService.updateName(latestRTC, NEW_NAME)
+                revision.name = NEW_NAME
+                modelFileFormatService.updateName(revision, NEW_NAME)
             }
             if (NEW_DESCRIPTION) {
-                latestRTC.description = NEW_DESCRIPTION
-                modelFileFormatService.updateDescription(latestRTC, NEW_DESCRIPTION)
+                revision.description = NEW_DESCRIPTION
+                modelFileFormatService.updateDescription(revision, NEW_DESCRIPTION)
             }
-            if (SHOULD_UPDATE) {
-                latestRTC.comment = "Edited model metadata online."
-                modelService.addRevision(latestRTC.files, [], latestRTC)
-            }
+            Model newModel = modelService.uploadValidatedModel(repoFiles, revision)
             String modelId = newModel.submissionId
             workingMemory.put("model_id", modelId)
             HashSet<String> result = [modelId] as HashSet
@@ -1002,30 +995,19 @@ class SubmissionService {
 
             // update model format, modelling approach and readme info if they're provided and changed
             storeReadmeInfo(revision, workingMemory)
-
-            Revision newlyCreated = modelService.addRevision(repoFiles, deleteFiles, revision)
-            RTC newlyCreatedRTC = new RevisionAdapter(revision: newlyCreated).toCommandObject()
             final String NEW_NAME = workingMemory["new_name"]
             final String NEW_DESCRIPTION = workingMemory["new_description"]
-            final boolean SHOULD_UPDATE = NEW_NAME || NEW_DESCRIPTION
             if (NEW_NAME) {
-                newlyCreatedRTC.name = NEW_NAME
-                modelFileFormatService.updateName(newlyCreatedRTC, NEW_NAME)
+                revision.name = NEW_NAME
+                modelFileFormatService.updateName(revision, NEW_NAME)
                 changes.add("Edited model name")
             }
             if (NEW_DESCRIPTION) {
-                newlyCreatedRTC.description = NEW_DESCRIPTION
-                modelFileFormatService.updateDescription(newlyCreatedRTC, NEW_DESCRIPTION)
+                revision.description = NEW_DESCRIPTION
+                modelFileFormatService.updateDescription(revision, NEW_DESCRIPTION)
                 changes.add("Edited model description")
             }
-            if (SHOULD_UPDATE) {
-                newlyCreatedRTC.comment = "Edited model metadata online"
-                def updated = modelService.addRevision(newlyCreatedRTC.files, [], newlyCreatedRTC)
-                workingMemory.put("model_id", updated.model.submissionId)
-            } else {
-                workingMemory.put("model_id", newlyCreated.model.submissionId)
-            }
-
+            modelService.addRevision(repoFiles, deleteFiles, revision)
             return changes
         }
 
