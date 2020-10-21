@@ -1,7 +1,7 @@
 const $loading = $('#loading');
 $(document)
     .ajaxStart(function () {
-
+        $loading.show();
     })
     .ajaxStop(function () {
         $loading.hide();
@@ -49,12 +49,6 @@ $(document).ready(function () {
             step = current;
         }
         setCheckList(step, currentValidation);
-        // next is the last step, therefore, we have to complete the submission
-        // and return the boolean result whether the submission passed or failed
-        if (step == steps - 1 && currentValidation) {
-            completeSubmission();
-            setCheckList(current, currentValidation);
-        }
     });
 
     $(".previous").click(function () {
@@ -145,6 +139,11 @@ $(document).ready(function () {
                 // defined in the step 4
                 console.log("Updating the form at " + step);
                 populateSummaryData();
+                break;
+            case 5:
+                // defined in the step 4
+                console.log("Updating the form at " + step);
+                completeSubmission();
                 break;
             default:
                 break;
