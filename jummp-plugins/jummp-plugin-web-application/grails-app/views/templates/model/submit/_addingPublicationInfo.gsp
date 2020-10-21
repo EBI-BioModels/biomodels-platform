@@ -78,10 +78,11 @@
 <input type="button" name="previous" class="previous action-button-previous" value="Previous"/>
 <script type="text/javascript">
     $(document).ready(function () {
-        if ("${publication == null}") {
-            $('#publicationForm').hide();
-        } else {
+        console.log("${publication.dump()}");
+        if ("${publication}") {
             $('#publicationForm').show();
+        } else {
+            $('#publicationForm').hide();
         }
     });
     $('.publink-whatisit').on("click", function () {
