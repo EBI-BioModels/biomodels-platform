@@ -154,7 +154,6 @@
         $.ajax({
             type: "POST",
             url: url,
-            async: false,
             data: {
                 isUpdate: isUpdate,
                 modelFile: JSON.stringify(modelFile),
