@@ -102,4 +102,12 @@
         file: 'jquery.dm-uploader.min.js')}"></script>
 
 </body>
+<content tag="contexthelp">
+    <g:if test="${isUpdate}">
+        update
+    </g:if>
+    <g:else>
+        submission
+    </g:else>
+</content>
 </html>
