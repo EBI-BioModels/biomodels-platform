@@ -17,6 +17,7 @@
               'jquery.dm-uploader.min.css')}">
     <link rel="stylesheet"
           href="${resource(contextPath: serverURL, dir: 'css/font-awesome-4.7.0/css', file: 'font-awesome.css')}"/>
+    <g:javascript src="helpers.js" contextPath=""/>
     <g:javascript src="toastr.min.js" contextPath=""/>
     <link rel="stylesheet"
           href="${resource(contextPath: serverURL, dir: 'css', file: 'toastr.min.css')}"/>
