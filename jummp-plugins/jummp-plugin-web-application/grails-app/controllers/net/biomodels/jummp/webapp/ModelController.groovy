@@ -471,7 +471,7 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
         String modellingApproach = approach ? approach.name : ""
         List files = new ArrayList()
         latest.files.each {
-            files.add(["name": it.filename, "size": it.size,
+            files.add(["filename": it.filename, "size": it.size,
                        "description": it.description, "isModelFile": it.mainFile])
             File file = new File(it.path)
             fileSystemService.transferFile(initials.get("submissionFolder"), file)

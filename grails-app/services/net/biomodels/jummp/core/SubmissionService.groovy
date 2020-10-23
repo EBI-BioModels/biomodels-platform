@@ -974,24 +974,10 @@ class SubmissionService {
         @Profiled(tag = "submissionService.NewRevisionStateMachine.completeSubmission")
         @TypeChecked(TypeCheckingMode.SKIP)
         HashSet<String> completeSubmission(Map<String, Object> workingMemory) {
-            HashSet<String> changes = new HashSet<String>()
+            HashSet<String> changes = workingMemory['changesMade']
             RTC revision = workingMemory.get("RevisionTC") as RTC
             List<RFTC> repoFiles = getRepFiles(workingMemory)
             List<RFTC> deleteFiles = getRepFiles(workingMemory, "removeFromVCS")
-            deleteFiles.each { RFTC rf ->
-                File file = new File(rf.path)
-                changes.add("Deleted file: ${file.getName()}")
-            }
-            def existing = workingMemory.get("existing_files") as List<RFTC>
-            repoFiles.each { RFTC it ->
-                String fileAdded = new File(it.path).getName()
-                def exists = existing.find { RFTC fileExisting ->
-                    fileAdded == new File(fileExisting.path).getName()
-                }
-                if (!exists) {
-                    changes.add("Added file: ${fileAdded}")
-                }
-            }
 
             // update model format, modelling approach and readme info if they're provided and changed
             storeReadmeInfo(revision, workingMemory)

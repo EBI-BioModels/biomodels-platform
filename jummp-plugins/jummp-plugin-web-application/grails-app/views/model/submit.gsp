@@ -51,6 +51,7 @@
         var isUpdate = ${isUpdate};
         var revisionComments = "";
         var modelId = "${modelId}";
+        var changesMade = [];
     </script>
 </head>
 

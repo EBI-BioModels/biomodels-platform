@@ -87,6 +87,7 @@
                         class="file-size">%%filesize%%</strong>, Status: <span
                             class="text-muted">
                             Waiting</span>
+                            <a class="original-file-size" style="display: inline-block">%%originalFilesize%%</a>
                         </p>
                         <div class="progress mb-2">
                             <div class="progress progress-bar progress-bar-striped progress-bar-animated bg-primary"
@@ -203,7 +204,9 @@
             let filename = $(this).find("strong.file-name").html();
             let description = $(this).find("input.file-description").val();
             let isModelFile = $(this).find("input.is-model-file")[0].checked;
-            return { id: $(this).prop("id"), filename: filename , description: description, isModelFile: isModelFile };
+            let originalFilesize = $(this).find("a.original-file-size").text();
+            return { id: $(this).prop("id"), filename: filename , description: description, isModelFile: isModelFile,
+                            originalFilesize: originalFilesize };
         }).get();
         $.ajax({
             type: "POST",
@@ -211,11 +214,15 @@
             data: {
                 submissionSessionId: "${submissionSessionId}",
                 submissionFolder: "${submissionFolder}",
-                uploadingFiles: JSON.stringify(ids)
+                uploadingFiles: JSON.stringify(ids),
+                files: "${files}"
             },
             async: false,
             dataType: "JSON",
-            success: function(data) {
+            success: function(response) {
+                console.log(response.changesMade);
+                changesMade = response.changesMade;
+                let data = response["filesMap"];
                 if (data.length) {
                     const haveAllDescriptions = data.filter(e => e.description === "").length === 0;
                     if (!haveAllDescriptions) {

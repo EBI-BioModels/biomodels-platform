@@ -24,7 +24,7 @@ function ui_add_log(message, color) {
 // Creates a new file and add it to our list
 function ui_multi_add_file(id, file) {
     let template = $('#files-template').text();
-    template = template.replace('%%filename%%', file.name).replace('%%filesize%%', formatBytes(file.size));
+    template = template.replace('%%filename%%', file.name).replace('%%filesize%%', formatBytes(file.size)).replace('%%originalFilesize%%', file.size);
     template = $(template);
     template.prop('id', 'uploaderFile' + id);
     template.data('file-id', id);

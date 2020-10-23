@@ -47,7 +47,8 @@
                 modelInfo: JSON.stringify(modelInfo),
                 publication: JSON.stringify(publication),
                 revisionComments: revisionComments,
-                modelId: modelId
+                modelId: modelId,
+                changesMade: changesMade
             },
             dataType: "json"
         })

@@ -109,6 +109,7 @@ class SubmissionController {
         working.put("new_name", revision.name)
         working.put("new_description", revision.description)
         working.put("RevisionTC", revision)
+        working.put("changesMade", params.list("changesMade[]"))
         HashSet<String> result = submissionService.handleSubmission(working)
 
         /* Below is used for post processing submission and rendering the result to the callee */
@@ -225,9 +226,11 @@ class SubmissionController {
         String submissionFolder = params.get("submissionFolder")
         String uploadingFiles = params.uploadingFiles.decodeHTML()
         def filesMap = JSON.parse(uploadingFiles)
+        Map uploadedFiles = new HashMap()
         for (JSONElement e : filesMap) {
             e["submissionFolder"] = submissionFolder
             e["validateFileErrors"] = validateFile(e)
+            uploadedFiles.put(e["filename"], e["originalFilesize"])
             if (e["isModelFile"]) {
                 // Presumably the submission has a single (main) model file
                 Map detectedModelFormat = detectModelFormat(e)
@@ -238,7 +241,28 @@ class SubmissionController {
                 e["detectedModelInfo"] = detectedModelInfo
             }
         }
-        render filesMap as JSON
+        // Determines which files are added and removed
+        List<String> changesMade = new ArrayList<>()
+        List parsedExistingFiles = JSON.parse(params.files) as List
+        for (JSONElement e : parsedExistingFiles) {
+            boolean exists = uploadedFiles.find { String fName, String fSize ->
+                long size = Long.parseLong(fSize)
+                e["filename"] == fName && e["size"] == size
+            }
+            if (!exists) {
+                changesMade.add("Removed file ${e.filename}")
+            }
+        }
+        uploadedFiles.each { String fName, String fSize ->
+            long size = Long.parseLong(fSize)
+            boolean exists = parsedExistingFiles.find {
+                it["filename"] == fName && it["size"] == size
+            }
+            if (!exists) {
+                changesMade.add("Added file ${fName}")
+            }
+        }
+        render([filesMap: filesMap, changesMade: changesMade] as JSON)
     }
 
     private List validateFile(final JSONElement file) {

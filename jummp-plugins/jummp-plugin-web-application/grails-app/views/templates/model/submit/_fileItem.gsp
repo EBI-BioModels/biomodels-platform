@@ -3,7 +3,7 @@
         <div class="row">
             <div class="columns small-12 medium-5 large-5">
                 <p class="mb-2">
-                    <strong class="file-name">${file.name}</strong> - Size: <strong
+                    <strong class="file-name">${file.filename}</strong> - Size: <strong
                     class="file-size">${net.biomodels.jummp.utils.DisplayFormat.format(file.size, 2)}</strong>, Status: <span
                     class="text-muted">
                     <g:if test="${file?.size}">
@@ -13,6 +13,8 @@
                         Reload Failed
                     </g:else>
                     </span>
+                    <a
+                    class="original-file-size" style="display: inline-block">${file.size}</a>
                 </p>
                 %{--<div class="progress mb-2">
                     <div class="progress progress-bar progress-bar-striped progress-bar-animated bg-primary"
