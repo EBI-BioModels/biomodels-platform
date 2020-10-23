@@ -78,7 +78,6 @@
 <input type="button" name="previous" class="previous action-button-previous" value="Previous"/>
 <script type="text/javascript">
     $(document).ready(function () {
-        console.log("${publication.dump()}");
         if ("${publication}") {
             $('#publicationForm').show();
         } else {
@@ -103,13 +102,13 @@
             async: false,
             success: function (data) {
                 toastr.clear();
-                publication = data.publication;
+                publication = data["publication"];
                 if (data.status === "Failed") {
                     errorMessages.push(data["message"]);
                     toastr.error(data["message"])
                 } else {
                     toastr.success(data["message"]);
-                    reloadPublicationForm(data["publication"]);
+                    reloadPublicationForm(publication);
                 }
             },
             error: function(jqXHR, textStatus, errorThrown) {
@@ -158,7 +157,6 @@
             return;
         }
         let isPubTCValidated = true;
-        let authors = $('textarea[name="authorListContainer"]').val();
         let pubDetails = {};
         pubDetails["linkProvider"] = $('#pubLinkProvider').val();
         pubDetails["link"] = $('#publicationLink').val();
@@ -171,7 +169,7 @@
         pubDetails["year"] = $('#year').val();
         pubDetails["month"] = $('#month').val();
         pubDetails["pages"] = $('#pages').val();
-        pubDetails["authors"] = authorList;
+        pubDetails["authors"] = $('#authorListTemp').text();
         $.ajax({
             type: "POST",
             url: "${createLink(controller: "publication", action: "validatePublicationDetails")}",
@@ -185,6 +183,9 @@
                 $.each(res.errors, function(index, error) {
                     errorMessages.push(error);
                 });
+                if (isPubTCValidated) {
+                    publication = res.publication;
+                }
                 console.log("Status: " + res.status);
             },
             error: function(jqXHR, textStatus, errorThrown) {

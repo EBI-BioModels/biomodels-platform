@@ -142,7 +142,9 @@ function updateData() {
 }
 
 $(document).ready(function () {
-    updateData();
+    if (authorMap.authors.length !== 0) {
+        updateData();
+    }
 });
 $(document).on("change", "#authorList", function() {
     let selected = $("option:selected", this);

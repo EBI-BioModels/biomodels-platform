@@ -6,6 +6,7 @@
 --%>
 
 <%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page import="grails.converters.JSON;" %>
 <html>
 <head>
     <meta name="layout" content="biomodels/main"/>
@@ -28,7 +29,24 @@
         var modelFile;
         var additionalFiles;
         var authorMap = { authors: [] };
-        var authorList = authorMap.authors;
+        var authorList;
+        if (${publication != null}) {
+            authorMap = {
+                "authors":
+                    ${publication?.authors.collect {
+                        String userRealName = it.userRealName ?: ""
+                        String institution = it.institution ?: ""
+                        String orcid = it.orcid ?: ""
+                        def id = it.id ?: "undefined"
+                        if (id == "undefined") {
+                            [userRealName: userRealName, institution: institution, orcid: orcid]
+                        } else {
+                            [id: id, userRealName: userRealName, institution: institution, orcid: orcid]
+                        }
+                    } as JSON }
+            };
+            authorList = authorMap["authors"];
+        }
         var publication;
         var isUpdate = ${isUpdate};
         var revisionComments = "";
