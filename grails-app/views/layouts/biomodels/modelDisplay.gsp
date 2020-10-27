@@ -843,6 +843,12 @@
                                 </li>
                             </g:each>
                         </ul>
+                        <g:if test="${allRevs.size() > 1}">
+                            <p style="font-style: italic; font-size: smaller">(*) You might be seeing discontinous
+                            revisions as only published revisions
+                            are displayed here. Unless the current model was shared with you as a collaborator or
+                            co-author, you could see and access some private revisions also shown in this tab.</p>
+                        </g:if>
                     </div>
                     <g:if test="${convertedFilesTC}">
                     <div id="Exports">
