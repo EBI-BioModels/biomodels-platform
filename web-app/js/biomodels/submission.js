@@ -48,6 +48,7 @@ $(document).ready(function () {
             showErrorMessages();
             step = current;
         }
+        // tick or cross the previous or current step if the validation is valid or invalid respectively
         setCheckList(step, currentValidation);
     });
 
@@ -130,19 +131,20 @@ $(document).ready(function () {
                 break;
             case 2:
                 // defined in the step 2
-                console.log("Updating the form at " + step);
+                console.log("Updating the model info form at the step " + step);
                 updateModelInfoForm();
                 break;
             case 3:
+                console.log("Updating the publication form at the step " + step);
                 break;
             case 4:
                 // defined in the step 4
-                console.log("Updating the form at " + step);
+                console.log("Displaying the summary screen at the step " + step);
                 populateSummaryData();
                 break;
             case 5:
                 // defined in the step 4
-                console.log("Updating the form at " + step);
+                console.log("Completing the submission/update process at the step " + step);
                 completeSubmission();
                 break;
             default:

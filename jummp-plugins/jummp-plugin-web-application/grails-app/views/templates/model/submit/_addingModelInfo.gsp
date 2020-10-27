@@ -133,7 +133,6 @@
 <input type="button" name="previous" class="previous action-button-previous" value="Previous"/>
 <script>
     function validateModelInfo() {
-        console.log("validate the form before moving to the next step");
         errorMessages = [];
         let isNameValid = true;
         if ($('input[id="name"]').val().length === 0) {
