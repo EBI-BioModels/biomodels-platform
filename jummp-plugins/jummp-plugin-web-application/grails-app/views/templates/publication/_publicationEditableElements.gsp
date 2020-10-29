@@ -50,7 +50,9 @@
         </div>
     </div>
     Enter new author name and ORCID, then click <strong>Add</strong> button to add a new author into the list.
-Select any author in the list so as to <strong>Update</strong> or <strong>Delete</strong>. <strong>Notes: </strong>It must have at least one author.
+Select any author in the list so as to <strong>Update</strong> or <strong>Delete</strong>. <strong>Notes: </strong>It
+must have at least one author. Enter your ORCID ID. For example, an ORCID profile link is often formed as
+https://orcid.org/0000-0001-8479-0262, therefore this profile's ORCID ID is 0000-0001-8479-0262.
     <div>
         <ul class="subListForm">
             <div class="row">
@@ -65,7 +67,8 @@ Select any author in the list so as to <strong>Update</strong> or <strong>Delete
                         <label style="display:block; margin-left:0px">ORCID</label>
                         <span>
                             <input class="input40" size="40" type="text" id="newAuthorOrcid"
-                                   title="Enter your ORCID ID. For example, an ORCID profile link is often formed as http://orcid.org/0000-0002-2876-6046, therefore this profile's ORCID ID is 0000-0002-2876-6046"/>
+                                   title="Enter your ORCID ID. For example, an ORCID profile link is often formed as https://orcid.org/0000-0001-8479-0262, therefore this profile's ORCID ID is 0000-0001-8479-0262"
+                                   placeholder="Ex: 0000-0001-8479-0262"/>
                         </span>
                     </li>
                 </div>
