@@ -55,7 +55,6 @@ import java.util.concurrent.locks.ReentrantLock
  * @date 20130705
  */
 class ConfigurationService implements InitializingBean {
-    static scope = "singleton"
     static transactional = false
     /**
      * Methods accessing the configuration files, need to be thread-safe, hence the use of a lock.

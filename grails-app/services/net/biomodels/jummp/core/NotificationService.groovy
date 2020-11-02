@@ -346,6 +346,25 @@ class NotificationService {
             subject emailSubject
             html emailBody
         }
+
+        // send an email to the user to request a citation to BioModels
+        (emailFrom, emailTo) = [emailTo, emailFrom]
+        emailFrom = grailsApplication.config.jummp.model.curators.mailinglist
+        notificationTitle = "biomodels.howtoCiteUs.reminder.title"
+        titleParams = []
+        emailSubject = messageSource.getMessage(notificationTitle, titleParams, LCH.getLocale())
+
+        notificationBody = "biomodels.howtoCiteUs.reminder.content"
+        bodyParams = [serverURL, user?.person?.userRealName ?: user.username, model.submissionId]
+        emailBody = messageSource.getMessage(notificationBody, bodyParams, LCH.getLocale())
+        mailService.sendMail {
+            async true
+            to emailTo
+            from emailFrom
+            replyTo emailFrom
+            subject emailSubject
+            html emailBody
+        }
     }
 
     void feedback2Admin(def body) {
