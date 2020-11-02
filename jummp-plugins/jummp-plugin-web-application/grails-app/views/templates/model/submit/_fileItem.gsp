@@ -14,7 +14,7 @@
                     </g:else>
                     </span>
                     <a
-                    class="original-file-size" style="display: inline-block">${file.size}</a>
+                    class="original-file-size" style="display: none">${file.size}</a>
                 </p>
                 %{--<div class="progress mb-2">
                     <div class="progress progress-bar progress-bar-striped progress-bar-animated bg-primary"

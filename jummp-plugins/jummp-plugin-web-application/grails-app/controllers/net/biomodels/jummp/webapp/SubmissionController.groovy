@@ -242,25 +242,9 @@ class SubmissionController {
             }
         }
         // Determines which files are added and removed
-        List<String> changesMade = new ArrayList<>()
-        List parsedExistingFiles = JSON.parse(params.files) as List
-        for (JSONElement e : parsedExistingFiles) {
-            boolean exists = uploadedFiles.find { String fName, String fSize ->
-                long size = Long.parseLong(fSize)
-                e["filename"] == fName && e["size"] == size
-            }
-            if (!exists) {
-                changesMade.add("Removed file ${e.filename}")
-            }
-        }
-        uploadedFiles.each { String fName, String fSize ->
-            long size = Long.parseLong(fSize)
-            boolean exists = parsedExistingFiles.find {
-                it["filename"] == fName && it["size"] == size
-            }
-            if (!exists) {
-                changesMade.add("Added file ${fName}")
-            }
+        List<String> changesMade = new ArrayList<String>()
+        if (params.boolean("isUpdate")) {
+            changesMade = inferChangesMade(uploadedFiles)
         }
         render([filesMap: filesMap, changesMade: changesMade] as JSON)
     }
@@ -294,5 +278,29 @@ class SubmissionController {
         File modelFile = fileSystemService.retrieve(fileJSONData)
         Map modelInfo = submissionService.detectModelInfo(modelFile, modelFormat)
         return modelInfo
+    }
+
+    private List<String> inferChangesMade(Map uploadedFiles) {
+        List<String> changesMade = new ArrayList<>()
+        List parsedExistingFiles = JSON.parse(params.files) as List
+        for (JSONElement e : parsedExistingFiles) {
+            boolean exists = uploadedFiles.find { String fName, String fSize ->
+                long size = Long.parseLong(fSize)
+                e["filename"] == fName && e["size"] == size
+            }
+            if (!exists) {
+                changesMade.add("Removed file ${e.filename}")
+            }
+        }
+        uploadedFiles.each { String fName, String fSize ->
+            long size = Long.parseLong(fSize)
+            boolean exists = parsedExistingFiles.find {
+                it["filename"] == fName && it["size"] == size
+            }
+            if (!exists) {
+                changesMade.add("Added file ${fName}")
+            }
+        }
+        changesMade
     }
 }

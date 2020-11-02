@@ -87,7 +87,7 @@
                         class="file-size">%%filesize%%</strong>, Status: <span
                             class="text-muted">
                             Waiting</span>
-                            <a class="original-file-size" style="display: inline-block">%%originalFilesize%%</a>
+                            <a class="original-file-size" style="display: none">%%originalFilesize%%</a>
                         </p>
                         <div class="progress mb-2">
                             <div class="progress progress-bar progress-bar-striped progress-bar-animated bg-primary"
@@ -215,7 +215,8 @@
                 submissionSessionId: "${submissionSessionId}",
                 submissionFolder: "${submissionFolder}",
                 uploadingFiles: JSON.stringify(ids),
-                files: "${files}"
+                files: "${files}",
+                isUpdate: isUpdate
             },
             async: false,
             dataType: "JSON",
