@@ -95,7 +95,7 @@ class JummpTagLib {
         if (attrs.files) {
             attrs.files.each { f ->
                 out << render(
-                    template: "/templates/model/submit/fileItem",
+                    template: "/templates/model/submit/subviews/fileItem",
                     model: [file: f],
                     plugin: "jummp-plugin-web-application")
             }
