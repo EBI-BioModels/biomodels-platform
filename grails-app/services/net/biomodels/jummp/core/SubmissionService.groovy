@@ -886,12 +886,12 @@ class SubmissionService {
         void initialise(Map<String, Object> workingMemory) {
             super.initialise(workingMemory)
             // fetch files from repository, make RFTCs out of them
-            RTC rev = workingMemory.get("LastRevision") as RTC
-            List<RFTC> repFiles = rev.getFiles()
-            storeRFTC(workingMemory, repFiles, null)
-            workingMemory.put("existing_files", new ArrayList<RFTC>(repFiles))
+            //RTC rev = workingMemory.get("LastRevision") as RTC
+            //List<RFTC> repFiles = rev.getFiles()
+            //storeRFTC(workingMemory, repFiles, null)
+            //workingMemory.put("existing_files", new ArrayList<RFTC>(repFiles))
             // initialise the map of publication type objects would be added to the model
-            def publication_objects_in_working = initialisePublicationMap()
+            /*def publication_objects_in_working = initialisePublicationMap()
             if (rev.model.publication) {
                 PublicationDetailExtractionContext context = new PublicationDetailExtractionContext()
                 context.comesFromDatabase = true
@@ -899,7 +899,7 @@ class SubmissionService {
                 publication_objects_in_working.put(rev.model.publication.linkProvider.linkType, context)
             }
             workingMemory.put("publication_objects_in_working", publication_objects_in_working)
-            workingMemory.put("publicationContext", publication_objects_in_working)
+            workingMemory.put("publicationContext", publication_objects_in_working)*/
             sessionFactory.currentSession.clear()
         }
 

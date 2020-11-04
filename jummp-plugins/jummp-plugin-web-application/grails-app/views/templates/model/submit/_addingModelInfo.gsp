@@ -156,7 +156,7 @@
         let modellingApproach = $('#modelling_approach').val();
         let isMARecognisable = definedModellingApproachNames.filter(ma => ma === modellingApproach).length === 1;
         if (!isMARecognisable) {
-            errorMessages.push("Please type to choose a modelling approaches from the pre-defined values.")
+            errorMessages.push("Please type to choose a modelling approach from the pre-defined values.")
         }
         let isMAMatched = true;
         if (modellingApproach === "Other") {

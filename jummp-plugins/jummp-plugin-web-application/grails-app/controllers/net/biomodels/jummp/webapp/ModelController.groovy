@@ -449,22 +449,25 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
         }
     }
 
-    Map initialiseSubmission() {
+    Map initialiseSubmission(final boolean isUpdate) {
         Map<String, Object> initials = new HashMap<String, Object>()
+        // TODO: reconcile two variables
+        initials.put("isUpdate", isUpdate)
+        initials.put("isUpdateOnExistingModel", isUpdate)
+        initials.put("shouldCreateNewRevision", true) // TODO: get the checkbox
         submissionService.initialise(initials)
         initials
     }
 
     def submit() {
-        Map initials = initialiseSubmission()
-        initials.put("isUpdate", false)
+        Map initials = initialiseSubmission(false)
         initials.put("titlePage", "Submit a new model | BioModels")
         initials.put("uploadingFilesHeading", g.message(code: "submission.upload.header"))
         render(view: "submit", model: initials)
     }
 
     def newUpdate() {
-        Map initials = initialiseSubmission()
+        Map initials = initialiseSubmission(true)
         String modelId = params.id
         String titlePage = "Update model ${modelId} | BioModels"
         RevisionTransportCommand latest = modelDelegateService.getLatestRevision(modelId, false)
@@ -477,7 +480,6 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
             File file = new File(it.path)
             fileSystemService.transferFile(initials.get("submissionFolder"), file)
         }
-        initials.put("isUpdate", true)
         initials.put("modelId", modelId)
         initials.put("titlePage", titlePage)
         initials.put("uploadingFilesHeading", g.message(code: "submission.upload.review.titlePage"))

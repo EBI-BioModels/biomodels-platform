@@ -94,7 +94,7 @@ class SubmissionController {
             model.publication = null
         }
         working.put("isUpdateOnExistingModel", isUpdate)
-        working.put("shouldCreateNewRevision", true)
+        working.put("shouldCreateNewRevision", true) // TODO: allow curators decide
 
         RTC revision = new RTC(files: rftcList, model: model, format: format)
 
