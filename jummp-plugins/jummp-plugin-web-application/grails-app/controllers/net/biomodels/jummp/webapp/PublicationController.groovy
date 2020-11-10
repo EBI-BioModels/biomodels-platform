@@ -9,6 +9,7 @@ import net.biomodels.jummp.model.Publication
 
 import net.biomodels.jummp.core.model.PublicationTransportCommand
 import net.biomodels.jummp.model.PublicationLinkProvider as PLP
+import net.biomodels.jummp.core.model.PublicationDetailExtractionContext as PDEC
 import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -93,8 +94,6 @@ class PublicationController implements GrailsConfigurationAware {
         String pubLink = params.list("pubLink")[0]
         String message
         String status
-        println "pub link provider: $pubLinkProvider"
-        println "pub link: $pubLink"
         if (pubLinkProvider == "NoPub" && pubLink) {
             message = "Please select a publication link type."
             status: "Failed"
@@ -117,7 +116,8 @@ class PublicationController implements GrailsConfigurationAware {
                     publicationLinkProvider).toCommandObject()
             }
         }
-        render(["message": message, "status": status, "publication": cmd] as JSON)
+        PDEC ctx = publicationService.getPublicationExtractionContext(cmd)
+        render(["message": message, "status": status, "publication": cmd, "comesFromDB": ctx.comesFromDatabase] as JSON)
     }
 
     def validatePublicationDetails() {

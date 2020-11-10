@@ -892,20 +892,20 @@ class SubmissionService {
             //List<RFTC> repFiles = rev.getFiles()
             //storeRFTC(workingMemory, repFiles, null)
             //workingMemory.put("existing_files", new ArrayList<RFTC>(repFiles))
-            // initialise the map of publication type objects would be added to the model
-            /*def publication_objects_in_working = initialisePublicationMap()
-            if (rev.model.publication) {
-                PublicationDetailExtractionContext context = new PublicationDetailExtractionContext()
-                context.comesFromDatabase = true
-                context.publication = rev.model.publication
-                publication_objects_in_working.put(rev.model.publication.linkProvider.linkType, context)
-            }
-            workingMemory.put("publication_objects_in_working", publication_objects_in_working)
-            workingMemory.put("publicationContext", publication_objects_in_working)*/
             String modelId = workingMemory.get("modelId")
             RTC latest = modelDelegateService.getLatestRevision(modelId, false)
             ModellingApproach approach = latest.model.modellingApproach
             String modellingApproach = approach ? approach.name : ""
+            // initialise the map of publication type objects would be added to the model
+            def publication_objects_in_working = initialisePublicationMap()
+            if (latest.model.publication) {
+                PublicationDetailExtractionContext context = new PublicationDetailExtractionContext()
+                context.comesFromDatabase = true
+                context.publication = latest.model.publication
+                publication_objects_in_working.put(latest.model.publication.linkProvider.linkType, context)
+            }
+            workingMemory.put("publication_objects_in_working", publication_objects_in_working)
+            workingMemory.put("publicationContext", publication_objects_in_working)
             List files = new ArrayList()
             for (RFTC it: latest.files) {
                 files.add(["filename": it.filename, "size": it.size,

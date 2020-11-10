@@ -87,6 +87,26 @@
     $('.publink-whatisit').on("click", function () {
         $('.publink-explanation').toggle("slow");
     });
+
+    $(document).on('change', '#pubLinkProvider', {}, function(e) {
+        let pubLinkProvider = $(this).val();
+        let res = shouldWarnWhenUpdatingLinkProvider(pubLinkProvider);
+        if (res) {
+            let message =
+                "Please change the publication link on the next input and click on Refresh button to refresh the form";
+            showWarningMessage(message);
+        }
+    });
+
+    $(document).on('blue focusout', '#publicationLink', {}, function(e) {
+        let pubLink = $(this).val();
+        let res = shouldWarnWhenUpdatingPublicationLink(pubLink);
+        if (res) {
+            let message = "Click on Refresh button to refresh the publication details";
+            showWarningMessage(message);
+        }
+    });
+
     $(document).on('click', '#refreshPubLinkBtn', {}, function(e) {
         e.preventDefault();
         let pubLinkProvider = $('#pubLinkProvider').val();
@@ -108,6 +128,9 @@
                     toastr.error(data["message"])
                 } else {
                     toastr.success(data["message"]);
+                    if (data["comesFromDB"]) {
+                        toastr.warning("${g.message(code: "publication.editor.duplicateEntry.message")}");
+                    }
                     reloadPublicationForm(publication);
                 }
             },
@@ -197,5 +220,21 @@
             }
         });
         currentValidation = withoutPub || isPubTCValidated;
+    }
+
+    function shouldWarnWhenUpdatingLinkProvider(update) {
+        let hasChanged = update !== "${publication?.linkProvider?.linkType}";
+        let Need2BeWarned = update === "PubMed ID" || update === "DOI";
+        return hasChanged && Need2BeWarned;
+    }
+
+    function shouldWarnWhenUpdatingPublicationLink(update) {
+        return update !== "${publication?.link}";
+    }
+
+    function showWarningMessage(message) {
+        console.log("need to check and ask to click Refresh button: ${publication?.link}");
+        toastr.clear();
+        toastr.warning(message);
     }
 </script>
