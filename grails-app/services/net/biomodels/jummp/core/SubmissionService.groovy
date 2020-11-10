@@ -31,6 +31,7 @@
 
 package net.biomodels.jummp.core
 
+import grails.converters.JSON
 import grails.plugin.cache.Cacheable
 import groovy.transform.CompileStatic
 import groovy.transform.TypeChecked
@@ -85,6 +86,7 @@ class SubmissionService {
     ModelFileFormatService modelFileFormatService
     ModelService modelService
     ModelDelegateService modelDelegateService
+    FileSystemService fileSystemService
     def springSecurityService
     def userService
     /**
@@ -900,6 +902,28 @@ class SubmissionService {
             }
             workingMemory.put("publication_objects_in_working", publication_objects_in_working)
             workingMemory.put("publicationContext", publication_objects_in_working)*/
+            String modelId = workingMemory.get("modelId")
+            RTC latest = modelDelegateService.getLatestRevision(modelId, false)
+            ModellingApproach approach = latest.model.modellingApproach
+            String modellingApproach = approach ? approach.name : ""
+            List files = new ArrayList()
+            for (RFTC it: latest.files) {
+                files.add(["filename": it.filename, "size": it.size,
+                           "description": it.description, "isModelFile": it.mainFile])
+                File file = new File(it.path)
+                String submissionFolder = workingMemory.get("submissionFolder")
+                File fileCopied = fileSystemService.transferFile(submissionFolder, file)
+                logger.debug("File ${fileCopied.absolutePath} copied to the submission directory $submissionFolder".toString())
+            }
+            workingMemory.put("RevisionTC", latest)
+            workingMemory.put("publication", latest.model.publication)
+            workingMemory.put("modellingApproach", modellingApproach)
+            workingMemory.put("otherInfo", latest.model.otherInfo)
+            workingMemory.put("files", files)
+            // the variable below is used for comparing the existing files and updated ones
+            // then decide which changes have been made
+            List existingFiles = files
+            workingMemory.put("existingFiles", existingFiles as JSON)
             sessionFactory.currentSession.clear()
         }
 

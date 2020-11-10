@@ -455,6 +455,9 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
         initials.put("isUpdate", isUpdate)
         initials.put("isUpdateOnExistingModel", isUpdate)
         initials.put("shouldCreateNewRevision", true) // TODO: get the checkbox
+        if (isUpdate) {
+            initials.put("modelId", params.id)
+        }
         submissionService.initialise(initials)
         initials
     }
@@ -470,24 +473,11 @@ An anonymous or restricted access user is trying to retrieve this model: ${model
         Map initials = initialiseSubmission(true)
         String modelId = params.id
         String titlePage = "Update model ${modelId} | BioModels"
-        RevisionTransportCommand latest = modelDelegateService.getLatestRevision(modelId, false)
-        ModellingApproach approach = latest.model.modellingApproach
-        String modellingApproach = approach ? approach.name : ""
-        List files = new ArrayList()
-        latest.files.each {
-            files.add(["filename": it.filename, "size": it.size,
-                       "description": it.description, "isModelFile": it.mainFile])
-            File file = new File(it.path)
-            fileSystemService.transferFile(initials.get("submissionFolder"), file)
-        }
+
         initials.put("modelId", modelId)
         initials.put("titlePage", titlePage)
         initials.put("uploadingFilesHeading", g.message(code: "submission.upload.review.titlePage"))
-        initials.put("RevisionTC", latest)
-        initials.put("publication", latest.model.publication)
-        initials.put("modellingApproach", modellingApproach)
-        initials.put("otherInfo", latest.model.otherInfo)
-        initials.put("files", files)
+
         // TODO: store the initial values (from initials) on Redis
         render(view: "submit", model: initials)
     }

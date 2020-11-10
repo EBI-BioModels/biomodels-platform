@@ -215,7 +215,7 @@
                 submissionSessionId: "${submissionSessionId}",
                 submissionFolder: "${submissionFolder}",
                 uploadingFiles: JSON.stringify(ids),
-                files: "${files}",
+                files: JSON.stringify(existingFiles),
                 isUpdate: isUpdate
             },
             async: false,

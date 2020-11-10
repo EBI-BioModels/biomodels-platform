@@ -282,7 +282,7 @@ class SubmissionController {
 
     private List<String> inferChangesMade(Map uploadedFiles) {
         List<String> changesMade = new ArrayList<>()
-        List parsedExistingFiles = JSON.parse(params.files) as List
+        List parsedExistingFiles = JSON.parse(params.files.decodeHTML()) as List
         for (JSONElement e : parsedExistingFiles) {
             boolean exists = uploadedFiles.find { String fName, String fSize ->
                 long size = Long.parseLong(fSize)
