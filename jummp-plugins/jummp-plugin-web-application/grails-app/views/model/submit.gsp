@@ -47,7 +47,10 @@
             };
             authorList = authorMap["authors"];
         }
-        var existingFiles = ${existingFiles};
+        var existingFiles;
+        if (${isUpdate}) {
+            existingFiles = ${existingFiles};
+        }
         var publication;
         var isUpdate = ${isUpdate};
         var revisionComments = "";
