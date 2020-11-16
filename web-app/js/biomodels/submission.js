@@ -12,7 +12,7 @@ $(document).ready(function () {
     let current = 1;
     let steps = $("fieldset").length;
     steps = 5;
-    setProgressBar(current);
+    setProgressBar(current, steps);
     $(".next").click(function () {
         validateData(current);
         let step;
@@ -26,6 +26,7 @@ $(document).ready(function () {
 
             // show the next fieldset
             next_fs.show();
+            window.history.replaceState(null, null, '?step=' + current);
             // hide the current fieldset with style
             current_fs.animate({opacity: 0}, {
                 step: function (now) {
@@ -40,7 +41,7 @@ $(document).ready(function () {
                 },
                 duration: 500
             });
-            setProgressBar(current);
+            setProgressBar(current, steps);
             step = current - 1;
             clearErrorMessages();
             updateSubFormAtStep(current);
@@ -60,7 +61,7 @@ $(document).ready(function () {
         // Remove class active
         $("#progressbar li").eq($("fieldset").index(current_fs)).removeClass("active");
         $("#progressbar li").eq(current).removeClass("active");
-
+        window.history.replaceState(null, null, '?step=' + current);
         // show the previous fieldset
         previous_fs.show();
         // hide the current fieldset with style
@@ -77,29 +78,12 @@ $(document).ready(function () {
             },
             duration: 500
         });
-        setProgressBar(current);
+        setProgressBar(current, steps);
     });
-
-    function setProgressBar(curStep) {
-        let percent = (100 / steps) * curStep;
-        percent = percent.toFixed();
-        $(".progress-meter").css("width", percent + "%");
-    }
 
     $(".submit").click(function () {
         return false;
     });
-
-    function setCheckList(curStep, isValid) {
-        console.log("ticked/crossed at the step " + curStep + " --- isValid: " + isValid);
-        if (isValid) {
-            $('#step' + curStep + ' .fa-times-circle').hide();
-            $('#step' + curStep + ' .fa-check-circle-o').show();
-        } else {
-            $('#step' + curStep + ' .fa-check-circle-o').hide();
-            $('#step' + curStep + ' .fa-times-circle').show();
-        }
-    }
 
     function hideAllInvalidIcons() {
         $('.fa-times-circle').hide();
@@ -171,3 +155,20 @@ $(document).ready(function () {
         }
     }
 });
+
+function setProgressBar(curStep, totalSteps) {
+    let percent = (100 / totalSteps) * curStep;
+    percent = percent.toFixed();
+    $(".progress-meter").css("width", percent + "%");
+}
+
+function setCheckList(curStep, isValid) {
+    console.log("ticked/crossed at the step " + curStep + " --- isValid: " + isValid);
+    if (isValid) {
+        $('#step' + curStep + ' .fa-times-circle').hide();
+        $('#step' + curStep + ' .fa-check-circle-o').show();
+    } else {
+        $('#step' + curStep + ' .fa-check-circle-o').hide();
+        $('#step' + curStep + ' .fa-times-circle').show();
+    }
+}

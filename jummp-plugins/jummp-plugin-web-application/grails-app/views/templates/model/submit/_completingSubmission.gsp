@@ -56,6 +56,7 @@
             console.log(response);
             currentValidation = response.status === "Success" ? true : false;
             $('#completionMessage').html(response.message);
+            setCheckList(5, currentValidation);
             /*if (currentValidation) {
                 $('#modelURL').attr("href", response.modelURL);
                 $('#modelURL').text(response.modelIdentifier);

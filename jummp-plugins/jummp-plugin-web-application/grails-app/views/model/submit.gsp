@@ -118,11 +118,8 @@
                   plugin="jummp-plugin-web-application"/>
     </fieldset>
 </form>
-<script
-    src="${resource(contextPath: serverURL, dir: 'js/biomodels', file: 'submission.js')}"></script>
-<script
-    src="${resource(contextPath: serverURL, dir: 'js/biomodels/uploader-1.0.2',
-        file: 'jquery.dm-uploader.min.js')}"></script>
+<g:javascript src="biomodels/submission.js" contextPath="" />
+<g:javascript src="biomodels/uploader-1.0.2/jquery.dm-uploader.min.js" contextPath="" />
 
 </body>
 <content tag="contexthelp">
