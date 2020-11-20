@@ -72,9 +72,13 @@ class SubmissionController {
         MFTC format = modelFileFormatService.inferModelFormat(rftcList)
 
         boolean isUpdate = params.boolean("isUpdate")
+        boolean isAmend = params.boolean("isAmend")
+        working.put("isAmend", isAmend)
         MTC model = new MTC()
+        RTC revision = new RTC(files: rftcList, model: model, format: format)
         if (isUpdate && params.modelId) {
-            model = modelDelegateService.getLatestRevision(params.modelId, false).model
+            revision = modelDelegateService.getLatestRevision(params.modelId, false)
+            model = revision.model
         }
 
         // populate model info
@@ -95,8 +99,6 @@ class SubmissionController {
         }
         working.put("isUpdateOnExistingModel", isUpdate)
         working.put("shouldCreateNewRevision", true) // TODO: allow curators decide
-
-        RTC revision = new RTC(files: rftcList, model: model, format: format)
 
         revision.model = model
         revision.name = model.name

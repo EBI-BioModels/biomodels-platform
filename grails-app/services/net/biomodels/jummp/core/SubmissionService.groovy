@@ -38,7 +38,6 @@ import groovy.transform.TypeChecked
 import groovy.transform.TypeCheckingMode
 import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter
-import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC //rude?
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
 import net.biomodels.jummp.core.model.PublicationDetailExtractionContext
@@ -49,7 +48,6 @@ import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelFormat
-import net.biomodels.jummp.model.Revision
 import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
 import org.hibernate.SessionFactory
 import org.perf4j.aop.Profiled
@@ -778,6 +776,7 @@ class SubmissionService {
         void initialise(Map<String, Object> workingMemory) {
             super.initialise(workingMemory)
             def publication_objects_in_working = initialisePublicationMap()
+            workingMemory.put("existingFiles", null)
             workingMemory.put("publication_objects_in_working", publication_objects_in_working)
             workingMemory.put("publicationContext", publication_objects_in_working)
         }
@@ -1017,7 +1016,11 @@ class SubmissionService {
                 modelFileFormatService.updateDescription(revision, NEW_DESCRIPTION)
                 changes.add("Edited model description")
             }
-            modelService.addRevision(repoFiles, deleteFiles, revision)
+            if (workingMemory.get("isAmend")) {
+                modelService.amendRevision(repoFiles, deleteFiles, revision)
+            } else {
+                modelService.addRevision(repoFiles, deleteFiles, revision)
+            }
             return changes
         }
 

@@ -180,6 +180,18 @@
 <div class="row">
     <div class="columns small-12 medium-2 large-2">
         <span class="submission-prop">
+            Do you want to amend the revision?
+        </span>
+    </div>
+    <div class="columns small-12 medium-10 large-10">
+        <div id="amend-create-new-revision">
+            <g:checkBox name="isAmend" id="is-amend" value="${false}" />
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="columns small-12 medium-2 large-2">
+        <span class="submission-prop">
             <g:message code="submission.summary.revisionLabel"/>
         </span>
     </div>
@@ -241,4 +253,13 @@
         // Explain what you have updated
         revisionComments = $('#revisionComments').val();
     }
+
+    $('#is-amend').on("click", function () {
+        isAmend = $(this).is(":checked");
+        if (isAmend) {
+            // TODO: get the last commit message
+        } else {
+
+        }
+    });
 </script>

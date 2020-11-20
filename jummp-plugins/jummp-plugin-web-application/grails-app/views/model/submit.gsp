@@ -53,6 +53,7 @@
         }
         var publication;
         var isUpdate = ${isUpdate};
+        var isAmend = false;
         var revisionComments = "";
         var modelId = "${modelId}";
         var changesMade = [];

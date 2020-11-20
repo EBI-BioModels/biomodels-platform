@@ -42,6 +42,7 @@
             url: url,
             data: {
                 isUpdate: isUpdate,
+                isAmend: isAmend,
                 modelFile: JSON.stringify(modelFile),
                 additionalFiles: JSON.stringify(additionalFiles),
                 modelInfo: JSON.stringify(modelInfo),

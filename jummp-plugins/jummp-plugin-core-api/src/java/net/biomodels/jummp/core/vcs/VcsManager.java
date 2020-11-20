@@ -84,7 +84,7 @@ public interface VcsManager {
      * @throws VcsException
      */
     String updateModel(File modelDirectory, List<File> files,
-                       List<File> deleted, String commitMessage) throws VcsException;
+                       List<File> deleted, String commitMessage, boolean isAmend) throws VcsException;
 
     /**
      * Overloaded method for convenience using a default commit message.
@@ -97,7 +97,7 @@ public interface VcsManager {
      * @throws VcsException
      */
     String updateModel(File modelDirectory, List<File> files,
-                       List<File> deleted) throws VcsException;
+                       List<File> deleted, boolean isAmend) throws VcsException;
 
     /**
      * Retrieves files at the @p modelDirectory  of given @p revision.

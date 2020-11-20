@@ -767,9 +767,27 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         return attachedRevision ?: revision
     }
 
+    @PreAuthorize("hasRole('ROLE_USER')")
+    @PostLogging(LoggingEventType.UPDATE)
+    @Profiled(tag="modelService.amendRevision")
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    Revision amendRevision(final List<RepositoryFileTransportCommand> repoFiles,
+                         final List<RepositoryFileTransportCommand> deleteFiles,
+                         final RevisionTransportCommand rev) throws ModelException {
+        logger.debug("Amending the revision: ${rev.dump()}")
+        Revision revision
+        def txDefinition = [
+            // this tx will use a different session than the current one
+            propagationBehavior: TransactionDefinition.PROPAGATION_REQUIRES_NEW
+        ]
+        Revision.withTransaction(txDefinition) {
+            // the returned revision is detached from the Hibernate session
+            revision = doAmendRevision(repoFiles, deleteFiles, rev)
         }
+        Revision attachedRevision = doPostPersistRevision(revision)
+        return attachedRevision ?: revision
+        return revision
     }
-
     /**
      * Persists a new model revision in the database and upload the repository files in VCS.
      *
@@ -825,6 +843,38 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         }
         stopWatch.stop()
         return revision
+    }
+
+    Revision doAmendRevision(List<RepositoryFileTransportCommand> repoFiles,
+                             List<RepositoryFileTransportCommand> deleteFiles,
+                             RevisionTransportCommand rev) throws ModelException {
+        StopWatch stopWatch = new Log4JStopWatch("modelService.doAmendRevision")
+        validateModelRevision(rev)
+
+        List<File> modelFiles = repositoryFileService.getFilesFromRF(repoFiles)
+        List<File> filesToDelete = repositoryFileService.getFilesFromRF(deleteFiles)
+        final User currentUser = User.findByUsername(springSecurityService.authentication.name)
+        final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
+        Model model = getModel(PERENNIAL_ID)
+        // fetch the current revision from the database
+        Revision revision = Revision.get(rev.id)
+        // update the revision with the potential updates populated in the rev argument
+        doUpdateRevision(revision, rev)
+        List<RepositoryFile> domainObjects = repositoryFileService.convertRFTCToRF(repoFiles, revision)
+
+        putFilesUnderVcs(model, revision, domainObjects, modelFiles, filesToDelete, true)
+
+        if (revision.validate()) {
+            doUpdateModelMetadata(model, rev)
+            revision.save()
+            model.save(flush: true)
+            doUpdatePermissions(model, revision, currentUser)
+        } else {
+            discardFailedRevision(model, revision, repoFiles)
+            revision = null
+        }
+        stopWatch.stop()
+        revision
     }
 
     /**

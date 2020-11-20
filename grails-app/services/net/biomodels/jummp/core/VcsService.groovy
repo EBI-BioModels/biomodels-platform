@@ -87,8 +87,9 @@ class VcsService implements InitializingBean {
     **/
     @PreAuthorize("hasPermission(#model, write) or hasRole('ROLE_ADMIN')")
     @Profiled(tag = "vcsService.updateModel")
-    String updateModel(final Model model, final List<File> files, final List<File> deleted,
-           final String commitMessage) throws VcsException {
+    String updateModel(final Model model, final List<File> files,
+                       final List<File> deleted, final String commitMessage,
+                       final boolean isAmend = false) throws VcsException {
         if (!isValid()) {
             throw new VcsException("Version Control System is not valid")
         }
@@ -97,16 +98,18 @@ class VcsService implements InitializingBean {
                     File.separator).append(model.vcsIdentifier).toString()
         final File MODEL_FOLDER = new File(modelFolderPath)
         if (commitMessage == null || commitMessage.isEmpty()) {
-            return vcsManager.updateModel(MODEL_FOLDER, files, deleted, "Updated at ${new Date().toGMTString()}")
+            String cmtMsg = "Updated at ${new Date().toGMTString()}"
+            return vcsManager.updateModel(MODEL_FOLDER, files, deleted, cmtMsg , isAmend)
         } else {
-            return vcsManager.updateModel(MODEL_FOLDER, files, deleted, commitMessage)
+            return vcsManager.updateModel(MODEL_FOLDER, files, deleted, commitMessage, isAmend)
         }
     }
 
     @PreAuthorize("hasPermission(#model, write) or hasRole('ROLE_ADMIN')")
     @Profiled(tag = "vcsService.updateModel")
-    String updateModel(final Model model, final File file, final String commitMessage) throws VcsException {
-        return updateModel(model, [file], [], commitMessage);
+    String updateModel(final Model model, final File file,
+                       final String commitMessage, final boolean isAmend = false) throws VcsException {
+        return updateModel(model, [file], [], commitMessage, isAmend);
     }
     /**
      * Imports a new Model file into the VCS.
