@@ -50,6 +50,7 @@ import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+import org.perf4j.StopWatch
 import org.perf4j.aop.Profiled
 import org.perf4j.log4j.Log4JStopWatch
 import org.springframework.beans.factory.ObjectFactory
@@ -762,31 +763,11 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             // the returned revision is detached from the Hibernate session
             revision = persistRevision(repoFiles, deleteFiles, rev)
         }
-        if (revision) {
-            /*
-             * Force the new revision to be fetched from the database.
-             *
-             * With the default MySQL transaction isolation level, the following query would
-             * return null because within the current tx we're already loaded the model's
-             * revisions and REPEATABLE_READS means that we're always going to get the same
-             * result within the same tx (in order to avoid dirty reads).
-             * Here there is no risk of dirty reads, it's actually desired behaviour, so
-             * we need isolation level READ_COMMITTED.
-             *
-             * Use eager loading for the model and the format because we expect them to be
-             * unproxied downstream when we're creating the revision transport command.
-             */
-            def attachedRevision = Revision.findByModelAndRevisionNumber(revision.model,
-                revision.revisionNumber, [fetch: [model: "eager", format: 'eager']])
+        Revision attachedRevision = doPostPersistRevision(revision)
+        return attachedRevision ?: revision
+    }
 
-            def revisionAdapter = new RevisionAdapter(revision: attachedRevision)
-            RevisionTransportCommand cmd = revisionAdapter.toCommandObject()
-            indexModelRevision(cmd)
-            //convertModelToOtherFormats(cmd)
-            shareRevision2FellowCurators(cmd)
-            return attachedRevision
         }
-        revision
     }
 
     /**
@@ -806,113 +787,43 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     Revision persistRevision(List<RepositoryFileTransportCommand> repoFiles,
                              List<RepositoryFileTransportCommand> deleteFiles,
                              RevisionTransportCommand rev) throws ModelException {
+        StopWatch stopWatch = new Log4JStopWatch("modelService.persistRevision")
         // TODO: the method should be thread safe, add a lock
-        if (!rev.model) {
-            throw new ModelException(null, "Model may not be null")
-        }
-        if (rev.model.deleted) {
-            throw new ModelException(rev.model, "A new Revision cannot be added to a deleted model")
-        }
-        if (rev.comment == null) {
-            throw new ModelException(rev.model, "Comment may not be null, empty comment is allowed")
-        }
+        validateModelRevision(rev)
         List<File> modelFiles = repositoryFileService.getFilesFromRF(repoFiles)
         List<File> filesToDelete = repositoryFileService.getFilesFromRF(deleteFiles)
-
         final User currentUser = User.findByUsername(springSecurityService.authentication.name)
         final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
-        Model model = getModel(PERENNIAL_ID)
         final String formatVersion = rev.format.formatVersion ?: modelFileFormatService.getFormatVersion(rev)
+        Model model = getModel(PERENNIAL_ID)
+        // initialise a new revision
         Revision revision = new Revision(model: model, name: rev.name, description: rev.description,
                     comment: rev.comment, uploadDate: new Date(), owner: currentUser,
                     validated: rev.validated, curationState: rev.curationState, minorRevision: rev.minorRevision,
                     format: ModelFormat.findByIdentifierAndFormatVersion(rev.format.identifier, formatVersion),
-                    validationReport: rev.validationReport, validationLevel: rev.validationLevel, readmeSubmission:
-            rev.readmeSubmission)
-        def stopWatch = new Log4JStopWatch("modelService.addRevision.rftcCreation")
+                    validationReport: rev.validationReport, validationLevel: rev.validationLevel,
+                    readmeSubmission: rev.readmeSubmission)
         List<RepositoryFile> domainObjects = repositoryFileService.convertRFTCToRF(repoFiles, revision)
 
-        stopWatch.lap("RepositoryFileTransportCommands created.")
-        // save the new model in the database
-        stopWatch.setTag("modelService.addRevision.persistModel")
-        try {
-            String vcsId = vcsService.updateModel(model, modelFiles, filesToDelete, revision.comment)
-            revision.vcsId = vcsId
-        } catch (VcsException e) {
-            revision.discard()
-            domainObjects.each{ it.discard() }
-            log.error("Exception occurred during uploading a new Model Revision to VCS: ${e.getMessage()}")
-            stopWatch.stop()
-            throw new ModelException(new ModelAdapter(model: model).toCommandObject(),
-                "Could not store new Model Revision for Model ${model.id} with VcsIdentifier ${model.vcsIdentifier} in VCS", e)
-        }
-        domainObjects.each {
-            revision.addToRepoFiles(it)
-        }
+        putFilesUnderVcs(model, revision, domainObjects, modelFiles, filesToDelete, false)
+
         // calculate the new revision number - accessing the revisions directly to circumvent ACL
         revision.revisionNumber = model.revisions.sort {it.revisionNumber}.last().revisionNumber + 1
 
         if (revision.validate()) {
             model.addToRevisions(revision)
-            model.modellingApproach = rev.model.modellingApproach
-            model.otherInfo = rev.model.otherInfo
-            PublicationTransportCommand publicationTC = rev.model.publication
-            if (!publicationTC && model.publication) {
-                // delete db association if corresponding publication was removed in the UI
-                model.publication = null
-            } else if (publicationTC) {
-                // update db association with the value from the UI
-                try {
-                    model.publication = publicationService.fromCommandObject(publicationTC)
-                } catch(Exception e) {
-                    log.error("Unable to record publication for ${rev.model}: ${e.message}", e)
-                }
-            }
-            //save repoFiles, revision and model in one go
-            revision.save()
-            model.save(flush: true)
-            stopWatch.lap("Model persisted to the database.")
-            stopWatch.setTag("modelService.addRevision.grantPermissions")
-            aclInsertionLock.lock()
-            try {
-                aclUtilService.addPermission(revision, currentUser.username, BasePermission.ADMINISTRATION)
-                aclUtilService.addPermission(revision, currentUser.username, BasePermission.READ)
-                aclUtilService.addPermission(revision, currentUser.username, BasePermission.DELETE)
+            doUpdateModelMetadata(model, rev)
+            //revision.save()
+            //model.save(flush: true)
+            doUpdatePermissions(model, revision, currentUser)
 
-                //grant admin rights to the owner of the model
-                Revision earliest = Revision.findByModelAndRevisionNumber(revision.model, 1)
-                aclUtilService.addPermission(revision, earliest.owner.username, BasePermission.ADMINISTRATION)
-                aclUtilService.addPermission(revision, earliest.owner.username, BasePermission.DELETE)
-
-                // grant read access to all users having read access to the model
-                Acl acl = aclUtilService.readAcl(model)
-                for (ace in acl.entries) {
-                    if (ace.sid instanceof PrincipalSid && ace.permission == BasePermission.READ) {
-                        aclUtilService.addPermission(revision, ace.sid.principal, BasePermission.READ)
-                    }
-                    if (ace.sid instanceof PrincipalSid && ace.permission == BasePermission.ADMINISTRATION) {
-                        aclUtilService.addPermission(revision, ace.sid.principal, BasePermission.ADMINISTRATION)
-                    }
-                }
-            } finally {
-                aclInsertionLock.unlock()
-            }
-
-            stopWatch.stop()
             // !! THIS HAS TO BE IN A SEPARATE METHOD WITH A DEDICATED TRANSACTION CONTEXT !!
             /*grailsApplication.mainContext.publishEvent(new RevisionCreatedEvent(this,
                    new RevisionAdapter(revision: revision).toCommandObject(), vcsService.retrieveFiles(revision)))*/
         } else {
-            // TODO: this means we have imported the revision into the VCS, but it failed to be saved in the database, which is pretty bad
-            revision.errors.allErrors.each {
-               log.error(it)
-            }
-            revision.discard()
-            final def m = new ModelAdapter(model: model).toCommandObject()
-            log.error("New Revision containing ${repoFiles.inspect()} for Model ${m} with VcsIdentifier ${model.vcsIdentifier} added to VCS, but not stored in database")
-            stopWatch.stop()
-            throw new ModelException(m, "Revision stored in VCS, but not in database")
+            discardFailedRevision(model, revision, repoFiles)
         }
+        stopWatch.stop()
         return revision
     }
 
@@ -2495,6 +2406,7 @@ There has been error while adding $approach to the model ${revisionTC.identifier
      * @param command {@link RevisionTransportCommand} object
      */
     private void shareRevision2FellowCurators(RevisionTransportCommand command) {
+        StopWatch stopWatch = new Log4JStopWatch("modelService.shareRevision2FellowCurators")
         Revision revision = Revision.get(command.id)
         // Check authorities
         User owner = revision.owner
@@ -2507,5 +2419,165 @@ There has been error while adding $approach to the model ${revisionTC.identifier
         } else {
             log.debug("cannot share the model ${command.identifier()} to fellow curators")
         }
+        stopWatch.stop()
+    }
+
+    private Revision doPostPersistRevision(final Revision revision) {
+        StopWatch stopWatch = new Log4JStopWatch("modelService.doPostPersistRevision")
+        if (revision) {
+            /*
+             * Force the new revision to be fetched from the database.
+             *
+             * With the default MySQL transaction isolation level, the following query would
+             * return null because within the current tx we're already loaded the model's
+             * revisions and REPEATABLE_READS means that we're always going to get the same
+             * result within the same tx (in order to avoid dirty reads).
+             * Here there is no risk of dirty reads, it's actually desired behaviour, so
+             * we need isolation level READ_COMMITTED.
+             *
+             * Use eager loading for the model and the format because we expect them to be
+             * unproxied downstream when we're creating the revision transport command.
+             */
+            def attachedRevision = Revision.findByModelAndRevisionNumber(revision.model,
+                revision.revisionNumber, [fetch: [model: "eager", format: 'eager']])
+
+            def revisionAdapter = new RevisionAdapter(revision: attachedRevision)
+            RevisionTransportCommand cmd = revisionAdapter.toCommandObject()
+            indexModelRevision(cmd)
+            //convertModelToOtherFormats(cmd)
+            shareRevision2FellowCurators(cmd)
+            updateModelCache(attachedRevision)
+            return attachedRevision
+        }
+        stopWatch.stop()
+        return null
+    }
+
+    private void doUpdatePermissions(final Model model, final Revision revision, final User user) {
+        StopWatch stopWatch = new Log4JStopWatch("modelService.doUpdatePermissions")
+        aclInsertionLock.lock()
+        try {
+            aclUtilService.addPermission(revision, user.username, BasePermission.ADMINISTRATION)
+            aclUtilService.addPermission(revision, user.username, BasePermission.READ)
+            aclUtilService.addPermission(revision, user.username, BasePermission.DELETE)
+
+            // grant admin rights to the owner of the model
+            Revision earliest = Revision.findByModelAndRevisionNumber(revision.model, 1)
+            aclUtilService.addPermission(revision, earliest.owner.username, BasePermission.ADMINISTRATION)
+            aclUtilService.addPermission(revision, earliest.owner.username, BasePermission.DELETE)
+
+            // grant read access to all users having read access to the model
+            Acl acl = aclUtilService.readAcl(model)
+            for (ace in acl.entries) {
+                if (ace.sid instanceof PrincipalSid && ace.permission == BasePermission.READ) {
+                    aclUtilService.addPermission(revision, ace.sid.principal, BasePermission.READ)
+                }
+                if (ace.sid instanceof PrincipalSid && ace.permission == BasePermission.ADMINISTRATION) {
+                    aclUtilService.addPermission(revision, ace.sid.principal, BasePermission.ADMINISTRATION)
+                }
+            }
+        } finally {
+            aclInsertionLock.unlock()
+        }
+        stopWatch.stop()
+    }
+
+    private void validateModelRevision(final RevisionTransportCommand rev) throws ModelException {
+        StopWatch stopWatch = new Log4JStopWatch("modelService.validateModelRevision")
+        if (!rev.model) {
+            throw new ModelException(null, "Model may not be null")
+        }
+        if (rev.model.deleted) {
+            throw new ModelException(rev.model, "A new Revision cannot be added to a deleted model")
+        }
+        if (rev.comment == null) {
+            throw new ModelException(rev.model, "Comment may not be null, empty comment is allowed")
+        }
+        stopWatch.stop()
+    }
+
+    private Model doUpdateModelMetadata(final Model model, final RevisionTransportCommand revision) {
+        StopWatch stopWatch = new Log4JStopWatch("modelService.doUpdateModelMetadata")
+        model.modellingApproach = revision.model.modellingApproach
+        model.otherInfo = revision.model.otherInfo
+        PublicationTransportCommand publicationTC = revision.model.publication
+        if (!publicationTC && model.publication) {
+            // delete db association if corresponding publication was removed in the UI
+            model.publication = null
+        } else if (publicationTC) {
+            // update db association with the value from the UI
+            try {
+                model.publication = publicationService.fromCommandObject(publicationTC)
+            } catch(Exception e) {
+                logger.error("Unable to record publication for ${revision.model}: ${e.message}", e)
+            }
+        }
+        stopWatch.stop()
+        return model
+    }
+
+    private Revision putFilesUnderVcs(final Model model, final Revision revision,
+                                      final List domainObjects, final List modelFiles,
+                                      final List filesToDelete, final boolean isAmend) {
+        StopWatch stopWatch = new Log4JStopWatch("modelService.putFilesUnderVcs")
+        try {
+            String vcsId = vcsService.updateModel(model, modelFiles, filesToDelete, revision.comment, isAmend)
+            revision.vcsId = vcsId
+        } catch (VcsException e) {
+            revision.discard()
+            domainObjects.each { it.discard() }
+            logger.error("Exception occurred during uploading a new Model Revision to VCS: ${e.getMessage()}")
+            stopWatch.stop()
+            throw new ModelException(new ModelAdapter(model: model).toCommandObject(),
+                "Could not store new Model Revision for Model ${model.id} with VcsIdentifier ${model.vcsIdentifier} in VCS", e)
+        }
+        domainObjects.each {
+            revision.addToRepoFiles(it)
+        }
+        stopWatch.stop()
+        return revision
+    }
+
+    private void discardFailedRevision(final Model model, final Revision revision, final List repoFiles) {
+        // TODO: this means we have imported the revision into the VCS, but it failed to be saved in the database, which is pretty bad
+        StopWatch stopWatch = new Log4JStopWatch("modelService.discardFailedRevision")
+        revision.errors.allErrors.each {
+            logger.error(it)
+        }
+        revision.discard()
+        final def m = new ModelAdapter(model: model).toCommandObject()
+        logger.error("""New Revision containing ${repoFiles.inspect()} for Model ${m} with VcsIdentifier \
+${model.vcsIdentifier} added to VCS, but not stored in database""")
+        throw new ModelException(m, "Revision stored in VCS, but not in database")
+        stopWatch.stop()
+    }
+
+    private Revision doUpdateRevision(Revision revision, RevisionTransportCommand rev) {
+        StopWatch stopWatch = new Log4JStopWatch("modelService.doUpdateRevision")
+        final User currentUser = User.findByUsername(springSecurityService.authentication.name)
+        final String formatVersion = rev.format.formatVersion ?: modelFileFormatService.getFormatVersion(rev)
+        revision.with {
+            name = rev.name
+            description = rev.description
+            comment = rev.comment
+            uploadDate = new Date()
+            owner = currentUser
+            validated = rev.validated
+            curationState = rev.curationState
+            minorRevision = rev.minorRevision
+            format = ModelFormat.findByIdentifierAndFormatVersion(rev.format.identifier, formatVersion)
+            validationReport = rev.validationReport
+            validationLevel = rev.validationLevel
+            readmeSubmission = rev.readmeSubmission
+            repoFiles = null
+        }
+        // delete the previous repository files associating with the revision
+        RepositoryFile.where { revision == revision }.deleteAll()
+        stopWatch.stop()
+        return revision
+    }
+
+    private void updateModelCache(final Revision revision) {
+        repositoryFileService.updateModelRevisionCache(revision)
     }
 }
