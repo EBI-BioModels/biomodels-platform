@@ -48,11 +48,11 @@ import net.biomodels.jummp.core.vcs.VcsFileDetails
 import net.biomodels.jummp.model.*
 import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
 import org.perf4j.StopWatch
 import org.perf4j.aop.Profiled
 import org.perf4j.log4j.Log4JStopWatch
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.ObjectFactory
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.access.prepost.PostAuthorize
@@ -108,17 +108,7 @@ import java.util.concurrent.locks.ReentrantLock
 @SuppressWarnings("GroovyUnusedCatchParameter")
 @Transactional
 class ModelService {
-    /**
-     * The class logger.
-     */
-    private static final Log log = LogFactory.getLog(this)
-    /**
-     * Threshold for the verbosity of the logger.
-     */
-    private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
-    /**
-     * Dependency Injection of Spring Security Service
-     */
+    private static final Logger logger = LoggerFactory.getLogger(ModelService.class)
     def springSecurityService
     /**
      * Dependency Injection of AclUtilService
@@ -258,7 +248,7 @@ class ModelService {
         try {
             results = Model.getAll(Model.executeQuery(query, namedParams, metaParams))
         } catch (Exception e) {
-            log.error("Exception $e while executing $query with '$namedParams' (page '$metaParams')")
+            logger.error("Exception $e while executing $query with '$namedParams' (page '$metaParams')")
         }
         results
     }
@@ -301,7 +291,7 @@ WHERE r.model = r2.model
                 break
             default:
                 if (type) {
-                    log.warn("Ignoring unsupported permission level '$type'.")
+                    logger.warn("Ignoring unsupported permission level '$type'.")
                 } else if (!isAdmin) {
                     query = """$query AND ((r.owner.id = ${u.id} AND r.state = '${ModelState.UNPUBLISHED}')
 OR (r.owner.id != ${u.id} AND r.state = '${ModelState.UNPUBLISHED}')
@@ -548,7 +538,8 @@ WHERE
     **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getLatestRevision")
-    public Revision getLatestRevision(Model model, boolean addToHistory = true) {
+    Revision getLatestRevision(Model model, boolean addToHistory = true) {
+        logger.debug("Get the latest revision of the model: ${model.submissionId}")
         if (!model) {
             return null
         }
@@ -633,7 +624,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         // exclude deleted revisions
         modelHistoryService.addModelToHistory(model)
         List<Revision> revisions = model.revisions.toList().findAll { !it.deleted }.sort {it.revisionNumber}
-        log.debug("All Domain Revision Objects: ${revisions.dump()}")
+        logger.debug("All Domain Revision Objects: ${revisions.dump()}")
         return revisions
     }
 
@@ -727,7 +718,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         if (repoFile) {
            return uploadModelAsList([repoFile], meta)
         }
-        log.error("No file provided during the update of ${meta.properties}")
+        logger.error("No file provided during the update of ${meta.properties}")
         throw new ModelException(meta, "The new version of the model does not have any files.")
     }
 
@@ -956,11 +947,11 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @Profiled(tag="modelService.doUploadValidatedModel")
     Model doUploadValidatedModel(final List<RepositoryFileTransportCommand> repoFiles,
             RevisionTransportCommand rev) throws ModelException {
-        log.debug "About to store the following model: ${rev.name}"
+        logger.debug "About to store the following model: ${rev.name}"
         // TODO: to support anonymous submissions, this method has to be changed
         if (Revision.findByName(rev.name)) {
             final String msg = "There is already a Model with name ${rev.name}".toString()
-            log.warn(msg)
+            logger.warn(msg)
         }
         ModelBuilder modelBuilder = new ModelBuilder(repoFiles, rev).build()
         Model model = modelBuilder.model
@@ -1002,30 +993,30 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         def stopWatch = new Log4JStopWatch("modelService.uploadModelAsList.sanityChecks")
         // TODO: to support anonymous submissions this method has to be changed
         if (!repoFiles || repoFiles.size() == 0) {
-            log.error("No files were provided as part of the submission of model ${meta.properties}")
+            logger.error("No files were provided as part of the submission of model ${meta.properties}")
             throw new ModelException(meta, "A model must contain at least one file.")
         }
         Model model = new Model()
         List<File> modelFiles = []
         for (rf in repoFiles) {
             if (!rf || !rf.path) {
-                log.error("No file was provided as part of the submission of model ${meta.properties}")
+                logger.error("No file was provided as part of the submission of model ${meta.properties}")
                 throw new ModelException(meta, "Please supply at least one file for this model.")
             }
             final String path = rf.path
             if (!path || path.isEmpty()) {
-                log.error("Null file encountered while creating ${meta.properties}: ${repoFiles.properties}")
+                logger.error("Null file encountered while creating ${meta.properties}: ${repoFiles.properties}")
                 throw new ModelException(meta,
                     "Sorry, there was a problem with one of the files you submitted. Please refine the files you wish to upload and try again.")
             }
             final def f = new File(path)
             if (!f.exists()) {
-                log.error("Non-existent file detected while uploading a new revision for ${meta.properties}: ${f.properties}")
+                logger.error("Non-existent file detected while uploading a new revision for ${meta.properties}: ${f.properties}")
                 throw new ModelException(meta,
                     "Sorry, one of the files you submitted does not appear to exist. Please refine the files you wish to upload and try again")
             }
             if (f.isDirectory()) {
-                log.error("Folder detected while uploading a new revision for ${meta.properties}: ${repoFiles.properties}")
+                logger.error("Folder detected while uploading a new revision for ${meta.properties}: ${repoFiles.properties}")
                 throw new ModelException(meta, "Sorry, we currently do not accept models organised into subfolders.")
             }
             modelFiles.add(f)
@@ -1036,7 +1027,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         ModelFormat format = ModelFormat.findByIdentifierAndFormatVersion(meta.format.identifier, "*")
         if (!modelFileFormatService.validate(modelFiles, format, [])) {
             def err = "The files ${modelFiles.inspect()} do no comprise valid ${meta.format.identifier}"
-            log.error(err)
+            logger.error(err)
        //     throw new ModelException(meta, "Invalid ${meta.format.identifier} submission.")
             valid = false
         }
@@ -1059,7 +1050,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         boolean success = modelFolder.mkdirs()
         if (!success) {
             def err = "Cannot create the directory where the ${name} should be stored"
-            log.error(err)
+            logger.error(err)
             throw new ModelException(meta, err.toString())
         }
         model.vcsIdentifier = new StringBuilder(containerName).append(File.separator).
@@ -1093,7 +1084,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             errMsg.append("${m.properties} to VCS: ${e.getMessage()}.\n")
             errMsg.append("${model.errors.allErrors.inspect()}\n")
             errMsg.append("${revision.errors.allErrors.inspect()}\n")
-            log.error(errMsg)
+            logger.error(errMsg)
             stopWatch.stop()
             throw new ModelException(m,
                 "Could not store new Model $m.properties} in VCS".toString(), e)
@@ -1115,7 +1106,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
                 def msg  = new StringBuffer("New Model ${name} does not validate:\n")
                 msg.append("${model.errors.allErrors.inspect()}\n")
                 msg.append("${revision.errors.allErrors.inspect()}\n")
-                log.error(msg)
+                logger.error(msg)
                 stopWatch.stop()
                 throw new ModelException(new ModelAdapter(model: model).toCommandObject(), "New model does not validate")
             }
@@ -1140,7 +1131,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             revision.discard()
             domainObjects.each {it.discard()}
             model.discard()
-            log.error("New Model ${model.properties} with properties ${meta.properties} does not validate:${revision.errors.allErrors.inspect()}")
+            logger.error("New Model ${model.properties} with properties ${meta.properties} does not validate:${revision.errors.allErrors.inspect()}")
             throw new ModelException(new ModelAdapter(model: model).toCommandObject(), "Sorry, but the new Model does not seem to be valid.")
         }
         return model
@@ -1195,42 +1186,42 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             throw new ModelException(mtc, "Comment may not be null, empty comment is allowed")
         }
         if (!repoFiles || repoFiles.size() == 0) {
-            log.error("No files were provided as part of the update of model ${model.properties}")
+            logger.error("No files were provided as part of the update of model ${model.properties}")
             throw new ModelException(mtc, "A new version of the model must contain at least one file.")
         }
         List<File> modelFiles = []
         for (rf in repoFiles) {
             if (!rf || !rf.path) {
-                log.error("No file was provided as part of the update of model ${model.properties}")
+                logger.error("No file was provided as part of the update of model ${model.properties}")
                 throw new ModelException(mtc, "Please supply at least one file for the new version of this model.")
             }
             final String path = rf.path
             if (!path || path.isEmpty()) {
-                log.error("Null file encountered while uploading a new revision for ${model.properties}: ${repoFiles.properties}")
+                logger.error("Null file encountered while uploading a new revision for ${model.properties}: ${repoFiles.properties}")
                 throw new ModelException(mtc,
                     "Sorry, there was something wrong with one of the files you submitted. Please refine the files you wish to upload and try again.")
             }
             final def f = new File(path)
             if (!f.exists()) {
-                log.error("Non-existent file detected while uploading a new revision for ${model.properties}: ${f.properties}")
+                logger.error("Non-existent file detected while uploading a new revision for ${model.properties}: ${f.properties}")
                 throw new ModelException(mtc,
                     "Sorry, one of the files you submitted does not appear to exist. Please refine the files you wish to upload and try again")
             }
             if (f.isDirectory()) {
-                log.error("Folder detected while uploading a new revision for ${model.properties}: ${repoFiles.properties}")
+                logger.error("Folder detected while uploading a new revision for ${model.properties}: ${repoFiles.properties}")
                 throw new ModelException(mtc,
                     "Sorry, we currently do not accept model organised into sub-folders.")
             }
             if (rf.mainFile && f.length() == 0) {
                 def err = "File ${f.name} cannot be empty because it is the main file of the submission."
-                log.error err
+                logger.error err
                 throw new ModelException(mtc, err)
             }
             modelFiles.add(f)
         }
         boolean valid = true
         if (!modelFileFormatService.validate(modelFiles, format, [])) {
-            log.warn("""\
+            logger.warn("""\
 New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does not comprise valid ${format
                 .identifier}""")
             //throw new ModelException(m, "The file list does not comprise valid ${format.identifier}")
@@ -1253,7 +1244,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
         } catch (VcsException e) {
             revision.discard()
             domainObjects.each{ it.discard() }
-            log.error("Exception occurred during uploading a new Model Revision to VCS: ${e.getMessage()}")
+            logger.error("Exception occurred during uploading a new Model Revision to VCS: ${e.getMessage()}")
             throw new ModelException(mtc,
                 "Could not store new Model Revision for Model ${model.id} with VcsIdentifier ${model.vcsIdentifier} in VCS", e)
         }
@@ -1284,7 +1275,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
         } else {
             // TODO: this means we have imported the revision into the VCS, but it failed to be saved in the database, which is pretty bad
             revision.discard()
-            log.error("New Revision containing ${repoFiles.inspect()} for Model ${mtc} with VcsIdentifier ${model.vcsIdentifier} added to VCS, but not stored in database")
+            logger.error("New Revision containing ${repoFiles.inspect()} for Model ${mtc} with VcsIdentifier ${model.vcsIdentifier} added to VCS, but not stored in database")
             throw new ModelException(mtc, "Revision stored in VCS, but not in database")
         }
         return revision
@@ -1325,7 +1316,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
             files = repositoryFileService.retrieveFiles(revision)
         } catch (VcsException e) {
             String message = "Retrieving Revision ${revision.vcsId} for Model ${revision.name} from VCS failed."
-            log.error(message, e)
+            logger.error(message, e)
             ModelTransportCommand model = new ModelAdapter(model: revision.model).toCommandObject()
             throw new ModelException(model, message, e)
         }
@@ -1346,7 +1337,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
                 || SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')) {
             return repositoryFileService.getRepositoryFilesForRevision(revision)
         } else {
-            log.error "you can't access revision ${revision.id}!"
+            logger.error "you can't access revision ${revision.id}!"
             throw new AccessDeniedException("Sorry you are not allowed to download this Model")
         }
     }
@@ -1362,7 +1353,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
     List<RepositoryFileTransportCommand> retrieveModelFiles(final Model model) throws ModelException {
         final Revision revision = getLatestRevision(model, false)
         if (!revision) {
-            log.error("you cant access model ${model}")
+            logger.error("you cant access model ${model}")
             throw new AccessDeniedException("Sorry you are not allowed to download this Model.")
         }
         return retrieveModelFiles(revision)
@@ -1640,7 +1631,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
                     try {
                         aclUtilService.deletePermission(revision, principal, BasePermission.READ)
                     } catch(Exception e) {
-                        log.error e.message, e
+                        logger.error e.message, e
                         return false
                     }
                 }
@@ -2205,7 +2196,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
             shareRevision2FellowCurators(toPublishTC)
             return toPublish
         } else {
-            log.warn("""We are publishing $revision encoded in $format, but won't be able to add \
+            logger.warn("""We are publishing $revision encoded in $format, but won't be able to add \
 the perennial publication identifier to the model file""")
         }
         return revision
@@ -2236,7 +2227,7 @@ the perennial publication identifier to the model file""")
         revision.model.firstPublished = null
         revision.model.publicationId = null
         if (!revision.save(flush:true)) {
-            log.error("Revision ${revision.id} was not made private: ${revision.errors.allErrors}")
+            logger.error("Revision ${revision.id} was not made private: ${revision.errors.allErrors}")
         }
     }
 
@@ -2292,7 +2283,7 @@ the perennial publication identifier to the model file""")
                     changesMade: cmd.changesMade,
                     success: cmd.success)
             if (!audit.save(flush: true)) {
-                log.error("""\
+                logger.error("""\
 While trying to update an audit record, there is an error: ${audit.getErrors().allErrors.inspect()}""")
                 return -1
             } else {
@@ -2318,7 +2309,7 @@ While trying to update an audit record, there is an error: ${audit.getErrors().a
             audit.success = success
             if (audit.isDirty('success')) {
                 if (!audit.save(flush: true)) {
-                    log.error("""\
+                    logger.error("""\
 Failed to update audit $itemId to $success: ${audit.errors.allErrors.inspect()}""")
                 }
             }
@@ -2386,7 +2377,7 @@ WHERE
             RepositoryFile rf = revision.repoFiles.find { RepositoryFile rf -> rf.mainFile }
             File f = files.find { it.name == rf.path }
             if (!f) {
-                log.error "Cannot find main file for revision {}", revision.id
+                logger.error "Cannot find main file for revision {}", revision.id
                 return
             }
             String filename = revision.model.publicationId ?: revision.model.submissionId
@@ -2417,7 +2408,7 @@ WHERE
     }
 
     private convertModelToOtherFormats(RevisionTransportCommand cmd) {
-        log.info("""\
+        logger.info("""\
 Try to connect with Conversion service to export the model ${cmd.model.submissionId} under the other formats""")
         modelConversionService.generateExports(cmd)
     }
@@ -2443,7 +2434,7 @@ Try to connect with Conversion service to export the model ${cmd.model.submissio
         def sbmlService = grailsApplication.mainContext.getBean("sbmlService", ISbmlService.class)
         boolean result = sbmlService.addModellingApproachAsAnnotation(revisionTC, approach)
         if (!result) {
-            log.error("""\
+            logger.error("""\
 There has been error while adding $approach to the model ${revisionTC.identifier()}""")
         }
     }
@@ -2464,10 +2455,10 @@ There has been error while adding $approach to the model ${revisionTC.identifier
         Role curaRole = Role.findByAuthority("ROLE_CURATOR")
         boolean shouldShare = curaRole in roles
         if (shouldShare) {
-            log.debug("Publishing the event to share the revision ${command.identifier()}")
+            logger.debug("Publishing the event to share the revision ${command.identifier()}")
             grailsApplication.mainContext.publishEvent(new RevisionCreatedEvent(this, command))
         } else {
-            log.debug("cannot share the model ${command.identifier()} to fellow curators")
+            logger.debug("cannot share the model ${command.identifier()} to fellow curators")
         }
         stopWatch.stop()
     }

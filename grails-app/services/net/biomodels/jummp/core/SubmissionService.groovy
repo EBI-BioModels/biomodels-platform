@@ -68,7 +68,7 @@ import org.slf4j.LoggerFactory
  */
 @CompileStatic
 class SubmissionService {
-    private static final Logger log = LoggerFactory.getLogger(SubmissionService.class)
+    private static final Logger logger = LoggerFactory.getLogger(SubmissionService.class)
 
     // concrete strategies for the submission state machine
     private final NewModelStateMachine newModel = new NewModelStateMachine()
@@ -128,7 +128,7 @@ class SubmissionService {
             String submissionCssHref = appTagLib.resource(submissionCssMap)
             String publicationCssHref = appTagLib.resource(publicationCssMap)
             String uuid = UUID.randomUUID().toString()
-            log.debug("Generated submission folder using UUID: ${uuid}")
+            logger.debug("Generated submission folder using UUID: ${uuid}")
             Integer selectedValue = 7//unknownFormat?.id
 
             workingMemory.put("submissionFolder", uuid)
@@ -596,7 +596,7 @@ class SubmissionService {
                 cleanup(workingMemory)
             }
             catch (Exception e) {
-                log.error "Cannot process submission $workingMemory: ${e.message}", e
+                logger.error "Cannot process submission $workingMemory: ${e.message}", e
                 throw e // need this to enter error subflow
             }
             retval
