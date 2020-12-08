@@ -40,20 +40,21 @@
             <li><a href="${g.createLink(controller: 'search', action: 'search', params: [query: '*:*'])}">All
             models</a></li>
             <li><a
-                href="${g.createLink(controller: 'goChart', action: 'index', plugin: 'jummp-plugin-biomodels-dom')}">GO categories</a>
-            </li>
-            <li><a
                 href="${g.createLink(controller: 'parameterSearch', action: 'index', plugin:
                     'jummp-plugin-biomodels-dom')}">BioModels Parameters Search</a>
             </li>
+            <li><g:link mapping="covid19">COVID-19</g:link></li>
+            <li><a
+                href="${g.createLink(controller: 'goChart', action: 'index', plugin: 'jummp-plugin-biomodels-dom')}">GO categories</a>
+            </li>
             <li><g:link mapping="agedbrain">Neurodegeneration models</g:link></li>
             <li><g:link mapping="path2models">Path2Models models</g:link></li>
-            <li><g:link mapping="covid19">COVID-19</g:link></li>
             <li>
                 <a href="${g.createLink(controller: 'pdgsmm', action: 'index')}">
                     PDGSM models
                 </a>
             </li>
+            <li><g:link mapping="reproducibility">Reproducibility</g:link></li>
         </ul>
     </li>
     <li <g:if test="${g.pageProperty(name:'page.submit')?.length()}"> class="active" </g:if> role="menuitem">
