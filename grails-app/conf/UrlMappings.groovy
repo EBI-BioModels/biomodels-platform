@@ -56,10 +56,14 @@ class UrlMappings {
             controller = "feature"
             action = 'path2models'
         }
-        name covid19 : "/covid-19" {
-                controller = "feature"
-                action = 'covid19'
-            }
+        name covid19: "/covid-19" {
+            controller = "feature"
+            action = 'covid19'
+        }
+        name reproducibility: "/reproducibility" {
+            controller = "feature"
+            action = 'reproducibility'
+        }
         // used for web services
         "/$controller/$action?/$id?(.$format)?"{
             constraints {

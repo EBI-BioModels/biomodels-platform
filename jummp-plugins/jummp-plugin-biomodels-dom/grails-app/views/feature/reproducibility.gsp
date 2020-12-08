@@ -1,8 +1,8 @@
 <%--
   Created by IntelliJ IDEA.
-  User: tnguyen
-  Date: 06/07/2020
-  Time: 10:12
+  User: nvntung@gmail.com
+  Date: 07/12/2020
+  Time: 22:44
 --%>
 
 <%@ page contentType="text/html;charset=UTF-8" %>
@@ -10,10 +10,10 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="layout" content="${grailsApplication.config.jummp.branding.style}/main"/>
-    <title>Reproducible simulation studies targeting COVID-19 | BioModels</title>
+    <title>Reproducibility in Systems Biology Modelling | BioModels</title>
 </head>
 
 <body>
-    ${content}
+${content}
 </body>
 </html>

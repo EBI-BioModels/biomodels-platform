@@ -843,6 +843,13 @@
                                 </li>
                             </g:each>
                         </ul>
+                        <g:if test="${allRevs.size() > 1}">
+                            <p style="font-style: italic; font-size: smaller">(*) You might be seeing discontinuous
+                                revisions as only public revisions are displayed here. Any private revisions
+                                <img title="unpublished model revision" alt="unpublished model revision"
+                                     src="${grailsApplication.config.grails.serverURL}/images/lock.png"/>
+                                 of this model will only be shown to the submitter and their collaborators.</p>
+                        </g:if>
                     </div>
                     <g:if test="${convertedFilesTC}">
                     <div id="Exports">

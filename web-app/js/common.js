@@ -99,7 +99,7 @@ $("#registerForm #resetFormButton").click(function() {
 $('#registerForm input').on("change input", function() {
     hideNow();
 });
-$('input[name=username]').blur(function() {
+$('input[id=username]').blur(function() {
     var username = $(this).val().trim();
     if (username !== currentUsername) {
         var message = "";
@@ -119,12 +119,13 @@ $('input[name=username]').blur(function() {
                 } else {
                     message = "This username does not exist. Please check typos and spelling or try again."
                 }
-                if ("forgot" !== actionName) {
-                    showNotification(message);
-                } else if (username === "") {
-                    showNotification(message);
-                } else {
+                // When an anonymous user is trying to open a new account and username doesn't exist 
+                // or to login the system, don't show the warning message
+                if (("create" === actionName && username === "") || 
+                    ("auth" === actionName && username !== "")) {
                     hideNow();
+                } else {
+                    showNotification(message);
                 }
             }
         });
