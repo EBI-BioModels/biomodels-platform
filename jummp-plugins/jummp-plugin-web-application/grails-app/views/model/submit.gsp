@@ -22,7 +22,7 @@
     <g:javascript src="toastr.min.js" contextPath=""/>
     <link rel="stylesheet"
           href="${resource(contextPath: serverURL, dir: 'css', file: 'toastr.min.css')}"/>
-    <script type="text/javascript">
+    <g:javascript>
         var currentValidation = false;
         var errorMessages = new Array();
         var modelInfo = {};
@@ -47,17 +47,14 @@
             };
             authorList = authorMap["authors"];
         }
-        var existingFiles;
-        if (${isUpdate}) {
-            existingFiles = ${existingFiles};
-        }
+        var existingFiles = ${existingFiles};
         var publication;
         var isUpdate = ${isUpdate};
         var isAmend = false;
         var revisionComments = "";
         var modelId = "${modelId}";
         var changesMade = [];
-    </script>
+    </g:javascript>
 </head>
 
 <body>

@@ -776,7 +776,7 @@ class SubmissionService {
         void initialise(Map<String, Object> workingMemory) {
             super.initialise(workingMemory)
             def publication_objects_in_working = initialisePublicationMap()
-            workingMemory.put("existingFiles", null)
+            workingMemory.put("existingFiles", [])
             workingMemory.put("publication_objects_in_working", publication_objects_in_working)
             workingMemory.put("publicationContext", publication_objects_in_working)
         }
