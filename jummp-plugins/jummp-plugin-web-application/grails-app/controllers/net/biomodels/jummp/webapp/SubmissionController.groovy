@@ -237,8 +237,9 @@ class SubmissionController {
                 // Presumably the submission has a single (main) model file
                 Map detectedModelFormat = detectModelFormat(e)
                 e["detectedModelFormat"] = detectedModelFormat
-                List messages = validateSyntax(e, detectedModelFormat.identifier)
-                e["validateSyntaxErrors"] = messages
+                List errors = []
+                e["validSyntax"] = validateSyntax(e, detectedModelFormat.identifier, errors)
+                e["validateSyntaxErrors"] = errors
                 Map detectedModelInfo = detectModelInfo(e, detectedModelFormat.identifier)
                 e["detectedModelInfo"] = detectedModelInfo
             }
@@ -258,11 +259,11 @@ class SubmissionController {
         return validationErrors
     }
 
-    private List<String> validateSyntax(final JSONElement file, final String format) {
+    private boolean validateSyntax(final JSONElement file, final String format, final List<String> errors) {
         logger.debug("Validating the file: $file")
         File modelFile = fileSystemService.retrieve(file)
-        List validationErrors = submissionService.validateSyntax(modelFile, format)
-        return validationErrors
+        boolean valid = submissionService.validateSyntax(modelFile, format, errors)
+        return valid
     }
 
     private Map detectModelFormat(final JSONElement jsonFileData) {

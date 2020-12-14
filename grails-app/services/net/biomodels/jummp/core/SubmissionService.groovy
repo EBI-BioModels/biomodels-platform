@@ -698,14 +698,14 @@ class SubmissionService {
             return errors
         }
 
-        List doValidateSyntax(final File file, final String format) {
-            List<String> errors = new ArrayList<>()
+        boolean doValidateSyntax(final File file, final String format, final List<String> errors) {
+            boolean valid = false
             if (doValidateFile(file)?.size() > 0) {
                 errors.add("Couldn't validate syntax on the file having physical errors")
             } else {
-                modelFileFormatService.validate([file], format, errors)
+                valid = modelFileFormatService.validate([file], format, errors)
             }
-            return errors
+            return valid
         }
 
         @TypeChecked(TypeCheckingMode.SKIP)
@@ -1211,9 +1211,9 @@ class SubmissionService {
      * @return A list of error messages if the model file is invalid
      */
     @Profiled(tag = "submissionService.validateSyntax")
-    List validateSyntax(final File uploadFile, final String format) {
+    boolean validateSyntax(final File uploadFile, final String format, final List<String> errors) {
         Map<String, Object> working = ["isUpdateOnExistingModel": false, "shouldCreateNewRevision": true] as Map<String, Object>
-        getStrategyFromContext(working).doValidateSyntax(uploadFile, format)
+        getStrategyFromContext(working).doValidateSyntax(uploadFile, format, errors)
     }
 
     /**

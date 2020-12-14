@@ -239,10 +239,14 @@
                             modelFileWithNoErrors = false;
                         } else {
                             // model file
-                            modelFileWithNoErrors = modelFile["validateFileErrors"].length === 0 &&
-                                                    modelFile["validateSyntaxErrors"].length === 0
+                            modelFileWithNoErrors = modelFile["validateFileErrors"].length === 0 && modelFile["validSyntax"]
                             consolidateErrorMessages(modelFile["filename"], modelFile["validateFileErrors"]);
-                            consolidateErrorMessages(modelFile["filename"], modelFile["validateSyntaxErrors"]);
+                            if (!modelFile["validSyntax"]) {
+                                consolidateErrorMessages(modelFile["filename"], modelFile["validateSyntaxErrors"]);
+                            } else if (modelFile["validateSyntaxErrors"].length !== 0)  {
+                                toastr.clear();
+                                toastr.warning(modelFile["validateSyntaxErrors"])
+                            }
                             // additional files
                             additionalFiles = data.filter(e => !e.isModelFile);
                             if (additionalFiles.length > 0) {
