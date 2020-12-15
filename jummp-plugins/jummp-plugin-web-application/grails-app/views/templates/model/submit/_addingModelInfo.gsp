@@ -282,7 +282,6 @@
         inputVal = $.trim(inputVal);
         let existed = $.inArray(inputVal, definedModellingApproachNames) >= 0;
         if (!existed) {
-            console.log("show dialog box");
             let popup = new Foundation.Reveal($('#modellingApproachWarningPopup'));
             popup.open();
         }

@@ -39,8 +39,8 @@ import net.biomodels.jummp.core.vcs.VcsFileDetails
 import net.biomodels.jummp.core.vcs.VcsManager
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Revision
+import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
 import org.perf4j.aop.Profiled
-import org.springframework.beans.factory.InitializingBean
 import org.springframework.security.access.prepost.PreAuthorize
 
 /**
@@ -53,18 +53,16 @@ import org.springframework.security.access.prepost.PreAuthorize
  * @see VcsManager
  * @author  Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
  * @author Raza Ali <raza.ali@ebi.ac.uk>
+ * @author <a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a>
+ * @author <a href="mailto:mihai.glont@ebi.ac.uk">Mihai Glont</a>
  */
-class VcsService implements InitializingBean {
+class VcsService implements GrailsConfigurationAware {
     @SuppressWarnings('GrailsStatelessService')
     VcsManager vcsManager
     @SuppressWarnings('GrailsStatelessService')
     def grailsApplication
     def fileSystemService
     String modelContainerRoot
-
-    void afterPropertiesSet() {
-        modelContainerRoot = fileSystemService.root.canonicalPath
-    }
 
     /**
      * Checks whether the Version Control System is configured properly
@@ -186,5 +184,10 @@ class VcsService implements InitializingBean {
         }
         final File MODEL_FOLDER = new File(modelContainerRoot, revision.model.vcsIdentifier)
         return vcsManager.getFileDetails(MODEL_FOLDER, path)
+    }
+
+    @Override
+    void setConfiguration(ConfigObject co) {
+        modelContainerRoot = fileSystemService.root.canonicalPath
     }
 }

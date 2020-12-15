@@ -221,7 +221,6 @@
             async: false,
             dataType: "JSON",
             success: function(response) {
-                console.log(response.changesMade);
                 changesMade = response.changesMade;
                 let data = response["filesMap"];
                 if (data.length) {

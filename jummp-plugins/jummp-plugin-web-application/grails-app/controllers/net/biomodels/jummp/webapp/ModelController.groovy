@@ -37,30 +37,21 @@ package net.biomodels.jummp.webapp
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.IFileSystemService
-import net.biomodels.jummp.core.InvalidPublicationAuthorsException
-import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.*
-import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
 import net.biomodels.jummp.core.model.PublicationDetailExtractionContext as PDEC
-import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PLPTC
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
-import net.biomodels.jummp.core.model.audit.AccessFormat
-import net.biomodels.jummp.core.model.audit.AccessType
 import net.biomodels.jummp.core.util.ReactomeEnvironment
 import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
 import net.biomodels.jummp.deployment.biomodels.TagTransportCommand
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModellingApproach
-import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.Team
 import net.biomodels.jummp.utils.redis.KeyCollection
 import net.biomodels.jummp.webapp.rest.errors.Error
 import net.biomodels.jummp.webapp.rest.model.show.Model as RestfulModel
 import net.biomodels.jummp.webapp.rest.model.show.ModelFiles
-import org.apache.commons.io.FileUtils
-import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONObject
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -75,62 +66,20 @@ import java.util.zip.ZipOutputStream
 @Secured(['IS_AUTHENTICATED_FULLY'])
 class ModelController {
     private final Logger log = LoggerFactory.getLogger(this.getClass())
-    /**
-     * Flag that checks whether the dynamically-inserted logger is set to DEBUG or higher.
-     */
     private final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
     IFileSystemService fileSystemService
-    /**
-     * Dependency injection of springSecurityService.
-     */
     def springSecurityService
-    /**
-     * Dependency injection of modelDelegateService.
-     **/
     def modelDelegateService
-    /**
-     * Dependency injection of modelFileFormatService
-     **/
     def modelFileFormatService
-    /**
-     * Dependency injection of teamService.
-     */
     def teamService
-    /**
-     * Dependency injection of sbmlService.
-     */
     def sbmlService
-    /**
-     * Dependency injection of submissionService
-     */
     def submissionService
-    /**
-     * Dependency Injection of grailsApplication
-     */
     def grailsApplication
-    /**
-     * Dependency injection of PublicationService
-     */
     def publicationService
-    /*
-    * Dependency injection of mailService
-    */
-    def mailService
-    /**
-     * Dependency injection of MetadataDelegateService
-     */
     def metadataDelegateService
-    /**
-     * Dependency injection of OmexService
-     */
     def omexService
-
     def modelConversionService
-
     def userService
-
-    def messageSource
-
     def publishClientService
 
     /**
@@ -207,9 +156,9 @@ class ModelController {
     @grails.transaction.Transactional
     def showWithMessage() {
         flash["giveMessage"] = params.flashMessage
-        StringBuilder modelId = new StringBuilder(params.id)
+        StringBuilder modelId = new StringBuilder(params.id as String)
         if (params.revisionId) {
-            modelId.append('.').append(params.revisionId)
+            modelId.append('.').append(params.revisionId as String)
         }
         redirect(action: "show", id: modelId.toString())
     }
@@ -222,9 +171,8 @@ class ModelController {
         try {
             rev = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
         } catch (AccessDeniedException e) {
-            Model model = Model.findByPublicationIdOrSubmissionId(params.id, params.id)
-            log.warn("""\
-An anonymous or restricted access user is trying to retrieve this model: ${model.submissionId}""")
+            Model model = Model.findByPublicationIdOrSubmissionId(params.id as String, params.id as String)
+            log.warn("""An anonymous or restricted access user is trying to retrieve this model: ${model.submissionId}""")
             int revisionNumber = -1
             if (params.revisionId) {
                 revisionNumber = params.int("revisionId")
