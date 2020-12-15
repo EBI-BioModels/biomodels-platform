@@ -39,6 +39,7 @@ import org.apache.commons.logging.LogFactory
 import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
 import org.springframework.context.ApplicationListener
 import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.HttpServerErrorException
 import uk.ac.ebi.ddi.ebe.ws.dao.client.dataset.DatasetWsClient
 import uk.ac.ebi.ddi.ebe.ws.dao.config.AbstractEbeyeWsConfig
 import uk.ac.ebi.ddi.ebe.ws.dao.config.EbeyeWsConfigDev
@@ -196,12 +197,15 @@ class OmicsdiBasedSearch implements GrailsConfigurationAware, ModelSearchStrateg
             int length = paginationCriteria['length']
             int facetCount = paginationCriteria['facetCount']
             result = datasetWsClient.getDatasets(domain, query, fields, start, length, facetCount, sort)
-        } catch (HttpClientErrorException e) {
-            log.debug("""\
-There was a problem obtaining search result from EBI search server. The root cause is ${e.toString()}""")
+        } catch (HttpServerErrorException e) {
+            log.debug("""There was a problem obtaining search result from EBI search server. \
+The root cause is ${e.toString()}""")
             log.debug("Status code: ${e.statusCode.value()}. Message: ${e.message}")
+            result = null
+        } catch (HttpClientErrorException e) {
+            log.error("There was a problem searching models from BioModels ${e.toString()}")
             if (e.statusCode.value() == 400) {
-                log.debug("The querying string might be wrong syntax or contains restricted characters.")
+                log.error("The querying string might be wrong syntax or contains restricted characters.")
             }
             result = null
         } catch (UnknownHostException ignored ) {
