@@ -25,20 +25,22 @@ import grails.plugin.springsecurity.annotation.Secured
 /**
  * This controller aims to serve special features
  */
+@Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
 class FeatureController {
     def featureService
 
-    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def agedbrain() {
     }
 
-    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def path2models() {
 
     }
 
-    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def covid19() {
         [content: featureService.covid19PageContent]
+    }
+
+    def reproducibility() {
+        [content: featureService.loadContentForReproducibilityPage]
     }
 }

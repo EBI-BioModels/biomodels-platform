@@ -171,7 +171,8 @@
                     url: "${createLink(controller: "publication", action: "refreshPubMedData")}",
                     data: {
                         id: ${params.id},
-                        pubmed: $('#link').val()
+                        pubmed: $('#link').val(),
+                        operation: "edit"
                     }
                 }).done(function(data) {
                     $('.editablePart').html(data);
