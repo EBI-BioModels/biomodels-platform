@@ -60,7 +60,7 @@ $(document).ready(function () {
         // Remove class active
         $("#progressbar li").eq($("fieldset").index(current_fs)).removeClass("active");
         $("#progressbar li").eq(current).removeClass("active");
-        window.history.replaceState(null, null, '?step=' + current);
+        // window.history.replaceState(null, null, '?step=' + current);
         // show the previous fieldset
         previous_fs.show();
         // hide the current fieldset with style

@@ -299,14 +299,36 @@
 
     function updateModelInfoForm() {
         // the modelFile is the global variable
-        $('input[id="name"]').val(modelFile.detectedModelInfo.name);
-        $('textarea[id="description"]').val(modelFile.detectedModelInfo.description);
+        let name = modelFile.detectedModelInfo.name;
+        if (!name) {
+            name = modelInfo.detectedName;
+        }
+        $('input[id="name"]').val(name);
+
+        let description = modelFile.detectedModelInfo.description;
+        if (!description) {
+            description = modelInfo.detectedDescription;
+        }
+        $('textarea[id="description"]').val(description);
 
         $('#model_format').val(modelFile.detectedModelFormat.id).change();
-        $('#readme_submission').val(modelFile.detectedModelInfo.readmeSubmission);
+        // Below are two pieces of information associated with the revision
+        let readmeSubmission = modelFile.detectedModelFormat.readme;
+        if (!readmeSubmission) {
+            readmeSubmission = modelInfo.detectedModelFormat.readme;
+        }
+        $('#readme_submission').val(readmeSubmission);
 
-        $('#modelling_approach').val(modelFile.detectedModelInfo.modellingApproach);
-        $('#other_info').val(modelFile.detectedModelInfo.otherInfo);
+        // Below are two extra info associated with the model
+        let modellingApproach = modelFile.detectedModelInfo.approach;
+        if (!modellingApproach) {
+            modellingApproach = modelInfo.detectedModelling.approach;
+        }
+        $('#modelling_approach').val(modellingApproach);
+
+        let otherInfo = modelInfo.detectedModelling.otherInfo;
+        $('#other_info').val(otherInfo);
+
         // below are two functions defined in addingModelInfo template
         handleShowOrHideModelFormatExtraInfo($('#model_format'));
         handleShowOrHideModellingApproachExtraInfo($('#modelling_approach'), true);

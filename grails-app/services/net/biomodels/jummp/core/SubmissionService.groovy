@@ -915,6 +915,8 @@ class SubmissionService {
                 logger.debug("File ${fileCopied.absolutePath} copied to the submission directory $submissionFolder".toString())
             }
             workingMemory.put("RevisionTC", latest)
+            workingMemory.put("RevisionID", latest.id)
+            workingMemory.put("RevisionNumber", latest.revisionNumber)
             workingMemory.put("publication", latest.model.publication)
             workingMemory.put("modellingApproach", modellingApproach)
             workingMemory.put("otherInfo", latest.model.otherInfo)

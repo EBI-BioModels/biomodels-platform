@@ -398,7 +398,7 @@ class ModelController {
         }
     }
 
-    Map initialiseSubmission(final boolean isUpdate) {
+    private Map initialiseSubmission(final boolean isUpdate) {
         Map<String, Object> initials = new HashMap<String, Object>()
         // TODO: reconcile two variables
         initials.put("isUpdate", isUpdate)
@@ -408,6 +408,29 @@ class ModelController {
             initials.put("modelId", params.id)
         }
         submissionService.initialise(initials)
+        buildModelInfo(initials)
+        initials
+    }
+
+    private Map buildModelInfo(Map initials) {
+        Map modelInfo = new HashMap()
+        boolean isUpdate = initials.get("isUpdate")
+        RevisionTransportCommand revisionTC = initials.get("RevisionTC")
+        modelInfo.put("detectedName", isUpdate ? revisionTC?.name : "")
+        modelInfo.put("detectedDescription", isUpdate ? revisionTC?.description : "")
+
+        Map detectedModelFormat = [:]
+        detectedModelFormat.put("id", revisionTC?.format?.id.toString())
+        detectedModelFormat.put("name", revisionTC?.format?.name)
+        detectedModelFormat.put("readme", revisionTC?.readmeSubmission)
+        modelInfo.put("detectedModelFormat", detectedModelFormat)
+
+        Map detectedModelling = [:]
+        detectedModelling.put("approach", initials.get("modellingApproach"))
+        detectedModelling.put("otherInfo", initials.get("otherInfo"))
+        modelInfo.put("detectedModelling", detectedModelling)
+
+        initials.put("modelInfo", modelInfo as JSON)
         initials
     }
 
@@ -422,7 +445,6 @@ class ModelController {
         Map initials = initialiseSubmission(true)
         String modelId = params.id
         String titlePage = "Update model ${modelId} | BioModels"
-
         initials.put("modelId", modelId)
         initials.put("titlePage", titlePage)
         initials.put("uploadingFilesHeading", g.message(code: "submission.upload.review.titlePage"))
@@ -458,6 +480,7 @@ class ModelController {
     def terms() {
         [serverURL: grailsApplication.config.grails.serverURL]
     }
+
     def delete() {
         try {
             boolean deleted = modelDelegateService.deleteModel(params.id)

@@ -25,7 +25,7 @@
     <g:javascript>
         var currentValidation = false;
         var errorMessages = new Array();
-        var modelInfo = {};
+        var modelInfo = ${modelInfo};
         var modelFile;
         var additionalFiles;
         var authorMap = { authors: [] };
@@ -53,6 +53,8 @@
         var isAmend = false;
         var revisionComments = "";
         var modelId = "${modelId}";
+        var revisionId = "${RevisionID}";
+        var revisionNumber = "${RevisionNumber}";
         var changesMade = [];
     </g:javascript>
 </head>
