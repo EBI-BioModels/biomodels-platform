@@ -24,6 +24,7 @@
 
 package net.biomodels.jummp.core
 
+import grails.converters.JSON
 import grails.transaction.Transactional
 import groovy.json.JsonSlurper
 import net.biomodels.jummp.core.adapters.PublicationAdapter
@@ -39,8 +40,8 @@ import net.biomodels.jummp.core.user.PersonTransportCommand as PersonTC
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.codehaus.groovy.grails.web.json.JSONArray
+import org.codehaus.groovy.grails.web.json.JSONObject
 import org.springframework.validation.ObjectError
-
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -229,9 +230,60 @@ There has been errors when assembling authors $authors into the publication '${p
         cmd
     }
 
+    Map buildPublicationFromJSONData(final String JSONData) {
+        PubTC tempPTC = new PubTC()
+        def pubDetails = JSON.parse(JSONData)
+        bindJSONData(tempPTC, pubDetails)
+        String linkTypeProvider = ""
+        if (pubDetails?.linkProvider instanceof JSONObject) {
+            linkTypeProvider = pubDetails.linkProvider.linkType
+        } else if (pubDetails?.linkProvider instanceof String) {
+            linkTypeProvider = pubDetails.linkProvider
+        }
+        tempPTC.linkProvider = inferPublicationLinkProvider(linkTypeProvider)
+        String message = ""
+        String status = ""
+        List errors = new ArrayList()
+        try  {
+            assembleAuthors(tempPTC, pubDetails.authors)
+            message = "Authors have been successfully assembled"
+            status = "Success"
+        } catch (InvalidPublicationAuthorsException e) {
+            String errMsg = e.getI18nErrorMessage4InvalidAuthor()
+            message = "There have been errors while parsing authors of the publication:<br/>${errMsg}"
+            status = "Error"
+        }
+        if (tempPTC.hasErrors()) {
+            def locale = Locale.getDefault()
+            for (fieldErrors in tempPTC.errors) {
+                for (error in fieldErrors.allErrors) {
+                    message = messageSource.getMessage(error, locale)
+                    errors.add(message)
+                    log.error(message)
+                }
+            }
+            status = "Error"
+        }
+        ["message": message, "status": status, "errors": errors, "publication": tempPTC] as Map
+    }
+
     PubTC getById(Long id) {
         Publication publication = Publication.get(id)
         new PublicationAdapter(publication: publication).toCommandObject()
+    }
+
+    private PubTC bindJSONData(PubTC pubTC, def jsonData) {
+        pubTC.link = jsonData.link
+        pubTC.title = jsonData.title
+        pubTC.journal = jsonData.journal
+        pubTC.affiliation = jsonData.affiliation
+        pubTC.synopsis = jsonData.synopsis
+        pubTC.year = jsonData.year as Integer
+        pubTC.month = jsonData.month
+        pubTC.volume = jsonData.volume
+        pubTC.issue = jsonData.issue
+        pubTC.pages = jsonData.pages
+        pubTC
     }
 
     private void reconcile(Publication publication, List<PersonTC> tobeAdded) {

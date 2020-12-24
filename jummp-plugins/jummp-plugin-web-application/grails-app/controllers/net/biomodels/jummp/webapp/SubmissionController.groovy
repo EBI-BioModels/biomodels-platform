@@ -33,11 +33,9 @@ package net.biomodels.jummp.webapp
 import grails.async.Promises
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
-import net.biomodels.jummp.core.InvalidPublicationAuthorsException
 import net.biomodels.jummp.core.model.CurationState
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
-import net.biomodels.jummp.core.model.PublicationTransportCommand
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import net.biomodels.jummp.core.model.ValidationState
@@ -92,7 +90,7 @@ class SubmissionController {
 
         // populate publication details
         if (params.publication) {
-            Map publicationData = buildPublicationFromJSONData(params.publication.decodeHTML())
+            Map publicationData = publicationService.buildPublicationFromJSONData(params.publication.decodeHTML())
             model.publication = publicationData["publication"]
         } else {
             model.publication = null
@@ -169,39 +167,6 @@ class SubmissionController {
             }
         }
         render(["message": message, "status": status, "modelURL": modelURL, "modelIdentifier": modelId] as JSON)
-    }
-
-    Map buildPublicationFromJSONData(final String JSONData) {
-        // TODO: unite this method to the same in PublicationController
-        //PDEC pubContext = publicationMap.get(flow.workingMemory.get("SelectedPubLinkProvider"))
-        PublicationTransportCommand tempPTC = new PublicationTransportCommand()//pubContext.publication
-        def pubDetails = JSON.parse(JSONData)
-        bindData(tempPTC, pubDetails, [exclude: ['authors']])
-//        tempPTC.linkProvider = publicationService.inferPublicationLinkProvider(pubDetails.linkProvider)
-        String message = ""
-        String status = ""
-        List errors = new ArrayList()
-        try  {
-            publicationService.assembleAuthors(tempPTC, pubDetails.authors)
-            message = "Authors have been successfully assembled"
-            status = "Success"
-        } catch (InvalidPublicationAuthorsException e) {
-            String errMsg = e.getI18nErrorMessage4InvalidAuthor()
-            message = "There have been errors while parsing authors of the publication:<br/>${errMsg}"
-            status = "Error"
-        }
-        if (tempPTC.hasErrors()) {
-            def locale = Locale.getDefault()
-            for (fieldErrors in tempPTC.errors) {
-                for (error in fieldErrors.allErrors) {
-                    message = messageSource.getMessage(error, locale)
-                    errors.add(message)
-                    logger.error(message)
-                }
-            }
-            status = "Error"
-        }
-        ["message": message, "status": status, "errors": errors, "publication": tempPTC] as Map
     }
 
     /**
