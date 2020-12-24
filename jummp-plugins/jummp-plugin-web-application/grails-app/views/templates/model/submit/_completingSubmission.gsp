@@ -16,7 +16,7 @@
 <div class="row">
     <div class="columns small-12 large-12">
         <div class="text-center">
-            <img src="${serverURL}/images/biomodels/loading.gif" id="loading" title="working..." />
+            <img src="${serverURL}/images/biomodels/loading.gif" id="loading" title="working..." alt="Please wait..."/>
         </div>
     </div>
 </div>
@@ -30,9 +30,6 @@
 
 <script>
     function completeSubmission() {
-        // TODO: show a waiting prompt message
-        // showWaitingIcon();
-
         // perform an ajax call to complete the submission
         // the function should return true or false to indicate the state of submission
         // I suppose it fails meaning the currentValidation to be false
@@ -49,28 +46,20 @@
                 publication: JSON.stringify(publication),
                 revisionComments: revisionComments,
                 modelId: modelId,
-                changesMade: changesMade
+                changesMade: changesMade,
+                submissionFolder: "${submissionFolder}"
             },
             dataType: "json"
         })
         .done(function (response) {
             console.log(response);
-            currentValidation = response.status === "Success" ? true : false;
+            currentValidation = response.status === "Success";
             $('#completionMessage').html(response.message);
             setCheckList(5, currentValidation);
-            /*if (currentValidation) {
-                $('#modelURL').attr("href", response.modelURL);
-                $('#modelURL').text(response.modelIdentifier);
-                $('#smgSuccess').css("display", "block");
-                $('#smgFailure').css("display", "none");
-            } else {
-                $('#smgSuccess').css("display", "none");
-                $('#smgFailure').css("display", "block");
-            }*/
-        // }).fail(function (jXHR, textStatus, thrown) {
-        //     console.log("Status: " + jXHR.status + " - " + jXHR.statusText);
-        //     $('#completionMessage').html("There have been errors to prevent you from submitting or updating your model. Please try again or contact us for further help.");
-        //     // TODO: show cross icon
+        }).fail(function (jXHR, textStatus, thrown) {
+            console.log("Status: " + jXHR.status + " - " + jXHR.statusText);
+            $('#completionMessage').html("<h3 style='color: red'>There have been errors to prevent you from submitting or updating your model. Please try again or contact us for further help.</h3>");
+            setCheckList(5, false);
         });
     }
 </script>

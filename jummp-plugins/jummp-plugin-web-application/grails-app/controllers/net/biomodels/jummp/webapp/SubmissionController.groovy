@@ -39,6 +39,8 @@ import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import net.biomodels.jummp.core.model.ValidationState
+import org.apache.commons.io.FileUtils
+import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONElement
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -47,7 +49,9 @@ import org.slf4j.LoggerFactory
 class SubmissionController {
     private static final Logger logger = LoggerFactory.getLogger(SubmissionController.class)
     def fileSystemService
+    def grailsApplication
     def groovyPageRenderer
+    def mailService
     def messageSource
     def modelFileFormatService
     def modelDelegateService
@@ -55,84 +59,91 @@ class SubmissionController {
     def submissionService
 
     def completeSubmission() {
-        /* The following statements aims at saving the new submission or updates */
+        String message = ""
+        String status = "Success"
         Map working = new HashMap<String, Object>()
-        List<RFTC> rftcList = new ArrayList<RFTC>()
-        JSONElement mf = JSON.parse(params.modelFile.decodeHTML())
-        RFTC mfRFTC = createRFTC(mf["submissionFolder"], mf["filename"], true, mf["description"])
-        rftcList.add(mfRFTC)
-        def afs = JSON.parse(params.additionalFiles.decodeHTML())
-        for (def file : afs) {
-            mfRFTC = createRFTC(file["submissionFolder"], file["filename"], false, file["description"])
+        working.put("submissionFolder", params.get("submissionFolder"))
+        try {
+            /* The following statements aims at saving the new submission or updates */
+            List<RFTC> rftcList = new ArrayList<RFTC>()
+            JSONElement mf = JSON.parse(params.modelFile.decodeHTML())
+            RFTC mfRFTC = createRFTC(mf["submissionFolder"], mf["filename"], true, mf["description"])
             rftcList.add(mfRFTC)
-        }
-        working.put("repository_files", rftcList)
-        MFTC format = modelFileFormatService.inferModelFormat(rftcList)
+            def afs = JSON.parse(params.additionalFiles.decodeHTML())
+            for (def file : afs) {
+                mfRFTC = createRFTC(file["submissionFolder"], file["filename"], false, file["description"])
+                rftcList.add(mfRFTC)
+            }
+            working.put("repository_files", rftcList)
+            MFTC format = modelFileFormatService.inferModelFormat(rftcList)
 
-        boolean isUpdate = params.boolean("isUpdate")
-        boolean isAmend = params.boolean("isAmend")
-        working.put("isAmend", isAmend)
-        MTC model = new MTC()
-        RTC revision = new RTC(files: rftcList, model: model, format: format)
-        if (isUpdate && params.modelId) {
-            revision = modelDelegateService.getLatestRevision(params.modelId, false)
-            model = revision.model
-        }
+            boolean isUpdate = params.boolean("isUpdate")
+            boolean isAmend = params.boolean("isAmend")
+            working.put("isAmend", isAmend)
+            MTC model = new MTC()
+            RTC revision = new RTC(files: rftcList, model: model, format: format)
+            if (isUpdate && params.modelId) {
+                revision = modelDelegateService.getLatestRevision(params.modelId, false)
+                model = revision.model
+            }
 
-        // populate model info
-        def modelInfoData = JSON.parse(params.modelInfo.decodeHTML())
-        model.name = modelInfoData["detectedName"] ?: mf["filename"]
-        model.description = modelInfoData["detectedDescription"] ?: ""
-        working.put("modelling_approach", modelInfoData["detectedModelling"]["approach"])
-        working.put("other_info", modelInfoData["detectedModelling"]["otherInfo"])
-        working.put("model_format", modelInfoData["detectedModelFormat"]["id"])
-        working.put("readme_submission", modelInfoData["detectedModelFormat"]["readme"])
+            // populate model info
+            def modelInfoData = JSON.parse(params.modelInfo.decodeHTML())
+            model.name = modelInfoData["detectedName"] ?: mf["filename"]
+            model.description = modelInfoData["detectedDescription"] ?: ""
+            working.put("modelling_approach", modelInfoData["detectedModelling"]["approach"])
+            working.put("other_info", modelInfoData["detectedModelling"]["otherInfo"])
+            working.put("model_format", modelInfoData["detectedModelFormat"]["id"])
+            working.put("readme_submission", modelInfoData["detectedModelFormat"]["readme"])
 
-        // populate publication details
-        if (params.publication) {
-            Map publicationData = publicationService.buildPublicationFromJSONData(params.publication.decodeHTML())
-            model.publication = publicationData["publication"]
-        } else {
-            model.publication = null
-        }
-        working.put("isUpdateOnExistingModel", isUpdate)
-        working.put("shouldCreateNewRevision", true) // TODO: allow curators decide
+            // populate publication details
+            if (params.publication) {
+                Map publicationData = publicationService.buildPublicationFromJSONData(params.publication.decodeHTML())
+                model.publication = publicationData["publication"]
+            } else {
+                model.publication = null
+            }
+            working.put("isUpdateOnExistingModel", isUpdate)
+            working.put("shouldCreateNewRevision", true) // TODO: allow curators decide
 
-        revision.model = model
-        revision.name = model.name
-        revision.description = model.description
-        revision.validated = true
-        revision.minorRevision = false
-        revision.curationState = CurationState.NON_CURATED
-        revision.validationLevel = ValidationState.APPROVE
-        revision.comment = params.revisionComments.decodeHTML() ?: "Model revised without commit message"
-        working.put("new_name", revision.name)
-        working.put("new_description", revision.description)
-        working.put("RevisionTC", revision)
-        working.put("changesMade", params.list("changesMade[]"))
-        HashSet<String> result = submissionService.handleSubmission(working)
+            revision.model = model
+            revision.name = model.name
+            revision.description = model.description
+            revision.validated = true
+            revision.minorRevision = false
+            revision.curationState = CurationState.NON_CURATED
+            revision.validationLevel = ValidationState.APPROVE
+            revision.comment = params.revisionComments.decodeHTML() ?: "Model revised without commit message"
+            working.put("new_name", revision.name)
+            working.put("new_description", revision.description)
+            working.put("RevisionTC", revision)
+            working.put("changesMade", params.list("changesMade[]"))
+            HashSet<String> result = submissionService.handleSubmission(working)
 
-        /* Below is used for post processing submission and rendering the result to the callee */
-        String modelId = params.modelId
-        working.put("accessType", "update")
-        working.put("changesMade", result)
-        if (!isUpdate) {
-            modelId = result.first()
-            working.put("accessType", "create")
-            working.put("changesMade", [])
-        }
-        String modelURL = createLink(controller: "model", action: "show", params: [id: modelId])
-        working.putAll(["modelId": modelId, "modelURL": modelURL])
-        // test this first
-        submissionService.processPostSubmission(working)
-        // TODO: investigate why the following async block fails due to
-        /* org.springframework.jdbc.BadSqlGrammarException: Hibernate operation: could not extract ResultSet; bad SQL
+            /* Below is used for post processing submission and rendering the result to the callee */
+            String modelId = params.modelId
+            working.put("accessType", "update")
+            working.put("changesMade", result)
+            if (!isUpdate) {
+                modelId = result.first()
+                working.put("accessType", "create")
+                working.put("changesMade", [])
+            }
+            String modelURL = createLink(controller: "model", action: "show", params: [id: modelId])
+            working.putAll(["modelId": modelId, "modelURL": modelURL])
+
+            // Method 1: synchronous approach
+            submissionService.processPostSubmission(working)
+
+            // Method 2: asynchronous approach
+            // TODO: investigate why the following async block fails due to
+            /* org.springframework.jdbc.BadSqlGrammarException: Hibernate operation: could not extract ResultSet; bad SQL
         grammar [n/a]; nested exception is com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException: You have an
         error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right
         syntax to use near ')) and (aclentry1_.mask in (1 , 16)) and aclentry1_.granting=1 group by revision'  at
         line 17
          */
-        /*Promises.task {
+            /*Promises.task {
             String auditId = submissionService.processPostSubmission(working)
             Thread.sleep(5000)
             return auditId
@@ -142,31 +153,37 @@ class SubmissionController {
             logger.error("Errors while processing post submission {}", throwable)
         }*/
 
-        /* Build the right messages to show at the model owner/submitter */
-        String message = ""
-        String status = "Success"
-        if (isUpdate) {
-            if (working.get("changesMade")) {
-                status = "Success"
-                message = groovyPageRenderer.render(template: "/templates/model/submit/subviews/successUpdate",
-                    plugin: "jummp-plugin-web-application", model: ["modelURL": modelURL, "modelId": modelId])
+            /* Build the right messages to show at the model owner/submitter */
+            if (isUpdate) {
+                if (working.get("changesMade")) {
+                    status = "Success"
+                    message = groovyPageRenderer.render(template: "/templates/model/submit/subviews/successUpdate",
+                        plugin: "jummp-plugin-web-application", model: ["modelURL": modelURL, "modelId": modelId])
+                } else {
+                    status = "Failure"
+                    message = groovyPageRenderer.render(template: "/templates/model/submit/subviews/failureUpdate",
+                        plugin: "jummp-plugin-web-application")
+                }
             } else {
-                status = "Failure"
-                message = groovyPageRenderer.render(template: "/templates/model/submit/subviews/failureUpdate",
-                    plugin: "jummp-plugin-web-application")
+                if (modelId) {
+                    status = "Success"
+                    message = groovyPageRenderer.render(template: "/templates/model/submit/subviews/successSubmission",
+                        plugin: "jummp-plugin-web-application", model: ["modelURL": modelURL, "modelId": modelId])
+                } else {
+                    status = "Failure"
+                    message = groovyPageRenderer.render(template: "/templates/model/submit/subviews/failureSubmission",
+                        plugin: "jummp-plugin-web-application")
+                }
             }
-        } else {
-            if (modelId) {
-                status = "Success"
-                message = groovyPageRenderer.render(template: "/templates/model/submit/subviews/successSubmission",
-                    plugin: "jummp-plugin-web-application", model: ["modelURL": modelURL, "modelId": modelId])
-            } else {
-                status = "Failure"
-                message = groovyPageRenderer.render(template: "/templates/model/submit/subviews/failureSubmission",
-                    plugin: "jummp-plugin-web-application")
-            }
+            render(["message": message, "status": status, "modelURL": modelURL, "modelIdentifier": modelId] as JSON)
+        } catch (Exception e) {
+            status = "Failure"
+            handleException(working, e)
+            String errorTicketId = working.get("submissionFolder")
+            message = groovyPageRenderer.render(template: "/templates/errorTemplate",
+                plugin: "jummp-plugin-web-application", model: ["errorTicketId": errorTicketId])
+            render(["ticketID": errorTicketId, "status": status, "message": message] as JSON)
         }
-        render(["message": message, "status": status, "modelURL": modelURL, "modelIdentifier": modelId] as JSON)
     }
 
     /**
@@ -270,5 +287,34 @@ class SubmissionController {
             }
         }
         changesMade
+    }
+
+    private void handleException(final Map working, final Exception e) {
+        logger.error("Oops!!! There has been an error!", e)
+        // rollback and backup submission
+        String ticket = working.get("submissionFolder")
+        if (working.containsKey("repository_files")) {
+            List repFiles = working.get("repository_files")
+            if (repFiles) {
+                final String EXCHANGE = grailsApplication.config.jummp.vcs.exchangeDirectory
+                final File PARENT = new File(EXCHANGE)
+                File submissionFiles = new File(PARENT, ticket)
+                File buggyFiles = new File(PARENT, "buggy")
+                File temporaryStorage = new File(buggyFiles, ticket)
+                temporaryStorage.mkdirs()
+                FileUtils.copyDirectory(submissionFiles, temporaryStorage)
+
+                // TODO: create error.log containing the output of ExceptionUtils.getStackTrace(e) in this folder
+
+                // TODO: save submission metadata
+            }
+        }
+        submissionService.cleanup(working)
+        mailService.sendMail {
+            to grailsApplication.config.jummp.security.registration.email.adminAddress
+            from grailsApplication.config.jummp.security.registration.email.sender
+            subject "Bug in submission: ${ticket}"
+            body "MESSAGE: ${ExceptionUtils.getStackTrace(e)}"
+        }
     }
 }

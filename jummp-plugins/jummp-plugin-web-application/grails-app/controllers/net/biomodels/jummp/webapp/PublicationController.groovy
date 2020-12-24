@@ -17,7 +17,6 @@ class PublicationController implements GrailsConfigurationAware {
     private static final Logger logger = LoggerFactory.getLogger(PublicationController.class)
     def publicationService
     def pubMedService
-    def messageSource
     String style
     String serverUrl
 
