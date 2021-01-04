@@ -43,12 +43,20 @@ class SbmlController {
 
     def show = {
         Map model = flash.genericModel
+        final String perennialId = params.id
         RevisionTransportCommand r = model.revision
         Map<QualifierTransportCommand, List<ResourceReferenceTransportCommand>> genericAnno =
                 metadataDelegateService.fetchGenericAnnotations r
         if (genericAnno) {
             model["genericAnnotations"] = genericAnno
         }
+        def components = [:]
+        try {
+            components = sbmlService.extractComponentsFromBP(perennialId)
+        } catch(RuntimeException re) {
+            log.error("Error while extracting components from BP for $perennialId", re)
+        }
+        model['components'] = components
         boolean canCheckConsistency = modelDelegateService.canCheckConsistency(r)
         model["canCheckConsistency"] = canCheckConsistency
         render(view: "/model/sbml/show", model: model)
