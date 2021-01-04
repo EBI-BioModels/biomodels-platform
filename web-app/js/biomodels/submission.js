@@ -20,9 +20,7 @@ $(document).ready(function () {
         next_fs = current_fs.next();
         if (currentValidation) {
             // Add Class Active
-            console.log("before: " + current);
             $("#progressbar li").eq(current++).addClass("active");
-            console.log("after: " + current);
 
             // show the next fieldset
             next_fs.show();
@@ -95,7 +93,6 @@ $(document).ready(function () {
         if (errorMessages.length) {
             let messages = "<ul>";
             for (i = 0; i < errorMessages.length; i++) {
-                console.log(errorMessages[i]);
                 messages += "<li>" + errorMessages[i] + "</li>";
             };
             messages += "</ul>";
@@ -114,20 +111,16 @@ $(document).ready(function () {
                 break;
             case 2:
                 // defined in the step 2
-                console.log("Updating the model info form at the step " + step);
                 updateModelInfoForm();
                 break;
             case 3:
-                console.log("Updating the publication form at the step " + step);
                 break;
             case 4:
                 // defined in the step 4
-                console.log("Displaying the summary screen at the step " + step);
                 populateSummaryData();
                 break;
             case 5:
                 // defined in the step 4
-                console.log("Completing the submission/update process at the step " + step);
                 completeSubmission();
                 break;
             default:
@@ -162,7 +155,6 @@ function setProgressBar(curStep, totalSteps) {
 }
 
 function setCheckList(curStep, isValid) {
-    console.log("ticked/crossed at the step " + curStep + " --- isValid: " + isValid);
     if (isValid) {
         $('#step' + curStep + ' .fa-times-circle').hide();
         $('#step' + curStep + ' .fa-check-circle-o').show();
