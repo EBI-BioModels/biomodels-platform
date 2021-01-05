@@ -89,8 +89,8 @@
                                 <th>Parameters</th>
                                 <g:each var="a" in="${components.reactions}">
                                     <tr style="text-align: center">
-                                        <td>${a.value.reactionShow}</td>
-                                        <td>${a.value.rateShow}</td>
+                                        <td>${a.value.reaction}</td>
+                                        <td>${a.value.rate}</td>
                                         <td>${a.value.parameters}</td>
                                     </tr>
                                 </g:each>
