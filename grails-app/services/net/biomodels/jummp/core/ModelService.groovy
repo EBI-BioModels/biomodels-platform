@@ -35,7 +35,6 @@ import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.authentication.GrailsAnonymousAuthenticationToken
 import grails.transaction.NotTransactional
 import grails.transaction.Transactional
-import groovy.sql.Sql
 import groovy.transform.CompileStatic
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
@@ -256,7 +255,11 @@ class ModelService {
         }
         def results = []
         try {
-            results = Model.getAll(Model.executeQuery(query, namedParams, metaParams))
+            List queryResultSet = Model.executeQuery(query, namedParams, metaParams)
+            // result set consists of [model, <sortColumnValue>, revisionNumber] and we can't avoid it
+            // extract the first column before the result set gets used downstream
+            List<Long> modelIds = queryResultSet.collect { it[0] }
+            results = Model.getAll(modelIds)
         } catch (Exception e) {
             log.error("Exception $e while executing $query with '$namedParams' (page '$metaParams')")
         }
@@ -267,8 +270,11 @@ class ModelService {
                                          boolean filterIsValid, String type,
                                          List filteredFormats, List filteredUsers,
                                          String sortingDirection, boolean isAdmin = false) {
+        String orderByColumn = getSortColumnAsString(sortColumn)
+        // we have to include $orderByColumn and revisionNumber in the selected columns
+        // in order for the query to be valid SQL
         String query = """\
-SELECT distinct m.id
+SELECT m.id, ${orderByColumn}, r.revisionNumber
 FROM Revision AS r RIGHT OUTER JOIN r.model AS m
 WHERE
     r.deleted = false
@@ -308,7 +314,7 @@ AND r.state = '${ModelState.UNPUBLISHED}'))"""
                 }
                 break
         }
-        query = """$query ORDER BY ${getSortColumnAsString(sortColumn)} ${sortingDirection}, r.revisionNumber desc"""
+        query = """$query ORDER BY ${orderByColumn} ${sortingDirection}, r.revisionNumber desc"""
         return query
     }
 
