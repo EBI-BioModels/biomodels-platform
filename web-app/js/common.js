@@ -99,7 +99,7 @@ $("#registerForm #resetFormButton").click(function() {
 $('#registerForm input').on("change input", function() {
     hideNow();
 });
-$('input[name=username]').blur(function() {
+$('input[id=username]').blur(function() {
     var username = $(this).val().trim();
     if (username !== currentUsername) {
         var message = "";
@@ -113,8 +113,18 @@ $('input[name=username]').blur(function() {
             url: $.jummp.createLink("usermanagement", "lookupUser"),
             success: function (response) {
                 username = response[0];
-                if (username.trim()) {
-                    message = "A user with this username " + username.trim() + " already exists. Please try another one."
+                username = username.trim();
+                if (username) {
+                    message = "A user with this username " + username + " already exists. Please try another one."
+                } else {
+                    message = "This username does not exist. Please check typos and spelling or try again."
+                }
+                // When an anonymous user is trying to open a new account and username doesn't exist 
+                // or to login the system, don't show the warning message
+                if (("create" === actionName && username === "") || 
+                    ("auth" === actionName && username !== "")) {
+                    hideNow();
+                } else {
                     showNotification(message);
                 }
             }
@@ -257,4 +267,32 @@ function previewImage(input, imageHolder) {
         reader.readAsDataURL(image);
     }
     return imgData;
+}
+
+/**
+ * Patches the issue of hiding dropdown menu partially. Foundation dropdown menu script adds opens-inner class
+ * improperly causing this problem.
+ */
+$('#menu-item-myaccount').on('mouseover', function (event) {
+    event.preventDefault();
+    if ($(this).hasClass("opens-inner")) {
+        $(this).removeClass("opens-inner");
+        $(this).addClass("opens-left");
+    }
+});
+
+function validateInputLength(element, minLength, maxLength, messageHolder) {
+    $(element).on('keydown keyup change', function(){
+        var char = $(this).val();
+        var charLength = $(this).val().length;
+        if (charLength < minLength){
+            $(messageHolder).text('Length is short, minimum '+minLength+' characters required.');
+            setTimeout(function() { $(this).focus(); }, 0);
+        } else if (charLength > maxLength){
+            $(messageHolder).text('Length is not valid, maximum '+maxLength+' characters allowed.');
+            $(this).val(char.substring(0, maxLength));
+        } else {
+            $(messageHolder).text('');
+        }
+    });
 }

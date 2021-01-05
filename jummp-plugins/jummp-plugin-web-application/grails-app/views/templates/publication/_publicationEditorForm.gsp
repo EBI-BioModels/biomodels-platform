@@ -1,4 +1,4 @@
-<g:form>
+<g:form useToken="true">
     <div class="dialog">
         <g:render template="/templates/publication/publicationEditableElements"
                   plugin="jummp-plugin-web-application"

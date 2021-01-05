@@ -1,3 +1,4 @@
+<%@ page import="grails.plugin.springsecurity.SpringSecurityUtils" %>
 <%--
  Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
  Deutsches Krebsforschungszentrum (DKFZ)
@@ -39,10 +40,12 @@
             <li><a href="${g.createLink(controller: 'search', action: 'search', params: [query: '*:*'])}">All
             models</a></li>
             <li><a
-                href="${g.createLink(controller: 'goChart', action: 'index', plugin: 'jummp-plugin-biomodels-dom')}">GO categories</a>
+                href="${g.createLink(controller: 'parameterSearch', action: 'index', plugin:
+                    'jummp-plugin-biomodels-dom')}">BioModels Parameters Search</a>
             </li>
+            <li><g:link mapping="covid19">COVID-19</g:link></li>
             <li><a
-                href="${g.createLink(controller: 'parameterSearch', action: 'index', plugin: 'jummp-plugin-biomodels-dom')}">Parameter Search</a>
+                href="${g.createLink(controller: 'goChart', action: 'index', plugin: 'jummp-plugin-biomodels-dom')}">GO categories</a>
             </li>
             <li><g:link mapping="agedbrain">Neurodegeneration models</g:link></li>
             <li><g:link mapping="path2models">Path2Models models</g:link></li>
@@ -51,6 +54,7 @@
                     PDGSM models
                 </a>
             </li>
+            <li><g:link mapping="reproducibility">Reproducibility</g:link></li>
         </ul>
     </li>
     <li <g:if test="${g.pageProperty(name:'page.submit')?.length()}"> class="active" </g:if> role="menuitem">
@@ -59,11 +63,17 @@
     <li <g:if test="${selectedSupportItems}"> class="active" </g:if> role="menuitem">
         <a><i class="icon icon-common icon-support"></i> <g:message code="jummp.support.biomodels.title"/></a>
         <ul class="menu">
-            <li><a href="${g.createLink(controller: 'jummp', action: 'faq')}">FAQ</a></li>
+            <li><a href="${g.createLink(controller: 'jummp', action: 'faq')}">FAQs</a></li>
+            <li class="divider"></li>
+            <li><a href="${grailsApplication.config.jummp.context.help.root}manual.html" target="_blank">User Manual</a></li>
+            <li class="divider"></li>
+            <li><a href="${createLink(controller: 'jummp', action: 'curatorZone')}">Curator's Zone</a></li>
+            <li class="divider"></li>
+            <li><a href="${createLink(controller: 'jummp', action: 'developerZone')}">Developer's Zone</a></li>
+            <li class="divider"></li>
             <li><a href="${g.createLink(controller: 'jummp', action: 'courses')}">Courses</a></li>
             <li><a href="//www.ebi.ac.uk/biomodels/tools/converters/" target="_blank">Online converters</a></li>
             <li><a href="//www.ebi.ac.uk/rdf/services/biomodels/sparql" target="_blank">SPARQL Endpoint</a></li>
-            <li><a href="${createLink(controller: 'jummp', action: 'developerZone')}">Developer's Zone</a></li>
         </ul>
     </li>
     <li <g:if test="${selectedAboutusItems}"> class="active" </g:if> role="menuitem">
@@ -75,11 +85,6 @@
             <li><a href="${g.createLink(controller: 'jummp', action: 'acknowledgements')}">Acknowledgements</a></li>
             <li><a href="${g.createLink(controller: 'jummp', action: 'jobs')}">Jobs</a></li>
         </ul>
-    </li>
-    <li id="menuItemSwitchToClassicBioModels" data-open="switchToClassicBioModels" role="menuitem">
-        <!-- switchToClassicBioModels is the identifier of the modal switchToClassicBioModels form defined in the footer.
-             This form is rendered using the switchClassicBioModels template of the web plugin -->
-        <a><g:message code="jummp.switchClassicBioModels.default.title"/></a>
     </li>
     <li <g:if test="${g.pageProperty(name:'page.contactus')?.length()}"> class="active" </g:if> role="menuitem">
         <a href="${g.createLink(controller: 'jummp', action: 'contactus')}">
@@ -96,30 +101,44 @@
        whichever one will show up last...
        For example: -->
     <sec:ifLoggedIn>
-        <li class="functional first float-right" role="menuitem">
+        <li class="functional first float-right opens-left" role="menuitem" id="menu-item-myaccount">
             <a>My Account</a>
-            <ul class="menu">
-                <li><a href="${grailsApplication.config.grails.serverURL}/user"><i class="icon icon-common icon-user-circle"></i>
-                    ${sec.username()}'s Profile</a></li>
+            <ul class="dropdown menu" data-dropdown-menu style="width: 235px; max-width: 265px">
+                <li><a href="${grailsApplication.config.grails.serverURL}/user">
+                    <span class="icon icon-common icon-user-circle">&nbsp;</span>${sec.username()}'s Profile</a></li>
                 <li class="divider"></li>
                 <li><a href="${g.createLink(controller: 'search', action: 'list')}">
-                    <img width="20" height="auto" title="Click here to see your models"
-                         src="${grailsApplication.config.grails.serverURL}/images/biomodels/mymodels.png"/>&nbsp;My Models</a></li>
+                    <span class="icon icon-common icon-folder-open">&nbsp;</span>My Models</a></li>
                 <li><a href="${g.createLink(controller: 'team', action: 'index')}">
-                    <img width="20" height="auto" title="Click here to see your teams"
-                         src="${grailsApplication.config.grails.serverURL}/images/biomodels/team.png"/>
+                    <span class="icon icon-common icon-group">&nbsp;</span>
                     My Teams</a></li>
                 <li class="functional float-right" role="menuitem" id="notificationCount">
                     <a title="View ${sec.username()}'s Notifications" href='<g:createLink controller="notification" action="list"/>'>
-                        <img width="20" height="auto" title="Click here to see your notifications"
-                             src="${grailsApplication.config.grails.serverURL}/images/email.png"/>
+                        <span class="icon icon-common icon-envelope">&nbsp;</span>
                         <span id="notificationLink">My Notifications</span>
                     </a>
                 </li>
+
+                <g:if test="${SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')}">
+                <li class="divider"></li>
+                <li><a href="${g.createLink(controller: 'admin', action: 'dashboard')}"
+                       title="Administration Dashboard"><span class="icon icon-common icon-user-md">&nbsp;</span>Admin
+                    Dashboard</a></li>
+                </g:if>
+
+                <g:if test="${SpringSecurityUtils.ifAnyGranted('ROLE_CURATOR')}">
+                <li class="divider"></li>
+                <li><a href="${g.createLink(controller: 'curation', action: 'dashboard')}"
+                       title="Curation Dashboard">
+                    <span class="icon icon-common icon-reviewed-data hide-for-small-only">&nbsp;</span>
+                    Curation Dashboard</a></li>
+                </g:if>
+
                 <li class="divider"></li>
                 <li class="functional last float-right" role="menuitem">
-                    <a href="${grailsApplication.config.grails.serverURL}/logout" class="icon icon-functional" data-icon="l">
-                        <g:message code="jummp.main.logout"/>
+                    <a href="${grailsApplication.config.grails.serverURL}/logout">
+                        <span class="icon icon-common icon-sign-out-alt">&nbsp;</span><g:message
+                            code="jummp.main.logout"/>
                     </a>
                 </li>
             </ul>
@@ -132,8 +151,8 @@
             </a>
         </li>
         <li class="functional last float-right" role="menuitem">
-            <a href="${grailsApplication.config.grails.serverURL}/login" class="icon icon-functional" data-icon="l">
-                <g:message code="jummp.main.login"/>
+            <a href="${grailsApplication.config.grails.serverURL}/login">
+                <span class="icon icon-common icon-sign-in-alt">&nbsp;</span><g:message code="jummp.main.login"/>
             </a>
         </li>
     </sec:ifNotLoggedIn>

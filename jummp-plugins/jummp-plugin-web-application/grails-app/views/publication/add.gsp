@@ -14,7 +14,7 @@
 <html>
 <head>
     <meta name="layout" content="biomodels/main" />
-    <title>${title} | BioModels</title>
+    <title>${title}</title>
     <link rel="stylesheet"
           href="${resource(contextPath: "${serverUrl}", dir: "/css/${style}", file: 'publicationPageStyle.css')}" />
     <link rel="stylesheet"
@@ -159,7 +159,8 @@
                 type: "POST",
                 url: "${createLink(controller: "publication", action: "refreshPubMedData")}",
                 data: {
-                    pubmed: $('#link').val()
+                    pubmed: $('#link').val(),
+                    operation: "add"
                 }
             }).done(function(data) {
                 $('.editablePart').html(data);

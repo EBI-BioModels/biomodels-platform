@@ -55,7 +55,7 @@ import java.util.regex.Pattern
  * @date created on 08/06/2016.
  */
 
-class PublicationService {
+class PublicationService implements IPublicationService {
     final Log log = LogFactory.getLog(getClass())
     static transactional = false
 
@@ -64,9 +64,11 @@ class PublicationService {
 
     List<PubTC> getAll() {
         List pubs = Publication.all
+        List pubCmds= new ArrayList()
         pubs.each {
-            new PublicationAdapter(publication: it).toCommandObject()
+            pubCmds.add new PublicationAdapter(publication: it).toCommandObject()
         }
+        pubCmds
     }
 
     PubTC createPTCWithMinimalInformation(String pubLinkProvider, String pubLink, List<PersonTC> authors) {
@@ -149,6 +151,10 @@ Failed to add author $person to $publication: ${tmp.errors.allErrors.inspect()}"
     Publication fromCommandObject(PubTC cmd) {
         Publication publication = findByPublicationTransportCommand(cmd)
         if (publication) {
+            String linkTypeLabel = cmd.linkProvider.linkType
+            PLP.LinkType linkType = PLP.LinkType.findLinkTypeByLabel(linkTypeLabel)
+            publication.linkProvider = PLP.findByLinkType(linkType)
+            publication.link = cmd.link
             publication.title = cmd.title
             publication.affiliation = cmd.affiliation
             publication.synopsis = cmd.synopsis
@@ -283,7 +289,7 @@ There has been errors when assembling authors $authors into the publication '${p
                 // If the position of authors have been updated
                 if (existingAuthor.position != index ||
                     existingAuthor.pubAlias != newAuthor.userRealName) {
-                    String query = """update PublicationPerson pp 
+                    String query = """update PublicationPerson pp
 set pp.position = :newPosition, pp.pubAlias = :newPubAlias
 where pp.publication = :publication and pp.person = :person and pp.position = :oldPosition"""
                     Map parameters = [newPosition: index,
@@ -344,7 +350,9 @@ where pp.publication = :publication and pp.person = :person and pp.position = :o
 
     private Publication findByPublicationTransportCommand(PubTC cmd) {
         Publication publication = null
-        if (cmd?.link) {
+        if (cmd?.id) {
+            publication = Publication.get(cmd.id)
+        } else if (cmd?.link) {
             PLP.LinkType linkType = PLP.LinkType.findLinkTypeByLabel(cmd.linkProvider.linkType)
             publication = Publication.withCriteria(uniqueResult: true) {
                 eq("link", cmd.link)
@@ -352,8 +360,6 @@ where pp.publication = :publication and pp.person = :person and pp.position = :o
                     eq("linkType", linkType)
                 }
             }
-        } else if (cmd?.id) {
-            publication = Publication.get(cmd.id)
         }
         publication
     }

@@ -59,6 +59,14 @@ pre {
     margin-top: 7px;
 }
 
+.faq-section-box {
+    border-radius: 12px;
+    border: 2px solid rgb(0, 124, 130);
+    width: 100%;
+    box-shadow: 5px 5px 5px grey;
+    margin-top: 10px;
+}
+
 .facetContainer {
     padding-top: 5px;
     border:2px solid #ccc;
@@ -474,4 +482,15 @@ a.external:hover, a.external:active {
 .overview-tab-attribute {
     font-weight: bold;
     color: rgb(0,124,130)
+}
+
+.pubauthors {
+    font-size: 100%;
+}
+.pubtitle {
+    font-weight: bold;
+}
+
+.pubjournal {
+    font-style: italic;
 }

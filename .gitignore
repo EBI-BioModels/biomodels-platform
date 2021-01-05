@@ -58,3 +58,16 @@ Doxyfile
 
 ## patches
 *.patch
+.project
+build.gradle
+.gradle/
+.settings/
+
+## For k8s deployment
+## The folder contains yaml files
+k8s/
+## grails wrapper contains http proxy host and port
+wrapper/grails-wrapper.properties
+## utility scripts
+*.sh
+!docker-build.sh

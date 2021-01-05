@@ -34,6 +34,27 @@ abstract class ModelIdentifierPartition {
     /* The string which this partition holds. */
     protected String value
 
+
+    int getBeginIndex() {
+        return beginIndex
+    }
+
+    int getEndIndex() {
+        return endIndex
+    }
+
+    int getWidth() {
+        return width
+    }
+
+    String getValue() {
+        return value
+    }
+
+    void setValue(final String value) {
+        this.value = value
+    }
+
     /* No access to servletContext or GORM, hence cannot use Grails validators .*/
     boolean validate() {
         boolean beginIndexOk = validateBeginIndex()

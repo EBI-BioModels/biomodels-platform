@@ -29,9 +29,18 @@
 
 <footer id="local-footer" class="local-footer">
     <!-- Optional local footer (insert citation / project-specific copyright / etc here -->
-    <div class="row">
-        <div id="footer" class="float-left">
-            Build: <g:render template="/templates/version"/>
+    <div  id="footer" class="row">
+        <div>
+            <div class="small-12 medium-6 large-6 columns">
+                <span style="font-size: small">Build: <g:render template="/templates/version"/></span>
+            </div>
+            <div class="small-12 medium-6 large-6 columns" style="text-align: right">
+                <span style="font-size: small">
+                    <g:if test="${grails.util.Environment.isDevelopmentMode() ||
+                        grails.plugin.springsecurity.SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')}">
+                        <g:render template="/templates/biomodels/renderedFrom"/></span>
+                    </g:if>
+            </div>
         </div>
         <div class="clear"></div>
     </div>
@@ -40,7 +49,7 @@
           data-more-information-link="//www.elixir-europe.org/platforms/data/elixir-deposition-databases"
           data-use-basic-styles="true"></div>
      <script defer="defer"
-             src="//ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/js/elixirBanner.js"></script>
+             src="https://ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/js/elixirBanner.js"></script>
      <style>
          .elixir-ribbon {
              padding: 1rem 0;
@@ -96,19 +105,18 @@
         </section>
     </div>
      <g:render template="/templates/feedback" plugin="jummp-plugin-web-application"/>
-     <g:render template="/templates/switchClassicBioModels" plugin="jummp-plugin-web-application"/>
      <g:render template="/templates/biomodels/searchTips" />
      <g:render template="/templates/biomodels/domainSwitcherExplanation" />
 </footer>
 </div> <!--! end of #mainframe -->
 
 <!-- JavaScript at the bottom for fast page loading -->
-<script src="https://dev.ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/js/script.js"></script>
+<script src="https://ebi.emblstatic.net/web_guidelines/EBI-Framework/v1.3/js/script.js"></script>
 <!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if offline -->
 
 <!-- The Foundation theme JavaScript -->
-<script src="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.3/libraries/foundation-6/js/foundation.js"></script>
-<script src="//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.3/js/foundationExtendEBI.js"></script>
+<script src="https://www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.3/libraries/foundation-6/js/foundation.js"></script>
+<script src="https://www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.3/js/foundationExtendEBI.js"></script>
 <script type="text/JavaScript">$(document).foundation();</script>
 <script type="text/JavaScript">$(document).foundationExtendEBI();</script>
 

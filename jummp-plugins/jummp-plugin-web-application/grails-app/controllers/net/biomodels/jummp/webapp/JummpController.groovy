@@ -34,6 +34,7 @@ class JummpController {
     def grailsApplication
     def teamService
     def feedbackService
+    def messageSource
 
     final List<String> AUDIT_EXCEPTIONS = ['support', 'aboutus', 'contactus', 'lookupUser',
                                            'autoCompleteUser', 'teamLookup']
@@ -56,7 +57,15 @@ class JummpController {
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def faq() {
         detectTheme()
-        render(view: "faq", model: [titleCode: "jummp.faq.${theme}.title"])
+        String titlePage = messageSource.getMessage("jummp.faq.${theme}.title", null, Locale.ENGLISH)
+        titlePage += " | BioModels"
+        String manualUrl = grailsApplication.config.jummp.context.help.root
+        String serverUrl = grailsApplication.config.grails.serverURL
+        render(view: "faq",
+            model: [
+                titleCode: "jummp.faq.${theme}.title",
+                titlePage: titlePage,
+                manualUrl: manualUrl, serverUrl: serverUrl])
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
@@ -105,6 +114,12 @@ class JummpController {
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def curatorZone() {
+        detectTheme()
+        render(view: "curatorZone", model: [titleCode: "jummp.curatorZone.${theme}.title"])
+    }
+
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def developerZone() {
         detectTheme()
         render(view: "developerZone", model: [titleCode: "jummp.developerZone.${theme}.title"])
@@ -120,7 +135,6 @@ class JummpController {
                 render([status: '500', message: "Please rate between 1 and 5 stars."] as JSON)
             } else {
                 // save the data to the database
-                comment = comment.encodeAsHTML()
                 boolean result = feedbackService.persist(star, email, comment)
                 if (result) {
                     def notification = [

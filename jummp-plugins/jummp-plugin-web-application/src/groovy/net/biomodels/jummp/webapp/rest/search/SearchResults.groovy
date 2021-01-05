@@ -20,11 +20,17 @@
 
 package net.biomodels.jummp.webapp.rest.search
 
+import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Facet
+
 class SearchResults extends Results {
     int matches
+    List<Facet> facets
+    String facetStats
 
-    public SearchResults(def searchResults) {
+    SearchResults(def searchResults) {
         super(searchResults)
         matches = searchResults.matches
+        facets = searchResults.facets
+        facetStats = searchResults.facetStats
     }
 }

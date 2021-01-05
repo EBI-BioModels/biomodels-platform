@@ -97,7 +97,7 @@ class ModelIdentifierGeneratorRegistryFactory implements
             result = new ModelIdentifierGeneratorRegistryService(application, generatorNames, fields,
                 explicitRegexValue)
         } else {
-            result = new ModelIdentifierGeneratorRegistryService(application, fields, generatorNames)
+            result = new ModelIdentifierGeneratorRegistryService(application, generatorNames, fields)
         }
 
         result

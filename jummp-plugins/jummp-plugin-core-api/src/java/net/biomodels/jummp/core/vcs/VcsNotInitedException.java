@@ -32,4 +32,8 @@ public class VcsNotInitedException extends VcsException {
     public VcsNotInitedException() {
         super("The working copy has not been initialised yet.");
     }
+
+    public VcsNotInitedException(final String message) {
+        super(message);
+    }
 }

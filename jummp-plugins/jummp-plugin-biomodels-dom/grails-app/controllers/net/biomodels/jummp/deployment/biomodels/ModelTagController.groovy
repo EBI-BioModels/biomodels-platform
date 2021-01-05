@@ -42,7 +42,7 @@ class ModelTagController {
     def springSecurityService
 
     def fetchTagsForSelect2() {
-        String term = params.get("search").encodeAsHTML()
+        String term = params.get("search")
         List<String> tags = tagService.search(term)
         List result = []
         tags.eachWithIndex { String value, Long index ->
@@ -53,9 +53,9 @@ class ModelTagController {
     }
 
     def updateModelTag() {
-        def tagParams = params.list("updatedTags")[0].encodeAsHTML()
+        List tagParams = params.list("updatedTags")[0]
         Set<String> updatedTags = tagParams != "" ? tagParams.split(",") : [].toSet()
-        def modelId = params.get("modelId").encodeAsHTML()
+        def modelId = params.get("modelId")
         def user = springSecurityService.currentUser
         def result = modelTagService.update(updatedTags, modelId, user)
         response.status = result["status"]
@@ -65,11 +65,14 @@ class ModelTagController {
     def saveModelTag(ModelTagTransportCommand command) {
         Map result = [:]
         /* Manually bind data for command.tags */
-        def tags = JSON.parse(params.tags)
+        def tagsData = params.tags.decodeHTML()
+        def tags = JSON.parse(tagsData)
         List list = tags.collect {
-            TagTransportCommand cmd = new TagTransportCommand(name: it.name)
+            String idStr = it.id
+            String tagName = it.name
+            TagTransportCommand cmd = new TagTransportCommand(name: tagName)
             if (it.id.matches("[0-9]+")) {
-                cmd.id = Long.parseLong(it.id)
+                cmd.id = Long.parseLong(idStr)
             }
             cmd
         }

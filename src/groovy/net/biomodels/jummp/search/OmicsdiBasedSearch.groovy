@@ -36,6 +36,7 @@ import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 import net.biomodels.jummp.model.Revision
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
 import org.springframework.context.ApplicationListener
 import org.springframework.web.client.HttpClientErrorException
 import uk.ac.ebi.ddi.ebe.ws.dao.client.dataset.DatasetWsClient
@@ -60,7 +61,8 @@ import java.text.SimpleDateFormat
  * @date   12/09/2016
  */
 
-class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelOperationEvent> {
+class OmicsdiBasedSearch implements GrailsConfigurationAware, ModelSearchStrategy,
+    ApplicationListener<ModelOperationEvent> {
     /**
      * The class logger.
      */
@@ -127,6 +129,15 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
 
     def producerTemplate = Holders.grailsApplication.mainContext.getBean('producerTemplate')
 
+    private String httpProxyHost = "localhost"
+    private int httpProxyPort = 80
+
+    @Override
+    void setConfiguration(ConfigObject co) {
+        httpProxyHost = co.jummp.http.proxy.host
+        httpProxyPort = co.jummp.http.proxy.port as int
+    }
+
     @NotTransactional
     void onApplicationEvent(ModelOperationEvent event) {
         // look at solrbasedsearch
@@ -140,7 +151,7 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
     @NotTransactional
     SearchResponse searchModels(String query, String domain, SortOrder sortOrder,
             Map<String, Integer> paginationCriteria = ["start": 0, "length": 50, "facetCount": 10] ) {
-        long start = System.currentTimeMillis()
+        long startAt = System.currentTimeMillis()
         boolean inProdMode = Environment.current == Environment.PRODUCTION
         AbstractEbeyeWsConfig ebeyeWsConfig
         if (inProdMode) {
@@ -148,6 +159,21 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
         } else {
             ebeyeWsConfig = new EbeyeWsConfigDev()
         }
+        /**
+         * At the current settings, using HTTP PROXY to access the internet in the cloud based deployment.
+         * Because of that, we need to tell ddi-ebe-ws-dao the information of HTTP PROXY
+         */
+        String _httpProxyHost = System.getenv("HTTP_PROXY_HOST")
+        String proxyHost = _httpProxyHost != null ? _httpProxyHost : this.httpProxyHost
+        String _httpProxyPort = System.getenv("HTTP_PROXY_PORT")
+        int proxyPort = _httpProxyPort != null ? _httpProxyPort.toInteger().intValue() : this.httpProxyPort
+        if (_httpProxyHost && _httpProxyPort) {
+            log.debug("HTTP Proxy information is retrieved from environment variables")
+        } else {
+            log.debug("Using the default information about HTTP Proxy")
+        }
+        ebeyeWsConfig.setHttpProxyHost(proxyHost)
+        ebeyeWsConfig.setHttpProxyPort(proxyPort)
         DatasetWsClient datasetWsClient = new DatasetWsClient(ebeyeWsConfig)
         // parse raw query to OmicsDI API to avoid double encoding issues.
         final String rawQuery = query.decodeHTML()
@@ -166,8 +192,10 @@ class OmicsdiBasedSearch implements ModelSearchStrategy, ApplicationListener<Mod
         sort = sort ? "isprivate:ascending,$sort" : "isprivate:ascending"
         QueryResult result
         try {
-            result = datasetWsClient.getDatasets(domain, query, fields,
-                paginationCriteria['start'], paginationCriteria['length'], paginationCriteria['facetCount'], sort)
+            int start = paginationCriteria['start']
+            int length = paginationCriteria['length']
+            int facetCount = paginationCriteria['facetCount']
+            result = datasetWsClient.getDatasets(domain, query, fields, start, length, facetCount, sort)
         } catch (HttpClientErrorException e) {
             log.debug("""\
 There was a problem obtaining search result from EBI search server. The root cause is ${e.toString()}""")
@@ -297,7 +325,7 @@ There was a problem obtaining search result from EBI search server. The root cau
         searchResponse.totalCount = totalCount
         if (IS_DEBUG_ENABLED) {
             log.debug("Search terms: $query")
-            log.debug("Results processed in ${System.currentTimeMillis() - start}")
+            log.debug("Results processed in ${System.currentTimeMillis() - startAt}")
         }
         return searchResponse
     }
@@ -311,7 +339,7 @@ There was a problem obtaining search result from EBI search server. The root cau
             int versionNumber = revision.revisionNumber
             boolean isCertified = null != revision.qcInfo
             final String uniqueId = "${submissionId}.${versionNumber}"
-            String exchangeFolder = new File(revision.files.first().path).getParent()
+            String exchangeFolder = new File(revision?.files?.first().path).getParent()
             String registryExport = miriamService.registryExport.canonicalPath
             def dsConfig = grailsApplication.config.dataSource
             def searchStrategy = grailsApplication.config.jummp.search.strategy
@@ -321,7 +349,7 @@ There was a problem obtaining search result from EBI search server. The root cau
             String dbUsername = dsConfig?.username
             String dbPassword = dsConfig?.password
             def dbSettings = [ 'url': dbUrl, 'username': dbUsername, 'password': dbPassword ]
-            def tags = modelTagService.getTagsByModelId(revision.model.submissionId)
+            def tags = modelTagService.getTagsByModelId(revision?.model?.submissionId)
             def partialData = [
                 'submissionId': submissionId,
                 'publicationId' :publicationId,

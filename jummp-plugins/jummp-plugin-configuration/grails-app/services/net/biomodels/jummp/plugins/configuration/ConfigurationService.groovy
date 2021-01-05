@@ -34,72 +34,96 @@
 
 package net.biomodels.jummp.plugins.configuration
 
-import java.util.concurrent.locks.ReentrantLock
+import org.codehaus.groovy.grails.exceptions.GrailsConfigurationException
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 
+import java.util.concurrent.locks.ReentrantLock
+
 /**
- * Service for managing the configuration stored in a properties file.
+ * @short Service for managing the configuration stored in a properties file.
  *
- * This service can be used by controllers to update the jummp configuration.
+ * <p>This service can be used by controllers to update the jummp configuration.
  * It is important to remember that a change in the configuration does not have any
  * influence to the runtime behavior of the currently running application.
  * The application needs to be restarted, whenever the configuration changes.
- * @author  Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
- * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ *
+ * @author <a href="m.graesslin@dkfz-heidelberg.de">Martin Gräßlin</a>
+ * @author <a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a>
+ * @author <a href="mailto:mihai.glont@ebi.ac.uk">Mihai Glont</a>
  * @date 20130705
  */
 class ConfigurationService implements InitializingBean {
+    static transactional = false
     /**
      * Methods accessing the configuration files, need to be thread-safe, hence the use of a lock.
      */
     private final ReentrantLock lock = new ReentrantLock()
+    private static final Logger logger = LoggerFactory.getLogger(ConfigurationService.class)
 
-    static transactional = false
     /**
      * The configuration file is set in after properties set to a default value if not already set.
      * Primary purpose of this property is for integration tests to not overwrite the real configuration.
      */
     @SuppressWarnings('GrailsStatelessService')
     File configurationFile = null
+    /**
+     * Default name of the configuration file
+     */
+    final String CFG_FILENAME = ".jummp.properties"
 
     private boolean testPath(String path) {
-    	File testFile=new File(path)
-    	return testFile.exists()
+        File testFile = new File(path)
+        return testFile.exists()
     }
-    
+
+    private String getDefaultConfigFile() {
+        logger.debug("Jummp is loading the configuration file from the default location")
+        String userHome = System.getProperty("user.home")
+        String fileSeparator = System.getProperty("file.separator")
+        String path =  "${userHome}${fileSeparator}${CFG_FILENAME}".toString()
+        if (!testPath(path)) {
+            path = null
+            logger.error("The default configuration file doesn't exist. The app cannot be started!")
+        }
+        path
+    }
+
     String getConfigFilePath() {
-    	String path = System.getenv("JUMMP_CONFIG");
-    	if (!path || !testPath(path)) {
-    		path=System.getProperty("user.home") + System.getProperty("file.separator") + ".jummp.properties"
-    		if (!testPath(path)) {
-    			path=null
-    		}
-    	}
-    	return path
+        String path = System.getenv("JUMMP_CONFIG")
+        if (!path || !testPath(path)) {
+            path = getDefaultConfigFile()
+        }
+        return path
     }
-    
-    
+
     void afterPropertiesSet() {
-    	String configPath=getConfigFilePath()
+        String configPath = getConfigFilePath()
         if (!configurationFile && configPath) {
-            configurationFile = new File(System.getProperty("user.home") + System.getProperty("file.separator") + ".jummp.properties")
+            logger.debug("The app is loading the configuration file ${configPath}")
+            configurationFile = new File(configPath)
+        } else {
+            String errMsg = "Cannot find neither .jummp.properties nor alternative"
+            logger.error(errMsg)
+            throw new GrailsConfigurationException(errMsg)
         }
     }
-    
-    /*
-    * Simple class to sort the properties map to make the resulting config file
-    * easier to read.
-    */
+
+    /**
+     * Simple class to sort the properties map to make the resulting config file
+     * easier to read.
+     */
     class SortedProperties extends Properties {
-    	public Enumeration keys() {
-    		Enumeration keysEnum = super.keys();
-    		Vector<String> keyList = new Vector<String>();
-    		while(keysEnum.hasMoreElements()){
-    			keyList.add((String)keysEnum.nextElement());
-    		}
-    		Collections.sort(keyList);
-    		return keyList.elements();
-    	}
+        Enumeration keys() {
+            Enumeration keysEnum = super.keys();
+            Vector<String> keyList = new Vector<String>();
+            while(keysEnum.hasMoreElements()){
+                keyList.add((String)keysEnum.nextElement());
+            }
+            Collections.sort(keyList);
+            return keyList.elements();
+        }
     }
 
     /**
@@ -188,7 +212,7 @@ class ConfigurationService implements InitializingBean {
         BivesCommand bives = new BivesCommand()
         bives.diffDir   = properties.getProperty("jummp.plugins.bives.diffdir")
         return bives
-    } 
+    }
 
     /**
      * Loads the current CMS Configuration.
@@ -224,6 +248,39 @@ class ConfigurationService implements InitializingBean {
         database.password = properties.getProperty("jummp.database.password")
         return database
     }
+
+    /**
+     * Loads the current information of HTTP Proxy
+     * @return A command object {@link HttpProxyCommand} encapsulating HTTP Proxy information
+     */
+    HttpProxyCommand loadHttpProxy() {
+        Properties properties = loadProperties()
+        HttpProxyCommand proxyCommand = new HttpProxyCommand()
+        proxyCommand.host = properties.getProperty("jummp.http.proxy.host")
+        proxyCommand.port = Integer.parseInt(properties.getProperty("jummp.http.proxy.port"))
+        return proxyCommand
+    }
+
+    /**
+     * Verifies the current configuration having HTTP Proxy information or not
+     * @return A command object {@link Proxy} encapsulating HTTP Proxy information
+     */
+    Proxy verifyHttpProxy() {
+        HttpProxyCommand command = loadHttpProxy()
+        String host = command.host
+        int port = command.port as int
+        boolean noSetProxyHost = host.equalsIgnoreCase("localhost") || host == null
+        boolean notSetProxyPort = port == 80 || port == null
+        boolean noHttpProxy = noSetProxyHost && notSetProxyPort
+        Proxy proxy
+        if (noHttpProxy) {
+            proxy = null
+        } else {
+            proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(host, port))
+        }
+        proxy
+    }
+
 
     /**
      * Loads the current Remote Configuration.
@@ -766,7 +823,7 @@ class ConfigurationService implements InitializingBean {
        properties.setProperty("jummp.branding.internalColor", branding.internalColor.toString())
        properties.setProperty("jummp.branding.externalColor", branding.externalColor.toString())
    }
-   
+
     /**
     * Updates the @p properties with the settings from @p search
     * @param properties The existing properties
@@ -806,7 +863,7 @@ class ConfigurationService implements InitializingBean {
        }
    }
 
-   
+
     /**
      * Loads the properties from the configuration file
      * @return The Jummp Configuration Properties
@@ -825,14 +882,14 @@ class ConfigurationService implements InitializingBean {
     private void saveProperties(Properties properties) {
         lock.lock()
         try {
-        	if (!configurationFile) {
-        		String path=getConfigFilePath()
-        		if (!path) {
-        			// There is no location specified. Using the default location.
-        			path=System.getProperty("user.home") + System.getProperty("file.separator") + ".jummp.properties"
-        		}
-        		configurationFile = new File(path)
-        	}
+            if (!configurationFile) {
+                String path = getConfigFilePath()
+                if (!path) {
+                    // There is no location specified. Using the default location.
+                    path= getDefaultConfigFile()
+                }
+                configurationFile = new File(path)
+            }
             FileOutputStream out = new FileOutputStream(configurationFile)
             properties.store(out, "Jummp Configuration")
         } finally {

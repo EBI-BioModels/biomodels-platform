@@ -1070,16 +1070,19 @@ class SubmissionService {
      */
     /* generics + @CompileStatic ==> https://issues.apache.org/jira/browse/GROOVY-7477 */
     protected List getFilesFromMemory(Map workingMemory, boolean filterMain) {
-        Collection<RFTC> repFiles = getRepFiles(workingMemory)
+        List<RFTC> repFiles = getRepFiles(workingMemory)
         if (!repFiles) {
             repFiles = new LinkedList<RFTC>();
             //only for testing, remove and throw exception perhaps!
         }
         if (filterMain) {
             /* filter out non-main files */
-            repFiles = repFiles.findAll { RFTC it -> it.mainFile }
+            repFiles = repFiles.findAll { it ->
+                RFTC rftc = it as RFTC
+                rftc.mainFile
+            } as List<RFTC>
         }
-        return getFilesFromRepFiles(repFiles.toList())
+        return getFilesFromRepFiles(repFiles)
     }
 
     /**

@@ -12,5 +12,5 @@
     <td>${publication.volume}</td>
     <td>${publication.issue}</td>
     <td>${publication.pages}</td>
-    <td></td>
+    <td>${publication.authors.join("; ")}</td>
 </tr>

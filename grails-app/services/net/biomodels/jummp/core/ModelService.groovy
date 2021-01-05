@@ -47,6 +47,7 @@ import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGe
 import net.biomodels.jummp.core.vcs.VcsException
 import net.biomodels.jummp.core.vcs.VcsFileDetails
 import net.biomodels.jummp.model.*
+import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
@@ -67,6 +68,8 @@ import org.springframework.transaction.TransactionDefinition
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Propagation
 
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.concurrent.locks.ReentrantLock
 
 /**
@@ -383,7 +386,7 @@ WHERE
     /**
     * Convenient method for sorting by the id column.
     *
-    * @return List of Models sorted ascending
+    * @return List of {@link Model}s sorted ascending
     * @see ModelService#getAllModels(int offset, int count, boolean sortOrder)
     **/
     @PostLogging(LoggingEventType.RETRIEVAL)
@@ -798,6 +801,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             RevisionTransportCommand cmd = revisionAdapter.toCommandObject()
             indexModelRevision(cmd)
             //convertModelToOtherFormats(cmd)
+            shareRevision2FellowCurators(cmd)
             return attachedRevision
         }
         revision
@@ -999,6 +1003,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             RevisionTransportCommand cmd = new RevisionAdapter(revision: r).toCommandObject()
             indexModelRevision(cmd)
             //convertModelToOtherFormats(cmd)
+            shareRevision2FellowCurators(cmd)
             return attachedModel
         }
         model
@@ -1101,7 +1106,10 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         String container = fileSystemService.findCurrentModelContainer()
         String containerName = new File(container).name
         String timestamp = new Date().format("yyyy-MM-dd'T'HH-mm-ss-SSS")
-        final String submissionId = submissionIdGenerator.generate()
+        final String submissionId
+        synchronized (this) {
+            submissionId = submissionIdGenerator.generate()
+        }
         String modelPath = new StringBuilder(timestamp).append("_").append(submissionId).
                 append(File.separator).toString()
         File modelFolder = new File(container, modelPath)
@@ -1460,7 +1468,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
                 }
             }
         }
-        def notification = [
+        Map notification = [
                 model: new ModelAdapter(model: model).toCommandObject(),
                 user: springSecurityService.currentUser,
                 grantedTo: collaborator,
@@ -1708,8 +1716,8 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
     private boolean hasAdminPermission(def modelOrRevision, String username) {
         Acl acl = aclUtilService.readAcl(modelOrRevision)
         return null != acl.entries.find { ace ->
-            if (!(ace instanceof PrincipalSid)) {
-                return
+            if (!(ace.sid instanceof PrincipalSid)) {
+                return null
             }
             def aceAsPrincipalSid = ace.sid as PrincipalSid
             aceAsPrincipalSid.principal == username &&
@@ -1717,6 +1725,36 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
         }
     }
 
+    /**
+     * Determines whether a user or role has a specific permission on a given model or revision or not
+     *
+     * @param modelOrRevision   A domain object which is either {@link Revision} or {@link Model}
+     * @param usernameOrRole    A string representing the username or authority (i.e. role)
+     * @param perm              An object representing a permission which the type is of {@link BasePermission}
+     * @return                  true/false
+     */
+    boolean hasPermission(def modelOrRevision, final String usernameOrRole, final BasePermission perm) {
+        Acl acl = aclUtilService.readAcl(modelOrRevision)
+        return null != acl.entries.find { ace ->
+            if (!(ace.sid instanceof PrincipalSid) || !(ace.sid instanceof GrantedAuthoritySid)) {
+                return false
+            }
+            def sid
+            String currentUsernameOrRole
+            if (ace.sid instanceof PrincipalSid) {
+                sid = ace.sid as PrincipalSid
+                currentUsernameOrRole = sid.principal
+            } else if (ace.sid instanceof GrantedAuthoritySid) {
+                sid = ace.sid as GrantedAuthoritySid
+                currentUsernameOrRole = sid.grantedAuthority
+            } else {
+                sid = null
+            }
+            boolean value = ace.permission == perm && currentUsernameOrRole == usernameOrRole
+            boolean doesItHasPermission = sid == null ? false : value
+            return doesItHasPermission
+        }
+    }
     /**
     * Revokes write access for @p model from @p collaborator.
     *
@@ -1856,6 +1894,12 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
         return succeed
     }
 
+    void deleteModelWorkingDirectory(final Model model) throws IOException {
+        String workingDirectory = grailsApplication.config.jummp.vcs.workingDirectory
+        String modelDirectory = model.vcsIdentifier
+        Path absModelDir = Paths.get(workingDirectory, modelDirectory)
+        fileSystemService.deleteDirectory(absModelDir)
+    }
     /*
      * Convenience method that checks whether a model has any publicly-available revision.
      *
@@ -2189,7 +2233,9 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
     private Revision doBeforePublishingCuratedRevision(Revision revision) throws ModelException {
         String publicationId
         if (null == revision.model.publicationId) {
-            revision.model.publicationId = getPublicationIdGenerator().generate()
+            synchronized (this) {
+                revision.model.publicationId = getPublicationIdGenerator().generate()
+            }
         }
         publicationId = revision.model.publicationId
 
@@ -2213,6 +2259,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
             Revision toPublish = persistRevision(revisionTC.files, [], revisionTC)
             RevisionTransportCommand toPublishTC = new RevisionAdapter(revision: toPublish).toCommandObject()
             indexModelRevision(toPublishTC)
+            shareRevision2FellowCurators(toPublishTC)
             return toPublish
         } else {
             log.warn("""We are publishing $revision encoded in $format, but won't be able to add \
@@ -2442,6 +2489,12 @@ Try to connect with Conversion service to export the model ${cmd.model.submissio
         revision.curationState == CurationState.CURATED
     }
 
+    /**
+     * Adds a {@link ModellingApproach} considered as an annotation to a specific revision.
+     * @param revisionTC    a {@link RevisionTransportCommand} object representing the revision.
+     * @param approach      a {@link ModellingApproach} object representing the modelling approach.
+     * @throws ModelException
+     */
     void addModellingApproachAsAnnotation(RevisionTransportCommand revisionTC, ModellingApproach approach) throws
             ModelException {
         def sbmlService = grailsApplication.mainContext.getBean("sbmlService", ISbmlService.class)
@@ -2449,6 +2502,28 @@ Try to connect with Conversion service to export the model ${cmd.model.submissio
         if (!result) {
             log.error("""\
 There has been error while adding $approach to the model ${revisionTC.identifier()}""")
+        }
+    }
+
+    /**
+     * Publishes an event to a specific subscriber. The method checks criteria to publish a
+     * {@link RevisionCreatedEvent} so that the subscriber {@link ShareRevisionToFellowCurators}
+     * can detect and share the newly created revision to the fellow curators with the writable permission.
+     *
+     * @param command {@link RevisionTransportCommand} object
+     */
+    private void shareRevision2FellowCurators(RevisionTransportCommand command) {
+        Revision revision = Revision.get(command.id)
+        // Check authorities
+        User owner = revision.owner
+        Set roles = owner.authorities
+        Role curaRole = Role.findByAuthority("ROLE_CURATOR")
+        boolean shouldShare = curaRole in roles
+        if (shouldShare) {
+            log.debug("Publishing the event to share the revision ${command.identifier()}")
+            grailsApplication.mainContext.publishEvent(new RevisionCreatedEvent(this, command))
+        } else {
+            log.debug("cannot share the model ${command.identifier()} to fellow curators")
         }
     }
 }

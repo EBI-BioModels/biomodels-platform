@@ -797,10 +797,7 @@
                         </div>
                     </div>
                     <div id="Files" class="row">
-                        <%
-                            Map model = [:]
-                            model["repoFiles"] = repoFiles
-                        %>
+                        <% Map model = ["repoFiles": repoFiles] %>
                         <g:render template="/templates/biomodels/modelDisplay/tabFiles"
                                   model="${model}" />
                     </div>
@@ -846,6 +843,13 @@
                                 </li>
                             </g:each>
                         </ul>
+                        <g:if test="${allRevs.size() > 1}">
+                            <p style="font-style: italic; font-size: smaller">(*) You might be seeing discontinuous
+                                revisions as only public revisions are displayed here. Any private revisions
+                                <img title="unpublished model revision" alt="unpublished model revision"
+                                     src="${grailsApplication.config.grails.serverURL}/images/lock.png"/>
+                                 of this model will only be shown to the submitter and their collaborators.</p>
+                        </g:if>
                     </div>
                     <g:if test="${convertedFilesTC}">
                     <div id="Exports">
@@ -856,7 +860,8 @@
                     <g:pageProperty name="page.modelspecifictabscontent" />
                     <g:if test="${curationNotes != null || hasCuratorRole}">
                         <biomd:renderCurationNotesTab curationNotes="${curationNotes}"
-                                                      model="${revision.model}" modelName="${revision.name}"
+                                                      model="${revision.modelIdentifier()}"
+                                                      modelName="${revision.name}"
                                                       hasCuratorRole="${hasCuratorRole}"/>
                     </g:if>
                 </div>

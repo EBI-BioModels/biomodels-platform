@@ -1,12 +1,10 @@
 .flashNotificationDiv {
 	text-align:left;
-	padding-top:8px;
-	padding-bottom:8px;
+	padding: 8px 5px 8px 5px;
 	background-color: #fff;
 	font-size:20px;-moz-border-radius: 6px;-webkit-border-radius: 6px;
 	color:brown;
 	border:2px solid gray;
-    padding:10px;
     position: relative;
 }
 .flashNotificationDiv ul {

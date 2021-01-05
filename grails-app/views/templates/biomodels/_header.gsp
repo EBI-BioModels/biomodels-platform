@@ -21,30 +21,22 @@
 
 
 
-
 <div id="skip-to">
-    <ul>
-    <li><a href="#content">Skip to main content</a></li>
-    <li><a href="#local-nav">Skip to local navigation</a></li>
-    <li><a href="#global-nav">Skip to EBI global navigation menu</a></li>
-    <li><a href="#global-nav-expanded">Skip to expanded EBI global navigation menu (includes all sub-sections)</a></li>
-    </ul>
+    <a href="#content">Skip to main content</a>
 </div>
 <header id="masthead-black-bar" class="clearfix masthead-black-bar">
     <!-- EBML-EBI menu items will be rendered by the script in script.js -->
 </header>
 
-<div id="content" data-sticky-container="" lass="sticky-container">
+<div data-sticky-container class="sticky-container">
     <!-- Suggested layout containers -->
-    <header id="masthead" class="masthead sticky is-anchored is-at-top" data-sticky="42dzxn-sticky"
-            data-sticky-on="large" data-top-anchor="content:top" data-btm-anchor="content:bottom"
-            data-resize="masthead" data-mutate="masthead" data-events="mutate"
-            style="max-width: 2545px; margin-top: 0px; bottom: auto; top: 0px; background-color: rgb(37, 65, 70);
-                background-image: url('//www.ebi.ac.uk/web_guidelines/EBI-Framework/v1.3/images/backgrounds/embl-ebi-background.jpg');">
+    <header id="masthead" class="masthead" data-sticky data-sticky-on="large" data-top-anchor="content:top"
+            data-btm-anchor="content:bottom">
+
         <!-- local-title, local search -->
-        <div id="local-title" class="row" style="padding-top: 10px">
-            <div
-                class="hide-for-small-only medium-12 large-4 columns padding-top-none padding-bottom-none padding-left-none padding-right-none">
+        <div class="masthead-inner row" style="height: 109px; padding-top: 0rem">
+            <div id="local-title"
+                 class="hide-for-small-only medium-12 large-4 columns padding-top-none padding-bottom-none padding-left-none padding-right-none">
                 <h1>
                     <a href="${createLink(uri: '/', absolute: true)}" title="Back to BioModels homepage"
                     style="text-decoration: none; border-bottom-style: none">

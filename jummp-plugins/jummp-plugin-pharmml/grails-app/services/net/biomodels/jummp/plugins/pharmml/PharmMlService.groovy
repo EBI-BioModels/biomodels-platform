@@ -48,10 +48,9 @@ import eu.ddmore.libpharmml.dom.trialdesign.TrialStructure
 import groovy.xml.QName
 import groovy.xml.XmlUtil
 import net.biomodels.jummp.core.IPharmMlService
-import net.biomodels.jummp.core.model.FileFormatService
+import net.biomodels.jummp.core.model.FileFormatServiceAdapter
 import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.core.util.JummpXmlUtils
-import net.biomodels.jummp.model.ModellingApproach
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.apache.tika.detect.DefaultDetector
@@ -72,7 +71,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-class PharmMlService implements FileFormatService {
+class PharmMlService extends FileFormatServiceAdapter {
     private static final Log log = LogFactory.getLog(this)
     private static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
     private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
@@ -249,16 +248,6 @@ class PharmMlService implements FileFormatService {
         AbstractPharmMlHandler.savePharmML(pharmML, res)
     }
 
-    @Profiled(tag = "pharmMlService.getAllAnnotationURNs")
-    public List<String> getAllAnnotationURNs(RevisionTransportCommand revision) {
-        return []
-    }
-
-    @Profiled(tag = "pharmMlService.getPubMedAnnotation")
-    public List<String> getPubMedAnnotation(RevisionTransportCommand revision) {
-        return []
-    }
-
     /**
      * Detects whether the supplied files are in the format supported by this Service
      * @param files a list of files that should be checked
@@ -424,11 +413,7 @@ class PharmMlService implements FileFormatService {
         AbstractPharmMlHandler.savePharmML(pharmML, res)
     }
 
-    @Override
-    ModellingApproach getModellingApproach(RevisionTransportCommand revision) {
-        return null
-    }
-/*
+    /*
      * Helper function that updates a given element of model encoded in PharmML.
      *
      * Specifically, it updates the XML element, as well as the corresponding attribute in

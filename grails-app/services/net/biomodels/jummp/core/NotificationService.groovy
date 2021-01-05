@@ -186,7 +186,7 @@ class NotificationService {
             String withPubMsgCode = "notification.model.created.emailToSubmitter.body.withPublicationProvided"
             String noPubMsgCode = "notification.model.created.emailToSubmitter.body.noPublicationProvided"
             String withPublicationProvided = messageSource.getMessage(withPubMsgCode, [] as String[],  null)
-            String noPublicationProvided = messageSource.getMessage(noPubMsgCode, [] as String[], null)
+            String noPublicationProvided = messageSource.getMessage(noPubMsgCode, [model.submissionId] as String[], null)
             String askAcknowledgement = model.publication ? withPublicationProvided : noPublicationProvided
             String[] args = [salutation, model.name, model.submissionId, askAcknowledgement, modelLink]
             emailBody = messageSource.getMessage("notification.model.created.emailToSubmitter.body", args, null)
@@ -331,6 +331,25 @@ class NotificationService {
         String emailFrom = user.email //grailsApplication.config.jummp.security.registration.email.sender
         String emailSubject = messageSource.getMessage(notificationTitle, titleParams, LCH.getLocale())
         String emailBody = messageSource.getMessage(notificationBody, bodyParams, LCH.getLocale())
+        mailService.sendMail {
+            async true
+            to emailTo
+            from emailFrom
+            replyTo emailFrom
+            subject emailSubject
+            html emailBody
+        }
+
+        // send an email to the user to request a citation to BioModels
+        (emailFrom, emailTo) = [emailTo, emailFrom]
+        emailFrom = grailsApplication.config.jummp.model.curators.mailinglist
+        notificationTitle = "biomodels.howtoCiteUs.reminder.title"
+        titleParams = []
+        emailSubject = messageSource.getMessage(notificationTitle, titleParams, LCH.getLocale())
+
+        notificationBody = "biomodels.howtoCiteUs.reminder.content"
+        bodyParams = [serverURL, user?.person?.userRealName ?: user.username, model.submissionId]
+        emailBody = messageSource.getMessage(notificationBody, bodyParams, LCH.getLocale())
         mailService.sendMail {
             async true
             to emailTo

@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -32,6 +32,8 @@ grails.project.war.file = "target/${appName}.war"
 grails.project.groupId = "net.biomodels.jummp"
 grails.project.source.level = 1.8
 grails.project.target.level = 1.8
+grails.server.host="0.0.0.0"
+grails.server.port=8080
 grails.project.dependency.resolver = "maven"
 
 customJvmArgs = ["-server", "-noverify", "-XX:+UseConcMarkSweepGC", "-XX:+UseParNewGC" ]
@@ -42,7 +44,7 @@ grails.project.fork = [
     // configure settings for the run-app JVM
     run: [maxMemory: 2048, minMemory: 64, debug: false, maxPerm: 512, forkReserve:false, jvmArgs: customJvmArgs],
     // configure settings for the run-war JVM
-    war: [maxMemory: 2048, minMemory: 64, debug: false, maxPerm: 512, forkReserve:false, jvmArgs: customJvmArgs],
+    war: [maxMemory: 8192, minMemory: 64, debug: false, maxPerm: 512, forkReserve:false, jvmArgs: customJvmArgs],
     // configure settings for the Console UI JVM
     console: [maxMemory: 1024, minMemory: 64, debug: false, maxPerm: 256, jvmArgs: customJvmArgs]
 ]
@@ -65,18 +67,15 @@ grails.project.dependency.resolution = {
         grailsPlugins()
         grailsHome()
         grailsCentral()
-
         mavenLocal()
         mavenCentral()
         mavenRepo "https://www.ebi.ac.uk/~maven/m2repo"
         mavenRepo "https://www.ebi.ac.uk/~maven/m2repo_snapshots/"
-        mavenRepo "http://download.eclipse.org/jgit/maven"
-        mavenRepo "http://www.biojava.org/download/maven/"
-        mavenRepo "http://repo.spring.io/milestone"
+        mavenRepo "https://repo.spring.io/milestone"
         mavenRepo "http://repo.grails.org/grails/core"
 
         // for spock-reports
-        mavenRepo "http://jcenter.bintray.com"
+        mavenRepo "https://jcenter.bintray.com"
     }
     dependencies {
         // required by OntologyLookupResolver
@@ -86,7 +85,7 @@ grails.project.dependency.resolution = {
         runtime 'mysql:mysql-connector-java:5.1.34'
         runtime "postgresql:postgresql:9.1-901.jdbc4"
 
-        compile "uk.ac.ebi.ddi:ddi-ebe-ws-dao:1.0"
+        compile "uk.ac.ebi.ddi:ddi-ebe-ws-dao:1.2.1"
         // Jackson DataBinder has 'provided' scope in DDI: See
         //      https://github.com/BD2K-DDI/ddi-base-master/blob/2326b4/pom.xml
         //      https://github.com/BD2K-DDI/ddi-ebeye-ws-dao/blob/8bd08f/pom.xml
@@ -162,12 +161,18 @@ grails.project.dependency.resolution = {
             excludes 'spring-context','spring-core','spring-test', 'jena', 'slf4j-log4j12'
         }
         compile "com.rometools:rome:1.11.1"
+        /* Jedis and spring-data-redis clash in Grails2,
+           though not Grails 3 https://stackoverflow.com/a/30776364 */
+        compile("org.springframework.data:spring-data-redis:1.8.10.RELEASE") {
+            excludes("spring-context", "spring-context-support", "spring-aop")
+        }
+        compile "redis.clients:jedis:2.9.0"
     }
 
     plugins {
         build ":tomcat:7.0.55.3"
         build ":codenarc:1.2"
-
+        compile":rest-client-builder:2.1.1"
         // plugins for the compile step
         compile ":cache:1.1.8"
         compile ":cache-ehcache:1.0.5"
@@ -185,6 +190,9 @@ grails.project.dependency.resolution = {
         //compile ":svn:1.0.2"
         compile ":locale-variant:0.1"
         compile ":webflow:2.1.0"
+        compile (":spring-session:1.2") {
+            excludes "spring-data-redis"
+        }
 
         runtime (":weceem:1.4") {
             /* feeds plugin clashes with rome api rendering Model of The Month RSS feed */

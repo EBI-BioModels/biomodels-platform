@@ -35,37 +35,15 @@
         <g:javascript contextPath="" src="useradministration.js"/>
     </head>
     <body>
+        <g:render template="/templates/initRegistration" plugin="jummp-plugin-web-application" />
         <div id="userAdministrationRegister" class="row">
             <div class="medium-6 medium-centered large-6 large-centered columns">
             <form id="registerForm">
                 <div class="row column register-form">
-                    <label for="register-form-username" class="required">
-                        <g:message code="user.administration.ui.username"/></label>
-                    <input type="text" id="register-form-username" name="username"
-                           placeholder="Choose an username" />
-
-                    <label for="register-form-name" class="required">
-                        <g:message code="user.administration.ui.realname"/></label>
-                    <input type="text" id="register-form-name" name="email"
-                           placeholder="Enter your real name"/>
-
-                    <label for="register-form-email" class="required">
-                        <g:message code="user.administration.ui.email"/></label>
-                    <input type="text" id="register-form-email" name="email"
-                           placeholder="Enter your email address"/>
-
-                    <label for="register-form-institution" class="label-floating-left">
-                        <g:message code="user.administration.ui.institution"/></label>
-                    <input type="text" id="register-form-institution" name="institution"
-                           placeholder="Enter an institution name where you are working with"/>
-
-                    <label for="register-form-orcid"  class="label-floating-left">
-                        <g:message code="user.administration.ui.orcid"/></label>
-                    <input type="text" id="register-form-orcid" name="orcid"
-                           placeholder="For example, 0000-0002-2876-6046"/>
-                    <p>
+                    <g:render template="/templates/newAccountRegistrationForm"
+                              plugin="jummp-plugin-web-application" model="[user: null]" />
                     <input type="reset" class="button" value="${g.message(code: 'user.administration.cancel')}"/>
-                    <input type="submit" class="button" value="${g.message(code: 'user.administration.register')}"/></p>
+                    <input type="submit" class="button" value="${g.message(code: 'user.administration.register')}"/>
                 </div>
             </form>
             </div>

@@ -78,7 +78,7 @@
                 $( "#helpPanel" ).hide();
                 helpHidden=1;
                 helpWidth=-1;
-                $('#toggleHelp').text("Help");
+                $('#toggleHelp').text("More about this page");
                 $('#toggleHelp').attr("title", "Access help for this page");
             }
 
@@ -221,48 +221,11 @@
     </g:javascript>
     <g:javascript src="jummp.js"/>
     <g:javascript src="notification.js"/>
-    <g:javascript src="jquery.cookiebar.js"/>
-    <g:javascript>
-        function get_browser(){
-            var ua = navigator.userAgent,
-                tem,
-                M = ua.match(/(opera|chrome|safari|firefox|msie|trident(?=\/))\/?\s*(\d+)/i) || [];
-            if (/trident/i.test(M[1])) {
-                tem = /\brv[ :]+(\d+)/g.exec(ua) || [];
-                return {name: 'IE', version: (tem[1]||'')};
-            }
-            if (M[1] === 'Chrome') {
-                tem = ua.match(/\bOPR\/(\d+)/)
-                if (tem != null)
-                {
-                    return {name: 'Opera', version: tem[1]};
-                }
-            }
-            M = M[2]? [M[1], M[2]] : [navigator.appName, navigator.appVersion, '-?'];
-            if ((tem = ua.match(/version\/(\d+)/i)) != null) {
-                M.splice(1,1,tem[1]);}
-            return {
-                name: M[0],
-                version: M[1]
-            };
-        }
-        $(document).ready(function() {
-            var browser = get_browser();
-            if ((browser.name === 'Chrome' && parseInt(browser.version) < 19) ||
-                (browser.name === 'Firefox' && parseInt(browser.version) < 10) ||
-                (browser.name === 'IE' && parseInt(browser.version) < 10) ||
-                (browser.name === 'Safari' && parseInt(browser.version) < 5) ||
-                (browser.name === 'Opera')) {
-                $.cookieBar({});
-            }
-        });
-    </g:javascript>
 
     <link rel="stylesheet" href="<g:resource dir="css" file="notification.css"/>" />
     <link rel="stylesheet" href="<g:resource dir="css/${styleName}" file="layout.css"/>" />
     <link rel="stylesheet" href="<g:resource dir="css/${styleName}" file="${styleName}.css"/>" />
     <link rel="stylesheet" href="<g:resource dir="css/jqueryui/smoothness" file="jquery-ui-1.10.3.custom.min.css"/>" />
-    <link rel="stylesheet" href="<g:resource dir="css" file="jquery.cookiebar.css"/>" />
     <g:layoutHead/>
 </head>
 <!-- open body tag -->
@@ -280,7 +243,7 @@
 
     <g:if test="${contextHelpLocation}">
         <div id="helpbutton">
-            <a id="toggleHelp" title="Access help for this page" href="#">Help</a>
+            <a id="toggleHelp" title="Access help for this page" href="#">More about this page</a>
         </div>
         <div id="helpPanel">
             <div id="toolbar" class="ui-widget-header ui-corner-all">

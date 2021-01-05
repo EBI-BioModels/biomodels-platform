@@ -25,8 +25,9 @@ import net.biomodels.jummp.core.model.identifier.ModelIdentifier
 import net.biomodels.jummp.core.events.DateModelIdentifierDecoratorUpdatedEvent
 import net.biomodels.jummp.core.events.ModelIdentifierDecoratorUpdatedEvent
 import net.biomodels.jummp.core.model.identifier.decorator.AbstractAppendingDecorator
+import net.biomodels.jummp.core.model.identifier.decorator.FixedLiteralAppendingDecorator as FLAD
 import net.biomodels.jummp.core.model.identifier.decorator.OrderedModelIdentifierDecorator
-import net.biomodels.jummp.core.model.identifier.decorator.VariableDigitAppendingDecorator
+import net.biomodels.jummp.core.model.identifier.decorator.VariableDigitAppendingDecorator as VDAD
 import net.biomodels.jummp.core.model.identifier.support.GeneratorDetails
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
@@ -53,11 +54,12 @@ abstract class AbstractModelIdentifierGenerator implements ModelIdentifierGenera
      */
     String regex
 
+    String type
     /**
      * Default constructor
      */
     protected AbstractModelIdentifierGenerator() {
-        this((SortedSet) null)
+        this(null, (SortedSet) null)
     }
 
     /**
@@ -65,8 +67,9 @@ abstract class AbstractModelIdentifierGenerator implements ModelIdentifierGenera
      *
      * @param decorators an ordered set of model id decorators.
      */
-    protected AbstractModelIdentifierGenerator(
+    protected AbstractModelIdentifierGenerator(String type,
             SortedSet<? extends OrderedModelIdentifierDecorator> decorators) {
+        this.type = type
         doSetDecoratorRegistry(decorators)
         regex = null
     }
@@ -82,13 +85,13 @@ abstract class AbstractModelIdentifierGenerator implements ModelIdentifierGenera
          * NoSuchMethodError: GeneratorDetails.getDecorators()Ljava/util/TreeSet
          * No idea why, but I left @CompileStatic on the often-used methods of this class
          */
-        this(details?.decorators)
+        this(details?.generatorType, details?.decorators)
         regex = details?.regex
     }
 
     abstract String generate()
 
-    abstract void update()
+    abstract void update(final String lastUsedValue)
 
     @CompileStatic
     SortedSet<? extends OrderedModelIdentifierDecorator> getDecoratorRegistry() {
@@ -117,9 +120,9 @@ abstract class AbstractModelIdentifierGenerator implements ModelIdentifierGenera
         synchronized(ModelIdentifier.class) {
             if (event instanceof DateModelIdentifierDecoratorUpdatedEvent) {
                 // finds the first variable digit decorator and reset its value.
-                VariableDigitAppendingDecorator d = decoratorRegistry.find {
-                    it instanceof VariableDigitAppendingDecorator
-                } as VariableDigitAppendingDecorator
+                VDAD d = decoratorRegistry.find {
+                    it instanceof VDAD
+                } as VDAD
                 if (d) {
                     d.reset()
                     if (IS_DEBUG_ENABLED) {
@@ -128,6 +131,22 @@ abstract class AbstractModelIdentifierGenerator implements ModelIdentifierGenera
                 }
             }
         }
+    }
+
+    /**
+     * Determines type of generators. It is either submission or publication identifier generator.
+     *
+     * @return A {@link String} representing type of identifier generator
+     */
+    String typeOfIdentifierGenerator() { // FIXME
+        String type = ""
+        FLAD f = decoratorRegistry.find {
+            it instanceof FLAD
+        } as FLAD
+        if (f) {
+            type = f.SUFFIX
+        }
+        return type
     }
 
     @CompileStatic

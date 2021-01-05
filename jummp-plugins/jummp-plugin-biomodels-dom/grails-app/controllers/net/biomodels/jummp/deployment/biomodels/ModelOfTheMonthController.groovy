@@ -32,38 +32,42 @@ package net.biomodels.jummp.deployment.biomodels
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
+import net.biomodels.jummp.deployment.biomodels.ModelOfTheMonthTransportCommand as MOMTC
 
 import java.text.SimpleDateFormat
 
 @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
 class ModelOfTheMonthController {
-    def modelDelegateService
     def modelOfTheMonthService
 
     def index() {
-        List<ModelOfTheMonthTransportCommand> entries = modelOfTheMonthService.list()
+        List<MOMTC> entries = modelOfTheMonthService.list()
         [entries: entries]
     }
 
     def create() {
         Date current = new Date()
         String yearDate = current.format(ModelOfTheMonth.DATE_FORMAT_PATTERN)
-        ModelOfTheMonthTransportCommand entry = new ModelOfTheMonthTransportCommand(formattedEntryDate: yearDate, lastUpdated: current, publicationDate: current)
+        MOMTC entry = new MOMTC(formattedEntryDate: yearDate, lastUpdated: current,
+            publicationDate: current)
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
         [entry: entry, dateFormat: dateFormat]
     }
 
     def show(ModelOfTheMonth entry) {
+        String errMsg = ""
         if (!entry) {
             // render out the error
+            errMsg = entry.errors.toString()
+            [errMsg: errMsg]
         }
-        ModelOfTheMonthTransportCommand command = entry.toCommandObject()
+        MOMTC command = entry.toCommandObject()
         command.formattedEntryDate = command.publicationDate.format(ModelOfTheMonth.DATE_FORMAT_PATTERN)
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
-        [entry: command, dateFormat: dateFormat]
+        [entry: command, dateFormat: dateFormat, errMsg: errMsg]
     }
 
-    def save(ModelOfTheMonthTransportCommand command) {
+    def save(MOMTC command) {
         Map result = [:]
         if (command?.validate()) {
             ModelOfTheMonth updated = modelOfTheMonthService.doCreateOrUpdate(command)
@@ -79,7 +83,9 @@ class ModelOfTheMonthController {
             }
         } else {
             result.status = 422
-            result['message'] = "Sorry, but your form was not submitted because it is not valid. Please correct or enter valid values into the required fields if they are missing. Click Save button again when you finish it!"
+            result['message'] = """Sorry, but your form was not submitted because it is not valid. \
+Please correct or enter valid values into the required fields if they are missing. \
+Click Save button again when you finish it!"""
             result['errors'] = command.errors.allErrors.inspect()
         }
         response.status = result.status

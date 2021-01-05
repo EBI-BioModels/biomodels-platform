@@ -48,7 +48,7 @@ interface ModelIdentifierDecorator {
     /**
      * Modify model identifier @p modelIdentifier.
      */
-    ModelIdentifier decorate(ModelIdentifier modelIdentifier)
+    ModelIdentifier decorate(ModelIdentifier modelIdentifier, String lastUsed)
     /**
      * States whether a decorator implementation appends the same suffix to all
      * model identifiers, in which case it is considered fixed, or a different
@@ -59,13 +59,19 @@ interface ModelIdentifierDecorator {
      * Updates the value of the suffix that a decorator implementation will use
      * the next time its decorate() method is called.
      */
-    void refresh()
+    void refresh(final String lastUsedValue)
     /**
      * Sets the generator to which this decorator instance belongs.
      *
      * @param generator
      */
     void setGenerator(ModelIdentifierGenerator generator)
+    /**
+     * Returns the model id generator to which this decorator instance belongs.
+     *
+     * @return null if {@link net.biomodels.jummp.core.model.identifier.decorator.ModelIdentifierDecorator#setGenerator(net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGenerator)} has not been called yet.
+     */
+    ModelIdentifierGenerator getGenerator()
     /**
      * Informs the generator of a change to this model id decorator's value.
      *

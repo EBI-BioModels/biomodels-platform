@@ -54,7 +54,8 @@ class TeamController {
     	String description = ""
     	Set<User> users=new HashSet<User>()
     	try {
-    		def map = JSON.parse(params.teamData)
+            def teamData = params.teamData.decodeHTML()
+    		def map = JSON.parse(teamData)
     		name = map.getString("name")
     		description = map.getString("description")
     		def collabs = map.getJSONArray("members")
@@ -144,7 +145,8 @@ class TeamController {
     		if (team && user == team.owner) {
     			Set<User> users=new HashSet<User>()
     			try {
-    				def map = JSON.parse(params.teamData)
+                    def teamData = params.teamData.decodeHTML()
+    				def map = JSON.parse(teamData)
     				team.name = map.getString("name")
     				team.description = map.getString("description")
     				def collabs = map.getJSONArray("members")
