@@ -472,9 +472,10 @@ WHERE
      **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getMyModels")
-    List<Model> getMyModels() {
+    List<Model> getMyModels(int offset, int count, boolean sortOrder, ModelListSorting sortColumn,
+                            String filter = null, boolean deletedOnly = false) {
         String query = """\
-SELECT distinct m.id
+SELECT distinct m.id, m.submissionId
 FROM Revision AS r JOIN r.model AS m
 WHERE
     r.deleted = false
@@ -488,12 +489,27 @@ ORDER BY m.id desc, r.revisionNumber desc
         String message = "User $userId : $username is accessing their models at ${new Date()}"
         log.debug(message)
         println message
+        Map metaParams
+        if (offset < 0 || count <= 0) {
+            // safety check
+            metaParams = [:]
+        } else {
+            metaParams = [
+                max: count, offset: offset
+            ]
+        }
         Map namedParams = [
             "userId": userId
         ]
-        Map metaParams = ["max": 100, "offset": 0]
         List models = Model.getAll(Model.executeQuery(query, namedParams, metaParams))
         return models
+    }
+
+    @PostLogging(LoggingEventType.RETRIEVAL)
+    @Profiled(tag="modelService.getModelCount")
+    Integer countMyModels(String filter = null, boolean deletedOnly = false) {
+        List models = getMyModels(-1, 0, true, ModelListSorting.ID, filter)
+        models?.size()
     }
 
     /** convenience method to check if our filter is OK */
