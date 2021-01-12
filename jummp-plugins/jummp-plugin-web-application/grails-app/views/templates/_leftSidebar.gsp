@@ -13,7 +13,8 @@
     def FACETS_WRAPPED_DOUBLE_QUOTE = ["curationstatus", "modelformat", "disease", "modellingapproach", "modelflag"]
 %>
 <g:if test="${models}">
-    <h4>Filter your results</h4>
+<div class="sidebar">
+    <h4 style="color: forestgreen; font-weight: bold">Filter results</h4>
     <g:each in="${facets}" var="facet" status="i">
         <div id="facetList${i}">
         <h5 style="padding-top: 5px">${facet.label}</h5>
@@ -102,6 +103,7 @@
         </div>
         </div> <!-- facetList -->
     </g:each>
+</div>
 </g:if>
 <g:else>
     <p></p>

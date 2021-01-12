@@ -3,26 +3,8 @@
     expressionCodec = "none"
 %>
 <g:if test="${models}">
-    <g:if test="${actionName == 'search'}">
-        <div class="element" id="rightSidebar">
-        </div>
-    </g:if>
-    <g:elseif test="${actionName == 'list'}">
-        <g:if test="${history}">
-            <div class="element" id="sidebar-element-last-accessed-models">
-                <h4><g:message code="model.history.title"/></h4>
-                <ul>
-                    <g:each in="${history}">
-                        <li><a href="${createLink(controller: "model", action: "show",
-                            id: it.publicationId ?: it.submissionId)}">${it.name}</a><br/>
-                            <g:message code="model.history.submitter"/>${it.submitter}</li>
-                    </g:each>
-                </ul>
-            </div>
-        </g:if>
-    </g:elseif>
-    <div class="element">
-        <h4>Shortcuts to browse models</h4>
+    <div class="sidebar">
+        <h4 style="color: forestgreen; font-weight: bold">Quick links</h4>
         <h5><g:link controller="parameterSearch">Parameters Search</g:link></h5>
         <p>BioModels Parameters is a resource that facilitates easy search and retrieval of parameter values used in
         the SBML models stored in the BioModels repository.</p>

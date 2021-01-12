@@ -39,8 +39,8 @@
         <!-- TODO: could use other view for list action -->
     </body>
     <content tag="sidebar">
-        <!-- show the recently accessed models, the most accessed models, etc. -->
-        <g:render template="/templates/rightSidebar" model="['action': 'list']"/>
+        <!-- quick links -->
+        <g:render template="/templates/listRightSidebar" />
     </content>
     <content tag="facetsearch">
         <!-- show facets search on the left side bar -->

@@ -35,10 +35,7 @@
         </div>
         <div class="row">
                 <g:if test="${action == "list"}">
-                    <sec:ifLoggedIn>
-                        <a href="${createLink(controller: "search", action: "archive")}">
-                            Browse Archived Models</a>
-                    </sec:ifLoggedIn>
+
                 </g:if>
                 <g:else>
                     <g:if test="${params.flashMessage}">
