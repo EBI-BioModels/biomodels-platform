@@ -212,7 +212,7 @@ class SearchService {
         List<Facet> facets = []
         def formats = models.collect(
             new HashSet(), {
-            [it.format.identifier, it.format.name, 0]
+            [it?.format?.identifier, it?.format?.name, 0]
         })
         def submitters = models.collect(
             new HashSet(), {
@@ -220,7 +220,7 @@ class SearchService {
         })
         def types = new HashSet([["Private", 0], ["Shared", 0], ["Public", 0]])
         models.each {
-            String format = it.format.identifier
+            String format = it?.format?.identifier
             formats.each {
                 if (it[0] == format) {
                     it[2] += 1
@@ -250,7 +250,7 @@ class SearchService {
         // Format
         def facet = new Facet()
         List<FacetValue> fvs = []
-        facet.id = "Format"
+        facet.id = "format"
         facet.label = "Format"
         facet.facetValues = []
         formats.each {
@@ -262,7 +262,7 @@ class SearchService {
         // Submitter
         facet = new Facet()
         fvs = []
-        facet.id = "Submitter"
+        facet.id = "submitter"
         facet.label = "Collaborator"
         facet.facetValues = []
         submitters.each {

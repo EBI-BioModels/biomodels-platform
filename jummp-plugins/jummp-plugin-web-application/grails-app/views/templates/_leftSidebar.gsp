@@ -52,17 +52,18 @@
                 <g:else>
                     <%
                         String newQuery = ""
+                        def newParams = [:]
                         if (actionName.equalsIgnoreCase("search")) {
                             newQuery = query? "${query} AND ${selectedFacet}" : "${selectedFacet}"
+                            if (params.domain) {
+                                newParams['domain'] = params.domain
+                            } else {
+                                newParams['domain'] = 'biomodels'
+                            }
                         } else {
                             newQuery = selectedFacet
                         }
-                        def newParams = [:]
-                        if (params.domain) {
-                            newParams['domain'] = params.domain
-                        } else {
-                            newParams['domain'] = 'biomodels'
-                        }
+
                         if (query) {
                             newParams["query"] = newQuery
                         } else {
@@ -113,9 +114,9 @@
         valueNames: ['facetLabel'] // add css classes associated with the elements that you want to search in
     };
     let facetList = [];
-    for (i = 0; i< ${listOfFacets.size()}; i++) {
+    for (let i = 0; i< ${listOfFacets.size()}; i++) {
         facetList[i] = new List('facetList'+i, options);
-    };
+    }
 
     function runFacetSearch(e, facetGroupId, facetValue) {
         let newSearchURI = "${grailsApplication.config.grails.serverURL}/search?query="
@@ -170,7 +171,7 @@
             // why don't we need to check empty of the currentQueryString?
             currentQueryString = currentQueryString.replace(latestQueryString, "");
         }
-        let otherParams = "domain=${params.domain}";
+        let otherParams = "";
         if ("${params.offset}") {
             otherParams += "&amp;offset=${params.offset}";
         }
