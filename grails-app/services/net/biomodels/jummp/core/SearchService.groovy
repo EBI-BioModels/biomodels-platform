@@ -214,9 +214,13 @@ class SearchService {
             new HashSet(), {
             [it?.format?.identifier, it?.format?.name, 0]
         })
-        def submitters = models.collect(
+        Map<String, String> submitterMap = new HashMap<>()
+        for (ModelTransportCommand m : models) {
+            submitterMap.putAll(m.creatorUsernames)
+        }
+        def submitters = submitterMap.values().collect(
             new HashSet(), {
-            [it.submitter, 0]
+            [it, 0]
         })
         def types = new HashSet([["Private", 0], ["Shared", 0], ["Public", 0]])
         models.each {
