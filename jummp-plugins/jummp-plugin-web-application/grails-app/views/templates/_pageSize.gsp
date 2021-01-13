@@ -7,7 +7,9 @@
             <g:else>
                 <%
                     Map customParams = [offset: params.offset, numResults: it, sort: params.sort]
-                    customParams['query'] = query
+                    if (query) {
+                        customParams['query'] = query
+                    }
                     if (action == 'search') {
                         customParams['domain'] = domain
                     }

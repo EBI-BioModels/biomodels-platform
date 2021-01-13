@@ -99,7 +99,7 @@
                                 </g:if>
                                 <g:else>
                                     <span class="icon icon-functional" data-icon="U"
-                                          title="This model has public revisions"
+                                          title="This is a public model"
                                           style="float: right; margin-top: 10px"></span>
                                 </g:else>
                             </g:if>
