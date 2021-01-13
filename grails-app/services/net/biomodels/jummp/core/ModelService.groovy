@@ -471,14 +471,12 @@ WHERE
         Map namedParams = ["ownerId": userId]
         String type
         // use object IDs here to minimise the number SQL queries and JOINS Hibernate uses.
-        List filteredFormats = new ArrayList()
-        List filteredUsers = new ArrayList()
-        List filteredTypes = new ArrayList()
         if (filterIsValid) {
             boolean isTypeQuery = filter?.substring(0,4)?.equals("type")
             if (!isTypeQuery) {
                 if (filter.take(6) == "format") {
                     String formatId = filter.drop(7)
+                    List filteredFormats = new ArrayList()
                     filteredFormats = ModelFormat.executeQuery(
                         "SELECT id FROM ModelFormat WHERE identifier = :p", [p: formatId]
                     )
@@ -488,6 +486,7 @@ WHERE
                 }
                 if (filter.take(9) == "submitter") {
                     String personName = filter.drop(10)
+                    List filteredUsers = new ArrayList()
                     filteredUsers = User.executeQuery(
                         "SELECT u.id FROM User u JOIN u.person p WHERE p.userRealName = :n",
                         [n: personName]
@@ -522,6 +521,8 @@ $query AND m.id IN (SELECT r2.model.id FROM Revision AS r2 WHERE r2.owner.id != 
                         break
                 }
             }
+        } else {
+            log.debug("You have provided an invalid filter $filter")
         }
 
         Map metaParams
