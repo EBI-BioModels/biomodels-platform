@@ -254,7 +254,9 @@
                     pagedParams = [offset: 0, numResults: length, sort: params.sort]
                     if (query) {
                         pagedParams["query"] = query
-                        pagedParams["domain"] = params.domain
+                        if (action.equalsIgnoreCase("search")) {
+                            pagedParams["domain"] = params.domain
+                        }
                     }
                 %>
                 <a href="${createLink(controller: 'search', action: action, params: pagedParams)}">First</a>
@@ -271,7 +273,9 @@
                     pagedParams = [offset: modelStart - length - 1, numResults: length, sort: params.sort]
                     if (query) {
                         pagedParams["query"] = query
-                        pagedParams["domain"] = params.domain
+                        if (action.equalsIgnoreCase("search")) {
+                            pagedParams["domain"] = params.domain
+                        }
                     }
                 %>
                 <a href="${createLink(controller: 'search', action: action, params: pagedParams)}">
@@ -296,7 +300,9 @@
                             pagedParams = [offset: (i - 1) * length, numResults: length, sort: params.sort]
                             if (query) {
                                 pagedParams["query"] = query
-                                pagedParams["domain"] = params.domain
+                                if (action.equalsIgnoreCase("search")) {
+                                    pagedParams["domain"] = params.domain
+                                }
                             }
                         %>
                         <a href="${createLink(controller: 'search', action: action, params: pagedParams)}">
@@ -314,7 +320,9 @@
                     pagedParams = [offset: modelStart + length - 1, numResults: length, sort: params.sort]
                     if (query) {
                         pagedParams["query"] = query
-                        pagedParams["domain"] = params.domain
+                        if (action.equalsIgnoreCase("search")) {
+                            pagedParams["domain"] = params.domain
+                        }
                     }
                 %>
                 <a href="${createLink(controller: 'search', action: action, params: pagedParams)}">
@@ -327,7 +335,9 @@
                     pagedParams = [offset: length * (numPages - 1), numResults: length, sort: params.sort]
                     if (query) {
                         pagedParams["query"] = query
-                        pagedParams["domain"] = params.domain
+                        if (action.equalsIgnoreCase("search")) {
+                            pagedParams["domain"] = params.domain
+                        }
                     }
                 %>
                 <a href="${createLink(controller: 'search', action: action, params: pagedParams)}">Last</a>
