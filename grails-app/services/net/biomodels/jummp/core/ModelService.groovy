@@ -503,14 +503,18 @@ WHERE r2.owner.id in ($strOwnerIds)  AND r2.model.id = m.id)"""
                 type = filter.drop(5).toLowerCase()
                 switch(type?.toLowerCase()) {
                     case "private":
-                        query = "$query AND r.state = '${ModelState.UNPUBLISHED}'"
+                        query = """\
+$query AND r.state = '${ModelState.UNPUBLISHED}' \
+AND r.revisionNumber = (SELECT MAX(r2.revisionNumber) FROM Revision As r2 WHERE r2.model.id = m.id)"""
                         break
                     case "shared":
                         query = """\
 $query AND m.id IN (SELECT r2.model.id FROM Revision AS r2 WHERE r2.owner.id != :ownerId AND r2.model.id = m.id)"""
                         break
                     case "public":
-                        query = "$query  AND r.state = '${ModelState.PUBLISHED}'"
+                        query = """\
+$query  AND r.state = '${ModelState.PUBLISHED}' \
+AND r.revisionNumber = (SELECT MAX(r2.revisionNumber) FROM Revision As r2 WHERE r2.model.id = m.id)"""
                         break
                     default:
                         if (type) {

@@ -98,17 +98,15 @@
                                            style="float: right; margin-top: 10px">
                                 </g:if>
                                 <g:else>
-                                    <span class="icon icon-common icon-unlock"
+                                    <span class="icon icon-functional" data-icon="U"
                                           title="This model has public revisions"
                                           style="float: right; margin-top: 10px"></span>
                                 </g:else>
                             </g:if>
                             <g:else>
-                                <g:if test="${action == 'search'}">
                                 <span class="icon icon-common icon-lock"
                                       title="This is a private model"
                                       style="float: right; margin-top: 10px"></span>
-                                </g:if>
                             </g:else>
                         </div>
                     </div>
