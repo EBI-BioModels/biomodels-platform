@@ -97,7 +97,7 @@ Provides functionality to support models encoded in PharmML.
                     service.registerModelElementType(modelFormat, type)
                 }
             }
-        } catch(NoSuchBeanDefinitionException e) {
+        } catch(Exception e) {
             println("Cannot register PharmML handler because ModelFileFormatService is not available!")
         } catch(IllegalStateException e) {
             println "Cannot register known PharmML element types -- annotations will not be saved."

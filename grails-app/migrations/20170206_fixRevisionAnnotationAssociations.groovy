@@ -54,6 +54,7 @@ databaseChangeLog = {
     }
 
 	changeSet(author: "mglont (generated)", id: "1486387545035-7") {
+		dropForeignKeyConstraint(baseTableName: "element_annotation", constraintName: "FKCFAB2C52265115F5")
 		dropColumn(columnName: "revision_id", tableName: "element_annotation")
         preConditions(onFail: "MARK_RAN") {
             columnExists(columnName: "revision_id", tableName: "element_annotation")

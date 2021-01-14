@@ -51,6 +51,7 @@ databaseChangeLog = {
         dropIndex(indexName: "identifier", tableName: "miriam_identifier")
         preConditions(onFail: "MARK_RAN") {
             tableExists(tableName: "miriam_identifier")
+			indexExists(schemaName: "miriam_datatype", indexName: "identifier")
         }
     }
 
@@ -58,6 +59,7 @@ databaseChangeLog = {
         dropIndex(indexName: "identifier", tableName: "miriam_resource")
         preConditions(onFail: "MARK_RAN") {
             tableExists(tableName: "miriam_resource")
+			indexExists(schemaName: "miriam_resource", indexName: "identifier")
         }
 
     }

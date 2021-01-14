@@ -242,8 +242,8 @@ class ModelService {
         String query
         // for Admin - sees all (not deleted) models
         boolean isAdmin = SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")
-        query = getQueryStringForUser(sortColumn, deletedOnly, filterIsValid, type,
-            filteredFormats, filteredUsers, sortingDirection, isAdmin)
+        query = getQueryStringForUser(sortColumn, deletedOnly, filteredFormats, filteredUsers,
+            sortingDirection, isAdmin)
         if (!isAdmin) {
             List permissions = new ArrayList([BasePermission.READ.getMask(), BasePermission.ADMINISTRATION.getMask()])
             Set<String> roles = getSpringDatabaseRoles()
@@ -255,7 +255,11 @@ class ModelService {
         }
         def results = []
         try {
-            results = Model.getAll(Model.executeQuery(query, namedParams, metaParams))
+            List queryResultSet = Model.executeQuery(query, namedParams, metaParams)
+            // result set consists of [model, <sortColumnValue>, revisionNumber] and we can't avoid it
+            // extract the first column before the result set gets used downstream
+            List<Long> modelIds = queryResultSet.collect { it[0] }
+            results = Model.getAll(modelIds)
         } catch (Exception e) {
             log.error("Exception $e while executing $query with '$namedParams' (page '$metaParams')")
         }
@@ -263,53 +267,33 @@ class ModelService {
     }
 
     private String getQueryStringForUser(ModelListSorting sortColumn, boolean deletedOnly,
-                                         boolean filterIsValid, String type,
                                          List filteredFormats, List filteredUsers,
                                          String sortingDirection, boolean isAdmin = false) {
+        String orderByColumn = getSortColumnAsString(sortColumn)
+        // we have to include $orderByColumn and revisionNumber in the selected columns
+        // in order for the query to be valid SQL
         String query = """\
-SELECT m.id
+SELECT m.id, ${orderByColumn}, r.revisionNumber
 FROM Revision AS r RIGHT OUTER JOIN r.model AS m
 WHERE
-    r.deleted = false
-    AND m.deleted = ${deletedOnly}
-    ${return filteredFormats ? "AND r.format.id IN (:formats)" : ""}
-    ${return filteredUsers ? "AND r.owner.id IN (:users)" : ""}
+ r.deleted = false
+ AND m.deleted = ${deletedOnly}
+ ${return filteredFormats ? "AND r.format.id IN (:formats)" : ""}
+ ${return filteredUsers ? "AND r.owner.id IN (:users)" : ""}
 """
         if (isAdmin) {
             query = """$query AND r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2 where r.model=r2.model)"""
         } else {
             query = """\
 $query AND r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2, AclEntry ace
-WHERE r.model = r2.model
+  WHERE r.model = r2.model
     AND r2.id = ace.aclObjectIdentity.objectId
     AND ace.aclObjectIdentity.aclClass.className = :className
     AND ace.sid.sid IN (:roles)
     AND ace.mask IN (:permissions))"""
         }
 
-        User u = springSecurityService.currentUser
-        switch(type?.toLowerCase()) {
-            case "private":
-                query = "$query AND r.owner.id = ${u.id} AND r.state = '${ModelState.UNPUBLISHED}'"
-                break
-            case "shared":
-                query = "$query AND r.owner.id != ${u.id} AND r.state = '${ModelState.UNPUBLISHED}'"
-                break
-            case "public":
-                query = "$query AND r.owner.id = ${u.id} AND r.state = '${ModelState.PUBLISHED}'"
-                break
-            default:
-                if (type) {
-                    log.warn("Ignoring unsupported permission level '$type'.")
-                } else if (!isAdmin) {
-                    query = """$query AND ((r.owner.id = ${u.id} AND r.state = '${ModelState.UNPUBLISHED}')
-OR (r.owner.id != ${u.id} AND r.state = '${ModelState.UNPUBLISHED}')
-OR (r.owner.id = ${u.id} AND r.state = '${ModelState.PUBLISHED}'))
-"""
-                }
-                break
-        }
-        query = """$query ORDER BY ${getSortColumnAsString(sortColumn)} ${sortingDirection}, r.revisionNumber desc"""
+        query = """$query ORDER BY ${orderByColumn} ${sortingDirection}, r.revisionNumber desc"""
         return query
     }
 
@@ -467,9 +451,104 @@ WHERE
      **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getMyModels")
-    List<Model> getMyModels(String filter = null, boolean deletedOnly = false) {
-        ModelListSorting sorting
-        getAllModels(-1, 0, false, sorting, filter, false)
+    List<Model> getMyModels(int offset, int count, boolean sortOrder, ModelListSorting sortColumn,
+                            String filter = null, boolean deletedOnly = false) {
+        String query = """\
+SELECT distinct m.id, m.submissionId
+FROM Revision AS r JOIN r.model AS m
+WHERE
+    r.deleted = false
+    AND m.deleted = false
+    AND r.owner.id = :ownerId
+"""
+        User u = springSecurityService.currentUser
+        String username = u.username
+        Long userId = u.id
+        String message = "User $userId : $username is accessing their models at ${new Date()}"
+        log.debug(message)
+
+        boolean filterIsValid = filterValid(filter)
+        Map namedParams = ["ownerId": userId]
+        String type
+        // use object IDs here to minimise the number SQL queries and JOINS Hibernate uses.
+        if (filterIsValid) {
+            boolean isTypeQuery = filter?.substring(0,4)?.equals("type")
+            if (!isTypeQuery) {
+                if (filter.take(6) == "format") {
+                    String formatId = filter.drop(7)
+                    List filteredFormats = new ArrayList()
+                    filteredFormats = ModelFormat.executeQuery(
+                        "SELECT id FROM ModelFormat WHERE identifier = :p", [p: formatId]
+                    )
+                    //namedParams.put("formats", filteredFormats)
+                    String strFormatIds = filteredFormats.join(", ")
+                    query ="$query AND r.format.id IN ($strFormatIds)"
+                }
+                if (filter.take(9) == "submitter") {
+                    String personName = filter.drop(10)
+                    List filteredUsers = new ArrayList()
+                    filteredUsers = User.executeQuery(
+                        "SELECT u.id FROM User u JOIN u.person p WHERE p.userRealName = :n",
+                        [n: personName]
+                    )
+                    if (filteredUsers?.size()) {
+                        String strOwnerIds = filteredUsers.join(",")
+                        query = """\
+$query AND m.id IN (SELECT r2.model.id FROM Revision AS r2 \
+WHERE r2.owner.id in ($strOwnerIds)  AND r2.model.id = m.id)"""
+                    }
+                }
+            } else {
+                // type := < private | shared | public >
+                type = filter.drop(5).toLowerCase()
+                switch(type?.toLowerCase()) {
+                    case "private":
+                        query = """\
+$query AND r.state = '${ModelState.UNPUBLISHED}' \
+AND r.revisionNumber = (SELECT MAX(r2.revisionNumber) FROM Revision As r2 WHERE r2.model.id = m.id)"""
+                        break
+                    case "shared":
+                        query = """\
+$query AND m.id IN (SELECT r2.model.id FROM Revision AS r2 WHERE r2.owner.id != :ownerId AND r2.model.id = m.id)"""
+                        break
+                    case "public":
+                        query = """\
+$query  AND r.state = '${ModelState.PUBLISHED}' \
+AND r.revisionNumber = (SELECT MAX(r2.revisionNumber) FROM Revision As r2 WHERE r2.model.id = m.id)"""
+                        break
+                    default:
+                        if (type) {
+                            log.warn("Ignoring unsupported permission level '$type'.")
+                        } else  {
+                            query = "$query AND r.state = '${ModelState.UNPUBLISHED}'"
+                        }
+                        break
+                }
+            }
+        } else {
+            log.debug("You have provided an invalid filter $filter")
+        }
+
+        Map metaParams
+        if (offset < 0 || count <= 0) {
+            // safety check
+            metaParams = [:]
+        } else {
+            metaParams = [
+                max: count, offset: offset
+            ]
+        }
+
+        query ="$query ORDER BY m.id desc, r.revisionNumber, r.owner.username desc"
+        List models = Model.getAll(Model.executeQuery(query, namedParams, metaParams))
+        return models
+    }
+
+    @PostLogging(LoggingEventType.RETRIEVAL)
+    @Profiled(tag="modelService.getModelCount")
+    Integer countMyModels(String filter = null, boolean deletedOnly = false) {
+        List models = getMyModels(-1, 0, true, ModelListSorting.ID, filter)
+        models?.size()
     }
 
     /** convenience method to check if our filter is OK */

@@ -41,11 +41,18 @@ databaseChangeLog = {
 		}
 	}
 
+/*
 	changeSet(author: "mglont (generated)", id: "1487352784053-11") {
+		preConditions(onFail: "MARK_RAN") {
+			not {
+				indexExists(schemaName: "revision_annotations", indexName: "FK_8brpctoynuteloeqtumijkyl4")
+			}
+		}
 		createIndex(indexName: "FK_8brpctoynuteloeqtumijkyl4", tableName: "revision_annotations") {
 			column(name: "revision_id")
 		}
 	}
+*/
 
 	changeSet(author: "mglont (generated)", id: "1487352784053-12") {
 		createIndex(indexName: "FK_frjxgaag9ypwhjyf7y3p5o3of", tableName: "team") {

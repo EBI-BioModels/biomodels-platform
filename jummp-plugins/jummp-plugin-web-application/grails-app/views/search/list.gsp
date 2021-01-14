@@ -29,7 +29,7 @@
 
 <%@ page contentType="text/html;charset=UTF-8" %>
     <head>
-        <title>Model Listing</title>
+        <title>Model Listing | BioModels</title>
         <meta name="layout" content="${grailsApplication.config.jummp.branding.style}/main" />
         <link rel="stylesheet" href="${resource(contextPath: "${grailsApplication.config.grails.serverURL}", dir: '/css', file: 'datatablestyle.css')}" />
         <g:javascript contextPath="" src="jquery/jquery-ui-v1.10.3.js"/>
@@ -39,8 +39,8 @@
         <!-- TODO: could use other view for list action -->
     </body>
     <content tag="sidebar">
-        <!-- show the recently accessed models, the most accessed models, etc. -->
-        <g:render template="/templates/rightSidebar" model="['action': 'list']"/>
+        <!-- quick links -->
+        <g:render template="/templates/listRightSidebar" />
     </content>
     <content tag="facetsearch">
         <!-- show facets search on the left side bar -->

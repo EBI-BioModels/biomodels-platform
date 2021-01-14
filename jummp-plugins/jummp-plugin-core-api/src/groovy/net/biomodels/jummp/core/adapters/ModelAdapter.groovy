@@ -40,11 +40,11 @@ class ModelAdapter {
     @CompileStatic
     ModelTransportCommand toCommandObject(boolean saveHistory = true) {
         Set<String> creators = []
-        Set<String> creatorUsernames = []
+        Map<String, String> creatorUsernames = [:]
         if (model.revisions?.size() > 0) {
             for (Revision revision: model.revisions) {
                 creators.add(revision.owner.person.userRealName)
-                creatorUsernames.add(revision.owner.username)
+                creatorUsernames.put(revision.owner.username, revision.owner.person.userRealName ?: revision.owner.username)
             }
         }
         Revision latestRev

@@ -104,7 +104,7 @@ This plugin supports to handle commonly well-known formats such as C/C++, Python
                     service.handleModelFormat(formatCmd, formatService, formatController)
                 }
             }
-        } catch (NoSuchBeanDefinitionException ignored) {
+        } catch (Exception ignored) {
             // running as standalone plugin
         }
     }

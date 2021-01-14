@@ -494,3 +494,16 @@ a.external:hover, a.external:active {
 .pubjournal {
     font-style: italic;
 }
+
+.sidebar h4 {
+    color: forestgreen;
+    font-weight: bold;
+}
+
+.sidebar p {
+    font-size: 85%;
+}
+
+.sidebar .element ul > li {
+    font-size: 85%;
+}
