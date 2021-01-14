@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -31,13 +31,13 @@
 
 package net.biomodels.jummp.core
 
+import grails.converters.JSON
 import grails.plugin.cache.Cacheable
 import groovy.transform.CompileStatic
 import groovy.transform.TypeChecked
 import groovy.transform.TypeCheckingMode
 import net.biomodels.jummp.core.adapters.ModelFormatAdapter
 import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter
-import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC //rude?
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
 import net.biomodels.jummp.core.model.PublicationDetailExtractionContext
@@ -48,10 +48,12 @@ import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelFormat
-import net.biomodels.jummp.model.Revision
+import org.codehaus.groovy.grails.plugins.web.taglib.ApplicationTagLib
 import org.hibernate.SessionFactory
 import org.perf4j.aop.Profiled
 import org.apache.commons.io.FilenameUtils
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * Service that provides model building functionality to a wizard-style model
@@ -61,10 +63,13 @@ import org.apache.commons.io.FilenameUtils
  *
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author <a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a>
  * @date 20160216
  */
 @CompileStatic
 class SubmissionService {
+    private static final Logger logger = LoggerFactory.getLogger(SubmissionService.class)
+
     // concrete strategies for the submission state machine
     private final NewModelStateMachine newModel = new NewModelStateMachine()
     private final NewRevisionStateMachine newRevision = new NewRevisionStateMachine()
@@ -73,22 +78,21 @@ class SubmissionService {
      * Disable transactional behaviour for this service.
      */
     static transactional = false
-    /**
-     * Dependency Injection of ModelFileFormatService
-     */
+
+    def decorationService
+    def grailsApplication
     ModelFileFormatService modelFileFormatService
-    /**
-     * Dependency Injection of ModelService
-     */
     ModelService modelService
-
     ModelDelegateService modelDelegateService
-
+    FileSystemService fileSystemService
+    def springSecurityService
+    def userService
     /**
      * Dependency Injection of session factory to prevent serialisation of revision
      * domain object.
      */
     transient SessionFactory sessionFactory
+
 
     /**
      * Abstract state machine strategy, to be extended by the two concrete
@@ -107,13 +111,38 @@ class SubmissionService {
         @Cacheable('sortedModelFormats')
         //@Cacheable('definedModellingApproaches') // should split it into two methods so as to apply cacheable
         void initialise(Map<String, Object> workingMemory) {
+            // TODO: clean up this method when re-implementing submission process finished
             List<ModelFormat> sortedModelFormats = net.biomodels.jummp.model.ModelFormat.list().sort { it.name }
             workingMemory.put("sorted_model_formats", sortedModelFormats)
             List<ModellingApproach> definedModellingApproaches = ModellingApproach.list()
+            List definedModellingApproachNames = definedModellingApproaches.collect { it.name }
             workingMemory.put("defined_modelling_approaches", definedModellingApproaches)
             ModelFormat unknownFormat = ModelFormat.findByIdentifier("UNKNOWN")
             MFTC unknownFormatTC = new ModelFormatAdapter(format: unknownFormat).toCommandObject()
             workingMemory.put("unknown_format_command", unknownFormatTC)
+
+            String serverURL = grailsApplication.config.grails.serverURL
+            Map submissionCssMap = [contextPath: serverURL, dir: '/css/biomodels', file: 'submission.css']
+            Map publicationCssMap = [contextPath: serverURL, dir: '/css/biomodels', file: 'publicationPageStyle.css']
+            ApplicationTagLib appTagLib = new ApplicationTagLib()
+            String submissionCssHref = appTagLib.resource(submissionCssMap)
+            String publicationCssHref = appTagLib.resource(publicationCssMap)
+            String uuid = UUID.randomUUID().toString()
+            logger.debug("Generated submission folder using UUID: ${uuid}")
+            Integer selectedValue = 7//unknownFormat?.id
+
+            workingMemory.put("submissionFolder", uuid)
+            workingMemory.put("serverURL", serverURL)
+            workingMemory.put("submissionCssHref", submissionCssHref)
+            workingMemory.put("publicationCssHref", publicationCssHref)
+            workingMemory.put("publication", null)
+            workingMemory.put("definedModellingApproachNames", definedModellingApproachNames)
+            workingMemory.put("unknownFormat", unknownFormatTC)
+            workingMemory.put("modelFormatsSortedByName", sortedModelFormats)
+            workingMemory.put("selectedModelFormat", selectedValue)
+            workingMemory.put("otherInfo", "")
+            workingMemory.put("modellingApproach", "")
+            workingMemory.put("readmeSubmission", "readme submission")
         }
 
         /**
@@ -379,7 +408,7 @@ class SubmissionService {
             }
 
             // update model format
-            final long fmtId = workingMemory.get("model_format")
+            final long fmtId = workingMemory.get("model_format") as Long
             if (fmtId != revision.format.id) {
                 // the model format has been changed by the user
                 MFTC formatTC = new ModelFormatAdapter(format: ModelFormat.get(fmtId)).toCommandObject()
@@ -567,7 +596,7 @@ class SubmissionService {
                 cleanup(workingMemory)
             }
             catch (Exception e) {
-                log.error "Cannot process submission $workingMemory: ${e.message}", e
+                logger.error "Cannot process submission $workingMemory: ${e.message}", e
                 throw e // need this to enter error subflow
             }
             retval
@@ -654,6 +683,55 @@ class SubmissionService {
             }
             publication_objects_in_working
         }
+
+        List doValidateFile(final File file) {
+            List<String> errors = new ArrayList<>()
+            if (!file) {
+                errors.add("Null file is not allowed")
+            }
+            if (!file.exists()) {
+                errors.add("File does not exist")
+            }
+            if (file.isDirectory()) {
+                errors.add("The model file cannot be a directory")
+            }
+            return errors
+        }
+
+        boolean doValidateSyntax(final File file, final String format, final List<String> errors) {
+            boolean valid = false
+            if (doValidateFile(file)?.size() > 0) {
+                errors.add("Couldn't validate syntax on the file having physical errors")
+            } else {
+                valid = modelFileFormatService.validate([file], format, errors)
+            }
+            return valid
+        }
+
+        @TypeChecked(TypeCheckingMode.SKIP)
+        Map detectModelInfo(final File modelFile, final String modelFormat) {
+            ModelFormat format = ModelFormat.findByIdentifierAndFormatVersion(modelFormat, "*")
+            String name = modelFileFormatService.extractName([modelFile], format)
+            String description = modelFileFormatService.extractDescription([modelFile], format)
+            ModellingApproach approach = modelFileFormatService.guessModellingApproachFromFiles(modelFile, modelFormat)
+            String modellingApproach = approach ? approach.name : ""
+            ["name": name, "description": description, "modellingApproach": modellingApproach]
+        }
+
+        @TypeChecked(TypeCheckingMode.SKIP)
+        HashSet<String> processPostSubmission(Map<String, Object> working) {
+            HashSet<String> returned = new HashSet<String>()
+            // update the model history
+            String modelId = working.get("modelId")
+            String username = userService.getUsername()
+            String accessType = working.get("accessType")
+            String formatType = "html"
+            def changesMade = working.get("changesMade")
+            changesMade = changesMade.join(", ")
+            int result = modelDelegateService.updateHistory(modelId, username, accessType, formatType, changesMade)
+            returned.add(result.toString())
+            returned
+        }
     }
 
     @CompileStatic
@@ -698,14 +776,16 @@ class SubmissionService {
         void initialise(Map<String, Object> workingMemory) {
             super.initialise(workingMemory)
             def publication_objects_in_working = initialisePublicationMap()
+            workingMemory.put("existingFiles", [])
             workingMemory.put("publication_objects_in_working", publication_objects_in_working)
+            workingMemory.put("publicationContext", publication_objects_in_working)
         }
 
         void removeFromVCS(Map<String, Object> workingMemory, List<RFTC> filesToDelete) {
             //nothing in VCS, need to do nothing
         }
 
-        //Always process files in create mode. Possibly needs optimisation.
+        // Always process files in create mode. Possibly needs optimisation.
         boolean processingRequired(Map<String, Object> workingMemory) {
             return true
         }
@@ -750,28 +830,42 @@ class SubmissionService {
             // update model format, modelling approach and readme info if they're provided
             storeReadmeInfo(revision, workingMemory)
             revision.comment = "Import of ${revision.name}".toString()
-            Model newModel = modelService.uploadValidatedModel(repoFiles, revision)
-            Revision latest = modelService.getLatestRevision(newModel, false)
-            RTC latestRTC = new RevisionAdapter(revision: latest).toCommandObject()
 
             final String NEW_NAME = workingMemory["new_name"]
             final String NEW_DESCRIPTION = workingMemory["new_description"]
-            final boolean SHOULD_UPDATE = NEW_NAME || NEW_DESCRIPTION
             if (NEW_NAME) {
-                latestRTC.name = NEW_NAME
-                modelFileFormatService.updateName(latestRTC, NEW_NAME)
+                revision.name = NEW_NAME
+                modelFileFormatService.updateName(revision, NEW_NAME)
             }
             if (NEW_DESCRIPTION) {
-                latestRTC.description = NEW_DESCRIPTION
-                modelFileFormatService.updateDescription(latestRTC, NEW_DESCRIPTION)
+                revision.description = NEW_DESCRIPTION
+                modelFileFormatService.updateDescription(revision, NEW_DESCRIPTION)
             }
-            if (SHOULD_UPDATE) {
-                latestRTC.comment = "Edited model metadata online."
-                modelService.addRevision(latestRTC.files, [], latestRTC)
-            }
+            Model newModel = modelService.uploadValidatedModel(repoFiles, revision)
             String modelId = newModel.submissionId
             workingMemory.put("model_id", modelId)
-            return new HashSet<String>() //no need to track changes made during submission
+            HashSet<String> result = [modelId] as HashSet
+            return result
+        }
+
+        @TypeChecked(TypeCheckingMode.SKIP)
+        HashSet<String> processPostSubmission(final Map working) {
+            HashSet<String> returned = super.processPostSubmission(working)
+
+            // send a confirmation email to the submitter
+            final String biomodelsCuraMailingList = grailsApplication.config.jummp.model.curators.mailinglist
+            final String submitterEmail = userService.getEmailAddress()
+            final String username = userService.getUsername()
+            if (submitterEmail && username) {
+                String model = working.get("modelId")
+                def notification = [
+                    model: modelDelegateService.getModel(model),
+                    user: springSecurityService.currentUser,
+                    emails: [biomodelsCuraMailingList, submitterEmail]]
+                sendMessage("seda:model.create", notification)
+            }
+
+            returned
         }
     }
 
@@ -793,19 +887,44 @@ class SubmissionService {
         void initialise(Map<String, Object> workingMemory) {
             super.initialise(workingMemory)
             // fetch files from repository, make RFTCs out of them
-            RTC rev = workingMemory.get("LastRevision") as RTC
-            List<RFTC> repFiles = rev.getFiles()
-            storeRFTC(workingMemory, repFiles, null)
-            workingMemory.put("existing_files", new ArrayList<RFTC>(repFiles))
+            //RTC rev = workingMemory.get("LastRevision") as RTC
+            //List<RFTC> repFiles = rev.getFiles()
+            //storeRFTC(workingMemory, repFiles, null)
+            //workingMemory.put("existing_files", new ArrayList<RFTC>(repFiles))
+            String modelId = workingMemory.get("modelId")
+            RTC latest = modelDelegateService.getLatestRevision(modelId, false)
+            ModellingApproach approach = latest.model.modellingApproach
+            String modellingApproach = approach ? approach.name : ""
             // initialise the map of publication type objects would be added to the model
             def publication_objects_in_working = initialisePublicationMap()
-            if (rev.model.publication) {
+            if (latest.model.publication) {
                 PublicationDetailExtractionContext context = new PublicationDetailExtractionContext()
                 context.comesFromDatabase = true
-                context.publication = rev.model.publication
-                publication_objects_in_working.put(rev.model.publication.linkProvider.linkType, context)
+                context.publication = latest.model.publication
+                publication_objects_in_working.put(latest.model.publication.linkProvider.linkType, context)
             }
             workingMemory.put("publication_objects_in_working", publication_objects_in_working)
+            workingMemory.put("publicationContext", publication_objects_in_working)
+            List files = new ArrayList()
+            for (RFTC it: latest.files) {
+                files.add(["filename": it.filename, "size": it.size,
+                           "description": it.description, "isModelFile": it.mainFile])
+                File file = new File(it.path)
+                String submissionFolder = workingMemory.get("submissionFolder")
+                File fileCopied = fileSystemService.transferFile(submissionFolder, file)
+                logger.debug("File ${fileCopied.absolutePath} copied to the submission directory $submissionFolder".toString())
+            }
+            workingMemory.put("RevisionTC", latest)
+            workingMemory.put("RevisionID", latest.id)
+            workingMemory.put("RevisionNumber", latest.revisionNumber)
+            workingMemory.put("publication", latest.model.publication)
+            workingMemory.put("modellingApproach", modellingApproach)
+            workingMemory.put("otherInfo", latest.model.otherInfo)
+            workingMemory.put("files", files)
+            // the variable below is used for comparing the existing files and updated ones
+            // then decide which changes have been made
+            List existingFiles = files
+            workingMemory.put("existingFiles", existingFiles as JSON)
             sessionFactory.currentSession.clear()
         }
 
@@ -868,7 +987,7 @@ class SubmissionService {
          * @param workingMemory     a Map containing all objects exchanged throughout the flow.
          * @param modifications     the revision comments (and any other info to be updated)
          */
-        @Profiled(tag = "submissionService.NewRevisionStateMachine.updateRevisionComments")
+        @Profiled(tag = "submissionService.NewRevisionStateMachine.updateFromSummary")
         void updateFromSummary(Map<String, Object> workingMemory, Map<String, String> modifications) {
             RTC revision = workingMemory.get("RevisionTC") as RTC
             revision.comment = modifications.get("RevisionComments")
@@ -880,52 +999,51 @@ class SubmissionService {
         @Profiled(tag = "submissionService.NewRevisionStateMachine.completeSubmission")
         @TypeChecked(TypeCheckingMode.SKIP)
         HashSet<String> completeSubmission(Map<String, Object> workingMemory) {
-            HashSet<String> changes = new HashSet<String>()
+            HashSet<String> changes = workingMemory['changesMade']
             RTC revision = workingMemory.get("RevisionTC") as RTC
             List<RFTC> repoFiles = getRepFiles(workingMemory)
             List<RFTC> deleteFiles = getRepFiles(workingMemory, "removeFromVCS")
-            deleteFiles.each { RFTC rf ->
-                File file = new File(rf.path)
-                changes.add("Deleted file: ${file.getName()}")
-            }
-            def existing = workingMemory.get("existing_files") as List<RFTC>
-            repoFiles.each { RFTC it ->
-                String fileAdded = new File(it.path).getName()
-                def exists = existing.find { RFTC fileExisting ->
-                    fileAdded == new File(fileExisting.path).getName()
-                }
-                if (!exists) {
-                    changes.add("Added file: ${fileAdded}")
-                }
-            }
 
             // update model format, modelling approach and readme info if they're provided and changed
             storeReadmeInfo(revision, workingMemory)
-
-            Revision newlyCreated = modelService.addRevision(repoFiles, deleteFiles, revision)
-            RTC newlyCreatedRTC = new RevisionAdapter(revision: newlyCreated).toCommandObject()
             final String NEW_NAME = workingMemory["new_name"]
             final String NEW_DESCRIPTION = workingMemory["new_description"]
-            final boolean SHOULD_UPDATE = NEW_NAME || NEW_DESCRIPTION
             if (NEW_NAME) {
-                newlyCreatedRTC.name = NEW_NAME
-                modelFileFormatService.updateName(newlyCreatedRTC, NEW_NAME)
+                revision.name = NEW_NAME
+                modelFileFormatService.updateName(revision, NEW_NAME)
                 changes.add("Edited model name")
             }
             if (NEW_DESCRIPTION) {
-                newlyCreatedRTC.description = NEW_DESCRIPTION
-                modelFileFormatService.updateDescription(newlyCreatedRTC, NEW_DESCRIPTION)
+                revision.description = NEW_DESCRIPTION
+                modelFileFormatService.updateDescription(revision, NEW_DESCRIPTION)
                 changes.add("Edited model description")
             }
-            if (SHOULD_UPDATE) {
-                newlyCreatedRTC.comment = "Edited model metadata online."
-                def updated = modelService.addRevision(newlyCreatedRTC.files, [], newlyCreatedRTC)
-                workingMemory.put("model_id", updated.model.submissionId)
+            if (workingMemory.get("isAmend")) {
+                modelService.amendRevision(repoFiles, deleteFiles, revision)
             } else {
-                workingMemory.put("model_id", newlyCreated.model.submissionId)
+                modelService.addRevision(repoFiles, deleteFiles, revision)
+            }
+            return changes
+        }
+
+        @TypeChecked(TypeCheckingMode.SKIP)
+        HashSet<String> processPostSubmission(final Map working) {
+            HashSet<String> returned = super.processPostSubmission(working)
+
+            // send a confirmation email to the subscribers
+            def currentUser = springSecurityService.currentUser
+            def changesMade = working.get("changesMade")
+            if (currentUser && changesMade) {
+                String model = working.get("modelId")
+                def notification = [
+                    model: modelDelegateService.getModel(model),
+                    user: currentUser,
+                    update: changesMade,
+                    perms : modelDelegateService.getPermissionsMap(model, false)]
+                sendMessage("seda:model.update", notification)
             }
 
-            return changes
+            returned
         }
     }
 
@@ -940,6 +1058,10 @@ class SubmissionService {
         getStrategyFromContext(workingMemory).initialise(workingMemory)
     }
 
+    void writeUploadingFileToRedis(final File file) {
+        // TODO: implement me
+        decorationService
+    }
     /**
      * Called by ModelController for adding or removing files from the working memory
      *
@@ -988,6 +1110,20 @@ class SubmissionService {
     }
 
     /**
+     * Guesses and extracts the model's information
+     *
+     * @param modelFile     A File object denoting the model file to inspect the meta information
+     * @param modelFormat   A String object denoting the format identifier
+     * @return              A Map of the name, description and modelling approach
+     */
+    @Profiled(tag = "submissionService.detectModelInfo")
+    Map detectModelInfo(final File modelFile, final String modelFormat) {
+        Map<String, Object> working = ["isUpdateOnExistingModel": false,
+                                       "shouldCreateNewRevision": true] as Map<String, Object>
+        getStrategyFromContext(working).detectModelInfo(modelFile, modelFormat)
+    }
+
+    /**
      * update the working memory with user specified modifications
      * creating separate objects where necessary to ensure that
      * the modifications are performed as separate commits or revisions
@@ -1018,7 +1154,7 @@ class SubmissionService {
      *
      * @param workingMemory a Map containing all objects exchanged throughout the flow.
      */
-    @Profiled(tag = "submissionService.updateFromSummary")
+    @Profiled(tag = "submissionService.updatePublicationLink")
     void updatePublicationLink(Map<String, Object> workingMemory, Map<String, String> modifications) {
         getStrategyFromContext(workingMemory).updatePublicationLink(workingMemory, modifications)
     }
@@ -1035,6 +1171,18 @@ class SubmissionService {
     }
 
     /**
+     * Processes the post submission
+     *
+     * @param workingMemory a Map containing all objects exchanged throughout the flow.
+     * @return a set of String objects containing the model audit identifier
+     */
+    @Profiled(tag = "submissionService.processPostSubmission")
+    HashSet<String> processPostSubmission(Map<String, Object> workingMemory) {
+        StateMachineStrategy strategy = getStrategyFromContext(workingMemory)
+        strategy.processPostSubmission(workingMemory)
+    }
+
+    /**
      * Purpose: Remove the intermediate files from the disk
      *
      * @param workingMemory a Map containing all objects exchanged throughout the flow.
@@ -1042,6 +1190,32 @@ class SubmissionService {
     @Profiled(tag = "submissionService.cleanup")
     void cleanup(Map<String, Object> workingMemory) {
         getStrategyFromContext(workingMemory).cleanup(workingMemory)
+    }
+
+    /**
+     * Performs the validation on the upload file
+     *
+     * @param modelFile A File denoting the uploading file
+     *
+     * @return A list of error messages if the uploading file is invalid
+     */
+    @Profiled(tag = "submissionService.validateFile")
+    List validateFile(final File uploadFile) {
+        Map<String, Object> working = ["isUpdateOnExistingModel": false, "shouldCreateNewRevision": true] as Map<String, Object>
+        getStrategyFromContext(working).doValidateFile(uploadFile)
+    }
+
+    /**
+     * Performs the semantic validation on the model file
+     *
+     * @param modelFile A File denoting the uploading model file
+     *
+     * @return A list of error messages if the model file is invalid
+     */
+    @Profiled(tag = "submissionService.validateSyntax")
+    boolean validateSyntax(final File uploadFile, final String format, final List<String> errors) {
+        Map<String, Object> working = ["isUpdateOnExistingModel": false, "shouldCreateNewRevision": true] as Map<String, Object>
+        getStrategyFromContext(working).doValidateSyntax(uploadFile, format, errors)
     }
 
     /**
@@ -1053,6 +1227,7 @@ class SubmissionService {
         Boolean isUpdateOnExistingModel = (Boolean) workingMemory.get("isUpdateOnExistingModel")
         Boolean shouldCreateNewRevision = (Boolean) workingMemory.get("shouldCreateNewRevision")
         if (isUpdateOnExistingModel) {
+            // this check will be probably used in the future to ignore minor updates
             shouldCreateNewRevision = Boolean.TRUE
             if (!shouldCreateNewRevision) {
                 inPlaceMachine

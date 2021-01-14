@@ -8,7 +8,7 @@
 #
 # See https://bitbucket.org/biomodels/jummp-biomodels/src/master/docker-build.sh
 ##
-FROM openjdk:8-jdk AS base
+FROM openjdk:8-jdk-buster AS base
 LABEL maintainer="biomodels-developers@lists.sf.net"
 
 # install Java and Grails based on
@@ -30,7 +30,7 @@ ENV PATH $GRAILS_HOME/bin:$PATH
 WORKDIR /app/
 
 # the docker image to be used in production
-FROM tomcat:7-jdk8-openjdk-slim AS prod
+FROM tomcat:7-jdk8-openjdk-buster AS prod
 LABEL maintainer="biomodels-developers@lists.sf.net"
 
 # set environment options

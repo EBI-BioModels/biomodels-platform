@@ -91,6 +91,17 @@ class JummpTagLib {
         out << "</tbody></table>"
     }
 
+    def renderExistingFiles = {attrs ->
+        if (attrs.files) {
+            attrs.files.each { f ->
+                out << render(
+                    template: "/templates/model/submit/subviews/fileItem",
+                    model: [file: f],
+                    plugin: "jummp-plugin-web-application")
+            }
+        }
+    }
+
     def displayExistingAdditionalFiles = { attrs ->
         out << "<table class='formtable responsive-table' id='additionalFiles'><tbody>"
         if (attrs.additionals) {

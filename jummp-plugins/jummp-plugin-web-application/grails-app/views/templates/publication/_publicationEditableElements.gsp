@@ -2,7 +2,7 @@
 <%
     linkSourceTypes = PublicationLinkProvider.LinkType.values().collect { it.label }
 %>
-<div class="editablePart">
+<div class="editablePart row">
     <g:render template="/templates/publication/publicationDetailForm"
               plugin="jummp-plugin-web-application" model="[linkSourceTypes: linkSourceTypes]"/>
 </div>

@@ -311,9 +311,11 @@ class GitManager implements VcsManager {
      * @param addFiles A list of the supplied files to be put into the repository
      */
     @Profiled(tag = "gitManager.updateModel")
-    String updateModel(File modelDirectory, List<File> addFiles, List<File> removeFiles)
+    String updateModel(File modelDirectory, List<File> addFiles,
+                       List<File> removeFiles, boolean isAmend = false)
             throws VcsException {
-        return updateModel(modelDirectory, addFiles, removeFiles, "Update of ${modelDirectory.name}")
+        String cmtMsg = "Update of ${modelDirectory.name}"
+        return updateModel(modelDirectory, addFiles, removeFiles, cmtMsg, isAmend)
     }
 
     /**
@@ -326,13 +328,14 @@ class GitManager implements VcsManager {
      * @param commitMessage The commit message for this revision
      */
     @Profiled(tag = "gitManager.updateModel")
-    String updateModel(File modelDirectory, List<File> addFiles, List<File> removeFiles,
-            String commitMessage) throws VcsException {
+    String updateModel(File modelDirectory, List<File> addFiles,
+                       List<File> removeFiles, String commitMessage,
+                       boolean isAmend = false) throws VcsException {
         ensureRepInited(modelDirectory)
         String revision = null
         lockModelRepository(modelDirectory)
         try {
-            revision = handleModification(modelDirectory, addFiles, removeFiles, commitMessage)
+            revision = handleModification(modelDirectory, addFiles, removeFiles, commitMessage, isAmend)
         } finally {
             unlockModelRepository(modelDirectory)
         }
@@ -559,10 +562,10 @@ The working directory of the revision ${revision} at ${modelDirectory.absolutePa
      *
      * @return A String denoting the commit id of the newly made commit
      */
-    String updateModel(Git git, List<File> files, List<File> deleted, String commitMessage) {
+    String updateModel(Git git, boolean isAmend = false, List<File> files, List<File> deleted, String commitMessage) {
         String revision
         try {
-            revision = doGitUpdate(git, files, deleted, commitMessage)
+            revision = doGitUpdate(git, isAmend, files, deleted, commitMessage)
         } catch (Exception e) {
             e.printStackTrace()
             throw new IOException("Git command could not be executed", e)
@@ -587,11 +590,11 @@ The working directory of the revision ${revision} at ${modelDirectory.absolutePa
     @Profiled(tag = "gitManager.handleModification")
     private String handleModification(File modelDirectory, List<File> files,
                                       List<File> deleted,
-                                      String commitMessage) {
+                                      String commitMessage, boolean isAmend = false) {
         String revision
         try {
             Git git = initedRepositories.get(modelDirectory)
-            revision = doGitUpdate(git, files, deleted, commitMessage)
+            revision = doGitUpdate(git, isAmend, files, deleted, commitMessage)
         } catch (Exception e) {
             e.printStackTrace()
             throw new IOException("Git command could not be executed", e)
@@ -612,7 +615,7 @@ The working directory of the revision ${revision} at ${modelDirectory.absolutePa
      *
      * @return A String denoting the commit id of the newly made commit
      */
-    private String doGitUpdate(Git git,
+    private String doGitUpdate(Git git, boolean isAmend = false,
                                List<File> files, List<File> deleted, String commitMessage) {
         String revision
         String repoDir = git.repository.directory.parent // parent of .git dir
@@ -634,7 +637,12 @@ The working directory of the revision ${revision} at ${modelDirectory.absolutePa
             }
             add.call()
         }
-        RevCommit commit = git.commit().setMessage(commitMessage).call()
+        RevCommit commit = git
+                            .commit()
+                            .setAmend(isAmend)
+                            .setNoVerify(true)
+                            .setMessage(commitMessage)
+                            .call()
         revision = commit.getId().getName()
         /*if (hasRemote) {
               git.push().call()
