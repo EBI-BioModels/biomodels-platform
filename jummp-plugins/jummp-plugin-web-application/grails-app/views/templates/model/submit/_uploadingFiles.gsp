@@ -104,8 +104,8 @@
                         </label>
                     </div>
                     <div class="columns small-12 medium-1 large-1">
-                        <label>Model file
-                            <input type="checkbox" name="isModelFile" class="is-model-file"></label>
+                        <label>Main model file
+                            <input type="radio" name="isModelFile" class="is-model-file"></label>
                     </div>
                 </div>
             </div>
