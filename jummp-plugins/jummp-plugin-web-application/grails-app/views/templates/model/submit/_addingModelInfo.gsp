@@ -331,7 +331,7 @@
 
         // below are two functions defined in addingModelInfo template
         handleShowOrHideModelFormatExtraInfo($('#model_format'));
-        handleShowOrHideModellingApproachExtraInfo($('#modelling_approach'), true);
+        handleShowOrHideModellingApproachExtraInfo($('#modelling_approach'), false);
     }
 
     function updateModelInfoObject() {
