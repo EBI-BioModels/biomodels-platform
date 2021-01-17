@@ -1,5 +1,6 @@
 /**
  * Created by Tung (tnguyen@ebi.ac.uk) on 09/03/2016.
+ * Updated by Tung (tungnguyenvn@pm.com) on 16/01/2021.
  */
 $(document).ready(function () {
     if ($('#publicationLink').val() === "") {

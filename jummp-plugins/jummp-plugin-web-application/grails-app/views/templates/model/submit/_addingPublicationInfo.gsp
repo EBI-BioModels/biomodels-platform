@@ -1,5 +1,5 @@
 <%@ page import="net.biomodels.jummp.model.PublicationLinkProvider" %>
-<g:javascript contextPath="" src="enterPublicationLink.js"/>
+<g:javascript contextPath="" src="biomodels/enterPublicationLink.js"/>
 <g:javascript contextPath="" src="biomodels/publicationSubmission.js"/>
 <%
     List linkSourceTypes = PublicationLinkProvider.LinkType.
