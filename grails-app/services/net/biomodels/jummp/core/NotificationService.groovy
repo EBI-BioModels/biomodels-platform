@@ -190,7 +190,8 @@ class NotificationService {
             String noPubMsgCode = "notification.model.created.emailToSubmitter.body.noPublicationProvided"
             String withPublicationProvided = messageSource.getMessage(withPubMsgCode, [] as String[],  null)
             String noPublicationProvided = messageSource.getMessage(noPubMsgCode, [model.submissionId] as String[], null)
-            String askAcknowledgement = model.publication ? withPublicationProvided : noPublicationProvided
+            // embed the instructions about citing BioModels regardless of publication details
+            String askAcknowledgement = noPubMsgCode
             String[] args = [salutation, model.name, model.submissionId, askAcknowledgement, modelLink]
             emailBody = messageSource.getMessage("notification.model.created.emailToSubmitter.body", args, null)
             mailService.sendMail {
