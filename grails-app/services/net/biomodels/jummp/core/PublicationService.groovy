@@ -28,6 +28,7 @@ import grails.converters.JSON
 import grails.transaction.Transactional
 import groovy.json.JsonSlurper
 import net.biomodels.jummp.core.adapters.PublicationAdapter
+import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter
 import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter as PLPA
 import net.biomodels.jummp.core.model.PublicationDetailExtractionContext as PDEC
 import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
@@ -41,6 +42,7 @@ import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.codehaus.groovy.grails.web.json.JSONArray
 import org.codehaus.groovy.grails.web.json.JSONObject
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.validation.ObjectError
 import java.util.regex.Matcher
 import java.util.regex.Pattern
@@ -58,12 +60,19 @@ import java.util.regex.Pattern
  * @date created on 08/06/2016.
  */
 
-class PublicationService implements IPublicationService {
+class PublicationService implements IPublicationService, InitializingBean {
     final Log log = LogFactory.getLog(getClass())
     static transactional = false
 
+    def doiService
     def pubMedService
     def messageSource
+    PubDataFetchStrategy fetchStrategy
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+
+    }
 
     List<PubTC> getAll() {
         List pubs = Publication.all
@@ -85,6 +94,20 @@ class PublicationService implements IPublicationService {
                 publicationLinkProvider).toCommandObject()
         retrieved.authors = authors
         retrieved
+    }
+
+    PubTC fetchPublicationData(final String linkTypeAsString, final String link) {
+        PubTC pubTC = null
+        PLP.LinkType type = PLP.LinkType.findLinkTypeByLabel(linkTypeAsString)
+
+        if (type == PLP.LinkType.PUBMED) {
+            pubTC = pubMedService.fetchPublicationData(link)
+            log.debug("The publication details fetched from EuropePMC look ${pubTC?.dump()}")
+        } else if (type == PLP.LinkType.DOI) {
+            pubTC = doiService.fetchPublicationData(link)
+            log.debug("The publication details fetched from https://doi.org look ${pubTC?.dump()}")
+        }
+        pubTC
     }
 
     boolean verifyLink(String linkTypeAsString, String link) {
@@ -115,20 +138,16 @@ class PublicationService implements IPublicationService {
     PDEC getPublicationExtractionContext(PubTC cmd) throws JummpException {
         Publication publication = findByPublicationTransportCommand(cmd)
         PDEC ctx = new  PDEC()
+        PubTC pubTC = null
         if (publication) {
             // if existing in database
-            ctx.publication = new PublicationAdapter(publication: publication).toCommandObject()
+            pubTC = new PublicationAdapter(publication: publication).toCommandObject()
             ctx.comesFromDatabase = true
         } else {
             // if not in database
             PLP.LinkType type = PLP.LinkType.findLinkTypeByLabel(cmd.linkProvider.linkType)
-            // fetch from pubmed
-            if (type == PLP.LinkType.PUBMED) {
-                ctx.publication = pubMedService.fetchPublicationData(cmd.link)
-                log.debug("The publication details fetched from EuropePMC look ${ctx.publication?.dump()}")
-            } else {
-                ctx.publication = null
-            }
+            pubTC = fetchPublicationData(type, cmd?.link)
+            ctx.publication = pubTC
             ctx.comesFromDatabase = false
         }
         ctx

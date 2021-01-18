@@ -33,7 +33,6 @@ package net.biomodels.jummp.core
 import grails.plugin.cache.Cacheable
 import groovy.util.slurpersupport.GPathResult
 import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter as PLPA
-import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand
 import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PLPTC
 import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
 import net.biomodels.jummp.model.PublicationLinkProvider
@@ -53,7 +52,7 @@ import org.xml.sax.SAXParseException
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-class PubMedService {
+class PubMedService implements PubDataFetchStrategy {
     final Log log = LogFactory.getLog(getClass())
     static transactional = false
 
@@ -65,15 +64,17 @@ class PubMedService {
      * @return A fully populated Publication
      */
     @SuppressWarnings("EmptyCatchBlock")
+    @Override
     PubTC fetchPublicationData(String id) throws JummpException {
         def slurper = lookupPublicationDataInPubMed(id)
 
-        PublicationLinkProviderTransportCommand linkCommand = createPubMedLinkProviderInstance()
+        PLPTC linkCommand = createLinkProviderInstance()
         PubTC.fromPubMed(linkCommand, id, slurper)
     }
 
     @Cacheable("pubMedLinkProviderInstance")
-    PublicationLinkProviderTransportCommand createPubMedLinkProviderInstance() {
+    @Override
+    PLPTC createLinkProviderInstance() {
         PublicationLinkProvider link = PublicationLinkProvider.withCriteria(uniqueResult: true) {
             eq("linkType", PublicationLinkProvider.LinkType.PUBMED)
         }

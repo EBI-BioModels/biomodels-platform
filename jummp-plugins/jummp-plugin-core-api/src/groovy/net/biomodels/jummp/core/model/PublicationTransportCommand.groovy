@@ -36,6 +36,7 @@ package net.biomodels.jummp.core.model
 
 import groovy.util.slurpersupport.GPathResult
 import net.biomodels.jummp.core.user.PersonTransportCommand
+import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PLPTC
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 
@@ -97,7 +98,7 @@ class PublicationTransportCommand implements Serializable {
     /**
      * The provider of the publication id (e.g. PubMed)
      */
-    PublicationLinkProviderTransportCommand linkProvider
+    PLPTC linkProvider
     /**
      * The key to the publication at the linkProvider or a URL
      */
@@ -123,9 +124,13 @@ class PublicationTransportCommand implements Serializable {
         link(nullable: true, unique: 'linkProvider')
     }
 
-    static PublicationTransportCommand fromPubMed(PublicationLinkProviderTransportCommand linkProvider, String pmid,
-            GPathResult xml) {
-        def publication = new PublicationTransportCommand(linkProvider: linkProvider, link: pmid)
+    static PublicationTransportCommand fromDOI(PublicationTransportCommand pubTC) {
+        return pubTC
+    }
+
+    static PublicationTransportCommand fromPubMed(PLPTC linkProvider, String pmid, GPathResult xml) {
+        PublicationTransportCommand publication =
+            new PublicationTransportCommand(linkProvider: linkProvider, link: pmid)
         publication.extractManuscriptInfoFromPubMed(xml)
         publication.extractAuthorsFromPubMed(xml)
         publication
