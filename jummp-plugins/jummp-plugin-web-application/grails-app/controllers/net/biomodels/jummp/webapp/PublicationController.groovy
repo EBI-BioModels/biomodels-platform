@@ -93,6 +93,7 @@ class PublicationController implements GrailsConfigurationAware {
         String pubLink = params.list("pubLink")[0]
         String message
         String status
+        PDEC ctx = new PDEC()
         if (pubLinkProvider == "NoPub" && pubLink) {
             message = "Please select a publication link type."
             status: "Failed"
@@ -101,10 +102,13 @@ class PublicationController implements GrailsConfigurationAware {
             message = "The link is not a valid ${pubLinkProvider}"
             status = "Failed"
         } else {
-            message = "The publication link provider and link are valid"
+            message = "The publication details have been updated successfully."
             status = "OK"
             if (pubLinkProvider == "PubMed ID") {
                 cmd = pubMedService.fetchPublicationData(pubLink)
+            if (!cmd.validate()) {
+                status = "Unavailable"
+                    message = "No records are available. Please do check again."
             } else {
                 def provider = PLP.LinkType.findLinkTypeByLabel(pubLinkProvider)
                 PLP publicationLinkProvider = PLP.withCriteria(uniqueResult: true) {
@@ -113,10 +117,11 @@ class PublicationController implements GrailsConfigurationAware {
                 cmd.link = pubLink
                 cmd.linkProvider = new PublicationLinkProviderAdapter(linkProvider:
                     publicationLinkProvider).toCommandObject()
+                ctx = publicationService.getPublicationExtractionContext(cmd)
             }
         }
-        PDEC ctx = publicationService.getPublicationExtractionContext(cmd)
-        render(["message": message, "status": status, "publication": cmd, "comesFromDB": ctx.comesFromDatabase] as JSON)
+        render(["message": message, "status": status, "publication": cmd,
+                "comesFromDB": ctx?.comesFromDatabase] as JSON)
     }
 
     def validatePublicationDetails() {
