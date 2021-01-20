@@ -24,7 +24,8 @@
 }
 .card-section {
     border: 0.25rem solid #A5A5C7;
-    overflow-y: scroll; height: 279px
+    /*overflow-y: scroll; */
+    /*height: 279px*/
 }
 </style>
 <div class="row">
@@ -38,9 +39,9 @@
     </div>
 </div>
 <div class="row">
-    <div class="columns small-12 medium-6 large-4">
+    <div class="columns small-12 medium-12 large-12">
         <!-- Our markup, the important part here! -->
-        <div id="drag-and-drop-zone" class="dm-uploader" style="padding: 3rem!important;">
+        <div id="drag-and-drop-zone" class="dm-uploader">
             <div class="padding-3 margin-3">
                 <h3 class="text-muted" style="margin-top: 3rem!important; margin-bottom: 3rem!important;">Drag
             &amp; drop files here</h3></div>
@@ -54,7 +55,9 @@
         </div><!-- /uploader -->
 
     </div>
-    <div class="columns small-12 medium-6 large-8">
+</div>
+<div class="row">
+    <div class="columns small-12 medium-12 large-12">
         <div class="card">
             <div class="card-header">
                 <h3>Model File List <span style="font-size: small; color: red">Important: </span><span
