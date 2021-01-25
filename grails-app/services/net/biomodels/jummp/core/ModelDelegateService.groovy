@@ -164,7 +164,7 @@ class ModelDelegateService implements IModelService {
         }
         Revision rev = modelService.getLatestRevision(model, addToHistory)
         if (rev) {
-            return new RevisionAdapter(revision: rev).toCommandObject()
+            return new RevisionAdapter(revision: rev, latest: true).toCommandObject()
         } else {
             throw new AccessDeniedException("No access to any revision of Model ${modelId}")
         }

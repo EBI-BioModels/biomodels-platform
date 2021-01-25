@@ -36,7 +36,7 @@ import net.biomodels.jummp.model.Revision
 @CompileStatic
 class ModelAdapter {
     Model model
-
+    Revision latest = null
     @CompileStatic
     ModelTransportCommand toCommandObject(boolean saveHistory = true) {
         Set<String> creators = []
@@ -57,6 +57,9 @@ class ModelAdapter {
         if (modelIsSaved) {
             if (SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
                 latestRev = revisions.last()
+                firstRev = revisions.first()
+            } else if (latest) {
+                latestRev = latest
                 firstRev = revisions.first()
             } else {
                 latestRev = getLatestRevisionForUser(saveHistory)
