@@ -258,8 +258,8 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         return null
     }
 
-    List<FlagTransportCommand> getFlags(String modelId) {
-        Model model = modelService.getModel(modelId)
+    List<FlagTransportCommand> getFlags(final String modelId) {
+        Model model = modelService.findByPerennialIdentifier(modelId)
         List<FlagTransportCommand> results = new ArrayList<FlagTransportCommand>()
         if (model != null) {
             List<Flag> flags = modelFlagService.getFlags(model)
@@ -506,6 +506,12 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
 
     int updateHistory(String modelId, String user, String accessType,
                       String formatType, String changesMade, boolean success = false) {
+        ModelTransportCommand model = findByPerennialIdentifier(modelId)
+        updateHistory(model, user, accessType, formatType, changesMade, success)
+    }
+
+    int updateHistory(ModelTransportCommand model, String user, String accessType,
+                      String formatType, String changesMade, boolean success = false) {
         accessType = accessType.replace("/model/","")
         AccessFormat format = AccessFormat.HTML
         try {
@@ -513,7 +519,6 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         } catch(Exception ignore) {
 
         }
-        ModelTransportCommand model = findByPerennialIdentifier(modelId)
         ModelAuditTransportCommand audit = new ModelAuditTransportCommand(
             model: model,
             username: user,

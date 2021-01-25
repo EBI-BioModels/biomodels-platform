@@ -125,8 +125,8 @@ class ModelController {
                 model = modelDelegateService.findByPerennialIdentifier(modelIdParam)
             }
             if (model) {
-                modelId = (model.publicationId) ?: model.submissionId
-                int historyItem = modelDelegateService.updateHistory(modelId, username, accessType, formatType, changesMade)
+                int historyItem = modelDelegateService.updateHistory(model, username, accessType, formatType,
+                    changesMade)
                 request.lastHistory = historyItem
                 return true
             } else {
