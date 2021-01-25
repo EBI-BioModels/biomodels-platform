@@ -44,7 +44,8 @@ class ModelAdapter {
         if (model.revisions?.size() > 0) {
             for (Revision revision: model.revisions) {
                 creators.add(revision.owner.person.userRealName)
-                creatorUsernames.put(revision.owner.username, revision.owner.person.userRealName ?: revision.owner.username)
+                String realName = revision.owner.person.userRealName ?: revision.owner.username
+                creatorUsernames.put(revision.owner.username, realName)
             }
         }
         Revision latestRev

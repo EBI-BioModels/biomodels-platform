@@ -477,7 +477,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
             final int REVISION_ID = Integer.parseInt(sanitisedRevisionId)
             REV = getRevision(sanitisedModelId, REVISION_ID)
         } else { // no revision was specified - pull the latest one.
-            REV = getRevision(sanitisedModelId)
+            REV = getLatestRevision(sanitisedModelId)
         }
         return REV
     }
