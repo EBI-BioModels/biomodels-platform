@@ -110,7 +110,7 @@
                 </div>
             </div>
             <button type="button" name="removeFile" class="button btn-remove-file">Remove</button>
-            <hr class="mt-1 mb-1" style="color: lightgrey"/>
+            <hr class="mt-1 mb-1" style="color: lightgrey; max-width: 100%"/>
         </li>
         </script>
     </div>

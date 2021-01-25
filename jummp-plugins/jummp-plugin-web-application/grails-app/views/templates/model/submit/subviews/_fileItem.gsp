@@ -42,5 +42,5 @@
         </div>
     </div>
     <button type="button" name="removeFile" class="button btn-remove-file">Remove</button>
-    <hr style="color: lightgrey"/>
+    <hr style="color: lightgrey; max-width: 100%"/>
 </li>
