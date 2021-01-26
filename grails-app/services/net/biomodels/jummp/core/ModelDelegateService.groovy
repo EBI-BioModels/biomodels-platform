@@ -184,9 +184,8 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
 
         List<RevisionTransportCommand> revisions = []
         revs.each {
-            revisions << new RevisionAdapter(revision: it).toCommandObject()
+            revisions << new RevisionAdapter(revision: it, latest: true).toCommandObject()
         }
-        log.info("All Revision Transport Command Objects: ${revisions.dump()}")
         return revisions
     }
 
@@ -413,11 +412,12 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
     RevisionTransportCommand getRevisionDetails(RevisionTransportCommand skeleton) {
         assert skeleton.id
         final String REV_ID = skeleton.id
-        final Revision REV = Revision.get(REV_ID)
-        if (!REV) {
+        final Model model = modelService.findByPerennialIdentifier(skeleton.model.submissionId)
+        final Revision revision = Revision.get(REV_ID)
+        if (!revision) {
             throw new IllegalArgumentException("Revision with id $REV_ID does not exist")
         }
-        return new ModelAdapter(model: REV).toCommandObject()
+        return new ModelAdapter(model: model, latest: revision).toCommandObject()
     }
 
     RevisionTransportCommand publishModelRevision(RevisionTransportCommand cmd) {
@@ -453,7 +453,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         Revision revision = modelService.getRevision(
             modelService.findByPerennialIdentifier(modelId), revisionNumber)
         revision = modelService.updateRevisionCurationState(revision, curationState)
-        new RevisionAdapter(revision: revision).toCommandObject()
+        new RevisionAdapter(revision: revision, latest: true).toCommandObject()
     }
 
     RevisionTransportCommand getRevisionFromParams(final String MODEL, String REVISION = null) {

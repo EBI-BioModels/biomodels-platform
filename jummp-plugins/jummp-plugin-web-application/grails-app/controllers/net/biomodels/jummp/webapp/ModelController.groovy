@@ -85,9 +85,9 @@ class ModelController {
     /**
      * The list of actions for which we should not automatically create an audit item.
      */
-    final List<String> AUDIT_EXCEPTIONS = ['updateFlow', 'createFlow', 'uploadFlow', 'showWithMessage', 'share',
+    final List<String> AUDIT_EXCEPTIONS = ['showWithMessage',
                                            'getFileDetails', 'submitForPublication', 'updateCurationState',
-                                           'searchModellingApproach', 'submit', 'update', 'terms', 'uploadFile']
+                                           'searchModellingApproach', 'submit', 'terms', 'uploadFile']
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
 
@@ -645,13 +645,11 @@ class ModelController {
                 def modelId = params.id
                 def revisionId = params.revisionId
                 String fileName = params.filename
+                RevisionTransportCommand revision = modelDelegateService.getRevisionFromParams(modelId, revisionId)
+                final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(revision)
                 if (!fileName) {
-                    final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(
-                        modelDelegateService.getRevisionFromParams(modelId, revisionId))
                     serveModelAsCombineArchive(FILES, response)
                 } else {
-                    final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(
-                        modelDelegateService.getRevisionFromParams(modelId, revisionId))
                     RFTC requested = FILES.find {
                         if (it.hidden) {
                             return false

@@ -288,7 +288,8 @@ $modelId, revision $revNum: ${e.message}""")
                                          Revision revision) {
         List<RepositoryFile> results = []
         boolean foundValidMainFile = false
-        final def m = new ModelAdapter(model: revision.model).toCommandObject(false)
+        ModelAdapter adapter = new ModelAdapter(model: revision.model, latest: revision)
+        final def m = adapter.toCommandObject(false)
         for (rf in repoFileCmds) {
             // validate
             String filePath = rf.path
