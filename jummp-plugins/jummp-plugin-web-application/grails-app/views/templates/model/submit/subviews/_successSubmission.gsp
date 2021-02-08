@@ -8,3 +8,6 @@
 <p>
     Thank you for submitting your model.
 </p>
+<p>Your model is private. To make it publicly available asap, please follow up
+    <a href="https://www.ebi.ac.uk/biomodels/faq#access-after-submission"
+       title="Access more information about publishing your submission">the instruction</a>.</p>
