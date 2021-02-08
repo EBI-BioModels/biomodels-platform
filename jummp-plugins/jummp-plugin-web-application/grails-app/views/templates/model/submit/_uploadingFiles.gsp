@@ -269,8 +269,10 @@
                 }
             },
             error: function(jqXHR, textStatus, errorThrown) {
-                console.log("inside error " + JSON.parse(JSON.stringify(errorThrown)));
+                let msg = JSON.parse(JSON.stringify(errorThrown));
+                console.log("inside error " + msg);
                 console.log(textStatus);
+                $('.flashNotificationDiv').html(msg).show();
             }
         });
     }
