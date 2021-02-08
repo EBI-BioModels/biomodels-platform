@@ -145,7 +145,7 @@ class PublicationService implements IPublicationService, InitializingBean {
             ctx.comesFromDatabase = true
         } else {
             // if not in database
-            PLP.LinkType type = PLP.LinkType.findLinkTypeByLabel(cmd.linkProvider.linkType)
+            String type = cmd.linkProvider.linkType
             pubTC = fetchPublicationData(type, cmd?.link)
             ctx.publication = pubTC
             ctx.comesFromDatabase = false
