@@ -269,7 +269,7 @@
                 }
             },
             error: function(jqXHR, textStatus, errorThrown) {
-                console.log("inside error " + JSON.stringify(errorThrown));
+                console.log("inside error " + JSON.parse(JSON.stringify(errorThrown)));
                 console.log(textStatus);
             }
         });

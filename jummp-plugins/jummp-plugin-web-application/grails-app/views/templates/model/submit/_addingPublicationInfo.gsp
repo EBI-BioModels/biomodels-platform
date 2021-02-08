@@ -162,7 +162,7 @@
                 }
             },
             error: function (jqXHR, textStatus, errorThrown) {
-                let errMsg = JSON.stringify(errorThrown);
+                let errMsg = JSON.parse(JSON.stringify(errorThrown));
                 console.log("inside error " + errMsg);
                 console.log(textStatus);
                 toastr.clear();
@@ -245,7 +245,7 @@
                 }
             },
             error: function(jqXHR, textStatus, errorThrown) {
-                const msg = JSON.stringify(errorThrown);
+                const msg = JSON.parse(JSON.stringify(errorThrown));
                 console.log("msg: " + msg);
                 console.log("textStatus: " + textStatus);
                 collectErrors(errorMessages, msg);
