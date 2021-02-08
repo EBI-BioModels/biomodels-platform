@@ -1,5 +1,5 @@
 <%@ page import="net.biomodels.jummp.model.PublicationLinkProvider" %>
-<g:javascript contextPath="" src="enterPublicationLink.js"/>
+<g:javascript contextPath="" src="biomodels/enterPublicationLink.js"/>
 <g:javascript contextPath="" src="biomodels/publicationSubmission.js"/>
 <%
     List linkSourceTypes = PublicationLinkProvider.LinkType.
@@ -12,11 +12,21 @@
     .show {
         display: block;
     }
+    #loadingIcon {
+        margin: 10px auto 20px;
+        display: block;
+    }
 </style>
 <div class="row">
-    <div class="columns small-12 medium-10 large-10">
+    <div class="columns small-12 medium-8 large-8">
         <h2 class="fs-title">Add Publication Information</h2>
         <p><g:message code="submission.biomodels.submit.publication.explanation"/></p>
+    </div>
+    <div class="columns small-12 medium-2 large-2">
+        <div class="text-center">
+            <img src="${serverURL}/images/biomodels/loading.gif" id="loadingIcon" title="Fetching data..."
+                 alt="Please wait..."/>
+        </div>
     </div>
     <div class="columns small-12 medium-2 large-2">
         <h2 class="steps">Step 3 - 5</h2>
@@ -29,14 +39,9 @@
             class="fa fa-question-circle" aria-hidden="true"></i>
         </a></h4>
         <div class="publink-explanation" style="display: none;"><g:message code="submission.publink.publication"/></div>
-        %{--<g:if test="${publication}">
-            <g:if test="${publication.title && (publication.affiliation || publication.synopsis)}">
-                Currently, the model is associated with:
-                <g:render  model="[model: model]" template="/templates/showPublication" />
-            </g:if>
-        </g:if>--}%
         <div class="row">
             <div class="columns small-12 medium-3 large-3">
+                <label for="pubLinkProvider">Choose a publication source</label>
                 <g:if test="${publication}">
                     <g:select name="PubLinkProvider" id="pubLinkProvider"
                               from="${linkSourceTypes}"
@@ -47,16 +52,20 @@
                     <g:select name="PubLinkProvider" id="pubLinkProvider"
                               from="${linkSourceTypes}"
                               noSelection="['NoPub':'- No publication available -']"/>
-                    %{--<g:textField name="PublicationLink" id="publicationLink"
-                                 placeholder="Enter PubMed identifier, DOI or web link"/>--}%
                 </g:else>
             </div>
             <div class="columns small-12 medium-7 large-7">
+                <div id="lblPublicationLink">
+                    <label class="required" for="publicationLink">
+                        Enter PubMed identifier or DOI, then press on the <strong>Update</strong> button
+                    </label>
+                </div>
                 <g:textField name="PublicationLink" id="publicationLink" value="${publication?.link}"
                              placeholder="Enter PubMed identifier, DOI or web link"/>
             </div>
             <div class="columns small-12 medium-2 large-2">
-                <button type="button" class="button" id="refreshPubLinkBtn" name="refreshPubLink">Refresh
+                <label>&nbsp;</label>
+                <button type="button" class="button" id="updatePubLinkBtn" name="updatePubLink">Update
                 </button>
             </div>
 
@@ -78,10 +87,18 @@
 <input type="button" name="previous" class="previous action-button-previous" value="Previous"/>
 <script type="text/javascript">
     $(document).ready(function () {
+        $('#loadingIcon').hide();
         if ("${publication}") {
             $('#publicationForm').show();
+            //doShowHideUpdateBtn(true);
+            let selectedPubLinkProvider = $('#pubLinkProvider').val();
+            if (selectedPubLinkProvider === "Publication without link") {
+                doShowHideUpdateBtn(false);
+                $('#publicationLink').hide();
+            }
         } else {
             $('#publicationForm').hide();
+            doShowHideUpdateBtn(false);
         }
     });
     $('.publink-whatisit').on("click", function () {
@@ -91,6 +108,7 @@
     $(document).on('change', '#pubLinkProvider', {}, function(e) {
         let pubLinkProvider = $(this).val();
         let res = shouldWarnWhenUpdatingLinkProvider(pubLinkProvider);
+        doShowHideUpdateBtn(res);
         if (res) {
             let message =
                 "Please change the publication link on the next input and click on Refresh button to refresh the form";
@@ -107,8 +125,9 @@
         }
     });
 
-    $(document).on('click', '#refreshPubLinkBtn', {}, function(e) {
+    $(document).on('click', '#updatePubLinkBtn', {}, function (e) {
         e.preventDefault();
+        clearErrorMessages();
         let pubLinkProvider = $('#pubLinkProvider').val();
         let pubLink = $('#publicationLink').val();
         $.ajax({
@@ -119,24 +138,40 @@
                 pubLink: pubLink
             },
             dataType: "json",
-            async: false,
+            async: true,
+            beforeSend: function () {
+                $('#loadingIcon').show();
+            },
             success: function (data) {
                 toastr.clear();
                 publication = data["publication"];
                 if (data.status === "Failed") {
-                    errorMessages.push(data["message"]);
-                    toastr.error(data["message"])
+                    collectErrors(errorMessages, data["message"]);
+                    toastr.error(data["message"]);
+                    showErrorMessages();
                 } else {
-                    toastr.success(data["message"]);
+                    if (data.status === "OK") {
+                        toastr.success(data["message"]);
+                    } else {
+                        toastr.warning(data["message"]);
+                    }
                     if (data["comesFromDB"]) {
                         toastr.warning("${g.message(code: "publication.editor.duplicateEntry.message")}");
                     }
                     reloadPublicationForm(publication);
                 }
             },
-            error: function(jqXHR, textStatus, errorThrown) {
-                console.log("inside error " + JSON.stringify(errorThrown));
+            error: function (jqXHR, textStatus, errorThrown) {
+                let errMsg = JSON.parse(JSON.stringify(errorThrown));
+                console.log("inside error " + errMsg);
                 console.log(textStatus);
+                toastr.clear();
+                toastr.error(errMsg);
+                errorMessages.push(errMsg);
+                showErrorMessages();
+            },
+            complete: function () {
+                $('#loadingIcon').hide();
             }
         });
     });
@@ -173,7 +208,6 @@
     function validatePublicationInfo() {
         errorMessages = [];
         let selectedPubLinkProvider = $('#pubLinkProvider').val();
-        console.log(selectedPubLinkProvider);
         let withoutPub = selectedPubLinkProvider === "NoPub";
         if (withoutPub) {
             currentValidation = true;
@@ -204,28 +238,26 @@
             success: function(res) {
                 isPubTCValidated = res.status === "Error" ? false : true;
                 $.each(res.errors, function(index, error) {
-                    errorMessages.push(error);
+                    collectErrors(errorMessages, error);
                 });
                 if (isPubTCValidated) {
                     publication = res.publication;
                 }
-                console.log("Status: " + res.status);
             },
             error: function(jqXHR, textStatus, errorThrown) {
-                const msg = JSON.stringify(errorThrown);
+                const msg = JSON.parse(JSON.stringify(errorThrown));
                 console.log("msg: " + msg);
                 console.log("textStatus: " + textStatus);
-                errorMessages.push(msg);
+                collectErrors(errorMessages, msg);
                 isPubTCValidated = false;
             }
         });
         currentValidation = withoutPub || isPubTCValidated;
     }
 
-    function shouldWarnWhenUpdatingLinkProvider(update) {
-        let hasChanged = update !== "${publication?.linkProvider?.linkType}";
-        let Need2BeWarned = update === "PubMed ID" || update === "DOI";
-        return hasChanged && Need2BeWarned;
+    function shouldWarnWhenUpdatingLinkProvider(pubLinkProvider) {
+        let Need2BeWarned = pubLinkProvider === "PubMed ID" || pubLinkProvider === "DOI";
+        return Need2BeWarned;
     }
 
     function shouldWarnWhenUpdatingPublicationLink(update) {
@@ -233,8 +265,39 @@
     }
 
     function showWarningMessage(message) {
-        console.log("need to check and ask to click Refresh button: ${publication?.link}");
         toastr.clear();
         toastr.warning(message);
+    }
+
+    function doShowHideUpdateBtn(flag) {
+        flag ? $('#updatePubLinkBtn').show() : $('#updatePubLinkBtn').hide();
+        let v1 = '<label class="required" for="publicationLink">\n' +
+            'Enter PubMed identifier or DOI, then press on the <strong>Update</strong> button\n' +
+            '</label>'
+        let v2 = '&nbsp;';
+        flag ? $('#lblPublicationLink').html(v1) : $('#lblPublicationLink').html(v2);
+    }
+
+    function showErrorMessages() {
+        if (errorMessages.length) {
+            let messages = "<ul>";
+            for (i = 0; i < errorMessages.length; i++) {
+                messages += "<li>" + errorMessages[i] + "</li>";
+            };
+            messages += "</ul>";
+            $('.flashNotificationDiv').html(messages).show();
+        }
+    }
+
+    function clearErrorMessages() {
+        errorMessages = [];
+        $('.flashNotificationDiv').html("").hide();
+    }
+
+    function collectErrors(errorMessages, errMsg) {
+        let found = jQuery.inArray(errMsg, errorMessages);
+        if (found < 0) {
+            errorMessages.push(errMsg);
+        }
     }
 </script>

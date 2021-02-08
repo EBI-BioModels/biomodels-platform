@@ -3,7 +3,6 @@ package net.biomodels.jummp.webapp
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.adapters.PublicationAdapter
-import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter
 import net.biomodels.jummp.model.Publication
 import net.biomodels.jummp.core.model.PublicationTransportCommand
 import net.biomodels.jummp.model.PublicationLinkProvider as PLP
@@ -93,6 +92,7 @@ class PublicationController implements GrailsConfigurationAware {
         String pubLink = params.list("pubLink")[0]
         String message
         String status
+        PDEC ctx = new PDEC()
         if (pubLinkProvider == "NoPub" && pubLink) {
             message = "Please select a publication link type."
             status: "Failed"
@@ -101,22 +101,29 @@ class PublicationController implements GrailsConfigurationAware {
             message = "The link is not a valid ${pubLinkProvider}"
             status = "Failed"
         } else {
-            message = "The publication link provider and link are valid"
+            message = "The publication details have been updated successfully."
             status = "OK"
-            if (pubLinkProvider == "PubMed ID") {
-                cmd = pubMedService.fetchPublicationData(pubLink)
+            cmd = publicationService.fetchPublicationData(pubLinkProvider, pubLink)
+
+            if (!cmd.validate()) {
+                status = "Unavailable"
+                if (cmd.journal && cmd.title && cmd.linkProvider.linkType == "DOI") {
+                    message = """The publication details are the best which our system can automatically
+fetch from <a href="https://doi.org/${pubLink}" target="_blank">https://doi.org/${pubLink}</a>. Currently they are
+missing the affiliation and synopsis. Please verify the form and fill empty fields in manually."""
+                    status = "Warning"
+                } else if (!cmd.synopsis || !cmd.affiliation) {
+                    status = "Warning"
+                    message = """The publication details are incomplete. Please check the empty fields and fill them in manually."""
+                } else {
+                    message = "No records are available. Please do check again."
+                }
             } else {
-                def provider = PLP.LinkType.findLinkTypeByLabel(pubLinkProvider)
-                PLP publicationLinkProvider = PLP.withCriteria(uniqueResult: true) {
-                    eq("linkType", provider)
-                } as PLP
-                cmd.link = pubLink
-                cmd.linkProvider = new PublicationLinkProviderAdapter(linkProvider:
-                    publicationLinkProvider).toCommandObject()
+                ctx = publicationService.getPublicationExtractionContext(cmd)
             }
         }
-        PDEC ctx = publicationService.getPublicationExtractionContext(cmd)
-        render(["message": message, "status": status, "publication": cmd, "comesFromDB": ctx.comesFromDatabase] as JSON)
+        render(["message": message, "status": status, "publication": cmd,
+                "comesFromDB": ctx?.comesFromDatabase] as JSON)
     }
 
     def validatePublicationDetails() {

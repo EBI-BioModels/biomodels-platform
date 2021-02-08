@@ -31,16 +31,16 @@
                 </label>
             </div>
             <div class="columns small-12 medium-1 large-1">
-                <label>Model file
+                <label>Main model file
                 <g:if test="${file.isModelFile}">
-                    <input type="checkbox" name="isModelFile" class="is-model-file" checked></label>
+                    <input type="radio" name="isModelFile" class="is-model-file" checked></label>
                 </g:if>
                 <g:else>
-                    <input type="checkbox" name="isModelFile" class="is-model-file"></label>
+                    <input type="radio" name="isModelFile" class="is-model-file"></label>
                 </g:else>
             </div>
         </div>
     </div>
     <button type="button" name="removeFile" class="button btn-remove-file">Remove</button>
-    <hr style="color: lightgrey"/>
+    <hr style="color: lightgrey; max-width: 100%"/>
 </li>

@@ -52,7 +52,7 @@ class ModelFileFormatConfig {
     }
 
     static void status() {
-        println("MODEL FILE FORMAT CONFIG STATUS:")
+        println("${new Date().format("YYYY-MM-dd HH:mm:ss")} MODEL FILE FORMAT CONFIG STATUS:")
         println("SERVICES: ${services.inspect()}")
         println("CONTROLLERS: ${controllers.inspect()}")
     }

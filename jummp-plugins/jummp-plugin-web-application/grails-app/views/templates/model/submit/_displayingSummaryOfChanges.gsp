@@ -105,7 +105,7 @@
         </table>--}%
     </div>
     <div class="columns small-12 medium-10 large-10">
-        <span id="detectedModelName"></span>
+        <div id="detectedModelName"></div>
     </div>
 </div>
 <div class="row">
@@ -208,8 +208,8 @@
 <script type="text/javascript">
     function populateSummaryData() {
         console.log("Displaying the summary of submission/changes");
-        $('#detectedModelName').text(modelInfo.detectedName);
-        $('#detectedModelDescription').text(modelInfo.detectedDescription);
+        $('#detectedModelName').html(modelInfo.detectedName);
+        $('#detectedModelDescription').html(modelInfo.detectedDescription);
 
         $('#detectedModelFormat').text(modelInfo.detectedModelFormat.name);
         $('#detectedModelFormatReadme').text(modelInfo.detectedModelFormat.readme);

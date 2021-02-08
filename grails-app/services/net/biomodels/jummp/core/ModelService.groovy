@@ -703,7 +703,6 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         // exclude deleted revisions
         modelHistoryService.addModelToHistory(model)
         List<Revision> revisions = model.revisions.toList().findAll { !it.deleted }.sort {it.revisionNumber}
-        logger.debug("All Domain Revision Objects: ${revisions.dump()}")
         return revisions
     }
 
@@ -1159,7 +1158,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             model.discard()
             //TODO undo the addition of the files to the VCS.
             def errMsg = new StringBuffer("Exception occurred while storing new Model ")
-            def m = new ModelAdapter(model: model).toCommandObject()
+            def m = new ModelAdapter(model: model, latest: revision).toCommandObject()
             errMsg.append("${m.properties} to VCS: ${e.getMessage()}.\n")
             errMsg.append("${model.errors.allErrors.inspect()}\n")
             errMsg.append("${revision.errors.allErrors.inspect()}\n")
@@ -1187,7 +1186,9 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
                 msg.append("${revision.errors.allErrors.inspect()}\n")
                 logger.error(msg)
                 stopWatch.stop()
-                throw new ModelException(new ModelAdapter(model: model).toCommandObject(), "New model does not validate")
+                ModelAdapter adapter = new ModelAdapter(model: model, latest: revision).toCommandObject()
+                msg = "New model does not validate"
+                throw new ModelException(adapter, msg)
             }
             model.save(flush: true)
             stopWatch.lap("Finished GORM validation.")
@@ -1350,7 +1351,8 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
             }
             revision.refresh()
             grailsApplication.mainContext.publishEvent(new RevisionCreatedEvent(this,
-                   new RevisionAdapter(revision: revision).toCommandObject(), vcsService.retrieveFiles(revision)))
+                   new RevisionAdapter(revision: revision, latest: true).toCommandObject(), vcsService.retrieveFiles
+                (revision)))
         } else {
             // TODO: this means we have imported the revision into the VCS, but it failed to be saved in the database, which is pretty bad
             revision.discard()
@@ -1396,7 +1398,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
         } catch (VcsException e) {
             String message = "Retrieving Revision ${revision.vcsId} for Model ${revision.name} from VCS failed."
             logger.error(message, e)
-            ModelTransportCommand model = new ModelAdapter(model: revision.model).toCommandObject()
+            ModelTransportCommand model = new ModelAdapter(model: revision.model, latest: revision).toCommandObject()
             throw new ModelException(model, message, e)
         }
         return files
@@ -2202,7 +2204,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
         model.firstPublished = new Date()
         markRevisionAsPublic(revision)
         if (!model.save(flush: true)) {
-            ModelTransportCommand cmd = new ModelAdapter(model: model).toCommandObject(false)
+            ModelTransportCommand cmd = new ModelAdapter(model: model, latest: revision).toCommandObject(false)
             throw new ModelException(cmd,
                     "Cannot publish model ${model.submissionId}:${model.errors.allErrors.inspect()}")
         }
@@ -2648,7 +2650,7 @@ There has been error while adding $approach to the model ${revisionTC.identifier
             domainObjects.each { it.discard() }
             logger.error("Exception occurred during uploading a new Model Revision to VCS: ${e.getMessage()}")
             stopWatch.stop()
-            throw new ModelException(new ModelAdapter(model: model).toCommandObject(),
+            throw new ModelException(new ModelAdapter(model: model, latest: revision).toCommandObject(),
                 "Could not store new Model Revision for Model ${model.id} with VcsIdentifier ${model.vcsIdentifier} in VCS", e)
         }
         domainObjects.each {
@@ -2665,7 +2667,7 @@ There has been error while adding $approach to the model ${revisionTC.identifier
             logger.error(it)
         }
         revision.discard()
-        final def m = new ModelAdapter(model: model).toCommandObject()
+        final def m = new ModelAdapter(model: model, latest: revision).toCommandObject()
         logger.error("""New Revision containing ${repoFiles.inspect()} for Model ${m} with VcsIdentifier \
 ${model.vcsIdentifier} added to VCS, but not stored in database""")
         throw new ModelException(m, "Revision stored in VCS, but not in database")

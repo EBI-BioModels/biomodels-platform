@@ -142,7 +142,7 @@ class PublicationServiceSpec extends IntegrationSpec {
      */
     def "test assembleAuthors method"() {
         given: "null PublicationTransportCommand instance"
-        PublicationLinkProviderTransportCommand linkProviderTC = pubMedService.createPubMedLinkProviderInstance()
+        PublicationLinkProviderTransportCommand linkProviderTC = pubMedService.createLinkProviderInstance()
         PublicationTransportCommand ptc = null
 
         when: "instantiate the given publication transport command object with a map of parameters without authors"

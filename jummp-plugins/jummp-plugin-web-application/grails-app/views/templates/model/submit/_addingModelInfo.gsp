@@ -250,11 +250,11 @@
         });
     });
 
-    $('#modelling_approach').on('change', function () {
+    $('#modelling_approach').bind('change blur', function () {
         handleShowOrHideModellingApproachExtraInfo(this, true);
     });
 
-    $('#model_format').on("change", function () {
+    $('#model_format').bind("change blur", function () {
         handleShowOrHideModelFormatExtraInfo(this);
     });
 
@@ -331,7 +331,7 @@
 
         // below are two functions defined in addingModelInfo template
         handleShowOrHideModelFormatExtraInfo($('#model_format'));
-        handleShowOrHideModellingApproachExtraInfo($('#modelling_approach'), true);
+        handleShowOrHideModellingApproachExtraInfo($('#modelling_approach'), false);
     }
 
     function updateModelInfoObject() {

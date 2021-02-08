@@ -161,7 +161,7 @@ class ModelHistoryService {
             return []
         }
         final int LIMIT = grailsApplication.config.get("jummp.model.history.maxElements", 10)
-        if ( LIMIT == 0) {
+        if (LIMIT == 0) {
             // if feature disabled, return empty list
             return []
         }

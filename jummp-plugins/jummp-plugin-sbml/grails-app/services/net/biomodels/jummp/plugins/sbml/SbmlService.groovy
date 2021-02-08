@@ -209,7 +209,7 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
         SBMLReader reader = new SBMLReader()
         try {
             doc = reader.readSBML(model)
-        } catch (XMLStreamException e) {
+        } catch (XMLStreamException | NullPointerException e) {
             e.printStackTrace()
             errorMsg = "SBMLDocument could not be read from ${model.name} caused by\n${e.message}"
             log.error(errorMsg)
@@ -237,7 +237,7 @@ The consistency check for your model is being ignored."""
             return doc
         }
         try {
-            final int CONSISTENCY_ERRORS = doc.checkConsistencyOffline()
+            final int CONSISTENCY_ERRORS = doc.checkConsistency()
             if (CONSISTENCY_ERRORS == -1) {
                 errorMsg ="Internal error in online SBML Validator while validating ${doc.inspect()}\t${doc.properties}"
                 errors.add(errorMsg)

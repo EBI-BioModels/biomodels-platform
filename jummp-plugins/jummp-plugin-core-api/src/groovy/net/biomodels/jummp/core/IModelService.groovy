@@ -388,4 +388,7 @@ interface IModelService {
      */
     int updateHistory(String modelId, String user, String accessType,
                       String formatType, String changesMade, boolean success)
+
+    int updateHistory(ModelTransportCommand model, String user, String accessType,
+                      String formatType, String changesMade, boolean success)
 }

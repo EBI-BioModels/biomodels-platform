@@ -24,7 +24,8 @@
 }
 .card-section {
     border: 0.25rem solid #A5A5C7;
-    overflow-y: scroll; height: 279px
+    /*overflow-y: scroll; */
+    /*height: 279px*/
 }
 </style>
 <div class="row">
@@ -38,9 +39,9 @@
     </div>
 </div>
 <div class="row">
-    <div class="columns small-12 medium-6 large-4">
+    <div class="columns small-12 medium-12 large-12">
         <!-- Our markup, the important part here! -->
-        <div id="drag-and-drop-zone" class="dm-uploader" style="padding: 3rem!important;">
+        <div id="drag-and-drop-zone" class="dm-uploader">
             <div class="padding-3 margin-3">
                 <h3 class="text-muted" style="margin-top: 3rem!important; margin-bottom: 3rem!important;">Drag
             &amp; drop files here</h3></div>
@@ -54,16 +55,15 @@
         </div><!-- /uploader -->
 
     </div>
-    <div class="columns small-12 medium-6 large-8">
+</div>
+<div class="row">
+    <div class="columns small-12 medium-12 large-12">
         <div class="card">
             <div class="card-header">
                 <h3>Model File List <span style="font-size: small; color: red">Important: </span><span
                     style="font-size: small">Please
-                mark a
-                model file
-                by ticking the
-                Model file
-                checkbox</span></h3>
+                make sure only one main model file by checking the corresponding the Main Model file
+                radio box</span></h3>
             </div>
             <div class="card-section">
                 <ul class="list-unstyled" id="files" style="margin-right: 1.25rem">
@@ -104,13 +104,13 @@
                         </label>
                     </div>
                     <div class="columns small-12 medium-1 large-1">
-                        <label>Model file
-                            <input type="checkbox" name="isModelFile" class="is-model-file"></label>
+                        <label>Main model file
+                            <input type="radio" name="isModelFile" class="is-model-file"></label>
                     </div>
                 </div>
             </div>
             <button type="button" name="removeFile" class="button btn-remove-file">Remove</button>
-            <hr class="mt-1 mb-1" style="color: lightgrey"/>
+            <hr class="mt-1 mb-1" style="color: lightgrey; max-width: 100%"/>
         </li>
         </script>
     </div>
@@ -223,15 +223,19 @@
             success: function(response) {
                 changesMade = response.changesMade;
                 let data = response["filesMap"];
+                let msg = "";
                 if (data.length) {
                     const haveAllDescriptions = data.filter(e => e.description === "").length === 0;
                     if (!haveAllDescriptions) {
-                        errorMessages.push("Please check the file description text boxes. They are not allowed empty.");
+                        msg = "Please check the file description text boxes. They are not allowed empty.";
+                        errorMessages.push(msg);
                     }
                     const hasOneModelFile = data.filter(e => e.isModelFile).length === 1;
                     let modelFileWithNoErrors = true;
                     if (!hasOneModelFile) {
-                        errorMessages.push("Please verify the Model file checkboxes. A submission has at least a model file.");
+                        msg =
+                            "Please verify the Main Model file radio box. A submission must have at least only one main model file.";
+                        errorMessages.push(msg);
                     } else {
                         modelFile = data.filter(e => e.isModelFile)[0];
                         if (!modelFile) {
@@ -261,12 +265,14 @@
                     currentValidation = hasOneModelFile && haveAllDescriptions && modelFileWithNoErrors;
                 } else {
                     currentValidation = false;
-                    errorMessages.push("A submission has at least a model file.")
+                    errorMessages.push("A submission must have at least only one main model file.")
                 }
             },
             error: function(jqXHR, textStatus, errorThrown) {
-                console.log("inside error " + JSON.stringify(errorThrown));
+                let msg = JSON.parse(JSON.stringify(errorThrown));
+                console.log("inside error " + msg);
                 console.log(textStatus);
+                $('.flashNotificationDiv').html(msg).show();
             }
         });
     }

@@ -56,6 +56,13 @@
         var revisionId = "${RevisionID}";
         var revisionNumber = "${RevisionNumber}";
         var changesMade = [];
+
+        toastr.options = {
+            // How long the toast will display without user interaction
+            "timeOut": 7000,
+            // How long the toast will display after a user hovers over it
+            "extendedTimeOut": 10000
+        };
     </g:javascript>
 </head>
 

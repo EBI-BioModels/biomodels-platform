@@ -164,7 +164,7 @@ class ModelDelegateService implements IModelService {
         }
         Revision rev = modelService.getLatestRevision(model, addToHistory)
         if (rev) {
-            return new RevisionAdapter(revision: rev).toCommandObject()
+            return new RevisionAdapter(revision: rev, latest: true).toCommandObject()
         } else {
             throw new AccessDeniedException("No access to any revision of Model ${modelId}")
         }
@@ -184,9 +184,8 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
 
         List<RevisionTransportCommand> revisions = []
         revs.each {
-            revisions << new RevisionAdapter(revision: it).toCommandObject()
+            revisions << new RevisionAdapter(revision: it, latest: true).toCommandObject()
         }
-        log.info("All Revision Transport Command Objects: ${revisions.dump()}")
         return revisions
     }
 
@@ -258,8 +257,8 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         return null
     }
 
-    List<FlagTransportCommand> getFlags(String modelId) {
-        Model model = modelService.getModel(modelId)
+    List<FlagTransportCommand> getFlags(final String modelId) {
+        Model model = modelService.findByPerennialIdentifier(modelId)
         List<FlagTransportCommand> results = new ArrayList<FlagTransportCommand>()
         if (model != null) {
             List<Flag> flags = modelFlagService.getFlags(model)
@@ -413,11 +412,12 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
     RevisionTransportCommand getRevisionDetails(RevisionTransportCommand skeleton) {
         assert skeleton.id
         final String REV_ID = skeleton.id
-        final Revision REV = Revision.get(REV_ID)
-        if (!REV) {
+        final Model model = modelService.findByPerennialIdentifier(skeleton.model.submissionId)
+        final Revision revision = Revision.get(REV_ID)
+        if (!revision) {
             throw new IllegalArgumentException("Revision with id $REV_ID does not exist")
         }
-        return new ModelAdapter(model: REV).toCommandObject()
+        return new ModelAdapter(model: model, latest: revision).toCommandObject()
     }
 
     RevisionTransportCommand publishModelRevision(RevisionTransportCommand cmd) {
@@ -453,7 +453,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         Revision revision = modelService.getRevision(
             modelService.findByPerennialIdentifier(modelId), revisionNumber)
         revision = modelService.updateRevisionCurationState(revision, curationState)
-        new RevisionAdapter(revision: revision).toCommandObject()
+        new RevisionAdapter(revision: revision, latest: true).toCommandObject()
     }
 
     RevisionTransportCommand getRevisionFromParams(final String MODEL, String REVISION = null) {
@@ -477,7 +477,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
             final int REVISION_ID = Integer.parseInt(sanitisedRevisionId)
             REV = getRevision(sanitisedModelId, REVISION_ID)
         } else { // no revision was specified - pull the latest one.
-            REV = getRevision(sanitisedModelId)
+            REV = getLatestRevision(sanitisedModelId)
         }
         return REV
     }
@@ -506,6 +506,12 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
 
     int updateHistory(String modelId, String user, String accessType,
                       String formatType, String changesMade, boolean success = false) {
+        ModelTransportCommand model = findByPerennialIdentifier(modelId)
+        updateHistory(model, user, accessType, formatType, changesMade, success)
+    }
+
+    int updateHistory(ModelTransportCommand model, String user, String accessType,
+                      String formatType, String changesMade, boolean success = false) {
         accessType = accessType.replace("/model/","")
         AccessFormat format = AccessFormat.HTML
         try {
@@ -513,7 +519,6 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         } catch(Exception ignore) {
 
         }
-        ModelTransportCommand model = findByPerennialIdentifier(modelId)
         ModelAuditTransportCommand audit = new ModelAuditTransportCommand(
             model: model,
             username: user,
