@@ -115,7 +115,7 @@ public interface FileFormatService {
 
     /**
      * Gets MAMO terms annotated in the model as the modelling approach.
-     *
+
      * The majority of models deposited in BioModels are being annotated with MAMO terms so as to
      * denote the modelling approach of the model.
      *
@@ -123,4 +123,6 @@ public interface FileFormatService {
      * @return  an ModellingApproach object indicating a specified approach
      */
     public ModellingApproach getModellingApproach(final RevisionTransportCommand revision);
+
+    public ModellingApproach guessModellingApproach(final File modelFile);
 }

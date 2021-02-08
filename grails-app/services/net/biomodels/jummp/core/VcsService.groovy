@@ -39,8 +39,8 @@ import net.biomodels.jummp.core.vcs.VcsFileDetails
 import net.biomodels.jummp.core.vcs.VcsManager
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Revision
+import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
 import org.perf4j.aop.Profiled
-import org.springframework.beans.factory.InitializingBean
 import org.springframework.security.access.prepost.PreAuthorize
 
 /**
@@ -53,18 +53,16 @@ import org.springframework.security.access.prepost.PreAuthorize
  * @see VcsManager
  * @author  Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
  * @author Raza Ali <raza.ali@ebi.ac.uk>
+ * @author <a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a>
+ * @author <a href="mailto:mihai.glont@ebi.ac.uk">Mihai Glont</a>
  */
-class VcsService implements InitializingBean {
+class VcsService implements GrailsConfigurationAware {
     @SuppressWarnings('GrailsStatelessService')
     VcsManager vcsManager
     @SuppressWarnings('GrailsStatelessService')
     def grailsApplication
     def fileSystemService
     String modelContainerRoot
-
-    void afterPropertiesSet() {
-        modelContainerRoot = fileSystemService.root.canonicalPath
-    }
 
     /**
      * Checks whether the Version Control System is configured properly
@@ -87,8 +85,9 @@ class VcsService implements InitializingBean {
     **/
     @PreAuthorize("hasPermission(#model, write) or hasRole('ROLE_ADMIN')")
     @Profiled(tag = "vcsService.updateModel")
-    String updateModel(final Model model, final List<File> files, final List<File> deleted,
-           final String commitMessage) throws VcsException {
+    String updateModel(final Model model, final List<File> files,
+                       final List<File> deleted, final String commitMessage,
+                       final boolean isAmend = false) throws VcsException {
         if (!isValid()) {
             throw new VcsException("Version Control System is not valid")
         }
@@ -97,16 +96,18 @@ class VcsService implements InitializingBean {
                     File.separator).append(model.vcsIdentifier).toString()
         final File MODEL_FOLDER = new File(modelFolderPath)
         if (commitMessage == null || commitMessage.isEmpty()) {
-            return vcsManager.updateModel(MODEL_FOLDER, files, deleted, "Updated at ${new Date().toGMTString()}")
+            String cmtMsg = "Updated at ${new Date().toGMTString()}"
+            return vcsManager.updateModel(MODEL_FOLDER, files, deleted, cmtMsg , isAmend)
         } else {
-            return vcsManager.updateModel(MODEL_FOLDER, files, deleted, commitMessage)
+            return vcsManager.updateModel(MODEL_FOLDER, files, deleted, commitMessage, isAmend)
         }
     }
 
     @PreAuthorize("hasPermission(#model, write) or hasRole('ROLE_ADMIN')")
     @Profiled(tag = "vcsService.updateModel")
-    String updateModel(final Model model, final File file, final String commitMessage) throws VcsException {
-        return updateModel(model, [file], [], commitMessage);
+    String updateModel(final Model model, final File file,
+                       final String commitMessage, final boolean isAmend = false) throws VcsException {
+        return updateModel(model, [file], [], commitMessage, isAmend);
     }
     /**
      * Imports a new Model file into the VCS.
@@ -183,5 +184,10 @@ class VcsService implements InitializingBean {
         }
         final File MODEL_FOLDER = new File(modelContainerRoot, revision.model.vcsIdentifier)
         return vcsManager.getFileDetails(MODEL_FOLDER, path)
+    }
+
+    @Override
+    void setConfiguration(ConfigObject co) {
+        modelContainerRoot = fileSystemService.root.canonicalPath
     }
 }

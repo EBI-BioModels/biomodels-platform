@@ -209,7 +209,7 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
         SBMLReader reader = new SBMLReader()
         try {
             doc = reader.readSBML(model)
-        } catch (XMLStreamException e) {
+        } catch (XMLStreamException | NullPointerException e) {
             e.printStackTrace()
             errorMsg = "SBMLDocument could not be read from ${model.name} caused by\n${e.message}"
             log.error(errorMsg)
@@ -230,14 +230,14 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
         final long MAX_SIZE = 10*1024*1024 // 10MB
         long actualSize = model.length()
         if (0 >= actualSize || actualSize > MAX_SIZE) {
-            errorMsg = """\
-Your file exceeds the maximum upload size limit that our system currently supports. The consistency check for your
-model is being ignored."""
+            errorMsg = """Your file exceeds the maximum upload size limit that our system currently supports. \
+The consistency check for your model is being ignored."""
             errors.add(errorMsg)
+            log.debug(errorMsg)
             return doc
         }
         try {
-            final int CONSISTENCY_ERRORS = doc.checkConsistencyOffline()
+            final int CONSISTENCY_ERRORS = doc.checkConsistency()
             if (CONSISTENCY_ERRORS == -1) {
                 errorMsg ="Internal error in online SBML Validator while validating ${doc.inspect()}\t${doc.properties}"
                 errors.add(errorMsg)
@@ -400,7 +400,8 @@ the user has attempted to update an blank value for the name attribute.""")
             return ""
         }
         def description = new StringBuffer()
-        def nsList = ["http://www.sbml.org/sbml/level2/version4",
+        def nsList = ["http://www.sbml.org/sbml/level2/version5",
+                      "http://www.sbml.org/sbml/level2/version4",
                       "http://www.sbml.org/sbml/level2/version3",
                       "http://www.sbml.org/sbml/level2/version2",
                       "http://www.sbml.org/sbml/level2",
@@ -1136,6 +1137,17 @@ the user has attempted to update an blank value for the name attribute.""")
     ModellingApproach getModellingApproach(final RevisionTransportCommand revision) {
         SBMLDocument document = getFromCache(revision)
         def rID = revision.identifier() ? "revision ${revision.identifier()}" : "the provisional revision in the new submission"
+        guessModellingApproachFromSBMLDocument(document, rID)
+    }
+
+    ModellingApproach guessModellingApproach(final File modelFile) {
+        List<String> errors = new ArrayList<>()
+        SBMLDocument document = getFileAsValidatedSBMLDocument(modelFile, errors)
+        String rID = modelFile.name
+        guessModellingApproachFromSBMLDocument(document, rID)
+    }
+
+    private ModellingApproach guessModellingApproachFromSBMLDocument(final SBMLDocument document, final String rID) {
         if (null == document) {
             log.error("Cannot extract modelling approach from $rID as we could not parse its main files")
             return null

@@ -48,10 +48,11 @@ import net.biomodels.jummp.core.vcs.VcsFileDetails
 import net.biomodels.jummp.model.*
 import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
+import org.perf4j.StopWatch
 import org.perf4j.aop.Profiled
 import org.perf4j.log4j.Log4JStopWatch
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.ObjectFactory
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.access.prepost.PostAuthorize
@@ -107,17 +108,7 @@ import java.util.concurrent.locks.ReentrantLock
 @SuppressWarnings("GroovyUnusedCatchParameter")
 @Transactional
 class ModelService {
-    /**
-     * The class logger.
-     */
-    private static final Log log = LogFactory.getLog(this)
-    /**
-     * Threshold for the verbosity of the logger.
-     */
-    private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
-    /**
-     * Dependency Injection of Spring Security Service
-     */
+    private static final Logger logger = LoggerFactory.getLogger(ModelService.class)
     def springSecurityService
     /**
      * Dependency Injection of AclUtilService
@@ -242,8 +233,8 @@ class ModelService {
         String query
         // for Admin - sees all (not deleted) models
         boolean isAdmin = SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")
-        query = getQueryStringForUser(sortColumn, deletedOnly, filterIsValid, type,
-            filteredFormats, filteredUsers, sortingDirection, isAdmin)
+        query = getQueryStringForUser(sortColumn, deletedOnly, filteredFormats, filteredUsers,
+            sortingDirection, isAdmin)
         if (!isAdmin) {
             List permissions = new ArrayList([BasePermission.READ.getMask(), BasePermission.ADMINISTRATION.getMask()])
             Set<String> roles = getSpringDatabaseRoles()
@@ -255,61 +246,45 @@ class ModelService {
         }
         def results = []
         try {
-            results = Model.getAll(Model.executeQuery(query, namedParams, metaParams))
+            List queryResultSet = Model.executeQuery(query, namedParams, metaParams)
+            // result set consists of [model, <sortColumnValue>, revisionNumber] and we can't avoid it
+            // extract the first column before the result set gets used downstream
+            List<Long> modelIds = queryResultSet.collect { it[0] }
+            results = Model.getAll(modelIds)
         } catch (Exception e) {
-            log.error("Exception $e while executing $query with '$namedParams' (page '$metaParams')")
+            logger.error("Exception $e while executing $query with '$namedParams' (page '$metaParams')")
         }
         results
     }
 
     private String getQueryStringForUser(ModelListSorting sortColumn, boolean deletedOnly,
-                                         boolean filterIsValid, String type,
                                          List filteredFormats, List filteredUsers,
                                          String sortingDirection, boolean isAdmin = false) {
+        String orderByColumn = getSortColumnAsString(sortColumn)
+        // we have to include $orderByColumn and revisionNumber in the selected columns
+        // in order for the query to be valid SQL
         String query = """\
-SELECT m.id
+SELECT m.id, ${orderByColumn}, r.revisionNumber
 FROM Revision AS r RIGHT OUTER JOIN r.model AS m
 WHERE
-    r.deleted = false
-    AND m.deleted = ${deletedOnly}
-    ${return filteredFormats ? "AND r.format.id IN (:formats)" : ""}
-    ${return filteredUsers ? "AND r.owner.id IN (:users)" : ""}
+ r.deleted = false
+ AND m.deleted = ${deletedOnly}
+ ${return filteredFormats ? "AND r.format.id IN (:formats)" : ""}
+ ${return filteredUsers ? "AND r.owner.id IN (:users)" : ""}
 """
         if (isAdmin) {
             query = """$query AND r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2 where r.model=r2.model)"""
         } else {
             query = """\
 $query AND r.revisionNumber=(SELECT MAX(r2.revisionNumber) from Revision r2, AclEntry ace
-WHERE r.model = r2.model
+  WHERE r.model = r2.model
     AND r2.id = ace.aclObjectIdentity.objectId
     AND ace.aclObjectIdentity.aclClass.className = :className
     AND ace.sid.sid IN (:roles)
     AND ace.mask IN (:permissions))"""
         }
 
-        User u = springSecurityService.currentUser
-        switch(type?.toLowerCase()) {
-            case "private":
-                query = "$query AND r.owner.id = ${u.id} AND r.state = '${ModelState.UNPUBLISHED}'"
-                break
-            case "shared":
-                query = "$query AND r.owner.id != ${u.id} AND r.state = '${ModelState.UNPUBLISHED}'"
-                break
-            case "public":
-                query = "$query AND r.owner.id = ${u.id} AND r.state = '${ModelState.PUBLISHED}'"
-                break
-            default:
-                if (type) {
-                    log.warn("Ignoring unsupported permission level '$type'.")
-                } else if (!isAdmin) {
-                    query = """$query AND ((r.owner.id = ${u.id} AND r.state = '${ModelState.UNPUBLISHED}')
-OR (r.owner.id != ${u.id} AND r.state = '${ModelState.UNPUBLISHED}')
-OR (r.owner.id = ${u.id} AND r.state = '${ModelState.PUBLISHED}'))
-"""
-                }
-                break
-        }
-        query = """$query ORDER BY ${getSortColumnAsString(sortColumn)} ${sortingDirection}, r.revisionNumber desc"""
+        query = """$query ORDER BY ${orderByColumn} ${sortingDirection}, r.revisionNumber desc"""
         return query
     }
 
@@ -467,9 +442,104 @@ WHERE
      **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getMyModels")
-    List<Model> getMyModels(String filter = null, boolean deletedOnly = false) {
-        ModelListSorting sorting
-        getAllModels(-1, 0, false, sorting, filter, false)
+    List<Model> getMyModels(int offset, int count, boolean sortOrder, ModelListSorting sortColumn,
+                            String filter = null, boolean deletedOnly = false) {
+        String query = """\
+SELECT distinct m.id, m.submissionId
+FROM Revision AS r JOIN r.model AS m
+WHERE
+    r.deleted = false
+    AND m.deleted = false
+    AND r.owner.id = :ownerId
+"""
+        User u = springSecurityService.currentUser
+        String username = u.username
+        Long userId = u.id
+        String message = "User $userId : $username is accessing their models at ${new Date()}"
+        log.debug(message)
+
+        boolean filterIsValid = filterValid(filter)
+        Map namedParams = ["ownerId": userId]
+        String type
+        // use object IDs here to minimise the number SQL queries and JOINS Hibernate uses.
+        if (filterIsValid) {
+            boolean isTypeQuery = filter?.substring(0,4)?.equals("type")
+            if (!isTypeQuery) {
+                if (filter.take(6) == "format") {
+                    String formatId = filter.drop(7)
+                    List filteredFormats = new ArrayList()
+                    filteredFormats = ModelFormat.executeQuery(
+                        "SELECT id FROM ModelFormat WHERE identifier = :p", [p: formatId]
+                    )
+                    //namedParams.put("formats", filteredFormats)
+                    String strFormatIds = filteredFormats.join(", ")
+                    query ="$query AND r.format.id IN ($strFormatIds)"
+                }
+                if (filter.take(9) == "submitter") {
+                    String personName = filter.drop(10)
+                    List filteredUsers = new ArrayList()
+                    filteredUsers = User.executeQuery(
+                        "SELECT u.id FROM User u JOIN u.person p WHERE p.userRealName = :n",
+                        [n: personName]
+                    )
+                    if (filteredUsers?.size()) {
+                        String strOwnerIds = filteredUsers.join(",")
+                        query = """\
+$query AND m.id IN (SELECT r2.model.id FROM Revision AS r2 \
+WHERE r2.owner.id in ($strOwnerIds)  AND r2.model.id = m.id)"""
+                    }
+                }
+            } else {
+                // type := < private | shared | public >
+                type = filter.drop(5).toLowerCase()
+                switch(type?.toLowerCase()) {
+                    case "private":
+                        query = """\
+$query AND r.state = '${ModelState.UNPUBLISHED}' \
+AND r.revisionNumber = (SELECT MAX(r2.revisionNumber) FROM Revision As r2 WHERE r2.model.id = m.id)"""
+                        break
+                    case "shared":
+                        query = """\
+$query AND m.id IN (SELECT r2.model.id FROM Revision AS r2 WHERE r2.owner.id != :ownerId AND r2.model.id = m.id)"""
+                        break
+                    case "public":
+                        query = """\
+$query  AND r.state = '${ModelState.PUBLISHED}' \
+AND r.revisionNumber = (SELECT MAX(r2.revisionNumber) FROM Revision As r2 WHERE r2.model.id = m.id)"""
+                        break
+                    default:
+                        if (type) {
+                            log.warn("Ignoring unsupported permission level '$type'.")
+                        } else  {
+                            query = "$query AND r.state = '${ModelState.UNPUBLISHED}'"
+                        }
+                        break
+                }
+            }
+        } else {
+            log.debug("You have provided an invalid filter $filter")
+        }
+
+        Map metaParams
+        if (offset < 0 || count <= 0) {
+            // safety check
+            metaParams = [:]
+        } else {
+            metaParams = [
+                max: count, offset: offset
+            ]
+        }
+
+        query ="$query ORDER BY m.id desc, r.revisionNumber, r.owner.username desc"
+        List models = Model.getAll(Model.executeQuery(query, namedParams, metaParams))
+        return models
+    }
+
+    @PostLogging(LoggingEventType.RETRIEVAL)
+    @Profiled(tag="modelService.getModelCount")
+    Integer countMyModels(String filter = null, boolean deletedOnly = false) {
+        List models = getMyModels(-1, 0, true, ModelListSorting.ID, filter)
+        models?.size()
     }
 
     /** convenience method to check if our filter is OK */
@@ -547,7 +617,8 @@ WHERE
     **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getLatestRevision")
-    public Revision getLatestRevision(Model model, boolean addToHistory = true) {
+    Revision getLatestRevision(Model model, boolean addToHistory = true) {
+        logger.debug("Get the latest revision of the model: ${model.submissionId}")
         if (!model) {
             return null
         }
@@ -632,7 +703,6 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         // exclude deleted revisions
         modelHistoryService.addModelToHistory(model)
         List<Revision> revisions = model.revisions.toList().findAll { !it.deleted }.sort {it.revisionNumber}
-        log.debug("All Domain Revision Objects: ${revisions.dump()}")
         return revisions
     }
 
@@ -726,7 +796,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         if (repoFile) {
            return uploadModelAsList([repoFile], meta)
         }
-        log.error("No file provided during the update of ${meta.properties}")
+        logger.error("No file provided during the update of ${meta.properties}")
         throw new ModelException(meta, "The new version of the model does not have any files.")
     }
 
@@ -762,33 +832,31 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             // the returned revision is detached from the Hibernate session
             revision = persistRevision(repoFiles, deleteFiles, rev)
         }
-        if (revision) {
-            /*
-             * Force the new revision to be fetched from the database.
-             *
-             * With the default MySQL transaction isolation level, the following query would
-             * return null because within the current tx we're already loaded the model's
-             * revisions and REPEATABLE_READS means that we're always going to get the same
-             * result within the same tx (in order to avoid dirty reads).
-             * Here there is no risk of dirty reads, it's actually desired behaviour, so
-             * we need isolation level READ_COMMITTED.
-             *
-             * Use eager loading for the model and the format because we expect them to be
-             * unproxied downstream when we're creating the revision transport command.
-             */
-            def attachedRevision = Revision.findByModelAndRevisionNumber(revision.model,
-                revision.revisionNumber, [fetch: [model: "eager", format: 'eager']])
-
-            def revisionAdapter = new RevisionAdapter(revision: attachedRevision)
-            RevisionTransportCommand cmd = revisionAdapter.toCommandObject()
-            indexModelRevision(cmd)
-            //convertModelToOtherFormats(cmd)
-            shareRevision2FellowCurators(cmd)
-            return attachedRevision
-        }
-        revision
+        Revision attachedRevision = doPostPersistRevision(revision)
+        return attachedRevision ?: revision
     }
 
+    @PreAuthorize("hasRole('ROLE_USER')")
+    @PostLogging(LoggingEventType.UPDATE)
+    @Profiled(tag="modelService.amendRevision")
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    Revision amendRevision(final List<RepositoryFileTransportCommand> repoFiles,
+                         final List<RepositoryFileTransportCommand> deleteFiles,
+                         final RevisionTransportCommand rev) throws ModelException {
+        logger.debug("Amending the revision: ${rev.dump()}")
+        Revision revision
+        def txDefinition = [
+            // this tx will use a different session than the current one
+            propagationBehavior: TransactionDefinition.PROPAGATION_REQUIRES_NEW
+        ]
+        Revision.withTransaction(txDefinition) {
+            // the returned revision is detached from the Hibernate session
+            revision = doAmendRevision(repoFiles, deleteFiles, rev)
+        }
+        Revision attachedRevision = doPostPersistRevision(revision)
+        return attachedRevision ?: revision
+        return revision
+    }
     /**
      * Persists a new model revision in the database and upload the repository files in VCS.
      *
@@ -806,114 +874,76 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     Revision persistRevision(List<RepositoryFileTransportCommand> repoFiles,
                              List<RepositoryFileTransportCommand> deleteFiles,
                              RevisionTransportCommand rev) throws ModelException {
+        StopWatch stopWatch = new Log4JStopWatch("modelService.persistRevision")
         // TODO: the method should be thread safe, add a lock
-        if (!rev.model) {
-            throw new ModelException(null, "Model may not be null")
-        }
-        if (rev.model.deleted) {
-            throw new ModelException(rev.model, "A new Revision cannot be added to a deleted model")
-        }
-        if (rev.comment == null) {
-            throw new ModelException(rev.model, "Comment may not be null, empty comment is allowed")
-        }
+        validateModelRevision(rev)
         List<File> modelFiles = repositoryFileService.getFilesFromRF(repoFiles)
         List<File> filesToDelete = repositoryFileService.getFilesFromRF(deleteFiles)
-
         final User currentUser = User.findByUsername(springSecurityService.authentication.name)
         final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
-        Model model = getModel(PERENNIAL_ID)
         final String formatVersion = rev.format.formatVersion ?: modelFileFormatService.getFormatVersion(rev)
+        Model model = getModel(PERENNIAL_ID)
+        // initialise a new revision
         Revision revision = new Revision(model: model, name: rev.name, description: rev.description,
                     comment: rev.comment, uploadDate: new Date(), owner: currentUser,
                     validated: rev.validated, curationState: rev.curationState, minorRevision: rev.minorRevision,
                     format: ModelFormat.findByIdentifierAndFormatVersion(rev.format.identifier, formatVersion),
-                    validationReport: rev.validationReport, validationLevel: rev.validationLevel, readmeSubmission:
-            rev.readmeSubmission)
-        def stopWatch = new Log4JStopWatch("modelService.addRevision.rftcCreation")
+                    validationReport: rev.validationReport, validationLevel: rev.validationLevel,
+                    readmeSubmission: rev.readmeSubmission)
         List<RepositoryFile> domainObjects = repositoryFileService.convertRFTCToRF(repoFiles, revision)
 
-        stopWatch.lap("RepositoryFileTransportCommands created.")
-        // save the new model in the database
-        stopWatch.setTag("modelService.addRevision.persistModel")
-        try {
-            String vcsId = vcsService.updateModel(model, modelFiles, filesToDelete, revision.comment)
-            revision.vcsId = vcsId
-        } catch (VcsException e) {
-            revision.discard()
-            domainObjects.each{ it.discard() }
-            log.error("Exception occurred during uploading a new Model Revision to VCS: ${e.getMessage()}")
-            stopWatch.stop()
-            throw new ModelException(new ModelAdapter(model: model).toCommandObject(),
-                "Could not store new Model Revision for Model ${model.id} with VcsIdentifier ${model.vcsIdentifier} in VCS", e)
-        }
-        domainObjects.each {
-            revision.addToRepoFiles(it)
-        }
+        putFilesUnderVcs(model, revision, domainObjects, modelFiles, filesToDelete, false)
+
         // calculate the new revision number - accessing the revisions directly to circumvent ACL
         revision.revisionNumber = model.revisions.sort {it.revisionNumber}.last().revisionNumber + 1
 
         if (revision.validate()) {
             model.addToRevisions(revision)
-            model.modellingApproach = rev.model.modellingApproach
-            model.otherInfo = rev.model.otherInfo
-            PublicationTransportCommand publicationTC = rev.model.publication
-            if (!publicationTC && model.publication) {
-                // delete db association if corresponding publication was removed in the UI
-                model.publication = null
-            } else if (publicationTC) {
-                // update db association with the value from the UI
-                try {
-                    model.publication = publicationService.fromCommandObject(publicationTC)
-                } catch(Exception e) {
-                    log.error("Unable to record publication for ${rev.model}: ${e.message}", e)
-                }
-            }
-            //save repoFiles, revision and model in one go
-            revision.save()
-            model.save(flush: true)
-            stopWatch.lap("Model persisted to the database.")
-            stopWatch.setTag("modelService.addRevision.grantPermissions")
-            aclInsertionLock.lock()
-            try {
-                aclUtilService.addPermission(revision, currentUser.username, BasePermission.ADMINISTRATION)
-                aclUtilService.addPermission(revision, currentUser.username, BasePermission.READ)
-                aclUtilService.addPermission(revision, currentUser.username, BasePermission.DELETE)
+            doUpdateModelMetadata(model, rev)
+            //revision.save()
+            //model.save(flush: true)
+            doUpdatePermissions(model, revision, currentUser)
 
-                //grant admin rights to the owner of the model
-                Revision earliest = Revision.findByModelAndRevisionNumber(revision.model, 1)
-                aclUtilService.addPermission(revision, earliest.owner.username, BasePermission.ADMINISTRATION)
-                aclUtilService.addPermission(revision, earliest.owner.username, BasePermission.DELETE)
-
-                // grant read access to all users having read access to the model
-                Acl acl = aclUtilService.readAcl(model)
-                for (ace in acl.entries) {
-                    if (ace.sid instanceof PrincipalSid && ace.permission == BasePermission.READ) {
-                        aclUtilService.addPermission(revision, ace.sid.principal, BasePermission.READ)
-                    }
-                    if (ace.sid instanceof PrincipalSid && ace.permission == BasePermission.ADMINISTRATION) {
-                        aclUtilService.addPermission(revision, ace.sid.principal, BasePermission.ADMINISTRATION)
-                    }
-                }
-            } finally {
-                aclInsertionLock.unlock()
-            }
-
-            stopWatch.stop()
             // !! THIS HAS TO BE IN A SEPARATE METHOD WITH A DEDICATED TRANSACTION CONTEXT !!
             /*grailsApplication.mainContext.publishEvent(new RevisionCreatedEvent(this,
                    new RevisionAdapter(revision: revision).toCommandObject(), vcsService.retrieveFiles(revision)))*/
         } else {
-            // TODO: this means we have imported the revision into the VCS, but it failed to be saved in the database, which is pretty bad
-            revision.errors.allErrors.each {
-               log.error(it)
-            }
-            revision.discard()
-            final def m = new ModelAdapter(model: model).toCommandObject()
-            log.error("New Revision containing ${repoFiles.inspect()} for Model ${m} with VcsIdentifier ${model.vcsIdentifier} added to VCS, but not stored in database")
-            stopWatch.stop()
-            throw new ModelException(m, "Revision stored in VCS, but not in database")
+            discardFailedRevision(model, revision, repoFiles)
         }
+        stopWatch.stop()
         return revision
+    }
+
+    Revision doAmendRevision(List<RepositoryFileTransportCommand> repoFiles,
+                             List<RepositoryFileTransportCommand> deleteFiles,
+                             RevisionTransportCommand rev) throws ModelException {
+        StopWatch stopWatch = new Log4JStopWatch("modelService.doAmendRevision")
+        validateModelRevision(rev)
+
+        List<File> modelFiles = repositoryFileService.getFilesFromRF(repoFiles)
+        List<File> filesToDelete = repositoryFileService.getFilesFromRF(deleteFiles)
+        final User currentUser = User.findByUsername(springSecurityService.authentication.name)
+        final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
+        Model model = getModel(PERENNIAL_ID)
+        // fetch the current revision from the database
+        Revision revision = Revision.get(rev.id)
+        // update the revision with the potential updates populated in the rev argument
+        doUpdateRevision(revision, rev)
+        List<RepositoryFile> domainObjects = repositoryFileService.convertRFTCToRF(repoFiles, revision)
+
+        putFilesUnderVcs(model, revision, domainObjects, modelFiles, filesToDelete, true)
+
+        if (revision.validate()) {
+            doUpdateModelMetadata(model, rev)
+            revision.save()
+            model.save(flush: true)
+            doUpdatePermissions(model, revision, currentUser)
+        } else {
+            discardFailedRevision(model, revision, repoFiles)
+            revision = null
+        }
+        stopWatch.stop()
+        revision
     }
 
     /**
@@ -995,11 +1025,11 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @Profiled(tag="modelService.doUploadValidatedModel")
     Model doUploadValidatedModel(final List<RepositoryFileTransportCommand> repoFiles,
             RevisionTransportCommand rev) throws ModelException {
-        log.debug "About to store the following model: ${rev.name}"
+        logger.debug "About to store the following model: ${rev.name}"
         // TODO: to support anonymous submissions, this method has to be changed
         if (Revision.findByName(rev.name)) {
             final String msg = "There is already a Model with name ${rev.name}".toString()
-            log.warn(msg)
+            logger.warn(msg)
         }
         ModelBuilder modelBuilder = new ModelBuilder(repoFiles, rev).build()
         Model model = modelBuilder.model
@@ -1041,30 +1071,30 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         def stopWatch = new Log4JStopWatch("modelService.uploadModelAsList.sanityChecks")
         // TODO: to support anonymous submissions this method has to be changed
         if (!repoFiles || repoFiles.size() == 0) {
-            log.error("No files were provided as part of the submission of model ${meta.properties}")
+            logger.error("No files were provided as part of the submission of model ${meta.properties}")
             throw new ModelException(meta, "A model must contain at least one file.")
         }
         Model model = new Model()
         List<File> modelFiles = []
         for (rf in repoFiles) {
             if (!rf || !rf.path) {
-                log.error("No file was provided as part of the submission of model ${meta.properties}")
+                logger.error("No file was provided as part of the submission of model ${meta.properties}")
                 throw new ModelException(meta, "Please supply at least one file for this model.")
             }
             final String path = rf.path
             if (!path || path.isEmpty()) {
-                log.error("Null file encountered while creating ${meta.properties}: ${repoFiles.properties}")
+                logger.error("Null file encountered while creating ${meta.properties}: ${repoFiles.properties}")
                 throw new ModelException(meta,
                     "Sorry, there was a problem with one of the files you submitted. Please refine the files you wish to upload and try again.")
             }
             final def f = new File(path)
             if (!f.exists()) {
-                log.error("Non-existent file detected while uploading a new revision for ${meta.properties}: ${f.properties}")
+                logger.error("Non-existent file detected while uploading a new revision for ${meta.properties}: ${f.properties}")
                 throw new ModelException(meta,
                     "Sorry, one of the files you submitted does not appear to exist. Please refine the files you wish to upload and try again")
             }
             if (f.isDirectory()) {
-                log.error("Folder detected while uploading a new revision for ${meta.properties}: ${repoFiles.properties}")
+                logger.error("Folder detected while uploading a new revision for ${meta.properties}: ${repoFiles.properties}")
                 throw new ModelException(meta, "Sorry, we currently do not accept models organised into subfolders.")
             }
             modelFiles.add(f)
@@ -1075,7 +1105,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         ModelFormat format = ModelFormat.findByIdentifierAndFormatVersion(meta.format.identifier, "*")
         if (!modelFileFormatService.validate(modelFiles, format, [])) {
             def err = "The files ${modelFiles.inspect()} do no comprise valid ${meta.format.identifier}"
-            log.error(err)
+            logger.error(err)
        //     throw new ModelException(meta, "Invalid ${meta.format.identifier} submission.")
             valid = false
         }
@@ -1098,7 +1128,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         boolean success = modelFolder.mkdirs()
         if (!success) {
             def err = "Cannot create the directory where the ${name} should be stored"
-            log.error(err)
+            logger.error(err)
             throw new ModelException(meta, err.toString())
         }
         model.vcsIdentifier = new StringBuilder(containerName).append(File.separator).
@@ -1128,11 +1158,11 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             model.discard()
             //TODO undo the addition of the files to the VCS.
             def errMsg = new StringBuffer("Exception occurred while storing new Model ")
-            def m = new ModelAdapter(model: model).toCommandObject()
+            def m = new ModelAdapter(model: model, latest: revision).toCommandObject()
             errMsg.append("${m.properties} to VCS: ${e.getMessage()}.\n")
             errMsg.append("${model.errors.allErrors.inspect()}\n")
             errMsg.append("${revision.errors.allErrors.inspect()}\n")
-            log.error(errMsg)
+            logger.error(errMsg)
             stopWatch.stop()
             throw new ModelException(m,
                 "Could not store new Model $m.properties} in VCS".toString(), e)
@@ -1154,9 +1184,11 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
                 def msg  = new StringBuffer("New Model ${name} does not validate:\n")
                 msg.append("${model.errors.allErrors.inspect()}\n")
                 msg.append("${revision.errors.allErrors.inspect()}\n")
-                log.error(msg)
+                logger.error(msg)
                 stopWatch.stop()
-                throw new ModelException(new ModelAdapter(model: model).toCommandObject(), "New model does not validate")
+                ModelAdapter adapter = new ModelAdapter(model: model, latest: revision).toCommandObject()
+                msg = "New model does not validate"
+                throw new ModelException(adapter, msg)
             }
             model.save(flush: true)
             stopWatch.lap("Finished GORM validation.")
@@ -1179,7 +1211,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             revision.discard()
             domainObjects.each {it.discard()}
             model.discard()
-            log.error("New Model ${model.properties} with properties ${meta.properties} does not validate:${revision.errors.allErrors.inspect()}")
+            logger.error("New Model ${model.properties} with properties ${meta.properties} does not validate:${revision.errors.allErrors.inspect()}")
             throw new ModelException(new ModelAdapter(model: model).toCommandObject(), "Sorry, but the new Model does not seem to be valid.")
         }
         return model
@@ -1234,42 +1266,42 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             throw new ModelException(mtc, "Comment may not be null, empty comment is allowed")
         }
         if (!repoFiles || repoFiles.size() == 0) {
-            log.error("No files were provided as part of the update of model ${model.properties}")
+            logger.error("No files were provided as part of the update of model ${model.properties}")
             throw new ModelException(mtc, "A new version of the model must contain at least one file.")
         }
         List<File> modelFiles = []
         for (rf in repoFiles) {
             if (!rf || !rf.path) {
-                log.error("No file was provided as part of the update of model ${model.properties}")
+                logger.error("No file was provided as part of the update of model ${model.properties}")
                 throw new ModelException(mtc, "Please supply at least one file for the new version of this model.")
             }
             final String path = rf.path
             if (!path || path.isEmpty()) {
-                log.error("Null file encountered while uploading a new revision for ${model.properties}: ${repoFiles.properties}")
+                logger.error("Null file encountered while uploading a new revision for ${model.properties}: ${repoFiles.properties}")
                 throw new ModelException(mtc,
                     "Sorry, there was something wrong with one of the files you submitted. Please refine the files you wish to upload and try again.")
             }
             final def f = new File(path)
             if (!f.exists()) {
-                log.error("Non-existent file detected while uploading a new revision for ${model.properties}: ${f.properties}")
+                logger.error("Non-existent file detected while uploading a new revision for ${model.properties}: ${f.properties}")
                 throw new ModelException(mtc,
                     "Sorry, one of the files you submitted does not appear to exist. Please refine the files you wish to upload and try again")
             }
             if (f.isDirectory()) {
-                log.error("Folder detected while uploading a new revision for ${model.properties}: ${repoFiles.properties}")
+                logger.error("Folder detected while uploading a new revision for ${model.properties}: ${repoFiles.properties}")
                 throw new ModelException(mtc,
                     "Sorry, we currently do not accept model organised into sub-folders.")
             }
             if (rf.mainFile && f.length() == 0) {
                 def err = "File ${f.name} cannot be empty because it is the main file of the submission."
-                log.error err
+                logger.error err
                 throw new ModelException(mtc, err)
             }
             modelFiles.add(f)
         }
         boolean valid = true
         if (!modelFileFormatService.validate(modelFiles, format, [])) {
-            log.warn("""\
+            logger.warn("""\
 New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does not comprise valid ${format
                 .identifier}""")
             //throw new ModelException(m, "The file list does not comprise valid ${format.identifier}")
@@ -1292,7 +1324,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
         } catch (VcsException e) {
             revision.discard()
             domainObjects.each{ it.discard() }
-            log.error("Exception occurred during uploading a new Model Revision to VCS: ${e.getMessage()}")
+            logger.error("Exception occurred during uploading a new Model Revision to VCS: ${e.getMessage()}")
             throw new ModelException(mtc,
                 "Could not store new Model Revision for Model ${model.id} with VcsIdentifier ${model.vcsIdentifier} in VCS", e)
         }
@@ -1319,11 +1351,12 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
             }
             revision.refresh()
             grailsApplication.mainContext.publishEvent(new RevisionCreatedEvent(this,
-                   new RevisionAdapter(revision: revision).toCommandObject(), vcsService.retrieveFiles(revision)))
+                   new RevisionAdapter(revision: revision, latest: true).toCommandObject(), vcsService.retrieveFiles
+                (revision)))
         } else {
             // TODO: this means we have imported the revision into the VCS, but it failed to be saved in the database, which is pretty bad
             revision.discard()
-            log.error("New Revision containing ${repoFiles.inspect()} for Model ${mtc} with VcsIdentifier ${model.vcsIdentifier} added to VCS, but not stored in database")
+            logger.error("New Revision containing ${repoFiles.inspect()} for Model ${mtc} with VcsIdentifier ${model.vcsIdentifier} added to VCS, but not stored in database")
             throw new ModelException(mtc, "Revision stored in VCS, but not in database")
         }
         return revision
@@ -1364,8 +1397,8 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
             files = repositoryFileService.retrieveFiles(revision)
         } catch (VcsException e) {
             String message = "Retrieving Revision ${revision.vcsId} for Model ${revision.name} from VCS failed."
-            log.error(message, e)
-            ModelTransportCommand model = new ModelAdapter(model: revision.model).toCommandObject()
+            logger.error(message, e)
+            ModelTransportCommand model = new ModelAdapter(model: revision.model, latest: revision).toCommandObject()
             throw new ModelException(model, message, e)
         }
         return files
@@ -1385,7 +1418,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
                 || SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')) {
             return repositoryFileService.getRepositoryFilesForRevision(revision)
         } else {
-            log.error "you can't access revision ${revision.id}!"
+            logger.error "you can't access revision ${revision.id}!"
             throw new AccessDeniedException("Sorry you are not allowed to download this Model")
         }
     }
@@ -1401,7 +1434,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
     List<RepositoryFileTransportCommand> retrieveModelFiles(final Model model) throws ModelException {
         final Revision revision = getLatestRevision(model, false)
         if (!revision) {
-            log.error("you cant access model ${model}")
+            logger.error("you cant access model ${model}")
             throw new AccessDeniedException("Sorry you are not allowed to download this Model.")
         }
         return retrieveModelFiles(revision)
@@ -1679,7 +1712,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
                     try {
                         aclUtilService.deletePermission(revision, principal, BasePermission.READ)
                     } catch(Exception e) {
-                        log.error e.message, e
+                        logger.error e.message, e
                         return false
                     }
                 }
@@ -2171,7 +2204,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
         model.firstPublished = new Date()
         markRevisionAsPublic(revision)
         if (!model.save(flush: true)) {
-            ModelTransportCommand cmd = new ModelAdapter(model: model).toCommandObject(false)
+            ModelTransportCommand cmd = new ModelAdapter(model: model, latest: revision).toCommandObject(false)
             throw new ModelException(cmd,
                     "Cannot publish model ${model.submissionId}:${model.errors.allErrors.inspect()}")
         }
@@ -2244,7 +2277,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
             shareRevision2FellowCurators(toPublishTC)
             return toPublish
         } else {
-            log.warn("""We are publishing $revision encoded in $format, but won't be able to add \
+            logger.warn("""We are publishing $revision encoded in $format, but won't be able to add \
 the perennial publication identifier to the model file""")
         }
         return revision
@@ -2275,7 +2308,7 @@ the perennial publication identifier to the model file""")
         revision.model.firstPublished = null
         revision.model.publicationId = null
         if (!revision.save(flush:true)) {
-            log.error("Revision ${revision.id} was not made private: ${revision.errors.allErrors}")
+            logger.error("Revision ${revision.id} was not made private: ${revision.errors.allErrors}")
         }
     }
 
@@ -2331,7 +2364,7 @@ the perennial publication identifier to the model file""")
                     changesMade: cmd.changesMade,
                     success: cmd.success)
             if (!audit.save(flush: true)) {
-                log.error("""\
+                logger.error("""\
 While trying to update an audit record, there is an error: ${audit.getErrors().allErrors.inspect()}""")
                 return -1
             } else {
@@ -2357,7 +2390,7 @@ While trying to update an audit record, there is an error: ${audit.getErrors().a
             audit.success = success
             if (audit.isDirty('success')) {
                 if (!audit.save(flush: true)) {
-                    log.error("""\
+                    logger.error("""\
 Failed to update audit $itemId to $success: ${audit.errors.allErrors.inspect()}""")
                 }
             }
@@ -2425,7 +2458,7 @@ WHERE
             RepositoryFile rf = revision.repoFiles.find { RepositoryFile rf -> rf.mainFile }
             File f = files.find { it.name == rf.path }
             if (!f) {
-                log.error "Cannot find main file for revision {}", revision.id
+                logger.error "Cannot find main file for revision {}", revision.id
                 return
             }
             String filename = revision.model.publicationId ?: revision.model.submissionId
@@ -2456,7 +2489,7 @@ WHERE
     }
 
     private convertModelToOtherFormats(RevisionTransportCommand cmd) {
-        log.info("""\
+        logger.info("""\
 Try to connect with Conversion service to export the model ${cmd.model.submissionId} under the other formats""")
         modelConversionService.generateExports(cmd)
     }
@@ -2482,7 +2515,7 @@ Try to connect with Conversion service to export the model ${cmd.model.submissio
         def sbmlService = grailsApplication.mainContext.getBean("sbmlService", ISbmlService.class)
         boolean result = sbmlService.addModellingApproachAsAnnotation(revisionTC, approach)
         if (!result) {
-            log.error("""\
+            logger.error("""\
 There has been error while adding $approach to the model ${revisionTC.identifier()}""")
         }
     }
@@ -2495,6 +2528,7 @@ There has been error while adding $approach to the model ${revisionTC.identifier
      * @param command {@link RevisionTransportCommand} object
      */
     private void shareRevision2FellowCurators(RevisionTransportCommand command) {
+        StopWatch stopWatch = new Log4JStopWatch("modelService.shareRevision2FellowCurators")
         Revision revision = Revision.get(command.id)
         // Check authorities
         User owner = revision.owner
@@ -2502,10 +2536,170 @@ There has been error while adding $approach to the model ${revisionTC.identifier
         Role curaRole = Role.findByAuthority("ROLE_CURATOR")
         boolean shouldShare = curaRole in roles
         if (shouldShare) {
-            log.debug("Publishing the event to share the revision ${command.identifier()}")
+            logger.debug("Publishing the event to share the revision ${command.identifier()}")
             grailsApplication.mainContext.publishEvent(new RevisionCreatedEvent(this, command))
         } else {
-            log.debug("cannot share the model ${command.identifier()} to fellow curators")
+            logger.debug("cannot share the model ${command.identifier()} to fellow curators")
         }
+        stopWatch.stop()
+    }
+
+    private Revision doPostPersistRevision(final Revision revision) {
+        StopWatch stopWatch = new Log4JStopWatch("modelService.doPostPersistRevision")
+        if (revision) {
+            /*
+             * Force the new revision to be fetched from the database.
+             *
+             * With the default MySQL transaction isolation level, the following query would
+             * return null because within the current tx we're already loaded the model's
+             * revisions and REPEATABLE_READS means that we're always going to get the same
+             * result within the same tx (in order to avoid dirty reads).
+             * Here there is no risk of dirty reads, it's actually desired behaviour, so
+             * we need isolation level READ_COMMITTED.
+             *
+             * Use eager loading for the model and the format because we expect them to be
+             * unproxied downstream when we're creating the revision transport command.
+             */
+            def attachedRevision = Revision.findByModelAndRevisionNumber(revision.model,
+                revision.revisionNumber, [fetch: [model: "eager", format: 'eager']])
+
+            def revisionAdapter = new RevisionAdapter(revision: attachedRevision)
+            RevisionTransportCommand cmd = revisionAdapter.toCommandObject()
+            indexModelRevision(cmd)
+            //convertModelToOtherFormats(cmd)
+            shareRevision2FellowCurators(cmd)
+            updateModelCache(attachedRevision)
+            return attachedRevision
+        }
+        stopWatch.stop()
+        return null
+    }
+
+    private void doUpdatePermissions(final Model model, final Revision revision, final User user) {
+        StopWatch stopWatch = new Log4JStopWatch("modelService.doUpdatePermissions")
+        aclInsertionLock.lock()
+        try {
+            aclUtilService.addPermission(revision, user.username, BasePermission.ADMINISTRATION)
+            aclUtilService.addPermission(revision, user.username, BasePermission.READ)
+            aclUtilService.addPermission(revision, user.username, BasePermission.DELETE)
+
+            // grant admin rights to the owner of the model
+            Revision earliest = Revision.findByModelAndRevisionNumber(revision.model, 1)
+            aclUtilService.addPermission(revision, earliest.owner.username, BasePermission.ADMINISTRATION)
+            aclUtilService.addPermission(revision, earliest.owner.username, BasePermission.DELETE)
+
+            // grant read access to all users having read access to the model
+            Acl acl = aclUtilService.readAcl(model)
+            for (ace in acl.entries) {
+                if (ace.sid instanceof PrincipalSid && ace.permission == BasePermission.READ) {
+                    aclUtilService.addPermission(revision, ace.sid.principal, BasePermission.READ)
+                }
+                if (ace.sid instanceof PrincipalSid && ace.permission == BasePermission.ADMINISTRATION) {
+                    aclUtilService.addPermission(revision, ace.sid.principal, BasePermission.ADMINISTRATION)
+                }
+            }
+        } finally {
+            aclInsertionLock.unlock()
+        }
+        stopWatch.stop()
+    }
+
+    private void validateModelRevision(final RevisionTransportCommand rev) throws ModelException {
+        StopWatch stopWatch = new Log4JStopWatch("modelService.validateModelRevision")
+        if (!rev.model) {
+            throw new ModelException(null, "Model may not be null")
+        }
+        if (rev.model.deleted) {
+            throw new ModelException(rev.model, "A new Revision cannot be added to a deleted model")
+        }
+        if (rev.comment == null) {
+            throw new ModelException(rev.model, "Comment may not be null, empty comment is allowed")
+        }
+        stopWatch.stop()
+    }
+
+    private Model doUpdateModelMetadata(final Model model, final RevisionTransportCommand revision) {
+        StopWatch stopWatch = new Log4JStopWatch("modelService.doUpdateModelMetadata")
+        model.modellingApproach = revision.model.modellingApproach
+        model.otherInfo = revision.model.otherInfo
+        PublicationTransportCommand publicationTC = revision.model.publication
+        if (!publicationTC && model.publication) {
+            // delete db association if corresponding publication was removed in the UI
+            model.publication = null
+        } else if (publicationTC) {
+            // update db association with the value from the UI
+            try {
+                model.publication = publicationService.fromCommandObject(publicationTC)
+            } catch(Exception e) {
+                logger.error("Unable to record publication for ${revision.model}: ${e.message}", e)
+            }
+        }
+        stopWatch.stop()
+        return model
+    }
+
+    private Revision putFilesUnderVcs(final Model model, final Revision revision,
+                                      final List domainObjects, final List modelFiles,
+                                      final List filesToDelete, final boolean isAmend) {
+        StopWatch stopWatch = new Log4JStopWatch("modelService.putFilesUnderVcs")
+        try {
+            String vcsId = vcsService.updateModel(model, modelFiles, filesToDelete, revision.comment, isAmend)
+            revision.vcsId = vcsId
+        } catch (VcsException e) {
+            revision.discard()
+            domainObjects.each { it.discard() }
+            logger.error("Exception occurred during uploading a new Model Revision to VCS: ${e.getMessage()}")
+            stopWatch.stop()
+            throw new ModelException(new ModelAdapter(model: model, latest: revision).toCommandObject(),
+                "Could not store new Model Revision for Model ${model.id} with VcsIdentifier ${model.vcsIdentifier} in VCS", e)
+        }
+        domainObjects.each {
+            revision.addToRepoFiles(it)
+        }
+        stopWatch.stop()
+        return revision
+    }
+
+    private void discardFailedRevision(final Model model, final Revision revision, final List repoFiles) {
+        // TODO: this means we have imported the revision into the VCS, but it failed to be saved in the database, which is pretty bad
+        StopWatch stopWatch = new Log4JStopWatch("modelService.discardFailedRevision")
+        revision.errors.allErrors.each {
+            logger.error(it)
+        }
+        revision.discard()
+        final def m = new ModelAdapter(model: model, latest: revision).toCommandObject()
+        logger.error("""New Revision containing ${repoFiles.inspect()} for Model ${m} with VcsIdentifier \
+${model.vcsIdentifier} added to VCS, but not stored in database""")
+        throw new ModelException(m, "Revision stored in VCS, but not in database")
+        stopWatch.stop()
+    }
+
+    private Revision doUpdateRevision(Revision revision, RevisionTransportCommand rev) {
+        StopWatch stopWatch = new Log4JStopWatch("modelService.doUpdateRevision")
+        final User currentUser = User.findByUsername(springSecurityService.authentication.name)
+        final String formatVersion = rev.format.formatVersion ?: modelFileFormatService.getFormatVersion(rev)
+        revision.with {
+            name = rev.name
+            description = rev.description
+            comment = rev.comment
+            uploadDate = new Date()
+            owner = currentUser
+            validated = rev.validated
+            curationState = rev.curationState
+            minorRevision = rev.minorRevision
+            format = ModelFormat.findByIdentifierAndFormatVersion(rev.format.identifier, formatVersion)
+            validationReport = rev.validationReport
+            validationLevel = rev.validationLevel
+            readmeSubmission = rev.readmeSubmission
+            repoFiles = null
+        }
+        // delete the previous repository files associating with the revision
+        RepositoryFile.where { revision == revision }.deleteAll()
+        stopWatch.stop()
+        return revision
+    }
+
+    private void updateModelCache(final Revision revision) {
+        repositoryFileService.updateModelRevisionCache(revision)
     }
 }

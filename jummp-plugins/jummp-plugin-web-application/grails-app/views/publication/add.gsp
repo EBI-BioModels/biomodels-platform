@@ -159,7 +159,8 @@
                 type: "POST",
                 url: "${createLink(controller: "publication", action: "refreshPubMedData")}",
                 data: {
-                    pubmed: $('#link').val()
+                    pubmed: $('#link').val(),
+                    operation: "add"
                 }
             }).done(function(data) {
                 $('.editablePart').html(data);

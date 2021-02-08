@@ -210,7 +210,8 @@ class MetadataService {
         Model theModel = Model.findBySubmissionIdOrPublicationId(model, model)
         Revision baseRevision = modelService.getLatestRevision(theModel, false)
         boolean isUpdate = baseRevision.annotations?.size() > 0
-        RevisionTransportCommand newRevision = new RevisionAdapter(revision: baseRevision).toCommandObject()
+        RevisionAdapter adapter = new RevisionAdapter(revision: baseRevision, latest: true)
+        RevisionTransportCommand newRevision = adapter.toCommandObject()
         newRevision.comment = "Updated model annotations."
         AnnotationValidationContext avc = validateModelRevision(baseRevision,statements)
         newRevision.validationLevel = avc.validationLevel

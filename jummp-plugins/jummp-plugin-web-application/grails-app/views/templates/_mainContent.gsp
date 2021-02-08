@@ -35,10 +35,7 @@
         </div>
         <div class="row">
                 <g:if test="${action == "list"}">
-                    <sec:ifLoggedIn>
-                        <a href="${createLink(controller: "search", action: "archive")}">
-                            Browse Archived Models</a>
-                    </sec:ifLoggedIn>
+
                 </g:if>
                 <g:else>
                     <g:if test="${params.flashMessage}">
@@ -95,17 +92,22 @@
                             </h4>
                         </div>
                         <div class="small-1 medium-1 large-1 columns" id="download">
-                            <g:if test="${action == 'search'}">
-                                <g:if test="${model.state == net.biomodels.jummp.core.model.ModelState.PUBLISHED}">
-                                <input id="chkDownload" type="checkbox" value="${id}"
-                                       style="float: right; margin-top: 10px">
+                            <g:if test="${model.state == net.biomodels.jummp.core.model.ModelState.PUBLISHED}">
+                                <g:if test="${action == 'search'}">
+                                    <input id="chkDownload" type="checkbox" value="${id}"
+                                           style="float: right; margin-top: 10px">
                                 </g:if>
                                 <g:else>
-                                    <span class="icon icon-functional" data-icon="L"
-                                          title="This is a private model"
+                                    <span class="icon icon-functional" data-icon="U"
+                                          title="This is a public model"
                                           style="float: right; margin-top: 10px"></span>
                                 </g:else>
                             </g:if>
+                            <g:else>
+                                <span class="icon icon-common icon-lock"
+                                      title="This is a private model"
+                                      style="float: right; margin-top: 10px"></span>
+                            </g:else>
                         </div>
                     </div>
                     </g:each>
@@ -250,7 +252,9 @@
                     pagedParams = [offset: 0, numResults: length, sort: params.sort]
                     if (query) {
                         pagedParams["query"] = query
-                        pagedParams["domain"] = params.domain
+                        if (action.equalsIgnoreCase("search")) {
+                            pagedParams["domain"] = params.domain
+                        }
                     }
                 %>
                 <a href="${createLink(controller: 'search', action: action, params: pagedParams)}">First</a>
@@ -267,7 +271,9 @@
                     pagedParams = [offset: modelStart - length - 1, numResults: length, sort: params.sort]
                     if (query) {
                         pagedParams["query"] = query
-                        pagedParams["domain"] = params.domain
+                        if (action.equalsIgnoreCase("search")) {
+                            pagedParams["domain"] = params.domain
+                        }
                     }
                 %>
                 <a href="${createLink(controller: 'search', action: action, params: pagedParams)}">
@@ -292,7 +298,9 @@
                             pagedParams = [offset: (i - 1) * length, numResults: length, sort: params.sort]
                             if (query) {
                                 pagedParams["query"] = query
-                                pagedParams["domain"] = params.domain
+                                if (action.equalsIgnoreCase("search")) {
+                                    pagedParams["domain"] = params.domain
+                                }
                             }
                         %>
                         <a href="${createLink(controller: 'search', action: action, params: pagedParams)}">
@@ -310,7 +318,9 @@
                     pagedParams = [offset: modelStart + length - 1, numResults: length, sort: params.sort]
                     if (query) {
                         pagedParams["query"] = query
-                        pagedParams["domain"] = params.domain
+                        if (action.equalsIgnoreCase("search")) {
+                            pagedParams["domain"] = params.domain
+                        }
                     }
                 %>
                 <a href="${createLink(controller: 'search', action: action, params: pagedParams)}">
@@ -323,7 +333,9 @@
                     pagedParams = [offset: length * (numPages - 1), numResults: length, sort: params.sort]
                     if (query) {
                         pagedParams["query"] = query
-                        pagedParams["domain"] = params.domain
+                        if (action.equalsIgnoreCase("search")) {
+                            pagedParams["domain"] = params.domain
+                        }
                     }
                 %>
                 <a href="${createLink(controller: 'search', action: action, params: pagedParams)}">Last</a>

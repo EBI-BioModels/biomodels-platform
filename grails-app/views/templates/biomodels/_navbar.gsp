@@ -1,6 +1,6 @@
 <%@ page import="grails.plugin.springsecurity.SpringSecurityUtils" %>
 <%--
- Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
  Deutsches Krebsforschungszentrum (DKFZ)
 
  This file is part of Jummp.
@@ -58,7 +58,8 @@
         </ul>
     </li>
     <li <g:if test="${g.pageProperty(name:'page.submit')?.length()}"> class="active" </g:if> role="menuitem">
-        <a href="${g.createLink(controller: 'model', action: 'create')}"><i class="icon icon-common icon-submit"></i> Submit</a>
+        <a href="${g.createLink(controller: 'model', action: 'submission-guidelines-and-agreement')}">
+            <i class="icon icon-common icon-submit"></i>&nbsp;Submit</a>
     </li>
     <li <g:if test="${selectedSupportItems}"> class="active" </g:if> role="menuitem">
         <a><i class="icon icon-common icon-support"></i> <g:message code="jummp.support.biomodels.title"/></a>

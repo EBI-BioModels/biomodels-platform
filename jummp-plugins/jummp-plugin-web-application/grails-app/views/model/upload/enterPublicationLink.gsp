@@ -37,7 +37,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="layout" content="${session['branding.style']}/main" />
     <title><g:message code="submission.publicationLink.header"/></title>
-    <g:javascript contextPath="" src="enterPublicationLink.js"/>
+    <g:javascript contextPath="" src="biomodels/enterPublicationLink.js"/>
 </head>
 <body>
 <%
@@ -59,7 +59,7 @@
         <g:if test="${publication}">
         <g:if test="${publication.title && (publication.affiliation || publication.synopsis)}">
             Currently, the model is associated with:
-            <g:render  model="[model: model]" template="/templates/showPublication" />
+            <g:render  model="[publication: model.publication]" template="/templates/showPublication" />
         </g:if>
         </g:if>
     <g:form>

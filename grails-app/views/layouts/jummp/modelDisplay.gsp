@@ -631,7 +631,7 @@
                 <td><label><g:message code="model.model.publication"/>:</label></td>
                 <td>
                     <div class='spaced'>
-                        <g:render  model="[model:model]" template="/templates/showPublication" />
+                        <g:render  model="[publication: model.publication]" template="/templates/showPublication" />
                     </div>
                 </td>
             </tr>

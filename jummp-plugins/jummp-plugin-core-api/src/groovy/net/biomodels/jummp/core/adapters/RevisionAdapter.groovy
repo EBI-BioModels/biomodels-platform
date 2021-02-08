@@ -35,10 +35,18 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-public class RevisionAdapter {
+class RevisionAdapter {
     private static final Log log = LogFactory.getLog(RevisionAdapter.class)
 
     Revision revision
+
+    /**
+     * This flag is used to indicate that the current revision is the latest
+     * so that toCommandObject method does not need to find the latest one when
+     * populating the model attribute. It helps avoid unnecessarily consuming
+     * more time to look for the latest revision of a given model.
+     */
+    boolean latest = false
 
     def grailsApplication = Holders.getGrailsApplication()
 
@@ -52,7 +60,12 @@ sessionClosed: ${grailsApplication.mainContext.sessionFactory.currentSession.isC
         def formatAdapter = new ModelFormatAdapter(format: revision.format)
         def formatCmd = formatAdapter.toCommandObject()
         String submitterName = revision.owner.person.userRealName
-        def modelAdapter = new ModelAdapter(model: revision.model)
+        ModelAdapter modelAdapter
+        if (latest) {
+            modelAdapter = new ModelAdapter(model: revision.model, latest: revision)
+        } else {
+            modelAdapter = new ModelAdapter(model: revision.model)
+        }
         def modelCmd = modelAdapter.toCommandObject(false)
         QcInfoTransportCommand qcInfoCmd
         use(QcInfoCategory) {

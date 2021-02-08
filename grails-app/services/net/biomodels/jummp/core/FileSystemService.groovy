@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -30,12 +30,19 @@
 
 package net.biomodels.jummp.core
 
+import net.biomodels.jummp.plugins.configuration.SvnCommand
+import net.biomodels.jummp.plugins.configuration.VcsCommand
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
+import org.codehaus.groovy.grails.web.json.JSONElement
 import org.perf4j.aop.Profiled
 import org.springframework.beans.factory.InitializingBean
+import org.springframework.web.multipart.MultipartFile
 
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantLock
 
@@ -52,10 +59,8 @@ class FileSystemService implements IFileSystemService, InitializingBean {
      * Monitor used to prevent concurrent requests from seeing inconsistent data.
      */
     final ReentrantLock lock = new ReentrantLock()
-    /*
-     * Dependency Injection for Grails Application
-     */
-    def grailsApplication
+
+    def configurationService
     /**
      * The location of the parent folder where all repositories reside.
      */
@@ -78,9 +83,6 @@ class FileSystemService implements IFileSystemService, InitializingBean {
      * created.
      */
     int maxContainerSize = 1000
-    /**
-     * This class' log
-     */
     private static final Log log = LogFactory.getLog(this)
 
     /**
@@ -209,8 +211,93 @@ particularly for network file systems."""
         return result.toString()
     }
 
+    /**
+     * Transfer an uploading file given via a {@link File} object to the dedicated submission directory
+     *
+     * @param submissionFolder  A string often given in an UUID string denoting the submission directory
+     * @param uploadFile        A File object denoting the uploading file
+     *
+     * @return A File object denoting the physical file object stored in file system
+     */
+    File transferFile(final String submissionFolder,
+                      final File uploadFile) {
+        String exchangeDir = configurationService.loadVcsConfiguration().exchangeDirectory
+        File uploadDir = new File(exchangeDir, submissionFolder)
+        uploadDir.mkdirs()
+
+        Path source = Paths.get(uploadFile.absolutePath)
+        Path target = Paths.get(uploadDir.canonicalPath, uploadFile.name)
+        Path transferredFile = Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING)
+        transferredFile.toFile()
+    }
+
+    /**
+     * Transfer an uploading file given via a {@link MultipartFile} object to the dedicated submission directory
+     *
+     * @param submissionFolder  A string often given in an UUID string denoting the submission directory
+     * @param uploadFile        A MultipartFile object denoting the uploading file
+     *
+     * @return A File object denoting the physical file object stored in file system
+     */
+    File transferFile(final String submissionFolder,
+                      final MultipartFile uploadFile) {
+        String sep = File.separator
+
+        String exchangeDir = configurationService.loadVcsConfiguration().exchangeDirectory
+        File uploadDir = new File(exchangeDir, submissionFolder)
+        uploadDir.mkdirs()
+        List files = transferMultipartFiles(uploadDir.canonicalPath + sep, uploadFile as List)
+        files?.first()
+    }
+
+    /**
+     * Transfers a list of the {@link MultipartFile} objects to a given location
+     *
+     * @param parent            A string denoting the location where the files are copied to
+     * @param multipartFiles    A list denoting the {@link MultipartFile} objects as the files
+     * @return                  A list of the physical file objects
+     */
+    List<File> transferMultipartFiles(String parent, List<MultipartFile> multipartFiles) {
+        List<File> outcome = []
+        multipartFiles.each { MultipartFile f ->
+            final String originalFilename = f.getOriginalFilename()
+            if (!originalFilename.isEmpty()) {
+                final File transferredFile = new File(parent, originalFilename)
+                log.debug("Transferring file ${transferredFile}")
+                f.transferTo(transferredFile)
+                outcome << transferredFile
+            }
+        }
+        outcome
+    }
+
+    /**
+     * Transfers a list of the {@link File} objects to a given location
+     *
+     * @param parent            A string denoting the location where the files are copied to
+     * @param file              A list denoting the {@link File} objects as the files
+     * @return                  A list of the physical file objects
+     */
+    List<File> transferFiles(String parent, List<File> files) {
+        List<File> outcome = []
+        files.each { File f ->
+            final String filename = f.name
+            if (!filename.isEmpty()) {
+                log.debug("Transferring file ${f.absolutePath}")
+                outcome << transferFile(parent, f)
+            }
+        }
+        outcome
+    }
+
+    File retrieve(JSONElement jsonElement) {
+        String exchangeDir = configurationService.loadVcsConfiguration().exchangeDirectory
+        File uploadDir = new File(exchangeDir, jsonElement["submissionFolder"])
+        File modelFile = new File(uploadDir, jsonElement["filename"])
+        return modelFile
+    }
     /*
-     * Finds the subfolders from a given parent.
+     * Finds the sub folders from a given parent.
      * @param parent    the location where to look for model folders
      * @return          an array of model folders
      */
@@ -235,19 +322,19 @@ particularly for network file systems."""
      */
     private File findRoot() {
         String rootLocation
-        def conf = grailsApplication.config
-        if (conf.jummp.vcs.plugin == "git") {
-            rootLocation = conf.jummp.vcs.workingDirectory
-        }
-        else if (conf.jummp.vcs.plugin == "subversion") {
-            rootLocation = conf.jummp.plugins.subversion.localRepository
+        VcsCommand vcsCommand = configurationService.loadVcsConfiguration()
+        if (vcsCommand.isGit()) {
+            rootLocation = vcsCommand.workingDirectory
+        } else if (vcsCommand.isSvn()) {
+            SvnCommand svn = configurationService.loadSvnConfiguration()
+            rootLocation = svn.localRepository
         }
         log.debug("Root folder for model repositories set to ${rootLocation}")
         try {
             if (rootLocation) {
                 root = new File(rootLocation).getCanonicalFile()
             }
-        } catch(IOException ex) {
+        } catch (IOException ex) {
             log.error(ex.message, ex)
         } catch(SecurityException e) {
             log.error(e.message, e)

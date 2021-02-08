@@ -36,15 +36,16 @@ import net.biomodels.jummp.model.Revision
 @CompileStatic
 class ModelAdapter {
     Model model
-
+    Revision latest = null
     @CompileStatic
     ModelTransportCommand toCommandObject(boolean saveHistory = true) {
         Set<String> creators = []
-        Set<String> creatorUsernames = []
+        Map<String, String> creatorUsernames = [:]
         if (model.revisions?.size() > 0) {
             for (Revision revision: model.revisions) {
                 creators.add(revision.owner.person.userRealName)
-                creatorUsernames.add(revision.owner.username)
+                String realName = revision.owner.person.userRealName ?: revision.owner.username
+                creatorUsernames.put(revision.owner.username, realName)
             }
         }
         Revision latestRev
@@ -56,6 +57,9 @@ class ModelAdapter {
         if (modelIsSaved) {
             if (SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
                 latestRev = revisions.last()
+                firstRev = revisions.first()
+            } else if (latest) {
+                latestRev = latest
                 firstRev = revisions.first()
             } else {
                 latestRev = getLatestRevisionForUser(saveHistory)

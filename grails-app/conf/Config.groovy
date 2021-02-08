@@ -330,7 +330,6 @@ log4j.main = {
         'org.springframework.orm.hibernate4.support'
 
     ], additivity: false
-    info console: "net.biomodels.jummp.core", additivity: false
 }
 
 // Added by the Spring Security Core plugin:

@@ -45,6 +45,8 @@ import net.biomodels.jummp.webapp.Notification
 import net.biomodels.jummp.webapp.NotificationType
 import net.biomodels.jummp.webapp.NotificationTypePreferences
 import net.biomodels.jummp.webapp.NotificationUser
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.context.i18n.LocaleContextHolder as LCH
 
@@ -59,6 +61,7 @@ import org.springframework.context.i18n.LocaleContextHolder as LCH
  */
 @Transactional
 class NotificationService {
+    private static final Logger logger = LoggerFactory.getLogger(NotificationService.class)
     def grailsApplication
     def mailService
     def springSecurityService
@@ -102,7 +105,7 @@ class NotificationService {
                 existing.sendMail = updated.sendMail
                 existing.sendNotification = updated.sendNotification
                 if (!existing.save(flush: true)) {
-                    log.error "Failed to update notification preferences ${existing} for user ${user}"
+                    logger.error "Failed to update notification preferences ${existing} for user ${user}"
                 }
             }
         }
@@ -124,14 +127,14 @@ class NotificationService {
             NotificationUser userNotify = new NotificationUser(notification: notification,
                     user: user)
             if (!userNotify.save(flush: true)) {
-                log.error "Was not able to deliver notification ${userNotify.errors.allErrors}"
+                logger.error "Was not able to deliver notification ${userNotify.errors.allErrors}"
             }
         }
     }
 
     void sendNotification(ModelTransportCommand model, Notification notification, Set<User> watchers) {
         if (!notification.save(flush: true)) {
-            log.error("Notification $notification for users $watchers was not persisted")
+            logger.error("Notification $notification for users $watchers was not persisted due to ${notification.errors.inspect()}")
         } else {
             watchers.each { sendNotificationToUser(it, notification) }
         }
@@ -187,7 +190,8 @@ class NotificationService {
             String noPubMsgCode = "notification.model.created.emailToSubmitter.body.noPublicationProvided"
             String withPublicationProvided = messageSource.getMessage(withPubMsgCode, [] as String[],  null)
             String noPublicationProvided = messageSource.getMessage(noPubMsgCode, [model.submissionId] as String[], null)
-            String askAcknowledgement = model.publication ? withPublicationProvided : noPublicationProvided
+            // embed the instructions about citing BioModels regardless of publication details
+            String askAcknowledgement = noPublicationProvided
             String[] args = [salutation, model.name, model.submissionId, askAcknowledgement, modelLink]
             emailBody = messageSource.getMessage("notification.model.created.emailToSubmitter.body", args, null)
             mailService.sendMail {
@@ -302,10 +306,14 @@ class NotificationService {
         User user = body.user as User
         String notifTitle = "notification.model.updated.title"
         String notifBody = "notification.model.updated.body"
+        Set<User> recipients = getNotificationRecipients(body.perms)
+        String tmp = recipients.collect { User u ->
+            u.username
+        }.toString()
+        logger.debug("People will receive the notification: ${tmp}")
         useGenericNotificationStructure(notifTitle, [model.name] as String[], notifBody,
-            [model.name, user.username, updates.join(",")] as String[],
-            NotificationType.VERSION_CREATED, user,
-            getNotificationRecipients(body.perms), model)
+            [model.name, user.username, updates.join(", ")] as String[],
+            NotificationType.VERSION_CREATED, user, recipients, model)
     }
 
     void modelSubmitForPublication(def body) {

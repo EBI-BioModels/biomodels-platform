@@ -94,7 +94,7 @@ Adds support for the COMBINE archive into JUMMP.
                 def modelFormat = service.registerModelFormat("OMEX", "COMBINE archive", it)
                 service.handleModelFormat(modelFormat, "omexService", "combine")
             }
-        } catch(NoSuchBeanDefinitionException e) {
+        } catch(Exception e) {
             println("ModelFileFormatService is not available!")
         }
     }

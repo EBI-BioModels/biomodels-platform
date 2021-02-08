@@ -350,13 +350,14 @@ under the format: ${response.format}"""
 
     private def browseCore(String sortBy, String sortDirection, int offset, int length, String filter) {
         ModelListSorting sort = inferSortedColumn(sortBy)
-        List modelsDomain = modelService.getAllModels(offset, length, sortDirection == "asc", sort, filter)
+        List modelsDomain = modelService.getMyModels(offset, length, sortDirection == "asc", sort, filter)
         List models = []
         modelsDomain.each {
-            models.add(new ModelAdapter(model: it).toCommandObject(false))
+            MTC m = new ModelAdapter(model: it).toCommandObject(false)
+            models.add(m)
         }
         List<Facet> basicFacets = searchService.buildBasicFacets(models)
-        int totalCount = modelService.getModelCount(filter, false)
+        int totalCount = modelService.countMyModels(filter, false)
         return [models: models, facets: basicFacets, modelsAvailable: totalCount, sortBy: sortBy,
                 sortDirection: sortDirection, offset: offset, length: length, query: filter]
     }
