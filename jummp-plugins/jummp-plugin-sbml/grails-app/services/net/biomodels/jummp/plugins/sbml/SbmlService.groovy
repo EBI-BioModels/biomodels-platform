@@ -237,7 +237,7 @@ The consistency check for your model is being ignored."""
             return doc
         }
         try {
-            final int CONSISTENCY_ERRORS = doc.checkConsistencyOffline()
+            final int CONSISTENCY_ERRORS = doc.checkConsistency()
             if (CONSISTENCY_ERRORS == -1) {
                 errorMsg ="Internal error in online SBML Validator while validating ${doc.inspect()}\t${doc.properties}"
                 errors.add(errorMsg)
