@@ -209,7 +209,7 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
         SBMLReader reader = new SBMLReader()
         try {
             doc = reader.readSBML(model)
-        } catch (XMLStreamException e) {
+        } catch (XMLStreamException | NullPointerException e) {
             e.printStackTrace()
             errorMsg = "SBMLDocument could not be read from ${model.name} caused by\n${e.message}"
             log.error(errorMsg)
