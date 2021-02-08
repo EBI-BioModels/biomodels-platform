@@ -112,6 +112,9 @@ class PublicationController implements GrailsConfigurationAware {
 fetch from <a href="https://doi.org/${pubLink}" target="_blank">https://doi.org/${pubLink}</a>. Currently they are
 missing the affiliation and synopsis. Please verify the form and fill empty fields in manually."""
                     status = "Warning"
+                } else if (!cmd.synopsis || !cmd.affiliation) {
+                    status = "Warning"
+                    message = """The publication details are incomplete. Please check the empty fields and fill them in manually."""
                 } else {
                     message = "No records are available. Please do check again."
                 }
