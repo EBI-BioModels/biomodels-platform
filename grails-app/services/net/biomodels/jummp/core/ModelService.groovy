@@ -900,8 +900,8 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         if (revision.validate()) {
             model.addToRevisions(revision)
             doUpdateModelMetadata(model, rev)
-            //revision.save()
-            //model.save(flush: true)
+            revision.save()
+            model.save(flush: true)
             doUpdatePermissions(model, revision, currentUser)
 
             // !! THIS HAS TO BE IN A SEPARATE METHOD WITH A DEDICATED TRANSACTION CONTEXT !!
