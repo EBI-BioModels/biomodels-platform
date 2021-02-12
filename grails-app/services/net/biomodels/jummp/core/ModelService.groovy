@@ -2563,7 +2563,7 @@ There has been error while adding $approach to the model ${revisionTC.identifier
             def attachedRevision = Revision.findByModelAndRevisionNumber(revision.model,
                 revision.revisionNumber, [fetch: [model: "eager", format: 'eager']])
 
-            def revisionAdapter = new RevisionAdapter(revision: attachedRevision)
+            def revisionAdapter = new RevisionAdapter(revision: attachedRevision, latest: true)
             RevisionTransportCommand cmd = revisionAdapter.toCommandObject()
             indexModelRevision(cmd)
             //convertModelToOtherFormats(cmd)
