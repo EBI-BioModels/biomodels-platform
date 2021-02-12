@@ -52,8 +52,8 @@ class RevisionAdapter {
 
     RevisionTransportCommand toCommandObject() {
         def msg = """\
-Converting Revision #${revision.id} (attached: ${revision.isAttached()}),
-(format attached: ${revision.format.isAttached()}) to cmd object
+Converting Revision #${revision?.id} (attached: ${revision?.isAttached()}),
+(format attached: ${revision?.format?.isAttached()}) to cmd object
 isSynchronisationActive: ${TransactionSynchronizationManager.isSynchronizationActive()}
 sessionClosed: ${grailsApplication.mainContext.sessionFactory.currentSession.isClosed()}""".toString()
         log.info(msg)

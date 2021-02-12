@@ -900,8 +900,8 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         if (revision.validate()) {
             model.addToRevisions(revision)
             doUpdateModelMetadata(model, rev)
-            //revision.save()
-            //model.save(flush: true)
+            revision.save()
+            model.save(flush: true)
             doUpdatePermissions(model, revision, currentUser)
 
             // !! THIS HAS TO BE IN A SEPARATE METHOD WITH A DEDICATED TRANSACTION CONTEXT !!
@@ -2563,7 +2563,7 @@ There has been error while adding $approach to the model ${revisionTC.identifier
             def attachedRevision = Revision.findByModelAndRevisionNumber(revision.model,
                 revision.revisionNumber, [fetch: [model: "eager", format: 'eager']])
 
-            def revisionAdapter = new RevisionAdapter(revision: attachedRevision)
+            def revisionAdapter = new RevisionAdapter(revision: attachedRevision, latest: true)
             RevisionTransportCommand cmd = revisionAdapter.toCommandObject()
             indexModelRevision(cmd)
             //convertModelToOtherFormats(cmd)
@@ -2598,6 +2598,8 @@ There has been error while adding $approach to the model ${revisionTC.identifier
                     aclUtilService.addPermission(revision, ace.sid.principal, BasePermission.ADMINISTRATION)
                 }
             }
+        } catch (Exception e) {
+            logger.error(e.getMessage())
         } finally {
             aclInsertionLock.unlock()
         }
