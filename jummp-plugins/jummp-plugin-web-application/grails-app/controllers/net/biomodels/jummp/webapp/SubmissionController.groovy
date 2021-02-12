@@ -80,12 +80,12 @@ class SubmissionController {
             boolean isUpdate = params.boolean("isUpdate")
             boolean isAmend = params.boolean("isAmend")
             working.put("isAmend", isAmend)
-            MTC model = new MTC()
-            RTC revision = new RTC(files: rftcList, model: model, format: format)
-            if (isUpdate && params.modelId) {
+            MTC model = modelDelegateService.getModel(params.modelId)
+            RTC revision = new RTC(model: model, format: format)
+            if (isAmend && params.modelId) {
                 revision = modelDelegateService.getLatestRevision(params.modelId, false)
-                model = revision.model
             }
+            revision.files = rftcList
 
             // populate model info
             def modelInfoData = JSON.parse(params.modelInfo.decodeHTML())
