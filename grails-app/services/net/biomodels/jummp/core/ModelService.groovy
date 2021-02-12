@@ -2598,6 +2598,8 @@ There has been error while adding $approach to the model ${revisionTC.identifier
                     aclUtilService.addPermission(revision, ace.sid.principal, BasePermission.ADMINISTRATION)
                 }
             }
+        } catch (Exception e) {
+            logger.error(e.getMessage())
         } finally {
             aclInsertionLock.unlock()
         }

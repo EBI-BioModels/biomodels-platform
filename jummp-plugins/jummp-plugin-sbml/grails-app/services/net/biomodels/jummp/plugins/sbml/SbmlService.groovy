@@ -369,6 +369,10 @@ Could not check if SBML files ${files.inspect()} are valid or not.""")
             // update the name of SBML model file of the revision
             SBMLDocument sbmlDocument = getFromCache(revision)
             Model sbmlModel = sbmlDocument.getModel()
+            if (!sbmlModel) {
+                log.error("Cannot update the model name for the main model file of the revision: ${revision.dump()}")
+                return false
+            }
             sbmlModel.setName(name)
             File sbmlFile = fetchMainFileFromRevision(revision)
             SBMLWriter sbmlWriter = new SBMLWriter()
