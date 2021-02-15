@@ -80,7 +80,10 @@ class SubmissionController {
             boolean isUpdate = params.boolean("isUpdate")
             boolean isAmend = params.boolean("isAmend")
             working.put("isAmend", isAmend)
-            MTC model = modelDelegateService.getModel(params.modelId)
+            MTC model = new MTC()
+            if (isUpdate) {
+                model = modelDelegateService.getModel(params.modelId)
+            }
             RTC revision = new RTC(model: model, format: format)
             if (isAmend && params.modelId) {
                 revision = modelDelegateService.getLatestRevision(params.modelId, false)
