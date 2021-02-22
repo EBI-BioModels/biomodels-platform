@@ -282,8 +282,8 @@
         inputVal = $.trim(inputVal);
         let existed = $.inArray(inputVal, definedModellingApproachNames) >= 0;
         if (!existed) {
-            let popup = new Foundation.Reveal($('#modellingApproachWarningPopup'));
-            popup.open();
+            let popup = $('#modellingApproachWarningPopup');
+            popup.html($(this).html()).foundation('open');
         }
     }
 
