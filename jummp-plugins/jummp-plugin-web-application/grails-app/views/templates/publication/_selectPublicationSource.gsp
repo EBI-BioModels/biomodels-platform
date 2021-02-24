@@ -48,7 +48,8 @@
             if (res) {
                 let message =
                     "Please change the publication link in the Link box and click on the Update button to refresh the form";
-                showWarningMessage(message);
+                toastr.warning(message);
+                showFlashMessages(message);
             }
             if (pubLinkProvider === "Publication without link" || pubLinkProvider === "NoPub")  {
                 $('#publicationLinkCol').hide();
@@ -78,13 +79,9 @@
             let res = shouldWarnWhenUpdatingPublicationLink(pubLink);
             if (res) {
                 let message = "Click on the Update button to refresh the publication details";
-                showWarningMessage(message);
+                toastr.warning(message);
+                showFlashMessages(message);
             }
         });
-
-        function showWarningMessage(message) {
-            toastr.clear();
-            toastr.warning(message);
-        }
     </script>
 </g:if>

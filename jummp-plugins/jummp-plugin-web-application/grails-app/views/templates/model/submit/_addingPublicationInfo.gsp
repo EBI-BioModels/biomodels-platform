@@ -54,6 +54,7 @@
 <input type="button" name="next" class="next action-button" value="Next" />
 <input type="button" name="previous" class="previous action-button-previous" value="Previous"/>
 <script type="text/javascript">
+    // TODO: move some duplicate codes to helpers.js
     $(document).ready(function () {
         $('#loadingIcon').hide();
         if ("${publication}") {
@@ -92,7 +93,7 @@
                 if (data.status === "Failed") {
                     collectErrors(errorMessages, data["message"]);
                     toastr.error(data["message"]);
-                    showErrorMessages();
+                    showFlashMessages(errorMessages);
                 } else {
                     if (data.status === "OK") {
                         toastr.success(data["message"]);
@@ -112,7 +113,7 @@
                 toastr.clear();
                 toastr.error(errMsg);
                 errorMessages.push(errMsg);
-                showErrorMessages();
+                showFlashMessages(errorMessages);
             },
             complete: function () {
                 $('#loadingIcon').hide();
@@ -197,22 +198,6 @@
             }
         });
         currentValidation = withoutPub || isPubTCValidated;
-    }
-
-    function showWarningMessage(message) {
-        toastr.clear();
-        toastr.warning(message);
-    }
-
-    function showErrorMessages() {
-        if (errorMessages.length) {
-            let messages = "<ul>";
-            for (i = 0; i < errorMessages.length; i++) {
-                messages += "<li>" + errorMessages[i] + "</li>";
-            };
-            messages += "</ul>";
-            $('.flashNotificationDiv').html(messages).show();
-        }
     }
 
     function clearErrorMessages() {
