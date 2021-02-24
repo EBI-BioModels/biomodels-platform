@@ -69,11 +69,16 @@ class PublicationController implements GrailsConfigurationAware {
     def fetchPublicationFromPubMedAndRenderPublicationForm() {
         String pubLinkProvider = params.pubLinkProvider
         String pubLink = params.pubLink
+        String message, status
         PublicationTransportCommand pubTC = new PublicationTransportCommand()
         if (!publicationService.verifyLink(pubLinkProvider, pubLink)) {
+            message = "The link is not a valid ${pubLinkProvider}"
+            status = "Failed"
         } else {
+            message = "The publication details have been updated successfully."
+            status = "OK"
             pubTC = publicationService.fetchPublicationData(pubLinkProvider, pubLink)
-
+            // TODO: better the following snippet
             if (!pubTC.validate()) {
 
             } else {
@@ -106,6 +111,7 @@ class PublicationController implements GrailsConfigurationAware {
             result.message = message
             result.status = status
         } else {
+            // TODO: extract friendly error messages from Errors object
             result.message = "There have been problems with data binding:<br/>${pubCmd.errors.allErrors.inspect()}"
             result.status = 500
         }
