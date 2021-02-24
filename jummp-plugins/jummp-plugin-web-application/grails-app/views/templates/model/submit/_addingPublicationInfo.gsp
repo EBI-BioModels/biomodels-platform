@@ -68,6 +68,10 @@
     });
 
     function verifyAndFetchPublicationDetails(pubLinkProvider, pubLink) {
+        if (!pubLinkProvider || !pubLink) {
+            toastr.clear();
+            toastr.error("Either of publication provider or link is empty");
+            return;
         }
         clearErrorMessages();
         $.ajax({

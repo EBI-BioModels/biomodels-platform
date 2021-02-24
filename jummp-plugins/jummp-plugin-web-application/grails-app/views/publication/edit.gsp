@@ -82,6 +82,12 @@
             $('#btnSave').on("click", function(event) {
                 "use strict";
                 event.preventDefault();
+                // validate the form
+                if ($('#pubLinkProvider').val() === "NoPub") {
+                    toastr.clear();
+                    toastr.error("Cannot save the publication without choosing a type of publication resource");
+                    return;
+                }
                 $.ajax({
                     type: "POST",
                     url: $.jummp.createLink("publication", "save"),
