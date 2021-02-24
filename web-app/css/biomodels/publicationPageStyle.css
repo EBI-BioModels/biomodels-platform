@@ -76,7 +76,3 @@ td {
 .input40 {
     /*width: 15em;*/
 }
-
-select {
-    height: inherit; /* request Ken fix it */
-}
