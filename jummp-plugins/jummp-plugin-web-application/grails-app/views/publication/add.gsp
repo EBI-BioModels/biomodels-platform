@@ -102,10 +102,12 @@
                     } else if (response['status'] === 500) {
                         toastr.error(response['message']);
                     }
+                    showFlashMessages(response['message']);
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
                     toastr.clear();
                     toastr.error("Error: ", jqXHR.responseText + textStatus + errorThrown + JSON.stringify(jqXHR));
+                    showFlashMessages(jqXHR.statusText);
                 }
             });
         });
