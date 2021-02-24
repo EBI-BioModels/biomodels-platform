@@ -29,3 +29,24 @@ function extractErrorMessage(jqXHR) {
     }
     return message;
 }
+
+function showFlashMessages(messages) {
+    // there is a specific division beneath the main menu to be designed to show all flash messages
+    let msg = "";
+    if ($.isArray(messages)) {
+        if (messages.length) {
+            let messages = "<ul>";
+            for (i = 0; i < messages.length; i++) {
+                msg += "<li>" + messages[i] + "</li>";
+            }
+            msg += "</ul>";
+        }
+    } else if (typeof messages === "string") {
+        msg = messages
+    }
+    $('.flashNotificationDiv').html(msg).show();
+}
+
+function hideFlashMessages() {
+    $('.flashNotificationDiv').html("").hide();
+}

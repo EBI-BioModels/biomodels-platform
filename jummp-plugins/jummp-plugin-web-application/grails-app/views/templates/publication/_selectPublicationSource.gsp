@@ -12,7 +12,7 @@
                 <g:select name="PubLinkProvider" id="pubLinkProvider"
                           from="${linkSourceTypes}"
                           value="${publication?.linkProvider?.linkType}"
-                  noSelection="['NoPub':'- No publication available -']"/></g:if>
+                          noSelection="['NoPub':'- No publication available -']"/></g:if>
                 <g:else>
                 <g:select name="PubLinkProvider" id="pubLinkProvider"
                           from="${linkSourceTypes}"
@@ -56,6 +56,11 @@
             } else {
                 $('#publicationLinkCol').show();
                 $('#freshPublicationBtnCol').show();
+            }
+            if (pubLinkProvider === "NoPub" && "${controller}" === "publication") {
+                let message = "You have to choose a publication source to complete your operation";
+                toastr.warning(message);
+                showFlashMessages(message);
             }
         });
 
