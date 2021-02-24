@@ -63,6 +63,7 @@
         </div>
     </div>
     <g:javascript>
+        var validation = false;
         $('#btnSave').on("click", function(event) {
             "use strict";
             event.preventDefault();
@@ -70,6 +71,13 @@
             if ($('#pubLinkProvider').val() === "NoPub") {
                 toastr.clear();
                 toastr.error("Cannot save the publication without choosing a type of publication resource");
+                return;
+            }
+            if (!validation) {
+                let msg = "The publication source and link do not match. Please verify these values and try again";
+                toastr.clear();
+                toastr.error(msg);
+                showFlashMessages(msg);
                 return;
             }
             $.ajax({
@@ -173,11 +181,17 @@
                     pubLink: pubLink,
                     operation: "add"
                 }
-            }).success(function () {
-                    toastr.clear();
-                    toastr.success("The publication details have been fetched successfully");
-            }).done(function(data) {
-                $('.editablePart').html(data);
+            }).done(function(res) {
+                validation = res.status !== "Failed";
+                if (!validation) {
+                    toastr.error(res.message);
+                    showFlashMessages(res.message);
+                } else {
+                    let msg = "The publication details have been fetched successfully";
+                    toastr.success(msg);
+                    showFlashMessages(msg);
+                    $('.editablePart').html(res);
+                }
             }).fail(function(jqXHR) {
                 // the method below is defined in helpers.js
                 let msg = extractErrorMessage(jqXHR);

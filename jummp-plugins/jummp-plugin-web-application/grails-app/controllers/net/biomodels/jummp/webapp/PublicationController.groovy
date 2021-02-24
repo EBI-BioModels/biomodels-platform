@@ -69,29 +69,30 @@ class PublicationController implements GrailsConfigurationAware {
     def fetchPublicationFromPubMedAndRenderPublicationForm() {
         String pubLinkProvider = params.pubLinkProvider
         String pubLink = params.pubLink
-        String message, status
+        String message, status, data = ""
         PublicationTransportCommand pubTC = new PublicationTransportCommand()
         if (!publicationService.verifyLink(pubLinkProvider, pubLink)) {
             message = "The link is not a valid ${pubLinkProvider}"
             status = "Failed"
+            render([message: message, status: status, data: data] as JSON)
         } else {
-            message = "The publication details have been updated successfully."
-            status = "OK"
+            message = "The publication details have been fetched successfully."
+            status = "Success"
             pubTC = publicationService.fetchPublicationData(pubLinkProvider, pubLink)
-            // TODO: better the following snippet
             if (!pubTC.validate()) {
-
+                message = "The publication details are invalid"
+                status = "Failed"
+                render([message: message, status: status, data: data] as JSON)
             } else {
                 pubTC.id = params.long("id")
+                List linkSourceTypes = PLP.LinkType.values().collect { it.label }
+                String operation = params.get("operation")
+                render(template: "/templates/publication/publicationDetailForm",
+                    plugin: "jummp-plugin-web-application",
+                    model: [id        : params.id, publication: pubTC, authorListContainerSize: 4, linkSourceTypes: linkSourceTypes,
+                            controller: "publication", operation: operation, url: request.forwardURI])
             }
         }
-
-        List linkSourceTypes = PLP.LinkType.values().collect { it.label }
-        String operation = params.get("operation")
-        render template: "/templates/publication/publicationDetailForm",
-            plugin: "jummp-plugin-web-application",
-            model: [id: params.id, publication: pubTC, authorListContainerSize: 4, linkSourceTypes: linkSourceTypes,
-                    controller: "publication", operation: operation, url: request.forwardURI]
     }
 
     def save(PublicationTransportCommand pubCmd) {
