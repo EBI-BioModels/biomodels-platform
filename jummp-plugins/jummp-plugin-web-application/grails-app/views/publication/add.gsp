@@ -26,6 +26,7 @@
     </g:javascript>
     <g:javascript contextPath="" src="${style}/publicationSubmission.js"/>
     <g:javascript src="toastr.min.js" contextPath=""/>
+    <g:javascript src="helpers.js" contextPath=""/>
     <g:javascript>
         toastr.options = {
             "closeButton": false,
@@ -51,9 +52,8 @@
     <div class="row">
         <h2>Add a new publication</h2>
 
-        <g:render template="/templates/publication/refreshPubMedDataButton"
-                  plugin="jummp-plugin-web-application"
-                  model="['publication': publication]"/>
+        <g:render template="/templates/publication/selectPublicationSource"
+                  plugin="jummp-plugin-web-application"/>
         <div id="publicationForm">
             <g:render template="/templates/publication/publicationEditableElements"
                       plugin="jummp-plugin-web-application"
@@ -98,10 +98,10 @@
         /* build up a publication transport command object */
         function buildPublicationTC() {
             let linkProvider = {
-                "linkType": $('#linkProvider').val(),
+                "linkType": $('#pubLinkProvider').val(),
                 "pattern": ""
             };
-            let link = $('#link').val();
+            let link = $('#publicationLink').val();
             let title = $('#title').val();
             let journal = $('#journal').val();
             let affiliation = $('#affiliation').val();
@@ -153,19 +153,31 @@
             backAway();
         });
 
-        $(document).on('click', '#refreshPublicationFromPubMed', {}, function(e) {
-            e.preventDefault();
+        function verifyAndFetchPublicationDetails(pubLinkProvider, pubLink) {
+            if (!pubLinkProvider || !pubLink) {
+                toastr.clear();
+                toastr.error("Either of publication provider or link is empty");
+                return;
+            }
             $.ajax({
                 type: "POST",
-                url: "${createLink(controller: "publication", action: "refreshPubMedData")}",
+                url: "${createLink(controller: "publication", action: "fetchPublicationFromPubMedAndRenderPublicationForm")}",
                 data: {
-                    pubmed: $('#link').val(),
+                    pubLinkProvider: pubLinkProvider,
+                    pubLink: pubLink,
                     operation: "add"
                 }
+            }).success(function () {
+                    toastr.clear();
+                    toastr.success("The publication details have been fetched successfully");
             }).done(function(data) {
                 $('.editablePart').html(data);
+            }).fail(function(jqXHR) {
+                // the method below is defined in helpers.js
+                let msg = extractErrorMessage(jqXHR);
+                toastr.error(msg);
             });
-        });
+        };
     </g:javascript>
 </body>
 </html>

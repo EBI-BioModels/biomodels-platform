@@ -187,6 +187,23 @@ $(document).on("click", '.re-ordering-author', function() {
         ($this.attr("data-name") === 'Up') ? $op.first().prev().before($op) : $op.last().next().after($op);
     }
 });
+
+/* The handler for the click event on the refreshPublicationFromPubMed button */
+$(document).on('click', '#refreshPublicationFromPubMed', {}, function(e) {
+    e.preventDefault();
+    let pubLinkProvider = $('#pubLinkProvider').val();
+    let pubLink = $('#publicationLink').val();
+    let Need2BeWarned = pubLinkProvider === "PubMed ID" || pubLinkProvider === "DOI";
+    if (!Need2BeWarned) {
+        toastr.clear();
+        toastr.warning("Only work for PubMed or DOI");
+        console.log("Only work for PubMed or DOI");
+        return;
+    }
+    // call the specific handler for different pages, see publication add/edit and submission/adding PublicationInfo
+    verifyAndFetchPublicationDetails(pubLinkProvider, pubLink);
+});
+
 function backAway(){
     // if it was the first page
     if(history.length === 1){

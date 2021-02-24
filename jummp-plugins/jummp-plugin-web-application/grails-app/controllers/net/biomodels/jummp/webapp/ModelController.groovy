@@ -435,6 +435,8 @@ class ModelController {
 
     def submit() {
         Map initials = initialiseSubmission(false)
+        initials.put("controller", "model")
+        initials.put("operation", "submit")
         initials.put("titlePage", "Submit a new model | BioModels")
         initials.put("uploadingFilesHeading", g.message(code: "submission.upload.header"))
         render(view: "submit", model: initials)
@@ -444,6 +446,8 @@ class ModelController {
         Map initials = initialiseSubmission(true)
         String modelId = params.id
         String titlePage = "Update model ${modelId} | BioModels"
+        initials.put("controller", "model")
+        initials.put("operation", "update")
         initials.put("modelId", modelId)
         initials.put("titlePage", titlePage)
         initials.put("uploadingFilesHeading", g.message(code: "submission.upload.review.titlePage"))

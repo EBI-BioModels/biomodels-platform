@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory
 class PublicationController implements GrailsConfigurationAware {
     private static final Logger logger = LoggerFactory.getLogger(PublicationController.class)
     def publicationService
-    def pubMedService
     String style
     String serverUrl
 
@@ -51,9 +50,37 @@ class PublicationController implements GrailsConfigurationAware {
          style: style, serverUrl: serverUrl, controller: "publication", operation: "edit"]
     }
 
-    def refreshPubMedData() {
-        PublicationTransportCommand pubTC = pubMedService.fetchPublicationData(params.pubmed)
-        pubTC.id = params.long("id")
+    /**
+     * Fetches publication details from PubMed Server, then renders the publication form with these details
+     *
+     * This action contributes to fetching publication details via identifier from EuropePMC server.
+     * The identifier can be an PubMed ID or DOI. As of writing these comments, we have implemented DoiService and
+     * PubMedService separately because we haven't been aware of the existence of DOI support from the service
+     * provider.
+     *
+     * Our implementation of {@link DoiService} is based on the output of the curl command hitting to https://doi.org
+     * directly. The approach works well but does not include the abstract and affiliation.
+     *
+     * TODO: use PubMed service for the retrieval of the publication details with DOI
+     * TODO: split the action into two smaller ones: fetch and render
+     *
+     * @return HTML codes to display in the publication add and edit view
+     */
+    def fetchPublicationFromPubMedAndRenderPublicationForm() {
+        String pubLinkProvider = params.pubLinkProvider
+        String pubLink = params.pubLink
+        PublicationTransportCommand pubTC = new PublicationTransportCommand()
+        if (!publicationService.verifyLink(pubLinkProvider, pubLink)) {
+        } else {
+            pubTC = publicationService.fetchPublicationData(pubLinkProvider, pubLink)
+
+            if (!pubTC.validate()) {
+
+            } else {
+                pubTC.id = params.long("id")
+            }
+        }
+
         List linkSourceTypes = PLP.LinkType.values().collect { it.label }
         String operation = params.get("operation")
         render template: "/templates/publication/publicationDetailForm",
@@ -67,14 +94,13 @@ class PublicationController implements GrailsConfigurationAware {
         String message = ""
         Integer status
         if (pubCmd.validate()) {
-            message = "Data binding is valid"
             Publication publication = publicationService.fromCommandObject(pubCmd)
             if (publication) {
-                message += "<br/>The data have been saved successfully"
+                message += "The publication details have been saved successfully"
                 status = 200
                 result["publicationId"] = publication.id
             } else {
-                message += "<br/>Failures of saving data"
+                message += "There have been errors while saving the publication details"
                 status = 500
             }
             result.message = message
@@ -95,7 +121,7 @@ class PublicationController implements GrailsConfigurationAware {
         PDEC ctx = new PDEC()
         if (pubLinkProvider == "NoPub" && pubLink) {
             message = "Please select a publication link type."
-            status: "Failed"
+            status = "Failed"
         }
         if (!publicationService.verifyLink(pubLinkProvider, pubLink)) {
             message = "The link is not a valid ${pubLinkProvider}"

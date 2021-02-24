@@ -1,10 +1,6 @@
-<%@ page import="net.biomodels.jummp.model.PublicationLinkProvider" %>
 <g:javascript contextPath="" src="biomodels/enterPublicationLink.js"/>
 <g:javascript contextPath="" src="biomodels/publicationSubmission.js"/>
-<%
-    List linkSourceTypes = PublicationLinkProvider.LinkType.
-        values().collect { it.label }
-%>
+
 <style type="text/css">
     .hide {
         display: none;
@@ -39,37 +35,9 @@
             class="fa fa-question-circle" aria-hidden="true"></i>
         </a></h4>
         <div class="publink-explanation" style="display: none;"><g:message code="submission.publink.publication"/></div>
-        <div class="row">
-            <div class="columns small-12 medium-3 large-3">
-                <label for="pubLinkProvider">Choose a publication source</label>
-                <g:if test="${publication}">
-                    <g:select name="PubLinkProvider" id="pubLinkProvider"
-                              from="${linkSourceTypes}"
-                              value="${publication?.linkProvider?.linkType}"
-                              noSelection="['NoPub':'- No publication available -']"/>
-                </g:if>
-                <g:else>
-                    <g:select name="PubLinkProvider" id="pubLinkProvider"
-                              from="${linkSourceTypes}"
-                              noSelection="['NoPub':'- No publication available -']"/>
-                </g:else>
-            </div>
-            <div class="columns small-12 medium-7 large-7">
-                <div id="lblPublicationLink">
-                    <label class="required" for="publicationLink">
-                        Enter PubMed identifier or DOI, then press on the <strong>Update</strong> button
-                    </label>
-                </div>
-                <g:textField name="PublicationLink" id="publicationLink" value="${publication?.link}"
-                             placeholder="Enter PubMed identifier, DOI or web link"/>
-            </div>
-            <div class="columns small-12 medium-2 large-2">
-                <label>&nbsp;</label>
-                <button type="button" class="button" id="updatePubLinkBtn" name="updatePubLink">Update
-                </button>
-            </div>
 
-        </div>
+        <g:render template="/templates/publication/selectPublicationSource"
+                  plugin="jummp-plugin-web-application"/>
 
         <div id="publicationForm">
             <div class="dialog">
@@ -90,46 +58,18 @@
         $('#loadingIcon').hide();
         if ("${publication}") {
             $('#publicationForm').show();
-            //doShowHideUpdateBtn(true);
-            let selectedPubLinkProvider = $('#pubLinkProvider').val();
-            if (selectedPubLinkProvider === "Publication without link") {
-                doShowHideUpdateBtn(false);
-                $('#publicationLink').hide();
-            }
         } else {
             $('#publicationForm').hide();
-            doShowHideUpdateBtn(false);
         }
     });
+
     $('.publink-whatisit').on("click", function () {
         $('.publink-explanation').toggle("slow");
     });
 
-    $(document).on('change', '#pubLinkProvider', {}, function(e) {
-        let pubLinkProvider = $(this).val();
-        let res = shouldWarnWhenUpdatingLinkProvider(pubLinkProvider);
-        doShowHideUpdateBtn(res);
-        if (res) {
-            let message =
-                "Please change the publication link on the next input and click on Refresh button to refresh the form";
-            showWarningMessage(message);
+    function verifyAndFetchPublicationDetails(pubLinkProvider, pubLink) {
         }
-    });
-
-    $(document).on('blue focusout', '#publicationLink', {}, function(e) {
-        let pubLink = $(this).val();
-        let res = shouldWarnWhenUpdatingPublicationLink(pubLink);
-        if (res) {
-            let message = "Click on Refresh button to refresh the publication details";
-            showWarningMessage(message);
-        }
-    });
-
-    $(document).on('click', '#updatePubLinkBtn', {}, function (e) {
-        e.preventDefault();
         clearErrorMessages();
-        let pubLinkProvider = $('#pubLinkProvider').val();
-        let pubLink = $('#publicationLink').val();
         $.ajax({
             type: "POST",
             url: "${createLink(controller: "publication", action:"doVerifyPubLinkAndFetchData")}",
@@ -174,7 +114,7 @@
                 $('#loadingIcon').hide();
             }
         });
-    });
+    };
 
     function reloadPublicationForm(publication) {
         $('#title').val(publication.title);
@@ -255,27 +195,9 @@
         currentValidation = withoutPub || isPubTCValidated;
     }
 
-    function shouldWarnWhenUpdatingLinkProvider(pubLinkProvider) {
-        let Need2BeWarned = pubLinkProvider === "PubMed ID" || pubLinkProvider === "DOI";
-        return Need2BeWarned;
-    }
-
-    function shouldWarnWhenUpdatingPublicationLink(update) {
-        return update !== "${publication?.link}";
-    }
-
     function showWarningMessage(message) {
         toastr.clear();
         toastr.warning(message);
-    }
-
-    function doShowHideUpdateBtn(flag) {
-        flag ? $('#updatePubLinkBtn').show() : $('#updatePubLinkBtn').hide();
-        let v1 = '<label class="required" for="publicationLink">\n' +
-            'Enter PubMed identifier or DOI, then press on the <strong>Update</strong> button\n' +
-            '</label>'
-        let v2 = '&nbsp;';
-        flag ? $('#lblPublicationLink').html(v1) : $('#lblPublicationLink').html(v2);
     }
 
     function showErrorMessages() {
