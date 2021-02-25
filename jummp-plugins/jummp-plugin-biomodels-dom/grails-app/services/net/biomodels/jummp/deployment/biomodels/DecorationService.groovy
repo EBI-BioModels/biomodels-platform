@@ -144,7 +144,7 @@ GROUP BY rev.model
         String query = '''
 SELECT
     coalesce(model.publicationId, model.submissionId) as modelId,
-    max(model.firstPublished),
+    model.firstPublished,
     rev.name, rev.owner, model.publication.title, model.publication.journal, model.publication.year
 FROM Model AS model
 JOIN model.revisions AS rev
@@ -161,7 +161,8 @@ WHERE
             AND sid.sid = 'ROLE_ANONYMOUS'
             AND ace.mask = 1)
   AND model.firstPublished IS NOT NULL
-GROUP BY rev.model
+  AND rev.revisionNumber = (SELECT MAX(revisionNumber) FROM Revision r2
+                            WHERE r2.model.id=rev.model.id AND r2.state='PUBLISHED')
 ORDER BY model.firstPublished DESC'''
         def matchedModels = Model.executeQuery(query, [max: PUBLISHED_MAX_RECORDS])
         Map<String, RecentlyPublishedModel> returnedModels = new HashMap<String, RecentlyPublishedModel>()
@@ -178,6 +179,8 @@ ORDER BY model.firstPublished DESC'''
         }
         if (returnedModels) {
             logger.debug("Extracting the list of recently PUBLISHED models from the database")
+        } else {
+            logger.error("Could not extract the list of recently published models")
         }
         returnedModels
     }
@@ -206,7 +209,8 @@ ORDER BY model.firstPublished DESC'''
         try {
             jedis = pool.getResource()
             String key = "hp-recently-published-models"
-            deleteAllByPattern(jedis, key)
+            clearRedisCacheOfRecentlyPublishedModels(jedis, key)
+
             Map models = [:]
             for (Map.Entry<String, RecentlyPublishedModel> entry : mapModels) {
                 RecentlyPublishedModel m = entry.value
@@ -489,6 +493,18 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
         }
         pool.close()
         returnedMap
+    }
+
+    private clearRedisCacheOfRecentlyPublishedModels(final Jedis jedis, final String key) {
+        // Use redis-cli: redis-cli KEYS "hp-recently-published-models*" | xargs redis-cli DEL
+        // Get all recently published models
+        Map rpm  = doRedisHGetAll(key)
+        // Iterate on the models to remove each of them (i.e. these caches look hp-recently-published-models-BIOMD...)
+        for (String m in rpm.keySet()) {
+            deleteAllByPattern("$key-$m")
+        }
+        // Delete the cache named as the key (i.e. hp-recently-published-models)
+        deleteAllByPattern(jedis, key)
     }
 
     private deleteAllByPattern(final Jedis jedis, final String pattern) {
