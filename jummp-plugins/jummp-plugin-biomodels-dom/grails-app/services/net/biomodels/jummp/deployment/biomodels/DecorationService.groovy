@@ -179,6 +179,8 @@ ORDER BY model.firstPublished DESC'''
         }
         if (returnedModels) {
             logger.debug("Extracting the list of recently PUBLISHED models from the database")
+        } else {
+            logger.error("Could not extract the list of recently published models")
         }
         returnedModels
     }
@@ -207,7 +209,8 @@ ORDER BY model.firstPublished DESC'''
         try {
             jedis = pool.getResource()
             String key = "hp-recently-published-models"
-            deleteAllByPattern(jedis, key)
+            clearRedisCacheOfRecentlyPublishedModels(jedis, key)
+
             Map models = [:]
             for (Map.Entry<String, RecentlyPublishedModel> entry : mapModels) {
                 RecentlyPublishedModel m = entry.value
@@ -490,6 +493,18 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
         }
         pool.close()
         returnedMap
+    }
+
+    private clearRedisCacheOfRecentlyPublishedModels(final Jedis jedis, final String key) {
+        // Use redis-cli: redis-cli KEYS "hp-recently-published-models*" | xargs redis-cli DEL
+        // Get all recently published models
+        Map rpm  = doRedisHGetAll(key)
+        // Iterate on the models to remove each of them (i.e. these caches look hp-recently-published-models-BIOMD...)
+        for (String m in rpm.keySet()) {
+            deleteAllByPattern("$key-$m")
+        }
+        // Delete the cache named as the key (i.e. hp-recently-published-models)
+        deleteAllByPattern(jedis, key)
     }
 
     private deleteAllByPattern(final Jedis jedis, final String pattern) {
