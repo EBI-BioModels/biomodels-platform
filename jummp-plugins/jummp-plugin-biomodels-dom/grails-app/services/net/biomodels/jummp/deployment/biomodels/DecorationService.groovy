@@ -144,7 +144,7 @@ GROUP BY rev.model
         String query = '''
 SELECT
     coalesce(model.publicationId, model.submissionId) as modelId,
-    max(model.firstPublished),
+    model.firstPublished,
     rev.name, rev.owner, model.publication.title, model.publication.journal, model.publication.year
 FROM Model AS model
 JOIN model.revisions AS rev
@@ -161,7 +161,8 @@ WHERE
             AND sid.sid = 'ROLE_ANONYMOUS'
             AND ace.mask = 1)
   AND model.firstPublished IS NOT NULL
-GROUP BY rev.model
+  AND rev.revisionNumber = (SELECT MAX(revisionNumber) FROM Revision r2
+                            WHERE r2.model.id=rev.model.id AND r2.state='PUBLISHED')
 ORDER BY model.firstPublished DESC'''
         def matchedModels = Model.executeQuery(query, [max: PUBLISHED_MAX_RECORDS])
         Map<String, RecentlyPublishedModel> returnedModels = new HashMap<String, RecentlyPublishedModel>()
