@@ -501,7 +501,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
         Map rpm  = doRedisHGetAll(key)
         // Iterate on the models to remove each of them (i.e. these caches look hp-recently-published-models-BIOMD...)
         for (String m in rpm.keySet()) {
-            deleteAllByPattern("$key-$m")
+            deleteAllByPattern(jedis, "$key-$m")
         }
         // Delete the cache named as the key (i.e. hp-recently-published-models)
         deleteAllByPattern(jedis, key)
