@@ -31,6 +31,9 @@ import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
 import net.biomodels.jummp.core.user.PersonTransportCommand
 import net.biomodels.jummp.model.PublicationLinkProvider
 import org.apache.commons.lang3.StringUtils
+import org.apache.tools.ant.util.StringUtils
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * @short Singleton-scoped facade for fetching publication metadata via DOI.
@@ -42,6 +45,7 @@ import org.apache.commons.lang3.StringUtils
  */
 class DoiService implements PubDataFetchStrategy {
     static transactional = false
+    private static final Logger logger = LoggerFactory.getLogger(DoiService.class)
 
     @Override
     PubTC fetchPublicationData(final String doi) throws JummpException {
@@ -62,21 +66,24 @@ class DoiService implements PubDataFetchStrategy {
 
     PubTC buildPubTCFromRawData(final Map rawData) {
         String rawPubDetails = rawData["pubDetails"]
+        if (!rawPubDetails) {
+            logger.debug("The raw details of the publication record ${rawData.get('doi')} cannot be empty.")
+            return null
+        }
         String left = rawPubDetails.substring(rawPubDetails.indexOf(",") + 1)
-        String need = left.substring(0, left.lastIndexOf("}") - 1)
-        String[] parts = need.split(",")
+        left = left.substring(0, left?.length() - 1)
+        String need = left.substring(0, left.lastIndexOf("}"))
+        String[] parts = need.split(",\n\t")
+        parts[0].replace("\n\t", "")
         PLPTC linkProvider = createLinkProviderInstance()
         PubTC pubTC = new PubTC(linkProvider: linkProvider, link: rawData["doi"])
         Map pubMap = [:]
-        println parts
         for (String p : parts) {
-            String[] items = p.substring(p.indexOf("\t")).split(" = ")
+            String[] items = p.split(" = ")
             String attr = items[0].trim()
             String val = items[1].trim()
-            val = StringUtils.stripStart(val, "{")
-            val = StringUtils.stripEnd(val, "}")
+            val = val.replaceAll("\\{", "").replaceAll("\\}", "")
             pubMap.put(attr, val)
-            println "$attr: $val"
         }
         if (!pubMap?.isEmpty()) {
             pubTC.link = pubMap.get("doi")
@@ -89,7 +96,7 @@ class DoiService implements PubDataFetchStrategy {
             pubTC.year = Integer.parseInt(pubMap.get("year"))
             pubTC.month = inferFromMonthName(pubMap.get("month"))
 
-            // Currently, the three attributes below are missing due to the limitations of this approach
+            // Currently, the two attributes below are missing due to the limitations of this approach
             /*pubTC.affiliation
             pubTC.synopsis*/
         }
