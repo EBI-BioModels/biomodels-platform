@@ -63,7 +63,6 @@
         </div>
     </div>
     <g:javascript>
-        var validation = false;
         $('#btnSave').on("click", function(event) {
             "use strict";
             event.preventDefault();
@@ -73,6 +72,7 @@
                 toastr.error("Cannot save the publication without choosing a type of publication resource");
                 return;
             }
+            validation = validation && validateDataForm('publicationForm');
             if (!validation) {
                 let msg = "The publication source and link do not match. Please verify these values and try again";
                 toastr.clear();
@@ -105,9 +105,10 @@
                     showFlashMessages(response['message']);
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
+                    let errMsg = extractErrorMessage(jqXHR);
                     toastr.clear();
-                    toastr.error("Error: ", jqXHR.responseText + textStatus + errorThrown + JSON.stringify(jqXHR));
-                    showFlashMessages(jqXHR.statusText);
+                    toastr.error(errMsg);
+                    showFlashMessages(errMsg);
                 }
             });
         });

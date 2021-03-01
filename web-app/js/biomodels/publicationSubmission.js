@@ -212,3 +212,12 @@ function backAway(){
         history.back();
     }
 }
+
+function validateDataForm(formId) {
+    // TODO: 1) make use of this function more flexible by using the formId to select elements
+    // TODO: 2) validate and return the warning/error messages, then show them against users
+    let pubLinkProvider = $('#pubLinkProvider').val();
+    let publicationLink = $('#publicationLink').val();
+    let pubLinkNotNull = pubLinkProvider !== "" && publicationLink !== "";
+    return pubLinkProvider === "Publication without link" || pubLinkNotNull;
+}

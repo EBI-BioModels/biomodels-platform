@@ -32,6 +32,7 @@
             </div>
     </div>
     <script type="text/javascript">
+        var validation = true;
         $(document).ready(function () {
             if ("${publication}") {
                 $('#publicationLinkCol').show();
@@ -59,6 +60,7 @@
                 $('#freshPublicationBtnCol').show();
             }
             if (pubLinkProvider === "NoPub" && "${controller}" === "publication") {
+                validation = false;
                 let message = "You have to choose a publication source to complete your operation";
                 toastr.warning(message);
                 showFlashMessages(message);

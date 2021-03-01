@@ -157,6 +157,12 @@
         if (withoutPub) {
             currentValidation = true;
             return;
+        } else {
+            currentValidation = validateDataForm("publicationForm");
+        }
+        if (!currentValidation) {
+            toastr.error("The publication form is invalid such as missing required values. Please check all the fields again!");
+            return;
         }
         let isPubTCValidated = true;
         let pubDetails = {};
