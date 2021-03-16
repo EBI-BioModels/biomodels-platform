@@ -374,11 +374,18 @@ class ModelController {
     }
 
     def submitForPublication() {
+        def rev = modelDelegateService.getRevisionFromParams(params.id)
+        boolean allowed2Request = modelDelegateService.canSubmitForPublication(rev)
+        if (!allowed2Request) {
+            redirect(action: "showWithMessage",
+                id: rev.identifier(),
+                params: [flashMessage: "Sorry! You are not allowed to perform this operation."])
+            return
+        }
         try {
-            def rev = modelDelegateService.getRevisionFromParams(params.id)
             modelDelegateService.submitModelRevisionForPublication(rev)
-            def currentUser = springSecurityService.currentUser
             def perms = modelDelegateService.getPermissionsMap(rev.model.submissionId)
+            def currentUser = springSecurityService.currentUser
             if (currentUser) {
                 def notification = [revision: rev,
                                     user    : currentUser,
@@ -390,7 +397,7 @@ class ModelController {
                 params: [flashMessage: "Model has been submitted to the curators for publication."])
         } catch (Exception e) {
             log.error(e.message, e)
-            String message = "Sorry, there was a problem. Please try again later."
+            String message = "Sorry!!! There has been a problem. Please try it later or contact us for further help."
             redirect(action: "showWithMessage",
                 id: modelDelegateService.getRevisionFromParams(params.id).identifier(),
                 params: [flashMessage: message])
