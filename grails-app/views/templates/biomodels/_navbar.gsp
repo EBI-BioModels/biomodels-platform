@@ -61,6 +61,13 @@
         <a href="${g.createLink(controller: 'model', action: 'submission-guidelines-and-agreement')}">
             <i class="icon icon-common icon-submit"></i>&nbsp;Submit</a>
     </li>
+    <li <g:if test="${g.pageProperty(name:'page.curation')?.length()}"> class="active" </g:if> role="menuitem">
+        <a href="${g.createLink(controller: 'curation', action: 'index')}"><i
+            class="icon icon-common icon-cogs"></i>&nbsp;Curation</a>
+        <ul class="menu">
+            <li><a href="${g.createLink(controller: 'curation', action: 'fbc')}">FBC</a></li>
+        </ul>
+    </li>
     <li <g:if test="${selectedSupportItems}"> class="active" </g:if> role="menuitem">
         <a><i class="icon icon-common icon-support"></i> <g:message code="jummp.support.biomodels.title"/></a>
         <ul class="menu">
@@ -129,7 +136,7 @@
 
                 <g:if test="${SpringSecurityUtils.ifAnyGranted('ROLE_CURATOR')}">
                 <li class="divider"></li>
-                <li><a href="${g.createLink(controller: 'curation', action: 'dashboard')}"
+                <li><a href="${g.createLink(controller: 'curator', action: 'dashboard')}"
                        title="Curation Dashboard">
                     <span class="icon icon-common icon-reviewed-data hide-for-small-only">&nbsp;</span>
                     Curation Dashboard</a></li>
