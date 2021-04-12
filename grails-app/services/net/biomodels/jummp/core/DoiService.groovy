@@ -65,15 +65,20 @@ class DoiService implements PubDataFetchStrategy {
     }
 
     PubTC buildPubTCFromRawData(final Map rawData) {
+        String doi = rawData["doi"]
         String rawPubDetails = rawData["pubDetails"]
         if (!rawPubDetails) {
             logger.debug("The raw details of the publication record ${rawData.get('doi')} cannot be empty.")
             return null
         }
+        if (rawPubDetails.charAt(0) != '@') {
+            logger.debug("DOI ${doi} Not Found")
+            return null
+        }
         String left = rawPubDetails.substring(rawPubDetails.indexOf(",") + 1)
-        left = left.substring(0, left?.length() - 1)
-        String need = left.substring(0, left.lastIndexOf("}"))
-        String[] parts = need.split(",\n\t")
+        left = left?.substring(0, left?.length() - 1)
+        String need = left?.substring(0, left.lastIndexOf("}"))
+        String[] parts = need?.split(",\n\t")
         parts[0].replace("\n\t", "")
         PLPTC linkProvider = createLinkProviderInstance()
         PubTC pubTC = new PubTC(linkProvider: linkProvider, link: rawData["doi"])
