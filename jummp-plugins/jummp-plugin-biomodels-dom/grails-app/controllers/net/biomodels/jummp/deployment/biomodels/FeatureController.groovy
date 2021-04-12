@@ -41,6 +41,6 @@ class FeatureController {
     }
 
     def reproducibility() {
-        [content: featureService.loadContentForReproducibilityPage]
+        [content: featureService.contentForReproducibilityPage]
     }
 }

@@ -42,7 +42,7 @@ order by createdOn desc"""
         newsItem[0]?.content
     }
 
-    String getLoadContentForReproducibilityPage() {
+    String getContentForReproducibilityPage() {
         def newsQuery = """from WcmContent where aliasURI = :aliasuri and status.code = :code \
 order by createdOn desc"""
         def newsItem = WcmContent.executeQuery(newsQuery, [aliasuri: 'reproducibility', code: 200], [max: 1])
