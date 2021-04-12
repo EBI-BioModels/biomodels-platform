@@ -618,7 +618,6 @@ AND r.revisionNumber = (SELECT MAX(r2.revisionNumber) FROM Revision As r2 WHERE 
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getLatestRevision")
     Revision getLatestRevision(Model model, boolean addToHistory = true) {
-        logger.debug("Get the latest revision of the model: ${model.submissionId}")
         if (!model) {
             return null
         }
