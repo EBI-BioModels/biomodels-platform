@@ -35,14 +35,14 @@ function showFlashMessages(messages) {
     let msg = "";
     if ($.isArray(messages)) {
         if (messages.length) {
-            let messages = "<ul>";
-            for (i = 0; i < messages.length; i++) {
+            msg = "<ul>";
+            for (let i = 0; i < messages.length; i++) {
                 msg += "<li>" + messages[i] + "</li>";
             }
             msg += "</ul>";
         }
     } else if (typeof messages === "string") {
-        msg = messages
+        msg = messages;
     }
     $('.flashNotificationDiv').html(msg).show();
 }
