@@ -191,6 +191,7 @@ $(document).on("click", '.re-ordering-author', function() {
 /* The handler for the click event on the refreshPublicationFromPubMed button */
 $(document).on('click', '#refreshPublicationFromPubMed', {}, function(e) {
     e.preventDefault();
+    resetPublicationForm();
     let pubLinkProvider = $('#pubLinkProvider').val();
     let pubLink = $('#publicationLink').val();
     let Need2BeWarned = pubLinkProvider === "PubMed ID" || pubLinkProvider === "DOI";
@@ -211,6 +212,19 @@ function backAway(){
     } else {
         history.back();
     }
+}
+
+function resetPublicationForm() {
+    $('#title').val("");
+    $('#journal').val("");
+    $('#affiliation').val("");
+    $('#synopsis').val("");
+    $('#volume').val("");
+    $('#issue').val("");
+    $('#year').val("");
+    $('#month').val("");
+    $('#pages').val("");
+    $('#authorList').empty()
 }
 
 function validateDataForm(formId) {

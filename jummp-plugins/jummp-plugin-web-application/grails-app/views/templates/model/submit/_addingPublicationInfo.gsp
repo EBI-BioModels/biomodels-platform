@@ -103,7 +103,12 @@
                     if (data["comesFromDB"]) {
                         toastr.warning("${g.message(code: "publication.editor.duplicateEntry.message")}");
                     }
-                    reloadPublicationForm(publication);
+                    if (publication) {
+                        reloadPublicationForm(publication);
+                    } else {
+                        let msg = "The publication details of  " + pubLinkProvider + ": " + pubLink + " cannot be found."
+                        showFlashMessages(msg);
+                    }
                 }
             },
             error: function (jqXHR, textStatus, errorThrown) {
