@@ -82,4 +82,8 @@ abstract class AbstractFormatDetectionService extends FileFormatServiceAdapter {
         }
         return false
     }
+
+    boolean validate(final List<File> model, final List<String> errors) {
+        areFilesThisFormat(model)
+    }
 }
