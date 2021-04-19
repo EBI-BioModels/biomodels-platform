@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2021 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -20,6 +20,10 @@
 
 package net.biomodels.jummp.plugins.format
 
+import net.biomodels.jummp.core.annotation.QualifierTransportCommand
+import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand
+import net.biomodels.jummp.core.model.RevisionTransportCommand
+
 /**
  * <p>Controls the way of rendering format specific views</p>
  * <p style="font-weight: bold">Authors:</p>
@@ -29,7 +33,14 @@ package net.biomodels.jummp.plugins.format
  *  </ul>
  */
 class CommonFormatController {
-    def show() {
+    def metadataDelegateService
 
+    def show() {
+        def model = flash.genericModel
+        final RevisionTransportCommand revision = model.revision as RevisionTransportCommand
+        Map<QualifierTransportCommand, List<ResourceReferenceTransportCommand>> annotations =
+            metadataDelegateService.fetchGenericAnnotations(revision)
+        model['annotations'] = annotations
+        model
     }
 }
