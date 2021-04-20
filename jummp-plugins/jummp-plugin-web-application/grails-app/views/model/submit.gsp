@@ -29,7 +29,7 @@
         var modelFile;
         var additionalFiles;
         var authorMap = { authors: [] };
-        var authorList;
+        var authorList = [];
         if (${publication != null}) {
             authorMap = {
                 "authors":
