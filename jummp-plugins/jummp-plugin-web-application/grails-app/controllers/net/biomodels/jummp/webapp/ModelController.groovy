@@ -35,6 +35,7 @@
 package net.biomodels.jummp.webapp
 
 import grails.converters.JSON
+import grails.util.Environment
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.IFileSystemService
 import net.biomodels.jummp.core.adapters.RevisionAdapter
@@ -634,8 +635,9 @@ class ModelController {
         File file = new File(rf.path)
         resp.setContentType(rf.mimeType)
         final String INLINE = inline ? "inline" : "attachment"
-        final String F_NAME = file.name
-        resp.setHeader("Content-disposition", "${INLINE};filename=\"${F_NAME}\"")
+        final String F_NAME = URLEncoder.encode(file.name, "UTF-8")
+        resp.setCharacterEncoding("UTF-8")
+        resp.setHeader( "Content-Disposition", "${INLINE};filename=\"${F_NAME}\"")
         byte[] fileData = file.readBytes()
         int previewSize = grailsApplication.config.jummp.web.file.preview as Integer
         if (!preview || previewSize > fileData.length) {
@@ -655,7 +657,13 @@ class ModelController {
             if (params.containsKey("id")) {
                 def modelId = params.id
                 def revisionId = params.revisionId
-                String fileName = params.filename
+                String fileName = params.filename.decodeHTML()
+                if (Environment.isWarDeployed()) {
+                    String resCharacterEncoding = response.characterEncoding
+                    if (resCharacterEncoding.equalsIgnoreCase("iso-8859-1")) {
+                        fileName = new String(request.getParameter("filename")?.getBytes("iso-8859-1"))
+                    }
+                }
                 RevisionTransportCommand revision = modelDelegateService.getRevisionFromParams(modelId, revisionId)
                 final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(revision)
                 if (!fileName) {
