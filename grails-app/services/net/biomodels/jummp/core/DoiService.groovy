@@ -109,6 +109,8 @@ class DoiService implements PubDataFetchStrategy {
     }
 
     private Map lookupPublicationDataFromDOI(final String doi) {
+        // this method works without specifying proxy in the curl command
+        // because we had given the proxy arguments to JVM
         Map result = ["doi": doi]
         String url = "https://dx.doi.org/$doi"
         String[] cmd = ["curl", "-LH", "Accept: application/x-bibtex", url]

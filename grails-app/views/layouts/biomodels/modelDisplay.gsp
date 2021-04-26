@@ -483,11 +483,11 @@
 </head>
 <body>
         <div id="buttonContainer" style="display:inline">
-                <ul id='toolbarList'><li>
-                <button class='toolbutton' id="download"
-                        onclick="return $.jummp.openPage('${g.createLink(controller: 'model',
-                        action: 'download', id: revision.identifier())}')">Download</button></li>
+            <ul id='toolbarList'>
                 <li>
+                <button class='toolbutton' id="download"
+                    onclick="return $.jummp.openPage('${g.createLink(controller: 'model',
+                    action: 'download', id: revision.identifier())}')">Download</button></li>
                 <g:if test="${canUpdate}">
                     <li>
                     <button class='toolbutton' id="update"
@@ -553,42 +553,42 @@
                                 id: revision.modelIdentifier())}')">Annotate</button>
                     </li>
                 </g:if>--}%
-                    <g:if test="${canCertify}">
-                        <li>
-                            <button class='toolbutton' id="certify"
-                                    onclick="return $.jummp.openPage('${g.createLink(controller: 'qcInfo',
-                                    action: 'edit',
-                            id: revision.modelIdentifier())}')">Certify</button>
-                        </li>
-                    </g:if>
-                    <g:if test="${canCheckConsistency}">
-                        <div id="confirm-model-consistency-check" title="Model consistency check" style="display:none;">
-                            <p>Checking model consistency uses an online validator. This might take time for uploading and validating the model. Do you want to proceed the validation?</p>
-                        </div>
-                        <li>
-                            <button id="checkConsistency"
-                                    class="toolbutton"
-                                    title="Check consistency"
-                                    onclick="return $('#confirm-model-consistency-check').dialog('open');">
-                                Check
-                            </button>
-                        </li>
-                    </g:if>
-                    <g:if test="${hasCuratorRole && supportedForConversion}">
-                        <div id="confirm-model-conversion" title="Model Conversion" style="display:none;">
-                            <p>Exporting this model to other formats uses an online service. This might take time for
-                            uploading and exporting the model. Do you want to proceed the model conversion?</p>
-                        </div>
-                        <li>
-                            <button id="convert"
-                                    class="toolbutton"
-                                    title="Convert This Model To The Other Formats"
-                                    onclick="return $('#confirm-model-conversion').dialog('open');">
-                                Convert
-                            </button>
-                        </li>
-                    </g:if>
-                </ul>
+                <g:if test="${canCertify}">
+                    <li>
+                        <button class='toolbutton' id="certify"
+                                onclick="return $.jummp.openPage('${g.createLink(controller: 'qcInfo',
+                                action: 'edit',
+                        id: revision.modelIdentifier())}')">Certify</button>
+                    </li>
+                </g:if>
+                <g:if test="${canCheckConsistency}">
+                    <div id="confirm-model-consistency-check" title="Model consistency check" style="display:none;">
+                        <p>Checking model consistency uses an online validator. This might take time for uploading and validating the model. Do you want to proceed the validation?</p>
+                    </div>
+                    <li>
+                        <button id="checkConsistency"
+                                class="toolbutton"
+                                title="Check consistency"
+                                onclick="return $('#confirm-model-consistency-check').dialog('open');">
+                            Check
+                        </button>
+                    </li>
+                </g:if>
+                <g:if test="${hasCuratorRole && supportedForConversion}">
+                    <div id="confirm-model-conversion" title="Model Conversion" style="display:none;">
+                        <p>Exporting this model to other formats uses an online service. This might take time for
+                        uploading and exporting the model. Do you want to proceed the model conversion?</p>
+                    </div>
+                    <li>
+                        <button id="convert"
+                                class="toolbutton"
+                                title="Convert This Model To The Other Formats"
+                                onclick="return $('#confirm-model-conversion').dialog('open');">
+                            Convert
+                        </button>
+                    </li>
+                </g:if>
+            </ul>
         </div>
         <div class="ebiLayout_reduceWidth">
             <g:if test="${revision.model.deleted}">
