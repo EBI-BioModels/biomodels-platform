@@ -377,7 +377,7 @@ GROUP BY p.journal
         // only select the published News items and ignore ones under the other statuses
         def newsQuery = """\
 from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order by publishFrom desc"""
-        def newsEntries = WcmContent.executeQuery(newsQuery, [aliasuri: 'news', code: 400], [max: 15])
+        def newsEntries = WcmContent.executeQuery(newsQuery, [aliasuri: 'news', code: 400], [max: 10])
         Map<String, String> data = [:]
         for (def entry : newsEntries) {
             data.put(entry.aliasURI,

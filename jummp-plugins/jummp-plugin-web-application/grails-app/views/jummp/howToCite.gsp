@@ -121,6 +121,40 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
     </dd>
 </dl>
 
+<h3 id="reproducibility">Reproducibility</h3>
+<dl>
+    <dt>
+        Krishna Tiwari, Sarubini Kananathan, Matthew G Roberts, Johannes P Meyer, Mohammad Umer Sharif Shohan,
+        Ashley Xavier, Matthieu Maire, Ahmad Zyoud, Jinghao Men, Szeyi Ng, Tung V N Nguyen, Mihai Glont,
+        Henning Hermjakob, Rahuman S Malik‐Sheriff
+    </dt>
+    <dd style="margin-left:0;">
+        <div class="pubtitle">Reproducibility in systems biology modelling</div>
+        <div class="pubjournal"><em>Molecular Systems Biology</em> 2021</div>
+        [<a href="https://www.embopress.org/doi/full/10.15252/msb.20209982"
+            title="Publication on Molecular Systems Biology">Molecular Systems Biology</a>]
+    [<a href="javascript:toggleDisplayById('bib_Tiwari2021');"
+        title="Display/hide the BibTeX entry for this publication">
+        <img src="https://www.ebi.ac.uk/biomodels-static/icons/plus.gif" alt="+ icon" style="padding-right: 5px;"
+        />BibTeX entry</a>]
+        <pre id="bib_Tiwari2021" class="hidden">
+        @article{https://doi.org/10.15252/msb.20209982,
+            author = {Tiwari, Krishna and Kananathan, Sarubini and Roberts, Matthew G and Meyer, Johannes P and Sharif Shohan, Mohammad Umer and Xavier, Ashley and Maire, Matthieu and Zyoud, Ahmad and Men, Jinghao and Ng, Szeyi and Nguyen, Tung V N and Glont, Mihai and Hermjakob, Henning and Malik-Sheriff, Rahuman S},
+            title = {Reproducibility in systems biology modelling},
+            journal = {Molecular Systems Biology},
+            volume = {17},
+            number = {2},
+            pages = {e9982},
+            doi = {https://doi.org/10.15252/msb.20209982},
+            url = {https://www.embopress.org/doi/abs/10.15252/msb.20209982},
+            eprint = {https://www.embopress.org/doi/pdf/10.15252/msb.20209982},
+            abstract = {Reproducibility of scientific results is a key element of science and credibility. The lack of reproducibility across many scientific fields has emerged as an important concern. In this piece, we assess mathematical model reproducibility and propose a scorecard for improving reproducibility in this field.},
+            year = {2021}
+        }
+        </pre>
+    </dd>
+</dl>
+
 <h3 id="biomodels-parameters">BioModels Parameters</h3>
 <dl>
     <dt>

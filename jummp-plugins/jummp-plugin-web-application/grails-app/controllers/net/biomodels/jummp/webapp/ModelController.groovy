@@ -35,6 +35,7 @@
 package net.biomodels.jummp.webapp
 
 import grails.converters.JSON
+import grails.util.Environment
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.IFileSystemService
 import net.biomodels.jummp.core.adapters.RevisionAdapter
@@ -374,11 +375,18 @@ class ModelController {
     }
 
     def submitForPublication() {
+        def rev = modelDelegateService.getRevisionFromParams(params.id)
+        boolean allowed2Request = modelDelegateService.canSubmitForPublication(rev)
+        if (!allowed2Request) {
+            redirect(action: "showWithMessage",
+                id: rev.identifier(),
+                params: [flashMessage: "Sorry! You are not allowed to perform this operation."])
+            return
+        }
         try {
-            def rev = modelDelegateService.getRevisionFromParams(params.id)
             modelDelegateService.submitModelRevisionForPublication(rev)
-            def currentUser = springSecurityService.currentUser
             def perms = modelDelegateService.getPermissionsMap(rev.model.submissionId)
+            def currentUser = springSecurityService.currentUser
             if (currentUser) {
                 def notification = [revision: rev,
                                     user    : currentUser,
@@ -390,7 +398,7 @@ class ModelController {
                 params: [flashMessage: "Model has been submitted to the curators for publication."])
         } catch (Exception e) {
             log.error(e.message, e)
-            String message = "Sorry, there was a problem. Please try again later."
+            String message = "Sorry!!! There has been a problem. Please try it later or contact us for further help."
             redirect(action: "showWithMessage",
                 id: modelDelegateService.getRevisionFromParams(params.id).identifier(),
                 params: [flashMessage: message])
@@ -435,6 +443,8 @@ class ModelController {
 
     def submit() {
         Map initials = initialiseSubmission(false)
+        initials.put("controller", "model")
+        initials.put("operation", "submit")
         initials.put("titlePage", "Submit a new model | BioModels")
         initials.put("uploadingFilesHeading", g.message(code: "submission.upload.header"))
         render(view: "submit", model: initials)
@@ -444,6 +454,8 @@ class ModelController {
         Map initials = initialiseSubmission(true)
         String modelId = params.id
         String titlePage = "Update model ${modelId} | BioModels"
+        initials.put("controller", "model")
+        initials.put("operation", "update")
         initials.put("modelId", modelId)
         initials.put("titlePage", titlePage)
         initials.put("uploadingFilesHeading", g.message(code: "submission.upload.review.titlePage"))
@@ -623,8 +635,9 @@ class ModelController {
         File file = new File(rf.path)
         resp.setContentType(rf.mimeType)
         final String INLINE = inline ? "inline" : "attachment"
-        final String F_NAME = file.name
-        resp.setHeader("Content-disposition", "${INLINE};filename=\"${F_NAME}\"")
+        final String F_NAME = URLEncoder.encode(file.name, "UTF-8")
+        resp.setCharacterEncoding("UTF-8")
+        resp.setHeader( "Content-Disposition", "${INLINE};filename=\"${F_NAME}\"")
         byte[] fileData = file.readBytes()
         int previewSize = grailsApplication.config.jummp.web.file.preview as Integer
         if (!preview || previewSize > fileData.length) {
@@ -644,7 +657,13 @@ class ModelController {
             if (params.containsKey("id")) {
                 def modelId = params.id
                 def revisionId = params.revisionId
-                String fileName = params.filename
+                String fileName = params.filename.decodeHTML()
+                if (Environment.isWarDeployed()) {
+                    String resCharacterEncoding = response.characterEncoding
+                    if (resCharacterEncoding.equalsIgnoreCase("iso-8859-1")) {
+                        fileName = new String(request.getParameter("filename")?.getBytes("iso-8859-1"))
+                    }
+                }
                 RevisionTransportCommand revision = modelDelegateService.getRevisionFromParams(modelId, revisionId)
                 final List<RFTC> FILES = modelDelegateService.retrieveModelFiles(revision)
                 if (!fileName) {

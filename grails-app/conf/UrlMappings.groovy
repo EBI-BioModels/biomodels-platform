@@ -104,7 +104,7 @@ class UrlMappings {
         "/faq"(controller: "jummp", action: "faq")
         "/courses"(controller: "jummp", action: "courses")
         "/dev"(controller: "jummp", action: "developerZone")
-        "/curation"(controller: "jummp", action: "curatorZone")
+        "/curation-docs"(controller: "jummp", action: "curatorZone")
         "/about"(controller: "jummp", action: "aboutus")
         "/termsofuse"(controller: "jummp", action: "termsOfUse")
         "/citation"(controller: "jummp", action: "howToCiteBioModelsDatabase")

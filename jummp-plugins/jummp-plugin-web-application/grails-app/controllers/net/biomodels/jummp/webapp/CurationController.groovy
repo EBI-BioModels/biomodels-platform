@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -18,29 +18,28 @@
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
  **/
 
-package net.biomodels.jummp.deployment.biomodels
+package net.biomodels.jummp.webapp
 
 import grails.plugin.springsecurity.annotation.Secured
+import net.biomodels.jummp.deployment.biomodels.CommonController
 
 /**
- * This controller aims to serve special features
+ * Controller for handling curation related pages
+ *
+ * @author <a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a>
  */
-@Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
-class FeatureController {
+@Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+class CurationController extends CommonController {
     def featureService
 
-    def agedbrain() {
+    def index() {
+        String title = "Curation related pages"
+        [layout: layout, title: title]
     }
 
-    def path2models() {
-
-    }
-
-    def covid19() {
-        [content: featureService.covid19PageContent]
-    }
-
-    def reproducibility() {
-        [content: featureService.contentForReproducibilityPage]
+    def fbc() {
+        String title = "FROG analysis"
+        String content = featureService.contentForFROGPage
+        [layout: layout, title: title, content: content]
     }
 }

@@ -24,15 +24,15 @@ import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.deployment.biomodels.CommonController
 
 /**
- * Controller for handling curation workflow
+ * Controller for handling curation related workflows
  *
  * @author <a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a>
  */
 @Secured('ROLE_CURATOR')
-class CurationController extends CommonController {
+class CuratorController extends CommonController {
 
     def dashboard() {
-        String title = "Curation Dashboard | BioModels"
+        String title = "Curator's Dashboard | BioModels"
         [layout: layout, title: title]
     }
 }

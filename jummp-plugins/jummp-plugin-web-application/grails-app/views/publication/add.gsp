@@ -26,6 +26,7 @@
     </g:javascript>
     <g:javascript contextPath="" src="${style}/publicationSubmission.js"/>
     <g:javascript src="toastr.min.js" contextPath=""/>
+    <g:javascript src="helpers.js" contextPath=""/>
     <g:javascript>
         toastr.options = {
             "closeButton": false,
@@ -51,9 +52,8 @@
     <div class="row">
         <h2>Add a new publication</h2>
 
-        <g:render template="/templates/publication/refreshPubMedDataButton"
-                  plugin="jummp-plugin-web-application"
-                  model="['publication': publication]"/>
+        <g:render template="/templates/publication/selectPublicationSource"
+                  plugin="jummp-plugin-web-application"/>
         <div id="publicationForm">
             <g:render template="/templates/publication/publicationEditableElements"
                       plugin="jummp-plugin-web-application"
@@ -66,6 +66,20 @@
         $('#btnSave').on("click", function(event) {
             "use strict";
             event.preventDefault();
+            // validate the form
+            if ($('#pubLinkProvider').val() === "NoPub") {
+                toastr.clear();
+                toastr.error("Cannot save the publication without choosing a type of publication resource");
+                return;
+            }
+            validation = validation && validateDataForm('publicationForm');
+            if (!validation) {
+                let msg = "The publication source and link do not match. Please verify these values and try again";
+                toastr.clear();
+                toastr.error(msg);
+                showFlashMessages(msg);
+                return;
+            }
             $.ajax({
                 type: "POST",
                 url: $.jummp.createLink("publication", "save"),
@@ -88,20 +102,23 @@
                     } else if (response['status'] === 500) {
                         toastr.error(response['message']);
                     }
+                    showFlashMessages(response['message']);
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
+                    let errMsg = extractErrorMessage(jqXHR);
                     toastr.clear();
-                    toastr.error("Error: ", jqXHR.responseText + textStatus + errorThrown + JSON.stringify(jqXHR));
+                    toastr.error(errMsg);
+                    showFlashMessages(errMsg);
                 }
             });
         });
         /* build up a publication transport command object */
         function buildPublicationTC() {
             let linkProvider = {
-                "linkType": $('#linkProvider').val(),
+                "linkType": $('#pubLinkProvider').val(),
                 "pattern": ""
             };
-            let link = $('#link').val();
+            let link = $('#publicationLink').val();
             let title = $('#title').val();
             let journal = $('#journal').val();
             let affiliation = $('#affiliation').val();
@@ -153,19 +170,37 @@
             backAway();
         });
 
-        $(document).on('click', '#refreshPublicationFromPubMed', {}, function(e) {
-            e.preventDefault();
+        function verifyAndFetchPublicationDetails(pubLinkProvider, pubLink) {
+            if (!pubLinkProvider || !pubLink) {
+                toastr.clear();
+                toastr.error("Either of publication provider or link is empty");
+                return;
+            }
             $.ajax({
                 type: "POST",
-                url: "${createLink(controller: "publication", action: "refreshPubMedData")}",
+                url: "${createLink(controller: "publication", action: "fetchPublicationFromPubMedAndRenderPublicationForm")}",
                 data: {
-                    pubmed: $('#link').val(),
+                    pubLinkProvider: pubLinkProvider,
+                    pubLink: pubLink,
                     operation: "add"
                 }
-            }).done(function(data) {
-                $('.editablePart').html(data);
+            }).done(function(res) {
+                validation = res.status !== "Failed";
+                if (!validation) {
+                    toastr.error(res.message);
+                    showFlashMessages(res.message);
+                } else {
+                    let msg = "The publication details have been fetched successfully";
+                    toastr.success(msg);
+                    showFlashMessages(msg);
+                    $('.editablePart').html(res);
+                }
+            }).fail(function(jqXHR) {
+                // the method below is defined in helpers.js
+                let msg = extractErrorMessage(jqXHR);
+                toastr.error(msg);
             });
-        });
+        };
     </g:javascript>
 </body>
 </html>

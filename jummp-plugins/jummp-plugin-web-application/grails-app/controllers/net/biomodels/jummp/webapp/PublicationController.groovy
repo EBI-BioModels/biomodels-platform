@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory
 class PublicationController implements GrailsConfigurationAware {
     private static final Logger logger = LoggerFactory.getLogger(PublicationController.class)
     def publicationService
-    def pubMedService
     String style
     String serverUrl
 
@@ -51,15 +50,49 @@ class PublicationController implements GrailsConfigurationAware {
          style: style, serverUrl: serverUrl, controller: "publication", operation: "edit"]
     }
 
-    def refreshPubMedData() {
-        PublicationTransportCommand pubTC = pubMedService.fetchPublicationData(params.pubmed)
-        pubTC.id = params.long("id")
-        List linkSourceTypes = PLP.LinkType.values().collect { it.label }
-        String operation = params.get("operation")
-        render template: "/templates/publication/publicationDetailForm",
-            plugin: "jummp-plugin-web-application",
-            model: [id: params.id, publication: pubTC, authorListContainerSize: 4, linkSourceTypes: linkSourceTypes,
-                    controller: "publication", operation: operation, url: request.forwardURI]
+    /**
+     * Fetches publication details from PubMed Server, then renders the publication form with these details
+     *
+     * This action contributes to fetching publication details via identifier from EuropePMC server.
+     * The identifier can be an PubMed ID or DOI. As of writing these comments, we have implemented DoiService and
+     * PubMedService separately because we haven't been aware of the existence of DOI support from the service
+     * provider.
+     *
+     * Our implementation of {@link DoiService} is based on the output of the curl command hitting to https://doi.org
+     * directly. The approach works well but does not include the abstract and affiliation.
+     *
+     * TODO: use PubMed service for the retrieval of the publication details with DOI
+     * TODO: split the action into two smaller ones: fetch and render
+     *
+     * @return HTML codes to display in the publication add and edit view
+     */
+    def fetchPublicationFromPubMedAndRenderPublicationForm() {
+        String pubLinkProvider = params.pubLinkProvider
+        String pubLink = params.pubLink
+        String message, status, data = ""
+        PublicationTransportCommand pubTC = new PublicationTransportCommand()
+        if (!publicationService.verifyLink(pubLinkProvider, pubLink)) {
+            message = "The link is not a valid ${pubLinkProvider}"
+            status = "Failed"
+            render([message: message, status: status, data: data] as JSON)
+        } else {
+            message = "The publication details have been fetched successfully."
+            status = "Success"
+            pubTC = publicationService.fetchPublicationData(pubLinkProvider, pubLink)
+            if (!pubTC.validate()) {
+                message = "The publication details are invalid"
+                status = "Failed"
+                render([message: message, status: status, data: data] as JSON)
+            } else {
+                pubTC.id = params.long("id")
+                List linkSourceTypes = PLP.LinkType.values().collect { it.label }
+                String operation = params.get("operation")
+                render(template: "/templates/publication/publicationDetailForm",
+                    plugin: "jummp-plugin-web-application",
+                    model: [id        : params.id, publication: pubTC, authorListContainerSize: 4, linkSourceTypes: linkSourceTypes,
+                            controller: "publication", operation: operation, url: request.forwardURI])
+            }
+        }
     }
 
     def save(PublicationTransportCommand pubCmd) {
@@ -67,19 +100,19 @@ class PublicationController implements GrailsConfigurationAware {
         String message = ""
         Integer status
         if (pubCmd.validate()) {
-            message = "Data binding is valid"
             Publication publication = publicationService.fromCommandObject(pubCmd)
             if (publication) {
-                message += "<br/>The data have been saved successfully"
+                message += "The publication details have been saved successfully"
                 status = 200
                 result["publicationId"] = publication.id
             } else {
-                message += "<br/>Failures of saving data"
+                message += "There have been errors while saving the publication details"
                 status = 500
             }
             result.message = message
             result.status = status
         } else {
+            // TODO: extract friendly error messages from Errors object
             result.message = "There have been problems with data binding:<br/>${pubCmd.errors.allErrors.inspect()}"
             result.status = 500
         }
@@ -95,7 +128,7 @@ class PublicationController implements GrailsConfigurationAware {
         PDEC ctx = new PDEC()
         if (pubLinkProvider == "NoPub" && pubLink) {
             message = "Please select a publication link type."
-            status: "Failed"
+            status = "Failed"
         }
         if (!publicationService.verifyLink(pubLinkProvider, pubLink)) {
             message = "The link is not a valid ${pubLinkProvider}"
@@ -105,14 +138,14 @@ class PublicationController implements GrailsConfigurationAware {
             status = "OK"
             cmd = publicationService.fetchPublicationData(pubLinkProvider, pubLink)
 
-            if (!cmd.validate()) {
+            if (!cmd?.validate()) {
                 status = "Unavailable"
-                if (cmd.journal && cmd.title && cmd.linkProvider.linkType == "DOI") {
+                if (cmd?.journal && cmd?.title && cmd?.linkProvider?.linkType == "DOI") {
                     message = """The publication details are the best which our system can automatically
 fetch from <a href="https://doi.org/${pubLink}" target="_blank">https://doi.org/${pubLink}</a>. Currently they are
 missing the affiliation and synopsis. Please verify the form and fill empty fields in manually."""
                     status = "Warning"
-                } else if (!cmd.synopsis || !cmd.affiliation) {
+                } else if (!cmd?.synopsis || !cmd?.affiliation) {
                     status = "Warning"
                     message = """The publication details are incomplete. Please check the empty fields and fill them in manually."""
                 } else {

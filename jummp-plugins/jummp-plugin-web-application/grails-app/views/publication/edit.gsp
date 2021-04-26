@@ -36,6 +36,7 @@
     <link rel="stylesheet"
           href="${resource(contextPath: "${serverUrl}", dir: "css", file: 'toastr.min.css')}"/>
 
+    <g:javascript src="helpers.js" contextPath=""/>
     <g:javascript src="toastr.min.js" contextPath=""/>
     <g:javascript>
         // Indeed, we don't need to check whether the authors is null or not because if case of the model has
@@ -65,9 +66,11 @@
 <body>
     <h2>Publication Details</h2>
     <g:if test="${publication}">
-        <g:render template="/templates/publication/refreshPubMedDataButton"
+        <g:render template="/templates/publication/selectPublicationSource"
                   plugin="jummp-plugin-web-application"
-                  model="['publication': publication]"/>
+                  model="['publication': publication, 'controller': controller,
+                          'operation': operation,
+                          'linkSourceTypes': linkSourceTypes]" />
         <div id="publicationForm">
             <g:render template="/templates/publication/publicationEditableElements"
                       plugin="jummp-plugin-web-application"
@@ -79,6 +82,20 @@
             $('#btnSave').on("click", function(event) {
                 "use strict";
                 event.preventDefault();
+                // validate the form
+                if ($('#pubLinkProvider').val() === "NoPub") {
+                    toastr.clear();
+                    toastr.error("Cannot save the publication without choosing a type of publication resource");
+                    return;
+                }
+                validation = validation && validateDataForm('publicationForm');
+                if (!validation) {
+                    let msg = "The publication source and link do not match. Please verify these values and try again";
+                    toastr.clear();
+                    toastr.error(msg);
+                    showFlashMessages(msg);
+                    return;
+                }
                 $.ajax({
                     type: "POST",
                     url: $.jummp.createLink("publication", "save"),
@@ -97,10 +114,13 @@
                         } else if (response['status'] === 500) {
                             toastr.error(response['message']);
                         }
+                        showFlashMessages(response['message']);
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
+                        let errMsg = extractErrorMessage(jqXHR);
                         toastr.clear();
-                        toastr.error("Error: ", jqXHR.responseText + textStatus + errorThrown + JSON.stringify(jqXHR));
+                        toastr.error(errMsg);
+                        showFlashMessages(errMsg);
                     }
                 });
             });
@@ -108,10 +128,10 @@
             function buildPublicationTC() {
                 let id = ${params.id};
                 let linkProvider = {
-                    "linkType": $('#linkProvider').val(),
+                    "linkType": $('#pubLinkProvider').val(),
                     "pattern": ""
                 };
-                let link = $('#link').val();
+                let link = $('#publicationLink').val();
                 let title = $('#title').val();
                 let journal = $('#journal').val();
                 let affiliation = $('#affiliation').val();
@@ -164,20 +184,39 @@
                 backAway();
             });
 
-            $(document).on('click', '#refreshPublicationFromPubMed', {}, function(e) {
-                e.preventDefault();
+            function verifyAndFetchPublicationDetails(pubLinkProvider, pubLink) {
+                if (!pubLinkProvider || !pubLink) {
+                    toastr.clear();
+                    toastr.error("Either of publication provider or link is empty");
+                    return;
+                }
                 $.ajax({
                     type: "POST",
-                    url: "${createLink(controller: "publication", action: "refreshPubMedData")}",
+                    url: "${createLink(controller: "publication", action: "fetchPublicationFromPubMedAndRenderPublicationForm")}",
                     data: {
+                        pubLinkProvider: pubLinkProvider,
+                        pubLink: pubLink,
                         id: ${params.id},
-                        pubmed: $('#link').val(),
+                        pubmed: $('#publicationLink').val(),
                         operation: "edit"
                     }
-                }).done(function(data) {
-                    $('.editablePart').html(data);
+                }).success(function(res) {
+                    validation = res.status !== "Failed";
+                    if (!validation) {
+                        toastr.error(res.message);
+                        showFlashMessages(res.message);
+                    } else {
+                        let msg = "The publication details have been fetched successfully";
+                        toastr.success(msg);
+                        showFlashMessages(msg);
+                        $('.editablePart').html(res);
+                    }
+                }).fail(function(jqXHR) {
+                    // the method below is defined in helpers.js
+                    let msg = extractErrorMessage(jqXHR);
+                    toastr.error(msg);
                 });
-            });
+            }
         </g:javascript>
     </g:if>
     <g:else>

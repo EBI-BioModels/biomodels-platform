@@ -618,7 +618,6 @@ AND r.revisionNumber = (SELECT MAX(r2.revisionNumber) FROM Revision As r2 WHERE 
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.getLatestRevision")
     Revision getLatestRevision(Model model, boolean addToHistory = true) {
-        logger.debug("Get the latest revision of the model: ${model.submissionId}")
         if (!model) {
             return null
         }
@@ -2040,7 +2039,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
      */
     @PostLogging(LoggingEventType.SUBMIT_FOR_PUBLICATION)
     @Profiled(tag="modelService.canSubmitForPublication")
-    public boolean canSubmitForPublication(Revision revision) {
+    boolean canSubmitForPublication(Revision revision) {
         if (!revision) {
             return false
         }
@@ -2050,7 +2049,11 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
         if (revision.model.deleted) {
             return false
         }
-        if (!SpringSecurityUtils.ifAnyGranted("ROLE_CURATOR,ROLE_REVIEWER")) {
+        // the condition 1: the currently logged user is neither curator nor reviewer
+        boolean cond1 = SpringSecurityUtils.ifAnyGranted("ROLE_CURATOR,ROLE_REVIEWER")
+        // the condition 2: the currently logged user is the model owner
+        boolean cond2 = revision.owner == springSecurityService.currentUser
+        if (!cond1 && cond2) {
             return true
         }
         return false
