@@ -132,12 +132,14 @@
             /**
              * We have no max size limit. Notes: the default is 0 meaning no size limit.
              * If we want to use this customisable property, please externalise its value in Config.groovy
-             * and refer it here.
+             * and refer it here. See more options and callbacks in README.md at
+             * https://github.com/danielm/uploader/blob/master/README.md#options
              */
             // maxFileSize: 12000000, // 12 Megs
             extraData: {
                 "submissionFolder": "${submissionFolder}"
             },
+            multiple: true,
             onDragEnter: function () {
                 // Happens when dragging something over the DnD area
                 this.addClass('active');
