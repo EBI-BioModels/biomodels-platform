@@ -154,6 +154,29 @@
             },
             onComplete: function () {
                 // All files in the queue are processed (success or error)
+                let uploadedFiles = $('.file-name').map(function () {
+                    return this.innerHTML;
+                }).get();
+                let uploadedFilesMap = {};
+                uploadedFiles.forEach(function(x) {
+                   uploadedFilesMap[x] = (uploadedFilesMap[x] || 0) + 1;
+                });
+                let messages = [];
+                let msg = "";
+                $.each(uploadedFilesMap, (filename, count) => {
+                    if (count > 1) {
+                        msg =
+                            "The file names in your submission should not be identical. " +
+                            "Please double-check the recently uploaded files having the name: " + filename;
+                        messages.push(msg);
+                    }
+                });
+                if (messages.length) {
+                    console.log(messages);
+                    showFlashMessages(messages);
+                } else {
+                    hideFlashMessages();
+                }
                 ui_add_log('All pending transfers finished');
             },
             onNewFile: function (id, file) {
