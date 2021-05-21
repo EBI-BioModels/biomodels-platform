@@ -83,7 +83,7 @@
                 pubLink: pubLink
             },
             dataType: "json",
-            async: true,
+            async: false,
             beforeSend: function () {
                 $('#loadingIcon').show();
             },
@@ -93,6 +93,7 @@
                 if (data.status === "Failed") {
                     collectErrors(errorMessages, data["message"]);
                     toastr.error(data["message"]);
+                    currentValidation = false;
                     showFlashMessages(errorMessages);
                 } else {
                     if (data.status === "OK") {
@@ -105,9 +106,11 @@
                     }
                     if (publication) {
                         reloadPublicationForm(publication);
+                        currentValidation = true;
                     } else {
                         let msg = "The publication details of  " + pubLinkProvider + ": " + pubLink + " cannot be found."
                         showFlashMessages(msg);
+                        currentValidation = false;
                     }
                 }
             },
@@ -118,6 +121,7 @@
                 toastr.clear();
                 toastr.error(errMsg);
                 errorMessages.push(errMsg);
+                currentValidation = false;
                 showFlashMessages(errorMessages);
             },
             complete: function () {
@@ -156,6 +160,7 @@
     }
 
     function validatePublicationInfo() {
+
         errorMessages = [];
         let selectedPubLinkProvider = $('#pubLinkProvider').val();
         let withoutPub = selectedPubLinkProvider === "NoPub";
@@ -163,11 +168,20 @@
             currentValidation = true;
             return;
         } else {
+            verifyAndFetchPublicationDetails($('#pubLinkProvider').val(), $('#publicationLink').val());
+            if (!currentValidation) {
+                return;
+            }
             currentValidation = validateDataForm("publicationForm");
         }
         if (!currentValidation) {
-            toastr.error("The publication form is invalid such as missing required values. Please check all the fields again!");
+            let msg =
+                "The publication form is invalid such as missing required values. Please check all the fields again!";
+            toastr.error(msg);
+            showFlashMessages(msg);
             return;
+        } else {
+
         }
         let isPubTCValidated = true;
         let pubDetails = {};
