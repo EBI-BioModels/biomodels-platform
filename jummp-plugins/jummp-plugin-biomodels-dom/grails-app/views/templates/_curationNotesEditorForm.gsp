@@ -181,6 +181,9 @@
                 curationNotes['curationImage'] = base64ImgStr;
             } else {
                 console.log("The curation notes is not uploaded the curation image");
+                // load the dummy curation figure
+                let dummyFigure = "${grailsApplication.config.grails.serverURL}/images/biomodels/No-Image-Available.jpg";
+                
             }
         }
         curationNotes['mimeType'] = mimeType;
@@ -231,6 +234,7 @@
         var curationImage = $('#curaImageHolder').attr('src');
         var re = new RegExp('data:image\/');
         var isCurationImageAvailable = re.exec(curationImage);
+        isCurationImageAvailable = true;
         /* combine with the built-in validation check */
         var isValid = $('#curationNotesForm')[0].checkValidity() && isCurationImageAvailable;
         if (isValid) {
