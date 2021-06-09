@@ -202,8 +202,8 @@ class SubmissionController {
     RFTC createRFTC(final String submissionFolder, final String filename,
                     final boolean isModelFile, final String description) {
         String exchangeDir = grailsApplication.config.jummp.vcs.exchangeDirectory
-        File subFolder = new File(exchangeDir, submissionFolder)
-        File modelFile = new File(subFolder, filename)
+        File modelDirectory = new File(exchangeDir, submissionFolder)
+        File modelFile = new File(modelDirectory, filename)
 
         new RFTC(path: modelFile.getCanonicalPath(),
             mainFile: isModelFile, userSubmitted: true, hidden: false, description: description)

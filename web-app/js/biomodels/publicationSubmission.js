@@ -233,5 +233,20 @@ function validateDataForm(formId) {
     let pubLinkProvider = $('#pubLinkProvider').val();
     let publicationLink = $('#publicationLink').val();
     let pubLinkNotNull = pubLinkProvider !== "" && publicationLink !== "";
-    return pubLinkProvider === "Publication without link" || pubLinkNotNull;
+    let tittle = $('#title').val();
+    let journal = $('#journal').val();
+    let affiliation = $('#affiliation').val();
+    let abstract = $('#synopsis').val();
+    let authorExists = false;
+    $('#authorList  option').each(function(){
+        if (this.value) {
+            authorExists = true;
+        }
+    });
+    let requiredFieldsFilled = (tittle !== null || tittle !== "")
+                            && (journal !== null || journal !== "")
+                            && (affiliation !== null || affiliation !== "")
+                            && (abstract !== null || abstract !== "") && authorExists;
+    let ret = (pubLinkProvider === "Publication without link") || (pubLinkNotNull && requiredFieldsFilled);
+    return ret;
 }

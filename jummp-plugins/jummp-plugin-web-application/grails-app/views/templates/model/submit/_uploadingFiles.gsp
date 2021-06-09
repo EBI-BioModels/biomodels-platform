@@ -132,12 +132,14 @@
             /**
              * We have no max size limit. Notes: the default is 0 meaning no size limit.
              * If we want to use this customisable property, please externalise its value in Config.groovy
-             * and refer it here.
+             * and refer it here. See more options and callbacks in README.md at
+             * https://github.com/danielm/uploader/blob/master/README.md#options
              */
             // maxFileSize: 12000000, // 12 Megs
             extraData: {
                 "submissionFolder": "${submissionFolder}"
             },
+            multiple: true,
             onDragEnter: function () {
                 // Happens when dragging something over the DnD area
                 this.addClass('active');
@@ -152,6 +154,29 @@
             },
             onComplete: function () {
                 // All files in the queue are processed (success or error)
+                let uploadedFiles = $('.file-name').map(function () {
+                    return this.innerHTML;
+                }).get();
+                let uploadedFilesMap = {};
+                uploadedFiles.forEach(function(x) {
+                   uploadedFilesMap[x] = (uploadedFilesMap[x] || 0) + 1;
+                });
+                let messages = [];
+                let msg = "";
+                $.each(uploadedFilesMap, (filename, count) => {
+                    if (count > 1) {
+                        msg =
+                            "The file names in your submission should not be identical. " +
+                            "Please double-check the recently uploaded files having the name: " + filename;
+                        messages.push(msg);
+                    }
+                });
+                if (messages.length) {
+                    console.log(messages);
+                    showFlashMessages(messages);
+                } else {
+                    hideFlashMessages();
+                }
                 ui_add_log('All pending transfers finished');
             },
             onNewFile: function (id, file) {

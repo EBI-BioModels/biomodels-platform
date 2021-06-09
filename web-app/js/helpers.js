@@ -44,7 +44,9 @@ function showFlashMessages(messages) {
     } else if (typeof messages === "string") {
         msg = messages;
     }
-    $('.flashNotificationDiv').html(msg).show();
+    if (msg) {
+        $('.flashNotificationDiv').html(msg).show();
+    }
 }
 
 function hideFlashMessages() {
