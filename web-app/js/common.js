@@ -270,6 +270,27 @@ function previewImage(input, imageHolder) {
 }
 
 /**
+ * This function converts an image from its URL to the based64 format
+ *
+ * @param imgURL indicating the image via a URL
+ * @returns {String} representing the based64 format of the image denoting from the imgURL
+ */
+function convertImageURL2Data(imgURL) {
+    let imgData = null;
+    if (imgURL) {
+        var image = new Image();
+        image.src = imgURL;
+        let canvas = document.createElement("canvas");
+        canvas.width = image.width;
+        canvas.height = image.height;
+        let ctx = canvas.getContext("2d");
+        ctx.drawImage(image, 0, 0);
+        const dataURL = canvas.toDataURL("image/png");
+        imgData = dataURL.replace(/^data:image\/(png|jpg);base64,/, "");
+    }
+    return imgData;
+}
+/**
  * Patches the issue of hiding dropdown menu partially. Foundation dropdown menu script adds opens-inner class
  * improperly causing this problem.
  */
