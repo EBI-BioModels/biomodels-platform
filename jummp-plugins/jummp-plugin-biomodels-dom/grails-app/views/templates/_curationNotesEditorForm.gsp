@@ -1,3 +1,6 @@
+<%
+    String serverURL = grailsApplication.config.grails.serverURL
+%>
 <div id="txtStatus" style="color: #ED0000; font-weight: 500; font-size: larger"></div>
 <form id="curationNotesForm">
     <div class="row">
@@ -12,7 +15,7 @@
                                      title="Click on the thumbnail to view the result(s)" />
                             </g:if>
                             <g:else>
-                                <img src="${grailsApplication.config.grails.serverURL}/images/biomodels/No-Image-Available.jpg"
+                                <img src="${serverURL}/images/biomodels/simulation-result-unavailable.png"
                                      id="curaImageHolder"
                                      title="The curation images are not available" />
                             </g:else><br/>
@@ -192,7 +195,7 @@
     }
 
     function showWarningMessage() {
-        var imgSrc = "${grailsApplication.config.grails.serverURL}/images/biomodels/unacceptable.png";
+        var imgSrc = "${serverURL}/images/biomodels/unacceptable.png";
         $('#curaImageHolder').attr('src', imgSrc);
         $('#curaImageHolder').attr('title', 'This format is not acceptable');
     }
