@@ -25,6 +25,7 @@ import grails.util.Holders
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import net.biomodels.jummp.core.model.ModelTransportCommand
+import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Revision
 
@@ -70,7 +71,8 @@ class ModelAdapter {
             latestRev = revisions?.first()
             firstRev = latestRev
         }
-
+        PubTC pubTC = model.publication ?
+            new PublicationAdapter(publication:  model.publication).toCommandObject() : null
         return new ModelTransportCommand(
             id: modelId,
             submissionId: model.submissionId,
@@ -81,7 +83,7 @@ class ModelAdapter {
             state: latestRev?.state,
             lastModifiedDate: latestRev?.uploadDate,
             format: latestRev ? new ModelFormatAdapter(format: latestRev.format).toCommandObject() : null,
-            publication: model.publication ? new PublicationAdapter(publication:  model.publication).toCommandObject() : null,
+            publication: pubTC,
             deleted: model.deleted,
             submitter: firstRev?.owner?.person?.userRealName,
             submitterUsername: firstRev?.owner?.username,
