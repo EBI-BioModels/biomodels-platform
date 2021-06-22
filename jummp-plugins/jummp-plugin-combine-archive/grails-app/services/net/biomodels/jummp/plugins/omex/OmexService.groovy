@@ -41,7 +41,6 @@ import de.unirostock.sems.cbext.Formatizer
 import net.biomodels.jummp.core.model.FileFormatServiceAdapter
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.model.ModellingApproach
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.apache.tika.detect.DefaultDetector
@@ -202,7 +201,8 @@ class OmexService extends FileFormatServiceAdapter {
             Path path = Paths.get(rftc.path)
             URI uri = Formatizer.guessFormat(file)
             String mimeType = uri.toString()
-            ArtifactInfo artifactInfo = arch.createArtifact(fileName, mimeType)
+            boolean master = rftc.mainFile
+            ArtifactInfo artifactInfo = arch.createArtifact(fileName, mimeType, master)
             OutputStream writer = arch.writeArtifact(artifactInfo)
             Files.copy(path, writer)
             writer.close()
