@@ -695,6 +695,9 @@ class ModelController {
                 response.status = HttpServletResponse.SC_BAD_REQUEST
                 forward(controller: "errors", action: "error400")
             }
+        } catch (AccessDeniedException e) {
+            response.status = HttpServletResponse.SC_FORBIDDEN
+            forward(controller: "errors", action: "error403")
         } catch (Exception e) {
             log.error(e.message, e)
             render(status: 400,
