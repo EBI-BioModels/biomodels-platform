@@ -120,6 +120,8 @@
     src="${resource(contextPath: serverURL, dir: '/js/biomodels/uploader-1.0.2', file: 'biomodels-ui.js')}">
 </script>
 <script type="text/javascript">
+    var duplicateFilesMsg = "The file names in your submission should not be identical. " +
+        "Please double-check the recently uploaded files having the name: ";
     $(function () {
         /*
          * For the sake keeping the code clean and the examples simple this file
@@ -153,30 +155,7 @@
                 ui_add_log('Penguin initialized :)', 'info');
             },
             onComplete: function () {
-                // All files in the queue are processed (success or error)
-                let uploadedFiles = $('.file-name').map(function () {
-                    return this.innerHTML;
-                }).get();
-                let uploadedFilesMap = {};
-                uploadedFiles.forEach(function(x) {
-                   uploadedFilesMap[x] = (uploadedFilesMap[x] || 0) + 1;
-                });
-                let messages = [];
-                let msg = "";
-                $.each(uploadedFilesMap, (filename, count) => {
-                    if (count > 1) {
-                        msg =
-                            "The file names in your submission should not be identical. " +
-                            "Please double-check the recently uploaded files having the name: " + filename;
-                        messages.push(msg);
-                    }
-                });
-                if (messages.length) {
-                    console.log(messages);
-                    showFlashMessages(messages);
-                } else {
-                    hideFlashMessages();
-                }
+                checkIdenticalFileNames();
                 ui_add_log('All pending transfers finished');
             },
             onNewFile: function (id, file) {
@@ -220,6 +199,34 @@
         });
     });
 
+    function checkIdenticalFileNames() {
+        // All files in the queue are processed (success or error)
+        let uploadedFiles = $('.file-name').map(function () {
+            return this.innerHTML;
+        }).get();
+        let uploadedFilesMap = {};
+        uploadedFiles.forEach(function(x) {
+            uploadedFilesMap[x] = (uploadedFilesMap[x] || 0) + 1;
+        });
+        let messages = [];
+        let msg = "";
+        $.each(uploadedFilesMap, (filename, count) => {
+            if (count > 1) {
+                msg = duplicateFilesMsg + filename;
+                messages.push(msg);
+            }
+        });
+        if (messages.length) {
+            console.log(messages);
+            showFlashMessages(messages);
+            currentValidation = false;
+        } else {
+            hideFlashMessages();
+            currentValidation = true;
+        }
+        return messages;
+    }
+
     function validateFileUpload() {
         errorMessages = [];
         currentValidation = false;
@@ -233,6 +240,12 @@
             return { id: $(this).prop("id"), filename: filename , description: description, isModelFile: isModelFile,
                             originalFilesize: originalFilesize };
         }).get();
+        let messages = checkIdenticalFileNames();
+        if (!currentValidation) {
+            toastr.clear();
+            toastr.error(messages);
+            return;
+        }
         $.ajax({
             type: "POST",
             url: "${createLink(controller: "submission", action: "processUploadFiles")}",
