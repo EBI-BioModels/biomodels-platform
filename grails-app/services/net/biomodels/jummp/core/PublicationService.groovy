@@ -142,6 +142,7 @@ class PublicationService implements IPublicationService, InitializingBean {
         if (publication) {
             // if existing in database
             pubTC = new PublicationAdapter(publication: publication).toCommandObject()
+            ctx.publication = pubTC
             ctx.comesFromDatabase = true
         } else {
             // if not in database
