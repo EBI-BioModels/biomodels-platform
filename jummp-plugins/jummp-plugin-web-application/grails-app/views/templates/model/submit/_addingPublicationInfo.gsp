@@ -130,6 +130,57 @@
         });
     };
 
+    function verifyPublicationProviderAndLink(pubLinkProvider, pubLink) {
+        if (!pubLinkProvider || !pubLink) {
+            toastr.clear();
+            toastr.error("Either of publication provider or link is empty");
+            return;
+        }
+        clearErrorMessages();
+        $.ajax({
+            type: "POST",
+            url: "${createLink(controller: "publication", action:"doVerifyPublicationProviderAndLink")}",
+            data: {
+                pubLinkProvider: pubLinkProvider,
+                pubLink: pubLink
+            },
+            dataType: "json",
+            async: false,
+            beforeSend: function () {
+                $('#loadingIcon').show();
+                setTimeout(function(){ console.log("Please wait for 10s..."); }, 10000);
+            },
+            success: function (data) {
+                toastr.clear();
+                if (data.status === "Failed") {
+                    collectErrors(errorMessages, data["message"]);
+                    toastr.error(data["message"]);
+                    currentValidation = false;
+                    showFlashMessages(errorMessages);
+                } else {
+                    currentValidation = true;
+                    if (data.status === "OK") {
+                        toastr.success(data["message"]);
+                    } else {
+                        toastr.warning(data["message"]);
+                    }
+                }
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                let errMsg = JSON.parse(JSON.stringify(errorThrown));
+                console.log("inside error " + errMsg);
+                toastr.clear();
+                toastr.error(errMsg);
+                errorMessages.push(errMsg);
+                currentValidation = false;
+                showFlashMessages(errorMessages);
+            },
+            complete: function () {
+                $('#loadingIcon').hide();
+            }
+        });
+    };
+
     function reloadPublicationForm(publication) {
         $('#title').val(publication.title);
         $('#journal').val(publication.journal);
@@ -168,7 +219,7 @@
             currentValidation = true;
             return;
         } else {
-            verifyAndFetchPublicationDetails($('#pubLinkProvider').val(), $('#publicationLink').val());
+            verifyPublicationProviderAndLink($('#pubLinkProvider').val(), $('#publicationLink').val());
             if (!currentValidation) {
                 return;
             }

@@ -581,26 +581,6 @@ class ModelController {
         }
     }
 
-    private PDEC loadOrFetchOrCreatePublication(ModelTransportCommand modelTC) {
-        try {
-            PDEC publicationContext = publicationService.getPublicationExtractionContext(modelTC.publication)
-            if (publicationContext.publication) {
-                if (publicationContext.comesFromDatabase) {
-                    flash.flashMessage = g.message(code: "publication.editor.duplicateEntry.message")
-                }
-            } else {
-                PublicationTransportCommand retrieved
-                retrieved = publicationService.createPTCWithMinimalInformation(params.PubLinkProvider, params.PublicationLink, [])
-                publicationContext.publication = retrieved
-                publicationContext.comesFromDatabase = false
-            }
-            return publicationContext
-        } catch (Exception e) {
-            log.error(e.message, e)
-            return null
-        }
-    }
-
     private void serveModelAsCombineArchive(List<RFTC> files, def resp) {
         String omexFileName = omexService.createCombineArchive(files, params.id)
         File omexFile = new File(omexFileName)

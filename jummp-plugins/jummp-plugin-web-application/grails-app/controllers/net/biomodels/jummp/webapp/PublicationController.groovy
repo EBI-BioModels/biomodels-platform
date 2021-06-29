@@ -3,6 +3,7 @@ package net.biomodels.jummp.webapp
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.adapters.PublicationAdapter
+import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.model.Publication
 import net.biomodels.jummp.core.model.PublicationTransportCommand
 import net.biomodels.jummp.model.PublicationLinkProvider as PLP
@@ -125,38 +126,60 @@ class PublicationController implements GrailsConfigurationAware {
         String pubLink = params.list("pubLink")[0]
         String message
         String status
-        PDEC ctx = new PDEC()
+        boolean comesFromDB = false
         if (pubLinkProvider == "NoPub" && pubLink) {
             message = "Please select a publication link type."
             status = "Failed"
-        }
-        if (!publicationService.verifyLink(pubLinkProvider, pubLink)) {
-            message = "The link is not a valid ${pubLinkProvider}"
-            status = "Failed"
         } else {
-            message = "The publication details have been updated successfully."
-            status = "OK"
-            cmd = publicationService.fetchPublicationData(pubLinkProvider, pubLink)
-
-            if (!cmd?.validate()) {
-                status = "Unavailable"
-                if (cmd?.journal && cmd?.title && cmd?.linkProvider?.linkType == "DOI") {
-                    message = """The publication details are the best which our system can automatically
+            if (!publicationService.verifyLink(pubLinkProvider, pubLink)) {
+                message = "The link is not a valid ${pubLinkProvider}"
+                status = "Failed"
+            } else {
+                message = "The publication details have been updated successfully."
+                status = "OK"
+                cmd = publicationService.createPTCWithMinimalInformation(pubLinkProvider, pubLink, [])
+                PDEC ctx = loadOrFetchOrCreatePublication(cmd)
+                // reassign cmd to a newly refreshed one
+                cmd = ctx.publication
+                if (!cmd?.validate()) {
+                    status = "Unavailable"
+                    if (cmd?.journal && cmd?.title && cmd?.linkProvider?.linkType == "DOI") {
+                        message = """The publication details are the best which our system can automatically
 fetch from <a href="https://doi.org/${pubLink}" target="_blank">https://doi.org/${pubLink}</a>. Currently they are
 missing the affiliation and synopsis. Please verify the form and fill empty fields in manually."""
-                    status = "Warning"
-                } else if (!cmd?.synopsis || !cmd?.affiliation) {
-                    status = "Warning"
-                    message = """The publication details are incomplete. Please check the empty fields and fill them in manually."""
-                } else {
-                    message = "No records are available. Please do check again."
+                        status = "Warning"
+                    } else if (!cmd?.synopsis || !cmd?.affiliation) {
+                        status = "Warning"
+                        message = """The publication details are incomplete. Please check the empty fields and fill them in manually."""
+                    } else {
+                        message = "No records are available. Please do check again."
+                    }
                 }
-            } else {
-                ctx = publicationService.getPublicationExtractionContext(cmd)
+                comesFromDB = ctx?.comesFromDatabase
             }
         }
-        render(["message": message, "status": status, "publication": cmd,
-                "comesFromDB": ctx?.comesFromDatabase] as JSON)
+        render(["message": message, "status": status, "publication": cmd, "comesFromDB": comesFromDB] as JSON)
+    }
+
+    def doVerifyPublicationProviderAndLink() {
+        PublicationTransportCommand cmd = new PublicationTransportCommand()
+        String pubLinkProvider = params.list("pubLinkProvider")[0]
+        String pubLink = params.list("pubLink")[0]
+        String message
+        String status
+        if (pubLinkProvider == "NoPub" && pubLink) {
+            message = "Please select a publication link type."
+            status = "Failed"
+        } else {
+            if (!publicationService.verifyLink(pubLinkProvider, pubLink)) {
+                message = "The link is not a valid ${pubLinkProvider}"
+                status = "Failed"
+            } else {
+                message = "The publication details have been updated successfully."
+                status = "OK"
+            }
+        }
+        render(["message": message, "status": status] as JSON)
     }
 
     def validatePublicationDetails() {
@@ -176,6 +199,26 @@ missing the affiliation and synopsis. Please verify the form and fill empty fiel
             bindData(tempPTC, pubDetails, [exclude: ['authors']])
             publicationService.assembleAuthors(tempPTC, pubDetails.authors)
             render(template: "/templates/showPublication", model: [publication: tempPTC, isUpdate: false])
+        }
+    }
+
+    private PDEC loadOrFetchOrCreatePublication(PublicationTransportCommand pubTC) {
+        try {
+            PDEC publicationContext = publicationService.getPublicationExtractionContext(pubTC)
+            if (publicationContext.publication) {
+                if (publicationContext.comesFromDatabase) {
+                    flash.flashMessage = g.message(code: "publication.editor.duplicateEntry.message")
+                }
+            } else {
+                PublicationTransportCommand retrieved
+                retrieved = publicationService.createPTCWithMinimalInformation(params.PubLinkProvider, params.PublicationLink, [])
+                publicationContext.publication = retrieved
+                publicationContext.comesFromDatabase = false
+            }
+            return publicationContext
+        } catch (Exception e) {
+            log.error(e.message, e)
+            return null
         }
     }
 
