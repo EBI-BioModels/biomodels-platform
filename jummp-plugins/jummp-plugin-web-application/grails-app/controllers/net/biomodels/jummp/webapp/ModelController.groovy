@@ -638,10 +638,14 @@ class ModelController {
                 def modelId = params.id
                 def revisionId = params.revisionId
                 String fileName = params.filename.decodeHTML()
-                if (Environment.isWarDeployed()) {
+                if (Environment.isWarDeployed() && fileName != null) {
+                    // This block temporarily solves this problem with special characters in the file name
                     String resCharacterEncoding = response.characterEncoding
-                    if (resCharacterEncoding.equalsIgnoreCase("iso-8859-1")) {
-                        fileName = new String(request.getParameter("filename")?.getBytes("iso-8859-1"))
+                    boolean IS_ISO_8859_1 = resCharacterEncoding.equalsIgnoreCase("iso-8859-1")
+                    boolean FILENAME_REQUESTED = request.parameterMap.containsKey("filename")
+                    if (IS_ISO_8859_1 && FILENAME_REQUESTED) {
+                        fileName = request.getParameter("filename")
+                        fileName = new String(fileName.getBytes("iso-8859-1"))
                     }
                 }
                 RevisionTransportCommand revision = modelDelegateService.getRevisionFromParams(modelId, revisionId)
@@ -672,11 +676,9 @@ class ModelController {
                     }
                 }
             } else {
-                response.status = HttpServletResponse.SC_BAD_REQUEST
                 forward(controller: "errors", action: "error400")
             }
         } catch (AccessDeniedException e) {
-            response.status = HttpServletResponse.SC_FORBIDDEN
             forward(controller: "errors", action: "error403")
         } catch (Exception e) {
             log.error(e.message, e)
