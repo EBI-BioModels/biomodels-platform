@@ -58,6 +58,8 @@ class PubMedService extends AbstractPubDataFetchStrategy {
 
     def configurationService
 
+    final String PUBMED_API_URL = "https://www.ebi.ac.uk/europepmc/webservices/rest/search/query="
+
     /**
      * Downloads the XML describing the PubMed resource and parses the Publication information.
      * @param id The PubMed Identifier
@@ -66,7 +68,9 @@ class PubMedService extends AbstractPubDataFetchStrategy {
     @SuppressWarnings("EmptyCatchBlock")
     @Override
     PubTC fetchPublicationData(String id) throws JummpException {
-        def slurper = lookupPublicationDataInPubMed(id)
+        // default PubMed
+        final queryString = "${PUBMED_API_URL}ext_id:${id}%20src:med&resulttype=core"
+        def slurper = lookupPublicationDataInPubMed(queryString)
 
         PLPTC linkCommand = createLinkProviderInstance()
         PubTC.fromPubMed(linkCommand, id, slurper)
@@ -82,10 +86,9 @@ class PubMedService extends AbstractPubDataFetchStrategy {
         linkCommand
     }
 
-    GPathResult lookupPublicationDataInPubMed(String id) throws JummpException {
+    GPathResult lookupPublicationDataInPubMed(String strURL) throws JummpException {
         URL url
         try {
-            String strURL = "https://www.ebi.ac.uk/europepmc/webservices/rest/search/query=ext_id:${id}%20src:med&resulttype=core"
             url = new URL(strURL)
         } catch (MalformedURLException e) {
             // TODO: throw a specific exception
