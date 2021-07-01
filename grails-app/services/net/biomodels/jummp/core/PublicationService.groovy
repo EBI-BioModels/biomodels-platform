@@ -67,7 +67,6 @@ class PublicationService implements IPublicationService, InitializingBean {
     def doiService
     def pubMedService
     def messageSource
-    PubDataFetchStrategy fetchStrategy
 
     @Override
     void afterPropertiesSet() throws Exception {

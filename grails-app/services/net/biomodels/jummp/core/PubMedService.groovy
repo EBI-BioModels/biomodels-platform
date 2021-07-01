@@ -52,7 +52,7 @@ import org.xml.sax.SAXParseException
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-class PubMedService implements PubDataFetchStrategy {
+class PubMedService extends AbstractPubDataFetchStrategy {
     final Log log = LogFactory.getLog(getClass())
     static transactional = false
 

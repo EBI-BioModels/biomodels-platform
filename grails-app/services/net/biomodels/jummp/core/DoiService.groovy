@@ -43,7 +43,7 @@ import org.slf4j.LoggerFactory
  * @author <a href="mailto:tungnguyenvn@pm.me">tungnguyenvn@pm.me</a>
  * @date   2021-01-17
  */
-class DoiService implements PubDataFetchStrategy {
+class DoiService extends AbstractPubDataFetchStrategy {
     static transactional = false
     private static final Logger logger = LoggerFactory.getLogger(DoiService.class)
 
