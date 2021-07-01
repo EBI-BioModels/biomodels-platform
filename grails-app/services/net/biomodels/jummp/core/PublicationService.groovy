@@ -99,12 +99,14 @@ class PublicationService implements IPublicationService, InitializingBean {
         PubTC pubTC = null
         PLP.LinkType type = PLP.LinkType.findLinkTypeByLabel(linkTypeAsString)
 
-        if (type == PLP.LinkType.PUBMED) {
-            pubTC = pubMedService.fetchPublicationData(link)
-            log.debug("The publication details fetched from EuropePMC look ${pubTC?.dump()}")
-        } else if (type == PLP.LinkType.DOI) {
-            pubTC = doiService.fetchPublicationData(link)
-            log.debug("The publication details fetched from https://doi.org look ${pubTC?.dump()}")
+        if (type == PLP.LinkType.PUBMED || type == PLP.LinkType.DOI) {
+            pubTC = pubMedService.fetchPublicationData(link, type)
+            log.debug("The publication details of ${link} fetched from EuropePMC look ${pubTC?.dump()}")
+            if (type == PLP.LinkType.DOI && !pubTC) {
+                // fallback to DoiService if the entry hasn't indexed in PubMed centre yet
+                pubTC = doiService.fetchPublicationData(link)
+                log.debug("The publication details of ${link} fetched from https://doi.org look ${pubTC?.dump()}")
+            }
         }
         pubTC
     }
