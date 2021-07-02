@@ -126,7 +126,7 @@ class PubMedService extends AbstractPubDataFetchStrategy {
         linkCommand
     }
 
-    GPathResult lookupPublicationDataInPubMed(String strURL) throws JummpException {
+    private GPathResult lookupPublicationDataInPubMed(String strURL) throws JummpException {
         URL url
         try {
             url = new URL(strURL)

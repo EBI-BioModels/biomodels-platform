@@ -62,7 +62,7 @@ class DoiService extends AbstractPubDataFetchStrategy {
         linkCommand
     }
 
-    PubTC buildPubTCFromRawData(final Map rawData) {
+    private PubTC buildPubTCFromRawData(final Map rawData) {
         String doi = rawData["doi"]
         String rawPubDetails = rawData["pubDetails"]
         if (!rawPubDetails) {
@@ -117,7 +117,7 @@ class DoiService extends AbstractPubDataFetchStrategy {
         result
     }
 
-    List<PersonTransportCommand> parseAuthorsFromRawText(final String rawText) {
+    private List<PersonTransportCommand> parseAuthorsFromRawText(final String rawText) {
         List<PersonTransportCommand> authors = new ArrayList<>()
         if (rawText) {
             String[] authorSet = rawText.trim().split(" and ")
