@@ -68,6 +68,10 @@
 
 <body>
 <form id="msform" useToken="true" class="${submissionSessionId}">
+    <div class="text-center">
+        <img src="${serverURL}/images/biomodels/loading.gif" id="loadingIcon" title="Fetching data..."
+             alt="Please wait..."/>
+    </div>
     <!-- progressbar -->
     <ul id="progressbar">
         <li class="active" id="upload-file"><strong>Model Files</strong></li>
@@ -127,6 +131,32 @@
 </form>
 <g:javascript src="biomodels/submission.js" contextPath="" />
 <g:javascript src="biomodels/uploader-1.0.2/jquery.dm-uploader.min.js" contextPath="" />
+<script type="text/javascript">
+    toastr.options = {
+        "closeButton": false,
+        "debug": false,
+        "newestOnTop": false,
+        "progressBar": false,
+        "positionClass": "toast-top-right",
+        "preventDuplicates": false,
+        "onclick": null,
+        "showDuration": "600",
+        "hideDuration": "1000",
+        "timeOut": "10000",
+        "extendedTimeOut": "1000",
+        "showEasing": "swing",
+        "hideEasing": "linear",
+        "showMethod": "fadeIn",
+        "hideMethod": "fadeOut"
+    }
+    $(document).ajaxStart(function() {
+        $("#loadingIcon").show();
+    });
+
+    $(document).ajaxStop(function() {
+        $("#loadingIcon").hide();
+    });
+</script>
 
 </body>
 <content tag="contexthelp">

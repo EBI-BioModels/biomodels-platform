@@ -19,10 +19,10 @@
         <p><g:message code="submission.biomodels.submit.publication.explanation"/></p>
     </div>
     <div class="columns small-12 medium-2 large-2">
-        <div class="text-center">
+        %{--<div class="text-center">
             <img src="${serverURL}/images/biomodels/loading.gif" id="loadingIcon" title="Fetching data..."
                  alt="Please wait..."/>
-        </div>
+        </div>--}%
     </div>
     <div class="columns small-12 medium-2 large-2">
         <h2 class="steps">Step 3 - 5</h2>
@@ -85,7 +85,7 @@
             dataType: "json",
             async: false,
             beforeSend: function () {
-                $('#loadingIcon').show();
+                console.log("Before sending the request");
             },
             success: function (data) {
                 toastr.clear();
@@ -125,7 +125,7 @@
                 showFlashMessages(errorMessages);
             },
             complete: function () {
-                $('#loadingIcon').hide();
+                console.log("Completed");
             }
         });
     };
@@ -176,6 +176,8 @@
                 showFlashMessages(errorMessages);
             },
             complete: function () {
+                $('#loadingIcon').css("display", "none");
+                console.log("just complete");
                 $('#loadingIcon').hide();
             }
         });

@@ -50,9 +50,7 @@
                 submissionFolder: "${submissionFolder}"
             },
             dataType: "json"
-        })
-        .done(function (response) {
-            console.log(response);
+        }).done(function (response) {
             currentValidation = response.status === "Success";
             $('#completionMessage').html(response.message);
             setCheckList(5, currentValidation);

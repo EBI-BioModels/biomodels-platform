@@ -140,7 +140,7 @@ class PublicationController implements GrailsConfigurationAware {
                 cmd = publicationService.createPTCWithMinimalInformation(pubLinkProvider, pubLink, [])
                 PDEC ctx = loadOrFetchOrCreatePublication(cmd)
                 // reassign cmd to a newly refreshed one
-                cmd = ctx.publication
+                cmd = ctx?.publication
                 if (!cmd?.validate()) {
                     status = "Unavailable"
                     if (cmd?.journal && cmd?.title && cmd?.linkProvider?.linkType == "DOI") {
