@@ -54,7 +54,7 @@ class PublicationController implements GrailsConfigurationAware {
     /**
      * Fetches publication details from PubMed Server, then renders the publication form with these details
      *
-     * This action contributes to fetching publication details via identifier from EuropePMC server.
+     * This action contributes to fetching publication details via identifier from EuropePMC.
      * The identifier can be an PubMed ID or DOI. As of writing these comments, we have implemented DoiService and
      * PubMedService separately because we haven't been aware of the existence of DOI support from the service
      * provider.
@@ -62,37 +62,37 @@ class PublicationController implements GrailsConfigurationAware {
      * Our implementation of {@link DoiService} is based on the output of the curl command hitting to https://doi.org
      * directly. The approach works well but does not include the abstract and affiliation.
      *
-     * TODO: use PubMed service for the retrieval of the publication details with DOI
      * TODO: split the action into two smaller ones: fetch and render
      *
      * @return HTML codes to display in the publication add and edit view
      */
     def fetchPublicationFromPubMedAndRenderPublicationForm() {
-        String pubLinkProvider = params.pubLinkProvider
-        String pubLink = params.pubLink
-        String message, status, data = ""
-        PublicationTransportCommand pubTC = new PublicationTransportCommand()
-        if (!publicationService.verifyLink(pubLinkProvider, pubLink)) {
-            message = "The link is not a valid ${pubLinkProvider}"
-            status = "Failed"
-            render([message: message, status: status, data: data] as JSON)
-        } else {
-            message = "The publication details have been fetched successfully."
-            status = "Success"
-            pubTC = publicationService.fetchPublicationData(pubLinkProvider, pubLink)
-            if (!pubTC.validate()) {
-                message = "The publication details are invalid"
-                status = "Failed"
-                render([message: message, status: status, data: data] as JSON)
-            } else {
-                pubTC.id = params.long("id")
-                List linkSourceTypes = PLP.LinkType.values().collect { it.label }
-                String operation = params.get("operation")
-                render(template: "/templates/publication/publicationDetailForm",
-                    plugin: "jummp-plugin-web-application",
-                    model: [id        : params.id, publication: pubTC, authorListContainerSize: 4, linkSourceTypes: linkSourceTypes,
-                            controller: "publication", operation: operation, url: request.forwardURI])
+        Map data = doVerifyPubLinkAndFetchData()
+        String operation = params.get("operation")
+
+        if (data["comesFromDB"] && operation == "add") { // adding
+            data["message"] = "The publication has existed!"
+            data["status"] = "Failed"
+            render(data as JSON)
+            return
+        }
+        if (data["status"] != "Failed")  {
+            boolean ID_EXISTS = params.containsKey("id") // editing
+            if (ID_EXISTS) {
+                data["publication"].id = params.long("id")
             }
+            List linkSourceTypes = PLP.LinkType.values().collect { it.label }
+            operation = params.get("operation")
+            if (data["comesFromDB"]) {
+                flash.message = g.message(code: "publication.editor.duplicateEntry.message")
+            }
+            render(template: "/templates/publication/publicationDetailForm",
+                plugin: "jummp-plugin-web-application",
+                model: [id: params.id, publication: data["publication"],
+                        authorListContainerSize: 4, linkSourceTypes: linkSourceTypes,
+                        controller: "publication", operation: operation, url: request.forwardURI])
+        } else {
+            render(data as JSON)
         }
     }
 
@@ -120,7 +120,18 @@ class PublicationController implements GrailsConfigurationAware {
         render(result as JSON)
     }
 
-    def doVerifyPubLinkAndFetchData() {
+    /**
+     * This action is used when hitting on the Update button in the step of providing the publication
+     * in the submission or update flow
+     *
+     * @return A map of initialised and repopulated variables
+     */
+    def verifyPubLinkAndFetchData() {
+        Map data = doVerifyPubLinkAndFetchData()
+        render(data as JSON)
+    }
+
+    private Map doVerifyPubLinkAndFetchData() {
         PublicationTransportCommand cmd = new PublicationTransportCommand()
         String pubLinkProvider = params.list("pubLinkProvider")[0]
         String pubLink = params.list("pubLink")[0]
@@ -158,7 +169,7 @@ missing the affiliation and synopsis. Please verify the form and fill empty fiel
                 comesFromDB = ctx?.comesFromDatabase
             }
         }
-        render(["message": message, "status": status, "publication": cmd, "comesFromDB": comesFromDB] as JSON)
+        ["message": message, "status": status, "publication": cmd, "comesFromDB": comesFromDB]
     }
 
     def doVerifyPublicationProviderAndLink() {

@@ -77,7 +77,7 @@
         clearErrorMessages();
         $.ajax({
             type: "POST",
-            url: "${createLink(controller: "publication", action:"doVerifyPubLinkAndFetchData")}",
+            url: "${createLink(controller: "publication", action:"verifyPubLinkAndFetchData")}",
             data: {
                 pubLinkProvider: pubLinkProvider,
                 pubLink: pubLink
