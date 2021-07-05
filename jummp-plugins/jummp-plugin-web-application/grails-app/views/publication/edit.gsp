@@ -215,6 +215,13 @@
                     // the method below is defined in helpers.js
                     let msg = extractErrorMessage(jqXHR);
                     toastr.error(msg);
+                }).complete(function () {
+                    let comesFromDB = ("true" === $('#comesFromDB').html());
+                    if (comesFromDB) {
+                        let msg = "${g.message(code: "publication.editor.duplicateEntry.message")}";
+                        toastr.warning(msg);
+                        showFlashMessages(msg);
+                    }
                 });
             }
         </g:javascript>

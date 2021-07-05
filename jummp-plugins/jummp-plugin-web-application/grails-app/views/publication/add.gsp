@@ -191,7 +191,12 @@
                     showFlashMessages(res.message);
                 } else {
                     let msg = "The publication details have been fetched successfully";
-                    toastr.success(msg);
+                    if (res.status === 302) {
+                        msg = "${g.message(code: "publication.editor.duplicateEntry.message")}";
+                        toastr.warning(msg);
+                    } else {
+                        toastr.success(msg);
+                    }
                     showFlashMessages(msg);
                     $('.editablePart').html(res);
                 }

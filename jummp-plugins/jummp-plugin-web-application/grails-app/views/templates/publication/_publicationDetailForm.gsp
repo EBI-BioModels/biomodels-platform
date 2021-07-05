@@ -1,5 +1,6 @@
 
 <div class="row">
+    <div id="comesFromDB" style="display: none">${comesFromDB}</div>
 <div class="small-6 medium-6 columns">
     <label class="required" for="title">
         <g:message code="submission.publication.title"/>

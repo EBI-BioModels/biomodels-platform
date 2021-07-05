@@ -82,13 +82,9 @@ class PublicationController implements GrailsConfigurationAware {
                 data["publication"].id = params.long("id")
             }
             List linkSourceTypes = PLP.LinkType.values().collect { it.label }
-            operation = params.get("operation")
-            if (data["comesFromDB"]) {
-                flash.message = g.message(code: "publication.editor.duplicateEntry.message")
-            }
             render(template: "/templates/publication/publicationDetailForm",
                 plugin: "jummp-plugin-web-application",
-                model: [id: params.id, publication: data["publication"],
+                model: [id: params.id, publication: data["publication"], comesFromDB: data["comesFromDB"],
                         authorListContainerSize: 4, linkSourceTypes: linkSourceTypes,
                         controller: "publication", operation: operation, url: request.forwardURI])
         } else {
