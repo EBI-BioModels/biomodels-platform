@@ -216,6 +216,11 @@ class PublicationTransportCommand implements Serializable {
         }
     }
 
+    boolean isEmpty() {
+        // Both two primary required fields are empty
+        title == null && journal == null
+    }
+
     private void setFieldIfItExists(String fieldName, def xmlField, boolean castToInt) {
         try {
             if (xmlField && xmlField.size() == 1) {
