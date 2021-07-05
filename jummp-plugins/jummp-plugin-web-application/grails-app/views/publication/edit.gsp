@@ -64,7 +64,7 @@
 </head>
 
 <body>
-    <h2>Publication Details</h2>
+    <h2>Edit Publication Details</h2>
     <g:if test="${publication}">
         <g:render template="/templates/publication/selectPublicationSource"
                   plugin="jummp-plugin-web-application"
