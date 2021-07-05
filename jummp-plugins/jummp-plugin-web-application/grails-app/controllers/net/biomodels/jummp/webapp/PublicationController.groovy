@@ -71,7 +71,7 @@ class PublicationController implements GrailsConfigurationAware {
         String operation = params.get("operation")
 
         if (data["comesFromDB"] && operation == "add") { // adding
-            data["message"] = "The publication has existed!"
+            data["message"] = "The publication exists!"
             data["status"] = "Failed"
             render(data as JSON)
             return
@@ -157,7 +157,7 @@ missing the affiliation and synopsis. Please verify the form and fill empty fiel
                         status = "Warning"
                     } else if (!cmd?.synopsis || !cmd?.affiliation) {
                         status = "Warning"
-                        message = """The publication details are incomplete. Please check the empty fields and fill them in manually."""
+                        message = """The publication details are fetched incompletely. Please check the empty fields and fill them in manually."""
                     } else {
                         message = "No records are available. Please do check again."
                     }
