@@ -1,6 +1,8 @@
 
 <div class="row">
     <div id="comesFromDB" style="display: none">${comesFromDB}</div>
+    <div id="status" style="display: none">${status}</div>
+    <div id="message" style="display: none">${message}</div>
 <div class="small-6 medium-6 columns">
     <label class="required" for="title">
         <g:message code="submission.publication.title"/>

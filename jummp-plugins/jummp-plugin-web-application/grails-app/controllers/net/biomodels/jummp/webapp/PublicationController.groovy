@@ -70,26 +70,22 @@ class PublicationController implements GrailsConfigurationAware {
         Map data = doVerifyPubLinkAndFetchData()
         String operation = params.get("operation")
 
-        if (data["comesFromDB"] && operation == "add") { // adding
+        if (data["comesFromDB"] && operation == "add") {
             data["message"] = "The publication exists!"
             data["status"] = "Failed"
-            render(data as JSON)
-            return
-        }
-        if (data["status"] != "Failed")  {
-            boolean ID_EXISTS = params.containsKey("id") // editing
+        } else if (!data["publication"]?.isEmpty() && operation == "edit") {
+            boolean ID_EXISTS = params.containsKey("id")
             if (ID_EXISTS) {
-                data["publication"].id = params.long("id")
+                data["publication"]?.id = params.long("id")
             }
-            List linkSourceTypes = PLP.LinkType.values().collect { it.label }
-            render(template: "/templates/publication/publicationDetailForm",
-                plugin: "jummp-plugin-web-application",
-                model: [id: params.id, publication: data["publication"], comesFromDB: data["comesFromDB"],
-                        authorListContainerSize: 4, linkSourceTypes: linkSourceTypes,
-                        controller: "publication", operation: operation, url: request.forwardURI])
-        } else {
-            render(data as JSON)
         }
+        List linkSourceTypes = PLP.LinkType.values().collect { it.label }
+        render(template: "/templates/publication/publicationDetailForm",
+            plugin: "jummp-plugin-web-application",
+            model: [id: params.id, publication: data["publication"], comesFromDB: data["comesFromDB"],
+                    authorListContainerSize: 4, status: data["status"],
+                    linkSourceTypes: linkSourceTypes, message: data["message"],
+                    controller: "publication", operation: operation, url: request.forwardURI])
     }
 
     def save(PublicationTransportCommand pubCmd) {
@@ -142,26 +138,22 @@ class PublicationController implements GrailsConfigurationAware {
                 message = "The link is not a valid ${pubLinkProvider}"
                 status = "Failed"
             } else {
-                message = "The publication details have been updated successfully."
+                message = "The publication details have been fetched successfully."
                 status = "OK"
                 cmd = publicationService.createPTCWithMinimalInformation(pubLinkProvider, pubLink, [])
                 PDEC ctx = loadOrFetchOrCreatePublication(cmd)
                 // reassign cmd to a newly refreshed one
                 cmd = ctx?.publication
-                if (!cmd?.validate()) {
+                if (!cmd) {
                     status = "Unavailable"
-                    if (cmd?.journal && cmd?.title && cmd?.linkProvider?.linkType == "DOI") {
-                        message = """The publication details are the best which our system can automatically
+                    message = "No record found. Please do check and try again."
+                } else if (!cmd?.synopsis || !cmd?.affiliation) { // for DOI fetched from DOI service
+                    status = "Warning"
+                    message = """The publication details are the best which our system can automatically
 fetch from <a href="https://doi.org/${pubLink}" target="_blank">https://doi.org/${pubLink}</a>. Currently they are
-missing the affiliation and synopsis. Please verify the form and fill empty fields in manually."""
-                        status = "Warning"
-                    } else if (!cmd?.synopsis || !cmd?.affiliation) {
-                        status = "Warning"
-                        message = """The publication details are fetched incompletely. Please check the empty fields and fill them in manually."""
-                    } else {
-                        message = "No records are available. Please do check again."
-                    }
+missing the affiliation and synopsis. Please verify the form and fill in the empty fields manually."""
                 }
+
                 comesFromDB = ctx?.comesFromDatabase
             }
         }

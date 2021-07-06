@@ -72,6 +72,7 @@
                 toastr.error("Cannot save the publication without choosing a type of publication resource");
                 return;
             }
+            // the validation variable is defined in _selectPublicationSource loaded ahead
             validation = validation && validateDataForm('publicationForm');
             if (!validation) {
                 let msg = "The publication source and link do not match. Please verify these values and try again";
@@ -173,9 +174,10 @@
         function verifyAndFetchPublicationDetails(pubLinkProvider, pubLink) {
             if (!pubLinkProvider || !pubLink) {
                 toastr.clear();
-                toastr.error("Either of publication provider or link is empty");
+                toastr.error("Either publication provider or link is empty");
                 return;
             }
+            let msg = "";
             $.ajax({
                 type: "POST",
                 url: "${createLink(controller: "publication", action: "fetchPublicationFromPubMedAndRenderPublicationForm")}",
@@ -190,20 +192,30 @@
                     toastr.error(res.message);
                     showFlashMessages(res.message);
                 } else {
-                    let msg = "The publication details have been fetched successfully";
-                    if (res.status === 302) {
-                        msg = "${g.message(code: "publication.editor.duplicateEntry.message")}";
-                        toastr.warning(msg);
-                    } else {
-                        toastr.success(msg);
-                    }
-                    showFlashMessages(msg);
                     $('.editablePart').html(res);
                 }
             }).fail(function(jqXHR) {
                 // the method below is defined in helpers.js
-                let msg = extractErrorMessage(jqXHR);
+                msg = extractErrorMessage(jqXHR);
                 toastr.error(msg);
+                showFlashMessages(msg);
+            }).complete(function () {
+                let comesFromDB = ("true" === $('#comesFromDB').html());
+                let messages = [];
+                if (comesFromDB) {
+                    msg = "${g.message(code: "publication.editor.duplicateEntry.message")}";
+                    toastr.warning(msg);
+                    messages.push(msg);
+                }
+                let status = $('#status').html();
+                msg = $('#message').html();
+                if (status === 'Warning') {
+                    toastr.warning(msg);
+                } else if (status === "Unavailable" || status === "Failed") {
+                    toastr.error(msg);
+                }
+                messages.push(msg);
+                showFlashMessages(messages);
             });
         };
     </g:javascript>
