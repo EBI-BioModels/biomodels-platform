@@ -96,20 +96,25 @@
                     currentValidation = false;
                     showFlashMessages(errorMessages);
                 } else {
+                    let msg = data["message"];;
                     if (data.status === "OK") {
-                        toastr.success(data["message"]);
+                        toastr.success(msg);
                     } else {
-                        toastr.warning(data["message"]);
+                        toastr.warning(msg);
                     }
+                    showFlashMessages(msg);
                     if (data["comesFromDB"]) {
-                        toastr.warning("${g.message(code: "publication.editor.duplicateEntry.message")}");
+                        msg = "${g.message(code: "publication.editor.duplicateEntry.message")}";
+                        toastr.warning(msg);
+                        showFlashMessages(msg);
                     }
                     if (publication) {
                         reloadPublicationForm(publication);
                         currentValidation = true;
                     } else {
-                        let msg = "The publication details of  " + pubLinkProvider + ": " + pubLink + " cannot be found."
+                        msg = "The publication details of  " + pubLinkProvider + ": " + pubLink + " cannot be found."
                         showFlashMessages(msg);
+                        toastr.error(msg);
                         currentValidation = false;
                     }
                 }
