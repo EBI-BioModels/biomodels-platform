@@ -147,11 +147,17 @@ class PublicationController implements GrailsConfigurationAware {
                 if (!cmd) {
                     status = "Unavailable"
                     message = "No record found. Please do check and try again."
-                } else if (!cmd?.synopsis || !cmd?.affiliation) { // for DOI fetched from DOI service
+                } else if (!cmd?.synopsis || !cmd?.affiliation) {
+                    // for DOI fetched from DOI service or for PubMed entry not having any values for these fields
                     status = "Warning"
+                    String t = cmd.linkProvider.linkType
+                    String pubHref = "https://doi.org/${pubLink}"
+                    if (t == PLP.LinkType.PUBMED.getLabel()) {
+                        pubHref = "https://identifiers.org/pubmed/${pubLink}"
+                    }
                     message = """The publication details are the best which our system can automatically
-fetch from <a href="https://doi.org/${pubLink}" target="_blank">https://doi.org/${pubLink}</a>. Currently they are
-missing the affiliation and synopsis. Please verify the form and fill in the empty fields manually."""
+fetch from <a href="${pubHref}" target="_blank">${pubHref}</a>. Currently they are
+missing either or both the affiliation and abstract. Please verify the form and fill in the empty fields manually."""
                 }
 
                 comesFromDB = ctx?.comesFromDatabase
