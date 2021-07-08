@@ -68,10 +68,6 @@
 
 <body>
 <form id="msform" useToken="true" class="${submissionSessionId}">
-    <div class="text-center">
-        <img src="${serverURL}/images/biomodels/loading.gif" id="loadingIcon" title="Fetching data..."
-             alt="Please wait..."/>
-    </div>
     <!-- progressbar -->
     <ul id="progressbar">
         <li class="active" id="upload-file"><strong>Model Files</strong></li>
@@ -149,13 +145,6 @@
         "showMethod": "fadeIn",
         "hideMethod": "fadeOut"
     }
-    $(document).ajaxStart(function() {
-        $("#loadingIcon").show();
-    });
-
-    $(document).ajaxStop(function() {
-        $("#loadingIcon").hide();
-    });
 </script>
 
 </body>
