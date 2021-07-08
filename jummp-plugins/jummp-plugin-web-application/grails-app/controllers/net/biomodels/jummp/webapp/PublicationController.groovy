@@ -3,6 +3,7 @@ package net.biomodels.jummp.webapp
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.adapters.PublicationAdapter
+import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.model.Publication
 import net.biomodels.jummp.core.model.PublicationTransportCommand
 import net.biomodels.jummp.model.PublicationLinkProvider as PLP
@@ -53,7 +54,7 @@ class PublicationController implements GrailsConfigurationAware {
     /**
      * Fetches publication details from PubMed Server, then renders the publication form with these details
      *
-     * This action contributes to fetching publication details via identifier from EuropePMC server.
+     * This action contributes to fetching publication details via identifier from EuropePMC.
      * The identifier can be an PubMed ID or DOI. As of writing these comments, we have implemented DoiService and
      * PubMedService separately because we haven't been aware of the existence of DOI support from the service
      * provider.
@@ -61,38 +62,30 @@ class PublicationController implements GrailsConfigurationAware {
      * Our implementation of {@link DoiService} is based on the output of the curl command hitting to https://doi.org
      * directly. The approach works well but does not include the abstract and affiliation.
      *
-     * TODO: use PubMed service for the retrieval of the publication details with DOI
      * TODO: split the action into two smaller ones: fetch and render
      *
      * @return HTML codes to display in the publication add and edit view
      */
     def fetchPublicationFromPubMedAndRenderPublicationForm() {
-        String pubLinkProvider = params.pubLinkProvider
-        String pubLink = params.pubLink
-        String message, status, data = ""
-        PublicationTransportCommand pubTC = new PublicationTransportCommand()
-        if (!publicationService.verifyLink(pubLinkProvider, pubLink)) {
-            message = "The link is not a valid ${pubLinkProvider}"
-            status = "Failed"
-            render([message: message, status: status, data: data] as JSON)
-        } else {
-            message = "The publication details have been fetched successfully."
-            status = "Success"
-            pubTC = publicationService.fetchPublicationData(pubLinkProvider, pubLink)
-            if (!pubTC.validate()) {
-                message = "The publication details are invalid"
-                status = "Failed"
-                render([message: message, status: status, data: data] as JSON)
-            } else {
-                pubTC.id = params.long("id")
-                List linkSourceTypes = PLP.LinkType.values().collect { it.label }
-                String operation = params.get("operation")
-                render(template: "/templates/publication/publicationDetailForm",
-                    plugin: "jummp-plugin-web-application",
-                    model: [id        : params.id, publication: pubTC, authorListContainerSize: 4, linkSourceTypes: linkSourceTypes,
-                            controller: "publication", operation: operation, url: request.forwardURI])
+        Map data = doVerifyPubLinkAndFetchData()
+        String operation = params.get("operation")
+
+        if (data["comesFromDB"] && operation == "add") {
+            data["message"] = "The publication exists!"
+            data["status"] = "Failed"
+        } else if (!data["publication"]?.isEmpty() && operation == "edit") {
+            boolean ID_EXISTS = params.containsKey("id")
+            if (ID_EXISTS) {
+                data["publication"]?.id = params.long("id")
             }
         }
+        List linkSourceTypes = PLP.LinkType.values().collect { it.label }
+        render(template: "/templates/publication/publicationDetailForm",
+            plugin: "jummp-plugin-web-application",
+            model: [id: params.id, publication: data["publication"], comesFromDB: data["comesFromDB"],
+                    authorListContainerSize: 4, status: data["status"],
+                    linkSourceTypes: linkSourceTypes, message: data["message"],
+                    controller: "publication", operation: operation, url: request.forwardURI])
     }
 
     def save(PublicationTransportCommand pubCmd) {
@@ -119,44 +112,79 @@ class PublicationController implements GrailsConfigurationAware {
         render(result as JSON)
     }
 
-    def doVerifyPubLinkAndFetchData() {
+    /**
+     * This action is used when hitting on the Update button in the step of providing the publication
+     * in the submission or update flow
+     *
+     * @return A map of initialised and repopulated variables
+     */
+    def verifyPubLinkAndFetchData() {
+        Map data = doVerifyPubLinkAndFetchData()
+        render(data as JSON)
+    }
+
+    private Map doVerifyPubLinkAndFetchData() {
         PublicationTransportCommand cmd = new PublicationTransportCommand()
         String pubLinkProvider = params.list("pubLinkProvider")[0]
         String pubLink = params.list("pubLink")[0]
         String message
         String status
-        PDEC ctx = new PDEC()
+        boolean comesFromDB = false
         if (pubLinkProvider == "NoPub" && pubLink) {
             message = "Please select a publication link type."
             status = "Failed"
-        }
-        if (!publicationService.verifyLink(pubLinkProvider, pubLink)) {
-            message = "The link is not a valid ${pubLinkProvider}"
-            status = "Failed"
         } else {
-            message = "The publication details have been updated successfully."
-            status = "OK"
-            cmd = publicationService.fetchPublicationData(pubLinkProvider, pubLink)
-
-            if (!cmd?.validate()) {
-                status = "Unavailable"
-                if (cmd?.journal && cmd?.title && cmd?.linkProvider?.linkType == "DOI") {
-                    message = """The publication details are the best which our system can automatically
-fetch from <a href="https://doi.org/${pubLink}" target="_blank">https://doi.org/${pubLink}</a>. Currently they are
-missing the affiliation and synopsis. Please verify the form and fill empty fields in manually."""
-                    status = "Warning"
-                } else if (!cmd?.synopsis || !cmd?.affiliation) {
-                    status = "Warning"
-                    message = """The publication details are incomplete. Please check the empty fields and fill them in manually."""
-                } else {
-                    message = "No records are available. Please do check again."
-                }
+            if (!publicationService.verifyLink(pubLinkProvider, pubLink)) {
+                message = "The link is not a valid ${pubLinkProvider}"
+                status = "Failed"
             } else {
-                ctx = publicationService.getPublicationExtractionContext(cmd)
+                message = "The publication details have been fetched successfully."
+                status = "OK"
+                cmd = publicationService.createPTCWithMinimalInformation(pubLinkProvider, pubLink, [])
+                PDEC ctx = loadOrFetchOrCreatePublication(cmd)
+                // reassign cmd to a newly refreshed one
+                cmd = ctx?.publication
+                if (!cmd) {
+                    status = "Unavailable"
+                    message = "No record found. Please do check and try again."
+                } else if (!cmd?.synopsis || !cmd?.affiliation || !cmd?.title) {
+                    // for DOI fetched from DOI service or for PubMed entry not having any values for these fields
+                    status = "Warning"
+                    String t = cmd.linkProvider.linkType
+                    String pubHref = "https://doi.org/${pubLink}"
+                    if (t == PLP.LinkType.PUBMED.getLabel()) {
+                        pubHref = "https://identifiers.org/pubmed/${pubLink}"
+                    }
+                    message = """The publication details are the best which our system can automatically
+fetch from <a href="${pubHref}" target="_blank">${pubHref}</a>. Currently they are
+missing a title, an affiliation and/or an abstract. Please verify the form and fill in the empty fields manually."""
+                }
+
+                comesFromDB = ctx?.comesFromDatabase
             }
         }
-        render(["message": message, "status": status, "publication": cmd,
-                "comesFromDB": ctx?.comesFromDatabase] as JSON)
+        ["message": message, "status": status, "publication": cmd, "comesFromDB": comesFromDB]
+    }
+
+    def doVerifyPublicationProviderAndLink() {
+        PublicationTransportCommand cmd = new PublicationTransportCommand()
+        String pubLinkProvider = params.list("pubLinkProvider")[0]
+        String pubLink = params.list("pubLink")[0]
+        String message
+        String status
+        if (pubLinkProvider == "NoPub" && pubLink) {
+            message = "Please select a publication link type."
+            status = "Failed"
+        } else {
+            if (!publicationService.verifyLink(pubLinkProvider, pubLink)) {
+                message = "The link is not a valid ${pubLinkProvider}"
+                status = "Failed"
+            } else {
+                message = "The publication details have been updated successfully."
+                status = "OK"
+            }
+        }
+        render(["message": message, "status": status] as JSON)
     }
 
     def validatePublicationDetails() {
@@ -176,6 +204,26 @@ missing the affiliation and synopsis. Please verify the form and fill empty fiel
             bindData(tempPTC, pubDetails, [exclude: ['authors']])
             publicationService.assembleAuthors(tempPTC, pubDetails.authors)
             render(template: "/templates/showPublication", model: [publication: tempPTC, isUpdate: false])
+        }
+    }
+
+    private PDEC loadOrFetchOrCreatePublication(PublicationTransportCommand pubTC) {
+        try {
+            PDEC publicationContext = publicationService.getPublicationExtractionContext(pubTC)
+            if (publicationContext.publication) {
+                if (publicationContext.comesFromDatabase) {
+                    flash.flashMessage = g.message(code: "publication.editor.duplicateEntry.message")
+                }
+            } else {
+                PublicationTransportCommand retrieved
+                retrieved = publicationService.createPTCWithMinimalInformation(params.PubLinkProvider, params.PublicationLink, [])
+                publicationContext.publication = retrieved
+                publicationContext.comesFromDatabase = false
+            }
+            return publicationContext
+        } catch (Exception e) {
+            log.error(e.message, e)
+            return null
         }
     }
 

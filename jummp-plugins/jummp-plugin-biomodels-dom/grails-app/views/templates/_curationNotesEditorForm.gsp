@@ -1,3 +1,6 @@
+<%
+    String serverURL = grailsApplication.config.grails.serverURL
+%>
 <div id="txtStatus" style="color: #ED0000; font-weight: 500; font-size: larger"></div>
 <form id="curationNotesForm">
     <div class="row">
@@ -5,18 +8,19 @@
             <div class="grid-container">
                 <div class="grid-x grid-padding-x">
                     <div class="small-12 medium-12 large-12 cell">
-                        <label>Simulation results <small style="color: red">required</small><br/>
+                        <label>Simulation results <small style="color: red">required</small>                        </label>
+<br/>                   <div style="text-align: center">
                             <g:if test="${curationImage}">
                                 <img src="data:image/jpeg;base64,${curationImage}"
                                      id="curaImageHolder"
                                      title="Click on the thumbnail to view the result(s)" />
                             </g:if>
                             <g:else>
-                                <img src="${grailsApplication.config.grails.serverURL}/images/biomodels/No-Image-Available.jpg"
+                                <img src="${serverURL}/images/biomodels/simulation-result-unavailable.png"
                                      id="curaImageHolder"
                                      title="The curation images are not available" />
                             </g:else><br/>
-                        </label>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -171,25 +175,32 @@
             'lastModified': lastModified,
             'updated': ${curationNotesTC.updated}
         };
+        let base64ImgStr;
         if (imgUploadedStream) {
-            curationNotes['curationImage'] = imgUploadedStream;
+            base64ImgStr = imgUploadedStream;
         } else {
-            var base64ImgStr = $('img#curaImageHolder').attr('src');
+            base64ImgStr = $('img#curaImageHolder').attr('src');
             if (base64ImgStr.indexOf('base64,')>=0) {
                 mimeType = base64ImgStr.substring(5, base64ImgStr.indexOf(";"));
                 base64ImgStr = base64ImgStr.substring(base64ImgStr.indexOf('base64,') + 'base64,'.length);
-                curationNotes['curationImage'] = base64ImgStr;
             } else {
                 console.log("The curation notes is not uploaded the curation image");
+                // allow the curation figure to be empty but it will be populated a dummy figure later
+                // load the dummy curation figure
+                let dummyFigure = "${serverURL}/images/biomodels/simulation-result-unavailable.png";
+                mimeType = "image/jpeg";
+                // The convertImageURL2Data is defined in the common.js file
+                base64ImgStr = convertImageURL2Data(dummyFigure);
             }
         }
+        curationNotes['curationImage'] = base64ImgStr;
         curationNotes['mimeType'] = mimeType;
         curationNotes = JSON.stringify(curationNotes);
         return curationNotes;
     }
 
     function showWarningMessage() {
-        var imgSrc = "${grailsApplication.config.grails.serverURL}/images/biomodels/unacceptable.png";
+        var imgSrc = "${serverURL}/images/biomodels/unacceptable.png";
         $('#curaImageHolder').attr('src', imgSrc);
         $('#curaImageHolder').attr('title', 'This format is not acceptable');
     }
@@ -202,6 +213,7 @@
             var imageFile = this.files[0];
             mimeType = imageFile.type;
             if (re.exec(mimeType)) {
+                // use the previewImage function defined in common.js to render the preview of the figure
                 imgUploadedStream = previewImage(this, '#curaImageHolder');
                 delete messages["onlyAcceptImages"];
             } else {
@@ -231,6 +243,8 @@
         var curationImage = $('#curaImageHolder').attr('src');
         var re = new RegExp('data:image\/');
         var isCurationImageAvailable = re.exec(curationImage);
+        // allow the curation figure to be empty but it will be populated a dummy figure later
+        isCurationImageAvailable = true;
         /* combine with the built-in validation check */
         var isValid = $('#curationNotesForm')[0].checkValidity() && isCurationImageAvailable;
         if (isValid) {

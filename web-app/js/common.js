@@ -119,9 +119,9 @@ $('input[id=username]').blur(function() {
                 } else {
                     message = "This username does not exist. Please check typos and spelling or try again."
                 }
-                // When an anonymous user is trying to open a new account and username doesn't exist 
+                // When an anonymous user is trying to open a new account and username doesn't exist
                 // or to login the system, don't show the warning message
-                if (("create" === actionName && username === "") || 
+                if (("create" === actionName && username === "") ||
                     ("auth" === actionName && username !== "")) {
                     hideNow();
                 } else {
@@ -254,12 +254,12 @@ function values(array) {
  */
 function previewImage(input, imageHolder) {
     // reused sample codes from https://stackoverflow.com/a/4459419/865603
-    var imgData;
+    let imgData;
     if (input.files && input.files[0]) {
-        var reader = new FileReader();
-        var image = input.files[0];
+        const reader = new FileReader();
+        const image = input.files[0];
         reader.onload = function (event) {
-            var imgSrc = event.target.result;
+            const imgSrc = event.target.result;
             imgData = event.target.result.replace("data:"+ image.type +";base64,", '');
             $(imageHolder).attr('src', imgSrc);
             $(imageHolder).attr('title', 'This image has been uploaded or replaced');
@@ -269,6 +269,27 @@ function previewImage(input, imageHolder) {
     return imgData;
 }
 
+/**
+ * This function converts an image from its URL to the based64 format
+ *
+ * @param imgURL indicating the image via a URL
+ * @returns {String} representing the based64 format of the image denoting from the imgURL
+ */
+function convertImageURL2Data(imgURL) {
+    let imgData = null;
+    if (imgURL) {
+        var image = new Image();
+        image.src = imgURL;
+        let canvas = document.createElement("canvas");
+        canvas.width = image.width;
+        canvas.height = image.height;
+        let ctx = canvas.getContext("2d");
+        ctx.drawImage(image, 0, 0);
+        const dataURL = canvas.toDataURL("image/png");
+        imgData = dataURL.replace(/^data:image\/(png|jpg);base64,/, "");
+    }
+    return imgData;
+}
 /**
  * Patches the issue of hiding dropdown menu partially. Foundation dropdown menu script adds opens-inner class
  * improperly causing this problem.

@@ -35,7 +35,7 @@ import groovy.util.slurpersupport.GPathResult
 import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter as PLPA
 import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PLPTC
 import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
-import net.biomodels.jummp.model.PublicationLinkProvider
+import net.biomodels.jummp.model.PublicationLinkProvider as PubLP
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.xml.sax.SAXParseException
@@ -52,11 +52,13 @@ import org.xml.sax.SAXParseException
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
-class PubMedService implements PubDataFetchStrategy {
+class PubMedService extends AbstractPubDataFetchStrategy {
     final Log log = LogFactory.getLog(getClass())
     static transactional = false
 
     def configurationService
+
+    final String PUBMED_API_URL = "https://www.ebi.ac.uk/europepmc/webservices/rest/search/query="
 
     /**
      * Downloads the XML describing the PubMed resource and parses the Publication information.
@@ -66,26 +68,67 @@ class PubMedService implements PubDataFetchStrategy {
     @SuppressWarnings("EmptyCatchBlock")
     @Override
     PubTC fetchPublicationData(String id) throws JummpException {
-        def slurper = lookupPublicationDataInPubMed(id)
+        // default PubMed
+        final queryString = "${PUBMED_API_URL}ext_id:${id}%20src:med&resulttype=core"
+        def slurper = lookupPublicationDataInPubMed(queryString)
 
         PLPTC linkCommand = createLinkProviderInstance()
+        PubTC.fromPubMed(linkCommand, id, slurper)
+    }
+
+    @SuppressWarnings("EmptyCatchBlock")
+    @Override
+    PubTC fetchPublicationData(final String id, final String linkType) throws JummpException {
+        PubLP.LinkType type = PubLP.LinkType.findLinkTypeByLabel(linkType)
+        fetchPublicationData(id, type)
+
+    }
+
+    @SuppressWarnings("EmptyCatchBlock")
+    @Override
+    PubTC fetchPublicationData(final String id, final PubLP.LinkType linkType) throws JummpException {
+        final queryString = ""
+        if (linkType == PubLP.LinkType.PUBMED) {
+            queryString = "${PUBMED_API_URL}ext_id:${id}%20src:med&resulttype=core"
+        } else if (linkType == PubLP.LinkType.DOI) {
+            queryString = "${PUBMED_API_URL}doi:${id}%20src:med&resulttype=core"
+        }
+        def slurper = lookupPublicationDataInPubMed(queryString)
+
+        PLPTC linkCommand = createLinkProviderInstance(linkType)
         PubTC.fromPubMed(linkCommand, id, slurper)
     }
 
     @Cacheable("pubMedLinkProviderInstance")
     @Override
     PLPTC createLinkProviderInstance() {
-        PublicationLinkProvider link = PublicationLinkProvider.withCriteria(uniqueResult: true) {
-            eq("linkType", PublicationLinkProvider.LinkType.PUBMED)
+        PubLP link = PubLP.withCriteria(uniqueResult: true) {
+            eq("linkType", PubLP.LinkType.PUBMED)
         }
         PLPTC linkCommand = new PLPA(linkProvider: link).toCommandObject()
         linkCommand
     }
 
-    GPathResult lookupPublicationDataInPubMed(String id) throws JummpException {
+    @Cacheable("pubMedLinkProviderInstance")
+    @Override
+    PLPTC createLinkProviderInstance(final String linkTypeAsString) {
+        PubLP.LinkType type = PubLP.LinkType.findLinkTypeByLabel(linkTypeAsString)
+        createLinkProviderInstance(type)
+    }
+
+    @Cacheable("pubMedLinkProviderInstance")
+    @Override
+    PLPTC createLinkProviderInstance(final PubLP.LinkType linkType) {
+        PubLP link = PubLP.withCriteria(uniqueResult: true) {
+            eq("linkType", linkType)
+        }
+        PLPTC linkCommand = new PLPA(linkProvider: link).toCommandObject()
+        linkCommand
+    }
+
+    private GPathResult lookupPublicationDataInPubMed(String strURL) throws JummpException {
         URL url
         try {
-            String strURL = "https://www.ebi.ac.uk/europepmc/webservices/rest/search/query=ext_id:${id}%20src:med&resulttype=core"
             url = new URL(strURL)
         } catch (MalformedURLException e) {
             // TODO: throw a specific exception

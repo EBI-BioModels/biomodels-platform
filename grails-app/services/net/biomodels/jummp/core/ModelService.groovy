@@ -2542,7 +2542,7 @@ There has been error while adding $approach to the model ${revisionTC.identifier
             logger.debug("Publishing the event to share the revision ${command.identifier()}")
             grailsApplication.mainContext.publishEvent(new RevisionCreatedEvent(this, command))
         } else {
-            logger.debug("cannot share the model ${command.identifier()} to fellow curators")
+            logger.error("cannot share the model ${command.identifier()} to fellow curators")
         }
         stopWatch.stop()
     }

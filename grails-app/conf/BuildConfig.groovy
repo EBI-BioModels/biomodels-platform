@@ -142,7 +142,7 @@ grails.project.dependency.resolution = {
         runtime "org.apache.camel:camel-exec:2.13.0"
 
         // DDMoRe Metadata Information Service uses jena 2.13
-        compile("org.mbine.co:libCombineArchive:0.1") {
+        compile("org.mbine.co:libCombineArchive:0.2.3") {
             excludes 'junit', 'slf4j-api', 'slf4j-log4j12', 'slf4j-log4j12-impl', 'jmock-junit4', 'jena-core'
         }
         compile "de.unirostock.sems:CombineExt:1.2.4"

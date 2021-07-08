@@ -29,9 +29,7 @@ import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter as PLPA
 import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PLPTC
 import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
 import net.biomodels.jummp.core.user.PersonTransportCommand
-import net.biomodels.jummp.model.PublicationLinkProvider
-import org.apache.commons.lang3.StringUtils
-import org.apache.tools.ant.util.StringUtils
+import net.biomodels.jummp.model.PublicationLinkProvider as PubLP
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -43,7 +41,7 @@ import org.slf4j.LoggerFactory
  * @author <a href="mailto:tungnguyenvn@pm.me">tungnguyenvn@pm.me</a>
  * @date   2021-01-17
  */
-class DoiService implements PubDataFetchStrategy {
+class DoiService extends AbstractPubDataFetchStrategy {
     static transactional = false
     private static final Logger logger = LoggerFactory.getLogger(DoiService.class)
 
@@ -57,14 +55,14 @@ class DoiService implements PubDataFetchStrategy {
     @Cacheable("doiLinkProviderInstance")
     @Override
     PLPTC createLinkProviderInstance() {
-        PublicationLinkProvider link = PublicationLinkProvider.withCriteria(uniqueResult: true) {
-            eq("linkType", PublicationLinkProvider.LinkType.DOI)
+        PubLP link = PubLP.withCriteria(uniqueResult: true) {
+            eq("linkType", PubLP.LinkType.DOI)
         }
         PLPTC linkCommand = new PLPA(linkProvider: link).toCommandObject()
         linkCommand
     }
 
-    PubTC buildPubTCFromRawData(final Map rawData) {
+    private PubTC buildPubTCFromRawData(final Map rawData) {
         String doi = rawData["doi"]
         String rawPubDetails = rawData["pubDetails"]
         if (!rawPubDetails) {
@@ -119,7 +117,7 @@ class DoiService implements PubDataFetchStrategy {
         result
     }
 
-    List<PersonTransportCommand> parseAuthorsFromRawText(final String rawText) {
+    private List<PersonTransportCommand> parseAuthorsFromRawText(final String rawText) {
         List<PersonTransportCommand> authors = new ArrayList<>()
         if (rawText) {
             String[] authorSet = rawText.trim().split(" and ")

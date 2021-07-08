@@ -19,10 +19,10 @@
         <p><g:message code="submission.biomodels.submit.publication.explanation"/></p>
     </div>
     <div class="columns small-12 medium-2 large-2">
-        <div class="text-center">
+        %{--<div class="text-center">
             <img src="${serverURL}/images/biomodels/loading.gif" id="loadingIcon" title="Fetching data..."
                  alt="Please wait..."/>
-        </div>
+        </div>--}%
     </div>
     <div class="columns small-12 medium-2 large-2">
         <h2 class="steps">Step 3 - 5</h2>
@@ -77,7 +77,7 @@
         clearErrorMessages();
         $.ajax({
             type: "POST",
-            url: "${createLink(controller: "publication", action:"doVerifyPubLinkAndFetchData")}",
+            url: "${createLink(controller: "publication", action:"verifyPubLinkAndFetchData")}",
             data: {
                 pubLinkProvider: pubLinkProvider,
                 pubLink: pubLink
@@ -85,7 +85,7 @@
             dataType: "json",
             async: false,
             beforeSend: function () {
-                $('#loadingIcon').show();
+                console.log("Before sending the request");
             },
             success: function (data) {
                 toastr.clear();
@@ -96,20 +96,25 @@
                     currentValidation = false;
                     showFlashMessages(errorMessages);
                 } else {
+                    let msg = data["message"];;
                     if (data.status === "OK") {
-                        toastr.success(data["message"]);
+                        toastr.success(msg);
                     } else {
-                        toastr.warning(data["message"]);
+                        toastr.warning(msg);
                     }
+                    showFlashMessages(msg);
                     if (data["comesFromDB"]) {
-                        toastr.warning("${g.message(code: "publication.editor.duplicateEntry.message")}");
+                        msg = "${g.message(code: "publication.editor.duplicateEntry.message")}";
+                        toastr.warning(msg);
+                        showFlashMessages(msg);
                     }
                     if (publication) {
                         reloadPublicationForm(publication);
                         currentValidation = true;
                     } else {
-                        let msg = "The publication details of  " + pubLinkProvider + ": " + pubLink + " cannot be found."
+                        msg = "The publication details of  " + pubLinkProvider + ": " + pubLink + " cannot be found."
                         showFlashMessages(msg);
+                        toastr.error(msg);
                         currentValidation = false;
                     }
                 }
@@ -125,6 +130,59 @@
                 showFlashMessages(errorMessages);
             },
             complete: function () {
+                console.log("Completed");
+            }
+        });
+    };
+
+    function verifyPublicationProviderAndLink(pubLinkProvider, pubLink) {
+        if (!pubLinkProvider || !pubLink) {
+            toastr.clear();
+            toastr.error("Either of publication provider or link is empty");
+            return;
+        }
+        clearErrorMessages();
+        $.ajax({
+            type: "POST",
+            url: "${createLink(controller: "publication", action:"doVerifyPublicationProviderAndLink")}",
+            data: {
+                pubLinkProvider: pubLinkProvider,
+                pubLink: pubLink
+            },
+            dataType: "json",
+            async: false,
+            beforeSend: function () {
+                $('#loadingIcon').show();
+                setTimeout(function(){ console.log("Please wait for 10s..."); }, 10000);
+            },
+            success: function (data) {
+                toastr.clear();
+                if (data.status === "Failed") {
+                    collectErrors(errorMessages, data["message"]);
+                    toastr.error(data["message"]);
+                    currentValidation = false;
+                    showFlashMessages(errorMessages);
+                } else {
+                    currentValidation = true;
+                    if (data.status === "OK") {
+                        toastr.success(data["message"]);
+                    } else {
+                        toastr.warning(data["message"]);
+                    }
+                }
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                let errMsg = JSON.parse(JSON.stringify(errorThrown));
+                console.log("inside error " + errMsg);
+                toastr.clear();
+                toastr.error(errMsg);
+                errorMessages.push(errMsg);
+                currentValidation = false;
+                showFlashMessages(errorMessages);
+            },
+            complete: function () {
+                $('#loadingIcon').css("display", "none");
+                console.log("just complete");
                 $('#loadingIcon').hide();
             }
         });
@@ -168,7 +226,7 @@
             currentValidation = true;
             return;
         } else {
-            verifyAndFetchPublicationDetails($('#pubLinkProvider').val(), $('#publicationLink').val());
+            verifyPublicationProviderAndLink($('#pubLinkProvider').val(), $('#publicationLink').val());
             if (!currentValidation) {
                 return;
             }
