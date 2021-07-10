@@ -500,4 +500,11 @@ class JummpTagLib {
         }
         out << result.toString()
     }
+
+    def detectCluster = { attrs ->
+        String serverURL = grailsApplication.config.grails.serverURL
+        URI uri = new URI(serverURL)
+        String domain = uri.getHost()
+        out << domain
+    }
 }
