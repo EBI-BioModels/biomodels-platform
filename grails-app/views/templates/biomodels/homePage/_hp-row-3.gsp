@@ -104,10 +104,10 @@
             </dt>
             <dd>
                 <a href="http://www.embl.org/">
-                    <img src="//www.ebi.ac.uk/compneur-srv/biomodels/GRAPHICS/EMBL_logo_lo_res_0.jpg"
+                    <img src="//www.ebi.ac.uk/biomodels-static/GRAPHICS/EMBL_logo_lo_res_0.jpg"
                          title="European Molecular Biology Laboratory (EMBL)" alt="EMBL logo" border="0"/></a>
                 <a href="http://www.bbsrc.ac.uk/" title="Biotechnology and Biological Sciences Research Council (BBSRC)">
-                    <img src="//www.ebi.ac.uk/compneur-srv/biomodels/GRAPHICS/bbsrc_logo.png"
+                    <img src="//www.ebi.ac.uk/biomodels-static/GRAPHICS/bbsrc_logo.png"
                          title="Biotechnology and Biological Sciences Research Council (BBSRC)" alt="BBSRC logo" /></a>
                 <a href="http://www.imi.europa.eu/" title="Innovative Medicines Initiative (IMI)">
                     <img src="//www.ebi.ac.uk/biomodels-static/GRAPHICS/IMI_logo-small.png"
