@@ -112,7 +112,7 @@
         <li class="functional first float-right opens-left" role="menuitem" id="menu-item-myaccount">
             <a>My Account</a>
             <ul class="dropdown menu" data-dropdown-menu style="width: 235px; max-width: 265px">
-                <li><a href="${grailsApplication.config.grails.serverURL}/user">
+                <li><a href='<g:createLink controller="usermanagement" action="show"/>'>
                     <span class="icon icon-common icon-user-circle">&nbsp;</span>${sec.username()}'s Profile</a></li>
                 <li class="divider"></li>
                 <li><a href="${g.createLink(controller: 'search', action: 'list')}">
@@ -144,7 +144,7 @@
 
                 <li class="divider"></li>
                 <li class="functional last float-right" role="menuitem">
-                    <a href="${grailsApplication.config.grails.serverURL}/logout">
+                    <a href='<g:createLink controller="logout" action="index"/>'>
                         <span class="icon icon-common icon-sign-out-alt">&nbsp;</span><g:message
                             code="jummp.main.logout"/>
                     </a>
@@ -154,9 +154,8 @@
     </sec:ifLoggedIn>
     <sec:ifNotLoggedIn>
         <li class="functional first float-right" role="menuitem">
-            <a href="${grailsApplication.config.grails.serverURL}/registration" class="icon icon-functional" data-icon="7">
-                <g:message code="jummp.main.register"/>
-            </a>
+            <a href='<g:createLink controller="usermanagement" action="create" />' class="icon icon-functional"
+               data-icon="7"><g:message code="jummp.main.register"/></a>
         </li>
         <li class="functional last float-right" role="menuitem">
             <a href="${grailsApplication.config.grails.serverURL}/login">
