@@ -276,6 +276,7 @@
                         errorMessages.push(msg);
                     } else {
                         modelFile = data.filter(e => e.isModelFile)[0];
+                        modelInfo = modelFile["detectedModelInfo"];
                         if (!modelFile) {
                             modelFileWithNoErrors = false;
                         } else {
