@@ -314,20 +314,22 @@
         $('#model_format').val(modelFile.detectedModelFormat.id).change();
         // Below are two pieces of information associated with the revision
         let readmeSubmission = modelFile.detectedModelFormat.readme;
-        if (!readmeSubmission) {
+        if (!readmeSubmission && isUpdate && typeof modelInfo.detectedModelFormat !== "undefined") {
             readmeSubmission = modelInfo.detectedModelFormat.readme;
         }
         $('#readme_submission').val(readmeSubmission);
 
         // Below are two extra info associated with the model
-        let modellingApproach = modelFile.detectedModelInfo.approach;
-        if (!modellingApproach) {
+        let modellingApproach = modelFile.detectedModelInfo.modellingApproach;
+        if (!modellingApproach && isUpdate && typeof modelInfo.detectedModelling !== "undefined") {
             modellingApproach = modelInfo.detectedModelling.approach;
         }
         $('#modelling_approach').val(modellingApproach);
 
-        let otherInfo = modelInfo.detectedModelling.otherInfo;
-        $('#other_info').val(otherInfo);
+        if (typeof modelInfo.detectedModelling !== "undefined") {
+            let otherInfo = modelInfo.detectedModelling.otherInfo;
+            $('#other_info').val(otherInfo);
+        }
 
         // below are two functions defined in addingModelInfo template
         handleShowOrHideModelFormatExtraInfo($('#model_format'));
