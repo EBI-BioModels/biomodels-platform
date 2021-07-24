@@ -33,6 +33,8 @@ package net.biomodels.jummp.core
 
 import grails.converters.JSON
 import grails.plugin.cache.Cacheable
+import groovy.time.TimeCategory
+import groovy.time.TimeDuration
 import groovy.transform.CompileStatic
 import groovy.transform.TypeChecked
 import groovy.transform.TypeCheckingMode
@@ -710,12 +712,31 @@ class SubmissionService {
 
         @TypeChecked(TypeCheckingMode.SKIP)
         Map detectModelInfo(final File modelFile, final String modelFormat) {
+            Date start = new Date()
             ModelFormat format = ModelFormat.findByIdentifierAndFormatVersion(modelFormat, "*")
-            String name = modelFileFormatService.extractName([modelFile], format)
-            String description = modelFileFormatService.extractDescription([modelFile], format)
-            ModellingApproach approach = modelFileFormatService.guessModellingApproachFromFiles(modelFile, modelFormat)
-            String modellingApproach = approach ? approach.name : ""
-            ["name": name, "description": description, "modellingApproach": modellingApproach]
+            def threads = []
+            String name = ""
+            def th1 = Thread.start {
+                name = modelFileFormatService.extractName([modelFile], format)
+            }
+            threads << th1
+            String description = ""
+            def th2 = Thread.start {
+                description = modelFileFormatService.extractDescription([modelFile], format)
+            }
+            threads << th2
+            String modellingApproach = ""
+            def th3 = Thread.start {
+                ModellingApproach approach = modelFileFormatService.guessModellingApproachFromFiles(modelFile, modelFormat)
+                modellingApproach = approach ? approach.name : ""
+            }
+            threads << th3
+            threads.each { it.join() }
+            Map info = ["name": name, "description": description, "modellingApproach": modellingApproach]
+            Date stop = new Date()
+            TimeDuration td = TimeCategory.minus(stop, start)
+            logger.debug("Detecting the model info ${info} of the model mail file ${modelFile.absolutePath} took $td")
+            return info
         }
 
         @TypeChecked(TypeCheckingMode.SKIP)
