@@ -399,8 +399,8 @@ the user has attempted to update an blank value for the name attribute.""")
     @Profiled(tag="SbmlService.extractDescription")
     String extractDescription(final List<File> model) {
         if (!model) {
-            def errMsg = new StringBuffer("Cannot extract the description from undefined file ${model.properties}")
-            log.warn errMsg.toString()
+            String errMsg = "Cannot extract the description from undefined file ${model.properties}"
+            log.warn(errMsg)
             return ""
         }
         def description = new StringBuffer()
@@ -432,14 +432,12 @@ the user has attempted to update an blank value for the name attribute.""")
                 }
             }
         } catch (JDOMException e) {
-            def errMsg = new StringBuffer("Exception encountered while extracting description from ${model.inspect()}")
-            errMsg.append(": ${e.message}")
-            log.error(errMsg.toString(), e)
+            String errMsg ="Exception encountered while extracting description from ${model.inspect()}: ${e.message}"
+            log.error(errMsg, e)
             return ""
         } catch (IOException e) {
-            def errMsg = new StringBuffer("IOException encountered while extracting description from ${model.inspect()}")
-            errMsg.append(": ${e.message}")
-            log.error(errMsg.toString(), e)
+            String errMsg = "IOException encountered while extracting description from ${model.inspect()}: ${e.message}"
+            log.error(errMsg, e)
             return ""
         }
         return description.toString()
