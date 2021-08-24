@@ -143,7 +143,7 @@ grails.project.dependency.resolution = {
 
         // DDMoRe Metadata Information Service uses jena 2.13
         compile("org.mbine.co:libCombineArchive:0.2.3") {
-            excludes 'junit', 'slf4j-api', 'slf4j-log4j12', 'slf4j-log4j12-impl', 'jmock-junit4', 'jena-core'
+            excludes 'junit', 'slf4j-api', 'slf4j-log4j12', 'slf4j-log4j12-impl', 'jmock-junit4', 'jena-core', 'icu4j'
         }
         compile "de.unirostock.sems:CombineExt:1.2.4"
         // need to add this as an explicit dependency to configure exclusions
@@ -155,8 +155,9 @@ grails.project.dependency.resolution = {
             excludes 'slf4j-log4j12', 'slf4j-log4j12-impl'
         }
         compile("org.apache.jena:jena-core:2.13.0") {
-            excludes 'slf4j-log4j12'
+            excludes 'slf4j-log4j12', 'icu4j'
         }
+        compile "com.ibm.icu:icu4j:4.8.1"
         compile ("eu.ddmore.metadata:lib-metadata:1.5.2-SNAPSHOT") {
             excludes 'spring-context','spring-core','spring-test', 'jena', 'slf4j-log4j12'
         }

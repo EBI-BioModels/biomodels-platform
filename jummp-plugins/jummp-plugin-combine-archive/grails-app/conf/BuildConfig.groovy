@@ -62,7 +62,7 @@ grails.project.dependency.resolution = {
     }
     dependencies {
         compile("org.mbine.co:libCombineArchive:0.2.3") {
-            excludes 'junit', 'slf4j-api', 'slf4j-log4j12', 'slf4j-log4j12-impl', 'jmock-junit4', 'jena-core'
+            excludes 'junit', 'slf4j-api', 'slf4j-log4j12', 'slf4j-log4j12-impl', 'jmock-junit4', 'jena-core', 'icu4j'
         }
         compile "de.unirostock.sems:CombineExt:1.2.4"
 
