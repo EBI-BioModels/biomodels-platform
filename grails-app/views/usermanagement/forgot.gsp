@@ -47,8 +47,9 @@
             <p><g:message code="user.forgot.ui.explanation"/></p>
             <g:form name="passwordForm" action="requestPassword" useToken="true">
                 <div class="row column request-reset-password-form">
-                    <label class="required"><g:message code="user.forgot.ui.username"/></label>
-                    <g:textField name="username" placeholder="Enter your username"/>
+                    <label class="required"><g:message code="user.forgot.ui.username"/> or <g:message
+                        code="user.forgot.ui.email"/></label>
+                    <g:textField name="username" placeholder="Enter your username or email"/>
                     <input type="submit" class="button" value="Submit"/>
                 </div>
             </g:form>

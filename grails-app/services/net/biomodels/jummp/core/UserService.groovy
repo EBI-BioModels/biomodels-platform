@@ -217,14 +217,17 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
      */
     @PreAuthorize("isAnonymous() or isAuthenticated()")
     User lookupUser(String query, int column) {
-        if (column == 1) {
-            return User.findByUsername(query)
-        } else if (column == 2) {
-            return User.findByEmail(query)
+        User user = null
+        if (column == 1 || column == 2) {
+            user = User.findByUsername(query)
+            if (!user) {
+                user = User.findByEmail(query)
+            }
+            return user
         } else {
             // column == 3 --> search Person by ORCID identifier
             Person person = Person.findByOrcid(query)
-            User user = User.findByPerson(person)
+            user = User.findByPerson(person)
             return user
         }
     }
@@ -532,11 +535,12 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="userService.requestPassword")
     @PreAuthorize("isAnonymous()")
-    void requestPassword(String username)
+    void requestPassword(String usernameOrEmail)
         throws UserNotFoundException, AuthenticationFailedException, MailAuthenticationException  {
-        User user = User.findByUsername(username)
+        // the second param of the following call is useless
+        User user = lookupUser(usernameOrEmail, 1)
         if (!user) {
-            throw new UserNotFoundException(username)
+            throw new UserNotFoundException(usernameOrEmail)
             return
         }
         String passwordCode = String.valueOf(random.nextInt()) + user.username

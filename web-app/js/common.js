@@ -100,9 +100,9 @@ $('#registerForm input').on("change input", function() {
     hideNow();
 });
 $('input[id=username]').blur(function() {
-    var username = $(this).val().trim();
+    let username = $(this).val().trim();
     if (username !== currentUsername) {
-        var message = "";
+        let message = "";
         $.ajax({
             dataType: "json",
             cache: false,
@@ -122,6 +122,7 @@ $('input[id=username]').blur(function() {
                 // When an anonymous user is trying to open a new account and username doesn't exist
                 // or to login the system, don't show the warning message
                 if (("create" === actionName && username === "") ||
+                    ("forgot" === actionName && username !== "") ||
                     ("auth" === actionName && username !== "")) {
                     hideNow();
                 } else {
