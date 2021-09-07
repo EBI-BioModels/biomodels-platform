@@ -27,7 +27,7 @@ import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import net.biomodels.jummp.core.model.ValidationState
 import net.biomodels.jummp.model.ModelFormat
-import net.biomodels.jummp.utils.ModelSubmissionHelper
+import net.biomodels.jummp.utils.ModelSubmissionHelper as MSH
 import net.biomodels.jummp.utils.RunScriptHelper
 import net.biomodels.jummp.utils.redis.Operations
 import org.apache.camel.CamelContext
@@ -46,14 +46,14 @@ class ConcurrentModelSubmitter {
     def ctx
 
     CamelContext camelContext
-    ModelSubmissionHelper helper
+    MSH helper
     static final String adminUsername = System.getenv("ADMIN_USER")
     // auth token for admin account; used by worker threads to publish models
     static final Authentication adminAuth = RunScriptHelper.createTokenForUser(adminUsername)
 
     void init() {
         camelContext = ctx.getBean('camelContext', CamelContext)
-        helper = new ModelSubmissionHelper(ctx: ctx, camelContext: camelContext)
+        helper = new MSH(ctx: ctx, camelContext: camelContext)
     }
 
     void runBatchSubmission() {
@@ -96,7 +96,7 @@ class ConcurrentModelSubmitter {
         String tmpDir = System.getProperty("java.io.tmpdir")
         File location = new File(tmpDir)
         for (int i = 1; i <= 10; i++) {
-            File mainFile = createSimpleMatlabModel("MODEL$i", location)
+            File mainFile = MSH.createSimpleMatlabModel("MODEL$i", location)
             String desc = "This is a sample Matlab model $i"
             RFTC mainRFTC = ModelSubmissionHelper.createRepoFile(mainFile, true, desc)
             ModelFormat fmt = ModelFormat.findByIdentifierAndName("matlab", "MATLAB (Octave)")
@@ -125,41 +125,6 @@ class ConcurrentModelSubmitter {
             submissionId = ctx.modelService.submissionIdGenerator.generate()
         }
         println "The new model identifier is $submissionId"*/
-    }
-
-    private File createSimpleMatlabModel(final String filename, final File location) {
-        String content = """
-%% String Manipulations with Arrays
-% *back to* <https://fanwangecon.github.io *Fan*>*'s* <https://fanwangecon.github.io/Math4Econ/
-% *Intro Math for Econ*>*,*  <https://fanwangecon.github.io/M4Econ/ *Matlab Examples*>*,
-% or* <https://fanwangecon.github.io/CodeDynaAsset/ *Dynamic Asset*> *Repositories*
-%% String Array
-% Three title lines, with double quotes:
-
-ar_st_titles = ["Title1","Title2","Title3"]';
-disp(ar_st_titles);
-%%
-% Three words, joined together, now single quotes, this creates one string,
-% rather than a string array:
-
-st_titles = ['Title1','Title2','Title3'];
-disp(st_titles);
-%% String Cell Array
-% Create a string array:
-
-ar_st_title_one = {'Title One Line'};
-ar_st_titles = {'Title1','Title2','Title3'};
-disp(ar_st_title_one);
-disp(ar_st_titles);
-%%
-% Add to a string array:
-
-ar_st_titles{4} = 'Title4';
-disp(ar_st_titles);
-"""
-        File tempFile = File.createTempFile(filename, ".m", location)
-        tempFile.write(content)
-        return tempFile
     }
 
     void startBatchSubmissionWithTrigger() {
