@@ -98,7 +98,7 @@ class ConcurrentModelSubmitter {
         for (int i = 1; i <= 10; i++) {
             File mainFile = MSH.createSimpleMatlabModel("MODEL$i", location)
             String desc = "This is a sample Matlab model $i"
-            RFTC mainRFTC = ModelSubmissionHelper.createRepoFile(mainFile, true, desc)
+            RFTC mainRFTC = MSH.createRepoFile(mainFile, true, desc)
             ModelFormat fmt = ModelFormat.findByIdentifierAndName("matlab", "MATLAB (Octave)")
             MFTC fmtCmd = new MFTC(identifier: "matlab", name: "MATLAB (Octave)", formatVersion: fmt.formatVersion)
             boolean isValid = true

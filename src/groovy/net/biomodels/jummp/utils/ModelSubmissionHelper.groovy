@@ -1,27 +1,39 @@
 package net.biomodels.jummp.utils
 
-import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
+import groovy.io.FileType
+import groovy.transform.CompileDynamic
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RepoFTC
 import org.apache.camel.CamelContext
 import org.apache.camel.component.seda.SedaConsumer
-import org.codehaus.groovy.grails.support.PersistenceContextInterceptor
+import org.codehaus.groovy.grails.support.PersistenceContextInterceptor as PCI
 import org.hibernate.SessionFactory
 import org.springframework.context.ApplicationContext
 import org.springframework.orm.hibernate4.SessionHolder
-import org.springframework.transaction.support.TransactionSynchronizationManager
+import org.springframework.transaction.support.TransactionSynchronizationManager as TxnSyncMnger
+import grails.plugin.springsecurity.SpringSecurityUtils
+
+import net.biomodels.jummp.model.Model
+import net.biomodels.jummp.model.Revision
+import net.biomodels.jummp.model.ModelFormat
+import net.biomodels.jummp.model.ModellingApproach
+import net.biomodels.jummp.model.RepositoryFile
+import net.biomodels.jummp.model.Revision
+
+import java.util.regex.Pattern
 
 class ModelSubmissionHelper {
     static ApplicationContext ctx
     private CamelContext camelContext
 
-    static RepositoryFileTransportCommand createRepoFile(final File file, final boolean isMainFile, final String
-        description) {
-        new RepositoryFileTransportCommand(path: file.absolutePath, mainFile: isMainFile,
+    RepoFTC createRepoFile(final File file, final boolean isMainFile,
+                                  final String description) {
+        new RepoFTC(path: file.absolutePath, mainFile: isMainFile,
             userSubmitted: true, hidden: false, description: description)
     }
 
     static SessionHolder getCurrentSession() {
         SessionFactory factory = ctx.getBean "sessionFactory", SessionFactory
-        TransactionSynchronizationManager.getResource(factory) as SessionHolder
+        TxnSyncMnger.getResource(factory) as SessionHolder
     }
 
     /**
@@ -32,7 +44,7 @@ class ModelSubmissionHelper {
      */
     Object doInSession(Closure callback) {
         // set up a Hibernate session
-        PersistenceContextInterceptor persistenceInterceptor = ctx.getBean "persistenceInterceptor", PersistenceContextInterceptor
+        PCI persistenceInterceptor = ctx.getBean "persistenceInterceptor", PCI
         SessionHolder session = null
         try {
             persistenceInterceptor?.init()
@@ -96,31 +108,4 @@ disp(ar_st_titles);
         return tempFile
     }
 
-    @CompileDynamic
-    void processFolderOfSubmissions(File root, Pattern modelFolderPattern) {
-        root.eachFileRecurse(FileType.DIRECTORIES) { File dir ->
-            final String dirName = dir.name
-            if (dirName ==~ modelFolderPattern) {
-                doSubmissionDetected dir
-            }
-        }
-
-
-        /*File modelFile = null
-        // the main file is the SBML (.xml extension)
-        // additionals should only contain <category_name>.zip -- the OMEX with the missing models
-        List<File> additionals = []
-        File[] model_dirs = models_location.listFiles()
-        model_dirs = model_dirs.findAll {
-            !it.name.startsWith(".")
-        }
-        for (File child : model_dirs) {
-            println "Building the model files of the model ${child.name}"
-//            if (child.name.endsWith('.xml')) {
-//                modelFile = child
-//            } else {
-//                additionals << child
-//            }
-        }*/
-    }
 }
