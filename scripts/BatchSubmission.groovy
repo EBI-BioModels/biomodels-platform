@@ -1,0 +1,548 @@
+/**
+ * Copyright (C) 2010-2021 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Deutsches Krebsforschungszentrum (DKFZ)
+ *
+ * This file is part of Jummp.
+ *
+ * Jummp is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation; either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along
+ * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
+ */
+
+import grails.plugin.springsecurity.SpringSecurityUtils
+import grails.plugin.springsecurity.acl.AclUtilService
+import groovy.io.FileType
+import groovy.transform.CompileDynamic
+import groovy.transform.CompileStatic
+import groovyx.gpars.GParsPool
+import net.biomodels.jummp.core.JummpException
+import net.biomodels.jummp.core.ModelException
+import net.biomodels.jummp.core.model.CurationState
+import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
+import net.biomodels.jummp.core.model.ModelTransportCommand
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
+import net.biomodels.jummp.core.model.ValidationState
+import net.biomodels.jummp.model.Model
+import net.biomodels.jummp.model.Revision
+import net.biomodels.jummp.model.ModelFormat
+import net.biomodels.jummp.model.ModellingApproach
+import net.biomodels.jummp.model.RepositoryFile
+import net.biomodels.jummp.model.Revision
+import net.biomodels.jummp.utils.ModelSubmissionHelper as MSH
+import net.biomodels.jummp.utils.RunScriptHelper
+import net.biomodels.jummp.utils.redis.Operations
+import org.apache.camel.CamelContext
+import org.springframework.security.core.Authentication
+import net.biomodels.jummp.plugins.security.User
+import org.springframework.orm.hibernate4.SessionHolder
+import net.biomodels.jummp.core.*
+import org.codehaus.groovy.grails.support.PersistenceContextInterceptor as PCI
+
+
+import java.time.Duration
+import java.time.Instant
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.regex.Pattern
+
+/**
+ * Simple holder for variables defined in this script that are accessed by different methods.
+ */
+@CompileStatic
+class CuratedUpdateSupport {
+    static final String MODEL_ID_LIKE_QUERY_PATTERN = "BIOMD000000%"
+
+    static final String adminUsername = System.getenv("ADMIN_USER")
+    // the current session
+    static final SessionHolder session = null
+    static final String constraintBasedModel = "http://identifiers.org/mamo/MAMO_0000009"
+    static final ModellingApproach modellingApproach = lookupModellingApproach()
+
+    /**
+     * Returns the User account owning the models to be updated.
+     *
+     * All models were submitted by the same account, and we guard this assumption with a runtime (fatal) exception.
+     *
+     * @return the User account that should be used to update these models.
+     */
+    @CompileDynamic
+    static User getSubmitterAccount(String publicationId) {
+        // we deliberately call get() because we expect a single result; getting > 1 results would be an error which
+        // would be propagated upstream to the callees of this method.
+        User owner = Revision.createCriteria().get {
+            projections {
+                distinct "owner"
+            }
+            model {
+                like "publicationId", publicationId
+            }
+        } as User
+        owner
+    }
+
+    @CompileDynamic
+    private static ModellingApproach lookupModellingApproach() {
+        ModellingApproach.findByResource(constraintBasedModel)
+    }
+}
+
+/**
+ * Model-centric log holder.
+ *
+ * Printing to System.out in a multi-threaded environment introduces unnecessary blocking and also
+ * makes the order in which the statements are printed unpredictable.
+ *
+ * This class addresses both issues: all log messages pertaining to a particular model are queued, so
+ * the order is preserved. Also, because we process each model in a dedicated thread, there's no need
+ * to block.
+ * See also the printModelLog() method.
+ */
+@CompileStatic
+class ModelLogger {
+    /**
+     * Log for model-related messages.
+     *
+     * Keys represent model identifiers. Values represent pairs of ordered sets of messages
+     * corresponding to the error log and the info log respectively.
+     *
+     * Since all messages relating to a model will be inserted by the same thread, there is no
+     * need to use locks.
+     */
+    static ConcurrentHashMap<String, ModelLogger> messageLog = new ConcurrentHashMap<>()
+    /**
+     * The error log for this model
+     */
+    Set err
+    /**
+     * The message log for this model
+     */
+    Set out
+
+    void logMsg(def msg) {
+        out << msg
+    }
+
+    void errMsg(def msg) {
+        err << msg
+    }
+
+    String toString() {
+        "out: $out, err: $err"
+    }
+}
+
+/**
+ * Submits multiple models concurrently to test model identifier generators
+ * in the context of multiple instance deployment
+ *
+ * @author <a href="mailto:nvntung@gmail.com">Tung Nguyen</a> on 04/06/20.
+ */
+class BatchSubmissionMainClass {
+    def ctx
+
+    CamelContext camelContext
+    MSH mshelper
+    static final String adminUsername = "administrator"// System.getenv("ADMIN_USER")
+    static final String MODELS_DIR = System.getenv("MODELS_DIR")
+    // auth token for admin account; used by worker threads to publish models
+    static final Authentication adminAuth = RunScriptHelper.createTokenForUser(adminUsername)
+
+    static final AtomicInteger processedCount = new AtomicInteger()
+    static final AtomicInteger failureCount = new AtomicInteger()
+
+    void init() {
+        camelContext = ctx.getBean('camelContext', CamelContext)
+        mshelper = new MSH(ctx: ctx, camelContext: camelContext)
+    }
+
+    static void addModelMsg(String model, def msg) {
+        def logger = getOrCreateModelLogger model
+        logger.logMsg msg
+    }
+
+    static void addModelError(String model, def msg) {
+        failureCount.incrementAndGet()
+        def logger = getOrCreateModelLogger model
+        logger.errMsg msg
+    }
+
+    static ModelLogger getOrCreateModelLogger(String model) {
+        ModelLogger.messageLog.putIfAbsent(model,
+            new ModelLogger(err: new LinkedHashSet(), out: new LinkedHashSet()))
+        ModelLogger.messageLog[model]
+    }
+
+    static void printModelLog() {
+        ModelLogger.messageLog.keySet().sort().each { String modelId ->
+            ModelLogger logger = ModelLogger.messageLog[modelId]
+            Set infoMessages = logger.out
+            for (m in infoMessages) println("$modelId: $m")
+        }
+        if (failureCount.get() > 0) {
+            println("Failed to import the following models:")
+            ModelLogger.messageLog.keySet().sort().each { String modelId ->
+                ModelLogger logger = ModelLogger.messageLog[modelId]
+                Set errorMessages = logger.err
+                for (m in errorMessages) System.err.println("$modelId: $m")
+            }
+        }
+    }
+
+
+    static boolean markSessionAsRollbackOnly(SessionHolder session) {
+        assert session: "Hibernate Session not available. Was persistenceInterceptor.init() called?"
+        session.setRollbackOnly()
+        session.isRollbackOnly()
+    }
+
+    /**
+     * Marks the current Hibernate session as rollback only and atomically deletes all entities associated with a revision.
+     *
+     * <p>To be used as the preferred rollback mechanism in code invoked after the new model revision has been created and
+     * persisted into the database via {@code modelService.addRevision( )}, assuming the insertion has been successful.</p>
+     *
+     * @param revision the revision which should be deleted
+     * @see UhlenModelUpdater#undoRevisionInsertion(net.biomodels.jummp.model.Revision)
+     * @see UhlenModelUpdater#markSessionAsRollbackOnly(org.springframework.orm.hibernate4.SessionHolder)
+     */
+    void rollBackSessionAndRevision(Revision revision, SessionHolder session) {
+        markSessionAsRollbackOnly(session)
+        undoRevisionInsertion(revision)
+    }
+
+    /**
+     * Supports to partition the model main and additional files
+     *
+     * @param folder    A File object representing the model folder
+     * @return          A map of the main and additional files
+     */
+    static Map<String, Object> partitionMainAndAdditionalFiles(File folder) {
+        File modelFile = null
+        // the main file is the SBML (.xml extension)
+        // additionals should only contain <category_name>.zip -- the OMEX with the missing models
+        List<File> additionals = []
+        for (File child : folder.listFiles()) {
+            if (child.name.endsWith('.xml')) {
+                modelFile = child
+            } else {
+                additionals << child
+            }
+        }
+        [main: modelFile, additionals: additionals]
+    }
+
+    @SuppressWarnings("GrMethodMayBeStatic")
+    @CompileDynamic
+    ModelFormat fetchModelFormat(MFTC cmd) {
+        ModelFormat.findByIdentifierAndFormatVersion(cmd.identifier, cmd.formatVersion)
+    }
+
+    Map<String, Object> createRepoFiles(File folder) {
+        def partitionedFiles = partitionMainAndAdditionalFiles(folder)
+        File modelFile = partitionedFiles.main as File
+        List<File> additionals = partitionedFiles.additionals as List<File>
+        final String modelId = folder.name
+        assert modelFile: "No main file found in submission folder $modelId"
+
+        RFTC mainFileRFTC = mshelper.createRepoFile(modelFile, true, "Model main file")
+        List<RFTC> otherRepoFiles = additionals.collect { f ->
+            mshelper.createRepoFile(f, false, "Additional files")
+        }
+
+        [main: mainFileRFTC, additionals: otherRepoFiles]
+    }
+
+    Map<String, Object> createRevisionTCForModelFolder(String id, File folder, Model model) {
+        Map<String, Object> repoFileMap = createRepoFiles(folder)
+        RFTC modelFile = repoFileMap.main as RFTC
+        List<RFTC> additionals = repoFileMap.additionals as List<RFTC>
+        def mainFiles = [new File(modelFile.path as String)]
+
+        ModelFileFormatService modelFileFormatService = ctx.getBean("modelFileFormatService")
+        MFTC fmtCmd = modelFileFormatService.inferModelFormat([modelFile])
+        ModelFormat fmt = fetchModelFormat(fmtCmd)
+        List errors = []
+        boolean isValid = modelFileFormatService.validate(mainFiles, fmt.identifier, errors)
+        if (!isValid) {
+            addModelError(id, "Model failed validation: $errors")
+            return null
+        }
+
+        String modelName = modelFileFormatService.extractName(mainFiles, fmt)
+        String modelDesc = modelFileFormatService.extractDescription(mainFiles, fmt)
+
+        ModelTransportCommand modelCmd = new ModelTransportCommand(deleted: false)
+        if (model) {
+            modelCmd.submissionId = model.submissionId
+        }
+        addModelMsg id, "fake mtc created"
+        // avoid calling new ModelAdapter(model: model).toCommandObject(false) because, for
+        // reasons not entirely understood yet, modelService.getSpringDatabaseRoles() returns an empty set
+        // which causes the query in getLatestRevision() to throw a BadSqlGrammarException. This is because
+        // we cannot use empty collections with the 'in' operator in HQL.
+        // new ModelAdapter(model: model).toCommandObject(false)
+        // addModelMsg id, "real mtc created"
+
+        def repoFileCommands = [modelFile] + additionals
+        // GitManager needs filesToDelete and repoFileCommands to not have any overlapping files.
+        def filesToDelete = []
+        def revisionCmd = new RTC(files: repoFileCommands, format: fmtCmd, validated: isValid,
+            name: modelName, description: modelDesc, validationLevel: ValidationState.APPROVED,
+            curationState: CurationState.NON_CURATED, minorRevision: false, context: ctx,
+            comment: "Import of '$modelName'.", model: modelCmd)
+
+        [revision: revisionCmd, toAdd: repoFileCommands, toDelete: filesToDelete]
+    }
+
+    /**
+     * Makes a given revision readable to anyone.
+     */
+    void publish(Revision r, String owner) {
+        SpringSecurityUtils.doWithAuth(owner) {
+            AclUtilService aclUtilService = ctx.getBean "aclUtilService", AclUtilService
+            aclUtilService.addPermission(r, "ROLE_USER", BasePermission.READ)
+            aclUtilService.addPermission(r, "ROLE_ANONYMOUS", BasePermission.READ)
+            r.state = ModelState.PUBLISHED
+            if (!r.save()) {
+                def err = r.errors.allErrors
+                assert markSessionAsRollbackOnly(getCurrentSession()): "Publishing $r failed ($err), but we could not roll back the session"
+                throw new IllegalStateException("Cannot publish revision ${r.id}: $err")
+            }
+        }
+    }
+
+    Revision doInsertNewRevision(String modelId, File modelFolder, Model model) {
+        println "doInsertNewRevision"
+        Map<String, Object> revisionData = createRevisionTCForModelFolder(modelId, modelFolder, model)
+        if (!revisionData) { // something went wrong, the error has already been logged
+            println "revisionData is null"
+            return null
+        }
+        RTC revisionCmd = revisionData.revision as RTC
+        List<RFTC> filesToAdd = revisionData.toAdd as List<RFTC>
+        List<RFTC> filesToDelete = revisionData.toDelete as List<RFTC>
+        Revision newRevision = null
+        ModelService modelService = ctx.getBean "modelService", ModelService
+        try {
+            //modelService.addModellingApproachAsAnnotation(revisionCmd, UhlenScriptSupport.modellingApproach)
+            //addModelMsg(modelId, "Assigned modelling approach")
+            if (model) {
+                newRevision = modelService.addRevision(filesToAdd, filesToDelete, revisionCmd)
+            } else {
+                model = modelService.uploadValidatedModel(filesToAdd, revisionCmd)
+                newRevision = model.revisions.first()
+            }
+        } catch (ModelException e) {
+            assert markSessionAsRollbackOnly(MHS.getCurrentSession()): "Adding revision ${revisionCmd.properties} " +
+                "failed but could not roll back"
+            addModelError(modelId, "ModelException thrown when inserting the new revision: $e.message")
+        }
+        newRevision
+    }
+
+    /**
+     * Support method for handleModelFolder()
+     */
+    private void doHandleModelFolder(SessionHolder session, File submissionFolder, Model model, String owner) {
+//        assert submissionFolder?.isDirectory(): "'$submissionFolder' is not a model folder that exists"
+//        processedCount.incrementAndGet()
+        String id = submissionFolder.name
+        println "Model '$id' should have already been imported but isn't."
+        Revision newRevision = doInsertNewRevision(id, submissionFolder, model)
+        addModelMsg id, "inserted revision $newRevision"
+        if (!newRevision || newRevision?.hasErrors()) {
+            addModelError(id, "Model update failed: ${newRevision?.errors?.allErrors}")
+            println("Model $id update failed: ${newRevision?.errors?.allErrors}")
+            assert markSessionAsRollbackOnly(session): """No new revision could be inserted and we failed to roll back the current session"""
+        } else {
+            println "trying to get the first revision"
+            Revision.withTransaction { status ->
+                try {
+                    // the session of this transaction is empty; attach the new revision to it
+                    newRevision = Revision.get(newRevision.id)
+                    publish newRevision, owner
+                    //int deleteCount = markNonRepresentativeModelsAsDeleted(id)
+                    //addModelMsg(id, "Archived $deleteCount non-representative models.")
+                } catch (JummpException e) {
+                    addModelError(id, e.message)
+                    println(e.message)
+                    rollBackSessionAndRevision newRevision, session
+                }
+            }
+        }
+    }
+
+    /**
+     * Updates the model, adds the modelling approach, publishes its latest version and
+     * deletes the non-representative models for the model's category.
+     */
+    void handleModelFolder(File modelFolder, Model model, String owner) {
+        mshelper.doInSession { SessionHolder s ->
+            doHandleModelFolder(s, modelFolder, model, owner)
+        }
+    }
+
+    private void doSubmissionDetected(File root) {
+        final String rootName = root.name
+        String ownerUsername = CuratedUpdateSupport.getSubmitterAccount(rootName)
+        if (!ownerUsername) {
+            println("Cannot find the owner of the model $rootName. Using the administrator account instead")
+            ownerUsername = "administrator"
+        }
+        ModelService modelService = ctx.getBean "modelService", ModelService
+        Model model = modelService.findByPerennialIdentifier(rootName)
+        boolean isUpdated = true
+        if (!model) {
+            println("""Model '${rootName}' does not exist. The model is about depositing in BioModels under the \
+account '${ownerUsername}'.""")
+            isUpdated = false
+        }
+
+        SpringSecurityUtils.doWithAuth(ownerUsername) {
+            try {
+
+                handleModelFolder(root, model, ownerUsername)
+                println("handled the model $rootName")
+            } catch (IllegalStateException ise) {
+                addModelError(rootName, ise.message)
+            } catch (AssertionError e) {
+                addModelError rootName, e.toString()
+            } catch (Exception e) {
+                addModelError(rootName, "oops: $rootName -- $e")
+                e.printStackTrace()
+            }
+        }
+    }
+
+    @CompileDynamic
+    void processFolderOfSubmissions(File root, Pattern modelFolderPattern) {
+        root.eachFileRecurse(FileType.DIRECTORIES) { File dir ->
+            final String dirName = dir.name
+            if (dirName ==~ modelFolderPattern) {
+                doSubmissionDetected dir
+            }
+        }
+    }
+
+    void runBatchSubmission() {
+        println "Started the job: ${new Date().format("dd/MM/yyyy HH:mm:ss")}"
+
+        init()
+        String duration
+        Instant startTime = Instant.now()
+        ctx.persistenceInterceptor?.init()
+
+        try {
+            def modelFolderPattern = ~/^BIOMD\d{10}$/
+            File base = new File(MODELS_DIR)
+
+            processFolderOfSubmissions(base, modelFolderPattern)
+            //helper.awaitCompletionOfIndexingJobs()
+        } catch (Exception e) {
+            System.err.println("Generic exception encountered while importing the models: $e")
+        } finally {
+            ctx.persistenceInterceptor?.destroy()
+            duration = Duration.between(startTime, Instant.now())
+            String formattedDuration = duration.toString()
+            println "Submission lasting in $formattedDuration"
+        }
+
+        /*try {
+            Map revisions = buildDataSubmission()
+            final int POOL_SIZE = 8
+            GParsPool.withPool(POOL_SIZE) {
+                revisions.eachParallel { RTC cmd, List files ->
+                    RunScriptHelper.simpleRunAs(adminAuth, {
+                        ctx.persistenceInterceptor?.init()
+                        try {
+                            submitModel(files, cmd)
+                        } catch (Exception e) {
+                            String message = """Cannot submit the models due to ${e.message}"""
+                            println(message)
+                            e.printStackTrace()
+                        } finally {
+                            ctx.persistenceInterceptor?.destroy()
+                        }
+                    })
+                }
+            }
+        } finally {
+            ctx.persistenceInterceptor?.destroy()
+            duration = Duration.between(startTime, Instant.now())
+            String formattedDuration = duration.toString()
+            println "Submission lasting in $formattedDuration"
+        }*/
+        println "Completed the job: ${new Date().format("dd/MM/yyyy HH:mm:ss")}"
+    }
+
+    Map buildDataSubmission() {
+        Map data = [:]
+        String tmpDir = System.getProperty("java.io.tmpdir")
+        File location = new File(tmpDir)
+
+        for (int i = 1; i <= 10; i++) {
+            File mainFile = MSH.createSimpleMatlabModel("MODEL$i", location)
+            String desc = "This is a sample Matlab model $i"
+            RFTC mainRFTC = mshelper.createRepoFile(mainFile, true, desc)
+            ModelFormat fmt = ModelFormat.findByIdentifierAndName("matlab", "MATLAB (Octave)")
+            MFTC fmtCmd = new MFTC(identifier: "matlab", name: "MATLAB (Octave)", formatVersion: fmt.formatVersion)
+            boolean isValid = true
+            String modelName = "This is a sample Matlab model $i"
+            String modelDesc = "This model simulates how to submit multiple models to BioModels concurrently"
+            ModelTransportCommand modelCmd = new ModelTransportCommand(deleted: false)
+            RTC command = new RTC(files: [mainRFTC], format: fmtCmd, context: ctx,
+                validated: isValid, name: modelName, description: modelDesc, uploadDate: new Date(),
+                validationLevel: ValidationState.APPROVED,
+                curationState: CurationState.NON_CURATED, minorRevision: false,
+                comment: "Push the first commit of '$modelName'.", model: modelCmd)
+            data.put(command, [mainRFTC] as List)
+        }
+        return data
+    }
+
+    void submitModel(final List files, final RTC revision) {
+        println """Submitting the model revision ${revision.dump()} with the repository files ${files.dump()} with the submission id: ${revision.model.submissionId}"""
+        //ctx.modelService.uploadValidatedModel(files, revision)
+        //helper.awaitCompletionOfIndexingJobs()
+        /*String submissionId = ""
+        synchronized (this) {
+            submissionId = ctx.modelService.submissionIdGenerator.generate()
+        }
+        println "The new model identifier is $submissionId"*/
+    }
+
+    void startBatchSubmissionWithTrigger() {
+        Boolean running = false
+        while (!running) {
+            // sleep for 1 second
+            println("Waiting 1 second...")
+            Thread.sleep(1000)
+            running = Operations.doRedisGet("run-batch-submission").toBoolean()
+        }
+        // ready to go
+        runBatchSubmission()
+//        Operations.doRedisSet("run-batch-submission", "false")
+    }
+}
+/**
+ * Steps to enable the trigger
+ * 1. Run this script on different terminals to simulate BioModels' multiple concurrent running instances
+ * ./grailsw run-script scripts/BatchSubmission.groovy >> logs/run-script-batch-submission`date +%F`.log
+ *
+ * 2. When the lines 'Waiting 1 second...' begin appearing in the log file, it's time to make a bang by running the
+ * following from Redis CLI
+ * SET run-batch-submission true
+ *
+ * 3. Take your coffee and watch the log file
+ */
+new BatchSubmissionMainClass(ctx: ctx).startBatchSubmissionWithTrigger()
