@@ -325,7 +325,6 @@ class BatchSubmissionMainClass {
         println "doInsertNewRevision"
         Map<String, Object> revisionData = createRevisionTCForModelFolder(modelId, modelFolder, model)
         if (!revisionData) { // something went wrong, the error has already been logged
-            println "revisionData is null"
             return null
         }
         RTC revisionCmd = revisionData.revision as RTC
@@ -375,7 +374,6 @@ class BatchSubmissionMainClass {
                     //addModelMsg(id, "Archived $deleteCount non-representative models.")
                 } catch (JummpException e) {
                     addModelError(id, e.message)
-                    println(e.message)
                     rollBackSessionAndRevision newRevision, session
                 }
             }
@@ -455,6 +453,7 @@ account '${ownerUsername}'.""")
             duration = Duration.between(startTime, Instant.now())
             String formattedDuration = duration.toString()
             println "Submission lasting in $formattedDuration"
+            printModelLog()
         }
 
         /*try {
