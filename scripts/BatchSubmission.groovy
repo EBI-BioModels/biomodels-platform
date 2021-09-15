@@ -29,6 +29,7 @@ import net.biomodels.jummp.core.ModelException
 import net.biomodels.jummp.core.model.CurationState
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
 import net.biomodels.jummp.core.model.ModelTransportCommand
+import net.biomodels.jummp.core.model.RepositoryFileService
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import net.biomodels.jummp.core.model.ValidationState
@@ -247,23 +248,46 @@ class BatchSubmissionMainClass {
         ModelFormat.findByIdentifierAndFormatVersion(cmd.identifier, cmd.formatVersion)
     }
 
-    Map<String, Object> createRepoFiles(File folder) {
+    Map<String, Object> createRepoFiles(File folder, Model model) {
+        List<RFTC> repoFilesTC = null
+        Map<String, String> repoFilesMap = new HashMap<String, String>()
+        if (model) {
+            // it means we must reuse the description of their existing files
+            //1. Get the latest revision
+            ModelService modelService = ctx.getBean("modelService")
+            Revision revision = modelService.getLatestRevision(model, false)
+
+            RepositoryFileService rfService = ctx.getBean("repositoryFileService")
+            repoFilesTC = rfService.getRepositoryFilesForRevision(revision)
+            //2. Get the list of repository files of that revision
+            for (RFTC o : repoFilesTC) {
+                repoFilesMap.put(o.filename, o.description)
+            }
+        }
         def partitionedFiles = partitionMainAndAdditionalFiles(folder)
         File modelFile = partitionedFiles.main as File
         List<File> additionals = partitionedFiles.additionals as List<File>
         final String modelId = folder.name
         assert modelFile: "No main file found in submission folder $modelId"
 
-        RFTC mainFileRFTC = mshelper.createRepoFile(modelFile, true, "Model main file")
+        String description = "Model main file"
+        if (repoFilesMap.containsKey(modelFile.name)) {
+            description = repoFilesMap.get(modelFile.name)
+        }
+        RFTC mainFileRFTC = mshelper.createRepoFile(modelFile, true, description)
         List<RFTC> otherRepoFiles = additionals.collect { f ->
-            mshelper.createRepoFile(f, false, "Additional files")
+            description = "Additional files"
+            if (repoFilesMap.containsKey(f.name)) {
+                description = repoFilesMap.get(f.name)
+            }
+            mshelper.createRepoFile(f, false, description)
         }
 
         [main: mainFileRFTC, additionals: otherRepoFiles]
     }
 
     Map<String, Object> createRevisionTCForModelFolder(String id, File folder, Model model) {
-        Map<String, Object> repoFileMap = createRepoFiles(folder)
+        Map<String, Object> repoFileMap = createRepoFiles(folder, model)
         RFTC modelFile = repoFileMap.main as RFTC
         List<RFTC> additionals = repoFileMap.additionals as List<RFTC>
         def mainFiles = [new File(modelFile.path as String)]
