@@ -251,11 +251,12 @@ class BatchSubmissionMainClass {
     Map<String, Object> createRepoFiles(File folder, Model model) {
         List<RFTC> repoFilesTC = null
         Map<String, String> repoFilesMap = new HashMap<String, String>()
+        Revision revision = null
         if (model) {
             // it means we must reuse the description of their existing files
             //1. Get the latest revision
             ModelService modelService = ctx.getBean("modelService")
-            Revision revision = modelService.getLatestRevision(model, false)
+            revision = modelService.getLatestRevision(model, false)
 
             RepositoryFileService rfService = ctx.getBean("repositoryFileService")
             repoFilesTC = rfService.getRepositoryFilesForRevision(revision)
@@ -283,11 +284,12 @@ class BatchSubmissionMainClass {
             mshelper.createRepoFile(f, false, description)
         }
 
-        [main: mainFileRFTC, additionals: otherRepoFiles]
+        [main: mainFileRFTC, additionals: otherRepoFiles, latestRevision: revision]
     }
 
     Map<String, Object> createRevisionTCForModelFolder(String id, File folder, Model model) {
         Map<String, Object> repoFileMap = createRepoFiles(folder, model)
+        Revision latest = repoFileMap.latestRevision as Revision
         RFTC modelFile = repoFileMap.main as RFTC
         List<RFTC> additionals = repoFileMap.additionals as List<RFTC>
         def mainFiles = [new File(modelFile.path as String)]
@@ -325,6 +327,9 @@ class BatchSubmissionMainClass {
             curationState: CurationState.NON_CURATED, minorRevision: false, context: ctx,
             comment: "Import of '$modelName'.", model: modelCmd)
 
+        if (latest) {
+            revisionCmd.id = latest.id
+        }
         [revision: revisionCmd, toAdd: repoFileCommands, toDelete: filesToDelete]
     }
 
