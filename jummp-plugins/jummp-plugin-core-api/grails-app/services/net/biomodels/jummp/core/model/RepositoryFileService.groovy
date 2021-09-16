@@ -27,6 +27,7 @@ package net.biomodels.jummp.core.model
 import grails.transaction.Transactional
 import net.biomodels.jummp.core.ModelException
 import net.biomodels.jummp.core.adapters.ModelAdapter
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.vcs.VcsException
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.RepositoryFile
@@ -84,6 +85,25 @@ class RepositoryFileService implements GrailsConfigurationAware {
      */
     void setModelCacheDir(final String location) {
         modelCacheDir = location
+    }
+
+    /**
+     * A service supporting to get the RFTC object of the main file of the latest revision
+     * via looking for the model with the model identifier.
+     *
+     * @param modelIdentifier   A string object denoting the model identifier. It can be
+     *                          the perennial or submission identifier
+     * @return  A RFTC object encapsulating all the information of the latest revision
+     */
+    @Transactional
+    RFTC getMainFile(final String modelIdentifier) {
+        RFTC mainFileRFTC = null
+        Revision latestRev = modelService.retrieveLatestRevision(modelIdentifier)
+        if (latestRev) {
+            List repoFiles = getRepositoryFilesForRevision(latestRev)
+            mainFileRFTC = repoFiles.find { it.mainFile }
+        }
+        return mainFileRFTC
     }
 
     /**
@@ -230,6 +250,28 @@ $modelId, revision $revNum: ${e.message}""")
         return result
     }
 
+    /**
+     * Builds the list of {@link RepositoryFileTransportCommand} objects of the latest revision of a model looked
+     * up via its identifier. <b>Notes</b>: This revision is the latest regardless of its visible status because the
+     * service retrieving the revision bypasses security check to get the revision having the maximum revision number.
+     *
+     * @param modelId   A string denoting the model identifier
+     * @return  A list of {@link RepositoryFileTransportCommand} objects encapsulated the physical files of the
+     *          model having the identifier
+     */
+    List<RepositoryFileTransportCommand> getRepositoryFilesForRevision(final String modelId) {
+        Revision latestRev = modelService.retrieveLatestRevision(modelId)
+        getRepositoryFilesForRevision(latestRev)
+    }
+
+    /**
+     * Builds the list of {@link RepositoryFileTransportCommand} objects of a specific revision.
+     *
+     * @param revision  A {@link Revision} object representing the information of the revision in request. <b>Note</b>:
+     * the revision couldn't be the latest one.
+     * @return  A list of {@link RepositoryFileTransportCommand} objects encapsulated the physical files of the
+     *          model having the identifier
+     */
     List<RepositoryFileTransportCommand> getRepositoryFilesForRevision(final Revision revision) {
         List<RepositoryFileTransportCommand> repFiles = new LinkedList<RepositoryFileTransportCommand>()
         List<File> files = retrieveFiles(revision)

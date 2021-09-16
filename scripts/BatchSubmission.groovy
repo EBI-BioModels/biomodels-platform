@@ -18,37 +18,30 @@
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
  */
 
+
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.acl.AclUtilService
 import groovy.io.FileType
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
-import groovyx.gpars.GParsPool
 import net.biomodels.jummp.core.JummpException
 import net.biomodels.jummp.core.ModelException
-import net.biomodels.jummp.core.model.CurationState
+import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
-import net.biomodels.jummp.core.model.ModelTransportCommand
-import net.biomodels.jummp.core.model.RepositoryFileService
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
-import net.biomodels.jummp.core.model.ValidationState
-import net.biomodels.jummp.model.Model
-import net.biomodels.jummp.model.Revision
-import net.biomodels.jummp.model.ModelFormat
-import net.biomodels.jummp.model.ModellingApproach
-import net.biomodels.jummp.model.RepositoryFile
-import net.biomodels.jummp.model.Revision
+import net.biomodels.jummp.model.*
+import net.biomodels.jummp.core.*
+import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.utils.ModelSubmissionHelper as MSH
 import net.biomodels.jummp.utils.RunScriptHelper
 import net.biomodels.jummp.utils.redis.Operations
 import org.apache.camel.CamelContext
-import org.springframework.security.core.Authentication
-import net.biomodels.jummp.plugins.security.User
 import org.springframework.orm.hibernate4.SessionHolder
-import net.biomodels.jummp.core.*
-import org.codehaus.groovy.grails.support.PersistenceContextInterceptor as PCI
-
+import org.springframework.security.acls.domain.BasePermission
+import org.springframework.security.core.Authentication
+import org.springframework.transaction.TransactionDefinition
+import org.springframework.transaction.TransactionStatus
 
 import java.time.Duration
 import java.time.Instant
@@ -149,8 +142,24 @@ class ModelLogger {
  * @author <a href="mailto:nvntung@gmail.com">Tung Nguyen</a> on 04/06/20.
  */
 class BatchSubmissionMainClass {
+    /**
+     * Expected contents of a typical folder for literature-based models
+     */
+    def expectedFiles = [
+        "[A-Z0-9]*_urn\\.xml": "Auto-generated SBML file with URNs",
+        "[A-Z0-9]*-biopax2\\.owl": "Auto-generated BioPAX (Level 2)",
+        "[A-Z0-9]*-biopax3\\.owl": "Auto-generated BioPAX (Level 3)",
+        "[A-Z0-9]*\\.cellml": "Auto-generated CellML",
+        "[A-Z0-9]*\\.m" : "Auto-generated Octave file",
+        "[A-Z0-9]*\\.pdf" : "Auto-generated PDF file",
+        "[A-Z0-9]*\\_manual.png" : "Manually generated Reaction graph (PNG)",
+        "[A-Z0-9]*\\_manual.svg" : "Manually generated Reaction graph (SVG)",
+        "[A-Z0-9]*\\.png" : "Auto-generated Reaction graph (PNG)",
+        "[A-Z0-9]*\\.svg" : "Auto-generated Reaction graph (SVG)",
+        "[A-Z0-9]*\\.sci" : "Auto-generated Scilab file",
+        "[A-Z0-9]*\\.vcml" : "Auto-generated VCML file",
+        "[A-Z0-9]*\\.xpp" : "Auto-generated XPP file" ]
     def ctx
-
     CamelContext camelContext
     MSH mshelper
     static final String adminUsername = "administrator"// System.getenv("ADMIN_USER")
@@ -160,6 +169,11 @@ class BatchSubmissionMainClass {
 
     static final AtomicInteger processedCount = new AtomicInteger()
     static final AtomicInteger failureCount = new AtomicInteger()
+
+    // initiate the map of model main files from the database
+    Map<String, RFTC> modelMainFileMap = new LinkedHashMap<String, RFTC>()
+    // initiate the map of the file name descriptions from the database
+    Map<String, List> fileNameDescriptionMap = new LinkedHashMap<String, List<RFTC>>()
 
     void init() {
         camelContext = ctx.getBean('camelContext', CamelContext)
@@ -453,6 +467,49 @@ account '${ownerUsername}'.""")
     }
 
     @CompileDynamic
+    void initiateModelMainFileMap(File root, Pattern modelFolderPattern) {
+        RepositoryFileService rfService = ctx.getBean("repositoryFileService")
+        RFTC mainFileRFTC = null
+        root.eachFileRecurse(FileType.DIRECTORIES) { File dir ->
+            final String dirName = dir.name
+            if (dirName ==~ modelFolderPattern) {
+                mainFileRFTC = rfService.getMainFile(dirName)
+                modelMainFileMap.put(dirName, mainFileRFTC)
+            }
+        }
+        Set<String> keys = modelMainFileMap.keySet()
+        for (String k: keys) {
+            RFTC file = modelMainFileMap.get(k)
+            println("${file.filename}: ${file.description}")
+        }
+    }
+
+    @CompileDynamic
+    void initiateFileNameDescriptionMap(File root, Pattern modelFolderPattern) {
+        RepositoryFileService rfService = ctx.getBean("repositoryFileService")
+        List<RFTC> rftcList = null
+        root.eachFileRecurse(FileType.DIRECTORIES) { File dir ->
+            final String dirName = dir.name
+            if (dirName ==~ modelFolderPattern) {
+                rftcList = rfService.getRepositoryFilesForRevision(dirName)
+                if (rftcList) {
+                    fileNameDescriptionMap.put(dirName, rftcList)
+                }
+            }
+        }
+        Set<String> keys = fileNameDescriptionMap.keySet()
+        for (String k: keys) {
+            RFTC mainFile = modelMainFileMap.get(k)
+            println("Main file: ${mainFile?.filename}: ${mainFile?.description}")
+            List files = fileNameDescriptionMap.get(k)
+            for (RFTC rftc: files) {
+                println("${rftc.filename}: ${rftc.description}")
+            }
+            println("----")
+        }
+    }
+
+    @CompileDynamic
     void processFolderOfSubmissions(File root, Pattern modelFolderPattern) {
         root.eachFileRecurse(FileType.DIRECTORIES) { File dir ->
             final String dirName = dir.name
@@ -473,9 +530,10 @@ account '${ownerUsername}'.""")
         try {
             def modelFolderPattern = ~/^BIOMD\d{10}$/
             File base = new File(MODELS_DIR)
-
+            initiateModelMainFileMap(base, modelFolderPattern)
+            initiateFileNameDescriptionMap(base, modelFolderPattern)
             processFolderOfSubmissions(base, modelFolderPattern)
-            //helper.awaitCompletionOfIndexingJobs()
+            mshelper.awaitCompletionOfIndexingJobs()
         } catch (Exception e) {
             System.err.println("Generic exception encountered while importing the models: $e")
         } finally {

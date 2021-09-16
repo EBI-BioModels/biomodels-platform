@@ -674,7 +674,38 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             return Revision.get(result[0])
     }
 
-    /** deduplication method for getting Spring's authorities as Database-Role strings */
+    /**
+     * Retrieves the latest revision of a model looked up via its identifier. The service bypasses security check and
+     * gets the maximum revision number to determine which is the latest revision.
+     *
+     * @param modelIdentifier   A string object denoting the model identifier. It can be
+     *                          the perennial or submission identifier.
+     * @return  A {@link Revision} object representing all the information of the latest revision of the model.
+     */
+    @PostLogging(LoggingEventType.RETRIEVAL)
+    @Profiled(tag="modelService.getLatestRevision")
+    Revision retrieveLatestRevision(final String modelIdentifier) {
+        def subIdPattern = ~/^MODEL\d{10}$/
+        def pubIdPattern = ~/^BIOMD\d{10}$/
+        Model model
+        if (modelIdentifier ==~ subIdPattern) {
+            model = getModelBySubmissionId(modelIdentifier)
+        } else if (modelIdentifier ==~ pubIdPattern) {
+            model = findByPerennialIdentifier(modelIdentifier)
+        }
+
+        Revision latestRev = null
+        if (model) {
+            // get the latest revision based on the maximal revision number
+            Integer maxRevNum = model.revisions.collect { it.revisionNumber }.max()
+            latestRev = model.revisions.find { it.revisionNumber == maxRevNum }
+       }
+        return latestRev
+    }
+
+    /**
+     * deduplication method for getting Spring's authorities as Database-Role strings
+     */
     private Set<String> getSpringDatabaseRoles() {
         Set<String> roles = SpringSecurityUtils.authoritiesToRoles(SpringSecurityUtils.getPrincipalAuthorities())
         if (springSecurityService.isLoggedIn()) {
