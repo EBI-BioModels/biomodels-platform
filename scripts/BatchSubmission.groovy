@@ -235,7 +235,8 @@ class BatchSubmissionMainClass {
         for (File child : folder.listFiles()) {
             if (child.name.endsWith('.xml')) {
                 modelFile = child
-            } else {
+            } else if (!child.name.startsWith(".")) {
+                // ignore the directories beginning with a dot such as .git or .DS_Store
                 additionals << child
             }
         }
