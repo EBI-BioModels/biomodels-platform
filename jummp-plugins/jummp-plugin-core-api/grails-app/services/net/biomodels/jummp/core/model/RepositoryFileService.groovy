@@ -331,7 +331,7 @@ $modelId, revision $revNum: ${e.message}""")
             if (!domain.validate()) {
                 def msg = new StringBuffer("Invalid file ${rf.properties} uploaded for model ${m.properties}.")
                 msg.append("The file failed due to ${domain.errors.allErrors.inspect()}")
-                logger.error(msg)
+                logger.error(msg.toString())
                 msg = """Your submission appears to contain invalid file ${fileName}. Please review it and try again."""
                 throw new ModelException(m, msg)
             } else {
