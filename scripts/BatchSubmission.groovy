@@ -426,8 +426,8 @@ class BatchSubmissionMainClass {
             r.state = ModelState.PUBLISHED
             if (!r.save()) {
                 def err = r.errors.allErrors
-                assert markSessionAsRollbackOnly(getCurrentSession()): "Publishing $r failed ($err), but we could not roll back the session"
-                throw new IllegalStateException("Cannot publish revision ${r.id}: $err")
+                assert markSessionAsRollbackOnly(MSH.getCurrentSession()): """Publishing $r failed ($err), but we \
+could not roll back the session" throw new IllegalStateException("Cannot publish revision ${r.id}: $err"""
             }
         }
     }
@@ -464,7 +464,7 @@ class BatchSubmissionMainClass {
      * Support method for handleModelFolder()
      */
     private void doHandleModelFolder(SessionHolder session, File submissionFolder, Model model, String owner) {
-//        assert submissionFolder?.isDirectory(): "'$submissionFolder' is not a model folder that exists"
+        assert submissionFolder?.isDirectory(): "'$submissionFolder' is not a model folder that exists"
 //        processedCount.incrementAndGet()
         String id = submissionFolder.name
         println "Model '$id' should have already been imported but isn't."
@@ -481,8 +481,6 @@ class BatchSubmissionMainClass {
                     // the session of this transaction is empty; attach the new revision to it
                     newRevision = Revision.get(newRevision.id)
                     publish newRevision, owner
-                    //int deleteCount = markNonRepresentativeModelsAsDeleted(id)
-                    //addModelMsg(id, "Archived $deleteCount non-representative models.")
                 } catch (JummpException e) {
                     addModelError(id, e.message)
                     rollBackSessionAndRevision newRevision, session
