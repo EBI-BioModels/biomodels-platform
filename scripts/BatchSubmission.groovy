@@ -401,11 +401,11 @@ class BatchSubmissionMainClass {
         def repoFileCommands = [modelFile] + additionals
         // GitManager needs filesToDelete and repoFileCommands to not have any overlapping files.
         def filesToDelete = []
+        String commitMessage = "Enhance the quality of '$modelName' by resubmitting the updated files."
         def revisionCmd = new RTC(files: repoFileCommands, format: fmtCmd, validated: isValid,
             name: modelName, description: modelDesc, validationLevel: ValidationState.APPROVED,
             curationState: CurationState.NON_CURATED, minorRevision: false, context: ctx,
-            comment: "Import of '$modelName'.", model: modelCmd)
-
+            comment: commitMessage, model: modelCmd)
         if (latest) {
             revisionCmd.id = latest.id
         }
