@@ -273,14 +273,17 @@ class BatchSubmissionMainClass {
     }
 
     /**
-     * Marks the current Hibernate session as rollback only and atomically deletes all entities associated with a revision.
+     * </p>Marks the current Hibernate session as rollback only and atomically deletes all entities associated with a
+     * revision.</p>
      *
      * <p>To be used as the preferred rollback mechanism in code invoked after the new model revision has been created and
-     * persisted into the database via {@code modelService.addRevision( )}, assuming the insertion has been successful.</p>
+     * persisted into the database via {@code modelService.addRevision()}, assuming the insertion has been successful.</p>
      *
-     * @param revision the revision which should be deleted
-     * @see UhlenModelUpdater#undoRevisionInsertion(net.biomodels.jummp.model.Revision)
-     * @see UhlenModelUpdater#markSessionAsRollbackOnly(org.springframework.orm.hibernate4.SessionHolder)
+     * @param revision      the revision which should be deleted
+     * @param session       the session in which the revision should be deleted
+     *
+     * @see BatchSubmissionMainClass#undoRevisionInsertion
+     * @see BatchSubmissionMainClass#markSessionAsRollbackOnly
      */
     void rollBackSessionAndRevision(Revision revision, SessionHolder session) {
         markSessionAsRollbackOnly(session)
