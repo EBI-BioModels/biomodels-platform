@@ -218,6 +218,53 @@ class BatchSubmissionMainClass {
         }
     }
 
+    /**
+     * Atomically deletes a revision, its repository files and associated ACL permissions.
+     *
+     * <p>Since
+     * {@link net.biomodels.jummp.core.ModelService#addRevision(java.util.List, java.util.List,
+     * net.biomodels.jummp.core.model.RevisionTransportCommand)}
+     * inserts the new revision in a dedicated transaction which gets committed and flushed before the method returns, we
+     * cannot use transaction rollback to undo that insertion &ndash; we need to use another dedicated transaction which
+     * undoes that work.</p>
+     *
+     * <p>We also run <tt>git revert</tt> so that the working directory of the model is cleaned.</p>
+     *
+     * <p>This method will throw an {@code IllegalStateException} if any of the entities could not be deleted.</p>
+     * @param toDelete the revision that should be deleted
+     * @see BatchSubmissionMainClass#rollBackSessionAndRevision(net.biomodels.jummp.model.Revision, org.springframework.orm.hibernate4.SessionHolder)
+     */
+    void undoRevisionInsertion(Revision toDelete) {
+        assert toDelete
+        long rId = toDelete.id
+        AclUtilService aclUtilService = ctx.getBean "aclUtilService", AclUtilService
+        // a revision and its ACLs are inserted in a dedicated transaction, so we cannot simply
+        def txSettings = [propagationBehavior: TransactionDefinition.PROPAGATION_NESTED,
+                          isolationLevel     : TransactionDefinition.ISOLATION_READ_COMMITTED]
+        Revision.withTransaction(txSettings) { TransactionStatus status ->
+            try {
+                aclUtilService.deleteAcl(toDelete)
+                String query = "delete RepositoryFile rf where rf.revision = :revision"
+
+                RepositoryFile.executeUpdate(query, [revision: toDelete])
+                toDelete.delete(flush: true)
+            } catch (Exception e) {
+                // rollback everything in this transaction and notify the callee
+                status.setRollbackOnly()
+                String msg = "Could not delete Revision $rId: ${e.message}"
+                throw new IllegalStateException(msg)
+            }
+            try {
+                // database rollback ok, now try the reverting VCS changes for this revision
+                revertGitRevision(toDelete)
+            } catch (Exception e) {
+                // VCS rollback failed, don't commit the database rollback to preserve consistency
+                status.setRollbackOnly()
+                String msg = "Could not revert VCS changes introduced by Revision $rId: $e"
+                throw new IllegalStateException(msg, e)
+            }
+        }
+    }
 
     static boolean markSessionAsRollbackOnly(SessionHolder session) {
         assert session: "Hibernate Session not available. Was persistenceInterceptor.init() called?"
