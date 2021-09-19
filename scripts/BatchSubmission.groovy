@@ -174,6 +174,11 @@ class BatchSubmissionMainClass {
     Map<String, RFTC> modelMainFileMap = new LinkedHashMap<String, RFTC>()
     // initiate the map of the file name descriptions from the database
     Map<String, List> fileNameDescriptionMap = new LinkedHashMap<String, List<RFTC>>()
+    // the set of the main files renamed due to containing special characters or having typos
+    final Map<String, String> MAIN_FILES_RENAMED = [
+        "BIOMD0000000923": "Lio2012_Modelling osteomyelitis_Control Model.xml",
+        "BIOMD0000000928": "Baker2017_Fig14.xml"
+    ] as Map
 
     void init() {
         camelContext = ctx.getBean('camelContext', CamelContext)
@@ -244,10 +249,22 @@ class BatchSubmissionMainClass {
     static Map<String, Object> partitionMainAndAdditionalFiles(File folder) {
         File modelFile = null
         // the main file is the SBML (.xml extension)
-        // additionals should only contain <category_name>.zip -- the OMEX with the missing models
         List<File> additionals = []
+        String perennialId = folder.name
+        RFTC mainFileRFTCFromDB = modelMainFileMap.get(perennialId)
+        String mainFileName = ""
+
+        if (MAIN_FILES_RENAMED.contains(perennialId)) {
+            mainFileName = MAIN_FILES_RENAMED.get(perennialId)
+        } else if (mainFileRFTCFromDB) {
+            mainFileName = mainFileRFTCFromDB.filename
+        } else {
+            addModelError(perennialId, """Cannot find the model main file of this model from database""")
+            return null
+        }
         for (File child : folder.listFiles()) {
-            if (child.name.endsWith('.xml')) {
+            if (child.name == mainFileName) {
+                // the model main file
                 modelFile = child
             } else if (!child.name.startsWith(".")) {
                 // ignore the directories beginning with a dot such as .git or .DS_Store
