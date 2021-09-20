@@ -53,6 +53,7 @@ class ModelFormatAdapter {
             case "java":
             case "mathematica":
             case "matlab":
+            case "morpheusml":
             case "python":
             case "r":
                 retVal = true
