@@ -108,7 +108,8 @@ class ModelFileFormatService {
             if (it == "UNKNOWN") return false
             String serviceName = services[it]
             def ffs = grailsApplication.mainContext.getBean(serviceName, FileFormatService)
-            return ffs.areFilesThisFormat(fileList)
+            boolean isThisFormat = ffs.areFilesThisFormat(fileList)
+            isThisFormat
         }
         if (!match) {
             return new ModelFormatAdapter(format:
