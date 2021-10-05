@@ -510,7 +510,7 @@ could not roll back the session" throw new IllegalStateException("Cannot publish
 
     private void doSubmissionDetected(File root) {
         final String rootName = root.name
-        String ownerUsername = CuratedUpdateSupport.getSubmitterAccount(rootName)
+        String ownerUsername = CuratedUpdateSupport.getSubmitterAccount(rootName).username
         if (!ownerUsername) {
             println("Cannot find the owner of the model $rootName. Using the administrator account instead")
             ownerUsername = "administrator"
