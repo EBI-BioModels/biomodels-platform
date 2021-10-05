@@ -72,16 +72,20 @@ class CuratedUpdateSupport {
     @CompileDynamic
     static User getSubmitterAccount(String publicationId) {
         // we deliberately call get() because we expect a single result; getting > 1 results would be an error which
-        // would be propagated upstream to the callees of this method.
-        User owner = Revision.createCriteria().get {
+        // would be propagated upstream to the callees of this method. 
+        // The get() method doesn't sure to return a single result. However, we pretty sure we only need the submitter's
+        // username of the latest revision. So, ordering the list of Revision objects then withrawing the first element 
+        // ensure to have a single user and makes sense of getting the newest submitter's info.
+        def owners = Revision.createCriteria().list {
             projections {
                 distinct "owner"
             }
             model {
                 like "publicationId", publicationId
             }
-        } as User
-        owner
+            order("revisionNumber", "desc")
+        }
+        owners?.first()
     }
 
     @CompileDynamic
