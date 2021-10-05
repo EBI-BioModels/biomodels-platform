@@ -179,7 +179,12 @@ class BatchSubmissionMainClass {
     // initiate the map of the file name descriptions from the database
     Map<String, List> fileNameDescriptionMap = new LinkedHashMap<String, List<RFTC>>()
     // the set of the main files renamed due to containing special characters or having typos
-    final Map<String, String> MAIN_FILES_RENAMED = [
+    Map<String, String> MAIN_FILES_RENAMED = [
+        "BIOMD0000000769": "Eftimie2017_2.xml",
+        "BIOMD0000000770": "EFtimie2017_1.xml",
+        "BIOMD0000000773": "Wodarz2018_2.xml",
+        "BIOMD0000000780": "Wang2016_1.xml",
+        "BIOMD0000000781": "Wang2016_2.xml",
         "BIOMD0000000923": "Lio2012_Modelling osteomyelitis_Control Model.xml",
         "BIOMD0000000928": "Baker2017_Fig14.xml"
     ] as Map
@@ -308,7 +313,7 @@ class BatchSubmissionMainClass {
         RFTC mainFileRFTCFromDB = modelMainFileMap.get(perennialId)
         String mainFileName = ""
 
-        if (MAIN_FILES_RENAMED.contains(perennialId)) {
+        if (MAIN_FILES_RENAMED.containsKey(perennialId)) {
             mainFileName = MAIN_FILES_RENAMED.get(perennialId)
         } else if (mainFileRFTCFromDB) {
             mainFileName = mainFileRFTCFromDB.filename
