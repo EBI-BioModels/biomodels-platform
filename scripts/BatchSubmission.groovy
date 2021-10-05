@@ -321,7 +321,10 @@ class BatchSubmissionMainClass {
             addModelError(perennialId, """Cannot find the model main file of this model from database""")
             return null
         }
+        
+        
         for (File child : folder.listFiles()) {
+            //println(child.name)
             if (child.name == mainFileName) {
                 // the model main file
                 modelFile = child
@@ -330,6 +333,12 @@ class BatchSubmissionMainClass {
                 additionals << child
             }
         }
+        if (!modelFile) {
+            addModelError(perennialId, "The main file of this model has been renamed")
+        }
+
+        println("$perennialId: ${mainFileRFTCFromDB?.filename} : ${modelFile?.name}")
+        
         [main: modelFile, additionals: additionals]
     }
 
@@ -365,7 +374,7 @@ class BatchSubmissionMainClass {
         String description = "Model main file"
         if (repoFilesMap.containsKey(modelFile.name)) {
             description = repoFilesMap.get(modelFile.name)
-        }
+        } else { println "Model $modelId has been renamed the main file: ${modelFile.name}" } 
         RFTC mainFileRFTC = mshelper.createRepoFile(modelFile, true, description)
         List<RFTC> otherRepoFiles = additionals.collect { f ->
             description = "Additional files"
@@ -442,7 +451,6 @@ could not roll back the session" throw new IllegalStateException("Cannot publish
     }
 
     Revision doInsertNewRevision(String modelId, File modelFolder, Model model) {
-        println "doInsertNewRevision"
         Map<String, Object> revisionData = createRevisionTCForModelFolder(modelId, modelFolder, model)
         if (!revisionData) { // something went wrong, the error has already been logged
             return null
@@ -476,12 +484,11 @@ could not roll back the session" throw new IllegalStateException("Cannot publish
         assert submissionFolder?.isDirectory(): "'$submissionFolder' is not a model folder that exists"
 //        processedCount.incrementAndGet()
         String id = submissionFolder.name
-        println "Model '$id' should have already been imported but isn't."
+        //println "Model '$id' should have already been imported but isn't."
         Revision newRevision = doInsertNewRevision(id, submissionFolder, model)
         addModelMsg id, "inserted revision $newRevision"
         if (!newRevision || newRevision?.hasErrors()) {
             addModelError(id, "Model update failed: ${newRevision?.errors?.allErrors}")
-            println("Model $id update failed: ${newRevision?.errors?.allErrors}")
             assert markSessionAsRollbackOnly(session): """No new revision could be inserted and we failed to roll back the current session"""
         } else {
             println "trying to get the first revision"
@@ -526,9 +533,7 @@ account '${ownerUsername}'.""")
 
         SpringSecurityUtils.doWithAuth(ownerUsername) {
             try {
-
                 handleModelFolder(root, model, ownerUsername)
-                println("handled the model $rootName")
             } catch (IllegalStateException ise) {
                 addModelError(rootName, ise.message)
             } catch (AssertionError e) {
@@ -548,13 +553,12 @@ account '${ownerUsername}'.""")
             final String dirName = dir.name
             if (dirName ==~ modelFolderPattern) {
                 mainFileRFTC = rfService.getMainFile(dirName)
-                modelMainFileMap.put(dirName, mainFileRFTC)
+                if (mainFileRFTC) { 
+                    modelMainFileMap.put(dirName, mainFileRFTC)
+                } else {
+                    addModelError(dirName, "The main file didn't exist and save into the database.")
+                }
             }
-        }
-        Set<String> keys = modelMainFileMap.keySet()
-        for (String k: keys) {
-            RFTC file = modelMainFileMap.get(k)
-            println("${file.filename}: ${file.description}")
         }
     }
 
@@ -568,19 +572,11 @@ account '${ownerUsername}'.""")
                 rftcList = rfService.getRepositoryFilesForRevision(dirName)
                 if (rftcList) {
                     fileNameDescriptionMap.put(dirName, rftcList)
+                } else { 
+                    println("Model $dirName not found") 
                 }
             }
-        }
-        Set<String> keys = fileNameDescriptionMap.keySet()
-        for (String k: keys) {
-            RFTC mainFile = modelMainFileMap.get(k)
-            println("Main file: ${mainFile?.filename}: ${mainFile?.description}")
-            List files = fileNameDescriptionMap.get(k)
-            for (RFTC rftc: files) {
-                println("${rftc.filename}: ${rftc.description}")
-            }
-            println("----")
-        }
+        }       
     }
 
     @CompileDynamic
@@ -595,7 +591,6 @@ account '${ownerUsername}'.""")
 
     void runBatchSubmission() {
         println "Started the job: ${new Date().format("dd/MM/yyyy HH:mm:ss")}"
-
         init()
         String duration
         Instant startTime = Instant.now()
@@ -616,7 +611,7 @@ account '${ownerUsername}'.""")
             String formattedDuration = duration.toString()
             println "Submission lasting in $formattedDuration"
             printModelLog()
-        }
+       }
 
         /*try {
             Map revisions = buildDataSubmission()
