@@ -261,6 +261,7 @@ $modelId, revision $revNum: ${e.message}""")
      */
     List<RepositoryFileTransportCommand> getRepositoryFilesForRevision(final String modelId) {
         Revision latestRev = modelService.retrieveLatestRevision(modelId)
+        if (!latestRev) { return null }
         getRepositoryFilesForRevision(latestRev)
     }
 
@@ -273,6 +274,9 @@ $modelId, revision $revNum: ${e.message}""")
      *          model having the identifier
      */
     List<RepositoryFileTransportCommand> getRepositoryFilesForRevision(final Revision revision) {
+        if (!revision) {
+            return null
+        }
         List<RepositoryFileTransportCommand> repFiles = new LinkedList<RepositoryFileTransportCommand>()
         List<File> files = retrieveFiles(revision)
         revision.repoFiles.each { rf ->
