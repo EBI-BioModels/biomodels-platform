@@ -113,6 +113,7 @@ $.jummp.userAdministration.editUser = function () {
     });
     $("#edit-user-form").submit(function (event) {
         event.preventDefault();
+        hideNow();
         $.ajax({
             type: 'GET',
             url: "../editUser",
