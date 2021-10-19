@@ -237,6 +237,8 @@ class UserAdministrationController {
      */
     def editUser = { EditUserCommand cmd ->
         Map data = [:]
+        cmd.email = cmd.email.replace("&#64;", "@")
+        cmd.validate()
         if (cmd.hasErrors()) {
             data.put("error", true)
             data.put("username", resolveErrorMessage(cmd, "username", "Username"))
