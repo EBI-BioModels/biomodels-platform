@@ -199,11 +199,31 @@
         });
     });
 
-    function checkIdenticalFileNames() {
+    function retrieveUploadedFiles() {
         // All files in the queue are processed (success or error)
         let uploadedFiles = $('.file-name').map(function () {
             return this.innerHTML;
         }).get();
+        return uploadedFiles;
+    }
+
+    // check acceptable characters for the file names
+    function checkAcceptableCharactersForFileNames() {
+        let uploadedFiles = retrieveUploadedFiles();
+        let messages = [];
+        uploadedFiles.forEach((filename) => {
+            let isValid = checkAcceptableCharactersForFileName(filename);
+            if (!isValid) {
+                let msg = "Please make sure the file \'" + filename + "\' only containing alphanumeric characters, \
+  spaces, hyphens and underscores.";
+                messages.push(msg);
+            }
+        });
+        return messages;
+    }
+
+    function checkIdenticalFileNames() {
+        let uploadedFiles = retrieveUploadedFiles();
         let uploadedFilesMap = {};
         uploadedFiles.forEach(function(x) {
             uploadedFilesMap[x] = (uploadedFilesMap[x] || 0) + 1;
@@ -212,18 +232,11 @@
         let msg = "";
         $.each(uploadedFilesMap, (filename, count) => {
             if (count > 1) {
-                msg = duplicateFilesMsg + filename;
+                msg = duplicateFilesMsg + filename +".";
                 messages.push(msg);
             }
         });
-        if (messages.length) {
-            console.log(messages);
-            showFlashMessages(messages);
-            currentValidation = false;
-        } else {
-            hideFlashMessages();
-            currentValidation = true;
-        }
+
         return messages;
     }
 
@@ -241,10 +254,18 @@
                             originalFilesize: originalFilesize };
         }).get();
         let messages = checkIdenticalFileNames();
-        if (!currentValidation) {
+        let acceptableFileNames = checkAcceptableCharactersForFileNames();
+        messages.push(...acceptableFileNames);
+        if (messages.length) {
+            console.log(messages);
+            showFlashMessages(messages);
             toastr.clear();
             toastr.error(messages);
+            currentValidation = false;
             return;
+        } else {
+            hideFlashMessages();
+            currentValidation = true;
         }
         $.ajax({
             type: "POST",
