@@ -120,7 +120,7 @@
     src="${resource(contextPath: serverURL, dir: '/js/biomodels/uploader-1.0.2', file: 'biomodels-ui.js')}">
 </script>
 <script type="text/javascript">
-    var duplicateFilesMsg = "The file names in your submission should not be identical. " +
+    const duplicateFilesMsg = "The file names in your submission should not be identical. " +
         "Please double-check the recently uploaded files having the name: ";
     $(function () {
         /*
@@ -207,6 +207,19 @@
         return uploadedFiles;
     }
 
+    function buildUploadedFilesMap() {
+        const allMediaElements = $('.media');
+        const ids = allMediaElements.map(function () {
+            let filename = $(this).find("strong.file-name").html();
+            let description = $(this).find("input.file-description").val();
+            let isModelFile = $(this).find("input.is-model-file")[0].checked;
+            let originalFilesize = $(this).find("a.original-file-size").text();
+            return { id: $(this).prop("id"), filename: filename , description: description, isModelFile: isModelFile,
+                originalFilesize: originalFilesize };
+        }).get();
+        return ids;
+    }
+
     // check acceptable characters for the file names
     function checkAcceptableCharactersForFileNames() {
         let uploadedFiles = retrieveUploadedFiles();
@@ -214,8 +227,9 @@
         uploadedFiles.forEach((filename) => {
             let isValid = checkAcceptableCharactersForFileName(filename);
             if (!isValid) {
-                let msg = "Please make sure the file \'" + filename + "\' only containing alphanumeric characters, \
-  spaces, hyphens and underscores.";
+                let msg = "Please make sure the file name \'" + filename +
+                    "\' only containing alphanumeric characters, \
+                    spaces, hyphens and underscores.";
                 messages.push(msg);
             }
         });
@@ -236,37 +250,19 @@
                 messages.push(msg);
             }
         });
-
         return messages;
     }
 
     function validateFileUpload() {
         errorMessages = [];
         currentValidation = false;
-        let nbModelFiles = 0;
-        const allMediaElements = $('.media');
-        const ids = allMediaElements.map(function () {
-            let filename = $(this).find("strong.file-name").html();
-            let description = $(this).find("input.file-description").val();
-            let isModelFile = $(this).find("input.is-model-file")[0].checked;
-            let originalFilesize = $(this).find("a.original-file-size").text();
-            return { id: $(this).prop("id"), filename: filename , description: description, isModelFile: isModelFile,
-                            originalFilesize: originalFilesize };
-        }).get();
+        const ids = buildUploadedFilesMap();
         let messages = checkIdenticalFileNames();
         let acceptableFileNames = checkAcceptableCharactersForFileNames();
         messages.push(...acceptableFileNames);
-        if (messages.length) {
-            console.log(messages);
-            showFlashMessages(messages);
-            toastr.clear();
-            toastr.error(messages);
-            currentValidation = false;
-            return;
-        } else {
-            hideFlashMessages();
-            currentValidation = true;
-        }
+        handleErrorMessages(messages);
+        if (!currentValidation) { return; }
+
         $.ajax({
             type: "POST",
             url: "${createLink(controller: "submission", action: "processUploadFiles")}",
@@ -341,6 +337,19 @@
        let parent = $(this).parent();
        parent.remove();
     });
+
+    function handleErrorMessages(messages) {
+        if (messages.length) {
+            console.log(messages);
+            showFlashMessages(messages);
+            toastr.clear();
+            toastr.error(messages);
+            currentValidation = false;
+        } else {
+            hideFlashMessages();
+            currentValidation = true;
+        }
+    }
 
     function consolidateErrorMessages(filename, messages) {
         if (messages.length > 0) {
