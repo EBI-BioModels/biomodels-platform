@@ -71,7 +71,7 @@ class SubmissionController {
             rftcList.add(mfRFTC)
             def afs = JSON.parse(params.additionalFiles.decodeHTML())
             for (def file : afs) {
-                mfRFTC = createRFTC(file["submissionFolder"], file["filename"], false, file["description"])
+                mfRFTC = createRFTC(file["submissionFolder"] as String, file["filename"], false, file["description"])
                 rftcList.add(mfRFTC)
             }
             working.put("repository_files", rftcList)
@@ -312,6 +312,7 @@ class SubmissionController {
         // create error.log containing the output of ExceptionUtils.getStackTrace(e)
         File errorLog = new File(temporaryStorage, "error.log")
         errorLog.write(ExceptionUtils.getStackTrace(e))
+        logger.error(ExceptionUtils.getRootCauseMessage(e))
         // save the submission metadata to submission.log
         File submissionLog = new File(temporaryStorage, "submission.log")
         submissionLog.write("Submission Data\n")
