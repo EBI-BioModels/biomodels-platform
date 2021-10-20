@@ -296,22 +296,29 @@ class SubmissionController {
         logger.error("Oops!!! There has been an error!", e)
         // rollback and backup submission
         String ticket = working.get("submissionFolder")
+        final String EXCHANGE = grailsApplication.config.jummp.vcs.exchangeDirectory
+        final File PARENT = new File(EXCHANGE)
+        File submissionFiles = new File(PARENT, ticket)
+        File buggyFiles = new File(PARENT, "buggy")
+        File temporaryStorage = new File(buggyFiles, ticket)
+        temporaryStorage.mkdirs()
         if (working.containsKey("repository_files")) {
             List repFiles = working.get("repository_files")
             if (repFiles) {
-                final String EXCHANGE = grailsApplication.config.jummp.vcs.exchangeDirectory
-                final File PARENT = new File(EXCHANGE)
-                File submissionFiles = new File(PARENT, ticket)
-                File buggyFiles = new File(PARENT, "buggy")
-                File temporaryStorage = new File(buggyFiles, ticket)
-                temporaryStorage.mkdirs()
                 FileUtils.copyDirectory(submissionFiles, temporaryStorage)
-
-                // TODO: create error.log containing the output of ExceptionUtils.getStackTrace(e) in this folder
-
-                // TODO: save submission metadata
             }
         }
+
+        // create error.log containing the output of ExceptionUtils.getStackTrace(e)
+        File errorLog = new File(temporaryStorage, "error.log")
+        errorLog.write(ExceptionUtils.getStackTrace(e))
+        // save the submission metadata to submission.log
+        File submissionLog = new File(temporaryStorage, "submission.log")
+        submissionLog.write("Submission Data\n")
+        working.each {
+            submissionLog.append("${it.key}: ${it.dump()}\n")
+        }
+
         submissionService.cleanup(working)
         mailService.sendMail {
             to grailsApplication.config.jummp.security.registration.email.adminAddress
