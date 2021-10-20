@@ -228,8 +228,7 @@
             let isValid = checkAcceptableCharactersForFileName(filename);
             if (!isValid) {
                 let msg = "Please make sure the file name \'" + filename +
-                    "\' only containing alphanumeric characters, \
-                    spaces, hyphens and underscores.";
+                    "\' only containing alphanumeric characters, spaces, hyphens and underscores.";
                 messages.push(msg);
             }
         });
@@ -287,38 +286,49 @@
                     }
                     const hasOneModelFile = data.filter(e => e.isModelFile).length === 1;
                     let modelFileWithNoErrors = true;
+                    let allFileNamesValid = true;
                     if (!hasOneModelFile) {
                         msg =
                             "Please verify the Main Model file radio box. A submission must have at least only one main model file.";
                         errorMessages.push(msg);
                     } else {
                         modelFile = data.filter(e => e.isModelFile)[0];
-                        modelInfo = modelFile["detectedModelInfo"];
                         if (!modelFile) {
                             modelFileWithNoErrors = false;
                         } else {
                             // model file
                             modelFileWithNoErrors = modelFile["validateFileErrors"].length === 0 && modelFile["validSyntax"]
-                            consolidateErrorMessages(modelFile["filename"], modelFile["validateFileErrors"]);
+                            let isModelMainFileNameValid = consolidateErrorMessages(modelFile["filename"],
+                                modelFile["validateFileErrors"]);
+                            let areAdditionalFileNamesValid = true;
                             if (!modelFile["validSyntax"]) {
                                 consolidateErrorMessages(modelFile["filename"], modelFile["validateSyntaxErrors"]);
                             } else if (modelFile["validateSyntaxErrors"].length !== 0)  {
                                 toastr.clear();
                                 toastr.warning(modelFile["validateSyntaxErrors"])
                             }
+                            // check the model file name for the invalid characters
+                            consolidateErrorMessages(modelFile["filename"], modelFile["validateFileName"]);
                             // additional files
                             additionalFiles = data.filter(e => !e.isModelFile);
                             if (additionalFiles.length > 0) {
                                 // there is no file having errors
-                                modelFileWithNoErrors = additionalFiles.filter(f => f["validateFileErrors"].length
-                                    > 0).length === 0;
+                                modelFileWithNoErrors = additionalFiles.filter(f =>
+                                    f["validateFileErrors"].length > 0).length === 0;
                                 $.each(additionalFiles, function (i, f) {
                                     consolidateErrorMessages(f["filename"], f["validateFileErrors"]);
+                                    // check each additional file name for the invalid characters
+                                    let hasError = consolidateErrorMessages(f["filename"], f["validateFileName"]);
+                                    if (hasError) { areAdditionalFileNamesValid = false; }
                                 });
                             }
+                            // update the validation of all file names
+                            allFileNamesValid = isModelMainFileNameValid && areAdditionalFileNamesValid;
+                            // model info
+                            modelInfo = modelFile["detectedModelInfo"];
                         }
                     }
-                    currentValidation = hasOneModelFile && haveAllDescriptions && modelFileWithNoErrors;
+                    currentValidation = hasOneModelFile && haveAllDescriptions && modelFileWithNoErrors && allFileNamesValid;
                 } else {
                     currentValidation = false;
                     errorMessages.push("A submission must have at least only one main model file.")
@@ -356,6 +366,8 @@
             $.each(messages, function (id, msg) {
                 errorMessages.push(filename + ": " + msg);
             });
+            return true;
         }
+        return false;
     }
 </script>

@@ -39,6 +39,7 @@ import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import net.biomodels.jummp.core.model.ValidationState
+import net.biomodels.jummp.utils.FileHelper
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONElement
@@ -227,6 +228,14 @@ class SubmissionController {
                 e["validateSyntaxErrors"] = errors
                 Map detectedModelInfo = detectModelInfo(e, detectedModelFormat.identifier)
                 e["detectedModelInfo"] = detectedModelInfo
+            }
+            // check for the valid file name
+            if (!FileHelper.isFileNameAcceptable(e["filename"])) {
+                String warningMessage = """\
+Please make sure the file name '${e["filename"]}' only containing alphanumeric characters, spaces, \
+hyphens and underscores.
+"""
+                e["validateFileName"] = [warningMessage] as List<String>
             }
         }
         // Determines which files are added and removed
