@@ -20,12 +20,14 @@
 
 
 package net.biomodels.jummp.webapp
-import net.biomodels.jummp.plugins.security.User
+
 import net.biomodels.jummp.plugins.security.Person
-import java.util.regex.Pattern
+import net.biomodels.jummp.plugins.security.User
+import net.biomodels.jummp.webapp.NotificationType as NT
+import net.biomodels.jummp.webapp.NotificationTypePreferences as NTRs
+
 import java.util.regex.Matcher
-import net.biomodels.jummp.webapp.NotificationTypePreferences
-import net.biomodels.jummp.webapp.NotificationType
+import java.util.regex.Pattern
 
 /**
  * @short Command Object to validate the user before editing.
@@ -39,7 +41,7 @@ class EditUserCommand implements Serializable {
     String email
     String institution
     String orcid
-    
+
     boolean sendNotification1;
     boolean sendNotification2;
     boolean sendNotification3;
@@ -70,19 +72,19 @@ class EditUserCommand implements Serializable {
      * @return The command object as a User
      */
     User toUser() {
-    	return new User(username: this.username, person: new Person(userRealName: this.userRealName, institution:this.institution, orcid:this.orcid), email: this.email)
+        Person person = new Person(userRealName: this.userRealName, institution: this.institution, orcid: this.orcid)
+        User user = new User(username: this.username, person: person, email: this.email)
+        user
     }
-    
-    List<NotificationTypePreferences> getPreferences(User user) {
-    	List<NotificationTypePreferences> prefs = new LinkedList<NotificationTypePreferences>();
-    	for (int i=1; i<=4; i++) {
-    		NotificationType type = NotificationType.getById(i);
-    		NotificationTypePreferences pref = new NotificationTypePreferences(user: user, 
-    																		   notificationType: type, 
-    																		   sendMail: this."sendMail${i}", 
-    																		   sendNotification: this."sendNotification${i}")
+
+    List<NTRs> getPreferences(User user) {
+        List<NTRs> prefs = new LinkedList<NTRs>()
+        for (int i=1; i<=4; i++) {
+            NT type = NT.getById(i)
+            NTRs pref = new NTRs(user: user, notificationType: type,
+                sendMail: this."sendMail${i}", sendNotification: this."sendNotification${i}")
             prefs.add(pref)
-    	}
-    	return prefs
+        }
+        return prefs
     }
 }
