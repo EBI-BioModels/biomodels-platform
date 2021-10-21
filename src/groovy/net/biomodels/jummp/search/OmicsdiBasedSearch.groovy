@@ -168,11 +168,6 @@ class OmicsdiBasedSearch implements GrailsConfigurationAware, ModelSearchStrateg
         String proxyHost = _httpProxyHost != null ? _httpProxyHost : this.httpProxyHost
         String _httpProxyPort = System.getenv("HTTP_PROXY_PORT")
         int proxyPort = _httpProxyPort != null ? _httpProxyPort.toInteger().intValue() : this.httpProxyPort
-        if (_httpProxyHost && _httpProxyPort) {
-            log.debug("HTTP Proxy information is retrieved from environment variables")
-        } else {
-            log.debug("Using the default information about HTTP Proxy")
-        }
         ebeyeWsConfig.setHttpProxyHost(proxyHost)
         ebeyeWsConfig.setHttpProxyPort(proxyPort)
         DatasetWsClient datasetWsClient = new DatasetWsClient(ebeyeWsConfig)

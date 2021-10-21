@@ -9,7 +9,7 @@ class ModelViewSubscriber extends JedisPubSub {
 
     void onMessage(final String channel, final String message) {
         super.onMessage(channel, message)
-        LOGGER.debug("< SUBSCRIBE < channel: $channel > Message received: $message")
+        //LOGGER.debug("< SUBSCRIBE < channel: $channel > Message received: $message")
     }
 
     @Override
