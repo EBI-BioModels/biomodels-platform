@@ -298,9 +298,7 @@
                         } else {
                             // model file
                             modelFileWithNoErrors = modelFile["validateFileErrors"].length === 0 && modelFile["validSyntax"]
-                            let isModelMainFileNameValid = consolidateErrorMessages(modelFile["filename"],
-                                modelFile["validateFileErrors"]);
-                            let areAdditionalFileNamesValid = true;
+                            consolidateErrorMessages(modelFile["filename"], modelFile["validateFileErrors"]);
                             if (!modelFile["validSyntax"]) {
                                 consolidateErrorMessages(modelFile["filename"], modelFile["validateSyntaxErrors"]);
                             } else if (modelFile["validateSyntaxErrors"].length !== 0)  {
@@ -308,9 +306,11 @@
                                 toastr.warning(modelFile["validateSyntaxErrors"])
                             }
                             // check the model file name for the invalid characters
-                            consolidateErrorMessages(modelFile["filename"], modelFile["validateFileName"]);
+                            let isModelMainFileNameValid = consolidateErrorMessages(modelFile["filename"], modelFile["validateFileName"]);
+
                             // additional files
                             additionalFiles = data.filter(e => !e.isModelFile);
+                            let areAdditionalFileNamesValid = true;
                             if (additionalFiles.length > 0) {
                                 // there is no file having errors
                                 modelFileWithNoErrors = additionalFiles.filter(f =>
@@ -362,6 +362,7 @@
     }
 
     function consolidateErrorMessages(filename, messages) {
+        if (typeof messages === "undefined") { return false; }
         if (messages.length > 0) {
             $.each(messages, function (id, msg) {
                 errorMessages.push(filename + ": " + msg);
