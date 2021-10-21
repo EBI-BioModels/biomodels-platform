@@ -306,7 +306,8 @@
                                 toastr.warning(modelFile["validateSyntaxErrors"])
                             }
                             // check the model file name for the invalid characters
-                            let isModelMainFileNameValid = consolidateErrorMessages(modelFile["filename"], modelFile["validateFileName"]);
+                            let hasError = consolidateErrorMessages(modelFile["filename"], modelFile["validateFileName"]);
+                            let isModelMainFileNameValid = hasError ? false : true;
 
                             // additional files
                             additionalFiles = data.filter(e => !e.isModelFile);
