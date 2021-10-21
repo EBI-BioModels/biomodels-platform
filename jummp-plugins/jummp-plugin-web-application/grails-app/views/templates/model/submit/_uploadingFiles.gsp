@@ -120,7 +120,7 @@
     src="${resource(contextPath: serverURL, dir: '/js/biomodels/uploader-1.0.2', file: 'biomodels-ui.js')}">
 </script>
 <script type="text/javascript">
-    var duplicateFilesMsg = "The file names in your submission should not be identical. " +
+    const duplicateFilesMsg = "The file names in your submission should not be identical. " +
         "Please double-check the recently uploaded files having the name: ";
     $(function () {
         /*
@@ -199,11 +199,44 @@
         });
     });
 
-    function checkIdenticalFileNames() {
+    function retrieveUploadedFiles() {
         // All files in the queue are processed (success or error)
         let uploadedFiles = $('.file-name').map(function () {
             return this.innerHTML;
         }).get();
+        return uploadedFiles;
+    }
+
+    function buildUploadedFilesMap() {
+        const allMediaElements = $('.media');
+        const ids = allMediaElements.map(function () {
+            let filename = $(this).find("strong.file-name").html();
+            let description = $(this).find("input.file-description").val();
+            let isModelFile = $(this).find("input.is-model-file")[0].checked;
+            let originalFilesize = $(this).find("a.original-file-size").text();
+            return { id: $(this).prop("id"), filename: filename , description: description, isModelFile: isModelFile,
+                originalFilesize: originalFilesize };
+        }).get();
+        return ids;
+    }
+
+    // check acceptable characters for the file names
+    function checkAcceptableCharactersForFileNames() {
+        let uploadedFiles = retrieveUploadedFiles();
+        let messages = [];
+        uploadedFiles.forEach((filename) => {
+            let isValid = checkAcceptableCharactersForFileName(filename);
+            if (!isValid) {
+                let msg = "Please make sure the file name \'" + filename +
+                    "\' only containing alphanumeric characters, spaces, hyphens and underscores.";
+                messages.push(msg);
+            }
+        });
+        return messages;
+    }
+
+    function checkIdenticalFileNames() {
+        let uploadedFiles = retrieveUploadedFiles();
         let uploadedFilesMap = {};
         uploadedFiles.forEach(function(x) {
             uploadedFilesMap[x] = (uploadedFilesMap[x] || 0) + 1;
@@ -212,40 +245,23 @@
         let msg = "";
         $.each(uploadedFilesMap, (filename, count) => {
             if (count > 1) {
-                msg = duplicateFilesMsg + filename;
+                msg = duplicateFilesMsg + filename +".";
                 messages.push(msg);
             }
         });
-        if (messages.length) {
-            console.log(messages);
-            showFlashMessages(messages);
-            currentValidation = false;
-        } else {
-            hideFlashMessages();
-            currentValidation = true;
-        }
         return messages;
     }
 
     function validateFileUpload() {
         errorMessages = [];
         currentValidation = false;
-        let nbModelFiles = 0;
-        const allMediaElements = $('.media');
-        const ids = allMediaElements.map(function () {
-            let filename = $(this).find("strong.file-name").html();
-            let description = $(this).find("input.file-description").val();
-            let isModelFile = $(this).find("input.is-model-file")[0].checked;
-            let originalFilesize = $(this).find("a.original-file-size").text();
-            return { id: $(this).prop("id"), filename: filename , description: description, isModelFile: isModelFile,
-                            originalFilesize: originalFilesize };
-        }).get();
+        const ids = buildUploadedFilesMap();
         let messages = checkIdenticalFileNames();
-        if (!currentValidation) {
-            toastr.clear();
-            toastr.error(messages);
-            return;
-        }
+        let acceptableFileNames = checkAcceptableCharactersForFileNames();
+        messages.push(...acceptableFileNames);
+        handleErrorMessages(messages);
+        if (!currentValidation) { return; }
+
         $.ajax({
             type: "POST",
             url: "${createLink(controller: "submission", action: "processUploadFiles")}",
@@ -270,38 +286,49 @@
                     }
                     const hasOneModelFile = data.filter(e => e.isModelFile).length === 1;
                     let modelFileWithNoErrors = true;
+                    let allFileNamesValid = true;
                     if (!hasOneModelFile) {
                         msg =
                             "Please verify the Main Model file radio box. A submission must have at least only one main model file.";
                         errorMessages.push(msg);
                     } else {
                         modelFile = data.filter(e => e.isModelFile)[0];
-                        modelInfo = modelFile["detectedModelInfo"];
                         if (!modelFile) {
                             modelFileWithNoErrors = false;
                         } else {
                             // model file
                             modelFileWithNoErrors = modelFile["validateFileErrors"].length === 0 && modelFile["validSyntax"]
-                            consolidateErrorMessages(modelFile["filename"], modelFile["validateFileErrors"]);
+                            let isModelMainFileNameValid = consolidateErrorMessages(modelFile["filename"],
+                                modelFile["validateFileErrors"]);
+                            let areAdditionalFileNamesValid = true;
                             if (!modelFile["validSyntax"]) {
                                 consolidateErrorMessages(modelFile["filename"], modelFile["validateSyntaxErrors"]);
                             } else if (modelFile["validateSyntaxErrors"].length !== 0)  {
                                 toastr.clear();
                                 toastr.warning(modelFile["validateSyntaxErrors"])
                             }
+                            // check the model file name for the invalid characters
+                            consolidateErrorMessages(modelFile["filename"], modelFile["validateFileName"]);
                             // additional files
                             additionalFiles = data.filter(e => !e.isModelFile);
                             if (additionalFiles.length > 0) {
                                 // there is no file having errors
-                                modelFileWithNoErrors = additionalFiles.filter(f => f["validateFileErrors"].length
-                                    > 0).length === 0;
+                                modelFileWithNoErrors = additionalFiles.filter(f =>
+                                    f["validateFileErrors"].length > 0).length === 0;
                                 $.each(additionalFiles, function (i, f) {
                                     consolidateErrorMessages(f["filename"], f["validateFileErrors"]);
+                                    // check each additional file name for the invalid characters
+                                    let hasError = consolidateErrorMessages(f["filename"], f["validateFileName"]);
+                                    if (hasError) { areAdditionalFileNamesValid = false; }
                                 });
                             }
+                            // update the validation of all file names
+                            allFileNamesValid = isModelMainFileNameValid && areAdditionalFileNamesValid;
+                            // model info
+                            modelInfo = modelFile["detectedModelInfo"];
                         }
                     }
-                    currentValidation = hasOneModelFile && haveAllDescriptions && modelFileWithNoErrors;
+                    currentValidation = hasOneModelFile && haveAllDescriptions && modelFileWithNoErrors && allFileNamesValid;
                 } else {
                     currentValidation = false;
                     errorMessages.push("A submission must have at least only one main model file.")
@@ -321,11 +348,26 @@
        parent.remove();
     });
 
+    function handleErrorMessages(messages) {
+        if (messages.length) {
+            console.log(messages);
+            showFlashMessages(messages);
+            toastr.clear();
+            toastr.error(messages);
+            currentValidation = false;
+        } else {
+            hideFlashMessages();
+            currentValidation = true;
+        }
+    }
+
     function consolidateErrorMessages(filename, messages) {
         if (messages.length > 0) {
             $.each(messages, function (id, msg) {
                 errorMessages.push(filename + ": " + msg);
             });
+            return true;
         }
+        return false;
     }
 </script>

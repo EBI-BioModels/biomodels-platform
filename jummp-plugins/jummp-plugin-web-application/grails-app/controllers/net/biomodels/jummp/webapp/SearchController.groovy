@@ -298,18 +298,17 @@ under the format: ${response.format}"""
             ArrayList<MTC> res = response.results
             totalCount = response.totalCount
             if (res?.size() > 0) {
-                LOGGER.info("Found(s): ${res.size()} records.")
                 res.each {
                     models.add(it)
                 }
             }
             LinkedHashMap<String, OrderedFacet> respondedFacets = response.facets
             if (respondedFacets?.size() > 0) {
-                LOGGER.info("Found(s): ${respondedFacets.size()} facets.")
                 respondedFacets.each {
                     facets.add(it.value.facet)
                 }
             }
+            LOGGER.info("Found: ${res?.size() ?: 0} records, ${respondedFacets?.size() ?: 0} facets.")
         }
         JsonBuilder builder = new JsonBuilder(facets)
 
