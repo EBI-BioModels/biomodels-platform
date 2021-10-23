@@ -129,7 +129,7 @@ class JummpController {
     def feedback() {
         if (params.star) {
             byte star = params.byte("star")
-            String email = params.email
+            String email = params.email.decodeHTML()
             String comment = params.comment
             if (star < 1 && star > 5) {
                 render([status: '500', message: "Please rate between 1 and 5 stars."] as JSON)
