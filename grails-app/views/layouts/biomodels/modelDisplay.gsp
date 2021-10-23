@@ -777,16 +777,22 @@
                                     <biomd:renderOriginalModels sources="${originalModels}"/></div>
                             </div></g:if>
                             <!-- Show all tags assigned to the model -->
+                            <biomd:insertSeparator/>
                             <g:if test="${canUpdate && hasCuratorRole}">
-                                <biomd:insertSeparator/>
                                 <biomd:showEditableTags bmTags="${bmTags}"/>
                             </g:if>
                             <g:else>
-                                <biomd:insertSeparator/>
                                 <biomd:showTags bmTags="${bmTags}"/>
                             </g:else>
+                            <biomd:insertSeparator/>
+                            <div class='row'>
+                                <div class="small-12 medium-6 large-4 columns">Connected external resources</div>
+                                <div class="small-12 medium-6 large-8 columns">
+                                    <biomd:renderRosette model="${revision.modelIdentifier()}"/></div>
+                            </div>
                             <!-- Render a disclaimer if the model has been published without a publicly available manuscript -->
                             <biomd:displayDisclaimer revision="${revision}"/>
+
                             %{--<div class='row'>
                                 <div class="medium-3 columns">Validation Status</div>
                                 <div class="medium-9 columns">${validationLevel}</div>
