@@ -52,8 +52,8 @@ function convertData(datasetId) {
             'label': 'Reanalyses'
         },
         {
-            'score': omicsData["downloadsCount"], // downloadsCount
-            'scale': omicsData["downloadsCountScaled"], // downloadsCountScaled
+            'score': omicsData["downloadCount"], // downloadCount
+            'scale': omicsData["downloadCountScaled"], // downloadCountScaled
             'color': '#FFA500',
             'label': 'Downloads'
         }
