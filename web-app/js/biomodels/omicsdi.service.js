@@ -1,9 +1,8 @@
 /**
  * This work is copyrighted by Robert Petryszak
  (https://www.ebi.ac.uk/~rpetry/omicsdi/rosette/rosette.html)
- * I have customised to adopt in BioModels context.
+ * I have customised to adopt it in BioModels context.
  */
-this.datasetId = "BIOMD0000000780";
 // Width/height of the rosette
 this.width = 65;
 // Radius of the white circle inside the rosette

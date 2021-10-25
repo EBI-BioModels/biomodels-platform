@@ -796,7 +796,7 @@
                                     <div class="row">
                                         <div class="small-12 medium-3 large-3 columns" id="rosette-holder">
                                             <!-- This emply holder is used to show the model rosette rendered
-                                            automatically in omicsdi.service.js via the function initialise() called
+                                            automatically in omicsdi.service.js via the function createRosette() called
                                             from the ready block of this page -->
                                         </div>
                                         <div class="small-12 medium-4 large-3 columns"></div>
