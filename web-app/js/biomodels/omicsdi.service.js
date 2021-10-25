@@ -9,10 +9,11 @@ this.width = 65;
 // Radius of the white circle inside the rosette
 this.circleRadius = 52;
 
-function convertData(datasetId) {
-    const EP_PREFIX = "https://www.omicsdi.org/ws/dataset/get?database=biomodels&accession=";
-    const EP_URL_DS = EP_PREFIX + datasetId;
+const EP_PREFIX = "https://www.omicsdi.org/ws/dataset/get?database=biomodels&accession=";
+
+function requestData(datasetId) {
     let omicsData = [];
+    const EP_URL_DS = EP_PREFIX + datasetId;
     $.ajax({
         type: "GET",
         url: EP_URL_DS,
@@ -22,9 +23,20 @@ function convertData(datasetId) {
             console.log(omicsData);
         },
         error: function (xhr) {
-            console.log()("An error occurred: " + xhr.status + " " + xhr.statusText);
+            console.log("An error occurred: " + xhr.status + " " + xhr.statusText);
         }
     });
+    return omicsData;
+}
+
+function checkModelAvailability(datasetId) {
+    let omicsData = requestData(datasetId);
+    let result = !($.isEmptyObject(omicsData)) && omicsData?.length > 0;
+    return result;
+}
+
+function convertData(datasetId) {
+    let omicsData = requestData(datasetId);
 
     return [
         {

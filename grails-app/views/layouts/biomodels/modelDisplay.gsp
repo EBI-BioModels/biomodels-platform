@@ -163,7 +163,8 @@
 
         $(document).ready(function() {
             // OmicsDI Service for showing rosette
-            createRosette("${revision.modelIdentifier()}");
+            let isAvailable = checkModelAvailability("${revision.modelIdentifier()}");
+            if (isAvailable) { createRosette("${revision.modelIdentifier()}"); }
 
             // Handler for .ready() called.
             $('#confirm-model-consistency-check').dialog({
