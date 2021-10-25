@@ -11,7 +11,7 @@ this.circleRadius = 52;
 const EP_PREFIX = "https://www.omicsdi.org/ws/dataset/get?database=biomodels&accession=";
 
 function requestData(datasetId) {
-    let omicsData = [];
+    let omicsData = {};
     const EP_URL_DS = EP_PREFIX + datasetId;
     $.ajax({
         type: "GET",
@@ -30,7 +30,7 @@ function requestData(datasetId) {
 
 function checkModelAvailability(datasetId) {
     let omicsData = requestData(datasetId);
-    let result = !($.isEmptyObject(omicsData)) && omicsData?.length > 0;
+    let result = !($.isEmptyObject(omicsData));
     return result;
 }
 
