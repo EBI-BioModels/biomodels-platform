@@ -105,7 +105,11 @@ function normalise_number_leaves(data, max_leaves) {
     let max_scale = 0;
     let index_max_scale = 0;
     for (let i = 0; i < data.length; i++) {
-        data[i]['norm_leaves'] = (data[i]['scale'] / total_scale) / (1 / max_leaves);
+        if (total_scale > 0) {
+            data[i]['norm_leaves'] = (data[i]['scale'] / total_scale) / (1 / max_leaves);
+        } else {
+            data[i]['norm_leaves'] = 0;
+        }
         if (max_scale < data[i]['norm_leaves']) {
             max_scale = data[i]['norm_leaves'];
             index_max_scale = i;
@@ -174,11 +178,8 @@ function createRosette(datasetId) {
         .attr('position', 'absolute');
     const defs = svg.append('defs');
     const reducer = (a, b) => a + b['scale'] * 1000;
-    console.log(data);
     const r = data.reduce(reducer, 0);
-    console.log(r);
     const omics_score = Math.round(r);
-    console.log(omics_score);
     const leafs = [];
     this.normalise_number_leaves(data, 12);
     for (let i = 0; i < data.length; i++) {
