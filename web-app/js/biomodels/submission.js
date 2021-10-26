@@ -7,6 +7,12 @@ $(document)
         $loading.hide();
     });
 $(document).ready(function () {
+    // this is the same as the procedure above
+    /*$('#loading').bind("ajaxStart", function() {
+        $(this).show();
+    }).bind("ajaxStop", function() {
+        $(this).hide();
+    });*/
     let current_fs, next_fs, previous_fs; //fieldsets
     let opacity;
     let current = 1;

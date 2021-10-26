@@ -67,6 +67,14 @@
 </head>
 
 <body>
+<div class="row">
+    <div class="columns small-12 large-12">
+        <div class="text-center">
+            <img src="${serverURL}/images/biomodels/loading.gif" id="loading" title="working..." alt="Please wait..."
+                 style="display: none" />
+        </div>
+    </div>
+</div>
 <form id="msform" useToken="true" class="${submissionSessionId}">
     <!-- progressbar -->
     <ul id="progressbar">
