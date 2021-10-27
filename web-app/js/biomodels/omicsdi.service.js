@@ -332,7 +332,7 @@ function createRosette(datasetId) {
     graph.append('text').attr('x', 355)
         .attr('y', 355)
         .attr('dy', '.3em')
-        .attr('style', 'font-size: 32px')
+        .attr('style', 'font-size: 32px; font-weight: bold;')
         .attr('text-anchor', 'middle')
         .text(this.transform(omics_score, 1));
 }
