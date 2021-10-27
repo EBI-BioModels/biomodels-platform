@@ -83,7 +83,7 @@
                 pubLink: pubLink
             },
             dataType: "json",
-            async: false,
+            async: true,
             beforeSend: function () {
                 console.log("Before sending the request");
             },

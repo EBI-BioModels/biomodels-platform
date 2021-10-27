@@ -117,7 +117,7 @@ $(document).ready(function () {
                 break;
             case 2:
                 // defined in the step 2
-                updateModelInfoForm();
+                // updateModelInfoForm();
                 break;
             case 3:
                 break;

@@ -272,7 +272,7 @@
                 files: JSON.stringify(existingFiles),
                 isUpdate: isUpdate
             },
-            async: false,
+            async: true,
             dataType: "JSON",
             success: function(response) {
                 changesMade = response.changesMade;
@@ -334,6 +334,7 @@
                     currentValidation = false;
                     errorMessages.push("A submission must have at least only one main model file.")
                 }
+                updateModelInfoForm();
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 let msg = JSON.parse(JSON.stringify(errorThrown));
