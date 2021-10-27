@@ -799,9 +799,9 @@
                                             automatically in omicsdi.service.js via the function createRosette() called
                                             from the ready block of this page -->
                                         </div>
-                                        <div class="small-12 medium-4 large-3 columns"></div>
-                                        <div class="small-12 medium-4 large-3 columns"></div>
-                                        <div class="small-12 medium-4 large-3 columns"></div>
+                                        <div class="small-12 medium-9 large-9 columns">
+                                            <p class="ext-rsc-text">OmicsDI Impact Matrix</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

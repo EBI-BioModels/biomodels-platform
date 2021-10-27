@@ -59,3 +59,9 @@
 #toolbarList li .ui-button-text {
     font-size: 0.75em;
 }
+/* left and center the simple text explaining external resource icon */
+.ext-rsc-text {
+    margin: auto;
+    padding: 0.9375rem 0.9375rem 0.9375rem 0rem;
+    font-size: 85%;
+}
