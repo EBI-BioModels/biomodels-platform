@@ -351,9 +351,4 @@ class BioModelsTagLib {
             model: [diseases: rightColumn])
         out << '</div>'
     }
-
-    def renderRosette = { attrs ->
-        String modelId = attrs.model
-        out << modelId
-    }
 }
