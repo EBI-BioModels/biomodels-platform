@@ -164,7 +164,10 @@
         $(document).ready(function() {
             // OmicsDI Service for showing rosette
             let isAvailable = checkModelAvailability("${revision.modelIdentifier()}");
-            if (isAvailable) { createRosette("${revision.modelIdentifier()}"); }
+            if (isAvailable) {
+                createRosette("${revision.modelIdentifier()}");
+                $('.ext-rsc-text').attr('style', 'display:inline-block;');
+            }
 
             // Handler for .ready() called.
             $('#confirm-model-consistency-check').dialog({
@@ -800,7 +803,7 @@
                                             from the ready block of this page -->
                                         </div>
                                         <div class="small-12 medium-9 large-9 columns">
-                                            <p class="ext-rsc-text">OmicsDI Impact Matrix</p>
+                                            <p class="ext-rsc-text" style="display: none">OmicsDI Impact Matrix</p>
                                         </div>
                                     </div>
                                 </div>
