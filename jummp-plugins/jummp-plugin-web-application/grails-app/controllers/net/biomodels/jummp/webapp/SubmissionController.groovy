@@ -267,6 +267,7 @@ hyphens and underscores.
         String description = jsonFileData["description"]
         RFTC mfRFTC = createRFTC(submissionFolder, filename, true, description)
         MFTC format = modelFileFormatService.inferModelFormat([mfRFTC])
+        // TODO: add "readme": "not decided yet" with an updated value to the returned map
         return ["identifier": format.identifier, "name": format.name, "id": format.id]
     }
 
@@ -282,6 +283,7 @@ hyphens and underscores.
         logger.debug("Detecting and extracting the model info from: $fileJSONData")
         File modelFile = fileSystemService.retrieve(fileJSONData)
         Map modelInfo = submissionService.detectModelInfo(modelFile, modelFormat)
+        // TODO: load other info from cache and update this object modelInfo.put("otherInfo", "experimental data")
         return modelInfo
     }
 

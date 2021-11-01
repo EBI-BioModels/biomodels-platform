@@ -324,23 +324,33 @@
         $('#model_format').val(modelFile.detectedModelFormat.id).change();
         // Below are two pieces of information associated with the revision
         let readmeSubmission = modelFile.detectedModelFormat.readme;
-        if (!readmeSubmission && isUpdate && typeof modelInfo.detectedModelFormat !== "undefined") {
-            readmeSubmission = modelInfo.detectedModelFormat.readme;
+        if (!readmeSubmission && isUpdate)  {
+            if (typeof modelInfo.detectedModelFormat !== "undefined") {
+                readmeSubmission = modelInfo.detectedModelFormat.readme;
+            }
+            if (!readmeSubmission) {
+                readmeSubmission = "${readmeSubmission}";
+            }
         }
         $('#readme_submission').val(readmeSubmission);
 
         // Below are two extra info associated with the model
         let modellingApproach = modelFile.detectedModelInfo.modellingApproach;
-        if (!modellingApproach && isUpdate && typeof modelInfo.detectedModelling !== "undefined") {
-            modellingApproach = modelInfo.detectedModelling.approach;
-        }
-        if (!modellingApproach) {
-            modellingApproach = "${modellingApproach}";
+        if (!modellingApproach && isUpdate) {
+            if (typeof modelInfo.detectedModelling !== "undefined") {
+                modellingApproach = modelInfo.detectedModelling.approach;
+            }
+            if (!modellingApproach) {
+                modellingApproach = "${modellingApproach}";
+            }
         }
         $('#modelling_approach').val(modellingApproach);
 
         if (typeof modelInfo.detectedModelling !== "undefined") {
             let otherInfo = modelInfo.detectedModelling.otherInfo;
+            if (!otherInfo) {
+                otherInfo = "${otherInfo}";
+            }
             $('#other_info').val(otherInfo);
         }
 

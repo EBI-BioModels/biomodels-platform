@@ -144,7 +144,7 @@ class SubmissionService {
             workingMemory.put("selectedModelFormat", selectedValue)
             workingMemory.put("otherInfo", "")
             workingMemory.put("modellingApproach", "")
-            workingMemory.put("readmeSubmission", "readme submission")
+            workingMemory.put("readmeSubmission", "")
         }
 
         /**

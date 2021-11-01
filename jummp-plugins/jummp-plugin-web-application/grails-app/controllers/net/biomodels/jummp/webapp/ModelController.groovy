@@ -438,6 +438,8 @@ class ModelController {
         modelInfo.put("detectedModelling", detectedModelling)
 
         initials.put("modelInfo", modelInfo as JSON)
+        initials.put("readmeSubmission", detectedModelFormat.get("readme"))
+
         initials
     }
 
