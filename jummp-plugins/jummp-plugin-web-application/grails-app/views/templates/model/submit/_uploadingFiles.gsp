@@ -274,7 +274,11 @@
             },
             async: true,
             dataType: "JSON",
+            beforeSend: function() {
+                console.log("Validating files and extracting some information if it is available...");
+            },
             success: function(response) {
+                console.log("Populating the model info to the form...");
                 changesMade = response.changesMade;
                 let data = response["filesMap"];
                 let msg = "";
@@ -334,7 +338,6 @@
                     currentValidation = false;
                     errorMessages.push("A submission must have at least only one main model file.")
                 }
-                updateModelInfoForm();
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 let msg = JSON.parse(JSON.stringify(errorThrown));
@@ -342,6 +345,12 @@
                 console.log(textStatus);
                 $('.flashNotificationDiv').html(msg).show();
             }
+        }).done(function () {
+            console.log("Finishing the validation and population...");
+        }).then(function () {
+            // $('#loadingText').text("Finishing the validation and population...");
+            // Update the model info form
+            updateModelInfoForm();
         });
     }
 
