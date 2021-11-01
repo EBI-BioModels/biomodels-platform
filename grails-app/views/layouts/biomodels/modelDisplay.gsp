@@ -803,7 +803,7 @@
                                             from the ready block of this page -->
                                         </div>
                                         <div class="small-12 medium-9 large-9 columns">
-                                            <p class="ext-rsc-text" style="display: none">OmicsDI Impact Matrix</p>
+                                            <p class="ext-rsc-text" style="display: none">OmicsDI Impact Metrics</p>
                                         </div>
                                     </div>
                                 </div>
