@@ -270,6 +270,14 @@ hyphens and underscores.
         return ["identifier": format.identifier, "name": format.name, "id": format.id]
     }
 
+    /**
+     * This service detects three info of the model such as name, description and modelling approach based on {@link
+     * ModelFileFormatService} which basically reads the main model file and extracts these info.
+     *
+     * @param fileJSONData  A JSON string representing the input data as the uploading files
+     * @param modelFormat   A String denoting the model format name
+     * @return              A Map of three items and their associated values
+     */
     private Map detectModelInfo(final JSONElement fileJSONData, final String modelFormat) {
         logger.debug("Detecting and extracting the model info from: $fileJSONData")
         File modelFile = fileSystemService.retrieve(fileJSONData)

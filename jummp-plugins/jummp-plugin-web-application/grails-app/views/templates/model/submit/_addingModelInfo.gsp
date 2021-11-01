@@ -298,16 +298,26 @@
     }
 
     function updateModelInfoForm() {
-        // the modelFile is the global variable
+        // the modelFile is the global variable that is updated in step 1: uploading and processing files
         let name = modelFile.detectedModelInfo.name;
         if (!name) {
             name = modelInfo.detectedName;
+            if (!name && ${isUpdate}) {
+                name = `${RevisionTC?.name}`;
+            }
         }
         $('input[id="name"]').val(name);
 
         let description = modelFile.detectedModelInfo.description;
         if (!description) {
             description = modelInfo.detectedDescription;
+            if (!description && ${isUpdate}) {
+                // For example: SBML models often have a description in HTML format. To prevent unexpected errors
+                // happening in Javascript,  use backticks to assign a block of HTML text to a variable.
+                // Read the explanation here [1].
+                // [1] https://stackoverflow.com/a/44234016/865603
+                description = `${RevisionTC?.description}`;
+            }
         }
         $('textarea[id="description"]').val(description);
 
@@ -323,6 +333,9 @@
         let modellingApproach = modelFile.detectedModelInfo.modellingApproach;
         if (!modellingApproach && isUpdate && typeof modelInfo.detectedModelling !== "undefined") {
             modellingApproach = modelInfo.detectedModelling.approach;
+        }
+        if (!modellingApproach) {
+            modellingApproach = "${modellingApproach}";
         }
         $('#modelling_approach').val(modellingApproach);
 
