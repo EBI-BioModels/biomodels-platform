@@ -55,6 +55,10 @@ $(document).ready(function () {
             }
             // tick or cross the previous or current step if the validation is valid or invalid respectively
             setCheckList(step, currentValidation);
+            if (step === 3) {
+                // set the check icon for the displaying summary step
+                setCheckList(4, currentValidation);
+            }
         }).then(function (r) {
             console.log("Validated and displayed completely.");
         });
