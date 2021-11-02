@@ -133,42 +133,48 @@
 <input type="button" name="previous" class="previous action-button-previous" value="Previous"/>
 <script>
     function validateModelInfo() {
-        errorMessages = [];
-        let isNameValid = true;
-        if ($('input[id="name"]').val().length === 0) {
-            errorMessages.push("The model name text box is empty. Please enter a meaningful name.")
-            isNameValid = false;
-        } else if ($('input[id="name"]').val().length < 5 || $('input[id="name"]').val().length > 255) {
-            errorMessages.push("Length of the model name is greater 4 and less 256 characters.")
-            isNameValid = false;
-        }
+        return $.ajax({
+            url: "${createLink(controller: "healthCheck", action: "status")}",
+            type: "GET",
+            success: function (response) {
+                errorMessages = [];
+                let isNameValid = true;
+                if ($('input[id="name"]').val().length === 0) {
+                    errorMessages.push("The model name text box is empty. Please enter a meaningful name.")
+                    isNameValid = false;
+                } else if ($('input[id="name"]').val().length < 5 || $('input[id="name"]').val().length > 255) {
+                    errorMessages.push("Length of the model name is greater 4 and less 256 characters.")
+                    isNameValid = false;
+                }
 
-        let modelFormat = $("#model_format option:selected").text();
-        let isMFDetected = definedModelFormatNames.filter(e => e === modelFormat).length === 1;
-        let isFMMatched = true;
-        if (modelFormat === "Original code *") {
-            isFMMatched = $('#readme_submission').val().length > 0
-        }
-        if (!isFMMatched) {
-            errorMessages.push("Please explain what is your model format in the corresponding box.");
-        }
+                let modelFormat = $("#model_format option:selected").text();
+                let isMFDetected = definedModelFormatNames.filter(e => e === modelFormat).length === 1;
+                let isFMMatched = true;
+                if (modelFormat === "Original code *") {
+                    isFMMatched = $('#readme_submission').val().length > 0
+                }
+                if (!isFMMatched) {
+                    errorMessages.push("Please explain what is your model format in the corresponding box.");
+                }
 
-        let modellingApproach = $('#modelling_approach').val();
-        let isMARecognisable = definedModellingApproachNames.filter(ma => ma === modellingApproach).length === 1;
-        if (!isMARecognisable) {
-            errorMessages.push("Please type to choose a modelling approach from the pre-defined values.")
-        }
-        let isMAMatched = true;
-        if (modellingApproach === "Other") {
-            isMAMatched = $('#other_info').val().length > 0;
-        }
-        if (!isMAMatched) {
-            errorMessages.push("Please explain what is your modelling approach in the corresponding box.");
-        }
-        currentValidation = isNameValid && isMFDetected && isFMMatched && isMARecognisable && isMAMatched;
-        if (currentValidation) {
-            updateModelInfoObject();
-        }
+                let modellingApproach = $('#modelling_approach').val();
+                let isMARecognisable = definedModellingApproachNames.filter(ma => ma === modellingApproach).length === 1;
+                if (!isMARecognisable) {
+                    errorMessages.push("Please type to choose a modelling approach from the pre-defined values.")
+                }
+                let isMAMatched = true;
+                if (modellingApproach === "Other") {
+                    isMAMatched = $('#other_info').val().length > 0;
+                }
+                if (!isMAMatched) {
+                    errorMessages.push("Please explain what is your modelling approach in the corresponding box.");
+                }
+                currentValidation = isNameValid && isMFDetected && isFMMatched && isMARecognisable && isMAMatched;
+                if (currentValidation) {
+                    updateModelInfoObject();
+                }
+            }
+        });
     }
 
     function associateEventHandlers(id) {

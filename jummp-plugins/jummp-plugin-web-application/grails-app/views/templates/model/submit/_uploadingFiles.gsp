@@ -157,6 +157,7 @@
             onComplete: function () {
                 checkIdenticalFileNames();
                 ui_add_log('All pending transfers finished');
+                console.log("Uploaded successfully");
             },
             onNewFile: function (id, file) {
                 // When a new file is added using the file selector or the DnD area
@@ -262,7 +263,7 @@
         handleErrorMessages(messages);
         if (!currentValidation) { return; }
 
-        $.ajax({
+        return $.ajax({
             type: "POST",
             url: "${createLink(controller: "submission", action: "processUploadFiles")}",
             data: {
@@ -278,7 +279,7 @@
                 console.log("Validating files and extracting some information if it is available...");
             },
             success: function(response) {
-                console.log("Populating the model info to the form...");
+                console.log("Updating objects and variables tighten to the form...");
                 changesMade = response.changesMade;
                 let data = response["filesMap"];
                 let msg = "";
@@ -345,12 +346,6 @@
                 console.log(textStatus);
                 $('.flashNotificationDiv').html(msg).show();
             }
-        }).done(function () {
-            console.log("Finishing the validation and population...");
-        }).then(function () {
-            // $('#loadingText').text("Finishing the validation and population...");
-            // Update the model info form
-            updateModelInfoForm();
         });
     }
 

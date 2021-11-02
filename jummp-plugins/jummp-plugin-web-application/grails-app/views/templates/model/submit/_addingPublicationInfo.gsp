@@ -142,7 +142,7 @@
             return;
         }
         clearErrorMessages();
-        $.ajax({
+        return $.ajax({
             type: "POST",
             url: "${createLink(controller: "publication", action:"doVerifyPublicationProviderAndLink")}",
             data: {
@@ -223,23 +223,24 @@
         let selectedPubLinkProvider = $('#pubLinkProvider').val();
         let withoutPub = selectedPubLinkProvider === "NoPub";
         if (withoutPub) {
-            currentValidation = true;
-            return;
+            return ajax(() => {
+                currentValidation = true;
+            });
         } else {
-            verifyPublicationProviderAndLink($('#pubLinkProvider').val(), $('#publicationLink').val());
+            verifyPublicationProviderAndLink($('#pubLinkProvider').val(),
+                $('#publicationLink').val()).then(function (r) {
+                if (!currentValidation) {
+                    return;
+                }
+                currentValidation = validateDataForm("publicationForm");
+            });
             if (!currentValidation) {
+                let msg =
+                    "The publication form is invalid such as missing required values. Please check all the fields again!";
+                toastr.error(msg);
+                showFlashMessages(msg);
                 return;
             }
-            currentValidation = validateDataForm("publicationForm");
-        }
-        if (!currentValidation) {
-            let msg =
-                "The publication form is invalid such as missing required values. Please check all the fields again!";
-            toastr.error(msg);
-            showFlashMessages(msg);
-            return;
-        } else {
-
         }
         let isPubTCValidated = true;
         let pubDetails = {};
@@ -255,7 +256,7 @@
         pubDetails["month"] = $('#month').val();
         pubDetails["pages"] = $('#pages').val();
         pubDetails["authors"] = $('#authorListTemp').text();
-        $.ajax({
+        return $.ajax({
             type: "POST",
             url: "${createLink(controller: "publication", action: "validatePublicationDetails")}",
             data: {
@@ -278,9 +279,11 @@
                 console.log("textStatus: " + textStatus);
                 collectErrors(errorMessages, msg);
                 isPubTCValidated = false;
+            },
+            complete: function (r) {
+                currentValidation = withoutPub || isPubTCValidated;
             }
         });
-        currentValidation = withoutPub || isPubTCValidated;
     }
 
     function clearErrorMessages() {
@@ -293,5 +296,14 @@
         if (found < 0) {
             errorMessages.push(errMsg);
         }
+    }
+    function ajax(callback) {
+        return $.ajax({
+            url: "${createLink(controller: "healthCheck", action: "status")}",
+            type: "GET",
+            success: function (response) {
+                callback();
+            }
+        });
     }
 </script>

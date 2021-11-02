@@ -20,40 +20,44 @@ $(document).ready(function () {
     steps = 5;
     setProgressBar(current, steps);
     $(".next").click(function () {
-        validateData(current);
-        let step;
-        current_fs = $(this).parent();
-        next_fs = current_fs.next();
-        if (currentValidation) {
-            // Add Class Active
-            $("#progressbar li").eq(current++).addClass("active");
+        const navSys = $(this);
+        validateData(current).done(function (r) {
+            let step;
+            current_fs = navSys.parent();
+            next_fs = current_fs.next();
+            if (currentValidation) {
+                // Add Class Active
+                $("#progressbar li").eq(current++).addClass("active");
 
-            // show the next fieldset
-            next_fs.show();
-            // hide the current fieldset with style
-            current_fs.animate({opacity: 0}, {
-                step: function (now) {
-                    // for making fieldset appear animation
-                    opacity = 1 - now;
+                // show the next fieldset
+                next_fs.show();
+                // hide the current fieldset with style
+                current_fs.animate({opacity: 0}, {
+                    step: function (now) {
+                        // for making fieldset appear animation
+                        opacity = 1 - now;
 
-                    current_fs.css({
-                        'display': 'none',
-                        'position': 'relative'
-                    });
-                    next_fs.css({'opacity': opacity});
-                },
-                duration: 500
-            });
-            setProgressBar(current, steps);
-            step = current - 1;
-            clearErrorMessages();
-            updateSubFormAtStep(current);
-        } else {
-            showErrorMessages();
-            step = current;
-        }
-        // tick or cross the previous or current step if the validation is valid or invalid respectively
-        setCheckList(step, currentValidation);
+                        current_fs.css({
+                            'display': 'none',
+                            'position': 'relative'
+                        });
+                        next_fs.css({'opacity': opacity});
+                    },
+                    duration: 500
+                });
+                setProgressBar(current, steps);
+                step = current - 1;
+                clearErrorMessages();
+                updateSubFormAtStep(current);
+            } else {
+                showErrorMessages();
+                step = current;
+            }
+            // tick or cross the previous or current step if the validation is valid or invalid respectively
+            setCheckList(step, currentValidation);
+        }).then(function (r) {
+            console.log("Validated and displayed completely.");
+        });
     });
 
     $(".previous").click(function () {
@@ -117,7 +121,7 @@ $(document).ready(function () {
                 break;
             case 2:
                 // defined in the step 2
-                // updateModelInfoForm();
+                updateModelInfoForm();
                 break;
             case 3:
                 break;
@@ -135,22 +139,24 @@ $(document).ready(function () {
     }
 
     function validateData(step) {
+        let func;
         switch (step) {
             case 1:
-                validateFileUpload();
+                func = validateFileUpload();
                 break;
             case 2:
-                validateModelInfo();
+                func = validateModelInfo();
                 break;
             case 3:
-                validatePublicationInfo();
+                func = validatePublicationInfo();
                 break;
             case 4:
-                submitData();
+                func = submitData();
                 break;
             default:
                 break;
         }
+        return func;
     }
 });
 
