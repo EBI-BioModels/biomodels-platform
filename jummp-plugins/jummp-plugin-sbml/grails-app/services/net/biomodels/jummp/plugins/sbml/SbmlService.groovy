@@ -236,28 +236,31 @@ The consistency check for your model is being ignored."""
             log.debug(errorMsg)
             return doc
         }
-        try {
-            final int CONSISTENCY_ERRORS = doc.checkConsistency()
-            if (CONSISTENCY_ERRORS == -1) {
-                errorMsg ="Internal error in online SBML Validator while validating ${doc.inspect()}\t${doc.properties}"
-                errors.add(errorMsg)
-                return null
-            } else if (CONSISTENCY_ERRORS > 0) {
-                // search for an error
-                for (SBMLError error in doc.getListOfErrors().validationErrors) {
-                    if (error.isFatal() || error.isInternal() || error.isSystem() || error.isXML() || error.isError()) {
-                        errorMsg = error.getMessage()
-                        log.debug(errorMsg)
-                        errors.add(errorMsg)
-                        doc = null
-                        break
+
+        if (grailsApplication.config.jummp.plugins.sbml.validation) {
+            try {
+                final int CONSISTENCY_ERRORS = doc.checkConsistency()
+                if (CONSISTENCY_ERRORS == -1) {
+                    errorMsg = "Internal error in online SBML Validator while validating ${doc.inspect()}\t${doc.properties}"
+                    errors.add(errorMsg)
+                    return null
+                } else if (CONSISTENCY_ERRORS > 0) {
+                    // search for an error
+                    for (SBMLError error in doc.getListOfErrors().validationErrors) {
+                        if (error.isFatal() || error.isInternal() || error.isSystem() || error.isXML() || error.isError()) {
+                            errorMsg = error.getMessage()
+                            log.debug(errorMsg)
+                            errors.add(errorMsg)
+                            doc = null
+                            break
+                        }
                     }
                 }
+                return doc
+            } catch (ConversionException e) {
+                log.error(e.getMessage(), e)
+                return null
             }
-            return doc
-        } catch (ConversionException e) {
-            log.error(e.getMessage(), e)
-            return null
         }
     }
 

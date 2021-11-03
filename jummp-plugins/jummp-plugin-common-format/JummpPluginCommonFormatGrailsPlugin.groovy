@@ -38,12 +38,12 @@ class JummpPluginCommonFormatGrailsPlugin {
     def description = '''\
 This plugin supports to handle commonly well-known formats such as C/C++, Python, R, Java, Mathematica and Matlab
 '''
+    // Any additional developers beyond the author specified above.
     def developers = [
         [ name: "Tung Nguyen", email: "tung.nguyen@ebi.ac.uk"],
         [ name: "Mihai Glonț", email: "mihai.glont@ebi.ac.uk" ]
     ]
     // URL to the plugin's documentation
-//    def documentation = "http://grails.org/plugin/jummp-plugin-common-format"
     def documentation = "https://bitbucket.org/jummp/jummp"
 
     // Extra (optional) plugin metadata
@@ -53,9 +53,6 @@ This plugin supports to handle commonly well-known formats such as C/C++, Python
 
     // Details of company behind the plugin (if there is one)
     def organization = [ name: "EMBL-EBI", url: "https://www.ebi.ac.uk/" ]
-
-    // Any additional developers beyond the author specified above.
-//    def developers = [ [ name: "Joe Bloggs", email: "joe@bloggs.net" ]]
 
     // Location of the plugin's issue tracker.
     def issueManagement = [ system: "JIRA", url: "https://jummp-repo.atlassian.net/" ]

@@ -13,14 +13,6 @@
     </div>
 </div>
 
-<div class="row">
-    <div class="columns small-12 large-12">
-        <div class="text-center">
-            <img src="${serverURL}/images/biomodels/loading.gif" id="loading" title="working..." alt="Please wait..."/>
-        </div>
-    </div>
-</div>
-
 <div class="row align-center">
     <div class="columns small-12 medium-12 large-12">
         <div style="display: block;" id="completionMessage" class="animate-bottom text-center">

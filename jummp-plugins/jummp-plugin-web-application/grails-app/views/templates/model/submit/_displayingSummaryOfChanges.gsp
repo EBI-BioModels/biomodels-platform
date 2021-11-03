@@ -232,7 +232,7 @@
 
         // Publication details
         // invoke an ajax call to the server to render _publication template
-        $.ajax({
+        return $.ajax({
             url: "${createLink(controller: "publication", action: "renderPublicationDetails")}",
             type: 'POST',
             data: {
@@ -248,10 +248,19 @@
     }
 
     function submitData() {
-        currentValidation = true;
+        return $.ajax({
+            url: "${createLink(controller: "healthCheck", action: "status")}",
+            type: "GET",
+            success: function (r) {
+                currentValidation = true;
+                // Explain what you have updated
+                revisionComments = $('#revisionComments').val();
+            },
+            error: function (r) {
+                currentValidation = false;
+            }
+        });
 
-        // Explain what you have updated
-        revisionComments = $('#revisionComments').val();
     }
 
     $('#is-amend').on("click", function () {

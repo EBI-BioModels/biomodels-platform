@@ -517,6 +517,9 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
     private Map buildModelOfTheMonthEntry() {
         final String query = "from ModelOfTheMonth order by publicationDate desc"
         ModelOfTheMonth theLatestMoM = ModelOfTheMonth.find(query)
+        if (!theLatestMoM) {
+            return null
+        }
         String entryTitle = theLatestMoM.title
         String shortDescription = theLatestMoM.shortDescription
         String previewImage = Base64.encoder.encodeToString(theLatestMoM.previewImage)

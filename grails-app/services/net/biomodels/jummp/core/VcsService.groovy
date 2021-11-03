@@ -96,7 +96,9 @@ class VcsService implements GrailsConfigurationAware {
                     File.separator).append(model.vcsIdentifier).toString()
         final File MODEL_FOLDER = new File(modelFolderPath)
         if (commitMessage == null || commitMessage.isEmpty()) {
-            String cmtMsg = "Updated at ${new Date().toGMTString()}"
+            // TODO: replace toGMTString method
+            Date dtStamp = new Date()
+            String cmtMsg = "Updated at ${dtStamp.format('yyyy-MM-dd HH:mm:ss z')}".toString()
             return vcsManager.updateModel(MODEL_FOLDER, files, deleted, cmtMsg , isAmend)
         } else {
             return vcsManager.updateModel(MODEL_FOLDER, files, deleted, commitMessage, isAmend)

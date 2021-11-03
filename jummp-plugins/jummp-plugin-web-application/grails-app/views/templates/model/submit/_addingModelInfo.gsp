@@ -133,42 +133,48 @@
 <input type="button" name="previous" class="previous action-button-previous" value="Previous"/>
 <script>
     function validateModelInfo() {
-        errorMessages = [];
-        let isNameValid = true;
-        if ($('input[id="name"]').val().length === 0) {
-            errorMessages.push("The model name text box is empty. Please enter a meaningful name.")
-            isNameValid = false;
-        } else if ($('input[id="name"]').val().length < 5 || $('input[id="name"]').val().length > 255) {
-            errorMessages.push("Length of the model name is greater 4 and less 256 characters.")
-            isNameValid = false;
-        }
+        return $.ajax({
+            url: "${createLink(controller: "healthCheck", action: "status")}",
+            type: "GET",
+            success: function (response) {
+                errorMessages = [];
+                let isNameValid = true;
+                if ($('input[id="name"]').val().length === 0) {
+                    errorMessages.push("The model name text box is empty. Please enter a meaningful name.")
+                    isNameValid = false;
+                } else if ($('input[id="name"]').val().length < 5 || $('input[id="name"]').val().length > 255) {
+                    errorMessages.push("Length of the model name is greater 4 and less 256 characters.")
+                    isNameValid = false;
+                }
 
-        let modelFormat = $("#model_format option:selected").text();
-        let isMFDetected = definedModelFormatNames.filter(e => e === modelFormat).length === 1;
-        let isFMMatched = true;
-        if (modelFormat === "Original code *") {
-            isFMMatched = $('#readme_submission').val().length > 0
-        }
-        if (!isFMMatched) {
-            errorMessages.push("Please explain what is your model format in the corresponding box.");
-        }
+                let modelFormat = $("#model_format option:selected").text();
+                let isMFDetected = definedModelFormatNames.filter(e => e === modelFormat).length === 1;
+                let isFMMatched = true;
+                if (modelFormat === "Original code *") {
+                    isFMMatched = $('#readme_submission').val().length > 0
+                }
+                if (!isFMMatched) {
+                    errorMessages.push("Please explain what is your model format in the corresponding box.");
+                }
 
-        let modellingApproach = $('#modelling_approach').val();
-        let isMARecognisable = definedModellingApproachNames.filter(ma => ma === modellingApproach).length === 1;
-        if (!isMARecognisable) {
-            errorMessages.push("Please type to choose a modelling approach from the pre-defined values.")
-        }
-        let isMAMatched = true;
-        if (modellingApproach === "Other") {
-            isMAMatched = $('#other_info').val().length > 0;
-        }
-        if (!isMAMatched) {
-            errorMessages.push("Please explain what is your modelling approach in the corresponding box.");
-        }
-        currentValidation = isNameValid && isMFDetected && isFMMatched && isMARecognisable && isMAMatched;
-        if (currentValidation) {
-            updateModelInfoObject();
-        }
+                let modellingApproach = $('#modelling_approach').val();
+                let isMARecognisable = definedModellingApproachNames.filter(ma => ma === modellingApproach).length === 1;
+                if (!isMARecognisable) {
+                    errorMessages.push("Please type to choose a modelling approach from the pre-defined values.")
+                }
+                let isMAMatched = true;
+                if (modellingApproach === "Other") {
+                    isMAMatched = $('#other_info').val().length > 0;
+                }
+                if (!isMAMatched) {
+                    errorMessages.push("Please explain what is your modelling approach in the corresponding box.");
+                }
+                currentValidation = isNameValid && isMFDetected && isFMMatched && isMARecognisable && isMAMatched;
+                if (currentValidation) {
+                    updateModelInfoObject();
+                }
+            }
+        });
     }
 
     function associateEventHandlers(id) {
@@ -298,36 +304,59 @@
     }
 
     function updateModelInfoForm() {
-        // the modelFile is the global variable
+        // the modelFile is the global variable that is updated in step 1: uploading and processing files
         let name = modelFile.detectedModelInfo.name;
         if (!name) {
             name = modelInfo.detectedName;
+            if (!name && ${isUpdate}) {
+                name = `${RevisionTC?.name}`;
+            }
         }
         $('input[id="name"]').val(name);
 
         let description = modelFile.detectedModelInfo.description;
         if (!description) {
             description = modelInfo.detectedDescription;
+            if (!description && ${isUpdate}) {
+                // For example: SBML models often have a description in HTML format. To prevent unexpected errors
+                // happening in Javascript,  use backticks to assign a block of HTML text to a variable.
+                // Read the explanation here [1].
+                // [1] https://stackoverflow.com/a/44234016/865603
+                description = `${RevisionTC?.description}`;
+            }
         }
         $('textarea[id="description"]').val(description);
 
         $('#model_format').val(modelFile.detectedModelFormat.id).change();
         // Below are two pieces of information associated with the revision
         let readmeSubmission = modelFile.detectedModelFormat.readme;
-        if (!readmeSubmission && isUpdate && typeof modelInfo.detectedModelFormat !== "undefined") {
-            readmeSubmission = modelInfo.detectedModelFormat.readme;
+        if (!readmeSubmission && isUpdate)  {
+            if (typeof modelInfo.detectedModelFormat !== "undefined") {
+                readmeSubmission = modelInfo.detectedModelFormat.readme;
+            }
+            if (!readmeSubmission) {
+                readmeSubmission = "${readmeSubmission}";
+            }
         }
         $('#readme_submission').val(readmeSubmission);
 
         // Below are two extra info associated with the model
         let modellingApproach = modelFile.detectedModelInfo.modellingApproach;
-        if (!modellingApproach && isUpdate && typeof modelInfo.detectedModelling !== "undefined") {
-            modellingApproach = modelInfo.detectedModelling.approach;
+        if (!modellingApproach && isUpdate) {
+            if (typeof modelInfo.detectedModelling !== "undefined") {
+                modellingApproach = modelInfo.detectedModelling.approach;
+            }
+            if (!modellingApproach) {
+                modellingApproach = "${modellingApproach}";
+            }
         }
         $('#modelling_approach').val(modellingApproach);
 
         if (typeof modelInfo.detectedModelling !== "undefined") {
             let otherInfo = modelInfo.detectedModelling.otherInfo;
+            if (!otherInfo) {
+                otherInfo = "${otherInfo}";
+            }
             $('#other_info').val(otherInfo);
         }
 

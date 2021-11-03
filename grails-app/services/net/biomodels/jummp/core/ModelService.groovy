@@ -2147,7 +2147,9 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
      */
     Revision updateRevisionCurationState(Revision revision, CurationState state) {
         revision.setCurationState(state)
-        if (CurationState.CURATED == state && isRevisionPublic(revision)) {
+        String perennialId = revision.model.publicationId
+        boolean missingPerennialId = !perennialId || perennialId == ""
+        if (CurationState.CURATED == state && isRevisionPublic(revision) && missingPerennialId) {
             Revision updated = doBeforePublishingCuratedRevision(revision)
             if (null != updated && updated != revision) {
                 // ask Hibernate to not persist the original revision
@@ -2232,7 +2234,8 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
 */
 
         boolean curatedModel = isCurated(revision)
-        if (MAKE_PUBLICATION_ID && curatedModel) {
+        boolean missingPerennialId = !model.publicationId || model.publicationId == ""
+        if (MAKE_PUBLICATION_ID && curatedModel && missingPerennialId) {
             revision = doBeforePublishingCuratedRevision(revision)
         }
         model.firstPublished = new Date()

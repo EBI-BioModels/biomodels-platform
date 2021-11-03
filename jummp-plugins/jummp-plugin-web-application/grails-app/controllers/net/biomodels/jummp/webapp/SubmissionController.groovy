@@ -39,6 +39,7 @@ import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import net.biomodels.jummp.core.model.ValidationState
+import net.biomodels.jummp.utils.FileHelper
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONElement
@@ -71,7 +72,7 @@ class SubmissionController {
             rftcList.add(mfRFTC)
             def afs = JSON.parse(params.additionalFiles.decodeHTML())
             for (def file : afs) {
-                mfRFTC = createRFTC(file["submissionFolder"], file["filename"], false, file["description"])
+                mfRFTC = createRFTC(file["submissionFolder"] as String, file["filename"], false, file["description"])
                 rftcList.add(mfRFTC)
             }
             working.put("repository_files", rftcList)
@@ -228,6 +229,14 @@ class SubmissionController {
                 Map detectedModelInfo = detectModelInfo(e, detectedModelFormat.identifier)
                 e["detectedModelInfo"] = detectedModelInfo
             }
+            // check for the valid file name
+            if (!FileHelper.isFileNameAcceptable(e["filename"])) {
+                String warningMessage = """\
+Please make sure the file name '${e["filename"]}' only containing alphanumeric characters, spaces, \
+hyphens and underscores.
+"""
+                e["validateFileName"] = [warningMessage] as List<String>
+            }
         }
         // Determines which files are added and removed
         List<String> changesMade = new ArrayList<String>()
@@ -258,13 +267,23 @@ class SubmissionController {
         String description = jsonFileData["description"]
         RFTC mfRFTC = createRFTC(submissionFolder, filename, true, description)
         MFTC format = modelFileFormatService.inferModelFormat([mfRFTC])
+        // TODO: add "readme": "not decided yet" with an updated value to the returned map
         return ["identifier": format.identifier, "name": format.name, "id": format.id]
     }
 
+    /**
+     * This service detects three info of the model such as name, description and modelling approach based on {@link
+     * ModelFileFormatService} which basically reads the main model file and extracts these info.
+     *
+     * @param fileJSONData  A JSON string representing the input data as the uploading files
+     * @param modelFormat   A String denoting the model format name
+     * @return              A Map of three items and their associated values
+     */
     private Map detectModelInfo(final JSONElement fileJSONData, final String modelFormat) {
         logger.debug("Detecting and extracting the model info from: $fileJSONData")
         File modelFile = fileSystemService.retrieve(fileJSONData)
         Map modelInfo = submissionService.detectModelInfo(modelFile, modelFormat)
+        // TODO: load other info from cache and update this object modelInfo.put("otherInfo", "experimental data")
         return modelInfo
     }
 
@@ -296,22 +315,30 @@ class SubmissionController {
         logger.error("Oops!!! There has been an error!", e)
         // rollback and backup submission
         String ticket = working.get("submissionFolder")
+        final String EXCHANGE = grailsApplication.config.jummp.vcs.exchangeDirectory
+        final File PARENT = new File(EXCHANGE)
+        File submissionFiles = new File(PARENT, ticket)
+        File buggyFiles = new File(PARENT, "buggy")
+        File temporaryStorage = new File(buggyFiles, ticket)
+        temporaryStorage.mkdirs()
         if (working.containsKey("repository_files")) {
             List repFiles = working.get("repository_files")
             if (repFiles) {
-                final String EXCHANGE = grailsApplication.config.jummp.vcs.exchangeDirectory
-                final File PARENT = new File(EXCHANGE)
-                File submissionFiles = new File(PARENT, ticket)
-                File buggyFiles = new File(PARENT, "buggy")
-                File temporaryStorage = new File(buggyFiles, ticket)
-                temporaryStorage.mkdirs()
                 FileUtils.copyDirectory(submissionFiles, temporaryStorage)
-
-                // TODO: create error.log containing the output of ExceptionUtils.getStackTrace(e) in this folder
-
-                // TODO: save submission metadata
             }
         }
+
+        // create error.log containing the output of ExceptionUtils.getStackTrace(e)
+        File errorLog = new File(temporaryStorage, "error.log")
+        errorLog.write(ExceptionUtils.getStackTrace(e))
+        logger.error(ExceptionUtils.getRootCauseMessage(e))
+        // save the submission metadata to submission.log
+        File submissionLog = new File(temporaryStorage, "submission.log")
+        submissionLog.write("Submission Data\n")
+        working.each {
+            submissionLog.append("${it.key}: ${it.dump()}\n")
+        }
+
         submissionService.cleanup(working)
         mailService.sendMail {
             to grailsApplication.config.jummp.security.registration.email.adminAddress

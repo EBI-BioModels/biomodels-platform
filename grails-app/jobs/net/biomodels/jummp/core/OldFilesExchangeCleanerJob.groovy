@@ -38,32 +38,33 @@ package net.biomodels.jummp.core
  * @short Job for cleaning the exchange directory after RTCs if they have been in the
  * exchange for a long time. This can happen if the GC based cleaner doesnt clean up
  * the files in the first place (which could be because the program ended before GC ran,
- * or the GC decided theres lots of memory so it doesnt need to run. 
+ * or the GC decided theres lots of memory so it doesnt need to run.
  *
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  */
 class OldFilesExchangeCleanerJob {
-    
+
     def grailsApplication
     def veryOld = ( new Date() ).time - 1000*60*60*6 //remove six hour old files
-	
+
     static triggers = {
     	    //run on startup, and then every six hours.
-    	    simple name: 'OldFilesExchangeCleanerTrigger', startDelay: 30000, repeatInterval: 1000*60*60*6  
+    	    simple name: 'OldFilesExchangeCleanerTrigger', startDelay: 30000, repeatInterval: 1000*60*60*6
     }
-  
+
     def execute() {
-    	    new File(grailsApplication.config.jummp.vcs.exchangeDirectory).eachFile({f ->
-    	    	    System.out.println("EXCHANGE CLEANER: Processing "+f.getName()+" last modified at "+f.lastModified())
-    	    	    if (f.lastModified() <= veryOld && !f.getName().contains("buggy")) {
-    	    	    	    if (f.isFile()) {
-    	    	    	    	    f.delete()
-    	    	    	    }
-    	    	    	    else {
-    	    	    	    	    System.out.println("EXCHANGE CLEANER: deleting: "+f.getName()+" ..."+f.deleteDir())
-    	    	    	    }
-    	    	    }
-    	    })
+        new File(grailsApplication.config.jummp.vcs.exchangeDirectory).eachFile({f ->
+            Date lastModified = new Date(f.lastModified())
+            println("""EXCHANGE CLEANER: Processing ${f.getName()} last modified at \
+${lastModified.format('yyyy-MM-dd HH:mm:ss z')}""")
+            if (f.lastModified() <= veryOld && !f.getName().contains("buggy")) {
+                if (f.isFile()) {
+                    f.delete()
+                } else {
+                    println("EXCHANGE CLEANER: deleting: ${f.getName()}... ${f.deleteDir()}")
+                }
+            }
+        })
     }
 
 }

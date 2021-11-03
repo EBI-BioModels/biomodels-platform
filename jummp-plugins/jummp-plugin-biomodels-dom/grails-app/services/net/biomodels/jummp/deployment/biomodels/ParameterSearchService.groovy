@@ -101,10 +101,8 @@ class ParameterSearchService {
         try {
             if (proxy) {
                 conn = (HttpURLConnection) url.openConnection(proxy)
-                log.debug("via HTTP PROXY: ${proxy.dump()}")
             } else {
                 conn = (HttpURLConnection) url.openConnection()
-                log.debug("No HTTP PROXY")
             }
             conn.setConnectTimeout(1000)
             conn.setReadTimeout(1000)

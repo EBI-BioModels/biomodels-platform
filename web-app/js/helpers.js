@@ -52,3 +52,16 @@ function showFlashMessages(messages) {
 function hideFlashMessages() {
     $('.flashNotificationDiv').html("").hide();
 }
+
+
+/**
+ * Checks acceptable characters for the uploading file names
+ *
+ * @param filename  A String denoting the file name
+ * @returns {boolean}   A logical value showing that the file name only contains the acceptable characters or not
+ */
+function checkAcceptableCharactersForFileName(filename) {
+    let regexp = /^[a-zA-Z0-9\ -_]+$/g;
+    let retVal = filename.search(regexp) === -1 ? false : true;
+    return retVal;
+}

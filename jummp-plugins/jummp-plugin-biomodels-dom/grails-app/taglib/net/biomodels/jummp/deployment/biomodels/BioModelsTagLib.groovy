@@ -220,7 +220,11 @@ class BioModelsTagLib {
 
     def renderTheLatestMoMEntryWidget = {
         Map<String, String> momEntry = decorationService.fetchMomEntry()
-        out << render(template: "/templates/biomodels/homePage/theLatestMomEntryWidget", model: momEntry)
+        if (momEntry) {
+            out << render(template: "/templates/biomodels/homePage/theLatestMomEntryWidget", model: momEntry)
+        } else {
+            out << render(template: "/templates/biomodels/homePage/theEmptyMoMEntry")
+        }
     }
 
     def renderConvertedFiles = { attrs ->

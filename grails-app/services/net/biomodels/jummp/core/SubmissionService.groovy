@@ -144,7 +144,7 @@ class SubmissionService {
             workingMemory.put("selectedModelFormat", selectedValue)
             workingMemory.put("otherInfo", "")
             workingMemory.put("modellingApproach", "")
-            workingMemory.put("readmeSubmission", "readme submission")
+            workingMemory.put("readmeSubmission", "")
         }
 
         /**
@@ -735,7 +735,7 @@ class SubmissionService {
             Map info = ["name": name, "description": description, "modellingApproach": modellingApproach]
             Date stop = new Date()
             TimeDuration td = TimeCategory.minus(stop, start)
-            logger.debug("Detecting the model info ${info} of the model mail file ${modelFile.absolutePath} took $td")
+            logger.debug("Detecting the model info ${info} of the model main file ${modelFile.absolutePath} took $td")
             return info
         }
 

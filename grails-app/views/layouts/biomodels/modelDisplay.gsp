@@ -1,5 +1,5 @@
 <%--
- Copyright (C) 2010-2016 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ Copyright (C) 2010-2021 EMBL-European Bioinformatics Institute (EMBL-EBI),
  Deutsches Krebsforschungszentrum (DKFZ)
 
  This file is part of Jummp.
@@ -87,7 +87,8 @@
     <g:javascript src="syntax/shBrushXml.js"/>
     <g:javascript src="toastr.min.js"/>
     <g:javascript src="jquery.handsontable.full.js"/>
-
+    <script type="text/javascript" src="https://d3js.org/d3.v4.min.js"></script>
+    <g:javascript src="biomodels/omicsdi.service.js"/>
     <link rel="alternate" href="https://identifiers.org/biomodels.db/${revision.modelIdentifier()}"/>
     <link rel="alternate" href="https://www.ebi.ac.uk/biomodels-main/${revision.modelIdentifier()}"/>
     <link rel="alternate" href="https://www.ebi.ac.uk/biomodels-main/${revision.modelIdentifier()}"/>
@@ -161,6 +162,13 @@
         });
 
         $(document).ready(function() {
+            // OmicsDI Service for showing rosette
+            let isAvailable = checkModelAvailability("${revision.modelIdentifier()}");
+            if (isAvailable) {
+                createRosette("${revision.modelIdentifier()}");
+                $('.ext-rsc-text').attr('style', 'display:inline-block;');
+            }
+
             // Handler for .ready() called.
             $('#confirm-model-consistency-check').dialog({
                 resizable: false,
@@ -777,16 +785,32 @@
                                     <biomd:renderOriginalModels sources="${originalModels}"/></div>
                             </div></g:if>
                             <!-- Show all tags assigned to the model -->
+                            <biomd:insertSeparator/>
                             <g:if test="${canUpdate && hasCuratorRole}">
-                                <biomd:insertSeparator/>
                                 <biomd:showEditableTags bmTags="${bmTags}"/>
                             </g:if>
                             <g:else>
-                                <biomd:insertSeparator/>
                                 <biomd:showTags bmTags="${bmTags}"/>
                             </g:else>
+                            <biomd:insertSeparator/>
+                            <div class='row'>
+                                <div class="small-12 medium-6 large-4 columns">Connected external resources</div>
+                                <div class="small-12 medium-6 large-8 columns">
+                                    <div class="row">
+                                        <div class="small-12 medium-3 large-3 columns" id="rosette-holder">
+                                            <!-- This emply holder is used to show the model rosette rendered
+                                            automatically in omicsdi.service.js via the function createRosette() called
+                                            from the ready block of this page -->
+                                        </div>
+                                        <div class="small-12 medium-9 large-9 columns">
+                                            <p class="ext-rsc-text" style="display: none">OmicsDI Impact Metrics</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <!-- Render a disclaimer if the model has been published without a publicly available manuscript -->
                             <biomd:displayDisclaimer revision="${revision}"/>
+
                             %{--<div class='row'>
                                 <div class="medium-3 columns">Validation Status</div>
                                 <div class="medium-9 columns">${validationLevel}</div>
