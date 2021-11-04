@@ -196,6 +196,13 @@ class BatchSubmissionMainClass {
 
     void init() {
         camelContext = ctx.getBean('camelContext', CamelContext)
+        // don't let Camel shut itself down within 5 minutes of the importer finishing.
+        // wait for all models to be indexed instead.
+        camelContext.shutdownStrategy.setTimeout(Long.MAX_VALUE)
+        
+        // set the application context reference in POGOs that expect it
+        RevisionTransportCommand.context = ctx  
+        
         mshelper = new MSH(ctx: ctx, camelContext: camelContext)
     }
 
@@ -646,6 +653,7 @@ account '${ownerUsername}'.""")
             File base = new File(MODELS_DIR)
             initiateModelMainFileMap(base, modelFolderPattern)
             processFolderOfSubmissions(base, modelFolderPattern)
+            mshelper.awaitCompletionOfIndexingJobs()
         } catch (Exception e) {
             System.err.println("Generic exception encountered while importing the models: $e")
         } finally {
