@@ -154,13 +154,17 @@ class BatchSubmissionMainClass {
         "[A-Z0-9]*-biopax2\\.owl": "Auto-generated BioPAX (Level 2)",
         "[A-Z0-9]*-biopax3\\.owl": "Auto-generated BioPAX (Level 3)",
         "[A-Z0-9]*\\.cellml": "Auto-generated CellML",
-        "[A-Z0-9]*\\.m" : "Auto-generated Octave file",
+        "[A-Z0-9_-\\ ]*\\." : "COPASI file",
+        "[A-Z0-9]*\\.m" : "Auto-generated Matlab/Octave file",
+        "[A-Z0-9]*-octave\\.m" : "Auto-generated Octave file",
+        "[A-Z0-9]*-matlab\\.m" : "Auto-generated Matlab file",
         "[A-Z0-9]*\\.pdf" : "Auto-generated PDF file",
         "[A-Z0-9]*\\_manual.png" : "Manually generated Reaction graph (PNG)",
         "[A-Z0-9]*\\_manual.svg" : "Manually generated Reaction graph (SVG)",
         "[A-Z0-9]*\\.png" : "Auto-generated Reaction graph (PNG)",
         "[A-Z0-9]*\\.svg" : "Auto-generated Reaction graph (SVG)",
         "[A-Z0-9]*\\.sci" : "Auto-generated Scilab file",
+        "[A-Z0-9_-\\ ]*\\.sedml" : "SED-ML file",
         "[A-Z0-9]*\\.vcml" : "Auto-generated VCML file",
         "[A-Z0-9]*\\.xpp" : "Auto-generated XPP file" ]
     def ctx
