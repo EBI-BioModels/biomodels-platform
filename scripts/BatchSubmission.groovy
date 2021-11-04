@@ -639,19 +639,6 @@ account '${ownerUsername}'.""")
             def modelFolderPattern = ~/^BIOMD\d{10}$/
             File base = new File(MODELS_DIR)
             initiateModelMainFileMap(base, modelFolderPattern)
-            //initiateFileNameDescriptionMap(base, modelFolderPattern)
-            /*Set<String> keys = fileNameDescriptionMap.keySet()
-            keys = keys.sort { a, b -> a <=> b }
-            for (String k: keys) {
-                RFTC mainFile = modelMainFileMap.get(k)
-                println("$k: MF: ${mainFile?.filename}: ${mainFile?.description}")
-                List files = fileNameDescriptionMap.get(k)
-                //for (RFTC rftc: files) {
-                    //println("${rftc.filename}: ${rftc.description}")
-                //}
-                //println("----")
-            }*/
-
             processFolderOfSubmissions(base, modelFolderPattern)
             mshelper.awaitCompletionOfIndexingJobs()
         } catch (Exception e) {
@@ -662,70 +649,9 @@ account '${ownerUsername}'.""")
             String formattedDuration = duration.toString()
             println "Submission lasting in $formattedDuration"
             printModelLog()
-       }
+        }
 
-        /*try {
-            Map revisions = buildDataSubmission()
-            final int POOL_SIZE = 8
-            GParsPool.withPool(POOL_SIZE) {
-                revisions.eachParallel { RTC cmd, List files ->
-                    RunScriptHelper.simpleRunAs(adminAuth, {
-                        ctx.persistenceInterceptor?.init()
-                        try {
-                            submitModel(files, cmd)
-                        } catch (Exception e) {
-                            String message = """Cannot submit the models due to ${e.message}"""
-                            println(message)
-                            e.printStackTrace()
-                        } finally {
-                            ctx.persistenceInterceptor?.destroy()
-                        }
-                    })
-                }
-            }
-        } finally {
-            ctx.persistenceInterceptor?.destroy()
-            duration = Duration.between(startTime, Instant.now())
-            String formattedDuration = duration.toString()
-            println "Submission lasting in $formattedDuration"
-        }*/
         println "Completed the job: ${new Date().format("dd/MM/yyyy HH:mm:ss")}"
-    }
-
-    Map buildDataSubmission() {
-        Map data = [:]
-        String tmpDir = System.getProperty("java.io.tmpdir")
-        File location = new File(tmpDir)
-
-        for (int i = 1; i <= 10; i++) {
-            File mainFile = MSH.createSimpleMatlabModel("MODEL$i", location)
-            String desc = "This is a sample Matlab model $i"
-            RFTC mainRFTC = mshelper.createRepoFile(mainFile, true, desc)
-            ModelFormat fmt = ModelFormat.findByIdentifierAndName("matlab", "MATLAB (Octave)")
-            MFTC fmtCmd = new MFTC(identifier: "matlab", name: "MATLAB (Octave)", formatVersion: fmt.formatVersion)
-            boolean isValid = true
-            String modelName = "This is a sample Matlab model $i"
-            String modelDesc = "This model simulates how to submit multiple models to BioModels concurrently"
-            ModelTransportCommand modelCmd = new ModelTransportCommand(deleted: false)
-            RTC command = new RTC(files: [mainRFTC], format: fmtCmd, context: ctx,
-                validated: isValid, name: modelName, description: modelDesc, uploadDate: new Date(),
-                validationLevel: ValidationState.APPROVED,
-                curationState: CurationState.NON_CURATED, minorRevision: false,
-                comment: "Push the first commit of '$modelName'.", model: modelCmd)
-            data.put(command, [mainRFTC] as List)
-        }
-        return data
-    }
-
-    void submitModel(final List files, final RTC revision) {
-        println """Submitting the model revision ${revision.dump()} with the repository files ${files.dump()} with the submission id: ${revision.model.submissionId}"""
-        //ctx.modelService.uploadValidatedModel(files, revision)
-        //helper.awaitCompletionOfIndexingJobs()
-        /*String submissionId = ""
-        synchronized (this) {
-            submissionId = ctx.modelService.submissionIdGenerator.generate()
-        }
-        println "The new model identifier is $submissionId"*/
     }
 
     void startBatchSubmissionWithTrigger() {
