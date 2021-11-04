@@ -309,7 +309,7 @@ class BatchSubmissionMainClass {
      * @param folder    A File object representing the model folder
      * @return          A map of the main and additional files
      */
-    static Map<String, Object> partitionMainAndAdditionalFiles(File folder) {
+    Map<String, Object> partitionMainAndAdditionalFiles(File folder) {
         File modelFile = null
         // the main file is the SBML (.xml extension)
         List<File> additionals = []
