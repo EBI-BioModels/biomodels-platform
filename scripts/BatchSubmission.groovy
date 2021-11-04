@@ -150,24 +150,24 @@ class BatchSubmissionMainClass {
      * Expected contents of a typical folder for literature-based models
      */
     def expectedFiles = [
-        "[A-Z0-9]*_urn\\.xml": "Auto-generated SBML file with URNs",
-        "[A-Z0-9]*-biopax2\\.owl": "Auto-generated BioPAX (Level 2)",
-        "[A-Z0-9]*-biopax3\\.owl": "Auto-generated BioPAX (Level 3)",
-        "[A-Z0-9]*\\.cellml": "Auto-generated CellML",
-        "[A-Z0-9_-\\ ]*\\." : "COPASI file",
-        "[A-Z0-9]*\\.m" : "Auto-generated Matlab/Octave file",
-        "[A-Z0-9]*-octave\\.m" : "Auto-generated Octave file",
-        "[A-Z0-9]*-matlab\\.m" : "Auto-generated Matlab file",
-        "[A-Z0-9]*\\.pdf" : "Auto-generated PDF file",
-        "[A-Z0-9]*\\_manual.png" : "Manually generated Reaction graph (PNG)",
-        "[A-Z0-9]*\\_manual.svg" : "Manually generated Reaction graph (SVG)",
-        "[A-Z0-9]*\\.png" : "Auto-generated Reaction graph (PNG)",
-        "[A-Z0-9_-\\]*\\.rdf" : "Auto-generated RDF file",
-        "[A-Z0-9]*\\.svg" : "Auto-generated Reaction graph (SVG)",
-        "[A-Z0-9]*\\.sci" : "Auto-generated Scilab file",
-        "[A-Z0-9_-\\ ]*\\.sedml" : "SED-ML file",
-        "[A-Z0-9]*\\.vcml" : "Auto-generated VCML file",
-        "[A-Z0-9]*\\.xpp" : "Auto-generated XPP file" ]
+        "[a-zA-Z0-9_\\-\\s]*_urn.xml"       : "Auto-generated SBML file with URNs",
+        "[a-zA-Z0-9_\\-\\s]*-biopax2.owl"   : "Auto-generated BioPAX (Level 2)",
+        "[a-zA-Z0-9_\\-\\s]*-biopax3.owl"   : "Auto-generated BioPAX (Level 3)",
+        "[a-zA-Z0-9_\\-\\s]*.cellml"        : "Auto-generated CellML",
+        "[a-zA-Z0-9_\\-\\ ]*.cps"           : "COPASI file",
+        "[a-zA-Z0-9_\\-\\s]*.m"             : "Auto-generated Matlab/Octave file",
+        "[a-zA-Z0-9_\\-\\s]*-octave.m"      : "Auto-generated Octave file",
+        "[a-zA-Z0-9_\\-\\s]*-matlab.m"      : "Auto-generated Matlab file",
+        "[a-zA-Z0-9_\\-\\s]*.pdf"           : "Auto-generated PDF file",
+        "[a-zA-Z0-9_\\-\\s]*_manual.png"    : "Manually generated Reaction graph (PNG)",
+        "[a-zA-Z0-9_\\-\\s]*_manual.svg"    : "Manually generated Reaction graph (SVG)",
+        "[a-zA-Z0-9_\\-\\s]*.png"           : "Auto-generated Reaction graph (PNG)",
+        "[a-zA-Z0-9_\\-\\s]*.rdf"           : "Auto-generated RDF file",
+        "[a-zA-Z0-9_\\-\\s]*.svg"           : "Auto-generated Reaction graph (SVG)",
+        "[a-zA-Z0-9_\\-\\s]*.sci"           : "Auto-generated Scilab file",
+        "[a-zA-Z0-9_\\-\\ ]*.sedml"         : "SED-ML file",
+        "[a-zA-Z0-9_\\-\\s]*.vcml"          : "Auto-generated VCML file",
+        "[a-zA-Z0-9_\\-\\s]*.xpp"           : "Auto-generated XPP file" ]
     def ctx
     CamelContext camelContext
     MSH mshelper
