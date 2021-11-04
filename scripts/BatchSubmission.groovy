@@ -434,6 +434,13 @@ class BatchSubmissionMainClass {
         // new ModelAdapter(model: model).toCommandObject(false)
         // addModelMsg id, "real mtc created"
 
+        // Just import the main file for now and hope the model has been in BioModels as of running this script
+        if (latest) {
+            RepositoryFileService rfSvc = ctx.getBean("repositoryFileService")
+            List oldRepoFileTC = rfSvc.getRepositoryFilesForRevision(latest)
+            additionals = oldRepoFileTC.findAll { !it.mainFile }
+        }
+
         def repoFileCommands = [modelFile] + additionals
         // GitManager needs filesToDelete and repoFileCommands to not have any overlapping files.
         def filesToDelete = []
