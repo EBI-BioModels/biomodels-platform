@@ -639,7 +639,6 @@ account '${ownerUsername}'.""")
             File base = new File(MODELS_DIR)
             initiateModelMainFileMap(base, modelFolderPattern)
             processFolderOfSubmissions(base, modelFolderPattern)
-            mshelper.awaitCompletionOfIndexingJobs()
         } catch (Exception e) {
             System.err.println("Generic exception encountered while importing the models: $e")
         } finally {
