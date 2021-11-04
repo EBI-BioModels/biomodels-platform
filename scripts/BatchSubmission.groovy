@@ -387,6 +387,13 @@ class BatchSubmissionMainClass {
             description = "Additional files"
             if (repoFilesMap.containsKey(f.name)) {
                 description = repoFilesMap.get(f.name)
+            } else {
+                def pattern = expectedFiles.keySet().find { testPattern ->
+                    Pattern.matches(testPattern, f.name)
+                }
+                if (pattern) {
+                    description = expectedFiles.get(pattern)
+                }
             }
             mshelper.createRepoFile(f, false, description)
         }
