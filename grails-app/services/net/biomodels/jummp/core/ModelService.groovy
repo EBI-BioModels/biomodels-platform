@@ -841,6 +841,8 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
      * @param repoFiles     The model files to be stored in the VCS as a new revision
      * @param deleteFiles   The list of files to be deleted from the VCS
      * @param rev           The revision to be added the model which the revision is being associated with
+     * @param clone         The flag telling whether the newly created revision is cloned or freshly created.
+     *                      This parameter is helpful when we want to retain most properties of the former revision.
      *
      * @return The newly-added Revision. In case an error occurred while accessing the VCS @c null will be returned.
      * @throws ModelException If either @p model, @p modelFiles or @p comment are null or if the files do not exist
@@ -852,7 +854,8 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @Transactional(isolation = Isolation.READ_COMMITTED)
     Revision addRevision(final List<RepositoryFileTransportCommand> repoFiles,
                          final List<RepositoryFileTransportCommand> deleteFiles,
-                         final RevisionTransportCommand rev) throws ModelException {
+                         final RevisionTransportCommand rev,
+                         final boolean clone = false) throws ModelException {
         Revision revision
         def txDefinition = [
             // this tx will use a different session than the current one
@@ -860,7 +863,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         ]
         Revision.withTransaction(txDefinition) {
             // the returned revision is detached from the Hibernate session
-            revision = persistRevision(repoFiles, deleteFiles, rev)
+            revision = persistRevision(repoFiles, deleteFiles, rev, clone)
         }
         Revision attachedRevision = doPostPersistRevision(revision)
         return attachedRevision ?: revision
@@ -903,7 +906,8 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
      */
     Revision persistRevision(List<RepositoryFileTransportCommand> repoFiles,
                              List<RepositoryFileTransportCommand> deleteFiles,
-                             RevisionTransportCommand rev) throws ModelException {
+                             RevisionTransportCommand rev,
+                             boolean clone = false) throws ModelException {
         StopWatch stopWatch = new Log4JStopWatch("modelService.persistRevision")
         // TODO: the method should be thread safe, add a lock
         validateModelRevision(rev)
@@ -929,7 +933,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
 
         if (revision.validate()) {
             model.addToRevisions(revision)
-            doUpdateModelMetadata(model, rev)
+            doUpdateModelMetadata(model, rev, clone)
             revision.save()
             model.save(flush: true)
             doUpdatePermissions(model, revision, currentUser)
@@ -2657,20 +2661,23 @@ There has been error while adding $approach to the model ${revisionTC.identifier
         stopWatch.stop()
     }
 
-    private Model doUpdateModelMetadata(final Model model, final RevisionTransportCommand revision) {
+    private Model doUpdateModelMetadata(final Model model, final RevisionTransportCommand revision,
+                                        final boolean clone = false) {
         StopWatch stopWatch = new Log4JStopWatch("modelService.doUpdateModelMetadata")
-        model.modellingApproach = revision.model.modellingApproach
-        model.otherInfo = revision.model.otherInfo
-        PublicationTransportCommand publicationTC = revision.model.publication
-        if (!publicationTC && model.publication) {
-            // delete db association if corresponding publication was removed in the UI
-            model.publication = null
-        } else if (publicationTC) {
-            // update db association with the value from the UI
-            try {
-                model.publication = publicationService.fromCommandObject(publicationTC)
-            } catch(Exception e) {
-                logger.error("Unable to record publication for ${revision.model}: ${e.message}", e)
+        if (!clone) {
+            model.modellingApproach = revision.model.modellingApproach
+            model.otherInfo = revision.model.otherInfo
+            PublicationTransportCommand publicationTC = revision.model.publication
+            if (!publicationTC && model.publication) {
+                // delete db association if corresponding publication was removed in the UI
+                model.publication = null
+            } else if (publicationTC) {
+                // update db association with the value from the UI
+                try {
+                    model.publication = publicationService.fromCommandObject(publicationTC)
+                } catch (Exception e) {
+                    logger.error("Unable to record publication for ${revision.model}: ${e.message}", e)
+                }
             }
         }
         stopWatch.stop()
