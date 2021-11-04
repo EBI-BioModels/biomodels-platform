@@ -369,9 +369,9 @@ class BatchSubmissionMainClass {
                 repoFilesMap.put(o.filename, o.description)
             }
         }
+
         def partitionedFiles = partitionMainAndAdditionalFiles(folder)
         File modelFile = partitionedFiles.main as File
-        List<File> additionals = partitionedFiles.additionals as List<File>
         final String modelId = folder.name
         assert modelFile: "No main file found in submission folder $modelId"
 
@@ -380,6 +380,8 @@ class BatchSubmissionMainClass {
             description = repoFilesMap.get(modelFile.name)
         } else { println "Model $modelId has been renamed the main file: ${modelFile.name}" } 
         RFTC mainFileRFTC = mshelper.createRepoFile(modelFile, true, description)
+        
+        List<File> additionals = partitionedFiles.additionals as List<File>
         List<RFTC> otherRepoFiles = additionals.collect { f ->
             description = "Additional files"
             if (repoFilesMap.containsKey(f.name)) {
@@ -396,12 +398,12 @@ class BatchSubmissionMainClass {
         Revision latest = repoFileMap.latestRevision as Revision
         RFTC modelFile = repoFileMap.main as RFTC
         List<RFTC> additionals = repoFileMap.additionals as List<RFTC>
-        def mainFiles = [new File(modelFile.path as String)]
 
         ModelFileFormatService modelFileFormatService = ctx.getBean("modelFileFormatService")
         MFTC fmtCmd = modelFileFormatService.inferModelFormat([modelFile])
         ModelFormat fmt = fetchModelFormat(fmtCmd)
         List errors = []
+        def mainFiles = [new File(modelFile.path as String)]
         boolean isValid = modelFileFormatService.validate(mainFiles, fmt.identifier, errors)
         if (!isValid) {
             addModelError(id, "Model failed validation: $errors")
@@ -464,6 +466,7 @@ could not roll back the session" throw new IllegalStateException("Cannot publish
         List<RFTC> filesToDelete = revisionData.toDelete as List<RFTC>
         Revision newRevision = null
         ModelService modelService = ctx.getBean "modelService", ModelService
+        
         try {
             //modelService.addModellingApproachAsAnnotation(revisionCmd, UhlenScriptSupport.modellingApproach)
             //addModelMsg(modelId, "Assigned modelling approach")
