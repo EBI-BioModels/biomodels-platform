@@ -332,7 +332,7 @@ class BatchSubmissionMainClass {
             if (child.name == mainFileName) {
                 // the model main file
                 modelFile = child
-            } else if (!child.name.startsWith(".")) {
+            } else if (!child.name.startsWith(".") && child.name != 'manifest.xml') {
                 // ignore the directories beginning with a dot such as .git or .DS_Store
                 additionals << child
             }
