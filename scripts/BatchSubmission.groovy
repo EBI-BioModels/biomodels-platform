@@ -83,7 +83,7 @@ class CuratedUpdateSupport {
             model {
                 like "publicationId", publicationId
             }
-            order("revisionNumber", "desc")
+            order("revisionNumber", "asc")
         }
         owners?.first()
     }
