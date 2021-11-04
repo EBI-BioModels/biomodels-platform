@@ -162,6 +162,7 @@ class BatchSubmissionMainClass {
         "[A-Z0-9]*\\_manual.png" : "Manually generated Reaction graph (PNG)",
         "[A-Z0-9]*\\_manual.svg" : "Manually generated Reaction graph (SVG)",
         "[A-Z0-9]*\\.png" : "Auto-generated Reaction graph (PNG)",
+        "[A-Z0-9_-\\]*\\.rdf" : "Auto-generated RDF file",
         "[A-Z0-9]*\\.svg" : "Auto-generated Reaction graph (SVG)",
         "[A-Z0-9]*\\.sci" : "Auto-generated Scilab file",
         "[A-Z0-9_-\\ ]*\\.sedml" : "SED-ML file",
