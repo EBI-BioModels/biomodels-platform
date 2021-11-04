@@ -416,8 +416,9 @@ class BatchSubmissionMainClass {
         ModelTransportCommand modelCmd = new ModelTransportCommand(deleted: false)
         if (model) {
             modelCmd.submissionId = model.submissionId
+            modelCmd.modellingApproach = model.modellingApproach
         }
-        addModelMsg id, "fake mtc created"
+        addModelMsg(id, "A fake ModelTC created from the real model instead of using toCommandObject() method")
         // avoid calling new ModelAdapter(model: model).toCommandObject(false) because, for
         // reasons not entirely understood yet, modelService.getSpringDatabaseRoles() returns an empty set
         // which causes the query in getLatestRevision() to throw a BadSqlGrammarException. This is because
@@ -429,9 +430,10 @@ class BatchSubmissionMainClass {
         // GitManager needs filesToDelete and repoFileCommands to not have any overlapping files.
         def filesToDelete = []
         String commitMessage = "Enhance the quality of '$modelName' by resubmitting the updated files."
+        commitMessage = "Resubmit the revised version of model files from Center for Reproducible modelling."
         def revisionCmd = new RTC(files: repoFileCommands, format: fmtCmd, validated: isValid,
             name: modelName, description: modelDesc, validationLevel: ValidationState.APPROVED,
-            curationState: CurationState.NON_CURATED, minorRevision: false, context: ctx,
+            curationState: latest.curationState, minorRevision: false, context: ctx,
             comment: commitMessage, model: modelCmd)
         if (latest) {
             revisionCmd.id = latest.id
@@ -491,14 +493,15 @@ could not roll back the session" throw new IllegalStateException("Cannot publish
         assert submissionFolder?.isDirectory(): "'$submissionFolder' is not a model folder that exists"
 //        processedCount.incrementAndGet()
         String id = submissionFolder.name
-        //println "Model '$id' should have already been imported but isn't."
+        if (!model) {
+            addModelError(id, "Model should have already been imported but isn't.")
+        }
         Revision newRevision = doInsertNewRevision(id, submissionFolder, model)
-        addModelMsg id, "inserted revision $newRevision"
+        addModelMsg(id, "inserted revision $newRevision")
         if (!newRevision || newRevision?.hasErrors()) {
             addModelError(id, "Model update failed: ${newRevision?.errors?.allErrors}")
             assert markSessionAsRollbackOnly(session): """No new revision could be inserted and we failed to roll back the current session"""
         } else {
-            println "trying to get the first revision"
             Revision.withTransaction { status ->
                 try {
                     // the session of this transaction is empty; attach the new revision to it
@@ -522,13 +525,18 @@ could not roll back the session" throw new IllegalStateException("Cannot publish
         }
     }
 
-    private void doSubmissionDetected(File root) {
-        final String rootName = root.name
-        String ownerUsername = CuratedUpdateSupport.getSubmitterAccount(rootName).username
+    private String inferSubmitterUserName(final String modelDir) {
+       String ownerUsername = CuratedUpdateSupport.getSubmitterAccount(modelDir).username
         if (!ownerUsername) {
-            println("Cannot find the owner of the model $rootName. Using the administrator account instead")
+            println("Cannot find the owner of the model $modelDir. Using the administrator account instead")
             ownerUsername = "administrator"
         }
+        return ownerUsername 
+    }
+
+    private void doSubmissionDetected(File root) {
+        final String rootName = root.name
+        String ownerUsername = inferSubmitterUserName(rootName)
         ModelService modelService = ctx.getBean "modelService", ModelService
         Model model = modelService.findByPerennialIdentifier(rootName)
         boolean isUpdated = true
@@ -553,18 +561,34 @@ account '${ownerUsername}'.""")
     }
 
     @CompileDynamic
-    void initiateModelMainFileMap(File root, Pattern modelFolderPattern) {
+    private void addToModelMainFileMap(final String modelDir) {
+        String submitter = inferSubmitterUserName(modelDir)
         RepositoryFileService rfService = ctx.getBean("repositoryFileService")
+        ModelService modelService = ctx.getBean("modelService")
         RFTC mainFileRFTC = null
+
+        SpringSecurityUtils.doWithAuth(submitter) {
+            mainFileRFTC = rfService.getMainFile(modelDir)
+            Revision rev = modelService.getRevision(modelDir)
+            List files = rfService.getRepositoryFilesForRevision(modelDir)
+            mainFileRFTC = files.find { it.mainFile }
+            if (mainFileRFTC) { 
+                modelMainFileMap.put(modelDir, mainFileRFTC)
+            } else {
+                addModelError(modelDir, "The main file didn't exist and save into the database.")
+            }
+        }
+    }
+
+    /**
+     * Initialise the map of model main files based on the input directory
+     */
+    @CompileDynamic
+    void initiateModelMainFileMap(File root, Pattern modelFolderPattern) {
         root.eachFileRecurse(FileType.DIRECTORIES) { File dir ->
-            final String dirName = dir.name
-            if (dirName ==~ modelFolderPattern) {
-                mainFileRFTC = rfService.getMainFile(dirName)
-                if (mainFileRFTC) { 
-                    modelMainFileMap.put(dirName, mainFileRFTC)
-                } else {
-                    addModelError(dirName, "The main file didn't exist and save into the database.")
-                }
+            final String modelDir = dir.name
+            if (modelDir ==~ modelFolderPattern) {
+                addToModelMainFileMap(modelDir)
             }
         }
     }
@@ -580,7 +604,7 @@ account '${ownerUsername}'.""")
                 if (rftcList) {
                     fileNameDescriptionMap.put(dirName, rftcList)
                 } else { 
-                    println("Model $dirName not found") 
+                    addModelError(dirName, "Model not found") 
                 }
             }
         }       
@@ -607,7 +631,19 @@ account '${ownerUsername}'.""")
             def modelFolderPattern = ~/^BIOMD\d{10}$/
             File base = new File(MODELS_DIR)
             initiateModelMainFileMap(base, modelFolderPattern)
-            initiateFileNameDescriptionMap(base, modelFolderPattern)
+            //initiateFileNameDescriptionMap(base, modelFolderPattern)
+            /*Set<String> keys = fileNameDescriptionMap.keySet()
+            keys = keys.sort { a, b -> a <=> b }
+            for (String k: keys) {
+                RFTC mainFile = modelMainFileMap.get(k)
+                println("$k: MF: ${mainFile?.filename}: ${mainFile?.description}")
+                List files = fileNameDescriptionMap.get(k)
+                //for (RFTC rftc: files) {
+                    //println("${rftc.filename}: ${rftc.description}")
+                //}
+                //println("----")
+            }*/
+
             processFolderOfSubmissions(base, modelFolderPattern)
             mshelper.awaitCompletionOfIndexingJobs()
         } catch (Exception e) {
