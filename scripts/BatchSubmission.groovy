@@ -480,7 +480,7 @@ could not roll back the session" throw new IllegalStateException("Cannot publish
             //modelService.addModellingApproachAsAnnotation(revisionCmd, UhlenScriptSupport.modellingApproach)
             //addModelMsg(modelId, "Assigned modelling approach")
             if (model) {
-                newRevision = modelService.addRevision(filesToAdd, filesToDelete, revisionCmd)
+                newRevision = modelService.addRevision(filesToAdd, filesToDelete, revisionCmd, true)
             } else {
                 model = modelService.uploadValidatedModel(filesToAdd, revisionCmd)
                 newRevision = model.revisions.first()
