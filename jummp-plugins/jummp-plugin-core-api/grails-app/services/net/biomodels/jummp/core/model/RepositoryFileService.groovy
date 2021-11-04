@@ -198,7 +198,12 @@ The revision has been checked out from VCS instead."""
             if (!revisionDirectory.exists()) {
                 throw new FileNotFoundException()
             } else {
-                returnedFiles = revisionDirectory.listFiles().toList()
+                returnedFiles = Files.list(revisionDirectory.toPath())*.toFile() 
+                returnedFiles = returnedFiles.findAll { 
+                    String fName = it.name
+                    boolean isRegularFile = !fName.endsWith(".tmp") && !fName.startsWith("\\.")
+                    isRegularFile
+                }
             }
             if (returnedFiles?.isEmpty()) {
                 String message = """The cache directory of this model ${modelId} revision ${revisionNumber} is empty. \
@@ -280,7 +285,11 @@ $modelId, revision $revNum: ${e.message}""")
         List<RepositoryFileTransportCommand> repFiles = new LinkedList<RepositoryFileTransportCommand>()
         List<File> files = retrieveFiles(revision)
         revision.repoFiles.each { rf ->
-            File tmpFile = files.find { it.getName() == (new File(rf.path)).getName() }
+            File tmpFile = files.find {
+                String fname = it.getName()
+                boolean isEqual = fname == (new File(rf.path)).getName()
+                isEqual
+            }
             if (tmpFile != null) {
                 long size = tmpFile.length()
                 long configPreviewSize = grailsApplication.config.jummp.web.file.preview
@@ -297,7 +306,7 @@ $modelId, revision $revNum: ${e.message}""")
                     userSubmitted: rf.userSubmitted,
                     mimeType: rf.mimeType)
                 repFiles.add(rftc)
-            }
+            } else { logger.debug("Cannot create the file for ${rf?.path}") }
         }
         return repFiles
     }
