@@ -512,7 +512,7 @@ could not roll back the session" throw new IllegalStateException("Cannot publish
      */
     private void doHandleModelFolder(SessionHolder session, File submissionFolder, Model model, String owner) {
         assert submissionFolder?.isDirectory(): "'$submissionFolder' is not a model folder that exists"
-//        processedCount.incrementAndGet()
+        processedCount.incrementAndGet()
         String id = submissionFolder.name
         if (!model) {
             addModelError(id, "Model should have already been imported but isn't.")
@@ -661,6 +661,7 @@ account '${ownerUsername}'.""")
             duration = Duration.between(startTime, Instant.now())
             String formattedDuration = duration.toString()
             println "Submission lasting in $formattedDuration"
+            println("Imported ${processedCount.get()} models (${failureCount.get()} failures) in $formattedDuration")
             printModelLog()
         }
 
