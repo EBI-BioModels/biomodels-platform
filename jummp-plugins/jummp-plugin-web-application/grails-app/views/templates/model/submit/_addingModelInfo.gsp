@@ -134,9 +134,10 @@
 <script>
     function validateModelInfo() {
         return $.ajax({
-            url: "${createLink(controller: "healthCheck", action: "status")}",
+            url: "${createLink(controller: "submission", action: "validateModelInfo")}",
             type: "GET",
             success: function (response) {
+                console.log(JSON.stringify(response));
                 errorMessages = [];
                 let isNameValid = true;
                 if ($('input[id="name"]').val().length === 0) {

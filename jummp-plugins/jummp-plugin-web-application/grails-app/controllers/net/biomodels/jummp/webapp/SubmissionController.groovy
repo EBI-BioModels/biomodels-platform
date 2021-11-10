@@ -246,6 +246,18 @@ hyphens and underscores.
         render([filesMap: filesMap, changesMade: changesMade] as JSON)
     }
 
+    def displayChangesMade() {
+        render([status: "OK"] as JSON)
+    }
+
+    def validateModelInfo() {
+        render([status: "OK"] as JSON)
+    }
+
+    def checkCurrentValidation() {
+        render([status: "OK"] as JSON)
+    }
+
     private List validateFile(final JSONElement file) {
         logger.debug("Validating the file: $file")
         File modelFile = fileSystemService.retrieve(file)

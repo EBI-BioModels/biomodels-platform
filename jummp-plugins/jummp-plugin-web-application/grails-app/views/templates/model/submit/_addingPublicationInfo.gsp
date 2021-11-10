@@ -299,9 +299,10 @@
     }
     function ajax(callback) {
         return $.ajax({
-            url: "${createLink(controller: "healthCheck", action: "status")}",
+            url: "${createLink(controller: "submission", action: "checkCurrentValidation")}",
             type: "GET",
             success: function (response) {
+                console.log(JSON.stringify(response));
                 callback();
             }
         });

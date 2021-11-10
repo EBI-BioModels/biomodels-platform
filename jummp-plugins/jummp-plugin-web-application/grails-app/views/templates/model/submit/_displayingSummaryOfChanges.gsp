@@ -249,9 +249,10 @@
 
     function submitData() {
         return $.ajax({
-            url: "${createLink(controller: "healthCheck", action: "status")}",
+            url: "${createLink(controller: "submission", action: "displayChangesMade")}",
             type: "GET",
-            success: function (r) {
+            success: function (response) {
+                JSON.stringify(response);
                 currentValidation = true;
                 // Explain what you have updated
                 revisionComments = $('#revisionComments').val();
