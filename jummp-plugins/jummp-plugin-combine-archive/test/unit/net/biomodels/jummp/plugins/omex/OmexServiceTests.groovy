@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2021 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -47,16 +47,16 @@ class OmexServiceTests {
     @Test
     void testValidation() {
         def omexService = new OmexService()
-        assertFalse(omexService.validate(null))
-        assertFalse(omexService.validate([]))
-        assertFalse(omexService.validate([new File("inexistent")]))
+        assertFalse(omexService.validate(null, null))
+        assertFalse(omexService.validate([], []))
+        assertFalse(omexService.validate([new File("inexistent")], []))
         def randomFile = new File("target/misc.txt")
         FileUtils.touch(randomFile)
         randomFile.setText("Hello")
         assertTrue randomFile.exists()
-        assertFalse omexService.validate([randomFile])
+        assertFalse omexService.validate([randomFile], [])
         def omexFile = new File("test/files/sample archive.omex")
-        assertTrue omexService.validate([omexFile])
+        assertTrue omexService.validate([omexFile], [])
     }
 
     @Test
