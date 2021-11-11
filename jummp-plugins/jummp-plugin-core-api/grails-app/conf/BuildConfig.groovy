@@ -86,6 +86,7 @@ grails.project.dependency.resolution = {
         compile "com.fasterxml.jackson.core:jackson-databind:2.5.2"
         compile "org.apache.commons:commons-lang3:3.3.2"
         compile "org.apache.tika:tika-core:1.23"
+        compile "redis.clients:jedis:2.9.0"
     }
     plugins {
         build ":tomcat:7.0.55.3"
