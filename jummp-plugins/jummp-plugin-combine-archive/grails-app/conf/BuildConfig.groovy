@@ -61,10 +61,11 @@ grails.project.dependency.resolution = {
         mavenRepo "https://www.ebi.ac.uk/~maven/m2repo_snapshots/"
     }
     dependencies {
-        compile("org.mbine.co:libCombineArchive:0.2.3") {
+        compile("org.mbine.co:libCombineArchive:0.3-SNAPSHOT") {
             excludes 'junit', 'slf4j-api', 'slf4j-log4j12', 'slf4j-log4j12-impl', 'jmock-junit4', 'jena-core', 'icu4j'
         }
         compile "de.unirostock.sems:CombineExt:1.2.4"
+        compile "com.ibm.icu:icu4j:4.8.1"
 
         runtime("commons-jexl:commons-jexl:1.1") { excludes 'junit', 'commons-logging', 'slf4j-log4j12' }
         compile "commons-io:commons-io:2.1"
