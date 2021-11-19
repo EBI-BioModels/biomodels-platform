@@ -64,7 +64,7 @@ class OmexService extends FileFormatServiceAdapter {
     private static final boolean IS_INFO_ENABLED = log.isInfoEnabled()
 
     @Profiled(tag="omexService.validate")
-    public boolean validate(final List<File> model, final List<String> errors) {
+    boolean validate(final List<File> model, final List<String> errors) {
         //TODO delegate the validation to libCombineArchive API
         return areFilesThisFormat(model)
     }
@@ -102,7 +102,7 @@ class OmexService extends FileFormatServiceAdapter {
      * @see net.biomodels.jummp.core.model.FileFormatService#areFilesThisFormat(List files)
      */
     @Profiled(tag="omexService.areFilesThisFormat")
-    public boolean areFilesThisFormat(final List<File> files) {
+    boolean areFilesThisFormat(final List<File> files) {
         if (!files) {
             return false
         }
@@ -140,7 +140,7 @@ class OmexService extends FileFormatServiceAdapter {
         String properType = sherlock.detect(new BufferedInputStream(
                         new FileInputStream(f)), new Metadata()).toString()
 
-        boolean correctMIME = "application/zip".equals(properType)
+        boolean correctMIME = "application/zip" == properType
         if (!correctMIME) {
             if (IS_INFO_ENABLED) {
                 log.info "Not treating ${f.name} as COMBINE archive because of incorrect content type. ${properType}"
@@ -166,13 +166,13 @@ class OmexService extends FileFormatServiceAdapter {
             fs?.close()
         }
 
-            if (IS_INFO_ENABLED) {
-                StringBuilder msg = new StringBuilder("File ")
-                msg.append(f.name).append(" is")
-                msg.append(containsManifest ? "" : " not").append(" a COMBINE archive.")
-                msg.append(containsManifest ?: " The manifest file is missing.")
-                log.info(msg.toString())
-            }
+        if (IS_INFO_ENABLED) {
+            StringBuilder msg = new StringBuilder("File ")
+            msg.append(f.name).append(" is")
+            msg.append(containsManifest ? "" : " not").append(" a COMBINE archive.")
+            msg.append(containsManifest ?: " The manifest file is missing.")
+            log.info(msg.toString())
+        }
         return containsManifest
     }
 
@@ -187,32 +187,36 @@ class OmexService extends FileFormatServiceAdapter {
      * @return a string indicates the absolute path of the combine archive file
      */
     String createCombineArchive(List<RFTC> files, String modelId) {
+        if (files?.empty || !modelId) {
+            return ""
+        }
         String dateTimeString = new Date().format("yyyyMMdd-HHmmss")
         String TEMP_PATH = System.getProperty("java.io.tmpdir")
+        String namePrefix = modelId ? modelId : "biomodels"
         String absoluteOmexFileName = Paths.get(TEMP_PATH,
-                "$modelId-${dateTimeString}.omex").toString()
+                "$namePrefix-${dateTimeString}.omex").toString()
         ICombineArchive arch
         CombineArchiveFactory fact = new CombineArchiveFactory()
         arch = fact.openArchive(absoluteOmexFileName, true)
 
-        files.each {RFTC rftc ->
+        files.each { RFTC rftc ->
             File file = new File(rftc.path)
             String fileName = file.getName()
             Path path = Paths.get(rftc.path)
             URI uri = Formatizer.guessFormat(file)
-            String mimeType = uri.toString()
+            String format = uri?.toString()
             boolean master = rftc.mainFile
-            ArtifactInfo artifactInfo = arch.createArtifact(fileName, mimeType, master)
+            ArtifactInfo artifactInfo = arch.createArtifact(fileName, format, master)
             OutputStream writer = arch.writeArtifact(artifactInfo)
             Files.copy(path, writer)
             writer.close()
         }
 
         // customise the metadata.rdf
-        String licenceValue = "http://creativecommons.org/publicdomain/zero/1.0/"
+        String licenceValue = "https://creativecommons.org/publicdomain/zero/1.0/"
         String timeStamp = new Date().format("E LLL dd HH:mm:ss z yyyy")
         String provenanceValue = """\
-This model was downloaded from BioModels (http://www.ebi.ac.uk/biomodels/) on ${timeStamp}"""
+This model was downloaded from BioModels (https://www.ebi.ac.uk/biomodels/) on ${timeStamp}"""
         MetadataManager mdm = arch.getMetadata()
         mdm.load()
         Model model = mdm.RDFModel
