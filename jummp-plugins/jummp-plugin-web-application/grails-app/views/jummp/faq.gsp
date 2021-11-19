@@ -907,7 +907,7 @@
         <p>Support for standard formats is provided by dedicated software tools, such as &nbsp;<a
             href="http://sbml.org/Software/JSBML">JSBML</a>, <a
             href="http://www.pharmml.org/tools/libpharmml">libPharmML</a>, <a
-            href="https://github.com/mglont/CombineArchive">libCOMBINEArchive</a>.</p>
+            href="https://github.com/EBI-BioModels/CombineArchive">libCOMBINEArchive</a>.</p>
 
         <h3 id="biomd-software-reuse">Can I install my own version of BioModels?</h3>
         <p>The models can be <a
