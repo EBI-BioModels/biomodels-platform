@@ -64,7 +64,7 @@ grails.project.dependency.resolution = {
         compile("org.mbine.co:libCombineArchive:0.3-SNAPSHOT") {
             excludes 'junit', 'slf4j-api', 'slf4j-log4j12', 'slf4j-log4j12-impl', 'jmock-junit4', 'jena-core', 'icu4j'
         }
-        compile "de.unirostock.sems:CombineExt:1.2.4"
+        compile "de.uni-rostock.sbi:CombineExt:1.3.1"
         compile "com.ibm.icu:icu4j:4.8.1"
 
         runtime("commons-jexl:commons-jexl:1.1") { excludes 'junit', 'commons-logging', 'slf4j-log4j12' }
