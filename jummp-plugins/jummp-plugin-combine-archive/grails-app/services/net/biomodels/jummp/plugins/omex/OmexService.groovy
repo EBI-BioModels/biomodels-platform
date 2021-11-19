@@ -48,6 +48,7 @@ import org.apache.tika.metadata.Metadata
 import org.mbine.co.archive.ArtifactInfo
 import org.mbine.co.archive.CombineArchiveFactory
 import org.mbine.co.archive.ICombineArchive
+import org.mbine.co.archive.ManifestManager
 import org.mbine.co.archive.MetadataManager
 import org.perf4j.aop.Profiled
 
@@ -225,6 +226,11 @@ This model was downloaded from BioModels (https://www.ebi.ac.uk/biomodels/) on $
         resource.addProperty(DCTerms.provenance, provenanceValue)
         resource.addProperty(DCTerms.license, licenceValue)
         mdm.save()
+
+        ManifestManager mfm = arch.getManifest()
+        mfm.sortByLocation()
+        mfm.save()
+
         arch.close()
         return absoluteOmexFileName
     }
