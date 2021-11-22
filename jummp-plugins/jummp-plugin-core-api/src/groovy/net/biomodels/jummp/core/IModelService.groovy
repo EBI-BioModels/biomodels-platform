@@ -34,14 +34,14 @@
 
 package net.biomodels.jummp.core
 
-import net.biomodels.jummp.core.model.ModelFormatTransportCommand
+import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
 import net.biomodels.jummp.core.model.ModelListSorting
-import net.biomodels.jummp.core.model.ModelTransportCommand
-import net.biomodels.jummp.core.model.PublicationTransportCommand
-import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
-import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.core.model.ModelTransportCommand as ModelTC
+import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
 import net.biomodels.jummp.plugins.security.User
-import org.springframework.security.access.AccessDeniedException
+import org.springframework.security.access.AccessDeniedException as ADEx
 
 /**
  * @short Service Interface for accessing the Model Service from a Remote Adapter.
@@ -69,7 +69,7 @@ interface IModelService {
      * @param sortColumn the column which should be sorted
      * @return List of Models
      */
-    List<ModelTransportCommand> getAllModels(int offset, int count, boolean sortOrder, ModelListSorting sortColumn)
+    List<ModelTC> getAllModels(int offset, int count, boolean sortOrder, ModelListSorting sortColumn)
 
     /**
      * Convenient method for sorting by the id column.
@@ -77,7 +77,7 @@ interface IModelService {
      * @return List of Models sorted ascending
      * @see getAllModels(int offset, int count, boolean sortOrder)
      */
-    List<ModelTransportCommand> getAllModels(int offset, int count, boolean sortOrder)
+    List<ModelTC> getAllModels(int offset, int count, boolean sortOrder)
 
     /**
      * Convenient method for ascending sorting.
@@ -85,7 +85,7 @@ interface IModelService {
      * @return List of Models sorted ascending by @p sortColumn
      * @see getAllModels(int offset, int count, boolean sortOrder)
      */
-    List<ModelTransportCommand> getAllModels(int offset, int count, ModelListSorting sortColumn)
+    List<ModelTC> getAllModels(int offset, int count, ModelListSorting sortColumn)
 
     /**
      * Convenient method for ascending sorting by id.
@@ -93,7 +93,7 @@ interface IModelService {
      * @return List of Models sorted ascending by id
      * @see getAllModels(int offset, int count, boolean sortOrder)
      */
-    List<ModelTransportCommand> getAllModels(int offset, int count)
+    List<ModelTC> getAllModels(int offset, int count)
 
     /**
      * Convenient method for ascending sorting of first ten models.
@@ -102,7 +102,7 @@ interface IModelService {
      * @return List of first 10 Models sorted ascending by @p sortColumn
      * @see getAllModels(int offset, int count, boolean sortOrder)
      */
-    List<ModelTransportCommand> getAllModels(ModelListSorting sortColumn)
+    List<ModelTC> getAllModels(ModelListSorting sortColumn)
 
     /**
      * Convenient method for ascending sorting of first ten models by id.
@@ -110,7 +110,7 @@ interface IModelService {
      * @return List of first 10 Models sorted ascending by id
      * @see getAllModels(int offset, int count, boolean sortOrder)
      */
-    List<ModelTransportCommand> getAllModels()
+    List<ModelTC> getAllModels()
 
     /**
      * Returns the number of Models the user has access to.
@@ -124,14 +124,14 @@ interface IModelService {
      * @param modelId The Model to be returned
      * @return The Model if available
      */
-    ModelTransportCommand getModel(String modelId)
+    ModelTC getModel(String modelId)
 
     /**
      * Queries the model for the latest available revision the user has read access to.
      * @param modelId The id of the Model for which the latest revision should be retrieved.
      * @return Latest Revision the current user has read access to. If there is no such revision null is returned
      */
-    RevisionTransportCommand getLatestRevision(String modelId)
+    RevisionTC getLatestRevision(String modelId)
 
     /**
      * Queries the model for all revisions the user has read access to.
@@ -141,7 +141,7 @@ interface IModelService {
      * revision an empty list is returned
      * @todo: add paginated version with offset and count. Problem: filter
      */
-    List<RevisionTransportCommand> getAllRevisions(String modelId)
+    List<RevisionTC> getAllRevisions(String modelId)
 
     /**
      * Retrieves the Revision for the Model identified by @p modelId and @p revisionNumber
@@ -149,16 +149,16 @@ interface IModelService {
      * @param revisionNumber The revision in context of the Model
      * @return The Revision or @c null if there is no such Revision
      */
-    RevisionTransportCommand getRevision(String modelId, int revisionNumber)
+    RevisionTC getRevision(String modelId, int revisionNumber)
 
     /**
      * Returns the reference publication of this model.
      * @param modelId The if of the Model for which the reference publication should be returned.
      * @return The reference publication
      * @throws IllegalArgumentException if @p model is null
-     * @throws AccessDeniedException if the current user is not allowed to access at least one Model Revision
+     * @throws ADEx if the current user is not allowed to access at least one Model Revision
      */
-    PublicationTransportCommand getPublication(final String modelId) throws AccessDeniedException, IllegalArgumentException
+    PubTC getPublication(final String modelId) throws ADEx, IllegalArgumentException
 
     /**
      * Creates a new Model and stores it in the VCS.
@@ -172,7 +172,7 @@ interface IModelService {
      * @return The new created Model, or null if the model could not be created
      * @throws ModelException If Model File is not valid or the Model could not be stored in VCS
      */
-    ModelTransportCommand uploadModel(final List<File> modelFiles, ModelTransportCommand meta) throws ModelException
+    ModelTC uploadModel(final List<File> modelFiles, ModelTC meta) throws ModelException
 
     /**
      * Adds a new Revision to the model.
@@ -187,9 +187,9 @@ interface IModelService {
      * @throws ModelException If either @p model, @p file or @p comment are null or if
      * the file does not exists or is a directory
      */
-    RevisionTransportCommand addRevision(final String modelId,
+    RevisionTC addRevision(final String modelId,
                                          final File file,
-                                         final ModelFormatTransportCommand format,
+                                         final MFTC format,
                                          final String comment) throws ModelException
 
     /**
@@ -209,9 +209,9 @@ interface IModelService {
      * @throws ModelException If either @p model, @p modelFiles or @p comment are null or if the files do not exist
      * or are directories.
      */
-    RevisionTransportCommand addRevision(final List<RepositoryFileTransportCommand> repoFiles,
-                                         final List<RepositoryFileTransportCommand> deleteFiles,
-                                         final RevisionTransportCommand rev) throws ModelException
+    RevisionTC addRevision(final List<RFTC> repoFiles,
+                                         final List<RFTC> deleteFiles,
+                                         final RevisionTC rev) throws ModelException
 
     /**
      * Returns whether the current user has the right to add a revision to the model.
@@ -226,7 +226,7 @@ interface IModelService {
      * @return Byte Array of the content of the Model file for the revision.
      * @throws ModelException In case retrieving from VCS fails.
      */
-    List<RepositoryFileTransportCommand> retrieveModelFiles(final RevisionTransportCommand revision) throws ModelException
+    List<RFTC> retrieveModelFiles(final RevisionTC revision) throws ModelException
 
     /**
      * Retrieves the model file for the latest revision of the model.
@@ -234,7 +234,7 @@ interface IModelService {
      * @return Byte Array of the content of the Model file.
      * @throws ModelException In case retrieving from VCS fails.
      */
-    List<RepositoryFileTransportCommand> retrieveModelFiles(final String modelId) throws ModelException
+    List<RFTC> retrieveModelFiles(final String modelId) throws ModelException
 
     /**
      * Grants read access for model to @p collaborator.
@@ -335,19 +335,19 @@ interface IModelService {
      * @todo might belong in an administration service?
      */
     boolean restoreModel(String modelId)
-    boolean deleteRevision(RevisionTransportCommand revision)
-    RevisionTransportCommand publishModelRevision(RevisionTransportCommand revision)
+    boolean deleteRevision(RevisionTC revision)
+    RevisionTC publishModelRevision(RevisionTC revision)
 
-//    public void validateModelRevision(RevisionTransportCommand revision)
+//    public void validateModelRevision(RevisionTC revision)
 
     /**
      * Finds the model with the specified perennial identifier.
      *
      * @p identifier the perennial identifier against which to perform the search.
-     * @return @c null if there was no match, @c the ModelTransportCommand of the corresponding
+     * @return @c null if there was no match, @c the ModelTC of the corresponding
      * model otherwise.
      */
-    ModelTransportCommand findByPerennialIdentifier(String identifier)
+    ModelTC findByPerennialIdentifier(String identifier)
 
     /**
      * Maps a list of perennial identifiers to their corresponding primary key.
@@ -363,9 +363,9 @@ interface IModelService {
      * @param model a perennial model identifier which may include the revision identifier or not.
      * @param revision the specific revision number of the model in question. If this argument is null,
      * the latest revision of the model should be retrieved.
-     * @return a RevisionTransportCommand representation of the requested model revision.
+     * @return a RevisionTC representation of the requested model revision.
      */
-    RevisionTransportCommand getRevisionFromParams(final String model, final String revision)
+    RevisionTC getRevisionFromParams(final String model, final String revision)
 
     /**
      * @short Specifies whether there are one or more kinds of perennial identifiers defined.
@@ -389,6 +389,6 @@ interface IModelService {
     int updateHistory(String modelId, String user, String accessType,
                       String formatType, String changesMade, boolean success)
 
-    int updateHistory(ModelTransportCommand model, String user, String accessType,
+    int updateHistory(ModelTC model, String user, String accessType,
                       String formatType, String changesMade, boolean success)
 }

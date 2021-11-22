@@ -41,6 +41,11 @@ import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.PublicationAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.*
+import net.biomodels.jummp.core.model.ModelAuditTransportCommand as ModelATC
+import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
+import net.biomodels.jummp.core.model.ModelTransportCommand as ModelTC
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
 import net.biomodels.jummp.core.model.audit.AccessFormat
 import net.biomodels.jummp.core.model.audit.AccessType
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
@@ -81,52 +86,52 @@ class ModelDelegateService implements IModelService {
     def referenceTracker
 
     @NotTransactional
-    String getPluginForFormat(ModelFormatTransportCommand format) {
+    String getPluginForFormat(MFTC format) {
         return modelFileFormatService.getPluginForFormat(format)
     }
 
-    List<ModelTransportCommand> getAllModels(int offset, int count, boolean sortOrder, ModelListSorting sortColumn) {
-        List<ModelTransportCommand> models = []
+    List<ModelTC> getAllModels(int offset, int count, boolean sortOrder, ModelListSorting sortColumn) {
+        List<ModelTC> models = []
         modelService.getAllModels(offset, count, sortOrder, sortColumn).each {
             models << new ModelAdapter(model: it).toCommandObject(false)
         }
         return models
     }
 
-    List<ModelTransportCommand> getAllModels(int offset, int count, boolean sortOrder) {
-        List<ModelTransportCommand> models = []
+    List<ModelTC> getAllModels(int offset, int count, boolean sortOrder) {
+        List<ModelTC> models = []
         modelService.getAllModels(offset, count, sortOrder).each {
             models << new ModelAdapter(model: it).toCommandObject(false)
         }
         return models
     }
 
-    List<ModelTransportCommand> getAllModels(int offset, int count, ModelListSorting sortColumn) {
-        List<ModelTransportCommand> models = []
+    List<ModelTC> getAllModels(int offset, int count, ModelListSorting sortColumn) {
+        List<ModelTC> models = []
         modelService.getAllModels(offset, count, sortColumn).each {
             models << new ModelAdapter(model: it).toCommandObject(false)
         }
         return models
     }
 
-    List<ModelTransportCommand> getAllModels(int offset, int count) {
-        List<ModelTransportCommand> models = []
+    List<ModelTC> getAllModels(int offset, int count) {
+        List<ModelTC> models = []
         modelService.getAllModels(offset, count).each {
             models << new ModelAdapter(model: it).toCommandObject(false)
         }
         return models
     }
 
-    List<ModelTransportCommand> getAllModels(ModelListSorting sortColumn) {
-        List<ModelTransportCommand> models = []
+    List<ModelTC> getAllModels(ModelListSorting sortColumn) {
+        List<ModelTC> models = []
         modelService.getAllModels(sortColumn).each {
             models << new ModelAdapter(model: it).toCommandObject(false)
         }
         return models
     }
 
-    List<ModelTransportCommand> getAllModels() {
-        List<ModelTransportCommand> models = []
+    List<ModelTC> getAllModels() {
+        List<ModelTC> models = []
         modelService.getAllModels().each {
             models << new ModelAdapter(model: it).toCommandObject(false)
         }
@@ -139,7 +144,7 @@ class ModelDelegateService implements IModelService {
     }
 
     @NotTransactional
-    long createAuditItem(ModelAuditTransportCommand cmd) {
+    long createAuditItem(ModelATC cmd) {
         return modelService.createAuditItem(cmd)
     }
 
@@ -153,11 +158,11 @@ class ModelDelegateService implements IModelService {
         return modelService.getFileDetails(Revision.get(revID), filename)
     }
 
-    ModelTransportCommand getModel(String modelId) {
+    ModelTC getModel(String modelId) {
         return new ModelAdapter(model: modelService.getModel(modelId)).toCommandObject()
     }
 
-    RevisionTransportCommand getLatestRevision(String modelId, boolean addToHistory = true) {
+    RevisionTC getLatestRevision(String modelId, boolean addToHistory = true) {
         Model model = modelService.findByPerennialIdentifier(modelId)
         if (!model) {
             throw new AccessDeniedException("No access to any revision of Model ${modelId}")
@@ -170,7 +175,7 @@ class ModelDelegateService implements IModelService {
         }
     }
 
-    List<RevisionTransportCommand> getAllRevisions(String modelId) {
+    List<RevisionTC> getAllRevisions(String modelId) {
         def model = modelService.findByPerennialIdentifier(modelId)
         def revs = modelService.getAllRevisions(model)
         def msg = """Fetching revisions ${revs*.id} for $modelId. Attachment to current session: ${revs*.isAttached()}
@@ -182,18 +187,18 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
 """
         log.info(msg.toString())
 
-        List<RevisionTransportCommand> revisions = []
+        List<RevisionTC> revisions = []
         revs.each {
             revisions << new RevisionAdapter(revision: it, latest: true).toCommandObject()
         }
         return revisions
     }
 
-    RevisionTransportCommand getRevision(String identifier) {
+    RevisionTC getRevision(String identifier) {
         return new RevisionAdapter(revision: modelService.getRevision(identifier)).toCommandObject()
     }
 
-    RevisionTransportCommand getRevision(String modelId, int revisionNumber) {
+    RevisionTC getRevision(String modelId, int revisionNumber) {
         return new RevisionAdapter(revision: modelService.getRevision(
                     modelService.findByPerennialIdentifier(modelId), revisionNumber)).toCommandObject()
     }
@@ -208,13 +213,13 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         return null
     }
 
-    ModelTransportCommand uploadModel(List<File> modelFiles, ModelTransportCommand meta) throws
+    ModelTC uploadModel(List<File> modelFiles, ModelTC meta) throws
                 ModelException {
         return new ModelAdapter(model: modelService.uploadModelAsList(modelFiles, meta)).toCommandObject()
     }
 
-    RevisionTransportCommand addRevision(String modelId, File file,
-                ModelFormatTransportCommand format, String comment) throws ModelException {
+    RevisionTC addRevision(String modelId, File file,
+                MFTC format, String comment) throws ModelException {
         Model model = modelService.findByPerennialIdentifier(modelId)
         ModelFormat modelFormat = ModelFormat.findByIdentifierAndFormatVersion(format.identifier,
             format.formatVersion)
@@ -222,19 +227,19 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         return new RevisionAdapter(revision: revision).toCommandObject()
     }
 
-    RevisionTransportCommand addRevision(final List<RepositoryFileTransportCommand> repoFiles,
-                                         final List<RepositoryFileTransportCommand> deleteFiles,
-                                         final RevisionTransportCommand rev) throws ModelException {
+    RevisionTC addRevision(final List<RFTC> repoFiles,
+                                         final List<RFTC> deleteFiles,
+                                         final RevisionTC rev) throws ModelException {
         Revision revision = modelService.addRevision(repoFiles, deleteFiles, rev)
-        RevisionTransportCommand revisionTC = new RevisionAdapter(revision: revision).toCommandObject()
+        RevisionTC revisionTC = new RevisionAdapter(revision: revision).toCommandObject()
         return revisionTC
     }
 
     @NotTransactional
-    Byte[] serveModelFilesAsZip(Map<String, RepositoryFileTransportCommand> files) {
+    Byte[] serveModelFilesAsZip(Map<String, RFTC> files) {
         ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream()
         ZipOutputStream zipFile = new ZipOutputStream(byteBuffer)
-        files.each { String modelId, RepositoryFileTransportCommand cmd ->
+        files.each { String modelId, RFTC cmd ->
             File file = new File(cmd.path)
             String extension = Files.getFileExtension(file.getName())
             ZipEntry entry = new ZipEntry("${modelId}.$extension")
@@ -250,7 +255,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
 
     @NotTransactional
     Byte[] serveModelFilesAsZip(String[] modelIDs) {
-        Map<String, RepositoryFileTransportCommand> files = modelService.fetchMainFileForModels(modelIDs)
+        Map<String, RFTC> files = modelService.fetchMainFileForModels(modelIDs)
         if (files) {
             return serveModelFilesAsZip(files)
         } else
@@ -290,7 +295,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
     }
 
     @NotTransactional
-    Boolean canPublish(RevisionTransportCommand revision) {
+    Boolean canPublish(RevisionTC revision) {
         if (revision.state == ModelState.UNPUBLISHED) {
             try {
                 return modelService.canPublish(Revision.get(revision.id))
@@ -309,7 +314,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
     }
 
     @NotTransactional
-    Boolean canCertify(RevisionTransportCommand revision) {
+    Boolean canCertify(RevisionTC revision) {
         if (revision.qcInfo) return false
         qcInfoDelegateService.canCertify(revision.modelIdentifier())
     }
@@ -321,13 +326,13 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
     }
 
     @NotTransactional
-    Boolean canCheckConsistency(RevisionTransportCommand revision) {
+    Boolean canCheckConsistency(RevisionTC revision) {
         Revision actualRevision = Revision.get(revision.id)
         modelService.canCheckConsistency(actualRevision)
     }
 
     @NotTransactional
-    Boolean canSubmitForPublication(RevisionTransportCommand revision) {
+    Boolean canSubmitForPublication(RevisionTC revision) {
         if ((revision.state == ModelState.UNPUBLISHED)) {
             try {
                 return modelService.canSubmitForPublication(Revision.get(revision.id))
@@ -344,10 +349,10 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         canSubmitForPublication(revision)
     }
 
-    List<RepositoryFileTransportCommand> retrieveModelFiles(RevisionTransportCommand revision)
+    List<RFTC> retrieveModelFiles(RevisionTC revision)
             throws ModelException {
         Revision theRevision = Revision.get(revision.id)
-        List<RepositoryFileTransportCommand> files = modelService.retrieveModelFiles(theRevision)
+        List<RFTC> files = modelService.retrieveModelFiles(theRevision)
         if (!files?.isEmpty()) {
             files.each { it.revision = revision }
             /*
@@ -359,7 +364,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         return files
     }
 
-    List<RepositoryFileTransportCommand> retrieveModelFiles(String modelId) {
+    List<RFTC> retrieveModelFiles(String modelId) {
         return modelService.retrieveModelFiles(modelService.findByPerennialIdentifier(modelId))
     }
 
@@ -397,7 +402,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         return modelService.restoreModel(modelService.findByPerennialIdentifier(modelId))
     }
 
-    boolean deleteRevision(RevisionTransportCommand revision) {
+    boolean deleteRevision(RevisionTC revision) {
         return modelService.deleteRevision(Revision.get(revision.id))
     }
 
@@ -409,7 +414,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         modelService.setPermissions(modelService.findByPerennialIdentifier(modelId), permissions)
     }
 
-    RevisionTransportCommand getRevisionDetails(RevisionTransportCommand skeleton) {
+    RevisionTC getRevisionDetails(RevisionTC skeleton) {
         assert skeleton.id
         final String REV_ID = skeleton.id
         final Model model = modelService.findByPerennialIdentifier(skeleton.model.submissionId)
@@ -420,21 +425,21 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         return new ModelAdapter(model: model, latest: revision).toCommandObject()
     }
 
-    RevisionTransportCommand publishModelRevision(RevisionTransportCommand cmd) {
+    RevisionTC publishModelRevision(RevisionTC cmd) {
         Revision revision = Revision.get(cmd.id)
         Revision published = modelService.publishModelRevision(revision)
         new RevisionAdapter(revision: published).toCommandObject()
     }
 
-    void unpublishModelRevision(RevisionTransportCommand revision) {
+    void unpublishModelRevision(RevisionTC revision) {
         modelService.unpublishModelRevision(Revision.get(revision.id))
     }
 
-    void submitModelRevisionForPublication(RevisionTransportCommand revision) {
+    void submitModelRevisionForPublication(RevisionTC revision) {
         modelService.submitModelRevisionForPublication(Revision.get(revision.id))
     }
 
-    ModelTransportCommand findByPerennialIdentifier(String perennialId) {
+    ModelTC findByPerennialIdentifier(String perennialId) {
         def model = modelService.findByPerennialIdentifier(perennialId)
         if (model) {
             return new ModelAdapter(model: model).toCommandObject()
@@ -448,7 +453,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
      * @param revisionNumber: revision number
      * @param curationState: curation status
      */
-    RevisionTransportCommand updateCurationStateRevision(String modelId, int revisionNumber,
+    RevisionTC updateCurationStateRevision(String modelId, int revisionNumber,
             CurationState curationState) {
         Revision revision = modelService.getRevision(
             modelService.findByPerennialIdentifier(modelId), revisionNumber)
@@ -456,10 +461,10 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         new RevisionAdapter(revision: revision, latest: true).toCommandObject()
     }
 
-    RevisionTransportCommand getRevisionFromParams(final String MODEL, String REVISION = null) {
+    RevisionTC getRevisionFromParams(final String MODEL, String REVISION = null) {
         String sanitisedModelId
         String sanitisedRevisionId
-        final RevisionTransportCommand REV
+        final RevisionTC REV
         final boolean MODEL_ID_HAS_DOT = MODEL.contains('.')
         if (MODEL_ID_HAS_DOT) {
             String[] parts = MODEL.split("\\.")
@@ -506,11 +511,11 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
 
     int updateHistory(String modelId, String user, String accessType,
                       String formatType, String changesMade, boolean success = false) {
-        ModelTransportCommand model = findByPerennialIdentifier(modelId)
+        ModelTC model = findByPerennialIdentifier(modelId)
         updateHistory(model, user, accessType, formatType, changesMade, success)
     }
 
-    int updateHistory(ModelTransportCommand model, String user, String accessType,
+    int updateHistory(ModelTC model, String user, String accessType,
                       String formatType, String changesMade, boolean success = false) {
         accessType = accessType.replace("/model/","")
         AccessFormat format = AccessFormat.HTML
@@ -519,7 +524,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         } catch(Exception ignore) {
 
         }
-        ModelAuditTransportCommand audit = new ModelAuditTransportCommand(
+        ModelATC audit = new ModelATC(
             model: model,
             username: user,
             format: format,
