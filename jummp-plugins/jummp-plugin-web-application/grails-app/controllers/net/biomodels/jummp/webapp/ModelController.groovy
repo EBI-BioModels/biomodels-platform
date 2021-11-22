@@ -242,10 +242,13 @@ class ModelController {
                     List<RFTC> convertedFilesTC = modelConversionService.getConvertedFiles(rev)
                     Set<TagTransportCommand> tags = metadataDelegateService.findTagsByModel(rev.model)
                     String reactomeUrl = ReactomeEnvironment.getUrlForThisEnvironment()
+                    String hrefLinkToNewtEditor = makeLinkToNewtEditor(revision.identifier(), repoFiles)
 
-                    def model = [revision               : rev,
+                    def model = [
+                                 revision               : rev,
                                  reactomeIds            : reactomeIds,
                                  reactomeUrl            : reactomeUrl,
+                                 hrefLinkToNewtEditor   : hrefLinkToNewtEditor,
                                  authors                : rev.model.creators,
                                  allRevs                : revs,
                                  flashMessage           : flashMessage,
@@ -847,5 +850,14 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
             }
         }
         return true
+    }
+
+    private String makeLinkToNewtEditor(final String identifier, final List<RFTC> repoFiles) {
+        String href = "http://web.newteditor.org/"
+        href = "$href?URL=${grailsApplication.config.grails.serverURL}/model/download"
+        String modelMainFileName = repoFiles.find { it.mainFile }.filename
+        String otherParams = "inferNestingOnLoad=true&applyLayoutOnURL=true"
+        href = "$href/$identifier?filename=$modelMainFileName&$otherParams"
+        return href
     }
 }

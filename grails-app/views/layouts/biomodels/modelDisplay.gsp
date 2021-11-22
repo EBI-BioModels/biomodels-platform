@@ -792,20 +792,29 @@
                             <g:else>
                                 <biomd:showTags bmTags="${bmTags}"/>
                             </g:else>
-                            <biomd:insertSeparator/>
+                            <div class="row"><div class="small-12 medium-12 large-12 columns">
+                                <hr style="height:10px;border:none;margin: 0.75em 0 0.75em 0"/></div></div>
+                            <div class="rounded-header"><h4 style="color: #ffffee">Connected external resources</h4></div>
                             <div class='row'>
-                                <div class="small-12 medium-6 large-4 columns">Connected external resources</div>
-                                <div class="small-12 medium-6 large-8 columns">
-                                    <div class="row">
-                                        <div class="small-12 medium-3 large-3 columns" id="rosette-holder">
-                                            <!-- This emply holder is used to show the model rosette rendered
-                                            automatically in omicsdi.service.js via the function createRosette() called
-                                            from the ready block of this page -->
-                                        </div>
-                                        <div class="small-12 medium-9 large-9 columns">
-                                            <p class="ext-rsc-text" style="display: none">OmicsDI Impact Metrics</p>
-                                        </div>
-                                    </div>
+                                <div class="small-12 medium-3 large-3 columns" id="rosette-holder">
+                                    <!-- This emply holder is used to show the model rosette rendered
+                                    automatically in omicsdi.service.js via the function createRosette() called
+                                    from the ready block of this page -->
+                                </div>
+                                <div class="small-12 medium-9 large-9 columns">
+                                    <p class="ext-rsc-text" style="display: none">OmicsDI Impact Metrics</p>
+                                </div>
+                            </div>
+                            <div class='row'>
+                                <div class="small-12 medium-3 large-3 columns" id="sbgn-holder">
+                                    <a href="${hrefLinkToNewtEditor}"
+                                       title="Click here to render SBGN format of this model in Newt Editor">
+                                        <img
+                                            src="${grailsApplication.config.grails.serverURL}/images/biomodels/sbgn.png"
+                                            width="60%"/></a>
+                                </div>
+                                <div class="small-12 medium-9 large-9 columns">
+                                    <p class="ext-rsc-text" style="display: none">SBGN view in Newt Editor</p>
                                 </div>
                             </div>
                             <!-- Render a disclaimer if the model has been published without a publicly available manuscript -->
