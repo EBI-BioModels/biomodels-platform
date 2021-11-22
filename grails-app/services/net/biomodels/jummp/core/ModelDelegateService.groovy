@@ -533,4 +533,9 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
             success: success)
         return createAuditItem(audit)
     }
+
+    List<RFTC> sortModelFilesByName(final List<RFTC> repoFiles) {
+        List<RFTC> sortedList = repoFiles.sort { it.filename }
+        return sortedList
+    }
 }

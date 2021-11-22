@@ -227,6 +227,7 @@ class ModelController {
                         flashMessage = flash.now["giveMessage"]
                     }
                     List<RFTC> repoFiles = modelDelegateService.retrieveModelFiles(rev)
+                    repoFiles = modelDelegateService.sortModelFilesByName(repoFiles)
                     List<RevisionTransportCommand> revs =
                         modelDelegateService.getAllRevisions(PERENNIAL_ID)
                     List<String> reactomeIds = metadataDelegateService.getPathwaysForModelId(PERENNIAL_ID)
