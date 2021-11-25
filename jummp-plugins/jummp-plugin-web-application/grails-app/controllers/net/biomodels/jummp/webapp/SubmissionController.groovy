@@ -91,14 +91,21 @@ class SubmissionController {
             }
             revision.files = rftcList
 
-            // populate model info
+            // rebuild the model info as much as possible detected from the former step
+            // and update them in the working map
             def modelInfoData = JSON.parse(params.modelInfo.decodeHTML())
             model.name = modelInfoData["detectedName"] ?: mf["filename"]
             model.description = modelInfoData["detectedDescription"] ?: ""
-            working.put("modelling_approach", modelInfoData["detectedModelling"]["approach"])
-            working.put("other_info", modelInfoData["detectedModelling"]["otherInfo"])
-            working.put("model_format", modelInfoData["detectedModelFormat"]["id"])
-            working.put("readme_submission", modelInfoData["detectedModelFormat"]["readme"])
+            def detectedModelling = modelInfoData["detectedModelling"] ?
+                modelInfoData["detectedModelling"]["approach"] : ""
+            working.put("modelling_approach", detectedModelling)
+            def otherInfo = modelInfoData["detectedModelling"] ? modelInfoData["detectedModelling"]["otherInfo"] : ""
+            working.put("other_info", otherInfo)
+            def detectedModelFormat = modelInfoData["detectedModelFormat"] ?
+                modelInfoData["detectedModelFormat"]["id"] : null
+            working.put("model_format", detectedModelFormat)
+            def readme = modelInfoData["detectedModelFormat"] ? modelInfoData["detectedModelFormat"]["readme"] : ""
+            working.put("readme_submission", readme)
 
             // populate publication details
             if (params.publication) {
