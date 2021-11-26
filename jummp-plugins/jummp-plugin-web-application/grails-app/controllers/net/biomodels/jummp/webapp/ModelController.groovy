@@ -207,13 +207,6 @@ class ModelController {
                     return
                 } else {
                     final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
-                    def components = [:]
-                    try {
-                        components = sbmlService.extractComponentsFromBP(PERENNIAL_ID)
-                    } catch (RuntimeException re){
-                        log.error("Error while extracting components from BP")
-                        log.error(re.inspect())
-                    }
                     RevisionTransportCommand revision = modelDelegateService.getLatestRevision(PERENNIAL_ID)
                     boolean showPublishOption = modelDelegateService.canPublish(revision)
                     boolean canSubmitForPublication = modelDelegateService.canSubmitForPublication(revision)
