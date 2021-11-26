@@ -847,7 +847,7 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
     }
 
     private String makeLinkToNewtEditor(final String identifier, final List<RFTC> repoFiles) {
-        String href = "http://web.newteditor.org/"
+        String href = "https://web.newteditor.org/"
         href = "$href?URL=${grailsApplication.config.grails.serverURL}/model/download"
         String modelMainFileName = repoFiles.find { it.mainFile }.filename
         String otherParams = "inferNestingOnLoad=true&applyLayoutOnURL=true"
