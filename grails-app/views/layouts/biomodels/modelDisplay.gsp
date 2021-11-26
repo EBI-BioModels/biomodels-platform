@@ -792,8 +792,7 @@
                             <g:else>
                                 <biomd:showTags bmTags="${bmTags}"/>
                             </g:else>
-                            <div class="row"><div class="small-12 medium-12 large-12 columns">
-                                <hr style="height:10px;border:none;margin: 0.75em 0 0.75em 0"/></div></div>
+                            <biomd:insertSectionSeparator/>
                             <div class="rounded-header"><h4 style="color: #ffffee">Connected external resources</h4></div>
                             <div class='row'>
                                 <div class="small-12 medium-3 large-3 columns" id="rosette-holder">
