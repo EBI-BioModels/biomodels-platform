@@ -32,9 +32,12 @@
     <anno:renderGenericAnnotations annotations="${genericAnnotations}"/>
 </content>
 <content tag="modelspecifictabs">
+<g:if test="${components}">
     <sbml:decideTabs/>
+</g:if>
 </content>
 <content tag="modelspecifictabscontent">
+    <g:if test="${components}">
     <div id="Components" class="row">
         <div class="small-12 columns">
             <div class="row">
@@ -121,6 +124,6 @@
 
         });
     </g:javascript>
-
+    </g:if>
 </content>
 
