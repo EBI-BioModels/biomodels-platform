@@ -61,7 +61,7 @@
         });
     </script>
     <script type='text/javascript'
-            src="${grailsApplication.config.grails.serverURL}/js/MathJax-2.6.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+            src="${serverURL}/js/MathJax-2.6.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
     </script>
     <g:javascript>
         let canUpdate = ${canUpdate};
@@ -629,12 +629,12 @@
                     <g:if test="${revision.state==ModelState.PUBLISHED}">
                         <img style="float:right;margin-top:0;" title="This version of the model is public"
                              alt="public model"
-                             src="${grailsApplication.config.grails.serverURL}/images/unlock.png"/>
+                             src="${serverURL}/images/unlock.png"/>
                     </g:if>
                     <g:else>
                         <img style="float:right;margin-top:0;" title="This version of the model is unpublished"
                              alt="unpublished model"
-                             src="${grailsApplication.config.grails.serverURL}/images/lock.png"/>
+                             src="${serverURL}/images/lock.png"/>
                     </g:else>
                 </div>
             <g:if test="${reactomeIds}">
@@ -694,7 +694,7 @@
                                     %{--<a class="descriptionToggle" title="Click to see more">
                                         <span>Click here to collapse/expand the description
                                             <img style="width:12px;margin:2px;float:none"
-                                                 src="${grailsApplication.config.grails.serverURL}/images/expand.png"/>
+                                                 src="${serverURL}/images/expand.png"/>
                                         </span>
                                     </a>--}%
                                     <div id="description">
@@ -809,7 +809,7 @@
                                     <a href="${hrefLinkToNewtEditor}" target="_blank"
                                        title="Click here to render SBGN format of this model in Newt Editor">
                                         <img
-                                            src="${grailsApplication.config.grails.serverURL}/images/biomodels/sbgn.png"
+                                            src="${serverURL}/images/biomodels/sbgn.png"
                                             width="60%"/></a>
                                 </div>
                                 <div class="small-12 medium-9 large-9 columns">
@@ -849,24 +849,24 @@
                                     <g:if test="${rv.state==ModelState.PUBLISHED}">
                                             <img style="width:12px;margin:2px;float:none;"
                                                  title="This version of the model is public" alt="public model"
-                                                 src="${grailsApplication.config.grails.serverURL}/images/unlock.png"/>
+                                                 src="${serverURL}/images/unlock.png"/>
                                     </g:if>
                                     <g:else>
                                             <img style="width:12px;margin:2px;float:none;"
                                                  title="This version of the model is unpublished" alt="unpublished model"
-                                                 src="${grailsApplication.config.grails.serverURL}/images/lock.png"/>
+                                                 src="${serverURL}/images/lock.png"/>
                                     </g:else>
                                     <g:if test="${revision.id!=rv.id}">
                                         <a class="versionDownload" title="go to version ${rv.revisionNumber}"
                                            href="${g.createLink(controller: 'model', action: 'show', id: rv.identifier())}">
                                             <img style="width:12px;margin:2px;float:none"
-                                                 src="${grailsApplication.config.grails.serverURL}/images/external_link.png"/>
+                                                 src="${serverURL}/images/external_link.png"/>
                                         </a>
                                     </g:if>
                                             <a class="versionDownload" title="download"
                                                href="${g.createLink(controller: 'model', action: 'download', id: rv.identifier())}">
                                                 <img alt="Download this version" style="width:15px;float:none"
-                                                     src="${grailsApplication.config.grails.serverURL}/images/download.png"/>
+                                                     src="${serverURL}/images/download.png"/>
                                             </a>
                                         <ul>
                                             <li>Submitted on: ${dateFormat.format(rv.uploadDate)}</li>
@@ -880,7 +880,7 @@
                             <p style="font-style: italic; font-size: smaller">(*) You might be seeing discontinuous
                                 revisions as only public revisions are displayed here. Any private revisions
                                 <img title="unpublished model revision" alt="unpublished model revision"
-                                     src="${grailsApplication.config.grails.serverURL}/images/lock.png"/>
+                                     src="${serverURL}/images/lock.png"/>
                                  of this model will only be shown to the submitter and their collaborators.</p>
                         </g:if>
                     </div>

@@ -264,7 +264,8 @@ class ModelController {
                                  hasCuratorRole         : hasCuratorRole,
                                  supportedForConversion : supportedForConversion,
                                  convertedFilesTC       : convertedFilesTC,
-                                 bmTags                 : tags
+                                 bmTags                 : tags,
+                                 serverURL              : grailsApplication.config.grails.serverURL
                     ]
                     if (rev.id == revision.id) {
                         flash.genericModel = model
