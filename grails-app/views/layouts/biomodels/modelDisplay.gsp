@@ -92,8 +92,6 @@
     <link rel="alternate" href="https://identifiers.org/biomodels.db/${revision.modelIdentifier()}"/>
     <link rel="alternate" href="https://www.ebi.ac.uk/biomodels-main/${revision.modelIdentifier()}"/>
     <link rel="alternate" href="https://www.ebi.ac.uk/biomodels-main/${revision.modelIdentifier()}"/>
-    <link rel="alternate" href="http://biomodels.caltech.edu/${revision.identifier()}"/>
-    <link rel="alternate" href="http://biomodels.caltech.edu/${revision.modelIdentifier()}"/>
     <link rel="canonical" href="https://www.ebi.ac.uk/biomodels/${revision.modelIdentifier()}"/>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.handsontable.full.min.css')}"/>
     <link rel="stylesheet" href="${resource(dir: 'css/syntax', file: 'shCore.css')}"/>
