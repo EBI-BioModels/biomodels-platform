@@ -488,6 +488,7 @@
     <g:layoutHead/>
 </head>
 <body>
+        <!-- Render the model toolbox -->
         <div id="buttonContainer" style="display:inline">
             <ul id='toolbarList'>
                 <li>
@@ -596,7 +597,10 @@
                 </g:if>
             </ul>
         </div>
+
+        <!-- Render the main content of the model display page -->
         <div class="ebiLayout_reduceWidth">
+            <!-- Show warning messages: archived models, old versions, etc. -->
             <g:if test="${revision.model.deleted}">
                 <div class='PermanentMessage'>
                     This is an archived model.
@@ -610,12 +614,16 @@
                         revision.modelIdentifier())}">here</a>.
                 </div>
             </g:if>
+
+            <!-- Show model revision name, model of the month, icons, flags, Reactome connected pathways, etc. -->
             <div id="topBar">
                 <div class="message" style="display: block"></div>
+
                 <div style="float:left;width:75%;">
                     <h2>${revision.name}</h2>
                     <biomd:renderModelOfMonth modelId="${revision.model.id}" />
                 </div>
+
                 <div style="float:right;margin-top:10px;">
                     <g:if test="${!flags.empty}">
                         <biomd:renderModelFlags flags="${flags}"/>
@@ -635,8 +643,8 @@
                              src="${serverURL}/images/lock.png"/>
                     </g:else>
                 </div>
-            <g:if test="${reactomeIds}">
 
+                <g:if test="${reactomeIds}">
                 <div style="margin-right: 50%;">
                     <g:select name="reactome_pathways"
                               id="opener"
@@ -646,9 +654,10 @@
                               optionKey = "${{null != it && !((String)it).isEmpty()?((String)it).split('\\|')[1]:((String)it).split('\\|')[0]}}"
                               optionValue="${{((String)it).split('\\|')[0]}}" />
                 </div>
-            </g:if>
+                </g:if>
             </div>
 
+            <!-- Render the model tabs -->
             <div id="tablewrapper">
                 <div id="tabs">
                     <ul class='modelTabs'>
@@ -672,6 +681,8 @@
 		            <g:if test="${curationNotes != null || hasCuratorRole}">
                     <li><a href='#Curation'>Curation</a></li></g:if>
                     </ul>
+
+                    <!-- Overview tab -->
                     <div id="Overview" class="row">
                         <div class="small-12 medium-8 large-8 columns">
                             <div class="row">
@@ -827,11 +838,15 @@
                             </div>--}%
                         </div>
                     </div>
+
+                    <!-- Files tab -->
                     <div id="Files" class="row">
                         <% Map model = ["repoFiles": repoFiles] %>
                         <g:render template="/templates/biomodels/modelDisplay/tabFiles"
                                   model="${model}" />
                     </div>
+
+                    <!-- History tab -->
                     <div id="History">
                         <% DateFormat dateFormat = DateFormat.getDateTimeInstance(); %>
                         <ul>
@@ -882,13 +897,19 @@
                                  of this model will only be shown to the submitter and their collaborators.</p>
                         </g:if>
                     </div>
+
+                    <!-- Exports tab -->
                     <g:if test="${convertedFilesTC}">
                     <div id="Exports">
                         <h3>Below are the converted model files where you could download</h3>
                         <biomd:renderConvertedFiles convertedFilesTC="${convertedFilesTC}"/>
                     </div>
                     </g:if>
+
+                    <!-- Some specific tabs -->
                     <g:pageProperty name="page.modelspecifictabscontent" />
+
+                    <!-- Curation tab -->
                     <g:if test="${curationNotes != null || hasCuratorRole}">
                         <biomd:renderCurationNotesTab curationNotes="${curationNotes}"
                                                       model="${revision.modelIdentifier()}"
