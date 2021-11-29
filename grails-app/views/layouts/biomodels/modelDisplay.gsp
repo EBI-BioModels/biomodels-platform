@@ -813,20 +813,10 @@
                                     <p class="ext-rsc-text" style="display: none">OmicsDI Impact Metrics</p>
                                 </div>
                             </div>
-                            <div class='row'>
-                                <div class="small-12 medium-3 large-3 columns" id="sbgn-holder">
-                                    <a href="${hrefLinkToNewtEditor}" target="_blank"
-                                       title="Click here to render SBGN format of this model in Newt Editor">
-                                        <img
-                                            src="${serverURL}/images/biomodels/sbgn.png"
-                                            width="60%"/></a>
-                                </div>
-                                <div class="small-12 medium-9 large-9 columns">
-                                    <p class="ext-rsc-text">SBGN view in Newt Editor</p>
-                                </div>
-                            </div>
-                            <!-- Render a disclaimer if the model has been published without a publicly available manuscript -->
-                            <biomd:displayDisclaimer revision="${revision}"/>
+                            <g:if test="${hrefLinkToNewtEditor}">
+                            <biomd:renderLinkToNewtEditor serverURL="${serverURL}"
+                                                          hrefLinkToNewtEditor="${hrefLinkToNewtEditor}"/>
+                            </g:if>
 
                             %{--<div class='row'>
                                 <div class="medium-3 columns">Validation Status</div>

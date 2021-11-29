@@ -355,4 +355,9 @@ class BioModelsTagLib {
             model: [diseases: rightColumn])
         out << '</div>'
     }
+
+    def renderLinkToNewtEditor = { Map attrs ->
+        out << render(template: "/templates/biomodels/modelDisplay/linkNewtEditor",
+            model: [hrefLinkToNewtEditor: attrs.hrefLinkToNewtEditor, serverURL: attrs.serverURL])
+    }
 }
