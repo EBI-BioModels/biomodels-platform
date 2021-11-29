@@ -801,11 +801,13 @@
                             <g:else>
                                 <biomd:showTags bmTags="${bmTags}"/>
                             </g:else>
+                            <!-- Render a disclaimer if the model has been published without a publicly available manuscript -->
+                            <biomd:displayDisclaimer revision="${revision}"/>
                             <biomd:insertSectionSeparator/>
                             <div class="rounded-header"><h4 style="color: #ffffee">Connected external resources</h4></div>
                             <div class='row'>
                                 <div class="small-12 medium-3 large-3 columns" id="rosette-holder">
-                                    <!-- This emply holder is used to show the model rosette rendered
+                                    <!-- This empty holder is used to show the model rosette rendered
                                     automatically in omicsdi.service.js via the function createRosette() called
                                     from the ready block of this page -->
                                 </div>
