@@ -34,12 +34,13 @@
 
 package net.biomodels.jummp.plugins.omex
 
-import grails.test.mixin.*
-import net.biomodels.jummp.core.model.ModelFormatTransportCommand
-import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
+
+import grails.test.mixin.TestFor
+import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import org.apache.commons.io.FileUtils
-import org.junit.*
+import org.junit.Test
 
 @TestFor(OmexService)
 class OmexServiceTests {
@@ -82,11 +83,10 @@ class OmexServiceTests {
     @Test
     void testExtractAnno() {
         assertEquals([], omexService.getAllAnnotationURNs(null))
-        def omexFormat = new ModelFormatTransportCommand(identifier: "OMEX",
-                name: "Open Modelling Exchange Format")
-        def file = new RepositoryFileTransportCommand(path: "test/files/sample archive.omex",
+        def omexFormat = new MFTC(identifier: "OMEX", name: "Open Modelling Exchange Format")
+        def file = new RFTC(path: "test/files/sample archive.omex",
                 mainFile: true, hidden: false, userSubmitted: true)
-        def revision = new RevisionTransportCommand(format: omexFormat, files: [file])
+        def revision = new RTC(format: omexFormat, files: [file])
 
         assertEquals([], omexService.getAllAnnotationURNs(revision))
     }
@@ -94,11 +94,10 @@ class OmexServiceTests {
     @Test
     void testGetPublicationAnno() {
         assertEquals([], omexService.getPubMedAnnotation(null))
-        def omexFormat = new ModelFormatTransportCommand(identifier: "OMEX",
-                name: "Open Modelling Exchange Format")
-        def file = new RepositoryFileTransportCommand(path: "test/files/sample archive.omex",
-                mainFile: true, hidden: false, userSubmitted: true)
-        def revision = new RevisionTransportCommand(format: omexFormat, files: [file])
+        def omexFormat = new MFTC(identifier: "OMEX", name: "Open Modelling Exchange Format")
+        def file = new RFTC(path: "test/files/sample archive.omex", mainFile: true,
+            hidden: false, userSubmitted: true)
+        def revision = new RTC(format: omexFormat, files: [file])
 
         assertEquals([], omexService.getPubMedAnnotation(revision))
     }
