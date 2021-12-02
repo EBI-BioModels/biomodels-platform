@@ -42,6 +42,10 @@ import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import org.apache.commons.io.FileUtils
 import org.junit.Test
 
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+
 @TestFor(OmexService)
 class OmexServiceTests {
     def omexService
@@ -100,5 +104,40 @@ class OmexServiceTests {
         def revision = new RTC(format: omexFormat, files: [file])
 
         assertEquals([], omexService.getPubMedAnnotation(revision))
+    }
+
+    @Test
+    void testCreateCombineArchive() {
+        String retOmexFileName = omexService.createCombineArchive([], "")
+        assertTrue("" == retOmexFileName)
+        retOmexFileName = omexService.createCombineArchive([], "BIOMD0000001000")
+        assertTrue("" == retOmexFileName)
+
+        /* create a list of {link @RFTC} objects */
+        Path resourcesDirectory = Paths.get("test", "files", "create")
+        File main = new File(resourcesDirectory.toFile(), "Aubry1995.xml")
+        def cmdMainFile = new RFTC(path: main.absolutePath, mainFile: true,
+            hidden: false, userSubmitted: true, filename: "Aubury1995.xml", size: 1000, description: "Main file",
+            mimeType: "application/xml", revision: null)
+        File additional = new File(resourcesDirectory.toFile(), "curated.csv")
+        def cmdAdditionalFile = new RFTC(path: additional.absolutePath, mainFile:
+            false, hidden: false, userSubmitted: true, filename: "curated.csv", size: 1000, description: "Main file",
+            mimeType: "application/xml", revision: null)
+        List repoFiles = [cmdMainFile, cmdAdditionalFile]
+        retOmexFileName = omexService.createCombineArchive(repoFiles, "dummy")
+        assertNotNull(retOmexFileName)
+        /* clean up the newly created files during testing */
+        if (retOmexFileName != null) {
+            try {
+                boolean result = Files.deleteIfExists(Paths.get(retOmexFileName))
+                if (result) {
+                    println "File is deleted."
+                } else {
+                    println "Sorry, unable to delete the file."
+                }
+            } catch (IOException ioEx) {
+                println "Found errors while trying to delete the file ${retOmexFileName}"
+            }
+        }
     }
 }
