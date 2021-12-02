@@ -43,10 +43,14 @@ import org.junit.*
 
 @TestFor(OmexService)
 class OmexServiceTests {
+    def omexService
+
+    void setUp() {
+        omexService = new OmexService()
+    }
 
     @Test
     void testValidation() {
-        def omexService = new OmexService()
         assertFalse(omexService.validate(null, null))
         assertFalse(omexService.validate([], []))
         assertFalse(omexService.validate([new File("inexistent")], []))
@@ -61,7 +65,6 @@ class OmexServiceTests {
 
     @Test
     void testExtractName() {
-        def omexService = new OmexService()
         List<File> modelFiles = null
         assertEquals("", omexService.extractName(modelFiles))
         modelFiles = [new File("test/files/sample archive.omex")]
@@ -70,7 +73,6 @@ class OmexServiceTests {
 
     @Test
     void testExtractDescription() {
-        def omexService = new OmexService()
         List<File> modelFiles = null
         assertEquals("", omexService.extractDescription(modelFiles))
         modelFiles = [new File("test/files/sample archive.omex")]
@@ -79,7 +81,6 @@ class OmexServiceTests {
 
     @Test
     void testExtractAnno() {
-        def omexService = new OmexService()
         assertEquals([], omexService.getAllAnnotationURNs(null))
         def omexFormat = new ModelFormatTransportCommand(identifier: "OMEX",
                 name: "Open Modelling Exchange Format")
@@ -92,7 +93,6 @@ class OmexServiceTests {
 
     @Test
     void testGetPublicationAnno() {
-        def omexService = new OmexService()
         assertEquals([], omexService.getPubMedAnnotation(null))
         def omexFormat = new ModelFormatTransportCommand(identifier: "OMEX",
                 name: "Open Modelling Exchange Format")
