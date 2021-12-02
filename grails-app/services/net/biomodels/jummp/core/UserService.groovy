@@ -175,8 +175,8 @@ class UserService implements IUserService {
     @Profiled(tag = "userService.editUser")
     @PreAuthorize("hasRole('ROLE_ADMIN') or isAuthenticated()") //used to be: authentication.name==#username
     User editUser(User user) throws UserInvalidException {
-        checkUserValid(user.username)
-        User origUser = User.findByUsername(user.username)
+        checkUserValid(user.username.decodeHTML())
+        User origUser = User.findByUsername(user.username.decodeHTML())
         handleOrcidModification(user, origUser)
         origUser.person.userRealName = user.person.userRealName
         origUser.person.institution = user.person.institution
