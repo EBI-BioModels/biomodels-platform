@@ -97,10 +97,10 @@ $.jummp.userAdministration.editUser = function () {
                     linkText = "";
                     divInsertId = "";
                     if (action === "addRole") {
-                        linkText = $.i18n.prop("user.administration.userRole.ui.removeRole");
+                        linkText = "Remove Role from User";
                         divInsertId = "#userRoles";
                     } else if (action === "removeRole") {
-                        linkText = $.i18n.prop("user.administration.userRole.ui.addRole");
+                        linkText = "Add Role to User";
                         divInsertId = "#availableRoles";
                     }
                     tableRow = link.parents("tr");

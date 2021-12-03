@@ -33,7 +33,6 @@
         <title><g:message code="user.administration.ui.heading.user"/></title>
         <meta name="layout" content="${session['branding.style']}/main" />
         <g:javascript contextPath="" src="useradministration.js"/>
-        <g:javascript contextPath="" src="jquery/jquery.i18n.properties-min-1.0.9.js"/>
      </head>
     <body>
         <form id="edit-user-form" method="POST">
