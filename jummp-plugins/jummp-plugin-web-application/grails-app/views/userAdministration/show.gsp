@@ -36,7 +36,6 @@
         <g:javascript contextPath="" src="jquery/jquery.i18n.properties-min-1.0.9.js"/>
      </head>
     <body>
-        <div>
         <form id="edit-user-form" method="POST">
             <table class="responsive-table">
                 <thead></thead>
@@ -68,7 +67,6 @@
                 <input type="submit" class="button" value="${g.message(code: 'user.administration.save')}"/>
             </div>
         </form>
-        </div>
         <div id="user-role-management">
             <h2><g:message code="user.administration.userRole.ui.heading" args="[user.username]"/></h2>
             <div id="userRoles">

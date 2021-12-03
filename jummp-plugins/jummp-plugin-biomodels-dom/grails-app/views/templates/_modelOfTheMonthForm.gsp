@@ -22,7 +22,7 @@
                     ${entry?.shortDescription}</textarea>
                 <label for="models" class="required">Models associated with (separated by commas)</label>
                 <input type="text" id="models" name="models" required
-                       placeholder="Model identifiers associated with this entry separated by commas. These identifiers must be determined to create backlinks to be shown underneath the model name on the model display page."
+                       placeholder="Model identifiers associated with this entry separated by commas. Not allowed null."
                        value="${entry?.models}">
                 <div class="row">
                     <div class="small-12 medium-6 large-6 columns">

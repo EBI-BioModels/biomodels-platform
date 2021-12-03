@@ -49,11 +49,10 @@
             });
         });
     </script>
-    <title>Model of The Month Management</title>
+    <title>Model of The Month Management | BioModels</title>
 </head>
 
 <body>
-<div class="row">
     <h2>Model of The Month Management</h2>
     <h3>List all of Model of Month entries</h3>
     <a class="button" href="${createLink(controller: "ModelOfTheMonth", action: "create")}">Add a new entry</a>
@@ -71,7 +70,5 @@
         <g:render template="/templates/momEntry" collection="${entries}" var="entry" />
         </tbody>
     </table>
-</div>
-
 </body>
 </html>
