@@ -13,8 +13,7 @@
                        value="${entry?.title}">
                 <label for="shortDescription" class="required">Short Description</label>
                 <textarea id="shortDescription" required
-                          placeholder="Enter a short description for this MoM entry.
-                          This description will be shown on the MoM widget. It shouldn't be left empty."
+                          placeholder="Enter a short description for this MoM entry. This description will be shown on the MoM widget. It shouldn't be left empty."
                           aria-multiline="true" rows="5"
                           style="white-space: pre-wrap">${entry?.shortDescription}</textarea>
                 <textarea id="tmpShortDescription"
@@ -23,8 +22,7 @@
                     ${entry?.shortDescription}</textarea>
                 <label for="models" class="required">Models associated with (separated by commas)</label>
                 <input type="text" id="models" name="models" required
-                       placeholder="Model identifiers associated with this entry separated by commas.
-                       These identifiers must be determined to create backlinks to be shown underneath the model name on the model display page"
+                       placeholder="Model identifiers associated with this entry separated by commas. These identifiers must be determined to create backlinks to be shown underneath the model name on the model display page."
                        value="${entry?.models}">
                 <div class="row">
                     <div class="small-12 medium-6 large-6 columns">
