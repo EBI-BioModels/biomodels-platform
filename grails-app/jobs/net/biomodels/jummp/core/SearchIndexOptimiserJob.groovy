@@ -14,7 +14,7 @@ class SearchIndexOptimiserJob {
     /**
      * The class logger.
      */
-    static final Log log = LogFactory.getLog(SearchService)
+    static final Log log = LogFactory.getLog(SearchService.class)
     /**
      * Flag indicating the logger's verbosity threshold.
      */
@@ -24,14 +24,14 @@ class SearchIndexOptimiserJob {
      */
     def solrServerHolder
 
-    static triggers = {
+    /*static triggers = {
         cron name: "optimiseSearchIndexTrigger", cronExpression: "0 0 2 * * ?"
-    }
+    }*/
 
     /**
      * Triggers the optimisation of the search index.
      */
-    def execute() {
+    /*def execute() {
         if (IS_DEBUG_ENABLED) {
             log.debug "Started optimising the search index..."
         }
@@ -39,5 +39,5 @@ class SearchIndexOptimiserJob {
         if (IS_DEBUG_ENABLED) {
             log.debug "... finished optimising the search index."
         }
-    }
+    }*/
 }
