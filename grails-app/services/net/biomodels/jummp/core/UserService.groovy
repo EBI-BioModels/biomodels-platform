@@ -32,6 +32,7 @@ package net.biomodels.jummp.core
 
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.plugin.springsecurity.acl.AclSid
+import grails.plugin.springsecurity.userdetails.GrailsUser
 import net.biomodels.jummp.core.events.LoggingEventType
 import net.biomodels.jummp.core.events.PostLogging
 import net.biomodels.jummp.core.user.*
@@ -101,6 +102,9 @@ class UserService implements IUserService {
         def principal = springSecurityService.principal
         if (principal instanceof String) {
             username = principal
+        } else if (principal instanceof GrailsUser ||
+            principal instanceof org.springframework.security.core.userdetails.User) {
+            username = principal.username
         }
         return username
     }
@@ -244,6 +248,12 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
         isCurator(User.load(userId))
     }
 
+    boolean isLoggedInUserAAdmin() {
+        def userId = springSecurityService.getCurrentUserId()
+        if (!userId) return false
+        isAdmin(User.load(userId))
+    }
+
     @Profiled(tag="userService.isCurator")
     @PreAuthorize("isAuthenticated()")
     boolean isCurator(User u) throws RoleNotFoundException {
@@ -252,6 +262,16 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
             throw new RoleNotFoundException("Authority ROLE_CURATOR is not defined.")
         }
         hasRole(u, curator)
+    }
+
+    @Profiled(tag="userService.isAdmin")
+    @PreAuthorize("isAuthenticated()")
+    boolean isAdmin(User u) throws RoleNotFoundException {
+        Role admin = Role.findByAuthority('ROLE_ADMIN')
+        if (!admin) {
+            throw new RoleNotFoundException("Authority ROLE_ADMIN is not defined.")
+        }
+        hasRole(u, admin)
     }
 
     @PostLogging(LoggingEventType.RETRIEVAL)
