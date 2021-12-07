@@ -535,6 +535,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
         Set models = theLatestMoM.models
         String modelIds = models.collect { it.publicationId ?: it.submissionId }.join(";")
         Map momEntry = [:]
+        momEntry.put("id", Long.toString(theLatestMoM.id))
         momEntry.put("entryTitle", entryTitle)
         momEntry.put("shortDescription", shortDescription)
         momEntry.put("previewImage", previewImage)
