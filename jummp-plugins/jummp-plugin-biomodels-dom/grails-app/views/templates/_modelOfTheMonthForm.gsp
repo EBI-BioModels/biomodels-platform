@@ -56,8 +56,11 @@
 
         <div class="row">
             <div class="small-12 medium-6 large-6 columns" style="text-align: left">
+                <a class="button"
+                   href="${createLink(controller: "modelOfTheMonth", action: "index")}"
+                   title="Go to the page of showing all MOM entries">Access all MOM entries</a>
                 <a class="button" onclick="window.history.back()"
-                   title="Back to the model display page">Back</a>
+                   title="Back to the previous page">Back</a>
                 <button type="button" class="button" id="btnSave">Save</button>
                 <button type="button" class="button" id="btnReset">Reset</button>
             </div>

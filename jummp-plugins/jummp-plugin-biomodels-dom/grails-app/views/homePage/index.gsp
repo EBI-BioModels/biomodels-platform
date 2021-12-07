@@ -57,5 +57,15 @@ with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
             </ul>
         </div>
     </div>
+    <div class="row">
+        <div class="columns small-12 medium-12 large-12">
+            <a class="button" href="${createLink(controller: "admin", action: "dashboard")}">
+                Admin Dashboard
+            </a>
+            <a class="button" href="${createLink(controller: "curator", action: "dashboard")}">
+                Curator Dashboard
+            </a>
+        </div>
+    </div>
 </body>
 </html>
