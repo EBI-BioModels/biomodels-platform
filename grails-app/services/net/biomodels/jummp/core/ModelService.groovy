@@ -40,6 +40,8 @@ import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.events.*
 import net.biomodels.jummp.core.model.*
+import net.biomodels.jummp.core.model.ModelTransportCommand as ModelTC
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorRegistryService
 import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
@@ -790,7 +792,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @PreAuthorize("hasRole('ROLE_USER')")
     @PostLogging(LoggingEventType.CREATION)
     @Profiled(tag="modelService.uploadModelAsFile")
-    Model uploadModelAsFile(final RepositoryFileTransportCommand repoFile, ModelTransportCommand meta)
+    Model uploadModelAsFile(final RFTC repoFile, ModelTC meta)
             throws ModelException {
         if (repoFile) {
            return uploadModelAsList([repoFile], meta)
@@ -819,8 +821,8 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.addRevision")
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    Revision addRevision(final List<RepositoryFileTransportCommand> repoFiles,
-                         final List<RepositoryFileTransportCommand> deleteFiles,
+    Revision addRevision(final List<RFTC> repoFiles,
+                         final List<RFTC> deleteFiles,
                          final RevisionTransportCommand rev) throws ModelException {
         Revision revision
         def txDefinition = [
@@ -839,8 +841,8 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.amendRevision")
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    Revision amendRevision(final List<RepositoryFileTransportCommand> repoFiles,
-                         final List<RepositoryFileTransportCommand> deleteFiles,
+    Revision amendRevision(final List<RFTC> repoFiles,
+                         final List<RFTC> deleteFiles,
                          final RevisionTransportCommand rev) throws ModelException {
         logger.debug("Amending the revision: ${rev.dump()}")
         Revision revision
@@ -870,8 +872,8 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
      * @throws ModelException if there is no model associated with @p rev, if its model has
      * been deleted or if the comment is null.
      */
-    Revision persistRevision(List<RepositoryFileTransportCommand> repoFiles,
-                             List<RepositoryFileTransportCommand> deleteFiles,
+    Revision persistRevision(List<RFTC> repoFiles,
+                             List<RFTC> deleteFiles,
                              RevisionTransportCommand rev) throws ModelException {
         StopWatch stopWatch = new Log4JStopWatch("modelService.persistRevision")
         // TODO: the method should be thread safe, add a lock
@@ -913,8 +915,8 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
         return revision
     }
 
-    Revision doAmendRevision(List<RepositoryFileTransportCommand> repoFiles,
-                             List<RepositoryFileTransportCommand> deleteFiles,
+    Revision doAmendRevision(List<RFTC> repoFiles,
+                             List<RFTC> deleteFiles,
                              RevisionTransportCommand rev) throws ModelException {
         StopWatch stopWatch = new Log4JStopWatch("modelService.doAmendRevision")
         validateModelRevision(rev)
@@ -996,7 +998,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @PostLogging(LoggingEventType.CREATION)
     @Profiled(tag="modelService.uploadValidatedModel")
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    Model uploadValidatedModel(final List<RepositoryFileTransportCommand> repoFiles,
+    Model uploadValidatedModel(final List<RFTC> repoFiles,
             RevisionTransportCommand rev) throws ModelException {
         Model model
         // this tx will use a different session than the current one
@@ -1022,7 +1024,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
 
     @PostLogging(LoggingEventType.CREATION)
     @Profiled(tag="modelService.doUploadValidatedModel")
-    Model doUploadValidatedModel(final List<RepositoryFileTransportCommand> repoFiles,
+    Model doUploadValidatedModel(final List<RFTC> repoFiles,
             RevisionTransportCommand rev) throws ModelException {
         logger.debug "About to store the following model: ${rev.name}"
         // TODO: to support anonymous submissions, this method has to be changed
@@ -1065,7 +1067,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @PreAuthorize("hasRole('ROLE_USER')")
     @PostLogging(LoggingEventType.CREATION)
     @Profiled(tag="modelService.uploadModelAsList")
-    public Model uploadModelAsList(final List<RepositoryFileTransportCommand> repoFiles, ModelTransportCommand meta)
+    public Model uploadModelAsList(final List<RFTC> repoFiles, ModelTC meta)
             throws ModelException {
         def stopWatch = new Log4JStopWatch("modelService.uploadModelAsList.sanityChecks")
         // TODO: to support anonymous submissions this method has to be changed
@@ -1222,7 +1224,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     * The provided @p file will be stored in the VCS as an update to an existing file of the same @p model.
     * A new Revision will be created and appended to the list of Revisions of the @p model.
     * @param model The Model the revision should be added
-    * @param repoFile The RepositoryFileTransportCommand object corresponding to the file that is to be stored in the VCS as a new revision
+    * @param repoFile The RFTC object corresponding to the file that is to be stored in the VCS as a new revision
     * @param format The format of the model file
     * @param comment The commit message for the new revision
     * @return The new added Revision. In case an error occurred while accessing the VCS @c null will be returned.
@@ -1231,7 +1233,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @PreAuthorize("hasPermission(#model, write) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.addRevisionAsFile")
-    Revision addRevisionAsFile(Model model, final RepositoryFileTransportCommand repoFile,
+    Revision addRevisionAsFile(Model model, final RFTC repoFile,
             final ModelFormat format, final String comment) throws ModelException {
         return addRevisionAsList(model, [repoFile], format, comment)
     }
@@ -1250,13 +1252,13 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
     @PreAuthorize("hasPermission(#model, write) or hasRole('ROLE_ADMIN')")
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="modelService.addRevisionAsList")
-    public Revision addRevisionAsList(Model model, final List<RepositoryFileTransportCommand> repoFiles,
+    public Revision addRevisionAsList(Model model, final List<RFTC> repoFiles,
             final ModelFormat format, final String comment) throws ModelException {
         // TODO: the method should be thread safe, add a lock
         if (!model) {
             throw new ModelException(null, "Model may not be null")
         }
-        ModelTransportCommand mtc = new ModelAdapter(model: model).toCommandObject(false)
+        ModelTC mtc = new ModelAdapter(model: model).toCommandObject(false)
         if (model.deleted) {
             throw new ModelException(mtc, "A new Revision cannot be added to a deleted model")
         }
@@ -1397,7 +1399,8 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
         } catch (VcsException e) {
             String message = "Retrieving Revision ${revision.vcsId} for Model ${revision.name} from VCS failed."
             logger.error(message, e)
-            ModelTransportCommand model = new ModelAdapter(model: revision.model, latest: revision).toCommandObject()
+            ModelTC model = new ModelAdapter(model: revision.model,
+                latest: revision).toCommandObject()
             throw new ModelException(model, message, e)
         }
         return files
@@ -1412,7 +1415,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
     //@PreAuthorize("hasPermission(#revision, read) or hasRole('ROLE_ADMIN')")  Not working. Seems related to: https://bitbucket.org/jummp/jummp/issue/23/spring-security-doesnt-work-as-expected-in
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.retrieveModelFiles")
-    List<RepositoryFileTransportCommand> retrieveModelFiles(final Revision revision) throws ModelException {
+    List<RFTC> retrieveModelFiles(final Revision revision) throws ModelException {
         if (aclUtilService.hasPermission(springSecurityService.authentication, revision, BasePermission.READ)
                 || SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')) {
             return repositoryFileService.getRepositoryFilesForRevision(revision)
@@ -1430,7 +1433,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
      */
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="modelService.retrieveModelFiles")
-    List<RepositoryFileTransportCommand> retrieveModelFiles(final Model model) throws ModelException {
+    List<RFTC> retrieveModelFiles(final Model model) throws ModelException {
         final Revision revision = getLatestRevision(model, false)
         if (!revision) {
             logger.error("you cant access model ${model}")
@@ -2210,7 +2213,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
         model.firstPublished = new Date()
         markRevisionAsPublic(revision)
         if (!model.save(flush: true)) {
-            ModelTransportCommand cmd = new ModelAdapter(model: model, latest: revision).toCommandObject(false)
+            ModelTC cmd = new ModelAdapter(model: model, latest: revision).toCommandObject(false)
             throw new ModelException(cmd,
                     "Cannot publish model ${model.submissionId}:${model.errors.allErrors.inspect()}")
         }
@@ -2430,11 +2433,11 @@ Failed to update audit $itemId to $success: ${audit.errors.allErrors.inspect()}"
      * these chain of methods do not need to check ACLs
      *
      * @param modelIDs The list of model identities being retrieved
-     * @return either the list of RepositoryFileTransportCommand objects or null
+     * @return either the list of RFTC objects or null
      *         if there is no model files available
      */
-    Map<String, RepositoryFileTransportCommand> fetchMainFileForModels(String[] modelIDs) {
-        Map<String, RepositoryFileTransportCommand> results = [:]
+    Map<String, RFTC> fetchMainFileForModels(String[] modelIDs) {
+        Map<String, RFTC> results = [:]
         List mids = modelIDs.toList()
         String query = """
 SELECT
@@ -2468,7 +2471,7 @@ WHERE
                 return
             }
             String filename = revision.model.publicationId ?: revision.model.submissionId
-            RepositoryFileTransportCommand rftc = new RepositoryFileTransportCommand(
+            RFTC rftc = new RFTC(
                 id: rf.id,
                 path: f.getCanonicalPath(),
                 description: rf.description,
