@@ -100,16 +100,20 @@ class Operations implements GrailsConfigurationAware, DisposableBean {
         jedisPool.getResource().withCloseable  {Jedis jedis ->
             Set<String> result = new HashSet<>()
             result = jedis.keys(pattern)
+            Set<String> deletedKeys = new HashSet<>()
             if (!result?.isEmpty()) {
                 for (String key: result) {
                     Long remainingTTL = jedis.ttl(key)
                     if (-2 == remainingTTL) {
                         jedis.del(key)
+                        deletedKeys.add(key)
+                        LOGGER.debug("deleting the key $key")
                     }
                 }
             }
             result = jedis.keys(pattern)
-            success = result?.isEmpty() ? true : false
+            Set comItems = result.intersect(deletedKeys)
+            success = 0 == comItems?.size()
         }
         return success
     }
