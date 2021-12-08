@@ -183,7 +183,7 @@ class SearchController {
      */
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def search() {
-        publishClientService.publish(KeyCollection.REDIS_CHANNEL_MODEL_ID_LAST_USED_VALUE, "MODEL1234")
+//        publishClientService.publish(KeyCollection.REDIS_CHANNEL_MODEL_ID_LAST_USED_VALUE, "MODEL1234")
         sanitiseParams()
         if (!params.query) {
             params.query = ""

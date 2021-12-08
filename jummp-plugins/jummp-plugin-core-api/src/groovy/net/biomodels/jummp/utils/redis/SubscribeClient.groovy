@@ -71,7 +71,7 @@ class SubscribeClient {
     }
 
     synchronized void init() {
-        executor = Executors.newFixedThreadPool(2)
+        /*executor = Executors.newFixedThreadPool(2)
         if (!executor.isTerminated()) {
             LOGGER.debug("Start background thread for getting responses from backend through Redis")
             executor = Executors.newFixedThreadPool(2)
@@ -81,7 +81,7 @@ class SubscribeClient {
                 KeyCollection.REDIS_CHANNEL_MODEL_ID_LAST_USED_VALUE))
         } else {
             LOGGER.debug("Cannot start threading subscribers to poll Redis responses")
-        }
+        }*/
     }
 
     synchronized void destroy() {
