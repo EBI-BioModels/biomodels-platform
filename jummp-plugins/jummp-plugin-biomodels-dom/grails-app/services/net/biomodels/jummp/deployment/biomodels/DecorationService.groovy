@@ -134,9 +134,10 @@ GROUP BY rev.model
     }
 
     /**
-     * gets 10 of the most recently published models
-     * Due to needing more fields to be shown on the widget, this service will have to include
-     * some fields like revision owner as submitter, publication title, publication journal and year.
+     * <p><strong>gets 10 of the most recently published models</strong></p>
+     * <br/>
+     * <p>Due to needing more fields to be shown on the widget, this service will have to include
+     * some fields like revision owner as submitter, publication title, publication journal and year.</p>
      * @return A {@link Map} of {@link net.biomodels.jummp.statistic.RecentlyPublishedModel} objects
      */
     @Profiled(tag = 'decorationService.buildListOfRecentlyPublishedModels')
@@ -216,7 +217,7 @@ ORDER BY model.firstPublished DESC'''
                 RecentlyPublishedModel m = entry.value
                 Map value = ["id": m.id, "title": m.title, "submitter": m.submitter,
                              "lastPublished": m.lastPublished, "pubTitle": m.pubTitle,
-                             "pubJournal": m.pubJournal, "pubYear": m.pubYear]
+                             "pubJournal": m.pubJournal, "pubYear": m.pubYear ?: "Unpublished"]
                 jedis.hmset("$key-${m.id}" as String, value)
                 models.put(m.id, m.title)
             }
