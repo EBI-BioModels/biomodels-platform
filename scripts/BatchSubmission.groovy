@@ -674,11 +674,11 @@ account '${ownerUsername}'.""")
             // sleep for 1 second
             println("Waiting 1 second...")
             Thread.sleep(1000)
-            running = Operations.doRedisGet("run-batch-submission").toBoolean()
+            running = true //Operations.doRedisGet("run-batch-submission").toBoolean()
         }
         // ready to go
         runBatchSubmission()
-//        Operations.doRedisSet("run-batch-submission", "false")
+        // Operations.doRedisSet("run-batch-submission", "false")
     }
 }
 /**
