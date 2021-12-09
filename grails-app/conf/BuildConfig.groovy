@@ -142,10 +142,10 @@ grails.project.dependency.resolution = {
         runtime "org.apache.camel:camel-exec:2.13.0"
 
         // DDMoRe Metadata Information Service uses jena 2.13
-        compile("org.mbine.co:libCombineArchive:0.2.3") {
+        compile("org.mbine.co:libCombineArchive:0.3-SNAPSHOT") {
             excludes 'junit', 'slf4j-api', 'slf4j-log4j12', 'slf4j-log4j12-impl', 'jmock-junit4', 'jena-core', 'icu4j'
         }
-        compile "de.unirostock.sems:CombineExt:1.2.4"
+        compile "de.uni-rostock.sbi:CombineExt:1.3.1"
         // need to add this as an explicit dependency to configure exclusions
         // can't use apache-jena-libs due to pom packaging, rely on jena-tdb instead
         compile("eu.ddmore:lib-metadata:0.1.3-SNAPSHOT") {

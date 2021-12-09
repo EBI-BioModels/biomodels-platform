@@ -61,7 +61,7 @@
         });
     </script>
     <script type='text/javascript'
-            src="${grailsApplication.config.grails.serverURL}/js/MathJax-2.6.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+            src="${serverURL}/js/MathJax-2.6.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
     </script>
     <g:javascript>
         let canUpdate = ${canUpdate};
@@ -92,8 +92,6 @@
     <link rel="alternate" href="https://identifiers.org/biomodels.db/${revision.modelIdentifier()}"/>
     <link rel="alternate" href="https://www.ebi.ac.uk/biomodels-main/${revision.modelIdentifier()}"/>
     <link rel="alternate" href="https://www.ebi.ac.uk/biomodels-main/${revision.modelIdentifier()}"/>
-    <link rel="alternate" href="http://biomodels.caltech.edu/${revision.identifier()}"/>
-    <link rel="alternate" href="http://biomodels.caltech.edu/${revision.modelIdentifier()}"/>
     <link rel="canonical" href="https://www.ebi.ac.uk/biomodels/${revision.modelIdentifier()}"/>
     <link rel="stylesheet" href="${resource(dir: 'css', file: 'jquery.handsontable.full.min.css')}"/>
     <link rel="stylesheet" href="${resource(dir: 'css/syntax', file: 'shCore.css')}"/>
@@ -490,6 +488,7 @@
     <g:layoutHead/>
 </head>
 <body>
+        <!-- Render the model toolbox -->
         <div id="buttonContainer" style="display:inline">
             <ul id='toolbarList'>
                 <li>
@@ -598,7 +597,10 @@
                 </g:if>
             </ul>
         </div>
+
+        <!-- Render the main content of the model display page -->
         <div class="ebiLayout_reduceWidth">
+            <!-- Show warning messages: archived models, old versions, etc. -->
             <g:if test="${revision.model.deleted}">
                 <div class='PermanentMessage'>
                     This is an archived model.
@@ -612,12 +614,16 @@
                         revision.modelIdentifier())}">here</a>.
                 </div>
             </g:if>
+
+            <!-- Show model revision name, model of the month, icons, flags, Reactome connected pathways, etc. -->
             <div id="topBar">
                 <div class="message" style="display: block"></div>
+
                 <div style="float:left;width:75%;">
                     <h2>${revision.name}</h2>
                     <biomd:renderModelOfMonth modelId="${revision.model.id}" />
                 </div>
+
                 <div style="float:right;margin-top:10px;">
                     <g:if test="${!flags.empty}">
                         <biomd:renderModelFlags flags="${flags}"/>
@@ -629,16 +635,16 @@
                     <g:if test="${revision.state==ModelState.PUBLISHED}">
                         <img style="float:right;margin-top:0;" title="This version of the model is public"
                              alt="public model"
-                             src="${grailsApplication.config.grails.serverURL}/images/unlock.png"/>
+                             src="${serverURL}/images/unlock.png"/>
                     </g:if>
                     <g:else>
                         <img style="float:right;margin-top:0;" title="This version of the model is unpublished"
                              alt="unpublished model"
-                             src="${grailsApplication.config.grails.serverURL}/images/lock.png"/>
+                             src="${serverURL}/images/lock.png"/>
                     </g:else>
                 </div>
-            <g:if test="${reactomeIds}">
 
+                <g:if test="${reactomeIds}">
                 <div style="margin-right: 50%;">
                     <g:select name="reactome_pathways"
                               id="opener"
@@ -648,9 +654,10 @@
                               optionKey = "${{null != it && !((String)it).isEmpty()?((String)it).split('\\|')[1]:((String)it).split('\\|')[0]}}"
                               optionValue="${{((String)it).split('\\|')[0]}}" />
                 </div>
-            </g:if>
+                </g:if>
             </div>
 
+            <!-- Render the model tabs -->
             <div id="tablewrapper">
                 <div id="tabs">
                     <ul class='modelTabs'>
@@ -674,6 +681,8 @@
 		            <g:if test="${curationNotes != null || hasCuratorRole}">
                     <li><a href='#Curation'>Curation</a></li></g:if>
                     </ul>
+
+                    <!-- Overview tab -->
                     <div id="Overview" class="row">
                         <div class="small-12 medium-8 large-8 columns">
                             <div class="row">
@@ -694,7 +703,7 @@
                                     %{--<a class="descriptionToggle" title="Click to see more">
                                         <span>Click here to collapse/expand the description
                                             <img style="width:12px;margin:2px;float:none"
-                                                 src="${grailsApplication.config.grails.serverURL}/images/expand.png"/>
+                                                 src="${serverURL}/images/expand.png"/>
                                         </span>
                                     </a>--}%
                                     <div id="description">
@@ -792,24 +801,24 @@
                             <g:else>
                                 <biomd:showTags bmTags="${bmTags}"/>
                             </g:else>
-                            <biomd:insertSeparator/>
-                            <div class='row'>
-                                <div class="small-12 medium-6 large-4 columns">Connected external resources</div>
-                                <div class="small-12 medium-6 large-8 columns">
-                                    <div class="row">
-                                        <div class="small-12 medium-3 large-3 columns" id="rosette-holder">
-                                            <!-- This emply holder is used to show the model rosette rendered
-                                            automatically in omicsdi.service.js via the function createRosette() called
-                                            from the ready block of this page -->
-                                        </div>
-                                        <div class="small-12 medium-9 large-9 columns">
-                                            <p class="ext-rsc-text" style="display: none">OmicsDI Impact Metrics</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                             <!-- Render a disclaimer if the model has been published without a publicly available manuscript -->
                             <biomd:displayDisclaimer revision="${revision}"/>
+                            <biomd:insertSectionSeparator/>
+                            <div class="rounded-header"><h4 style="color: #ffffee">Connected external resources</h4></div>
+                            <div class='row'>
+                                <div class="small-12 medium-3 large-3 columns" id="rosette-holder">
+                                    <!-- This empty holder is used to show the model rosette rendered
+                                    automatically in omicsdi.service.js via the function createRosette() called
+                                    from the ready block of this page -->
+                                </div>
+                                <div class="small-12 medium-9 large-9 columns">
+                                    <p class="ext-rsc-text" style="display: none">OmicsDI Impact Metrics</p>
+                                </div>
+                            </div>
+                            <g:if test="${hrefLinkToNewtEditor}">
+                            <biomd:renderLinkToNewtEditor serverURL="${serverURL}"
+                                                          hrefLinkToNewtEditor="${hrefLinkToNewtEditor}"/>
+                            </g:if>
 
                             %{--<div class='row'>
                                 <div class="medium-3 columns">Validation Status</div>
@@ -821,11 +830,15 @@
                             </div>--}%
                         </div>
                     </div>
+
+                    <!-- Files tab -->
                     <div id="Files" class="row">
                         <% Map model = ["repoFiles": repoFiles] %>
                         <g:render template="/templates/biomodels/modelDisplay/tabFiles"
                                   model="${model}" />
                     </div>
+
+                    <!-- History tab -->
                     <div id="History">
                         <% DateFormat dateFormat = DateFormat.getDateTimeInstance(); %>
                         <ul>
@@ -841,24 +854,24 @@
                                     <g:if test="${rv.state==ModelState.PUBLISHED}">
                                             <img style="width:12px;margin:2px;float:none;"
                                                  title="This version of the model is public" alt="public model"
-                                                 src="${grailsApplication.config.grails.serverURL}/images/unlock.png"/>
+                                                 src="${serverURL}/images/unlock.png"/>
                                     </g:if>
                                     <g:else>
                                             <img style="width:12px;margin:2px;float:none;"
                                                  title="This version of the model is unpublished" alt="unpublished model"
-                                                 src="${grailsApplication.config.grails.serverURL}/images/lock.png"/>
+                                                 src="${serverURL}/images/lock.png"/>
                                     </g:else>
                                     <g:if test="${revision.id!=rv.id}">
                                         <a class="versionDownload" title="go to version ${rv.revisionNumber}"
                                            href="${g.createLink(controller: 'model', action: 'show', id: rv.identifier())}">
                                             <img style="width:12px;margin:2px;float:none"
-                                                 src="${grailsApplication.config.grails.serverURL}/images/external_link.png"/>
+                                                 src="${serverURL}/images/external_link.png"/>
                                         </a>
                                     </g:if>
                                             <a class="versionDownload" title="download"
                                                href="${g.createLink(controller: 'model', action: 'download', id: rv.identifier())}">
                                                 <img alt="Download this version" style="width:15px;float:none"
-                                                     src="${grailsApplication.config.grails.serverURL}/images/download.png"/>
+                                                     src="${serverURL}/images/download.png"/>
                                             </a>
                                         <ul>
                                             <li>Submitted on: ${dateFormat.format(rv.uploadDate)}</li>
@@ -872,17 +885,23 @@
                             <p style="font-style: italic; font-size: smaller">(*) You might be seeing discontinuous
                                 revisions as only public revisions are displayed here. Any private revisions
                                 <img title="unpublished model revision" alt="unpublished model revision"
-                                     src="${grailsApplication.config.grails.serverURL}/images/lock.png"/>
+                                     src="${serverURL}/images/lock.png"/>
                                  of this model will only be shown to the submitter and their collaborators.</p>
                         </g:if>
                     </div>
+
+                    <!-- Exports tab -->
                     <g:if test="${convertedFilesTC}">
                     <div id="Exports">
                         <h3>Below are the converted model files where you could download</h3>
                         <biomd:renderConvertedFiles convertedFilesTC="${convertedFilesTC}"/>
                     </div>
                     </g:if>
+
+                    <!-- Some specific tabs -->
                     <g:pageProperty name="page.modelspecifictabscontent" />
+
+                    <!-- Curation tab -->
                     <g:if test="${curationNotes != null || hasCuratorRole}">
                         <biomd:renderCurationNotesTab curationNotes="${curationNotes}"
                                                       model="${revision.modelIdentifier()}"

@@ -207,13 +207,6 @@ class ModelController {
                     return
                 } else {
                     final String PERENNIAL_ID = (rev.model.publicationId) ?: (rev.model.submissionId)
-                    def components = [:]
-                    try {
-                        components = sbmlService.extractComponentsFromBP(PERENNIAL_ID)
-                    } catch (RuntimeException re){
-                        log.error("Error while extracting components from BP")
-                        log.error(re.inspect())
-                    }
                     RevisionTransportCommand revision = modelDelegateService.getLatestRevision(PERENNIAL_ID)
                     boolean showPublishOption = modelDelegateService.canPublish(revision)
                     boolean canSubmitForPublication = modelDelegateService.canSubmitForPublication(revision)
@@ -227,6 +220,7 @@ class ModelController {
                         flashMessage = flash.now["giveMessage"]
                     }
                     List<RFTC> repoFiles = modelDelegateService.retrieveModelFiles(rev)
+                    repoFiles = modelDelegateService.sortModelFilesByName(repoFiles)
                     List<RevisionTransportCommand> revs =
                         modelDelegateService.getAllRevisions(PERENNIAL_ID)
                     List<String> reactomeIds = metadataDelegateService.getPathwaysForModelId(PERENNIAL_ID)
@@ -242,10 +236,13 @@ class ModelController {
                     List<RFTC> convertedFilesTC = modelConversionService.getConvertedFiles(rev)
                     Set<TagTransportCommand> tags = metadataDelegateService.findTagsByModel(rev.model)
                     String reactomeUrl = ReactomeEnvironment.getUrlForThisEnvironment()
+                    String hrefLinkToNewtEditor = makeLinkToNewtEditor(revision, repoFiles)
 
-                    def model = [revision               : rev,
+                    def model = [
+                                 revision               : rev,
                                  reactomeIds            : reactomeIds,
                                  reactomeUrl            : reactomeUrl,
+                                 hrefLinkToNewtEditor   : hrefLinkToNewtEditor,
                                  authors                : rev.model.creators,
                                  allRevs                : revs,
                                  flashMessage           : flashMessage,
@@ -267,7 +264,8 @@ class ModelController {
                                  hasCuratorRole         : hasCuratorRole,
                                  supportedForConversion : supportedForConversion,
                                  convertedFilesTC       : convertedFilesTC,
-                                 bmTags                 : tags
+                                 bmTags                 : tags,
+                                 serverURL              : grailsApplication.config.grails.serverURL
                     ]
                     if (rev.id == revision.id) {
                         flash.genericModel = model
@@ -847,5 +845,19 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
             }
         }
         return true
+    }
+
+    private String makeLinkToNewtEditor(final RevisionTransportCommand revision, final List<RFTC> repoFiles) {
+        boolean unpublished = ModelState.UNPUBLISHED == revision.state
+        boolean isSBMLModel = "SBML" == revision.format.name
+        if (unpublished && isSBMLModel) {
+            return ""
+        }
+        String href = "https://web.newteditor.org/"
+        href = "$href?URL=${grailsApplication.config.grails.serverURL}/model/download"
+        String modelMainFileName = repoFiles.find { it.mainFile }.filename
+        String otherParams = "inferNestingOnLoad=true&applyLayoutOnURL=true"
+        href = "$href/${revision.identifier()}?filename=$modelMainFileName&$otherParams"
+        return href
     }
 }

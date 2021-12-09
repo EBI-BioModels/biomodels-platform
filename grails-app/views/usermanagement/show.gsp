@@ -25,6 +25,7 @@
     <head>
         <title>${titlePage}</title>
         <meta name="layout" content="${session['branding.style']}/main" />
+		<g:render template="/templates/initRegistration" plugin="jummp-plugin-web-application" />
      </head>
     <body>
     	<div class="content">

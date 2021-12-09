@@ -56,7 +56,9 @@ class SbmlController {
         } catch(RuntimeException re) {
             log.error("Error while extracting components from BP for $perennialId", re)
         }
-        model['components'] = components
+        if (components.get("species") || components.get("reactions")) {
+            model['components'] = components
+        }
         boolean canCheckConsistency = modelDelegateService.canCheckConsistency(r)
         model["canCheckConsistency"] = canCheckConsistency
         render(view: "/model/sbml/show", model: model)

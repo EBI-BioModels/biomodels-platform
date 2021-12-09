@@ -19,9 +19,6 @@
  */
 
 
-
-
-
 package net.biomodels.jummp.core.model
 
 import grails.transaction.Transactional
@@ -46,8 +43,8 @@ import java.nio.file.StandardCopyOption
  * This class enables to handle services for manipulating repository files such as updating repository files,
  * retrieving these files from the file system, etc.
  *
- * @author  Tung Nguyen <tung.nguyen@ebi.ac.uk>
- * @author  Mihai Glonț <mihai.glont@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
+ * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
 class RepositoryFileService implements GrailsConfigurationAware {
     static scope = "prototype"
@@ -109,10 +106,10 @@ class RepositoryFileService implements GrailsConfigurationAware {
     /**
      * This method aims at updating the description of a given repository file.
      *
-     * @param repoFileId    The identifier of the repository file
-     * @param revisionId    The identifier of the revision which the repository file is gone with
-     * @param path          The string represents the place where the repository file is hosting
-     * @param description   The text denotes the description of the repository file
+     * @param repoFileId The identifier of the repository file
+     * @param revisionId The identifier of the revision which the repository file is gone with
+     * @param path The string represents the place where the repository file is hosting
+     * @param description The text denotes the description of the repository file
      * @return value        A logical value indicates whether the process is success or failed
      */
     @Transactional
@@ -137,17 +134,17 @@ $description --- of the repository file $path""")
     /**
      * This method aims at converting a list of the physical files to the responding repository file objects
      *
-     * @param   files   The list of physical files
-     * @return  a list  The list of repository file objects
+     * @param files The list of physical files
+     * @return a list  The list of repository file objects
      */
-    static List<RepositoryFileTransportCommand> asRFTCList(List<File> files) {
-        List<RepositoryFileTransportCommand> results = new LinkedList<>()
+    static List<RFTC> asRFTCList(List<File> files) {
+        List<RFTC> results = new LinkedList<>()
         // work out MIME type
         def sherlock = new DefaultDetector()
         files.each { File file ->
             def is = new BufferedInputStream(new FileInputStream(file))
             String mimeType = sherlock.detect(is, new Metadata()).toString()
-            RepositoryFileTransportCommand command = new RepositoryFileTransportCommand(
+            RFTC command = new RFTC(
                 path: file.name,
                 description: file.name,
                 mimeType: mimeType
@@ -198,8 +195,8 @@ The revision has been checked out from VCS instead."""
             if (!revisionDirectory.exists()) {
                 throw new FileNotFoundException()
             } else {
-                returnedFiles = Files.list(revisionDirectory.toPath())*.toFile() 
-                returnedFiles = returnedFiles.findAll { 
+                returnedFiles = Files.list(revisionDirectory.toPath())*.toFile()
+                returnedFiles = returnedFiles.findAll {
                     String fName = it.name
                     boolean isRegularFile = !fName.endsWith(".tmp") && !fName.startsWith("\\.")
                     isRegularFile
@@ -237,7 +234,7 @@ revision ${revisionNumber} hasn't been cached yet"""
         boolean result = false
         try {
             List<File> files = vcsService.retrieveFiles(revision)
-            for (File it: files) {
+            for (File it : files) {
                 String fileName = it.getName()
                 logger.debug("File ${fileName} is being copied")
                 Files.copy(it.toPath(),
@@ -256,33 +253,33 @@ $modelId, revision $revNum: ${e.message}""")
     }
 
     /**
-     * Builds the list of {@link RepositoryFileTransportCommand} objects of the latest revision of a model looked
+     * Builds the list of {@link RFTC} objects of the latest revision of a model looked
      * up via its identifier. <b>Notes</b>: This revision is the latest regardless of its visible status because the
      * service retrieving the revision bypasses security check to get the revision having the maximum revision number.
      *
      * @param modelId   A string denoting the model identifier
-     * @return  A list of {@link RepositoryFileTransportCommand} objects encapsulated the physical files of the
+     * @return  A list of {@link RFTC} objects encapsulated the physical files of the
      *          model having the identifier
      */
-    List<RepositoryFileTransportCommand> getRepositoryFilesForRevision(final String modelId) {
+    List<RFTC> getRepositoryFilesForRevision(final String modelId) {
         Revision latestRev = modelService.retrieveLatestRevision(modelId)
         if (!latestRev) { return null }
         getRepositoryFilesForRevision(latestRev)
     }
 
     /**
-     * Builds the list of {@link RepositoryFileTransportCommand} objects of a specific revision.
+     * Builds the list of {@link RFTC} objects of a specific revision.
      *
      * @param revision  A {@link Revision} object representing the information of the revision in request. <b>Note</b>:
      * the revision couldn't be the latest one.
-     * @return  A list of {@link RepositoryFileTransportCommand} objects encapsulated the physical files of the
+     * @return  A list of {@link RFTC} objects encapsulated the physical files of the
      *          model having the identifier
      */
-    List<RepositoryFileTransportCommand> getRepositoryFilesForRevision(final Revision revision) {
+    List<RFTC> getRepositoryFilesForRevision(final Revision revision) {
         if (!revision) {
             return null
         }
-        List<RepositoryFileTransportCommand> repFiles = new LinkedList<RepositoryFileTransportCommand>()
+        List<RFTC> repFiles = new LinkedList<RFTC>()
         List<File> files = retrieveFiles(revision)
         revision.repoFiles.each { rf ->
             File tmpFile = files.find {
@@ -294,7 +291,7 @@ $modelId, revision $revNum: ${e.message}""")
                 long size = tmpFile.length()
                 long configPreviewSize = grailsApplication.config.jummp.web.file.preview
                 boolean showPreview = size > configPreviewSize ? true : false
-                RepositoryFileTransportCommand rftc = new RepositoryFileTransportCommand(
+                RFTC rftc = new RFTC(
                     id: rf.id,
                     path: tmpFile.absolutePath,
                     filename: rf.path,
@@ -311,7 +308,7 @@ $modelId, revision $revNum: ${e.message}""")
         return repFiles
     }
 
-    List<File> getFilesFromRF(List<RepositoryFileTransportCommand> files) {
+    List<File> getFilesFromRF(List<RFTC> files) {
         List<File> modelFiles = []
         if (files) {
             for (rf in files) {
@@ -334,12 +331,12 @@ $modelId, revision $revNum: ${e.message}""")
      *      there is at least one empty file, or
      *      there are no main files.
      *
-     * @param repoFileCmds  a list of RepositoryFileTransportCommand objects to validate and convert into
+     * @param repoFileCmds a list of RepositoryFileTransportCommand objects to validate and convert into
      *                      domain objects.
-     * @param revision      a Revision object
+     * @param revision a Revision object
      * @return a list of RepositoryFile domain objects
      */
-    List<RepositoryFile> convertRFTCToRF(List<RepositoryFileTransportCommand> repoFileCmds,
+    List<RepositoryFile> convertRFTCToRF(List<RFTC> repoFileCmds,
                                          Revision revision) {
         List<RepositoryFile> results = []
         boolean foundValidMainFile = false

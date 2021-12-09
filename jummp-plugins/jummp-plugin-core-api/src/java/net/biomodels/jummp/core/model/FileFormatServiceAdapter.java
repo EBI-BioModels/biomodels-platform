@@ -23,6 +23,7 @@ package net.biomodels.jummp.core.model;
 import net.biomodels.jummp.model.ModellingApproach;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 
 public class FileFormatServiceAdapter implements FileFormatService {
@@ -33,12 +34,12 @@ public class FileFormatServiceAdapter implements FileFormatService {
 
     @Override
     public String extractName(List<File> model) {
-        return null;
+        return "";
     }
 
     @Override
     public String extractDescription(List<File> model) {
-        return null;
+        return "";
     }
 
     @Override
@@ -53,12 +54,12 @@ public class FileFormatServiceAdapter implements FileFormatService {
 
     @Override
     public List<String> getAllAnnotationURNs(RevisionTransportCommand revision) {
-        return null;
+        return Collections.emptyList();
     }
 
     @Override
     public List<String> getPubMedAnnotation(RevisionTransportCommand revision) {
-        return null;
+        return Collections.emptyList();
     }
 
     @Override
@@ -68,7 +69,7 @@ public class FileFormatServiceAdapter implements FileFormatService {
 
     @Override
     public String getFormatVersion(RevisionTransportCommand revision) {
-        return null;
+        return "";
     }
 
     @Override

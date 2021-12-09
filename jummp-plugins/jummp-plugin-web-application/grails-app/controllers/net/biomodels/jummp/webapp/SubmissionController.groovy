@@ -65,17 +65,11 @@ class SubmissionController {
         Map working = new HashMap<String, Object>()
         working.put("submissionFolder", params.get("submissionFolder"))
         try {
-            /* The following statements aims at saving the new submission or updates */
+            /* The following statements aim at saving the new submission or updates */
             List<RFTC> rftcList = new ArrayList<RFTC>()
-            JSONElement mf = JSON.parse(params.modelFile.decodeHTML())
-            RFTC mfRFTC = createRFTC(mf["submissionFolder"], mf["filename"], true, mf["description"])
-            rftcList.add(mfRFTC)
-            def afs = JSON.parse(params.additionalFiles.decodeHTML())
-            for (def file : afs) {
-                mfRFTC = createRFTC(file["submissionFolder"] as String, file["filename"], false, file["description"])
-                rftcList.add(mfRFTC)
-            }
-            working.put("repository_files", rftcList)
+            rftcList = rebuildRepoFiles(params.modelFile.decodeHTML() as String,
+                params.additionalFiles.decodeHTML() as String, working)
+
             MFTC format = modelFileFormatService.inferModelFormat(rftcList)
 
             boolean isUpdate = params.boolean("isUpdate")
@@ -89,38 +83,20 @@ class SubmissionController {
             if (isAmend && params.modelId) {
                 revision = modelDelegateService.getLatestRevision(params.modelId, false)
             }
-            revision.files = rftcList
 
-            // populate model info
-            def modelInfoData = JSON.parse(params.modelInfo.decodeHTML())
-            model.name = modelInfoData["detectedName"] ?: mf["filename"]
-            model.description = modelInfoData["detectedDescription"] ?: ""
-            working.put("modelling_approach", modelInfoData["detectedModelling"]["approach"])
-            working.put("other_info", modelInfoData["detectedModelling"]["otherInfo"])
-            working.put("model_format", modelInfoData["detectedModelFormat"]["id"])
-            working.put("readme_submission", modelInfoData["detectedModelFormat"]["readme"])
+            // rebuild the model info as much as possible detected from the former step
+            // and update them in the working map
+            rebuildModelInfo(params.modelInfo?.decodeHTML() as String, rftcList, working, model)
 
             // populate publication details
-            if (params.publication) {
-                Map publicationData = publicationService.buildPublicationFromJSONData(params.publication.decodeHTML())
-                model.publication = publicationData["publication"]
-            } else {
-                model.publication = null
-            }
+            populatePublication(params.publication?.decodeHTML(), model)
+
+            // populate the data on the revision
+            populateDataRevision(revision, model, working, rftcList,
+                params.revisionComments?.decodeHTML() as String)
+
             working.put("isUpdateOnExistingModel", isUpdate)
             working.put("shouldCreateNewRevision", true) // TODO: allow curators decide
-
-            revision.model = model
-            revision.name = model.name
-            revision.description = model.description
-            revision.validated = true
-            revision.minorRevision = false
-            revision.curationState = CurationState.NON_CURATED
-            revision.validationLevel = ValidationState.APPROVE
-            revision.comment = params.revisionComments.decodeHTML() ?: "Model revised without commit message"
-            working.put("new_name", revision.name)
-            working.put("new_description", revision.description)
-            working.put("RevisionTC", revision)
             working.put("changesMade", params.list("changesMade[]"))
             HashSet<String> result = submissionService.handleSubmission(working)
 
@@ -158,27 +134,7 @@ class SubmissionController {
         }*/
 
             /* Build the right messages to show at the model owner/submitter */
-            if (isUpdate) {
-                if (working.get("changesMade")) {
-                    status = "Success"
-                    message = groovyPageRenderer.render(template: "/templates/model/submit/subviews/successUpdate",
-                        plugin: "jummp-plugin-web-application", model: ["modelURL": modelURL, "modelId": modelId])
-                } else {
-                    status = "Failure"
-                    message = groovyPageRenderer.render(template: "/templates/model/submit/subviews/failureUpdate",
-                        plugin: "jummp-plugin-web-application")
-                }
-            } else {
-                if (modelId) {
-                    status = "Success"
-                    message = groovyPageRenderer.render(template: "/templates/model/submit/subviews/successSubmission",
-                        plugin: "jummp-plugin-web-application", model: ["modelURL": modelURL, "modelId": modelId])
-                } else {
-                    status = "Failure"
-                    message = groovyPageRenderer.render(template: "/templates/model/submit/subviews/failureSubmission",
-                        plugin: "jummp-plugin-web-application")
-                }
-            }
+            buildResultMessage(isUpdate, status, message, modelURL, modelId, working)
             render(["message": message, "status": status, "modelURL": modelURL, "modelIdentifier": modelId] as JSON)
         } catch (Exception e) {
             status = "Failure"
@@ -244,6 +200,18 @@ hyphens and underscores.
             changesMade = inferChangesMade(uploadedFiles)
         }
         render([filesMap: filesMap, changesMade: changesMade] as JSON)
+    }
+
+    def displayChangesMade() {
+        render([status: "OK"] as JSON)
+    }
+
+    def validateModelInfo() {
+        render([status: "OK"] as JSON)
+    }
+
+    def checkCurrentValidation() {
+        render([status: "OK"] as JSON)
     }
 
     private List validateFile(final JSONElement file) {
@@ -345,6 +313,89 @@ hyphens and underscores.
             from grailsApplication.config.jummp.security.registration.email.sender
             subject "Bug in submission: ${ticket}"
             body "MESSAGE: ${ExceptionUtils.getStackTrace(e)}"
+        }
+    }
+
+    private List<RFTC> rebuildRepoFiles(String paramModelFile, String paramAdditionalFiles,
+                                        HashMap<String, Object> working) {
+        List<RFTC> rftcList = new ArrayList<>()
+        JSONElement mf = JSON.parse(paramModelFile)
+        RFTC mfRFTC = createRFTC(mf["submissionFolder"], mf["filename"], true, mf["description"])
+        rftcList.add(mfRFTC)
+        def afs = JSON.parse(paramAdditionalFiles)
+        for (def file : afs) {
+            mfRFTC = createRFTC(file["submissionFolder"] as String, file["filename"], false, file["description"])
+            rftcList.add(mfRFTC)
+        }
+        working.put("repository_files", rftcList)
+        return rftcList
+    }
+
+    private void rebuildModelInfo(String modelInfo, List<RFTC> files,
+                                  HashMap<String, Object> working, MTC model) {
+        def modelInfoData = JSON.parse(modelInfo)
+        RFTC modelFile = files.find { it.mainFile }
+        model.name = modelInfoData["detectedName"] ?: modelFile.filename
+        model.description = modelInfoData["detectedDescription"] ?: ""
+        def detectedModelling = modelInfoData["detectedModelling"] ?
+            modelInfoData["detectedModelling"]["approach"] : ""
+        working.put("modelling_approach", detectedModelling)
+        def otherInfo = modelInfoData["detectedModelling"] ? modelInfoData["detectedModelling"]["otherInfo"] : ""
+        working.put("other_info", otherInfo)
+        def detectedModelFormat = modelInfoData["detectedModelFormat"] ?
+            modelInfoData["detectedModelFormat"]["id"] : null
+        working.put("model_format", detectedModelFormat)
+        def readme = modelInfoData["detectedModelFormat"] ? modelInfoData["detectedModelFormat"]["readme"] : ""
+        working.put("readme_submission", readme)
+    }
+
+    private void populatePublication(def paramPublication, MTC model) {
+        if (paramPublication) {
+            Map publicationData = publicationService.buildPublicationFromJSONData(paramPublication)
+            model.publication = publicationData["publication"]
+        } else {
+            model.publication = null
+        }
+    }
+
+    private void populateDataRevision(RTC revision, MTC model, Map working,
+                                      ArrayList<RFTC> rftcList, String paramComments) {
+        revision.files = rftcList
+        revision.model = model
+        revision.name = model.name
+        revision.description = model.description
+        revision.validated = true
+        revision.minorRevision = false
+        revision.curationState = CurationState.NON_CURATED
+        revision.validationLevel = ValidationState.APPROVE
+        revision.comment = paramComments ?: "Model revised without commit message"
+        working.put("new_name", revision.name)
+        working.put("new_description", revision.description)
+        working.put("RevisionTC", revision)
+    }
+
+    private void buildResultMessage(boolean isUpdate, String status, String message,
+                                    String modelURL, String modelId, Map<String, Object> working) {
+        if (isUpdate) {
+            if (working.get("changesMade")) {
+                status = "Success"
+                message = groovyPageRenderer.render(template: "/templates/model/submit/subviews/successUpdate",
+                    plugin: "jummp-plugin-web-application", model: ["modelURL": modelURL, "modelId": modelId])
+            } else {
+                status = "Failure"
+                message = groovyPageRenderer.render(template: "/templates/model/submit/subviews/failureUpdate",
+                    plugin: "jummp-plugin-web-application")
+            }
+        } else {
+            if (modelId) {
+                status = "Success"
+                message = groovyPageRenderer.render(template: "/templates/model/submit/subviews/successSubmission",
+                    plugin: "jummp-plugin-web-application", model: ["modelURL": modelURL, "modelId": modelId])
+            } else {
+                status = "Failure"
+                message = groovyPageRenderer.render(template: "/templates/model/submit/subviews/failureSubmission",
+                    plugin: "jummp-plugin-web-application")
+            }
         }
     }
 }

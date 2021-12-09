@@ -88,6 +88,67 @@ class Operations implements GrailsConfigurationAware, DisposableBean {
         }
     }
 
+    /**
+     * This method mainly aims to remove the keys which the prefix is "spring:session:sessions:" created by
+     * spring-session. This package is used to ensure session-based login worked as expected.
+     *
+     * @param pattern   A String indicating the given key
+     * @return          A boolean value indicating the successful status of the deleting action
+     */
+    synchronized static boolean delNonExistedKeysByPattern(final String pattern) {
+        boolean success
+        jedisPool.getResource().withCloseable  {Jedis jedis ->
+            Set<String> result = new HashSet<>()
+            result = jedis.keys(pattern)
+            Set<String> deletedKeys = new HashSet<>()
+            if (!result?.isEmpty()) {
+                for (String key: result) {
+                    Long remainingTTL = jedis.ttl(key)
+                    if (-2 == remainingTTL) {
+                        jedis.del(key)
+                        deletedKeys.add(key)
+                        LOGGER.debug("deleting the key $key")
+                    }
+                }
+            }
+            result = jedis.keys(pattern)
+            Set comItems = result.intersect(deletedKeys)
+            success = 0 == comItems?.size()
+        }
+        return success
+    }
+
+    /**
+     * Finds all keys by giving a pattern.
+     *
+     * @param pattern   A string indicating the given pattern
+     * @return          A set of String objects indicating the existing keys
+     */
+    synchronized static Set<String> findKeyByPattern(final String pattern) {
+        Set<String> result
+        jedisPool.getResource().withCloseable {
+            result = it.keys(pattern)
+        }
+        result
+    }
+
+    /**
+     * Gets the remaining time to live (TTL) of a key that has a timeout.
+     *
+     * @param key   A string denoting the given key
+     * @return      A Long positive value indicating the number of seconds a given key will continue to be part of
+     * the dataset. It could be either -2 or -1 if and only if the key does not exist or exists but has no associated
+     * expire.
+     */
+    synchronized static Long getRemainingTTL(final String key) {
+        Long ttl
+        jedisPool.getResource().withCloseable {
+            ttl = it.ttl(key)
+        }
+        ttl
+    }
+
+
     @Override
     void setConfiguration(ConfigObject co) {
         REDIS_SRV_HOST = co.jummp.redis.host

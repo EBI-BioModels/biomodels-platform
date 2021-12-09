@@ -43,10 +43,12 @@ class BioModelsTagLib {
      * Declare dependency injections
      */
     def grailsApplication
+    def grailsLinkGenerator
     def decorationService
     def modelOfTheMonthService
     def tagService
     def p2mService
+    def userService
 
     /**
      * <p>Displays the Model of the Month (MoM) entry for the given model.
@@ -221,6 +223,16 @@ class BioModelsTagLib {
     def renderTheLatestMoMEntryWidget = {
         Map<String, String> momEntry = decorationService.fetchMomEntry()
         if (momEntry) {
+            String curUsername = userService.getUsername() as String
+            String hrefToEditor = ""
+            boolean loggedIn = "anonymous" != curUsername
+            boolean canUpdate = userService.isLoggedInUserACurator() || userService.isLoggedInUserAAdmin()
+            if (loggedIn && canUpdate) {
+                Long id = Long.parseLong(momEntry.get("id"))
+                hrefToEditor = grailsLinkGenerator.link(controller: "modelOfTheMonth",
+                    action: "show", id: id, absolute: true) as String
+            }
+            momEntry.put("hrefToEditor", hrefToEditor)
             out << render(template: "/templates/biomodels/homePage/theLatestMomEntryWidget", model: momEntry)
         } else {
             out << render(template: "/templates/biomodels/homePage/theEmptyMoMEntry")
@@ -304,6 +316,10 @@ class BioModelsTagLib {
         out << render(template: "/templates/metadataSeparator", plugin: "jummp-plugin-biomodels-dom")
     }
 
+    def insertSectionSeparator = {
+        out << render(template: "/templates/sectionSeparator", plugin: "jummp-plugin-biomodels-dom")
+    }
+
     def renderGridViewForPath2ModelsCategory = { attrs ->
         Set categories = attrs.categories
         int size = categories?.size()
@@ -350,5 +366,10 @@ class BioModelsTagLib {
         out << render(template: "/templates/pdgsmmDiseaseColumn", plugin: "jummp-plugin-biomodels-dom",
             model: [diseases: rightColumn])
         out << '</div>'
+    }
+
+    def renderLinkToNewtEditor = { Map attrs ->
+        out << render(template: "/templates/biomodels/modelDisplay/linkNewtEditor",
+            model: [hrefLinkToNewtEditor: attrs.hrefLinkToNewtEditor, serverURL: attrs.serverURL])
     }
 }
