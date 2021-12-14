@@ -848,16 +848,16 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
     }
 
     private String makeLinkToNewtEditor(final RevisionTransportCommand revision, final List<RFTC> repoFiles) {
-        boolean unpublished = ModelState.UNPUBLISHED == revision.state
+        boolean published = ModelState.PUBLISHED == revision.state
         boolean isSBMLModel = "SBML" == revision.format.name
-        if (unpublished && isSBMLModel) {
-            return ""
+        String href = ""
+        if (published && isSBMLModel) {
+            href = "https://web.newteditor.org/"
+            href = "$href?URL=${grailsApplication.config.grails.serverURL}/model/download"
+            String modelMainFileName = repoFiles.find { it.mainFile }.filename
+            String otherParams = "inferNestingOnLoad=true&applyLayoutOnURL=true"
+            href = "$href/${revision.identifier()}?filename=$modelMainFileName&$otherParams"
         }
-        String href = "https://web.newteditor.org/"
-        href = "$href?URL=${grailsApplication.config.grails.serverURL}/model/download"
-        String modelMainFileName = repoFiles.find { it.mainFile }.filename
-        String otherParams = "inferNestingOnLoad=true&applyLayoutOnURL=true"
-        href = "$href/${revision.identifier()}?filename=$modelMainFileName&$otherParams"
         return href
     }
 }
