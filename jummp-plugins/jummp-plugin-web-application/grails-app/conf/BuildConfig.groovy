@@ -72,8 +72,8 @@ grails.project.dependency.resolution = {
     }
 
     dependencies {
-        compile "com.fasterxml.jackson.core:jackson-databind:2.5.2"
-        compile "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.5.2"
+        compile "com.fasterxml.jackson.core:jackson-databind:2.9.0"
+        compile "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.9.0"
     }
 
     plugins {

@@ -83,7 +83,8 @@ grails.project.dependency.resolution = {
         // Jackson DataBinder has 'provided' scope in DDI: See
         //      https://github.com/BD2K-DDI/ddi-base-master/blob/2326b4/pom.xml
         //      https://github.com/BD2K-DDI/ddi-ebeye-ws-dao/blob/8bd08f/pom.xml
-        compile "com.fasterxml.jackson.core:jackson-databind:2.5.2"
+        compile "com.fasterxml.jackson.core:jackson-databind:2.9.0"
+        compile "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.9.0"
         compile "org.apache.commons:commons-lang3:3.3.2"
         compile "org.apache.tika:tika-core:1.23"
         compile "redis.clients:jedis:2.9.0"
