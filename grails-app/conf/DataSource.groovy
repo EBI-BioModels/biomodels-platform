@@ -69,11 +69,15 @@ try {
         jmxEnabled = true
         pooled = Boolean.parseBoolean(dbConfig.jummp.database.pooled as String)
         driverClassName = dbConfig.jummp.database.driver
+        dialect  = dbConfig.jummp.database.dialect
         username = dbConfig.jummp.database.username
         password = dbConfig.jummp.database.password
-        dialect  = dbConfig.jummp.database.dialect
+        url = dbConfig.jummp.database.url
         if (protocol != ModelIdentifierUtils.DEFAULT_PROTOCOL) {
             properties {
+                // Documentation for Tomcat JDBC Pool
+                // http://tomcat.apache.org/tomcat-7.0-doc/jdbc-pool.html#Common_Attributes
+                // https://tomcat.apache.org/tomcat-7.0-doc/api/org/apache/tomcat/jdbc/pool/PoolConfiguration.html
                 maxActive = 100
                 maxIdle = 25
                 minIdle = 1
@@ -109,11 +113,6 @@ try {
     environments {
         development {
             dataSource {
-                driverClassName = dbConfig.jummp.database.driver
-                username = dbConfig.jummp.database.username
-                password = dbConfig.jummp.database.password
-                dialect  = dbConfig.jummp.database.dialect
-                url = dbConfig.jummp.database.url
 //                logSql = true
 //                dbCreate = "create"
             }
@@ -135,12 +134,6 @@ try {
         }
         production {
             dataSource {
-                pooled = Boolean.parseBoolean(dbConfig.jummp.database.pooled as String)
-                driverClassName = dbConfig.jummp.database.driver
-                dialect  = dbConfig.jummp.database.dialect
-                username = dbConfig.jummp.database.username
-                password = dbConfig.jummp.database.password
-                url = dbConfig.jummp.database.url
                 properties {
                     ignoreExceptionOnPreLoad = true
                     jdbcInterceptors = "ConnectionState;StatementCache(max=200)"
@@ -148,7 +141,9 @@ try {
                     removeAbandoned = true
                     removeAbandonedTimeout = 120
                     logAbandoned = false
-                    if (driverClassName == "com.mysql.jdbc.Driver") {
+                    if (it.driverClassName == "com.mysql.jdbc.Driver") {
+                        // JDBC driver properties
+                        // Mysql as example
                         dbProperties {
                             autoReconnect = false
                             jdbcCompliantTruncation = false
