@@ -81,7 +81,7 @@ try {
                 minEvictableIdleTimeMillis = 60000
                 timeBetweenEvictionRunsMillis = 60000
                 numTestsPerEvictionRun = 3
-                maxWait = 10000
+                maxWait = 30000
                 maxAge = 10 * 60000
 
                 testOnBorrow = true
