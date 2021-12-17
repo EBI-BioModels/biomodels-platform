@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory
  * @author <a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a>
  */
 class HomePageUpdaterJob {
-    private static final Logger logger = LoggerFactory.getLogger(HomePageUpdaterJob.class)
+    private static final Logger LOGGER = LoggerFactory.getLogger(HomePageUpdaterJob.class)
     def decorationService
 
     static triggers = {
@@ -45,8 +45,8 @@ class HomePageUpdaterJob {
 
     def execute() {
         // execute job
-        logger.info("""\
-QuartzJob: Refreshing data for widgets shown on the home page on Redis Server at ${new Date().toString()}""")
+        LOGGER.info("""\
+QuartzJob: Refreshing Redis cached data for widgets shown on the home page""")
         decorationService.updateDataForWidgetsOnHomePage()
     }
 }

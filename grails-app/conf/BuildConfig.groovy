@@ -55,6 +55,7 @@ grails.project.dependency.resolution = {
         // uncomment to disable ehcache
         // excludes 'ehcache'
         excludes 'javassist'
+        excludes 'grails-plugin-logging', 'grails-plugin-log4j', 'log4j'
     }
     log "warn" // log level of Ivy resolver, either 'error', 'warn', 'info', 'debug' or 'verbose'
     legacyResolve false // whether to do a secondary resolve on plugin installation, not advised and here for backwards compatibility
@@ -118,7 +119,7 @@ grails.project.dependency.resolution = {
                     'xalan',
                     'xml-apis'
         }*/
-        compile 'log4j:log4j:1.2.17'
+        runtime "ch.qos.logback:logback-core:0.9.29"
         compile "org.apache.tika:tika-core:1.23"
         /**
          * Weceem lists it as a runtime dependency, while jsbml needs it during compilation.
