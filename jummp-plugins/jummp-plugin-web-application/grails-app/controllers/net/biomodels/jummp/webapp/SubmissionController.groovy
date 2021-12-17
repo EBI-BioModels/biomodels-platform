@@ -134,7 +134,9 @@ class SubmissionController {
         }*/
 
             /* Build the right messages to show at the model owner/submitter */
-            buildResultMessage(isUpdate, status, message, modelURL, modelId, working)
+            Map msg = buildResultMessage(isUpdate, status, message, modelURL, modelId, working)
+            message = msg.get("message")
+            status = msg.get("status")
             render(["message": message, "status": status, "modelURL": modelURL, "modelIdentifier": modelId] as JSON)
         } catch (Exception e) {
             status = "Failure"
@@ -374,8 +376,8 @@ hyphens and underscores.
         working.put("RevisionTC", revision)
     }
 
-    private void buildResultMessage(boolean isUpdate, String status, String message,
-                                    String modelURL, String modelId, Map<String, Object> working) {
+    private Map buildResultMessage(boolean isUpdate, String status, String message,
+        String modelURL, String modelId, Map<String, Object> working) {
         if (isUpdate) {
             if (working.get("changesMade")) {
                 status = "Success"
@@ -397,5 +399,6 @@ hyphens and underscores.
                     plugin: "jummp-plugin-web-application")
             }
         }
+        [status: status, message: message] as Map<String, String>
     }
 }
