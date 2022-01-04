@@ -20,6 +20,7 @@
 
 package net.biomodels.jummp.utils
 
+import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 class FileHelper {
@@ -27,7 +28,8 @@ class FileHelper {
 
     static boolean isFileNameAcceptable(final String filename) {
         if (!filename) { return false }
-        boolean retVal = filename =~ acceptableCharactersInFileName
+        Matcher matcher = filename =~ acceptableCharactersInFileName
+        boolean retVal = matcher.matches()
         retVal
     }
 }
