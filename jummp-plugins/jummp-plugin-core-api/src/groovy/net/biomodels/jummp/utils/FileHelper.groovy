@@ -23,7 +23,7 @@ package net.biomodels.jummp.utils
 import java.util.regex.Pattern
 
 class FileHelper {
-    private static final Pattern acceptableCharactersInFileName = ~/^[a-zA-Z0-9\ -_]+$/
+    private static final Pattern acceptableCharactersInFileName = ~/^[a-zA-Z0-9\s_\.\+-]+\.[\w]+$/
 
     static boolean isFileNameAcceptable(final String filename) {
         if (!filename) { return false }

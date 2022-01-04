@@ -191,7 +191,7 @@ class SubmissionController {
             if (!FileHelper.isFileNameAcceptable(e["filename"])) {
                 String warningMessage = """\
 Please make sure the file name '${e["filename"]}' only containing alphanumeric characters, spaces, \
-hyphens and underscores.
+hyphens and underscores. It should also have a proper file extension.
 """
                 e["validateFileName"] = [warningMessage] as List<String>
             }
