@@ -852,11 +852,12 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
         boolean isSBMLModel = "SBML" == revision.format.name
         String href = ""
         if (published && isSBMLModel) {
-            href = "https://web.newteditor.org/"
-            href = "$href?URL=${grailsApplication.config.grails.serverURL}/model/download"
             String modelMainFileName = repoFiles.find { it.mainFile }.filename
+            String downloadLink = createLink(controller: 'model',
+                action: 'download', params: [id: revision.identifier(), filename: modelMainFileName], absolute: true)
             String otherParams = "inferNestingOnLoad=true&applyLayoutOnURL=true"
-            href = "$href/${revision.identifier()}?filename=$modelMainFileName&$otherParams"
+            href = "https://web.newteditor.org/"
+            href = "$href?URL=${downloadLink}&${otherParams}"
         }
         return href
     }
