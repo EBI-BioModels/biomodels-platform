@@ -66,8 +66,8 @@ import java.util.zip.ZipOutputStream
 
 @Secured(['IS_AUTHENTICATED_FULLY'])
 class ModelController {
-    private final Logger log = LoggerFactory.getLogger(this.getClass())
-    private final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
+    private static final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
+    private final boolean IS_DEBUG_ENABLED = LOGGER.isDebugEnabled()
     IFileSystemService fileSystemService
     def springSecurityService
     def modelDelegateService
@@ -131,12 +131,12 @@ class ModelController {
                 request.lastHistory = historyItem
                 return true
             } else {
-                log.error "Ignoring invalid request for $actionUri with params $params."
+                LOGGER.error "Ignoring invalid request for $actionUri with params $params."
                 forward(controller: "errors", action: "error404")
                 return false
             }
         } catch(Exception e) {
-            log.error(e.message, e)
+            LOGGER.error(e.message, e)
             String actionError = params?.action == "download" ? "error400" : "error403"
             forward(controller: "errors", action: actionError)
             return false
@@ -150,7 +150,7 @@ class ModelController {
                 request.removeAttribute("lastHistory")
             }
         } catch(Exception e) {
-            log.error e.message, e
+            LOGGER.error e.message, e
         }
     }
 
@@ -173,7 +173,7 @@ class ModelController {
             rev = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
         } catch (AccessDeniedException e) {
             Model model = Model.findByPublicationIdOrSubmissionId(params.id as String, params.id as String)
-            log.warn("""An anonymous or restricted access user is trying to retrieve this model: ${model.submissionId}""")
+            LOGGER.warn("""An anonymous or restricted access user is trying to retrieve this model: ${model.submissionId}""")
             int revisionNumber = -1
             if (params.revisionId) {
                 revisionNumber = params.int("revisionId")
@@ -275,7 +275,7 @@ class ModelController {
                             forward controller: formatController, action: "show", id: PERENNIAL_ID
                         } else {
                             final String fmtId = format.identifier
-                            log.error "Could not find a controller for format $fmtId of $PERENNIAL_ID"
+                            LOGGER.error "Could not find a controller for format $fmtId of $PERENNIAL_ID"
                         }
                     } else { //showing an old version, with the default page. Do not allow updates.
                         model["canUpdate"] = false
@@ -333,7 +333,7 @@ class ModelController {
                 '*' { render status: 415, view: "/errors/error415" }
             }
         } catch(Exception err) {
-            log.error err.message, err
+            LOGGER.error err.message, err
             forward controller: 'errors', action: 'error404'
         }
     }
@@ -358,16 +358,16 @@ class ModelController {
             redirect(action: "showWithMessage", id: published.identifier(),
                         params: [flashMessage: "Model has been published${extraMsg}"])
         } catch(AccessDeniedException e) {
-            log.error(e.message, e)
+            LOGGER.error(e.message, e)
             forward(controller: "errors", action: "error403")
         } catch(IllegalArgumentException e) {
-            log.error(e.message)
+            LOGGER.error(e.message)
             redirect(action: "showWithMessage",
                     id: rev.identifier(),
                     params: [flashMessage: "Model has not been published because there is a " +
                             "problem with this version of the model. Sorry!"])
         } catch(Exception e) {
-            log.error("General exception thrown while publishing ${rev.identifier()} (${published?.identifier()})", e)
+            LOGGER.error("General exception thrown while publishing ${rev.identifier()} (${published?.identifier()})", e)
             redirect(action: "showWithMessage", id: rev.identifier(), params: [flashMessage: "An internal error prevented this model from being published"])
         }
     }
@@ -395,7 +395,7 @@ class ModelController {
                 id: rev.identifier(),
                 params: [flashMessage: "Model has been submitted to the curators for publication."])
         } catch (Exception e) {
-            log.error(e.message, e)
+            LOGGER.error(e.message, e)
             String message = "Sorry!!! There has been a problem. Please try it later or contact us for further help."
             redirect(action: "showWithMessage",
                 id: modelDelegateService.getRevisionFromParams(params.id).identifier(),
@@ -473,7 +473,7 @@ class ModelController {
      */
     def uploadFile() {
         String submissionFolder = params.get("submissionFolder")
-        log.debug("Submission folder: ${submissionFolder}")
+        LOGGER.debug("Submission folder: ${submissionFolder}")
         CommonsMultipartFile uploadFile = request.getMultiFileMap().file?.first()
         String originalFilename = uploadFile?.originalFilename
         File file = fileSystemService.transferFile(submissionFolder, uploadFile)
@@ -508,7 +508,7 @@ class ModelController {
                                     "Model has been deleted, and moved into archives." :
                                     "Model could not be deleted"])
         } catch(Exception e) {
-            log.error e.message, e
+            LOGGER.error e.message, e
             forward(controller: "errors", action: "error403")
         }
     }
@@ -521,11 +521,11 @@ class ModelController {
                         modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
             def retval = modelDelegateService.getFileDetails(REVISION.id, params.filename)
             if (IS_DEBUG_ENABLED) {
-                log.debug("Permissions for ${REVISION.identifier()}: ${retval as JSON}")
+                LOGGER.debug("Permissions for ${REVISION.identifier()}: ${retval as JSON}")
             }
             render retval as JSON
         } catch(Exception e) {
-            log.error e.message, e
+            LOGGER.error e.message, e
             return "INVALID ID"
         }
     }
@@ -537,7 +537,7 @@ class ModelController {
             def teams = getTeamsForCurrentUser()
             return [revision: rev, permissions: perms as JSON, teams: teams]
         } catch(Exception error) {
-            log.error error.message, error
+            LOGGER.error error.message, error
             forward(controller: "errors", action: "error403")
         }
     }
@@ -572,7 +572,7 @@ class ModelController {
                             modelDelegateService.getPermissionsMap(params.id)]
                 render result
             } catch(Exception e) {
-                log.error e.message, e
+                LOGGER.error e.message, e
                 valid = false
             }
         }
@@ -589,9 +589,9 @@ class ModelController {
         resp.setHeader("Content-disposition", "attachment;filename=\"${name}\"")
         resp.outputStream << new ByteArrayInputStream(omexFile.readBytes())
         if (omexFile.delete()) {
-            log.info("The temporary file was deleted successfully.")
+            LOGGER.info("The temporary file was deleted successfully.")
         } else {
-            log.info("Cannot delete the temporary file.")
+            LOGGER.info("Cannot delete the temporary file.")
         }
     }
 
@@ -681,7 +681,7 @@ class ModelController {
         } catch (AccessDeniedException e) {
             forward(controller: "errors", action: "error403")
         } catch (Exception e) {
-            log.error(e.message, e)
+            LOGGER.error(e.message, e)
             render(status: 400,
                 view: "/errors/error400",
                 model: [errorDescription: "The model identifier parameter must be provided."])
