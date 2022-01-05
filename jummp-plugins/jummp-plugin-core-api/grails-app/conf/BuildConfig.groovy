@@ -77,7 +77,7 @@ grails.project.dependency.resolution = {
         compile("eu.ddmore.metadata:lib-metadata:1.5.2-SNAPSHOT") {
             excludes 'spring-context','spring-core','spring-test', 'jena', 'slf4j-log4j12'
         }
-        compile("uk.ac.ebi.ddi:ddi-ebe-ws-dao:1.0") {
+        compile("uk.ac.ebi.ddi:ddi-ebe-ws-dao:1.2.1") {
             excludes 'slf4j-log4j12'
         }
         // Jackson DataBinder has 'provided' scope in DDI: See
