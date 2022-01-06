@@ -216,6 +216,10 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         render([status: "OK"] as JSON)
     }
 
+    def renderFileUploadFailures() {
+        render([status: "OK"] as JSON)
+    }
+
     private List validateFile(final JSONElement file) {
         logger.debug("Validating the file: $file")
         File modelFile = fileSystemService.retrieve(file)

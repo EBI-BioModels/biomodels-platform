@@ -263,7 +263,18 @@
         let acceptableFileNames = checkAcceptableCharactersForFileNames();
         messages.push(...acceptableFileNames);
         handleErrorMessages(messages);
-        if (!currentValidation) { return; }
+        if (!currentValidation) {
+            return $.ajax({
+                type: "POST",
+                url: "${createLink(controller: "submission", action: "renderFileUploadFailures")}",
+                success: function () {
+                    console.log("There have been errors to the uploading files.");
+                },
+                error: function () {
+                    console.log("There have been errors to show messages to users when uploading files failed.");
+                }
+            });
+        }
 
         return $.ajax({
             type: "POST",
