@@ -156,6 +156,7 @@
             },
             onComplete: function () {
                 checkIdenticalFileNames();
+
                 ui_add_log('All pending transfers finished');
                 console.log("Uploaded successfully");
             },
@@ -229,7 +230,8 @@
             let isValid = checkAcceptableCharactersForFileName(filename);
             if (!isValid) {
                 let msg = "Please make sure the file name \'" + filename +
-                    "\' only containing alphanumeric characters, spaces, hyphens and underscores.";
+                    "\' only containing alphanumeric characters, spaces, hyphens, plus signs and underscores. " +
+                    "It should be followed by a proper file extension.";
                 messages.push(msg);
             }
         });
