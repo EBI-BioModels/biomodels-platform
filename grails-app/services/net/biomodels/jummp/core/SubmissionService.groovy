@@ -935,6 +935,7 @@ class SubmissionService {
                 File fileCopied = fileSystemService.transferFile(submissionFolder, file)
                 logger.debug("File ${fileCopied.absolutePath} copied to the submission directory $submissionFolder".toString())
             }
+            files = sortByRole(files)
             workingMemory.put("RevisionTC", latest)
             workingMemory.put("RevisionID", latest.id)
             workingMemory.put("RevisionNumber", latest.revisionNumber)
@@ -1065,6 +1066,24 @@ class SubmissionService {
             }
 
             returned
+        }
+
+        /**
+         * Sorts the model file to the top and following by the additional ones
+         *
+         * @param files A list of customised repository file objects
+         * @return A sorted array list
+         */
+        private ArrayList sortByRole(List files) {
+            List tmpList = new ArrayList()
+            def mF = files.find { it["isModelFile"]}
+            tmpList.add(mF)
+            List addList = files.findAll { !it["isModelFile"] } as List
+            if (!addList?.isEmpty()) {
+                addList.sort { it["filename"] }
+                tmpList.addAll(addList)
+            }
+            return tmpList
         }
     }
 
