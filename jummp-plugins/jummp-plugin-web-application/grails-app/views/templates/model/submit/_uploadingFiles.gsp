@@ -1,7 +1,10 @@
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/pretty-checkbox@3.0/dist/pretty-checkbox.min.css"/>
 <style>
 #files {
     overflow-y: scroll !important;
     min-height: 320px;
+    margin: 0; /* reset this property against ebi-global */
 }
 @media (min-width: 768px) {
     #files {
@@ -26,6 +29,22 @@
     border: 0.25rem solid #A5A5C7;
     /*overflow-y: scroll; */
     /*height: 279px*/
+}
+
+.media {
+    margin: 5px;
+    padding: 5px;
+    list-style-type: none;
+    background-color: #d8d8e6;
+}
+.media > hr {
+    margin: 0;
+}
+
+.btn-remove-file {
+    cursor: pointer;
+    font-size: x-large;
+    color: red;
 }
 </style>
 <div class="row">
@@ -66,7 +85,7 @@
                 radio box</span></h3>
             </div>
             <div class="card-section">
-                <ul class="list-unstyled" id="files" style="margin-right: 1.25rem">
+                <ul class="list-unstyled" id="files">
                 <g:if test="${files}">
                     <jummp:renderExistingFiles files="${files}" />
                 </g:if>
@@ -81,7 +100,7 @@
         <li class="media">
             <div class="media-body mb-1">
                 <div class="row">
-                    <div class="columns small-12 medium-5 large-5">
+                    <div class="columns small-12 medium-4 large-4">
                         <p class="mb-2">
                             <strong class="file-name">%%filename%%</strong> - Size: <strong
                         class="file-size">%%filesize%%</strong>, Status: <span
@@ -97,20 +116,25 @@
                             </div>
                         </div>
                     </div>
-                    <div class="columns small-12 medium-6 large-6">
+                    <div class="columns small-12 medium-5 large-5">
                         <label>File Description
                             <input type="text" name="fileDescription" class="file-description"
                                    placeholder="Describe this file. For example: What is this file used for?">
                         </label>
                     </div>
+                    <div class="columns small-12 medium-2 large-2">
+                        <div class="pretty p-switch p-fill">
+                            <input type="radio" name="isModelFile" class="is-model-file">
+                            <div class="state p-success">
+                                <label style="line-height: 0; margin-left: 5px">Main model file</label>
+                            </div>
+                        </div>
+                    </div>
                     <div class="columns small-12 medium-1 large-1">
-                        <label>Main model file
-                            <input type="radio" name="isModelFile" class="is-model-file"></label>
+                        <i class="icon icon-common icon-times btn-remove-file"></i>
                     </div>
                 </div>
             </div>
-            <button type="button" name="removeFile" class="button btn-remove-file">Remove</button>
-            <hr class="mt-1 mb-1" style="color: lightgrey; max-width: 100%"/>
         </li>
         </script>
     </div>
@@ -364,6 +388,9 @@
 
     $('#files').on("click", '.btn-remove-file', function () {
        let parent = $(this).parent();
+       let grandparent = parent.parent();
+       grandparent = grandparent.parent();
+       parent = grandparent.parent();
        parent.remove();
     });
 
