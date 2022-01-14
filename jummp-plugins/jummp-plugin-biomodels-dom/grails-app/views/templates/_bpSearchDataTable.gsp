@@ -89,7 +89,7 @@
             return result;
         }
 
-        function formatEntity(entityHTML, row) {
+        function formatEntity(row) {
             let result = '';
             let entityRow = '';
             const entity = row.fields.entity_id;
