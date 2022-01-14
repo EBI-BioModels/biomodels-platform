@@ -468,7 +468,6 @@
                 data: 'fields.external_links_show',
                 orderable: false,
                 render: function (data, type, row) {
-                    console.log("EL: " + data);
                     return formatExternalLinks(data, type, row);
                 }
             }
