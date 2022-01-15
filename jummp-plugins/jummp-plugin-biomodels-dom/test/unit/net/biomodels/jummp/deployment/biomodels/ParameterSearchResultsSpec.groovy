@@ -86,6 +86,22 @@ class ParameterSearchResultsSpec extends Specification {
 
     }
 
+    void "test the external links containing OpenTargets links"() {
+        given: "A webservice call to ebi search and basic criteria"
+        when: "Called getResultObjectWithQuery to hit the webservice and get the results"
+        ParameterSearchResults results = getResultObjectWithQuery("BIO*700")
+
+        then: "it should return correct initial data value with special character units"
+
+        String expected = "OpenTargets:ENSG00000112029"
+        def externalLinks = results.entries.collect {
+            it.fields.get("external_links_show")
+        }
+
+        externalLinks.find {
+            it.contains(expected)
+        }
+    }
 
     private static ParameterSearchResults getResultObjectWithQuery(String query) {
         String urlString = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters?format=json" +
