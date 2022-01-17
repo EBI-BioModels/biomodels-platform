@@ -93,14 +93,14 @@ class ParameterSearchResultsSpec extends Specification {
 
         then: "it should return correct initial data value with special character units"
 
-        String expected = "OpenTargets:ENSG00000112029"
-        def externalLinks = results.entries.collect {
-            it.fields.get("external_links_show")
+        String expected = "OpenTargets:"
+        def externalLinks = results.entries.collect() {
+            it.fields["external_links_show"]
         }
-
+        externalLinks.size() > 0
         externalLinks.find {
             it.contains(expected)
-        }
+        }.size() > 0
     }
 
     private static ParameterSearchResults getResultObjectWithQuery(String query,
