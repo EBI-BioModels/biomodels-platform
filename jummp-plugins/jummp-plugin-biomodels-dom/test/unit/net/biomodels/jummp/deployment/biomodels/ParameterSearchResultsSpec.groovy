@@ -17,36 +17,31 @@ class ParameterSearchResultsSpec extends Specification {
     void "test ParameterSearchResults fromJSON"() {
 
         given: "A webservice call to ebi search and basic criteria"
-        when: "Called getResultObjectWithQuery to hit the webservice and get the results"
 
-        ParameterSearchResults results = getResultObjectWithQuery("E4P*")
+        when: "Called getResultObjectWithQuery to hit the webservice and get the results"
+        ParameterSearchResults results = getResultObjectWithQuery("E4P*", "model:ascending")
 
         then: "It should return correct results"
-
         results.recordsTotal > 1
 
         and: "it should return reaction value"
-
-
-        String expectedPublication = "http://identifiers.org/pubmed/22001849|22001849"
-        String expectedReaction = "([24794350] + [122357]) => ([sedoheptulose 1,7-bisphosphate])"
-        String expectedOriginalReaction = "(TP + E4P) => (SBP)"
-        String expectedReactionShow = "<span class='legend-green'>(TP + E4P) => (SBP)</span><br/><br/>([24794350] + [122357]) => ([sedoheptulose 1,7-bisphosphate])"
+        String expectedPublication = "http://identifiers.org/pubmed/15233787|15233787"
+        String expectedReaction = "GraP + Sed7P => E4P + Fru6P"
+        String expectedOriginalReaction = "GraP + Sed7P => E4P + Fru6P"
+        String expectedReactionShow = "K6v24=0.4653 dimensionless; Keqv24=1.05 dimensionless; K5v24=0.8683 dimensionless; Vmaxv24=27.2 mM_per_hour; K1v24=0.00823 mM; K2v24=0.04765 mM; K7v24=2.524 dimensionless; K3v24=0.1733 mM; K4v24=0.006095 mM"
         String expectedEntityId = "E4P"
-        String expectedEntityShow = "<span class='legend-green'>E4P</span><br/><br/><a style='color:black' target='_blank' href='http://identifiers.org/pubchem.compound/122357' > 122357 </a>"
-        String expectedRateShow = "<span class='legend-green'>chloroplast*Vm*(DHAP*E4P-SBP/q)/((DHAP+Ks1)*(E4P+Ks2))</span><br/><br/>chloroplast*Vm*([668]*[122357]-[sedoheptulose 1,7-bisphosphate]/q)/(([668]+Ks1)*([122357]+Ks2))"
-        String expectedParameters = "q=1.017; Vm=1.21889; Ks2=0.2; Ks1=0.4"
-        results.entries.find{value ->
+        String expectedEntityShow = "<span class='legend-green'>E4P</span><br/><br/><a style='color:black' target='_blank' href='http://identifiers.org/chebi/CHEBI:16897' > D-erythrose 4-phosphate(2-) </a>; <a style='color:black' target='_blank' href=' http://identifiers.org/kegg.compound/C00279' > D-Erythrose 4-phosphate </a>"
+        String expectedParameters = "K6v24=0.4653 dimensionless; Keqv24=1.05 dimensionless; K5v24=0.8683 dimensionless; Vmaxv24=27.2 mM_per_hour; K1v24=0.00823 mM; K2v24=0.04765 mM; K7v24=2.524 dimensionless; K3v24=0.1733 mM; K4v24=0.006095 mM"
+
+        // The results likely have the entity identified E4P
+        results.entries.findAll() {value ->
            value.fields.entity_id == expectedEntityId &&
                value.fields.reaction == expectedReaction &&
                value.fields.reaction_original_RAW == expectedOriginalReaction &&
                value.fields.publication == expectedPublication &&
-               value.fields.reaction_show == expectedReactionShow &&
                value.fields.entity_show == expectedEntityShow &&
-               value.fields.rate_show == expectedRateShow &&
                value.fields.parameters == expectedParameters
-        }
-
+        }.size() > 0
     }
 
     void "test ParameterSearchResults fromJSON for html escaping special character"() {
