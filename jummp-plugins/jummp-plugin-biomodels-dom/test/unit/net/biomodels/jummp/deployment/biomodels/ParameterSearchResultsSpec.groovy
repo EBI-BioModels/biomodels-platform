@@ -103,10 +103,12 @@ class ParameterSearchResultsSpec extends Specification {
         }
     }
 
-    private static ParameterSearchResults getResultObjectWithQuery(String query) {
+    private static ParameterSearchResults getResultObjectWithQuery(String query,
+                                                                   String sortField = "entity:ascending") {
         String urlString = "https://wwwdev.ebi.ac.uk/ebisearch/ws/rest/biomodels_parameters?format=json" +
             "&fields=entity_RAW,entity_id,reaction_RAW,entity_accession_url,reaction_original_RAW,model,publication," +
-            "rate_RAW,rate_original_RAW,parameters_RAW,external_links,initial_data_RAW&query=${query}&size=10&start=0&sort=entity:ascending"
+            "rate_RAW,rate_original_RAW,parameters_RAW,external_links,external_links_show," +
+            "initial_data_RAW&query=${query}&size=10&start=0&sort=${sortField}"
         def searchResults = urlString.toURL().text
         searchResults = ParameterSearchService.replaceFieldNames(searchResults)
         ParameterSearchResults results = ParameterSearchResults.fromJson(JSON.parse(searchResults))
