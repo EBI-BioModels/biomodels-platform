@@ -74,12 +74,14 @@ class SubmissionController {
 
             boolean isUpdate = params.boolean("isUpdate")
             boolean isAmend = params.boolean("isAmend")
+            working.put("isUpdate", isUpdate)
             working.put("isAmend", isAmend)
             MTC model = new MTC()
             if (isUpdate) {
                 model = modelDelegateService.getModel(params.modelId)
             }
-            RTC revision = new RTC(model: model, format: format)
+            RTC revision = new RTC(model: model, format: format,
+                minorRevision: false, validated: true)
             if (isAmend && params.modelId) {
                 revision = modelDelegateService.getLatestRevision(params.modelId, false)
             }
@@ -93,7 +95,7 @@ class SubmissionController {
 
             // populate the data on the revision
             populateDataRevision(revision, model, working, rftcList,
-                params.revisionComments?.decodeHTML() as String)
+                params.revisionComments?.decodeHTML() as String, isUpdate)
 
             working.put("isUpdateOnExistingModel", isUpdate)
             working.put("shouldCreateNewRevision", true) // TODO: allow curators decide
@@ -365,15 +367,17 @@ hyphens, plus signs and underscores. It should also have a proper file extension
     }
 
     private void populateDataRevision(RTC revision, MTC model, Map working,
-                                      ArrayList<RFTC> rftcList, String paramComments) {
+                                      ArrayList<RFTC> rftcList, String paramComments,
+                                      boolean isUpdate = false) {
         revision.files = rftcList
         revision.model = model
         revision.name = model.name
         revision.description = model.description
-        revision.validated = true
-        revision.minorRevision = false
-        revision.curationState = CurationState.NON_CURATED
-        revision.validationLevel = ValidationState.APPROVE
+        if (!isUpdate) {
+            // preserve the following properties when updating the model
+            revision.curationState = CurationState.NON_CURATED
+            revision.validationLevel = ValidationState.APPROVE
+        }
         revision.comment = paramComments ?: "Model revised without commit message"
         working.put("new_name", revision.name)
         working.put("new_description", revision.description)
