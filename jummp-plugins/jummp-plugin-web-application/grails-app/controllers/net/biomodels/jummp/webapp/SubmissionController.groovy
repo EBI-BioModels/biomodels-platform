@@ -82,7 +82,7 @@ class SubmissionController {
             }
             RTC revision = new RTC(model: model, format: format,
                 minorRevision: false, validated: true)
-            if (isAmend && params.modelId) {
+            if (isUpdate) {
                 revision = modelDelegateService.getLatestRevision(params.modelId, false)
             }
 
