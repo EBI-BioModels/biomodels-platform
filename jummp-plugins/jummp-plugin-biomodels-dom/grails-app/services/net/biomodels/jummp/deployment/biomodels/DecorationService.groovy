@@ -188,7 +188,11 @@ ORDER BY model.firstPublished DESC'''
 
     void refreshRecentlyAccessedModelsRedisCache() {
         Map<String, String> mapModels = buildListOfRecentlyAccessedModels()
-        logger.debug("Populating the list of recently ACCESSED models to Redis Server at ${new Date().toString()}")
+        addListOfRecentlyAccessedModelsToRedis(mapModels)
+    }
+
+    private void addListOfRecentlyAccessedModelsToRedis(Map mapModels) {
+        logger.debug("Caching the list of recently ACCESSED models to Redis Server")
         JedisPool pool = new JedisPool(new JedisPoolConfig(),
                                 REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
         Jedis jedis = null
@@ -203,7 +207,11 @@ ORDER BY model.firstPublished DESC'''
 
     void refreshRecentlyPublishedModelsRedisCache() {
         Map<String, RecentlyPublishedModel> mapModels = buildListOfRecentlyPublishedModels()
-        logger.debug("Populating the list of recently PUBLISHED models to Redis Server at ${new Date().toString()}")
+        addRecentlyPublishedModelsToRedis(mapModels)
+    }
+
+    private void addRecentlyPublishedModelsToRedis(Map mapModels) {
+        logger.debug("Caching the list of recently PUBLISHED models to Redis Server")
         JedisPool pool = new JedisPool(new JedisPoolConfig(),
                                 REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
         Jedis jedis = null
@@ -229,10 +237,15 @@ ORDER BY model.firstPublished DESC'''
     }
 
     void refreshModelOfTheMonthEntryRedisCache() {
+        Map momEntry = buildModelOfTheMonthEntry()
+        addModelOfTheMonthEntryToRedis(momEntry)
+    }
+
+    private void addModelOfTheMonthEntryToRedis(final Map momEntry) {
+        logger.debug("Caching the Model of the Month entry to Redis")
         JedisPool pool = new JedisPool(new JedisPoolConfig(),
                                 REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
         pool.getResource().withCloseable { Jedis jedis ->
-            Map momEntry = buildModelOfTheMonthEntry()
             final String MOM_ENTRY_KEY = "the-latest-mom-entry"
             for (Map.Entry<String, String> entry : momEntry) {
                 jedis.hset(MOM_ENTRY_KEY, entry.key, entry.value)
@@ -259,7 +272,9 @@ ORDER BY model.firstPublished DESC'''
         Map returnedMap = [:]
         if (!organismsMap) {
             // call the fallback
+            logger.debug("Falling back to build the Statistics for Organisms")
             returnedMap = buildStatisticsOrganisms()
+            addStatisticsOrganismsToRedis(returnedMap)
         } else {
             // rebuild the map which @see buildStatisticsOrganisms() returns
             returnedMap["children"] = organismsMap.collect { entry ->
@@ -282,7 +297,9 @@ ORDER BY model.firstPublished DESC'''
         Map models = doRedisHGetAll("hp-recently-accessed-models")
         if (!models) {
             // call the fallback
+            logger.debug("Falling back to build the list of Recently Accessed Models")
             models = buildListOfRecentlyAccessedModels()
+            addListOfRecentlyAccessedModelsToRedis(models)
         }
         return models
     }
@@ -293,7 +310,9 @@ ORDER BY model.firstPublished DESC'''
         Map returnedMap = [:]
         if (!models) {
             // call the fallback
+            logger.debug("Falling back to build the list of Recently Published Models")
             returnedMap = buildListOfRecentlyPublishedModels()
+            addRecentlyPublishedModelsToRedis(returnedMap)
         } else {
             for (String modelId in models.keySet()) {
                 Map rpm = doRedisHGetAll("$key-$modelId" as String)
@@ -312,7 +331,9 @@ ORDER BY model.firstPublished DESC'''
         Map momEntryMap = doRedisHGetAll("the-latest-mom-entry")
         if (!momEntryMap) {
             // call the fallback
+            logger.debug("Falling back to build the Model of the Month entry")
             momEntryMap = buildModelOfTheMonthEntry()
+            addModelOfTheMonthEntryToRedis(momEntryMap)
         }
         return momEntryMap
     }
@@ -321,7 +342,11 @@ ORDER BY model.firstPublished DESC'''
         Map<String, String> news = doRedisHGetAll("hp-news-widget")
         if (!news) {
             // call the fallback
+            logger.debug("Falling back to build the News entry")
             news = buildDataForNewsWidget()
+            // cache the data to Redis server
+            logger.debug("Caching the News entry to Redis server")
+            doRedisHSet("hp-news-widget", news)
         } else {
             Map sortedNews = new LinkedHashMap()
             sortedNews = news.sort { n1, n2 ->
@@ -394,24 +419,38 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
 
     void refreshStatisticsModellingApproachesRedisCache() {
         Map modellingApproachesMap = buildStatisticsModellingApproaches()
+        addStatisticsModellingApproachesToRedis(modellingApproachesMap)
+    }
+
+    private addStatisticsModellingApproachesToRedis(Map modellingApproachesMap) {
+        logger.debug("Caching the statistics modelling approaches to Redis Server")
         Map approachesMap = convert2RedisMap(modellingApproachesMap)
         doRedisHSet("hp-statistics-modelling-approaches", approachesMap)
     }
 
     void refreshStatisticsOrganismsRedisCache() {
         Map organismsMap = buildStatisticsOrganisms()
+        addStatisticsOrganismsToRedis(organismsMap)
+    }
+
+    private void addStatisticsOrganismsToRedis(Map organismsMap) {
         def organisms = organismsMap["children"]
         Map<String, String> taxons = new HashMap<>()
         organisms.each {
             String value = "${it['Count']};${it['Taxonomy']};${it['NormalisedCount']}" as String
             taxons.put(it["Name"] as String, value)
         }
-        logger.info("Organism Statistic has been updated on Redis on ${new Date()}")
+        logger.info("Caching the statistics organism to Redis Server")
         doRedisHSet("hp-statistics-organisms", taxons)
     }
 
     void refreshStatisticsJournalsRedisCache() {
         Map pubsMap = buildStatisticsJournals()
+        addStatisticsJournalsToRedis(pubsMap)
+    }
+
+    private void addStatisticsJournalsToRedis(Map pubsMap) {
+        logger.debug("Caching the statistics journals to Redis Server")
         Map pubsRedisMap = convert2RedisMap(pubsMap)
         doRedisHSet("hp-statistics-journals", pubsRedisMap)
     }
@@ -603,10 +642,14 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
             // call the fallback
             switch (key) {
                 case "hp-statistics-modelling-approaches":
+                    logger.info("Falling back to build statistics for modelling approaches")
                     returnedMap = buildStatisticsModellingApproaches()
+                    addStatisticsModellingApproachesToRedis(returnedMap)
                     break
                 case "hp-statistics-journals":
+                    logger.info("Falling back to build statistics for journals")
                     returnedMap = buildStatisticsJournals()
+                    addStatisticsJournalsToRedis(returnedMap)
                     break
             }
         } else {
