@@ -2675,7 +2675,7 @@ There has been error while adding $approach to the model ${revisionTC.identifier
         // TODO: this means we have imported the revision into the VCS, but it failed to be saved in the database, which is pretty bad
         StopWatch stopWatch = new Log4JStopWatch("modelService.discardFailedRevision")
         revision.errors.allErrors.each {
-            logger.error(it)
+            logger.error(it.toString())
         }
         revision.discard()
         final def m = new ModelAdapter(model: model, latest: revision).toCommandObject()
