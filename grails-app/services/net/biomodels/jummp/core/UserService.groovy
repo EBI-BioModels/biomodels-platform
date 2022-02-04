@@ -40,6 +40,7 @@ import net.biomodels.jummp.plugins.security.Person
 import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.plugins.security.UserRole
+import net.biomodels.jummp.utils.MathUtils
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.perf4j.aop.Profiled
@@ -426,7 +427,7 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
             newUser.person.save(flush:true, failOnError:true)
         }
         boolean adminRegistration = false
-        String p = generator( (('A'..'Z')+('0'..'9')).join(), 6 )
+        String p = MathUtils.generatePassword( (('A'..'Z')+('0'..'9')).join(), 6 )
         if (SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
             // admin creates with a random password that is emailed to the user.
             newUser.enabled = true
