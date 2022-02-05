@@ -53,6 +53,7 @@ import net.biomodels.jummp.utils.redis.KeyCollection
 import net.biomodels.jummp.webapp.rest.errors.Error
 import net.biomodels.jummp.webapp.rest.model.show.Model as RestfulModel
 import net.biomodels.jummp.webapp.rest.model.show.ModelFiles
+import org.apache.catalina.connector.ClientAbortException
 import org.codehaus.groovy.grails.web.json.JSONObject
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -587,11 +588,19 @@ class ModelController {
         String name = omexFile.name
         resp.setContentType("application/zip")
         resp.setHeader("Content-disposition", "attachment;filename=\"${name}\"")
-        resp.outputStream << new ByteArrayInputStream(omexFile.readBytes())
-        if (omexFile.delete()) {
-            LOGGER.info("The temporary file was deleted successfully.")
-        } else {
-            LOGGER.info("Cannot delete the temporary file.")
+        try {
+            resp.outputStream << new ByteArrayInputStream(omexFile.readBytes())
+        } catch (ClientAbortException cAE) {
+            LOGGER.error("The client might have cancelled their download request.")
+            throw cAE
+        } finally {
+            if (omexFile.delete()) {
+                LOGGER.info("The temporary file was deleted successfully.")
+            } else {
+                LOGGER.info("Cannot delete the temporary file.")
+            }
+            // Read more https://javaee.github.io/javaee-spec/javadocs/javax/servlet/ServletResponse.html#reset--
+            resp.reset()
         }
     }
 
@@ -608,7 +617,14 @@ class ModelController {
         zipFile.close()
         resp.setContentType("application/zip")
         resp.setHeader("Content-disposition", "attachment;filename=\"${params.id}.zip\"")
-        resp.outputStream << new ByteArrayInputStream(byteBuffer.toByteArray())
+        try {
+            resp.outputStream << new ByteArrayInputStream(byteBuffer.toByteArray())
+        } catch (ClientAbortException cAE) {
+            LOGGER.error("The client might have cancelled their download request.")
+            throw cAE
+        } finally {
+            resp.reset()
+        }
     }
 
     private void serveModelAsFile(RFTC rf, def resp, boolean inline, boolean preview = false) {
@@ -620,11 +636,17 @@ class ModelController {
         resp.setHeader( "Content-Disposition", "${INLINE};filename=\"${F_NAME}\"")
         byte[] fileData = file.readBytes()
         int previewSize = grailsApplication.config.jummp.web.file.preview as Integer
-        if (!preview || previewSize > fileData.length) {
-            resp.outputStream << new ByteArrayInputStream(fileData)
-        }
-        else {
-            resp.outputStream << new ByteArrayInputStream(Arrays.copyOf(fileData, previewSize))
+        try {
+            if (!preview || previewSize > fileData.length) {
+                resp.outputStream << new ByteArrayInputStream(fileData)
+            } else {
+                resp.outputStream << new ByteArrayInputStream(Arrays.copyOf(fileData, previewSize))
+            }
+        } catch (ClientAbortException cAE) {
+            LOGGER.error("The client might have cancelled their download request.")
+            throw cAE
+        } finally {
+            resp.reset()
         }
     }
 
@@ -815,6 +837,14 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
         // TODO: set a proper name for the model
         response.setHeader("Content-disposition", "attachment;filename=\"model.xml\"")
         response.outputStream << new ByteArrayInputStream(bytes)
+        try {
+            response.outputStream << new ByteArrayInputStream(bytes)
+        } catch (ClientAbortException cAE) {
+            LOGGER.error("The client might have cancelled their download request.")
+            throw cAE
+        } finally {
+            response.reset()
+        }
     }
 
     private List getMainFiles(Map<String,Object> workingMemory) {
