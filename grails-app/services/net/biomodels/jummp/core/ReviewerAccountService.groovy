@@ -34,6 +34,7 @@ import grails.plugin.springsecurity.acl.AclSid
 import grails.util.Holders
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.plugins.security.Person
+import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.plugins.security.UserRole
 import net.biomodels.jummp.utils.MathUtils
