@@ -1,21 +1,20 @@
 package net.biomodels.jummp.deployment.biomodels
 
-
 import grails.converters.JSON
 import grails.plugin.cache.Cacheable
 import groovy.transform.CompileStatic
 import groovyx.gpars.GParsPool
 import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchCommand
 import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchResults
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
 import org.grails.async.factory.gpars.LoggingPoolFactory
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 class ParameterSearchService {
     static transactional = false
     def static configurationService
 
-    static final Log log = LogFactory.getLog(ParameterSearchService.class)
+    static final Logger LOGGER = LoggerFactory.getLogger(ParameterSearchService.class)
     static List<String> columnNames = ["entity", "entity_id", "initial concentration/amount", "reaction with entity labels", "reaction with entity ids",
                                         "reactants", "products", "modifiers",
                                        "model", "organism", "publication",
@@ -75,7 +74,7 @@ class ParameterSearchService {
                 try {
                     result = removeHeader(getCSVData(thisCmd))
                 } catch (Throwable t) {
-                    log.error("Could not retrieve batch $page of $batchCount for query $query", t)
+                    LOGGER.error("Could not retrieve batch $page of $batchCount for query $query", t)
                 }
 
                 return result
@@ -112,20 +111,23 @@ class ParameterSearchService {
                     String records = conn.getInputStream().text
                     return replaceFieldNames(records).replaceAll("\\\\","")
                 } catch (IOException e) {
-                    log.error("""Error while getting data from HttpUrlConnection ${conn.dump()} because of the error ${e
-                        .message}""")
+                    LOGGER.error("""Error while getting data from HttpUrlConnection ${conn.dump()} because of \
+the error ${e.message}""")
                     return null
                 }
             } else {
-                log.error("""Couldn't fetch data from the resource ${url.dump()} because of the error caused by ${conn
-                    .getErrorStream()
-                    .inspect()}""")
+                LOGGER.error("""Couldn't fetch data from the resource ${url.dump()} because of the error \
+caused by ${conn.getErrorStream().inspect()}""")
                 return null
             }
-        } catch (SocketException se) {
-            log.error("Error while retrieving records from EBI Search ${se.getMessage()}, command - ${command}", se)
-        } catch (IllegalArgumentException ile) {
-            log.error("The proxy setting cannot be null")
+        } catch (SocketTimeoutException ste) {
+            LOGGER.error("""Error while retrieving records from EBI Search ${ste.getMessage()}, \
+command - ${command}""".toString(), ste)
+        } catch (IllegalArgumentException iae) {
+            LOGGER.error("The proxy setting cannot be null or ${iae.getMessage()}")
+        } finally {
+            conn.getInputStream().close()
+            conn.disconnect()
         }
         return null
     }
