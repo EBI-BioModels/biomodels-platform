@@ -15,5 +15,6 @@
 <body>
     <h2><g:message code="error.400.title"/></h2>
     <p><g:message code="error.400.explanation"/>
+    <p>${errorDescription}</p>
 </body>
 </html>

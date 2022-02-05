@@ -680,12 +680,19 @@ class ModelController {
             }
         } catch (AccessDeniedException e) {
             forward(controller: "errors", action: "error403")
-        } catch (Exception e) {
+        } catch (IOException | Exception e ) {
             LOGGER.error(e.message, e)
-            render(status: 400,
-                view: "/errors/error400",
-                model: [errorDescription: "The model identifier parameter must be provided."])
+            String errDesc = ""
+            if (e instanceof IOException) {
+                errDesc = "The client has probably cancelled the download."
+            } else if (e instanceof Exception) {
+                errDesc = "The model identifier parameter must be provided."
+            }
+            render(status: 400, view: "/errors/error400", model: [errorDescription: errDesc])
             return
+        } finally {
+            // close, disconnect
+
         }
     }
 
