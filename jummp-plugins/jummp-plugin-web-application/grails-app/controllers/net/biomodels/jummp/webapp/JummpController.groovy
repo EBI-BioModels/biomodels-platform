@@ -35,6 +35,7 @@ class JummpController {
     def teamService
     def feedbackService
     def messageSource
+    def reviewerAccountService
 
     final List<String> AUDIT_EXCEPTIONS = ['support', 'aboutus', 'contactus', 'lookupUser',
                                            'autoCompleteUser', 'teamLookup']
@@ -152,6 +153,15 @@ class JummpController {
         } else {
             println "This operation does not support."
         }
+    }
+
+    @Secured(["IS_AUTHENTICATED_FULLY"])
+    def createReviewerAccount() {
+        String serverURL = grailsApplication.config.grails.serverURL
+        String modelId = params.get("id").decodeHTML()
+        String message = reviewerAccountService.createAccountAndInstructions(modelId, serverURL)
+        Map retMap = [modelId: modelId, message: message, serverURL: serverURL]
+        render(view: "createReviewerAccount", model: retMap)
     }
 
     def lookupUser = {

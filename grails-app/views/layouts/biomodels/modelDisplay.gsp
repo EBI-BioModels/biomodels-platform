@@ -271,6 +271,12 @@
                         primary:"ui-icon-arrowthickstop-1-s"
                     }
             }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
+            $("#ask-reviewer-account").button({
+                    text:false,
+                    icons: {
+                        primary:"ui-icon-circle-check"
+                    }
+            }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
             $( "#peer-review" ).button({
                 text:false,
                 icons: {
@@ -593,6 +599,14 @@
                                 onclick="return $('#confirm-model-conversion').dialog('open');">
                             Convert
                         </button>
+                    </li>
+                </g:if>
+                <g:if test="${canAskReviewerAccount}">
+                    <li>
+                        <button class='toolbutton' id="ask-reviewer-account"
+                                onclick="return $.jummp.openPage('${g.createLink(controller: 'jummp',
+                            action: 'createReviewerAccount',
+                            id: revision.modelIdentifier())}')">Reviewer</button>
                     </li>
                 </g:if>
             </ul>
