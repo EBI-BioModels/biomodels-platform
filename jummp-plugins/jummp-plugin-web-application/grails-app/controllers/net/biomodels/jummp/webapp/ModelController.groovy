@@ -35,12 +35,11 @@
 package net.biomodels.jummp.webapp
 
 import grails.converters.JSON
-import grails.util.Environment
 import grails.plugin.springsecurity.annotation.Secured
+import grails.util.Environment
 import net.biomodels.jummp.core.IFileSystemService
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.*
-import net.biomodels.jummp.core.model.PublicationDetailExtractionContext as PDEC
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.util.ReactomeEnvironment
 import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
@@ -588,11 +587,21 @@ class ModelController {
         String name = omexFile.name
         resp.setContentType("application/zip")
         resp.setHeader("Content-disposition", "attachment;filename=\"${name}\"")
-        resp.outputStream << new ByteArrayInputStream(omexFile.readBytes())
-        if (omexFile.delete()) {
-            LOGGER.info("The temporary file was deleted successfully.")
-        } else {
-            LOGGER.info("Cannot delete the temporary file.")
+        ByteArrayInputStream  stream = null
+        try {
+            stream = new ByteArrayInputStream(omexFile.readBytes())
+            resp.outputStream << stream
+        } catch (IOException ioE) {
+            LOGGER.error("The client might have aborted their download request.", ioE)
+        } finally {
+            if (omexFile.delete()) {
+                LOGGER.info("The temporary file was deleted successfully.")
+            } else {
+                LOGGER.info("Cannot delete the temporary file.")
+            }
+            if (stream) {
+                stream.close()
+            }
         }
     }
 
@@ -609,7 +618,33 @@ class ModelController {
         zipFile.close()
         resp.setContentType("application/zip")
         resp.setHeader("Content-disposition", "attachment;filename=\"${params.id}.zip\"")
-        resp.outputStream << new ByteArrayInputStream(byteBuffer.toByteArray())
+        ByteArrayInputStream  stream = null
+        try {
+            stream = new ByteArrayInputStream(byteBuffer.toByteArray())
+            resp.outputStream << stream
+        } catch (IOException ioE) {
+            LOGGER.error("The client might have aborted their download request.", ioE)
+        } finally {
+            if (zipFile) {
+                LOGGER.debug("ZipFile ${zipFile.comment} has been flushed and closed.")
+                zipFile.flush()
+                zipFile.close()
+            }
+            if (byteBuffer) {
+                LOGGER.debug("byteBuffer (built from ${zipFile.comment}) has been flushed and closed.")
+                byteBuffer.flush()
+                byteBuffer.close()
+            }
+            if (resp.outputStream) {
+                LOGGER.debug("OutputStream of the file has been flushed and closed.")
+                resp.outputStream.flush()
+                resp.outputStream.close()
+            }
+            if (stream) {
+                LOGGER.debug("OutputStream of the file has been flushed and closed.")
+                stream.close()
+            }
+        }
     }
 
     private void serveModelAsFile(RFTC rf, def resp, boolean inline, boolean preview = false) {
@@ -621,11 +656,31 @@ class ModelController {
         resp.setHeader( "Content-Disposition", "${INLINE};filename=\"${F_NAME}\"")
         byte[] fileData = file.readBytes()
         int previewSize = grailsApplication.config.jummp.web.file.preview as Integer
-        if (!preview || previewSize > fileData.length) {
-            resp.outputStream << new ByteArrayInputStream(fileData)
-        }
-        else {
-            resp.outputStream << new ByteArrayInputStream(Arrays.copyOf(fileData, previewSize))
+        ByteArrayInputStream  stream = null
+        try {
+            if (!preview || previewSize > fileData.length) {
+                stream = new ByteArrayInputStream(fileData)
+                resp.outputStream << stream
+            } else {
+                stream = new ByteArrayInputStream(Arrays.copyOf(fileData, previewSize))
+                resp.outputStream << stream
+            }
+        } catch (IOException ioE) {
+            LOGGER.error("The client might have cancelled their download request.", ioE)
+        } finally {
+            if (file.delete()) {
+                LOGGER.debug("File ${file.name} has been deleted for cleaning the memory.")
+            }
+            if (resp.outputStream != null) {
+                LOGGER.debug("OutputStream of the file ${file.name} has been flushed and closed.")
+                resp.outputStream.flush()
+                resp.outputStream.close()
+            }
+            if (stream != null) {
+                LOGGER.debug("InputStream of the file ${file.name} has been flushed and closed.")
+                stream.close()
+            }
+            Arrays.fill(fileData, (byte)0)
         }
     }
 
@@ -681,12 +736,22 @@ class ModelController {
             }
         } catch (AccessDeniedException e) {
             forward(controller: "errors", action: "error403")
-        } catch (Exception e) {
+        } catch (IOException | Exception e ) {
             LOGGER.error(e.message, e)
-            render(status: 400,
-                view: "/errors/error400",
-                model: [errorDescription: "The model identifier parameter must be provided."])
+            String errDesc = ""
+            if (e instanceof IOException) {
+                errDesc = "The client has probably cancelled the download."
+            } else if (e instanceof Exception) {
+                errDesc = "The model identifier parameter must be provided."
+            }
+            render(status: 400, view: "/errors/error400", model: [errorDescription: errDesc])
             return
+        } finally {
+            if (response.outputStream) {
+                LOGGER.debug("Flushing and closing the output stream of the response")
+                response.outputStream.flush()
+                response.outputStream.close()
+            }
         }
     }
 
@@ -809,6 +874,17 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
         // TODO: set a proper name for the model
         response.setHeader("Content-disposition", "attachment;filename=\"model.xml\"")
         response.outputStream << new ByteArrayInputStream(bytes)
+        try {
+            response.outputStream << new ByteArrayInputStream(bytes)
+        } catch (IOException ioE) {
+            LOGGER.error("The client might have cancelled their download request.", ioE)
+            LOGGER.debug("Clearing any data that exists in the buffer as well as the status code, headers")
+        } finally {
+            if (response.outputStream) {
+                response.outputStream.flush()
+                response.outputStream.close()
+            }
+        }
     }
 
     private List getMainFiles(Map<String,Object> workingMemory) {
