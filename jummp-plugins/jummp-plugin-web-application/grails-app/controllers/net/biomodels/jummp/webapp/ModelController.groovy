@@ -237,7 +237,7 @@ class ModelController {
                     Set<TagTransportCommand> tags = metadataDelegateService.findTagsByModel(rev.model)
                     String reactomeUrl = ReactomeEnvironment.getUrlForThisEnvironment()
                     String hrefLinkToNewtEditor = makeLinkToNewtEditor(revision, repoFiles)
-
+                    boolean canAskReviewerAccount = modelDelegateService.canAskReviewerAccount(revision, hasCuratorRole)
                     def model = [
                                  revision               : rev,
                                  reactomeIds            : reactomeIds,
@@ -265,7 +265,8 @@ class ModelController {
                                  supportedForConversion : supportedForConversion,
                                  convertedFilesTC       : convertedFilesTC,
                                  bmTags                 : tags,
-                                 serverURL              : grailsApplication.config.grails.serverURL
+                                 serverURL              : grailsApplication.config.grails.serverURL,
+                                 canAskReviewerAccount  : canAskReviewerAccount
                     ]
                     if (rev.id == revision.id) {
                         flash.genericModel = model

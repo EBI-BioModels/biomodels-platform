@@ -2235,7 +2235,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
      * Returns true if a revision can be read by anonymous users and has state ModelState.PUBLISHED
      * and false otherwise.
      */
-    private boolean isRevisionPublic(Revision revision) {
+    boolean isRevisionPublic(Revision revision) {
         (revision.state == ModelState.PUBLISHED || revision.state == ModelState.RELEASED) &&
             aclUtilService.hasPermission(createAnonymousAuthToken(), revision, BasePermission.READ)
     }
