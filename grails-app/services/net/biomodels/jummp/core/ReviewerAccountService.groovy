@@ -91,10 +91,18 @@ class ReviewerAccountService extends UserService {
         }
         // TODO ensure there is no other reviewer account for these models?
         String accountName = formatReviewerAccountName(modelIDs)
+        User reviewer = User.findByUsername(accountName)
         String password = MathUtils.generatePassword((('A'..'Z')+('0'..'9')).join(), 6)
-        User reviewer = createReviewerUser(accountName, password)
-        for (Model m: models) {
-            ms.grantReadAccess(m, reviewer)
+        if (!reviewer) {
+            reviewer = createReviewerUser(accountName, password)
+            LOGGER.debug("A reviewer account [${reviewer.dump()}] has been created for the model(s): ${commaSeparatedModels}.")
+            for (Model m: models) {
+                ms.grantReadAccess(m, reviewer)
+            }
+        } else {
+            // update the new password to the reviewer account
+            reviewer.password = sss.encodePassword(password)
+            reviewer.save(flush: true)
         }
 
         new ReviewerAccountInfo(sharedModels: models, password: password, user: reviewer)
