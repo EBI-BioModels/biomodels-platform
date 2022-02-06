@@ -591,16 +591,16 @@ class ModelController {
         try {
             resp.outputStream << new ByteArrayInputStream(omexFile.readBytes())
         } catch (ClientAbortException cAE) {
-            LOGGER.error("The client might have cancelled their download request.")
-            throw cAE
+            LOGGER.error("The client might have cancelled their download request.", cAE)
+            // Read more https://javaee.github.io/javaee-spec/javadocs/javax/servlet/ServletResponse.html#reset--
+            LOGGER.debug("Clearing any data that exists in the buffer as well as the status code, headers")
+            resp.reset()
         } finally {
             if (omexFile.delete()) {
                 LOGGER.info("The temporary file was deleted successfully.")
             } else {
                 LOGGER.info("Cannot delete the temporary file.")
             }
-            // Read more https://javaee.github.io/javaee-spec/javadocs/javax/servlet/ServletResponse.html#reset--
-            resp.reset()
         }
     }
 
@@ -620,10 +620,11 @@ class ModelController {
         try {
             resp.outputStream << new ByteArrayInputStream(byteBuffer.toByteArray())
         } catch (ClientAbortException cAE) {
-            LOGGER.error("The client might have cancelled their download request.")
-            throw cAE
-        } finally {
+            LOGGER.error("The client might have cancelled their download request.", cAE)
+            LOGGER.debug("Clearing any data that exists in the buffer as well as the status code, headers")
             resp.reset()
+        } finally {
+            // neglect
         }
     }
 
@@ -643,10 +644,11 @@ class ModelController {
                 resp.outputStream << new ByteArrayInputStream(Arrays.copyOf(fileData, previewSize))
             }
         } catch (ClientAbortException cAE) {
-            LOGGER.error("The client might have cancelled their download request.")
-            throw cAE
-        } finally {
+            LOGGER.error("The client might have cancelled their download request.", cAE)
+            LOGGER.debug("Clearing any data that exists in the buffer as well as the status code, headers")
             resp.reset()
+        } finally {
+            // neglect
         }
     }
 
@@ -840,10 +842,11 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
         try {
             response.outputStream << new ByteArrayInputStream(bytes)
         } catch (ClientAbortException cAE) {
-            LOGGER.error("The client might have cancelled their download request.")
-            throw cAE
-        } finally {
+            LOGGER.error("The client might have cancelled their download request.", cAE)
+            LOGGER.debug("Clearing any data that exists in the buffer as well as the status code, headers")
             response.reset()
+        } finally {
+            // neglect
         }
     }
 
