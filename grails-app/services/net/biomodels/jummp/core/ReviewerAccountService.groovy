@@ -100,18 +100,21 @@ class ReviewerAccountService extends UserService {
         new ReviewerAccountInfo(sharedModels: models, password: password, user: reviewer)
     }
 
-    String createAccountAndInstructions(final String modelsToReview) {
+    String createAccountAndInstructions(final String modelsToReview, final String serverURL) {
         ReviewerAccountInfo reviewerInfo = createReviewerAccount(modelsToReview)
         String u = reviewerInfo.user.username
         String p = reviewerInfo.password
-        return """Please forward the following instructions to the reviewers:
+        return """<p>Please forward the following instructions to the reviewers:</p>
 
-To access these models
-1. Please visit https://www.ebi.ac.uk/biomodels/login/auth
-2. Log in with username $u and password $p
-3. Access the model at this link https://www.ebi.ac.uk/biomodels/${modelsToReview}
+<p>To access these models:</p>
+<p>
+1. Please visit <a href='${serverURL}/login/auth' target='_blank'>
+${serverURL}/login/auth</a><br/>
+2. Log in with username <strong>$u</strong> and password <strong>$p</strong><br/>
+3. Access the model at this link <a href='${serverURL}/${modelsToReview}' target='_blank'>
+${serverURL}/${modelsToReview}</a></p>
 
-In case of problems, please email biomodels-net-support@lists.sf.net, indicating the username $u
+<p>In case of problems, please email <em>biomodels-net-support@lists.sf.net</em>, indicating the username <strong>$u</strong>.</p>
 """
     }
 
