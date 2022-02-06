@@ -588,8 +588,10 @@ class ModelController {
         String name = omexFile.name
         resp.setContentType("application/zip")
         resp.setHeader("Content-disposition", "attachment;filename=\"${name}\"")
+        ByteArrayInputStream  stream = null
         try {
-            resp.outputStream << new ByteArrayInputStream(omexFile.readBytes())
+            stream = new ByteArrayInputStream(omexFile.readBytes())
+            resp.outputStream << stream
         } catch (ClientAbortException cAE) {
             LOGGER.error("The client might have cancelled their download request.", cAE)
             // Read more https://javaee.github.io/javaee-spec/javadocs/javax/servlet/ServletResponse.html#reset--
@@ -600,6 +602,9 @@ class ModelController {
                 LOGGER.info("The temporary file was deleted successfully.")
             } else {
                 LOGGER.info("Cannot delete the temporary file.")
+            }
+            if (stream) {
+                stream.close()
             }
         }
     }
@@ -617,14 +622,34 @@ class ModelController {
         zipFile.close()
         resp.setContentType("application/zip")
         resp.setHeader("Content-disposition", "attachment;filename=\"${params.id}.zip\"")
+        ByteArrayInputStream  stream = null
         try {
-            resp.outputStream << new ByteArrayInputStream(byteBuffer.toByteArray())
+            stream = new ByteArrayInputStream(byteBuffer.toByteArray())
+            resp.outputStream << stream
         } catch (ClientAbortException cAE) {
             LOGGER.error("The client might have cancelled their download request.", cAE)
             LOGGER.debug("Clearing any data that exists in the buffer as well as the status code, headers")
             resp.reset()
         } finally {
-            // neglect
+            if (zipFile) {
+                LOGGER.debug("ZipFile ${zipFile.comment} has been flushed and closed.")
+                zipFile.flush()
+                zipFile.close()
+            }
+            if (byteBuffer) {
+                LOGGER.debug("byteBuffer (built from ${zipFile.comment}) has been flushed and closed.")
+                byteBuffer.flush()
+                byteBuffer.close()
+            }
+            if (resp.outputStream) {
+                LOGGER.debug("OutputStream of the file has been flushed and closed.")
+                resp.outputStream.flush()
+                resp.outputStream.close()
+            }
+            if (stream) {
+                LOGGER.debug("OutputStream of the file has been flushed and closed.")
+                stream.close()
+            }
         }
     }
 
@@ -637,18 +662,33 @@ class ModelController {
         resp.setHeader( "Content-Disposition", "${INLINE};filename=\"${F_NAME}\"")
         byte[] fileData = file.readBytes()
         int previewSize = grailsApplication.config.jummp.web.file.preview as Integer
+        ByteArrayInputStream  stream = null
         try {
             if (!preview || previewSize > fileData.length) {
-                resp.outputStream << new ByteArrayInputStream(fileData)
+                stream = new ByteArrayInputStream(fileData)
+                resp.outputStream << stream
             } else {
-                resp.outputStream << new ByteArrayInputStream(Arrays.copyOf(fileData, previewSize))
+                stream = new ByteArrayInputStream(Arrays.copyOf(fileData, previewSize))
+                resp.outputStream << stream
             }
         } catch (ClientAbortException cAE) {
             LOGGER.error("The client might have cancelled their download request.", cAE)
             LOGGER.debug("Clearing any data that exists in the buffer as well as the status code, headers")
             resp.reset()
         } finally {
-            // neglect
+            if (file.delete()) {
+                LOGGER.debug("File ${file.name} has been deleted for cleaning the memory.")
+            }
+            if (resp.outputStream != null) {
+                LOGGER.debug("OutputStream of the file ${file.name} has been flushed and closed.")
+                resp.outputStream.flush()
+                resp.outputStream.close()
+            }
+            if (stream != null) {
+                LOGGER.debug("InputStream of the file ${file.name} has been flushed and closed.")
+                stream.close()
+            }
+            Arrays.fill(fileData, (byte)0)
         }
     }
 
@@ -715,8 +755,11 @@ class ModelController {
             render(status: 400, view: "/errors/error400", model: [errorDescription: errDesc])
             return
         } finally {
-            // close, disconnect
-
+            if (response.outputStream) {
+                LOGGER.debug("Flushing and closing the output stream of the response")
+                response.outputStream.flush()
+                response.outputStream.close()
+            }
         }
     }
 
