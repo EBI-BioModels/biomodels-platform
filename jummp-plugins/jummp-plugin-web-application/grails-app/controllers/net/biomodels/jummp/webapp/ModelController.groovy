@@ -35,12 +35,11 @@
 package net.biomodels.jummp.webapp
 
 import grails.converters.JSON
-import grails.util.Environment
 import grails.plugin.springsecurity.annotation.Secured
+import grails.util.Environment
 import net.biomodels.jummp.core.IFileSystemService
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.*
-import net.biomodels.jummp.core.model.PublicationDetailExtractionContext as PDEC
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.util.ReactomeEnvironment
 import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
@@ -53,7 +52,6 @@ import net.biomodels.jummp.utils.redis.KeyCollection
 import net.biomodels.jummp.webapp.rest.errors.Error
 import net.biomodels.jummp.webapp.rest.model.show.Model as RestfulModel
 import net.biomodels.jummp.webapp.rest.model.show.ModelFiles
-import org.apache.catalina.connector.ClientAbortException
 import org.codehaus.groovy.grails.web.json.JSONObject
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -592,11 +590,8 @@ class ModelController {
         try {
             stream = new ByteArrayInputStream(omexFile.readBytes())
             resp.outputStream << stream
-        } catch (ClientAbortException cAE) {
-            LOGGER.error("The client might have cancelled their download request.", cAE)
-            // Read more https://javaee.github.io/javaee-spec/javadocs/javax/servlet/ServletResponse.html#reset--
-            LOGGER.debug("Clearing any data that exists in the buffer as well as the status code, headers")
-            resp.reset()
+        } catch (IOException ioE) {
+            LOGGER.error("The client might have aborted their download request.", ioE)
         } finally {
             if (omexFile.delete()) {
                 LOGGER.info("The temporary file was deleted successfully.")
@@ -626,10 +621,8 @@ class ModelController {
         try {
             stream = new ByteArrayInputStream(byteBuffer.toByteArray())
             resp.outputStream << stream
-        } catch (ClientAbortException cAE) {
-            LOGGER.error("The client might have cancelled their download request.", cAE)
-            LOGGER.debug("Clearing any data that exists in the buffer as well as the status code, headers")
-            resp.reset()
+        } catch (IOException ioE) {
+            LOGGER.error("The client might have aborted their download request.", ioE)
         } finally {
             if (zipFile) {
                 LOGGER.debug("ZipFile ${zipFile.comment} has been flushed and closed.")
@@ -671,10 +664,8 @@ class ModelController {
                 stream = new ByteArrayInputStream(Arrays.copyOf(fileData, previewSize))
                 resp.outputStream << stream
             }
-        } catch (ClientAbortException cAE) {
-            LOGGER.error("The client might have cancelled their download request.", cAE)
-            LOGGER.debug("Clearing any data that exists in the buffer as well as the status code, headers")
-            resp.reset()
+        } catch (IOException ioE) {
+            LOGGER.error("The client might have cancelled their download request.", ioE)
         } finally {
             if (file.delete()) {
                 LOGGER.debug("File ${file.name} has been deleted for cleaning the memory.")
@@ -884,12 +875,14 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
         response.outputStream << new ByteArrayInputStream(bytes)
         try {
             response.outputStream << new ByteArrayInputStream(bytes)
-        } catch (ClientAbortException cAE) {
-            LOGGER.error("The client might have cancelled their download request.", cAE)
+        } catch (IOException ioE) {
+            LOGGER.error("The client might have cancelled their download request.", ioE)
             LOGGER.debug("Clearing any data that exists in the buffer as well as the status code, headers")
-            response.reset()
         } finally {
-            // neglect
+            if (response.outputStream) {
+                response.outputStream.flush()
+                response.outputStream.close()
+            }
         }
     }
 
