@@ -669,10 +669,6 @@ class ModelController {
         } catch (IOException ioE) {
             LOGGER.error("The client might have cancelled their download request.", ioE)
         } finally {
-            if (file.delete()) {
-                LOGGER.debug("File ${file.name} has been deleted for cleaning the memory.")
-            }
-
             if (stream != null) {
                 LOGGER.debug("InputStream of the file ${file.name} has been flushed and closed.")
                 stream.close()
