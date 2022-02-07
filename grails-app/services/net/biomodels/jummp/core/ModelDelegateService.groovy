@@ -176,6 +176,25 @@ class ModelDelegateService implements IModelService {
         }
     }
 
+    RevisionTC getOldestRevision(final String modelId) {
+        if (!modelId) {
+            return null
+        } else {
+            List<RevisionTC> allRevisions = getAllRevisions(modelId)
+            int smallestRevNum = allRevisions*.revisionNumber.min()
+            RevisionTC smallest = allRevisions.find {
+                it.revisionNumber == smallestRevNum
+            }
+            return smallest
+        }
+    }
+
+    RevisionTC getOldestRevision(final RevisionTC revisionTC) {
+        if (!revisionTC) { return null }
+        ModelTC modelTC = revisionTC.model
+        getOldestRevision(modelTC.submissionId)
+    }
+
     List<RevisionTC> getAllRevisions(String modelId) {
         def model = modelService.findByPerennialIdentifier(modelId)
         def revs = modelService.getAllRevisions(model)

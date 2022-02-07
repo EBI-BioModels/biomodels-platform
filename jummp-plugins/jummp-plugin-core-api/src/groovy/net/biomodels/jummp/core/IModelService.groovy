@@ -134,6 +134,24 @@ interface IModelService {
     RevisionTC getLatestRevision(String modelId)
 
     /**
+     * Queries the oldest/first revision of a model. Because of the deletion, the first revision couldn't be the one
+     * which revision number is greater than 1. Thus, the first or oldest revision will be the one which revision
+     * number is the smallest.
+     *
+     * @param modelId   indicating the model
+     * @return  the revision transport command
+     */
+    RevisionTC getOldestRevision(String modelId)
+
+    /**
+     * @see getOldestRevision(String modelId)
+     *
+     * @param revisionTC
+     * @return
+     */
+    RevisionTC getOldestRevision(RevisionTC revisionTC)
+
+    /**
      * Queries the model for all revisions the user has read access to.
      * The returned list is ordered by revision number of the model.
      * @param modelId The id of the Model for which all revisions should be retrieved
