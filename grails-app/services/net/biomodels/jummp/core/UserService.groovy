@@ -40,9 +40,12 @@ import net.biomodels.jummp.plugins.security.Person
 import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.plugins.security.UserRole
+import net.biomodels.jummp.utils.MathUtils
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.perf4j.aop.Profiled
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.mail.MailAuthenticationException
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.access.prepost.PreAuthorize
@@ -64,7 +67,7 @@ import javax.mail.AuthenticationFailedException
  * @author Raza Ali <raza.ali@ebi.ac.uk>
  */
 class UserService implements IUserService {
-    private static final Log log = LogFactory.getLog(this.getClass())
+    private static final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
     /**
      * Dependency injection of springSecurityService
      */
@@ -417,16 +420,16 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
                 }
             } else {
                 if (!newUser.person.save(flush: true)) {
-                    log.error("Cannot save user ${newUser.properties} - ${newUser.errors.allErrors.inspect()}. oops")
+                    LOGGER.error("Cannot save user ${newUser.properties} - ${newUser.errors.allErrors.inspect()}. oops")
                 } else {
-                    log.debug(newUser)
+                    LOGGER.debug(newUser)
                 }
             }
         } else {
             newUser.person.save(flush:true, failOnError:true)
         }
         boolean adminRegistration = false
-        String p = generator( (('A'..'Z')+('0'..'9')).join(), 6 )
+        String p = MathUtils.generatePassword( (('A'..'Z')+('0'..'9')).join(), 6 )
         if (SpringSecurityUtils.ifAnyGranted("ROLE_ADMIN")) {
             // admin creates with a random password that is emailed to the user.
             newUser.enabled = true
@@ -682,7 +685,7 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
             if (persistAdminWithRoles(person)) {
                 userCreated = true
             } else {
-                log.error("The initial user could not be created in the database. Is the database configured properly?")
+                LOGGER.error("The initial user could not be created in the database. Is the database configured properly?")
                 userCreated = false
             }
         } else {
@@ -732,7 +735,7 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
             if (potential) {
                 User user = User.findByPerson(potential)
                 if (user && user != oldUser) {
-                    log.warn("""\
+                    LOGGER.warn("""\
 User ${newUser.username} tried to register orcid ${orcid4NewUser} which is already in use by ${potential.userRealName}""")
                     throw new UserInvalidException("Someone with this ORCID (${orcid4NewUser}) is already registered in the repository", oldUser.id)
                 } else {

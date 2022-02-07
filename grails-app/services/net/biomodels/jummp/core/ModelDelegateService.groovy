@@ -84,6 +84,7 @@ class ModelDelegateService implements IModelService {
     def qcInfoDelegateService
     def modelFlagService
     def referenceTracker
+    def userService
 
     @NotTransactional
     String getPluginForFormat(MFTC format) {
@@ -173,6 +174,25 @@ class ModelDelegateService implements IModelService {
         } else {
             throw new AccessDeniedException("No access to any revision of Model ${modelId}")
         }
+    }
+
+    RevisionTC getOldestRevision(final String modelId) {
+        if (!modelId) {
+            return null
+        } else {
+            List<RevisionTC> allRevisions = getAllRevisions(modelId)
+            int smallestRevNum = allRevisions*.revisionNumber.min()
+            RevisionTC smallest = allRevisions.find {
+                it.revisionNumber == smallestRevNum
+            }
+            return smallest
+        }
+    }
+
+    RevisionTC getOldestRevision(final RevisionTC revisionTC) {
+        if (!revisionTC) { return null }
+        ModelTC modelTC = revisionTC.model
+        getOldestRevision(modelTC.submissionId)
     }
 
     List<RevisionTC> getAllRevisions(String modelId) {
@@ -277,6 +297,31 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
             }
         }
         return Collections.emptyList()
+    }
+
+    @NotTransactional
+    boolean canAskReviewerAccount(final RevisionTC revisionTC, final boolean hasCuratorRole) {
+        User currentUser = userService.getCurrentUser()
+        boolean isModelOwner = isOwnedBy(revisionTC, currentUser)
+        boolean isAdmin = userService.isAdmin(currentUser)
+        Revision revision = Revision.get(revisionTC.id)
+        boolean published = modelService.isRevisionPublic(revision)
+        boolean retVal = !published && (isModelOwner || hasCuratorRole || isAdmin)
+        retVal
+    }
+
+    /**
+     * Checks that the given user is the owner or not of the model which revisionTC is among its revisions
+     * @param revisionTC A RevisionTransportCommand object
+     * @param user  A user
+     * @return true or false
+     */
+    @NotTransactional
+    boolean isOwnedBy(final RevisionTC revisionTC, final User user) {
+        // TODO: the model owner could be defined as a person among the users working with the model
+        // the original submitter who is the first user submitted the model
+        ModelTC modelTC = revisionTC.model
+        modelTC.submitterUsername == user.username
     }
 
     @NotTransactional

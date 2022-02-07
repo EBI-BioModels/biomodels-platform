@@ -65,7 +65,7 @@ import java.util.zip.ZipOutputStream
 
 @Secured(['IS_AUTHENTICATED_FULLY'])
 class ModelController {
-    private static final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
+    private static final Logger LOGGER = LoggerFactory.getLogger(ModelController.class)
     private final boolean IS_DEBUG_ENABLED = LOGGER.isDebugEnabled()
     IFileSystemService fileSystemService
     def springSecurityService
@@ -236,7 +236,13 @@ class ModelController {
                     Set<TagTransportCommand> tags = metadataDelegateService.findTagsByModel(rev.model)
                     String reactomeUrl = ReactomeEnvironment.getUrlForThisEnvironment()
                     String hrefLinkToNewtEditor = makeLinkToNewtEditor(revision, repoFiles)
-
+                    def currentUser = springSecurityService.currentUser
+                    boolean canAskReviewerAccount = true
+                    if (!currentUser) {
+                        canAskReviewerAccount = false
+                    } else {
+                        canAskReviewerAccount = modelDelegateService.canAskReviewerAccount(revision, hasCuratorRole)
+                    }
                     def model = [
                                  revision               : rev,
                                  reactomeIds            : reactomeIds,
@@ -264,7 +270,8 @@ class ModelController {
                                  supportedForConversion : supportedForConversion,
                                  convertedFilesTC       : convertedFilesTC,
                                  bmTags                 : tags,
-                                 serverURL              : grailsApplication.config.grails.serverURL
+                                 serverURL              : grailsApplication.config.grails.serverURL,
+                                 canAskReviewerAccount  : canAskReviewerAccount
                     ]
                     if (rev.id == revision.id) {
                         flash.genericModel = model
@@ -634,11 +641,6 @@ class ModelController {
                 byteBuffer.flush()
                 byteBuffer.close()
             }
-            if (resp.outputStream) {
-                LOGGER.debug("OutputStream of the file has been flushed and closed.")
-                resp.outputStream.flush()
-                resp.outputStream.close()
-            }
             if (stream) {
                 LOGGER.debug("OutputStream of the file has been flushed and closed.")
                 stream.close()
@@ -670,11 +672,7 @@ class ModelController {
             if (file.delete()) {
                 LOGGER.debug("File ${file.name} has been deleted for cleaning the memory.")
             }
-            if (resp.outputStream != null) {
-                LOGGER.debug("OutputStream of the file ${file.name} has been flushed and closed.")
-                resp.outputStream.flush()
-                resp.outputStream.close()
-            }
+
             if (stream != null) {
                 LOGGER.debug("InputStream of the file ${file.name} has been flushed and closed.")
                 stream.close()
@@ -736,21 +734,19 @@ class ModelController {
         } catch (AccessDeniedException e) {
             forward(controller: "errors", action: "error403")
         } catch (IOException | Exception e ) {
-            LOGGER.error(e.message, e)
             String errDesc = ""
             if (e instanceof IOException) {
-                errDesc = "The client has probably cancelled the download."
+                errDesc = "The client has probably aborted the download request."
             } else if (e instanceof Exception) {
                 errDesc = "The model identifier parameter must be provided."
             }
+            LOGGER.error(errDesc, e)
             render(status: 400, view: "/errors/error400", model: [errorDescription: errDesc])
             return
         } finally {
-            if (response.outputStream) {
-                LOGGER.debug("Flushing and closing the output stream of the response")
-                response.outputStream.flush()
-                response.outputStream.close()
-            }
+            // TODO: How to clean up the recently used resources to free the heap memory
+            // In fact, the cleaning process is performed in the sub processes of this action,
+            // e.g. {@see serveModelAsCombineArchive()} and {@see serveModelAsFile()} method
         }
     }
 
@@ -872,16 +868,14 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
         response.setContentType("application/xml")
         // TODO: set a proper name for the model
         response.setHeader("Content-disposition", "attachment;filename=\"model.xml\"")
-        response.outputStream << new ByteArrayInputStream(bytes)
+        ByteArrayInputStream stream = new ByteArrayInputStream(bytes)
         try {
-            response.outputStream << new ByteArrayInputStream(bytes)
+            response.outputStream << stream
         } catch (IOException ioE) {
             LOGGER.error("The client might have cancelled their download request.", ioE)
-            LOGGER.debug("Clearing any data that exists in the buffer as well as the status code, headers")
         } finally {
-            if (response.outputStream) {
-                response.outputStream.flush()
-                response.outputStream.close()
+            if (stream) {
+                stream.close()
             }
         }
     }
