@@ -236,7 +236,13 @@ class ModelController {
                     Set<TagTransportCommand> tags = metadataDelegateService.findTagsByModel(rev.model)
                     String reactomeUrl = ReactomeEnvironment.getUrlForThisEnvironment()
                     String hrefLinkToNewtEditor = makeLinkToNewtEditor(revision, repoFiles)
-                    boolean canAskReviewerAccount = modelDelegateService.canAskReviewerAccount(revision, hasCuratorRole)
+                    def currentUser = springSecurityService.currentUser
+                    boolean canAskReviewerAccount = true
+                    if (!currentUser) {
+                        canAskReviewerAccount = false
+                    } else {
+                        canAskReviewerAccount = modelDelegateService.canAskReviewerAccount(revision, hasCuratorRole)
+                    }
                     def model = [
                                  revision               : rev,
                                  reactomeIds            : reactomeIds,
