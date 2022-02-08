@@ -23,12 +23,12 @@ package net.biomodels.jummp.deployment.biomodels
 import grails.converters.JSON
 import grails.converters.XML
 import grails.plugin.springsecurity.annotation.Secured
+import grails.rest.Resource
 import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchCommand
 import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchResults
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
-import grails.rest.*
 import org.perf4j.aop.Profiled
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.validation.FieldError
 
 import java.nio.charset.StandardCharsets
@@ -41,20 +41,17 @@ import java.nio.charset.StandardCharsets
 @Resource(uri = '/parameterSearch')
 class ParameterSearchController {
     def parameterSearchService
-    /**
-     * The class logger.
-     */
-    static final Log log = LogFactory.getLog(ParameterSearchController.class)
+    private static final Logger LOGGER = LoggerFactory.getLogger(ParameterSearchController.class)
 
     final String IOExceptionCustomMessage = """\
-Unable to retrieve data from EBI Search due to some problems with the request parameters, 
+Unable to retrieve data from EBI Search due to some problems with the request parameters,
 please use the suitable request parameters and try again."""
 
     @Profiled
     def index(ParameterSearchCommand command) {
         if (!command.validate()) {
             def msg = "Invalid request $command.query, ${command.errors.allErrors.inspect().toString()}"
-            log.error(msg)
+            LOGGER.error(msg)
             return ["message": msg, "command": command]
         }
         response.setHeader("Access-Control-Allow-Origin", "https://ebi.emblstatic.net")
@@ -116,14 +113,14 @@ please use the suitable request parameters and try again."""
                 }
             }
         } catch (IllegalArgumentException ie) {
-            log.error(ie.message, ie)
+            LOGGER.error(ie.message, ie)
             renderErrorMessage(ie.getMessage(), format, 400)
         } catch (IOException ioe) {
-            log.error(ioe.message, ioe)
+            LOGGER.error(ioe.message, ioe)
             renderErrorMessage(IOExceptionCustomMessage, format, 400)
         } catch (Exception ex) {
             String msg = "Error encountered while processing $command, No matches found"
-            log.error(ex.message, ex)
+            LOGGER.error(ex.message, ex)
             renderErrorMessage(msg, format, 500)
         }
     }
@@ -147,15 +144,15 @@ please use the suitable request parameters and try again."""
             def content = resultCSV.getBytes(StandardCharsets.UTF_8)
             response.outputStream << new ByteArrayInputStream(content)
         } catch (IllegalArgumentException ie) {
-            log.error(ie.message, ie)
+            LOGGER.error(ie.message, ie)
             renderErrorMessage(ie.getMessage(), format, 400)
         } catch (IOException ioe) {
-            log.error(ioe.message, ioe)
+            LOGGER.error(ioe.message, ioe)
             renderErrorMessage(ioe.message, format, 400)
 
         } catch (Exception ex) {
             String msg = "Error encountered while processing $command, No matches found"
-            log.error(ex.message, ex)
+            LOGGER.error(ex.message, ex)
             renderErrorMessage(msg, format, 500)
         }
     }
@@ -172,7 +169,7 @@ please use the suitable request parameters and try again."""
             response.status = 400
             String errorString = parseErrors(command.errors.fieldErrors)
             String commandErrorMessage = "Invalid request parameter. $errorString"
-            log.error(commandErrorMessage)
+            LOGGER.error(commandErrorMessage)
             renderErrorMessage(commandErrorMessage, format, 400)
             return false
         }

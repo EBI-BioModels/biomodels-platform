@@ -23,6 +23,10 @@
 
 
 package net.biomodels.jummp.core
+
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
 /**
  * @short Class written as a spring-bean singleton to hold modelfileformatservice config data
  *
@@ -33,6 +37,7 @@ package net.biomodels.jummp.core
  * @date 9/09/2013
  */
 class ModelFileFormatConfig {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ModelFileFormatConfig.class)
     /**
      * The registered services to handle ModelFormats
      */

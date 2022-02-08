@@ -20,8 +20,9 @@
 
 package net.biomodels.jummp.core
 
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
+
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * Simple job for updating the export of the identifiers.org registry.
@@ -31,7 +32,7 @@ import org.apache.commons.logging.LogFactory
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
 class MiriamRegistryExportUpdaterJob {
-    private static final Log log = LogFactory.getLog(MiriamRegistryExportUpdaterJob.class)
+    private static final Logger LOGGER = LoggerFactory.getLogger(MiriamRegistryExportUpdaterJob.class)
     def miriamService
 
     static triggers = {
@@ -39,8 +40,8 @@ class MiriamRegistryExportUpdaterJob {
     }
 
     def execute() {
-        log.info "Started refreshing identifiers.org registry export."
+        LOGGER.info "Started refreshing identifiers.org registry export."
         miriamService.updateMiriamResources()
-        log.info "Finished refreshing identifiers.org registry export."
+        LOGGER.info "Finished refreshing identifiers.org registry export."
     }
 }

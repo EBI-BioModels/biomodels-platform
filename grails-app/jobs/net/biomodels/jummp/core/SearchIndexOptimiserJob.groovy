@@ -14,7 +14,7 @@ class SearchIndexOptimiserJob {
     /**
      * The class logger.
      */
-    static final Log log = LogFactory.getLog(SearchService.class)
+    static final Log log = LogFactory.getLog(SearchIndexOptimiserJob.class)
     /**
      * Flag indicating the logger's verbosity threshold.
      */
