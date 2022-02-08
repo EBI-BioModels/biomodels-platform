@@ -32,6 +32,7 @@ class ParameterSearchService {
 
     ParameterSearchResults getJSONData(ParameterSearchCommand command) {
         String searchResults = getData(command, "JSON")
+        if (!searchResults) { return null }
         return ParameterSearchResults.fromJson(JSON.parse(searchResults))
     }
 
