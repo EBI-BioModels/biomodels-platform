@@ -128,7 +128,6 @@ command - ${command}""".toString(), ste)
             LOGGER.error("The proxy setting cannot be null or ${iae.getMessage()}")
         } finally {
             conn.getInputStream().close()
-            conn.disconnect()
         }
         return null
     }
