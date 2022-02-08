@@ -296,6 +296,8 @@ log4j.main = {
         threshold: org.apache.log4j.Level.INFO, additivity: false
     rollingFile name: "hibernateAppender", file: "${logsDir}/jummp-hibernate.log",
         threshold: org.apache.log4j.Level.WARN, additivity: false
+    rollingFile name: "cronJobAppender", file: "${logsDir}/jummp-cronjob.log",
+        threshold: org.apache.log4j.Level.WARN, additivity: false
 
     debug debugAppender: [
         'net.biomodels.jummp',
@@ -323,6 +325,18 @@ log4j.main = {
         'net.biomodels.jummp.core.ModelDelegateService'
 
     ], additivity: false
+
+    debug cronJobAppender: [
+        'net.biomodels.jummp.core.AuthenticationOutdaterJob',
+        'net.biomodels.jummp.core.GarbageCollectionBasedCleanerJob',
+        'net.biomodels.jummp.core.HomePageUpdaterJob',
+        'net.biomodels.jummp.core.MiriamRegistryExportUpdaterJob',
+        'net.biomodels.jummp.core.ModelFileFormatConfig',
+        'net.biomodels.jummp.core.OldFilesExchangeCleanerJob',
+        'net.biomodels.jummp.core.RegistrationCheckerJob',
+        'net.biomodels.jummp.core.SearchIndexOptimiserJob',
+    ], additivity: false
+
     warn hibernateAppender: [
         'org.codehaus.groovy.grails.orm.hibernate',
         'org.codehaus.groovy.grails.orm.support',
