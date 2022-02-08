@@ -131,6 +131,7 @@ please use the suitable request parameters and try again."""
         if (!validateCommandObject(command, format)) {
             return
         }
+        ByteArrayInputStream stream = null
         try {
             String resultCSV = parameterSearchService.exportData(command)
             if (null == resultCSV || resultCSV.isEmpty()) {
@@ -142,18 +143,22 @@ please use the suitable request parameters and try again."""
             response.setContentType("text/csv; header=present; charset=UTF-8")
             response.setHeader("Content-Disposition", "attachment;filename=${filename}")
             def content = resultCSV.getBytes(StandardCharsets.UTF_8)
-            response.outputStream << new ByteArrayInputStream(content)
+            stream = new ByteArrayInputStream(content)
+            response.outputStream << stream
         } catch (IllegalArgumentException ie) {
             LOGGER.error(ie.message, ie)
             renderErrorMessage(ie.getMessage(), format, 400)
         } catch (IOException ioe) {
             LOGGER.error(ioe.message, ioe)
             renderErrorMessage(ioe.message, format, 400)
-
         } catch (Exception ex) {
             String msg = "Error encountered while processing $command, No matches found"
             LOGGER.error(ex.message, ex)
             renderErrorMessage(msg, format, 500)
+        } finally {
+            if (stream) {
+                stream.close()
+            }
         }
     }
 
