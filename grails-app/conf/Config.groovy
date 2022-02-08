@@ -297,7 +297,7 @@ log4j.main = {
     rollingFile name: "hibernateAppender", file: "${logsDir}/jummp-hibernate.log",
         threshold: org.apache.log4j.Level.WARN, additivity: false
     rollingFile name: "cronJobAppender", file: "${logsDir}/jummp-cronjob.log",
-        threshold: org.apache.log4j.Level.WARN, additivity: false
+        threshold: org.apache.log4j.Level.DEBUG, additivity: false
 
     debug debugAppender: [
         'net.biomodels.jummp',
