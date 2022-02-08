@@ -40,8 +40,10 @@ class MiriamRegistryExportUpdaterJob {
     }
 
     def execute() {
-        LOGGER.info "Started refreshing identifiers.org registry export."
+        LOGGER.info("Started refreshing identifiers.org registry export")
+        println("Started refreshing identifiers.org registry export")
         miriamService.updateMiriamResources()
-        LOGGER.info "Finished refreshing identifiers.org registry export."
+        LOGGER.info("Finished refreshing identifiers.org registry export")
+        println("Finished refreshing identifiers.org registry export")
     }
 }

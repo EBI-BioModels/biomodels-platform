@@ -45,8 +45,11 @@ class HomePageUpdaterJob {
 
     def execute() {
         // execute job
-        LOGGER.info("""\
-QuartzJob: Refreshing Redis cached data for widgets shown on the home page""")
+        String msgLog = """\
+QuartzJob: Refreshing Redis cached data for widgets shown on the home page"""
+        LOGGER.info(msgLog)
+        println(msgLog)
         decorationService.updateDataForWidgetsOnHomePage()
+        println("QuartzJob: Finishing the update of Redis cache")
     }
 }
