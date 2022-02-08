@@ -104,8 +104,22 @@ class ParameterSearchService {
             } else {
                 conn = (HttpURLConnection) url.openConnection()
             }
-            conn.setConnectTimeout(1000)
-            conn.setReadTimeout(1000)
+            /**
+             * https://docs.oracle.com/javase/8/docs/api/java/net/URLConnection.html
+             * https://stackoverflow.com/a/6830053/865603
+             * https://www.baeldung.com/java-socket-connection-read-timeout
+             *
+             * The server often accepts the client connection, especially inter-connected services. So, we
+             * don't need to pump up the specific time for the connection timeout property. Instead of
+             * increasing the connection time out, is is recommended to increase the time for the read time out.
+             *
+             * From the client side, the "read timed out" error happens if the server is taking longer to
+             * respond and send information. This could be due to a slow internet connection, or the host
+             * could be offline. From the server side, it happens when the server takes a long time to
+             * read data compared to the preset timeout.
+             */
+            conn.setConnectTimeout(15000)
+            conn.setReadTimeout(30000)
             conn.connect()
             if (conn.responseCode < 400) {
                 try {
