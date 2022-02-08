@@ -50,14 +50,16 @@ class SbmlController {
         if (genericAnno) {
             model["genericAnnotations"] = genericAnno
         }
-        def components = [:]
-        try {
-            components = sbmlService.extractComponentsFromBP(perennialId)
-        } catch(RuntimeException re) {
-            log.error("Error while extracting components from BP for $perennialId", re)
-        }
-        if (components.get("species") || components.get("reactions")) {
-            model['components'] = components
+        if (!perennialId.startsWith("BMID")) {
+            def components = [:]
+            try {
+                components = sbmlService.extractComponentsFromBP(perennialId)
+            } catch (RuntimeException re) {
+                log.error("Error while extracting components from BP for $perennialId", re)
+            }
+            if (components.get("species") || components.get("reactions")) {
+                model['components'] = components
+            }
         }
         boolean canCheckConsistency = modelDelegateService.canCheckConsistency(r)
         model["canCheckConsistency"] = canCheckConsistency
