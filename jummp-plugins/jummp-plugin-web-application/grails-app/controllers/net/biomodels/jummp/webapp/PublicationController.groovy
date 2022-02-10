@@ -180,7 +180,7 @@ missing a title, an affiliation and/or an abstract. Please verify the form and f
                 message = "The link is not a valid ${pubLinkProvider}"
                 status = "Failed"
             } else {
-                message = "The publication details have been updated successfully."
+                message = "The publication provider and link are valid."
                 status = "OK"
             }
         }

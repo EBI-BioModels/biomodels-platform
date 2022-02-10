@@ -247,6 +247,6 @@ function validateDataForm(formId) {
                             && (journal !== null || journal !== "")
                             && (affiliation !== null || affiliation !== "")
                             && (abstract !== null || abstract !== "") && authorExists;
-    let ret = (pubLinkProvider === "Publication without link") || (pubLinkNotNull && requiredFieldsFilled);
+    let ret = ((pubLinkProvider === "Publication without link") || pubLinkNotNull) && requiredFieldsFilled;
     return ret;
 }
