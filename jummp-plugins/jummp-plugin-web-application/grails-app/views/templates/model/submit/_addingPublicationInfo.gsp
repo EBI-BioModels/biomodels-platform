@@ -19,10 +19,6 @@
         <p><g:message code="submission.biomodels.submit.publication.explanation"/></p>
     </div>
     <div class="columns small-12 medium-2 large-2">
-        %{--<div class="text-center">
-            <img src="${serverURL}/images/biomodels/loading.gif" id="loadingIcon" title="Fetching data..."
-                 alt="Please wait..."/>
-        </div>--}%
     </div>
     <div class="columns small-12 medium-2 large-2">
         <h2 class="steps">Step 3 - 5</h2>
@@ -69,11 +65,7 @@
     });
 
     function verifyAndFetchPublicationDetails(pubLinkProvider, pubLink) {
-        if (!pubLinkProvider || !pubLink) {
-            toastr.clear();
-            toastr.error("Either of publication provider or link is empty");
-            return;
-        }
+        verifyPublicationSource(pubLinkProvider, pubLink);
         clearErrorMessages();
         $.ajax({
             type: "POST",
@@ -136,11 +128,7 @@
     };
 
     function verifyPublicationProviderAndLink(pubLinkProvider, pubLink) {
-        if (!pubLinkProvider || !pubLink) {
-            toastr.clear();
-            toastr.error("Either of publication provider or link is empty");
-            return;
-        }
+        verifyPublicationSource(pubLinkProvider, pubLink);
         clearErrorMessages();
         return $.ajax({
             type: "POST",
@@ -284,6 +272,14 @@
                 currentValidation = withoutPub || isPubTCValidated;
             }
         });
+    }
+
+    function verifyPublicationSource(pubLinkProvider, pubLink) {
+        if (!pubLinkProvider || (!pubLink && pubLinkProvider !== "Publication without link")) {
+            toastr.clear();
+            toastr.error("Either of publication provider or link is empty.");
+            return;
+        }
     }
 
     function clearErrorMessages() {
