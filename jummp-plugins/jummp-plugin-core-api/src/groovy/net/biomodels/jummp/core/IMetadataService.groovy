@@ -20,12 +20,12 @@
 
 package net.biomodels.jummp.core
 
-import net.biomodels.jummp.core.annotation.QualifierTransportCommand
-import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand
-import net.biomodels.jummp.core.annotation.StatementTransportCommand
-import net.biomodels.jummp.core.model.ModelTransportCommand
-import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.model.ModellingApproach
+import net.biomodels.jummp.core.annotation.QualifierTransportCommand as QTC
+import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand as RRTC
+import net.biomodels.jummp.core.annotation.StatementTransportCommand as STC
+import net.biomodels.jummp.core.model.ModelTransportCommand as ModelTC
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
+import net.biomodels.jummp.model.ModellingApproach as MA
 
 /**
  * @short Contract for services wishing to deal with model metadata.
@@ -45,8 +45,7 @@ interface IMetadataService {
      * @return a list of TransportCommand wrappers corresponding to the ResourceReference
      *      objects that appear in RDF statements containing property @p qualifier.
      */
-    List<ResourceReferenceTransportCommand> findAllResourceReferencesForQualifier(
-            RevisionTransportCommand revision, String qualifier)
+    List<RRTC> findAllResourceReferencesForQualifier(RevisionTC revision, String qualifier)
 
     /**
      * Retrieves revision statements with a given property.
@@ -56,8 +55,7 @@ interface IMetadataService {
      * @return a list of TransportCommand wrappers corresponding to the Statements from the
      *      supplied @p revision containing property @p qualifier.
      */
-    List<StatementTransportCommand> findAllStatementsForQualifier(RevisionTransportCommand
-            revision, String qualifier)
+    List<STC> findAllStatementsForQualifier(RevisionTC revision, String qualifier)
 
     /**
      * Retrieves cross-references with a given subject.
@@ -67,8 +65,7 @@ interface IMetadataService {
      * @return a list of TransportCommand wrappers corresponding to the ResourceReference objects
      *      that appear in the statements of @p revision that have subject @p subject.
      */
-    List<ResourceReferenceTransportCommand> findAllResourceReferencesForSubject(
-            RevisionTransportCommand revision, String subject)
+    List<RRTC> findAllResourceReferencesForSubject(RevisionTC revision, String subject)
 
     /**
      * Retrieves revision statements with a given subject.
@@ -78,11 +75,9 @@ interface IMetadataService {
      * @return a list of TransportCommand wrappers corresponding to the Statements from the
      *      supplied @p revision containing subject @p subject.
      */
-    List<StatementTransportCommand> findAllStatementsForSubject(RevisionTransportCommand
-            revision, String subject)
+    List<STC> findAllStatementsForSubject(RevisionTC revision, String subject)
 
-    Map<QualifierTransportCommand, List<ResourceReferenceTransportCommand>> fetchGenericAnnotations(
-            RevisionTransportCommand rev)
+    Map<QTC, List<RRTC>> fetchGenericAnnotations(RevisionTC rev)
 
     List<String> getMetadataNamespaces()
 
@@ -90,7 +85,7 @@ interface IMetadataService {
 
     List searchModellingApproach(String searchTerm)
 
-    ModellingApproach getModellingApproach(String accession)
+    MA getModellingApproach(String accession)
 
-    ModellingApproach getModellingApproach(ModelTransportCommand model)
+    MA getModellingApproach(ModelTC model)
 }

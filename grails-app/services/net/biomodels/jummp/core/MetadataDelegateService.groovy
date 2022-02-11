@@ -27,12 +27,18 @@ import net.biomodels.jummp.annotationstore.ElementAnnotation
 import net.biomodels.jummp.annotationstore.ResourceReference
 import net.biomodels.jummp.annotationstore.RevisionAnnotation
 import net.biomodels.jummp.annotationstore.Statement
-import net.biomodels.jummp.core.annotation.*
+import net.biomodels.jummp.core.annotation.ElementAnnotationCategory
+import net.biomodels.jummp.core.annotation.ElementAnnotationTransportCommand as EATC
+import net.biomodels.jummp.core.annotation.QualifierTransportCommand
+import net.biomodels.jummp.core.annotation.ResourceReferenceCategory
+import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand as RRTC
+import net.biomodels.jummp.core.annotation.StatementCategory
+import net.biomodels.jummp.core.annotation.StatementTransportCommand as STC
 import net.biomodels.jummp.core.model.AnnotationValidationContext
-import net.biomodels.jummp.core.model.ModelTransportCommand
-import net.biomodels.jummp.core.model.RevisionTransportCommand
-import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand
-import net.biomodels.jummp.deployment.biomodels.TagTransportCommand
+import net.biomodels.jummp.core.model.ModelTransportCommand as ModelTC
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
+import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand as CNTC
+import net.biomodels.jummp.deployment.biomodels.TagTransportCommand as TagTC
 import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.model.Revision
 import org.apache.commons.logging.Log
@@ -76,10 +82,9 @@ class MetadataDelegateService implements IMetadataService {
      * {@inheritDoc}
      */
     @Profiled(tag = "metadataDelegateService.findAllResourceReferencesForQualifier")
-    List<ResourceReferenceTransportCommand> findAllResourceReferencesForQualifier(
-            RevisionTransportCommand revision, String qualifier) {
+    List<RRTC> findAllResourceReferencesForQualifier(RevisionTC revision, String qualifier) {
         List<ResourceReference> references = metadataService.
-                findAllResourceReferencesForQualifier(revision.id, qualifier)
+            findAllResourceReferencesForQualifier(revision.id, qualifier)
         wrapResourceReferences(references)
     }
 
@@ -87,10 +92,9 @@ class MetadataDelegateService implements IMetadataService {
      * {@inheritDoc}
      */
     @Profiled(tag = "metadataDelegateService.findAllResourceReferencesForSubject")
-    List<ResourceReferenceTransportCommand> findAllResourceReferencesForSubject(
-            RevisionTransportCommand revision, String subject) {
+    List<RRTC> findAllResourceReferencesForSubject(RevisionTC revision, String subject) {
         List<ResourceReference> references = metadataService.
-                findAllResourceReferencesForSubject(revision.id, subject)
+            findAllResourceReferencesForSubject(revision.id, subject)
         wrapResourceReferences(references)
     }
 
@@ -98,10 +102,8 @@ class MetadataDelegateService implements IMetadataService {
      * {@inheritDoc}
      */
     @Profiled(tag = "metadataDelegateService.findAllStatementsForQualifier")
-    List<StatementTransportCommand> findAllStatementsForQualifier(RevisionTransportCommand
-            revision, String qualifier) {
-        List<Statement> statements = metadataService.findAllStatementsForQualifier(
-                revision.id, qualifier)
+    List<STC> findAllStatementsForQualifier(RevisionTC revision, String qualifier) {
+        List<Statement> statements = metadataService.findAllStatementsForQualifier(revision.id, qualifier)
         wrapStatements(statements)
     }
 
@@ -109,15 +111,13 @@ class MetadataDelegateService implements IMetadataService {
      * {@inheritDoc}
      */
     @Profiled(tag = "metadataDelegateService.findAllStatementsForSubject")
-    List<StatementTransportCommand> findAllStatementsForSubject(RevisionTransportCommand
-            revision, String subject) {
-        List<Statement> statements = metadataService.findAllStatementsForSubject(
-                revision.id, subject)
+    List<STC> findAllStatementsForSubject(RevisionTC revision, String subject) {
+        List<Statement> statements = metadataService.findAllStatementsForSubject(revision.id, subject)
         wrapStatements(statements)
     }
 
     @Profiled(tag = "metadataDelegateService.wrapResourceReferences")
-    private List<ResourceReferenceTransportCommand> wrapResourceReferences(
+    private List<RRTC> wrapResourceReferences(
             List<ResourceReference> references) {
         use(ResourceReferenceCategory) {
             return references.collect { ResourceReference r ->
@@ -127,7 +127,7 @@ class MetadataDelegateService implements IMetadataService {
     }
 
     @Profiled(tag = "metadataDelegateService.wrapStatements")
-    private List<StatementTransportCommand> wrapStatements(List<Statement> statements) {
+    private List<STC> wrapStatements(List<Statement> statements) {
         use(StatementCategory) {
             return statements.collect { Statement s ->
                 s.toCommandObject()
@@ -136,7 +136,7 @@ class MetadataDelegateService implements IMetadataService {
     }
 
     @Profiled(tag = "metadataDelegateService.saveMetadata")
-    boolean saveMetadata(String model, List<StatementTransportCommand> statements) {
+    boolean saveMetadata(String model, List<STC> statements) {
         metadataService.saveMetadata(model, statements)
     }
 
@@ -160,7 +160,7 @@ class MetadataDelegateService implements IMetadataService {
     }
 
     @Profiled(tag = "metadataDelegateService.validateModelRevision")
-    AnnotationValidationContext validateModelRevision(RevisionTransportCommand revision, List<StatementTransportCommand> statements) {
+    AnnotationValidationContext validateModelRevision(RevisionTC revision, List<STC> statements) {
         try {
             return metadataService.validateModelRevision(Revision.get(revision.id), statements)
         }catch(ValidationException e){
@@ -173,8 +173,8 @@ class MetadataDelegateService implements IMetadataService {
         metadataService.getMetadataNamespaces()
     }
 
-    List<ElementAnnotationTransportCommand> fetchAnnotations(RevisionTransportCommand rev) {
-        List<ElementAnnotationTransportCommand> annotations = null
+    List<EATC> fetchAnnotations(RevisionTC rev) {
+        List<EATC> annotations = null
         use(ElementAnnotationCategory) {
             List<RevisionAnnotation>  revisionAnnotations = null
             def values = RevisionAnnotation.where {
@@ -188,13 +188,13 @@ class MetadataDelegateService implements IMetadataService {
         annotations
     }
 
-    Map<QualifierTransportCommand, List<ResourceReferenceTransportCommand>> fetchGenericAnnotations(
-        RevisionTransportCommand rev) {
-        List<StatementTransportCommand> statements = getModelLevelAnnotations(rev)
+    Map<QualifierTransportCommand, List<RRTC>> fetchGenericAnnotations(
+        RevisionTC rev) {
+        List<STC> statements = getModelLevelAnnotations(rev)
         Map result = [:]
-        statements.each { StatementTransportCommand s ->
+        statements.each { STC s ->
             final QualifierTransportCommand qualifier = s.predicate
-            final ResourceReferenceTransportCommand xref = s.object
+            final RRTC xref = s.object
             // ignore the biomodels custom annotation denoting curation status
             // because it is already shown at the curation status line
             boolean isCurationStatus = qualifier.type == "biomodelsCustomAnnotation" &&
@@ -212,7 +212,7 @@ class MetadataDelegateService implements IMetadataService {
         result
     }
 
-    CurationNotesTransportCommand fetchCurationNotes(RevisionTransportCommand rev) {
+    CNTC fetchCurationNotes(RevisionTC rev) {
         curationNotesService.fetchCurationNotesForModel(rev.model.id)
     }
 
@@ -222,14 +222,14 @@ class MetadataDelegateService implements IMetadataService {
      * This relies on BioModels' workflow of assigning a publication identifier for
      * curated models.
      *
-     * @param rev the {@link RevisionTransportCommand} to check
+     * @param rev the {@link RevisionTC} to check
      * @return the String 'curated' iff the model has been curated, or 'non-curated' otherwise.
      */
-    String fetchCurationStatus(RevisionTransportCommand rev) {
+    String fetchCurationStatus(RevisionTC rev) {
         rev.model.publicationId ? "curated" : "non-curated"
     }
 
-    Map<String, String> fetchModellingApproaches(RevisionTransportCommand rev) {
+    Map<String, String> fetchModellingApproaches(RevisionTC rev) {
         ModellingApproach modellingApproach =  rev.model.modellingApproach
         Map result = [:]
         if (modellingApproach) {
@@ -238,10 +238,10 @@ class MetadataDelegateService implements IMetadataService {
         return result
     }
 
-    List<String> fetchOriginalModels(RevisionTransportCommand rev) {
-        List<StatementTransportCommand> statements = getModelLevelAnnotations(rev)
+    List<String> fetchOriginalModels(RevisionTC rev) {
+        List<STC> statements = getModelLevelAnnotations(rev)
         List<String> result = []
-        statements.each { StatementTransportCommand s ->
+        statements.each { STC s ->
             if (s.predicate.accession == "source") {
                 result << s.object.uri
             }
@@ -264,20 +264,20 @@ class MetadataDelegateService implements IMetadataService {
     }
 
     @Override
-    ModellingApproach getModellingApproach(ModelTransportCommand model) {
+    ModellingApproach getModellingApproach(ModelTC model) {
         return model.modellingApproach
     }
 
-    Set<TagTransportCommand> findTagsByModel(ModelTransportCommand model) {
+    Set<TagTC> findTagsByModel(ModelTC model) {
         modelTagService.findTagsByModel(model)
     }
 
 
-    List<StatementTransportCommand> getModelLevelAnnotations(RevisionTransportCommand rev) {
+    List<STC> getModelLevelAnnotations(RevisionTC rev) {
         getModelLevelAnnotations(rev?.id)
     }
 
-    List<StatementTransportCommand> getModelLevelAnnotations(long revisionId) {
+    List<STC> getModelLevelAnnotations(long revisionId) {
         // By default, fetching generic annotations means to grab model-level annotations
         // The specific levels of annotations should be invoked within another methods
         if (!revisionId) {
@@ -290,13 +290,13 @@ class MetadataDelegateService implements IMetadataService {
         List<ElementAnnotation> annotationList = revisionAnnotations.collect { RevisionAnnotation ra ->
             ra.elementAnnotation
         }
-        List<ElementAnnotationTransportCommand> annotations = new ArrayList<>()
+        List<EATC> annotations = new ArrayList<>()
         annotationList.collect { ElementAnnotation ea ->
             use(ElementAnnotationCategory) {
                 annotations.add(ea.toCommandObject())
             }
         }
-        List<StatementTransportCommand> statements = annotations.collect {
+        List<STC> statements = annotations.collect {
             it.statement
         }
         statements

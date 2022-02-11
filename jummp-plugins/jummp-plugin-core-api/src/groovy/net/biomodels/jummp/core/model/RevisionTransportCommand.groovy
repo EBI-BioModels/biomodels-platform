@@ -34,9 +34,10 @@
 
 package net.biomodels.jummp.core.model
 
-import net.biomodels.jummp.core.annotation.ElementAnnotationTransportCommand
+import net.biomodels.jummp.core.annotation.ElementAnnotationTransportCommand as EATC
 import net.biomodels.jummp.core.certification.QcInfoTransportCommand
 import org.springframework.context.ApplicationContext
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 
 /**
  * @short Wrapper for a Revision to be transported through JMS.
@@ -101,11 +102,11 @@ class RevisionTransportCommand implements Serializable {
     /**
      * The list of files associated with this revision
      */
-    List<RepositoryFileTransportCommand> files = null
+    List<RFTC> files = null
     /**
      * The list of annotations for this revision.
      */
-    List<ElementAnnotationTransportCommand> annotations = null
+    List<EATC> annotations = null
 
     ValidationState validationLevel
 
@@ -120,14 +121,14 @@ class RevisionTransportCommand implements Serializable {
      */
     CurationState curationState
 
-    List<ElementAnnotationTransportCommand> getAnnotations() {
+    List<EATC> getAnnotations() {
         if (!annotations) {
             annotations = context.metadataDelegateService.fetchAnnotations(this)
         }
         return annotations
     }
 
-     List<RepositoryFileTransportCommand> getFiles() {
+     List<RFTC> getFiles() {
          if (!files) {
              files = context.modelDelegateService.retrieveModelFiles(this)
          }
