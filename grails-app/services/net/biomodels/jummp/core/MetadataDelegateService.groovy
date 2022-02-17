@@ -173,12 +173,16 @@ class MetadataDelegateService implements IMetadataService {
         metadataService.getMetadataNamespaces()
     }
 
-    List<EATC> fetchAnnotations(RevisionTC rev) {
+    List<EATC> fetchAnnotations(final RevisionTC revisionTC) {
+        fetchAnnotations(revisionTC.id)
+    }
+
+    List<EATC> fetchAnnotations(final Long revId) {
         List<EATC> annotations = null
         use(ElementAnnotationCategory) {
             List<RevisionAnnotation>  revisionAnnotations = null
             def values = RevisionAnnotation.where {
-                revision.id == rev.id
+                revision.id == revId
             }
             revisionAnnotations = values.list()
             annotations = revisionAnnotations.collect {RevisionAnnotation ra ->
