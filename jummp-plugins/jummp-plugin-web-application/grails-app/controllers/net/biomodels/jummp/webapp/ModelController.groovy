@@ -667,7 +667,7 @@ class ModelController {
                 resp.outputStream << stream
             }
         } catch (IOException ioE) {
-            LOGGER.error("The client might have cancelled their download request.", ioE)
+            LOGGER.error("The client might have cancelled downloading the file ${file.name}.", ioE)
         } finally {
             if (stream != null) {
                 LOGGER.debug("InputStream of the file ${file.name} has been flushed and closed.")
