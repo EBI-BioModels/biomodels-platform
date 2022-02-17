@@ -21,7 +21,8 @@
 import groovyx.gpars.GParsPool
 import net.biomodels.jummp.core.annotation.ElementAnnotationTransportCommand as EATC
 import net.biomodels.jummp.core.model.ModelState
-import net.biomodels.jummp.model.PublicationLinkProvider
+import net.biomodels.jummp.model.Publication
+import net.biomodels.jummp.model.PublicationLinkProvider as PLP
 import net.biomodels.jummp.model.Revision
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -62,13 +63,14 @@ ORDER BY M.id"""
                     ctx.persistenceInterceptor?.init()
                     try {
                         String pubOrDoiId = null
-                        PublicationLinkProvider.LinkType linkType = revision.model.publication.linkProvider
-                        if (linkType != PublicationLinkProvider.LinkType.MANUAL_ENTRY) {
-                            pubOrDoiId = revision.model.publication.link
+			Publication publication = revision.model.publication
+                        PLP.LinkType linkType = publication?.linkProvider?.linkType
+                        if (linkType != PLP.LinkType.MANUAL_ENTRY && publication != null) {
+                            pubOrDoiId = publication.link
                         }
                         List<EATC> annotations = mdDS.fetchAnnotations(revisionId)
                         List uniprotList = annotations.findAll {
-                            it.statement.object.datatype == "uniprot"
+                            it.statement.object.datatype == "ensembl"
                         }
                         List uniprotIds = uniprotList.collect {
                             it.statement.object.accession
