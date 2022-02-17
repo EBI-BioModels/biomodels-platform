@@ -386,12 +386,6 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
         }
     }
 
-    def generator = { String alphabet, int n ->
-        new Random().with {
-            (1..n).collect { alphabet[ nextInt( alphabet.length() ) ] }.join()
-        }
-    }
-
     @PostLogging(LoggingEventType.CREATION)
     @Profiled(tag = "userService.register")
     @PreAuthorize("isAnonymous() or hasRole('ROLE_ADMIN')")
