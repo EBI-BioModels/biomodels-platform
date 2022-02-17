@@ -69,15 +69,20 @@ ORDER BY M.id"""
                             pubOrDoiId = publication.link
                         }
                         List<EATC> annotations = mdDS.fetchAnnotations(revisionId)
-                        List uniprotList = annotations.findAll {
-                            it.statement.object.datatype == "ensembl"
+                        String EXT_RES = System.getenv("EXT_RES")
+                        if (!(EXT_RES in ["chebi", "ensembl", "uniprot"])) {
+                            // set "uniprot" as the default if the external source hasn't been specified
+                            EXT_RES = "uniprot"
                         }
-                        List uniprotIds = uniprotList.collect {
+                        List candidateList = annotations.findAll {
+                            it.statement.object.datatype == EXT_RES
+                        }
+                        List iDList = candidateList.collect {
                             it.statement.object.accession
                         }.unique()
                         String modelIdentifier = revision.model.publicationId ?: revision.model.submissionId
-                        uniprotIds.each { String uniProtId ->
-                            println "${modelIdentifier}\t${uniProtId}\t${pubOrDoiId}"
+                        iDList.each { String resourceId ->
+                            println "${modelIdentifier}\t${resourceId}\t${pubOrDoiId}"
                         }
                     } catch (Exception e) {
                         String message = """\
