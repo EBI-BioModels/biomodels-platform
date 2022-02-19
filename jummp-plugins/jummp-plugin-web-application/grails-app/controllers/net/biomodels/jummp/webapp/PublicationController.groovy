@@ -27,7 +27,7 @@ class PublicationController implements GrailsConfigurationAware {
 
     def add(Publication publication) {
         PublicationTransportCommand pubTC = publicationService.createPTCWithMinimalInformation("PubMed ID", null, null)
-        pubTC.id = null
+        pubTC.id = -1 // assign it a dummy value to avoid exceptions
         [publication: pubTC, title: "A a new publication | BioModels", style: style, serverUrl: serverUrl,
          controller: "publication", operation: "add"]
     }

@@ -50,8 +50,8 @@ function buildPublicationTC() {
         'authors': authors
     };
 
-    if ("${operation} === 'edit'") {
-        let id = ${params.id};
+    if ("${operation}" === "edit") {
+        let id = ${publication.id};
         pubCmd["id"] = id;
     }
 
