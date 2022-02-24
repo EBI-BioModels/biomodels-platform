@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2022 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -41,8 +41,6 @@ import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.plugins.security.UserRole
 import net.biomodels.jummp.utils.MathUtils
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
 import org.perf4j.aop.Profiled
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -65,23 +63,14 @@ import javax.mail.AuthenticationFailedException
  *
  * @author Martin Gräßlin <m.graesslin@dkfz-heidelberg.de>
  * @author Raza Ali <raza.ali@ebi.ac.uk>
+ * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 class UserService implements IUserService {
     private static final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
-    /**
-     * Dependency injection of springSecurityService
-     */
     def springSecurityService
-    /**
-     * Dependency injection of mail Service provided by the Mail plugin
-     */
     def mailService
-    /**
-     * Dependency injection of grails Application
-     */
     @SuppressWarnings("GrailsStatelessService")
     def grailsApplication
-
     def grailsLinkGenerator
     /**
      * Random number generator for creating user validation ids.
@@ -478,7 +467,7 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
             emailBody = emailBody.replace("{{PASSWORD}}", p)
             emailBody = emailBody.replace("{{REALNAME}}", newUser.person.userRealName)
             String webURL = grailsApplication.config.jummp.server.url
-            if (webURL) {
+            if (!webURL) {
                 webURL = "http://localhost:8080/${grails.util.Metadata.current.'app.name'}"
             }
             emailBody.replace("{{WEBURL}}", webURL)
@@ -568,7 +557,8 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
         user.save(flush: true)
         // send out notification mail
         String recipient = user.email
-        String url = grailsLinkGenerator.link(controller: 'usermanagement', action: 'resetPassword', id: user.passwordForgottenCode, absolute: true)
+        String url = grailsLinkGenerator.link(controller: 'usermanagement', action: 'resetPassword',
+            id: user.passwordForgottenCode, absolute: true)
         String emailBody = grailsApplication.config.jummp.security.resetPassword.email.body
         emailBody = emailBody.replace("{{REALNAME}}", user.person.userRealName)
         emailBody = emailBody.replace("{{URL}}", url)
@@ -583,7 +573,8 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
     @PostLogging(LoggingEventType.UPDATE)
     @Profiled(tag="userService.resetPassword")
     @PreAuthorize("isAnonymous()")
-    void resetPassword(String code, String username, String password) throws UserNotFoundException, UserCodeInvalidException, UserCodeExpiredException {
+    void resetPassword(String code, String username, String password)
+        throws UserNotFoundException, UserCodeInvalidException, UserCodeExpiredException {
         User user = User.findByUsername(username)
         if (!user) {
             throw new UserNotFoundException(username)
