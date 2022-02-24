@@ -31,12 +31,13 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="layout" content="${session['branding.style']}/main" />
-        <title>Registration Successful</title>
+        <title>Registration Successful | BioModels</title>
     </head>
      <body>
-        <div>
-            <g:message code="user.signup.ui.register.success.message" args="${[email]}"/>
-        </div>
+        <div class="row"><div class="columns large-centered small-12 medium-10 large-10">
+            <h2 style="color: #007C82">
+                <g:message code="user.signup.ui.register.success.message" args="${[email]}"/></h2>
+        </div></div>
         </body>
 </html>
 <content tag="title">
