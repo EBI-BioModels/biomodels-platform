@@ -25,18 +25,20 @@
 <head>
     <meta name="layout" content="${session['branding.style']}/main" />
     <style type="text/css">
-        dt {
-            display: block;
-        }
-        ul, ol, dl {
-            line-height: 1.0;
-        }
+    dt {
+        display: block;
+    }
+
+    ul, ol, dl {
+        line-height: 1.0;
+    }
     </style>
 </head>
+
 <body>
 <h2>Courses material</h2>
 
-Here are the materials from some of the presentations, courses and tutorials which were provided by the BioModels.net team.
+Here are the materials from some presentations, courses and tutorials which were provided by the BioModels.net team.
 
 <h3 id="year_2017">2017</h3>
 <ul class="news_list">
@@ -44,8 +46,8 @@ Here are the materials from some of the presentations, courses and tutorials whi
         <dl>
             <dt class="news-date">12<sup>th</sup> July 2017</dt>
             <dd>Event:
-                <a href="http://www.ebi.ac.uk/training/events/2017/silico-systems-biology-0"
-                   title="Website of the event">Joint EMBL-EBI-Wellcome Trust Course: In silico Systems Biology </a></dd>
+                <a href="https://www.ebi.ac.uk/training/events/2017/silico-systems-biology-0"
+                   title="Website of the event">Joint EMBL-EBI-Wellcome Trust Course: In silico Systems Biology</a></dd>
             <dd>Topic: Tutorial on modelling signalling pathways using COPASI</dd>
             <dd>Materials:
                 <a href="courses/20170712/"
@@ -60,8 +62,8 @@ Here are the materials from some of the presentations, courses and tutorials whi
         <dl>
             <dt class="news-date">06<sup>th</sup> July 2016</dt>
             <dd>Event:
-                <a href="http://www.ebi.ac.uk/training/events/2016/silico-systems-biology"
-                   title="Website of the event">Joint EMBL-EBI-Wellcome Trust Course: In silico Systems Biology </a></dd>
+                <a href="https://www.ebi.ac.uk/training/events/2016/silico-systems-biology"
+                   title="Website of the event">Joint EMBL-EBI-Wellcome Trust Course: In silico Systems Biology</a></dd>
             <dd>Topic: Tutorial on modelling signalling pathways using COPASI</dd>
             <dd>Materials:
                 <a href="courses/20160706/"
@@ -76,8 +78,8 @@ Here are the materials from some of the presentations, courses and tutorials whi
         <dl>
             <dt class="news-date">10<sup>th</sup> June 2015</dt>
             <dd>Event:
-                <a href="http://www.wellcome.ac.uk/Education-resources/Courses-and-conferences/Advanced-Courses-and-Scientific-Conferences/Advanced-Courses/WTVM053676.htm#"
-                   title="Website of the event">Joint EMBL-EBI-Wellcome Trust Course: In silico Systems Biology </a></dd>
+                <a href="https://www.wellcome.ac.uk/Education-resources/Courses-and-conferences/Advanced-Courses-and-Scientific-Conferences/Advanced-Courses/WTVM053676.htm#"
+                   title="Website of the event">Joint EMBL-EBI-Wellcome Trust Course: In silico Systems Biology</a></dd>
             <dd>Topic: Tutorial on modelling signalling pathways using COPASI</dd>
             <dd>Materials:
                 <a href="courses/20150610/"
@@ -106,8 +108,8 @@ Here are the materials from some of the presentations, courses and tutorials whi
         <dl>
             <dt class="news-date">25<sup>th</sup>-29<sup>th</sup> June 2013</dt>
             <dd>Event:
-                <a href="http://www.wellcome.ac.uk/Education-resources/Courses-and-conferences/Advanced-Courses-and-Scientific-Conferences/Advanced-Courses/WTVM053676.htm"
-                   title="Website of the event">Joint EMBL-EBI-Wellcome Trust Course: In silico Systems Biology </a></dd>
+                <a href="https://www.wellcome.ac.uk/Education-resources/Courses-and-conferences/Advanced-Courses-and-Scientific-Conferences/Advanced-Courses/WTVM053676.htm"
+                   title="Website of the event">Joint EMBL-EBI-Wellcome Trust Course: In silico Systems Biology</a></dd>
             <dd>Topic: Tutorial on modelling signalling pathways using COPASI</dd>
             <dd>Materials:
                 <a href="courses/20130627/"
@@ -126,8 +128,8 @@ Here are the materials from some of the presentations, courses and tutorials whi
         <dl>
             <dt class="news-date">27<sup>th</sup> April 2012</dt>
             <dd>Event:
-                <a href="http://www.wellcome.ac.uk/Education-resources/Courses-and-conferences/Advanced-Courses-and-Scientific-Conferences/Advanced-Courses/WTVM053676.htm"
-                   title="Website of the event">Joint EMBL-EBI-Wellcome Trust Course: In silico Systems Biology </a></dd>
+                <a href="https://www.wellcome.ac.uk/Education-resources/Courses-and-conferences/Advanced-Courses-and-Scientific-Conferences/Advanced-Courses/WTVM053676.htm"
+                   title="Website of the event">Joint EMBL-EBI-Wellcome Trust Course: In silico Systems Biology</a></dd>
             <dd>Topic: tutorial about modelling signalling pathways and lecture on BioModels Database</dd>
             <dd>Materials:
                 <a href="courses/20120427/"
