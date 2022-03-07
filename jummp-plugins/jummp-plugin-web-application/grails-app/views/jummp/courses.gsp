@@ -48,7 +48,7 @@ Here are the materials from some of the presentations, courses and tutorials whi
                    title="Website of the event">Joint EMBL-EBI-Wellcome Trust Course: In silico Systems Biology </a></dd>
             <dd>Topic: Tutorial on modelling signalling pathways using COPASI</dd>
             <dd>Materials:
-                <a href="http://www.ebi.ac.uk/biomodels/courses/20170712/"
+                <a href="courses/20170712/"
                    title="Access to all materials from this course">dedicated tutorial page</a></dd>
         </dl>
     </li>
@@ -64,7 +64,7 @@ Here are the materials from some of the presentations, courses and tutorials whi
                    title="Website of the event">Joint EMBL-EBI-Wellcome Trust Course: In silico Systems Biology </a></dd>
             <dd>Topic: Tutorial on modelling signalling pathways using COPASI</dd>
             <dd>Materials:
-                <a href="http://www.ebi.ac.uk/biomodels/courses/20160706/"
+                <a href="courses/20160706/"
                    title="Access to all materials from this course">dedicated tutorial page</a></dd>
         </dl>
     </li>
@@ -80,7 +80,7 @@ Here are the materials from some of the presentations, courses and tutorials whi
                    title="Website of the event">Joint EMBL-EBI-Wellcome Trust Course: In silico Systems Biology </a></dd>
             <dd>Topic: Tutorial on modelling signalling pathways using COPASI</dd>
             <dd>Materials:
-                <a href="http://www.ebi.ac.uk/biomodels/courses/20150610/"
+                <a href="courses/20150610/"
                    title="Access to all materials from this course">dedicated tutorial page</a></dd>
         </dl>
     </li>
@@ -98,7 +98,7 @@ Here are the materials from some of the presentations, courses and tutorials whi
                 <a href="http://co.mbine.org/events/ICSB_2013"
                    title="Workshop page">Modelling and Simulation of Quantitative Biological Models</a></dd>
             <dd>Materials:
-                <a href="http://www.ebi.ac.uk/biomodels/courses/20130904/biomodels-tutorial_20130904.pdf"
+                <a href="courses/20130904/biomodels-tutorial_20130904.pdf"
                    title="PDF slides: tutorial on BioModels Database">PDF slides of the tutorial</a> (3.4MB)</dd>
         </dl>
     </li>
@@ -110,11 +110,11 @@ Here are the materials from some of the presentations, courses and tutorials whi
                    title="Website of the event">Joint EMBL-EBI-Wellcome Trust Course: In silico Systems Biology </a></dd>
             <dd>Topic: Tutorial on modelling signalling pathways using COPASI</dd>
             <dd>Materials:
-                <a href="http://www.ebi.ac.uk/biomodels/courses/20130627/"
+                <a href="courses/20130627/"
                    title="Access to all materials from this course">dedicated tutorial page</a></dd>
             <dd>Topic: Lecture on BioModels Database</dd>
             <dd>Materials:
-                <a href="http://www.ebi.ac.uk/biomodels/courses/20130627/biomdtalk_20130629.pdf"
+                <a href="courses/20130627/biomdtalk_20130629.pdf"
                    title="PDF slides: Lecture on BioModels Database">PDF slides of the lecture</a></dd>
         </dl>
     </li>
@@ -130,9 +130,9 @@ Here are the materials from some of the presentations, courses and tutorials whi
                    title="Website of the event">Joint EMBL-EBI-Wellcome Trust Course: In silico Systems Biology </a></dd>
             <dd>Topic: tutorial about modelling signalling pathways and lecture on BioModels Database</dd>
             <dd>Materials:
-                <a href="http://www.ebi.ac.uk/biomodels/courses/20120427/"
+                <a href="courses/20120427/"
                    title="Access to all materials from this course">dedicated tutorial page</a>,
-                <a href="http://www.ebi.ac.uk/biomodels/courses/20120427/biomdtalk_20120427.pdf"
+                <a href="courses/20120427/biomdtalk_20120427.pdf"
                    title="PDF slides: Lecture on BioModels Database">PDF slides of the lecture</a> (3.9MB)
             </dd>
         </dl>
@@ -149,7 +149,7 @@ Here are the materials from some of the presentations, courses and tutorials whi
                    title="Website of the event">Conference - Enabling Systems Biology</a></dd>
             <dd>Topic: lecture about BioModels Database</dd>
             <dd>Materials:
-                <a href="http://www.ebi.ac.uk/biomodels/courses//20110413/biomdtalk_13April2011.pdf"
+                <a href="courses/20110413/biomdtalk_13April2011.pdf"
                    title="PDF Slides of the lecture">PDF slides</a> (10.4MB)</dd>
         </dl>
     </li>
@@ -159,7 +159,7 @@ Here are the materials from some of the presentations, courses and tutorials whi
             <dd>Event: Systems Biology Module, MSc Applied Bioinformatics, Cranfield University</dd>
             <dd>Topic: lecture about BioModels Database and tutorial about modelling signalling pathways</dd>
             <dd>Materials:
-                <a href="http://www.ebi.ac.uk/biomodels/courses/20110304/"
+                <a href="courses/20110304/"
                    title="Access to all materials from this course">dedicated tutorial page</a></dd>
         </dl>
     </li>
@@ -175,7 +175,7 @@ Here are the materials from some of the presentations, courses and tutorials whi
                    title="Website of the event">The 11th International Conference on Systems Biology (ICSB)</a></dd>
             <dd>Topic: introduction to BioModels Database and tutorial about modelling signalling pathways</dd>
             <dd>Materials:
-                <a href="http://www.ebi.ac.uk/biomodels/courses/20101010/"
+                <a href="courses/20101010/"
                    title="Access to all materials from this course">dedicated tutorial page</a></dd>
         </dl>
     </li>
@@ -188,7 +188,7 @@ Here are the materials from some of the presentations, courses and tutorials whi
                 network reconstruction, analysis and network based modelling'</a></dd>
             <dd>Topic: introduction to BioModels Database and tutorial about modelling signalling pathways using COPASI</dd>
             <dd>Materials:
-                <a href="http://www.ebi.ac.uk/biomodels/courses/20100413/"
+                <a href="courses/20100413/"
                    title="Access to all materials from this course">dedicated tutorial page</a></dd>
         </dl>
     </li>
