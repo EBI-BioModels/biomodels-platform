@@ -47,7 +47,7 @@ class PreProcessFiltersSpec extends Specification {
     }
 
     void "test something"() {
-        expect: "this is true"
+        expect: "this is true -- a dummy case to pass the test"
             1 == 1
     }
 }
