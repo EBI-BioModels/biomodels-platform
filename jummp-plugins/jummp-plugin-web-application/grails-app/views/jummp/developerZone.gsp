@@ -20,7 +20,7 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <head>
     <meta name="layout" content="${session['branding.style']}/main" />
-    <title><g:message code="${titleCode}" default="Developer's Zone | BioModels"/></title>
+    <title><g:message code="${titleCode}" default="Developer's Zone"/> | BioModels</title>
 </head>
 
 <body>

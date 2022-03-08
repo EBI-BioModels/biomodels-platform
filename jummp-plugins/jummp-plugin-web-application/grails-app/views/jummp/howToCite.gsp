@@ -25,6 +25,8 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <head>
     <meta name="layout" content="${session['branding.style']}/main" />
+    <title><g:message code="${titleCode}" default="How To Cite"/> | BioModels</title>
+
     <script type="text/javascript">
         function toggleDisplayById(theElementId) {
             var obj = document.getElementById(theElementId)

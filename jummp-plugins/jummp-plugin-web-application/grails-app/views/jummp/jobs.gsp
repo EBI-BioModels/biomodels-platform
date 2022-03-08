@@ -24,6 +24,7 @@
 
 <head>
     <meta name="layout" content="${session['branding.style']}/main" />
+    <title><g:message code="${titleCode}" default="Internship or Job Opportunities"/> | BioModels</title>
 </head>
 <body>
 

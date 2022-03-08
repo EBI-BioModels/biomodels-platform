@@ -24,7 +24,8 @@
 
 <head>
     <meta name="layout" content="${session['branding.style']}/main" />
-    <style type="text/css">
+    <title><g:message code="${titleCode}" default="Available Courses"/> | BioModels</title>
+    <style>
     dt {
         display: block;
     }

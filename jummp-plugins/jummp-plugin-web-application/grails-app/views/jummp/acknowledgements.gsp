@@ -25,6 +25,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <head>
     <meta name="layout" content="${session['branding.style']}/main" />
+    <title><g:message code="${titleCode}" default="Acknowledgements" /> | BioModels</title>
     <style type="text/css">
         .underline {
             border-bottom: 1px solid grey;

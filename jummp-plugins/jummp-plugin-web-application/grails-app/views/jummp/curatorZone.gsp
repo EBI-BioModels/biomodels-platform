@@ -9,7 +9,7 @@
 <html>
 <head>
     <meta name="layout" content="${session['branding.style']}/main" />
-    <title><g:message code="${titleCode}" default="Curator's Zone | BioModels"/></title>
+    <title><g:message code="${titleCode}" default="Curator's Zone"/> | BioModels</title>
 </head>
 
 <body>
