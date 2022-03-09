@@ -27,7 +27,6 @@ class PreProcessFilters {
             before = {
                 // Remove the trailing forward slash in the URL/URI
                 String uri = request.forwardURI
-                println uri
                 String slash = uri.reverse().take(1)
                 String controller = params.get("controller")
                 String action = params.get("action")
