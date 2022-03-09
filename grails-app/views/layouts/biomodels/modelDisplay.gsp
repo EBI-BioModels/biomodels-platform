@@ -604,6 +604,7 @@
                 <g:if test="${canAskReviewerAccount}">
                     <li>
                         <button class='toolbutton' id="ask-reviewer-account"
+                                title="Click on this button to open a reviewer account for this model"
                                 onclick="return $.jummp.openPage('${g.createLink(controller: 'jummp',
                             action: 'createReviewerAccount',
                             id: revision.modelIdentifier())}')">Reviewer</button>
