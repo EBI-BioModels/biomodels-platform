@@ -19,7 +19,7 @@
 
 <%@ page contentType="text/html;charset=UTF-8" %>
 <head>
-    <title>Model GO Categories</title>
+    <title>Model GO Categories | BioModels</title>
     <meta name="layout" content="${session['branding.style']}/main" />
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.12/css/jquery.dataTables.min.css" type="text/css">
     <link rel="stylesheet" href="${resource(dir: 'css/datatable', file: 'buttons.dataTables.min.css', contextPath: "${grailsApplication.config.grails.serverURL}")}" type="text/css">

@@ -26,7 +26,7 @@
         <link rel="dns-prefetch" href="https://www.ebi.ac.uk/" />
     </g:if>
     <link rel="dns-prefetch" href="https://ebi.emblstatic.net" />
-    <title>${command.isDefaultQuery() ? '' : "${command.query} | "}BioModels Parameters</title>
+    <title>${command.isDefaultQuery() ? '' : "${command.query} | "}BioModels Parameters | BioModels</title>
     <link rel="stylesheet"
           href="${resource(dir: 'css/', file: 'jquery.dataTables.min.css',
               contextPath: "${grailsApplication.config.grails.serverURL}")}"
