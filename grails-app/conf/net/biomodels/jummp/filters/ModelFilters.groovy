@@ -49,6 +49,7 @@ class ModelFilters {
         showP2MModel(controller: "model", action: "show") {
             before = {
                 String modelId = params.id
+                if (!modelId) { return false }
                 if (modelId.contains("BMID") || modelId.contains("MODEL170711")) {
                     AutoGenModelMapping modelMap
                     if (modelId.contains("MODEL170711")) {
@@ -59,6 +60,9 @@ class ModelFilters {
                     if (modelMap) {
                         String representative = modelMap.representative
                         String format = params.format
+                        if (!format) {
+                            forward(controller: "model", action: "show", id: representative)
+                        }
                         if (format in SUPPORTED_FORMAT) {
                             response.setContentType(format == 'json' ? "application/json" : "application/xml")
                             response.status = 301
@@ -81,6 +85,7 @@ class ModelFilters {
         downloadP2MModel(controller: "model", action: "download") {
             before = {
                 String modelId = params.id
+                if (!modelId) { return false }
                 if (modelId.contains("BMID") || modelId.contains("MODEL170711")) {
                     AutoGenModelMapping modelMap
                     if (modelId.contains("MODEL170711")) {
@@ -92,13 +97,14 @@ class ModelFilters {
                         String representative = modelMap.representative
                         forward(controller: "model", action: "download", id: representative)
                     }
-                } 
+                }
             }
         }
 
         filesP2MModel(controller: "model", action: "files") {
             before = {
                 String modelId = params.id
+                if (!modelId) { return false }
                 if (modelId.contains("BMID") || modelId.contains("MODEL170711")) {
                     AutoGenModelMapping modelMap
                     if (modelId.contains("MODEL170711")) {
@@ -109,6 +115,9 @@ class ModelFilters {
                     if (modelMap) {
                         String representative = modelMap.representative
                         String format = params.format
+                        if (!format) {
+                            forward(controller: "model", action: "show", id: representative)
+                        }
                         if (format in SUPPORTED_FORMAT) {
                             response.setContentType(format == 'json' ? "application/json" : "application/xml")
                             response.status = 301
