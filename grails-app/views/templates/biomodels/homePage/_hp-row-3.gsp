@@ -98,22 +98,22 @@
         <dl>
             <dt  class="widget-body-text">
                 BioModels is supported by the <a href="//www.embl.org/" class="external">European Molecular Biology Laboratory</a>,
-            the <a href="http://www.bbsrc.ac.uk/" class="external">Biotechnology and Biological Sciences Research Council</a> (Multimod, BB/N019482/1) and
-            the <a href="//www.imi.europa.eu/" title="Innovative Medicines Initiative (IMI)">Innovative Medicines Initiative</a>
-                (<a href="http://transqst.org/" title="This project has received funding from the Innovative Medicines Initiative 2 Joint Undertaking under grant agreement No 116030. This Joint Undertaking receives support from the European Union’s Horizon 2020 research and innovation programme and EFPIA.">TransQST, 116030</a>).
+            the <a href="https://www.bbsrc.ac.uk/" class="external">Biotechnology and Biological Sciences Research Council</a> (Multimod, BB/N019482/1) and
+            the <a href="https//www.imi.europa.eu/" title="Innovative Medicines Initiative (IMI)">Innovative Medicines Initiative</a>
+                (<a href="https://transqst.org/" title="This project has received funding from the Innovative Medicines Initiative 2 Joint Undertaking under grant agreement No 116030. This Joint Undertaking receives support from the European Union’s Horizon 2020 research and innovation programme and EFPIA.">TransQST, 116030</a>).
             </dt>
             <dd>
-                <a href="http://www.embl.org/">
-                    <img src="//www.ebi.ac.uk/biomodels-static/GRAPHICS/EMBL_logo_lo_res_0.jpg"
+                <a href="https://www.embl.org/">
+                    <img src="https://wwwdev.ebi.ac.uk/biomodels/static-assets/images/EMBL_logo_lo_res_0.jpg"
                          title="European Molecular Biology Laboratory (EMBL)" alt="EMBL logo" border="0"/></a>
                 <a href="http://www.bbsrc.ac.uk/" title="Biotechnology and Biological Sciences Research Council (BBSRC)">
-                    <img src="//www.ebi.ac.uk/biomodels-static/GRAPHICS/bbsrc_logo.png"
+                    <img src="https://wwwdev.ebi.ac.uk/biomodels/static-assets/images/bbsrc_logo.png"
                          title="Biotechnology and Biological Sciences Research Council (BBSRC)" alt="BBSRC logo" /></a>
-                <a href="http://www.imi.europa.eu/" title="Innovative Medicines Initiative (IMI)">
-                    <img src="//www.ebi.ac.uk/biomodels-static/GRAPHICS/IMI_logo-small.png"
+                <a href="https://www.imi.europa.eu/" title="Innovative Medicines Initiative (IMI)">
+                    <img src="https://wwwdev.ebi.ac.uk/biomodels/static-assets/images/IMI_logo-small.png"
                          title="Innovative Medicines Initiative (IMI)" alt="IMI logo" /></a>
-                <a href="http://cordis.europa.eu/fp7/" title="Seventh Framework Programme (FP7)">
-                    <img src="//www.ebi.ac.uk/biomodels-static/GRAPHICS/FP7_logo-small.png"
+                <a href="https://cordis.europa.eu/fp7/" title="Seventh Framework Programme (FP7)">
+                    <img src="https://wwwdev.ebi.ac.uk/biomodels/static-assets/images/FP7_logo-small.png"
                          title="Seventh Framework Programme (FP7)" alt="FP7 logo" /></a>
             </dd>
         </dl>
