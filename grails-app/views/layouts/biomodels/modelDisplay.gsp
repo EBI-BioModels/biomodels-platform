@@ -277,6 +277,12 @@
                         primary:"ui-icon-circle-check"
                     }
             }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
+            $("#manage-contributors").button({
+                    text:false,
+                    icons: {
+                        primary:"ui-icon-contact"
+                    }
+            }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
             $( "#peer-review" ).button({
                 text:false,
                 icons: {
@@ -608,6 +614,15 @@
                                 onclick="return $.jummp.openPage('${g.createLink(controller: 'jummp',
                             action: 'createReviewerAccount',
                             id: revision.modelIdentifier())}')">Reviewer</button>
+                    </li>
+                </g:if>
+                <g:if test="${canAskReviewerAccount}"> <!-- canAddContributor is the same canAskReviewerAccount -->
+                    <li>
+                        <button class='toolbutton' id="manage-contributors"
+                                title="Click on this button to manage the list of contributors of your model"
+                                onclick="return $.jummp.openPage('${g.createLink(controller: 'jummp',
+                            action: 'contributors',
+                            id: revision.modelIdentifier())}')">Contributors</button>
                     </li>
                 </g:if>
             </ul>

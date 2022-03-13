@@ -164,6 +164,15 @@ class JummpController {
         render(view: "createReviewerAccount", model: retMap)
     }
 
+    @Secured(["IS_AUTHENTICATED_FULLY"])
+    def contributors() {
+        String serverURL = grailsApplication.config.grails.serverURL
+        String modelId = params.get("id").decodeHTML()
+        String message = "Under construction" //reviewerAccountService.createAccountAndInstructions(modelId, serverURL)
+        Map retMap = [modelId: modelId, message: message, serverURL: serverURL]
+        render(view: "manageContributors", model: retMap)
+    }
+
     def lookupUser = {
         if (params.name) {
             String user = userService.getUsername(params.name)
