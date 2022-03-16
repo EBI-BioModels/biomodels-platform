@@ -1315,5 +1315,6 @@ databaseChangeLog = {
     include file: '20200123_changeModelFormat_Originalcode2Other.groovy'
 
     include file: '20210827_addMorpheusMLFormat.groovy'
+    include file: '20220316_createTable_ContributionRole.groovy'
 }
 
