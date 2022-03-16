@@ -2,7 +2,7 @@ import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.model.ModelElementType
 
 databaseChangeLog = {
-    changeSet(author: "tnguyen (customised)", id: "1630057751-1") {
+    changeSet(author: "Tung Nguyen", id: "add MorpheusML format") {
         grailsChange {
             change {
                 def format = new ModelFormat(identifier: "MorpheusML", name: "MorpheusML", formatVersion: "*")
