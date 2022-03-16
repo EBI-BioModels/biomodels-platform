@@ -622,7 +622,7 @@
                                 title="Click on this button to manage the list of contributors of your model"
                                 onclick="return $.jummp.openPage('${g.createLink(controller: 'jummp',
                             action: 'contributors',
-                            id: revision.modelIdentifier())}')">Contributors</button>
+                            id: revision.identifier())}')">Contributors</button>
                     </li>
                 </g:if>
             </ul>

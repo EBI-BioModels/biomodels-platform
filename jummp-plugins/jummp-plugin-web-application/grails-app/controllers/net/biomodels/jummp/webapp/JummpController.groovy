@@ -168,8 +168,9 @@ class JummpController {
     def contributors() {
         String serverURL = grailsApplication.config.grails.serverURL
         String modelId = params.get("id").decodeHTML()
+        println params.get("authors")
         String message = "Under construction" //reviewerAccountService.createAccountAndInstructions(modelId, serverURL)
-        Map retMap = [modelId: modelId, message: message, serverURL: serverURL]
+        Map retMap = [modelId: modelId, authors: params?.authors, message: message, serverURL: serverURL]
         render(view: "manageContributors", model: retMap)
     }
 

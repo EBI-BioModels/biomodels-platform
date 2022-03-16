@@ -16,6 +16,7 @@
 <h2>Contributors Management</h2>
 <div id="model-contributor-list">
     <h3 style="color: red">${message}</h3>
+    <p>The current contributors: ${authors}</p>
 </div>
 </body>
 </html>
