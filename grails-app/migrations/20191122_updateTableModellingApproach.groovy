@@ -28,8 +28,11 @@ databaseChangeLog = {
                         )
                     group by m
                 """, [readOnly: true]
-                resultSet.eachWithIndex { Model model, Revision revision, ResourceReference mamoXref, int index ->
-                     String mamoTermLabel = mamoXref.accession
+                resultSet.eachWithIndex { def item, int index ->
+                    Model model = item[0]
+                    Revision revision = item[1]
+                    String mamoTermLabel = item[2].accession
+                    println mamoTermLabel
                     if (MODELLING_APPROACHES.containsKey(mamoTermLabel)) {
                         // update modelling approach
                         ModellingApproach approach = ModellingApproach.findByAccession(mamoTermLabel)
