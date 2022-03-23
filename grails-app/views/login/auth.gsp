@@ -31,7 +31,7 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="layout" content="${session['branding.style']}/main" />
-        <title>Login</title>
+        <title>Login | BioModels</title>
     </head>
     <body>
         <g:render template="/templates/initRegistration"
@@ -80,6 +80,9 @@
         </script>
     </body>
 </html>
+<content tag="login">
+    selected
+</content>
 <content tag="title">
     Login
 </content>

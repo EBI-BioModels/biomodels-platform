@@ -165,3 +165,6 @@
     </g:else>
 </content>
 </html>
+<content tag="submit">
+    selected
+</content>

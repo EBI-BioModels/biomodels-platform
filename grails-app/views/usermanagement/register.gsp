@@ -83,6 +83,9 @@
         <script type="application/javascript" src="${resource(dir: 'js', file: 'common.js')}"></script>
     </body>
 </html>
+<content tag="register">
+    selected
+</content>
 <content tag="title">
     <g:message code="user.signup.ui.heading.register"/>
 </content>
