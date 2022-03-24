@@ -102,10 +102,10 @@ class BootStrap {
 
     void doInitialiseSomeContributionRoles() {
         Map<String, String> roles = [
-            "Co-author": "Any person who has made a significant contribution to your work",
+            "Submitter": "Any person who has made a significant contribution to your work",
             "Curator": "Any person who has contributed to update, correct and submit your model files",
-            "Editor": "Any person who has made a significant contribution to model submission",
-            "Owner": "Any person who has made the first version of your submission",
+            "Modeller": "Any person who has made a significant contribution to model submission",
+            "Other": "Any person who has made the first version of your submission",
         ]
         if (Environment.getCurrent() != Environment.TEST) {
             roles.each {
