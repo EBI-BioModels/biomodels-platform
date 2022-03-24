@@ -1,0 +1,29 @@
+<div class="row contributor">
+    <div class="columns large-1 medium-1 small-12">
+        &nbsp;
+    </div>
+    <div class="columns large-2 medium-2 text-center middle">
+        <div class="thumbnail">
+            <img src="${serverURL}/images/default-user-avatar.png" style="width: 30%">
+        </div>
+    </div>
+    <div class="columns large-5 medium-5 small-12">
+        <h4>${cont.person.userRealName}</h4>
+        <p>${cont.user.username}, ${cont.user.email}</p>
+    </div>
+    <div class="columns large-2 medium-2 small-12">
+        <select name="role" required id="role" class="form-control" <g:if test="${cont.locked}">disabled</g:if>>
+            <g:each in="${roles}" var="role">
+                <option value="${role}"
+                        <g:if test="${role.equals(cont.role.name)}">selected="selected" test="${cont.role.name}"</g:if>
+                >${role}</option>
+            </g:each>
+        </select>
+    </div>
+    <div class="columns large-1 medium-1 small-12">
+        <g:if test="${cont.locked}"><del>Remove</del></g:if><g:else>Remove</g:else>
+    </div>
+    <div class="columns large-1 medium-1 small-12">
+        &nbsp;
+    </div>
+</div>

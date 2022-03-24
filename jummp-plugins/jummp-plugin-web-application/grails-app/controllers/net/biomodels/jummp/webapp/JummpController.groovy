@@ -26,9 +26,18 @@ package net.biomodels.jummp.webapp
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
+import net.biomodels.jummp.deployment.biomodels.CommonController
+import net.biomodels.jummp.model.ContributionDetails
+import net.biomodels.jummp.model.ContributionRole
+import net.biomodels.jummp.core.model.ContributorTransportCommand as CTC
+import net.biomodels.jummp.model.Model
+import net.biomodels.jummp.model.Revision
+import net.biomodels.jummp.plugins.security.Person
+import net.biomodels.jummp.plugins.security.User
+
 
 @Secured(["IS_AUTHENTICATED_FULLY"])
-class JummpController {
+class JummpController extends CommonController {
     def springSecurityService
     def userService
     def grailsApplication
@@ -36,6 +45,7 @@ class JummpController {
     def feedbackService
     def messageSource
     def reviewerAccountService
+    def modelService
 
     final List<String> AUDIT_EXCEPTIONS = ['support', 'aboutus', 'contactus', 'lookupUser',
                                            'autoCompleteUser', 'teamLookup']
@@ -168,10 +178,48 @@ class JummpController {
     def contributors() {
         String serverURL = grailsApplication.config.grails.serverURL
         String modelId = params.get("id").decodeHTML()
-        println params.get("authors")
-        String message = "Under construction" //reviewerAccountService.createAccountAndInstructions(modelId, serverURL)
-        Map retMap = [modelId: modelId, authors: params?.authors, message: message, serverURL: serverURL]
+        int revisionNumber = params.getInt("format")
+        String message = "" //reviewerAccountService.createAccountAndInstructions(modelId, serverURL)
+        // The roles are ordered by the permission in ascending
+        List<String> roles = ContributionRole.getAll().collect { it.name }.sort { it }
+        Map<String, CTC> contributors = getContributors(modelId, revisionNumber)
+        List contributorEmailList = contributors.values().collect { it.user.email }
+        Map retMap = [modelId: modelId, revisionNumber: revisionNumber,
+                      authors: params?.authors, message: message,
+                      contributorEmailList: contributorEmailList,
+                      roles: roles, contributors: contributors, serverURL: serverURL]
         render(view: "manageContributors", model: retMap)
+    }
+
+    Map getContributors(String modelId, int revisionNumber) {
+        Model model = modelService.getModel("$modelId.$revisionNumber")
+        if (!model) { return null }
+        int minRevNum = model.revisions*.revisionNumber.min()
+        Revision firstRevision = model.revisions.find {
+            it.revisionNumber == minRevNum
+        }
+        Map contributorMap = [:]
+        User owner = firstRevision.owner
+        CTC ctc = new CTC(user: owner, role: ContributionRole.findByName("Submitter"),
+                         person: owner.person, locked: true)
+        contributorMap.put(owner.username, ctc)
+        Set<Revision> revisionList = model.revisions.findAll {
+            it.owner.username != owner.username
+        }.toSet()
+        User curator = null
+        for (Revision revision: revisionList) {
+            curator = revision.owner
+            ctc = new CTC(user: curator, role: ContributionRole.findByName("Curator"),
+                person: curator.person, locked: true)
+            contributorMap.put(revision.owner.username, ctc)
+        }
+        List revisions = model.revisions.toList()
+        List details = ContributionDetails.findAllByRevisionInList(revisions)
+        for (ContributionDetails detail: details) {
+            ctc = new CTC(user: detail.contributor, role: detail.role, person: detail.contributor.person, locked: false)
+            contributorMap.put(detail.contributor.username, ctc)
+        }
+        contributorMap
     }
 
     def lookupUser = {
