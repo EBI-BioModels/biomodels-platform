@@ -620,9 +620,7 @@
                     <li>
                         <button class='toolbutton' id="manage-contributors"
                                 title="Click on this button to manage the list of contributors of your model"
-                                onclick="return $.jummp.openPage('${g.createLink(controller: 'jummp',
-                            action: 'contributors',
-                            id: revision.identifier())}')">Contributors</button>
+                                onclick="return manageContributors()">Members</button>
                     </li>
                 </g:if>
             </ul>
@@ -1010,6 +1008,12 @@
                         action: 'submitForPublication', id: revision.identifier())}");
             }
             pointer.dialog("close");
+        }
+
+        function manageContributors() {
+            $.jummp.openPage('${g.createLink(controller: 'jummp',
+                            action: 'contributors',
+                            id: revision.identifier())}');
         }
     </script>
 </body>
