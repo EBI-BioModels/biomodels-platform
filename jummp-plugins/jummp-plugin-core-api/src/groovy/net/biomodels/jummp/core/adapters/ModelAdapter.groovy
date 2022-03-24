@@ -26,6 +26,7 @@ import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
+import net.biomodels.jummp.model.ContributionDetails
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Revision
 
@@ -47,6 +48,15 @@ class ModelAdapter {
                 creators.add(revision.owner.person.userRealName)
                 String realName = revision.owner.person.userRealName ?: revision.owner.username
                 creatorUsernames.put(revision.owner.username, realName)
+            }
+            List revisions = model.revisions.collect { it.id }
+            String queryString = "from ContributionDetails as CD where CD.revision.id in (:revisions)"
+            List otherContributors = ContributionDetails.findAll(queryString, [revisions: revisions])
+            for (ContributionDetails contributionDetail: otherContributors) {
+                String username = contributionDetail.contributor.username
+                String fullName = contributionDetail.contributor.person.userRealName ?: username
+                creators.add(fullName)
+                creatorUsernames.put(username, fullName)
             }
         }
         Revision latestRev
