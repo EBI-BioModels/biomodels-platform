@@ -754,6 +754,7 @@
                                 </div>
                             </div>
                             <g:render  model="[revision: revision]" template="/templates/renderPublication" />
+                            <g:render model="[authors: authors]" template="/templates/renderContributors" />
                         </div>
 
                         <div class="small-12 medium-4 large-4 columns">
