@@ -44,5 +44,41 @@
         </div></div>
     </div>
 </div>
+<script>
+
+    $("#btn-add-contributor-send").on("click", function() {
+        let email = $('input[name=email]').val();
+        if (!email) {
+            showNotification("Please try with a valid email address!");
+            return false;
+        }
+        if (contributorEmails.indexOf(email) >= 0) {
+            showNotification("An invitation has been sent to this email! Please add other contributors!");
+            return false;
+        }
+        const urlPost = $.jummp.createLink("contributor", "sendContributionInvite");
+        let data = new FormData();
+        data.append("modelId", "${modelId}");
+        data.append("revisionNumber", ${revisionNumber});
+        data.append("email", email);
+        fetch(urlPost, {
+            method: "POST",
+            body: data
+        }).then((result) => {
+            if (200 !== result.status) {
+                throw new Error("Bad Server Response");
+                return result.text();
+            }
+            return result.json();
+        }).then((response) => {
+            const data = JSON.stringify(response);
+            contributorEmails.push(response["email"]);
+            $("form[name=test_form]").append(response["htmlBasedStringForNewContributor"]);
+        }).catch((error) => {
+            console.log(error);
+        });
+        return false;
+    });
+</script>
 </body>
 </html>

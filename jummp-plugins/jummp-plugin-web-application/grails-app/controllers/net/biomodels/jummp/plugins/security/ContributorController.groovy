@@ -54,6 +54,54 @@ class ContributorController extends CommonController {
     def userService
     def modelService
 
+    @Secured(["IS_AUTHENTICATED_FULLY"])
+    def manage() {
+        String serverURL = grailsApplication.config.grails.serverURL
+        String modelId = params.get("id").decodeHTML()
+        String revisionNumber = params.get("format").decodeHTML()
+        String message = ""
+        // The roles are ordered by the permission in ascending
+        List<String> roles = CR.getAll().collect { it.name }.sort { it }
+        Map<String, CTC> contributors = getContributors(modelId, revisionNumber)
+        List contributorEmailList = contributors.values().collect { it.user.email }
+        Map retMap = [modelId: modelId, revisionNumber: revisionNumber,
+                      authors: params?.authors, message: message,
+                      contributorEmailList: contributorEmailList,
+                      roles: roles, contributors: contributors, serverURL: serverURL]
+        render(view: "manage", model: retMap)
+    }
+
+    private Map getContributors(String modelId, String revisionNumber) {
+        Model model = modelService.getModel("$modelId.$revisionNumber")
+        if (!model) { return null }
+        int minRevNum = model.revisions*.revisionNumber.min()
+        Revision firstRevision = model.revisions.find {
+            it.revisionNumber == minRevNum
+        }
+        Map contributorMap = [:]
+        User owner = firstRevision.owner
+        CTC ctc = new CTC(user: owner, role: CR.findByName("Submitter"),
+            person: owner.person, locked: true)
+        contributorMap.put(owner.username, ctc)
+        Set<Revision> revisionList = model.revisions.findAll {
+            it.owner.username != owner.username
+        }.toSet()
+        User curator = null
+        for (Revision revision: revisionList) {
+            curator = revision.owner
+            ctc = new CTC(user: curator, role: CR.findByName("Curator"),
+                person: curator.person, locked: true)
+            contributorMap.put(revision.owner.username, ctc)
+        }
+        List revisions = model.revisions.toList()
+        List details = CD.findAllByRevisionInList(revisions)
+        for (CD detail: details) {
+            ctc = new CTC(user: detail.contributor, role: detail.role, person: detail.contributor.person, locked: false)
+            contributorMap.put(detail.contributor.username, ctc)
+        }
+        contributorMap
+    }
+
     @Secured(['IS_AUTHENTICATED_FULLY'])
     def sendContributionInvite() {
         String modelId = params["modelId"]?.decodeHTML()
@@ -85,7 +133,7 @@ class ContributorController extends CommonController {
         List<String> roles = CR.getAll().collect {
             it.name
         }.sort()
-        String htmlString = g.render(template: "/jummp/showContributor",
+        String htmlString = g.render(template: "/contributor/showContributor",
             plugin: "jummp-plugin-web-application",
             model: [cont: ctc, serverURL: serverURL, roles: roles])
         result.put("htmlBasedStringForNewContributor", htmlString)

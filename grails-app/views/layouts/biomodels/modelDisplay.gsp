@@ -1012,9 +1012,7 @@
         }
 
         function manageContributors() {
-            $.jummp.openPage('${g.createLink(controller: 'jummp',
-                            action: 'contributors',
-                            id: revision.identifier())}');
+            $.jummp.openPage('${g.createLink(controller: 'contributor', action: 'manage', id: revision.identifier())}');
         }
     </script>
 </body>
