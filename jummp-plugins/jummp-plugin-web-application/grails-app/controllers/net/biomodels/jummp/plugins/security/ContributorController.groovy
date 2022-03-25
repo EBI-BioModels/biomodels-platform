@@ -175,4 +175,11 @@ class ContributorController extends CommonController {
         result.put("message", message)
         render(result as JSON)
     }
+
+    def remove() {
+        Map result = [:]
+        String message = "In progress"
+        result.put("message", message)
+        render(result as JSON)
+    }
 }

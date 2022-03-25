@@ -21,7 +21,8 @@
         </select>
     </div>
     <div class="columns large-1 medium-1 small-12">
-        <g:if test="${cont.locked}"><del>Remove</del></g:if><g:else>Remove</g:else>
+        <p id="contributor-remove" class="button">
+            <g:if test="${cont.locked}"><del>Remove</del></g:if><g:else>Remove</g:else></p>
     </div>
     <div class="columns large-1 medium-1 small-12">
         &nbsp;

@@ -12,7 +12,7 @@
     <title>Manage Model Contributors | BioModels</title>
     <script>
         const currentEmail = "";
-        var contributorEmails = [];
+        let contributorEmails = [];
         $.each(${contributorEmailList as grails.converters.JSON}, (i, v) => {
             contributorEmails.push(v);
         });
@@ -122,6 +122,48 @@
             toastr.success(message);
         }).catch((error) => {
             console.log(error);
+
+    $("#model-contributor-list").on("click", "#contributor-remove", function () {
+        const parentRow = $(this).parent().parent();
+        const usernameAndEmailElement = parentRow.find(".username-email");
+        const usernameAndEmail = usernameAndEmailElement.text();
+        let message = "";
+        if (!usernameAndEmail) {
+            message = "Cannot remove the contribution role due to an error!";
+            showNotification(message);
+            toastr.error(message);
+            return true;
+        }
+        const urlPost = $.jummp.createLink("contributor", "remove");
+        let data = new FormData();
+        data.append("usernameAndEmail", usernameAndEmail);
+        data.append("modelId", "${modelId}");
+        data.append("revisionNumber", ${revisionNumber});
+        //data.append("newRole", currentRole);
+        fetch(urlPost, {
+            method: "POST",
+            body: data
+        }).then((result) => {
+            if (200 !== result.status) {
+                message = "Bad Server Response";
+                showNotification(message);
+                toastr.error(message);
+                throw new Error(message);
+                return result.text();
+            }
+            return result.json();
+        }).then((response) => {
+            const email = usernameAndEmail.split(", ")[1];
+            contributorEmails = jQuery.grep(contributorEmails, function(e) {
+                return e !== email;
+            });
+            parentRow.remove();
+            message = response["message"];
+            showNotification(message);
+            toastr.success(message);
+        }).catch((error) => {
+            console.log(error);
+            return false;
         });
         return true;
     });
