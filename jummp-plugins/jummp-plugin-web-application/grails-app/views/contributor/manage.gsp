@@ -79,6 +79,11 @@
         });
         return false;
     });
+
+    $("#model-contributor-list").on("change", "#role", function () {
+        const currentRole = $(this).val();
+        console.log("Current Role: " + currentRole);
+    });
 </script>
 </body>
 </html>
