@@ -55,7 +55,6 @@ class ContributorController extends CommonController {
     def userService
     def modelService
 
-    @Secured(["IS_AUTHENTICATED_FULLY"])
     def manage() {
         String serverURL = grailsApplication.config.grails.serverURL
         String modelId = params.get("id").decodeHTML()
@@ -103,7 +102,6 @@ class ContributorController extends CommonController {
         contributorMap
     }
 
-    @Secured(['IS_AUTHENTICATED_FULLY'])
     def sendContributionInvite() {
         String modelId = params["modelId"]?.decodeHTML()
         int revisionNumber = params.getInt("revisionNumber")
@@ -142,7 +140,6 @@ class ContributorController extends CommonController {
         render(result as JSON)
     }
 
-    @Secured(['IS_AUTHENTICATED_FULLY'])
     def updateRole() {
         Map result = [:]
         String message = "Under construction"
