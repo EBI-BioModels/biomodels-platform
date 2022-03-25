@@ -8,8 +8,8 @@
         </div>
     </div>
     <div class="columns large-5 medium-5 small-12">
-        <h4>${cont.person.userRealName}</h4>
-        <p>${cont.user.username}, ${cont.user.email}</p>
+        <h4 class="user-real-name">${cont.person.userRealName}</h4>
+        <p class="username-email">${cont.user.username}, ${cont.user.email}</p>
     </div>
     <div class="columns large-2 medium-2 small-12">
         <select name="role" required id="role" class="form-control" <g:if test="${cont.locked}">disabled</g:if>>

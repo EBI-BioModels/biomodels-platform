@@ -17,6 +17,10 @@
             contributorEmails.push(v);
         });
     </script>
+    <g:javascript contextPath="" src="toastr.min.js" />
+    <link rel="stylesheet"
+          href="${resource(dir: 'css', file: 'toastr.min.css', contextPath: "${serverURL}")}" />
+
 </head>
 
 <body>
@@ -71,18 +75,55 @@
             }
             return result.json();
         }).then((response) => {
-            const data = JSON.stringify(response);
             contributorEmails.push(response["email"]);
             $("form[name=test_form]").append(response["htmlBasedStringForNewContributor"]);
         }).catch((error) => {
             console.log(error);
         });
-        return false;
+        return true;
     });
 
     $("#model-contributor-list").on("change", "#role", function () {
         const currentRole = $(this).val();
         console.log("Current Role: " + currentRole);
+        const parentRow = $(this).parent().parent();
+        const usernameAndEmailElement = parentRow.find(".username-email");
+        const usernameAndEmail = usernameAndEmailElement.text();
+        let message = "";
+        if (!usernameAndEmail) {
+            message = "Cannot update the contribution role due to an error!";
+            showNotification(message);
+            toastr.error(message);
+            return false;
+        }
+        toastr.success(usernameAndEmail);
+        showNotification(usernameAndEmail);
+        const urlPost = $.jummp.createLink("contributor", "updateRole");
+        let data = new FormData();
+        data.append("usernameAndEmail", usernameAndEmail);
+        data.append("modelId", "${modelId}");
+        data.append("revisionNumber", ${revisionNumber});
+        data.append("newRole", currentRole);
+        fetch(urlPost, {
+            method: "POST",
+            body: data
+        }).then((result) => {
+            if (200 !== result.status) {
+                message = "Bad Server Response";
+                showNotification(message);
+                toastr.error(message);
+                throw new Error(message);
+                return result.text();
+            }
+            return result.json();
+        }).then((response) => {
+            message = response["message"];
+            showNotification(message);
+            toastr.success(message);
+        }).catch((error) => {
+            console.log(error);
+        });
+        return true;
     });
 </script>
 </body>

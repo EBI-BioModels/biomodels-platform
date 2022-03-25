@@ -30,6 +30,7 @@ import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Revision
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.dao.OptimisticLockingFailureException
 
 /**
  * @short Controller class for interacting with user.
@@ -138,6 +139,43 @@ class ContributorController extends CommonController {
             model: [cont: ctc, serverURL: serverURL, roles: roles])
         result.put("htmlBasedStringForNewContributor", htmlString)
         result.put("message", "The data has been updated successfully!")
+        render(result as JSON)
+    }
+
+    @Secured(['IS_AUTHENTICATED_FULLY'])
+    def updateRole() {
+        Map result = [:]
+        String message = "Under construction"
+
+        String usernameAndEmail = params.get("usernameAndEmail").decodeHTML()
+        String[] parts = usernameAndEmail.split(", ")
+        String username = parts[0]
+        String email = parts[1]
+        User contributor = User.findByUsernameAndEmail(username, email)
+
+        String modelId = params.get("modelId")
+        String revisionNumber = params.get("revisionNumber")
+        Model model = modelService.getModel("$modelId.$revisionNumber")
+        Revision revision = Revision.findByModelAndRevisionNumber(model, revisionNumber)
+
+        String newRoleName = params.get("newRole").decodeHTML()
+        CR newRole = CR.findByName(newRoleName)
+
+        CD details = CD.findByContributorAndRevision(contributor, revision, [locked: true])
+        try {
+            details?.delete()
+            details = new CD(contributor: contributor, revision: revision, role: newRole)
+            if (details.save(flush: true)) {
+                message = "Update the new role for this contributor successfully."
+            } else {
+                message = "An error has happened while trying to update the role for this contributor."
+            }
+        } catch (OptimisticLockingFailureException exception) {
+            throw exception
+            LOGGER.error(message, exception)
+            println "$message: ${exception.toString()}"
+        }
+        result.put("message", message)
         render(result as JSON)
     }
 }
