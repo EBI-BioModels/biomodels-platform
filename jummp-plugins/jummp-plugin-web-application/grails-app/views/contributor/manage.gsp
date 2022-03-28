@@ -127,6 +127,7 @@
         const parentRow = $(this).parent().parent();
         const usernameAndEmailElement = parentRow.find(".username-email");
         const usernameAndEmail = usernameAndEmailElement.text();
+        const userRealName = parentRow.find(".username-email").text();
         let message = "";
         if (!usernameAndEmail) {
             message = "Cannot remove the contribution role due to an error!";
@@ -137,6 +138,7 @@
         const urlPost = $.jummp.createLink("contributor", "remove");
         let data = new FormData();
         data.append("usernameAndEmail", usernameAndEmail);
+        data.append("userRealName", userRealName);
         data.append("modelId", "${modelId}");
         data.append("revisionNumber", ${revisionNumber});
         //data.append("newRole", currentRole);

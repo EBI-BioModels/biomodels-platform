@@ -179,7 +179,52 @@ class ContributorController extends CommonController {
     def remove() {
         Map result = [:]
         String message = "In progress"
+        Map parsedParameters = parseParameters()
+        result.putAll(parsedParameters)
+        String revisionIdentifier = parsedParameters["revisionIdentifier"]
+        User contributor = parsedParameters["contributor"]
+        Revision revision = parsedParameters["revision"]
+        CD details = CD.findByContributorAndRevision(contributor, revision, [locked: true])
+        try {
+            details?.delete(flush: true)
+            details = CD.findByContributorAndRevision(contributor, revision, [locked: true])
+            if (details) {
+                message = """\
+Remove the contributor \
+${contributor.person.userRealName} (${contributor.username}, ${contributor.email}) \
+from the model ${revisionIdentifier} unsuccessfully."""
+            } else {
+                message = """\
+The contributor ${contributor.person.userRealName} (${contributor.username}, ${contributor.email}) \
+from the model ${revisionIdentifier} has been removed successfully."""
+            }
+            LOGGER.debug(message)
+        } catch (OptimisticLockingFailureException exception) {
+            throw exception
+            message = """\
+An error happened when removing the contributor \
+${contributor.person.userRealName} (${contributor.username}, ${contributor.email}) \
+from the model ${revisionIdentifier}."""
+            LOGGER.error(message, exception)
+            println "$message: ${exception.toString()}"
+        }
+        println message
         result.put("message", message)
         render(result as JSON)
+    }
+
+    private Map parseParameters() {
+        String usernameAndEmail = params.get("usernameAndEmail").decodeHTML()
+        String[] parts = usernameAndEmail.split(", ")
+        String username = parts[0]
+        String email = parts[1]
+        User contributor = User.findByUsernameAndEmail(username, email)
+
+        String modelId = params.get("modelId")
+        String revisionNumber = params.get("revisionNumber")
+        Model model = modelService.getModel("$modelId.$revisionNumber")
+        Revision revision = Revision.findByModelAndRevisionNumber(model, revisionNumber)
+
+        [contributor: contributor, revision: revision, revisionIdentifier: "$modelId.$revisionNumber"]
     }
 }
