@@ -91,8 +91,8 @@ function closeForm() {
  * In the section, some variables are defined in specific views, for instance, user edit view
  */
 // reference: https://wiki.eprints.org/w/ORCID
-var orcidRegExp = /^\d{4}-\d{4}-\d{4}-\d{3}(?:\d|X)$/gi;
-var emailRegExp = /^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+const orcidRegExp = /^\d{4}-\d{4}-\d{4}-\d{3}(?:\d|X)$/gi;
+const emailRegExp = /^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
 $("#registerForm #resetFormButton").click(function() {
     $('#registerForm')[0].reset();
 });
@@ -134,35 +134,74 @@ $('input[id=username]').blur(function() {
         hideNow();
     }
 });
+
+const LOOKUP_USER_INFO_STATUS_CODE = {
+    "FETCH_FAILED": -1,
+    "NOT_FOUND": 0,
+    "FOUND": 1
+};
+
+function doLookUpUserEmail(emailAddress) {
+    let lookupStatus;
+    let emailFound = "";
+    $.ajax({
+        async: false,
+        dataType: "json",
+        cache: false,
+        data: {
+            query: emailAddress,
+            column: 2
+        },
+        url: $.jummp.createLink("usermanagement", "lookupUser"),
+        success: function (response) {
+            emailFound = response[0];
+            if (emailFound.trim()) {
+                lookupStatus = LOOKUP_USER_INFO_STATUS_CODE.FOUND;
+            } else {
+                lookupStatus = LOOKUP_USER_INFO_STATUS_CODE.NOT_FOUND;
+            }
+        },
+        error: function () {
+            lookupStatus = LOOKUP_USER_INFO_STATUS_CODE.FETCH_FAILED;
+        },
+        complete: function (e) {
+            // do nothing
+        }
+    });
+    return lookupStatus;
+}
+
 $('input[name=email]').blur(function() {
-    var email = $(this).val().trim();
+    let email = $(this).val().trim();
     if (email !== currentEmail) {
-        var message = "";
+        let message = "";
+        let returned;
         if (email.match(emailRegExp)) {
-            $.ajax({
-                dataType: "json",
-                cache: false,
-                data: {
-                    query: email,
-                    column: 2
-                },
-                url: $.jummp.createLink("usermanagement", "lookupUser"),
-                success: function (response) {
-                    message = response[0];
-                    if (message.trim()) {
-                        message = "A user with this email address " + message.trim() + " already exists in our database. Please use a different one."
-                        showNotification(message);
-                    }
-                }
-            });
+            const LOOKUP_EMAIL_RESULT = doLookUpUserEmail(email);
+            if (LOOKUP_EMAIL_RESULT === LOOKUP_USER_INFO_STATUS_CODE.FETCH_FAILED) {
+                message = "There has been an internal error happening. Please try again!";
+                returned = false;
+            } else if (LOOKUP_EMAIL_RESULT === LOOKUP_USER_INFO_STATUS_CODE.NOT_FOUND) {
+                message = "The email address " + email + " could not be found, or does not exist.";
+                returned = false;
+            } else if (LOOKUP_EMAIL_RESULT === LOOKUP_USER_INFO_STATUS_CODE.FOUND) {
+                message = "The email " + email + " used by another BioModels user. Choose a different address.";
+                returned = true;
+            } else {
+                message = "An unknown error has happened! Please try again.";
+                returned = false;
+            }
         } else {
             message = "Your email address is invalid";
-            showNotification(message);
+            returned = false;
         }
+        showNotification(message);
+        return returned;
     } else {
         hideNow();
     }
 });
+
 $('input[name=orcid]').blur(function() {
     var orcid = $(this).val().trim();
     if (orcid !== currentOrcid) {

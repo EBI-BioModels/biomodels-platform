@@ -40,7 +40,7 @@
         <div class="columns large-6 medium-6 small-12">
         <div class="input-group">
             <span class="input-group-label">Email</span>
-            <input class="input-group-field" type="text" id="txt-email-or-name" name="email"
+            <input class="input-group-field" type="text" id="txt-email-or-name" name="txt-email-or-name"
                    placeholder="Type a valid email address of the contributor" >
             <div class="input-group-button">
                 <input type="submit" class="button" value="Send" id="btn-add-contributor-send">
@@ -49,6 +49,39 @@
     </div>
 </div>
 <script>
+    function doCheckEmail(email) {
+        let message = "";
+        let returned;
+        if (email.match(emailRegExp)) {
+            const LOOKUP_EMAIL_RESULT = doLookUpUserEmail(email);
+            if (LOOKUP_EMAIL_RESULT === LOOKUP_USER_INFO_STATUS_CODE.FETCH_FAILED) {
+                message = "There has been an internal error happening. Please try again!";
+                returned = false;
+            } else if (LOOKUP_EMAIL_RESULT === LOOKUP_USER_INFO_STATUS_CODE.NOT_FOUND) {
+                message = "The email address " + email + " could not be found, or does not exist.";
+                returned = false;
+            } else if (LOOKUP_EMAIL_RESULT === LOOKUP_USER_INFO_STATUS_CODE.FOUND) {
+                returned = true;
+            } else {
+                message = "An unknown error has happened! Please try again.";
+                returned = false;
+            }
+        } else {
+            message = "Your email address provided is invalid.";
+            returned = false;
+        }
+        if (message) {
+            clearNotification();
+            showNotification(message);
+            toastr.warning(message);
+        };
+        return returned;
+    }
+
+    $("#txt-email-or-name").blur(function() {
+        let email = $(this).val().trim();
+        doCheckEmail(email);
+    });
 
     $("#btn-add-contributor-send").on("click", function() {
         let email = $('input[name=email]').val();
@@ -56,10 +89,15 @@
             showNotification("Please try with a valid email address!");
             return false;
         }
+
         if (contributorEmails.indexOf(email) >= 0) {
-            showNotification("An invitation has been sent to this email! Please add other contributors!");
+            showNotification("The user associated with this email " + email + " has already been invited or added to the contributor list.");
             return false;
         }
+
+        const validEmail = doCheckEmail(email);
+        if (!validEmail) { return false; }
+
         const urlPost = $.jummp.createLink("contributor", "sendContributionInvite");
         let data = new FormData();
         data.append("modelId", "${modelId}");
@@ -70,10 +108,14 @@
             body: data
         }).then((result) => {
             if (200 !== result.status) {
-                throw new Error("Bad Server Response");
-                return result.text();
+                const errMsg = "Bad Server Response";
+                showNotification(errMsg);
+                toastr.error(errMsg);
+                throw new Error(errMsg);
+                return false;
+            } else {
+                return result.json();
             }
-            return result.json();
         }).then((response) => {
             contributorEmails.push(response["email"]);
             $("form[name=test_form]").append(response["htmlBasedStringForNewContributor"]);
