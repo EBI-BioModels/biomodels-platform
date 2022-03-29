@@ -24,7 +24,9 @@
 </head>
 
 <body>
-<h2>Manage Contributors</h2>
+<h2>Manage Contributors of
+    <a href="${createLink(controller: "model", action: "show", id: "${modelId}.${revisionNumber}")}">
+    ${modelId}.${revisionNumber}</a></h2>
 <div id="model-contributor-list">
     <h3 style="color: red">${message}</h3>
     <h3>The current contributors</h3>
@@ -84,14 +86,20 @@
     });
 
     $("#btn-add-contributor-send").on("click", function() {
-        let email = $('input[name=email]').val();
+        let email = $('input[name=txt-email-or-name]').val();
+        let message;
         if (!email) {
-            showNotification("Please try with a valid email address!");
+            message = "Please try with a valid email address!";
+            clearNotification();
+            showNotification(message);
+            toastr.warning(message);
             return false;
         }
 
         if (contributorEmails.indexOf(email) >= 0) {
-            showNotification("The user associated with this email " + email + " has already been invited or added to the contributor list.");
+            message = "The user associated with this email " + email + " has already been invited or added to the contributor list.";
+            showNotification(message);
+            toastr.warning(message);
             return false;
         }
 
@@ -117,9 +125,15 @@
                 return result.json();
             }
         }).then((response) => {
+            const msg = "An invitation has been sent to the user associated with the email " + email + ".";
+            showNotification(msg);
+            toastr.success(msg);
             contributorEmails.push(response["email"]);
             $("form[name=test_form]").append(response["htmlBasedStringForNewContributor"]);
         }).catch((error) => {
+            const errMsg = "There has been an internal error. Please try again or later.";
+            showNotification(errMsg);
+            toastr.error(errMsg);
             console.log(error);
         });
         return true;
@@ -136,7 +150,7 @@
             message = "Cannot update the contribution role due to an error!";
             showNotification(message);
             toastr.error(message);
-            return false;
+            return true;
         }
         toastr.success(usernameAndEmail);
         showNotification(usernameAndEmail);
@@ -164,6 +178,10 @@
             toastr.success(message);
         }).catch((error) => {
             console.log(error);
+            return false;
+        });
+        return true;
+    });
 
     $("#model-contributor-list").on("click", "#contributor-remove", function () {
         const parentRow = $(this).parent().parent();
