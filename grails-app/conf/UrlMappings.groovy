@@ -118,6 +118,7 @@ class UrlMappings {
         "/forgotpassword"(controller:"usermanagement", action:"forgot")
         "/user/editUser"(controller:"usermanagement", action:"edit")
         "/user/editPassword"(controller:"usermanagement", action:"editPassword")
+        "/user/profile"(controller:"usermanagement", action:"profile")
         "/user"(controller:"usermanagement", action:"show")
         "/mommanagement"(controller: "modelOfTheMonth", action: "index")
     }
