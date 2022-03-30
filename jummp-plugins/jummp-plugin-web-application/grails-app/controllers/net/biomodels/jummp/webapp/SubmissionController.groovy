@@ -86,6 +86,7 @@ class SubmissionController implements InitializingBean {
             MTC model = new MTC()
             if (isUpdate) {
                 model = modelDelegateService.getModel(params.modelId)
+                working.put("modelId", params.modelId)
             }
             RTC revision = new RTC(model: model, format: format,
                 minorRevision: false, validated: true)
@@ -350,16 +351,17 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         logger.error(ExceptionUtils.getRootCauseMessage(e))
         // save the submission metadata to submission.log
         File submissionLog = new File(temporaryStorage, "submission.log")
-        submissionLog.write("Submission Data\n")
+        def msg = working.containsKey("modelId") ? "Submission Data of ${working.get('modelId')}\n" : "Submission Data\n"
+        submissionLog.write(msg)
         working.each {
             submissionLog.append("${it.key}: ${it.dump()}\n")
         }
         List<RFTC> filesList = working.get("repository_files")
-        submissionLog.append("Dump of the repository files:\n")
+        submissionLog.append("\nDump of the repository files:\n")
         for (RFTC fileTC : filesList) {
             submissionLog.append(fileTC.dump())
         }
-        submissionLog.append("Dump of the revision transport command:\n")
+        submissionLog.append("\nDump of the revision transport command:\n")
         RTC revisionTC = working.get("RevisionTC")
         submissionLog.append(revisionTC.dump())
         println(submissionLog.text) // sending the logs to the stdout is used for K8s ELK
