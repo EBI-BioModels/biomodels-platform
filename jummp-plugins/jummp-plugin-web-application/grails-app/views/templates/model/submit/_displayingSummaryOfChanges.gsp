@@ -280,6 +280,8 @@
                 msg = "Finished the last validation of the submission data.";
                 if (!currentValidation) {
                     msg += response["errFileMsg"];
+                } else {
+                    msg += " Your submission data have no error."
                 }
                 showNotification(msg);
                 console.log(msg);
