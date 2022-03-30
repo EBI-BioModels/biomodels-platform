@@ -205,6 +205,7 @@
 </g:if>
 <input type="button" name="next" class="next action-button" value="Submit" />
 <input type="button" name="previous" class="previous action-button-previous" value="Previous" />
+<input type="button" name="btnFinalCheck" class="action-button" value="Final Check" style="float: left" />
 <script type="text/javascript">
     function populateSummaryData() {
         console.log("Displaying the summary of submission/changes");
@@ -297,5 +298,11 @@
         } else {
 
         }
+    });
+    $("input[name=btnFinalCheck]").on("click", function() {
+        // it can be called: validateData(4).done(function(response) {}); -- 4 means the step 4 of the submission flow
+        submitData().done(function(response) {
+            setCheckList(4, currentValidation);
+        });
     });
 </script>
