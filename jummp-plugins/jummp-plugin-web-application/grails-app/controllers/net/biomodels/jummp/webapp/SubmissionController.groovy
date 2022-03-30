@@ -357,6 +357,7 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         submissionLog.append("Dump of the revision transport command:\n")
         RTC revisionTC = working.get("RevisionTC")
         submissionLog.append(revisionTC.dump())
+        println(submissionLog.text) // sending the logs to the stdout is used for K8s ELK
 
         submissionService.cleanup(working)
         mailService.sendMail {
