@@ -277,7 +277,11 @@
                 currentValidation = response["currentValidation"];
                 // Explain what you have updated
                 revisionComments = $('#revisionComments').val();
-                msg = "Finished the final verification of the submission data";
+                msg = "Finished the last validation of the submission data.";
+                if (!currentValidation) {
+                    msg += response["errFileMsg"];
+                }
+                showNotification(msg);
                 console.log(msg);
                 toastr.info(msg);
             },

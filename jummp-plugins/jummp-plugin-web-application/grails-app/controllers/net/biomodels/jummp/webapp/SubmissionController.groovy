@@ -219,9 +219,13 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         // 1. Check the uploaded files
         List<RFTC> rftcList = working.get("repository_files")
         Map existedFiles = [:]
+        String errFileMsg = ""
         for (RFTC rftc : rftcList) {
             File file = new File(rftc.path)
             existedFiles.put(rftc.path, file?.exists())
+            if (!file?.exists()) {
+                errFileMsg += "${file.name}: Not found or not exist\n"
+            }
         }
         Map mapErrorFiles = existedFiles.findAll { !it.value }
         boolean areModelFilesValid = mapErrorFiles?.isEmpty()
@@ -238,6 +242,7 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         result.put("submissionFolder", submissionFolder)
         result.put("mapErrorFiles", mapErrorFiles)
         result.put("areModelFilesValid", areModelFilesValid)
+        result.put("errFileMsg", errFileMsg)
         result.put("areMetadataValid", areMetadataValid)
         result.put("isPublicationValid", isPublicationValid)
         boolean currentValidation = areModelFilesValid && areMetadataValid && isPublicationValid
