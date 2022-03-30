@@ -304,7 +304,7 @@
             type: "POST",
             url: "${createLink(controller: "submission", action: "processUploadFiles")}",
             data: {
-                submissionSessionId: "${submissionSessionId}",
+                submissionSessionId: "${submissionFolder}",
                 submissionFolder: "${submissionFolder}",
                 uploadingFiles: JSON.stringify(ids),
                 files: JSON.stringify(existingFiles),

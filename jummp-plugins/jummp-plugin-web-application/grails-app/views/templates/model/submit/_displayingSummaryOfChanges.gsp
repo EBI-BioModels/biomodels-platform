@@ -248,20 +248,46 @@
     }
 
     function submitData() {
+        // TODO: validate the working map again before invoking the following AJAX call and rename the method
+        // if the validation is true, hit the callback. The callback will save all the data in the redis
+        let msg = "";
         return $.ajax({
-            url: "${createLink(controller: "submission", action: "displayChangesMade")}",
-            type: "GET",
+            url: "${createLink(controller: "submission", action: "verifySubmissionData")}",
+            type: "POST",
+            data: {
+                isUpdate: isUpdate,
+                isAmend: isAmend,
+                modelFile: JSON.stringify(modelFile),
+                additionalFiles: JSON.stringify(additionalFiles),
+                modelInfo: JSON.stringify(modelInfo),
+                publication: JSON.stringify(publication),
+                revisionComments: revisionComments,
+                modelId: modelId,
+                changesMade: changesMade,
+                submissionFolder: "${submissionFolder}"
+            },
+            beforeSend: function () {
+                msg = "Doing the final verification of  your submission data...";
+                console.log(msg);
+                toastr.info(msg);
+            },
             success: function (response) {
                 JSON.stringify(response);
-                currentValidation = true;
+                currentValidation = response["currentValidation"];
                 // Explain what you have updated
                 revisionComments = $('#revisionComments').val();
+                msg = "Finished the final verification of the submission data";
+                console.log(msg);
+                toastr.info(msg);
             },
-            error: function (r) {
+            error: function (error) {
                 currentValidation = false;
+                msg = "There have been some errors in your submission data. Please do verify all steps again.";
+                console.log(msg);
+                showNotification(msg);
+                toastr.error(msg);
             }
         });
-
     }
 
     $('#is-amend').on("click", function () {

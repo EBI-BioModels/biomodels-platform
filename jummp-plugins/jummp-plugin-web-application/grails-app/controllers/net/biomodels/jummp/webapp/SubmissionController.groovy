@@ -205,9 +205,39 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         }
         render([filesMap: filesMap, changesMade: changesMade] as JSON)
     }
+    // TODO: change the method to something like doLastCheckSubmissionData(working)
+    def verifySubmissionData() {
+        // TODO: check the data and save all the data to Redis or return false due to failure or incorrectness
+        Map working = rebuildSubmissionData(params)
+        String submissionFolder = working.get("submissionFolder")
+        // 1. Check the uploaded files
+        List<RFTC> rftcList = working.get("repository_files")
+        Map existedFiles = [:]
+        for (RFTC rftc : rftcList) {
+            File file = new File(rftc.path)
+            existedFiles.put(rftc.path, file?.exists())
+        }
+        Map mapErrorFiles = existedFiles.findAll { !it.value }
+        boolean areModelFilesValid = mapErrorFiles?.isEmpty()
 
-    def displayChangesMade() {
-        render([status: "OK"] as JSON)
+        // 2. Check the model metadata provided/updated
+        // TODO: implement me
+        boolean areMetadataValid = true
+
+        // 3. Check the publication details
+        // TODO: implement me
+        boolean isPublicationValid = true
+
+        Map<String, Object> result = new HashMap<>()
+        result.put("submissionFolder", submissionFolder)
+        result.put("mapErrorFiles", mapErrorFiles)
+        result.put("areModelFilesValid", areModelFilesValid)
+        result.put("areMetadataValid", areMetadataValid)
+        result.put("isPublicationValid", isPublicationValid)
+        boolean currentValidation = areModelFilesValid && areMetadataValid && isPublicationValid
+        result.put("currentValidation", currentValidation)
+        logger.debug("The result of verifying the submission data: ${result.dump()}")
+        render(result as JSON)
     }
 
     def validateModelInfo() {
@@ -322,6 +352,20 @@ hyphens, plus signs and underscores. It should also have a proper file extension
             subject "Bug in submission: ${ticket}"
             body "MESSAGE: ${ExceptionUtils.getStackTrace(e)}"
         }
+    }
+
+    private Map rebuildSubmissionData(def params) {
+        Map working = new HashMap<String, Object>()
+        working.put("submissionFolder", params.get("submissionFolder"))
+        // 1. Rebuild the uploaded files
+        List<RFTC> rftcList = new ArrayList<RFTC>()
+        rftcList = rebuildRepoFiles(params.modelFile.decodeHTML() as String,
+            params.additionalFiles.decodeHTML() as String, working)
+        // 2. Rebuild the model format
+        MFTC format = modelFileFormatService.inferModelFormat(rftcList)
+        working.put("model_format", format)
+
+        return working
     }
 
     private List<RFTC> rebuildRepoFiles(String paramModelFile, String paramAdditionalFiles,
