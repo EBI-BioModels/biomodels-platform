@@ -212,7 +212,7 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         render([filesMap: filesMap, changesMade: changesMade] as JSON)
     }
 
-    def verifySubmissionData() {
+    def doLastValidateSubmissionData() {
         // TODO: check the data and save all the data to Redis or return false due to failure or incorrectness
         Map working = rebuildSubmissionData(params)
         String submissionFolder = working.get("submissionFolder")

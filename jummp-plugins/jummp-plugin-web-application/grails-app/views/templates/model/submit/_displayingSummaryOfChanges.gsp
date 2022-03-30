@@ -253,7 +253,7 @@
         // if the validation is true, hit the callback. The callback will save all the data in the redis
         let msg = "";
         return $.ajax({
-            url: "${createLink(controller: "submission", action: "verifySubmissionData")}",
+            url: "${createLink(controller: "submission", action: "doLastValidateSubmissionData")}",
             type: "POST",
             data: {
                 isUpdate: isUpdate,
