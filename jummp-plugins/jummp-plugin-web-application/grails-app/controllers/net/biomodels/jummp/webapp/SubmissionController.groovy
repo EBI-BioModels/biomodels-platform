@@ -349,6 +349,14 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         working.each {
             submissionLog.append("${it.key}: ${it.dump()}\n")
         }
+        List<RFTC> filesList = working.get("repository_files")
+        submissionLog.append("Dump of the repository files:\n")
+        for (RFTC fileTC : filesList) {
+            submissionLog.append(fileTC.dump())
+        }
+        submissionLog.append("Dump of the revision transport command:\n")
+        RTC revisionTC = working.get("RevisionTC")
+        submissionLog.append(revisionTC.dump())
 
         submissionService.cleanup(working)
         mailService.sendMail {
