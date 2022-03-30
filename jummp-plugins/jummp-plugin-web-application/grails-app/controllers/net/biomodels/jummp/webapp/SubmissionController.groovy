@@ -45,9 +45,10 @@ import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONElement
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 
 @Secured(['IS_AUTHENTICATED_FULLY'])
-class SubmissionController {
+class SubmissionController implements InitializingBean {
     private static final Logger logger = LoggerFactory.getLogger(SubmissionController.class)
     def fileSystemService
     def grailsApplication
@@ -58,6 +59,12 @@ class SubmissionController {
     def modelDelegateService
     def publicationService
     def submissionService
+
+    private String EXCH_DIR
+
+    void afterPropertiesSet() throws Exception {
+        EXCH_DIR = grailsApplication.config.jummp.vcs.exchangeDirectory
+    }
 
     def completeSubmission() {
         String message = ""
@@ -162,8 +169,7 @@ class SubmissionController {
      */
     RFTC createRFTC(final String submissionFolder, final String filename,
                     final boolean isModelFile, final String description) {
-        String exchangeDir = grailsApplication.config.jummp.vcs.exchangeDirectory
-        File modelDirectory = new File(exchangeDir, submissionFolder)
+        File modelDirectory = new File(EXCH_DIR, submissionFolder)
         File modelFile = new File(modelDirectory, filename)
 
         new RFTC(path: modelFile.getCanonicalPath(),
@@ -205,7 +211,7 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         }
         render([filesMap: filesMap, changesMade: changesMade] as JSON)
     }
-    // TODO: change the method to something like doLastCheckSubmissionData(working)
+
     def verifySubmissionData() {
         // TODO: check the data and save all the data to Redis or return false due to failure or incorrectness
         Map working = rebuildSubmissionData(params)
@@ -321,8 +327,7 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         logger.error("Oops!!! There has been an error!", e)
         // rollback and backup submission
         String ticket = working.get("submissionFolder")
-        final String EXCHANGE = grailsApplication.config.jummp.vcs.exchangeDirectory
-        final File PARENT = new File(EXCHANGE)
+        final File PARENT = new File(EXCH_DIR)
         File submissionFiles = new File(PARENT, ticket)
         File buggyFiles = new File(PARENT, "buggy")
         File temporaryStorage = new File(buggyFiles, ticket)
