@@ -45,9 +45,10 @@ import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONElement
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 
 @Secured(['IS_AUTHENTICATED_FULLY'])
-class SubmissionController {
+class SubmissionController implements InitializingBean {
     private static final Logger logger = LoggerFactory.getLogger(SubmissionController.class)
     def fileSystemService
     def grailsApplication
@@ -59,53 +60,28 @@ class SubmissionController {
     def publicationService
     def submissionService
 
+    private String EXCH_DIR
+    List validationMessages = new ArrayList<String>(3)
+
+    void afterPropertiesSet() throws Exception {
+        EXCH_DIR = grailsApplication.config.jummp.vcs.exchangeDirectory
+    }
+
     def completeSubmission() {
         String message = ""
         String status = "Success"
         Map working = new HashMap<String, Object>()
-        working.put("submissionFolder", params.get("submissionFolder"))
         try {
             /* The following statements aim at saving the new submission or updates */
-            List<RFTC> rftcList = new ArrayList<RFTC>()
-            rftcList = rebuildRepoFiles(params.modelFile.decodeHTML() as String,
-                params.additionalFiles.decodeHTML() as String, working)
+            working = rebuildSubmissionData()
 
-            MFTC format = modelFileFormatService.inferModelFormat(rftcList)
-
-            boolean isUpdate = params.boolean("isUpdate")
-            boolean isAmend = params.boolean("isAmend")
-            working.put("isUpdate", isUpdate)
-            working.put("isAmend", isAmend)
-            MTC model = new MTC()
-            if (isUpdate) {
-                model = modelDelegateService.getModel(params.modelId)
-            }
-            RTC revision = new RTC(model: model, format: format,
-                minorRevision: false, validated: true)
-            if (isUpdate) {
-                revision = modelDelegateService.getLatestRevision(params.modelId, false)
-            }
-
-            // rebuild the model info as much as possible detected from the former step
-            // and update them in the working map
-            rebuildModelInfo(params.modelInfo?.decodeHTML() as String, rftcList, working, model)
-
-            // populate publication details
-            populatePublication(params.publication?.decodeHTML(), model)
-
-            // populate the data on the revision
-            populateDataRevision(revision, model, working, rftcList,
-                params.revisionComments?.decodeHTML() as String, isUpdate)
-
-            working.put("isUpdateOnExistingModel", isUpdate)
-            working.put("shouldCreateNewRevision", true) // TODO: allow curators decide
-            working.put("changesMade", params.list("changesMade[]"))
             HashSet<String> result = submissionService.handleSubmission(working)
 
             /* Below is used for post processing submission and rendering the result to the callee */
-            String modelId = params.modelId
+            String modelId = working.get("modelId")
             working.put("accessType", "update")
             working.put("changesMade", result)
+            boolean isUpdate = working.get("isUpdate") as boolean
             if (!isUpdate) {
                 modelId = result.first()
                 working.put("accessType", "create")
@@ -162,8 +138,7 @@ class SubmissionController {
      */
     RFTC createRFTC(final String submissionFolder, final String filename,
                     final boolean isModelFile, final String description) {
-        String exchangeDir = grailsApplication.config.jummp.vcs.exchangeDirectory
-        File modelDirectory = new File(exchangeDir, submissionFolder)
+        File modelDirectory = new File(EXCH_DIR, submissionFolder)
         File modelFile = new File(modelDirectory, filename)
 
         new RFTC(path: modelFile.getCanonicalPath(),
@@ -206,8 +181,81 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         render([filesMap: filesMap, changesMade: changesMade] as JSON)
     }
 
-    def displayChangesMade() {
-        render([status: "OK"] as JSON)
+    def doLastValidateSubmissionData() {
+        // TODO: check the data and save all the data to Redis or return false due to failure or incorrectness
+        Map working = rebuildSubmissionData()
+        String errMsg = ""
+
+        // 1. Check the uploaded files
+        boolean areModelFilesValid = doValidateUploadedFiles(working)
+        // 2. Check the model metadata provided/updated
+        boolean areMetadataValid = doValidateModelInfo(working)
+        // 3. Check the publication details
+        boolean isPublicationValid = doValidatePublication(working)
+        errMsg = validationMessages.findAll { it }.join("\n")
+        Map<String, Object> result = new HashMap<>()
+        String submissionFolder = working.get("submissionFolder")
+        result.put("submissionFolder", submissionFolder)
+        result.put("errMsg", errMsg)
+        result.put("areModelFilesValid", areModelFilesValid)
+        result.put("areMetadataValid", areMetadataValid)
+        result.put("isPublicationValid", isPublicationValid)
+        boolean currentValidation = areModelFilesValid && areMetadataValid && isPublicationValid
+        result.put("currentValidation", currentValidation)
+        logger.debug("The result of verifying the submission data: ${result.dump()}")
+        render(result as JSON)
+    }
+
+    private boolean doValidateUploadedFiles(Map working) {
+        List<RFTC> rftcList = working.get("repository_files")
+        String errFileMsg = ""
+        Map existedFiles = [:]
+        for (RFTC rftc : rftcList) {
+            File file = new File(rftc.path)
+            existedFiles.put(rftc.path, file?.exists())
+            if (!file?.exists() || !file?.length() || file?.length() <= 0) {
+                errFileMsg += "${file.name}: Not found or not exist or empty.\n"
+            }
+        }
+        validationMessages[0] = errFileMsg
+        existedFiles.findAll { !it.value }?.isEmpty()
+    }
+
+    private boolean doValidateModelInfo(Map working) {
+        RTC revision = working.get("RevisionTC") as RTC
+        String errMsg = ""
+        // 1. Condition 1: model format is not null
+        boolean mfCond = revision.format
+        if (!mfCond) {
+            errMsg += "Model format is missing.\n"
+        }
+        // 2. Condition 2: model approach is not null
+        boolean maCond = working.containsKey("modelling_approach")
+        if (!maCond) {
+            errMsg += "Modelling approach is missing.\n"
+        }
+        // 3. Condition 3: model name is not null
+        boolean mnCond = revision.model.name
+        if (!mnCond) {
+            errMsg += "Model name is empty or blank.\n"
+        }
+        validationMessages[1] = errMsg
+        mfCond && maCond && mnCond
+    }
+
+    private boolean doValidatePublication(Map working) {
+        MTC model = working.get("ModelTC") as MTC
+        String errMsg = ""
+        if (!model.publication) {
+            return true
+        } else {
+            boolean r = model.publication.validate()
+            if (!r) {
+                errMsg += "Publication record is invalid.\n"
+            }
+            validationMessages[2] = errMsg
+            return r
+        }
     }
 
     def validateModelInfo() {
@@ -291,8 +339,7 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         logger.error("Oops!!! There has been an error!", e)
         // rollback and backup submission
         String ticket = working.get("submissionFolder")
-        final String EXCHANGE = grailsApplication.config.jummp.vcs.exchangeDirectory
-        final File PARENT = new File(EXCHANGE)
+        final File PARENT = new File(EXCH_DIR)
         File submissionFiles = new File(PARENT, ticket)
         File buggyFiles = new File(PARENT, "buggy")
         File temporaryStorage = new File(buggyFiles, ticket)
@@ -310,10 +357,21 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         logger.error(ExceptionUtils.getRootCauseMessage(e))
         // save the submission metadata to submission.log
         File submissionLog = new File(temporaryStorage, "submission.log")
-        submissionLog.write("Submission Data\n")
+        def msg = working.containsKey("modelId") ?
+                    "Submission Data of ${working.get('modelId')}\n" : "Submission Data\n"
+        submissionLog.write(msg)
         working.each {
             submissionLog.append("${it.key}: ${it.dump()}\n")
         }
+        List<RFTC> filesList = working.get("repository_files")
+        submissionLog.append("\nDump of the repository files:\n")
+        for (RFTC fileTC : filesList) {
+            submissionLog.append(fileTC.dump())
+        }
+        submissionLog.append("\nDump of the revision transport command:\n")
+        RTC revisionTC = working.get("RevisionTC")
+        submissionLog.append(revisionTC.dump())
+        println(submissionLog.text) // sending the logs to the stdout is used for K8s ELK
 
         submissionService.cleanup(working)
         mailService.sendMail {
@@ -322,6 +380,54 @@ hyphens, plus signs and underscores. It should also have a proper file extension
             subject "Bug in submission: ${ticket}"
             body "MESSAGE: ${ExceptionUtils.getStackTrace(e)}"
         }
+    }
+
+    private Map rebuildSubmissionData() {
+        /* The following statements aim at saving the new submission or updates */
+        Map working = new HashMap<String, Object>()
+        working.put("submissionFolder", params.get("submissionFolder"))
+        // 1. Rebuild the uploaded files
+        List<RFTC> rftcList = new ArrayList<RFTC>()
+        rftcList = rebuildRepoFiles(params.modelFile.decodeHTML() as String,
+            params.additionalFiles.decodeHTML() as String, working)
+        // 2. Rebuild the model format
+        MFTC format = modelFileFormatService.inferModelFormat(rftcList)
+        working.put("model_format", format)
+
+        boolean isUpdate = params.boolean("isUpdate")
+        boolean isAmend = params.boolean("isAmend")
+        working.put("isUpdate", isUpdate)
+        working.put("isAmend", isAmend)
+        MTC model = new MTC()
+        if (isUpdate) {
+            model = modelDelegateService.getModel(params.modelId)
+            working.put("modelId", params.modelId)
+        }
+        RTC revision = new RTC(model: model, format: format, minorRevision: false, validated: true)
+        String modelId = params.modelId
+        working.put("modelId", modelId)
+        if (isUpdate) {
+            revision = modelDelegateService.getLatestRevision(modelId, false)
+        }
+
+        // rebuild the model info as much as possible detected from the former step
+        // and update them in the working map
+        rebuildModelInfo(params.modelInfo?.decodeHTML() as String, rftcList, working, model)
+
+        // populate publication details
+        populatePublication(params.publication?.decodeHTML(), model)
+
+        // populate the data on the revision
+        String revisionComments = params.revisionComments?.decodeHTML() as String
+        populateDataRevision(revision, model, working, rftcList, revisionComments, isUpdate)
+
+        working.put("ModelTC", model)
+        working.put("RevisionTC", revision)
+        working.put("isUpdateOnExistingModel", isUpdate)
+        working.put("shouldCreateNewRevision", true) // TODO: allow curators decide
+        working.put("changesMade", params.list("changesMade[]"))
+
+        return working
     }
 
     private List<RFTC> rebuildRepoFiles(String paramModelFile, String paramAdditionalFiles,

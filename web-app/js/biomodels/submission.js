@@ -57,7 +57,9 @@ $(document).ready(function () {
             setCheckList(step, currentValidation);
             if (step === 3) {
                 // set the check icon for the displaying summary step
-                setCheckList(4, currentValidation);
+                validateData(4).done(function(response) {
+                    setCheckList(4, currentValidation);
+                });
             }
         }).then(function (r) {
             console.log("Validated and displayed completely.");

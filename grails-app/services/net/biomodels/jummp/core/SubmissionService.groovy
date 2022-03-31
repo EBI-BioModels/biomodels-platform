@@ -410,7 +410,10 @@ class SubmissionService {
             }
 
             // update model format
-            final long fmtId = workingMemory.get("model_format") as Long
+            final long fmtId = -1
+            if (workingMemory.containsKey("model_format")) {
+                fmtId = workingMemory.get("model_format") as Long
+            }
             if (fmtId != revision.format.id) {
                 // the model format has been changed by the user
                 MFTC formatTC = new ModelFormatAdapter(format: ModelFormat.get(fmtId)).toCommandObject()
