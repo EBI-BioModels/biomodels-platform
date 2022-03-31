@@ -325,7 +325,8 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         logger.error(ExceptionUtils.getRootCauseMessage(e))
         // save the submission metadata to submission.log
         File submissionLog = new File(temporaryStorage, "submission.log")
-        def msg = working.containsKey("modelId") ? "Submission Data of ${working.get('modelId')}\n" : "Submission Data\n"
+        def msg = working.containsKey("modelId") ?
+                    "Submission Data of ${working.get('modelId')}\n" : "Submission Data\n"
         submissionLog.write(msg)
         working.each {
             submissionLog.append("${it.key}: ${it.dump()}\n")
@@ -370,8 +371,7 @@ hyphens, plus signs and underscores. It should also have a proper file extension
             model = modelDelegateService.getModel(params.modelId)
             working.put("modelId", params.modelId)
         }
-        RTC revision = new RTC(model: model, format: format,
-            minorRevision: false, validated: true)
+        RTC revision = new RTC(model: model, format: format, minorRevision: false, validated: true)
         String modelId = params.modelId
         working.put("modelId", modelId)
         if (isUpdate) {
@@ -386,8 +386,8 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         populatePublication(params.publication?.decodeHTML(), model)
 
         // populate the data on the revision
-        populateDataRevision(revision, model, working, rftcList,
-            params.revisionComments?.decodeHTML() as String, isUpdate)
+        String revisionComments = params.revisionComments?.decodeHTML() as String
+        populateDataRevision(revision, model, working, rftcList, revisionComments, isUpdate)
 
         working.put("ModelTC", model)
         working.put("RevisionTC", revision)
