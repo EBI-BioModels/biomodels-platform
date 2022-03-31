@@ -45,9 +45,10 @@ import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONElement
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 
 @Secured(['IS_AUTHENTICATED_FULLY'])
-class SubmissionController {
+class SubmissionController implements InitializingBean {
     private static final Logger logger = LoggerFactory.getLogger(SubmissionController.class)
     def fileSystemService
     def grailsApplication
@@ -58,6 +59,12 @@ class SubmissionController {
     def modelDelegateService
     def publicationService
     def submissionService
+
+    private String EXCH_DIR
+
+    void afterPropertiesSet() throws Exception {
+        EXCH_DIR = grailsApplication.config.jummp.vcs.exchangeDirectory
+    }
 
     def completeSubmission() {
         String message = ""
@@ -79,6 +86,7 @@ class SubmissionController {
             MTC model = new MTC()
             if (isUpdate) {
                 model = modelDelegateService.getModel(params.modelId)
+                working.put("modelId", params.modelId)
             }
             RTC revision = new RTC(model: model, format: format,
                 minorRevision: false, validated: true)
@@ -162,8 +170,7 @@ class SubmissionController {
      */
     RFTC createRFTC(final String submissionFolder, final String filename,
                     final boolean isModelFile, final String description) {
-        String exchangeDir = grailsApplication.config.jummp.vcs.exchangeDirectory
-        File modelDirectory = new File(exchangeDir, submissionFolder)
+        File modelDirectory = new File(EXCH_DIR, submissionFolder)
         File modelFile = new File(modelDirectory, filename)
 
         new RFTC(path: modelFile.getCanonicalPath(),
@@ -206,8 +213,43 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         render([filesMap: filesMap, changesMade: changesMade] as JSON)
     }
 
-    def displayChangesMade() {
-        render([status: "OK"] as JSON)
+    def doLastValidateSubmissionData() {
+        // TODO: check the data and save all the data to Redis or return false due to failure or incorrectness
+        Map working = rebuildSubmissionData(params)
+        String submissionFolder = working.get("submissionFolder")
+        // 1. Check the uploaded files
+        List<RFTC> rftcList = working.get("repository_files")
+        Map existedFiles = [:]
+        String errFileMsg = ""
+        for (RFTC rftc : rftcList) {
+            File file = new File(rftc.path)
+            existedFiles.put(rftc.path, file?.exists())
+            if (!file?.exists()) {
+                errFileMsg += "${file.name}: Not found or not exist\n"
+            }
+        }
+        Map mapErrorFiles = existedFiles.findAll { !it.value }
+        boolean areModelFilesValid = mapErrorFiles?.isEmpty()
+
+        // 2. Check the model metadata provided/updated
+        // TODO: implement me
+        boolean areMetadataValid = true
+
+        // 3. Check the publication details
+        // TODO: implement me
+        boolean isPublicationValid = true
+
+        Map<String, Object> result = new HashMap<>()
+        result.put("submissionFolder", submissionFolder)
+        result.put("mapErrorFiles", mapErrorFiles)
+        result.put("areModelFilesValid", areModelFilesValid)
+        result.put("errFileMsg", errFileMsg)
+        result.put("areMetadataValid", areMetadataValid)
+        result.put("isPublicationValid", isPublicationValid)
+        boolean currentValidation = areModelFilesValid && areMetadataValid && isPublicationValid
+        result.put("currentValidation", currentValidation)
+        logger.debug("The result of verifying the submission data: ${result.dump()}")
+        render(result as JSON)
     }
 
     def validateModelInfo() {
@@ -291,8 +333,7 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         logger.error("Oops!!! There has been an error!", e)
         // rollback and backup submission
         String ticket = working.get("submissionFolder")
-        final String EXCHANGE = grailsApplication.config.jummp.vcs.exchangeDirectory
-        final File PARENT = new File(EXCHANGE)
+        final File PARENT = new File(EXCH_DIR)
         File submissionFiles = new File(PARENT, ticket)
         File buggyFiles = new File(PARENT, "buggy")
         File temporaryStorage = new File(buggyFiles, ticket)
@@ -310,10 +351,20 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         logger.error(ExceptionUtils.getRootCauseMessage(e))
         // save the submission metadata to submission.log
         File submissionLog = new File(temporaryStorage, "submission.log")
-        submissionLog.write("Submission Data\n")
+        def msg = working.containsKey("modelId") ? "Submission Data of ${working.get('modelId')}\n" : "Submission Data\n"
+        submissionLog.write(msg)
         working.each {
             submissionLog.append("${it.key}: ${it.dump()}\n")
         }
+        List<RFTC> filesList = working.get("repository_files")
+        submissionLog.append("Dump of the repository files:\n")
+        for (RFTC fileTC : filesList) {
+            submissionLog.append(fileTC.dump())
+        }
+        submissionLog.append("Dump of the revision transport command:\n")
+        RTC revisionTC = working.get("RevisionTC")
+        submissionLog.append(revisionTC.dump())
+        println(submissionLog.text) // sending the logs to the stdout is used for K8s ELK
 
         submissionService.cleanup(working)
         mailService.sendMail {
@@ -322,6 +373,20 @@ hyphens, plus signs and underscores. It should also have a proper file extension
             subject "Bug in submission: ${ticket}"
             body "MESSAGE: ${ExceptionUtils.getStackTrace(e)}"
         }
+    }
+
+    private Map rebuildSubmissionData(def params) {
+        Map working = new HashMap<String, Object>()
+        working.put("submissionFolder", params.get("submissionFolder"))
+        // 1. Rebuild the uploaded files
+        List<RFTC> rftcList = new ArrayList<RFTC>()
+        rftcList = rebuildRepoFiles(params.modelFile.decodeHTML() as String,
+            params.additionalFiles.decodeHTML() as String, working)
+        // 2. Rebuild the model format
+        MFTC format = modelFileFormatService.inferModelFormat(rftcList)
+        working.put("model_format", format)
+
+        return working
     }
 
     private List<RFTC> rebuildRepoFiles(String paramModelFile, String paramAdditionalFiles,

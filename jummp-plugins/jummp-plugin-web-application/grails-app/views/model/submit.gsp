@@ -75,7 +75,7 @@
         </div>
     </div>
 </div>
-<form id="msform" useToken="true" class="${submissionSessionId}">
+<form id="msform" useToken="true" class="${submissionFolder}">
     <!-- progressbar -->
     <ul id="progressbar">
         <li class="active" id="upload-file"><strong>Model Files</strong></li>
