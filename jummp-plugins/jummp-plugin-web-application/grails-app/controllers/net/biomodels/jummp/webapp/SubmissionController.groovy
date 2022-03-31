@@ -70,50 +70,17 @@ class SubmissionController implements InitializingBean {
         String message = ""
         String status = "Success"
         Map working = new HashMap<String, Object>()
-        working.put("submissionFolder", params.get("submissionFolder"))
         try {
             /* The following statements aim at saving the new submission or updates */
-            List<RFTC> rftcList = new ArrayList<RFTC>()
-            rftcList = rebuildRepoFiles(params.modelFile.decodeHTML() as String,
-                params.additionalFiles.decodeHTML() as String, working)
+            working = rebuildSubmissionData()
 
-            MFTC format = modelFileFormatService.inferModelFormat(rftcList)
-
-            boolean isUpdate = params.boolean("isUpdate")
-            boolean isAmend = params.boolean("isAmend")
-            working.put("isUpdate", isUpdate)
-            working.put("isAmend", isAmend)
-            MTC model = new MTC()
-            if (isUpdate) {
-                model = modelDelegateService.getModel(params.modelId)
-                working.put("modelId", params.modelId)
-            }
-            RTC revision = new RTC(model: model, format: format,
-                minorRevision: false, validated: true)
-            if (isUpdate) {
-                revision = modelDelegateService.getLatestRevision(params.modelId, false)
-            }
-
-            // rebuild the model info as much as possible detected from the former step
-            // and update them in the working map
-            rebuildModelInfo(params.modelInfo?.decodeHTML() as String, rftcList, working, model)
-
-            // populate publication details
-            populatePublication(params.publication?.decodeHTML(), model)
-
-            // populate the data on the revision
-            populateDataRevision(revision, model, working, rftcList,
-                params.revisionComments?.decodeHTML() as String, isUpdate)
-
-            working.put("isUpdateOnExistingModel", isUpdate)
-            working.put("shouldCreateNewRevision", true) // TODO: allow curators decide
-            working.put("changesMade", params.list("changesMade[]"))
             HashSet<String> result = submissionService.handleSubmission(working)
 
             /* Below is used for post processing submission and rendering the result to the callee */
-            String modelId = params.modelId
+            String modelId = working.get("modelId")
             working.put("accessType", "update")
             working.put("changesMade", result)
+            boolean isUpdate = working.get("isUpdate") as boolean
             if (!isUpdate) {
                 modelId = result.first()
                 working.put("accessType", "create")
@@ -215,7 +182,7 @@ hyphens, plus signs and underscores. It should also have a proper file extension
 
     def doLastValidateSubmissionData() {
         // TODO: check the data and save all the data to Redis or return false due to failure or incorrectness
-        Map working = rebuildSubmissionData(params)
+        Map working = rebuildSubmissionData()
         String submissionFolder = working.get("submissionFolder")
         // 1. Check the uploaded files
         List<RFTC> rftcList = working.get("repository_files")
@@ -224,15 +191,16 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         for (RFTC rftc : rftcList) {
             File file = new File(rftc.path)
             existedFiles.put(rftc.path, file?.exists())
-            if (!file?.exists()) {
-                errFileMsg += "${file.name}: Not found or not exist\n"
+            if (!file?.exists() || !file?.length() || file?.length() <= 0) {
+                errFileMsg += "${file.name}: Not found or not exist or empty.\n"
             }
         }
-        Map mapErrorFiles = existedFiles.findAll { !it.value }
-        boolean areModelFilesValid = mapErrorFiles?.isEmpty()
+        Map errorFilesMap = existedFiles.findAll { !it.value }
+        boolean areModelFilesValid = errorFilesMap?.isEmpty()
 
         // 2. Check the model metadata provided/updated
         // TODO: implement me
+        Map mdResultMap = doValidateModelInfo(working)
         boolean areMetadataValid = true
 
         // 3. Check the publication details
@@ -241,7 +209,7 @@ hyphens, plus signs and underscores. It should also have a proper file extension
 
         Map<String, Object> result = new HashMap<>()
         result.put("submissionFolder", submissionFolder)
-        result.put("mapErrorFiles", mapErrorFiles)
+        result.put("errorFilesMap", errorFilesMap)
         result.put("areModelFilesValid", areModelFilesValid)
         result.put("errFileMsg", errFileMsg)
         result.put("areMetadataValid", areMetadataValid)
@@ -250,6 +218,12 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         result.put("currentValidation", currentValidation)
         logger.debug("The result of verifying the submission data: ${result.dump()}")
         render(result as JSON)
+    }
+
+    private Map doValidateModelInfo(Map working) {
+        Map<String, Object> result = new HashMap<>()
+
+        result
     }
 
     def validateModelInfo() {
@@ -375,7 +349,8 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         }
     }
 
-    private Map rebuildSubmissionData(def params) {
+    private Map rebuildSubmissionData() {
+        /* The following statements aim at saving the new submission or updates */
         Map working = new HashMap<String, Object>()
         working.put("submissionFolder", params.get("submissionFolder"))
         // 1. Rebuild the uploaded files
@@ -385,6 +360,40 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         // 2. Rebuild the model format
         MFTC format = modelFileFormatService.inferModelFormat(rftcList)
         working.put("model_format", format)
+
+        boolean isUpdate = params.boolean("isUpdate")
+        boolean isAmend = params.boolean("isAmend")
+        working.put("isUpdate", isUpdate)
+        working.put("isAmend", isAmend)
+        MTC model = new MTC()
+        if (isUpdate) {
+            model = modelDelegateService.getModel(params.modelId)
+            working.put("modelId", params.modelId)
+        }
+        RTC revision = new RTC(model: model, format: format,
+            minorRevision: false, validated: true)
+        String modelId = params.modelId
+        working.put("modelId", modelId)
+        if (isUpdate) {
+            revision = modelDelegateService.getLatestRevision(modelId, false)
+        }
+
+        // rebuild the model info as much as possible detected from the former step
+        // and update them in the working map
+        rebuildModelInfo(params.modelInfo?.decodeHTML() as String, rftcList, working, model)
+
+        // populate publication details
+        populatePublication(params.publication?.decodeHTML(), model)
+
+        // populate the data on the revision
+        populateDataRevision(revision, model, working, rftcList,
+            params.revisionComments?.decodeHTML() as String, isUpdate)
+
+        working.put("model", model)
+        working.put("revision", revision)
+        working.put("isUpdateOnExistingModel", isUpdate)
+        working.put("shouldCreateNewRevision", true) // TODO: allow curators decide
+        working.put("changesMade", params.list("changesMade[]"))
 
         return working
     }
