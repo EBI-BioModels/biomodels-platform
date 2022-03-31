@@ -39,3 +39,6 @@
           model="[style: style, isUpdate: isUpdate, faqURI: faqURI,
                   contactURI: contactURI, createMsgArgs: createMsgArgs]"/>
 </body>
+<content tag="submit">
+    selected
+</content>

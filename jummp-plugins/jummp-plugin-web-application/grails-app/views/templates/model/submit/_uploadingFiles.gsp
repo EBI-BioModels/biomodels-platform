@@ -287,15 +287,21 @@
         let acceptableFileNames = checkAcceptableCharactersForFileNames();
         messages.push(...acceptableFileNames);
         handleErrorMessages(messages);
+        let msg = "";
         if (!currentValidation) {
             return $.ajax({
                 type: "POST",
                 url: "${createLink(controller: "submission", action: "renderFileUploadFailures")}",
-                success: function () {
-                    console.log("There have been errors to the uploading files.");
+                success: function() {
+                    msg = "Failed to upload your files.";
+                    showNotification(msg);
+                    console.log(msg);
                 },
-                error: function () {
-                    console.log("There have been errors to show messages to users when uploading files failed.");
+                error: function() {
+                    msg = "There have been internal errors when trying to upload your files.";
+                    console.log(msg);
+                    showNotification(msg);
+                    toastr.error(msg);
                 }
             });
         }
@@ -304,7 +310,7 @@
             type: "POST",
             url: "${createLink(controller: "submission", action: "processUploadFiles")}",
             data: {
-                submissionSessionId: "${submissionSessionId}",
+                submissionSessionId: "${submissionFolder}",
                 submissionFolder: "${submissionFolder}",
                 uploadingFiles: JSON.stringify(ids),
                 files: JSON.stringify(existingFiles),
@@ -379,8 +385,9 @@
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 let msg = JSON.parse(JSON.stringify(errorThrown));
-                console.log("inside error " + msg);
-                console.log(textStatus);
+                msg = "Error: " + msg;
+                console.log(msg);
+                toastr.error(msg);
                 $('.flashNotificationDiv').html(msg).show();
             }
         });

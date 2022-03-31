@@ -33,7 +33,7 @@
         </li>
     </ul>
 </body>
-<content tag="developerZone">
+<content tag="developer-zone">
     selected
 </content>
 <content tag="title">

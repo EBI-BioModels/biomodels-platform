@@ -35,19 +35,12 @@
         <label for="name">
             <span class="required">Name</span>&nbsp;
             <span class="assistive-example">[e.g. Launna2020 - T-Cell signalling model]</span></label>
-    %{--            <g:if test="${workingMemory['new_name']}">--}%
         <g:if test="${"new_name"}">
-        %{--<g:textField id="name" name="name" required=""
-                     value="${workingMemory['new_name']}"
-                     placeholder="Enter a simple sentence summarising title for your model or leave the title of the publication."/>--}%
             <g:textField id="name" name="name" required=""
                          value=""
                          placeholder="Enter a simple sentence summarising title for your model or leave the title of the publication."/>
         </g:if>
         <g:else>
-        %{--<g:textField id="name" name="name" required=""
-                     value="${(workingMemory.get("RevisionTC") as RevisionTransportCommand).name}"
-                     placeholder="Enter a simple sentence summarising title for your model or leave the title of the publication."/>--}%
             <g:textField id="name" name="name" required=""
                          value=""
                          placeholder="Enter a simple sentence summarising title for your model or leave the title of the publication."/>
@@ -57,23 +50,9 @@
         <jummp:displayModelDescriptionLabel>
             <label for="description">${description}</label>
         </jummp:displayModelDescriptionLabel>
-    %{--            <g:if test="${workingMemory['new_description']}">--}%
-        <g:if test="${""}">
-        %{--<g:textArea id="description" cols="70" rows="10" name="description"
-                    value="${workingMemory['new_description']}"
-                    placeholder="Enter a brief description for your model revision, for example: what are the  differences to the previous ones"/>--}%
-            <g:textArea id="description" cols="70" rows="10" name="description"
-                        value=""
-                        placeholder="Enter a brief description for your model revision, for example: what are the  differences to the previous ones"/>
-        </g:if>
-        <g:else>
-        %{--<g:textArea id="description" cols="70" rows="10" name="description"
-                    value='${(workingMemory.get("RevisionTC") as RevisionTransportCommand).description}'
-                    placeholder="Enter a brief description for your model revision, for example: what are the  differences to the previous ones"/>--}%
-            <g:textArea id="description" cols="70" rows="10" name="description"
-                        value=""
-                        placeholder="Enter a brief description for your model revision, for example: what are the  differences to the previous ones"/>
-        </g:else>
+        <g:textArea id="description" cols="70" rows="10" name="description"
+            value=""
+            placeholder="Enter a brief description for your model revision, for example: what are the  differences to the previous ones"/>
     </div>
     <div class="small-12 medium-6 large-6 columns">
         <label for="model_format">

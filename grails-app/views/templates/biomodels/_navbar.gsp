@@ -21,20 +21,29 @@
 <nav>
 <ul id="local-nav" class="main-menu dropdown menu"
     data-description="navigational" data-dropdown-menu role="menubar"%>
-    <li <g:if test="${actionName == null}"> class="first active" </g:if> role="menuitem">
+    <li <g:if test="${actionName == null}"> class="first active main-menu-item" </g:if>
+        <g:else>class="main-menu-item"</g:else>
+        role="menuitem">
         <a href="${createLink(uri: '/', absolute: true)}" title="Back to BioModels homepage">
             <i class="icon icon-generic" data-icon="H"></i> Home</a>
     </li>
     <%
-        boolean selectedSupportItems = g.pageProperty(name:'page.faq')?.length() || g.pageProperty(name:'page.courses')?.length()
+        boolean selectedSupportItems = g.pageProperty(name:'page.faq')?.length() ||
+            g.pageProperty(name:'page.courses')?.length() ||
+            g.pageProperty(name:'page.curator-zone')?.length() ||
+            g.pageProperty(name:'page.developer-zone')?.length()
         boolean selectedBrowseItems = g.pageProperty(name: 'page.search')?.length() || g.pageProperty(name: 'page.goChart')?.length()
         boolean selectedAboutusItems = g.pageProperty(name:'page.termsOfUse')?.length() ||
             g.pageProperty(name:'page.citation')?.length() ||
             g.pageProperty(name:'page.news')?.length() ||
             g.pageProperty(name:'page.acknowledgements')?.length() ||
             g.pageProperty(name:'page.jobs')?.length()
+        boolean loginSelected = g.pageProperty(name:'page.login')?.length()
+        boolean registerSelected = g.pageProperty(name:'page.register')?.length()
     %>
-    <li <g:if test="${selectedBrowseItems}"> class="active" </g:if> role="menuitem">
+    <li <g:if test="${selectedBrowseItems}"> class="active main-menu-item" </g:if>
+        <g:else>class="main-menu-item"</g:else>
+        role="menuitem">
         <a><i class="icon icon-common" data-icon="b"></i> Browse</a>
         <ul class="menu">
             <li><a href="${g.createLink(controller: 'search', action: 'search', params: [query: '*:*'])}">All
@@ -57,18 +66,22 @@
             <li><g:link mapping="reproducibility">Reproducibility</g:link></li>
         </ul>
     </li>
-    <li <g:if test="${g.pageProperty(name:'page.submit')?.length()}"> class="active" </g:if> role="menuitem">
+    <li <g:if test="${g.pageProperty(name:'page.submit')?.length()}"> class="active main-menu-item" </g:if>
+        <g:else>class="main-menu-item"</g:else>
+        role="menuitem">
         <a href="${g.createLink(controller: 'model', action: 'submission-guidelines-and-agreement')}">
             <i class="icon icon-common icon-submit"></i>&nbsp;Submit</a>
     </li>
-    <li <g:if test="${g.pageProperty(name:'page.curation')?.length()}"> class="active" </g:if> role="menuitem">
+    <li <g:if test="${g.pageProperty(name:'page.curation')?.length()}"> class="active main-menu-item" </g:if>
+        <g:else>class="main-menu-item"</g:else>role="menuitem">
         <a href="${g.createLink(controller: 'curation', action: 'index')}"><i
             class="icon icon-common icon-cogs"></i>&nbsp;Curation</a>
         <ul class="menu">
             <li><a href="${g.createLink(controller: 'curation', action: 'fbc')}">FBC</a></li>
         </ul>
     </li>
-    <li <g:if test="${selectedSupportItems}"> class="active" </g:if> role="menuitem">
+    <li <g:if test="${selectedSupportItems}"> class="active main-menu-item" </g:if>
+        <g:else>class="main-menu-item"</g:else>role="menuitem">
         <a><i class="icon icon-common icon-support"></i> <g:message code="jummp.support.biomodels.title"/></a>
         <ul class="menu">
             <li><a href="${g.createLink(controller: 'jummp', action: 'faq')}">FAQs</a></li>
@@ -84,7 +97,8 @@
             <li><a href="//www.ebi.ac.uk/rdf/services/biomodels/sparql" target="_blank">SPARQL Endpoint</a></li>
         </ul>
     </li>
-    <li <g:if test="${selectedAboutusItems}"> class="active" </g:if> role="menuitem">
+    <li <g:if test="${selectedAboutusItems}"> class="active main-menu-item" </g:if>
+        <g:else>class="main-menu-item"</g:else>role="menuitem">
         <a><i class="icon icon-common icon-info"></i> <g:message code="jummp.aboutus.biomodels.title"/></a>
         <ul class="menu">
             <li><a href="${g.createLink(controller: 'jummp', action: 'termsOfUse')}">Terms of Use</a></li>
@@ -94,12 +108,14 @@
             <li><a href="${g.createLink(controller: 'jummp', action: 'jobs')}">Jobs</a></li>
         </ul>
     </li>
-    <li <g:if test="${g.pageProperty(name:'page.contactus')?.length()}"> class="active" </g:if> role="menuitem">
+    <li <g:if test="${g.pageProperty(name:'page.contactus')?.length()}"> class="active main-menu-item" </g:if>
+        <g:else>class="main-menu-item"</g:else>role="menuitem">
         <a href="${g.createLink(controller: 'jummp', action: 'contactus')}">
             <i class="icon icon-common icon-contact"></i> <g:message code="jummp.contactus.biomodels.title"/>
         </a>
     </li>
-    <li style="border-right: none" id="menuItemFeedback" data-open="rate_review_form" role="menuitem">
+    <li style="border-right: none" id="menuItemFeedback" data-open="rate_review_form"
+        role="menuitem" class="main-menu-item">
         <!-- rate_review_form is the identifier of the modal feedback form defined in the footer.
              This form is rendered using the feedback template of the web plugin -->
         <a><i class="icon icon-common icon-comment"></i> <g:message code="jummp.feedback.default.title"/></a>
@@ -109,7 +125,7 @@
        whichever one will show up last...
        For example: -->
     <sec:ifLoggedIn>
-        <li class="functional first float-right opens-left" role="menuitem" id="menu-item-myaccount">
+        <li class="functional first float-right opens-left main-menu-item" role="menuitem" id="menu-item-myaccount">
             <a>My Account</a>
             <ul class="dropdown menu" data-dropdown-menu style="width: 235px; max-width: 265px">
                 <li><a href='<g:createLink controller="usermanagement" action="show"/>'>
@@ -153,11 +169,15 @@
         </li>
     </sec:ifLoggedIn>
     <sec:ifNotLoggedIn>
-        <li class="functional first float-right" role="menuitem">
+        <li <g:if test="${registerSelected}"> class="active main-menu-item functional first float-right " </g:if>
+            <g:else>class="main-menu-item functional first float-right "</g:else>
+            role="menuitem">
             <a href='<g:createLink controller="usermanagement" action="create" />' class="icon icon-functional"
                data-icon="7"><g:message code="jummp.main.register"/></a>
         </li>
-        <li class="functional last float-right" role="menuitem">
+        <li <g:if test="${loginSelected}"> class="active main-menu-item functional first float-right " </g:if>
+            <g:else>class="main-menu-item functional first float-right "</g:else>
+            role="menuitem">
             <a href="${grailsApplication.config.grails.serverURL}/login">
                 <span class="icon icon-common icon-sign-in-alt">&nbsp;</span><g:message code="jummp.main.login"/>
             </a>

@@ -24,85 +24,6 @@
     <div class="columns small-12 medium-2 large-2">
         <span class="submission-prop">
             <g:message code="submission.summary.nameLabel"/></span>
-        %{--<table class="formtable responsive-table">
-            <tbody>
-            <tr class="prop">
-                <td class="name" style="vertical-align:top;">
-                    <label for="${g.message(code: 'submission.summary.nameLabel')}">
-                        <g:message code="submission.summary.nameLabel"/>
-                    </label>
-                </td>
-                <td class="value" style="vertical-align:top;">
-                    <g:if test="${workingMemory["new_name"]}">
-                        ${workingMemory["new_name"]}
-                    </g:if>
-                    <g:else>
-                        ${revision.name}
-                    </g:else>
-                </td>
-            </tr>
-            <tr class="prop">
-                <td class="name" style="vertical-align:top;">
-                    <jummp:displayModelDescriptionLabel>
-                        <label for="${description}">
-                            ${description}
-                        </label>
-                    </jummp:displayModelDescriptionLabel>
-                </td>
-                <td class="value" style="vertical-align:top;">
-                    <div class="displayDescription">
-                        <g:if test="${workingMemory["new_description"]}">
-                            ${workingMemory["new_description"]}
-                        </g:if>
-                        <g:else>
-                            ${revision.description}
-                        </g:else>
-                    </div>
-                </td>
-            </tr>
-            <g:if test="${revision.model.publication?.validate()}">
-                <tr class="prop">
-                    <td class="name" style="vertical-align:top;">
-                        <label for="${g.message(code: 'submission.summary.publication')}">
-                            <g:message code="submission.summary.publication"/>
-                        </label>
-                    </td>
-                    <td class="value" style="vertical-align:top;">
-                        <div class="displayDescription">
-                            <g:render  model="[model:model]" template="/templates/showPublication" />
-                        </div>
-                    </td>
-                </tr>
-            </g:if>
-            <g:else>
-                <tr class="prop">
-                    <td class="name" style="vertical-align:top;">
-                        <label for="${g.message(code: 'submission.summary.publication')}">
-                            <g:message code="submission.summary.publication"/>
-                        </label>
-                    </td>
-                    <td class="value" style="vertical-align:top;">
-                        <div class="displayDescription">
-                            No publication provided
-                        </div>
-                    </td>
-                </tr>
-            </g:else>
-            <g:if test="${workingMemory.get("isUpdateOnExistingModel") as Boolean}">
-                <tr class="prop">
-                    <td class="name">
-                        <label for="RevisionComments">
-                            <g:message code="submission.summary.revisionLabel"/>
-                        </label>
-                    </td>
-                    <td class="value">
-                        <g:textArea name="RevisionComments" rows="5" cols="70"
-                                    placeholder="Explain what you have updated"/>
-                    </td>
-                </tr>
-            </g:if>
-            </tbody>
-        </table>--}%
     </div>
     <div class="columns small-12 medium-10 large-10">
         <div id="detectedModelName"></div>
@@ -205,6 +126,7 @@
 </g:if>
 <input type="button" name="next" class="next action-button" value="Submit" />
 <input type="button" name="previous" class="previous action-button-previous" value="Previous" />
+<input type="button" name="btnFinalCheck" class="action-button" value="Final Check" style="float: left" />
 <script type="text/javascript">
     function populateSummaryData() {
         console.log("Displaying the summary of submission/changes");
@@ -248,20 +170,52 @@
     }
 
     function submitData() {
+        // TODO: validate the working map again before invoking the following AJAX call and rename the method
+        // if the validation is true, hit the callback. The callback will save all the data in the redis
+        let msg = "";
         return $.ajax({
-            url: "${createLink(controller: "submission", action: "displayChangesMade")}",
-            type: "GET",
+            url: "${createLink(controller: "submission", action: "doLastValidateSubmissionData")}",
+            type: "POST",
+            data: {
+                isUpdate: isUpdate,
+                isAmend: isAmend,
+                modelFile: JSON.stringify(modelFile),
+                additionalFiles: JSON.stringify(additionalFiles),
+                modelInfo: JSON.stringify(modelInfo),
+                publication: JSON.stringify(publication),
+                revisionComments: revisionComments,
+                modelId: modelId,
+                changesMade: changesMade,
+                submissionFolder: "${submissionFolder}"
+            },
+            beforeSend: function () {
+                msg = "Doing the final verification of  your submission data...";
+                console.log(msg);
+                toastr.info(msg);
+            },
             success: function (response) {
                 JSON.stringify(response);
-                currentValidation = true;
+                currentValidation = response["currentValidation"];
                 // Explain what you have updated
                 revisionComments = $('#revisionComments').val();
+                msg = "Finished the last validation of the submission data.\n";
+                if (!currentValidation) {
+                    msg += response["errMsg"];
+                } else {
+                    msg += " Your submission data have no error."
+                }
+                showNotification(msg);
+                console.log(msg);
+                toastr.info(msg);
             },
-            error: function (r) {
+            error: function (error) {
                 currentValidation = false;
+                msg = "There have been some errors in your submission data. Please do verify all steps again.";
+                console.log(msg);
+                showNotification(msg);
+                toastr.error(msg);
             }
         });
-
     }
 
     $('#is-amend').on("click", function () {
@@ -271,5 +225,11 @@
         } else {
 
         }
+    });
+    $("input[name=btnFinalCheck]").on("click", function() {
+        // it can be called: validateData(4).done(function(response) {}); -- 4 means the step 4 of the submission flow
+        submitData().done(function(response) {
+            setCheckList(4, currentValidation);
+        });
     });
 </script>

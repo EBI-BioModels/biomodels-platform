@@ -342,6 +342,23 @@ $('#menu-item-myaccount').on('mouseover', function (event) {
     }
 });
 
+$('.is-submenu-item').on("mouseover", function() {
+    $('.main-menu-item').removeClass("active");
+    $('.main-menu-item a').removeAttr("style");
+    let grand = $(this).parent().parent().find('a');
+    // get the first menu item
+    $(grand[0]).css("background-color", "white");
+});
+
+$('.is-submenu-item').on("mouseout", function() {
+    $('.main-menu-item a').removeAttr("style");
+});
+
+$("#menuItemFeedback").on("click", function() {
+    $('.main-menu-item').removeClass("active");
+    $(this).addClass("active");
+});
+
 function validateInputLength(element, minLength, maxLength, messageHolder) {
     $(element).on('keydown keyup change', function(){
         var char = $(this).val();
