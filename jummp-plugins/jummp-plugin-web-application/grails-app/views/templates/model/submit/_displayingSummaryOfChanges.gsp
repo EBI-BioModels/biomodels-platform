@@ -198,9 +198,9 @@
                 currentValidation = response["currentValidation"];
                 // Explain what you have updated
                 revisionComments = $('#revisionComments').val();
-                msg = "Finished the last validation of the submission data.";
+                msg = "Finished the last validation of the submission data.\n";
                 if (!currentValidation) {
-                    msg += response["errFileMsg"];
+                    msg += response["errMsg"];
                 } else {
                     msg += " Your submission data have no error."
                 }

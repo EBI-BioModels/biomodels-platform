@@ -61,6 +61,7 @@ class SubmissionController implements InitializingBean {
     def submissionService
 
     private String EXCH_DIR
+    List validationMessages = new ArrayList<String>(3)
 
     void afterPropertiesSet() throws Exception {
         EXCH_DIR = grailsApplication.config.jummp.vcs.exchangeDirectory
@@ -183,35 +184,20 @@ hyphens, plus signs and underscores. It should also have a proper file extension
     def doLastValidateSubmissionData() {
         // TODO: check the data and save all the data to Redis or return false due to failure or incorrectness
         Map working = rebuildSubmissionData()
-        String submissionFolder = working.get("submissionFolder")
+        String errMsg = ""
+
         // 1. Check the uploaded files
-        List<RFTC> rftcList = working.get("repository_files")
-        Map existedFiles = [:]
-        String errFileMsg = ""
-        for (RFTC rftc : rftcList) {
-            File file = new File(rftc.path)
-            existedFiles.put(rftc.path, file?.exists())
-            if (!file?.exists() || !file?.length() || file?.length() <= 0) {
-                errFileMsg += "${file.name}: Not found or not exist or empty.\n"
-            }
-        }
-        Map errorFilesMap = existedFiles.findAll { !it.value }
-        boolean areModelFilesValid = errorFilesMap?.isEmpty()
-
+        boolean areModelFilesValid = doValidateUploadedFiles(working)
         // 2. Check the model metadata provided/updated
-        // TODO: implement me
-        Map mdResultMap = doValidateModelInfo(working)
-        boolean areMetadataValid = true
-
+        boolean areMetadataValid = doValidateModelInfo(working)
         // 3. Check the publication details
-        // TODO: implement me
-        boolean isPublicationValid = true
-
+        boolean isPublicationValid = doValidatePublication(working)
+        errMsg = validationMessages.findAll { it }.join("\n")
         Map<String, Object> result = new HashMap<>()
+        String submissionFolder = working.get("submissionFolder")
         result.put("submissionFolder", submissionFolder)
-        result.put("errorFilesMap", errorFilesMap)
+        result.put("errMsg", errMsg)
         result.put("areModelFilesValid", areModelFilesValid)
-        result.put("errFileMsg", errFileMsg)
         result.put("areMetadataValid", areMetadataValid)
         result.put("isPublicationValid", isPublicationValid)
         boolean currentValidation = areModelFilesValid && areMetadataValid && isPublicationValid
@@ -220,10 +206,56 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         render(result as JSON)
     }
 
-    private Map doValidateModelInfo(Map working) {
-        Map<String, Object> result = new HashMap<>()
+    private boolean doValidateUploadedFiles(Map working) {
+        List<RFTC> rftcList = working.get("repository_files")
+        String errFileMsg = ""
+        Map existedFiles = [:]
+        for (RFTC rftc : rftcList) {
+            File file = new File(rftc.path)
+            existedFiles.put(rftc.path, file?.exists())
+            if (!file?.exists() || !file?.length() || file?.length() <= 0) {
+                errFileMsg += "${file.name}: Not found or not exist or empty.\n"
+            }
+        }
+        validationMessages[0] = errFileMsg
+        existedFiles.findAll { !it.value }?.isEmpty()
+    }
 
-        result
+    private boolean doValidateModelInfo(Map working) {
+        RTC revision = working.get("RevisionTC") as RTC
+        String errMsg = ""
+        // 1. Condition 1: model format is not null
+        boolean mfCond = revision.format
+        if (!mfCond) {
+            errMsg += "Model format is missing.\n"
+        }
+        // 2. Condition 2: model approach is not null
+        boolean maCond = working.containsKey("modelling_approach")
+        if (!maCond) {
+            errMsg += "Modelling approach is missing.\n"
+        }
+        // 3. Condition 3: model name is not null
+        boolean mnCond = revision.model.name
+        if (!mnCond) {
+            errMsg += "Model name is empty or blank.\n"
+        }
+        validationMessages[1] = errMsg
+        mfCond && maCond && mnCond
+    }
+
+    private boolean doValidatePublication(Map working) {
+        MTC model = working.get("ModelTC") as MTC
+        String errMsg = ""
+        if (!model.publication) {
+            return true
+        } else {
+            boolean r = model.publication.validate()
+            if (!r) {
+                errMsg += "Publication record is invalid.\n"
+            }
+            validationMessages[2] = errMsg
+            return r
+        }
     }
 
     def validateModelInfo() {
