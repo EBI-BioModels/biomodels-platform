@@ -389,8 +389,8 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         populateDataRevision(revision, model, working, rftcList,
             params.revisionComments?.decodeHTML() as String, isUpdate)
 
-        working.put("model", model)
-        working.put("revision", revision)
+        working.put("ModelTC", model)
+        working.put("RevisionTC", revision)
         working.put("isUpdateOnExistingModel", isUpdate)
         working.put("shouldCreateNewRevision", true) // TODO: allow curators decide
         working.put("changesMade", params.list("changesMade[]"))
