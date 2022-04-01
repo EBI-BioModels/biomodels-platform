@@ -60,7 +60,7 @@ class ModelFilters {
                     if (modelMap) {
                         String representative = modelMap.representative
                         String format = params.format
-                        if (!format) {
+                        if (!format && !response.isCommitted()) {
                             forward(controller: "model", action: "show", id: representative)
                         }
                         if (format in SUPPORTED_FORMAT) {
@@ -75,7 +75,9 @@ class ModelFilters {
                             render(returned)
                             return false
                         } else {
-                            forward(controller: "model", action: "show", id: representative)
+                            if (!response.isCommitted()) {
+                                forward(controller: "model", action: "show", id: representative)
+                            }
                         }
                     }
                 }
@@ -94,8 +96,10 @@ class ModelFilters {
                         modelMap = P2MMapping.findByMember(modelId)
                     }
                     if (modelMap) {
-                        String representative = modelMap.representative
-                        forward(controller: "model", action: "download", id: representative)
+                        if (!response.isCommitted()) {
+                            String representative = modelMap.representative
+                            forward(controller: "model", action: "download", id: representative)
+                        }
                     }
                 }
             }
@@ -115,7 +119,7 @@ class ModelFilters {
                     if (modelMap) {
                         String representative = modelMap.representative
                         String format = params.format
-                        if (!format) {
+                        if (!format && !response.isCommitted()) {
                             forward(controller: "model", action: "show", id: representative)
                         }
                         if (format in SUPPORTED_FORMAT) {
@@ -130,7 +134,9 @@ class ModelFilters {
                             render(returned)
                             return false
                         } else {
-                            forward(controller: "model", action: "files", id: representative)
+                            if (!response.isCommitted()) {
+                                forward(controller: "model", action: "files", id: representative)
+                            }
                         }
                     }
                 }
