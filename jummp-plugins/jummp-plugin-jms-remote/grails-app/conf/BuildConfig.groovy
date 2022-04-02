@@ -104,7 +104,6 @@ grails.project.dependency.resolution = {
         compile ":jms:1.2"
 
         runtime ":hibernate4:4.3.10"
-        runtime ":jquery:1.11.1"
     }
 }
 grails.plugin.location.'jummp-plugin-core-api'="../jummp-plugin-core-api"
