@@ -40,8 +40,6 @@
 <html lang="en">
 <head>
     <g:render template="/templates/${styleName}/head" />
-    <g:javascript library="jquery" plugin="jquery"/>
-    <g:javascript src="jquery/jquery-ui-v1.10.3.js"/>
     <g:javascript>
         $.appName = "${grailsApplication.metadata["app.name"]}";
         $.serverUrl = "${grailsApplication.config.grails.serverURL}";

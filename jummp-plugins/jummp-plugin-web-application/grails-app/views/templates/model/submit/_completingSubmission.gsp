@@ -25,6 +25,12 @@
         // perform an ajax call to complete the submission
         // the function should return true or false to indicate the state of submission
         // I suppose it fails meaning the currentValidation to be false
+        // TODO: at this step, we don't need to pass parameters to the following AJAX call because all submission
+        // data have been validated either from the previous step or pressing on the Final Check button. To ignore
+        // this, the submission data should be saved on Redis after performing the last check/validation. The following
+        // AJAX call just loads the submission data back and performs the further actions. To do so can prevent
+        // cheats at the previous step to attempt to modify the submission data.
+        // Just pass the submission session id
         const url = "${createLink(controller: "submission", action: "completeSubmission")}";
         $.ajax({
             type: "POST",
