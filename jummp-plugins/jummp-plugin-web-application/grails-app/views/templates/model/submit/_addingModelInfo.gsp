@@ -112,6 +112,10 @@
 <input type="button" name="previous" class="previous action-button-previous" value="Previous"/>
 <script>
     function validateModelInfo() {
+        // perform a client side validation
+        // TODO: implement me: return false if there are errors on the form
+
+        // then perform a server side validation
         return $.ajax({
             url: "${createLink(controller: "submission", action: "validateModelInfo")}",
             type: "GET",
