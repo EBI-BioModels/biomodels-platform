@@ -18,11 +18,12 @@
                           from="${linkSourceTypes}"
                           noSelection="['NoPub':'- No publication available -']"/></g:else>
             </div>
+
             <div class="small-12 medium-6 large-6 columns" id="publicationLinkCol">
-                <label for="publicationLink" class="required">Link <span id="lblPublicationLink" style="font-style: italic">[If this is
-                PubMed
-                identifier or DOI, please enter a valid
-                value, then press on the <strong>Update</strong> button]</span></label>
+                <label for="publicationLink" class="required">
+                Link <span id="lblPublicationLink" style="font-style: italic">
+                [If this is PubMed identifier or DOI, please enter a valid value, then press on the
+                    <strong>Update</strong> button]</span></label>
                 <g:textField class="input25" name="PublicationLink" id="publicationLink" value="${publication?.link}"
                              placeholder="Enter PubMed identifier, DOI or web link"/></div>
             <div class="small-12 medium-3 large-3 columns" id="freshPublicationBtnCol">
@@ -52,7 +53,7 @@
         }
         var validation = true;
         $(document).ready(function () {
-            if ("${publication}") {
+            if ("${publication}" && $('#pubLinkProvider').val() !== "Publication without link") {
                 $('#publicationLinkCol').show();
                 $('#freshPublicationBtnCol').show();
             } else {
