@@ -134,7 +134,7 @@
         if (!valid) {
             return false;
         }
-        const urlPost = $.jummp.createLink("contributor", "addContributor");
+        const urlPost = $.jummp.createLink("contributor", "add");
         let data = new FormData();
         data.append("modelId", "${modelId}");
         data.append("revisionNumber", ${revisionNumber});
@@ -175,12 +175,50 @@
         }
         const LOOKUP_EMAIL_RESULT = doLookUpUserEmail(email);
         if (LOOKUP_EMAIL_RESULT === LOOKUP_USER_INFO_STATUS_CODE.FOUND) {
-            const msg = "The email " + email + " already exists. Please try a different email.";
+            const msg = "The email " + email + " already exists. Please try with another email or add this user to the contributor list.";
             showNotification(msg);
             toastr.warning(msg);
             return false;
         }
 
+        let role = $("#defined-role option:selected").text();
+        const urlPost = $.jummp.createLink("contributor", "invite");
+        let data = new FormData();
+        data.append("serverURL", "${serverURL}");
+        data.append("modelId", "${modelId}");
+        data.append("revisionNumber", ${revisionNumber});
+        data.append("inviterUsername", "${currentUsername}");
+        data.append("inviterEmail", "${currentUserEmail}");
+        data.append("inviterName", "${currentUserRealName}");
+        data.append("inviteeEmail", email);
+        data.append("role", role);
+        fetch(urlPost, {
+            method: "POST",
+            body: data
+        }).then((result) => {
+            if (200 !== result.status) {
+                const errMsg = "Bad Server Response";
+                showNotification(errMsg);
+                toastr.error(errMsg);
+                throw new Error(errMsg);
+                return false;
+            } else {
+                return result.json();
+            }
+        }).then((response) => {
+            const msg = "An invitation has been sent to the email address " + email + ".";
+            showNotification(msg);
+            toastr.success(msg);
+            console.log(JSON.stringify(response));
+            //contributorEmails.push(response["email"]);
+            $("form[name=test_form]").append(response["htmlBasedStringForNewContributor"]);
+        }).catch((error) => {
+            const errMsg = "There has been an internal error. Please try again or later.";
+            showNotification(errMsg);
+            toastr.error(errMsg);
+            console.log(error);
+        });
+        return true;
     });
 
     $("#model-contributor-list").on("change", "#role", function () {

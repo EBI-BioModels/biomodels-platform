@@ -54,6 +54,8 @@ class ContributorController extends CommonController {
     def teamService
     def userService
     def modelService
+    def mailService
+    private final Random random = new Random(System.currentTimeMillis())
 
     def manage() {
         String serverURL = grailsApplication.config.grails.serverURL
@@ -64,10 +66,17 @@ class ContributorController extends CommonController {
         List<String> roles = CR.getAll().collect { it.name }.sort { it }
         Map<String, CTC> contributors = getContributors(modelId, revisionNumber)
         List contributorEmailList = contributors.values().collect { it.user.email }
+        String currentUserEmail = userService.getEmailAddress()
+        String currentUsername = userService.username
+        String currentUserRealName = userService.getRealName(currentUsername)
         Map retMap = [modelId: modelId, revisionNumber: revisionNumber,
                       authors: params?.authors, message: message,
                       contributorEmailList: contributorEmailList,
-                      roles: roles, contributors: contributors, serverURL: serverURL]
+                      roles: roles, contributors: contributors,
+                      serverURL: serverURL,
+                      currentUsername: currentUsername,
+                      currentUserEmail: currentUserEmail,
+                      currentUserRealName: currentUserRealName]
         render(view: "manage", model: retMap)
     }
 
@@ -95,7 +104,7 @@ class ContributorController extends CommonController {
         contributorMap
     }
 
-    def addContributor() {
+    def add() {
         String modelId = params["modelId"]?.decodeHTML()
         int revisionNumber = params.getInt("revisionNumber")
         Model model = modelService.getModel("$modelId.$revisionNumber")
@@ -129,6 +138,47 @@ class ContributorController extends CommonController {
             plugin: "jummp-plugin-web-application",
             model: [cont: ctc, serverURL: serverURL, roles: roles])
         result.put("htmlBasedStringForNewContributor", htmlString)
+        result.put("message", "The data has been updated successfully!")
+        render(result as JSON)
+    }
+
+    def handleInviteResponse() {
+        String refCode = params["ref"]?.decodeHTML()
+        String op = params["op"]?.decodeHTML()
+        CI ci = CI.findByReference(refCode)
+        render(view: "handleInviteResponse")
+    }
+
+    def invite() {
+        String modelId = params["modelId"]?.decodeHTML()
+        int revisionNumber = params.getInt("revisionNumber")
+        Model model = modelService.getModel("$modelId.$revisionNumber")
+        if (!model) { return null }
+        String inviterEmail = params["inviterEmail"]?.decodeHTML()
+        String inviterName = params["inviterName"]?.decodeHTML()
+        String inviteeEmail = params["inviteeEmail"]?.decodeHTML()
+        Map result = [:]
+        result["inviterEmail"] = inviterEmail
+        result["inviterName"] = inviterName
+        result["inviteeEmail"] = inviteeEmail
+        String role = params["role"]?.decodeHTML()
+        String refCode = String.valueOf(random.nextInt()) + params["inviterUsername"]?.decodeHTML()
+        refCode = refCode.encodeAsMD5()
+        result.put("role", role)
+        result.put("refCode", refCode)
+        result.put("serverURL", params["serverURL"]?.decodeHTML())
+
+        // 1. Create a record in the contribution_invite table
+
+        // 2. Send an email having instructions to the invited contributor
+        String htmlBasedContent = g.render(template: "/contributor/inviteEmailTemplate", plugin: "jummp-plugin-web-application", model: result)
+        mailService.sendMail {
+            to inviteeEmail
+            from inviterEmail
+            subject "${inviterName} invited you to join as a ${role.toLowerCase()} in your submission in BioModels"
+            html htmlBasedContent
+        }
+
         result.put("message", "The data has been updated successfully!")
         render(result as JSON)
     }
