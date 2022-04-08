@@ -43,12 +43,8 @@ class ModelAdapter {
     ModelTransportCommand toCommandObject(boolean saveHistory = true) {
         Set<String> creators = []
         Map<String, String> creatorUsernames = [:]
+        Map<String, String> contributors = [:]
         if (model.revisions?.size() > 0) {
-            for (Revision revision: model.revisions) {
-                creators.add(revision.owner.person.userRealName)
-                String realName = revision.owner.person.userRealName ?: revision.owner.username
-                creatorUsernames.put(revision.owner.username, realName)
-            }
             List revisions = model.revisions.collect { it.id }
             String queryString = "from ContributionDetails as CD where CD.revision.id in (:revisions)"
             List otherContributors = ContributionDetails.findAll(queryString, [revisions: revisions])
@@ -57,6 +53,7 @@ class ModelAdapter {
                 String fullName = contributionDetail.contributor.person.userRealName ?: username
                 creators.add(fullName)
                 creatorUsernames.put(username, fullName)
+                contributors.put(username, "${contributionDetail.role.name} - ${fullName}".toString())
             }
         }
         Revision latestRev
@@ -100,6 +97,7 @@ class ModelAdapter {
             submissionDate: firstRev?.uploadDate,
             creators: creators,
             creatorUsernames: creatorUsernames,
+            contributors: contributors,
             flagLevel: latestRev?.qcInfo?.flag,
             modellingApproach: model.modellingApproach,
             otherInfo: model.otherInfo
