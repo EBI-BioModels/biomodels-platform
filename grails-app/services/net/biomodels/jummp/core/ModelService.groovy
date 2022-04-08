@@ -2574,10 +2574,17 @@ There has been error while adding $approach to the model ${revisionTC.identifier
 
             def revisionAdapter = new RevisionAdapter(revision: attachedRevision, latest: true)
             RevisionTransportCommand cmd = revisionAdapter.toCommandObject()
-            indexModelRevision(cmd)
-            //convertModelToOtherFormats(cmd)
-            shareRevision2FellowCurators(cmd)
-            updateModelCache(attachedRevision)
+            try {
+                // TODO: catch exceptions of each post-submission processes to report to the submitter and BioModels cura
+                indexModelRevision(cmd)
+                //convertModelToOtherFormats(cmd)
+                shareRevision2FellowCurators(cmd)
+                updateModelCache(attachedRevision)
+            } catch (Exception e) {
+                e.printStackTrace()
+                logger.error(e.toString())
+                println(e.toString())
+            }
             return attachedRevision
         }
         stopWatch.stop()
