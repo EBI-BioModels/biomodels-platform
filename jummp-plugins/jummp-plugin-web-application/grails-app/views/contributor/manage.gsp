@@ -190,7 +190,7 @@
         return true;
     });
 
-    $("#model-contributor-list").on("click", "#contributor-remove", function () {
+    $("#model-contributor-list").on("click", ".contributor-remove.unlocked", function () {
         const parentRow = $(this).parent().parent();
         const usernameAndEmailElement = parentRow.find(".username-email");
         const usernameAndEmail = usernameAndEmailElement.text();

@@ -12,7 +12,7 @@
         <p class="username-email">${cont.user.username}, ${cont.user.email}</p>
     </div>
     <div class="columns large-2 medium-2 small-12">
-        <select name="role" required id="role" class="form-control" <g:if test="${cont.locked}">disabled</g:if>>
+        <select name="role" required id="role" class="form-control">
             <g:each in="${roles}" var="role">
                 <option value="${role}"
                         <g:if test="${role.equals(cont.role.name)}">selected="selected" test="${cont.role.name}"</g:if>
@@ -21,7 +21,7 @@
         </select>
     </div>
     <div class="columns large-1 medium-1 small-12">
-        <p id="contributor-remove" class="button">
+        <p id="contributor-remove" class="contributor-remove button <g:if test="${cont.locked}">locked secondary</g:if><g:else>unlocked</g:else>">
             <g:if test="${cont.locked}"><del>Remove</del></g:if><g:else>Remove</g:else></p>
     </div>
     <div class="columns large-1 medium-1 small-12">

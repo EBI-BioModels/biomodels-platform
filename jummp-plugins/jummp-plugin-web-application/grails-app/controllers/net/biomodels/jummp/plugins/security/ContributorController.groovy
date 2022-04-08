@@ -78,27 +78,20 @@ class ContributorController extends CommonController {
         Revision firstRevision = model.revisions.find {
             it.revisionNumber == minRevNum
         }
-        Map contributorMap = [:]
         User owner = firstRevision.owner
-        CTC ctc = new CTC(user: owner, role: CR.findByName("Submitter"),
-            person: owner.person, locked: true)
-        contributorMap.put(owner.username, ctc)
-        Set<Revision> revisionList = model.revisions.findAll {
-            it.owner.username != owner.username
-        }.toSet()
-        User curator = null
-        for (Revision revision: revisionList) {
-            curator = revision.owner
-            ctc = new CTC(user: curator, role: CR.findByName("Curator"),
-                person: curator.person, locked: true)
-            contributorMap.put(revision.owner.username, ctc)
-        }
+        Map contributorMap = [:]
+        CTC ctc
         List revisions = model.revisions.toList()
+        Set authors = revisions*.owner?.collect { it.username }.toSet()
         List details = CD.findAllByRevisionInList(revisions)
         for (CD detail: details) {
-            ctc = new CTC(user: detail.contributor, role: detail.role, person: detail.contributor.person, locked: false)
-            contributorMap.put(detail.contributor.username, ctc)
+            String username = detail.contributor.username
+            boolean locked = username in authors
+            ctc = new CTC(user: detail.contributor, role: detail.role,
+                                person: detail.contributor.person, locked: locked)
+            contributorMap.put(username, ctc)
         }
+
         contributorMap
     }
 
@@ -208,7 +201,6 @@ from the model ${revisionIdentifier}."""
             LOGGER.error(message, exception)
             println "$message: ${exception.toString()}"
         }
-        println message
         result.put("message", message)
         render(result as JSON)
     }
