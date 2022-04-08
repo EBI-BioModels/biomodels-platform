@@ -145,6 +145,30 @@ class ModelDelegateService implements IModelService {
     }
 
     @NotTransactional
+    Map<String, List> collectContributors(Map<String, String> contributors) {
+        // TODO: create an Enum for the contribution role names
+        List curators = contributors.collect { it.value }.findAll {
+            String[] parts = it.split(" - ")
+            parts[0] == "Curator"
+        }.collect { it.split(" - ")[1] }
+
+        List modellers = contributors.collect { it.value }.findAll {
+            String[] parts = it.split(" - ")
+            parts[0] == "Modeller"
+        }.collect { it.split(" - ")[1] }
+
+        List others = contributors.collect { it.value }.findAll {
+            String[] parts = it.split(" - ")
+            parts[0] == "Other"
+        }.collect { it.split(" - ")[1] }
+
+        Map retRes = [:]
+        retRes.put("modellers", modellers)
+        retRes.put("curators", curators)
+        retRes.put("others", others)
+        retRes
+    }
+    @NotTransactional
     long createAuditItem(ModelATC cmd) {
         return modelService.createAuditItem(cmd)
     }

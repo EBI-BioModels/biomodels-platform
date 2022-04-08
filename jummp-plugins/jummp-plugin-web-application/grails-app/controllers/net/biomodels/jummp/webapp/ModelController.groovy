@@ -243,12 +243,14 @@ class ModelController {
                     } else {
                         canAskReviewerAccount = modelDelegateService.canAskReviewerAccount(revision, hasCuratorRole)
                     }
+                    def contributors = modelDelegateService.collectContributors(revision.model.contributors)
                     def model = [
                                  revision               : rev,
                                  reactomeIds            : reactomeIds,
                                  reactomeUrl            : reactomeUrl,
                                  hrefLinkToNewtEditor   : hrefLinkToNewtEditor,
                                  authors                : rev.model.creators,
+                                 contributors           : contributors,
                                  allRevs                : revs,
                                  flashMessage           : flashMessage,
                                  canUpdate              : canUpdate,
