@@ -20,6 +20,12 @@
     <g:javascript contextPath="" src="toastr.min.js" />
     <link rel="stylesheet"
           href="${resource(dir: 'css', file: 'toastr.min.css', contextPath: "${serverURL}")}" />
+    <style>
+        .contributor-header {
+            font-size: x-large;
+            font-weight: bolder;
+        }
+    </style>
 
 </head>
 
@@ -31,6 +37,7 @@
     <h3 style="color: red">${message}</h3>
     <h3>The current contributors</h3>
 <form name="test_form" method="POST">
+    <g:render template="showHeaderTitle" plugin="jummp-plugin-web-application" />
     <g:each in="${contributors}" var="cont">
         <g:render template="showContributor" plugin="jummp-plugin-web-application" model="[cont: cont.value]" />
     </g:each>
