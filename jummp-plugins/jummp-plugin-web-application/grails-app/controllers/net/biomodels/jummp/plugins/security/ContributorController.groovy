@@ -95,7 +95,7 @@ class ContributorController extends CommonController {
         contributorMap
     }
 
-    def sendContributionInvite() {
+    def addContributor() {
         String modelId = params["modelId"]?.decodeHTML()
         int revisionNumber = params.getInt("revisionNumber")
         Model model = modelService.getModel("$modelId.$revisionNumber")

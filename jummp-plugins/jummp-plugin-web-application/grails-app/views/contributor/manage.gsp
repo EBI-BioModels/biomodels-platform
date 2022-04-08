@@ -44,20 +44,46 @@
 </form>
 </div>
 <div class="add-contributor">
-    <h3>Invite a contributor</h3>
+    <h3>Add an existing user as a contributor</h3>
     <div class="row">
         <div class="columns large-6 medium-6 small-12">
         <div class="input-group">
-            <span class="input-group-label">Email</span>
+            <span class="input-group-label">Search</span>
             <input class="input-group-field" type="text" id="txt-email-or-name" name="txt-email-or-name"
                    placeholder="Type a valid email address of the contributor" >
             <div class="input-group-button">
-                <input type="submit" class="button" value="Send" id="btn-add-contributor-send">
+                <input type="submit" class="button" value="Add" id="btn-add-contributor">
             </div>
         </div></div>
     </div>
 </div>
+<div class="invite-contributor">
+    <h3>Invite a contributor</h3>
+    <div class="row">
+        <div class="columns small-12 medium-2 large-2">
+            <label for="txt-email-invite" class="text-right middle">Email</label>
+        </div>
+        <div class="columns small-12 medium-4 large-4">
+            <input type="text" id="txt-email-invite" name="txt-email-invite"
+                   placeholder="Type a valid email address of the contributor invited">
+        </div>
+        <div class="columns small-12 medium-4 large-4">
+            <select name="defined-role" required id="defined-role" class="form-control">
+                <g:each in="${roles}" var="role">
+                    <option value="${role}">${role}</option>
+                </g:each>
+            </select>
+        </div>
+        <div class="columns small-12 medium-2 large-2">
+            <input type="submit" class="button" value="Invite" id="btn-invite">
+        </div>
+    </div>
+</div>
 <script>
+    $(document).ready(function() {
+        $('#defined-role option:selected').val("Other");
+    });
+
     function doCheckEmail(email) {
         let message = "";
         let returned;
@@ -67,7 +93,7 @@
                 message = "There has been an internal error happening. Please try again!";
                 returned = false;
             } else if (LOOKUP_EMAIL_RESULT === LOOKUP_USER_INFO_STATUS_CODE.NOT_FOUND) {
-                message = "The email address " + email + " could not be found, or does not exist.";
+                message = "The email address " + email + " could not be found, or does not exist in our system.";
                 returned = false;
             } else if (LOOKUP_EMAIL_RESULT === LOOKUP_USER_INFO_STATUS_CODE.FOUND) {
                 returned = true;
@@ -87,33 +113,28 @@
         return returned;
     }
 
+
     $("#txt-email-or-name").blur(function() {
         let email = $(this).val().trim();
         doCheckEmail(email);
     });
 
-    $("#btn-add-contributor-send").on("click", function() {
+    $("#txt-email-invite").blur(function() {
+        let email = $(this).val().trim();
+        doCheckEmail(email);
+    });
+
+    $("#btn-add-contributor").on("click", function() {
         let email = $('input[name=txt-email-or-name]').val();
-        let message;
-        if (!email) {
-            message = "Please try with a valid email address!";
-            clearNotification();
-            showNotification(message);
-            toastr.warning(message);
+        let valid = preValidate(email);
+        if (!valid) {
             return false;
         }
-
-        if (contributorEmails.indexOf(email) >= 0) {
-            message = "The user associated with this email " + email + " has already been invited or added to the contributor list.";
-            showNotification(message);
-            toastr.warning(message);
+        valid = doCheckEmail(email);
+        if (!valid) {
             return false;
         }
-
-        const validEmail = doCheckEmail(email);
-        if (!validEmail) { return false; }
-
-        const urlPost = $.jummp.createLink("contributor", "sendContributionInvite");
+        const urlPost = $.jummp.createLink("contributor", "addContributor");
         let data = new FormData();
         data.append("modelId", "${modelId}");
         data.append("revisionNumber", ${revisionNumber});
@@ -132,7 +153,7 @@
                 return result.json();
             }
         }).then((response) => {
-            const msg = "An invitation has been sent to the user associated with the email " + email + ".";
+            const msg = "A confirmation email has been sent to the user associated with the email " + email + ".";
             showNotification(msg);
             toastr.success(msg);
             contributorEmails.push(response["email"]);
@@ -144,6 +165,22 @@
             console.log(error);
         });
         return true;
+    });
+
+    $("#btn-invite").on("click", function() {
+        let email = $('input[name=txt-email-invite]').val();
+        let valid = preValidate(email);
+        if (!valid) {
+            return false;
+        }
+        const LOOKUP_EMAIL_RESULT = doLookUpUserEmail(email);
+        if (LOOKUP_EMAIL_RESULT === LOOKUP_USER_INFO_STATUS_CODE.FOUND) {
+            const msg = "The email " + email + " already exists. Please try a different email.";
+            showNotification(msg);
+            toastr.warning(msg);
+            return false;
+        }
+
     });
 
     $("#model-contributor-list").on("change", "#role", function () {
@@ -236,6 +273,25 @@
         });
         return true;
     });
+
+    function preValidate(email) {
+        let message;
+        if (!email) {
+            message = "Please try with a valid email address!";
+            clearNotification();
+            showNotification(message);
+            toastr.warning(message);
+            return false;
+        }
+
+        if (contributorEmails.indexOf(email) >= 0) {
+            message = "The user associated with this email " + email + " has already been invited or added to the contributor list.";
+            showNotification(message);
+            toastr.warning(message);
+            return false;
+        }
+        return true;
+    }
 </script>
 </body>
 </html>
