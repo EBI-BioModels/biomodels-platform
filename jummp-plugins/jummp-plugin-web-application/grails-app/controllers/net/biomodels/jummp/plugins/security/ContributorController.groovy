@@ -23,8 +23,10 @@ package net.biomodels.jummp.plugins.security
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.model.ContributorTransportCommand as CTC
+import net.biomodels.jummp.core.model.InviteState as IS
 import net.biomodels.jummp.deployment.biomodels.CommonController
 import net.biomodels.jummp.model.ContributionDetails as CD
+import net.biomodels.jummp.model.ContributionInvite as CI
 import net.biomodels.jummp.model.ContributionRole as CR
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Revision
@@ -156,9 +158,11 @@ class ContributorController extends CommonController {
         if (!model) { return null }
         String inviterEmail = params["inviterEmail"]?.decodeHTML()
         String inviterName = params["inviterName"]?.decodeHTML()
+        String inviterUsername = params["inviterUsername"]?.decodeHTML()
         String inviteeEmail = params["inviteeEmail"]?.decodeHTML()
         Map result = [:]
         result["inviterEmail"] = inviterEmail
+        result["inviterUsername"] = inviterUsername
         result["inviterName"] = inviterName
         result["inviteeEmail"] = inviteeEmail
         String role = params["role"]?.decodeHTML()
@@ -168,7 +172,44 @@ class ContributorController extends CommonController {
         result.put("refCode", refCode)
         result.put("serverURL", params["serverURL"]?.decodeHTML())
 
+        String msg
         // 1. Create a record in the contribution_invite table
+        User inviter = User.findByUsername(inviterUsername)
+        CI ci = CI.findByInviterAndInviteeEmail(inviter, inviteeEmail)
+        if (ci) {
+            switch (ci.state) {
+                case IS.ACCEPTED:
+                    msg = "There has been an user in our system associated with the email ${inviteeEmail}"
+                    // do nothing
+                    break
+                case IS.PENDING:
+                    msg = "Sending a gentle reminder"
+                    break
+                case IS.CANCELLED:
+                    msg = "Resending an invitation"
+                    break
+                case IS.REJECTED:
+                    msg = "Resending an invitation"
+                    break
+                case IS.RESENT:
+                    msg = "Resending a gentle reminder"
+                    break
+                default:
+                    msg = "Sending a new invitation"
+                    break
+            }
+        } else {
+            ci = new CI(inviter: inviter, inviteeEmail: inviteeEmail, reference: refCode,
+                dateSent: new Date(), state: IS.PENDING)
+            if (ci.save(flush: true)) {
+                LOGGER.debug("Created a contribution invite (user: ${inviteeEmail}) successfully")
+                println("Created a contribution invite (user: ${inviteeEmail}) successfully")
+                result.put("contribution_invite_id", ci.id.toString())
+            } else {
+                LOGGER.error("Failed: ${ci.errors.toString()}")
+                println("Failed: ${ci.errors.toString()}")
+            }
+        }
 
         // 2. Send an email having instructions to the invited contributor
         String htmlBasedContent = g.render(template: "/contributor/inviteEmailTemplate", plugin: "jummp-plugin-web-application", model: result)
