@@ -12,8 +12,10 @@
         %{--<h2>${inviterName}</h2>--}%
     </div>
 </div>
-<h1>You are invited!</h1>
-<p>${inviterName} invited you to join your submission in BioModels as a ${role}. What would you like to do?</p>
+
+<h1>${emailHeading}</h1>
+
+<p><g:if test="${howtoAction == 'Remind'}">This is a friendly reminder that </g:if>${inviterName} invited you to join your submission in BioModels as a ${role}. What would you like to do?</p>
 <p><a href="${acceptURL}">
     <input id="btn-accept" value="Accept" class="button" type="button" /></a> &nbsp;
     <a href="${rejectURL}">

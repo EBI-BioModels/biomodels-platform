@@ -172,55 +172,83 @@ class ContributorController extends CommonController {
         result.put("refCode", refCode)
         result.put("serverURL", params["serverURL"]?.decodeHTML())
 
-        String msg
+        String msg = "An invitation has been sent to the email ${inviteeEmail}."
+        String subjectLine = "${inviterName} invited you to join your submission in BioModels as as a ${role.toLowerCase()}"
+        String emailHeading = "You are invited!"
+        String howtoAction = "Send"
         // 1. Create a record in the contribution_invite table
         User inviter = User.findByUsername(inviterUsername)
         CI ci = CI.findByInviterAndInviteeEmail(inviter, inviteeEmail)
         if (ci) {
             switch (ci.state) {
                 case IS.ACCEPTED:
-                    msg = "There has been an user in our system associated with the email ${inviteeEmail}"
+                    msg = "There has been an user in our system registed with the email ${inviteeEmail}."
                     // do nothing
                     break
                 case IS.PENDING:
-                    msg = "Sending a gentle reminder"
+                    msg = "A gentle reminder has been sent to the email ${inviteeEmail}."
+                    subjectLine = "${inviterName} is still waiting for you to join your submission in BioModels as a ${role.toLowerCase()}"
+                    emailHeading = "In case you missed it..."
                     break
                 case IS.CANCELLED:
-                    msg = "Resending an invitation"
+                    msg = "An invitation has been sent to the email ${inviteeEmail}."
+                    howtoAction = "Resend"
                     break
                 case IS.REJECTED:
-                    msg = "Resending an invitation"
+                    msg = "An invitation has been sent to the email ${inviteeEmail}."
+                    howtoAction = "Resend"
                     break
                 case IS.RESENT:
-                    msg = "Resending a gentle reminder"
+                    msg = "A gentle reminder has been sent to the email ${inviteeEmail}."
+                    subjectLine = "${inviterName} is still waiting for you to join your submission in BioModels as a ${role.toLowerCase()}"
+                    emailHeading = "In case you missed it..."
                     break
                 default:
-                    msg = "Sending a new invitation"
+                    msg = "An invitation has been sent to the email ${inviteeEmail}."
+                    howtoAction = "Resend"
                     break
+            }
+            CI newCI = new CI(inviter: inviter, inviteeEmail: inviteeEmail, reference: ci.reference, dateSent: new Date())
+            if ("Resend" == howtoAction) {
+                newCI.state = IS.PENDING
+            } else if ("Remind" == howtoAction) {
+                newCI.state = IS.RESENT
+            } else {
+                // do nothing
+            }
+            ci.delete(flush: true)
+            if (newCI.save(flush: true)) {
+                msg += " The invitation has been updated or the reminder has been sent successfully."
+            } else {
+                msg += " The invitation has been updated or the reminder has been sent unsuccessfully."
             }
         } else {
             ci = new CI(inviter: inviter, inviteeEmail: inviteeEmail, reference: refCode,
                 dateSent: new Date(), state: IS.PENDING)
             if (ci.save(flush: true)) {
-                LOGGER.debug("Created a contribution invite (user: ${inviteeEmail}) successfully")
-                println("Created a contribution invite (user: ${inviteeEmail}) successfully")
+                msg = "Created a contribution invite (user: ${inviteeEmail}) successfully."
                 result.put("contribution_invite_id", ci.id.toString())
             } else {
-                LOGGER.error("Failed: ${ci.errors.toString()}")
-                println("Failed: ${ci.errors.toString()}")
+                msg = "Failed: ${ci.errors.toString()}"
             }
         }
+        LOGGER.debug(msg)
+        println(msg)
+        result.put("message", msg)
+        result.put("subjectLine", subjectLine)
+        result.put("howtoAction", howtoAction)
+        result.put("emailHeading", emailHeading)
 
         // 2. Send an email having instructions to the invited contributor
-        String htmlBasedContent = g.render(template: "/contributor/inviteEmailTemplate", plugin: "jummp-plugin-web-application", model: result)
+        String htmlBasedContent = g.render(template: "/contributor/inviteEmailTemplate",
+            plugin: "jummp-plugin-web-application", model: result)
         mailService.sendMail {
             to inviteeEmail
             from inviterEmail
-            subject "${inviterName} invited you to join as a ${role.toLowerCase()} in your submission in BioModels"
+            subject subjectLine
             html htmlBasedContent
         }
 
-        result.put("message", "The data has been updated successfully!")
         render(result as JSON)
     }
 
