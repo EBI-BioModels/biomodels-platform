@@ -50,7 +50,7 @@ class SbmlController {
         if (genericAnno) {
             model["genericAnnotations"] = genericAnno
         }
-        if (!perennialId.startsWith("BMID")) {
+        if (!perennialId.startsWith("BMID") && !perennialId.startsWith("MODEL170711")) {
             def components = [:]
             try {
                 components = sbmlService.extractComponentsFromBP(perennialId)
