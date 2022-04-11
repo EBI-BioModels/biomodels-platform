@@ -205,6 +205,7 @@ grails.project.dependency.resolution = {
         runtime ":hibernate4:4.3.10"
         runtime ":jquery-datatables:1.7.5"
         runtime ":console:1.5.8"
+        runtime ":cors:1.3.0"
     }
 }
 
