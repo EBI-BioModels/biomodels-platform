@@ -25,6 +25,12 @@
         // perform an ajax call to complete the submission
         // the function should return true or false to indicate the state of submission
         // I suppose it fails meaning the currentValidation to be false
+        // TODO: at this step, we don't need to pass parameters to the following AJAX call because all submission
+        // data have been validated either from the previous step or pressing on the Final Check button. To ignore
+        // this, the submission data should be saved on Redis after performing the last check/validation. The following
+        // AJAX call just loads the submission data back and performs the further actions. To do so can prevent
+        // cheats at the previous step to attempt to modify the submission data.
+        // Just pass the submission session id
         const url = "${createLink(controller: "submission", action: "completeSubmission")}";
         $.ajax({
             type: "POST",
@@ -41,15 +47,20 @@
                 changesMade: changesMade,
                 submissionFolder: "${submissionFolder}"
             },
-            dataType: "json"
+            dataType: "json",
+            beforeSend: function() {
+                console.log("About completing the submission...");
+            }
         }).done(function (response) {
             currentValidation = response.status === "Success";
             $('#completionMessage').html(response.message);
             setCheckList(5, currentValidation);
+            console.log("Your submission has been deposited successfully.");
         }).fail(function (jXHR, textStatus, thrown) {
             console.log("Status: " + jXHR.status + " - " + jXHR.statusText);
             $('#completionMessage').html("<h3 style='color: red'>There have been errors to prevent you from submitting or updating your model. Please try again or contact us for further help.</h3>");
             setCheckList(5, false);
+            console.log("Your submission has been failed. Please try to submit again or contact us for the further help.");
         });
     }
 </script>

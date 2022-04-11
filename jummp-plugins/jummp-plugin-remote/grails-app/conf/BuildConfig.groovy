@@ -81,7 +81,6 @@ grails.project.dependency.resolution = {
         compile ":spring-security-core:2.0.0"
 
         runtime ":hibernate4:4.3.10"
-        runtime ":jquery:1.11.1"
     }
 }
 grails.plugin.location.'jummp-plugin-core-api'="../jummp-plugin-core-api"
