@@ -13,7 +13,7 @@
 </head>
 
 <body>
-    <h2>Under construction</h2>
-<p>Reference: ${params.ref}. Complete: ${params.op == 'reject' ? "Rejected" : "Accepted"}</p>
+    <h2>Thank you for interesting in BioModels!</h2>
+    <p>${msgUser}</p>
 </body>
 </html>

@@ -147,8 +147,67 @@ class ContributorController extends CommonController {
     def handleInviteResponse() {
         String refCode = params["ref"]?.decodeHTML()
         String op = params["op"]?.decodeHTML()
-        CI ci = CI.findByReference(refCode)
-        render(view: "handleInviteResponse")
+        CI ci = CI.findWhere(reference: refCode)
+        String msgLog
+        String msgUser
+        String modelId = ""
+        if ("accept" == op) {
+            if (ci) {
+                String inviteeEmail = ci.inviteeEmail
+                modelId = ci.revision.model.submissionId
+                User inviteeAccount = User.findByEmail(inviteeEmail)
+                if (inviteeAccount) {
+                    CD cd = CD.findWhere(contributor: inviteeAccount, revision: ci.revision, role: ci.role)
+                    if (!cd) {
+                        cd = new CD(contributor: inviteeAccount, revision: ci.revision, role: ci.role)
+                        boolean saved = cd.save(flush: true, insert: true)
+                        if (saved) {
+                            msgLog = "Added the user (${inviteeEmail}) as the ${ci.role.name} for " +
+                                "the model ${modelId}"
+                            msgUser = "You have joined your submission with the identifier ${modelId} in BioModels."
+                            updateCI(ci, "accept")
+                        } else {
+                            msgLog = "There has been an error why persisting the user (${inviteeEmail}) as " +
+                                "the ${ci.role.name} for the model ${ci.revision.model.submissionId}"
+                            msgUser = "Oops! There has been an error. Please try to open the invitation link or contact us!"
+                        }
+                    } else {
+                        String modelURL = createLink(controller: "model", action: "show", id: modelId)
+                        modelURL = '<a href="' + modelURL + '" target="_blank">' + modelId + '</a>'
+                        msgLog = "The user (${inviteeEmail}) as the ${ci.role.name} joined the model ${modelId}."
+                        msgUser = "You already accepted the invitation. Access your model ${modelURL}."
+                    }
+                } else {
+                    msgLog = "Sorry, we couldn't find any user registered with the email ${inviteeEmail}"
+                    msgUser = "Sorry, we couldn't find any user registered with the email ${inviteeEmail}"
+                }
+            } else {
+                msgLog = "The invitation is invalid due to expired, cancelled or rejected."
+                msgUser = "The invitation is invalid due to expired, cancelled or rejected."
+            }
+        } else if ("reject" == op) {
+            if (ci) {
+                msgLog = "Thank you for your response! We are always happy to support you in the near future."
+                msgUser = msgLog
+                updateCI(ci, "reject")
+                // TODO: update the contributor list either remove this user or expire the invitation: accepted and not allow to revert
+            } else {
+                msgLog = "The invitation is invalid due to expired, cancelled or rejected."
+                msgUser = "The invitation is invalid due to expired, cancelled or rejected."
+            }
+        } else {
+            msgLog = "Please stop cheating our system. Thanks!"
+            msgUser = "Please stop cheating our system. Thanks!"
+        }
+        Map retMap = [:]
+        retMap.put("reference", refCode)
+        retMap.put("inviteeResponse", op)
+        retMap.put("msgLog", msgLog)
+        retMap.put("msgUser", msgUser)
+        retMap.put("modelId", modelId)
+        LOGGER.debug(msgLog)
+        println(msgLog)
+        render(view: "handleInviteResponse", model: retMap)
     }
 
     def invite() {
@@ -345,5 +404,19 @@ from the model ${revisionIdentifier}."""
         Revision revision = Revision.findByModelAndRevisionNumber(model, revisionNumber)
 
         [contributor: contributor, revision: revision, revisionIdentifier: "$modelId.$revisionNumber"]
+    }
+
+    private CI updateCI(CI ci, String userResponse) {
+        ci.dateCompleted = new Date()
+        switch (userResponse) {
+            case "accept":
+                ci.state = IS.ACCEPTED
+                break
+            case "reject":
+                ci.state = IS.REJECTED
+                break
+        }
+        ci.merge(flush: true)
+        return ci
     }
 }
