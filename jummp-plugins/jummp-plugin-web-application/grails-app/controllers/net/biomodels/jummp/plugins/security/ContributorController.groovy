@@ -172,13 +172,13 @@ class ContributorController extends CommonController {
         result.put("refCode", refCode)
         result.put("serverURL", params["serverURL"]?.decodeHTML())
 
-        String msg = "An invitation has been sent to the email ${inviteeEmail}."
+        String msg = ""
         String subjectLine = "${inviterName} invited you to join your submission in BioModels as as a ${role.toLowerCase()}"
         String emailHeading = "You are invited!"
         String howtoAction = "Send"
         // 1. Create a record in the contribution_invite table
         User inviter = User.findByUsername(inviterUsername)
-        CI ci = CI.findByInviterAndInviteeEmail(inviter, inviteeEmail)
+        CI ci = CI.findByInviterAndInviteeEmail(inviter, inviteeEmail, [locked: true])
         if (ci) {
             switch (ci.state) {
                 case IS.ACCEPTED:
@@ -189,6 +189,7 @@ class ContributorController extends CommonController {
                     msg = "A gentle reminder has been sent to the email ${inviteeEmail}."
                     subjectLine = "${inviterName} is still waiting for you to join your submission in BioModels as a ${role.toLowerCase()}"
                     emailHeading = "In case you missed it..."
+                    howtoAction = "Remind"
                     break
                 case IS.CANCELLED:
                     msg = "An invitation has been sent to the email ${inviteeEmail}."
@@ -202,38 +203,39 @@ class ContributorController extends CommonController {
                     msg = "A gentle reminder has been sent to the email ${inviteeEmail}."
                     subjectLine = "${inviterName} is still waiting for you to join your submission in BioModels as a ${role.toLowerCase()}"
                     emailHeading = "In case you missed it..."
+                    howtoAction = "Remind"
                     break
                 default:
                     msg = "An invitation has been sent to the email ${inviteeEmail}."
-                    howtoAction = "Resend"
+                    howtoAction = "Send"
                     break
             }
-            CI newCI = new CI(inviter: inviter, inviteeEmail: inviteeEmail, reference: ci.reference, dateSent: new Date())
-            if ("Resend" == howtoAction) {
-                newCI.state = IS.PENDING
-            } else if ("Remind" == howtoAction) {
-                newCI.state = IS.RESENT
-            } else {
-                // do nothing
-            }
             ci.delete(flush: true)
-            if (newCI.save(flush: true)) {
+            ci = new CI(inviter: inviter, inviteeEmail: inviteeEmail, reference: refCode, dateSent: new Date())
+            if ("Remind" == howtoAction) {
+                ci.state = IS.RESENT
+            } else {
+                ci.state = IS.PENDING
+            }
+            if (ci.save(flush: true)) {
                 msg += " The invitation has been updated or the reminder has been sent successfully."
             } else {
-                msg += " The invitation has been updated or the reminder has been sent unsuccessfully."
+                msg += " The invitation has been updated or the reminder has been sent unsuccessfully. The cause is "
+                msg += "${ci.errors.getAllErrors().toString()}"
             }
         } else {
+            howtoAction = "Send"
             ci = new CI(inviter: inviter, inviteeEmail: inviteeEmail, reference: refCode,
                 dateSent: new Date(), state: IS.PENDING)
             if (ci.save(flush: true)) {
-                msg = "Created a contribution invite (user: ${inviteeEmail}) successfully."
+                msg = "An invitation has been sent to the email ${inviteeEmail}. "
+                msg += "Created a contribution invite (user: ${inviteeEmail}) successfully."
                 result.put("contribution_invite_id", ci.id.toString())
             } else {
                 msg = "Failed: ${ci.errors.toString()}"
             }
         }
-        LOGGER.debug(msg)
-        println(msg)
+
         result.put("message", msg)
         result.put("subjectLine", subjectLine)
         result.put("howtoAction", howtoAction)
@@ -248,6 +250,9 @@ class ContributorController extends CommonController {
             subject subjectLine
             html htmlBasedContent
         }
+
+        LOGGER.debug(msg)
+        println(msg)
 
         render(result as JSON)
     }

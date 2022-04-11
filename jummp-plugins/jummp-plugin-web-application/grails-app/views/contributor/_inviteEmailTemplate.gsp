@@ -3,13 +3,42 @@
     def acceptURL = rootHost + createLink(action: "handleInviteResponse", params: [ref: refCode, op: 'accept'])
     def rejectURL = rootHost + createLink(action: "handleInviteResponse", params: [ref: refCode, op: 'reject'])
 %>
+<style>
+.column {
+    float: left;
+    width: 50%;
+}
+
+/* Clear floats after the columns */
+.row:after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+.left {
+    width: 25%;
+}
+
+.right {
+    width: 75%;
+}
+
+/* Responsive layout - when the screen is less than 600px wide, make the two columns stack on top of each other
+instead of next to each other */
+@media screen and (max-width: 600px) {
+    .column {
+        width: 100%;
+    }
+}
+</style>
 <div class="row" style="height: 80px; background-color: #007c82">
-    <div class="columns small-12 medium-6 large-6">
+    <div class="column">
         <a href="${serverURL}" title="BioModels">
             <img src="${serverURL}/images/biomodels/logo_small.png" alt="BioModels"/></a>
     </div>
-    <div class="columns small-12 medium-6 large-6">
-        %{--<h2>${inviterName}</h2>--}%
+    <div class="column">
+        <h2 style="color: white; font-weight: bold; float: right">${inviterName}</h2>
     </div>
 </div>
 
