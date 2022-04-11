@@ -239,20 +239,21 @@ The consistency check for your model is being ignored."""
 
         if (grailsApplication.config.jummp.plugins.sbml.validation) {
             try {
-                int CONSISTENCY_ERRORS = doc.checkConsistency()
-                if (CONSISTENCY_ERRORS == -1) {
+                int CONSISTENCY_ERRORS = doc.checkConsistency() // by default, this method calls the online validator
+                if (CONSISTENCY_ERRORS == -1) { // -1 means the online validator is unreachable
                     errorMsg = """An internal error happening while trying to reach the SBML online validator \
 to validate the file ${doc.inspect()}\t${doc.properties}. \
 The system has tried to call the fallback to the SBML offline validator..."""
                     println(errorMsg)
                     log.error(errorMsg)
                     CONSISTENCY_ERRORS = doc.checkConsistencyOffline()
-                    return CONSISTENCY_ERRORS == 0 ? doc : null
-                } else if (CONSISTENCY_ERRORS > 0) {
+                }
+                if (CONSISTENCY_ERRORS > 0) {
                     // search for an error
                     for (SBMLError error in doc.getListOfErrors().validationErrors) {
                         if (error.isFatal() || error.isInternal() || error.isSystem() || error.isXML() || error.isError()) {
                             errorMsg = error.getMessage()
+                            println(errorMsg)
                             log.debug(errorMsg)
                             errors.add(errorMsg)
                             doc = null
