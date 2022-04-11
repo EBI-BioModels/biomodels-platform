@@ -155,6 +155,7 @@ class ContributorController extends CommonController {
         String modelId = params["modelId"]?.decodeHTML()
         int revisionNumber = params.getInt("revisionNumber")
         Model model = modelService.getModel("$modelId.$revisionNumber")
+        Revision revision = model.revisions.find { it.revisionNumber == revisionNumber }
         if (!model) { return null }
         String inviterEmail = params["inviterEmail"]?.decodeHTML()
         String inviterName = params["inviterName"]?.decodeHTML()
@@ -166,6 +167,7 @@ class ContributorController extends CommonController {
         result["inviterName"] = inviterName
         result["inviteeEmail"] = inviteeEmail
         String role = params["role"]?.decodeHTML()
+        CR contributionRole = CR.findByName(role)
         String refCode = String.valueOf(random.nextInt()) + params["inviterUsername"]?.decodeHTML()
         refCode = refCode.encodeAsMD5()
         result.put("role", role)
@@ -178,7 +180,7 @@ class ContributorController extends CommonController {
         String howtoAction = "Send"
         // 1. Create a record in the contribution_invite table
         User inviter = User.findByUsername(inviterUsername)
-        CI ci = CI.findByInviterAndInviteeEmail(inviter, inviteeEmail, [locked: true])
+        CI ci = CI.findWhere(inviter: inviter, inviteeEmail: inviteeEmail, revision: revision, role: contributionRole)
         if (ci) {
             switch (ci.state) {
                 case IS.ACCEPTED:
@@ -210,24 +212,25 @@ class ContributorController extends CommonController {
                     howtoAction = "Send"
                     break
             }
-            ci.delete(flush: true)
-            ci = new CI(inviter: inviter, inviteeEmail: inviteeEmail, reference: refCode, dateSent: new Date())
+            ci.reference = refCode
+            ci.dateSent = new Date()
             if ("Remind" == howtoAction) {
                 ci.state = IS.RESENT
             } else {
                 ci.state = IS.PENDING
             }
-            if (ci.save(flush: true)) {
+
+            if (ci.merge(flush: true)) {
                 msg += " The invitation has been updated or the reminder has been sent successfully."
             } else {
                 msg += " The invitation has been updated or the reminder has been sent unsuccessfully. The cause is "
-                msg += "${ci.errors.getAllErrors().toString()}"
+                msg += "${ci.errors.toString()}"
             }
         } else {
             howtoAction = "Send"
             ci = new CI(inviter: inviter, inviteeEmail: inviteeEmail, reference: refCode,
-                dateSent: new Date(), state: IS.PENDING)
-            if (ci.save(flush: true)) {
+                revision: revision, role: contributionRole, dateSent: new Date(), state: IS.PENDING)
+            if (ci.save(insert: true, flush: true)) {
                 msg = "An invitation has been sent to the email ${inviteeEmail}. "
                 msg += "Created a contribution invite (user: ${inviteeEmail}) successfully."
                 result.put("contribution_invite_id", ci.id.toString())

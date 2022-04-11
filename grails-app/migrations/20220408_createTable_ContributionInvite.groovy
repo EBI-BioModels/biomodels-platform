@@ -19,6 +19,14 @@ databaseChangeLog = {
                 constraints(nullable: "false")
             }
 
+            column(name: "revision_id", type: "bigint") {
+                constraints(nullable: "false")
+            }
+
+            column(name: "role_id", type: "bigint") {
+                constraints(nullable: "false")
+            }
+
             column(name: "state", type: "varchar(255)") {
                 constraints(nullable: "false")
             }
@@ -26,7 +34,7 @@ databaseChangeLog = {
     }
 
     changeSet(author: "tnguyen (generated)", id: "1649437890534-2") {
-        addPrimaryKey(columnNames: "inviter_id, invitee_email", constraintName: "contribution_PK",
-            tableName: "contribution_invite")
+        addPrimaryKey(columnNames: "inviter_id, invitee_email, revision_id, role_id",
+            constraintName: "contribution_PK", tableName: "contribution_invite")
     }
 }
