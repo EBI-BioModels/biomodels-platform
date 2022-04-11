@@ -47,15 +47,20 @@
                 changesMade: changesMade,
                 submissionFolder: "${submissionFolder}"
             },
-            dataType: "json"
+            dataType: "json",
+            beforeSend: function() {
+                console.log("About completing the submission...");
+            }
         }).done(function (response) {
             currentValidation = response.status === "Success";
             $('#completionMessage').html(response.message);
             setCheckList(5, currentValidation);
+            console.log("Your submission has been deposited successfully.");
         }).fail(function (jXHR, textStatus, thrown) {
             console.log("Status: " + jXHR.status + " - " + jXHR.statusText);
             $('#completionMessage').html("<h3 style='color: red'>There have been errors to prevent you from submitting or updating your model. Please try again or contact us for further help.</h3>");
             setCheckList(5, false);
+            console.log("Your submission has been failed. Please try to submit again or contact us for the further help.");
         });
     }
 </script>
