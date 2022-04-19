@@ -26,9 +26,10 @@ package net.biomodels.jummp.webapp
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
+import net.biomodels.jummp.deployment.biomodels.CommonController
 
 @Secured(["IS_AUTHENTICATED_FULLY"])
-class JummpController {
+class JummpController extends CommonController {
     def springSecurityService
     def userService
     def grailsApplication
@@ -36,6 +37,7 @@ class JummpController {
     def feedbackService
     def messageSource
     def reviewerAccountService
+    def modelService
 
     final List<String> AUDIT_EXCEPTIONS = ['support', 'aboutus', 'contactus', 'lookupUser',
                                            'autoCompleteUser', 'teamLookup']
@@ -162,16 +164,6 @@ class JummpController {
         String message = reviewerAccountService.createAccountAndInstructions(modelId, serverURL)
         Map retMap = [modelId: modelId, message: message, serverURL: serverURL]
         render(view: "createReviewerAccount", model: retMap)
-    }
-
-    @Secured(["IS_AUTHENTICATED_FULLY"])
-    def contributors() {
-        String serverURL = grailsApplication.config.grails.serverURL
-        String modelId = params.get("id").decodeHTML()
-        println params.get("authors")
-        String message = "Under construction" //reviewerAccountService.createAccountAndInstructions(modelId, serverURL)
-        Map retMap = [modelId: modelId, authors: params?.authors, message: message, serverURL: serverURL]
-        render(view: "manageContributors", model: retMap)
     }
 
     def lookupUser = {

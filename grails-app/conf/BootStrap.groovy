@@ -38,6 +38,7 @@ import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.healthcheck.HealthCheckUtil
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.model.PublicationLinkProvider
+import net.biomodels.jummp.model.ContributionRole
 import net.biomodels.jummp.plugins.security.Person
 import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
@@ -95,6 +96,22 @@ class BootStrap {
                     accountLocked: true,
                     passwordExpired: true)
                 user.save(flush: true)
+            }
+        }
+    }
+
+    void doInitialiseSomeContributionRoles() {
+        Map<String, String> roles = [
+            "Submitter": "Any person who has made a significant contribution to your work",
+            "Curator": "Any person who has contributed to update, correct and submit your model files",
+            "Modeller": "Any person who has made a significant contribution to model submission",
+            "Other": "Any person who has made the first version of your submission",
+        ]
+        if (Environment.getCurrent() != Environment.TEST) {
+            roles.each {
+                if (!ContributionRole.findByName(it.key)) {
+                  new ContributionRole(name: it.key, description: it.value).save(flush: true)
+                }
             }
         }
     }
@@ -245,6 +262,7 @@ class BootStrap {
         doAddValidationMethods2DomainClass()
         doInitialisePublicationLinkProvider()
         doInitialiseSomeUsersAndRoles()
+        doInitialiseSomeContributionRoles()
         doCustomiseMappingForWeceem()
         doCustomiseRestBuilderConstructor()
         doSubscribeRedisChannelsRelated2ModelIdentifierGeneration()

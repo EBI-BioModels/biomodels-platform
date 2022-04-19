@@ -28,6 +28,10 @@ function pollForNotifications(url) {
     });
 }
 
+function clearNotification() {
+    $(".flashNotificationDiv").text("");
+};
+
 function markAsRead(url, updateCount) {
     $.get( url, function() {});
     setTimeout(function() {

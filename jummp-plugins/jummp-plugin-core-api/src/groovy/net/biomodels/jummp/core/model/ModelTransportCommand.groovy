@@ -121,4 +121,7 @@ class ModelTransportCommand implements Serializable {
     ModellingApproach modellingApproach = null
 
     String otherInfo
+
+    // TODO: reconcile the contributors and createrUsernames states.
+    Map<String, String> contributors
 }

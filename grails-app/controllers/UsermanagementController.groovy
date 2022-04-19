@@ -221,6 +221,25 @@ class UsermanagementController {
         }
     }
 
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def profile() {
+        String username = ""
+        if (params.containsKey("id")) {
+            username = params.get("id").decodeHTML()
+        }
+        User currentUser = springSecurityService.currentUser
+        if (!username) {
+            username = currentUser?.username
+        }
+        String msg = ""
+        if (!springSecurityService.isLoggedIn() || username != currentUser?.username) {
+            msg = "You are viewing the public profile of $username"
+        } else {
+            msg = "You are viewing your full profile"
+        }
+        render(view: "profile", model: [msg: msg])
+    }
+
     /**
      * Requests a password link from the user service, hiding the exception thrown
      * if the username provided does not exist.

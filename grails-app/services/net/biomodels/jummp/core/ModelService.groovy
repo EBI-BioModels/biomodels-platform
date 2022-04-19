@@ -48,6 +48,8 @@ import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGe
 import net.biomodels.jummp.core.vcs.VcsException
 import net.biomodels.jummp.core.vcs.VcsFileDetails
 import net.biomodels.jummp.model.*
+import net.biomodels.jummp.model.ContributionDetails as CD
+import net.biomodels.jummp.model.ContributionRole as CR
 import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
 import org.perf4j.StopWatch
@@ -1013,10 +1015,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
             // turn them into transport commands in order to avoid LazyInitialisationExceptions
             def attachedModel = Model.get(model.id)
             Revision r = attachedModel.revisions.first()
-            RevisionTransportCommand cmd = new RevisionAdapter(revision: r).toCommandObject()
-            indexModelRevision(cmd)
-            //convertModelToOtherFormats(cmd)
-            shareRevision2FellowCurators(cmd)
+            doPostPersistRevision(r)
             return attachedModel
         }
         model
@@ -2485,6 +2484,34 @@ WHERE
 	    return results
     }
 
+    private void addContributors(final Revision revision) {
+        final String username = revision.owner.username
+        String msg = ""
+        aclInsertionLock.lock()
+        try {
+            CD details = CD.findByContributorAndRevision(revision.owner, revision, [locked: true])
+            if (!details) {
+                // TODO: create an UI to allow users to choose the contribution role during the submisision flow
+                String role = "Modeller"
+                CR newRole = CR.findByName(role)
+                details = new CD(contributor: revision.owner, revision: revision, role: newRole)
+                if (details.save(flush: true)) {
+                    msg = "Added $username as a $role for the revision ${revision.id} successfully."
+                } else {
+                    msg = "Failed to add $username as a $role for the revision ${revision.id}."
+                }
+                logger.debug(msg)
+                println(msg)
+            }
+        } catch (Exception e) {
+            msg = "Failed to add $username as a contributor for the revision ${revision.id} due to ${e.toString()}."
+            logger.error(msg)
+            println(msg)
+        } finally {
+            aclInsertionLock.unlock()
+        }
+    }
+
     /**
      * Invoking updateIndex method of search service
      *
@@ -2574,10 +2601,18 @@ There has been error while adding $approach to the model ${revisionTC.identifier
 
             def revisionAdapter = new RevisionAdapter(revision: attachedRevision, latest: true)
             RevisionTransportCommand cmd = revisionAdapter.toCommandObject()
-            indexModelRevision(cmd)
-            //convertModelToOtherFormats(cmd)
-            shareRevision2FellowCurators(cmd)
-            updateModelCache(attachedRevision)
+            try {
+                // TODO: catch exceptions of each post-submission processes to report to the submitter and BioModels cura
+                addContributors(attachedRevision)
+                indexModelRevision(cmd)
+                //convertModelToOtherFormats(cmd)
+                shareRevision2FellowCurators(cmd)
+                updateModelCache(attachedRevision)
+            } catch (Exception e) {
+                e.printStackTrace()
+                logger.error(e.toString())
+                println(e.toString())
+            }
             return attachedRevision
         }
         stopWatch.stop()
