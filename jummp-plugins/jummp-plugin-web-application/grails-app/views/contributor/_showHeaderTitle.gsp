@@ -1,4 +1,4 @@
-<div class="row contributor" style="height: 50px">
+<div class="row contributors-header" style="height: 50px">
     <div class="columns large-1 medium-1 small-12">
         &nbsp;
     </div>

@@ -1,4 +1,4 @@
-<div class="row contributor">
+<div class="row contributors-body">
     <div class="columns large-1 medium-1 small-12">
         &nbsp;
     </div>

@@ -59,6 +59,39 @@ class ContributorController extends CommonController {
     def mailService
     private final Random random = new Random(System.currentTimeMillis())
 
+    @Secured(["ROLE_ADMIN", "ROLE_CURATOR"])
+    def init() {
+        // create the first contributors based on the existing model revisions
+        Map parameters = parseParameters()
+        Revision revision = parameters.get("revision") as Revision
+        Map result = [:]
+        Map<String, CTC> contributors = createFirstContributors(revision)
+        result.put("contributors", contributors)
+        String message = ""
+        if (contributors) {
+            Map savedContributors = saveFirstContributors(contributors, revision)
+            String serverURL = grailsApplication.config.grails.serverURL
+            List<String> roles = CR.getAll().collect {
+                it.name
+            }.sort()
+            StringBuilder sb = new StringBuilder()
+            for (CTC cont: contributors.values()) {
+                String htmlString = g.render(template: "/contributor/showContributor",
+                    plugin: "jummp-plugin-web-application",
+                    model: [cont: cont, serverURL: serverURL, roles: roles])
+                sb.append(htmlString)
+            }
+            result.put("htmlBasedStringOfContributors", sb.toString())
+            message = "Initialised the contributors successfully."
+        } else {
+            result.put("htmlBasedStringOfContributors", "")
+            message = "There is no contributor for this model revision."
+        }
+        result.put("message", message)
+
+        render(result as JSON)
+    }
+
     def manage() {
         String serverURL = grailsApplication.config.grails.serverURL
         String modelId = params.get("id").decodeHTML()
@@ -391,19 +424,44 @@ from the model ${revisionIdentifier}."""
         render(result as JSON)
     }
 
+    private Map createFirstContributors(final Revision revision) {
+        Map<String, CTC> contributors = new HashMap<>()
+        CTC ctc = new CTC(user: revision.owner, role: CR.findByName("Curator"),
+            person: revision.owner.person, locked: true)
+        //List details = CD.findAllByRevisionInList(revisions)
+        contributors.put(revision.owner.username, ctc)
+        contributors
+    }
+
     private Map parseParameters() {
-        String usernameAndEmail = params.get("usernameAndEmail").decodeHTML()
-        String[] parts = usernameAndEmail.split(", ")
-        String username = parts[0]
-        String email = parts[1]
-        User contributor = User.findByUsernameAndEmail(username, email)
+        User contributor = null
+        if (params.containsKey("usernameAndEmail")) {
+            String usernameAndEmail = params.get("usernameAndEmail").decodeHTML()
+            String[] parts = usernameAndEmail.split(", ")
+            String username = parts[0]
+            String email = parts[1]
+            contributor = User.findByUsernameAndEmail(username, email)
+        }
 
         String modelId = params.get("modelId")
         String revisionNumber = params.get("revisionNumber")
         Model model = modelService.getModel("$modelId.$revisionNumber")
         Revision revision = Revision.findByModelAndRevisionNumber(model, revisionNumber)
 
-        [contributor: contributor, revision: revision, revisionIdentifier: "$modelId.$revisionNumber"]
+        [contributor: contributor, revision: revision, modelId: modelId, revisionNumber: revisionNumber,
+         revisionIdentifier: "$modelId.$revisionNumber"]
+    }
+
+    private Map saveFirstContributors(final Map<String, CTC> contributors, final Revision revision) {
+        Map result = [:]
+        for (CTC ctc: contributors.values()) {
+            CD cd = CD.findOrSaveWhere(contributor: ctc.user, revision: revision, role: ctc.role)
+            if (cd.save(flush: true)) {
+                println ctc.toString()
+                result.put(ctc.toString(), cd)
+            }
+        }
+        result
     }
 
     private CI updateCI(CI ci, String userResponse) {

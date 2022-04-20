@@ -310,6 +310,38 @@
         return true;
     });
 
+    $("#btn-init-contributors").on("click", function() {
+        const urlPost = $.jummp.createLink("contributor", "init");
+        let data = new FormData();
+        data.append("modelId", "${modelId}");
+        data.append("revisionNumber", ${revisionNumber});
+        let message = "";
+        fetch(urlPost, {
+            method: "POST",
+            body: data
+        }).then((result) => {
+            if (200 !== result.status) {
+                message = "Bad Server Response";
+                showNotification(message);
+                toastr.error(message);
+                throw new Error(message);
+                return result.text();
+            }
+            return result.json();
+        }).then((response) => {
+            message = response["message"];
+            showNotification(message);
+            toastr.success(message);
+            console.log("htmlBasedStringOfContributors: " + response["htmlBasedStringOfContributors"]);
+            $(".row .contributors-body").remove();
+            $(".row .contributors-header").after(response["htmlBasedStringOfContributors"]);
+        }).catch((error) => {
+            console.log(error);
+            return false;
+        });
+        return true;
+    });
+
     function preValidate(email) {
         let message;
         if (!email) {
