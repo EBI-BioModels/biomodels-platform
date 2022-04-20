@@ -2,8 +2,8 @@
     <div class="columns large-1 medium-1 small-12">
         &nbsp;
     </div>
-    <div class="columns large-2 medium-2 text-center middle">
-        <div class="contributor-header thumbnail">
+    <div class="columns large-2 medium-2 small-12">
+        <div class="contributor-header contributor-profile-photo">
             Profile Photo
         </div>
     </div>

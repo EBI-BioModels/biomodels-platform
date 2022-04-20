@@ -2,7 +2,7 @@
     <div class="columns large-1 medium-1 small-12">
         &nbsp;
     </div>
-    <div class="columns large-2 medium-2 text-center middle">
+    <div class="columns large-2 medium-2 small-12 text-center middle">
         <div class="thumbnail">
             <img src="${serverURL}/images/default-user-avatar.png" style="width: 30%">
         </div>
