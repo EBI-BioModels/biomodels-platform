@@ -36,12 +36,10 @@
 <div id="model-contributor-list">
     <h3 style="color: red">${message}</h3>
     <h3>The current contributors</h3>
-<form name="test_form" method="POST">
+<form name="test_form" method="POST"><div style="background-color: lightskyblue">
     <g:render template="showHeaderTitle" plugin="jummp-plugin-web-application" />
-    <g:each in="${contributors}" var="cont">
-        <g:render template="showContributor" plugin="jummp-plugin-web-application" model="[cont: cont.value]" />
-    </g:each>
-</form>
+    <jummp:renderContributors contributors="${contributors}" />
+</div></form>
 </div>
 <div class="add-contributor">
     <h3>Add an existing user as a contributor</h3>

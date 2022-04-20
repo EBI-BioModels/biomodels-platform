@@ -25,6 +25,7 @@
 package net.biomodels.jummp.webapp
 
 import com.google.common.base.CaseFormat
+import net.biomodels.jummp.core.model.ContributorTransportCommand as CTC
 import net.biomodels.jummp.qcinfo.FlagLevel
 
 import javax.xml.transform.stream.StreamSource
@@ -391,6 +392,17 @@ class JummpTagLib {
        }
        out << render(template: "/templates/annotationsTableRow", model: [annotations: attrs.annotations])
    }
+
+    def renderContributors = { attrs ->
+        Map contributors = attrs.contributors as Map
+        if (contributors) {
+            for (CTC cont: contributors) {
+                out << render(template: "/contributor/showContributor", model: [cont: cont.value])
+            }
+        } else {
+            out << render(template: "/contributor/showNoContributor")
+        }
+    }
 
     def renderCertificationForm = { attrs ->
         def result = new StringBuilder()
