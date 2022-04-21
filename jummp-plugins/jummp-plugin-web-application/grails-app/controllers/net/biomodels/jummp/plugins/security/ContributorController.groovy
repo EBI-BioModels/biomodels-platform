@@ -56,6 +56,8 @@ class ContributorController extends CommonController {
     def userService
     def modelService
     def mailService
+    def contributorService
+
     private final Random random = new Random(System.currentTimeMillis())
 
     @Secured(["ROLE_ADMIN", "ROLE_CURATOR"])
@@ -64,12 +66,12 @@ class ContributorController extends CommonController {
         Map parameters = parseParameters()
         Revision revision = parameters.get("revision") as Revision
         Map result = [:]
-        Map<String, CTC> contributors = createFirstContributors(revision)
+        Map<String, CTC> contributors = contributorService.createFirstContributors(revision)
         result.put("contributors", contributors)
         String message = ""
         String htmlBasedStringOfContributors = ""
         if (contributors) {
-            Map<String, CD> savedContributors = saveFirstContributors(contributors, revision)
+            Map<String, CD> savedContributors = contributorService.saveFirstContributors(contributors, revision)
             if (0 == savedContributors?.size()) {
                 message = "Cannot initialise the first contributors."
                 htmlBasedStringOfContributors = ""
@@ -185,62 +187,22 @@ class ContributorController extends CommonController {
         String msgLog
         String msgUser
         String modelId = ""
-        if ("accept" == op) {
-            if (ci) {
-                String inviteeEmail = ci.inviteeEmail
-                modelId = ci.revision.model.submissionId
-                User inviteeAccount = User.findByEmail(inviteeEmail)
-                if (inviteeAccount) {
-                    CD cd = CD.findWhere(contributor: inviteeAccount, revision: ci.revision, role: ci.role)
-                    if (!cd) {
-                        cd = new CD(contributor: inviteeAccount, revision: ci.revision, role: ci.role)
-                        boolean saved = cd.save(flush: true, insert: true)
-                        if (saved) {
-                            msgLog = "Added the user (${inviteeEmail}) as the ${ci.role.name} for " +
-                                "the model ${modelId}"
-                            msgUser = "You have joined your submission with the identifier ${modelId} in BioModels."
-                            updateCI(ci, "accept")
-                        } else {
-                            msgLog = "There has been an error why persisting the user (${inviteeEmail}) as " +
-                                "the ${ci.role.name} for the model ${ci.revision.model.submissionId}"
-                            msgUser = "Oops! There has been an error. Please try to open the invitation link or contact us!"
-                        }
-                    } else {
-                        String modelURL = createLink(controller: "model", action: "show", id: modelId)
-                        modelURL = '<a href="' + modelURL + '" target="_blank">' + modelId + '</a>'
-                        msgLog = "The user (${inviteeEmail}) as the ${ci.role.name} joined the model ${modelId}."
-                        msgUser = "You already accepted the invitation. Access your model ${modelURL}."
-                    }
-                } else {
-                    msgLog = "Sorry, we couldn't find any user registered with the email ${inviteeEmail}"
-                    msgUser = "Sorry, we couldn't find any user registered with the email ${inviteeEmail}"
-                }
-            } else {
-                msgLog = "The invitation is invalid due to expired, cancelled or rejected."
-                msgUser = "The invitation is invalid due to expired, cancelled or rejected."
-            }
-        } else if ("reject" == op) {
-            if (ci) {
-                msgLog = "Thank you for your response! We are always happy to support you in the near future."
-                msgUser = msgLog
-                updateCI(ci, "reject")
-                // TODO: update the contributor list either remove this user or expire the invitation: accepted and not allow to revert
-            } else {
-                msgLog = "The invitation is invalid due to expired, cancelled or rejected."
-                msgUser = "The invitation is invalid due to expired, cancelled or rejected."
-            }
-        } else {
-            msgLog = "Please stop cheating our system. Thanks!"
-            msgUser = "Please stop cheating our system. Thanks!"
-        }
         Map retMap = [:]
         retMap.put("reference", refCode)
         retMap.put("inviteeResponse", op)
+        if ("accept" == op) {
+            retMap.putAll(contributorService.processAccept(ci))
+        } else if ("reject" == op) {
+            retMap.putAll(contributorService.processReject(ci))
+        } else {
+            msgLog = "Please stop cheating our system. Thanks!"
+            msgUser = msgLog
+        }
         retMap.put("msgLog", msgLog)
         retMap.put("msgUser", msgUser)
         retMap.put("modelId", modelId)
-        LOGGER.debug(msgLog)
-        println(msgLog)
+        LOGGER.debug(retMap.get("msgLog") as String)
+        println(retMap["msgLog"]) // for K8s log
         render(view: "handleInviteResponse", model: retMap)
     }
 
@@ -263,9 +225,7 @@ class ContributorController extends CommonController {
         CR contributionRole = CR.findByName(role)
         String refCode = String.valueOf(random.nextInt()) + params["inviterUsername"]?.decodeHTML()
         refCode = refCode.encodeAsMD5()
-        result.put("role", role)
-        result.put("refCode", refCode)
-        result.put("serverURL", params["serverURL"]?.decodeHTML())
+        result.putAll([role: role, refCode: refCode, serverURL: serverURL] as Map)
 
         String msg = ""
         String subjectLine = "${inviterName} invited you to join your submission in BioModels as as a ${role.toLowerCase()}"
@@ -274,68 +234,8 @@ class ContributorController extends CommonController {
         // 1. Create a record in the contribution_invite table
         User inviter = User.findByUsername(inviterUsername)
         CI ci = CI.findWhere(inviter: inviter, inviteeEmail: inviteeEmail, revision: revision, role: contributionRole)
-        if (ci) {
-            switch (ci.state) {
-                case IS.ACCEPTED:
-                    msg = "There has been an user in our system registed with the email ${inviteeEmail}."
-                    // do nothing
-                    break
-                case IS.PENDING:
-                    msg = "A gentle reminder has been sent to the email ${inviteeEmail}."
-                    subjectLine = "${inviterName} is still waiting for you to join your submission in BioModels as a ${role.toLowerCase()}"
-                    emailHeading = "In case you missed it..."
-                    howtoAction = "Remind"
-                    break
-                case IS.CANCELLED:
-                    msg = "An invitation has been sent to the email ${inviteeEmail}."
-                    howtoAction = "Resend"
-                    break
-                case IS.REJECTED:
-                    msg = "An invitation has been sent to the email ${inviteeEmail}."
-                    howtoAction = "Resend"
-                    break
-                case IS.RESENT:
-                    msg = "A gentle reminder has been sent to the email ${inviteeEmail}."
-                    subjectLine = "${inviterName} is still waiting for you to join your submission in BioModels as a ${role.toLowerCase()}"
-                    emailHeading = "In case you missed it..."
-                    howtoAction = "Remind"
-                    break
-                default:
-                    msg = "An invitation has been sent to the email ${inviteeEmail}."
-                    howtoAction = "Send"
-                    break
-            }
-            ci.reference = refCode
-            ci.dateSent = new Date()
-            if ("Remind" == howtoAction) {
-                ci.state = IS.RESENT
-            } else {
-                ci.state = IS.PENDING
-            }
-
-            if (ci.merge(flush: true)) {
-                msg += " The invitation has been updated or the reminder has been sent successfully."
-            } else {
-                msg += " The invitation has been updated or the reminder has been sent unsuccessfully. The cause is "
-                msg += "${ci.errors.toString()}"
-            }
-        } else {
-            howtoAction = "Send"
-            ci = new CI(inviter: inviter, inviteeEmail: inviteeEmail, reference: refCode,
-                revision: revision, role: contributionRole, dateSent: new Date(), state: IS.PENDING)
-            if (ci.save(insert: true, flush: true)) {
-                msg = "An invitation has been sent to the email ${inviteeEmail}. "
-                msg += "Created a contribution invite (user: ${inviteeEmail}) successfully."
-                result.put("contribution_invite_id", ci.id.toString())
-            } else {
-                msg = "Failed: ${ci.errors.toString()}"
-            }
-        }
-
-        result.put("message", msg)
-        result.put("subjectLine", subjectLine)
-        result.put("howtoAction", howtoAction)
-        result.put("emailHeading", emailHeading)
+        Map r = contributorService.findOrCreateInvite(ci, inviterName, howtoAction, refCode, contributionRole, revision)
+        result.putAll(r)
 
         // 2. Send an email having instructions to the invited contributor
         String htmlBasedContent = g.render(template: "/contributor/inviteEmailTemplate",
@@ -425,15 +325,6 @@ from the model ${revisionIdentifier}."""
         render(result as JSON)
     }
 
-    private Map createFirstContributors(final Revision revision) {
-        Map<String, CTC> contributors = new HashMap<>()
-        CTC ctc = new CTC(user: revision.owner, role: CR.findByName("Curator"),
-            person: revision.owner.person, locked: true)
-        //List details = CD.findAllByRevisionInList(revisions)
-        contributors.put(revision.owner.username, ctc)
-        contributors
-    }
-
     private Map parseParameters() {
         User contributor = null
         if (params.containsKey("usernameAndEmail")) {
@@ -451,31 +342,5 @@ from the model ${revisionIdentifier}."""
 
         [contributor: contributor, revision: revision, modelId: modelId, revisionNumber: revisionNumber,
          revisionIdentifier: "$modelId.$revisionNumber"]
-    }
-
-    private Map saveFirstContributors(final Map<String, CTC> contributors, final Revision revision) {
-        Map result = [:]
-        for (CTC ctc: contributors.values()) {
-            CD cd = CD.findOrSaveWhere(contributor: ctc.user, revision: revision, role: ctc.role)
-            if (cd.save(flush: true)) {
-                println ctc.toString()
-                result.put(ctc.toString(), cd)
-            }
-        }
-        result
-    }
-
-    private CI updateCI(CI ci, String userResponse) {
-        ci.dateCompleted = new Date()
-        switch (userResponse) {
-            case "accept":
-                ci.state = IS.ACCEPTED
-                break
-            case "reject":
-                ci.state = IS.REJECTED
-                break
-        }
-        ci.merge(flush: true)
-        return ci
     }
 }
