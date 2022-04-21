@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2022 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -18,8 +18,9 @@
  * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
  */
 
-package net.biomodels.jummp.deployment.biomodels
+package net.biomodels.jummp.webapp
 
+import grails.util.Holders
 import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
 
 /**
@@ -29,9 +30,16 @@ import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
  */
 class CommonController implements GrailsConfigurationAware {
     static String layout
+    static String serverURL
+    static String manualURL
+
+    def grailsApplication
 
     @Override
     void setConfiguration(ConfigObject co) {
         layout = "${co.jummp.branding.style}/main"
+        grailsApplication = Holders.grailsApplication
+        manualURL = grailsApplication.config.jummp.context.help.root
+        serverURL = grailsApplication.config.grails.serverURL
     }
 }

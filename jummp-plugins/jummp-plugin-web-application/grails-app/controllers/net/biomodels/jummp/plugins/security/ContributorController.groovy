@@ -24,7 +24,7 @@ import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.model.ContributorTransportCommand as CTC
 import net.biomodels.jummp.core.model.InviteState as IS
-import net.biomodels.jummp.deployment.biomodels.CommonController
+import net.biomodels.jummp.webapp.CommonController
 import net.biomodels.jummp.model.ContributionDetails as CD
 import net.biomodels.jummp.model.ContributionInvite as CI
 import net.biomodels.jummp.model.ContributionRole as CR
@@ -45,7 +45,6 @@ class ContributorController extends CommonController {
 
     static allowedMethods = [update: "POST"]
 
-    def grailsApplication
     /**
      * Dependency Injection of Spring Security Service
      */
@@ -93,7 +92,6 @@ class ContributorController extends CommonController {
     }
 
     def manage() {
-        String serverURL = grailsApplication.config.grails.serverURL
         String modelId = params.get("id").decodeHTML()
         String revisionNumber = params.get("format").decodeHTML()
         String message = ""
@@ -165,7 +163,6 @@ class ContributorController extends CommonController {
                 person: user.person, locked: false)
         }
         result.put("newCont", ctc)
-        String serverURL = grailsApplication.config.grails.serverURL
         List<String> roles = CR.getAll().collect {
             it.name
         }.sort()

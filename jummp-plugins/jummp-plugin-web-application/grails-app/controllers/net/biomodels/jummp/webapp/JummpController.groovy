@@ -26,13 +26,12 @@ package net.biomodels.jummp.webapp
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
-import net.biomodels.jummp.deployment.biomodels.CommonController
+import net.biomodels.jummp.webapp.CommonController
 
 @Secured(["IS_AUTHENTICATED_FULLY"])
 class JummpController extends CommonController {
     def springSecurityService
     def userService
-    def grailsApplication
     def teamService
     def feedbackService
     def messageSource
@@ -62,13 +61,11 @@ class JummpController extends CommonController {
         detectTheme()
         String titlePage = messageSource.getMessage("jummp.faq.${theme}.title", null, Locale.ENGLISH)
         titlePage += " | BioModels"
-        String manualUrl = grailsApplication.config.jummp.context.help.root
-        String serverUrl = grailsApplication.config.grails.serverURL
         render(view: "faq",
             model: [
                 titleCode: "jummp.faq.${theme}.title",
                 titlePage: titlePage,
-                manualUrl: manualUrl, serverUrl: serverUrl])
+                manualUrl: manualURL, serverUrl: serverURL])
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
@@ -159,7 +156,6 @@ class JummpController extends CommonController {
 
     @Secured(["IS_AUTHENTICATED_FULLY"])
     def createReviewerAccount() {
-        String serverURL = grailsApplication.config.grails.serverURL
         String modelId = params.get("id").decodeHTML()
         String message = reviewerAccountService.createAccountAndInstructions(modelId, serverURL)
         Map retMap = [modelId: modelId, message: message, serverURL: serverURL]

@@ -28,6 +28,7 @@ package net.biomodels.jummp.deployment.biomodels
 import grails.converters.JSON
 import grails.converters.XML
 import grails.plugin.springsecurity.annotation.Secured
+import net.biomodels.jummp.webapp.CommonController
 
 @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
 class HomePageController extends CommonController {
