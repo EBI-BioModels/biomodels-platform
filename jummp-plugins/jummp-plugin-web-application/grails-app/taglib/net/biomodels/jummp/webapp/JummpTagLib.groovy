@@ -26,11 +26,11 @@ package net.biomodels.jummp.webapp
 
 import com.google.common.base.CaseFormat
 import net.biomodels.jummp.core.model.ContributorTransportCommand as CTC
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.qcinfo.FlagLevel
 
-import javax.xml.transform.stream.StreamSource
 import javax.xml.transform.stream.StreamResult
-import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
+import javax.xml.transform.stream.StreamSource
 
 class JummpTagLib {
     static namespace = "jummp"
@@ -82,7 +82,7 @@ class JummpTagLib {
         if (!attrs.main) {
             out << renderRowInMainFileTable()
         } else attrs.main.eachWithIndex { m, index ->
-            RepositoryFileTransportCommand command = m as RepositoryFileTransportCommand
+            RFTC command = m as RFTC
             String name = new File(command.path).name
             String description = command.description
             out << render(plugin: "jummp-plugin-web-application",
@@ -108,7 +108,7 @@ class JummpTagLib {
         if (attrs.additionals) {
             int counter = 0
             attrs.additionals.each { f ->
-                RepositoryFileTransportCommand command = f as RepositoryFileTransportCommand
+                RFTC command = f as RFTC
                 String name = new File(command.path).name
                 String description = command.description ?: ""
                 out << render(plugin: "jummp-plugin-web-application",
