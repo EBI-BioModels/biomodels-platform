@@ -30,6 +30,7 @@
 </head>
 
 <body>
+<g:if test="${revision}">
 <h2>Manage Contributors of
     <a href="${createLink(controller: "model", action: "show", id: "${modelId}.${revisionNumber}")}">
     ${modelId}.${revisionNumber}</a></h2>
@@ -77,6 +78,12 @@
         </div>
     </div>
 </div>
+</g:if>
+<g:else>
+    <h2 style="color: orange">Resource not found</h2>
+    <p>Revision <a href="${createLink(controller: "model", action: "show", id: "${modelId}")}">
+        ${modelId}</a>.${revisionNumber} does not exist.</p>
+</g:else>
 <script>
     $(document).ready(function() {
         $('#defined-role option:selected').val("Other");

@@ -100,6 +100,8 @@ class ContributorController extends CommonController {
     def manage() {
         String modelId = params.get("id").decodeHTML()
         String revisionNumber = params.get("format").decodeHTML()
+        Model model = modelService.getModel("$modelId.$revisionNumber")
+        Revision revision = Revision.findByModelAndRevisionNumber(model, revisionNumber)
         String message = ""
         // The roles are ordered by the permission in ascending
         List<String> roles = CR.getAll().collect { it.name }.sort { it }
@@ -108,7 +110,7 @@ class ContributorController extends CommonController {
         String currentUserEmail = userService.getEmailAddress()
         String currentUsername = userService.username
         String currentUserRealName = userService.getRealName(currentUsername)
-        Map retMap = [modelId: modelId, revisionNumber: revisionNumber,
+        Map retMap = [modelId: modelId, revisionNumber: revisionNumber, revision: revision,
                       authors: params?.authors, message: message,
                       contributorEmailList: contributorEmailList,
                       roles: roles, contributors: contributors,
@@ -442,8 +444,8 @@ from the model ${revisionIdentifier}."""
             contributor = User.findByUsernameAndEmail(username, email)
         }
 
-        String modelId = params.get("modelId")
-        String revisionNumber = params.get("revisionNumber")
+        String modelId = params.get("modelId").decodeHTML()
+        String revisionNumber = params.getInt("revisionNumber")
         Model model = modelService.getModel("$modelId.$revisionNumber")
         Revision revision = Revision.findByModelAndRevisionNumber(model, revisionNumber)
 
