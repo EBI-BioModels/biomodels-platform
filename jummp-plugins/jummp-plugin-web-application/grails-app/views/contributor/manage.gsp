@@ -34,16 +34,20 @@
 <h2>Manage Contributors of
     <a href="${createLink(controller: "model", action: "show", id: "${modelId}.${revisionNumber}")}">
     ${modelId}.${revisionNumber}</a></h2>
+
+<!-- The current contributors -->
 <div id="model-contributor-list">
     <h3 style="color: red">${message}</h3>
-    <h3>The current contributors</h3>
+    <h3 class="padding-top-medium">The current contributors</h3>
 <form name="test_form" method="POST"><div style="background-color: lightskyblue">
     <g:render template="showHeaderTitle" plugin="jummp-plugin-web-application" />
     <jummp:renderContributors contributors="${contributors}" />
 </div></form>
 </div>
+
+<!-- Add an existing user as a contributor -->
 <div class="add-contributor">
-    <h3>Add an existing user as a contributor</h3>
+    <h3 class="padding-top-xlarge">Add an existing user as a contributor</h3>
     <div class="row">
         <div class="columns large-6 medium-6 small-12">
         <div class="input-group">
@@ -56,8 +60,10 @@
         </div></div>
     </div>
 </div>
+
+<!-- Invite a contributor -->
 <div class="invite-contributor">
-    <h3>Invite a contributor</h3>
+    <h3 class="padding-top-xlarge">Invite a contributor</h3>
     <div class="row">
         <div class="columns small-12 medium-2 large-2">
             <label for="txt-email-invite" class="text-right middle">Email</label>
