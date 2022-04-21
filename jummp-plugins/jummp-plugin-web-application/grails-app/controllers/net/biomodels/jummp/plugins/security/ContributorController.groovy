@@ -122,16 +122,12 @@ class ContributorController extends CommonController {
     private Map getContributors(String modelId, String revisionNumber) {
         Model model = modelService.getModel("$modelId.$revisionNumber")
         if (!model) { return null }
-        int minRevNum = model.revisions*.revisionNumber.min()
-        Revision firstRevision = model.revisions.find {
-            it.revisionNumber == minRevNum
-        }
-        User owner = firstRevision.owner
         Map contributorMap = [:]
         CTC ctc
         List revisions = model.revisions.toList()
+        Revision revision = revisions.find { revisionNumber == it.revisionNumber.toString() }
         Set authors = revisions*.owner?.collect { it.username }.toSet()
-        List details = CD.findAllByRevisionInList(revisions)
+        List details = CD.findAllByRevision(revision)
         for (CD detail: details) {
             String username = detail.contributor.username
             boolean locked = username in authors
