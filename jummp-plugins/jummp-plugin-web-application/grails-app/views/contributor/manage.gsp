@@ -155,7 +155,11 @@
             showNotification(msg);
             toastr.success(msg);
             contributorEmails.push(response["email"]);
-            $("form[name=test_form]").append(response["htmlBasedStringForNewContributor"]);
+            if ($(".row .contributors-body").length) {
+                $(".row .contributors-header").after(response["htmlBasedStringForNewContributor"]);
+            } else {
+                $(".row .contributors-body").after(response["htmlBasedStringForNewContributor"]);
+            }
         }).catch((error) => {
             const errMsg = "There has been an internal error. Please try again or later.";
             showNotification(errMsg);
