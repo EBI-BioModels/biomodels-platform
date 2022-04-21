@@ -67,25 +67,31 @@ class ContributorController extends CommonController {
         Map<String, CTC> contributors = createFirstContributors(revision)
         result.put("contributors", contributors)
         String message = ""
+        String htmlBasedStringOfContributors = ""
         if (contributors) {
-            Map savedContributors = saveFirstContributors(contributors, revision)
-            String serverURL = grailsApplication.config.grails.serverURL
-            List<String> roles = CR.getAll().collect {
-                it.name
-            }.sort()
-            StringBuilder sb = new StringBuilder()
-            for (CTC cont: contributors.values()) {
-                String htmlString = g.render(template: "/contributor/showContributor",
-                    plugin: "jummp-plugin-web-application",
-                    model: [cont: cont, serverURL: serverURL, roles: roles])
-                sb.append(htmlString)
+            Map<String, CD> savedContributors = saveFirstContributors(contributors, revision)
+            if (0 == savedContributors?.size()) {
+                message = "Cannot initialise the first contributors."
+                htmlBasedStringOfContributors = ""
+            } else {
+                List<String> roles = CR.getAll().collect {
+                    it.name
+                }.sort()
+                StringBuilder sb = new StringBuilder()
+                for (CTC cont : contributors.values()) {
+                    String htmlString = g.render(template: "/contributor/showContributor",
+                        plugin: "jummp-plugin-web-application",
+                        model: [cont: cont, serverURL: serverURL, roles: roles])
+                    sb.append(htmlString)
+                }
+                htmlBasedStringOfContributors = sb.toString()
+                message = "Initialised the contributors successfully."
             }
-            result.put("htmlBasedStringOfContributors", sb.toString())
-            message = "Initialised the contributors successfully."
         } else {
-            result.put("htmlBasedStringOfContributors", "")
+            htmlBasedStringOfContributors = ""
             message = "There is no contributor for this model revision."
         }
+        result.put("htmlBasedStringOfContributors", htmlBasedStringOfContributors)
         result.put("message", message)
 
         render(result as JSON)
