@@ -240,6 +240,16 @@ class UsermanagementController {
         render(view: "profile", model: [msg: msg])
     }
 
+    @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
+    def registration() {
+        User currentUser = springSecurityService.currentUser
+        if (currentUser) {
+            redirect(action: "profile")
+        } else {
+            forward(action: "create")
+        }
+    }
+
     /**
      * Requests a password link from the user service, hiding the exception thrown
      * if the username provided does not exist.

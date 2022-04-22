@@ -112,9 +112,7 @@ class UrlMappings {
 	    "/acknowledgements"(controller: "jummp", action: "acknowledgements")
 	    "/jobs"(controller: "jummp", action: "jobs")
         "/lookupUser"(controller: "jummp", action: "lookupUser")
-        if (Holders.config.jummp.security.anonymousRegistration) {
-            "/registration"(controller: "usermanagement", action:"create")
-        }
+        "/registration"(controller:"usermanagement", action:"registration")
         "/forgotpassword"(controller:"usermanagement", action:"forgot")
         "/user/editUser"(controller:"usermanagement", action:"edit")
         "/user/editPassword"(controller:"usermanagement", action:"editPassword")
