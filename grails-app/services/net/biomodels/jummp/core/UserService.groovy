@@ -470,7 +470,7 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
             if (!webURL) {
                 webURL = "http://localhost:8080/${grails.util.Metadata.current.'app.name'}"
             }
-            emailBody.replace("{{WEBURL}}", webURL)
+            emailBody = emailBody.replace("{{WEBURL}}", webURL)
             mailService.sendMail {
                 to recipient
                 from grailsApplication.config.jummp.security.registration.email.sender
