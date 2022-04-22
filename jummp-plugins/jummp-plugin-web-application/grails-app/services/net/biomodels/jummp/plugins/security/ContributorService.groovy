@@ -188,6 +188,22 @@ class ContributorService {
         result
     }
 
+    CD findOrSaveContributionDetails(final Revision revision, final CR role) {
+        CD cd = CD.findOrSaveWhere(contributor: revision.owner, revision: revision, role: role)
+        if (cd.save(flush: true)) {
+            LOGGER.debug("Successfully created the contribution details: ${toStringCD(cd)}")
+        } else {
+            cd = null
+            LOGGER.error("Could not create the contribution details: ${toStringCD(cd)}")
+        }
+        return cd
+    }
+
+    // TODO: move the following method to ContributionDetails domain class
+    String toStringCD(final CD cd) {
+        "[${cd.contributor.username}\t ${cd.role.name}\t ${cd.revision.id}: ${cd.revision.name}]".toString()
+    }
+
     private CI updateCI(CI ci, String userResponse) {
         ci.dateCompleted = new Date()
         switch (userResponse) {
