@@ -24,12 +24,12 @@ import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.model.ContributorTransportCommand as CTC
 import net.biomodels.jummp.core.model.InviteState as IS
-import net.biomodels.jummp.webapp.CommonController
 import net.biomodels.jummp.model.ContributionDetails as CD
 import net.biomodels.jummp.model.ContributionInvite as CI
 import net.biomodels.jummp.model.ContributionRole as CR
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Revision
+import net.biomodels.jummp.webapp.CommonController
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.dao.OptimisticLockingFailureException
@@ -60,7 +60,9 @@ class ContributorController extends CommonController {
 
     private final Random random = new Random(System.currentTimeMillis())
 
-    @Secured(["ROLE_ADMIN", "ROLE_CURATOR"])
+    private List<String> roles
+
+    //@Secured(["ROLE_ADMIN", "ROLE_CURATOR"])
     def init() {
         // create the first contributors based on the existing model revisions
         Map parameters = parseParameters()
@@ -76,9 +78,7 @@ class ContributorController extends CommonController {
                 message = "Cannot initialise the first contributors."
                 htmlBasedStringOfContributors = ""
             } else {
-                List<String> roles = CR.getAll().collect {
-                    it.name
-                }.sort()
+                roles = CR.getAll().collect { it.name }.sort { it }
                 StringBuilder sb = new StringBuilder()
                 for (CTC cont : contributors.values()) {
                     String htmlString = g.render(template: "/contributor/showContributor",
@@ -105,13 +105,12 @@ class ContributorController extends CommonController {
         Model model = modelService.getModel("$modelId.$revisionNumber")
         Revision revision = Revision.findByModelAndRevisionNumber(model, revisionNumber)
         String message = ""
-        // The roles are ordered by the permission in ascending
-        List<String> roles = CR.getAll().collect { it.name }.sort { it }
         Map<String, CTC> contributors = getContributors(modelId, revisionNumber)
         List contributorEmailList = contributors.values().collect { it.user.email }
         String currentUserEmail = userService.getEmailAddress()
         String currentUsername = userService.username
         String currentUserRealName = userService.getRealName(currentUsername)
+        roles = CR.getAll().collect { it.name }.sort { it }
         Map retMap = [modelId: modelId, revisionNumber: revisionNumber, revision: revision,
                       authors: params?.authors, message: message,
                       contributorEmailList: contributorEmailList,
@@ -169,9 +168,7 @@ class ContributorController extends CommonController {
                 person: user.person, locked: false)
         }
         result.put("newCont", ctc)
-        List<String> roles = CR.getAll().collect {
-            it.name
-        }.sort()
+        roles = CR.getAll().collect { it.name }.sort { it }
         String htmlString = g.render(template: "/contributor/showContributor",
             plugin: "jummp-plugin-web-application",
             model: [cont: ctc, serverURL: serverURL, roles: roles])
