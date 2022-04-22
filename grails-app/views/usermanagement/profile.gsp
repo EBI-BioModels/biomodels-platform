@@ -9,7 +9,7 @@
 <html>
 <head>
     <meta name="layout" content="biomodels/main" />
-    <title>Public User Profile | BioModels</title>
+    <title>User's Public Profile | BioModels</title>
 </head>
 
 <body>
