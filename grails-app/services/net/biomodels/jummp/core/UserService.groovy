@@ -188,7 +188,7 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
     @Profiled(tag="userService.getCurrentUser")
     @PreAuthorize("hasRole('ROLE_USER')")
     User getCurrentUser() {
-        return User.findByUsername(springSecurityService.authentication.principal.username).sanitizedUser()
+        return User.findByUsername(springSecurityService.authentication.principal.username)?.sanitizedUser()
     }
 
     @PostLogging(LoggingEventType.RETRIEVAL)
