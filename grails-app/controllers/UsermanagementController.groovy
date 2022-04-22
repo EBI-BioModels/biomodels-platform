@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2022 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -24,7 +24,6 @@ import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.user.UserNotFoundException
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.webapp.*
-import net.biomodels.jummp.utils.InputParameterSanitizer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.mail.MailAuthenticationException
@@ -47,9 +46,9 @@ class UsermanagementController {
     def notificationService
 
     private String checkForMessage() {
-        String flashMessage=""
+        String flashMessage = ""
         if (flash.message) {
-        	flashMessage=flash.message
+        	flashMessage = flash.message
         }
         return flashMessage
     }
@@ -224,8 +223,10 @@ class UsermanagementController {
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def profile() {
         String username = ""
-        if (params.containsKey("id")) {
-            username = params.get("id").decodeHTML()
+        if (params.containsKey("username")) {
+            username = params.get("username").decodeHTML()
+        } else if (!springSecurityService.isLoggedIn()) {
+            redirect(uri: "/login/auth")
         }
         User currentUser = springSecurityService.currentUser
         if (!username) {
