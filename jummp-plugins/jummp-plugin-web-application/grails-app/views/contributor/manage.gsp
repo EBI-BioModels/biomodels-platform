@@ -339,6 +339,9 @@
         }).then((result) => {
             if (200 !== result.status) {
                 message = "Bad Server Response";
+                if (403 == result.status) {
+                    message = "You are not allowed to perform this operation."
+                }
                 showNotification(message);
                 toastr.error(message);
                 throw new Error(message);

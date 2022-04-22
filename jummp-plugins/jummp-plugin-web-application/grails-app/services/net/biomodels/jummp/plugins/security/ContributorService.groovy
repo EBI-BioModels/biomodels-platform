@@ -28,7 +28,6 @@ import net.biomodels.jummp.model.ContributionInvite as CI
 import net.biomodels.jummp.model.ContributionRole as CR
 import net.biomodels.jummp.model.ContributionRole
 import net.biomodels.jummp.model.Revision
-import org.codehaus.groovy.grails.web.mapping.LinkGenerator
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -40,6 +39,7 @@ import org.slf4j.LoggerFactory
 @Transactional
 class ContributorService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContributorService.class)
+    def grailsLinkGenerator
 
     Map createFirstContributors(final Revision revision) {
         Map<String, CTC> contributors = new HashMap<>()
@@ -144,11 +144,10 @@ class ContributorService {
                         msgUser = "Oops! There has been an error. Please try to open the invitation link or contact us!"
                     }
                 } else {
-                    LinkGenerator grailsLinkGenerator
                     String modelURL = grailsLinkGenerator.link(controller: "model", action: "show", id: modelId)
                     modelURL = '<a href="' + modelURL + '" target="_blank">' + modelId + '</a>'
                     msgLog = "The user (${inviteeEmail}) as the ${ci.role.name} joined the model ${modelId}."
-                    msgUser = "You already accepted the invitation. Access your model ${modelURL}."
+                    msgUser = "You have accepted the invitation for the contributions to your model ${modelURL}."
                 }
             } else {
                 msgLog = "Sorry, we couldn't find any user registered with the email ${inviteeEmail}"

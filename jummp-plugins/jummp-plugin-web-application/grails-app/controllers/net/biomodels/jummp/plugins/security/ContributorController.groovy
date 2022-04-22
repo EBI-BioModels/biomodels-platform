@@ -183,26 +183,39 @@ class ContributorController extends CommonController {
     def handleInviteResponse() {
         String refCode = params["ref"]?.decodeHTML()
         String op = params["op"]?.decodeHTML()
-        CI ci = CI.findWhere(reference: refCode)
-        String msgLog
-        String msgUser
-        String modelId = ""
         Map retMap = [:]
         retMap.put("reference", refCode)
         retMap.put("inviteeResponse", op)
-        if ("accept" == op) {
-            retMap.putAll(contributorService.processAccept(ci))
-        } else if ("reject" == op) {
-            retMap.putAll(contributorService.processReject(ci))
-        } else {
-            msgLog = "Please stop cheating our system. Thanks!"
+        String msgLog
+        String msgUser
+        CI ci = CI.findWhere(reference: refCode)
+
+        if (!ci) {
+            msgLog = "The invitation with the reference ${refCode} could be expired or invalid."
             msgUser = msgLog
+            retMap.putAll([msgLog: msgLog, msgUser: msgUser])
+        } else {
+            User currentUser = userService.currentUser
+            if (currentUser.email != ci.inviteeEmail) {
+                msgLog = "The user (${currentUser.email}) shouldn't have the access of the invite ${refCode}."
+                msgUser = "Unfortunately, you are not allowed to perform this operation."
+            } else {
+                if ("accept" == op) {
+                    retMap.putAll(contributorService.processAccept(ci))
+                } else if ("reject" == op) {
+                    retMap.putAll(contributorService.processReject(ci))
+                } else {
+                    msgLog = "Please stop cheating our system. Thanks!"
+                    msgUser = msgLog
+                }
+            }
+            if (!retMap.containsKey("msgLog")) { retMap.put("msgLog", msgLog) }
+            if (!retMap.containsKey("msgUser")) { retMap.put("msgUser", msgUser) }
+            if (retMap.get("msgLog")) {
+                LOGGER.debug(retMap.get("msgLog") as String)
+                println(retMap["msgLog"]) // for K8s log
+            }
         }
-        retMap.put("msgLog", msgLog)
-        retMap.put("msgUser", msgUser)
-        retMap.put("modelId", modelId)
-        LOGGER.debug(retMap.get("msgLog") as String)
-        println(retMap["msgLog"]) // for K8s log
         render(view: "handleInviteResponse", model: retMap)
     }
 
