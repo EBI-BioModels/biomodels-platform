@@ -49,13 +49,13 @@ class ContributorService {
         contributors
     }
 
-    Map findOrCreateInvite(final CI ci, final String inviterName, final String inviteeEmail,
-                           final String refCode, final CR role, final Revision revision) {
+    Map findOrCreateInvite(final CI ci, final String inviterName, final User inviter, final String inviteeEmail,
+                           String howtoAction, final String refCode, final CR role, final Revision revision) {
         Map result = [:]
         String msg = ""
-        String subjectLine = "${inviterName} invited you to join your submission in BioModels as as a ${role.toLowerCase()}"
+        String subjectLine = "${inviterName} invited you to join your submission in BioModels as as a ${role.name.toLowerCase()}"
         String emailHeading = "You are invited!"
-        String howtoAction = "Send"
+        howtoAction = "Send"
         if (ci) {
             switch (ci.state) {
                 case InviteState.ACCEPTED:

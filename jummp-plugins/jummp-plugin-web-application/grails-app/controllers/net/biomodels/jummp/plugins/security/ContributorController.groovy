@@ -221,20 +221,21 @@ class ContributorController extends CommonController {
         result["inviterUsername"] = inviterUsername
         result["inviterName"] = inviterName
         result["inviteeEmail"] = inviteeEmail
-        String role = params["role"]?.decodeHTML()
-        CR contributionRole = CR.findByName(role)
+        String roleName = params["role"]?.decodeHTML()
+        CR role = CR.findByName(roleName)
         String refCode = String.valueOf(random.nextInt()) + params["inviterUsername"]?.decodeHTML()
         refCode = refCode.encodeAsMD5()
         result.putAll([role: role, refCode: refCode, serverURL: serverURL] as Map)
 
         String msg = ""
-        String subjectLine = "${inviterName} invited you to join your submission in BioModels as as a ${role.toLowerCase()}"
+        String subjectLine = "${inviterName} invited you to join your submission in BioModels as as a ${roleName.toLowerCase()}"
         String emailHeading = "You are invited!"
         String howtoAction = "Send"
         // 1. Create a record in the contribution_invite table
         User inviter = User.findByUsername(inviterUsername)
-        CI ci = CI.findWhere(inviter: inviter, inviteeEmail: inviteeEmail, revision: revision, role: contributionRole)
-        Map r = contributorService.findOrCreateInvite(ci, inviterName, howtoAction, refCode, contributionRole, revision)
+        CI ci = CI.findWhere(inviter: inviter, inviteeEmail: inviteeEmail, revision: revision, role: role)
+        Map r = contributorService.findOrCreateInvite(ci, inviterName, inviter, inviteeEmail,
+                                    howtoAction, refCode, role, revision)
         result.putAll(r)
 
         // 2. Send an email having instructions to the invited contributor
