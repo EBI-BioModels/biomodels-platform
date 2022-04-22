@@ -172,7 +172,7 @@
         <li <g:if test="${registerSelected}"> class="active main-menu-item functional first float-right " </g:if>
             <g:else>class="main-menu-item functional first float-right "</g:else>
             role="menuitem">
-            <a href='<g:createLink controller="usermanagement" action="create" />' class="icon icon-functional"
+            <a href='<g:createLink uri="/registration" />' class="icon icon-functional"
                data-icon="7"><g:message code="jummp.main.register"/></a>
         </li>
         <li <g:if test="${loginSelected}"> class="active main-menu-item functional first float-right " </g:if>

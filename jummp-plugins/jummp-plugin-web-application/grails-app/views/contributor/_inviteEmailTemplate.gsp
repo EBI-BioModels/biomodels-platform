@@ -52,7 +52,7 @@ instead of next to each other */
 <p><strong>Notes:</strong> The button not working? Paste the following link into your browser:</p>
 <p>Accept: <a href="${acceptURL}" target="_blank">${acceptURL}</a></p>
 <p>Decline: <a href="${rejectURL}" target="_blank">${rejectURL}</a></p>
-<p>To join your submission, <a href="${serverURL}/registration" target="_blank">register now</a>
+<p>To join your submission, <a href="${createLink(uri: "/registration")}" target="_blank">register now</a>
     if you haven't been with BioModels yet.</p>
 <hr/>
 <p><strong>Stay in touch with BioModels</strong><br/>
