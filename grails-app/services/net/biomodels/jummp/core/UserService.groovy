@@ -466,7 +466,7 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
             emailBody = emailBody.replace("{{USERNAME}}", newUser.username)
             emailBody = emailBody.replace("{{PASSWORD}}", p)
             emailBody = emailBody.replace("{{REALNAME}}", newUser.person.userRealName)
-            String webURL = grailsApplication.config.jummp.server.url
+            String webURL = grailsApplication.config.grails.serverURL
             if (!webURL) {
                 webURL = "http://localhost:8080/${grails.util.Metadata.current.'app.name'}"
             }
