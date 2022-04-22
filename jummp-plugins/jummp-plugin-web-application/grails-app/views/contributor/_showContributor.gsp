@@ -8,7 +8,9 @@
         </div>
     </div>
     <div class="columns large-5 medium-5 small-12">
-        <h4 class="user-real-name">${cont.person.userRealName}</h4>
+        <h4 class="user-real-name">
+            <a href="${createLink(controller: "usermanagement", action: "profile", params: [username: cont.user.username])}"
+               target="_blank">${cont.person.userRealName}</a></h4>
         <p class="username-email">${cont.user.username}, ${cont.user.email}</p>
     </div>
     <div class="columns large-2 medium-2 small-12">
