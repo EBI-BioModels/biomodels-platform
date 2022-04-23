@@ -51,6 +51,7 @@ import org.slf4j.LoggerFactory
 
 class BootStrap {
     private final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
+    def contributorService
     def springSecurityService
     def wcmSecurityService
     def grailsApplication
@@ -265,6 +266,8 @@ class BootStrap {
         doCustomiseMappingForWeceem()
         doCustomiseRestBuilderConstructor()
         doSubscribeRedisChannelsRelated2ModelIdentifierGeneration()
+
+        contributorService.init()
     }
 
     def destroy = { servletContext ->

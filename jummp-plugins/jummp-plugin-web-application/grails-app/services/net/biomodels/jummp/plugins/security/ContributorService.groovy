@@ -40,6 +40,11 @@ import org.slf4j.LoggerFactory
 class ContributorService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContributorService.class)
     def grailsLinkGenerator
+    static List<String> roles
+
+    void init() {
+        this.roles = CR.getAll().collect { it.name }.sort { it }
+    }
 
     Map createFirstContributors(final Revision revision) {
         Map<String, CTC> contributors = new HashMap<>()
