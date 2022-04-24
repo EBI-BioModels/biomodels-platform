@@ -339,27 +339,36 @@ with us asap for further instructions"""
     @Secured(["IS_AUTHENTICATED_FULLY"])
     def fetchUsers() {
         String request = params.request
-        String searchTerm = params.search
         if (Integer.parseInt(request) == RequestType.SEARCH_TERMS) {
-            List users = userService.searchUsers(searchTerm)
-            def usersMap = []
-            users.each {user ->
-                def email = user[0]
-                def username = user[1]
-                def userRealName = user[2]
-                def id = user[3]
-                usersMap << [label: "${userRealName} (${username}<${email}>)",
-                             value: id,
-                             username: username,
-                             email: email,
-                             userRealname: userRealName]
-            }
+            String searchTerm = params.search
+            def usersMap = queryUsers(searchTerm)
             render(usersMap as JSON)
         } else { // request == RequestType.SELECT_VALUE
             String username = params.username
             User user = userService.getUser(username)
             render([user] as JSON)
         }
+    }
+
+    /**
+     * Search for users that are used for adding contributors
+     * @return
+     */
+    @Secured(["IS_AUTHENTICATED_FULLY"])
+    def searchUsersForAddContributors() {
+        String searchTerm = params.searchTerm?.decodeHTML()
+        List users = queryUsers(searchTerm)
+        users.each {
+            String label = "${it.userRealname} (${it.username}, ${it.email})"
+            it.put("label", label)
+        }
+        Map usersMap = [users: users]
+        if (users?.size()) {
+            String str = g.render(template: "/contributor/listOfFoundUsers", plugin: "jummp-plugin-web-application",
+                model: [users: users, searchTerm: searchTerm]).toString()
+            usersMap.put("htmlBasedStringOfUsers", str)
+        }
+        render(usersMap as JSON)
     }
 
     /**
@@ -381,5 +390,23 @@ with us asap for further instructions"""
             response = query
         }
         render([response] as JSON)
+    }
+
+    private List queryUsers(final String searchTerm) {
+        if (!searchTerm) { return [] }
+        List users = userService.searchUsers(searchTerm)
+        def usersMap = []
+        users.each {user ->
+            def email = user[0]
+            def username = user[1]
+            def userRealName = user[2]
+            def id = user[3]
+            usersMap << [label: "${userRealName} (${username}<${email}>)",
+                         value: id,
+                         username: username,
+                         email: email,
+                         userRealname: userRealName]
+        }
+        usersMap
     }
 }

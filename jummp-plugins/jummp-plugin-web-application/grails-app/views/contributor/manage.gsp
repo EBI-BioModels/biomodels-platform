@@ -25,6 +25,11 @@
             font-size: x-large;
             font-weight: bolder;
         }
+        #users-list {
+            list-style-type: none; /* Remove bullets */
+            padding: 0; /* Remove padding */
+            margin: 0; /* Remove margins */
+        }
     </style>
 
 </head>
@@ -49,15 +54,17 @@
 <div class="add-contributor">
     <h3 class="padding-top-xlarge">Add an existing user as a contributor</h3>
     <div class="row">
-        <div class="columns large-6 medium-6 small-12">
-        <div class="input-group">
-            <span class="input-group-label">Search</span>
-            <input class="input-group-field" type="text" id="txt-email-or-name" name="txt-email-or-name"
+        <div class="columns large-2 medium-2 small-12">
+            <label for="txt-email-or-name" class="text-right middle">Search</label>
+        </div>
+        <div class="columns large-8 medium-8 small-12">
+            <input type="text" id="txt-email-or-name" name="txt-email-or-name"
                    placeholder="Type a valid email address of the contributor" >
-            <div class="input-group-button">
-                <input type="submit" class="button" value="Add" id="btn-add-contributor">
-            </div>
-        </div></div>
+            <div id="suggestion-box"></div>
+        </div>
+        <div class="columns large-2 medium-2 small-12">
+            <input type="submit" class="button" value="Add" id="btn-add-contributor">
+        </div>
     </div>
 </div>
 
@@ -93,7 +100,40 @@
 <script>
     $(document).ready(function() {
         $('#defined-role option:selected').val("Other");
+        // AJAX call for autocomplete
+        searchAutocomplete();
     });
+
+    function searchAutocomplete() {
+        $("#txt-email-or-name").keyup(function(){
+            const postURL = "${createLink(controller: "usermanagement", action: "searchUsersForAddContributors")}";
+            $.ajax({
+                type: "POST",
+                url: postURL,
+                data: {
+                    searchTerm: $(this).val(),
+                    column: 1 // or 2
+                },
+                beforeSend: function(){
+                    $("#txt-email-or-name").css("background", "#FFF url(${serverURL}/images/loading.gif) no-repeat 225px");
+                },
+                success: function(data){
+                    const usersList = data["users"];
+                    if (usersList.length > 0) {
+                        $("#suggestion-box").show();
+                        $("#suggestion-box").html(data["htmlBasedStringOfUsers"]);
+                    }
+                    $("#txt-email-or-name").css("background", "#ffffff"); //"#87cefa"
+                }
+            });
+        });
+    };
+
+    // To select country name
+    function selectFoundUser(val) {
+        $("#txt-email-or-name").val(val);
+        $("#suggestion-box").hide();
+    }
 
     function doCheckEmail(email) {
         let message = "";
