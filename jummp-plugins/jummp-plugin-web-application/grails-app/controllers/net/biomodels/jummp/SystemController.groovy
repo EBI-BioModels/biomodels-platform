@@ -21,9 +21,10 @@
 package net.biomodels.jummp
 
 import grails.plugin.springsecurity.annotation.Secured
+import grails.plugins.rest.client.RestBuilder
+import net.biomodels.jummp.webapp.CommonController
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import net.biomodels.jummp.webapp.CommonController
 
 /**
  * This controller will interact with clients to query the system's basic information.
@@ -39,5 +40,16 @@ class SystemController extends CommonController {
     def info() {
         Map argsMap = [:]
         render(view: "info", model: argsMap)
+    }
+
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def health() {
+        String healthCheckLink = createLink(controller: "healthCheck", action: "status", absolute: true)
+        RestBuilder rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000)
+        def response = rest.get(healthCheckLink) {
+            accept("application/json")
+            contentType("application/json;charset=UTF-8")
+        }
+        [statusCode: response.responseEntity.statusCode, headers: response.responseEntity.headers]
     }
 }
