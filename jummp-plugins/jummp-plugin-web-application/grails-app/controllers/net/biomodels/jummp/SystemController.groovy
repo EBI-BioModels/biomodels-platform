@@ -37,6 +37,11 @@ class SystemController extends CommonController {
     def dataSource
 
     @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def index() {
+
+    }
+
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
     def info() {
         Map argsMap = [:]
         render(view: "info", model: argsMap)
