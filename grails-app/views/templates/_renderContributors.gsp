@@ -6,15 +6,16 @@
         <em>Submitter of the first revision: </em>${revision.model.submitter}
         <br/>
         <em>Submitter of this revision: </em>${revision.owner}
-        <br/>
-        <em>Curators:</em>
-        <g:join in="${curators}"/>
-        <br/>
-        <em>Modellers:</em>
-        <g:join in="${modellers}"/>
-        <br/>
+
+        <g:if test="${curators}"><br/><em>Curators:</em>
+        <g:join in="${curators}"/></g:if>
+
+        <g:if test="${curators}">
+        <br/><em>Modellers:</em>
+        <g:join in="${modellers}"/></g:if>
+
+        <g:if test="${curators}"><br/>
         <em>Others:</em>
-        <g:join in="${others}"/>
-        <br/>
+        <g:join in="${others}"/></g:if>
     </div>
 </div>
