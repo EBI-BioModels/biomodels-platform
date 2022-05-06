@@ -118,9 +118,7 @@
                 var anchor=$(this).attr('href');
                 var anchorClass = $(this).attr('class');
                 var anchorId = $(this).attr('id');
-                if (anchorClass=="versionDownload" || anchorClass=="publicationLink") {
-                    $.jummp.openPage(anchor);
-                } else if (anchorClass == "ui-tabs-anchor") {
+                if (anchorClass === "ui-tabs-anchor") {
                     e.preventDefault();
                     location.hash = anchor;
                     var toggleHelp=0;
@@ -873,13 +871,13 @@
                                                  src="${serverURL}/images/lock.png"/>
                                     </g:else>
                                     <g:if test="${revision.id!=rv.id}">
-                                        <a class="versionDownload" title="go to version ${rv.revisionNumber}"
+                                        <a class="versionDownload" title="go to version ${rv.revisionNumber}" target="_blank"
                                            href="${g.createLink(controller: 'model', action: 'show', id: rv.identifier())}">
                                             <img style="width:12px;margin:2px;float:none"
                                                  src="${serverURL}/images/external_link.png"/>
                                         </a>
                                     </g:if>
-                                            <a class="versionDownload" title="download"
+                                            <a class="versionDownload" title="download" target="_blank"
                                                href="${g.createLink(controller: 'model', action: 'download', id: rv.identifier())}">
                                                 <img alt="Download this version" style="width:15px;float:none"
                                                      src="${serverURL}/images/download.png"/>
