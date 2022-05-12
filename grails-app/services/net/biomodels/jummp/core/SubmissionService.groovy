@@ -409,10 +409,12 @@ class SubmissionService {
                 modelService.addModellingApproachAsAnnotation(revision, approach)
             }
 
-            // update model format
-            final long fmtId = -1
+            // update model format, accepted Other as the default if no selection or missing
+            final long fmtId = ModelFormat.findByIdentifier("UNKNOWN")?.getId()
             if (workingMemory.containsKey("model_format")) {
-                fmtId = workingMemory.get("model_format") as Long
+                if (workingMemory.get("model_format")) {
+                    fmtId = Long.parseLong(workingMemory.get("model_format"))
+                }
             }
             if (fmtId != revision.format.id) {
                 // the model format has been changed by the user
