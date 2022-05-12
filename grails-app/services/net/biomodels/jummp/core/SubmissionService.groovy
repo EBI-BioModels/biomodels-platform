@@ -384,16 +384,16 @@ class SubmissionService {
         }
 
         /**
-         * This tries to capture readme information about unknown format and other modelling approach.
+         * Capture the metadata information about model format, modelling approach, model name and description.
          *
          * Retrieving all these information from the working memory and update the revision in question.
          *
          * @param revision  Revision
-         * @param workingMemory a map of temporary variables
+         * @param workingMemory a map of temporary variables being used for the submission
          */
-        @Profiled(tag = "submissionService.storeReadmeInfo")
+        @Profiled(tag = "submissionService.storeModelInfo")
         @TypeChecked(TypeCheckingMode.SKIP)
-        protected void storeReadmeInfo(RTC revision, Map<String, Object> workingMemory) {
+        protected void storeModelInfo(RTC revision, Map<String, Object> workingMemory) {
             // update modelling approach
             String modellingApproach = workingMemory.get("modelling_approach")
             ModellingApproach approach = ModellingApproach.findByName(modellingApproach)
@@ -852,7 +852,7 @@ class SubmissionService {
             MTC model = revision.model
             model.format = revision.format
             // update model format, modelling approach and readme info if they're provided
-            storeReadmeInfo(revision, workingMemory)
+            storeModelInfo(revision, workingMemory)
             revision.comment = "Import of ${revision.name}".toString()
 
             final String NEW_NAME = workingMemory["new_name"]
@@ -1030,7 +1030,7 @@ class SubmissionService {
             List<RFTC> deleteFiles = getRepFiles(workingMemory, "removeFromVCS")
 
             // update model format, modelling approach and readme info if they're provided and changed
-            storeReadmeInfo(revision, workingMemory)
+            storeModelInfo(revision, workingMemory)
             final String NEW_NAME = workingMemory["new_name"]
             final String NEW_DESCRIPTION = workingMemory["new_description"]
             if (NEW_NAME) {
