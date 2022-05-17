@@ -74,7 +74,7 @@ class ParameterSearchResults {
                 } else if (value.contains("sabiork")) {
                     finalLink = sabioRKPrefix + suffixValue
                 } else if (value.contains("opentargets")) {
-                    finalLink = "$openTargetsPrefix/$suffixValue/associations"
+                    finalLink = "$openTargetsPrefix/$suffixValue"
                     value = "OpenTargets:$suffixValue"
                 }
 
