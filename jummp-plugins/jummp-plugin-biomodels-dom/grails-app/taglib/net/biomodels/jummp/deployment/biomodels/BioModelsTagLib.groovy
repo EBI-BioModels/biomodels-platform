@@ -87,6 +87,7 @@ class BioModelsTagLib {
         out << "<div id='Curation' class='row'>"
         def modelId =  attrs.model
         Map requiredParams = ["model": modelId]
+        boolean hasCuratorRole = attrs.hasCuratorRole
         if (attrs.curationNotes != null) {
             SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy, HH:mm:ss")
             def base64CurationNotes = attrs.curationNotes?.collect { CurationNotesTransportCommand cmd ->
@@ -97,7 +98,9 @@ class BioModelsTagLib {
                     dateAdded: dateFormat.format(cmd.dateAdded),
                     lastModified: dateFormat.format(cmd.lastModified),
                     comment: cmd.comment ?: "",
-                    curationImage: cmd.curationImage ? Base64.encoder.encodeToString(cmd.curationImage) : null
+                    internalComment: cmd.internalComment ?: "",
+                    curationImage: cmd.curationImage ? Base64.encoder.encodeToString(cmd.curationImage) : null,
+                    hasCuratorRole: hasCuratorRole
                 ]
             }
             requiredParams.put("cnId", attrs.curationNotes.id)
@@ -107,7 +110,6 @@ class BioModelsTagLib {
         } else {
             out << "<h3>The simulation result for this model is not present</h3>"
         }
-        boolean hasCuratorRole = attrs.hasCuratorRole
         if (hasCuratorRole) {
             def btnLabel = attrs.curationNotes ? "Edit" : "Add"
             def actionName = "show"

@@ -14,4 +14,7 @@
     <div style="white-space: pre-line">
     ${curaRec.comment}
     </div>
+    <g:if test="${curaRec.hasCuratorRole && curaRec.internalComment}">
+        <p><strong>Notes: </strong>${curaRec.internalComment}</p>
+    </g:if>
 </div>
