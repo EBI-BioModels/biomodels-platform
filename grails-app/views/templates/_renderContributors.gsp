@@ -10,11 +10,11 @@
         <g:if test="${curators}"><br/><em>Curators:</em>
         <g:join in="${curators}"/></g:if>
 
-        <g:if test="${curators}">
+        <g:if test="${modellers}">
         <br/><em>Modellers:</em>
         <g:join in="${modellers}"/></g:if>
 
-        <g:if test="${curators}"><br/>
+        <g:if test="${others}"><br/>
         <em>Others:</em>
         <g:join in="${others}"/></g:if>
     </div>
