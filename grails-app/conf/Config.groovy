@@ -931,3 +931,15 @@ cors.headers=[
     'Access-Control-Allow-Methods': 'GET, HEAD, POST, PUT, DELETE, TRACE, OPTIONS',
     'Access-Control-Max-Age': 3600
 ]
+
+if (!(jummpConfig.ws.client.japi.docs instanceof ConfigObject)) {
+    jummp.ws.client.japi.docs = jummpConfig.jummp.ws.client.japi.docs
+} else {
+    jummp.ws.client.japi.docs = "https://bitbucket.org/biomodels/biomodelswsclient/src/master/"
+}
+
+if (!(jummpConfig.ws.client.pyapi.docs instanceof ConfigObject)) {
+    jummp.ws.client.pyapi.docs = jummpConfig.jummp.ws.client.pyapi.docs
+} else {
+    jummp.ws.client.pyapi.docs = "https://bitbucket.org/biomodels/biomodelswsclient/src/master/"
+}

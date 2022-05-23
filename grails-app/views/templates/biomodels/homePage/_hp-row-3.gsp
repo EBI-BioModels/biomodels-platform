@@ -70,8 +70,13 @@
                             RESTful Web Services API Documentation</a><br>
                     </li>
                     <li><a href="${grailsApplication.config.jummp.ws.client.japi.docs}" target="_blank"
-                           title="The Java library provides a very convenient way to use a few web services endpoints requested by BioModels's existing clients.">Java based
-                        API of RESTful Web Services</a><br/>
+                           title="The Java library provides a convenient way to consume a few web services endpoints requested by BioModels' existing clients.">Java-based
+                        client API to consume BioModels' RESTful Web Services</a>
+                    </li>
+                    <li><a href="${grailsApplication.config.jummp.ws.client.pyapi.docs}" target="_blank"
+                           style="pointer-events: none; cursor: default; opacity: 0.8"
+                           title="The Python library provides a convenient way to consume a few web services endpoints requested by BioModels' existing clients.">Python-based
+                        client API to consume BioModels' RESTful Web Services</a> (<span style="color: red">coming soon</span>)
                     </li>
                     <li><a href="${createLink(controller: 'jummp', action: 'developerZone')}">Read more</a></li>
                 </ul>

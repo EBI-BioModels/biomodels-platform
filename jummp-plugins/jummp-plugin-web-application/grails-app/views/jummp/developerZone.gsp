@@ -31,6 +31,32 @@
             <a href="${createLink(uri: '/docs', absolute: true)}" target="_blank">RESTful Web Services API Documentation</a><br>
             BioModels provides programmatic access to its content via RESTful Web Services Interface. The Web Services API covers everything users can do on the Web interface.
         </li>
+        <li>
+            <a href="${grailsApplication.config.jummp.ws.client.japi.docs}" target="_blank">Java based API client
+            to consume BioModels' RESTful Web Services</a><br>
+            The Java-based API client provides a convenient way to consume a few of the API endpoints requested by
+            BioModels' existing users.
+            <ul>
+                <li><a href="https://bitbucket.org/biomodels/testbiomodelswsclient/src/master/" target="_blank">A Java program
+                to demonstrate how to use the library</a><br>
+                    The toy program written in Java to demonstrate the usages of the library.</li>
+            </ul>
+        </li>
+        <li>
+            <a href="${grailsApplication.config.jummp.ws.client.pyapi.docs}"
+               target="_blank"
+               style="pointer-events: none; cursor: default; opacity: 0.8">Python based client library
+            to consume BioModels' RESTful Web Services</a> (<span style="color: red">coming soon</span>)<br/>
+            The Python-based API client provides a convenient way to consume a few of the API endpoints requested by
+            BioModels' existing clients.
+            <ul>
+                <li><a href="https://bitbucket.org/biomodels/testbiomodelswsclient/src/master/"
+                       target="_blank"
+                       style="pointer-events: none; cursor: default; opacity: 0.8">A Python script
+                to demonstrate how to use the library</a> (<span style="color: red">coming soon</span>)<br/>
+                    The toy program written in Python to demonstrate the usages of the library.</li>
+            </ul>
+        </li>
     </ul>
 </body>
 <content tag="developer-zone">
