@@ -114,17 +114,16 @@ class NotificationService {
         NTPs pref = getPreference(user, notification.notificationType)
         if (pref.sendMail) {
             String emailBody = notification.body
-                String emailSubject = notification.title
-                mailService.sendMail {
-                    to user.email
-                    from grailsApplication.config.jummp.security.registration.email.sender
-                    subject emailSubject
-                    body emailBody
-                }
+            String emailSubject = notification.title
+            mailService.sendMail {
+                to user.email
+                from grailsApplication.config.jummp.security.registration.email.sender
+                subject emailSubject
+                html emailBody
+            }
         }
         if (pref.sendNotification) {
-            NU userNotify = new NU(notification: notification,
-                    user: user)
+            NU userNotify = new NU(notification: notification, user: user)
             if (!userNotify.save(flush: true)) {
                 logger.error "Was not able to deliver notification ${userNotify.errors.allErrors}"
             }
@@ -293,6 +292,10 @@ class NotificationService {
             [model.name, user.username] as String[], NT.DELETED, user, getNotificationRecipients(body.perms), model)
     }
 
+    /**
+     * Sending a notification to the subscribers when the model is updated.
+     * @param body
+     */
     void update(def body) {
         MTC model  = body.model as MTC
         def updates = []

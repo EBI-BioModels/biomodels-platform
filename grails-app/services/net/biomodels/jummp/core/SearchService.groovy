@@ -185,8 +185,8 @@ class SearchService {
      **/
     @PostLogging(LoggingEventType.RETRIEVAL)
     @Profiled(tag="searchService.searchModels")
-    SearchResponse searchModels(String query, String domain, SortOrder sortOrder, Map<String, Integer>
-        paginationCriteria) {
+    SearchResponse searchModels(String query, String domain, SortOrder sortOrder,
+                                Map<String, Integer> paginationCriteria) {
         return strategy.searchModels(query, domain, sortOrder, paginationCriteria)
     }
 

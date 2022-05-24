@@ -153,20 +153,19 @@ class UsermanagementController {
     def editUser() {
         EditUserCommand cmd = new EditUserCommand()
         if (!validateUserData(cmd, params)) {
-            return redirect(action:"edit")
+            return redirect(action: "edit")
         }
         try {
             def user = cmd.toUser()
         	User user1 = userService.editUser(user)
         	notificationService.updatePreferences(cmd.getPreferences(user1))
-        }
-        catch(Exception e) {
+        } catch (Exception e) {
             flash.message = e.getMessage()
             log.error(e.message, e)
-            return redirect(action:"edit")
+            return redirect(action: "edit")
         }
-        flash.message = "Profile was updated successfully"
-        redirect(action:"show")
+        flash.message = "Your profile was updated successfully!"
+        redirect(action: "show")
     }
 
     /**
