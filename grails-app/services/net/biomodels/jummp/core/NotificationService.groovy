@@ -304,8 +304,8 @@ class NotificationService {
         String notifTitle = "notification.model.updated.title"
         String notifBody = "notification.model.updated.body"
         Set<User> recipients = getNotificationRecipients(body.perms)
-        String tmp = recipients.collect { User u ->
-            u.username
+        List tmp = recipients.collect { User u ->
+            "${u.username} (${u.person.userRealName})"
         }.toString()
         logger.debug("People will receive the notification: ${tmp}")
         useGenericNotificationStructure(notifTitle, [model.name] as String[], notifBody,
