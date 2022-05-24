@@ -24,7 +24,7 @@ package net.biomodels.jummp.webapp
 import net.biomodels.jummp.plugins.security.Person
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.webapp.NotificationType as NT
-import net.biomodels.jummp.webapp.NotificationTypePreferences as NTRs
+import net.biomodels.jummp.webapp.NotificationTypePreferences as NTPs
 
 import java.util.regex.Matcher
 import java.util.regex.Pattern
@@ -77,11 +77,11 @@ class EditUserCommand implements Serializable {
         user
     }
 
-    List<NTRs> getPreferences(User user) {
-        List<NTRs> prefs = new LinkedList<NTRs>()
+    List<NTPs> getPreferences(User user) {
+        List<NTPs> prefs = new LinkedList<NTPs>()
         for (int i=1; i<=4; i++) {
             NT type = NT.getById(i)
-            NTRs pref = new NTRs(user: user, notificationType: type,
+            NTPs pref = new NTPs(user: user, notificationType: type,
                 sendMail: this."sendMail${i}", sendNotification: this."sendNotification${i}")
             prefs.add(pref)
         }
