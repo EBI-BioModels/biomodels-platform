@@ -1,5 +1,5 @@
 <%--
- Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ Copyright (C) 2010-2022 EMBL-European Bioinformatics Institute (EMBL-EBI),
  Deutsches Krebsforschungszentrum (DKFZ)
 
  This file is part of Jummp.
@@ -25,7 +25,6 @@
     <head>
         <title><g:message code="user.administration.ui.heading.user"/></title>
         <meta name="layout" content="${session['branding.style']}/main" />
-        <link rel="stylesheet" href="${resource(dir: 'css', file: 'jstree.css')}" />
      </head>
     <body>
     	<div class="content">
