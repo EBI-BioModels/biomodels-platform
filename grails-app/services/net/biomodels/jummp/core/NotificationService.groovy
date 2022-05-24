@@ -1,5 +1,5 @@
 /**
-* Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
+* Copyright (C) 2010-2022 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
 *
 * This file is part of Jummp.
@@ -11,7 +11,7 @@
 *
 * Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
 * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-* A PARTICULAR PURPOSE. See the GNU Affero General Publicc
+* A PARTICULAR PURPOSE. See the GNU Affero General Public.
 *
 * You should have received a copy of the GNU Affero General Public License along
 * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
@@ -34,21 +34,21 @@
 package net.biomodels.jummp.core
 
 import grails.transaction.Transactional
-import net.biomodels.jummp.core.model.ModelFormatTransportCommand
-import net.biomodels.jummp.core.model.ModelTransportCommand
-import net.biomodels.jummp.core.model.PublicationTransportCommand
-import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC
+import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
+import net.biomodels.jummp.core.model.PublicationTransportCommand as PTC
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.plugins.security.UserRole
 import net.biomodels.jummp.webapp.Notification
-import net.biomodels.jummp.webapp.NotificationType
-import net.biomodels.jummp.webapp.NotificationTypePreferences
-import net.biomodels.jummp.webapp.NotificationUser
+import net.biomodels.jummp.webapp.NotificationType as NT
+import net.biomodels.jummp.webapp.NotificationTypePreferences as NTPs
+import net.biomodels.jummp.webapp.NotificationUser as NU
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.context.i18n.LocaleContextHolder as LCH
+import org.springframework.security.access.prepost.PreAuthorize
 
 /**
  * Service asynchronously called by Camel plugin, in response to various messages.
@@ -69,8 +69,7 @@ class NotificationService {
 
     void useGenericNotificationStructure(String notificationTitle,
                                          String[] titleParams, String notificationBody, String[] bodyParams,
-                                         NotificationType type, User sender, Set<User> watchers,
-                                         ModelTransportCommand model) {
+                                         NT type, User sender, Set<User> watchers, MTC model) {
         Notification notification = new Notification()
         notification.title = messageSource.getMessage(notificationTitle, titleParams, null)
         notification.body = messageSource.getMessage(notificationBody, bodyParams, null)
@@ -89,18 +88,18 @@ class NotificationService {
         recipients
     }
 
-    NotificationTypePreferences getPreference(User user, NotificationType type) {
-        NotificationTypePreferences pref = NotificationTypePreferences.findByUserAndNotificationType(user, type)
+    NTPs getPreference(User user, NT type) {
+        NTPs pref = NTPs.findByUserAndNotificationType(user, type)
         if (!pref) {
-            pref = NotificationTypePreferences.getDefault(user, type)
+            pref = NTPs.getDefault(user, type)
         }
         return pref
     }
 
-    void updatePreferences(List<NotificationTypePreferences> preferences) {
+    void updatePreferences(List<NTPs> preferences) {
         User user = preferences.first().user
         preferences.each { updated ->
-            NotificationTypePreferences existing = getPreference(user, updated.notificationType)
+            NTPs existing = getPreference(user, updated.notificationType)
             if (existing.sendMail != updated.sendMail || existing.sendNotification != updated.sendNotification) {
                 existing.sendMail = updated.sendMail
                 existing.sendNotification = updated.sendNotification
@@ -112,7 +111,7 @@ class NotificationService {
     }
 
     void sendNotificationToUser(User user, Notification notification) {
-        NotificationTypePreferences pref = getPreference(user, notification.notificationType)
+        NTPs pref = getPreference(user, notification.notificationType)
         if (pref.sendMail) {
             String emailBody = notification.body
                 String emailSubject = notification.title
@@ -124,7 +123,7 @@ class NotificationService {
                 }
         }
         if (pref.sendNotification) {
-            NotificationUser userNotify = new NotificationUser(notification: notification,
+            NU userNotify = new NU(notification: notification,
                     user: user)
             if (!userNotify.save(flush: true)) {
                 logger.error "Was not able to deliver notification ${userNotify.errors.allErrors}"
@@ -132,7 +131,7 @@ class NotificationService {
         }
     }
 
-    void sendNotification(ModelTransportCommand model, Notification notification, Set<User> watchers) {
+    void sendNotification(MTC model, Notification notification, Set<User> watchers) {
         if (!notification.save(flush: true)) {
             logger.error("Notification $notification for users $watchers was not persisted due to ${notification.errors.inspect()}")
         } else {
@@ -141,7 +140,7 @@ class NotificationService {
     }
 
     void modelCreated(def body) {
-        ModelTransportCommand model = body.model
+        MTC model = body.model
         String serverURL = grailsApplication.config.grails.serverURL
         String modelLink = "${serverURL}/${model.submissionId}"
         User submitter = body.user
@@ -157,10 +156,10 @@ class NotificationService {
         if (emailTo) {
             emailSubject = messageSource.getMessage("notification.model.created.emailToCurator.subject",
                 [model.id.toString(), model.submissionId] as String[], null)
-            ModelFormatTransportCommand formatTC = model.format
+            MFTC formatTC = model.format
             String format = "${formatTC.identifier} (${formatTC.name}) (version: ${formatTC.formatVersion})"
             String submitterInfo = "${submitterRealName} (${submitterEmail})"
-            PublicationTransportCommand ptc = model.publication
+            PTC ptc = model.publication
             String pubData = ptc ? ptc.prettierPrint() : "&emsp;not yet published"
             GregorianCalendar cal = new GregorianCalendar()
             String submissionTime = cal.getTime().toGMTString()
@@ -205,54 +204,50 @@ class NotificationService {
     }
 
     void modelPublished(def body) {
-        RevisionTransportCommand rev  = body.revision as RevisionTransportCommand
+        RTC rev  = body.revision as RTC
         String notifTitle = "notification.model.published.title"
         String notifBody = "notification.model.published.body"
         User user = body.user as User
         useGenericNotificationStructure(notifTitle, [rev.name] as String[], notifBody,
-            [rev.name, user.username] as String[], NotificationType.PUBLISH,
-            user, getNotificationRecipients(body.perms), rev.model)
+            [rev.name, user.username] as String[], NT.PUBLISH, user, getNotificationRecipients(body.perms), rev.model)
     }
 
     void readAccessGranted(def body) {
-        ModelTransportCommand model  = body.model as ModelTransportCommand
+        MTC model  = body.model as MTC
         String notifTitle = "notification.model.readgranted.title"
         String notifBody = "notification.model.readgranted.body"
         User user = body.user as User
         User grantedTo = body.grantedTo
         useGenericNotificationStructure(notifTitle, [model.name] as String[], notifBody ,
             [model.name, user.username, grantedTo.username] as String[],
-            NotificationType.ACCESS_GRANTED, user,
-            getNotificationRecipients(body.perms), model)
+            NT.ACCESS_GRANTED, user, getNotificationRecipients(body.perms), model)
 
         notifTitle = "notification.model.readgrantedTo.title"
         notifBody = "notification.model.readgrantedTo.body"
         useGenericNotificationStructure(notifTitle, [model.name] as String[], notifBody,
-            [model.name, user.username] as String[], NotificationType.ACCESS_GRANTED_TO,
-            user, [grantedTo] as Set, model)
+            [model.name, user.username] as String[], NT.ACCESS_GRANTED_TO, user, [grantedTo] as Set, model)
     }
 
     void writeAccessGranted(def body) {
-        ModelTransportCommand model  = body.model as ModelTransportCommand
+        MTC model  = body.model as MTC
         String notifTitle = "notification.model.writegranted.title"
         String notifBody = "notification.model.writegranted.body"
         User user = body.user as User
         User grantedTo = body.grantedTo
         useGenericNotificationStructure(notifTitle, [model.name] as String[], notifBody,
             [model.name, user.username, body.grantedTo.username] as String[],
-            NotificationType.ACCESS_GRANTED, user,
+            NT.ACCESS_GRANTED, user,
             getNotificationRecipients(body.perms) - [grantedTo, user], model)
 
         notifTitle = "notification.model.writegrantedTo.title"
         notifBody = "notification.model.writegrantedTo.body"
         useGenericNotificationStructure(notifTitle, [model.name] as String[], notifBody,
-            [model.name, user.username] as String[], NotificationType.ACCESS_GRANTED_TO,
-            user, [grantedTo] as Set, model)
+            [model.name, user.username] as String[], NT.ACCESS_GRANTED_TO, user, [grantedTo] as Set, model)
     }
 
     int unreadNotificationCount() {
         User notificationsFor = User.findByUsername(springSecurityService.authentication.name)
-        def notifications = NotificationUser.findAllNotNotificationSeenByUser(notificationsFor)
+        def notifications = NU.findAllNotNotificationSeenByUser(notificationsFor)
         if (notifications) {
             return notifications.size()
         }
@@ -263,7 +258,7 @@ class NotificationService {
     def getNotificationPermissions(String username) {
         User notificationsFor = User.findByUsername(username)
         def retval = []
-        NotificationType.values().each {
+        NT.values().each {
             retval.add(getPreference(notificationsFor, it))
         }
         return retval
@@ -272,7 +267,7 @@ class NotificationService {
     @PreAuthorize("isAuthenticated()")
     def list(String username, int maxSize = -1) {
         User notificationsFor = User.findByUsername(username)
-        def notifications = NotificationUser.findAllByUser(notificationsFor).reverse()
+        def notifications = NU.findAllByUser(notificationsFor).reverse()
         if (maxSize == -1 || notifications.size() < maxSize) {
             return notifications
         }
@@ -283,24 +278,23 @@ class NotificationService {
         if (msgID && username) {
             Notification notification = Notification.get(msgID)
             User notificationsFor = User.findByUsername(username)
-            NotificationUser notificationUser = NotificationUser.findByNotificationAndUser(notification, notificationsFor)
+            NU notificationUser = NU.findByNotificationAndUser(notification, notificationsFor)
             notificationUser.setNotificationSeen(true)
             notificationUser.save(flush: true)
         }
     }
 
     void delete(def body) {
-        ModelTransportCommand model  = body.model as ModelTransportCommand
+        MTC model  = body.model as MTC
         String notifTitle = "notification.model.deleted.title"
         String notifBody = "notification.model.deleted.body"
         User user = body.user as User
         useGenericNotificationStructure(notifTitle, [model.name] as String[], notifBody,
-            [model.name, user.username] as String[], NotificationType.DELETED,
-            user, getNotificationRecipients(body.perms), model)
+            [model.name, user.username] as String[], NT.DELETED, user, getNotificationRecipients(body.perms), model)
     }
 
     void update(def body) {
-        ModelTransportCommand model  = body.model as ModelTransportCommand
+        MTC model  = body.model as MTC
         def updates = []
         body.update.each { updates.add(it) }
         User user = body.user as User
@@ -312,13 +306,12 @@ class NotificationService {
         }.toString()
         logger.debug("People will receive the notification: ${tmp}")
         useGenericNotificationStructure(notifTitle, [model.name] as String[], notifBody,
-            [model.name, user.username, updates.join(", ")] as String[],
-            NotificationType.VERSION_CREATED, user, recipients, model)
+            [model.name, user.username, updates.join(", ")] as String[], NT.VERSION_CREATED, user, recipients, model)
     }
 
     void modelSubmitForPublication(def body) {
-        RevisionTransportCommand revision = body.revision as RevisionTransportCommand
-        ModelTransportCommand model = revision.model
+        RTC revision = body.revision as RTC
+        MTC model = revision.model
         User user = body.user as User
         String notificationTitle = "notification.model.sub4pub.title"
         String subjectPrefix = model.publication ? "Publication Request" : "Pre-publication Request"
@@ -332,8 +325,7 @@ class NotificationService {
         Set<User> watchers = getNotificationRecipients(body.perms)
         // send a notification message to the members of the curator group
         useGenericNotificationStructure(notificationTitle, titleParams,
-            notificationBody, bodyParams,
-            NotificationType.SUBMIT_FOR_PUBLICATION, user, watchers, model)
+            notificationBody, bodyParams, NT.SUBMIT_FOR_PUBLICATION, user, watchers, model)
         // send an email to biomodels' cura mailing list
         String emailTo = grailsApplication.config.jummp.model.curators.mailinglist
         String emailFrom = user.email //grailsApplication.config.jummp.security.registration.email.sender
@@ -386,7 +378,6 @@ class NotificationService {
         String notifTitle = "notification.jummp.feedback.title"
         String notifBody = "notification.jummp.feedback.body"
         useGenericNotificationStructure(notifTitle, [body.star] as String[], notifBody,
-            [body.star, body.email, body.comment] as String[],
-            NotificationType.FEEDBACK_ARRIVED, user, watchers, null)
+            [body.star, body.email, body.comment] as String[], NT.FEEDBACK_ARRIVED, user, watchers, null)
     }
 }
