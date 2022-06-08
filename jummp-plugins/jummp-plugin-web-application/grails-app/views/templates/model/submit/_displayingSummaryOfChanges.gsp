@@ -185,7 +185,7 @@
                 publication: JSON.stringify(publication),
                 revisionComments: revisionComments,
                 modelId: modelId,
-                changesMade: changesMade,
+                changesMade: [...changesMade],
                 submissionFolder: "${submissionFolder}"
             },
             beforeSend: function () {

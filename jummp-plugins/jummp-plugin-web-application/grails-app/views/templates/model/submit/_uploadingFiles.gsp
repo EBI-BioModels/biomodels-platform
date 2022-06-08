@@ -323,7 +323,7 @@
             },
             success: function(response) {
                 console.log("Updating objects and variables tighten to the form...");
-                changesMade = response.changesMade;
+                changesMade = new Set([...response["changesMade"], ...changesMade]);
                 let data = response["filesMap"];
                 let msg = "";
                 if (data.length) {

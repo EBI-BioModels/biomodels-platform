@@ -299,6 +299,7 @@
             type: "GET",
             success: function (response) {
                 console.log(JSON.stringify(response));
+                changesMade = new Set([...response["changesMade"], ...changesMade]);
                 callback();
             }
         });

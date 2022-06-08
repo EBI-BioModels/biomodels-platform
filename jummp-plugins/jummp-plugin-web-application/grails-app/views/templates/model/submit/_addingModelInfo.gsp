@@ -121,6 +121,7 @@
             type: "GET",
             success: function (response) {
                 console.log(JSON.stringify(response));
+                changesMade = new Set([...response["changesMade"], ...changesMade]);
                 errorMessages = [];
                 let isNameValid = true;
                 if ($('input[id="name"]').val().length === 0) {

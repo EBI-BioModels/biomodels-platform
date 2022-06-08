@@ -55,7 +55,7 @@
         var modelId = "${modelId}";
         var revisionId = "${RevisionID}";
         var revisionNumber = "${RevisionNumber}";
-        var changesMade = [];
+        var changesMade = new Set();
 
         toastr.options = {
             // How long the toast will display without user interaction
