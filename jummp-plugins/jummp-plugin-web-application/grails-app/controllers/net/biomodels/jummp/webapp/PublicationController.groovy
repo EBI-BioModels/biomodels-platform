@@ -189,7 +189,7 @@ missing a title, an affiliation and/or an abstract. Please verify the form and f
 
     def validatePublicationDetails() {
         Map result = publicationService.buildPublicationFromJSONData(params.pubDetails.decodeHTML())
-        List<String> changesMade = inferChangesMadeOnModelPublicationDetails()
+        HashSet<String> changesMade = inferChangesMadeOnModelPublicationDetails()
         result.put("changesMade", changesMade)
         render(result as JSON)
     }
@@ -209,8 +209,8 @@ missing a title, an affiliation and/or an abstract. Please verify the form and f
         }
     }
 
-    private List<String> inferChangesMadeOnModelPublicationDetails() {
-        List<String> changesMade = new ArrayList<>()
+    private HashSet<String> inferChangesMadeOnModelPublicationDetails() {
+        HashSet<String> changesMade = new HashSet<>()
         if (params.boolean("isUpdate")) {
             changesMade = ["Updated the publication abstract.",
                            "Updated the publication title.",
