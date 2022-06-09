@@ -185,6 +185,11 @@
                 publication: JSON.stringify(publication),
                 revisionComments: revisionComments,
                 modelId: modelId,
+                /**
+                 * changesMade is a Set object. It is put here to pass to the server side as a list
+                 * because it is one of the members of the params object. So, [...changesMade] is to
+                 * convert a Set object to a List one.
+                 */
                 changesMade: [...changesMade],
                 submissionFolder: "${submissionFolder}"
             },

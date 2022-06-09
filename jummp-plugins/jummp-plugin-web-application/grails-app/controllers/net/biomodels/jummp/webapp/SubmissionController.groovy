@@ -440,6 +440,9 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         working.put("RevisionTC", revision)
         working.put("isUpdateOnExistingModel", isUpdate)
         working.put("shouldCreateNewRevision", true) // TODO: allow curators decide
+        // Please review the callee where the changesMade Set is converted to changesMade List.
+        // The callee is an ajax invoking the completeSubmission action where it is invoking to
+        // this method. Therefore, this method can see the params object.
         working.put("changesMade", params.list("changesMade[]"))
 
         return working
