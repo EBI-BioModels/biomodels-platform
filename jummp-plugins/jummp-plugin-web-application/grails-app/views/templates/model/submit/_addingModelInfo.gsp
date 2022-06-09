@@ -119,6 +119,9 @@
         return $.ajax({
             url: "${createLink(controller: "submission", action: "validateModelInfo")}",
             type: "GET",
+            data: {
+                isUpdate: isUpdate
+            },
             success: function (response) {
                 console.log(JSON.stringify(response));
                 changesMade = new Set([...response["changesMade"], ...changesMade]);

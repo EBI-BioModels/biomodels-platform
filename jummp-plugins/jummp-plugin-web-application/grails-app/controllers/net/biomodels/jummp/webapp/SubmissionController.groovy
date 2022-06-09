@@ -180,7 +180,7 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         // Determines which files are added and removed
         List<String> changesMade = new ArrayList<String>()
         if (params.boolean("isUpdate")) {
-            changesMade = inferChangesMade(uploadedFiles)
+            changesMade = inferChangesMadeOnModelFiles(uploadedFiles)
         }
         render([filesMap: filesMap, changesMade: changesMade] as JSON)
     }
@@ -263,7 +263,8 @@ hyphens, plus signs and underscores. It should also have a proper file extension
     }
 
     def validateModelInfo() {
-        render([status: "OK"] as JSON)
+        List<String> changesMade = inferChangesMadeOnModelInfo()
+        render([status: "OK", changesMade: changesMade] as JSON)
     }
 
     def checkCurrentValidation() {
@@ -315,7 +316,7 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         return modelInfo
     }
 
-    private List<String> inferChangesMade(Map uploadedFiles) {
+    private List<String> inferChangesMadeOnModelFiles(Map uploadedFiles) {
         List<String> changesMade = new ArrayList<>()
         List parsedExistingFiles = JSON.parse(params.files.decodeHTML()) as List
         for (JSONElement e : parsedExistingFiles) {
@@ -335,6 +336,16 @@ hyphens, plus signs and underscores. It should also have a proper file extension
             if (!exists) {
                 changesMade.add("Added file ${fName}")
             }
+        }
+        changesMade
+    }
+
+    private List<String> inferChangesMadeOnModelInfo() {
+        List<String> changesMade = new ArrayList<>()
+        if (params.boolean("isUpdate")) {
+            changesMade = ["Updated the model name.",
+                           "Updated the short description.",
+                           "Updated the modelling approach."]
         }
         changesMade
     }

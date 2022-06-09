@@ -189,6 +189,8 @@ missing a title, an affiliation and/or an abstract. Please verify the form and f
 
     def validatePublicationDetails() {
         Map result = publicationService.buildPublicationFromJSONData(params.pubDetails.decodeHTML())
+        List<String> changesMade = inferChangesMadeOnModelPublicationDetails()
+        result.put("changesMade", changesMade)
         render(result as JSON)
     }
 
@@ -205,6 +207,16 @@ missing a title, an affiliation and/or an abstract. Please verify the form and f
             publicationService.assembleAuthors(tempPTC, pubDetails.authors)
             render(template: "/templates/showPublication", model: [publication: tempPTC, isUpdate: false])
         }
+    }
+
+    private List<String> inferChangesMadeOnModelPublicationDetails() {
+        List<String> changesMade = new ArrayList<>()
+        if (params.boolean("isUpdate")) {
+            changesMade = ["Updated the publication abstract.",
+                           "Updated the publication title.",
+                           "Updated the publication authors."]
+        }
+        changesMade
     }
 
     private PDEC loadOrFetchOrCreatePublication(PublicationTransportCommand pubTC) {

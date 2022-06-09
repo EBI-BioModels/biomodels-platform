@@ -141,7 +141,7 @@
             async: false,
             beforeSend: function () {
                 $('#loadingIcon').show();
-                setTimeout(function(){ console.log("Please wait for 10s..."); }, 10000);
+                setTimeout(function(){ console.log("Please wait for 3s..."); }, 3000);
             },
             success: function (data) {
                 toastr.clear();
@@ -248,7 +248,8 @@
             type: "POST",
             url: "${createLink(controller: "publication", action: "validatePublicationDetails")}",
             data: {
-                pubDetails: JSON.stringify(pubDetails)
+                pubDetails: JSON.stringify(pubDetails),
+                isUpdate: isUpdate
             },
             async: false,
             dataType: "json",
@@ -260,6 +261,7 @@
                 if (isPubTCValidated) {
                     publication = res.publication;
                 }
+                changesMade = new Set([...res["changesMade"], ...changesMade]);
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 const msg = JSON.parse(JSON.stringify(errorThrown));
@@ -299,7 +301,6 @@
             type: "GET",
             success: function (response) {
                 console.log(JSON.stringify(response));
-                changesMade = new Set([...response["changesMade"], ...changesMade]);
                 callback();
             }
         });
