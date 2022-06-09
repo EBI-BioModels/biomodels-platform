@@ -428,8 +428,10 @@ body {
                 toastr.error(jqXHR.responseJSON.message);
             },
             success: function(data) {
-                generateLineChart(data, "#model-train-chart");
-                setTimeout(getTrainLog, 3000);
+                if (data.length !== 0) {
+                    generateLineChart(data, "#model-train-chart");
+                    setTimeout(getTrainLog, 3000);
+                }
             }
         });
     }
