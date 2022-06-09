@@ -62,6 +62,8 @@ class SubmissionController implements InitializingBean {
 
     private String EXCH_DIR
     List validationMessages = new ArrayList<String>(3)
+    // Using the following map to store the valid submission data before submitting the submission
+    Map<String, Object> validSubmissionDataMap = new HashMap<>()
 
     void afterPropertiesSet() throws Exception {
         EXCH_DIR = grailsApplication.config.jummp.vcs.exchangeDirectory
@@ -73,8 +75,7 @@ class SubmissionController implements InitializingBean {
         Map working = new HashMap<String, Object>()
         try {
             /* The following statements aim at saving the new submission or updates */
-            working = rebuildSubmissionData()
-
+            working = validSubmissionDataMap
             HashSet<String> result = submissionService.handleSubmission(working)
 
             /* Below is used for post processing submission and rendering the result to the callee */
@@ -187,6 +188,11 @@ hyphens, plus signs and underscores. It should also have a proper file extension
 
     def doLastValidateSubmissionData() {
         // TODO: check the data and save all the data to Redis or return false due to failure or incorrectness
+        /**
+         * This method is called twice:
+         * (1) in submission.js when the step is 3 to show tick or cross icon
+         * (2) clicking on the Submit button although the submission data have just been validated.
+         */
         Map working = rebuildSubmissionData()
         String errMsg = ""
 
@@ -207,6 +213,7 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         boolean currentValidation = areModelFilesValid && areMetadataValid && isPublicationValid
         result.put("currentValidation", currentValidation)
         logger.debug("The result of verifying the submission data: ${result.dump()}")
+        validSubmissionDataMap = working
         render(result as JSON)
     }
 

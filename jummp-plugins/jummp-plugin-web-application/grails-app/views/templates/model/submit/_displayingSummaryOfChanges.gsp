@@ -169,10 +169,12 @@
         });
     }
 
+    // This function implements for the Submit button on the final form
     function submitData() {
         // TODO: validate the working map again before invoking the following AJAX call and rename the method
         // if the validation is true, hit the callback. The callback will save all the data in the redis
         let msg = "";
+        revisionComments = $('#revisionComments').val();
         return $.ajax({
             url: "${createLink(controller: "submission", action: "doLastValidateSubmissionData")}",
             type: "POST",
