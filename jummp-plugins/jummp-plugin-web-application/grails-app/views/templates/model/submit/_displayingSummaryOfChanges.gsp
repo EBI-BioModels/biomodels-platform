@@ -220,7 +220,7 @@
                 }
                 showNotification(msg);
                 console.log(msg);
-                toastr.info(msg);
+                toastr.success(msg);
             },
             error: function (error) {
                 currentValidation = false;

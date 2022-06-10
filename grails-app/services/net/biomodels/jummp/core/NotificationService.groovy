@@ -309,7 +309,7 @@ class NotificationService {
         }.toString()
         logger.debug("People will receive the notification: ${tmp}")
         useGenericNotificationStructure(notifTitle, [model.name] as String[], notifBody,
-            [model.name, user.username, updates.join(", ")] as String[], NT.VERSION_CREATED, user, recipients, model)
+            [model.name, user.username, updates.join("<br/>")] as String[], NT.VERSION_CREATED, user, recipients, model)
     }
 
     void modelSubmitForPublication(def body) {
