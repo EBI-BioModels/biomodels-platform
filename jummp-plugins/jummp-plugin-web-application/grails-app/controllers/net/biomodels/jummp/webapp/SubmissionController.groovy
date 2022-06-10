@@ -350,9 +350,40 @@ hyphens, plus signs and underscores. It should also have a proper file extension
     private HashSet<String> inferChangesMadeOnModelInfo() {
         HashSet<String> changesMade = new HashSet<>()
         if (params.boolean("isUpdate")) {
-            changesMade = ["Updated the model name.",
-                           "Updated the short description.",
-                           "Updated the modelling approach."]
+            final String latestName = params.latestModelName.decodeHTML();
+            final String latestDescription = params.latestModelDescription.decodeHTML();
+            final String editedName = params.editedModelName.decodeHTML();
+            final String editedDescription = params.editedModelDescription.decodeHTML();
+            if (latestName != editedName) {
+                changesMade.add("Edited the model name.")
+            }
+            if (latestDescription != editedDescription) {
+                changesMade.add("Edited the short description.")
+            }
+
+            final String latestModelFormat = params.latestModelFormat.decodeHTML()
+            final String editedModelFormat = params.editedModelFormat.decodeHTML()
+            if (latestModelFormat != editedModelFormat) {
+                changesMade.add("Changed the model format from $latestModelFormat to $editedModelFormat.")
+            } else {
+                final String latestReadmeSubmission = params.latestReadmeSubmission.decodeHTML()
+                final String editedReadmeSubmission = params.editedReadmeSubmission.decodeHTML()
+                if (latestReadmeSubmission != editedReadmeSubmission) {
+                    changesMade.add("Edited the submission readme.")
+                }
+            }
+
+            final String latestModellingApproach = params.latestModellingApproach.decodeHTML()
+            final String editedModellingApproach = params.editedModellingApproach.decodeHTML()
+            if (latestModellingApproach != editedModellingApproach) {
+                changesMade.add("Changed the modelling approach from $latestModellingApproach to $editedModellingApproach.")
+            } else {
+                final String latestOtherInfo = params.latestOtherInfo.decodeHTML()
+                final String editedOtherInfo = params.editedOtherInfo.decodeHTML()
+                if (latestOtherInfo != editedOtherInfo) {
+                    changesMade.add("Edited the other info.")
+                }
+            }
         }
         changesMade
     }
@@ -430,6 +461,8 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         working.put("modelId", modelId)
         if (isUpdate) {
             revision = modelDelegateService.getLatestRevision(modelId, false)
+            working.putAll(["latestModelName": params.latestModelName.decodeHTML(),
+                            "latestModelDescription": params.latestModelDescription.decodeHTML()])
         }
 
         // rebuild the model info as much as possible detected from the former step

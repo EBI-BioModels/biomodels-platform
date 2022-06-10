@@ -57,6 +57,15 @@
         var revisionNumber = "${RevisionNumber}";
         var changesMade = new Set();
 
+        var latestModelName = "${latestModelName}";
+        var latestModelDescription = "${latestModelDescription}";
+
+        var latestModelFormat = "${latestModelFormat}";
+        var latestReadmeSubmission = "${latestReadmeSubmission}";
+
+        var latestModellingApproach = "${latestModellingApproach}";
+        var latestOtherInfo = "${latestOtherInfo}";
+
         toastr.options = {
             // How long the toast will display without user interaction
             "timeOut": 7000,

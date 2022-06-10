@@ -945,6 +945,12 @@ class SubmissionService {
             workingMemory.put("RevisionID", latest.id)
             workingMemory.put("RevisionNumber", latest.revisionNumber)
             workingMemory.put("publication", latest.model.publication)
+            workingMemory.put("latestModelName", latest.name)
+            workingMemory.put("latestModelDescription", latest.description)
+            workingMemory.put("latestModelFormat", latest.format.toString())
+            workingMemory.put("latestModellingApproach", modellingApproach)
+            workingMemory.put("latestOtherInfo", latest.model.otherInfo)
+            workingMemory.put("latestReadmeSubmission", latest.readmeSubmission)
             workingMemory.put("modellingApproach", modellingApproach)
             workingMemory.put("otherInfo", latest.model.otherInfo)
             workingMemory.put("files", files)
@@ -1035,15 +1041,17 @@ class SubmissionService {
             storeModelInfo(revision, workingMemory)
             final String NEW_NAME = workingMemory["new_name"]
             final String NEW_DESCRIPTION = workingMemory["new_description"]
-            if (NEW_NAME) {
+            final String LATEST_NAME = workingMemory["latestModelName"]
+            final String LATEST_DESCRIPTION = workingMemory["latestModelDescription"]
+            if (NEW_NAME != LATEST_NAME) {
                 revision.name = NEW_NAME
                 modelFileFormatService.updateName(revision, NEW_NAME)
-                changes.add("Edited model name")
+                changes.add("Edited the model name.")
             }
-            if (NEW_DESCRIPTION) {
+            if (NEW_DESCRIPTION != LATEST_DESCRIPTION) {
                 revision.description = NEW_DESCRIPTION
                 modelFileFormatService.updateDescription(revision, NEW_DESCRIPTION)
-                changes.add("Edited model description")
+                changes.add("Edited the model description.")
             }
             if (workingMemory.get("isAmend")) {
                 modelService.amendRevision(repoFiles, deleteFiles, revision)

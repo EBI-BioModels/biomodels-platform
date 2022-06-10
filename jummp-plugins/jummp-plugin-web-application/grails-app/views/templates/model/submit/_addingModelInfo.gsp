@@ -114,14 +114,12 @@
     function validateModelInfo() {
         // perform a client side validation
         // TODO: implement me: return false if there are errors on the form
-
+        const data = buildModelInfoData();
         // then perform a server side validation
         return $.ajax({
             url: "${createLink(controller: "submission", action: "validateModelInfo")}",
             type: "GET",
-            data: {
-                isUpdate: isUpdate
-            },
+            data: data,
             success: function (response) {
                 console.log(JSON.stringify(response));
                 changesMade = new Set([...response["changesMade"], ...changesMade]);
@@ -163,6 +161,27 @@
                 }
             }
         });
+    }
+
+    function buildModelInfoData() {
+        return {
+            modelId: modelId,
+            isUpdate: isUpdate,
+            isAmend: isAmend,
+            latestModelName: latestModelName,
+            latestModelDescription: latestModelDescription,
+            latestModelFormat: latestModelFormat,
+            latestReadmeSubmission: latestReadmeSubmission,
+            latestModellingApproach: latestModellingApproach,
+            latestOtherInfo: latestOtherInfo,
+
+            editedModelName: $('input[id="name"]').val(),
+            editedModelDescription: $('textarea[id="description"]').val(),
+            editedModelFormat: $('#model_format').val() + ": " + $('#model_format option:selected').text(),
+            editedReadmeSubmission: $('#readme_submission').val(),
+            editedModellingApproach: $('#modelling_approach').val(),
+            editedOtherInfo: $('#other_info').val()
+        }
     }
 
     function associateEventHandlers(id) {
