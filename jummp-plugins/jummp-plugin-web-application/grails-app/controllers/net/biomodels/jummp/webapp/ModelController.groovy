@@ -49,6 +49,7 @@ import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.Team
 import net.biomodels.jummp.utils.redis.KeyCollection
+import net.biomodels.jummp.utils.redis.Operations
 import net.biomodels.jummp.webapp.rest.errors.Error
 import net.biomodels.jummp.webapp.rest.model.show.Model as RestfulModel
 import net.biomodels.jummp.webapp.rest.model.show.ModelFiles
@@ -468,7 +469,11 @@ class ModelController {
         initials.put("titlePage", titlePage)
         initials.put("uploadingFilesHeading", g.message(code: "submission.upload.review.titlePage"))
 
-        // TODO: store the initial values (from initials) on Redis
+        String submissionFolder = initials.get("submissionFolder")
+        RevisionTransportCommand revisionTC = initials.get("RevisionTC")
+        Map submissionDataMap = ["latestModelDescription": revisionTC.description]
+        Operations.doRedisHSet(submissionFolder, submissionDataMap)
+
         render(view: "submit", model: initials)
     }
 

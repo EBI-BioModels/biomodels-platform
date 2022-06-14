@@ -23,6 +23,7 @@
     <link rel="stylesheet"
           href="${resource(contextPath: serverURL, dir: 'css', file: 'toastr.min.css')}"/>
     <g:javascript>
+        var submissionFolder = "${submissionFolder}";
         var currentValidation = false;
         var errorMessages = new Array();
         var modelInfo = ${modelInfo};
@@ -58,7 +59,6 @@
         var changesMade = new Set();
 
         var latestModelName = "${latestModelName}";
-        var latestModelDescription = "${latestModelDescription}";
 
         var latestModelFormat = "${latestModelFormat}";
         var latestModelFormatNameAndVersion = "${latestModelFormatNameAndVersion}";

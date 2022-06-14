@@ -60,7 +60,7 @@ class Operations implements GrailsConfigurationAware, DisposableBean {
         cachedData
     }
 
-    synchronized static void doRedisHSet(final String key, Map data) {
+    synchronized static void doRedisHSet(final String key, Map<String, String> data) {
         jedisPool.getResource().withCloseable { Jedis jedis ->
             deleteAllByPattern(jedis, key)
             jedis.hmset(key, data)

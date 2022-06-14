@@ -188,7 +188,6 @@
                 revisionComments: revisionComments,
                 modelId: modelId,
                 latestModelName: latestModelName,
-                latestModelDescription: latestModelDescription,
                 latestModelFormat: latestModelFormat,
                 latestModelFormatNameAndVersion: latestModelFormatNameAndVersion,
                 latestReadmeSubmission: latestReadmeSubmission,

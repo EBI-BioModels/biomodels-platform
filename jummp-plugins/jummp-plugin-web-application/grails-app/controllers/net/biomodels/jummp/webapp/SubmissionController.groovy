@@ -41,6 +41,7 @@ import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import net.biomodels.jummp.core.model.ValidationState
 import net.biomodels.jummp.utils.CollectionHelper
 import net.biomodels.jummp.utils.FileHelper
+import net.biomodels.jummp.utils.redis.Operations
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONElement
@@ -363,10 +364,11 @@ hyphens, plus signs and underscores. It should also have a proper file extension
             CollectionHelper.remove(changesMade, "MODEL INFO")
         }
         if (params.boolean("isUpdate")) {
-            final String latestName = params.latestModelName.decodeHTML();
-            final String latestDescription = params.latestModelDescription.decodeHTML();
-            final String editedName = params.editedModelName.decodeHTML();
-            final String editedDescription = params.editedModelDescription.decodeHTML();
+            final String latestName = params.latestModelName.decodeHTML()
+            final String submissionFolder = params.submissionFolder.decodeHTML()
+            final String latestDescription = Operations.doRedisHGet(submissionFolder, "latestModelDescription")
+            final String editedName = params.editedModelName.decodeHTML()
+            final String editedDescription = params.editedModelDescription.decodeHTML()
             if (latestName != editedName) {
                 changesMade.add("MODEL INFO: Edited the model name.")
             }
@@ -482,8 +484,10 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         working.put("modelId", modelId)
         if (isUpdate) {
             revision = modelDelegateService.getLatestRevision(modelId, false)
+            final String submissionFolder = working.get("submissionFolder")
+            final String latestDescription = Operations.doRedisHGet(submissionFolder, "latestModelDescription")
             working.putAll(["latestModelName": params.latestModelName.decodeHTML(),
-                            "latestModelDescription": params.latestModelDescription.decodeHTML()])
+                            "latestModelDescription": latestDescription])
         }
 
         // rebuild the model info as much as possible detected from the former step
