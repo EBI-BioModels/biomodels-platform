@@ -39,13 +39,14 @@ class CollectionHelper {
      */
     static HashSet<String> remove(HashSet<String> origSet, String prefix) {
         boolean found = false
-        String foundItem
+        HashSet<String> foundItems = new HashSet<>()
         for (String item : origSet) {
             if (item.contains(prefix)) {
-                found = true
-                foundItem = item
+                foundItems.add(item)
             }
-            if (found) { origSet.remove(foundItem) }
+        }
+        for (String item : foundItems) {
+            origSet.remove(item)
         }
         origSet
     }
