@@ -1063,6 +1063,7 @@ HAVING rev.revisionNumber = max(revisions.revisionNumber)''', [
      * @return The new created Model, or null if the model could not be created
      * @throws ModelException If Model File is not valid or the Model could not be stored in VCS
      */
+    // TODO: delete the following method and its usages
     @PreAuthorize("hasRole('ROLE_USER')")
     @PostLogging(LoggingEventType.CREATION)
     @Profiled(tag="modelService.uploadModelAsList")

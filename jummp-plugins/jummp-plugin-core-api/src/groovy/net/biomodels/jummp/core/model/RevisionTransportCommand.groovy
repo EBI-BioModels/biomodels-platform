@@ -114,6 +114,10 @@ class RevisionTransportCommand implements Serializable {
 
     QcInfoTransportCommand qcInfo
 
+    /**
+     * Capture the extra infor about the submission. For example, if the model format is unknown,
+     * the submitter can leave the language used to implement the model.
+     */
     String readmeSubmission
 
     /**

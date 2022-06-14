@@ -120,6 +120,9 @@ class ModelTransportCommand implements Serializable {
      */
     ModellingApproach modellingApproach = null
 
+    /**
+     * This field captures the modelling approach used
+     */
     String otherInfo
 
     // TODO: reconcile the contributors and createrUsernames states.

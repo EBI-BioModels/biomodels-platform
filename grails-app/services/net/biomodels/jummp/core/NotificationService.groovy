@@ -296,6 +296,7 @@ class NotificationService {
      * Sending a notification to the subscribers when the model is updated.
      * @param body
      */
+    // TODO: should update the body so as to "Dear Mr. Hello," instead of "Dear BioModels user."
     void update(def body) {
         MTC model  = body.model as MTC
         def updates = []

@@ -198,10 +198,10 @@ class SearchService {
      */
     @Profiled(tag = "searchService.clearAnnotationStatementsFromDatabase")
     void clearAnnotationStatementsFromDatabase() {
-        log.debug("Begin prunning annotation statements from database")
+        log.debug("Begin cleaning annotation statements from database")
         Revision.executeUpdate("delete ElementAnnotation")
         Revision.executeUpdate("delete Statement")
-        log.debug("Finished prunning annotation statements from database")
+        log.debug("Finished cleaning annotation statements from database")
     }
 
     String[] getSearchFields() {
