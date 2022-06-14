@@ -333,7 +333,7 @@ hyphens, plus signs and underscores. It should also have a proper file extension
                 e["filename"] == fName && e["size"] == size
             }
             if (!exists) {
-                changesMade.add("Removed file ${e.filename}")
+                changesMade.add("Removed file ${e.filename}".toString())
             }
         }
         uploadedFiles.each { String fName, String fSize ->
@@ -342,7 +342,7 @@ hyphens, plus signs and underscores. It should also have a proper file extension
                 it["filename"] == fName && it["size"] == size
             }
             if (!exists) {
-                changesMade.add("Added file ${fName}")
+                changesMade.add("Added file ${fName}".toString())
             }
         }
         changesMade
@@ -370,8 +370,8 @@ hyphens, plus signs and underscores. It should also have a proper file extension
             final String editedModelFormat = params.editedModelFormat.decodeHTML()
             final String editedModelFormatNameAndVersion = params.editedModelFormatNameAndVersion.decodeHTML()
             final String newFormat = "$editedModelFormat (${editedModelFormatNameAndVersion})"
+            remove(changesMade, "Changed the model format from")
             if (latestModelFormat != editedModelFormat) {
-                remove(changesMade, "Changed the model format from")
                 changesMade.add("Changed the model format from $origFormat to $newFormat.")
             } else {
                 final String latestReadmeSubmission = params.latestReadmeSubmission.decodeHTML()
