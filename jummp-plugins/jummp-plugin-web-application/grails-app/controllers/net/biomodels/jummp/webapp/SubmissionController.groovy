@@ -91,7 +91,8 @@ class SubmissionController implements InitializingBean {
             } else {
                 HashSet<String> changesMade = working.get("changesMade")
                 changesMade.addAll(result)
-                working.put("changesMade", changesMade)
+                HashSet<String> changes = changesMade.sort()
+                working.put("changesMade", changes)
             }
             String modelURL = createLink(controller: "model", action: "show", params: [id: modelId])
             working.putAll(["modelId": modelId, "modelURL": modelURL])
