@@ -386,7 +386,9 @@ hyphens, plus signs and underscores. It should also have a proper file extension
 
             final String latestModellingApproach = params.latestModellingApproach.decodeHTML()
             final String editedModellingApproach = params.editedModellingApproach.decodeHTML()
-            if (latestModellingApproach != editedModellingApproach) {
+            if (!latestModellingApproach) {
+                changesMade.add("Added the modelling approach.")
+            } else if (latestModellingApproach != editedModellingApproach) {
                 CollectionHelper.remove(changesMade, "Changed the modelling approach from")
                 String msg = "Changed the modelling approach from $latestModellingApproach to $editedModellingApproach.".toString()
                 changesMade.add(msg)
