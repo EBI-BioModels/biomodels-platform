@@ -277,7 +277,10 @@ hyphens, plus signs and underscores. It should also have a proper file extension
 
     def checkCurrentValidation() {
         HashSet<String> changesMade = params.list("changesMade[]").toSet()
-        changesMade.add("Removed the publication details.")
+        if (!changesMade) { changesMade = new HashSet<>() } else {
+            CollectionHelper.remove(changesMade, "MODEL PUBLICATION")
+        }
+        changesMade.add("MODEL PUBLICATION: Removed the publication details.")
         render([status: "OK", changesMade: changesMade] as JSON)
     }
 
@@ -327,8 +330,10 @@ hyphens, plus signs and underscores. It should also have a proper file extension
     }
 
     private HashSet<String> inferChangesMadeOnModelFiles(Map uploadedFiles) {
-        HashSet<String> changesMade = params.list("changesMade[]")
-        if (!changesMade) { changesMade = new HashSet<>() }
+        HashSet<String> changesMade = params.list("changesMade[]").toSet()
+        if (!changesMade) { changesMade = new HashSet<>() } else {
+            CollectionHelper.remove(changesMade, "MODEL FILES")
+        }
         List parsedExistingFiles = JSON.parse(params.files.decodeHTML()) as List
         for (JSONElement e : parsedExistingFiles) {
             boolean exists = uploadedFiles.find { String fName, String fSize ->
@@ -336,7 +341,7 @@ hyphens, plus signs and underscores. It should also have a proper file extension
                 e["filename"] == fName && e["size"] == size
             }
             if (!exists) {
-                changesMade.add("Removed file ${e.filename}".toString())
+                changesMade.add("MODEL FILES: Removed file ${e.filename}".toString())
             }
         }
         uploadedFiles.each { String fName, String fSize ->
@@ -345,7 +350,7 @@ hyphens, plus signs and underscores. It should also have a proper file extension
                 it["filename"] == fName && it["size"] == size
             }
             if (!exists) {
-                changesMade.add("Added file ${fName}".toString())
+                changesMade.add("MODEL FILES: Added file ${fName}".toString())
             }
         }
         changesMade
@@ -353,17 +358,19 @@ hyphens, plus signs and underscores. It should also have a proper file extension
 
     private HashSet<String> inferChangesMadeOnModelInfo() {
         HashSet<String> changesMade = params.list("changesMade[]")
-        if (!changesMade) { changesMade = new HashSet<>() }
+        if (!changesMade) { changesMade = new HashSet<>() } else {
+            CollectionHelper.remove(changesMade, "MODEL INFO")
+        }
         if (params.boolean("isUpdate")) {
             final String latestName = params.latestModelName.decodeHTML();
             final String latestDescription = params.latestModelDescription.decodeHTML();
             final String editedName = params.editedModelName.decodeHTML();
             final String editedDescription = params.editedModelDescription.decodeHTML();
             if (latestName != editedName) {
-                changesMade.add("Edited the model name.")
+                changesMade.add("MODEL INFO: Edited the model name.")
             }
             if (latestDescription != editedDescription) {
-                changesMade.add("Edited the short description.")
+                changesMade.add("MODEL INFO: Edited the short description.")
             }
 
             final String latestModelFormat = params.latestModelFormat.decodeHTML()
@@ -373,30 +380,28 @@ hyphens, plus signs and underscores. It should also have a proper file extension
             final String editedModelFormat = params.editedModelFormat.decodeHTML()
             final String editedModelFormatNameAndVersion = params.editedModelFormatNameAndVersion.decodeHTML()
             final String newFormat = "$editedModelFormat (${editedModelFormatNameAndVersion})"
-            CollectionHelper.remove(changesMade, "Changed the model format from")
             if (latestModelFormat != editedModelFormat) {
-                changesMade.add("Changed the model format from $origFormat to $newFormat.")
+                changesMade.add("MODEL INFO: Changed the model format from $origFormat to $newFormat.")
             } else {
                 final String latestReadmeSubmission = params.latestReadmeSubmission.decodeHTML()
                 final String editedReadmeSubmission = params.editedReadmeSubmission.decodeHTML()
                 if (latestReadmeSubmission != editedReadmeSubmission) {
-                    changesMade.add("Edited the submission readme.")
+                    changesMade.add("MODEL INFO: Edited the submission readme.")
                 }
             }
 
             final String latestModellingApproach = params.latestModellingApproach.decodeHTML()
             final String editedModellingApproach = params.editedModellingApproach.decodeHTML()
             if (!latestModellingApproach) {
-                changesMade.add("Added the modelling approach.")
+                changesMade.add("MODEL INFO: Added the modelling approach.")
             } else if (latestModellingApproach != editedModellingApproach) {
-                CollectionHelper.remove(changesMade, "Changed the modelling approach from")
-                String msg = "Changed the modelling approach from $latestModellingApproach to $editedModellingApproach.".toString()
+                String msg = "MODEL INFO: Changed the modelling approach from $latestModellingApproach to $editedModellingApproach.".toString()
                 changesMade.add(msg)
             } else {
                 final String latestOtherInfo = params.latestOtherInfo.decodeHTML()
                 final String editedOtherInfo = params.editedOtherInfo.decodeHTML()
                 if (latestOtherInfo != editedOtherInfo) {
-                    changesMade.add("Edited the other info.")
+                    changesMade.add("MODEL INFO: Edited the other info.")
                 }
             }
         }

@@ -194,7 +194,7 @@ missing a title, an affiliation and/or an abstract. Please verify the form and f
         if (params.boolean("isUpdate")) {
             changesMade = inferChangesMadeOnModelPublicationDetails(result)
         } else {
-            changesMade.addAll(["Added the publication details."])
+            changesMade.addAll(["MODEL PUBLICATION: Added the publication details."])
         }
         result.put("changesMade", changesMade)
         render(result as JSON)
@@ -223,13 +223,13 @@ missing a title, an affiliation and/or an abstract. Please verify the form and f
             PubTC pubTC = publicationService.findPublicationOfModel(modelId)
             if (!pubTC) {
                 if (result["status"] == "Success" && result["publication"]) {
-                    changesMade.addAll(["Added the publication details."])
+                    changesMade.addAll(["MODEL PUBLICATION: Added the publication details."])
                 }
             } else {
                 if (result["status"] == "Success" && result["publication"]) {
                     findUpdates(changesMade, pubTC, result["publication"])
                 } else if (!result["publication"]) {
-                    changesMade.addAll(["Removed the publication details."])
+                    changesMade.addAll(["MODEL PUBLICATION: Removed the publication details."])
                 }
             }
         }
@@ -238,33 +238,31 @@ missing a title, an affiliation and/or an abstract. Please verify the form and f
 
     private HashSet findUpdates(HashSet<String> changesMade, PubTC oldPub, PubTC newPub) {
         if (changesMade) {
-            CollectionHelper.remove(changesMade, "Changed the publication")
-            CollectionHelper.remove(changesMade, "Edited the publication")
-            CollectionHelper.remove(changesMade, "Updated the publication")
+            CollectionHelper.remove(changesMade, "MODEL PUBLICATION")
         }
         if (oldPub.link != newPub.link && oldPub.link &&newPub.link) {
-            changesMade.add("Changed the publication link/identifier from ${oldPub.link} to ${newPub.link}.")
+            changesMade.add("MODEL PUBLICATION: Changed the publication link/identifier from ${oldPub.link} to ${newPub.link}.")
         }
         if (oldPub.title != newPub.title) {
-            changesMade.add("Changed the publication title from ${oldPub.title} to ${newPub.title}.")
+            changesMade.add("MODEL PUBLICATION: Changed the publication title from ${oldPub.title} to ${newPub.title}.")
         }
         if (oldPub.journal != newPub.journal) {
-            changesMade.add("Changed the publication journal from ${oldPub.journal} to ${newPub.journal}.")
+            changesMade.add("MODEL PUBLICATION: Changed the publication journal from ${oldPub.journal} to ${newPub.journal}.")
         }
         if (oldPub.affiliation != newPub.affiliation) {
-            changesMade.add("Changed the publication affiliation from ${oldPub.affiliation} to ${newPub.affiliation}.")
+            changesMade.add("MODEL PUBLICATION: Changed the publication affiliation from ${oldPub.affiliation} to ${newPub.affiliation}.")
         }
         if (oldPub.year != newPub.year || oldPub.month != newPub.month || oldPub.day != newPub.day) {
-            changesMade.add("Updated the publication date time.")
+            changesMade.add("MODEL PUBLICATION: Updated the publication date time.")
         }
         if (oldPub.volume != newPub.volume || oldPub.issue != newPub.issue) {
-            changesMade.add("Updated the publication issue/volume.")
+            changesMade.add("MODEL PUBLICATION: Updated the publication issue/volume.")
         }
         if (oldPub.pages != newPub.pages) {
-            changesMade.add("Changed the publication pages from ${oldPub.pages} to ${newPub.pages}.")
+            changesMade.add("MODEL PUBLICATION: Changed the publication pages from ${oldPub.pages} to ${newPub.pages}.")
         }
         if (oldPub.synopsis != newPub.synopsis) {
-            changesMade.add("Edited the publication abstract.")
+            changesMade.add("MODEL PUBLICATION: Edited the publication abstract.")
         }
         // TODO: diffs = findDifferences(oldPub.authors, newPub.authors), then changesMade.addAll(diffs)
         changesMade
