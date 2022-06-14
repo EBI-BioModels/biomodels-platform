@@ -301,7 +301,12 @@
         return $.ajax({
             url: "${createLink(controller: "submission", action: "checkCurrentValidation")}",
             type: "GET",
+            data: {
+                isUpdate: isUpdate,
+                changesMade: [...changesMade]
+            },
             success: function (response) {
+                changesMade = response["changesMade"];
                 console.log(JSON.stringify(response));
                 callback();
             }

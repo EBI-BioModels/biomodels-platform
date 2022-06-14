@@ -4,10 +4,11 @@ import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.adapters.PublicationAdapter
 import net.biomodels.jummp.core.model.ModelTransportCommand
-import net.biomodels.jummp.model.Publication
 import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
-import net.biomodels.jummp.model.PublicationLinkProvider as PLP
 import net.biomodels.jummp.core.model.PublicationDetailExtractionContext as PDEC
+import net.biomodels.jummp.model.PublicationLinkProvider as PLP
+import net.biomodels.jummp.model.Publication
+import net.biomodels.jummp.utils.CollectionHelper
 import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -215,27 +216,58 @@ missing a title, an affiliation and/or an abstract. Please verify the form and f
     }
 
     private HashSet<String> inferChangesMadeOnModelPublicationDetails(Map result) {
-        HashSet<String> changesMade = params.list("changesMade[]")
+        HashSet<String> changesMade = params.list("changesMade[]").toSet()
         if (!changesMade) { changesMade = new HashSet<>() }
         if (params.boolean("isUpdate")) {
             String modelId = params.modelId.decodeHTML()
             PubTC pubTC = publicationService.findPublicationOfModel(modelId)
             if (!pubTC) {
-                changesMade.addAll(["Added the publication details."])
-            } else {
-                HashSet<String> updatesOnPublication = new HashSet<>()
                 if (result["status"] == "Success" && result["publication"]) {
-                    updatesOnPublication = findUpdates(pubTC, result["publication"])
+                    changesMade.addAll(["Added the publication details."])
                 }
-                changesMade.addAll(updatesOnPublication)
+            } else {
+                if (result["status"] == "Success" && result["publication"]) {
+                    findUpdates(changesMade, pubTC, result["publication"])
+                } else if (!result["publication"]) {
+                    changesMade.addAll(["Removed the publication details."])
+                }
             }
         }
         changesMade
     }
 
-    private HashSet findUpdates(PubTC former, PubTC latter) {
-        HashSet<String> result = new HashSet<>()
-        result
+    private HashSet findUpdates(HashSet<String> changesMade, PubTC oldPub, PubTC newPub) {
+        if (changesMade) {
+            CollectionHelper.remove(changesMade, "Changed the publication")
+            CollectionHelper.remove(changesMade, "Edited the publication")
+            CollectionHelper.remove(changesMade, "Updated the publication")
+        }
+        if (oldPub.link != newPub.link && oldPub.link &&newPub.link) {
+            changesMade.add("Changed the publication link/identifier from ${oldPub.link} to ${newPub.link}.")
+        }
+        if (oldPub.title != newPub.title) {
+            changesMade.add("Changed the publication title from ${oldPub.title} to ${newPub.title}.")
+        }
+        if (oldPub.journal != newPub.journal) {
+            changesMade.add("Changed the publication journal from ${oldPub.journal} to ${newPub.journal}.")
+        }
+        if (oldPub.affiliation != newPub.affiliation) {
+            changesMade.add("Changed the publication affiliation from ${oldPub.affiliation} to ${newPub.affiliation}.")
+        }
+        if (oldPub.year != newPub.year || oldPub.month != newPub.month || oldPub.day != newPub.day) {
+            changesMade.add("Updated the publication date time.")
+        }
+        if (oldPub.volume != newPub.volume || oldPub.issue != newPub.issue) {
+            changesMade.add("Updated the publication issue/volume.")
+        }
+        if (oldPub.pages != newPub.pages) {
+            changesMade.add("Changed the publication pages from ${oldPub.pages} to ${newPub.pages}.")
+        }
+        if (oldPub.synopsis != newPub.synopsis) {
+            changesMade.add("Edited the publication abstract.")
+        }
+        // TODO: diffs = findDifferences(oldPub.authors, newPub.authors), then changesMade.addAll(diffs)
+        changesMade
     }
 
     private PDEC loadOrFetchOrCreatePublication(PubTC pubTC) {

@@ -39,6 +39,7 @@ import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import net.biomodels.jummp.core.model.ValidationState
+import net.biomodels.jummp.utils.CollectionHelper
 import net.biomodels.jummp.utils.FileHelper
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
@@ -275,7 +276,9 @@ hyphens, plus signs and underscores. It should also have a proper file extension
     }
 
     def checkCurrentValidation() {
-        render([status: "OK"] as JSON)
+        HashSet<String> changesMade = params.list("changesMade[]").toSet()
+        changesMade.add("Removed the publication details.")
+        render([status: "OK", changesMade: changesMade] as JSON)
     }
 
     def renderFileUploadFailures() {
@@ -370,7 +373,7 @@ hyphens, plus signs and underscores. It should also have a proper file extension
             final String editedModelFormat = params.editedModelFormat.decodeHTML()
             final String editedModelFormatNameAndVersion = params.editedModelFormatNameAndVersion.decodeHTML()
             final String newFormat = "$editedModelFormat (${editedModelFormatNameAndVersion})"
-            remove(changesMade, "Changed the model format from")
+            CollectionHelper.remove(changesMade, "Changed the model format from")
             if (latestModelFormat != editedModelFormat) {
                 changesMade.add("Changed the model format from $origFormat to $newFormat.")
             } else {
@@ -384,7 +387,7 @@ hyphens, plus signs and underscores. It should also have a proper file extension
             final String latestModellingApproach = params.latestModellingApproach.decodeHTML()
             final String editedModellingApproach = params.editedModellingApproach.decodeHTML()
             if (latestModellingApproach != editedModellingApproach) {
-                remove(changesMade, "Changed the modelling approach from")
+                CollectionHelper.remove(changesMade, "Changed the modelling approach from")
                 String msg = "Changed the modelling approach from $latestModellingApproach to $editedModellingApproach.".toString()
                 changesMade.add(msg)
             } else {
@@ -396,19 +399,6 @@ hyphens, plus signs and underscores. It should also have a proper file extension
             }
         }
         changesMade
-    }
-
-    private HashSet<String> remove(HashSet<String> origSet, String prefix) {
-        boolean found = false
-        String foundItem
-        for (String item : origSet) {
-            if (item.contains(prefix)) {
-                found = true
-                foundItem = item
-            }
-        }
-        if (found) { origSet.remove(foundItem) }
-        origSet
     }
 
     private void handleException(final Map working, final Exception e) {
