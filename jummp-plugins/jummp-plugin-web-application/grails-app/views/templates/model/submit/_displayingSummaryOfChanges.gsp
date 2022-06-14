@@ -190,6 +190,7 @@
                 latestModelName: latestModelName,
                 latestModelDescription: latestModelDescription,
                 latestModelFormat: latestModelFormat,
+                latestModelFormatNameAndVersion: latestModelFormatNameAndVersion,
                 latestReadmeSubmission: latestReadmeSubmission,
                 latestModellingApproach: latestModellingApproach,
                 latestOtherInfo:latestOtherInfo,

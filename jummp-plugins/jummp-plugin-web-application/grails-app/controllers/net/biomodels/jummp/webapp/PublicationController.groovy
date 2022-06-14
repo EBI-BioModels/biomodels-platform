@@ -5,7 +5,7 @@ import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.adapters.PublicationAdapter
 import net.biomodels.jummp.core.model.ModelTransportCommand
 import net.biomodels.jummp.model.Publication
-import net.biomodels.jummp.core.model.PublicationTransportCommand
+import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
 import net.biomodels.jummp.model.PublicationLinkProvider as PLP
 import net.biomodels.jummp.core.model.PublicationDetailExtractionContext as PDEC
 import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
@@ -20,13 +20,13 @@ class PublicationController implements GrailsConfigurationAware {
     String serverUrl
 
     def index() {
-        List<PublicationTransportCommand> publications = new ArrayList<>()
+        List<PubTC> publications = new ArrayList<>()
         publications = publicationService.getAll()
         [publications: publications, title: "List of all publications | BioModels", style: style, serverUrl: serverUrl]
     }
 
     def add(Publication publication) {
-        PublicationTransportCommand pubTC = publicationService.createPTCWithMinimalInformation("PubMed ID", null, null)
+        PubTC pubTC = publicationService.createPTCWithMinimalInformation("PubMed ID", null, null)
         pubTC.id = -1 // assign it a dummy value to avoid exceptions
         [publication: pubTC, title: "A a new publication | BioModels", style: style, serverUrl: serverUrl,
          controller: "publication", operation: "add"]
@@ -36,7 +36,7 @@ class PublicationController implements GrailsConfigurationAware {
         if (!publication) {
             showError404()
         }
-        PublicationTransportCommand pubCmd = new PublicationAdapter(publication: publication).toCommandObject()
+        PubTC pubCmd = new PublicationAdapter(publication: publication).toCommandObject()
         [publication: pubCmd, title: "Show the publication ${pubCmd.id} | BioModels",
          style: style, serverUrl: serverUrl]
     }
@@ -46,7 +46,7 @@ class PublicationController implements GrailsConfigurationAware {
             logger.error("Publication (with id: ${publication?.id}) cannot be found in the database.")
             showError404()
         }
-        PublicationTransportCommand pubCmd = new PublicationAdapter(publication: publication).toCommandObject()
+        PubTC pubCmd = new PublicationAdapter(publication: publication).toCommandObject()
         [publication: pubCmd, authorListContainerSize: 4, title: "Edit the publication ${pubCmd.id} | BioModels",
          style: style, serverUrl: serverUrl, controller: "publication", operation: "edit"]
     }
@@ -88,7 +88,7 @@ class PublicationController implements GrailsConfigurationAware {
                     controller: "publication", operation: operation, url: request.forwardURI])
     }
 
-    def save(PublicationTransportCommand pubCmd) {
+    def save(PubTC pubCmd) {
         Map result = [:]
         String message = ""
         Integer status
@@ -124,7 +124,7 @@ class PublicationController implements GrailsConfigurationAware {
     }
 
     private Map doVerifyPubLinkAndFetchData() {
-        PublicationTransportCommand cmd = new PublicationTransportCommand()
+        PubTC cmd = new PubTC()
         String pubLinkProvider = params.list("pubLinkProvider")[0]
         String pubLink = params.list("pubLink")[0]
         String message
@@ -167,7 +167,7 @@ missing a title, an affiliation and/or an abstract. Please verify the form and f
     }
 
     def doVerifyPublicationProviderAndLink() {
-        PublicationTransportCommand cmd = new PublicationTransportCommand()
+        PubTC cmd = new PubTC()
         String pubLinkProvider = params.list("pubLinkProvider")[0]
         String pubLink = params.list("pubLink")[0]
         String message
@@ -189,7 +189,12 @@ missing a title, an affiliation and/or an abstract. Please verify the form and f
 
     def validatePublicationDetails() {
         Map result = publicationService.buildPublicationFromJSONData(params.pubDetails.decodeHTML())
-        HashSet<String> changesMade = inferChangesMadeOnModelPublicationDetails()
+        HashSet<String> changesMade = new HashSet<>()
+        if (params.boolean("isUpdate")) {
+            changesMade = inferChangesMadeOnModelPublicationDetails(result)
+        } else {
+            changesMade.addAll(["Added the publication details."])
+        }
         result.put("changesMade", changesMade)
         render(result as JSON)
     }
@@ -201,7 +206,7 @@ missing a title, an affiliation and/or an abstract. Please verify the form and f
         } else {
             // this action is often called to display the publication which has been validated
             // so we don't need to handle exception
-            PublicationTransportCommand tempPTC = new PublicationTransportCommand()//pubContext.publication
+            PubTC tempPTC = new PubTC()//pubContext.publication
             def pubDetails = JSON.parse(params.pubDetails.decodeHTML())
             bindData(tempPTC, pubDetails, [exclude: ['authors']])
             publicationService.assembleAuthors(tempPTC, pubDetails.authors)
@@ -209,17 +214,31 @@ missing a title, an affiliation and/or an abstract. Please verify the form and f
         }
     }
 
-    private HashSet<String> inferChangesMadeOnModelPublicationDetails() {
-        HashSet<String> changesMade = new HashSet<>()
+    private HashSet<String> inferChangesMadeOnModelPublicationDetails(Map result) {
+        HashSet<String> changesMade = params.list("changesMade[]")
+        if (!changesMade) { changesMade = new HashSet<>() }
         if (params.boolean("isUpdate")) {
-            changesMade = ["Updated the publication abstract.",
-                           "Updated the publication title.",
-                           "Updated the publication authors."]
+            String modelId = params.modelId.decodeHTML()
+            PubTC pubTC = publicationService.findPublicationOfModel(modelId)
+            if (!pubTC) {
+                changesMade.addAll(["Added the publication details."])
+            } else {
+                HashSet<String> updatesOnPublication = new HashSet<>()
+                if (result["status"] == "Success" && result["publication"]) {
+                    updatesOnPublication = findUpdates(pubTC, result["publication"])
+                }
+                changesMade.addAll(updatesOnPublication)
+            }
         }
         changesMade
     }
 
-    private PDEC loadOrFetchOrCreatePublication(PublicationTransportCommand pubTC) {
+    private HashSet findUpdates(PubTC former, PubTC latter) {
+        HashSet<String> result = new HashSet<>()
+        result
+    }
+
+    private PDEC loadOrFetchOrCreatePublication(PubTC pubTC) {
         try {
             PDEC publicationContext = publicationService.getPublicationExtractionContext(pubTC)
             if (publicationContext.publication) {
@@ -227,7 +246,7 @@ missing a title, an affiliation and/or an abstract. Please verify the form and f
                     flash.flashMessage = g.message(code: "publication.editor.duplicateEntry.message")
                 }
             } else {
-                PublicationTransportCommand retrieved
+                PubTC retrieved
                 retrieved = publicationService.createPTCWithMinimalInformation(params.PubLinkProvider, params.PublicationLink, [])
                 publicationContext.publication = retrieved
                 publicationContext.comesFromDatabase = false

@@ -61,6 +61,7 @@
         var latestModelDescription = "${latestModelDescription}";
 
         var latestModelFormat = "${latestModelFormat}";
+        var latestModelFormatNameAndVersion = "${latestModelFormatNameAndVersion}";
         var latestReadmeSubmission = "${latestReadmeSubmission}";
 
         var latestModellingApproach = "${latestModellingApproach}";

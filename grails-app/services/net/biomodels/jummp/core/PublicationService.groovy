@@ -33,6 +33,7 @@ import net.biomodels.jummp.core.model.PublicationDetailExtractionContext as PDEC
 import net.biomodels.jummp.core.model.PublicationLinkProviderTransportCommand as PLPTC
 import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
 import net.biomodels.jummp.core.user.PersonTransportCommand as PersonTC
+import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Publication
 import net.biomodels.jummp.model.PublicationLinkProvider as PLP
 import net.biomodels.jummp.model.PublicationPerson
@@ -109,6 +110,14 @@ class PublicationService implements IPublicationService, InitializingBean {
             }
         }
         pubTC
+    }
+
+    PubTC findPublicationOfModel(final String modelId) {
+        String queryStr = "from Model as m where m.publicationId = :modelId or m.submissionId = :modelId"
+        List result = Model.executeQuery(queryStr, [modelId: modelId])
+        Publication publication = result?.first()?.publication
+        if (!publication) { return null }
+        new PublicationAdapter(publication: publication).toCommandObject()
     }
 
     boolean verifyLink(String linkTypeAsString, String link) {

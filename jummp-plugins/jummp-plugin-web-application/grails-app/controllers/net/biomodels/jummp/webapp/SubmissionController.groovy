@@ -324,7 +324,8 @@ hyphens, plus signs and underscores. It should also have a proper file extension
     }
 
     private HashSet<String> inferChangesMadeOnModelFiles(Map uploadedFiles) {
-        HashSet<String> changesMade = new HashSet<>()
+        HashSet<String> changesMade = params.list("changesMade[]")
+        if (!changesMade) { changesMade = new HashSet<>() }
         List parsedExistingFiles = JSON.parse(params.files.decodeHTML()) as List
         for (JSONElement e : parsedExistingFiles) {
             boolean exists = uploadedFiles.find { String fName, String fSize ->
@@ -348,7 +349,8 @@ hyphens, plus signs and underscores. It should also have a proper file extension
     }
 
     private HashSet<String> inferChangesMadeOnModelInfo() {
-        HashSet<String> changesMade = new HashSet<>()
+        HashSet<String> changesMade = params.list("changesMade[]")
+        if (!changesMade) { changesMade = new HashSet<>() }
         if (params.boolean("isUpdate")) {
             final String latestName = params.latestModelName.decodeHTML();
             final String latestDescription = params.latestModelDescription.decodeHTML();
@@ -362,9 +364,15 @@ hyphens, plus signs and underscores. It should also have a proper file extension
             }
 
             final String latestModelFormat = params.latestModelFormat.decodeHTML()
+            final String latestModelFormatNameAndVersion = params.latestModelFormatNameAndVersion.decodeHTML()
+            final String origFormat = "$latestModelFormat (${latestModelFormatNameAndVersion})"
+
             final String editedModelFormat = params.editedModelFormat.decodeHTML()
+            final String editedModelFormatNameAndVersion = params.editedModelFormatNameAndVersion.decodeHTML()
+            final String newFormat = "$editedModelFormat (${editedModelFormatNameAndVersion})"
             if (latestModelFormat != editedModelFormat) {
-                changesMade.add("Changed the model format from $latestModelFormat to $editedModelFormat.")
+                remove(changesMade, "Changed the model format from")
+                changesMade.add("Changed the model format from $origFormat to $newFormat.")
             } else {
                 final String latestReadmeSubmission = params.latestReadmeSubmission.decodeHTML()
                 final String editedReadmeSubmission = params.editedReadmeSubmission.decodeHTML()
@@ -376,7 +384,9 @@ hyphens, plus signs and underscores. It should also have a proper file extension
             final String latestModellingApproach = params.latestModellingApproach.decodeHTML()
             final String editedModellingApproach = params.editedModellingApproach.decodeHTML()
             if (latestModellingApproach != editedModellingApproach) {
-                changesMade.add("Changed the modelling approach from $latestModellingApproach to $editedModellingApproach.")
+                remove(changesMade, "Changed the modelling approach from")
+                String msg = "Changed the modelling approach from $latestModellingApproach to $editedModellingApproach.".toString()
+                changesMade.add(msg)
             } else {
                 final String latestOtherInfo = params.latestOtherInfo.decodeHTML()
                 final String editedOtherInfo = params.editedOtherInfo.decodeHTML()
@@ -386,6 +396,19 @@ hyphens, plus signs and underscores. It should also have a proper file extension
             }
         }
         changesMade
+    }
+
+    private HashSet<String> remove(HashSet<String> origSet, String prefix) {
+        boolean found = false
+        String foundItem
+        for (String item : origSet) {
+            if (item.contains(prefix)) {
+                found = true
+                foundItem = item
+            }
+        }
+        if (found) { origSet.remove(foundItem) }
+        origSet
     }
 
     private void handleException(final Map working, final Exception e) {

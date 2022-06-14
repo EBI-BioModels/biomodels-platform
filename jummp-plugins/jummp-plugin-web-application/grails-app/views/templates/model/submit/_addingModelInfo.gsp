@@ -119,10 +119,31 @@
         return $.ajax({
             url: "${createLink(controller: "submission", action: "validateModelInfo")}",
             type: "GET",
-            data: data,
+            data: {
+                modelId: modelId,
+                isUpdate: isUpdate,
+                isAmend: isAmend,
+                latestModelName: latestModelName,
+                latestModelDescription: latestModelDescription,
+                latestModelFormat: latestModelFormat,
+                latestModelFormatNameAndVersion: latestModelFormatNameAndVersion,
+                latestReadmeSubmission: latestReadmeSubmission,
+                latestModellingApproach: latestModellingApproach,
+                latestOtherInfo: latestOtherInfo,
+
+                editedModelName: $('input[id="name"]').val(),
+                editedModelDescription: $('textarea[id="description"]').val(),
+                editedModelFormat: $('#model_format').val(),
+                editedModelFormatNameAndVersion: $('#model_format option:selected').text(),
+                editedReadmeSubmission: $('#readme_submission').val(),
+                editedModellingApproach: $('#modelling_approach').val(),
+                editedOtherInfo: $('#other_info').val(),
+
+                changesMade: [...changesMade]
+            },
             success: function (response) {
                 console.log(JSON.stringify(response));
-                changesMade = new Set([...response["changesMade"], ...changesMade]);
+                changesMade = response["changesMade"];
                 errorMessages = [];
                 let isNameValid = true;
                 if ($('input[id="name"]').val().length === 0) {
@@ -171,16 +192,20 @@
             latestModelName: latestModelName,
             latestModelDescription: latestModelDescription,
             latestModelFormat: latestModelFormat,
+            latestModelFormatNameAndVersion: latestModelFormatNameAndVersion,
             latestReadmeSubmission: latestReadmeSubmission,
             latestModellingApproach: latestModellingApproach,
             latestOtherInfo: latestOtherInfo,
 
             editedModelName: $('input[id="name"]').val(),
             editedModelDescription: $('textarea[id="description"]').val(),
-            editedModelFormat: $('#model_format').val() + ": " + $('#model_format option:selected').text(),
+            editedModelFormat: $('#model_format').val(),
+            editedModelFormatNameAndVersion: $('#model_format option:selected').text(),
             editedReadmeSubmission: $('#readme_submission').val(),
             editedModellingApproach: $('#modelling_approach').val(),
-            editedOtherInfo: $('#other_info').val()
+            editedOtherInfo: $('#other_info').val(),
+
+            changesMade: [...changesMade]
         }
     }
 

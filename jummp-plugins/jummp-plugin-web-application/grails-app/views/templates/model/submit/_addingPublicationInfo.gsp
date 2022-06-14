@@ -249,7 +249,9 @@
             url: "${createLink(controller: "publication", action: "validatePublicationDetails")}",
             data: {
                 pubDetails: JSON.stringify(pubDetails),
-                isUpdate: isUpdate
+                isUpdate: isUpdate,
+                modelId: modelId,
+                changesMade: [...changesMade]
             },
             async: false,
             dataType: "json",
@@ -261,7 +263,7 @@
                 if (isPubTCValidated) {
                     publication = res.publication;
                 }
-                changesMade = new Set([...res["changesMade"], ...changesMade]);
+                changesMade = res["changesMade"];
             },
             error: function(jqXHR, textStatus, errorThrown) {
                 const msg = JSON.parse(JSON.stringify(errorThrown));

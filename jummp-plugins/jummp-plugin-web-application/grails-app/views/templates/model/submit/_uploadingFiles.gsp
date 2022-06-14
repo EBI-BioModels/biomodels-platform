@@ -314,7 +314,8 @@
                 submissionFolder: "${submissionFolder}",
                 uploadingFiles: JSON.stringify(ids),
                 files: JSON.stringify(existingFiles),
-                isUpdate: isUpdate
+                isUpdate: isUpdate,
+                changesMade: [...changesMade]
             },
             async: true,
             dataType: "JSON",
@@ -323,7 +324,7 @@
             },
             success: function(response) {
                 console.log("Updating objects and variables tighten to the form...");
-                changesMade = new Set([...response["changesMade"], ...changesMade]);
+                changesMade = response["changesMade"];
                 let data = response["filesMap"];
                 let msg = "";
                 if (data.length) {
