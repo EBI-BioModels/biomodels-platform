@@ -373,7 +373,7 @@ hyphens, plus signs and underscores. It should also have a proper file extension
                 changesMade.add("MODEL INFO: Edited the model name.")
             }
             if (latestDescription != editedDescription) {
-                changesMade.add("MODEL INFO: Edited the short description.")
+                changesMade.add("MODEL INFO: Edited the short submission description.")
             }
 
             final String latestModelFormat = params.latestModelFormat.decodeHTML()

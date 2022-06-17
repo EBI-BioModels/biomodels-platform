@@ -1047,12 +1047,12 @@ class SubmissionService {
             if (NEW_NAME != LATEST_NAME) {
                 revision.name = NEW_NAME
                 modelFileFormatService.updateName(revision, NEW_NAME)
-                changes.add("Edited the model name.")
+                changes.add("MODEL INFO: Edited the model name.")
             }
             if (NEW_DESCRIPTION != LATEST_DESCRIPTION) {
                 revision.description = NEW_DESCRIPTION
                 modelFileFormatService.updateDescription(revision, NEW_DESCRIPTION)
-                changes.add("Edited the model description.")
+                changes.add("MODEL INFO: Edited the short submission description.")
             }
             if (workingMemory.get("isAmend")) {
                 modelService.amendRevision(repoFiles, deleteFiles, revision)
