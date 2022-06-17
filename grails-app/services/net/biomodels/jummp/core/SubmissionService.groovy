@@ -945,6 +945,7 @@ class SubmissionService {
             workingMemory.put("RevisionID", latest.id)
             workingMemory.put("RevisionNumber", latest.revisionNumber)
             workingMemory.put("publication", latest.model.publication)
+            workingMemory.put("selectedModelFormat", latest.format.id)
             workingMemory.put("latestModelName", latest.name)
             workingMemory.put("latestModelDescription", latest.description)
             workingMemory.put("latestModelFormat", latest.format.id)
