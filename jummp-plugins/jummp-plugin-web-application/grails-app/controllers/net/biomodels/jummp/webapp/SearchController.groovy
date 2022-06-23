@@ -273,16 +273,29 @@ under the format: ${response.format}"""
             forward(action: 'search', params: params)
             return params
         }
-        byte[] data = modelDelegateService.serveModelFilesAsZip(models)
-        if (data) {
-            // the data could be null in a few situations such as the model files are inaccessible
-            response.setContentType("application/zip")
-            String date = new Date().format("yyyyMMdd-HHmm")
-            String filename = "BioModels-search-results_${date}.zip".toString()
-            response.setHeader("Content-disposition", "attachment;filename=\"${filename}\"")
-            response.outputStream << new ByteArrayInputStream(data)
-        } else {
-            render(view: "download", status: 404)
+        def data = modelDelegateService.serveModelFilesAsZip(models)
+        try {
+            if (data) {
+                // the data could be null in a few situations such as the model files are inaccessible
+                response.setContentType("application/zip")
+                String date = new Date().format("yyyyMMdd-HHmm")
+                String filename = "BioModels-search-results_${date}.zip".toString()
+                response.setHeader("Content-disposition", "attachment;filename=\"${filename}\"")
+                response.outputStream << data
+            } else {
+                render(view: "download", status: 404)
+            }
+        } catch (Exception exception) {
+            LOGGER.error("Exception on downloading search result:", exception)
+        } finally {
+            data.close()
+            if (response.outputStream){
+                try {
+                    response.outputStream.close()
+                } catch (IOException ioe) {
+                    LOGGER.error("Exception on closing the output stream of the response object:", ioe)
+                }
+            }
         }
     }
 
