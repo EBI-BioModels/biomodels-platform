@@ -55,6 +55,7 @@ import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.User
+import net.biomodels.jummp.utils.MathUtils
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.springframework.security.access.AccessDeniedException
@@ -280,25 +281,36 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
     }
 
     @NotTransactional
-    Byte[] serveModelFilesAsZip(Map<String, RFTC> files) {
-        ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream()
-        ZipOutputStream zipFile = new ZipOutputStream(byteBuffer)
-        files.each { String modelId, RFTC cmd ->
-            File file = new File(cmd.path)
-            String extension = Files.getFileExtension(file.getName())
-            ZipEntry entry = new ZipEntry("${modelId}.$extension")
-            zipFile.putNextEntry(entry)
-            byte[] fileData = file.getBytes()
-            zipFile.write(fileData, 0, fileData.length)
-            zipFile.closeEntry()
+    ZipOutputStream serveModelFilesAsZip(Map<String, RFTC> files) {
+        ZipOutputStream zipFile = null
+        String zipFileName = MathUtils.generatePassword((('A'..'Z') + ('0'..'9')).join(), 9) + ".zip"
+        try {
+            FileOutputStream fos = new FileOutputStream(zipFileName)
+            zipFile = new ZipOutputStream(fos)
+            files.each { String modelId, RFTC cmd ->
+                File file = new File(cmd.path)
+                FileInputStream fis = new FileInputStream(file)
+                String extension = Files.getFileExtension(file.getName())
+                ZipEntry entry = new ZipEntry("${modelId}.$extension")
+                zipFile.putNextEntry(entry)
+                int length
+                byte[] buffer = new byte[1024]
+                while ((length = fis.read(buffer)) > 0) {
+                    zipFile.write(buffer, 0, length)
+                }
+                zipFile.closeEntry()
+                fis.close()
+            }
+            zipFile.close()
+        } catch (IOException ioe) {
+            log.error("Exception on creating zip file ${zipFileName}", ioe)
+        } finally {
+           return zipFile
         }
-        zipFile.close()
-        byte[] response = byteBuffer.toByteArray()
-        response
     }
 
     @NotTransactional
-    Byte[] serveModelFilesAsZip(String[] modelIDs) {
+    ZipOutputStream serveModelFilesAsZip(String[] modelIDs) {
         Map<String, RFTC> files = modelService.fetchMainFileForModels(modelIDs)
         if (files) {
             return serveModelFilesAsZip(files)
