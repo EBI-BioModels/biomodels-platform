@@ -4,12 +4,20 @@
 # Defines three stages
 #   * base: for general purpose development/testing
 #   * prod: for running in production
+#   * develop: for running in development
 #   * debug: for debugging over JPDA
 #
 # See https://bitbucket.org/biomodels/jummp-biomodels/src/master/docker-build.sh
 ##
 FROM openjdk:8-jdk-buster AS base
 LABEL maintainer="biomodels-developers@lists.sf.net"
+
+# install some utilities
+RUN apt-get update \
+  && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    net-tools vim telnet \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
 # install Java and Grails based on
 # https://github.com/mozart-analytics/grails-docker/blob/c65d488/grails-2/Dockerfile
@@ -29,14 +37,16 @@ ENV PATH $GRAILS_HOME/bin:$PATH
 # don't forget to also mount the folder containing the runtime configuration file
 WORKDIR /app/
 
-# the docker image to be used in production
-FROM tomcat:7-jdk8-openjdk-buster AS prod
+# the docker image to be used in the following stages
+FROM tomcat:7-jdk8-openjdk-buster AS deploy
 LABEL maintainer="biomodels-developers@lists.sf.net"
 
 # set environment options
 # see https://stackoverflow.com/a/59097932 for more information about potentially needing to use -Djava.security.egd=file:/dev/./urandom in JDK9+
-ENV JAVA_OPTS="-Xms64m -Xmx2048m -XX:MaxMetaspaceSize=256m -server -noverify -XX:+UseConcMarkSweepGC -XX:+UseParNewGC -Djava.net.preferIPv4Stack=true -XX:MaxJavaStackTraceDepth=100"
-
+ENV JAVA_OPTS_1="-Xms3g -Xmx3g -XX:MaxPermSize=512m -XX:MaxMetaspaceSize=512m"
+ENV JAVA_OPTS_2="-XX:+UseConcMarkSweepGC -XX:+UseParNewGC -XX:MaxJavaStackTraceDepth=100"
+ENV JAVA_OPTS_3="-XX:+HeapDumpOnOutOfMemoryError"
+ENV JAVA_OPTS="$JAVA_OPTS_1 $JAVA_OPTS_2 $JAVA_OPTS_3 -server -noverify -Djava.net.preferIPv4Stack=true"
 EXPOSE 3306
 EXPOSE 4372
 EXPOSE 6379
@@ -61,22 +71,27 @@ RUN addgroup --gid "$GID" "$USERNAME" \
 
 # Tomcat manager and host-manager can be copied from webapps.dist if needed
 RUN rm -rf /usr/local/tomcat/webapps/*
-COPY ./target/jummp-biomodels.war /usr/local/tomcat/webapps/jummp-biomodels.war
-RUN mkdir webapps/jummp-biomodels; \
-    cd webapps/jummp-biomodels; \
-    jar xf ../jummp-biomodels.war; \
+COPY ./target/biomodels.war /usr/local/tomcat/webapps/biomodels.war
+RUN mkdir webapps/biomodels; \
+    cd webapps/biomodels; \
+    jar xf ../biomodels.war; \
     cd - ; \
     mkdir log data; \
-    chown -R $USERNAME /usr/local/tomcat/data /usr/local/tomcat/log;
+    chown -R $USERNAME /usr/local/tomcat/data /usr/local/tomcat/log /usr/local/tomcat/webapps;
 
-# Change to the app user.
+# the docker image for the production server
+FROM deploy as prod
+COPY ./k8s/init/start.sh /usr/local/tomcat/bin/
 USER $USERNAME
-
 CMD ["catalina.sh", "run"]
 
+# the docker image for the development server
+FROM deploy as develop
+USER $USERNAME
+CMD ["catalina.sh", "run"]
 
 # the docker image for troubleshooting/debugging
-FROM prod as debug
+FROM deploy as debug
 ARG JPDA_PORT=8089
 
 EXPOSE $JPDA_PORT
