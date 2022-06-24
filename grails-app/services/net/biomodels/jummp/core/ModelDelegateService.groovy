@@ -281,13 +281,11 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
     }
 
     @NotTransactional
-    ZipOutputStream serveModelFilesAsZip(Map<String, RFTC> files) {
-        ZipOutputStream zipFile = null
-        String zipFileName = MathUtils.generatePassword((('A'..'Z') + ('0'..'9')).join(), 9) + ".zip"
-        String absZipFileName = "${grailsApplication.config.jummp.logs.location}${File.separator}${zipFileName}".toString()
+    InputStream serveModelFilesAsZip(Map<String, RFTC> files) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream()
+        ZipOutputStream zipFile = new ZipOutputStream(baos)
         try {
-            FileOutputStream fos = new FileOutputStream(absZipFileName)
-            zipFile = new ZipOutputStream(fos)
+            final int BUFFER = 2048
             files.each { String modelId, RFTC cmd ->
                 File file = new File(cmd.path)
                 FileInputStream fis = new FileInputStream(file)
@@ -295,7 +293,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
                 ZipEntry entry = new ZipEntry("${modelId}.$extension")
                 zipFile.putNextEntry(entry)
                 int length
-                byte[] buffer = new byte[1024]
+                byte[] buffer = new byte[BUFFER]
                 while ((length = fis.read(buffer)) > 0) {
                     zipFile.write(buffer, 0, length)
                 }
@@ -306,12 +304,14 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         } catch (IOException ioe) {
             LOGGER.error("Exception on creating zip file ${zipFileName}", ioe)
         } finally {
-           return zipFile
+            // nothing happens here
         }
+        if (!baos) { return null }
+        return new ByteArrayInputStream(baos.toByteArray())
     }
 
     @NotTransactional
-    ZipOutputStream serveModelFilesAsZip(String[] modelIDs) {
+    InputStream serveModelFilesAsZip(String[] modelIDs) {
         Map<String, RFTC> files = modelService.fetchMainFileForModels(modelIDs)
         if (files) {
             return serveModelFilesAsZip(files)

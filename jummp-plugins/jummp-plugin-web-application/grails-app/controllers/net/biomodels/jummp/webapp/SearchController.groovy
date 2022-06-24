@@ -282,17 +282,20 @@ under the format: ${response.format}"""
                 String filename = "BioModels-search-results_${date}.zip".toString()
                 response.setHeader("Content-disposition", "attachment;filename=\"${filename}\"")
                 response.outputStream << data
+                response.outputStream.flush()
             } else {
                 render(view: "download", status: 404)
             }
         } catch (Exception exception) {
             LOGGER.error("Exception on downloading search result:", exception)
         } finally {
+            LOGGER.debug("Number of models have been downloaded: ${models.join(", ")}")
             data?.close()
             if (response.outputStream){
                 try {
                     response.outputStream.close()
                 } catch (IOException ioe) {
+                    response.reset()
                     LOGGER.error("Exception on closing the output stream of the response object:", ioe)
                 }
             }
