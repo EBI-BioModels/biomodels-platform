@@ -56,8 +56,8 @@ import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.utils.MathUtils
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.transaction.support.TransactionSynchronizationManager
 
@@ -78,8 +78,7 @@ import java.util.zip.ZipOutputStream
  */
 @Transactional
 class ModelDelegateService implements IModelService {
-    private static final Log log = LogFactory.getLog(ModelDelegateService.class)
-
+    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
     def modelService
     def modelFileFormatService
     def qcInfoDelegateService
@@ -230,7 +229,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
             def instance = it.value
             "{${instance.class.name} ${instance.hasProperty('id') ? instance.id : instance.toString() }}" }.toString()}
 """
-        log.info(msg.toString())
+        LOGGER.info(msg.toString())
 
         List<RevisionTC> revisions = []
         revs.each {
@@ -303,7 +302,7 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
             }
             zipFile.close()
         } catch (IOException ioe) {
-            log.error("Exception on creating zip file ${zipFileName}", ioe)
+            LOGGER.error("Exception on creating zip file ${zipFileName}", ioe)
         } finally {
            return zipFile
         }
