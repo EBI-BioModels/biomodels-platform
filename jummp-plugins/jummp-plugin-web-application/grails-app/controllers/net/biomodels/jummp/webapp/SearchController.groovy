@@ -288,7 +288,7 @@ under the format: ${response.format}"""
         } catch (Exception exception) {
             LOGGER.error("Exception on downloading search result:", exception)
         } finally {
-            data.close()
+            data?.close()
             if (response.outputStream){
                 try {
                     response.outputStream.close()
