@@ -471,7 +471,7 @@ class ModelController {
 
         String submissionFolder = initials.get("submissionFolder")
         RevisionTransportCommand revisionTC = initials.get("RevisionTC")
-        Map submissionDataMap = ["latestModelDescription": revisionTC.description]
+        Map submissionDataMap = ["latestModelDescription": revisionTC.description ?: ""]
         Operations.doRedisHSet(submissionFolder, submissionDataMap)
 
         render(view: "submit", model: initials)
