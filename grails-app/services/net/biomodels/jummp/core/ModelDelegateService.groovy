@@ -79,6 +79,7 @@ import java.util.zip.ZipOutputStream
 @Transactional
 class ModelDelegateService implements IModelService {
     private final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
+    def grailsApplication
     def modelService
     def modelFileFormatService
     def qcInfoDelegateService
@@ -283,8 +284,9 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
     ZipOutputStream serveModelFilesAsZip(Map<String, RFTC> files) {
         ZipOutputStream zipFile = null
         String zipFileName = MathUtils.generatePassword((('A'..'Z') + ('0'..'9')).join(), 9) + ".zip"
+        String absZipFileName = "${grailsApplication.config.jummp.logs.location}${File.separator}${zipFileName}".toString()
         try {
-            FileOutputStream fos = new FileOutputStream(zipFileName)
+            FileOutputStream fos = new FileOutputStream(absZipFileName)
             zipFile = new ZipOutputStream(fos)
             files.each { String modelId, RFTC cmd ->
                 File file = new File(cmd.path)
