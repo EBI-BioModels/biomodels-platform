@@ -3,7 +3,9 @@
     <g:textField name="username" value="${user.username}" placeholder="Choose an username" readonly="true"/>
 </g:if>
 <g:else>
-    <g:textField name="username" placeholder="Choose an username" required="true" />
+    <g:textField name="username"
+                 placeholder="Username containing alphanumeric characters and underscores only"
+                 pattern="[a-zA-Z0-9_|]{3,64}" required="true" />
 </g:else>
 
 
