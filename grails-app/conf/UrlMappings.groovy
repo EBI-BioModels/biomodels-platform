@@ -119,5 +119,6 @@ class UrlMappings {
         "/user/profile"(controller:"usermanagement", action:"profile")
         "/user"(controller:"usermanagement", action:"show")
         "/mommanagement"(controller: "modelOfTheMonth", action: "index")
+        "/competition/model-of-the-year-2022"(controller: "competition", action: "modelOfTheYear2022")
     }
 }
