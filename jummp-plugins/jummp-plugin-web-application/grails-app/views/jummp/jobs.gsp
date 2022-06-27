@@ -30,6 +30,80 @@
 
 <h2>Internship opportunities</h2>
 
+<h3 style="border-bottom: 1px solid grey">
+    Curation internship: Literature curation of mechanistic models of Genome-Scale metabolic models</h3>
+
+<p><a href="http://www.ebi.ac.uk/biomodels/" title="BioModels Database">BioModels</a> is a
+central repository of mathematical models of biological/biomedical processes. It is hosted
+at EMBL-EBI and is one of the resources of the molecular systems cluster. The models
+distributed through BioModels are extensively tested and encoded in standard formats
+(for example, SBML (Systems Biology Markup Language)) and are free to use. In addition,
+the models and their components are cross-referenced with external data resources and
+ontologies, which facilitates search and retrieval, and maximises the benefits of the
+growing number of already existing models.</p>
+<div class="row">
+    <div class="columns small-12 medium-4 large-4">
+        <img src="https://www.ebi.ac.uk/biomodels/static-assets/images/curation/FROG/FROG_analysis_green_BG.svg"/>
+    </div>
+    <div class="columns small-12 medium-8 large-8">
+        <p> Curating models of biological processes is an effective training in computational
+        systems biology, where the curators gain an integrative knowledge on biological systems,
+        modelling and bioinformatics. We have a number of internship opportunities available within
+        the team, to carry out the curation of constraint-based models including Genome-Scale Metabolic models (GEMs).
+        </p>
+        <p>The internship is suitable for a student who is pursuing or completed master's or PhD degree and has experience
+        in constraint-based modelling approaches including genome-scale metabolic model reconstruction, flux balance analysis
+        or equivalent methods. The intern will apply the recently developed community standard FROG to assess the
+        reproducibility of the constraint-based models and perform semantic enrichment to curate. Training will be given
+        to understand the basics of FROG analysis and relevant tools. Potential possibilities exist for the intern to be
+        a co-author of our community manuscript on FROG analysis.
+        </p>
+    </div>
+</div>
+
+<p>This is an in-person internship at the EMBL-EBI Campus based in Hinxton, Cambridge, UK. The provisional starting
+date is September 2022, however, it can be adjusted. The position is for 6 months but can be extended up to one year.
+A fixed monthly allowance is provided to help towards living costs. Support for the visa will be offered to the
+selected candidate when required.
+</p>
+<p>For further enquiries or to make an application (with your CV and a cover letter),
+please contact: Dr Rahuman Sheriff (sheriff AT ebi.ac.uk). The application is open until filled.</p>
+
+<h3 style="border-bottom: 1px solid grey">
+    EMBL-EBI - IITM Internship on Curation of Machine Learning Models in BioModels</h3>
+
+<p>Machine learning (ML) models are widely used as tools in life science and medical research.
+However, ML models are scattered across various resources including personal websites, git-hub, bitbucket,
+and supplementary material, making it difficult to find, access, and reuse them.
+We aim to extend the <a href="https://www.ebi.ac.uk/biomodels" target="_blank">BioModels</a> to support Findable, Accessible,
+Interoperable, and Reusable (<a href="https://www.go-fair.org/fair-principles/" target="_blank">FAIR</a>)
+dissemination of ML models in biomedical sciences.  BioModels is a world-leading repository of mechanistic models
+of biological processes, hosted by EMBL-EBI. BioModels’s infrastructure was
+recently enhanced to support version-controlled dissemination and curation of a
+wide range of modelling frameworks and formats, providing capabilities to host
+and disseminate ML models.</p>
+
+<p>The internship is ideal for a student who is pursuing or completed a master's or PhD degree and aiming
+to move towards the next step of their career. The applicant should have experience in machine learning
+approaches including deep learning neural networks and other equivalent methods. During the internship,
+the intern will rebuild ML models published in life science journals and submit them to the BioModels
+repository. Potential possibilities exist for the intern to be a co-author on our high-impact manuscript.</p>
+
+<p><strong>Prerequisite</strong>: very good programming skills in Python, R or equivalent languages, experience in building
+machine learning models, and a good background in biological science. Experience in deep learning will be a plus.</p>
+
+<p>The first 3 months of the internship are based at the <a href="https://rbcdsai.iitm.ac.in/" target="_blank">Robert
+Bosch Centre for Data Science and Artificial Intelligence</a> &
+<a href="https://www.iitm.ac.in/academics/departments/department-of-biotechnology"
+   target="_blank">Dept. of Biotechnology</a>,
+    <a href="https://www.iitm.ac.in/" target="_blank">Indian Institute of Technology Madras</a> at
+    <a href="https://home.iitm.ac.in/kraman/lab/karthik/" target="_blank">Prof. Raman’s lab, Chennai, India</a>. The next 3 months will be based at the European Bioinformatics Institute (EMBL-EBI) Campus at Hinxton, Cambridge, UK. The position is for 6 months but can be extended up to one year. The provisional starting date is September 2022, however, it can be adjusted. A fixed monthly allowance is provided to help towards living costs. Support for a UK visa will be offered to the selected candidate.</p>
+
+<p>For further enquiries or to make an application (with your CV and a cover letter),
+please contact Prof. Karthik Raman (kraman AT iitm.ac.in) and or Dr Rahuman Sheriff (sheriff AT ebi.ac.uk).
+The application is open until filled.</p>
+
+<!--
 <h3 style="border-bottom: 1px solid grey">Curation internship: Literature curation of mechanistic models of disease pathways</h3>
 
 <p><a href="http://www.ebi.ac.uk/biomodels/" title="BioModels Database">BioModels</a> is a
@@ -68,6 +142,7 @@ please contact: Rahuman Sheriff (sheriff AT ebi.ac.uk).</p>
         neurodegeneration: evolving dimensions and future directions.</a>
         <em>CPT: Pharmacometrics &amp; Systems Pharmacology</em>. 2017</li>
 </ol>
+-->
 
 %{--<h3 style="border-bottom: 1px solid grey">Software development internship:
 Cluster Analysis of BioModels using Biomedical Ontologies</h3>
