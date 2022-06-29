@@ -35,6 +35,7 @@ import net.biomodels.jummp.core.vcs.*
 import org.apache.commons.io.FileUtils
 import org.eclipse.jgit.api.*
 import org.eclipse.jgit.api.errors.GitAPIException
+import org.eclipse.jgit.api.errors.RefNotFoundException
 import org.eclipse.jgit.errors.CheckoutConflictException
 import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.revwalk.DepthWalk.RevWalk
@@ -456,9 +457,10 @@ class GitManager implements VcsManager {
             } else {
                 if (!getRevisionsPrivate(modelDirectory, false).contains(revision))
                     throw new VcsException("Revision '$revision' not found in model directory '$modelDirectory' !")
+                String branchName = ""
                 try {
                     // need to checkout in a temporary branch
-                    String branchName = UUID.randomUUID()
+                    branchName = UUID.randomUUID()
                     initedRepositories.get(modelDirectory).
                         checkout().
                         setCreateBranch(true).
@@ -466,17 +468,23 @@ class GitManager implements VcsManager {
                         setStartPoint(revision).
                         call()
                     downloadFiles(modelDirectory, returnedFiles)
-                    initedRepositories.get(modelDirectory).checkout().setName("master").call()
-                    initedRepositories.get(modelDirectory).branchDelete().setBranchNames(branchName).call()
                 } catch (VcsException e) {
                     throw new VcsException("Checking out file from git directory ${modelDirectory?.name} failed: ", e)
+                } catch (RefNotFoundException rnfEx) {
+                    throw new VcsException("""Error while checking out the revision $revision of \
+the model git directory ${modelDirectory?.absolutePath}""", rnfEx)
+                } finally {
+                    if (modelDirectory && branchName) {
+                        // clear all the recently changes made and checkout the master brain
+                        Git git = initedRepositories.get(modelDirectory)
+                        doGitCleanAndCheckoutMasterBranch(git, branchName)
+                    }
                 }
             }
         } catch (VcsException e) {
-            String errMsg = """\
-The working directory of the revision ${revision} at ${modelDirectory.absolutePath} hasn't been initialised any VCS yet
-"""
-            throw new VcsNotInitedException(errMsg)
+            String errMsg = """The working directory of the revision ${revision} at ${modelDirectory.absolutePath} \
+has not been initialised any VCS yet."""
+            throw new VcsException(errMsg, e)
         } finally {
             unlockModelRepository(modelDirectory)
         }
@@ -648,5 +656,25 @@ The working directory of the revision ${revision} at ${modelDirectory.absolutePa
               git.push().call()
         }*/
         revision
+    }
+
+    /**
+     * Cleans or stashes the temporary branch if there has been changes.
+     * Then do checkout the master or main branch.
+     *
+     * @param git A Git object representing the model git directory in question
+     * @param branchName A String representing the provisional branch
+     */
+    private void doGitCleanAndCheckoutMasterBranch(Git git, String branchName) {
+        if (!git.status().call().clean) {
+            git.stashCreate().call()
+        }
+        Ref ref = git.branchList().call().find { it.name == "master" }
+        if (ref) {
+            git.checkout().setName("master").call()
+        } else {
+            git.checkout().setName("main").call()
+        }
+        git.branchDelete().setBranchNames(branchName).call()
     }
 }
