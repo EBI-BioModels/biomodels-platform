@@ -394,7 +394,7 @@ the user has attempted to update an blank value for the name attribute.""")
         }
     }
 
-    def extractComponentsFromBP(String modelId) {
+    Map extractComponentsFromBP(String modelId) throws IOException {
         return bpToModelDisplayService.getComponentsFromBP(modelId)
     }
     /**

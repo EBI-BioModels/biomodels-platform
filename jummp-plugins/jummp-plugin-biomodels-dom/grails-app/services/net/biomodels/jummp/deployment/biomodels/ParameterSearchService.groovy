@@ -98,6 +98,7 @@ class ParameterSearchService {
         def url = command.getSearchUrl(format)
         HttpURLConnection conn
         Proxy proxy = configurationService.verifyHttpProxy()
+        String result = null
         try {
             if (proxy) {
                 conn = (HttpURLConnection) url.openConnection(proxy)
@@ -124,11 +125,16 @@ class ParameterSearchService {
             if (conn.responseCode < 400) {
                 try {
                     String records = conn.getInputStream().text
-                    return replaceFieldNames(records).replaceAll("\\\\","")
+                    result = replaceFieldNames(records).replaceAll("\\\\","")
                 } catch (IOException e) {
                     LOGGER.error("""Error while getting data from HttpUrlConnection ${conn.dump()} because of \
 the error ${e.message}""")
-                    return null
+                } catch (SocketTimeoutException ste) {
+                    String msg = """Error while trying to retrieve BioModels Paramters from EBI Search due to \
+"${ste.getMessage()}" with the query info wrapped in the command: ${command}""".toString()
+                    LOGGER.error(msg, ste)
+                } finally {
+                    return result
                 }
             } else {
                 LOGGER.error("""Couldn't fetch data from the resource ${url.dump()} because of the error \
@@ -136,13 +142,14 @@ caused by ${conn.getErrorStream().inspect()}""")
                 return null
             }
         } catch (SocketTimeoutException ste) {
-            LOGGER.error("""Error while retrieving records from EBI Search ${ste.getMessage()}, \
-command - ${command}""".toString(), ste)
+            String msg = """Error while trying to connect to EBI Search Server to retrieve BioModels Parameters \
+due to "${ste.getMessage()}" with the query info wrapped in the command: ${command}""".toString()
+            LOGGER.error(msg, ste)
         } catch (IllegalArgumentException iae) {
             LOGGER.error("The proxy setting cannot be null or ${iae.getMessage()}")
         } finally {
             conn.getInputStream().close()
+            return result
         }
-        return null
     }
 }
