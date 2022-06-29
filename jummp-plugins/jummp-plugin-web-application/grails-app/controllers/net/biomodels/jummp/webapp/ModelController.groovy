@@ -925,12 +925,14 @@ approach from the list of suggested values. Otherwise, type 'Other'"""
         boolean isSBMLModel = "SBML" == revision.format.name
         String href = ""
         if (published && isSBMLModel) {
-            String modelMainFileName = repoFiles.find { it.mainFile }.filename
-            String downloadLink = createLink(controller: 'model',
-                action: 'download', params: [id: revision.identifier(), filename: modelMainFileName], absolute: true)
-            String otherParams = "inferNestingOnLoad=true&applyLayoutOnURL=true"
-            href = "https://web.newteditor.org/"
-            href = "$href?URL=${downloadLink}&${otherParams}"
+            String modelMainFileName = repoFiles.find { it?.mainFile }?.filename
+            if (modelMainFileName) {
+                String downloadLink = createLink(controller: 'model',
+                    action: 'download', params: [id: revision.identifier(), filename: modelMainFileName], absolute: true)
+                String otherParams = "inferNestingOnLoad=true&applyLayoutOnURL=true"
+                href = "https://web.newteditor.org/"
+                href = "$href?URL=${downloadLink}&${otherParams}"
+            }
         }
         return href
     }
