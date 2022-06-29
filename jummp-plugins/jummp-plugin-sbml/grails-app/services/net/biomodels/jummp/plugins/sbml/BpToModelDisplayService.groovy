@@ -17,7 +17,7 @@ class BpToModelDisplayService {
         ParameterSearchCommand command = new ParameterSearchCommand()
         command.query = modelId
         ParameterSearchService parameterSearchService = new ParameterSearchService()
-        ParameterSearchResults results = parameterSearchService.getJSONData(command)
+        ParameterSearchResults results = parameterSearchService.getJSONData(command, modelId)
         if (null == results) {
             throw new RuntimeException("No records to display")
         }

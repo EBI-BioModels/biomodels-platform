@@ -6,6 +6,7 @@ import groovy.transform.CompileStatic
 import groovyx.gpars.GParsPool
 import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchCommand
 import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchResults
+import net.biomodels.jummp.utils.redis.Operations
 import org.grails.async.factory.gpars.LoggingPoolFactory
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -30,8 +31,24 @@ class ParameterSearchService {
         return data
     }
 
-    ParameterSearchResults getJSONData(ParameterSearchCommand command) {
-        String searchResults = getData(command, "JSON")
+    ParameterSearchResults getJSONData(ParameterSearchCommand command, String modelId = null) {
+        String searchResults
+        if (modelId) {
+            searchResults = Operations.doRedisHGet("BP", modelId)
+            LOGGER.debug("Retrieving parameters for the model ${modelId} from Redis cache.")
+        }
+        if (!searchResults)  {
+            // fall back to the live search
+            LOGGER.debug("Calling EBI Search to fetch parameters for this model ${modelId} with the query info ${command}")
+            searchResults = getData(command, "JSON")
+            // cache the result on Redis
+            if (searchResults && modelId) {
+                Map map = [:]
+                map.put(modelId, searchResults)
+                Operations.doRedisHSet4BP("BP", map)
+                LOGGER.debug("Caching the parameters for ${modelId} on Redis. ")
+            }
+        }
         if (!searchResults) { return null }
         return ParameterSearchResults.fromJson(JSON.parse(searchResults))
     }

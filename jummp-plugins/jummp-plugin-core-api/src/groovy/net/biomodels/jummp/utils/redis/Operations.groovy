@@ -67,6 +67,12 @@ class Operations implements GrailsConfigurationAware, DisposableBean {
         }
     }
 
+    synchronized static void doRedisHSet4BP(final String key, Map<String, String> data) {
+        jedisPool.getResource().withCloseable { Jedis jedis ->
+            jedis.hmset(key, data)
+        }
+    }
+
     synchronized static void doRedisSet(final String key, final String value) {
         jedisPool.getResource().withCloseable { Jedis jedis ->
             jedis.set(key, value)
