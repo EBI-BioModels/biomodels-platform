@@ -120,5 +120,8 @@ class UrlMappings {
         "/user"(controller:"usermanagement", action:"show")
         "/mommanagement"(controller: "modelOfTheMonth", action: "index")
         "/competition/model-of-the-year-2022"(controller: "competition", action: "modelOfTheYear2022")
+
+        def cmsPrefix = "/cms"
+        "$cmsPrefix/editor/$action?"(controller: "cmsEditor")
     }
 }
