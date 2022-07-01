@@ -36,17 +36,20 @@ class ParameterSearchService {
         if (modelId) {
             searchResults = Operations.doRedisHGet("BP", modelId)
             LOGGER.debug("Retrieving parameters for the model ${modelId} from Redis cache.")
+            println("Retrieving parameters for the model ${modelId} from Redis cache.")
         }
         if (!searchResults)  {
-            // fall back to the live search
-            LOGGER.debug("Calling EBI Search to fetch parameters for this model ${modelId} with the query info ${command}")
+            // fall back to the live search on EBI Search Server
+            LOGGER.debug("Falling back EBI Search Server to fetch parameters for the query: ${command}")
+            println("Falling back EBI Search Server to fetch parameters for the query: ${command}")
             searchResults = getData(command, "JSON")
-            // cache the result on Redis
+            // cache the search results on Redis
             if (searchResults && modelId) {
                 Map map = [:]
                 map.put(modelId, searchResults)
                 Operations.doRedisHSet4BP("BP", map)
-                LOGGER.debug("Caching the parameters for ${modelId} on Redis. ")
+                LOGGER.debug("Caching the parameters for ${modelId} on Redis.")
+                println("Caching the parameters for ${modelId} on Redis.")
             }
         }
         if (!searchResults) { return null }
