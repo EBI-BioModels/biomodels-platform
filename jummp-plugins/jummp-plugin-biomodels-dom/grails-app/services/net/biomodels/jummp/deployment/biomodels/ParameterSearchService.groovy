@@ -6,8 +6,8 @@ import groovy.transform.CompileStatic
 import groovyx.gpars.GParsPool
 import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchCommand
 import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchResults
+import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.utils.redis.Operations
-import org.grails.async.factory.gpars.LoggingPoolFactory
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -44,13 +44,7 @@ class ParameterSearchService {
             println("Falling back EBI Search Server to fetch parameters for the query: ${command}")
             searchResults = getData(command, "JSON")
             // cache the search results on Redis
-            if (searchResults && modelId) {
-                Map map = [:]
-                map.put(modelId, searchResults)
-                Operations.doRedisHSet4BP("BP", map)
-                LOGGER.debug("Caching the parameters for ${modelId} on Redis.")
-                println("Caching the parameters for ${modelId} on Redis.")
-            }
+            doCacheSearchResultsOnRedis(searchResults, modelId)
         }
         if (!searchResults) { return null }
         return ParameterSearchResults.fromJson(JSON.parse(searchResults))
@@ -64,7 +58,6 @@ class ParameterSearchService {
     @Cacheable(value = "csvRecords", key = "#command.query.concat(#command.is_curated)")
     String exportData(ParameterSearchCommand command) {
         int MAX_RECORDS = 100
-        LoggingPoolFactory
         String csvRecords = null
         ParameterSearchResults parameterSearchResults = getJSONData(command)
         command.size = MAX_RECORDS
@@ -103,6 +96,26 @@ class ParameterSearchService {
         }
 
         return searchResults?.join("")
+    }
+
+    void updateRedisCache() {
+        // Notes: BP uses the public identifiers
+        String query = """SELECT M.publicationId FROM Model AS M \
+WHERE M.deleted = :deleted \
+ AND M.firstPublished IS NOT NULL \
+ AND M.publicationId IS NOT NULL \
+ AND M.publicationId != '' \
+ ORDER BY M.publicationId ASC"""
+        List listOfModels = Model.executeQuery(query, [deleted: false])
+        final int POOL_SIZE = 8
+        GParsPool.withPool(POOL_SIZE) {
+            listOfModels.eachParallel { String modelId ->
+                ParameterSearchCommand cmd = new ParameterSearchCommand()
+                cmd.query += modelId
+                String searchResults = getData(cmd, "JSON")
+                doCacheSearchResultsOnRedis(searchResults, modelId)
+            }
+        }
     }
 
     private static String removeHeader(String csvData) {
@@ -170,6 +183,16 @@ due to "${ste.getMessage()}" with the query info wrapped in the command: ${comma
         } finally {
             conn.getInputStream().close()
             return result
+        }
+    }
+
+    private void doCacheSearchResultsOnRedis(String searchResults, String modelId) {
+        if (searchResults && modelId) {
+            Map map = [:]
+            map.put(modelId, searchResults)
+            Operations.doRedisHSet4BP("BP", map)
+            LOGGER.debug("Caching the parameters for ${modelId} on Redis.")
+            println("Caching the parameters for ${modelId} on Redis.")
         }
     }
 }
