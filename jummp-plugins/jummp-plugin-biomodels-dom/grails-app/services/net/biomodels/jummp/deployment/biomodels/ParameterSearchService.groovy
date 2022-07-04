@@ -111,7 +111,7 @@ WHERE M.deleted = :deleted \
         GParsPool.withPool(POOL_SIZE) {
             listOfModels.eachParallel { String modelId ->
                 ParameterSearchCommand cmd = new ParameterSearchCommand()
-                cmd.query += modelId
+                cmd.query = modelId
                 String searchResults = getData(cmd, "JSON")
                 doCacheSearchResultsOnRedis(searchResults, modelId)
             }
