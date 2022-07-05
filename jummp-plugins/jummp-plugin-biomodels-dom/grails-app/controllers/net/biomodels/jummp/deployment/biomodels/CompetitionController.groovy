@@ -25,13 +25,13 @@ import grails.plugin.springsecurity.annotation.Secured
 @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
 class CompetitionController {
     def featureService
-
-    def index() {
-        render "Under construction"
-    }
+    def cmsContentService
 
     def modelOfTheYear2022() {
-        String content = featureService.getContentForModelOfTheYear2022CompetitionPage()
-        render(view: "model-of-the-year-2022", model: [content: content])
+        List result = featureService.getContentForModelOfTheYear2022CompetitionPage()
+        Long id = result[0] ?: null
+        String content = result[1] ?: ""
+        boolean canEdit = cmsContentService.canEdit()
+        render(view: "model-of-the-year-2022", model: [id: id, content: content, canEdit: canEdit])
     }
 }

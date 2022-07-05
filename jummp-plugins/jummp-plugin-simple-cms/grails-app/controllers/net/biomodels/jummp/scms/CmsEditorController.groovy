@@ -37,6 +37,8 @@ class CmsEditorController {
     }
 
     def edit() {
+        LOGGER.debug("Started editing content...")
+        println("Started editing content...")
         Long id = params.long("id")
         if (!id) {
             render(controller: "errors", view: "error404")

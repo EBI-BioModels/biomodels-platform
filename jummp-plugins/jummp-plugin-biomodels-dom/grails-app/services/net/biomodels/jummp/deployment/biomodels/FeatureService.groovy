@@ -56,10 +56,10 @@ order by createdOn desc"""
         newsItem[0]?.content
     }
 
-    String getContentForModelOfTheYear2022CompetitionPage() {
-        def newsQuery = """from WcmContent where aliasURI = :aliasuri and status.code = :code \
+    List getContentForModelOfTheYear2022CompetitionPage() {
+        def newsQuery = """FROM WcmContent where aliasURI = :aliasuri and status.code = :code \
 order by createdOn desc"""
         def newsItem = WcmContent.executeQuery(newsQuery, [aliasuri: 'model-of-the-year-2022-competition', code: 300], [max: 1])
-        newsItem[0]?.content
+        [newsItem[0]?.id, newsItem[0]?.content]
     }
 }

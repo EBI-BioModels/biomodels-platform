@@ -15,5 +15,6 @@
 
 <body>
     ${content}
+    <g:render template="/templates/actionButtons" plugin="jummp-plugin-biomodels-dom" />
 </body>
 </html>

@@ -30,6 +30,9 @@ import org.slf4j.LoggerFactory
 class CmsContentService {
     private static final Logger LOGGER = LoggerFactory.getLogger(CmsContentService.class)
 
+    def springSecurityService
+    def userService
+
     Map fromCommandObject(CCTC cmd) {
         cmd.content = cmd.content.decodeHTML()
         User createdBy = User.findByUsername(cmd.createdBy)
@@ -75,5 +78,13 @@ class CmsContentService {
                 [aliasURI: cmd.aliasURI])?.first()
         }
         content
+    }
+
+    // allows only admin and curators to edit and create contents
+    boolean canEdit() {
+        boolean isLoggedIn = springSecurityService.isLoggedIn()
+        if (!isLoggedIn) { return false }
+        boolean hasAdminOrCuratorRole = userService.isLoggedInUserACurator() || userService.isLoggedInUserAAdmin()
+        hasAdminOrCuratorRole
     }
 }
