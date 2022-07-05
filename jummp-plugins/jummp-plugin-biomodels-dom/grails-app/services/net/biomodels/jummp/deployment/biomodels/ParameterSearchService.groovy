@@ -4,8 +4,8 @@ import grails.converters.JSON
 import grails.plugin.cache.Cacheable
 import groovy.transform.CompileStatic
 import groovyx.gpars.GParsPool
-import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchCommand
-import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchResults
+import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchCommand as ParamSC
+import net.biomodels.jummp.deployment.biomodels.parameters.ParameterSearchResults as ParamSR
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.utils.redis.Operations
 import org.slf4j.Logger
@@ -31,7 +31,7 @@ class ParameterSearchService {
         return data
     }
 
-    ParameterSearchResults getJSONData(ParameterSearchCommand command, String modelId = null) {
+    ParamSR getJSONData(ParamSC command, String modelId = null) {
         String searchResults
         if (modelId) {
             searchResults = Operations.doRedisHGet("BP", modelId)
@@ -47,19 +47,19 @@ class ParameterSearchService {
             doCacheSearchResultsOnRedis(searchResults, modelId)
         }
         if (!searchResults) { return null }
-        return ParameterSearchResults.fromJson(JSON.parse(searchResults))
+        return ParamSR.fromJson(JSON.parse(searchResults))
     }
 
-    String getCSVData(ParameterSearchCommand command) {
+    String getCSVData(ParamSC command) {
         return getData(command, "CSV")
     }
 
     @CompileStatic
     @Cacheable(value = "csvRecords", key = "#command.query.concat(#command.is_curated)")
-    String exportData(ParameterSearchCommand command) {
+    String exportData(ParamSC command) {
         int MAX_RECORDS = 100
         String csvRecords = null
-        ParameterSearchResults parameterSearchResults = getJSONData(command)
+        ParamSR parameterSearchResults = getJSONData(command)
         command.size = MAX_RECORDS
         int recordsTotal = parameterSearchResults.recordsTotal
 
@@ -76,13 +76,13 @@ class ParameterSearchService {
         return csvRecords
     }
 
-    String assembleSearchResultsUsingGPars(ParameterSearchCommand command, int total, int MAX_RECORDS) {
+    String assembleSearchResultsUsingGPars(ParamSC command, int total, int MAX_RECORDS) {
         final int batchCount = Math.floor(total / MAX_RECORDS)
         def searchResults = null
         GParsPool.withPool(100) {
             searchResults = (0..batchCount).collectParallel { int page ->
                 String query = command.query
-                def thisCmd = new ParameterSearchCommand(query: query, start: page * MAX_RECORDS,
+                def thisCmd = new ParamSC(query: query, start: page * MAX_RECORDS,
                     size: MAX_RECORDS, is_curated: command.is_curated)
                 String result = ""
                 try {
@@ -124,7 +124,7 @@ WHERE M.deleted = :deleted \
         return csvData.substring(indexOfNewLineChar + 1)
     }
 
-    private static String getData(ParameterSearchCommand command, String format) {
+    private static String getData(ParamSC command, String format) {
         if (!command) {
             throw new IllegalArgumentException("Couldn't read the request parameters");
         }
