@@ -21,6 +21,7 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import grails.transaction.Transactional
+import net.biomodels.jummp.scms.CmsContent
 import org.weceem.content.WcmContent
 
 @Transactional
@@ -57,9 +58,9 @@ order by createdOn desc"""
     }
 
     List getContentForModelOfTheYear2022CompetitionPage() {
-        def newsQuery = """FROM WcmContent where aliasURI = :aliasuri and status.code = :code \
+        def newsQuery = """FROM CmsContent where aliasURI = :aliasuri \
 order by createdOn desc"""
-        def newsItem = WcmContent.executeQuery(newsQuery, [aliasuri: 'model-of-the-year-2022-competition', code: 300], [max: 1])
+        def newsItem = CmsContent.executeQuery(newsQuery, [aliasuri: 'model-of-the-year-2022-competition'], [max: 1])
         [newsItem[0]?.id, newsItem[0]?.content]
     }
 }
