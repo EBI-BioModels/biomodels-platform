@@ -20,6 +20,8 @@
 
 package net.biomodels.jummp.scms
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.security.access.annotation.Secured
 import net.biomodels.jummp.scms.CmsContentTransportCommand as CCTC
 import net.biomodels.jummp.plugins.security.User
@@ -28,6 +30,7 @@ import java.text.SimpleDateFormat
 
 @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
 class CmsEditorController {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CmsEditorController.class)
 
     def cmsContentService
     def userService
