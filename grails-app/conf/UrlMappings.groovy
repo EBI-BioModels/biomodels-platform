@@ -123,5 +123,7 @@ class UrlMappings {
 
         def cmsPrefix = "/cms"
         "$cmsPrefix/editor/$action?"(controller: "cmsEditor")
+        "$cmsPrefix/editor/edit/$id?"(controller: "cmsEditor", action: "edit")
+        "$cmsPrefix/content/$action?"(controller: "cmsContent")
     }
 }
