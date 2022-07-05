@@ -23,9 +23,12 @@ package net.biomodels.jummp.scms
 import grails.transaction.Transactional
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.scms.CmsContentTransportCommand as CCTC
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 @Transactional
 class CmsContentService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CmsContentService.class)
 
     Map fromCommandObject(CCTC cmd) {
         cmd.content = cmd.content.decodeHTML()

@@ -51,4 +51,9 @@ class CmsContentTransportCommand implements Serializable {
             createdBy: obj.createdBy.username, createdOn: obj.createdOn,
             lastChangedBy: obj.lastChangedBy.username, lastChangedOn: obj.lastChangedOn)
     }
+
+    String toString() {
+        """[$id] $title: $aliasURI: $description, created on $createdOn by $createdBy, \
+updated on $lastChangedOn by $lastChangedBy""".toString()
+    }
 }

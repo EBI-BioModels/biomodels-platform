@@ -25,20 +25,20 @@ import net.biomodels.jummp.scms.CmsContentTransportCommand as CCTC
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.security.access.annotation.Secured
-import net.biomodels.jummp.plugins.security.User
 
 import java.text.SimpleDateFormat
 
-
 @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
 class CmsContentController {
-    private static final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
+    private static final Logger LOGGER = LoggerFactory.getLogger(CmsContentController.class)
 
     def cmsContentService
     def userService
 
     def create() {
         // -1 is a fake id that will be granted a valid value
+        LOGGER.debug("Started creating new content...")
+        println("Started creating new content...")
         CCTC content = new CCTC(id: -1,
             createdBy: userService.username, createdOn: new Date(),
             lastChangedBy: userService.username, lastChangedOn: new Date())
@@ -49,7 +49,9 @@ class CmsContentController {
 
     def save(CCTC cmd) {
         Map result = [:]
-        LOGGER.debug(cmd.dump())
+        String action = cmd.id == -1 ? "creating" : "saving"
+        LOGGER.debug("Started $action the following content into the database...\n${cmd.toString()} ")
+        println("Started $action the following content into the database...\n${cmd.toString()}")
 
         String message = ""
         String status = ""

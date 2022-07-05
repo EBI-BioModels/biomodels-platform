@@ -313,6 +313,7 @@ log4j.main = {
         'net.biomodels.jummp.deployment.biomodels',
         'net.biomodels.jummp.plugins.pharmml',
         'net.biomodels.jummp.plugins.configuration',
+        'net.biomodels.jummp.scms',
         'net.biomodels.jummp.search',
         'net.biomodels.jummp.security',
         'net.biomodels.jummp.utils.redis',
@@ -335,6 +336,7 @@ log4j.main = {
         'net.biomodels.jummp.core.OldFilesExchangeCleanerJob',
         'net.biomodels.jummp.core.RegistrationCheckerJob',
         'net.biomodels.jummp.core.SearchIndexOptimiserJob',
+        'net.biomodels.jummp.core.UpdateCachedParametersOnRedisJob',
     ], additivity: false
 
     warn hibernateAppender: [
