@@ -31,7 +31,7 @@ class UpdateCachedParametersOnRedisJob {
     static triggers = {
         // execute job once in 10 seconds for development;
         // has to be set an appropriate repeat interval later for testing
-        //simple name: "updateParametersCachedOnRedis", startDelay: 10000, repeatInterval: 7_200_000L
+//        simple name: "updateParametersCachedOnRedis", startDelay: 10000, repeatInterval: 7_200_000L
 
         // the job is run at 02:00 P.M. on Wednesday every week
         cron name: "updateParametersCachedOnRedis", cronExpression: "0 0 10 ? * TUE"
@@ -42,7 +42,14 @@ class UpdateCachedParametersOnRedisJob {
 QuartzJob: Started updating the cached parameters on Redis."""
         LOGGER.info(msgLog)
         println(msgLog)
-        parameterSearchService.updateRedisCache()
+        try {
+            parameterSearchService.updateRedisCache()
+        } catch (SocketTimeoutException ste) {
+            msgLog = """\
+There have been some connections timed out. Please try to update Redis cache for the model manually."""
+            LOGGER.debug(msgLog, ste)
+            println(msgLog)
+        }
         msgLog = "QuartzJob: Completed updating the cached parameters on Redis."
         LOGGER.info(msgLog)
         println(msgLog)

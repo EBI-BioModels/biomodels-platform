@@ -50,6 +50,7 @@ QuartzJob: Refreshing Redis cached data for widgets shown on the home page"""
         LOGGER.info(msgLog)
         println(msgLog)
         decorationService.updateDataForWidgetsOnHomePage()
+        LOGGER.info("QuartzJob: Finishing the update of Redis cache")
         println("QuartzJob: Finishing the update of Redis cache")
     }
 }

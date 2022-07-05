@@ -98,7 +98,7 @@ class ParameterSearchService {
         return searchResults?.join("")
     }
 
-    void updateRedisCache() {
+    void updateRedisCache() throws SocketTimeoutException {
         // Notes: BP uses the public identifiers
         String query = """SELECT M.publicationId FROM Model AS M \
 WHERE M.deleted = :deleted \
