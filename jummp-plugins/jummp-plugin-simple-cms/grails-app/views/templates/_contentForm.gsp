@@ -5,6 +5,10 @@
     .ck {
         padding-bottom: 10px;
     }
+    #contentBody {
+        border: 1px solid lightgrey;
+        margin-bottom: 10px;
+    }
 </style>
 <form class="form-horizontal">
     <div class="row">
@@ -65,9 +69,16 @@
 
     <div class="row">
         <div class="columns small-12 medium-12 large-12">
-        <label for="contentBody" class="col-sm-2 control-label">Body <span style="color: red">(*)</span>
-            <textarea id="contentBody" name="contentBody" aria-multiline="true" rows="10"
+            <label for="contentBody" class="col-sm-2 control-label">Body <span style="color: red">(*)</span></label>
+            <!-- The toolbar will be rendered in this container. -->
+            <div id="toolbar-container"></div>
+            <div id="contentBody">${content?.content}</div>
+            <!-- Below is used with Classic Editor or CKEDITOR 4 -->
+            <!--
+            <label for="contentBody" class="col-sm-2 control-label">Body <span style="color: red">(*)</span>
+            <textarea id="contentBody" name="contentBody" aria-multiline="true" rows="20"
                 style="white-space: pre-wrap">${content?.content}</textarea></label>
+            -->
         </div>
     </div>
 
@@ -85,7 +96,7 @@
     </div>
 </form>
 <!-- Optional theme -->
-<script src="https://cdn.ckeditor.com/ckeditor5/34.2.0/classic/ckeditor.js"></script>
+<script src="https://cdn.ckeditor.com/ckeditor5/34.2.0/decoupled-document/ckeditor.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.1.4/toastr.min.js"></script>
 
 <g:javascript>
@@ -95,21 +106,22 @@
 
     let editor;
     $(document).ready(function () {
-        ClassicEditor
-            .create(document.querySelector('#contentBody'))
-            .then(newEditor => {
-                editor = newEditor;
-            })
-            .catch(error => {
-                console.error(error);
-            });
+        DecoupledEditor
+        .create(document.querySelector('#contentBody'))
+        .then( newEditor => {
+            editor = newEditor;
+            const toolbarContainer = document.querySelector('#toolbar-container');
+            toolbarContainer.appendChild(newEditor.ui.view.toolbar.element);
+        })
+        .catch( error => {
+            console.error(error);
+        });
     });
 
     $('#btnSave, #btnCreate').on("click", function (event) {
         "use strict";
         event.preventDefault();
         const data = buildCmsContentTransportCommand();
-        console.log(data);
         $.ajax({
             type: "POST",
             url: $.jummp.createLink("cmsContent", "save"),
