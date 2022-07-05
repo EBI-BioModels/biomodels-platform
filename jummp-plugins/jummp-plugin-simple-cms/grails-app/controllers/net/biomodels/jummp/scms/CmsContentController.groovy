@@ -35,12 +35,13 @@ class CmsContentController {
     private static final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
 
     def cmsContentService
+    def userService
 
     def create() {
         // -1 is a fake id that will be granted a valid value
         CCTC content = new CCTC(id: -1,
-            createdBy: "tung", createdOn: new Date(),
-            lastChangedBy: "tung", lastChangedOn: new Date())
+            createdBy: userService.username, createdOn: new Date(),
+            lastChangedBy: userService.username, lastChangedOn: new Date())
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
 
         [content: content, dateFormat: dateFormat]

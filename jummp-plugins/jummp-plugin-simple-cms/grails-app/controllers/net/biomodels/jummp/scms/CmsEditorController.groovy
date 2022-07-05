@@ -30,6 +30,7 @@ import java.text.SimpleDateFormat
 class CmsEditorController {
 
     def cmsContentService
+    def userService
 
     def index() {
         render "index"
@@ -50,6 +51,7 @@ class CmsEditorController {
                 return false
             }
             cntCmd = CCTC.toCommandObject(content)
+            cntCmd.lastChangedBy = userService.username
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
             [id: content.id, content: cntCmd, dateFormat: dateFormat]
         }
