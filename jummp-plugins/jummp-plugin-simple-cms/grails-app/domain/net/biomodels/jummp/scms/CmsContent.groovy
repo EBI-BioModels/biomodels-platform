@@ -20,6 +20,8 @@
 
 package net.biomodels.jummp.scms
 
+import grails.persistence.Entity
+import grails.validation.Validateable
 import net.biomodels.jummp.plugins.security.User
 
 /**
@@ -28,6 +30,8 @@ import net.biomodels.jummp.plugins.security.User
  *
  * Author: tnguyen@ebi.ac.uk, nvntung@gmail.com
  */
+@Entity
+@Validateable
 class CmsContent implements Serializable {
     private static final long serialVersionUID = 1L
     static MAX_CONTENT_SIZE = 500_000
@@ -35,16 +39,13 @@ class CmsContent implements Serializable {
     String title
     String description
     String content
-    SortedSet children
+    CmsContent parent
     String aliasURI
     User createdBy
     Date createdOn
     User lastChangedBy
     Date lastChangedOn
 
-    static belongsTo = [parent: CmsContent]
-    static hasOne = [parent: CmsContent]
-    static hasMany = [children: CmsContent]
     static constraints = {
         content(nullable: true, maxSize: CmsContent.MAX_CONTENT_SIZE)
         parent(nullable: true, lazy: true)
@@ -55,7 +56,6 @@ class CmsContent implements Serializable {
     static mapping = {
         columns {
             content type: "text"
-            children cascade: "all", lazy: true
             aliasURI index: "content_aliasURI_Idx"
         }
     }
