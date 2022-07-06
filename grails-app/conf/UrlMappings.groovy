@@ -125,5 +125,6 @@ class UrlMappings {
         "$cmsPrefix/editor/$action?"(controller: "cmsEditor")
         "$cmsPrefix/editor/edit/$id?"(controller: "cmsEditor", action: "edit")
         "$cmsPrefix/content/$action?"(controller: "cmsContent")
+        "$cmsPrefix/content/show/$id?"(controller: "cmsContent", action: "show")
     }
 }

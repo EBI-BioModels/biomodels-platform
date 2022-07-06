@@ -48,6 +48,29 @@ class CmsContentController {
         [content: content, dateFormat: dateFormat]
     }
 
+    def show() {
+        LOGGER.debug("Started showing content...")
+        println("Started showing content...")
+        Long id = params.long("id")
+        if (!id) {
+            render(controller: "errors", view: "error404")
+            return
+        } else {
+            CCTC cntCmd = new CCTC(id: id)
+            CmsContent content = cmsContentService.findByTransportCommand(cntCmd)
+            if (!content) {
+                String resource = "/cms/edit/$id"
+                render(plugin: "jummp-plugin-web-application", controller: "errors", view: "error404",
+                    model: [resource: resource])
+                return false
+            }
+            cntCmd = CCTC.toCommandObject(content)
+            cntCmd.lastChangedBy = userService.username
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+            [id: content.id, content: cntCmd, dateFormat: dateFormat]
+        }
+    }
+
     def save(CCTC cmd) {
         Map result = [:]
         String action = cmd.id == -1 ? "creating" : "saving"

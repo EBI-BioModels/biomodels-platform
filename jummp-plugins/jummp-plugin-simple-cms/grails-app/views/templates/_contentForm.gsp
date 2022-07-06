@@ -87,6 +87,8 @@
             <button type="button" id="btnDashboard" class="button btn-default">Dashboard</button>
             <button type="reset" class="button btn-default">Reset</button>
             <g:if test="${actionName == 'edit'}">
+                <button type="button" class="button btn-default"
+                        onclick="redirectToShow()">Show</button>
                 <button type="button" class="button" id="btnSave">Save</button>
             </g:if>
             <g:else>
@@ -227,4 +229,8 @@
             $(this).val(datetext);
         }
     });
+
+    function redirectToShow() {
+        window.location.href = "${createLink(uri: "/cms/content/show/$id")}";
+    }
 </g:javascript>
