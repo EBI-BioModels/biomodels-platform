@@ -55,7 +55,7 @@ grails.project.dependency.resolution = {
         compile ":cache-ehcache:1.0.5"
         runtime (":weceem:1.4") {
             /* feeds plugin clashes with rome api rendering Model of The Month RSS feed */
-            excludes "feeds"
+            excludes "feeds", "jquery"
         }
     }
 }

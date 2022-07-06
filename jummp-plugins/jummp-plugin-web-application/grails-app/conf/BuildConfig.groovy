@@ -78,8 +78,6 @@ grails.project.dependency.resolution = {
 
     plugins {
         build ":tomcat:7.0.55.3"
-
-        runtime ":jquery-datatables:1.7.5"
     }
 }
 grails.plugin.location.'jummp-plugin-core-api'="../jummp-plugin-core-api"
