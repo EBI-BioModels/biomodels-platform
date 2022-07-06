@@ -88,7 +88,7 @@
             <button type="reset" class="button btn-default">Reset</button>
             <g:if test="${actionName == 'edit'}">
                 <button type="button" class="button btn-default"
-                        onclick="redirectToShow()">Show</button>
+                        onclick="redirectToShow(${id})">Show</button>
                 <button type="button" class="button" id="btnSave">Save</button>
             </g:if>
             <g:else>
@@ -142,6 +142,12 @@
             toastr.clear();
             if (status === "Succeeded") {
                 toastr.success(message);
+                if ("${actionName}" === "create") {
+                    toastr.warning("Your content has been created successfully. Please wait 5s before redirecting...");
+                    setTimeout(function() {
+                        redirectToShow(data.id);
+                    }, 5000);
+                }
             } else if (status == "Failed") {
                 toastr.error(message);
             }
@@ -230,7 +236,7 @@
         }
     });
 
-    function redirectToShow() {
-        window.location.href = "${createLink(uri: "/cms/content/show/$id")}";
+    function redirectToShow(id) {
+        window.location.href = "${createLink(uri: "/cms/content/show/")}" + id;
     }
 </g:javascript>

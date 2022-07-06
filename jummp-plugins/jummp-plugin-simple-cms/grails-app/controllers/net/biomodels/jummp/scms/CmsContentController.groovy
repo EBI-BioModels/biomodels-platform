@@ -79,6 +79,7 @@ class CmsContentController {
 
         String message = ""
         String status = ""
+        Long id = -1
         if (cmd?.validate()) {
             Map contentMap = cmsContentService.fromCommandObject(cmd)
             CmsContent content = contentMap.get("content")
@@ -86,16 +87,18 @@ class CmsContentController {
             if (message == "Success") {
                 status = "Succeeded"
                 message = "Saved content successfully"
+                id = content.id
             } else {
                 status = "Failed"
                 message = "Failed to save content"
             }
         } else {
-            status = "Succeeded"
+            status = "Failed"
             message = "Data invalid: ${cmd.errors.toString()}"
         }
         result.put("status", status)
         result.put("message", message)
+        result.put("id", id)
         render(result as JSON)
     }
 
