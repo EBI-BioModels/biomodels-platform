@@ -22,6 +22,7 @@ package net.biomodels.jummp.scms
 
 import grails.converters.JSON
 import net.biomodels.jummp.scms.CmsContentTransportCommand as CCTC
+import net.biomodels.jummp.utils.Slug
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.security.access.annotation.Secured
@@ -73,5 +74,11 @@ class CmsContentController {
         result.put("status", status)
         result.put("message", message)
         render(result as JSON)
+    }
+
+    def generateSlug() {
+        String title = params.title.decodeHTML()
+        String slug = Slug.make(title)
+        render([slug: slug] as JSON)
     }
 }

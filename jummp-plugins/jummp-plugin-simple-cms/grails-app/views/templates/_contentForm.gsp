@@ -188,6 +188,28 @@
         return cmsContentTC;
     }
 
+    $('#title').on("blur", function() {
+        const title = $(this).val();
+        if (title) {
+            const data = { 'title': title };
+            let message = "";
+            $.ajax({
+                type: "POST",
+                url: $.jummp.createLink("cmsContent", "generateSlug"),
+                cache: true,
+                processData: true,
+                dataType: "json",
+                data: data,
+            }).done(function (data, txtStatus, jqXHR) {
+                let slug = data.slug
+                $('#aliasURI').val(slug);
+            }).fail(function (jqXHR, status, errorThrown) {
+                message = jqXHR.statusText;
+                console.log(message);
+            });
+        }
+    });
+
     $('#createdOn').datepicker({
         dateFormat: 'yy-mm-dd',
         onSelect: function(datetext) {
