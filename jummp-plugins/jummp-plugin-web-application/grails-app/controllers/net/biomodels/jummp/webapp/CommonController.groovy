@@ -20,6 +20,7 @@
 
 package net.biomodels.jummp.webapp
 
+import grails.util.Environment
 import grails.util.Holders
 import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
 
@@ -29,6 +30,7 @@ import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
  * @author <a href="mailto:tung.nguyen@ebi.ac.uk">Tung Nguyen</a>
  */
 class CommonController implements GrailsConfigurationAware {
+    static String bmStaticAssetsURL
     static String layout
     static String serverURL
     static String manualURL
@@ -41,5 +43,10 @@ class CommonController implements GrailsConfigurationAware {
         grailsApplication = Holders.grailsApplication
         manualURL = grailsApplication.config.jummp.context.help.root
         serverURL = grailsApplication.config.grails.serverURL
+        if (Environment.current != Environment.PRODUCTION) {
+            bmStaticAssetsURL = "https://wwwdev.ebi.ac.uk/biomodels/static-assets"
+        } else {
+            bmStaticAssetsURL = "https://www.ebi.ac.uk/biomodels/static-assets"
+        }
     }
 }

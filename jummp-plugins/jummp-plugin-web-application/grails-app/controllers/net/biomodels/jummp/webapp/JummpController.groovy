@@ -98,7 +98,9 @@ class JummpController extends CommonController {
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def howToCiteBioModelsDatabase() {
         detectTheme()
-        render(view: "howToCite", model: [titleCode: "jummp.howToCite.${theme}.title"])
+        render(view: "howToCite",
+            model: [titleCode: "jummp.howToCite.${theme}.title",
+                    manualUrl: manualURL, serverUrl: serverURL, bmStaticAssetsURL: bmStaticAssetsURL])
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
