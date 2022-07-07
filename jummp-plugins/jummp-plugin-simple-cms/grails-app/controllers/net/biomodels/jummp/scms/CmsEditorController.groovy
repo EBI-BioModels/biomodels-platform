@@ -43,22 +43,7 @@ class CmsEditorController {
         LOGGER.debug("Started editing content...")
         println("Started editing content...")
         Long id = params.long("id")
-        if (!id) {
-            render(controller: "errors", view: "error404")
-            return
-        } else {
-            CCTC cntCmd = new CCTC(id: id)
-            CmsContent content = cmsContentService.findByTransportCommand(cntCmd)
-            if (!content) {
-                String resource = "/cms/edit/$id"
-                render(plugin: "jummp-plugin-web-application", controller: "errors", view: "error404",
-                    model: [resource: resource])
-                return false
-            }
-            cntCmd = CCTC.toCommandObject(content)
-            cntCmd.lastChangedBy = userService.username
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
-            [id: content.id, content: cntCmd, dateFormat: dateFormat]
-        }
+        Map data = cmsContentService.findDataAndRenderView(id, "edit")
+        render(plugin: data.plugin, controller: data.controller, view: data.view, model: data.model)
     }
 }

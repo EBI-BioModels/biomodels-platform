@@ -26,6 +26,8 @@ import net.biomodels.jummp.scms.CmsContentTransportCommand as CCTC
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+import java.text.SimpleDateFormat
+
 @Transactional
 class CmsContentService {
     private static final Logger LOGGER = LoggerFactory.getLogger(CmsContentService.class)
@@ -78,6 +80,37 @@ class CmsContentService {
                 [aliasURI: cmd.aliasURI])?.first()
         }
         content
+    }
+
+    Map findDataAndRenderView(Long id, String mainView) {
+        Map model = [:]
+        String plugin
+        String controller
+        String view
+        if (!id) {
+            plugin = "jummp-plugin-web-application"
+            controller = "errors"
+            view = "error404"
+        } else {
+            CCTC cntCmd = new CCTC(id: id)
+            CmsContent content = findByTransportCommand(cntCmd)
+            if (!content) {
+                String resource = "/cms/edit/$id"
+                model = ["resource": resource]
+                plugin = "jummp-plugin-web-application"
+                controller = "errors"
+                view = "error404"
+            } else {
+                cntCmd = CCTC.toCommandObject(content)
+                cntCmd.lastChangedBy = userService.username
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
+                model = [id: content.id, content: cntCmd, dateFormat: dateFormat]
+                plugin = "jummp-plugin-simple-cms"
+                controller = "cmsContent"
+                view = mainView
+            }
+        }
+        [plugin: plugin, controller: controller, view: view, model: model]
     }
 
     // allows only admin and curators to edit and create contents
