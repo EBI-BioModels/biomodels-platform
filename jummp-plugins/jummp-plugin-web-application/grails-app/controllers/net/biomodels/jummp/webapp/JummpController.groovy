@@ -40,91 +40,90 @@ class JummpController extends CommonController {
 
     final List<String> AUDIT_EXCEPTIONS = ['support', 'aboutus', 'contactus', 'lookupUser',
                                            'autoCompleteUser', 'teamLookup']
-    String theme
 
     //def beforeInterceptor = [action: this.&detectTheme, except: AUDIT_EXCEPTIONS]
 
-    private void detectTheme() {
-        theme = grailsApplication.config.jummp.branding.style
-        if (!theme)
-            theme = 'default'
-    }
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def support() {
-        detectTheme()
-        [messageCode: "jummp.support.${theme}.message",
-         titleCode: "jummp.support.${theme}.title"]
+        Map model = COMMON_PROPERTIES
+        model.putAll(["messageCode": "jummp.support.${theme}.message",
+                      "titleCode": "jummp.support.${theme}.title"])
+        model
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def faq() {
-        detectTheme()
+        Map model = COMMON_PROPERTIES
         String titlePage = messageSource.getMessage("jummp.faq.${theme}.title", null, Locale.ENGLISH)
         titlePage += " | BioModels"
-        render(view: "faq",
-            model: [
-                titleCode: "jummp.faq.${theme}.title",
-                titlePage: titlePage,
-                manualUrl: manualURL, serverUrl: serverURL])
+        model.putAll(["titleCode": "jummp.faq.${theme}.title", titlePage: titlePage])
+        model
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def courses() {
-        detectTheme()
-        render(view: "courses", model: [titleCode: "jummp.courses.${theme}.title"])
+        Map model = COMMON_PROPERTIES
+        model.put("titleCode", "jummp.courses.${theme}.title")
+        model
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def aboutus() {
-        detectTheme()
-        [messageCode: "jummp.aboutus.${theme}.message",
-         titleCode: "jummp.aboutus.${theme}.title"]
+        Map model = COMMON_PROPERTIES
+        model.putAll([messageCode: "jummp.aboutus.${theme}.message",
+                      titleCode: "jummp.aboutus.${theme}.title"])
+        model
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def contactus() {
-        detectTheme()
-        [messageCode: "jummp.contactus.${theme}.message",
-         titleCode: "jummp.contactus.${theme}.title"]
+        Map model = COMMON_PROPERTIES
+        model.putAll([messageCode: "jummp.contactus.${theme}.message",
+                      titleCode: "jummp.contactus.${theme}.title"])
+        model
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def termsOfUse() {
-        detectTheme()
-        [messageCode: "jummp.termsOfUse.${theme}.message",
-         titleCode: "jummp.termsOfUse.${theme}.title"]
+        Map model = COMMON_PROPERTIES
+        model.putAll([messageCode: "jummp.termsOfUse.${theme}.message",
+                      titleCode: "jummp.termsOfUse.${theme}.title"])
+        model
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def howToCiteBioModelsDatabase() {
-        detectTheme()
-        render(view: "howToCite",
-            model: [titleCode: "jummp.howToCite.${theme}.title",
-                    manualUrl: manualURL, serverUrl: serverURL, bmStaticAssetsURL: bmStaticAssetsURL])
+        Map model = COMMON_PROPERTIES
+        model.put("titleCode", "jummp.howToCite.${theme}.title")
+        render(view: "howToCite", model: model)
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def acknowledgements() {
-        detectTheme()
-        render(view: "acknowledgements", model: [titleCode: "jummp.acknowledgements.${theme}.title"])
+        Map model = COMMON_PROPERTIES
+        model.put("titleCode", "jummp.acknowledgements.${theme}.title")
+        render(view: "acknowledgements", model: model)
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def jobs() {
-        detectTheme()
-        render(view: "jobs", model: [titleCode: "jummp.jobs.${theme}.title"])
+        Map model = COMMON_PROPERTIES
+        model.put("titleCode", "jummp.jobs.${theme}.title")
+        model
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def curatorZone() {
-        detectTheme()
-        render(view: "curatorZone", model: [titleCode: "jummp.curatorZone.${theme}.title"])
+        Map model = COMMON_PROPERTIES
+        model.put("titleCode", "jummp.curatorZone.${theme}.title")
+        render(view: "curatorZone", model: model)
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def developerZone() {
-        detectTheme()
-        render(view: "developerZone", model: [titleCode: "jummp.developerZone.${theme}.title"])
+        Map model = COMMON_PROPERTIES
+        model.put("titleCode", "jummp.developerZone.${theme}.title")
+        render(view: "developerZone", model: model)
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])

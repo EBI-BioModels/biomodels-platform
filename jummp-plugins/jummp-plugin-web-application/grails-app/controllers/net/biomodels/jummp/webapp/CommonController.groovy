@@ -34,6 +34,8 @@ class CommonController implements GrailsConfigurationAware {
     static String layout
     static String serverURL
     static String manualURL
+    static String theme
+    static Map COMMON_PROPERTIES = [:]
 
     def grailsApplication
 
@@ -48,5 +50,14 @@ class CommonController implements GrailsConfigurationAware {
         } else {
             bmStaticAssetsURL = "https://www.ebi.ac.uk/biomodels/static-assets"
         }
+        theme = grailsApplication.config.jummp.branding.style
+        if (!theme) theme = "default"
+        COMMON_PROPERTIES = [
+            "bmStaticAssetsURL": bmStaticAssetsURL,
+            "layout": layout,
+            "manualURL": manualURL,
+            "serverURL": serverURL,
+            "theme": theme
+        ]
     }
 }

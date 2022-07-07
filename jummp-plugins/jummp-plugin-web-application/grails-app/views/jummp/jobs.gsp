@@ -33,7 +33,7 @@
 <h3 style="border-bottom: 1px solid grey">
     Curation internship: Literature curation of mechanistic models of Genome-Scale metabolic models</h3>
 
-<p><a href="http://www.ebi.ac.uk/biomodels/" title="BioModels Database">BioModels</a> is a
+<p><a href="${serverURL}" title="BioModels Database">BioModels</a> is a
 central repository of mathematical models of biological/biomedical processes. It is hosted
 at EMBL-EBI and is one of the resources of the molecular systems cluster. The models
 distributed through BioModels are extensively tested and encoded in standard formats
@@ -43,7 +43,7 @@ ontologies, which facilitates search and retrieval, and maximises the benefits o
 growing number of already existing models.</p>
 <div class="row">
     <div class="columns small-12 medium-4 large-4">
-        <img src="https://www.ebi.ac.uk/biomodels/static-assets/images/curation/FROG/FROG_analysis_green_BG.svg"/>
+        <img src="${bmStaticAssetsURL}/images/curation/FROG/FROG_analysis_green_BG.svg"/>
     </div>
     <div class="columns small-12 medium-8 large-8">
         <p> Curating models of biological processes is an effective training in computational
@@ -75,7 +75,7 @@ please contact: Dr Rahuman Sheriff (sheriff AT ebi.ac.uk). The application is op
 <p>Machine learning (ML) models are widely used as tools in life science and medical research.
 However, ML models are scattered across various resources including personal websites, git-hub, bitbucket,
 and supplementary material, making it difficult to find, access, and reuse them.
-We aim to extend the <a href="https://www.ebi.ac.uk/biomodels" target="_blank">BioModels</a> to support Findable, Accessible,
+We aim to extend the <a href="${serverURL}" target="_blank">BioModels</a> to support Findable, Accessible,
 Interoperable, and Reusable (<a href="https://www.go-fair.org/fair-principles/" target="_blank">FAIR</a>)
 dissemination of ML models in biomedical sciences.  BioModels is a world-leading repository of mechanistic models
 of biological processes, hosted by EMBL-EBI. BioModels’s infrastructure was
@@ -106,7 +106,7 @@ The application is open until filled.</p>
 <!--
 <h3 style="border-bottom: 1px solid grey">Curation internship: Literature curation of mechanistic models of disease pathways</h3>
 
-<p><a href="http://www.ebi.ac.uk/biomodels/" title="BioModels Database">BioModels</a> is a
+<p><a href="${serverURL}" title="BioModels Database">BioModels</a> is a
 central repository of mathematical models of biological/biomedical processes. It is hosted
 at EMBL-EBI and is one of the resources of the molecular systems cluster. The models
 distributed through BioModels are extensively tested and encoded in standard formats
