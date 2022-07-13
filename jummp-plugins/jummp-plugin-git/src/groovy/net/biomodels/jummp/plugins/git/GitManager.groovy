@@ -32,7 +32,6 @@
 package net.biomodels.jummp.plugins.git
 
 import net.biomodels.jummp.core.vcs.*
-import org.apache.commons.io.FileUtils
 import org.eclipse.jgit.api.*
 import org.eclipse.jgit.api.errors.GitAPIException
 import org.eclipse.jgit.api.errors.RefNotFoundException
@@ -42,6 +41,8 @@ import org.eclipse.jgit.revwalk.DepthWalk.RevWalk
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.perf4j.aop.Profiled
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
@@ -53,7 +54,6 @@ import java.nio.file.StandardCopyOption
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
-
 /**
  * @short GitManager provides the interface to a local git clone.
  *
@@ -75,6 +75,8 @@ import java.util.concurrent.locks.ReentrantLock
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
 class GitManager implements VcsManager {
+    private static final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
+
     // uid for generating unique checkout directory names
     private static final AtomicInteger uid = new AtomicInteger(0)
     // locks to ensure model directories are not accessed concurrently
@@ -669,15 +671,26 @@ has not been initialised any VCS yet."""
      * @param branchName A String representing the provisional branch
      */
     private void doGitCleanAndCheckoutMasterBranch(Git git, String branchName) {
-        if (!git.status().call().clean) {
-            git.stashCreate().call()
+        try {
+            LOGGER.debug("Checking out the master branch...")
+            if (!git.status().call().clean) {
+                git.stashCreate().call()
+            }
+            Ref ref = git.branchList().call().find { it.name == "refs/heads/master" }
+            if (ref) {
+                git.checkout().setName("master").call()
+            } else {
+                ref = git.branchList().call().find { it.name == "refs/heads/main" }
+                if (ref) { git.checkout().setName("main").call() }
+            }
+        } catch (RefNotFoundException rnfException) {
+            String gitDir = git?.getRepository()?.directory?.name
+            String msg = "Cannot find the branch $branchName under the Git repository ${gitDir}"
+            LOGGER.error(msg, rnfException)
+            // the println statement aims to send the message to the stdout for ELK
+            println("$msg\n${rnfException.toString()}")
+        } finally {
+            git.branchDelete().setBranchNames(branchName).call()
         }
-        Ref ref = git.branchList().call().find { it.name == "master" }
-        if (ref) {
-            git.checkout().setName("master").call()
-        } else {
-            git.checkout().setName("main").call()
-        }
-        git.branchDelete().setBranchNames(branchName).call()
     }
 }
