@@ -31,7 +31,7 @@
 <h2>Internship opportunities</h2>
 
 <h3 style="border-bottom: 1px solid grey">
-    Curation internship: Literature curation of mechanistic models of Genome-Scale metabolic models</h3>
+    Curation internship: Literature curation of Genome-Scale metabolic models</h3>
 
 <p><a href="${serverURL}" title="BioModels Database">BioModels</a> is a
 central repository of mathematical models of biological/biomedical processes. It is hosted
