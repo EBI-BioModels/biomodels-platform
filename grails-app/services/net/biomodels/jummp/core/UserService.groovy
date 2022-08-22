@@ -561,6 +561,7 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
             id: user.passwordForgottenCode, absolute: true)
         String emailBody = grailsApplication.config.jummp.security.resetPassword.email.body
         emailBody = emailBody.replace("{{REALNAME}}", user.person.userRealName)
+        emailBody = emailBody.replace("{{USERNAME}}", user.username)
         emailBody = emailBody.replace("{{URL}}", url)
         mailService.sendMail {
                 to recipient
