@@ -475,7 +475,7 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
                 to recipient
                 from grailsApplication.config.jummp.security.registration.email.sender
                 subject emailSubject
-                html emailBody
+                text emailBody
             }
         }
         return User.findByUsername(user.username).id
@@ -567,7 +567,7 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
                 to recipient
                 from grailsApplication.config.jummp.security.registration.email.sender
                 subject grailsApplication.config.jummp.security.resetPassword.email.subject
-                html emailBody
+                text emailBody
         }
     }
 
