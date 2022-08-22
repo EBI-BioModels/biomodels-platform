@@ -1563,15 +1563,13 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
     }
 
     /**
-    * Grants permissions to a @model given a list of @permissions
-    *
-    *
-    * @param model The Model
-    * @param permissions A list of permissions
-    **/
-   // @PreAuthorize("hasPermission(#model, admin) or hasRole('ROLE_ADMIN')")
+     * Grants permissions to a @model given a list of @permissions
+     *
+     * @param model A {@link Model} object representing the model in question.
+     * @param permissions A list of wrapper objects {@link PermissionTransportCommand} which encapsulate a user, a model or revision and granted permissions
+     */
     @PostLogging(LoggingEventType.RETRIEVAL)
-    @Profiled(tag="modelService.getPermissionsMap")
+    @Profiled(tag="modelService.setPermissions")
     public void setPermissions(Model model, List<PermissionTransportCommand> permissions) {
         if (aclUtilService.hasPermission(springSecurityService.authentication, model,
                     BasePermission.ADMINISTRATION ) || SpringSecurityUtils.ifAnyGranted('ROLE_ADMIN')) {
@@ -1594,8 +1592,7 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
                     if (!(current.write) && newPerm.write) {
                         grantWriteAccess(model, user)
                     }
-                }
-                else {
+                } else {
                     if (newPerm.read) {
                         grantReadAccess(model, user)
                     }
@@ -1618,9 +1615,8 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
                     }
                 }
             }
-        }
-        else {
-            throw new AccessDeniedException("You cant access permissions if you dont have them.")
+        } else {
+            throw new AccessDeniedException("You can't access the model ${model.submissionId} if you don't have required permissions.")
         }
     }
 
