@@ -21,22 +21,23 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import grails.transaction.Transactional
-import net.biomodels.jummp.core.model.ModelTransportCommand
+import net.biomodels.jummp.core.model.ModelTransportCommand as ModelTC
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelTag
 import net.biomodels.jummp.model.Tag
 import net.biomodels.jummp.plugins.security.User
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
- * Service for handling associations between models and labels
+ * Service for handling the associations between models and labels/tags
  *
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 @Transactional
 class ModelTagService {
-    private static final Log log = LogFactory.getLog(ModelTagService.class)
+    private static final Logger log = LoggerFactory.getLogger(ModelTagService.class)
+
 
     List<String> getTagsByModelId(String modelId) {
         Model model = Model.findBySubmissionId(modelId)
@@ -116,12 +117,31 @@ Cannot save nothing for labels to the model"""
         result
     }
 
+    Map remove(Set<String> tags, String modelId, User user) {
+        String message = ""
+        int statusCode = 0
+        Model model = Model.findBySubmissionId(modelId)
+        if (!model) {
+            message = "Requested model $modelId doesn't exist."
+            statusCode = -1
+        } else if (tags?.isEmpty()) {
+            message = "None of tags is removed."
+        } else {
+            Set<ModelTag> tagsRemoved = new HashSet<>()
+            String query = "from ModelTag as mt where mt.model = :model and mt.tag.name in :tags"
+            tagsRemoved = ModelTag.executeQuery(query, [model: model, tags: tags]).toSet()
+            removeModelTag(tagsRemoved, user)
+        }
+        Map result = [message: message, statusCode: statusCode]
+        result
+    }
+
     /**
      * This method looks for all tags assigned to a given model
-     * @param model ModelTransportCommand object
+     * @param model ModelTC object
      * @return a set of TagTransportCommand objects
      */
-    Set<TagTransportCommand> findTagsByModel(ModelTransportCommand model) {
+    Set<TagTransportCommand> findTagsByModel(ModelTC model) {
         String query = "from ModelTag as mt where mt.model.submissionId=? order by mt.tag.name"
         List<ModelTag> result = ModelTag.findAll(query, [model.submissionId])
         List<TagTransportCommand> tagCmdList = result.collect {
@@ -133,12 +153,20 @@ Cannot save nothing for labels to the model"""
         tagSet
     }
 
+    private void removeModelTag(Set<ModelTag> modelTags, User user) {
+        modelTags.each { mt ->
+            String queryString = "delete ModelTag mt where mt.model = :model and mt.tag = :tag"
+            ModelTag.executeUpdate(queryString, [model: mt.model, tag: mt.tag])
+            log.info("Removed the '${mt.tag.name}' tag from the model ${mt.model.submissionId} by ${user.username}")
+        }
+    }
+
     private Set<ModelTag> updateModelTag(Set<String> updatedTags, Model model, User user) {
         Set existing = findAllByModel(model)
         Set<ModelTag> result = new HashSet<ModelTag>()
         if (existing?.isEmpty()) {
             log.info("""\
-None of these tags (i.e. ${updatedTags.join(", ")}) have been assigned to the model ${model.submissionId} yet, 
+None of these tags (i.e. ${updatedTags.join(", ")}) have been assigned to the model ${model.submissionId} yet,
 so we will persist all the tags into database""")
             result = insertFromTags(model, user, updatedTags)
         } else {
