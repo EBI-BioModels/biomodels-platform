@@ -55,14 +55,26 @@ class TagService {
         result
     }
 
-    Tag create(String name, String description, User userCreated) {
-        Tag tagObj = Tag.findOrCreateByNameAndUserCreated(name, userCreated)
+    Tag create(String name, String description, User userCreated = null) {
+        Tag tagObj = Tag.findOrCreateByName(name)
         if (!tagObj.id) {
             tagObj.dateCreated = new Date()
             tagObj.dateModified = new Date()
         }
+        if (!userCreated) {
+            userCreated = springSecurityService.currentUser
+        }
         tagObj.description = description
+        tagObj.userCreated = userCreated
         Tag returned = tagObj.save(flush: true)
+        if (returned) {
+            LOGGER.debug("""\
+Tag ${returned.name} (${returned.description}) has been created or updated successfully \
+by ${returned.userCreated.username}.""")
+        } else {
+            LOGGER.error("""\
+An error occurred when creating or updating the tag $name ($description) by ${userCreated.username}.""")
+        }
         returned
     }
 
