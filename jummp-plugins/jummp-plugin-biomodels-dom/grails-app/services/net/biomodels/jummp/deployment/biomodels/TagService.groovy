@@ -23,8 +23,8 @@ package net.biomodels.jummp.deployment.biomodels
 import grails.transaction.Transactional
 import net.biomodels.jummp.model.Tag
 import net.biomodels.jummp.plugins.security.User
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * Service for handling CRUD operations on tags/labels being used in BioModels
@@ -33,7 +33,8 @@ import org.apache.commons.logging.LogFactory
  */
 @Transactional
 class TagService {
-    private static final Log log = LogFactory.getLog(TagService.class)
+    private static final Logger LOGGER = LoggerFactory.getLogger(TagService.class)
+    def springSecurityService
 
     List<TagTransportCommand> getAll() {
         List<Tag> tags = Tag.getAll()
@@ -82,11 +83,11 @@ class TagService {
         tag.userCreated = User.findByUsername(command.userCreated)
         Tag saved = tag.save(flush: true)
         if (saved) {
-            log.debug("""\
-The tag (${tag.name}) was updated successfully""")
+            LOGGER.debug("""\
+The tag (${tag.name}) was created or updated successfully""")
         } else {
-            log.error("""\
-There have been errors while persisting the tag (${tag.name}) into the database 
+            LOGGER.error("""\
+There have been errors while persisting the tag (${tag.name}) into the database
 because of ${tag.errors.allErrors.inspect()}""")
         }
         saved
