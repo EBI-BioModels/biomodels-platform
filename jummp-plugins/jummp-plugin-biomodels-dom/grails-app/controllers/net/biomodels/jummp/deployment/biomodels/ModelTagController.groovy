@@ -57,7 +57,7 @@ class ModelTagController {
         Set<String> updatedTags = tagParams != "" ? tagParams.split(",") : [].toSet()
         def modelId = params.get("modelId")
         def user = springSecurityService.currentUser
-        def result = modelTagService.update(updatedTags, modelId, user)
+        def result = modelTagService.saveOrUpdate(updatedTags, modelId, currentUser)
         response.status = result["status"]
         render(result as JSON)
     }
@@ -79,7 +79,7 @@ class ModelTagController {
         command.tags = list
         if (command.validate()) {
             def user = springSecurityService.currentUser
-            result = modelTagService.saveOrUpdate(command, user)
+            result = modelTagService.saveOrUpdate(command, currentUser)
         } else {
             response.status = 422
             def errors = command.errors.allErrors.collect {

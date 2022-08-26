@@ -48,6 +48,14 @@ class ModelTagService {
         result.sort()
     }
 
+    /**
+     * Saves or updates tags to a given model from a {@link ModelTagTransportCommand} object.
+     * In practice, the system will automatically create a new tag if it does not exist.
+     *
+     * @param command a {@link ModelTagTransportCommand} object
+     * @param user a {@link User} object
+     * @return  a map of the status code and message
+     */
     Map saveOrUpdate(ModelTagTransportCommand command, User user) {
         String message = ""
         int statusCode = 0
@@ -88,13 +96,22 @@ There have been errors while trying to update choosen labels for the model '${co
         result
     }
 
-    Map update(Set<String> updatedTags, String modelId, User user) {
+    /**
+     * Saves or updates tags to a given model from the list of tags and the model identifier by a specific user.
+     * The system will automatically create a new tag if it does not exist in BioModels by the time of running the service.
+     *
+     * @param updatedTags   A list of strings as the tags
+     * @param modelId A string denoting the model identifier
+     * @param user A {@link User} object who is interacting the service
+     * @return  A Map of status code and message
+     */
+    Map saveOrUpdate(Set<String> updatedTags, String modelId, User user = null) {
         String message = ""
         int statusCode = 0
         Model model = Model.findBySubmissionId(modelId)
         Set<ModelTag> modelTags = findAllByModel(model)
         if (modelTags?.size() > 0 || updatedTags?.size() > 0) {
-            Set records = updateModelTag(updatedTags, model, user)
+            Set records = doSaveOrUpdate(updatedTags, model, user)
             if (records?.size() == updatedTags?.size()) {
                 statusCode = 200
                 if (records?.isEmpty()) {
@@ -162,7 +179,7 @@ Cannot save nothing for labels to the model"""
         }
     }
 
-    private Set<ModelTag> updateModelTag(Set<String> updatedTags, Model model, User user) {
+    private Set<ModelTag> doSaveOrUpdate(Set<String> updatedTags, Model model, User user) {
         Set existing = findAllByModel(model)
         Set<ModelTag> result = new HashSet<ModelTag>()
         if (existing?.isEmpty()) {
