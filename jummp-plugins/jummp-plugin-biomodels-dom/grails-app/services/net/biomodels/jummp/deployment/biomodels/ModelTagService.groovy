@@ -28,6 +28,7 @@ import net.biomodels.jummp.model.Tag
 import net.biomodels.jummp.plugins.security.User
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.transaction.TransactionDefinition
 
 /**
  * Service for handling the associations between models and labels/tags
@@ -36,7 +37,7 @@ import org.slf4j.LoggerFactory
  */
 @Transactional
 class ModelTagService {
-    private static final Logger log = LoggerFactory.getLogger(ModelTagService.class)
+    private static final Logger LOGGER = LoggerFactory.getLogger(ModelTagService.class)
 
 
     List<String> getTagsByModelId(String modelId) {
@@ -157,7 +158,7 @@ Cannot save nothing for labels to the model"""
         modelTags.each { mt ->
             String queryString = "delete ModelTag mt where mt.model = :model and mt.tag = :tag"
             ModelTag.executeUpdate(queryString, [model: mt.model, tag: mt.tag])
-            log.info("Removed the '${mt.tag.name}' tag from the model ${mt.model.submissionId} by ${user.username}")
+            LOGGER.info("Removed the '${mt.tag.name}' tag from the model ${mt.model.submissionId} by ${user.username}")
         }
     }
 
@@ -165,36 +166,26 @@ Cannot save nothing for labels to the model"""
         Set existing = findAllByModel(model)
         Set<ModelTag> result = new HashSet<ModelTag>()
         if (existing?.isEmpty()) {
-            log.info("""\
-None of these tags (i.e. ${updatedTags.join(", ")}) have been assigned to the model ${model.submissionId} yet,
-so we will persist all the tags into database""")
+            LOGGER.info("""\
+These tags (i.e. ${updatedTags.join(", ")}) haven't presented in BioModels. \
+Therefore, they are going to be persisted into BioModels and assigned to the model ${model.submissionId}.""")
             result = insertFromTags(model, user, updatedTags)
         } else {
-            log.info("Try to merge/reconcile the existing and updated ones")
+            LOGGER.info("Try to merge/reconcile the existing and updated ones.")
             Set preserved = existing.findAll {
                 it.tag.name in updatedTags && it.model.submissionId == model.submissionId
             }
-            log.debug("Preserved Tags: ${preserved?.collect { it.tag.name }?.join(', ')}")
+            LOGGER.debug("Preserved Tags: ${preserved?.collect { it.tag.name }?.join(', ')}")
             Set removed = existing - preserved
-            log.debug("Removed Tags: ${removed.collect { it.tag.name }?.join(', ')}")
+            LOGGER.debug("Removed Tags: ${removed.collect { it.tag.name }?.join(', ')}")
             Set preservedTags = preserved.collect { it.tag.name }
             Set insertedTags = updatedTags - preservedTags
-            log.debug("Inserted Tags: ${insertedTags.join(', ')}")
+            LOGGER.debug("Inserted Tags: ${insertedTags.join(', ')}")
             result.addAll(preserved)
             Set newlyInserted = reconcile(model, user, removed, insertedTags)
             result.addAll(newlyInserted)
         }
         result
-    }
-
-    private Set<ModelTag> reconcile(Model model, User user, Set<ModelTag> removed, Set<String> insertedTags) {
-        // basically we will delete the removed tags and insert the new ones
-        ModelTag.deleteAll(removed)
-        if (insertedTags?.isEmpty()) {
-            return [] as Set
-        }
-        Set newlyInserted = insertFromTags(model, user, insertedTags)
-        newlyInserted
     }
 
     private Set doSaveOrUpdate(Model model, Set modelTags, ModelTagTransportCommand command, User user) {
@@ -230,28 +221,51 @@ so we will persist all the tags into database""")
 
     private Set<ModelTag> insertFromTags(Model model, User user, Set<String> insertedTags) {
         Set<ModelTag> result = new HashSet<ModelTag>()
+
         insertedTags.each { String name ->
             Tag tagObj = Tag.findOrCreateWhere(name: name)
             if (!tagObj.id) {
+                tagObj.description = "Collection of the models relevant to $name"
                 tagObj.userCreated = user
                 tagObj.dateCreated = new Date()
                 tagObj.dateModified = new Date()
-                tagObj.save(flush: true)
+                tagObj = doSave(tagObj)
             }
             ModelTag modelTag = ModelTag.findOrCreateByTagAndModel(tagObj, model)
             if (modelTag.save(flush: true)) {
                 result.add(modelTag)
             } else {
                 println modelTag.errors.allErrors.inspect().toString()
-                log.error("""\
-There have been errors while trying to persist tag: '${name}' for the model '${model.submissionId}'""")
+                LOGGER.error("""\
+There have been errors while trying to persist tag: '${name}' for the model '${model.submissionId}'.""")
             }
         }
         result
     }
 
+    private Set<ModelTag> reconcile(Model model, User user, Set<ModelTag> removed, Set<String> insertedTags) {
+        // basically we will delete the removed tags and insert the new ones
+        ModelTag.deleteAll(removed)
+        if (insertedTags?.isEmpty()) {
+            return [] as Set
+        }
+        Set newlyInserted = insertFromTags(model, user, insertedTags)
+        newlyInserted
+    }
+
     private Set<ModelTag> findAllByModel(Model model) {
         List<ModelTag> records = ModelTag.findAllByModel(model)
         records?.toSet()
+    }
+
+    private Tag doSave(Tag tagObj) {
+        def txDef = [
+            // this tx will use a different session than the current one
+            propagationBehavior: TransactionDefinition.PROPAGATION_REQUIRES_NEW
+        ]
+        Tag.withTransaction(txDef) {
+            tagObj.save(flush: true)
+        }
+        tagObj
     }
 }
