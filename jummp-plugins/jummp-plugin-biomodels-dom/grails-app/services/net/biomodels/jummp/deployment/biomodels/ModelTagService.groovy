@@ -21,6 +21,7 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import grails.transaction.Transactional
+import groovyx.gpars.GParsPool
 import net.biomodels.jummp.core.model.ModelTransportCommand as ModelTC
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelTag
@@ -39,6 +40,9 @@ import org.springframework.transaction.TransactionDefinition
 class ModelTagService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ModelTagService.class)
 
+    private static final int POOL_SIZE = 8
+
+    def springSecurityService
 
     List<String> getTagsByModelId(String modelId) {
         Model model = Model.findBySubmissionId(modelId)
@@ -46,6 +50,36 @@ class ModelTagService {
             it.tag.name
         }
         result.sort()
+    }
+
+    /**
+     * Performs the insertion or update a list of models and associated tags in the batch mode. The task
+     * will be run in parallel.
+     *
+     * @param modelsAndTags A map of model identifiers and their associated tags
+     * The data pattern must be:
+     *  MODEL1907050005 -> Immuno-oncology
+     *  MODEL1907230002 -> Immuno-oncology
+     *  MODEL1907160002 -> Immuno-oncology;Oncology
+     * If a model goes with multiple tags, these tags must be separate by semicolons without any spaces
+     * @param user A user who will perform the batch update
+     */
+    void batchInsertOrUpdate(Map<String, String> modelsAndTags, User user = null) {
+        if (!user) {
+            user = springSecurityService.currentUser
+        }
+
+        if (modelsAndTags) {
+            GParsPool.withPool(POOL_SIZE) {
+                modelsAndTags.eachParallel { String modelId, String v ->
+                    ModelTag.withTransaction {
+                        LOGGER.debug("Tagging the labels $v to the model $modelId")
+                        Set<String> tags2Added = v.split(";") as Set
+                        saveOrUpdate(tags2Added, modelId, user)
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -108,6 +142,9 @@ There have been errors while trying to update choosen tags for the model ${comma
     Map saveOrUpdate(Set<String> updatedTags, String modelId, User user = null) {
         String message = ""
         int statusCode = 0
+        if (!user) {
+            user = springSecurityService.currentUser
+        }
         Model model = Model.findBySubmissionId(modelId)
         Set<ModelTag> modelTags = findAllByModel(model)
         if (modelTags?.size() > 0 || updatedTags?.size() > 0) {
