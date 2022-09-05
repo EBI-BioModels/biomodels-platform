@@ -72,23 +72,23 @@ class ModelTagService {
             if (records?.size() == command.tags?.size()) {
                 statusCode = 200
                 if (records?.isEmpty()) {
-                    message = "The model has no longer been tagged any label"
+                    message = "The model has no longer been associated any tag."
                 } else {
                     String chainOfTags = command.tags.collect { it.name }.join(', ')
-                    message = "Labels [${chainOfTags}] have been applied successfully to the model"
+                    message = "The tags [${chainOfTags}] have been applied successfully to the model."
                 }
             } else {
                 statusCode = 400
                 message = """\
-There have been errors while trying to update choosen labels for the model '${command.modelId}'"""
+There have been errors while trying to update choosen tags for the model ${command.modelId}."""
             }
         } else {
             /**
-             * This case means uses are trying to click Save button on the model having not been associated
-             * any tags yet
+             * This case means users are trying to click the Save button on the model having not been associated
+             * any tags yet.
              */
             statusCode = 422
-            message = "Cannot save nothing for labels to the model"
+            message = "Cannot save no tag to this model. Please enter at least a tag from the box."
         }
         Map result = [:]
         result["status"] = statusCode
@@ -115,19 +115,19 @@ There have been errors while trying to update choosen labels for the model '${co
             if (records?.size() == updatedTags?.size()) {
                 statusCode = 200
                 if (records?.isEmpty()) {
-                    message = "The model has no longer been tagged any label"
+                    message = "The model has no longer been gone with any tag."
                 } else {
-                    message = "Labels [${updatedTags.join(', ')}] have been applied successfully to the model"
+                    message = "The tags [${updatedTags.join(', ')}] have been applied successfully to the model $modelId."
                 }
             } else {
                 statusCode = 400
                 message = """\
-There have been errors while trying to update choosen labels for the model '${modelId}'"""
+There have been errors while trying to update choosen tags (${updatedTags.join(', ')}) for the model ${modelId}."""
             }
         } else {
             statusCode = 422
             message = """\
-Cannot save nothing for labels to the model"""
+Cannot save nothing for tags to the model."""
         }
         Map result = [:]
         result["status"] = statusCode

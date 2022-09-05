@@ -72,7 +72,7 @@ class ModelTagServiceSpec extends Specification {
         Map result = service.saveOrUpdate(updatedTags, modelId, user)
         then:
         result["status"] == 200
-        result["message"].contains("Labels [${updatedTags.join(', ')}] have been applied successfully to the model")
+        result["message"].contains("The tags [${updatedTags.join(', ')}] have been applied successfully to the model $modelId.")
 
         when:
         updatedTags = [] as Set

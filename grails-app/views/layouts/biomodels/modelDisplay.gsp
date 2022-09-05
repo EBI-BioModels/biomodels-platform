@@ -927,7 +927,7 @@
             let updatedTags = getDataFromSelect2();
             if (initialTags.length === updatedTags.length && !initialTags.length) {
                 toastr.clear();
-                toastr.warning("No label applied to the model. Alternatively, select at least one label from the list.");
+                toastr.warning("No tag applied to the model. Alternatively, select at least one tag from the list.");
             } else {
                 $.ajax({
                     type: "POST",
@@ -945,7 +945,7 @@
                         if (updatedTags.length === 0) {
                             msg = "No tags applied to the model.";
                         } else {
-                            msg = "The labels applied to the model are being saved into our database. Please wait...";
+                            msg = "The tags applied to the model are being saved into our database. Please wait...";
                         }
                         toastr.clear();
                         toastr.info(msg);
