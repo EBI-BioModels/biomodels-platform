@@ -179,6 +179,7 @@
             url: "${createLink(controller: "submission", action: "doLastValidateSubmissionData")}",
             type: "POST",
             data: {
+                submitterInfo: submitterInfo,
                 isUpdate: isUpdate,
                 isAmend: isAmend,
                 modelFile: JSON.stringify(modelFile),

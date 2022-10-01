@@ -114,6 +114,9 @@ class SubmissionService {
         //@Cacheable('definedModellingApproaches') // should split it into two methods so as to apply cacheable
         void initialise(Map<String, Object> workingMemory) {
             // TODO: clean up this method when re-implementing submission process finished
+            final String submitterEmail = userService.getEmailAddress()
+            final String username = userService.getUsername()
+            workingMemory.put("submitterInfo", "[$username, $submitterEmail]")
             List<ModelFormat> sortedModelFormats = net.biomodels.jummp.model.ModelFormat.list().sort { it.name }
             workingMemory.put("sorted_model_formats", sortedModelFormats)
             List<ModellingApproach> definedModellingApproaches = ModellingApproach.list()

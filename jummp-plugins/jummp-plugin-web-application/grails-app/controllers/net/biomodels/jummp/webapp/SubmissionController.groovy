@@ -207,6 +207,8 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         boolean isPublicationValid = doValidatePublication(working)
         errMsg = validationMessages.findAll { it }.join("\n")
         Map<String, Object> result = new HashMap<>()
+        String submitterInfo = working.get("submitterInfo")
+        result.put("submitterInfo", submitterInfo)
         String submissionFolder = working.get("submissionFolder")
         result.put("submissionFolder", submissionFolder)
         result.put("errMsg", errMsg)
@@ -215,7 +217,9 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         result.put("isPublicationValid", isPublicationValid)
         boolean currentValidation = areModelFilesValid && areMetadataValid && isPublicationValid
         result.put("currentValidation", currentValidation)
-        logger.debug("The result of verifying the submission data: ${result.dump()}")
+        String strResult = toString(result)
+        logger.debug("The result of verifying the submission data: \n$strResult")
+        println("The result of verifying the submission data: \n$strResult")
         validSubmissionDataMap = working
         render(result as JSON)
     }
@@ -461,6 +465,7 @@ hyphens, plus signs and underscores. It should also have a proper file extension
     private Map rebuildSubmissionData() {
         /* The following statements aim at saving the new submission or updates */
         Map working = new HashMap<String, Object>()
+        working.put("submitterInfo", params.get("submitterInfo").decodeHTML())
         working.put("submissionFolder", params.get("submissionFolder"))
         // 1. Rebuild the uploaded files
         List<RFTC> rftcList = new ArrayList<RFTC>()
@@ -597,5 +602,18 @@ hyphens, plus signs and underscores. It should also have a proper file extension
             }
         }
         [status: status, message: message] as Map<String, String>
+    }
+
+    private String toString(Map<String, Object> working) {
+        String result = "[\n"
+        result += "\tSubmitter Info: ${working.get("submitterInfo")}\n"
+        result += "\tSubmission Folder: ${working.get("submissionFolder")}\n"
+        result += "\tError Message: ${working.get("errMsg")}\n"
+        result += "\tareModelFilesValid: ${working.get("areModelFilesValid")}\n"
+        result += "\tareMetadataValid: ${working.get("areMetadataValid")}\n"
+        result += "\tisPublicationValid: ${working.get("isPublicationValid")}\n"
+        result += "\tcurrentValidation: ${working.get("currentValidation")}\n"
+        result += "]"
+        result
     }
 }

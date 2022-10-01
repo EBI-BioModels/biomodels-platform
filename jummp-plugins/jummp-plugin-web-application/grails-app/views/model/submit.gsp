@@ -23,6 +23,7 @@
     <link rel="stylesheet"
           href="${resource(contextPath: serverURL, dir: 'css', file: 'toastr.min.css')}"/>
     <g:javascript>
+        var submitterInfo = "${submitterInfo}";
         var submissionFolder = "${submissionFolder}";
         var currentValidation = false;
         var errorMessages = new Array();
