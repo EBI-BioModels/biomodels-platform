@@ -27,6 +27,7 @@ import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGenera
 import net.biomodels.jummp.core.vcs.VcsException
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.ModelFormat
+import net.biomodels.jummp.model.Publication
 import net.biomodels.jummp.model.RepositoryFile
 import net.biomodels.jummp.model.Revision
 import net.biomodels.jummp.plugins.security.User
@@ -173,7 +174,18 @@ class ModelBuilder {
 
     private ModelBuilder addPublication() {
         if (this.revisionTC.model.publication) {
-            this.model.publication = publicationService.fromCommandObject(this.revisionTC.model.publication)
+            Publication publication = null
+            try {
+                publication = publicationService.fromCommandObject(this.revisionTC.model.publication)
+                logger.debug("Adding the publication details successfully to the model ${this.model?.submissionId}.")
+            } catch (Exception e) {
+                String pubDetails = this.revisionTC.model.publication.dump()
+                String errMsg = """Failed to add the following publication details to the model ${this.model?.submissionId}\n
+${pubDetails}."""
+                logger.error(errMsg)
+            } finally {
+                this.model.publication = publication
+            }
         }
         return this
     }
