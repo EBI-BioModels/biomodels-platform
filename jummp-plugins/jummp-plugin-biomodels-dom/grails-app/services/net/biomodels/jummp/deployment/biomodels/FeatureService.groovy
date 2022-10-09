@@ -63,4 +63,11 @@ order by createdOn desc"""
         def newsItem = CmsContent.executeQuery(newsQuery, [aliasuri: 'model-of-the-year-2022-competition'], [max: 1])
         [newsItem[0]?.id, newsItem[0]?.content]
     }
+
+    List getContentForModelOfTheYear2023CompetitionPage() {
+        def newsQuery = """FROM CmsContent where aliasURI = :aliasuri \
+order by createdOn desc"""
+        def newsItem = CmsContent.executeQuery(newsQuery, [aliasuri: 'model-of-the-year-2023-competition'], [max: 1])
+        [newsItem[0]?.id, newsItem[0]?.content]
+    }
 }
