@@ -20,7 +20,7 @@
 
 <nav>
 <ul id="local-nav" class="main-menu dropdown menu"
-    data-description="navigational" data-dropdown-menu role="menubar"%>
+    data-description="navigational" data-dropdown-menu role="menubar">
     <li <g:if test="${actionName == null}"> class="first active main-menu-item" </g:if>
         <g:else>class="main-menu-item"</g:else>
         role="menuitem">
