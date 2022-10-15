@@ -58,7 +58,7 @@ class ModelFileFormatConfig {
 
     static void status() {
         String msgLog = "MODEL FILE FORMAT CONFIG STATUS:"
-        println("""${new Date().format("yyyy-mm-dd HH:mm:ss")} $msgLog ${services.size()} \
+        println("""${new Date().format("yyyy-MM-dd HH:mm:ss")} $msgLog ${services.size()} \
 services and ${controllers.size()} controllers are available.""")
         msgLog += "\nSERVICES: ${services.inspect()}"
         msgLog += "\nCONTROLLERS: ${controllers.inspect()}"

@@ -62,7 +62,7 @@ class OldFilesExchangeCleanerJob {
             String msgLog = """EXCHANGE CLEANER: Processing ${f.getName()} last modified at \
 ${lastModified.format('yyyy-MM-dd HH:mm:ss z')}"""
             LOGGER.debug(msgLog)
-            println("${new Date().format("yyyy-mm-dd HH:mm:ss")} $msgLog")
+            println("${new Date().format("yyyy-MM-dd HH:mm:ss")} $msgLog")
             if (f.lastModified() <= veryOld && !f.getName().contains("buggy")) {
                 if (f.isFile()) {
                     f.delete()
