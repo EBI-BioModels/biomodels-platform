@@ -22,10 +22,18 @@ package net.biomodels.jummp.deployment.biomodels
 
 import grails.transaction.Transactional
 import net.biomodels.jummp.scms.CmsContent
+import net.biomodels.jummp.utils.redis.RedisService
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.weceem.content.WcmContent
 
 @Transactional
-class FeatureService {
+class FeatureService extends RedisService {
+    private final Logger LOGGER = LoggerFactory.getLogger(FeatureService.class)
+
+    def redisService
+
+    def groovyPageRenderer
 
     /**
      * Retrieves the content of the COVID-19 page under Browse menu
@@ -69,5 +77,30 @@ order by createdOn desc"""
 order by createdOn desc"""
         def newsItem = CmsContent.executeQuery(newsQuery, [aliasuri: 'model-of-the-year-2023-competition'], [max: 1])
         [newsItem[0]?.id, newsItem[0]?.content]
+    }
+
+    String getSvgAgedBrain() {
+        final String SVG_AGED_BRAIN = "svg-aged-brain"
+        // load the SVG content from Redis cache
+        String svgAgedBrain = doRedisGet(SVG_AGED_BRAIN)
+        if (!svgAgedBrain) {
+            println("Rendering the AgedBrain page directly")
+            LOGGER.debug("Rendering the AgedBrain page directly")
+            svgAgedBrain = groovyPageRenderer.render(template: "/templates/svgAgedBrain",
+                plugin: "jummp-plugin-biomodels-dom")
+            // cache the svgAgedBrain to Redis server
+            if (svgAgedBrain) {
+                println("Caching the AgedBrain page on Redis cache")
+                LOGGER.debug("Caching the AgedBrain page on Redis cache")
+                doRedisSet(SVG_AGED_BRAIN, svgAgedBrain)
+            } else {
+                svgAgedBrain = "There has been an error when trying to load the Model space in neurodegeneration - model landscape map."
+            }
+        } else {
+            println("Retrieving the AgedBrain page from Redis cache")
+            LOGGER.debug("Retrieving the AgedBrain page from Redis cache")
+        }
+
+        svgAgedBrain
     }
 }
