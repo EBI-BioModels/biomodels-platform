@@ -1,26 +1,22 @@
 /**
-* Copyright (C) 2010-2020 EMBL-European Bioinformatics Institute (EMBL-EBI),
-* Deutsches Krebsforschungszentrum (DKFZ)
-*
-* This file is part of Jummp.
-*
-* Jummp is free software; you can redistribute it and/or modify it under the
-* terms of the GNU Affero General Public License as published by the Free
-* Software Foundation; either version 3 of the License, or (at your option) any
-* later version.
-*
-* Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
-* WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-* A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
-* details.
-*
-* You should have received a copy of the GNU Affero General Public License along
-* with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
-**/
-
-
-
-
+ * Copyright (C) 2010-2022 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Deutsches Krebsforschungszentrum (DKFZ)
+ *
+ * This file is part of Jummp.
+ *
+ * Jummp is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Affero General Public License as published by the Free
+ * Software Foundation; either version 3 of the License, or (at your option) any
+ * later version.
+ *
+ * Jummp is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ *
+ * You should have received a copy of the GNU Affero General Public License along
+ * with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
+ **/
 
 package net.biomodels.jummp.deployment.biomodels
 
@@ -31,10 +27,11 @@ import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.plugins.security.User
 import net.biomodels.jummp.statistic.OrganismData
 import net.biomodels.jummp.statistic.RecentlyPublishedModel
-import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
+import net.biomodels.jummp.utils.redis.RedisService
 import org.perf4j.aop.Profiled
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 import org.weceem.content.WcmContent
 import redis.clients.jedis.Jedis
 import redis.clients.jedis.JedisPool
@@ -53,36 +50,25 @@ import java.text.SimpleDateFormat
  * @author <a href="mailto:mihai.glont@ebi.ac.uk">Mihai Glont</a>
  */
 @Transactional(readOnly = true)
-class DecorationService implements GrailsConfigurationAware {
-    private static final Logger logger = LoggerFactory.getLogger(DecorationService.class)
-    def configurationService
-    static String REDIS_SRV_HOST //= grailsApplication.config.jummp.redis.host
+class DecorationService extends RedisService implements InitializingBean {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DecorationService.class)
+
+    def grailsApplication
+
+    /*static String REDIS_SRV_HOST //= grailsApplication.config.jummp.redis.host
     static int REDIS_SRV_PORT //= grailsApplication.config.jummp.redis.host.port
     static int REDIS_SRV_TIMEOUT //= grailsApplication.config.jummp.redis.timeout
-    static String EBI_SEARCH_URL = "https://www.ebi.ac.uk/ebisearch/ws/rest"
-    static String FIXED_PARAMS = "biomodels?query=domain_source:biomodels&size=0&facetfields"
-    static String EBI_SEARCH_BM_URL = "${EBI_SEARCH_URL}/${FIXED_PARAMS}"
+    */
+
     static String HP_STAT_TOTAL_FIGURE = "hp-statistics-total-figures"
-    static String BM_SVR_URL //= grailsApplication.config.grails.serverURL
-    static String CLASSIFIER_SVR_URL //= grailsApplication.config.jummp.classification.endpoint
     static int ACCESSED_MAX_RECORDS
     static int PUBLISHED_MAX_RECORDS
-    private Proxy proxy
 
     @Override
-    void setConfiguration(ConfigObject co) {
-        REDIS_SRV_HOST = co.jummp.redis.host
-        REDIS_SRV_PORT = co.jummp.redis.port as int
-        REDIS_SRV_TIMEOUT = co.jummp.redis.timeout as int
-        BM_SVR_URL = co.grails.serverURL
-        CLASSIFIER_SVR_URL = co.jummp.classification.endpoint
-        EBI_SEARCH_URL = "https://www.ebi.ac.uk/ebisearch/ws/rest"
-        FIXED_PARAMS = "biomodels?query=domain_source:biomodels&size=0&facetfields"
-        EBI_SEARCH_BM_URL = "${EBI_SEARCH_URL}/${FIXED_PARAMS}"
+    void afterPropertiesSet() throws Exception {
         HP_STAT_TOTAL_FIGURE = "hp-statistics-total-figures"
-        proxy = configurationService.verifyHttpProxy()
-        ACCESSED_MAX_RECORDS = co.biomodels.homepage.recently.accessed.models.maxRecords as int
-        PUBLISHED_MAX_RECORDS = co.biomodels.homepage.recently.published.models.maxRecords as int
+        ACCESSED_MAX_RECORDS = grailsApplication.config.biomodels.homepage.recently.accessed.models.maxRecords as int
+        PUBLISHED_MAX_RECORDS = grailsApplication.config.biomodels.homepage.recently.published.models.maxRecords as int
     }
 
     /**
@@ -129,7 +115,7 @@ GROUP BY rev.model
             String name = row[1]
             returnedModels.put(id, name)
         }
-        logger.debug("Extracting the list of recently ACCESSED models from the database")
+        LOGGER.debug("Extracting the list of recently ACCESSED models from the database")
         returnedModels
     }
 
@@ -179,9 +165,9 @@ ORDER BY model.firstPublished DESC'''
             returnedModels.put(it[0], rpm)
         }
         if (returnedModels) {
-            logger.debug("Extracting the list of recently PUBLISHED models from the database")
+            LOGGER.debug("Extracting the list of recently PUBLISHED models from the database")
         } else {
-            logger.error("Could not extract the list of recently published models")
+            LOGGER.error("Could not extract the list of recently published models")
         }
         returnedModels
     }
@@ -192,7 +178,7 @@ ORDER BY model.firstPublished DESC'''
     }
 
     private void addListOfRecentlyAccessedModelsToRedis(Map mapModels) {
-        logger.debug("Caching the list of recently ACCESSED models to Redis Server")
+        LOGGER.debug("Caching the list of recently ACCESSED models to Redis Server")
         JedisPool pool = new JedisPool(new JedisPoolConfig(),
                                 REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
         Jedis jedis = null
@@ -211,7 +197,7 @@ ORDER BY model.firstPublished DESC'''
     }
 
     private void addRecentlyPublishedModelsToRedis(Map mapModels) {
-        logger.debug("Caching the list of recently PUBLISHED models to Redis Server")
+        LOGGER.debug("Caching the list of recently PUBLISHED models to Redis Server")
         JedisPool pool = new JedisPool(new JedisPoolConfig(),
                                 REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
         Jedis jedis = null
@@ -242,7 +228,7 @@ ORDER BY model.firstPublished DESC'''
     }
 
     private void addModelOfTheMonthEntryToRedis(final Map momEntry) {
-        logger.debug("Caching the Model of the Month entry to Redis")
+        LOGGER.debug("Caching the Model of the Month entry to Redis")
         JedisPool pool = new JedisPool(new JedisPoolConfig(),
                                 REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
         pool.getResource().withCloseable { Jedis jedis ->
@@ -272,7 +258,7 @@ ORDER BY model.firstPublished DESC'''
         Map returnedMap = [:]
         if (!organismsMap) {
             // call the fallback
-            logger.debug("Falling back to build the Statistics for Organisms")
+            LOGGER.debug("Falling back to build the Statistics for Organisms")
             returnedMap = buildStatisticsOrganisms()
             addStatisticsOrganismsToRedis(returnedMap)
         } else {
@@ -297,7 +283,7 @@ ORDER BY model.firstPublished DESC'''
         Map models = doRedisHGetAll("hp-recently-accessed-models")
         if (!models) {
             // call the fallback
-            logger.debug("Falling back to build the list of Recently Accessed Models")
+            LOGGER.debug("Falling back to build the list of Recently Accessed Models")
             models = buildListOfRecentlyAccessedModels()
             addListOfRecentlyAccessedModelsToRedis(models)
         }
@@ -310,7 +296,7 @@ ORDER BY model.firstPublished DESC'''
         Map returnedMap = [:]
         if (!models) {
             // call the fallback
-            logger.debug("Falling back to build the list of Recently Published Models")
+            LOGGER.debug("Falling back to build the list of Recently Published Models")
             returnedMap = buildListOfRecentlyPublishedModels()
             addRecentlyPublishedModelsToRedis(returnedMap)
         } else {
@@ -331,7 +317,7 @@ ORDER BY model.firstPublished DESC'''
         Map momEntryMap = doRedisHGetAll("the-latest-mom-entry")
         if (!momEntryMap) {
             // call the fallback
-            logger.debug("Falling back to build the Model of the Month entry")
+            LOGGER.debug("Falling back to build the Model of the Month entry")
             momEntryMap = buildModelOfTheMonthEntry()
             addModelOfTheMonthEntryToRedis(momEntryMap)
         }
@@ -342,10 +328,10 @@ ORDER BY model.firstPublished DESC'''
         Map<String, String> news = doRedisHGetAll("hp-news-widget")
         if (!news) {
             // call the fallback
-            logger.debug("Falling back to build the News entry")
+            LOGGER.debug("Falling back to build the News entry")
             news = buildDataForNewsWidget()
             // cache the data to Redis server
-            logger.debug("Caching the News entry to Redis server")
+            LOGGER.debug("Caching the News entry to Redis server")
             doRedisHSet("hp-news-widget", news)
         } else {
             Map sortedNews = new LinkedHashMap()
@@ -423,7 +409,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
     }
 
     private addStatisticsModellingApproachesToRedis(Map modellingApproachesMap) {
-        logger.debug("Caching the statistics modelling approaches to Redis Server")
+        LOGGER.debug("Caching the statistics modelling approaches to Redis Server")
         Map approachesMap = convert2RedisMap(modellingApproachesMap)
         doRedisHSet("hp-statistics-modelling-approaches", approachesMap)
     }
@@ -440,7 +426,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
             String value = "${it['Count']};${it['Taxonomy']};${it['NormalisedCount']}" as String
             taxons.put(it["Name"] as String, value)
         }
-        logger.info("Caching the statistics organism to Redis Server")
+        LOGGER.info("Caching the statistics organism to Redis Server")
         doRedisHSet("hp-statistics-organisms", taxons)
     }
 
@@ -450,7 +436,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
     }
 
     private void addStatisticsJournalsToRedis(Map pubsMap) {
-        logger.debug("Caching the statistics journals to Redis Server")
+        LOGGER.debug("Caching the statistics journals to Redis Server")
         Map pubsRedisMap = convert2RedisMap(pubsMap)
         doRedisHSet("hp-statistics-journals", pubsRedisMap)
     }
@@ -497,42 +483,6 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
         refreshStatisticsModellingApproachesRedisCache()
         refreshStatisticsOrganismsRedisCache()
         refreshStatisticsJournalsRedisCache()
-    }
-
-    void doRedisHSet(final String key, Map data) {
-        JedisPool pool = new JedisPool(new JedisPoolConfig(),
-                                REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
-        pool.getResource().withCloseable { Jedis jedis ->
-            deleteAllByPattern(jedis, key)
-            jedis.hmset(key, data)
-        }
-        pool.close()
-    }
-
-    String doRedisHGet(final String key, final String field) {
-        JedisPool pool = new JedisPool(new JedisPoolConfig(),
-                            REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
-        String cachedData
-        pool.getResource().withCloseable { Jedis jedis ->
-            cachedData = jedis.hget(key, field)
-        }
-        pool.close()
-        cachedData
-    }
-
-    Map doRedisHGetAll(final String key) {
-        JedisPool pool = new JedisPool(new JedisPoolConfig(),
-                            REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
-        Jedis jedis = null
-        Map returnedMap = new HashMap()
-        try {
-            jedis = pool.getResource()
-            returnedMap = jedis.hgetAll(key)
-        } finally {
-            if (jedis) { jedis.close() }
-        }
-        pool.close()
-        returnedMap
     }
 
     private clearRedisCacheOfRecentlyPublishedModels(final Jedis jedis, final String key) {
@@ -623,7 +573,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
             organismData.add(d)
         }
 
-        logger.info("Sorting the organism list before normalising counts")
+        LOGGER.info("Sorting the organism list before normalising counts")
         Collections.sort(organismData, new Comparator<OrganismData>() {
             @Override
             int compare(OrganismData o1, OrganismData o2) {
@@ -642,12 +592,12 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
             // call the fallback
             switch (key) {
                 case "hp-statistics-modelling-approaches":
-                    logger.info("Falling back to build statistics for modelling approaches")
+                    LOGGER.info("Falling back to build statistics for modelling approaches")
                     returnedMap = buildStatisticsModellingApproaches()
                     addStatisticsModellingApproachesToRedis(returnedMap)
                     break
                 case "hp-statistics-journals":
-                    logger.info("Falling back to build statistics for journals")
+                    LOGGER.info("Falling back to build statistics for journals")
                     returnedMap = buildStatisticsJournals()
                     addStatisticsJournalsToRedis(returnedMap)
                     break
@@ -808,9 +758,9 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
      * @return a JSON object
      */
     private def hitRemoteService(final String serverURL, final String query) {
-        logger.debug("HTTP PROXY: ${proxy?.dump()}")
+        LOGGER.debug("HTTP PROXY: ${proxy?.dump()}")
         String queryURL = "${serverURL}/${query}"
-        logger.debug("Connecting to the service at $queryURL")
+        LOGGER.debug("Connecting to the service at $queryURL")
         RestBuilder rest
         if (proxy) {
             rest = new RestBuilder(connectTimeout: 10000, readTimeout: 100000, proxy: proxy)
@@ -827,7 +777,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
 
     private List<OrganismData> normaliseOrganismCount(final List<OrganismData> organismData) {
         // Take into account the fact that the input list was sorted in descending order
-        logger.debug("Scaling the counts of Organisms")
+        LOGGER.debug("Scaling the counts of Organisms")
         ArrayList<OrganismData> originalData = new ArrayList<OrganismData>(organismData)
         ArrayList<OrganismData> normalisedData = new ArrayList<OrganismData>()
         ArrayList<Float> delta = new ArrayList<Float>()
@@ -841,7 +791,7 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
         }
         OrganismData lastElement = originalData[originalData.size() - 1]
         normalisedData.add(lastElement)
-        logger.debug("Nb. elements: ${originalData.size()} -- ${normalisedData.size()}")
+        LOGGER.debug("Nb. elements: ${originalData.size()} -- ${normalisedData.size()}")
         normalisedData.toList()
     }
 
