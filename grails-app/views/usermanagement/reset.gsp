@@ -45,7 +45,7 @@
             <g:form name="resetForm" action="newPassword" class="log-in-form" useToken="true">
                 <label for="username">
                     <span class="required"><g:message code="user.signup.ui.username"/></span>
-                    <g:textField name="username"/>
+                    <g:textField name="username" value="${username}" disabled="true" />
                 </label>
                 <label for="newPassword">
                     <span class="required"><g:message code="user.administration.updatePassword.newPassword"/></span>

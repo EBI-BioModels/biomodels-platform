@@ -38,7 +38,7 @@ import javax.mail.AuthenticationFailedException
  * @author <a href="mailto:mihai.glont@ebi.ac.uk">Mihai Glont</a>
  */
 class UsermanagementController {
-    private static Logger log = LoggerFactory.getLogger(this.getClass())
+    private static Logger LOGGER = LoggerFactory.getLogger(this.getClass())
     def simpleCaptchaService
     def userService
     def springSecurityService
@@ -112,8 +112,9 @@ class UsermanagementController {
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def resetPassword() {
-        if (params.id) {
-            flash.hashCode = params.id
+        if (params.code) {
+            flash.hashCode = params.code
+            flash.username = params.username
             redirect action: 'reset'
         } else {
             redirect action: 'forgot'
@@ -125,9 +126,9 @@ class UsermanagementController {
      */
     @Secured(["isAnonymous()"])
     def reset() {
-    	render view: "reset", model: [postUrl: "", flashMessage:checkForMessage(),
-    								validationErrorOn: checkForErrorBean(),
-    								hashCode: flash.hashCode]
+        Map model = [postUrl: "", flashMessage:checkForMessage(), validationErrorOn: checkForErrorBean(),
+                     hashCode: flash.hashCode, username: flash.username]
+    	render(view: "reset", model: model)
     }
 
 
@@ -135,7 +136,7 @@ class UsermanagementController {
         bindData(cmd, params)
         if (!cmd.validate()) {
             cmd.errors?.allErrors?.each {
-                log.error(messageSource.getMessage(it, Locale.ENGLISH))
+                LOGGER.error(messageSource.getMessage(it, Locale.ENGLISH))
             }
             flash.validationError = cmd
             return false
@@ -161,7 +162,7 @@ class UsermanagementController {
         	notificationService.updatePreferences(cmd.getPreferences(user1))
         } catch (Exception e) {
             flash.message = e.getMessage()
-            log.error(e.message, e)
+            LOGGER.error(e.message, e)
             return redirect(action: "edit")
         }
         flash.message = "Your profile was updated successfully!"
@@ -265,11 +266,11 @@ class UsermanagementController {
                 try {
                     userService.requestPassword(username)
                 } catch (UserNotFoundException e) {
-                    log.error(e.message, e)
+                    LOGGER.error(e.message, e)
                     succeeded = false
                     usernameExists = false
                 } catch (MailAuthenticationException | AuthenticationFailedException e) {
-                    log.error(e.message, e)
+                    LOGGER.error(e.message, e)
                     succeeded = false
                 }
                 if (succeeded) {
@@ -285,7 +286,7 @@ with us asap for further instructions"""
             } else {
                 message = "Please provide a username."
             }
-            log.debug(message)
+            LOGGER.debug(message)
             flash.message = message
             redirect(action: "forgot")
         }.invalidToken {
@@ -320,7 +321,7 @@ with us asap for further instructions"""
                 userService.register(cmd.toUser())
             } catch (Exception e) {
                 flash.message = e.getMessage()
-                log.error e.message, e
+                LOGGER.error e.message, e
                 return redirect(action: "create")
             }
             render(view: "successfulregistration", model: [email: cmd.email])

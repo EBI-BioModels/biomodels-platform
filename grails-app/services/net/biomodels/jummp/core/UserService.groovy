@@ -558,11 +558,13 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
         // send out notification mail
         String recipient = user.email
         String url = grailsLinkGenerator.link(controller: 'usermanagement', action: 'resetPassword',
-            id: user.passwordForgottenCode, absolute: true)
+            params: [code: user.passwordForgottenCode, username: user.username], absolute: true)
+        String website = grailsApplication.config.grails.serverURL
         String emailBody = grailsApplication.config.jummp.security.resetPassword.email.body
         emailBody = emailBody.replace("{{REALNAME}}", user.person.userRealName)
         emailBody = emailBody.replace("{{USERNAME}}", user.username)
         emailBody = emailBody.replace("{{URL}}", url)
+        emailBody = emailBody.replace("{{WEBSITE}}", website)
         mailService.sendMail {
                 to recipient
                 from grailsApplication.config.jummp.security.registration.email.sender
