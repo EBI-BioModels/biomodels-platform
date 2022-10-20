@@ -13,7 +13,7 @@
       "url": "https://www.gnu.org/licenses/agpl-3.0.en.html"
     }
   },
-  "host": "www.ebi.ac.uk",
+  "host": "localhost:8080",
   "basePath": "/biomodels",
   "tags": [
     {
@@ -38,7 +38,7 @@
     }
   ],
   "schemes": [
-    "https"
+    "http"
   ],
   "paths": {
     "/{modelId}": {
@@ -599,25 +599,50 @@
           "description": "The date, which is encoded under Unix Epoch time, when the model first became publicly available in BioModels.",
           "example": "1543316622000"
         },
-          "format": {
-              "type": "object",
-              "$ref": "#/definitions/Format",
-              "description": "The model format comprises of the name and version"
+        "format": {
+          "type": "object",
+          "$ref": "#/definitions/Format",
+          "description": "The model format comprises of the name and version"
+        },
+        "history": {
+          "type": "object",
+          "$ref": "#/definitions/History",
+          "description": ""
           },
-          "history": {
-              "type": "object",
-              "$ref": "#/definitions/History",
-              "description": ""
-          },
-          "files": {
-              "type": "object",
-              "$ref": "#/definitions/ModelFiles",
-              "description": ""
+        "files": {
+          "type": "object",
+          "$ref": "#/definitions/ModelFiles",
+          "description": ""
           }
       },
       "xml": {
         "name": "Model"
       }
+    },
+    "Format": {
+        "type": "object",
+        "properties": {
+            "name": {
+                "type": "string",
+                "description": "The format name"
+            },
+            "version": {
+                "type": "string",
+                "description": "The format version"
+            }
+        }
+    },
+    "History": {
+        "type": "object",
+        "properties": {
+            "revisions": {
+                "type": "array",
+                "items": {
+                    "$ref": "#definitions/Revision"
+                },
+                "description": "The list of the revisions"
+            }
+        }
     },
       "ModelSummary": {
           "type": "object",
@@ -719,7 +744,7 @@
         "name": "Publication"
       }
     },
-  "SearchResults": {
+    "SearchResults": {
       "type": "object",
       "properties": {
           "matches": {
@@ -827,6 +852,27 @@
                   "type": "string",
                   "description": "The identifier of ORCID",
                   "example": "0000-0001-8479-0262"
+              }
+          }
+      },
+      "Revision": {
+          "type": "object",
+          "properties": {
+              "version": {
+                  "type": "integer",
+                  "description": "The integer denoting the revision number"
+              },
+              "submitted": {
+                  "type": "number",
+                  "description": "The date when the revision was created"
+              },
+              "submitter": {
+                  "type": "string",
+                  "description": "The name of the revision submitter"
+              },
+              "comment": {
+                  "type": "string",
+                  "description": "The commit message denoting what, when and why the model is updated"
               }
           }
       }
