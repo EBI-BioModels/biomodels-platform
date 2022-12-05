@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2010-2018 EMBL-European Bioinformatics Institute (EMBL-EBI),
+ * Copyright (C) 2010-2022 EMBL-European Bioinformatics Institute (EMBL-EBI),
  * Deutsches Krebsforschungszentrum (DKFZ)
  *
  * This file is part of Jummp.
@@ -69,5 +69,29 @@ class JummpHttpService {
             code = 404
         }
         return code
+    }
+
+    static String jsonGetRequest(String urlQueryString) {
+        String json = null
+        try {
+            URL url = new URL(urlQueryString)
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection()
+            connection.setDoOutput(true)
+            connection.setInstanceFollowRedirects(true)
+            connection.setRequestMethod("GET")
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.setRequestProperty("charset", "utf-8")
+            connection.connect()
+            InputStream inStream = connection.getInputStream()
+            json = streamToString(inStream) // input stream to string
+        } catch (IOException ex) {
+            ex.printStackTrace()
+        }
+        return json
+    }
+
+    private static String streamToString(InputStream inputStream) {
+        String text = new Scanner(inputStream, "UTF-8").useDelimiter("\\Z").next()
+        return text
     }
 }
