@@ -35,6 +35,7 @@
 package net.biomodels.jummp.webapp
 
 import grails.converters.JSON
+import grails.converters.XML
 import grails.plugin.springsecurity.annotation.Secured
 import grails.util.Environment
 import net.biomodels.jummp.core.IFileSystemService
@@ -88,7 +89,8 @@ class ModelController {
      */
     final List<String> AUDIT_EXCEPTIONS = ['showWithMessage',
                                            'getFileDetails', 'submitForPublication', 'updateCurationState',
-                                           'searchModellingApproach', 'submit', 'terms', 'uploadFile']
+                                           'searchModellingApproach', 'submit', 'terms', 'uploadFile',
+                                           'identifiers']
 
     def beforeInterceptor = [action: this.&auditBefore, except: AUDIT_EXCEPTIONS]
 
@@ -343,6 +345,27 @@ class ModelController {
             }
         } catch(Exception err) {
             LOGGER.error err.message, err
+            forward controller: 'errors', action: 'error404'
+        }
+    }
+
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def identifiers() {
+        if (!(response.format in ['json', 'xml'])) {
+            render view: '/errors/error415', status: 415
+            return
+        }
+        try {
+            List<String> listAllIdentifiers = modelDelegateService.getAllModelIdentifiers()
+            Map models = ["models": listAllIdentifiers]
+            withFormat {
+                json { render models as JSON }
+                xml { render models as XML }
+                '*' { render status: 415, view: "/errors/error415" }
+            }
+        } catch(Exception err) {
+            println(err.printStackTrace())
+            LOGGER.error(err.message, err)
             forward controller: 'errors', action: 'error404'
         }
     }

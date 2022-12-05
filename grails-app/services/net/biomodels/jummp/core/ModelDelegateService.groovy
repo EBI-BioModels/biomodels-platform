@@ -319,6 +319,10 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
         return null
     }
 
+    List<String> getAllModelIdentifiers() {
+        modelService.getAllModelIdentifiers()
+    }
+
     List<FlagTransportCommand> getFlags(final String modelId) {
         Model model = modelService.findByPerennialIdentifier(modelId)
         List<FlagTransportCommand> results = new ArrayList<FlagTransportCommand>()

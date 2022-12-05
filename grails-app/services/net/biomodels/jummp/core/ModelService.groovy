@@ -52,6 +52,8 @@ import net.biomodels.jummp.model.ContributionDetails as CD
 import net.biomodels.jummp.model.ContributionRole as CR
 import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
+import net.biomodels.jummp.core.util.JummpHttpService
+import org.codehaus.groovy.grails.web.json.JSONObject
 import org.perf4j.StopWatch
 import org.perf4j.aop.Profiled
 import org.perf4j.log4j.Log4JStopWatch
@@ -114,45 +116,18 @@ import java.util.concurrent.locks.ReentrantLock
 class ModelService {
     private static final Logger logger = LoggerFactory.getLogger(ModelService.class)
     def springSecurityService
-    /**
-     * Dependency Injection of AclUtilService
-     */
     def aclUtilService
-    /**
-     * Dependency Injection of VcsService
-     */
     def vcsService
-    /**
-     * Dependency Injection of ModelFileFormatService
-     */
     def modelFileFormatService
-    /**
-     * Dependency Injection for GrailsApplication
-     */
-    @SuppressWarnings("GrailsStatelessService")
     def grailsApplication
-    /**
-     * Dependency Injection for PublicationService
-     */
     def publicationService
-    /**
-     * Dependency injection of ModelHistoryService
-     */
     def modelHistoryService
-    /**
-     * Dependency Injection of FileSystemService
-     */
     def fileSystemService
-    /**
-     * Dependency Injection of userService
-     */
     def userService
-
     //def publishValidator
-
     def modelConversionService
-
     def repositoryFileService
+    def redisService
 
     ObjectFactory<ModelIdentifierGeneratorRegistryService> idGeneratorRegistryFactoryBean
 
@@ -2744,5 +2719,51 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
 
     private void updateModelCache(final Revision revision) {
         repositoryFileService.updateModelRevisionCache(revision)
+    }
+
+    List<String> getAllModelIdentifiers() {
+        final String REDIS_KEY = "all-model-identifiers"
+        List<String> identifiers = []
+        String strIdentifiers = redisService.doRedisGet(REDIS_KEY)
+        if (strIdentifiers) {
+            logger.debug("Retrieving all model identifiers from Redis cache.")
+            identifiers = strIdentifiers.split(",").toList()
+        } else {
+            logger.debug("Extracting all model identifiers from EBI Search.")
+            final String BM = "https://www.ebi.ac.uk/biomodels/search?query=*%3A*&domain=biomodels&sort=relevance-desc&format=json"
+            String jsonString = JummpHttpService.jsonGetRequest(BM)
+            JSONObject json = new JSONObject(jsonString)
+            Integer nbModels = 0
+            if (json.has("matches")) {
+                String nbMatches = json.get("matches")
+                nbModels = nbMatches.toInteger()
+            }
+            if (nbModels > 0) {
+                Integer fetchSize = 200
+                String searchAllUrl = "$BM&numResults=$fetchSize"
+                Integer times = Math.ceil((double) nbModels / fetchSize)
+                Long offset = 0
+                String searchUrl = ""
+                for (int index = 1; index <= times; ++index) {
+                    searchUrl = "$searchAllUrl&offset=$offset"
+                    jsonString = JummpHttpService.jsonGetRequest(searchUrl)
+                    json = new JSONObject(jsonString)
+                    identifiers.addAll(extractAllModelIdentifiers(json))
+                }
+                strIdentifiers = identifiers.join(",")
+                redisService.doRedisSet(REDIS_KEY, strIdentifiers)
+            }
+        }
+        return identifiers
+    }
+
+    private List<String> extractAllModelIdentifiers(JSONObject json) {
+        List<String> results = []
+        if (json.has("models")) {
+            json.get("models").each {
+                results.push(it.id as String)
+            }
+        }
+        results
     }
 }
