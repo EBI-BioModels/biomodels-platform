@@ -497,13 +497,6 @@ from WcmContent where parent.aliasURI = :aliasuri and status.code = :code order 
         deleteAllByPattern(jedis, key)
     }
 
-    private deleteAllByPattern(final Jedis jedis, final String pattern) {
-        Set<String> keys = jedis.keys(pattern)
-        for (String key : keys) {
-            jedis.del(key)
-        }
-    }
-
     private Map buildModelOfTheMonthEntry() {
         final String query = "from ModelOfTheMonth order by publicationDate desc"
         ModelOfTheMonth theLatestMoM = ModelOfTheMonth.find(query)

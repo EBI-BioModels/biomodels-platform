@@ -32,6 +32,7 @@ class RedisService implements GrailsConfigurationAware {
 
     def configurationService
 
+    //static JedisPool jedisPool
     static String REDIS_SRV_HOST //= grailsApplication.config.jummp.redis.host
     static int REDIS_SRV_PORT //= grailsApplication.config.jummp.redis.host.port
     static int REDIS_SRV_TIMEOUT //= grailsApplication.config.jummp.redis.timeout
@@ -118,5 +119,22 @@ class RedisService implements GrailsConfigurationAware {
             if (jedis) { jedis.close() }
         }
         pool.close()
+    }
+
+    synchronized static void deleteAllByPattern(final String pattern) {
+        JedisPool pool = new JedisPool(new JedisPoolConfig(),
+            REDIS_SRV_HOST, REDIS_SRV_PORT, REDIS_SRV_TIMEOUT)
+        pool.getResource().withCloseable { Jedis jedis ->
+            deleteAllByPattern(jedis, pattern)
+        }
+    }
+
+    synchronized static deleteAllByPattern(final Jedis jedis, final String pattern) {
+        Set<String> keys = jedis.keys(pattern)
+        for (String key : keys) {
+            if (jedis.exists(key)) {
+                jedis.del(key)
+            }
+        }
     }
 }
