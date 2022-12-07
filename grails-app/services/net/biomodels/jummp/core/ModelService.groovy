@@ -133,6 +133,8 @@ class ModelService {
 
     final boolean MAKE_PUBLICATION_ID = !(publicationIdGenerator instanceof NullModelIdentifierGenerator)
 
+    final String REDIS_KEY_ALL_MODEL_IDS = "all-model-identifiers"
+
     /**
      * Guard insertion of ACL entries from concurrent access.
      */
@@ -2722,37 +2724,43 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
     }
 
     List<String> getAllModelIdentifiers() {
-        final String REDIS_KEY = "all-model-identifiers"
         List<String> identifiers = []
-        String strIdentifiers = redisService.doRedisGet(REDIS_KEY)
-        if (strIdentifiers) {
+        String strIdentifiers = redisService.doRedisGet(REDIS_KEY_ALL_MODEL_IDS)
+        if (redisService.doRedisGet(REDIS_KEY_ALL_MODEL_IDS)) {
             logger.debug("Retrieving all model identifiers from Redis cache.")
             identifiers = strIdentifiers.split(",").toList()
         } else {
             logger.debug("Extracting all model identifiers from EBI Search.")
-            final String BM = "https://www.ebi.ac.uk/biomodels/search?query=*%3A*&domain=biomodels&sort=relevance-desc&format=json"
-            String jsonString = JummpHttpService.jsonGetRequest(BM)
-            JSONObject json = new JSONObject(jsonString)
-            Integer nbModels = 0
-            if (json.has("matches")) {
-                String nbMatches = json.get("matches")
-                nbModels = nbMatches.toInteger()
+            identifiers = extractAndCacheAllModelIdentifiersFromEBISearchServer()
+
+        }
+        return identifiers
+    }
+
+    List<String> extractAndCacheAllModelIdentifiersFromEBISearchServer() {
+        List<String> identifiers = new ArrayList<>()
+        final String BM = "https://www.ebi.ac.uk/biomodels/search?query=*%3A*&domain=biomodels&sort=relevance-desc&format=json"
+        String jsonString = JummpHttpService.jsonGetRequest(BM)
+        JSONObject json = new JSONObject(jsonString)
+        Integer nbModels = 0
+        if (json.has("matches")) {
+            String nbMatches = json.get("matches")
+            nbModels = nbMatches.toInteger()
+        }
+        if (nbModels > 0) {
+            Integer fetchSize = 200
+            String searchAllUrl = "$BM&numResults=$fetchSize"
+            Integer times = Math.ceil((double) nbModels / fetchSize)
+            Long offset = 0
+            String searchUrl = ""
+            for (int index = 1; index <= times; ++index) {
+                searchUrl = "$searchAllUrl&offset=$offset"
+                jsonString = JummpHttpService.jsonGetRequest(searchUrl)
+                json = new JSONObject(jsonString)
+                identifiers.addAll(extractAllModelIdentifiers(json))
             }
-            if (nbModels > 0) {
-                Integer fetchSize = 200
-                String searchAllUrl = "$BM&numResults=$fetchSize"
-                Integer times = Math.ceil((double) nbModels / fetchSize)
-                Long offset = 0
-                String searchUrl = ""
-                for (int index = 1; index <= times; ++index) {
-                    searchUrl = "$searchAllUrl&offset=$offset"
-                    jsonString = JummpHttpService.jsonGetRequest(searchUrl)
-                    json = new JSONObject(jsonString)
-                    identifiers.addAll(extractAllModelIdentifiers(json))
-                }
-                strIdentifiers = identifiers.join(",")
-                redisService.doRedisSet(REDIS_KEY, strIdentifiers)
-            }
+            String strIdentifiers = identifiers.join(",")
+            redisService.doRedisSet(REDIS_KEY_ALL_MODEL_IDS, strIdentifiers)
         }
         return identifiers
     }
