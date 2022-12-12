@@ -35,6 +35,7 @@
         $.ajax({
             type: "POST",
             url: url,
+            async: false,
             data: {
                 isUpdate: isUpdate,
                 isAmend: isAmend,
