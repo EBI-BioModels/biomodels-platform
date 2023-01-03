@@ -2739,7 +2739,8 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
 
     List<String> extractAndCacheAllModelIdentifiersFromEBISearchServer() {
         List<String> identifiers = new ArrayList<>()
-        final String BM = "https://www.ebi.ac.uk/biomodels/search?query=*%3A*&domain=biomodels&sort=relevance-desc&format=json"
+        final String query = "query=isprivate:false&fields=id,name,isprivate&domain=biomodels&format=json"
+        final String BM = "https://www.ebi.ac.uk/biomodels/search?$query"
         String jsonString = JummpHttpService.jsonGetRequest(BM)
         JSONObject json = new JSONObject(jsonString)
         Integer nbModels = 0
@@ -2752,9 +2753,8 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
             String searchAllUrl = "$BM&numResults=$fetchSize"
             Integer times = Math.ceil((double) nbModels / fetchSize)
             Long offset = 0
-            String searchUrl = ""
             for (int index = 1; index <= times; ++index) {
-                searchUrl = "$searchAllUrl&offset=$offset"
+                String searchUrl = "$searchAllUrl&offset=$offset"
                 jsonString = JummpHttpService.jsonGetRequest(searchUrl)
                 json = new JSONObject(jsonString)
                 identifiers.addAll(extractAllModelIdentifiers(json))
