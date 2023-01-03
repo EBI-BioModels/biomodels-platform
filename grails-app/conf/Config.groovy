@@ -337,6 +337,7 @@ log4j.main = {
         'net.biomodels.jummp.core.RegistrationCheckerJob',
         'net.biomodels.jummp.core.SearchIndexOptimiserJob',
         'net.biomodels.jummp.core.UpdateCachedParametersOnRedisJob',
+        'net.biomodels.jummp.core.RefreshModelIdentifiersOnRedisJob',
     ], additivity: false
 
     warn hibernateAppender: [

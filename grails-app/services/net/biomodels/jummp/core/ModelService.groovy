@@ -2762,6 +2762,7 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
                 offset = index*fetchSize
             }
             String strIdentifiers = identifiers.join(",")
+            logger.info("Updating the cached model identifiers on Redis Server")
             redisService.doRedisSet(Redis.REDIS_KEY_ALL_MODEL_IDS, strIdentifiers)
         }
         return identifiers
