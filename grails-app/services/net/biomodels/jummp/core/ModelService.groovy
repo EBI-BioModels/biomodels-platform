@@ -38,6 +38,8 @@ import grails.transaction.Transactional
 import groovy.transform.CompileStatic
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.adapters.RevisionAdapter
+import net.biomodels.jummp.core.constants.BioModels
+import net.biomodels.jummp.core.constants.Redis
 import net.biomodels.jummp.core.events.*
 import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.ModelTransportCommand as ModelTC
@@ -132,8 +134,6 @@ class ModelService {
     ObjectFactory<ModelIdentifierGeneratorRegistryService> idGeneratorRegistryFactoryBean
 
     final boolean MAKE_PUBLICATION_ID = !(publicationIdGenerator instanceof NullModelIdentifierGenerator)
-
-    final String REDIS_KEY_ALL_MODEL_IDS = "all-model-identifiers"
 
     /**
      * Guard insertion of ACL entries from concurrent access.
@@ -2725,8 +2725,8 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
 
     List<String> getAllModelIdentifiers() {
         List<String> identifiers = []
-        String strIdentifiers = redisService.doRedisGet(REDIS_KEY_ALL_MODEL_IDS)
-        if (redisService.doRedisGet(REDIS_KEY_ALL_MODEL_IDS)) {
+        String strIdentifiers = redisService.doRedisGet(Redis.REDIS_KEY_ALL_MODEL_IDS)
+        if (redisService.doRedisGet(Redis.REDIS_KEY_ALL_MODEL_IDS)) {
             logger.debug("Retrieving all model identifiers from Redis cache.")
             identifiers = strIdentifiers.split(",").toList()
         } else {
@@ -2740,7 +2740,7 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
     List<String> extractAndCacheAllModelIdentifiersFromEBISearchServer() {
         List<String> identifiers = new ArrayList<>()
         final String query = "query=isprivate:false&fields=id,name,isprivate&domain=biomodels&format=json"
-        final String BM = "https://www.ebi.ac.uk/biomodels/search?$query"
+        final String BM = "${BioModels.BM_PROD_SEARCH_URL_PREFIX}?$query"
         String jsonString = JummpHttpService.jsonGetRequest(BM)
         JSONObject json = new JSONObject(jsonString)
         Integer nbModels = 0
@@ -2760,7 +2760,7 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
                 identifiers.addAll(extractAllModelIdentifiers(json))
             }
             String strIdentifiers = identifiers.join(",")
-            redisService.doRedisSet(REDIS_KEY_ALL_MODEL_IDS, strIdentifiers)
+            redisService.doRedisSet(Redis.REDIS_KEY_ALL_MODEL_IDS, strIdentifiers)
         }
         return identifiers
     }
