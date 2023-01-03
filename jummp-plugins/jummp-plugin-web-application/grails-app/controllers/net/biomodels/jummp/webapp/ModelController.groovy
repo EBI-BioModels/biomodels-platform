@@ -357,7 +357,7 @@ class ModelController {
         }
         try {
             List<String> listAllIdentifiers = modelDelegateService.getAllModelIdentifiers()
-            Map models = ["hits": listAllIdentifiers?.size(), "models": listAllIdentifiers]
+            Map models = ["hits": listAllIdentifiers?.size() ?: 0, "models": listAllIdentifiers]
             withFormat {
                 json { render models as JSON }
                 xml { render models as XML }

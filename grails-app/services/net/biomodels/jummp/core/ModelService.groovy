@@ -2726,7 +2726,7 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
     List<String> getAllModelIdentifiers() {
         List<String> identifiers = []
         String strIdentifiers = redisService.doRedisGet(Redis.REDIS_KEY_ALL_MODEL_IDS)
-        if (redisService.doRedisGet(Redis.REDIS_KEY_ALL_MODEL_IDS)) {
+        if (strIdentifiers) {
             logger.debug("Retrieving all model identifiers from Redis cache.")
             identifiers = strIdentifiers.split(",").toList()
         } else {
@@ -2749,7 +2749,7 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
             nbModels = nbMatches.toInteger()
         }
         if (nbModels > 0) {
-            Integer fetchSize = 200
+            Integer fetchSize = 100
             String searchAllUrl = "$BM&numResults=$fetchSize"
             Integer times = Math.ceil((double) nbModels / fetchSize)
             Long offset = 0
@@ -2757,7 +2757,9 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
                 String searchUrl = "$searchAllUrl&offset=$offset"
                 jsonString = JummpHttpService.jsonGetRequest(searchUrl)
                 json = new JSONObject(jsonString)
-                identifiers.addAll(extractAllModelIdentifiers(json))
+                List ids = extractAllModelIdentifiers(json)
+                identifiers.addAll(ids)
+                offset = index*fetchSize
             }
             String strIdentifiers = identifiers.join(",")
             redisService.doRedisSet(Redis.REDIS_KEY_ALL_MODEL_IDS, strIdentifiers)
