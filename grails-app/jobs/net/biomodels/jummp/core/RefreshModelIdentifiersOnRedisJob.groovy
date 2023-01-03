@@ -25,7 +25,7 @@ QuartzJob: Started updating the cached model identifiers on Redis."""
         println(msgLog)
         try {
             println("QuartzJob: Called modelService.extractAndCacheAllModelIdentifiersFromEBISearchServer()")
-            modelService.extractAndCacheAllModelIdentifiersFromEBISearchServer()
+            modelService.extractAndCacheModelIdentifiers()
         } catch (SocketTimeoutException ste) {
             msgLog = """\
 There have been some connections timed out when trying to hit EBI Server and update the cached model identifiers. \

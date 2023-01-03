@@ -2731,13 +2731,17 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
             identifiers = strIdentifiers.split(",").toList()
         } else {
             logger.debug("Extracting all model identifiers from EBI Search.")
-            identifiers = extractAndCacheAllModelIdentifiersFromEBISearchServer()
+            identifiers = extractAndCacheModelIdentifiers()
 
         }
         return identifiers
     }
 
-    List<String> extractAndCacheAllModelIdentifiersFromEBISearchServer() {
+    /**
+     * Extracts all model identifiers by fetching all models from EBI Search server.
+     * Then updates the cached identifiers or caches them on Redis Server if they do not exist.
+     */
+    List<String> extractAndCacheModelIdentifiers() {
         List<String> identifiers = new ArrayList<>()
         final String query = "query=isprivate:false&fields=id,name,isprivate&domain=biomodels&format=json"
         final String BM = "${BioModels.BM_PROD_SEARCH_URL_PREFIX}?$query"
