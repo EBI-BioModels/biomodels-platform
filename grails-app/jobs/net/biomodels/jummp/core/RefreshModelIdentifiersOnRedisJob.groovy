@@ -12,11 +12,10 @@ class RefreshModelIdentifiersOnRedisJob {
         // execute job every three minutes for development;
         // has to be set an appropriate repeat interval later for testing
         // simple name: 'simpleTrigger', startDelay: 10000, repeatInterval: 30000, repeatCount: 10
-
-        simple name: "updateAllModelIdentifiersCachedOnRedis", startDelay: 1000*60*3, repeatInterval: 1000*60*3
+        // simple name: "updateAllModelIdentifiersCachedOnRedis", startDelay: 1000*60*3, repeatInterval: 1000*60*3
 
         // the job is run at 02:00 A.M. daily
-//        cron name: "updateAllModelIdentifiersCachedOnRedis", cronExpression: "0 0 2 * * ?"
+        cron name: "updateAllModelIdentifiersCachedOnRedis", cronExpression: "0 0 2 * * ?"
     }
 
     void execute() {
@@ -25,7 +24,7 @@ QuartzJob: Started updating the cached model identifiers on Redis."""
         LOGGER.info(msgLog)
         println(msgLog)
         try {
-            println "called modelService.extractAndCacheAllModelIdentifiersFromEBISearchServer()"
+            println("QuartzJob: Called modelService.extractAndCacheAllModelIdentifiersFromEBISearchServer()")
             modelService.extractAndCacheAllModelIdentifiersFromEBISearchServer()
         } catch (SocketTimeoutException ste) {
             msgLog = """\
