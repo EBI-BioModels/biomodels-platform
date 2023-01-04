@@ -181,6 +181,48 @@
                 }
             }
         },
+        "/model/identifiers": {
+            "get": {
+                "tags": [
+                    "Model-related operations"
+                ],
+                "summary": "Fetch all model identifiers",
+                "description": "Fetch all publicly available model identifiers",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "format",
+                        "type": "string",
+                        "required": false,
+                        "description": "The format that the response should return",
+                        "enum": [
+                            "json",
+                            "xml",
+                            "html"
+                        ]
+                    }
+                ],
+                "produces": [
+                    "application/json",
+                    "application/xml",
+                    "text/html"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ModelIdentifiers"
+                        }
+                    },
+                    "404": {
+                        "description": "Invalid operation"
+                    },
+                    "415": {
+                        "description": "Unsupported media type"
+                    }
+                }
+            }
+        },
         "/search": {
             "get": {
                 "tags": [
@@ -901,6 +943,19 @@
                 "comment": {
                     "type": "string",
                     "description": "The commit message denoting what, when and why the model is updated"
+                }
+            }
+        },
+        "ModelIdentifiers": {
+            "type": "object",
+            "properties": {
+                "hits": {
+                    "type": "integer",
+                    "description": "The number of accessible model identifiers"
+                },
+                "models": {
+                    "type": "array",
+                    "description": "The list of all accessible model identifiers"
                 }
             }
         }
