@@ -83,7 +83,7 @@
              style="padding: 0px; background-color: #ff9800; margin-bottom: 15px; font-size: large">
             <h3 style="color: white; font-weight: bolder">Submit your model to enter
             <a href="https://www.ebi.ac.uk/biomodels/competition/model-of-the-year-2023"
-               target="_blank">"Model of the year" Competition 2023</a>. Deadline 31<sup>st</sup> December 2022.</h3>
+               target="_blank">"Model of the year" Competition 2023</a>. Deadline 20<sup>th</sup> January 2023.</h3>
         </div>
     </div>
     <div class="large-12 medium-12 small-12 columns">
