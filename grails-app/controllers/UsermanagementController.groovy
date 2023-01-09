@@ -188,7 +188,7 @@ class UsermanagementController {
                 flash.message = "password.reset.service.error"
                 return redirect(action: "reset")
             }
-            flash.flashMessage = "Password for ${cmd.username} was updated successfully. Please try logging in now"
+            flash.flashMessage = "Password for ${cmd.username} was updated successfully. Please try logging in with your updated password now."
             redirect(controller: "login", action: "auth")
         }.invalidToken {
             render(controller: "errors", action: "error405")
