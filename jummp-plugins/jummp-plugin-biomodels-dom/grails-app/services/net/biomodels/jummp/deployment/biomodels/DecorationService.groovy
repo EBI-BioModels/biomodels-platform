@@ -348,15 +348,17 @@ ORDER BY model.firstPublished DESC'''
     }
 
     Map<String, Integer> buildStatisticsModellingApproaches() {
-        String query = "${FIXED_PARAMS}=modellingapproach&facetcount=10&format=json"
+        // As of changing this line, we have less than 200 modelling approaches while 1000 is the allowed value
+        // in the EBI Search to make sure we don't trap in NPEs.
+        String query = "biomodels?${FIXED_PARAMS}=modellingapproach&facetcount=1000&format=json"
         def response = hitRemoteService(EBI_SEARCH_URL, query)
-        def totalHitCount = response.json.hitCount
         // the total hit count is always greater than the sum of these below values
         // because it includes private models.
         def totalFacets = response.json.facets[0].total
         def facetValues = response.json.facets[0].facetValues
-        Map<String, Integer> approachesMap = [:] //["totalHitCount": totalHitCount]
-        for (int i = 0; i < totalFacets; i++) {
+        Map<String, Integer> approachesMap = [:]
+        int total = totalFacets <= facetValues?.size() ? totalFacets : facetValues?.size()
+        for (int i = 0; i < total; i++) {
             String key = facetValues[i]["label"] as String
             Integer value = facetValues[i]["count"] as Integer
             approachesMap.put(key, value)
