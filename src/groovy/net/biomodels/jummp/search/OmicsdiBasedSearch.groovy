@@ -179,7 +179,7 @@ class OmicsdiBasedSearch implements GrailsConfigurationAware, ModelSearchStrateg
         // create the returned object
         SearchResponse searchResponse = new SearchResponse()
         String[] fields = ["name", "description", "submitter", "curationstatus",
-                           "last_modification_date", "submission_date",
+                           "last_modification_date", "submission_date", "modellingapproach",
                            "modelformat", "levelversion", "first_author", "publication_year", "isprivate"]
         String sortField = sortOrder.getField()
         String sortDir = sortOrder.direction == SortOrder.SortDirection.ASC ? "ascending" : "descending"
