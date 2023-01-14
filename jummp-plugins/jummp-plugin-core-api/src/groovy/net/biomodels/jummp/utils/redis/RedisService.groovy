@@ -38,9 +38,8 @@ class RedisService implements GrailsConfigurationAware {
     static int REDIS_SRV_TIMEOUT //= grailsApplication.config.jummp.redis.timeout
     static String BM_SVR_URL //= grailsApplication.config.grails.serverURL
     static String CLASSIFIER_SVR_URL //= grailsApplication.config.jummp.classification.endpoint
-    static String EBI_SEARCH_URL = "https://www.ebi.ac.uk/ebisearch/ws/rest"
-    static String FIXED_PARAMS = "biomodels?query=domain_source:biomodels&size=0&facetfields"
-    static String EBI_SEARCH_BM_URL = "${EBI_SEARCH_URL}/${FIXED_PARAMS}"
+    static String EBI_SEARCH_RESTFUL_WS_URL
+    static String FIXED_PARAMS
     static Proxy proxy
 
     @Override
@@ -51,9 +50,8 @@ class RedisService implements GrailsConfigurationAware {
         REDIS_SRV_TIMEOUT = co.jummp.redis.timeout as int
         BM_SVR_URL = co.grails.serverURL
         CLASSIFIER_SVR_URL = co.jummp.classification.endpoint
-        EBI_SEARCH_URL = "https://www.ebi.ac.uk/ebisearch/ws/rest"
-        FIXED_PARAMS = "biomodels?query=domain_source:biomodels&size=0&facetfields"
-        EBI_SEARCH_BM_URL = "${EBI_SEARCH_URL}/${FIXED_PARAMS}"
+        EBI_SEARCH_RESTFUL_WS_URL = "https://www.ebi.ac.uk/ebisearch/ws/rest"
+        FIXED_PARAMS = "query=*:*&size=0&facetfields"
         proxy = configurationService.verifyHttpProxy()
     }
 
