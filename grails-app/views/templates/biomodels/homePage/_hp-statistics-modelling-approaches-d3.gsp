@@ -51,6 +51,7 @@
             return color(d.data["label"]);
         });
 
+/*
     var legendSize = 15;
     var legendSpacing = 8; // 2
     var legend = svg.selectAll(".legend")
@@ -72,7 +73,7 @@
         .text(function(d){return d;})
         .attr('x', legendSize + legendSpacing)
         .attr('y', legendSize - legendSpacing + 8); // 2 -- remove
-
+*/
     g.append("text")
         .attr("transform", function (d) {
             var _d = labelArc.centroid(d);
