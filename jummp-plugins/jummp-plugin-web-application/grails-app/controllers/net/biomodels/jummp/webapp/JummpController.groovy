@@ -27,7 +27,7 @@ package net.biomodels.jummp.webapp
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import groovy.xml.MarkupBuilder
-import net.biomodels.jummp.core.constants.BioModels
+
 
 @Secured(["IS_AUTHENTICATED_FULLY"])
 class JummpController extends CommonController {
@@ -211,7 +211,7 @@ class JummpController extends CommonController {
             List<String> allPublicModelIds = modelService.getAllModelIdentifiers()
             for (String modelId : allPublicModelIds) {
                 mkp.url {
-                    loc("${BioModels.BM_ROOT_URL}/$modelId")
+                    loc("https://www.ebi.ac.uk/biomodels/$modelId")
                     changefreq('daily')
                     priority(0.8)
                 }
@@ -357,7 +357,7 @@ class JummpController extends CommonController {
 
         // Model of the month
         mkp.url {
-            loc("http://localhost:8080/biomodels/content/model-of-the-month?all=yes")
+            loc("https://www.ebi.ac.uk/biomodels/content/model-of-the-month?all=yes")
             changefreq('yearly')
             priority(0.8)
         }
