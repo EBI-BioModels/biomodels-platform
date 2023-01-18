@@ -16,7 +16,7 @@
         </p>
         <p>The default search domain is <strong><g:message code="net.biomodels.jummp.domain.name.BioModels"/></strong>.</p>
 
-        <p><a href="https://www.ebi.ac.uk/biomodels-static/jummp-biomodels-help/model_search.html"
+        <p><a href="${grailsApplication.config.jummp.context.help.root}/model_search.html"
               target="_blank">Learn more about searching models</a></p>
     </div>
 </div>
