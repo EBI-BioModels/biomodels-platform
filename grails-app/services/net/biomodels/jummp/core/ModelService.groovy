@@ -2743,22 +2743,22 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
      */
     List<String> extractAndCacheModelIdentifiers() {
         List<String> identifiers = new ArrayList<>()
-        final String query = "query=isprivate:false&fields=id,name,isprivate&domain=biomodels&format=json"
-        final String BM = "${BioModels.BM_PROD_SEARCH_URL_PREFIX}?$query"
+        final String query = "query=*:*&isprivate:false&fields=id,name,isprivate&format=json"
+        String BM = "${BioModels.EBI_PROD_WS_REST_BM_URL}?$query"
         String jsonString = JummpHttpService.jsonGetRequest(BM)
         JSONObject json = new JSONObject(jsonString)
         Integer nbModels = 0
-        if (json.has("matches")) {
-            String nbMatches = json.get("matches")
+        if (json.has("hitCount")) {
+            String nbMatches = json.get("hitCount")
             nbModels = nbMatches.toInteger()
         }
         if (nbModels > 0) {
             Integer fetchSize = 100
-            String searchAllUrl = "$BM&numResults=$fetchSize"
+            String searchAllUrl = "$BM&size=$fetchSize"
             Integer times = Math.ceil((double) nbModels / fetchSize)
             Long offset = 0
             for (int index = 1; index <= times; ++index) {
-                String searchUrl = "$searchAllUrl&offset=$offset"
+                String searchUrl = "$searchAllUrl&start=$offset"
                 jsonString = JummpHttpService.jsonGetRequest(searchUrl)
                 json = new JSONObject(jsonString)
                 List ids = extractAllModelIdentifiers(json)
@@ -2774,9 +2774,9 @@ ${model.vcsIdentifier} added to VCS, but not stored in database""")
 
     private List<String> extractAllModelIdentifiers(JSONObject json) {
         List<String> results = []
-        if (json.has("models")) {
-            json.get("models").each {
-                results.push(it.id as String)
+        if (json.has("entries")) {
+            json.get("entries").each {
+                results.push(it.get("id") as String)
             }
         }
         results
