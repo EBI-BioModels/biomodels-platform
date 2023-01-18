@@ -1,3 +1,4 @@
+package net.biomodels.jummp
 /**
 * Copyright (C) 2010-2022 EMBL-European Bioinformatics Institute (EMBL-EBI),
 * Deutsches Krebsforschungszentrum (DKFZ)
