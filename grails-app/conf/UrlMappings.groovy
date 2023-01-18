@@ -68,6 +68,11 @@ class UrlMappings {
             controller = "feature"
             action = 'reproducibility'
         }
+
+        name sitemap: "/sitemap" {
+            controller = "jummp"
+            action = "sitemap"
+        }
         // used for web services
         "/$controller/$action?/$id?(.$format)?"{
             constraints {
