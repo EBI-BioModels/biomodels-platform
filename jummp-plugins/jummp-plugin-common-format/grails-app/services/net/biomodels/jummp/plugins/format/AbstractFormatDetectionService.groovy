@@ -20,6 +20,7 @@
 
 package net.biomodels.jummp.plugins.format
 
+import com.google.common.io.Files
 import net.biomodels.jummp.core.model.FileFormatServiceAdapter
 import org.apache.tika.Tika
 import org.slf4j.Logger
@@ -61,6 +62,17 @@ abstract class AbstractFormatDetectionService extends FileFormatServiceAdapter {
             fileMimeTypeMatches(f, mimeTypes)
         }
         return result
+    }
+
+    static boolean hasExt(final File file, final String ext) {
+        String fileExtension = Files.getFileExtension(file.name)
+        boolean hasThisExt = fileExtension.equalsIgnoreCase(ext)
+        hasThisExt
+    }
+
+    static boolean hasRoot(final File xmlBasedFile, final String root) {
+        def parsedDoc = new XmlSlurper().parse(xmlBasedFile)
+        parsedDoc.name().toLowerCase() == root?.toLowerCase()
     }
 
     /**

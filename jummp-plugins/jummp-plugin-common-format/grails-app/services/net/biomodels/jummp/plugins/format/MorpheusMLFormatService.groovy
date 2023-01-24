@@ -21,6 +21,7 @@
 package net.biomodels.jummp.plugins.format
 
 import com.google.common.io.Files
+import net.biomodels.jummp.plugins.format.utils.XmlBasedHandler
 
 /**
  * <p>Individual class for handling detection and manipulation of MorpheusML format.</p>
@@ -69,13 +70,10 @@ class MorpheusMLFormatService extends AbstractFormatDetectionService {
     }
 
     private boolean hasMorpheusMLTag(final File modelFile) {
-        String fileExtension = Files.getFileExtension(modelFile.name)
-        boolean hasXMLExt = fileExtension.equalsIgnoreCase("XML")
-        if (!hasXMLExt) {
+        if (!hasExt(modelFile, "XML")) {
             return false
         }
-        def parsedDoc = new XmlSlurper().parse(modelFile)
-        boolean hasMLRoot = parsedDoc.name().toLowerCase() == "morpheusmodel"
+        boolean hasMLRoot = hasRoot(modelFile, "morpheusmodel")
         hasMLRoot
     }
 }

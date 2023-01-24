@@ -15,6 +15,8 @@ import static net.biomodels.jummp.plugins.format.CommonFormat.Constants.*;
  */
 public enum CommonFormat {
     C_CPP("C/C++", "C_CPP", C_CPP_MIME, "ccppFormatService"),
+
+    CC3DML("CompuCell3D", "CC3DML", CC3DML_MIME, "cc3dmlFormatService"),
     JAVA("Java", "Java", JAVA_MIME),
     MATHEMATICA("Mathematica", "Mathematica", MATHEMATICA_MIME),
     MATLAB("MATLAB (Octave)", "matlab", DEFAULT_VERSIONS, MATLAB_MIME, "matlabFormatService", "matlab"),
@@ -105,6 +107,8 @@ public enum CommonFormat {
         public static final Set<String> PYTHON_MIME = new LinkedHashSet<>(
                 Collections.singletonList("text/x-python"));
         public static final Set<String> MORPHEUSML_MIME = new LinkedHashSet<>(
+                Collections.singletonList("application/xml"));
+        public static final Set<String> CC3DML_MIME = new LinkedHashSet<>(
                 Collections.singletonList("application/xml"));
         public static final Set<String> R_MIME = new LinkedHashSet<>(
                 Collections.singletonList("text/x-rsrc"));
