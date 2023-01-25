@@ -59,7 +59,7 @@
 
 <script type="text/javascript">
     var formats = ["text", "txt", "xml", "pdf", "jpg", "jpeg", "gif", "png",
-        "bmp", "svg", "doc", "docx", "xls", "xlsx", "ppt", "pptx"];
+        "bmp", "svg", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "cc3d"];
     $('[id^="previewButton"]').on('click', function (e) {
         e.preventDefault();
         var filename = $(this).attr("data-file-name");
@@ -86,12 +86,12 @@
                             if (format === "jpg" || format === "jpeg" || format === "gif" ||
                                 format === "png" || format === "bmp" || format === "svg") {
                                 imageType = true;
-                            } else if (format === "txt" || format === "text" || format === "xml") {
+                            } else if (format === "txt" || format === "text" || format === "xml" || format === "cc3d") {
                                 if (filename.indexOf('.mdl') !== -1) {
                                     mdlType = true;
                                     fileExtention = "mdl";
                                 }
-                                if (filename.indexOf('.xml') !== -1) {
+                                if (filename.indexOf('.xml') !== -1 || filename.indexOf('.cc3d') !== -1 ) {
                                     xmlType = true;
                                     fileExtention = "Xml";
                                 }
@@ -176,7 +176,7 @@
                         $("#notificationgoeshere").html(message);
                     }
                 }
-            }, 
+            },
             error: function (jqXHR, errorThrown) {
                 $("#notificationgoeshere").show();
                 $("#notificationgoeshere").html("Error: ", jqXHR.responseText + " " + errorThrown + JSON.stringify(jqXHR));
