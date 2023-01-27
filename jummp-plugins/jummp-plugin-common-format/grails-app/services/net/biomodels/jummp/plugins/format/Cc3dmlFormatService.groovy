@@ -19,9 +19,6 @@
  */
 
 package net.biomodels.jummp.plugins.format
-
-import net.biomodels.jummp.plugins.format.utils.XmlBasedHandler
-
 /**
  * <p>Individual class for handling detection and manipulation of CC3DML format.</p>
  * <br/>

@@ -19,10 +19,6 @@
  */
 
 package net.biomodels.jummp.plugins.format
-
-import com.google.common.io.Files
-import net.biomodels.jummp.plugins.format.utils.XmlBasedHandler
-
 /**
  * <p>Individual class for handling detection and manipulation of MorpheusML format.</p>
  * <br/>
