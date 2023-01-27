@@ -71,6 +71,9 @@ abstract class AbstractFormatDetectionService extends FileFormatServiceAdapter {
     }
 
     static boolean hasRoot(final File xmlBasedFile, final String root) {
+        if (!hasExt(xmlBasedFile, "xml")) {
+            return false
+        }
         def parsedDoc = new XmlSlurper().parse(xmlBasedFile)
         parsedDoc.name().toLowerCase() == root?.toLowerCase()
     }
