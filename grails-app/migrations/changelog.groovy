@@ -1319,5 +1319,6 @@ databaseChangeLog = {
     include file: '20220318_createTable_ContributionDetails.groovy'
     include file: '20220408_createTable_ContributionInvite.groovy'
     include file: '20220701_createTableCmsContent.groovy'
+    include file: '20230126_addCC3DMLFormat.groovy'
 }
 
