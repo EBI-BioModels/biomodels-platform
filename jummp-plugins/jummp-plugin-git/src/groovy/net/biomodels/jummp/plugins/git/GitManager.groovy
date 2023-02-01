@@ -645,7 +645,7 @@ has not been initialised any VCS yet."""
             files.each {
                 Path sourcePath = it.toPath()
                 Path targetPath = Paths.get(modelDirectory.absolutePath, it.getName())
-                Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING)
+                Files.move(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING)
                 add = add.addFilepattern(it.getName())
             }
             add.call()
