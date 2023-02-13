@@ -691,11 +691,10 @@ class ModelController {
         try {
             if (!preview || previewSize > fileData.length) {
                 stream = new ByteArrayInputStream(fileData)
-                resp.outputStream << stream
             } else {
                 stream = new ByteArrayInputStream(Arrays.copyOf(fileData, previewSize))
-                resp.outputStream << stream
             }
+            resp.outputStream << stream
         } catch (IOException ioE) {
             LOGGER.error("The client might have cancelled downloading the file ${file.name}.", ioE)
         } finally {
