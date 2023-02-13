@@ -134,6 +134,11 @@ class UsermanagementController {
 
 
     boolean validateUserData(def cmd, def params) {
+        params.username = params.username.decodeHTML()
+        params.email = params.email.decodeHTML()
+        params.userRealName = params.userRealName.decodeHTML()
+        params.institution = params.institution.decodeHTML()
+        params.orcid = params.orcid.decodeHTML()
         bindData(cmd, params)
         if (!cmd.validate()) {
             cmd.errors?.allErrors?.each {
@@ -306,7 +311,7 @@ with us asap for further instructions"""
         withForm {
             RegistrationCommand cmd = new RegistrationCommand()
             if (!validateUserData(cmd, params)) {
-                return redirect(action: "create")
+                return redirect(action: "registration")
             }
             String captcha = params.captcha
             boolean captchaValid = simpleCaptchaService.validateCaptcha(captcha)
