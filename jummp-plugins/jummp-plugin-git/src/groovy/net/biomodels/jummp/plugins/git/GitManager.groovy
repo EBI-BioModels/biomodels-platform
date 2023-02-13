@@ -75,7 +75,7 @@ import java.util.concurrent.locks.ReentrantLock
  * @author Mihai Glonț <mihai.glont@ebi.ac.uk>
  */
 class GitManager implements VcsManager {
-    private static final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
+    private static final Logger LOGGER = LoggerFactory.getLogger(GitManager.class)
 
     // uid for generating unique checkout directory names
     private static final AtomicInteger uid = new AtomicInteger(0)

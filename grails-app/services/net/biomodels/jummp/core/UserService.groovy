@@ -66,7 +66,7 @@ import javax.mail.AuthenticationFailedException
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 class UserService implements IUserService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserService.class)
     def springSecurityService
     def mailService
     @SuppressWarnings("GrailsStatelessService")

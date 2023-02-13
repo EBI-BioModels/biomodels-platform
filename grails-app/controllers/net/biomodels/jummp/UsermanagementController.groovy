@@ -39,7 +39,7 @@ import javax.mail.AuthenticationFailedException
  * @author <a href="mailto:mihai.glont@ebi.ac.uk">Mihai Glont</a>
  */
 class UsermanagementController {
-    private static Logger LOGGER = LoggerFactory.getLogger(this.getClass())
+    private static final Logger LOGGER = LoggerFactory.getLogger(UsermanagementController.class)
     def simpleCaptchaService
     def userService
     def springSecurityService

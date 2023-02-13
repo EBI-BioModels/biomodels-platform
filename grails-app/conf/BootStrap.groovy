@@ -50,7 +50,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 class BootStrap {
-    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
+    private final Logger LOGGER = LoggerFactory.getLogger(BootStrap.class)
     def contributorService
     def springSecurityService
     def wcmSecurityService
