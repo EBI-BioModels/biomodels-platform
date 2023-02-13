@@ -317,18 +317,26 @@ with us asap for further instructions"""
             boolean captchaValid = simpleCaptchaService.validateCaptcha(captcha)
             if (!captchaValid) {
                 flash.message = "The text entered did not match the image. Please try again"
-                return redirect(action: "create")
+                return redirect(action: "registration")
             }
             if (params.verysecure) {
                 flash.message = "I hope you are a robot. Otherwise something has gone wrong."
-                return redirect(action: "create")
+                return redirect(action: "registration")
             }
+            Long result = -1
             try {
-                userService.register(cmd.toUser())
+                result = userService.register(cmd.toUser())
             } catch (Exception e) {
                 flash.message = e.getMessage()
                 LOGGER.error e.message, e
-                return redirect(action: "create")
+                return redirect(action: "registration")
+            } finally {
+                if (result == -1) {
+                    LOGGER.error("""An error has happened when trying to create a new account
+for this user info [${cmd.username}, ${cmd.email}, ${cmd.userRealName}, ${cmd?.orcid}]""")
+                } else if (result >= 0) {
+                    LOGGER.debug("A new account has been created successfully with the uder info [${result}: ${cmd.username}, ${cmd.email}]")
+                }
             }
             render(view: "successfulregistration", model: [email: cmd.email])
         }.invalidToken {
