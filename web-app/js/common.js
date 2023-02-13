@@ -120,8 +120,9 @@ $('input[id=username]').blur(function() {
                     message = "This username does not exist. Please check typos and spelling or try again."
                 }
                 // When an anonymous user is trying to open a new account and username doesn't exist
-                // or to login the system, don't show the warning message
-                if (("create" === actionName && username === "") ||
+                // or to log in the system, don't show the warning message
+                if (("registration" === actionName && username === "") ||
+                    ("create" === actionName && username === "") ||
                     ("forgot" === actionName && username !== "") ||
                     ("auth" === actionName && username !== "")) {
                     hideNow();
@@ -176,8 +177,9 @@ $('input[name=email]').blur(function() {
     if (email !== currentEmail) {
         let message = "";
         let returned;
+        let LOOKUP_EMAIL_RESULT = "";
         if (email.match(emailRegExp)) {
-            const LOOKUP_EMAIL_RESULT = doLookUpUserEmail(email);
+            LOOKUP_EMAIL_RESULT = doLookUpUserEmail(email);
             if (LOOKUP_EMAIL_RESULT === LOOKUP_USER_INFO_STATUS_CODE.FETCH_FAILED) {
                 message = "There has been an internal error happening. Please try again!";
                 returned = false;
@@ -195,7 +197,12 @@ $('input[name=email]').blur(function() {
             message = "Your email address is invalid";
             returned = false;
         }
-        showNotification(message);
+        if (("create" === actionName || "registration" === actionName) &&
+            (LOOKUP_EMAIL_RESULT === LOOKUP_USER_INFO_STATUS_CODE.NOT_FOUND)) {
+            hideNow();
+        } else {
+            showNotification(message);
+        }
         return returned;
     } else {
         hideNow();
