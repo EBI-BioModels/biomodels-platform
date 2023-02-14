@@ -177,7 +177,7 @@ $('input[name=email]').blur(function() {
     if (email !== currentEmail) {
         let message = "";
         let returned;
-        let LOOKUP_EMAIL_RESULT = "";
+        let LOOKUP_EMAIL_RESULT = LOOKUP_USER_INFO_STATUS_CODE.NOT_FOUND;
         if (email.match(emailRegExp)) {
             LOOKUP_EMAIL_RESULT = doLookUpUserEmail(email);
             if (LOOKUP_EMAIL_RESULT === LOOKUP_USER_INFO_STATUS_CODE.FETCH_FAILED) {

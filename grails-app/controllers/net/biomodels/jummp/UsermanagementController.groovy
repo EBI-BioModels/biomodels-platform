@@ -395,7 +395,7 @@ for this user info [${cmd.username}, ${cmd.email}, ${cmd.userRealName}, ${cmd?.o
      */
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def lookupUser() {
-        String query = params?.query
+        String query = params?.query?.decodeHTML()
         String col = params?.column
         int column = Integer.parseInt(col)
         User user = userService.lookupUser(query, column)
