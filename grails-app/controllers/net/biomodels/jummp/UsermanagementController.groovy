@@ -332,10 +332,11 @@ with us asap for further instructions"""
                 return redirect(action: "registration")
             } finally {
                 if (result == -1) {
-                    LOGGER.error("""An error has happened when trying to create a new account
-for this user info [${cmd.username}, ${cmd.email}, ${cmd.userRealName}, ${cmd?.orcid}]""")
+                    LOGGER.error("""An error has happened when trying to create a new account for this user info \
+[${cmd.username}, ${cmd.email}, ${cmd.userRealName}, ${cmd?.orcid}]""")
                 } else if (result >= 0) {
-                    LOGGER.debug("A new account has been created successfully with the uder info [${result}: ${cmd.username}, ${cmd.email}]")
+                    LOGGER.debug("A new account has been created successfully with the uder info \
+[${result}: ${cmd.username}, ${cmd.email}]")
                 }
             }
             render(view: "successfulregistration", model: [email: cmd.email])

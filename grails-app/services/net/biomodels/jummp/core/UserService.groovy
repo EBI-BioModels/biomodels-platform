@@ -221,13 +221,12 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
             if (!user) {
                 user = User.findByEmail(query)
             }
-            return user
         } else {
             // column == 3 --> search Person by ORCID identifier
             Person person = Person.findByOrcid(query)
             user = User.findByPerson(person)
-            return user
         }
+        return user
     }
 
     @Profiled(tag="userService.hasRole")
@@ -444,6 +443,9 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
         newUser.accountExpired = false
         newUser.id = null
         if (!newUser.validate()) {
+            newUser.errors?.allErrors?.each {
+                LOGGER.error(it.toString())
+            }
             throw new UserInvalidException(user.username)
         }
         String registrationCode = String.valueOf(random.nextInt()) + user.username
