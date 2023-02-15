@@ -18,6 +18,7 @@
 --%>
 
 <%@ page contentType="text/html;charset=UTF-8" %>
+<html>
 <head>
     <title>Model GO Categories | BioModels</title>
     <meta name="layout" content="${session['branding.style']}/main" />
@@ -101,6 +102,7 @@
 <g:javascript src="datatable/vfs_fonts.js" contextPath=""/>
 <g:javascript src="datatable/buttons.html5.min.js" contextPath=""/>
 
+<g:if test="${classifiedModels}">
 <g:javascript>
     var json = $.parseJSON('${classifiedModels.toString().replace('\'', '\\\'')}');
 
@@ -428,6 +430,10 @@
         return rgb.r * .299 + rgb.g * .587 + rgb.b * .114;
     }
 </g:javascript>
+</g:if>
+<g:else>
+    <h1>Under construction. Please come back later or contact us. Thanks!</h1>
+</g:else>
 %{--<script>--}%
     %{--if (top != self) top.location.replace(location);--}%
 %{--</script>--}%
