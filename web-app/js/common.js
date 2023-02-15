@@ -10,20 +10,20 @@
  * attention once you want to customise it.
  */
 $('#submitButtonRate').prop('disabled', true);
-var allStars = ["star1", "star2", "star3", "star4", "star5"];
-var stackOfStars = [];
-var currentStar;
+const ALL_STARS = ["star1", "star2", "star3", "star4", "star5"];
+let stackOfStars = [];
+let currentStar;
 $('span[id^=star]').on('click', function() {
     currentStar = this.id;
     Array.prototype.diff = function(a) {
         return this.filter(function(i) {return a.indexOf(i) < 0;});
     };
     if (currentStar !== undefined) {
-        var currentStarId = currentStar.substring(4);
+        const currentStarId = currentStar.substring(4);
         stackOfStars = [];
-        var currentStarClass = $('#'+currentStar).attr('class');
-        for (i = 1; i <= currentStarId; i++) {
-            var idx = i;
+        const currentStarClass = $('#' + currentStar).attr('class');
+        for (let i = 1; i <= currentStarId; i++) {
+            const idx = i;
             stackOfStars.push("star" + idx);
             $('#star'+ idx).attr('class', 'star-icon full');
         }
@@ -31,7 +31,7 @@ $('span[id^=star]').on('click', function() {
             $('#'+currentStar).attr('class', 'star-icon');
             stackOfStars.pop();
         }
-        var remainingStars = allStars.diff(stackOfStars);
+        const remainingStars = ALL_STARS.diff(stackOfStars);
         $.each(remainingStars, function (index, value) {
             $('#'+value).attr('class', 'star-icon');
         });
@@ -259,10 +259,10 @@ function escapeSpecialLuceneCharacters(facet_value) {
 }
 
 function getTimeStamp() {
-    var d = new Date(); // for now
-    var hour = d.getHours() < 10 ? "0" + d.getHours().toString() : d.getHours();
-    var minute = d.getMinutes() < 10 ? "0" + d.getMinutes().toString() : d.getMinutes();
-    var second = d.getSeconds() < 10 ? "0" + d.getSeconds().toString() : d.getSeconds();
+    const d = new Date(); // for now
+    const hour = d.getHours() < 10 ? "0" + d.getHours().toString() : d.getHours();
+    const minute = d.getMinutes() < 10 ? "0" + d.getMinutes().toString() : d.getMinutes();
+    const second = d.getSeconds() < 10 ? "0" + d.getSeconds().toString() : d.getSeconds();
     return "T" + hour + ":" + minute + ":"+ second;
 }
 
@@ -285,8 +285,8 @@ function remove(array, k) {
 }
 
 function values(array) {
-    var values = [];
-    for (var k in array) {
+    const values = [];
+    for (let k in array) {
         values.push(array[k]);
     }
     return values;
@@ -325,7 +325,7 @@ function previewImage(input, imageHolder) {
 function convertImageURL2Data(imgURL) {
     let imgData = null;
     if (imgURL) {
-        var image = new Image();
+        const image = new Image();
         image.src = imgURL;
         let canvas = document.createElement("canvas");
         canvas.width = image.width;
@@ -349,7 +349,7 @@ $('#menu-item-myaccount').on('mouseover', function (event) {
     }
 });
 
-$('.is-submenu-item').on("mouseover", function() {
+$('.is-submenu-item').on("mouseover click", function() {
     $('.main-menu-item').removeClass("active");
     $('.main-menu-item a').removeAttr("style");
     let grand = $(this).parent().parent().find('a');
@@ -368,8 +368,8 @@ $("#menuItemFeedback").on("click", function() {
 
 function validateInputLength(element, minLength, maxLength, messageHolder) {
     $(element).on('keydown keyup change', function(){
-        var char = $(this).val();
-        var charLength = $(this).val().length;
+        const char = $(this).val();
+        const charLength = $(this).val().length;
         if (charLength < minLength){
             $(messageHolder).text('Length is short, minimum '+minLength+' characters required.');
             setTimeout(function() { $(this).focus(); }, 0);
