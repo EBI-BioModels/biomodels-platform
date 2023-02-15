@@ -80,7 +80,6 @@
             </div>
         </div>
 
-        <script type="application/javascript" src="${resource(dir: 'js', file: 'common.js')}"></script>
     </body>
 </html>
 <content tag="register">
