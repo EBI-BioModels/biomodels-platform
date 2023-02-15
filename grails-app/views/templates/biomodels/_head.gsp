@@ -78,7 +78,7 @@ relevant mechanistic models in standard formats."/>
 
 <!-- you can replace this with [projectname]-colours.css. See http://frontier.ebi.ac.uk/web/style/colour
 for details of how to do this -->
-<style type="text/css">
+<style>
     /* You have the option of setting a maximum width for your page, and making sure everything is centered */
     body {
         margin: 2px 5px auto;

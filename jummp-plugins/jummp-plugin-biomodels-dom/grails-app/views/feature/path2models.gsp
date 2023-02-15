@@ -37,3 +37,6 @@ with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
     <g:render template="/templates/p2mProjectPage" plugin="jummp-plugin-biomodels-dom"/>
 </body>
 </html>
+<content tag="path2models">
+    selected
+</content>

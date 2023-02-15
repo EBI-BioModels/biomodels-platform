@@ -34,3 +34,6 @@
 </div>
 </body>
 </html>
+<content tag="curatorboard">
+    selected
+</content>

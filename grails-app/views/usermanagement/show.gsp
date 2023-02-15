@@ -104,7 +104,7 @@
         </div>
    </body>
 </html>
-<content tag="title">
+<content tag="myprofile">
 	${user.person.userRealName}'s Profile
 </content>
 <content tag="contexthelp">

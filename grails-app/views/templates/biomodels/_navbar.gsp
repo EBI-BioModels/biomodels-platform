@@ -19,7 +19,7 @@
 --%>
 
 <nav>
-<ul id="local-nav" class="main-menu dropdown menu"
+<ul id="local-nav" class="main-menu dropdown menu float-left"
     data-description="navigational" data-dropdown-menu role="menubar">
     <li <g:if test="${actionName == null}"> class="first active main-menu-item" </g:if>
         <g:else>class="main-menu-item"</g:else>
@@ -32,14 +32,35 @@
             g.pageProperty(name:'page.courses')?.length() ||
             g.pageProperty(name:'page.curator-zone')?.length() ||
             g.pageProperty(name:'page.developer-zone')?.length()
-        boolean selectedBrowseItems = g.pageProperty(name: 'page.search')?.length() || g.pageProperty(name: 'page.goChart')?.length()
+
+        boolean selectedBrowseItems = g.pageProperty(name: 'page.search')?.length() ||
+            g.pageProperty(name: 'page.bpsearch')?.length() ||
+            g.pageProperty(name: 'page.covid19')?.length() ||
+            g.pageProperty(name: 'page.goChart')?.length() ||
+            g.pageProperty(name: 'page.agedbrain')?.length() ||
+            g.pageProperty(name: 'page.path2models')?.length() ||
+            g.pageProperty(name: 'page.pdgsmm')?.length() ||
+            g.pageProperty(name: 'page.reproducibility')?.length()
+
+        boolean selectedCurationItems = g.pageProperty(name: 'page.curationpage')?.length() ||
+            g.pageProperty(name: 'page.fbcpage')?.length()
+
         boolean selectedAboutusItems = g.pageProperty(name:'page.termsOfUse')?.length() ||
             g.pageProperty(name:'page.citation')?.length() ||
             g.pageProperty(name:'page.news')?.length() ||
             g.pageProperty(name:'page.acknowledgements')?.length() ||
             g.pageProperty(name:'page.jobs')?.length()
+
         boolean loginSelected = g.pageProperty(name:'page.login')?.length()
+
         boolean registerSelected = g.pageProperty(name:'page.register')?.length()
+
+        boolean selectedMyAccountItems = g.pageProperty(name:'page.myprofile')?.length() ||
+            g.pageProperty(name:'page.mymodels')?.length() ||
+            g.pageProperty(name:'page.myteams')?.length() ||
+            g.pageProperty(name:'page.mynotifications')?.length() ||
+            g.pageProperty(name:'page.adminboard')?.length() ||
+            g.pageProperty(name:'page.curatorboard')?.length()
     %>
     <li <g:if test="${selectedBrowseItems}"> class="active main-menu-item" </g:if>
         <g:else>class="main-menu-item"</g:else>
@@ -72,11 +93,12 @@
         <a href="${g.createLink(controller: 'model', action: 'submission-guidelines-and-agreement')}">
             <i class="icon icon-common icon-submit"></i>&nbsp;Submit</a>
     </li>
-    <li <g:if test="${g.pageProperty(name:'page.curation')?.length()}"> class="active main-menu-item" </g:if>
+    <li <g:if test="${selectedCurationItems}"> class="active main-menu-item" </g:if>
         <g:else>class="main-menu-item"</g:else>role="menuitem">
-        <a href="${g.createLink(controller: 'curation', action: 'index')}"><i
-            class="icon icon-common icon-cogs"></i>&nbsp;Curation</a>
+        <a><i class="icon icon-common icon-cogs"></i>&nbsp;Curation</a>
         <ul class="menu">
+            %{--<li><a href="${g.createLink(controller: 'curation', action: 'index')}">All curation pages</a></li>
+            <li class="divider"></li>--}%
             <li><a href="${g.createLink(controller: 'curation', action: 'fbc')}">FBC</a></li>
         </ul>
     </li>
@@ -122,10 +144,13 @@
     </li>
     <!-- If you need to include functional (as opposed to purely navigational) links in your local menu,
        add them here, and give them a class of "functional". Remember: you'll need a class of "last" for
-       whichever one will show up last...
-       For example: -->
+       whichever one will show up last... For example: -->
     <sec:ifLoggedIn>
-        <li class="functional first float-right opens-left main-menu-item" role="menuitem" id="menu-item-myaccount">
+        <li <g:if test="${selectedMyAccountItems}">
+            class="active functional first float-right opens-left main-menu-item"</g:if>
+            <g:else>
+            class="functional first float-right opens-left main-menu-item"</g:else>
+            role="menuitem" id="menu-item-myaccount">
             <a>My Account</a>
             <ul class="dropdown menu" data-dropdown-menu style="width: 235px; max-width: 265px">
                 <li><a href='<g:createLink controller="usermanagement" action="show"/>'>

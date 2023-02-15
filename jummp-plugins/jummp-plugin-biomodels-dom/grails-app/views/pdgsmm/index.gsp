@@ -38,3 +38,7 @@ with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
     <g:render template="/templates/pdgsmmPage" plugin="jummp-plugin-biomodels-dom"/>
 </body>
 </html>
+<html>
+<content tag="pdgsmm">
+    selected
+</content>

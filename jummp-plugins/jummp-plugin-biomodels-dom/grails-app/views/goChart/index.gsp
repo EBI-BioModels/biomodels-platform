@@ -433,10 +433,10 @@
 %{--</script>--}%
 
 </body>
-
-%{--<content tag="goChart">--}%
-    %{--selected--}%
-%{--</content>--}%
+</html>
+<content tag="goChart">
+    selected
+</content>
 
 %{--<content tag="title">--}%
     %{--Model Gene Ontology Categories--}%

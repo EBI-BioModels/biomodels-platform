@@ -34,7 +34,7 @@
             data-btm-anchor="content:bottom">
 
         <!-- local-title, local search -->
-        <div class="masthead-inner row" style="height: 109px; padding-top: 0rem">
+        <div class="masthead-inner row expanded">
             <div id="local-title"
                  class="hide-for-small-only medium-12 large-4 columns padding-top-none padding-bottom-none padding-left-none padding-right-none">
                 <h1>
@@ -49,11 +49,8 @@
             <div id="localsearch" class="small-12 medium-12 large-8 columns float-right">
                 <g:render template="/templates/${grailsApplication.config.jummp.branding.style}/searchBox"/>
             </div>
-        </div>
-        <!-- /local-title -->
-        <div class="row">
             <!-- local navigation bar -->
             <g:render template="/templates/${grailsApplication.config.jummp.branding.style}/navbar"/>
-        </div>
+        </div><!-- /local-title -->
     </header>
 </div>

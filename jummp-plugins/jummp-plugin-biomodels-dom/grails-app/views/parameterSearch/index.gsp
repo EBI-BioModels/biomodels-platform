@@ -80,3 +80,6 @@
 </div>
 </body>
 </html>
+<content tag="bpsearch">
+    selected
+</content>

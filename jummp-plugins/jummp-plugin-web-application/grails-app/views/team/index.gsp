@@ -22,6 +22,7 @@
 <html>
     <head>
         <meta name="layout" content="${session['branding.style']}/main" />
+        <title>My Teams | BioModels</title>
     </head>
     <body>
         <g:if test="${flash.message}">
@@ -103,7 +104,7 @@
         </span>
     </body>
 </html>
-<content tag="teams">
+<content tag="myteams">
     selected
 </content>
 <content tag="title">View my teams</content>
