@@ -22,7 +22,6 @@ package net.biomodels.jummp
 
 import grails.plugin.springsecurity.annotation.Secured
 import grails.plugins.rest.client.RestBuilder
-import net.biomodels.jummp.webapp.CommonController
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 

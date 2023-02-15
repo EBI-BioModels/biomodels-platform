@@ -21,7 +21,7 @@
 package net.biomodels.jummp.webapp
 
 import grails.plugin.springsecurity.annotation.Secured
-import net.biomodels.jummp.webapp.CommonController
+import net.biomodels.jummp.CommonController
 
 /**
  * Controller for handling curation related pages

@@ -23,7 +23,7 @@ package net.biomodels.jummp.deployment.biomodels
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.plugins.security.User
-import net.biomodels.jummp.webapp.CommonController
+import net.biomodels.jummp.CommonController
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 

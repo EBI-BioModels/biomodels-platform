@@ -30,7 +30,7 @@
 package net.biomodels.jummp.deployment.biomodels
 
 import grails.plugin.springsecurity.annotation.Secured
-import net.biomodels.jummp.webapp.CommonController
+import net.biomodels.jummp.CommonController
 
 @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
 class ClassifierController extends CommonController {

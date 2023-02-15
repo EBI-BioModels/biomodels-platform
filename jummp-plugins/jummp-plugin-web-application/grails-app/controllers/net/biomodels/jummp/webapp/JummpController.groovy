@@ -27,7 +27,7 @@ package net.biomodels.jummp.webapp
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import groovy.xml.MarkupBuilder
-
+import net.biomodels.jummp.CommonController
 
 @Secured(["IS_AUTHENTICATED_FULLY"])
 class JummpController extends CommonController {

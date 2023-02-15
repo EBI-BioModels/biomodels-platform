@@ -23,13 +23,12 @@ package net.biomodels.jummp.plugins.security
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import net.biomodels.jummp.core.model.ContributorTransportCommand as CTC
-import net.biomodels.jummp.core.model.InviteState as IS
 import net.biomodels.jummp.model.ContributionDetails as CD
 import net.biomodels.jummp.model.ContributionInvite as CI
 import net.biomodels.jummp.model.ContributionRole as CR
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.model.Revision
-import net.biomodels.jummp.webapp.CommonController
+import net.biomodels.jummp.CommonController
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.dao.OptimisticLockingFailureException
