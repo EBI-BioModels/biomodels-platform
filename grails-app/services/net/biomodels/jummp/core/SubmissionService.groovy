@@ -304,7 +304,13 @@ class SubmissionService {
          */
         @Profiled(tag = "submissionService.inferModelFormatType")
         void inferModelFormatType(Map<String, Object> workingMemory) {
-            if (workingMemory['changedMainFiles'] || !workingMemory['model_type']) {
+            List repFiles = getRepFiles(workingMemory)
+            boolean areMainFilesLarge = checkMainFilesAreLarge(repFiles)
+            boolean areMainFilesChanged = workingMemory['changedMainFiles']
+            boolean isModelTypeEmpty = !workingMemory['model_type']
+            boolean cond2InferModelFormat = !areMainFilesLarge && (areMainFilesChanged || isModelTypeEmpty)
+
+            if (cond2InferModelFormat) {
                 MFTC format = modelFileFormatService.inferModelFormat(getRepFiles(workingMemory))
                 if (format) {
                     workingMemory.put("model_type", format)
@@ -1337,5 +1343,14 @@ class SubmissionService {
     protected List getRepFiles(Map workingMemory,
             String mapName = "repository_files") {
         return (List) workingMemory.get(mapName)
+    }
+
+    private boolean checkMainFilesAreLarge(List<File> mainFiles) {
+        // As of this point in time, each submission has only one main file
+        def result = mainFiles.find { File file ->
+            // 100 MB is the maximum size to be allowed to infer the model format
+            file.size() >= 100*1024*1024
+        }
+        result != null
     }
 }
