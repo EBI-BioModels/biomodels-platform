@@ -46,6 +46,8 @@ import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.model.Revision
 import org.perf4j.aop.Profiled
 import net.biomodels.jummp.core.adapters.ModelFormatAdapter
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * @short Service to handle Model files.
@@ -67,6 +69,7 @@ import net.biomodels.jummp.core.adapters.ModelFormatAdapter
  * Last modified date: 14/04/2016
  */
 class ModelFileFormatService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ModelFileFormatService.class)
 
     static transactional = true
     /**
@@ -103,7 +106,7 @@ class ModelFileFormatService {
                 if (file.length() <= 100*1024*1024) {
                     fileList.add(file)
                 } else {
-
+                    LOGGER.debug("The model main file ${it.path} exceeds 100MB to able to detect a model format.")
                 }
             }
         }
