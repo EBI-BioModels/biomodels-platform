@@ -38,8 +38,8 @@ import groovy.time.TimeDuration
 import groovy.transform.CompileStatic
 import groovy.transform.TypeChecked
 import groovy.transform.TypeCheckingMode
-import net.biomodels.jummp.core.adapters.ModelFormatAdapter
-import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter
+import net.biomodels.jummp.core.adapters.ModelFormatAdapter as MFAdapter
+import net.biomodels.jummp.core.adapters.PublicationLinkProviderAdapter as PLPAdapter
 import net.biomodels.jummp.core.model.ModelFormatTransportCommand as MFTC //rude?
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
 import net.biomodels.jummp.core.model.PublicationDetailExtractionContext
@@ -123,7 +123,7 @@ class SubmissionService {
             List definedModellingApproachNames = definedModellingApproaches.collect { it.name }
             workingMemory.put("defined_modelling_approaches", definedModellingApproaches)
             ModelFormat unknownFormat = ModelFormat.findByIdentifier("UNKNOWN")
-            MFTC unknownFormatTC = new ModelFormatAdapter(format: unknownFormat).toCommandObject()
+            MFTC unknownFormatTC = new MFAdapter(format: unknownFormat).toCommandObject()
             workingMemory.put("unknown_format_command", unknownFormatTC)
 
             String serverURL = grailsApplication.config.grails.serverURL
@@ -302,6 +302,7 @@ class SubmissionService {
          *
          * @param workingMemory a Map containing all objects exchanged throughout the flow.
          */
+        @TypeChecked(TypeCheckingMode.SKIP)
         @Profiled(tag = "submissionService.inferModelFormatType")
         void inferModelFormatType(Map<String, Object> workingMemory) {
             List repFiles = getRepFiles(workingMemory)
@@ -310,11 +311,18 @@ class SubmissionService {
             boolean isModelTypeEmpty = !workingMemory['model_type']
             boolean cond2InferModelFormat = !areMainFilesLarge && (areMainFilesChanged || isModelTypeEmpty)
 
+            ModelFormat format = ModelFormat.findByIdentifierAndFormatVersion("UNKNOWN", "*")
+            MFTC fmTC = new MFAdapter(format: format).toCommandObject()
             if (cond2InferModelFormat) {
-                MFTC format = modelFileFormatService.inferModelFormat(getRepFiles(workingMemory))
+                fmTC = modelFileFormatService.inferModelFormat(getRepFiles(workingMemory))
                 if (format) {
-                    workingMemory.put("model_type", format)
+                    workingMemory.put("model_format", format)
                     // revision.format will be updated in updateRevisionFromFiles
+                } else {
+                    workingMemory.put("model_format", fmTC)
+                    String submissionFolder = workingMemory.get("submissionFolder")
+                    logger.debug("""One(s) of the uploading files of the submission $submissionFolder exceed \
+the allowed maximum size. Therfore, the automatic process of detecting the model format has been ignored.""")
                 }
             }
         }
@@ -387,8 +395,7 @@ class SubmissionService {
             PublicationLinkProvider publSrc = PublicationLinkProvider.withCriteria(uniqueResult: true) {
                 eq("linkType", linkType)
             }
-            model.publication.linkProvider = new PublicationLinkProviderAdapter(linkProvider:
-                    publSrc).toCommandObject()
+            model.publication.linkProvider = new PLPAdapter(linkProvider: publSrc).toCommandObject()
             return refreshPublication
         }
 
@@ -427,7 +434,7 @@ class SubmissionService {
             }
             if (fmtId != revision.format.id) {
                 // the model format has been changed by the user
-                MFTC formatTC = new ModelFormatAdapter(format: ModelFormat.get(fmtId)).toCommandObject()
+                MFTC formatTC = new MFAdapter(format: ModelFormat.get(fmtId)).toCommandObject()
                 revision.format = formatTC
                 revision.model.format = revision.model.format
             }
