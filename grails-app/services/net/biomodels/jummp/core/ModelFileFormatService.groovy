@@ -99,7 +99,12 @@ class ModelFileFormatService {
         List<File> fileList = new LinkedList<File>()
         modelFiles.each {
             if (it.mainFile) {
-                fileList.add(new File(it.path))
+                File file = new File(it.path)
+                if (file.length() <= 100*1024*1024) {
+                    fileList.add(file)
+                } else {
+
+                }
             }
         }
         Map<String, String> services = getServices()
