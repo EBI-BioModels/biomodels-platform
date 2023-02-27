@@ -48,6 +48,7 @@ import org.springframework.security.web.WebAttributes
  */
 @Secured('permitAll')
 class LoginController {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoginController.class)
     /**
      * Dependency injection for the authenticationTrustResolver.
      */
@@ -58,7 +59,6 @@ class LoginController {
      */
     def springSecurityService
 
-    private Logger logger = LoggerFactory.getLogger(this.getClass())
     /**
      * Default action; redirects to 'defaultTargetUrl' if logged in, /login/auth otherwise.
      */

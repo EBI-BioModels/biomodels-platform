@@ -22,7 +22,10 @@ package net.biomodels.jummp.plugins.security
 
 import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
+import net.biomodels.jummp.CommonController
 import net.biomodels.jummp.core.user.PersonCategory
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * @short Controller class for interacting with user teams.
@@ -31,8 +34,9 @@ import net.biomodels.jummp.core.user.PersonCategory
  * @author Tung Nguyen <tung.nguyen@ebi.ac.uk>
  */
 @Secured(["isAuthenticated()"])
-class TeamController {
+class TeamController extends CommonController {
     static allowedMethods = [update: "POST"]
+    private static final Logger LOGGER = LoggerFactory.getLogger(TeamController.class)
     /**
      * Dependency Injection of Spring Security Service
      */
@@ -62,8 +66,7 @@ class TeamController {
     		for (int i = 0; i < collabs.length(); i++) {
     			users.add(User.findByUsername(collabs.getJSONObject(i).getString("userId")))
     		}
-    	}
-    	catch(Exception e) {
+    	} catch(Exception e) {
     		render "Error processing parameters: ${e.getMessage()}"
     		return
     	}
@@ -121,7 +124,7 @@ class TeamController {
             showStandardErrorMessage()
         } else {
             try {
-                log.info("Team existing.")
+                LOGGER.debug("Team deleting")
                 boolean deleted = teamService.deleteTeam(id)
                 if (deleted) {
                     flash.message = "The team has been deleted successfully."

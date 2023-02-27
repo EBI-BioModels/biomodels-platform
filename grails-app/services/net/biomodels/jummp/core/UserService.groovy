@@ -380,7 +380,6 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
     @Profiled(tag = "userService.register")
     @PreAuthorize("isAnonymous() or hasRole('ROLE_ADMIN')")
     Long register(User user, boolean specifiedPassword=false) throws RegistrationException, UserInvalidException {
-        String passwordSupplied = user.password
         if (springSecurityService.authentication instanceof AnonymousAuthenticationToken &&
                 !grailsApplication.config.jummp.security.anonymousRegistration) {
             throw new AccessDeniedException("Registration disabled for anonymous users")
@@ -421,6 +420,7 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
                 newUser.password = p
             }
             else {
+                String passwordSupplied = user.password
                 newUser.password = passwordSupplied
             }
             newUser.password = springSecurityService.encodePassword(newUser.password, null)

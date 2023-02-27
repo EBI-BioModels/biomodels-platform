@@ -29,14 +29,14 @@ import grails.util.Environment
 import grails.util.Holders
 import groovy.json.JsonBuilder
 import net.biomodels.jummp.annotationstore.ResourceReference
-import net.biomodels.jummp.core.ModelSearchStrategy
+import net.biomodels.jummp.core.ModelSearchStrategy as MST
 import net.biomodels.jummp.core.events.ModelOperationEvent
 import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 import net.biomodels.jummp.model.Revision
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
-import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware
+import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware as GCA
 import org.springframework.context.ApplicationListener
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.client.HttpServerErrorException
@@ -62,8 +62,7 @@ import java.text.SimpleDateFormat
  * @date   12/09/2016
  */
 
-class OmicsdiBasedSearch implements GrailsConfigurationAware, ModelSearchStrategy,
-    ApplicationListener<ModelOperationEvent> {
+class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperationEvent> {
     /**
      * The class logger.
      */

@@ -39,8 +39,7 @@ import net.biomodels.jummp.search.SortOrder
 @CompileStatic
 interface ModelSearchStrategy {
     void clearIndex()
-    SearchResponse searchModels(String query, String domain, SortOrder sortOrder, Map<String, Integer>
-        paginationCriteria)
+    SearchResponse searchModels(String query, String domain, SortOrder sortOrder, Map<String, Integer> paginationCriteria)
     void updateIndex(RevisionTransportCommand revision)
     String[] getSortFields()
 }
