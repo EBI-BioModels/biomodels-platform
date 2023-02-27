@@ -355,6 +355,7 @@ grails.plugin.springsecurity.userLookup.authorityJoinClassName = 'net.biomodels.
 grails.plugin.springsecurity.authority.className = 'net.biomodels.jummp.plugins.security.Role'
 grails.plugin.springsecurity.securityConfigType = "Annotation" // "Annotation", "InterceptUrlMap", "Requestmap"
 grails.plugin.springsecurity.successHandler.alwaysUseDefaultTargetUrl = false
+grails.plugin.springsecurity.successHandler.defaultTargetUrl = "/"
 
 String healthCheckIpRestrictions = null
 if (jummpConfig.jummp.healthcheck.ipRestrictions instanceof String) {

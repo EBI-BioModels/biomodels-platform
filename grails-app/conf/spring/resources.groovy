@@ -30,6 +30,7 @@
 
 
 import grails.persistence.Entity
+import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.util.Environment
 import net.biomodels.jummp.core.WebflowAclBeanDefinitionProcessor
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorFactoryBean
@@ -124,6 +125,19 @@ beans = {
 
     webflowAclBeanDefinitionProcessor(WebflowAclBeanDefinitionProcessor) {
         it.initMethod = "init"
+    }
+
+    authenticationSuccessHandler(net.biomodels.jummp.plugins.security.BioModelsAuthSuccessHandler) {
+        /* Reusing the security configuration */
+        def conf = SpringSecurityUtils.securityConfig
+        /* Configuring the bean */
+        requestCache = ref('requestCache')
+        redirectStrategy = ref('redirectStrategy')
+        defaultTargetUrl = conf.successHandler.defaultTargetUrl
+        alwaysUseDefaultTargetUrl = conf.successHandler.alwaysUseDefault
+        targetUrlParameter = conf.successHandler.targetUrlParameter
+        ajaxSuccessUrl = conf.successHandler.ajaxSuccessUrl
+        useReferer = conf.successHandler.useReferer
     }
 
     //myBeanPostProcessor(net.biomodels.jummp.core.NosyBeanPostProcessor)

@@ -47,6 +47,7 @@
                         <label><g:message code="login.form.password"/>
                             <input type='password' name='j_password' id='password' placeholder="Password"/>
                         </label>
+                        <input type='text' name='j_previousURL' id='previousURL' style="display: block"/>
                         %{--<input id="show-password" type="checkbox"><label for="show-password">Show password</label>--}%
                         <p><button type="submit" class="button expanded">Log In</button></p>
                         <p class="text-center">
@@ -62,6 +63,7 @@
         </div>
         <script type='text/javascript'>
             // TODO: move out of HTML page
+            const referrer = document.referrer;
             $("#loginForm input").focus(function() {
                 if ($(this).data("reset") === undefined) {
                 $(this).val("");
@@ -76,6 +78,10 @@
             });
             $("#login div.loginButton button").click(function() {
                 $("#loginForm").submit();
+            $(document).ready(function() {
+                if (referrer.indexOf("biomodels/MODEL") > 0) {
+                    $("#previousURL").val(referrer);
+                }
             });
         </script>
     </body>
