@@ -47,7 +47,7 @@
                         <label><g:message code="login.form.password"/>
                             <input type='password' name='j_password' id='password' placeholder="Password"/>
                         </label>
-                        <input type='text' name='j_previousURL' id='previousURL' style="display: block"/>
+                        <input type='text' name='j_previousURL' id='previousURL' style="display: none"/>
                         %{--<input id="show-password" type="checkbox"><label for="show-password">Show password</label>--}%
                         <p><button type="submit" class="button expanded">Log In</button></p>
                         <p class="text-center">
