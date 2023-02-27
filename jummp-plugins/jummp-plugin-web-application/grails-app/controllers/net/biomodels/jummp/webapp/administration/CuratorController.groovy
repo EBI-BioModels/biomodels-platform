@@ -33,6 +33,6 @@ class CuratorController extends CommonController {
 
     def dashboard() {
         String title = "Curator's Dashboard | BioModels"
-        [layout: layout, title: title]
+        COMMON_PROPERTIES.putAll([layout: layout, title: title])
     }
 }

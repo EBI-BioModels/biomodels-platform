@@ -35,6 +35,6 @@ import net.biomodels.jummp.CommonController
 @Secured(['ROLE_ADMIN', 'ROLE_CURATOR'])
 class ClassifierController extends CommonController {
     def dashboard() {
-
+        COMMON_PROPERTIES
     }
 }

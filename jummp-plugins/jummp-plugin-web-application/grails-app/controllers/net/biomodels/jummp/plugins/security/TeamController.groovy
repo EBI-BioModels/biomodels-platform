@@ -50,7 +50,8 @@ class TeamController extends CommonController {
      * Renders the form to create new teams.
      */
     def create() {
-        render view: "create", model: [teamOwner: springSecurityService.getCurrentUser()]
+        Map model = COMMON_PROPERTIES.putAll([teamOwner: springSecurityService.getCurrentUser()])
+        render view: "create", model: model
     }
 
     def save() {
@@ -99,7 +100,7 @@ class TeamController extends CommonController {
      */
     def index() {
         def user = springSecurityService.getCurrentUser()
-        [teams: teamService.getTeamsForUser(user)]
+        COMMON_PROPERTIES.putAll([teams: teamService.getTeamsForUser(user)])
     }
 
     def edit(Long id) {
@@ -193,12 +194,13 @@ class TeamController extends CommonController {
         }
         else {
         	List<UserTeam> usersInTeam = UserTeam.findAllByTeam(team)
-        	[team: team, users: usersInTeam.collect { UserTeam ut ->
+        	Map model = [team: team, users: usersInTeam.collect { UserTeam ut ->
                 use(PersonCategory) {
                     ut.user.person.toCommandObject()
                 }
                 //new PersonAdapter(person: it.user.person).toCommandObject()
             }]
+            COMMON_PROPERTIES.putAll(model)
         }
     }
 }
