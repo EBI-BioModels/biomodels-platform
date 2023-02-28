@@ -594,14 +594,24 @@
 
         <h3 id="reviewer-access">How can reviewers access unpublished models?</h3>
         <p>BioModels can provide access to unpublished models to reviewers. This is not automatic, so the model
-        submitter needs to request it (for example emailing us at
-            <strong>biomodels-cura</strong> AT <strong>ebi.ac.uk</strong>). In this case, we will provide the submitter
+        submitter needs to open a reviewer account for their unpublished model on their own (please read
+        the instruction in the next
+        paragraph). If
+        you have any issue to use the online service, please don't hesitate to email us at
+            <strong>biomodels-cura</strong> AT <strong>ebi.ac.uk</strong> .
+        In this case, we will provide the submitter
         with a URL which can be used to download the model encoded in SBML. If security is a concern, we can supply a
         protected access, where reviewers will be asked for a password to access the model.
         </p>
-        <p>In future updates to BioModels, we plan to automate this process. If you have more specific needs,
-        please do not hesitate to <a
-            title="Contact BioModels.net Team" href="contact">contact us</a>.</p>
+        <h4 id="open-reviewer-account" class="level3">How to open the reviewer account for an unpublished model?</h4>
+        <p>When opening an unpublished model, the <strong>Reviewer</strong> button can be found
+        on the model toolbox (see Fig. 1) which lets the submitter request a reviewer account for the model in question. BioModels will
+        create a new account immediately to provide with read access to the model.</p>
+        <figure>
+            <img src="${resource(contextPath: "${grailsApplication.config.grails.serverURL}", dir: 'images/biomodels/faq',
+                file: 'open-reviewer-account.png')}" />
+            <figcaption>Fig. 1 - Reviewer button on the model toolbox of an unpublished model.</figcaption>
+        </figure>
 
         <h3 id="supported-formats">What are the supported model encoding formats?</h3>
         <p>BioModels is a strong advocate for interoperability and reproducibility, and the dissemination of models in
