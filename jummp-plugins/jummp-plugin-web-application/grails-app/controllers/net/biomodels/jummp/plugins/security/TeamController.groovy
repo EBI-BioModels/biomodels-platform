@@ -50,7 +50,8 @@ class TeamController extends CommonController {
      * Renders the form to create new teams.
      */
     def create() {
-        Map model = COMMON_PROPERTIES.putAll([teamOwner: springSecurityService.getCurrentUser()])
+        Map model = [teamOwner: springSecurityService.getCurrentUser()]
+        model.putAll(COMMON_PROPERTIES)
         render view: "create", model: model
     }
 
@@ -80,8 +81,7 @@ class TeamController extends CommonController {
         }
     	if (!team.validate()) {
             render "Error creating team. Team could not be validated."
-        }
-        else {
+        } else {
         	team.save(flush: true)
         	users.each {
         		UserTeam.create(it, team, true)
@@ -100,7 +100,9 @@ class TeamController extends CommonController {
      */
     def index() {
         def user = springSecurityService.getCurrentUser()
-        COMMON_PROPERTIES.putAll([teams: teamService.getTeamsForUser(user)])
+        Map model = COMMON_PROPERTIES
+        model.put("teams", teamService.getTeamsForUser(user))
+        model
     }
 
     def edit(Long id) {
@@ -193,14 +195,16 @@ class TeamController extends CommonController {
             showStandardErrorMessage()
         }
         else {
+            Map model = COMMON_PROPERTIES
         	List<UserTeam> usersInTeam = UserTeam.findAllByTeam(team)
-        	Map model = [team: team, users: usersInTeam.collect { UserTeam ut ->
+        	Map teamDetails = [team: team, users: usersInTeam.collect { UserTeam ut ->
                 use(PersonCategory) {
                     ut.user.person.toCommandObject()
                 }
                 //new PersonAdapter(person: it.user.person).toCommandObject()
             }]
-            COMMON_PROPERTIES.putAll(model)
+            model.putAll(teamDetails)
+            model
         }
     }
 }
