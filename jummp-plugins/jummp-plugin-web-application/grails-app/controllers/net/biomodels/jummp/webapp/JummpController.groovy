@@ -63,7 +63,9 @@ class JummpController extends CommonController {
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def courses() {
-        COMMON_PROPERTIES.putAll(["titleCode", "jummp.courses.${theme}.title"])
+        Map model = COMMON_PROPERTIES
+        model.putAll(["titleCode", "jummp.courses.${theme}.title"])
+        model
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
@@ -159,6 +161,7 @@ class JummpController extends CommonController {
         String modelId = params.get("id").decodeHTML()
         String message = reviewerAccountService.createAccountAndInstructions(modelId, serverURL)
         Map retMap = [modelId: modelId, message: message, serverURL: serverURL]
+        retMap.putAll(COMMON_PROPERTIES)
         render(view: "createReviewerAccount", model: retMap)
     }
 

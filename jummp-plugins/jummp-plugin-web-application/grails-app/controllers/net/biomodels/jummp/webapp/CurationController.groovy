@@ -34,12 +34,16 @@ class CurationController extends CommonController {
 
     def index() {
         String title = "Curation related pages | BioModels"
-        COMMON_PROPERTIES.putAll([layout: layout, title: title])
+        Map model = COMMON_PROPERTIES
+        model.putAll([layout: layout, title: title])
+        model
     }
 
     def fbc() {
         String title = "FROG analysis | BioModels"
         String content = featureService.contentForFROGPage
-        COMMON_PROPERTIES.putAll([layout: layout, title: title, content: content])
+        Map model = COMMON_PROPERTIES
+        model.putAll([layout: layout, title: title, content: content])
+        model
     }
 }
