@@ -64,7 +64,7 @@ class JummpController extends CommonController {
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def courses() {
         Map model = COMMON_PROPERTIES
-        model.putAll(["titleCode", "jummp.courses.${theme}.title"])
+        model.putAll(["titleCode": "jummp.courses.${theme}.title"])
         model
     }
 
