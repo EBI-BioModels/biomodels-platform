@@ -1,6 +1,7 @@
 package net.biomodels.jummp.plugins.format;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 import static net.biomodels.jummp.plugins.format.CommonFormat.Constants.*;
 
@@ -15,14 +16,12 @@ import static net.biomodels.jummp.plugins.format.CommonFormat.Constants.*;
  */
 public enum CommonFormat {
     C_CPP("C/C++", "C_CPP", C_CPP_MIME, "ccppFormatService"),
-
     CC3DML("CompuCell3D", "CC3DML", CC3DML_MIME, "cc3dmlFormatService"),
     JAVA("Java", "Java", JAVA_MIME),
     MATHEMATICA("Mathematica", "Mathematica", MATHEMATICA_MIME),
     MATLAB("MATLAB (Octave)", "matlab", DEFAULT_VERSIONS, MATLAB_MIME, "matlabFormatService", "matlab"),
-    MORPHEUSML("MorpheusML", "MorpheusML", DEFAULT_VERSIONS,
-        MORPHEUSML_MIME, "morpheusMLFormatService", DEFAULT_CONTROLLER),
-    PYTHON("Python", "Python", PYTHON_VERSIONS, PYTHON_MIME),
+    MORPHEUSML("MorpheusML", "MorpheusML", DEFAULT_VERSIONS, MORPHEUSML_MIME, "morpheusMLFormatService", DEFAULT_CONTROLLER),
+    PYTHON("Python", "Python", Stream.concat(Arrays.stream(DEFAULT_VERSIONS), Arrays.stream(PYTHON_VERSIONS)).toArray(String[]::new), PYTHON_MIME),
     R("R", "R", DEFAULT_VERSIONS, R_MIME, "rlangFormatService", DEFAULT_CONTROLLER);
 
     public String getName() {
