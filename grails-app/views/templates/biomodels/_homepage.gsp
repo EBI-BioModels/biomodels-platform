@@ -32,6 +32,10 @@
     .widget-body-text {
         font-size: 16px;
     }
+
+    .tag  {
+        font-size: 1.0rem !important;
+    }
 </style>
 
 <script type="text/javascript">
@@ -81,9 +85,8 @@
     <div class="columns small-12 medium-12 large-12">
         <div id="announcement"
              style="padding: 0px; background-color: #ff9800; margin-bottom: 15px; font-size: large">
-            <h3 style="color: white; font-weight: bolder">Submit your model to enter
-            <a href="https://www.ebi.ac.uk/biomodels/competition/model-of-the-year-2023"
-               target="_blank">"Model of the year" Competition 2023</a>. Deadline 20<sup>th</sup> January 2023.</h3>
+            <h3 style="color: white; font-weight: bolder">Application closed for <a href="https://www.ebi.ac.uk/biomodels/competition/model-of-the-year-2023"
+               target="_blank">"Model of the year" Competition 2023</a>. Evaluation under progress!</h3>
         </div>
     </div>
     <div class="large-12 medium-12 small-12 columns">
@@ -97,7 +100,8 @@
         href="faq#submit-model"
         class="tag">model submission</a>, <a href="faq#update-existing-model"
         class="tag">update</a>, <a href="faq#access-after-submission"
-        class="tag">publication</a> can be found in the <a href="faq">FAQ</a>.
+        class="tag">publication</a>, or <a href="faq#reviewer-access" class="tag">reviewers access</a>
+        can be found in the <a href="faq">FAQ</a>.
     </p></div>
 </div>
 <div id="hp-features" class="row text-center top-widget-area">
