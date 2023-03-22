@@ -43,18 +43,20 @@
 
 <p>
   Several papers about BioModels and related efforts have been published. Please see below for how to cite: <a href="#biom
-odels" title="How to cite BioModels">BioModels</a> | <a href="#path2models" title="How to cite Path2Models">Path2
-Models</a> | <a href="#associated_services" title="How to cite BioModels' associated services">Associated services</a> | <a href="#
-others" title="Other publications related to BioModels">Others</a>.
+odels" title="How to cite BioModels">BioModels</a> |
+    <a href="#reproducibility" title="How to cite Reproducibility">Reproducibility</a> |
+    <a href="#biomodels-parameters" title="How to cite BioModels Parameters">BioModels Parameters</a> |
+    <a href="#path2models" title="How to cite Path2Models">Path2Models</a> |
+    <a href="#associated_services" title="How to cite BioModels' associated services">Associated services</a> |
+    <a href="#others" title="Other publications related to BioModels">Others</a>.
 </p>
 <p>
-  For a more complete list, please refer to <a href="http://scholar.google.co.uk/citations?user=sxPul0AAAAAJ" title="BioModels rela
+  For a more complete list, please refer to <a href="https://scholar.google.co.uk/citations?user=sxPul0AAAAAJ" title="BioModels rela
 ted publications on Google Scholar">our Google Scholar profile</a>.
 </p>
 
 
 <h3 id="biomodels">BioModels</h3>
-
 <dl>
     <dt>Rahuman S Malik-Sheriff, Mihai Glont, Tung V N Nguyen, Krishna Tiwari, Matthew G Roberts, Ashley Xavier,
     Manh T Vu, Jinghao Men, Matthieu Maire, Sarubini Kananathan, Emma L Fairbanks, Johannes P Meyer,
@@ -189,7 +191,6 @@ ted publications on Google Scholar">our Google Scholar profile</a>.
 </dl>
 
 <h3 id="others">Other publications</h3>
-
 <dl>
     <dt>
         Vijayalakshmi Chelliah, Nick Juty, Ishan Ajmera, Raza Ali, Marine Dumousseau,
