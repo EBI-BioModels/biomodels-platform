@@ -41,6 +41,92 @@
 
 Here are the materials from some presentations, courses and tutorials which were provided by the BioModels.net team.
 
+<h3 id="year_2022">2022</h3>
+<ul class="news_list">
+    <li id="item_20221212">
+        <dl>
+            <dt class="news-date">12<sup>th</sup> - 16<sup>th</sup> December 2022</dt>
+
+            <dd>Online Course: <a href="https://www.ebi.ac.uk/training/events/mathematics-life-modelling-molecular-mechanisms-2022/">Mathematics of Life 2022</a></dd>
+            <dd><strong>Topic: </strong> Modelling molecular mechanisms</dd>
+            <dd>Materials:
+                <a href="https://www.ebi.ac.uk/training/materials/mathematics-of-life-materials/"
+                   title="Access to all materials from this course">dedicated page for all learning materials</a></dd>
+            </dd>
+        </dl>
+    </li>
+</ul>
+<h3 id="year_2021">2021</h3>
+<ul class="news_list">
+    <li id="item_20211206">
+        <dl>
+            <dt class="news-date">6<sup>th</sup> - 9<sup>th</sup> December 2021</dt>
+            <dd>Online Course:
+                <a href="https://www.ebi.ac.uk/training/events/mathematics-life-modelling-molecular-mechanisms-virtual/"
+                   title="Website of the course">IITM-EMBL-EBI Winter School 2021</a></dd>
+        </dl>
+    </li>
+    <li id="item_20210927">
+        <dl>
+            <dt class="news-date">27<sup>th</sup> September - 1<sup>st</sup> October 2021</dt>
+            <dd>Online Course: <a href="https://www.ebi.ac.uk/training/events/mathematics-life-virtual/" title="Website of the course">
+                Mathematics of Life 2021
+            </a></dd>
+            <dd><strong>Topic: </strong>Modelling molecular mechanism</dd>
+            <dd>Materials:
+                <a href="https://www.ebi.ac.uk/training/materials/mathematics-of-life-materials/"
+                   title="Access to all materials from this course">dedicated page for all learning materials</a></dd>
+        </dl>
+    </li>
+</ul>
+
+<h3 id="year_2020">2020</h3>
+<ul class="news_list">
+    <li id="item_20200928">
+        <dl>
+            <dt class="news-date">28<sup>th</sup> September - 2<sup>nd</sup> October 2020</dt>
+            <dd>Online Course:
+                <a href="https://www.ebi.ac.uk/training/events/mathematics-life-modelling-molecular-mechanisms-virtual/"
+                   title="Website of the course">Mathematics of Life 2020</a></dd>
+            <dd><strong>Topic:</strong> Modelling molecular mechanisms</dd>
+        </dl>
+        <dd>Materials:
+            <a href="http://ftp.ebi.ac.uk/pub/training/2020/Maths_of_Life_2020/"
+               title="Access to all materials from this course">FTP location for all learning materials</a></dd>
+    </li>
+</ul>
+
+<h3 id="year_2019">2019</h3>
+<ul class="news_list">
+    <li id="item_20191202">
+        <dl>
+            <dt class="news-date">2<sup>nd</sup> - 5<sup>th</sup> December 2019</dt>
+            <dd>Workshop:
+                <a href="https://www.ebi.ac.uk/training/events/iitm-ebi-modelling-workshop/"
+                   title="Website of the workshop">IITM-EBI modelling workshop</a></dd>
+            <dd>Topic: Modelling</dd>
+        </dl>
+    </li>
+    <li id="item_20191002">
+        <dl>
+            <dt class="news-date">2<sup>nd</sup> October 2019</dt>
+            <dd>Workshop:
+                <a href="https://www.ebi.ac.uk/training/events/embl-ebi-workshop-mathematics-life-workshop-modelling-molecular-mechanisms-basic-science-drug/"
+                   title="Website of the workshop">EMBL-EBI Workshop: Mathematics of life workshop: "Modelling molecular mechanisms: from basic science to drug discovery"</a></dd>
+            <dd>Topic: Mathematics of life workshop: "Modelling molecular mechanisms: from basic science to drug discovery"</dd>
+        </dl>
+    </li>
+    <li id="item_20190708">
+        <dl>
+            <dt class="news-date">8<sup>th</sup> - 10<sup>th</sup>July 2019</dt>
+            <dd>On Day Course:
+                <a href="https://www.ebi.ac.uk/training/events/systems-biology-large-datasets-biological-insight-0/"
+                   title="Website of the course">Systems biology: From large datasets to biological insight</a></dd>
+            <dd>Topic: BioModels</dd>
+        </dl>
+    </li>
+</ul>
+
 <h3 id="year_2017">2017</h3>
 <ul class="news_list">
     <li id="item_20170712">
