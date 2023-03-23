@@ -45,16 +45,15 @@
         <li>
             <a href="${grailsApplication.config.jummp.ws.client.pyapi.docs}"
                target="_blank"
-               style="pointer-events: none; cursor: default; opacity: 0.8">Python based client library
+               style="pointer-events: none; cursor: default; opacity: 0.8">Python-based client library
             to consume BioModels' RESTful Web Services</a> (<span style="color: red">coming soon</span>)<br/>
-            The Python-based API client provides a convenient way to consume a few of the API endpoints requested by
-            BioModels' existing clients.
+            The Python-based API client provides a convenient way to consume a few of the API endpoints that BioModels' existing clients request.
             <ul>
                 <li><a href="https://bitbucket.org/biomodels/testbiomodelswsclient/src/master/"
                        target="_blank"
                        style="pointer-events: none; cursor: default; opacity: 0.8">A Python script
                 to demonstrate how to use the library</a> (<span style="color: red">coming soon</span>)<br/>
-                    The toy program written in Python to demonstrate the usages of the library.</li>
+                    The toy program is written in Python to illustrate the usage of the library.</li>
             </ul>
         </li>
     </ul>
