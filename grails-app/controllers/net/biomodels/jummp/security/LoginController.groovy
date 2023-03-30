@@ -129,7 +129,7 @@ class LoginController {
                 msg = g.message(code: "springSecurity.errors.login.fail")
             }
         }
-        logger.debug("${msg} --- Login payload: ${params}: ${session}")
+        LOGGER.debug("${msg} --- Login payload: ${params}: ${session}")
         if (springSecurityService.isAjax(request)) {
             render([error: msg] as JSON)
         } else {
