@@ -444,14 +444,14 @@
         BioModels. For more guidance, please refer:
             <a href="
 
-            ${manualUrl}/getting-started.html#slide4"
+            ${manualURL}/submission-guidelines/index.html#slide4"
                target="_blank">Model Submission guidelines (Slide 4)</a>.</p>
 
         <h4 id="register-new-account" class="level3">How to register for a new user account?</h4>
         <p>For registering with BioModels, please visit the <a href="${serverUrl}">BioModels
         website</a> and click on <a href="${serverUrl}/registration">Register</a> link from the right side the main
         menu. Follow the on-screen instruction for the next steps. For more guidance, please refer:
-            <a href="${manualUrl}/getting-started.html#slide5"
+            <a href="${manualURL}/submission-guidelines/index.html#slide5"
                target="_blank">Model
             Submission guidelines (Slide 5-8)</a></p>
 
@@ -467,15 +467,15 @@
             To submit a new model, user has to log in to BioModels
             using their user credentials. Post login, click on “Submit”
             tab and proceed with model submission. For details,
-            please refer:  <a href="${manualUrl}/getting-started.html#slide9"
+            please refer:  <a href="${manualURL}/submission-guidelines/index.html#slide9"
                               target="_blank">Model Submission guidelines
             (Slide 9-16)</a>.
         </p>
 
         <p>If a model is encoded in
             <a title="Systems Biology Markup Language (SBML)"
-               href="http://sbml.org/">SBML</a> or <a
-            title="CellML language" href="http://www.cellml.org/">CellML</a>, the submission is entirely processed,
+               href="https://sbml.org/">SBML</a> or <a
+            title="CellML language" href="https://www.cellml.org/">CellML</a>, the submission is entirely processed,
         via the <a
             title="Model submission page"
             href="submit">submission page</a>. If the model is encoded using a different format, please read the section
@@ -516,7 +516,7 @@
             you want to update the files. On the left of side of the
             page, you will find option to “Update”, “Publish”, “Convert”
             etc. Click on “Update” and follow the on-screen
-            instructions. For details, please refer: <a href="${manualUrl}/getting-started.html#slide20"
+            instructions. For details, please refer: <a href="${manualURL}/submission-guidelines/index.html#slide20"
                                                         target="_blank">Model
             Submission guidelines (Slide 20-28)</a>
         </p>
@@ -532,7 +532,7 @@
             <strong>Publish</strong> <strong>Convert</strong>, etc. Click on <strong>Update</strong> and continue
             clicking "Next" to go to the Publication page. Follow the onscreen
             instructions further. For details, please refer:
-            <a href="${manualUrl}/getting-started.html#slide20"
+            <a href="${manualURL}/submission-guidelines/index.html#slide20"
                target="_blank">Model Submission guidelines (Slide 20-28)</a>
         </p>
         <p>
@@ -547,7 +547,7 @@
             Click on Edit and you will be directed to a different page
             for publication editing option. Enter the details of new
             publication (ID), click <strong>Update</strong> and “Save” post crosschecking
-            the details. For details, please refer: <a href="${manualUrl}/getting-started.html#slide31"
+            the details. For details, please refer: <a href="${manualURL}/submission-guidelines/index.html#slide31"
                                                        target="_blank">
             Model Submission guidelines (Slide 31-33)</a>
         </p>
@@ -615,9 +615,9 @@
         database curators will take a quick look and publish the
         model if all is well. If not, curator will contact the
         model submitter. For details, please refer: BioModels
-            model Submission guidelines (<a href="${manualUrl}/getting-started.html#slide17"
+            model Submission guidelines (<a href="${manualURL}/submission-guidelines/index.html#slide17"
                                             target="_blank">Slide 17-19 (New model)</a>
-        or <a href="${manualUrl}/getting-started.html#slide28"
+        or <a href="${manualURL}/submission-guidelines/index.html#slide28"
               target="_blank">28-30 (existing model)</a>).</p>
 
         <h4 id="what-will-happen-model-nonpublic" class="level3">What will happen if you don’t the make model public?</h4>
