@@ -46,10 +46,12 @@ class JummpController extends CommonController {
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def support() {
-        COMMON_PROPERTIES.putAll([
+        Map model = COMMON_PROPERTIES
+        model.putAll([
             "messageCode": "jummp.support.${theme}.message",
             "titleCode": "jummp.support.${theme}.title"
         ])
+        model
     }
 
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
