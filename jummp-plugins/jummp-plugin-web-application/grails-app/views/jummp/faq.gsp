@@ -448,8 +448,8 @@
                target="_blank">Model Submission guidelines (Slide 4)</a>.</p>
 
         <h4 id="register-new-account" class="level3">How to register for a new user account?</h4>
-        <p>For registering with BioModels, please visit the <a href="${serverUrl}">BioModels
-        website</a> and click on <a href="${serverUrl}/registration">Register</a> link from the right side the main
+        <p>For registering with BioModels, please visit the <a href="${serverURL}">BioModels
+        website</a> and click on <a href="${serverURL}/registration">Register</a> link from the right side the main
         menu. Follow the on-screen instruction for the next steps. For more guidance, please refer:
             <a href="${manualURL}/submission-guidelines/index.html#slide5"
                target="_blank">Model
@@ -642,7 +642,7 @@
         on the model toolbox (see Fig. 1) which lets the submitter request a reviewer account for the model in question. BioModels will
         create a new account immediately to provide with read access to the model.</p>
         <figure>
-            <img src="${resource(contextPath: "${grailsApplication.config.grails.serverURL}", dir: 'images/biomodels/faq',
+            <img src="${resource(contextPath: "${serverURL}", dir: 'images/biomodels/faq',
                 file: 'open-reviewer-account.png')}" />
             <figcaption>Fig. 1 - Reviewer button on the model toolbox of an unpublished model.</figcaption>
         </figure>
@@ -854,7 +854,7 @@
 
         <figure>
             <img class="screenshot" title="SBML scheme for annotation encoding"
-                 src="${resource(contextPath: "${grailsApplication.config.grails.serverURL}", dir: 'images/biomodels/faq',
+                 src="${resource(contextPath: "${serverURL}", dir: 'images/biomodels/faq',
                      file: 'annotations-example.png')}" alt="Piece of SBML showing some annotations"/>
             <figcaption>Fig. 2 - Piece of SBML showing some annotations</figcaption>
         </figure>
@@ -880,7 +880,7 @@
         process.</p>
 
         <figure>
-            <img src="${resource(contextPath: "${grailsApplication.config.grails.serverURL}", dir: 'images/biomodels/faq',
+            <img src="${resource(contextPath: "${serverURL}", dir: 'images/biomodels/faq',
                 file: 'annotation.png')}" />
             <figcaption>Fig. 3 - Semantic enrichment of models involves cross-referencing model entities (left) with
             controlled vocabularies and data resources (right) using COMBINE qualifiers (middle) that define the
