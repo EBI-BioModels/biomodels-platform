@@ -685,14 +685,24 @@ class ModelController {
         final String F_NAME = URLEncoder.encode(file.name, "UTF-8")
         resp.setCharacterEncoding("UTF-8")
         resp.setHeader( "Content-Disposition", "${INLINE};filename=\"${F_NAME}\"")
-        byte[] fileData = file.readBytes()
+        byte[] fileData = null
         int previewSize = grailsApplication.config.jummp.web.file.preview as Integer
         ByteArrayInputStream  stream = null
         try {
-            if (!preview || previewSize > fileData.length) {
-                stream = new ByteArrayInputStream(fileData)
+            if (file.length() > 100*1024*1024) {
+                String warnMsg = "File ${file.name} is too large to be served now."
+                LOGGER.debug(warnMsg)
+                println(warnMsg)
+                stream = new ByteArrayInputStream("BIG_FILE".bytes)
             } else {
-                stream = new ByteArrayInputStream(Arrays.copyOf(fileData, previewSize))
+                fileData = file.readBytes()
+
+                if (!preview || previewSize > fileData.length) {
+                    stream = new ByteArrayInputStream(fileData)
+                } else {
+                    fileData = file.readBytes()
+                    stream = new ByteArrayInputStream(Arrays.copyOf(fileData, previewSize))
+                }
             }
             resp.outputStream << stream
         } catch (IOException ioE) {
