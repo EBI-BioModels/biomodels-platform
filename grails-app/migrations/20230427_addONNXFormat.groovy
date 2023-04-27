@@ -10,7 +10,7 @@ databaseChangeLog = {
                 ModelFormat.withSession { session ->
                     boolean response = format.save()
                     if (response) {
-                        format = ModelFormat.findByIdentifier("CC3DML")
+                        format = ModelFormat.findByIdentifier("ONNX")
                         if (format) {
                             def met = new ModelElementType(name: "model", modelFormat: format)
                             if (!met.save(flush: true)) {
