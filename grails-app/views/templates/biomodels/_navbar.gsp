@@ -108,7 +108,7 @@
         <ul class="menu">
             <li><a href="${g.createLink(controller: 'jummp', action: 'faq')}">FAQs</a></li>
             <li class="divider"></li>
-            <li><a href="${grailsApplication.config.jummp.context.help.root}manual.html" target="_blank">User Manual</a></li>
+            <li><a href="${grailsApplication.config.jummp.context.help.root}/manual.html" target="_blank">User Manual</a></li>
             <li class="divider"></li>
             <li><a href="${createLink(controller: 'jummp', action: 'curatorZone')}">Curator's Zone</a></li>
             <li class="divider"></li>
