@@ -572,7 +572,21 @@ hyphens, plus signs and underscores. It should also have a proper file extension
             revision.curationState = CurationState.NON_CURATED
             revision.validationLevel = ValidationState.APPROVE
         }
-        revision.comment = paramComments ?: "Model revised without commit message"
+        boolean isAmend = working.get("isAmend") as boolean
+        if (isAmend) {
+            if (paramComments) {
+                revision.comment = paramComments
+            } else if (!revision.comment) {
+                revision.comment = "Model revised without commit message"
+            }
+        } else { // new submission or update submission
+            if (paramComments) {
+                revision.comment = paramComments
+            } else if (!revision.comment) {
+                // only add the following commit message if there has been no commit message in the previous revision
+                revision.comment = "Model revised without commit message"
+            }
+        }
         working.put("new_name", revision.name)
         working.put("new_description", revision.description)
         working.put("RevisionTC", revision)
