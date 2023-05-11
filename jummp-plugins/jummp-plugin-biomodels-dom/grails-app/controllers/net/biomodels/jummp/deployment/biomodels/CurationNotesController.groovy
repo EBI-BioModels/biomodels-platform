@@ -81,6 +81,7 @@ class CurationNotesController {
         command
     }
 
+    @Secured(['IS_AUTHENTICATED_FULLY'])
     def show() {
         def data = curationNotesService.loadOrInitialise(params)
         render(view: "curationNotesEditor", model: data)
@@ -89,7 +90,7 @@ class CurationNotesController {
     def doAddOrUpdate() {
         def curationNotes = params.curationNotes
         /**
-         * {@link ParameterFilters} automatically encoded the curation notes as HTML, therefore, we have to decode it
+         * {@link net.biomodels.jummp.filters.ParameterFilters} automatically encoded the curation notes as HTML, therefore, we have to decode it
          */
         curationNotes = curationNotes.decodeHTML()
         String model = params.model

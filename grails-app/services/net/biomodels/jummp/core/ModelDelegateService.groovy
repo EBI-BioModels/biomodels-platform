@@ -341,13 +341,19 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
     }
 
     @NotTransactional
-    boolean canAskReviewerAccount(final RevisionTC revisionTC, final boolean hasCuratorRole) {
+    boolean hasAdminRight(final RevisionTC revisionTC, final boolean hasCuratorRole = false) {
         User currentUser = userService.getCurrentUser()
         boolean isModelOwner = isOwnedBy(revisionTC, currentUser)
         boolean isAdmin = userService.isAdmin(currentUser)
+        isModelOwner || hasCuratorRole || isAdmin
+    }
+
+    @NotTransactional
+    boolean canAskReviewerAccount(final RevisionTC revisionTC, final boolean hasCuratorRole) {
+        boolean hasAdminRight = hasAdminRight(revisionTC, hasCuratorRole)
         Revision revision = Revision.get(revisionTC.id)
         boolean published = modelService.isRevisionPublic(revision)
-        boolean retVal = !published && (isModelOwner || hasCuratorRole || isAdmin)
+        boolean retVal = !published && hasAdminRight
         retVal
     }
 
