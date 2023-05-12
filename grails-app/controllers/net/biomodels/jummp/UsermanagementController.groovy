@@ -114,8 +114,8 @@ class UsermanagementController {
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def resetPassword() {
         if (params.code) {
-            flash.hashCode = params.code
-            flash.username = params.username
+            flash.hashCode = params.code.decodeHTML()
+            flash.username = params.username.decodeHTML()
             redirect action: 'reset'
         } else {
             redirect action: 'forgot'
@@ -259,12 +259,12 @@ class UsermanagementController {
 
     /**
      * Requests a password link from the user service, hiding the exception thrown
-     * if the username provided does not exist.
+     * if the username or email address provided does not exist.
      */
     @Secured(["IS_AUTHENTICATED_ANONYMOUSLY"])
     def requestPassword() {
         withForm {
-            String username = params.username
+            String username = params.username.decodeHTML()
             boolean succeeded = true
             boolean usernameExists = true
             String message = ""
@@ -280,20 +280,29 @@ class UsermanagementController {
                     succeeded = false
                 }
                 if (succeeded) {
-                    message = "Thank you. Please check the email associated with ${username}'s account"
+                    if (username.indexOf("@")) {
+                        message = "Thank you. Please check the mailbox of ${username}."
+                    } else {
+                        message = "Thank you. Please check the email associated with ${username}'s account"
+                    }
                 } else {
                     if (!usernameExists) {
-                        message = "Username ${username} does not exist."
+                        if (username.indexOf("@")) {
+                            message = "Email address ${username} does not exist."
+                        } else {
+                            message = "Username ${username} does not exist."
+                        }
                     } else {
                         message = """Cannot send a reset password link to your email. Please contact \
 with us asap for further instructions"""
                     }
                 }
             } else {
-                message = "Please provide a username."
+                message = "Please provide a username or an email address."
             }
             LOGGER.debug(message)
             flash.message = message
+            println(message)
             redirect(action: "forgot")
         }.invalidToken {
             render(controller: "errors", action: "error405")

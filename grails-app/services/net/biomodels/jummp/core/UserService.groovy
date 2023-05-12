@@ -598,7 +598,14 @@ Cannot persist the user data ${origUser.id} into the database due to ${origUser.
         user.password = springSecurityService.encodePassword(password, null)
         // reset password expired state
         user.passwordExpired = false
-        user.save(flush: true)
+        String msg = ""
+        if (user.save(flush: true)) {
+            msg = "Update the password successfully"
+        } else {
+            msg = "Updated the password unsuccessfully"
+        }
+        LOGGER.debug(msg)
+        println msg
     }
 
     @PostLogging(LoggingEventType.RETRIEVAL)
