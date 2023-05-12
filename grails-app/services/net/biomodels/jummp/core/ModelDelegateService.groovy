@@ -80,6 +80,7 @@ import java.util.zip.ZipOutputStream
 class ModelDelegateService implements IModelService {
     private final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
     def grailsApplication
+    def curationNotesService
     def modelService
     def modelFileFormatService
     def qcInfoDelegateService
@@ -342,6 +343,10 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
 
     @NotTransactional
     boolean hasAdminRight(final RevisionTC revisionTC, final boolean hasCuratorRole = false) {
+        /*if (revisionTC.curationState == ModelState.PUBLISHED) {
+            // always
+            return true
+        }*/
         User currentUser = userService.getCurrentUser()
         boolean isModelOwner = isOwnedBy(revisionTC, currentUser)
         boolean isAdmin = userService.isAdmin(currentUser)
@@ -629,5 +634,28 @@ session: ${TransactionSynchronizationManager.getResource(grails.util.Holders.app
     List<RFTC> sortModelFilesByName(final List<RFTC> repoFiles) {
         List<RFTC> sortedList = repoFiles.sort { it.filename }
         return sortedList
+    }
+
+    /**
+     * Determines the criteria to display the Curation tab in the model view
+     *
+     * @param revision
+     * @param hasCuratorRole
+     * @param currentUser
+     * @return a boolean value
+     */
+    boolean canSeeCurationTab(RevisionTC revision, boolean hasCuratorRole, def currentUser) {
+        def curationNotes = curationNotesService.fetchCurationNotesForModel(revision.model.id)
+        boolean isPublicModel = revision.curationState == ModelState.PUBLISHED
+        if (!curationNotes && !currentUser) {
+            // don't show the Curation tab if there hasn't been any curation results and logged in user
+            return false
+        } else if (curationNotes && !currentUser) {
+            // only show the Curation tab if there has been the curation results and the model is public
+            return isPublicModel
+        } else  {
+            // otherwise, display it to curators or the model's submitter
+            return hasCuratorRole || isOwnedBy(revision, userService.getCurrentUser())
+        }
     }
 }

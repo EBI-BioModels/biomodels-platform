@@ -247,7 +247,7 @@ class ModelController {
                         canAskReviewerAccount = modelDelegateService.canAskReviewerAccount(revision, hasCuratorRole)
                     }
                     def contributors = modelDelegateService.collectContributors(revision.model.contributors)
-                    boolean hasAdminRight = modelDelegateService.hasAdminRight(revision, hasCuratorRole)
+                    boolean canSeeCurationTab = modelDelegateService.canSeeCurationTab(revision, hasCuratorRole, currentUser)
                     def model = [
                                  revision               : rev,
                                  reactomeIds            : reactomeIds,
@@ -278,7 +278,7 @@ class ModelController {
                                  bmTags                 : tags,
                                  serverURL              : grailsApplication.config.grails.serverURL,
                                  canAskReviewerAccount  : canAskReviewerAccount,
-                                 hasAdminRight          : hasAdminRight
+                                 canSeeCurationTab      : canSeeCurationTab
                     ]
                     if (rev.id == revision.id) {
                         flash.genericModel = model

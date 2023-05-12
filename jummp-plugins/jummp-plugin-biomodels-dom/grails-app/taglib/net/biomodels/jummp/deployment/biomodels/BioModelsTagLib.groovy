@@ -88,7 +88,7 @@ class BioModelsTagLib {
         def modelId =  attrs.model
         Map requiredParams = ["model": modelId]
         boolean hasCuratorRole = attrs.hasCuratorRole
-        boolean hasAdminRight = attrs.hasAdminRight
+        boolean canSeeCurationTab = attrs.canSeeCurationTab
         if (attrs.curationNotes != null) {
             SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM yyyy, HH:mm:ss")
             def base64CurationNotes = attrs.curationNotes?.collect { CurationNotesTransportCommand cmd ->
@@ -111,7 +111,7 @@ class BioModelsTagLib {
         } else {
             out << "<h3>The simulation result for this model is not present</h3>"
         }
-        if (hasCuratorRole || hasAdminRight) {
+        if (hasCuratorRole || canSeeCurationTab) {
             def btnLabel = attrs.curationNotes ? "Edit" : "Add"
             def actionName = "show"
             def href = g.link(controller: "curationNotes",

@@ -704,7 +704,7 @@
                         These specific tabs would be shown based on the presence of data. For example,
                         curation notes do not be included at all the time.
                     -->
-		            <g:if test="${ curationNotes != null || hasCuratorRole || hasAdminRight }">
+		            <g:if test="${ curationNotes != null || hasCuratorRole || canSeeCurationTab }">
                     <li><a href='#Curation'>Curation</a></li></g:if>
                     </ul>
 
@@ -911,11 +911,11 @@
                     <g:pageProperty name="page.modelspecifictabscontent" />
 
                     <!-- Curation tab -->
-                    <g:if test="${curationNotes != null || hasCuratorRole || hasAdminRight }">
+                    <g:if test="${curationNotes != null || hasCuratorRole || canSeeCurationTab }">
                         <biomd:renderCurationNotesTab curationNotes="${curationNotes}"
                                                       model="${revision.modelIdentifier()}"
                                                       modelName="${revision.name}"
-                                                      hasAdminRight="${hasAdminRight}"
+                                                      canSeeCurationTab="${canSeeCurationTab}"
                                                       hasCuratorRole="${hasCuratorRole}"/>
                     </g:if>
                 </div>
