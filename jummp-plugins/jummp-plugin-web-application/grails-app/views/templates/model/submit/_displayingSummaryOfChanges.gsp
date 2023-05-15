@@ -124,7 +124,7 @@
     </div>
 </div>
 </g:if>
-<input type="button" name="next" class="next action-button" value="Submit" />
+<input type="button" name="next" class="next action-button" value="Submit" id="btnSubmit" />
 <input type="button" name="previous" class="previous action-button-previous" value="Previous" />
 <input type="button" name="btnFinalCheck" class="action-button" value="Final Check" style="float: left" />
 <script type="text/javascript">
@@ -247,4 +247,14 @@
             setCheckList(4, currentValidation);
         });
     });
+
+    $("#btnSubmit").on("click", function(e) {
+        // stop submitting the form to see the disabled button effect
+        e.preventDefault();
+        // $(this).addClass("disabled");
+        $(this).attr("disabled", true);
+        $(this).attr("style", "background-color: #616161 !important");
+        console.log("Please waiting for saving your submission data in our system. Don't press any button or close this window!");
+    });
+
 </script>
