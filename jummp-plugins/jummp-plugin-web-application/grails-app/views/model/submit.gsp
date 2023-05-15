@@ -61,7 +61,8 @@
 
         var latestModelName = "${latestModelName}";
 
-        var latestModelFormat = "${latestModelFormat}";
+        var latestModelFormat = "${latestModelFormat}"; // the format was defined in the previous update
+        var detectedModelFormat; // the format is selected by the submitter
         var latestModelFormatNameAndVersion = "${latestModelFormatNameAndVersion}";
         var latestReadmeSubmission = "${latestReadmeSubmission}";
 
@@ -78,6 +79,11 @@
 </head>
 
 <body>
+<g:if test="${files?.size() == 0 && isUpdate}">
+    <h2 style="color: darkred">There have been errors when trying to update your model. Please refresh the page.
+    If the issue persists, please contact us for further support.</h2>
+</g:if>
+<g:else>
 <div class="row">
     <div class="columns small-12 large-12">
         <div class="text-center">
@@ -165,6 +171,7 @@
         "hideMethod": "fadeOut"
     }
 </script>
+</g:else>
 
 </body>
 <content tag="contexthelp">
