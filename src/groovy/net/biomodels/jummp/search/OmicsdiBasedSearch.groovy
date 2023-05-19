@@ -32,6 +32,7 @@ import net.biomodels.jummp.annotationstore.ResourceReference
 import net.biomodels.jummp.core.ModelSearchStrategy as MST
 import net.biomodels.jummp.core.events.ModelOperationEvent
 import net.biomodels.jummp.core.model.*
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 import net.biomodels.jummp.model.Revision
 import org.apache.commons.logging.Log
@@ -328,15 +329,10 @@ The root cause is ${e.toString()}""")
         return searchResponse
     }
 
-    void updateIndex(RevisionTransportCommand revision) {
+    void updateIndex(RevisionTC revision) {
         Revision.withSession {
-            String name = revision.name ?: ""
-            String description = revision.description ?: ""
-            String submissionId = revision.model.submissionId
-            String publicationId = revision.model.publicationId ?: ""
-            int versionNumber = revision.revisionNumber
-            boolean isCertified = null != revision.qcInfo
-            final String uniqueId = "${submissionId}.${versionNumber}"
+            def partialData = buildPartialData(revision)
+
             String exchangeFolder = new File(revision?.files?.first().path).getParent()
             String registryExport = miriamService.registryExport.canonicalPath
             def dsConfig = grailsApplication.config.dataSource
@@ -347,35 +343,6 @@ The root cause is ${e.toString()}""")
             String dbUsername = dsConfig?.username
             String dbPassword = dsConfig?.password
             def dbSettings = [ 'url': dbUrl, 'username': dbUsername, 'password': dbPassword ]
-            def tags = modelTagService.getTagsByModelId(revision?.model?.submissionId)
-            def partialData = [
-                'submissionId': submissionId,
-                'publicationId' :publicationId,
-                'name': name,
-                'description' : description,
-                'modelFormat' : revision.format.name,
-                'levelVersion' : revision.format.formatVersion,
-                'submitter' : revision.owner,
-                'submitterUsername' :  revision.model.submitterUsername,
-                'publicationTitle' : revision.model.publication ?
-                    revision.model.publication.title  :  "",
-                'publicationAbstract' : revision.model.publication ?
-                    revision.model.publication.synopsis : "",
-                'publicationAuthor': revision.model.publication?.authors ?
-                    revision.model.publication.authors.collect {
-                        it.userRealName }.join(', ') : "",
-                'publicationYear': revision.model.publication?.year ?: 0,
-                'model_id' : revision.model.id,
-                'revision_id' :  revision.id,
-                'deleted' :  revision.model.deleted,
-                'public' :  revision.model.firstPublished ? 'true'  :  'false',
-                'certified' : isCertified ? 'true' : 'false',
-                'versionNumber' : versionNumber,
-                'submissionDate' : revision.model.submissionDate,
-                'lastModified' :  revision.model.lastModifiedDate,
-                'uniqueId' : uniqueId,
-                'tags': tags
-            ]
             def builder = new JsonBuilder()
             builder(partialData: partialData,
                 'folder': exchangeFolder,
@@ -449,7 +416,7 @@ The root cause is ${e.toString()}""")
         values
     }
 
-    private List<String> fetchFilesFromRevision(RevisionTransportCommand rev, boolean filterMains) {
+    private List<String> fetchFilesFromRevision(RevisionTC rev, boolean filterMains) {
         if (filterMains) {
             return rev?.files?.findAll{it.mainFile}.collect{it.path}
         }
@@ -464,5 +431,50 @@ The root cause is ${e.toString()}""")
         }
         matcher.appendTail(out)
         out.toString()
+    }
+
+    private Map buildPartialData(RevisionTC revision) {
+        String submissionId = revision.model.submissionId
+        String publicationId = revision.model.publicationId ?: ""
+        String name = revision.name ?: ""
+        String description = revision.description ?: ""
+
+        int versionNumber = revision.revisionNumber
+        boolean isCertified = null != revision.qcInfo
+
+        final String uniqueId = "${submissionId}.${versionNumber}"
+        def tags = modelTagService.getTagsByModelId(revision?.model?.submissionId)
+
+        Map data = [
+            'submissionId': submissionId,
+            'publicationId' :publicationId,
+            'name': name,
+            'description' : description,
+            'modelFormat' : revision.format.identifier,
+            'levelVersion' : revision.format.formatVersion,
+            'submitter' : revision.owner,
+            'submitterUsername' :  revision.model.submitterUsername,
+            'publicationLinkType': revision.model.publication ? revision.model.publication?.linkProvider.linkType : "",
+            'publicationLink': revision.model.publication ? revision.model.publication.link : "",
+            'publicationTitle' : revision.model.publication ?
+                revision.model.publication.title  :  "",
+            'publicationAbstract' : revision.model.publication ?
+                revision.model.publication.synopsis : "",
+            'publicationAuthor': revision.model.publication?.authors ?
+                revision.model.publication.authors.collect {
+                    it.userRealName }.join(', ') : "",
+            'publicationYear': revision.model.publication?.year ?: 0,
+            'modelId' : revision.model.id,
+            'revisionId' :  revision.id,
+            'deleted' :  revision.model.deleted,
+            'public' :  revision.model.firstPublished ? 'true'  :  'false',
+            'certified' : isCertified ? 'true' : 'false',
+            'versionNumber' : versionNumber,
+            'submissionDate' : revision.model.submissionDate,
+            'lastModified' :  revision.model.lastModifiedDate,
+            'uniqueId' : uniqueId,
+            'tags': tags
+        ]
+        return data
     }
 }
