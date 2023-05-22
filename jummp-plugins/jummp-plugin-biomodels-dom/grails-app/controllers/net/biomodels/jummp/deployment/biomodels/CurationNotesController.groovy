@@ -87,6 +87,7 @@ class CurationNotesController {
         render(view: "curationNotesEditor", model: data)
     }
 
+    @Secured(['IS_AUTHENTICATED_FULLY'])
     def doAddOrUpdate() {
         def curationNotes = params.curationNotes
         /**
