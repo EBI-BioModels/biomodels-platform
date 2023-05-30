@@ -164,9 +164,9 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
          * At the current settings, using HTTP PROXY to access the internet in the cloud based deployment.
          * Because of that, we need to tell ddi-ebe-ws-dao the information of HTTP PROXY
          */
-        String _httpProxyHost = System.getenv("HTTP_PROXY_HOST")
+        String _httpProxyHost = System.getProperty("http.proxyHost") ?: System.getenv("http.proxyHost")
         String proxyHost = _httpProxyHost != null ? _httpProxyHost : this.httpProxyHost
-        String _httpProxyPort = System.getenv("HTTP_PROXY_PORT")
+        String _httpProxyPort = System.getProperty("http.proxyPort") ?: System.getenv("http.proxyPort")
         int proxyPort = _httpProxyPort != null ? _httpProxyPort.toInteger().intValue() : this.httpProxyPort
         ebeyeWsConfig.setHttpProxyHost(proxyHost)
         ebeyeWsConfig.setHttpProxyPort(proxyPort)
