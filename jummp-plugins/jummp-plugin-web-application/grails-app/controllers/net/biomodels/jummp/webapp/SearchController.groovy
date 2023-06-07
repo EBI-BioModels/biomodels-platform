@@ -235,15 +235,16 @@ under the format: ${response.format}"""
                 try {
                     revision = modelDelegateService.getRevisionFromParams(model)
                 } catch (org.springframework.security.access.AccessDeniedException ade) {
-                    message = "Unable to access the model $model"
+                    message = "Unable to access the model"
                 }
                 if (revision) {
-                    String modelIdentifier = revision.identifier()
+                    model = revision.identifier()
                     searchService.updateIndex(revision)
-                    message = "Started re-indexing the model $modelIdentifier"
+                    message = "Started re-indexing the model"
                 }
             }
-            msgMap[model] = message
+            String modelLink = createLink(controller: "model", action: "show", id: model, absolute: true)
+            msgMap[modelLink] = message
         }
         [msgMap: msgMap]
     }

@@ -35,7 +35,8 @@
 <body>
     <h2>Indexing model(s)</h2>
     <g:each in="${msgMap}" var="model">
-        <h4>${model.value}</h4>
+        <h4>${model.value} <a href="${model.key}"
+                              target="_blank">${model.key.substring(model.key.lastIndexOf("/")+1)}</a></h4>
     </g:each>
 </body>
 </html>

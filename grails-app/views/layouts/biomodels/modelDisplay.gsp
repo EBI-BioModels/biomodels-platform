@@ -281,6 +281,12 @@
                         primary:"ui-icon-contact"
                     }
             }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
+            $("#index-model-revision").button({
+                    text:false,
+                    icons: {
+                        primary:"ui-icon-refresh"
+                    }
+            }).removeClass('ui-corner-all').css({ width: '45px', 'padding-top': '10px', 'padding-bottom': '10px' });
             $( "#peer-review" ).button({
                 text:false,
                 icons: {
@@ -619,6 +625,13 @@
                         <button class='toolbutton' id="manage-contributors"
                                 title="Click on this button to manage the list of contributors of your model"
                                 onclick="return manageContributors()">Members</button>
+                    </li>
+                </g:if>
+                <g:if test="${hasCuratorRole}"> <!-- canIndex is the same hasCuratorRole -->
+                    <li>
+                        <button class='toolbutton' id="index-model-revision"
+                                title="Click on this button to reindex your model"
+                                onclick="return indexModelRevision()">Index</button>
                     </li>
                 </g:if>
             </ul>
@@ -1015,6 +1028,10 @@
 
         function manageContributors() {
             $.jummp.openPage('${g.createLink(controller: 'contributor', action: 'manage', id: revision.identifier())}');
+        }
+
+        function indexModelRevision() {
+            $.jummp.openPage('${g.createLink(controller: 'search', action: 'reindex', params: ["models": [revision.identifier()]])}');
         }
     </script>
 </body>
