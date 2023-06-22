@@ -204,6 +204,10 @@ class SearchService {
         log.debug("Finished cleaning annotation statements from database")
     }
 
+    Map checkIndexedData() {
+        strategy.checkIndexedData()
+    }
+
     String[] getSearchFields() {
         strategy.getSortFields()
     }

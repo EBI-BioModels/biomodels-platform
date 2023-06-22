@@ -34,6 +34,7 @@ import grails.converters.JSON
 import grails.plugin.springsecurity.annotation.Secured
 import grails.plugin.springsecurity.authentication.GrailsAnonymousAuthenticationToken
 import groovy.json.JsonBuilder
+import net.biomodels.jummp.CommonController
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.model.ModelListSorting
 import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
@@ -50,7 +51,7 @@ import org.slf4j.LoggerFactory
 import uk.ac.ebi.ddi.ebe.ws.dao.model.common.Facet
 
 @Secured(['IS_AUTHENTICATED_FULLY'])
-class SearchController {
+class SearchController extends CommonController {
     private final Logger LOGGER = LoggerFactory.getLogger(this.getClass())
     /**
      * Dependency Injection of Spring Security Service
@@ -142,6 +143,19 @@ class SearchController {
             }
         }
         return prefs.numResults
+    }
+
+    @Secured(['IS_AUTHENTICATED_ANONYMOUSLY'])
+    def check() {
+        String title = "Checking indexed data | BioModels"
+        Map model = COMMON_PROPERTIES
+        model.putAll([layout: layout, title: title])
+        Map result = searchService.checkIndexedData()
+        if (result.get("listDuplicatedIds")?.size()) {
+            model.put "ids", result.get("listDuplicatedIds")
+        }
+        model.putAll(result)
+        model
     }
 
     /**

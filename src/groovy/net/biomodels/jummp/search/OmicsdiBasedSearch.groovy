@@ -28,13 +28,20 @@ import grails.transaction.NotTransactional
 import grails.util.Environment
 import grails.util.Holders
 import groovy.json.JsonBuilder
+import groovy.json.JsonSlurper
 import net.biomodels.jummp.annotationstore.ResourceReference
 import net.biomodels.jummp.core.ModelSearchStrategy as MST
+import net.biomodels.jummp.core.constants.BioModels
 import net.biomodels.jummp.core.events.ModelOperationEvent
-import net.biomodels.jummp.core.model.*
+import net.biomodels.jummp.core.model.ModelFormatTransportCommand
+import net.biomodels.jummp.core.model.ModelState
+import net.biomodels.jummp.core.model.ModelTransportCommand
+import net.biomodels.jummp.core.model.PublicationTransportCommand
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierUtils
 import net.biomodels.jummp.model.Revision
+import net.biomodels.jummp.utils.EbiSearchHelper
+import net.biomodels.jummp.utils.WebServiceFetcher
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.codehaus.groovy.grails.plugins.support.aware.GrailsConfigurationAware as GCA
@@ -147,6 +154,12 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
     @NotTransactional
     String[] getSortFields() {
         ["relevance", "submissionid", "name"]
+    }
+
+    @Override
+    @NotTransactional
+    Map checkIndexedData() {
+        EbiSearchHelper.checkIndexedData()
     }
 
     @NotTransactional
@@ -357,6 +370,7 @@ The root cause is ${e.toString()}""")
 
             String jarPath = grailsApplication.config.jummp.search.pathToIndexerExecutable
             def argsMap = [jarPath: jarPath, jsonPath: indexingData.absolutePath]
+
 
             String httpProxy = System.getProperty("http.proxyHost")
             if (httpProxy) {

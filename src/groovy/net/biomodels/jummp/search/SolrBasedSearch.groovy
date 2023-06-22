@@ -25,6 +25,7 @@
 package net.biomodels.jummp.search
 
 import grails.plugin.springsecurity.SpringSecurityUtils
+import grails.transaction.NotTransactional
 import grails.util.Holders
 import groovy.json.JsonBuilder
 import net.biomodels.jummp.core.ModelSearchStrategy
@@ -433,6 +434,11 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
         ["relevance"]
     }
 
+    @Override
+    @NotTransactional
+    Map checkIndexedData() {
+        null
+    }
     /**
      * Internal method to execute a query.
      *

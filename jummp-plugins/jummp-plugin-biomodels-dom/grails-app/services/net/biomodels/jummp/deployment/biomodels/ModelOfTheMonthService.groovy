@@ -24,6 +24,7 @@ import com.rometools.rome.feed.rss.Guid
 import com.rometools.rome.feed.synd.*
 import com.rometools.rome.io.SyndFeedOutput
 import grails.transaction.Transactional
+import net.biomodels.jummp.core.constants.BioModels
 import net.biomodels.jummp.deployment.biomodels.feeds.CustomSyndEntryImpl
 import net.biomodels.jummp.deployment.biomodels.feeds.CustomSyndFeedImpl
 import net.biomodels.jummp.model.Model
@@ -52,7 +53,7 @@ class ModelOfTheMonthService {
      */
     private static final boolean IS_DEBUG_ENABLED = log.isDebugEnabled()
 
-    private static final String PREFIX_MOM_LINK = "https://www.ebi.ac.uk/biomodels/content/model-of-the-month"
+    private static final String PREFIX_MOM_LINK = "${BioModels.BM_ROOT_URL}/content/model-of-the-month"
 
     def grailsApplication
 

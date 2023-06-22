@@ -13,7 +13,8 @@
 
 <body>
     <h3><a href="${createLink(action: "info")}">System Info</a> |
-    <a href="${createLink(action: "health")}">System Healthcheck</a>
+    <a href="${createLink(action: "health")}">System Healthcheck</a> |
+    <a href="${createLink(controller: "search", action: "check")}">Checked Indexed Data</a>
     </h3>
 </body>
 </html>
