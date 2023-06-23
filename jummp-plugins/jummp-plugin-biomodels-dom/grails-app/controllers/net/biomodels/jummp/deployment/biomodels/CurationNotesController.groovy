@@ -26,6 +26,7 @@ import grails.plugin.springsecurity.annotation.Secured
 import groovy.json.JsonSlurper
 import net.biomodels.jummp.core.adapters.ModelAdapter
 import net.biomodels.jummp.core.model.ModelTransportCommand
+import net.biomodels.jummp.deployment.biomodels.CurationNotesTransportCommand as CNTC
 import net.biomodels.jummp.model.Model
 import net.biomodels.jummp.plugins.security.User
 
@@ -70,7 +71,7 @@ class CurationNotesController {
                           dateAdded: dateAdded,
                           lastModified: lastModified,
                           updated: updated]
-        CurationNotesTransportCommand command = new CurationNotesTransportCommand(bindingMap)
+        CNTC command = new CNTC(bindingMap)
         if (params?.cnId) {
             command.id = params.long("cnId")
         }
@@ -93,16 +94,14 @@ class CurationNotesController {
         /**
          * {@link net.biomodels.jummp.filters.ParameterFilters} automatically encoded the curation notes as HTML, therefore, we have to decode it
          */
-        curationNotes = curationNotes.decodeHTML()
-        String model = params.model
-        CurationNotesTransportCommand command = parseCuratioNotes(curationNotes, model)
+        String model = params.model.decodeHTML()
+        CNTC command = parseCuratioNotes(curationNotes, model)
         // get the latest timestamp
         command.lastModified = new Date()
         if (!command.updated) {
             // this case means to add a new curation notes
             command.dateAdded = command.lastModified
         }
-        Map response = [:]
         if (command.validate()) {
             CurationNotes update = curationNotesService.doAddOrUpdateCurationNotes(command)
             if (update) {

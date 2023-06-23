@@ -45,7 +45,7 @@ import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
 import net.biomodels.jummp.core.model.PublicationDetailExtractionContext
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
-import net.biomodels.jummp.core.model.PublicationTransportCommand
+import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
 import net.biomodels.jummp.model.ModellingApproach
 import net.biomodels.jummp.model.PublicationLinkProvider
 import net.biomodels.jummp.model.Model
@@ -387,7 +387,7 @@ the allowed maximum size. Therfore, the automatic process of detecting the model
             PublicationLinkProvider.LinkType linkType = PublicationLinkProvider.LinkType.findLinkTypeByLabel(publinkType)
             if (publinkType) {
                 if (!model.publication) {
-                    model.publication = new PublicationTransportCommand()
+                    model.publication = new PubTC()
                 }
                 refreshPublication = true
             }
@@ -441,6 +441,18 @@ the allowed maximum size. Therfore, the automatic process of detecting the model
             // TODO: check that 'Original code *' is the currently chosen value. If not, don't do the statement below
             if (workingMemory.get("readme_submission")) {
                 revision.readmeSubmission = workingMemory.get("readme_submission")
+            }
+        }
+
+        @Profiled(tag = "submissionService.addPublicationAsAnnotation")
+        @TypeChecked(TypeCheckingMode.SKIP)
+        protected void addPublicationAsAnnotation(Map<String, Object> workingMemory) {
+            RTC revision = workingMemory.get("RevisionTC") as RTC
+            MFTC format = revision.format
+            if ("sbml" == format.identifier.toLowerCase()) {
+                MTC model = revision.model
+                PubTC pub = model.publication
+                modelService.addPublicationAsAnnotation(revision, pub)
             }
         }
 
@@ -869,7 +881,7 @@ the allowed maximum size. Therfore, the automatic process of detecting the model
             RTC revision = workingMemory.get("RevisionTC") as RTC
             MTC model = revision.model
             model.format = revision.format
-            // update model format, modelling approach and readme info if they're provided
+            // store model format, modelling approach and readme info if they're provided
             storeModelInfo(revision, workingMemory)
             revision.comment = "Import of ${revision.name}".toString()
 
@@ -883,6 +895,12 @@ the allowed maximum size. Therfore, the automatic process of detecting the model
                 revision.description = NEW_DESCRIPTION
                 modelFileFormatService.updateDescription(revision, NEW_DESCRIPTION)
             }
+
+            // store publication identifier to the model file (which format supports to store annotations)
+            // if it has been provided
+            addPublicationAsAnnotation(workingMemory)
+
+            // store files
             Model newModel = modelService.uploadValidatedModel(repoFiles, revision)
             String modelId = newModel.submissionId
             workingMemory.put("model_id", modelId)
@@ -1071,6 +1089,11 @@ the allowed maximum size. Therfore, the automatic process of detecting the model
                 modelFileFormatService.updateDescription(revision, NEW_DESCRIPTION)
                 changes.add("MODEL INFO: Edited the short submission description.")
             }
+
+            // store publication identifier to the model file (which format supports to store annotations)
+            // if it has been provided
+            addPublicationAsAnnotation(workingMemory)
+
             if (workingMemory.get("isAmend")) {
                 modelService.amendRevision(repoFiles, deleteFiles, revision)
             } else {
@@ -1083,7 +1106,7 @@ the allowed maximum size. Therfore, the automatic process of detecting the model
         HashSet<String> processPostSubmission(final Map working) {
             HashSet<String> returned = super.processPostSubmission(working)
 
-            // send a confirmation email to the subscribers
+            // send a confirmation email to the subscribers such as the submitter, model owner...
             def currentUser = springSecurityService.currentUser
             def changesMade = working.get("changesMade")
             if (currentUser && changesMade) {

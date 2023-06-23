@@ -41,12 +41,15 @@ import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.constants.BioModels
 import net.biomodels.jummp.core.constants.Redis
 import net.biomodels.jummp.core.events.*
+import net.biomodels.jummp.core.events.RevisionCreatedEvent as RevisionCE
 import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.ModelTransportCommand as ModelTC
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
 import net.biomodels.jummp.core.model.identifier.ModelIdentifierGeneratorRegistryService
 import net.biomodels.jummp.core.model.identifier.generator.ModelIdentifierGenerator
 import net.biomodels.jummp.core.model.identifier.generator.NullModelIdentifierGenerator
+import net.biomodels.jummp.core.util.JummpHttpService
 import net.biomodels.jummp.core.vcs.VcsException
 import net.biomodels.jummp.core.vcs.VcsFileDetails
 import net.biomodels.jummp.model.*
@@ -54,7 +57,6 @@ import net.biomodels.jummp.model.ContributionDetails as CD
 import net.biomodels.jummp.model.ContributionRole as CR
 import net.biomodels.jummp.plugins.security.Role
 import net.biomodels.jummp.plugins.security.User
-import net.biomodels.jummp.core.util.JummpHttpService
 import org.codehaus.groovy.grails.web.json.JSONObject
 import org.perf4j.StopWatch
 import org.perf4j.aop.Profiled
@@ -1328,9 +1330,9 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
                 }
             }
             revision.refresh()
-            grailsApplication.mainContext.publishEvent(new RevisionCreatedEvent(this,
-                   new RevisionAdapter(revision: revision, latest: true).toCommandObject(), vcsService.retrieveFiles
-                (revision)))
+            RevisionTC revisionTC = new RevisionAdapter(revision: revision, latest: true).toCommandObject()
+            RevisionCE revisionCE = new RevisionCE(this, revisionTC, vcsService.retrieveFiles(revision))
+            grailsApplication.mainContext.publishEvent(revisionCE)
         } else {
             // TODO: this means we have imported the revision into the VCS, but it failed to be saved in the database, which is pretty bad
             revision.discard()
@@ -2260,7 +2262,9 @@ New revision of model ${mtc.properties} containing ${modelFiles.inspect()} does 
             return toPublish
         } else {
             logger.warn("""We are publishing $revision encoded in $format, but won't be able to add \
-the perennial publication identifier to the model file""")
+the perennial publication identifier to the model file.""")
+            RevisionTransportCommand toPublishTC = new RevisionAdapter(revision: revision).toCommandObject()
+            indexModelRevision(toPublishTC)
         }
         return revision
     }
@@ -2531,8 +2535,25 @@ There has been error while adding $approach to the model ${revisionTC.identifier
     }
 
     /**
+     * Adds a publication identifier {@link Publication} as an annotation to the SBML file of the given model revision
+     * @param revisionTC   A {@link RevisionTransportCommand} instance indicating the model revision
+     * @param pubTC A {@link PublicationTransportCommand} instance indicating the publication details
+     */
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    void addPublicationAsAnnotation(RevisionTransportCommand revisionTC, PublicationTransportCommand pubTC) throws
+        ModelException {
+        def sbmlService = grailsApplication.mainContext.getBean("sbmlService", ISbmlService.class)
+        boolean result = sbmlService.addPublicationAsAnnotation(revisionTC, pubTC)
+        if (!result) {
+            logger.error("""\
+There has been error while adding ${pubTC.link} (${pubTC.linkProvider.linkType}) to the model main file of the ${revisionTC.identifier()}""")
+        }
+    }
+
+    /**
      * Publishes an event to a specific subscriber. The method checks criteria to publish a
-     * {@link RevisionCreatedEvent} so that the subscriber {@link ShareRevisionToFellowCurators}
+     * {@link RevisionCreatedEvent} so that the subscriber
+     * {@link net.biomodels.jummp.core.subscribers.ShareRevisionToFellowCurators}
      * can detect and share the newly created revision to the fellow curators with the writable permission.
      *
      * @param command {@link RevisionTransportCommand} object

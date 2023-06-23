@@ -42,9 +42,11 @@ import grails.util.Environment
 import net.biomodels.jummp.core.ISbmlService
 import net.biomodels.jummp.core.ModelException
 import net.biomodels.jummp.core.model.FileFormatServiceAdapter
-import net.biomodels.jummp.core.model.RepositoryFileTransportCommand
-import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.core.model.PublicationTransportCommand as PubTC
+import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RepoFTC
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
 import net.biomodels.jummp.model.ModellingApproach
+import net.biomodels.jummp.model.PublicationLinkProvider as PubLP
 import org.apache.commons.io.FileUtils
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
@@ -108,7 +110,7 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
 
     // TODO: move initialization into afterPropertiesSet and make it configuration dependent
     @SuppressWarnings("GrailsStatelessService")
-    /** keys are {@link net.biomodels.jummp.core.model.RevisionTransportCommand#getId()}s*/
+    /** keys are {@link net.biomodels.jummp.core.model.RevisionTC}s*/
     SbmlCache cache = new SbmlCache(100)
 
     void afterPropertiesSet() {
@@ -122,8 +124,8 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
         }
     }
 
-    void checkConsistency(RevisionTransportCommand revision, final List<String> errors) {
-        RepositoryFileTransportCommand mainFileTC = revision.files.find {
+    void checkConsistency(RevisionTC revision, final List<String> errors) {
+        RepoFTC mainFileTC = revision.files.find {
             it.mainFile
         }
         if (!mainFileTC) {
@@ -138,7 +140,7 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
     }
 
     @Override
-    boolean addModelIdentifiersAsAnnotation(RevisionTransportCommand revision, String... identifiers)
+    boolean addModelIdentifiersAsAnnotation(RevisionTC revision, String... identifiers)
             throws ModelException {
         Qualifier qualifier = Qualifier.BQM_IS
         String accessionPattern = "biomodels.db[/:](BIOMD|MODEL)[0-9]{10}"
@@ -146,15 +148,37 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
     }
 
     @Override
-    boolean addModellingApproachAsAnnotation(RevisionTransportCommand revision,
+    boolean addModellingApproachAsAnnotation(RevisionTC revision,
             ModellingApproach approach) throws ModelException {
-        final CVTerm.Qualifier bqbHasProperty = CVTerm.Qualifier.BQB_HAS_PROPERTY
+        final Qualifier bqbHasProperty = Qualifier.BQB_HAS_PROPERTY
         String[] identifiers = ["http://identifiers.org/mamo/${approach?.accession}"] as String[]
         String accessionPattern = "mamo[/:]MAMO_[0-9]{7}"
         addAnnotations2Model(revision, bqbHasProperty, accessionPattern, identifiers)
     }
 
-    private boolean addAnnotationsIfNeeded(RevisionTransportCommand revision,
+    @Override
+    boolean addPublicationAsAnnotation(RevisionTC revision, PubTC publication) throws ModelException {
+        final Qualifier bqmIsDescribedBy = Qualifier.BQM_IS_DESCRIBED_BY
+        String pubmedPattern = "^\\d+\$"
+        String doiPattern = "^(doi\\:)?10\\.\\d+/.*\$"
+        String accessionPattern
+        String namespace
+        if (publication.linkProvider.linkType == PubLP.LinkType.PUBMED_LABEL) {
+            accessionPattern = pubmedPattern
+            namespace = "pubmed"
+        } else if (publication.linkProvider.linkType == PubLP.LinkType.DOI_LABEL) {
+            accessionPattern = doiPattern
+            namespace = "doi"
+        } else {
+            return false
+            throw new UnsupportedOperationException("BioModels doesn't support to add publication to SBML model except for PubMed and DOI.")
+        }
+        String[] identifiers = ["http://identifiers.org/$namespace:$publication.link"] as String[]
+        addAnnotations2Model(revision, bqmIsDescribedBy, accessionPattern, identifiers)
+    }
+
+
+    private boolean addAnnotationsIfNeeded(RevisionTC revision,
                                            SBMLDocument document,
                                            Qualifier qualifier,
                                            String accessionPattern,
@@ -369,7 +393,7 @@ Could not check if SBML files ${files.inspect()} are valid or not.""")
      */
     @Override
     @Profiled(tag="sbmlService.updateName")
-    boolean updateName(RevisionTransportCommand revision, final String name) {
+    boolean updateName(RevisionTC revision, final String name) {
         if (revision && name.trim()) {
             // update the name of the revision
             revision.name = name.trim()
@@ -456,7 +480,7 @@ the user has attempted to update an blank value for the name attribute.""")
      */
     @Override
     @Profiled(tag="sbmlService.updateDescription")
-    boolean updateDescription(RevisionTransportCommand revision, final String DESC) {
+    boolean updateDescription(RevisionTC revision, final String DESC) {
         if (revision && DESC.trim()) {
             // update the description of SBML model file of the revision
             revision.description = DESC.trim()
@@ -474,41 +498,41 @@ the user has attempted to update an blank value for the name attribute.""")
     }
 
     @Profiled(tag="SbmlService.getMetaId")
-    String getMetaId(RevisionTransportCommand revision) {
+    String getMetaId(RevisionTC revision) {
         return getFromCache(revision)?.model?.metaId
     }
 
     @Profiled(tag="SbmlService.getVersion")
-    long getVersion(RevisionTransportCommand revision) {
+    long getVersion(RevisionTC revision) {
         return fetchModelAttributeFromRevision(revision, "version")
     }
 
     @Profiled(tag="SbmlService.getLevel")
-    long getLevel(RevisionTransportCommand revision) {
+    long getLevel(RevisionTC revision) {
         return fetchModelAttributeFromRevision(revision, "level")
     }
 
     @Profiled(tag="SbmlService.getFormatVersion")
-    String getFormatVersion(RevisionTransportCommand revision) {
+    String getFormatVersion(RevisionTC revision) {
         final long LEVEL = getLevel(revision)
         final long VERSION = getVersion(revision)
         return "L${LEVEL}V${VERSION}"
     }
 
     @Profiled(tag="SbmlService.getNotes")
-    String getNotes(RevisionTransportCommand revision) {
+    String getNotes(RevisionTC revision) {
         String notesString = getFromCache(revision)?.model?.notesString ?: ""
         return notesString
     }
 
     @Profiled(tag="SbmlService.getAnnotations")
-    List<Map> getAnnotations(RevisionTransportCommand revision) {
+    List<Map> getAnnotations(RevisionTC revision) {
         Model model = getFromCache(revision).model
         return convertCVTerms(model.annotation)
     }
 
     @Profiled(tag="SbmlService.getParameters")
-    List<Map> getParameters(RevisionTransportCommand revision) {
+    List<Map> getParameters(RevisionTC revision) {
         Model model = getFromCache(revision).model
         ListOf<Parameter> parameters = model.getListOfParameters()
         List<Map> list = []
@@ -519,7 +543,7 @@ the user has attempted to update an blank value for the name attribute.""")
     }
 
     @Profiled(tag="SbmlService.getParameter")
-    Map getParameter(RevisionTransportCommand revision, String id) {
+    Map getParameter(RevisionTC revision, String id) {
         Model model = getFromCache(revision).model
         QuantityWithUnit param = model.getParameter(id)
         if (!param) {
@@ -535,7 +559,7 @@ the user has attempted to update an blank value for the name attribute.""")
     }
 
     @Profiled(tag="SbmlService.getLocalParameters")
-    List<Map> getLocalParameters(RevisionTransportCommand revision) {
+    List<Map> getLocalParameters(RevisionTC revision) {
         Model model = getFromCache(revision).model
         List<Map> reactions = []
         model.listOfReactions.each { reaction ->
@@ -550,7 +574,7 @@ the user has attempted to update an blank value for the name attribute.""")
     }
 
     @Profiled(tag="SbmlService.getReactions")
-    List<Map> getReactions(RevisionTransportCommand revision) {
+    List<Map> getReactions(RevisionTC revision) {
         Model model = getFromCache(revision).model
         List<Map> reactions = []
         model.listOfReactions.each { reaction ->
@@ -560,7 +584,7 @@ the user has attempted to update an blank value for the name attribute.""")
     }
 
     @Profiled(tag="SbmlService.getReaction")
-    Map getReaction(RevisionTransportCommand revision, String id) {
+    Map getReaction(RevisionTC revision, String id) {
         Model model = getFromCache(revision).model
         Reaction reaction = model.getReaction(id)
         if (!reaction) {
@@ -574,7 +598,7 @@ the user has attempted to update an blank value for the name attribute.""")
     }
 
     @Profiled(tag="SbmlService.getEvents")
-    List<Map> getEvents(RevisionTransportCommand revision) {
+    List<Map> getEvents(RevisionTC revision) {
         Model model = getFromCache(revision).model
         List<Map> events = []
         model.listOfEvents.each { event ->
@@ -584,7 +608,7 @@ the user has attempted to update an blank value for the name attribute.""")
     }
 
     @Profiled(tag="SbmlService.getEvent")
-    Map getEvent(RevisionTransportCommand revision, String id) {
+    Map getEvent(RevisionTC revision, String id) {
         Model model = getFromCache(revision).model
         Event event = model.getEvent(id)
         Map eventMap = eventToMap(event)
@@ -597,7 +621,7 @@ the user has attempted to update an blank value for the name attribute.""")
     }
 
     @Profiled(tag="SbmlService.getRules")
-    List<Map> getRules(RevisionTransportCommand revision) {
+    List<Map> getRules(RevisionTC revision) {
         Model model = getFromCache(revision).model
         List<Map> rules = []
         model.listOfRules.each { rule ->
@@ -607,7 +631,7 @@ the user has attempted to update an blank value for the name attribute.""")
     }
 
     @Profiled(tag="SbmlService.getRule")
-    Map getRule(RevisionTransportCommand revision, String variable) {
+    Map getRule(RevisionTC revision, String variable) {
         Model model = getFromCache(revision).model
         ExplicitRule rule = model.getRuleByVariable(variable)
         if (!rule) {
@@ -619,7 +643,7 @@ the user has attempted to update an blank value for the name attribute.""")
         return ruleMap
     }
 
-    List<Map> getFunctionDefinitions(RevisionTransportCommand revision) {
+    List<Map> getFunctionDefinitions(RevisionTC revision) {
         Model model = getFromCache(revision).model
         List<Map> functions = []
         model.listOfFunctionDefinitions.each { function ->
@@ -628,7 +652,7 @@ the user has attempted to update an blank value for the name attribute.""")
         return functions
     }
 
-    Map getFunctionDefinition(RevisionTransportCommand revision, String id) {
+    Map getFunctionDefinition(RevisionTC revision, String id) {
         Model model = getFromCache(revision).model
         FunctionDefinition function = model.getFunctionDefinition(id)
         if (!function) {
@@ -642,7 +666,7 @@ the user has attempted to update an blank value for the name attribute.""")
     }
 
     @Profiled(tag="SbmlService.getCompartments")
-    List<Map> getCompartments(RevisionTransportCommand revision) {
+    List<Map> getCompartments(RevisionTC revision) {
         Model model = getFromCache(revision).model
         List<Map> compartments = []
         model.listOfCompartments.each { compartment ->
@@ -652,7 +676,7 @@ the user has attempted to update an blank value for the name attribute.""")
     }
 
     @Profiled(tag="SbmlService.getCompartment")
-    Map getCompartment(RevisionTransportCommand revision, String id) {
+    Map getCompartment(RevisionTC revision, String id) {
         Model model = getFromCache(revision).model
         Compartment compartment = model.getCompartment(id)
         if(!compartment) {
@@ -665,7 +689,7 @@ the user has attempted to update an blank value for the name attribute.""")
     }
 
     @Profiled(tag="SbmlService.getAllSpecies")
-    List<Map> getAllSpecies(RevisionTransportCommand revision) {
+    List<Map> getAllSpecies(RevisionTC revision) {
         Model model = getFromCache(revision).model
         List<Map> allSpecies = []
         model.listOfSpecies.each { species ->
@@ -687,7 +711,7 @@ the user has attempted to update an blank value for the name attribute.""")
     }
 
      @Profiled(tag="SbmlService.getSpecies")
-     Map getSpecies(RevisionTransportCommand revision, String id) {
+     Map getSpecies(RevisionTC revision, String id) {
          Model model =getFromCache(revision).model
          Species species = model.getSpecies(id)
          if(!species) {
@@ -700,7 +724,7 @@ the user has attempted to update an blank value for the name attribute.""")
      }
 
     @Profiled(tag="SbmlService.generateSvg")
-    byte[] generateSvg(RevisionTransportCommand revision) {
+    byte[] generateSvg(RevisionTC revision) {
         File dotFile = File.createTempFile("jummp", "dot")
         PrintWriter writer = new PrintWriter(dotFile)
         sbml2dotConverter().dotExport(getFromCache(revision), writer)
@@ -718,7 +742,7 @@ the user has attempted to update an blank value for the name attribute.""")
     }
 
     @Profiled(tag="SbmlService.generateOctave")
-    String generateOctave(RevisionTransportCommand revision) {
+    String generateOctave(RevisionTC revision) {
 //        SBMLModel sbmlModel = resolveSbmlModel(revision)
 //        OctaveModel octaveModel = sbml2OctaveConverter().octaveExport(sbmlModel)
 //        return octaveModel.modelToString()
@@ -726,7 +750,7 @@ the user has attempted to update an blank value for the name attribute.""")
     }
 
     @Profiled(tag="SbmlService.generateBioPax")
-    String generateBioPax(RevisionTransportCommand revision) {
+    String generateBioPax(RevisionTC revision) {
 //        SBMLModel sbmlModel = resolveSbmlModel(revision)
 //        BioPaxModel bioPaxModel = sbml2BioPaxConverter().biopaxexport(sbmlModel)
 //        return bioPaxModel.modelToString()
@@ -734,7 +758,7 @@ the user has attempted to update an blank value for the name attribute.""")
     }
 
     @Profiled(tag="SbmlService.getAllAnnotationURNs")
-    List<String> getAllAnnotationURNs(RevisionTransportCommand revision) {
+    List<String> getAllAnnotationURNs(RevisionTC revision) {
         SBMLDocument document = getFromCache(revision)
         List<String> urns = []
         List<SBase> sbases = []
@@ -760,7 +784,7 @@ the user has attempted to update an blank value for the name attribute.""")
     }
 
     @Profiled(tag="SbmlService.getPubMedAnnotation")
-    List<List<String>> getPubMedAnnotation(RevisionTransportCommand revision) {
+    List<List<String>> getPubMedAnnotation(RevisionTC revision) {
         Model model = getFromCache(revision)?.model
         Annotation annotation = model?.annotation
         if(!annotation) {
@@ -782,15 +806,15 @@ the user has attempted to update an blank value for the name attribute.""")
      * @param revision The revision for which the SBMLDocument needs to be retrieved
      * @return The parsed SBMLDocument
      */
-    private SBMLDocument getFromCache(RevisionTransportCommand revision) throws XMLStreamException {
+    private SBMLDocument getFromCache(RevisionTC revision) throws XMLStreamException {
         SBMLDocument document = cache.get(revision.id)
         if (document) {
             return document
         }
         //SBMLDocument document=null;
         // we do not have a document, so retrieve first the file
-        //List<RepositoryFileTransportCommand> files = grailsApplication.mainContext.getBean("modelDelegateService").retrieveModelFiles(revision)
-        List<RepositoryFileTransportCommand> files = revision.files
+        //List<RepoFTC> files = grailsApplication.mainContext.getBean("modelDelegateService").retrieveModelFiles(revision)
+        List<RepoFTC> files = revision.files
         files = files.findAll { it.mainFile }
 
         files.each {
@@ -1009,7 +1033,7 @@ the user has attempted to update an blank value for the name attribute.""")
 //        return biopaxConverter
 //    }
 
-    private long fetchModelAttributeFromRevision(RevisionTransportCommand revision, String attributeName) {
+    private long fetchModelAttributeFromRevision(RevisionTC revision, String attributeName) {
         File mainFile = fetchMainFileFromRevision(revision)
         if (!mainFile) {
             //we have already logged this error, just return
@@ -1019,7 +1043,7 @@ the user has attempted to update an blank value for the name attribute.""")
         return longFromString(attributeValue, attributeName, mainFile)
     }
 
-    private File fetchMainFileFromRevision(RevisionTransportCommand revision) {
+    private File fetchMainFileFromRevision(RevisionTC revision) {
         final String mainFileLocation = revision?.files?.find {it.mainFile}?.path
         if (!mainFileLocation) {
             log.error "The main file of revision ${revision.properties} is undefined."
@@ -1108,10 +1132,10 @@ the user has attempted to update an blank value for the name attribute.""")
 
     /**
      * Resolves the SBMLModel from the given @p revision.
-     * @param revision The RevisionTransportCommand from which to extract the SBMLModel.
+     * @param revision The RevisionTC from which to extract the SBMLModel.
      * @return The SBMLModel to be found or an empty array if the model could not be found.
      */
-//    private SBMLModel resolveSbmlModel(RevisionTransportCommand revision) {
+//    private SBMLModel resolveSbmlModel(RevisionTC revision) {
 //        try {
 //        Model model = getFromCache(revision).model
 //        SBMLWriter sbmlWriter = new SBMLWriter()
@@ -1131,7 +1155,7 @@ the user has attempted to update an blank value for the name attribute.""")
      * @return A String representation of the new model encoded in SBML.
      */
     String triggerSubmodelGeneration(
-            RevisionTransportCommand revision, String subModelId, String metaId,
+            RevisionTC revision, String subModelId, String metaId,
             List<String> compartmentIds, List<String> speciesIds, List<String> reactionIds,
             List<String> ruleIds, List<String> eventIds) {
         Model model = getFromCache(revision).model
@@ -1139,12 +1163,12 @@ the user has attempted to update an blank value for the name attribute.""")
                 model, subModelId, metaId, compartmentIds, speciesIds, reactionIds, ruleIds, eventIds)
     }
 
-    boolean doBeforeSavingAnnotations(File annoFile, RevisionTransportCommand rev) {
+    boolean doBeforeSavingAnnotations(File annoFile, RevisionTC rev) {
         return true
     }
 
     @Override
-    ModellingApproach getModellingApproach(final RevisionTransportCommand revision) {
+    ModellingApproach getModellingApproach(final RevisionTC revision) {
         SBMLDocument document = getFromCache(revision)
         def rID = revision.identifier() ? "revision ${revision.identifier()}" : "the provisional revision in the new submission"
         guessModellingApproachFromSBMLDocument(document, rID)
@@ -1206,7 +1230,7 @@ the user has attempted to update an blank value for the name attribute.""")
      * @param identifiers   The list of identifiers.org based URLs denoting the input annotations
      * @return a boolean value indicating whether the service finished successfully or failed.
      */
-    private boolean addAnnotations2Model(RevisionTransportCommand revision,
+    private boolean addAnnotations2Model(RevisionTC revision,
                                          Qualifier qualifier,
                                          String accessionPattern,
                                          String... identifiers) {
@@ -1216,11 +1240,12 @@ the user has attempted to update an blank value for the name attribute.""")
             String msg = """A revision whose main files are encoded in SBML and at least one model \
 identifier are required"""
             throw new IllegalArgumentException(msg)
+            return false
         }
         SBMLDocument document = getFromCache(revision)
         def rID = revision.identifier() ? "revision ${revision.identifier()}" : "the provisional revision in the new submission"
         if (null == document) {
-            log.error("Cannot add $identifiers to $rID as we could not parse its main files")
+            log.error("Cannot add $identifiers to the main files of the revision $rID as we could not parse its main files")
             return false
         }
 
