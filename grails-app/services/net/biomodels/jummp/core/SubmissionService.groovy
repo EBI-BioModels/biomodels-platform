@@ -452,7 +452,9 @@ the allowed maximum size. Therfore, the automatic process of detecting the model
             if ("sbml" == format.identifier.toLowerCase()) {
                 MTC model = revision.model
                 PubTC pub = model.publication
-                modelService.addPublicationAsAnnotation(revision, pub)
+                if (pub) {
+                    modelService.addPublicationAsAnnotation(revision, pub)
+                }
             }
         }
 

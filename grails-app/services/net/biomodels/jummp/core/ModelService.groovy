@@ -2542,11 +2542,13 @@ There has been error while adding $approach to the model ${revisionTC.identifier
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void addPublicationAsAnnotation(RevisionTransportCommand revisionTC, PublicationTransportCommand pubTC) throws
         ModelException {
-        def sbmlService = grailsApplication.mainContext.getBean("sbmlService", ISbmlService.class)
-        boolean result = sbmlService.addPublicationAsAnnotation(revisionTC, pubTC)
-        if (!result) {
-            logger.error("""\
+        if (pubTC) {
+            def sbmlService = grailsApplication.mainContext.getBean("sbmlService", ISbmlService.class)
+            boolean result = sbmlService.addPublicationAsAnnotation(revisionTC, pubTC)
+            if (!result) {
+                logger.error("""\
 There has been error while adding ${pubTC.link} (${pubTC.linkProvider.linkType}) to the model main file of the ${revisionTC.identifier()}""")
+            }
         }
     }
 
