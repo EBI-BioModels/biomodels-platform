@@ -90,7 +90,7 @@ class CurationNotesController {
 
     @Secured(['IS_AUTHENTICATED_FULLY'])
     def doAddOrUpdate() {
-        def curationNotes = params.curationNotes
+        def curationNotes = params.curationNotes.decodeHTML()
         /**
          * {@link net.biomodels.jummp.filters.ParameterFilters} automatically encoded the curation notes as HTML, therefore, we have to decode it
          */

@@ -19,6 +19,7 @@
                                 <img src="${serverURL}/images/biomodels/simulation-result-unavailable.png"
                                      id="curaImageHolder"
                                      title="The curation images are not available" />
+                                <p>Please press the button below to upload your curation figure.</p>
                             </g:else><br/>
                         </div>
                     </div>
@@ -185,7 +186,7 @@
                 base64ImgStr = base64ImgStr.substring(base64ImgStr.indexOf('base64,') + 'base64,'.length);
             } else {
                 console.log("The curation notes is not uploaded the curation image");
-                // allow the curation figure to be empty but it will be populated a dummy figure later
+                // allow the curation figure to be empty, but it will be populated a dummy figure later
                 // load the dummy curation figure
                 let dummyFigure = "${serverURL}/images/biomodels/simulation-result-unavailable.png";
                 mimeType = "image/jpeg";
@@ -258,7 +259,7 @@
     $('#btnSave').on("click", function(event) {
         var shouldSubmit =  checkRequiredValidity() && checkCustomValidity();
         if (shouldSubmit) {
-            var curationNotes = buildCurationNotesTC();
+            const curationNotes = buildCurationNotesTC();
             "use strict";
             event.preventDefault();
             $.ajax({
@@ -276,6 +277,10 @@
                     toastr.info("The curation notes are being saved. Please wait...");
                 },
                 success: function(response) {
+                    if (response['error']) {
+                        toastr.error(response['message']);
+                        return;
+                    }
                     var href = window.location.href;
                     if (href.indexOf("&cnId=") < 0 && typeof(response['cnId']) != 'undefined') {
                         var newHref = href + "&cnId=" + response['cnId'];
