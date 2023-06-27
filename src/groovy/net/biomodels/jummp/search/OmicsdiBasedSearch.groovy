@@ -159,6 +159,7 @@ class OmicsdiBasedSearch implements GCA, MST, ApplicationListener<ModelOperation
     @Override
     @NotTransactional
     Map checkIndexedData() {
+        log.debug("Checking whether BioModels duplicated entries on EBI Search Server...")
         EbiSearchHelper.checkIndexedData()
     }
 
