@@ -77,7 +77,7 @@
                     %>
                         <div class="small-11 medium-11 large-11 columns">
                             <h4>
-                                <a href="${modelUrl}">${model.name}</a>
+                                <a href="${modelUrl}" target="_blank">${model.name}</a>
                                 <br/>
                                 <span style="font-size: small; margin: -25px 0;">
                                 ID: ${id}
