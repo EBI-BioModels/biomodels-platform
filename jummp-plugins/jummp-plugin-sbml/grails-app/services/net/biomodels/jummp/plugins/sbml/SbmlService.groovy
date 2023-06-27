@@ -170,8 +170,8 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
             accessionPattern = doiPattern
             namespace = "doi"
         } else {
-            return false
             throw new UnsupportedOperationException("BioModels only supports to add an annotation to SBML file for PubMed and DOI.")
+            return false
         }
         String[] identifiers = ["http://identifiers.org/$namespace:$publication.link"] as String[]
         addAnnotations2Model(revision, bqmIsDescribedBy, accessionPattern, identifiers)

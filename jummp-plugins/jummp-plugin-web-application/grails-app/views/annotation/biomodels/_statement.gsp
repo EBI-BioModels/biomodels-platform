@@ -1,3 +1,4 @@
+<%@ page import="net.biomodels.jummp.core.constants.BioModels" %>
 <%--
  Copyright (C) 2010-2014 EMBL-European Bioinformatics Institute (EMBL-EBI),
  Deutsches Krebsforschungszentrum (DKFZ)
@@ -17,13 +18,8 @@
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
 
-<g:each in="${annotations}" var="s">
-    <div class="row" style="padding-bottom: 12px">
-        <div class="small-12 medium-6 large-4 columns" style="word-wrap: break-word">
-            <g:render template="/annotation/biomodels/qualifier" model="['qualifier': s.key]"/>
-        </div>
-        <div class="small-12 medium-6 large-8 columns" style="word-wrap: break-word">
-            <g:each in="${s.value}" var = "xref">
+        <div id="${qualifier.accession+index}" class="statement-block">
+            <g:each in="${references}" var = "xref">
                 <g:render template="/annotation/biomodels/resourceReference"
                           model="['reference': xref, 'include': ['collectionName']]"/>
                 <g:render template="/annotation/biomodels/resourceReference"
@@ -31,5 +27,8 @@
                 <br/>
             </g:each>
         </div>
-    </div>
-</g:each>
+<g:javascript>
+    var content = $("#" + "${qualifier.accession}" + "Qualifier").text();
+    content += "${qualifier.accession+index},";
+    $("#" + "${qualifier.accession}" + "Qualifier").text(content);
+</g:javascript>

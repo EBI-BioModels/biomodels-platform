@@ -2,6 +2,7 @@ package net.biomodels.jummp.webapp
 
 import net.biomodels.jummp.core.annotation.QualifierTransportCommand as QTC
 import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand as RRTC
+import net.biomodels.jummp.core.constants.BioModels
 
 class AnnotationTagLib {
     static namespace = "anno"
@@ -45,7 +46,7 @@ class AnnotationTagLib {
             int compare(BioModelsOrderedStatement o1, BioModelsOrderedStatement o2) {
                 int o1Order = o1.order()
                 int o2Order = o2.order()
-                return o1Order.compareTo(o2Order)
+                return o1Order <=> o2Order
             }
         })
         // copy the bmOrderedStmts to Map object
@@ -53,9 +54,30 @@ class AnnotationTagLib {
         bmOrderedStmts.each {
             annotations.put(it.qtc, it.listRRTC)
         }
+        // rendering
+        out << g.render(template: "/annotation/biomodels/openStatement", plugin: "jummp-plugin-web-application")
         String templateName = annotationRenderingTemplateProvider.template
         String tpl = "/annotation/$templateName"
-        out << g.render(template: tpl, plugin: "jummp-plugin-web-application", model: [annotations: annotations])
+        for (Map.Entry<QTC, List<RRTC>> entry : annotations.entrySet()) {
+            int size = entry.value.size()
+            out << g.render(template: "/annotation/biomodels/openQualifier",
+                            plugin: "jummp-plugin-web-application", model: [qualifier: entry.key, total: size])
+            int nbLoops = Math.ceil(size/BioModels.BM_MIN_NB_CR).toInteger()
+            int start =  0
+            int end = 0
+            for (int i = 1; i <= nbLoops; i++) {
+                start = (i-1)*BioModels.BM_MIN_NB_CR
+                end = start + BioModels.BM_MIN_NB_CR
+                end = end > size ? size : end
+                List<RRTC> references = entry.value.subList(start, end)
+                out << g.render(template: tpl, plugin: "jummp-plugin-web-application",
+                                model: [total: size, index: i, qualifier: entry.key, references: references])
+            }
+            out << g.render(template: "/annotation/biomodels/endQualifier", plugin: "jummp-plugin-web-application")
+        }
+        List<String> qualifiers = annotations.keySet()*.accession
+        out << g.render(template: "/annotation/biomodels/closeStatement", plugin: "jummp-plugin-web-application", model: [qualifiers: qualifiers])
+
     }
 }
 

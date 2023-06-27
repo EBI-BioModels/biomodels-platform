@@ -22,6 +22,6 @@
             href="${reference.uri}">${reference.name ?: reference.accession ?: reference.uri}</a>
     </g:if>
     <g:if test="${include.contains('collectionName')}">
-        <span style="font-style: italic;">${reference.collectionName}</span>
+        <span style="font-style: italic; padding-left: 15px">${reference.collectionName}</span>
     </g:if>
 </g:if>

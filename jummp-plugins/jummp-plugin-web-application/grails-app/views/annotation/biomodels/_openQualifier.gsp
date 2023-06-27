@@ -16,5 +16,7 @@
  You should have received a copy of the GNU Affero General Public License along
  with Jummp; if not, see <http://www.gnu.org/licenses/agpl-3.0.html>.
 --%>
-<abbr title="${qualifier.type}/qualifier. For more information please refer to ${qualifier.namespace}">${qualifier.accession}</abbr>
-
+<abbr title="${qualifier.type}/qualifier. For more information please refer \
+to ${qualifier.namespace}">${qualifier.accession}</abbr> <span style="font-size: 90%">(${total} <g:if test="${total >= 2}">statements</g:if>
+<g:else>statement</g:else>)</span>
+<p id="${qualifier.accession}Qualifier" style="display: none"></p>

@@ -29,7 +29,7 @@
 --%>
 
 <g:applyLayout name="biomodels/main">
-<%@ page import="grails.converters.JSON; java.text.DateFormat"%>
+<%@ page import="net.biomodels.jummp.core.constants.BioModels; grails.converters.JSON; java.text.DateFormat"%>
 <%@ page import="net.biomodels.jummp.core.model.ModelState"%>
 <%@ page import="net.biomodels.jummp.qcinfo.*"%>
 <%
@@ -52,7 +52,6 @@
             $("#collapse-all").click(function(){
                 $(".header").next().slideUp(500);
             });
-
         });
     </script>
     <script type="text/x-mathjax-config">
@@ -1034,6 +1033,37 @@
             $.jummp.openPage('${g.createLink(controller: 'search', action: 'reindex', params: ["models": [revision.identifier()]])}');
         }
     </script>
+    <g:javascript>
+        $(document).ready(function() {
+            const qualifiers = $("#all-qualifier-accessions").text().split(",");
+            jQuery.each(qualifiers, (index, item) => {
+                const pQualifier = $("#" + item + "Qualifier").text();
+                let parts = pQualifier.split(",");
+                parts = parts.filter(v => v !== '');
+                $.each(parts, (i, e) => {
+                    if (i >= 1) {
+                        $("#" + e).css("display", "none");
+                    } else if (parts.length >= 2) {
+                        $('<a id="' + item + 'ShowMore" class="show-more">Show more...</a>').insertAfter($("#" + e));
+                    } else {
+                        $("#" + e).css("display", "block");
+                    }
+                });
+            });
+        });
+
+        $(".each-qualifier-block").on("click", ".show-more", function() {
+            const id = $(this).prop("id");
+            const prevId = $(this).prev().prop("id");
+            const qualAccession = id.substring(0, id.length - "ShowMore".length);
+            const index = prevId.substring(qualAccession.length)
+            let next = parseInt(index) + 1;
+            const newEle = $("#" + qualAccession + next.toString())
+            newEle.css("display", "block");
+            $('<a id="' + qualAccession + 'ShowMore" class="show-more">Show more...</a>').insertAfter(newEle);
+            $(this).remove();
+        });
+    </g:javascript>
 </body>
 <content tag="contexthelp">
         display
