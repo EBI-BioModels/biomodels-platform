@@ -78,6 +78,7 @@
             });
             $("#login div.loginButton button").click(function() {
                 $("#loginForm").submit();
+            });
             $(document).ready(function() {
                 if (referrer.indexOf("biomodels/MODEL") > 0) {
                     $("#previousURL").val(referrer);

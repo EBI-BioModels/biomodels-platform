@@ -32,7 +32,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 /**
- * @short: The controller responsible for retriving GoChart
+ * @short: The controller responsible for retrieving GoChart
  *
  * @author: Vu Tu <tvu@ebi.ac.uk>
  */

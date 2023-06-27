@@ -432,7 +432,7 @@
 </g:javascript>
 </g:if>
 <g:else>
-    <h1>Under construction. Please come back later or contact us. Thanks!</h1>
+    <h1>Under construction or maintenance. Please come back later or contact us. Thanks!</h1>
 </g:else>
 %{--<script>--}%
     %{--if (top != self) top.location.replace(location);--}%

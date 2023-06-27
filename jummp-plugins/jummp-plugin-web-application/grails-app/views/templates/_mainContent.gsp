@@ -1,3 +1,4 @@
+<%@ page import="net.biomodels.jummp.core.model.ModelState" %>
 <%
     def totalCount
     if (matches) {
@@ -81,7 +82,7 @@
                                 <br/>
                                 <span style="font-size: small; margin: -25px 0;">
                                 ID: ${id}
-                                <g:if test="${model.state == net.biomodels.jummp.core.model.ModelState.PUBLISHED}">|
+                                <g:if test="${model.state == ModelState.PUBLISHED}">|
                                 Format: ${model.format.name} |
                                 Submitter: ${model.submitter} |
                                 Uploaded date: ${model.submissionDate.format('dd/MM/yyyy')} |
@@ -92,7 +93,7 @@
                             </h4>
                         </div>
                         <div class="small-1 medium-1 large-1 columns" id="download">
-                            <g:if test="${model.state == net.biomodels.jummp.core.model.ModelState.PUBLISHED}">
+                            <g:if test="${model.state == ModelState.PUBLISHED}">
                                 <g:if test="${action == 'search'}">
                                     <input id="chkDownload" type="checkbox" value="${id}"
                                            style="float: right; margin-top: 10px">

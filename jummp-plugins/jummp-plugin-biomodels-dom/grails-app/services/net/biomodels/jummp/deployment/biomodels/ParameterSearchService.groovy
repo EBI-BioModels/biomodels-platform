@@ -145,7 +145,7 @@ WHERE M.deleted = :deleted \
              *
              * The server often accepts the client connection, especially inter-connected services. So, we
              * don't need to pump up the specific time for the connection timeout property. Instead of
-             * increasing the connection time out, is is recommended to increase the time for the read time out.
+             * increasing the connection time out, it is recommended to increase the time for the read time out.
              *
              * From the client side, the "read timed out" error happens if the server is taking longer to
              * respond and send information. This could be due to a slow internet connection, or the host
