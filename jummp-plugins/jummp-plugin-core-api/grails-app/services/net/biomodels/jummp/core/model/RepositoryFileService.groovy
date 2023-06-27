@@ -176,7 +176,7 @@ The revision has been checked out from VCS instead."""
             if (!revisionDirectory.exists()) {
                 throw new FileNotFoundException()
             } else {
-                returnedFiles = revisionDirectory.listFiles().toList()
+                returnedFiles = hideSomeFileTypes(revisionDirectory, 'indexData.json')
             }
             if (returnedFiles?.isEmpty()) {
                 String message = """The cache directory of this model ${modelId} revision ${revisionNumber} is empty. \
@@ -210,6 +210,7 @@ revision ${revisionNumber} hasn't been cached yet"""
         boolean result = false
         try {
             List<File> files = vcsService.retrieveFiles(revision)
+            files = hideSomeFileTypes(files, 'indexData.json')
             for (File it : files) {
                 String fileName = it.getName()
                 logger.debug("File ${fileName} is being copied")
@@ -370,5 +371,16 @@ the model ${modelId} revision ${revision.revisionNumber}"""
         ModelTransportCommand modelTC = new ModelAdapter(model: model).toCommandObject(saveHistory)
         logger.error(message)
         throw new ModelException(modelTC, message)
+    }
+
+    private List<File> hideSomeFileTypes(final File revisionDirectory, String filenameToBeFiltered /*String fileExtension*/) {
+        List<File> returnedFiles = revisionDirectory.listFiles().toList()
+        returnedFiles = returnedFiles.findAll {
+            String filename = it?.name
+            //String extension = filename?.substring(filename?.lastIndexOf(".") + 1)
+            //extension != fileExtension
+            filenameToBeFiltered != filename
+        }
+        return returnedFiles
     }
 }
