@@ -29,7 +29,7 @@ import net.biomodels.jummp.annotationstore.RevisionAnnotation
 import net.biomodels.jummp.annotationstore.Statement
 import net.biomodels.jummp.core.annotation.ElementAnnotationCategory
 import net.biomodels.jummp.core.annotation.ElementAnnotationTransportCommand as EATC
-import net.biomodels.jummp.core.annotation.QualifierTransportCommand
+import net.biomodels.jummp.core.annotation.QualifierTransportCommand as QualifierTC
 import net.biomodels.jummp.core.annotation.ResourceReferenceCategory
 import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand as RRTC
 import net.biomodels.jummp.core.annotation.StatementCategory
@@ -192,12 +192,15 @@ class MetadataDelegateService implements IMetadataService {
         annotations
     }
 
-    Map<QualifierTransportCommand, List<RRTC>> fetchGenericAnnotations(
-        RevisionTC rev) {
+    Map<QualifierTC, List<RRTC>> fetchGenericAnnotations(RevisionTC rev) {
         List<STC> statements = getModelLevelAnnotations(rev)
+        fetchGenericAnnotations(statements)
+    }
+
+    Map<QualifierTC, List<RRTC>> fetchGenericAnnotations(final List<STC> statements) {
         Map result = [:]
         statements.each { STC s ->
-            final QualifierTransportCommand qualifier = s.predicate
+            final QualifierTC qualifier = s.predicate
             final RRTC xref = s.object
             // ignore the biomodels custom annotation denoting curation status
             // because it is already shown at the curation status line
@@ -213,7 +216,7 @@ class MetadataDelegateService implements IMetadataService {
                 }
             }
         }
-        result
+        result as Map<QualifierTC, List<RRTC>>
     }
 
     CNTC fetchCurationNotes(RevisionTC rev) {
@@ -244,6 +247,10 @@ class MetadataDelegateService implements IMetadataService {
 
     List<String> fetchOriginalModels(RevisionTC rev) {
         List<STC> statements = getModelLevelAnnotations(rev)
+        fetchOriginalModels(statements)
+    }
+
+    List<String> fetchOriginalModels(List<STC> statements) {
         List<String> result = []
         statements.each { STC s ->
             if (s.predicate.accession == "source") {
@@ -275,7 +282,6 @@ class MetadataDelegateService implements IMetadataService {
     Set<TagTC> findTagsByModel(ModelTC model) {
         modelTagService.findTagsByModel(model)
     }
-
 
     List<STC> getModelLevelAnnotations(RevisionTC rev) {
         getModelLevelAnnotations(rev?.id)

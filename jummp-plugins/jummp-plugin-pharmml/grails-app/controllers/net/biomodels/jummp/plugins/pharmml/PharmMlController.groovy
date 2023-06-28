@@ -34,7 +34,10 @@
 
 package net.biomodels.jummp.plugins.pharmml
 
-import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.core.annotation.QualifierTransportCommand as QualifierTC
+import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand as RRTC
+import net.biomodels.jummp.core.annotation.StatementTransportCommand as STC
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
 import eu.ddmore.libpharmml.dom.PharmML
 import eu.ddmore.libpharmml.dom.modeldefn.ModelDefinition
 import eu.ddmore.libpharmml.dom.modellingsteps.ModellingSteps
@@ -51,8 +54,12 @@ class PharmMlController {
 
     def show = {
         def model = flash.genericModel
-        final RevisionTransportCommand REVISION = model.revision
-        model["genericAnnotations"] = metadataDelegateService.fetchGenericAnnotations REVISION
+        final RevisionTC REVISION = model.revision
+        List<STC> statements = model.modelLevelAnnotations as List<STC>
+        Map<QualifierTC, List<RRTC>> annotations = metadataDelegateService.fetchGenericAnnotations(statements)
+        if (annotations) {
+            model["genericAnnotations"] = annotations
+        }
         PharmML dom = AbstractPharmMlHandler.getDomFromRevision(REVISION)
         final String VERSION = dom?.writtenVersion
         if (dom) {

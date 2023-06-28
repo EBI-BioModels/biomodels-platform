@@ -79,6 +79,8 @@ interface IMetadataService {
 
     Map<QTC, List<RRTC>> fetchGenericAnnotations(RevisionTC rev)
 
+    Map<QTC, List<RRTC>> fetchGenericAnnotations(List<STC> statements)
+
     List<String> getMetadataNamespaces()
 
     Set<String> fetchModelTags(String modelSubmissionId)

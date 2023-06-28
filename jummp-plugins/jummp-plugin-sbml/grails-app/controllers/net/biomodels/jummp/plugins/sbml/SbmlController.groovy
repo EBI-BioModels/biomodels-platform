@@ -25,9 +25,10 @@
 package net.biomodels.jummp.plugins.sbml
 
 import grails.plugin.springsecurity.annotation.Secured
-import net.biomodels.jummp.core.annotation.QualifierTransportCommand
-import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand
-import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.core.annotation.QualifierTransportCommand as QualifierTC
+import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand as RRTC
+import net.biomodels.jummp.core.annotation.StatementTransportCommand as STC
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
 import org.springframework.security.access.AccessDeniedException
 
 /**
@@ -44,11 +45,11 @@ class SbmlController {
     def show = {
         Map model = flash.genericModel
         final String perennialId = params.id
-        RevisionTransportCommand r = model.revision
-        Map<QualifierTransportCommand, List<ResourceReferenceTransportCommand>> genericAnno =
-                metadataDelegateService.fetchGenericAnnotations r
-        if (genericAnno) {
-            model["genericAnnotations"] = genericAnno
+        RevisionTC r = model.revision as RevisionTC
+        List<STC> statements = model.modelLevelAnnotations as List<STC>
+        Map<QualifierTC, List<RRTC>> annotations = metadataDelegateService.fetchGenericAnnotations(statements)
+        if (annotations) {
+            model["genericAnnotations"] = annotations
         }
         if (!perennialId.startsWith("BMID") && !perennialId.startsWith("MODEL170711")) {
             def components = [:]
@@ -68,7 +69,7 @@ class SbmlController {
 
     @Secured(['IS_AUTHENTICATED_FULLY'])
     def checkConsistency() {
-        RevisionTransportCommand rev
+        RevisionTC rev
         try {
             rev = modelDelegateService.getRevisionFromParams(params.id, params.revisionId)
             List<String> errors = new ArrayList<String>()
@@ -103,22 +104,22 @@ There is a problem with this version of the model while trying to check its cons
     }
 
     def reactionMetaOverview = {
-        RevisionTransportCommand rev = modelDelegateService.getLatestRevision(params.id as Long, false)
+        RevisionTC rev = modelDelegateService.getLatestRevision(params.id as Long, false)
         [reaction: sbmlService.getReaction(rev)]
     }
 
     def compartmentMetaOverview = {
-        RevisionTransportCommand rev = modelDelegateService.getLatestRevision(params.id as Long, false)
+        RevisionTC rev = modelDelegateService.getLatestRevision(params.id as Long, false)
         [compartment: sbmlService.getCompartment(rev)]
     }
 
     def parameterMetaOverview = {
-        RevisionTransportCommand rev = modelDelegateService.getLatestRevision(params.id as Long, false)
+        RevisionTC rev = modelDelegateService.getLatestRevision(params.id as Long, false)
         [parameter: sbmlService.getParameter(rev)]
     }
 
     def math = {
-        RevisionTransportCommand rev = modelDelegateService.getLatestRevision(params.id as Long, false)
+        RevisionTC rev = modelDelegateService.getLatestRevision(params.id as Long, false)
         [
             reactions: sbmlService.getReactions(rev),
             rules: sbmlService.getRules(rev),
@@ -128,27 +129,27 @@ There is a problem with this version of the model while trying to check its cons
     }
 
     def entity = {
-        RevisionTransportCommand rev = modelDelegateService.getLatestRevision(params.id as Long, false)
+        RevisionTC rev = modelDelegateService.getLatestRevision(params.id as Long, false)
         [compartments: sbmlService.getCompartments(rev)]
     }
 
     def compartmentMeta = {
-        RevisionTransportCommand rev = modelDelegateService.getLatestRevision(params.id as Long, false)
+        RevisionTC rev = modelDelegateService.getLatestRevision(params.id as Long, false)
         [compartment: sbmlService.getCompartment(rev)]
     }
 
     def speciesMeta = {
-        RevisionTransportCommand rev = modelDelegateService.getLatestRevision(params.id as Long, false)
+        RevisionTC rev = modelDelegateService.getLatestRevision(params.id as Long, false)
         [species: sbmlService.getSpecies(rev)]
     }
 
     def parameterMeta = {
-        RevisionTransportCommand rev = modelDelegateService.getLatestRevision(params.id as Long, false)
+        RevisionTC rev = modelDelegateService.getLatestRevision(params.id as Long, false)
         [parameter: sbmlService.getParameter(rev)]
     }
 
     def parameter = {
-        RevisionTransportCommand rev = modelDelegateService.getLatestRevision(params.id as Long, false)
+        RevisionTC rev = modelDelegateService.getLatestRevision(params.id as Long, false)
         [parameters: sbmlService.getParameters(rev), reactionParameters: sbmlService.getLocalParameters(rev)]
     }
 }

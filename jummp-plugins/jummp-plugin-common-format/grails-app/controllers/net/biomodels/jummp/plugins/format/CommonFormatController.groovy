@@ -20,9 +20,10 @@
 
 package net.biomodels.jummp.plugins.format
 
-import net.biomodels.jummp.core.annotation.QualifierTransportCommand
-import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand
-import net.biomodels.jummp.core.model.RevisionTransportCommand
+import net.biomodels.jummp.core.annotation.QualifierTransportCommand as QualifierTC
+import net.biomodels.jummp.core.annotation.ResourceReferenceTransportCommand as RRTC
+import net.biomodels.jummp.core.annotation.StatementTransportCommand as STC
+import net.biomodels.jummp.core.model.RevisionTransportCommand as RevisionTC
 
 /**
  * <p>Controls the way of rendering format specific views</p>
@@ -37,10 +38,12 @@ class CommonFormatController {
 
     def show() {
         def model = flash.genericModel
-        final RevisionTransportCommand revision = model.revision as RevisionTransportCommand
-        Map<QualifierTransportCommand, List<ResourceReferenceTransportCommand>> annotations =
-            metadataDelegateService.fetchGenericAnnotations(revision)
-        model['annotations'] = annotations
+        final RevisionTC revision = model.revision as RevisionTC
+        List<STC> statements = model.modelLevelAnnotations as List<STC>
+        Map<QualifierTC, List<RRTC>> annotations = metadataDelegateService.fetchGenericAnnotations(statements)
+        if (annotations) {
+            model["genericAnnotations"] = annotations
+        }
         model
     }
 }

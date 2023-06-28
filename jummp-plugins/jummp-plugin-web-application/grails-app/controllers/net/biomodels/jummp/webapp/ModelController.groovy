@@ -40,6 +40,7 @@ import grails.plugin.springsecurity.annotation.Secured
 import grails.util.Environment
 import net.biomodels.jummp.core.IFileSystemService
 import net.biomodels.jummp.core.adapters.RevisionAdapter
+import net.biomodels.jummp.core.annotation.StatementTransportCommand as STC
 import net.biomodels.jummp.core.model.*
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.util.ReactomeEnvironment
@@ -230,7 +231,8 @@ class ModelController {
                         metadataDelegateService.fetchCurationNotes(rev)
                     String curationState = rev.curationState.name()
                     List<String> possibleCurationStates = CurationState.values()*.name()
-                    List<String> originalModels = metadataDelegateService.fetchOriginalModels(rev)
+                    List<STC> modelLevelAnnotations = metadataDelegateService.getModelLevelAnnotations(rev)
+                    List<String> originalModels = metadataDelegateService.fetchOriginalModels(modelLevelAnnotations)
                     Map<String, String> modellingApproaches =
                         metadataDelegateService.fetchModellingApproaches(rev)
                     boolean hasCuratorRole = userService.isLoggedInUserACurator()
@@ -271,6 +273,7 @@ class ModelController {
                                  possibleCurationStates : possibleCurationStates,
                                  modellingApproaches    : modellingApproaches,
                                  curationNotes          : curationNotes,
+                                 modelLevelAnnotations  : modelLevelAnnotations,
                                  originalModels         : originalModels,
                                  hasCuratorRole         : hasCuratorRole,
                                  supportedForConversion : supportedForConversion,

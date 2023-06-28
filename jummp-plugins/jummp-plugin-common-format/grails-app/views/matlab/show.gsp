@@ -25,5 +25,5 @@
 
 </content>
 <content tag="genericAnnotations">
-    <anno:renderGenericAnnotations annotations="${annotations}"/>
+    <anno:renderGenericAnnotations annotations="${genericAnnotations}"/>
 </content>
