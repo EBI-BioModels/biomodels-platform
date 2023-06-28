@@ -237,7 +237,7 @@ $modelId, revision $revNum: ${e.message}""")
             if (tmpFile != null) {
                 long size = tmpFile.length()
                 long configPreviewSize = grailsApplication.config.jummp.web.file.preview
-                boolean showPreview = size > configPreviewSize ? true : false
+                boolean showPreview = size > configPreviewSize
                 RFTC rftc = new RFTC(
                     id: rf.id,
                     path: tmpFile.absolutePath,
@@ -375,7 +375,13 @@ the model ${modelId} revision ${revision.revisionNumber}"""
 
     private List<File> hideSomeFileTypes(final File revisionDirectory, String filenameToBeFiltered /*String fileExtension*/) {
         List<File> returnedFiles = revisionDirectory.listFiles().toList()
-        returnedFiles = returnedFiles.findAll {
+        returnedFiles = hideSomeFileTypes(returnedFiles, filenameToBeFiltered)
+        return returnedFiles
+    }
+
+    private List<File> hideSomeFileTypes(final List<File> listOfFiles, String filenameToBeFiltered /*String fileExtension*/) {
+        List<File> returnedFiles = new ArrayList<>()
+        returnedFiles = listOfFiles.findAll {
             String filename = it?.name
             //String extension = filename?.substring(filename?.lastIndexOf(".") + 1)
             //extension != fileExtension
