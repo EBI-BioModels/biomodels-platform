@@ -1044,7 +1044,7 @@
                     if (i >= 1) {
                         $("#" + e).css("display", "none");
                     } else if (parts.length >= 2) {
-                        $('<a id="' + item + 'ShowMore" class="show-more">Show more...</a>').insertAfter($("#" + e));
+                        $('<a id="' + item + 'ShowMore" class="show-more">Show more...</a><br/>').insertAfter($("#" + e));
                     } else {
                         $("#" + e).css("display", "block");
                     }
@@ -1053,14 +1053,17 @@
         });
 
         $(".each-qualifier-block").on("click", ".show-more", function() {
+            // there is a <br/> between blocks of 5 elements
+            const nextElement = $(this).next();
+            nextElement.remove();
             const id = $(this).prop("id");
             const prevId = $(this).prev().prop("id");
             const qualAccession = id.substring(0, id.length - "ShowMore".length);
             const index = prevId.substring(qualAccession.length)
-            let next = parseInt(index) + 1;
-            const newEle = $("#" + qualAccession + next.toString())
+            let nextId = parseInt(index) + 1;
+            const newEle = $("#" + qualAccession + nextId.toString())
             newEle.css("display", "block");
-            $('<a id="' + qualAccession + 'ShowMore" class="show-more">Show more...</a>').insertAfter(newEle);
+            $('<a id="' + qualAccession + 'ShowMore" class="show-more">Show more...</a><br/>').insertAfter(newEle);
             $(this).remove();
         });
     </g:javascript>
