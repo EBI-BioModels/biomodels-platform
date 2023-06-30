@@ -110,7 +110,7 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
 
     // TODO: move initialization into afterPropertiesSet and make it configuration dependent
     @SuppressWarnings("GrailsStatelessService")
-    /** keys are {@link net.biomodels.jummp.core.model.RevisionTC}s*/
+    /** keys are {@link net.biomodels.jummp.core.model.RevisionTC}s */
     SbmlCache cache = new SbmlCache(100)
 
     void afterPropertiesSet() {
@@ -226,6 +226,7 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
         }
         true
     }
+
     private SBMLDocument getFileAsValidatedSBMLDocument(final File model, final List<String> errors) {
         // TODO: we should insert the parsed model into the cache
         String errorMsg = ""
@@ -784,17 +785,19 @@ the user has attempted to update an blank value for the name attribute.""")
     }
 
     @Profiled(tag="SbmlService.getPubMedAnnotation")
-    List<List<String>> getPubMedAnnotation(RevisionTC revision) {
+    List<String> getPubMedAnnotation(RevisionTC revision) {
         Model model = getFromCache(revision)?.model
         Annotation annotation = model?.annotation
         if(!annotation) {
             return null
         }
-        List<CVTerm> filters = annotation.filterCVTerms(CVTerm.Qualifier.BQM_IS_DESCRIBED_BY)
-        List<List<String>> pubMedAnnotation = []
+        List<CVTerm> bqbiolIsDescribedByTerms = annotation.filterCVTerms(Qualifier.BQB_IS_DESCRIBED_BY)
+        List<CVTerm> bqmodelIsDescribedByTerms = annotation.filterCVTerms(Qualifier.BQM_IS_DESCRIBED_BY)
+        List<CVTerm> filters = bqbiolIsDescribedByTerms + bqmodelIsDescribedByTerms
+        List<String> pubMedAnnotation = []
         filters.each { filter ->
             CVTerm cvTerm = new CVTerm(filter)
-            pubMedAnnotation.add(cvTerm.filterResources("pubmed"))
+            pubMedAnnotation.addAll(cvTerm.filterResources("pubmed"))
         }
         return pubMedAnnotation
     }

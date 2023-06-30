@@ -52,21 +52,21 @@ public interface FileFormatService {
      * @param errors Is populated with a list of errors, if any
      * @return @c true if the Model is valid, @c false otherwise
      */
-    public boolean validate(final List<File> model, final List<String> errors);
+    boolean validate(final List<File> model, final List<String> errors);
 
     /**
      * Extracts the name from the @p model.
      * @param model File handle containing the Model whose name should be extracted.
      * @return The name of the Model, if possible, an empty String if not possible
      */
-    public String extractName(final List<File> model);
+    String extractName(final List<File> model);
 
     /**
      * Extracts the description from the @p model.
      * @param model File handle containing the Model whose name should be extracted.
      * @return The description of the Model, if possible, an empty String if not possible
      */
-    public String extractDescription(final List<File> model);
+    String extractDescription(final List<File> model);
 
     /**
      * Attempts to set the model name of @p revision to @p name.
@@ -75,7 +75,7 @@ public interface FileFormatService {
      * @param name The new name that the model should have.
      * @return true if the operation was successful, false otherwise.
      */
-    public boolean updateName(RevisionTransportCommand revision, final String name);
+    boolean updateName(RevisionTransportCommand revision, final String name);
 
     /**
      * Attempts to set the model description of @p revision to @p description.
@@ -84,45 +84,47 @@ public interface FileFormatService {
      * @param description The new description that the model should have.
      * @return true if the operation was successful, false otherwise.
      */
-    public boolean updateDescription(RevisionTransportCommand revision, final String description);
+    boolean updateDescription(RevisionTransportCommand revision, final String description);
 
     /**
      * Retrieves all annotation URNs in the model file referenced by @p revision.
      * @param revision The Revision identifying a model file
      * @return List of all URNs in the model file.
      */
-    public List<String> getAllAnnotationURNs(RevisionTransportCommand revision);
+    List<String> getAllAnnotationURNs(RevisionTransportCommand revision);
     /**
      * Retrieves all pubmed annotations in the model file referenced by @p revision.
      * @param revision  The Revision identifying a model file
      * @return List of all pubmeds used in the Revision
      */
-    public List<String> getPubMedAnnotation(RevisionTransportCommand revision);
+    List<String> getPubMedAnnotation(RevisionTransportCommand revision);
     /*
      * Checks whether the files passed comprise a model of this format
      * @param files The files comprising a potential model of this format
      */
-    public boolean areFilesThisFormat(final List<File> files);
+    boolean areFilesThisFormat(final List<File> files);
 
     /**
      * Retrieves the version of a format in which revision @p revision is encoded.
      * @param revision the Revision of a model
      * @return the textual representation of the format's version - e.g. L3V2 for SBML.
      */
-    public String getFormatVersion(RevisionTransportCommand revision);
+    String getFormatVersion(RevisionTransportCommand revision);
 
-    public boolean doBeforeSavingAnnotations(File annoFile, RevisionTransportCommand newRevision);
+    boolean doBeforeSavingAnnotations(File annoFile, RevisionTransportCommand newRevision);
 
     /**
      * Gets MAMO terms annotated in the model as the modelling approach.
 
-     * The majority of models deposited in BioModels are being annotated with MAMO terms so as to
+     * The majority of models deposited in BioModels are being annotated with MAMO terms to
      * denote the modelling approach of the model.
      *
      * @param revision  The Revision instance indicating the given model
      * @return  an ModellingApproach object indicating a specified approach
      */
-    public ModellingApproach getModellingApproach(final RevisionTransportCommand revision);
+    ModellingApproach getModellingApproach(final RevisionTransportCommand revision);
 
-    public ModellingApproach guessModellingApproach(final File modelFile);
+    ModellingApproach guessModellingApproach(final File modelFile);
+
+    String getPublicationAnnotation(final File modelFile);
 }

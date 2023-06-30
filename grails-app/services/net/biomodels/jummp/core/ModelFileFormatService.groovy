@@ -34,8 +34,10 @@
 
 package net.biomodels.jummp.core
 
+import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.ModelElementTypeCategory as METC
 import net.biomodels.jummp.core.model.ModelElementTypeTransportCommand as METTC
+import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.model.ModelElementType as MET
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.core.model.FileFormatService
@@ -307,13 +309,22 @@ class ModelFileFormatService {
     /**
      * Retrieves all pubmed annotations through the service responsible for the format used
      * by the @p revision.
-     * @param rev The Revision for which all pubmed annotations should be retrieved
+     * @param revision The Revision for which all pubmed annotations should be retrieved
      * @return List of all pubmeds used in the Revision
      */
     List<String> getPubMedAnnotation(Revision rev) {
         FileFormatService service = serviceForFormat(rev.format)
         if (service) {
-            return service.getPubMedAnnotation(new ModelFormatAdapter(format:rev).toCommandObject())
+            return service.getPubMedAnnotation(new RevisionAdapter(revision: rev).toCommandObject())
+        } else {
+            return []
+        }
+    }
+
+    List<String> getPubMedAnnotation(final RTC rev) {
+        FileFormatService service = serviceForFormat(rev.format.identifier)
+        if (service) {
+            return service.getPubMedAnnotation(rev)
         } else {
             return []
         }

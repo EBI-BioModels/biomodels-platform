@@ -85,4 +85,9 @@ public class FileFormatServiceAdapter implements FileFormatService {
     public ModellingApproach guessModellingApproach(final File modelFile) {
         return null;
     }
+
+    @Override
+    public String getPublicationAnnotation(File modelFile) {
+        return null;
+    }
 }

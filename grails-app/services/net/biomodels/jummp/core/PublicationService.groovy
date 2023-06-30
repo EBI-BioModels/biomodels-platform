@@ -131,8 +131,8 @@ class PublicationService implements IPublicationService, InitializingBean {
         if (PLP.LinkType.MANUAL_ENTRY == pubLinkProvider.linkType) {
             return true
         }
-        Pattern p = Pattern.compile(pubLinkProvider.pattern);
-        Matcher m = p.matcher(link);
+        Pattern p = Pattern.compile(pubLinkProvider.pattern)
+        Matcher m = p.matcher(link)
         return m.matches()
     }
 
