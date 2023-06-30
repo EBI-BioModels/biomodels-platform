@@ -786,6 +786,27 @@ the user has attempted to update an blank value for the name attribute.""")
 
     @Profiled(tag="SbmlService.getPubMedAnnotation")
     List<String> getPubMedAnnotation(RevisionTC revision) {
+        List<CVTerm> filters = getIsDescribedByAnnotations(revision)
+        List<String> pubMedAnnotation = []
+        filters.each { filter ->
+            CVTerm cvTerm = new CVTerm(filter)
+            pubMedAnnotation.addAll(cvTerm.filterResources("pubmed"))
+        }
+        return pubMedAnnotation
+    }
+
+    @Profiled(tag="SbmlService.getPublicationAnnotations")
+    List<String> getPublicationAnnotations(RevisionTC revision) {
+        List<String> annotations = []
+        List<CVTerm> filters = getIsDescribedByAnnotations(revision)
+        filters.each { filter ->
+            CVTerm cvTerm = new CVTerm(filter)
+            annotations.addAll(cvTerm.filterResources("pubmed", "PubMed", "doi", "DOI"))
+        }
+        return annotations
+    }
+
+    private List<CVTerm> getIsDescribedByAnnotations(RevisionTC revision) {
         Model model = getFromCache(revision)?.model
         Annotation annotation = model?.annotation
         if(!annotation) {
@@ -794,12 +815,7 @@ the user has attempted to update an blank value for the name attribute.""")
         List<CVTerm> bqbiolIsDescribedByTerms = annotation.filterCVTerms(Qualifier.BQB_IS_DESCRIBED_BY)
         List<CVTerm> bqmodelIsDescribedByTerms = annotation.filterCVTerms(Qualifier.BQM_IS_DESCRIBED_BY)
         List<CVTerm> filters = bqbiolIsDescribedByTerms + bqmodelIsDescribedByTerms
-        List<String> pubMedAnnotation = []
-        filters.each { filter ->
-            CVTerm cvTerm = new CVTerm(filter)
-            pubMedAnnotation.addAll(cvTerm.filterResources("pubmed"))
-        }
-        return pubMedAnnotation
+        return filters
     }
 
     /**

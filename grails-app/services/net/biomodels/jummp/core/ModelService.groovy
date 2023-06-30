@@ -2384,23 +2384,6 @@ Failed to update audit $itemId to $success: ${audit.errors.allErrors.inspect()}"
     }
 
     /**
-     * Retrieves the pub med annotations of the @p model.
-     * @param model The model of which the pub med annotation are to be retrieved
-     * @return The retrieved pub med annotations or @c null
-     * @throws JummpException
-     */
-    protected List<String> getPubMedAnnotation(Model model) throws JummpException {
-        if (!model) {
-            return null
-        }
-        Revision revision = getLatestRevision(model, false)
-        if (!revision) {
-            return null
-        }
-        return modelFileFormatService.getPubMedAnnotation(revision)
-    }
-
-    /**
      * Retrieves the main file of the models given in a list of their identifiers
      *
      * This service is currently used to fetch the requested main files to

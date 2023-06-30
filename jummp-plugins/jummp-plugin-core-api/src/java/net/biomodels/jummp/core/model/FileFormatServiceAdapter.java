@@ -63,6 +63,16 @@ public class FileFormatServiceAdapter implements FileFormatService {
     }
 
     @Override
+    public List<String> getPublicationAnnotations(File modelFile) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<String> getPublicationAnnotations(RevisionTransportCommand revision) {
+        return Collections.emptyList();
+    }
+
+    @Override
     public boolean areFilesThisFormat(List<File> files) {
         return false;
     }
@@ -83,11 +93,6 @@ public class FileFormatServiceAdapter implements FileFormatService {
     }
 
     public ModellingApproach guessModellingApproach(final File modelFile) {
-        return null;
-    }
-
-    @Override
-    public String getPublicationAnnotation(File modelFile) {
         return null;
     }
 }

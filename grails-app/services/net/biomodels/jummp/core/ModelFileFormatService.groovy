@@ -37,7 +37,6 @@ package net.biomodels.jummp.core
 import net.biomodels.jummp.core.adapters.RevisionAdapter
 import net.biomodels.jummp.core.model.ModelElementTypeCategory as METC
 import net.biomodels.jummp.core.model.ModelElementTypeTransportCommand as METTC
-import net.biomodels.jummp.core.model.RevisionTransportCommand
 import net.biomodels.jummp.model.ModelElementType as MET
 import net.biomodels.jummp.model.ModelFormat
 import net.biomodels.jummp.core.model.FileFormatService
@@ -330,6 +329,15 @@ class ModelFileFormatService {
         }
     }
 
+    List<String> getPublicationAnnotations(final RTC rev) {
+        FileFormatService service = serviceForFormat(rev.format.identifier)
+        if (service) {
+            return service.getPublicationAnnotations(rev)
+        } else {
+            return []
+        }
+    }
+
     ModellingApproach extractModellingApproachFromFiles(final RTC revision) {
         FileFormatService service = serviceForFormat(revision.format)
         if (service) {
@@ -347,7 +355,6 @@ class ModelFileFormatService {
             return null
         }
     }
-
 
     /**
      * Used to select the templates used to display the model of the @p format provided.
