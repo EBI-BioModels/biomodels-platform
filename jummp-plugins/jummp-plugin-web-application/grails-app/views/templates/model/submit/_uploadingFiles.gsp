@@ -346,6 +346,13 @@
                             modelFileWithNoErrors = false;
                         } else {
                             // model file
+
+                            // populate the publication namespace and accession guessed when trying to detect model format
+                            publication = modelFile["detectedModelFormat"]["pubURI"];
+                            guessedPublicationNamespace = modelFile["detectedModelFormat"]["namespace"];
+                            guessedPublicationCollectionLabel = modelFile["detectedModelFormat"]["collectionLabel"];
+                            guessedPublicationAccession = modelFile["detectedModelFormat"]["accession"]
+
                             modelFileWithNoErrors = modelFile["validateFileErrors"].length === 0 && modelFile["validSyntax"]
                             consolidateErrorMessages(modelFile["filename"], modelFile["validateFileErrors"]);
                             if (!modelFile["validSyntax"]) {

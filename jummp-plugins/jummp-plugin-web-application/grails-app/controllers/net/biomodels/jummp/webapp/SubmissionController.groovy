@@ -39,12 +39,14 @@ import net.biomodels.jummp.core.model.ModelTransportCommand as MTC
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand as RTC
 import net.biomodels.jummp.core.model.ValidationState
+import net.biomodels.jummp.core.util.JummpHttpService
 import net.biomodels.jummp.utils.CollectionHelper
 import net.biomodels.jummp.utils.FileHelper
 import net.biomodels.jummp.utils.redis.Operations
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.exception.ExceptionUtils
 import org.codehaus.groovy.grails.web.json.JSONElement
+import org.json.JSONObject
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
@@ -315,8 +317,30 @@ hyphens, plus signs and underscores. It should also have a proper file extension
         String description = jsonFileData["description"]
         RFTC mfRFTC = createRFTC(submissionFolder, filename, true, description)
         MFTC format = modelFileFormatService.inferModelFormat([mfRFTC])
+
+        // by the way, detecting publication annotations included in the main file, however, we select the first one
+        RTC revTC = new RTC(files: [mfRFTC], format: format)
+        List<String> pubURIs = modelFileFormatService.getPublicationAnnotations(revTC)
+        logger.info("""Detected publication identifiers included in the file $filename as annotations: \
+${pubURIs?.join(";")}""")
+        String firstPubURI = pubURIs?.first()
+        String rest = JummpHttpService.getDataTypeAndAccession(firstPubURI)
+        String json = JummpHttpService.jsonGetRequest("https://resolver.api.identifiers.org/" + rest)
+        JSONObject jsonObject = new JSONObject(json)
+        JSONObject parsedCI = jsonObject.getJSONObject("payload").getJSONObject("parsedCompactIdentifier")
+        String localId = parsedCI.getString("localId")
+        String namespace = parsedCI.getString("namespace")
+        String collectionLabel = ""
+        if ("pubmed" == namespace) {
+            collectionLabel = "PubMed ID"
+        } else if ("doi" == namespace) {
+            collectionLabel = "DOI"
+        }
+
         // TODO: add "readme": "not decided yet" with an updated value to the returned map
-        return ["identifier": format.identifier, "name": format.name, "id": format.id]
+        return ["identifier": format.identifier, "name": format.name, "id": format.id,
+                "pubURI": firstPubURI, "namespace": namespace,
+                "collectionLabel": collectionLabel, "accession": localId]
     }
 
     /**

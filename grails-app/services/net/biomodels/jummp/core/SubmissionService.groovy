@@ -140,7 +140,9 @@ class SubmissionService {
             workingMemory.put("serverURL", serverURL)
             workingMemory.put("submissionCssHref", submissionCssHref)
             workingMemory.put("publicationCssHref", publicationCssHref)
+
             workingMemory.put("publication", null)
+
             workingMemory.put("definedModellingApproachNames", definedModellingApproachNames)
             workingMemory.put("unknownFormat", unknownFormatTC)
             workingMemory.put("modelFormatsSortedByName", sortedModelFormats)

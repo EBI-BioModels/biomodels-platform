@@ -1,7 +1,7 @@
 <g:javascript contextPath="" src="biomodels/enterPublicationLink.js"/>
 <g:javascript contextPath="" src="biomodels/publicationSubmission.js"/>
 
-<style type="text/css">
+<style>
     .hide {
         display: none;
     }
@@ -31,10 +31,10 @@
             class="fa fa-question-circle" aria-hidden="true"></i>
         </a></h4>
         <div class="publink-explanation" style="display: none;"><g:message code="submission.publink.publication"/></div>
-
+        <div id="publicationProviderSelection">
         <g:render template="/templates/publication/selectPublicationSource"
                   plugin="jummp-plugin-web-application"/>
-
+        </div>
         <div id="publicationForm">
             <div class="dialog">
                 <g:render template="/templates/publication/publicationEditableElements"
@@ -64,6 +64,23 @@
         $('.publink-explanation').toggle("slow");
     });
 
+    /**
+     * Read the guessed namespace, collection label and accession of the publication annotation if
+     * it is available. These things have been detected while detecting the model format in the phase
+     * of uploading files. The function will be only invoked when the publication linked to the model
+     * is empty. It could be the first submission or the update flow when the previous revision does
+     * have any publication annotation.
+     */
+    function guessPublicationAndFillForm() {
+        if (${!publication}) {
+            console.log("Guess publication identifier from the main file and fill in the publication form");
+            const namespace = guessedPublicationNamespace;
+            const accession = guessedPublicationAccession;
+            const label = guessedPublicationCollectionLabel;
+            verifyAndFetchPublicationDetails(label, accession);
+        }
+    }
+
     function verifyAndFetchPublicationDetails(pubLinkProvider, pubLink) {
         verifyPublicationSource(pubLinkProvider, pubLink);
         clearErrorMessages();
@@ -88,7 +105,7 @@
                     currentValidation = false;
                     showFlashMessages(errorMessages);
                 } else {
-                    let msg = data["message"];;
+                    let msg = data["message"];
                     if (data.status === "OK") {
                         toastr.success(msg);
                     } else {
@@ -177,6 +194,15 @@
     };
 
     function reloadPublicationForm(publication) {
+        $('#publicationLinkProviderBox').show();
+        $('#publicationLink').show();
+        $('#publicationLinkCol').show();
+        $('#freshPublicationBtnCol').show();
+        $('#publicationForm').show();
+
+        $('#publicationLink').val(publication.link);
+        $('#pubLinkProvider').val(publication.linkProvider.linkType);
+
         $('#title').val(publication.title);
         $('#journal').val(publication.journal);
         $('#affiliation').val(publication.affiliation);

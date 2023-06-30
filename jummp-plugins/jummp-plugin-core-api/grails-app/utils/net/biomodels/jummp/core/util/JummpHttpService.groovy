@@ -30,7 +30,12 @@
 
 package net.biomodels.jummp.core.util
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
 class JummpHttpService {
+    private static final Logger logger = LoggerFactory.getLogger(JummpHttpService.class)
+
     static String getStatus(String url) throws IOException {
         String result = ""
         int code = getStatusCode(url)
@@ -88,6 +93,18 @@ class JummpHttpService {
             ex.printStackTrace()
         }
         return json
+    }
+
+    static String getDataTypeAndAccession(String uri) {
+        if (uri == null || uri.isEmpty()) {
+            logger.error("The URI given is null or empty");
+            return null;
+        }
+        if (uri.startsWith("http://")) {
+            uri = uri.replace("http", "https");
+        }
+        String rest = uri.substring(("https://identifiers.org/").length());
+        return rest;
     }
 
     private static String streamToString(InputStream inputStream) {

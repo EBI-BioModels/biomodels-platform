@@ -6,7 +6,7 @@
     %>
 
     <div class="row">
-            <div class="small-12 medium-3 large-3 columns">
+            <div class="small-12 medium-3 large-3 columns" id="publicationLinkProviderBox">
                 <label for="PubLinkProvider" class="required">Choose a publication source</label>
                 <g:if test="${publication}">
                 <g:select name="PubLinkProvider" id="pubLinkProvider"

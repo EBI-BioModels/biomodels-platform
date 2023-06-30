@@ -121,6 +121,10 @@ $(document).ready(function () {
         $('.flashNotificationDiv').html("").hide();
     }
 
+    /**
+     * This function will be called before approaching to the step
+     * @param step
+     */
     function updateSubFormAtStep(step) {
         switch (step) {
             case 1:
@@ -130,6 +134,8 @@ $(document).ready(function () {
                 updateModelInfoForm();
                 break;
             case 3:
+                // defined in the step 3
+                guessPublicationAndFillForm();
                 break;
             case 4:
                 // defined in the step 4
@@ -144,6 +150,12 @@ $(document).ready(function () {
         }
     }
 
+    /**
+     * This function will be called once being on this step and moving to the next step. That's why its name is
+     * validateData after updating data on the form.
+     * @param step
+     * @returns {*}
+     */
     function validateData(step) {
         let func;
         switch (step) {

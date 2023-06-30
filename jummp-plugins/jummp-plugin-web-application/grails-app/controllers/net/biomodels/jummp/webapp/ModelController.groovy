@@ -475,6 +475,11 @@ class ModelController {
         initials.put("modelInfo", modelInfo as JSON)
         initials.put("readmeSubmission", detectedModelFormat.get("readme"))
 
+        if (isUpdate) {
+            def pub = publicationService.findPublicationOfModel(revisionTC.modelIdentifier())
+            initials.put("publication", pub)
+        }
+
         initials
     }
 

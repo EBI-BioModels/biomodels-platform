@@ -30,9 +30,14 @@
         var modelInfo = ${modelInfo};
         var modelFile;
         var additionalFiles;
+        var publication = {};
         var authorMap = { authors: [] };
         var authorList = [];
         if (${publication != null}) {
+            publication = {
+                "link": "${publication?.link}",
+                "linkType": "${publication?.linkProvider?.linkType}"
+            };
             authorMap = {
                 "authors":
                     ${publication?.authors.collect {
@@ -50,7 +55,6 @@
             authorList = authorMap["authors"];
         }
         var existingFiles = ${existingFiles};
-        var publication;
         var isUpdate = ${isUpdate};
         var isAmend = false;
         var revisionComments = "";
@@ -68,6 +72,11 @@
 
         var latestModellingApproach = "${latestModellingApproach}";
         var latestOtherInfo = "${latestOtherInfo}";
+
+        var pubURI = "";
+        var guessedPublicationNamespace = "";
+        var guessedPublicationCollectionLabel = "";
+        var guessedPublicationAccession = "";
 
         toastr.options = {
             // How long the toast will display without user interaction
