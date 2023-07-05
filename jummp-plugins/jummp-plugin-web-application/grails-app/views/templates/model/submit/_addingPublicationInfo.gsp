@@ -77,7 +77,9 @@
             const namespace = guessedPublicationNamespace;
             const accession = guessedPublicationAccession;
             const label = guessedPublicationCollectionLabel;
-            verifyAndFetchPublicationDetails(label, accession);
+            if (typeof accession  !== "undefined" && typeof label !== "undefined") {
+                verifyAndFetchPublicationDetails(label, accession);
+            }
         }
     }
 
