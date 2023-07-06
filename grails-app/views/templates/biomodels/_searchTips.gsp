@@ -1,3 +1,4 @@
+<%@ page import="net.biomodels.jummp.core.constants.BioModels" %>
 <div class="reveal" id="searchTipsBox" data-reveal>
     <h3 id="messageTitle"
         style="border-bottom: 1px solid grey">Search Tips/Tricks</h3>
@@ -19,7 +20,7 @@
                     controller="search" action="search" params="${[query: "GO:GO:0016049"]}" class="secondary label"
                     title="Search by Gene Ontology term cell growth" target="_blank">GO:GO:0016049</g:link></li>
         </ul>
-        <p><a href="https://www.ebi.ac.uk/biomodels-static/jummp-biomodels-help/model_search.html"
+        <p><a href="${BioModels.BM_ROOT_URL}/user-guide/model_display.html"
               target="_blank">Learn more about searching models</a></p>
     </div>
 </div>
