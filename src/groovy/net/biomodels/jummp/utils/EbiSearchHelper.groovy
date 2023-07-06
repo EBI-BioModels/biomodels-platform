@@ -75,7 +75,13 @@ class EbiSearchHelper extends WebServiceFetcher {
             String result = wsFetcher.getText()
             Map parsedJson = new JsonSlurper().parseText(result) as Map
             processData(parsedJson, mapResult)
+            start = i*SIZE
         }
+        /*File out = new File("all-models.csv")
+        mapResult.each {
+            out << "${it.key}: ${it.value}\n"
+        }*/
+
         Map mapRedundant = findOutRedundantDataInOmicsDi(mapResult)
 
         return mapRedundant
