@@ -32,9 +32,14 @@ package net.biomodels.jummp.core.util
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.InitializingBean
 
-class JummpHttpService {
+class JummpHttpService implements InitializingBean {
     private static final Logger logger = LoggerFactory.getLogger(JummpHttpService.class)
+
+    def configurationService
+
+    private static Proxy proxy
 
     static String getStatus(String url) throws IOException {
         String result = ""
@@ -80,7 +85,12 @@ class JummpHttpService {
         String json = null
         try {
             URL url = new URL(urlQueryString)
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection()
+            HttpURLConnection connection
+            if (proxy) {
+                connection = (HttpURLConnection) url.openConnection(proxy)
+            } else {
+                connection = (HttpURLConnection) url.openConnection()
+            }
             connection.setDoOutput(true)
             connection.setInstanceFollowRedirects(true)
             connection.setRequestMethod("GET")
@@ -105,6 +115,11 @@ class JummpHttpService {
         }
         String rest = uri.substring(("https://identifiers.org/").length());
         return rest;
+    }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        proxy = configurationService.verifyHttpProxy()
     }
 
     private static String streamToString(InputStream inputStream) {
