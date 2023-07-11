@@ -1,3 +1,5 @@
+<%@ page import="net.biomodels.jummp.core.constants.BioModels"%>
+
 <style type="text/css">
     .welcome-message {
         text-align: justify;
@@ -85,7 +87,7 @@
     <div class="columns small-12 medium-12 large-12">
         <div id="announcement"
              style="padding: 0px; background-color: #ff9800; margin-bottom: 15px; font-size: large">
-            <h3 style="color: white; font-weight: bolder">Application closed for <a href="https://www.ebi.ac.uk/biomodels/competition/model-of-the-year-2023"
+            <h3 style="color: white; font-weight: bolder">Application closed for <a href="${BioModels.BM_ROOT_URL}/competition/model-of-the-year-2023"
                target="_blank">"Model of the year" Competition 2023</a>. Evaluation under progress!</h3>
         </div>
     </div>

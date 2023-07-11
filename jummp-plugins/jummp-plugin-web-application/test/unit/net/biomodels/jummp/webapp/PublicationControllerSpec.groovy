@@ -2,6 +2,7 @@ package net.biomodels.jummp.webapp
 
 import grails.test.mixin.TestFor
 import net.biomodels.jummp.core.IPublicationService
+import net.biomodels.jummp.core.constants.BioModels
 import net.biomodels.jummp.core.model.PublicationTransportCommand as PTC
 import net.biomodels.jummp.core.user.PersonTransportCommand
 import spock.lang.Specification
@@ -21,7 +22,7 @@ class PublicationControllerSpec extends Specification {
             title: "How to test Grails controller in an effectively way",
             journal: "BioModels\' developers review", affiliation: "EBI BioModels",
             synopsis: "Spock is among testing framework favourites we could consider to make use in our projects",
-            authors: authors, link: "https://www.ebi.ac.uk/biomodels/dev")
+            authors: authors, link: "${BioModels.BM_ROOT_URL}/dev")
         allPublications.add(ptc)
     }
 

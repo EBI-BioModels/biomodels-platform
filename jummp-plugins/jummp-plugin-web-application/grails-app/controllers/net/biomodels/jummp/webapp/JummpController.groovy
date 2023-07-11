@@ -243,127 +243,127 @@ class JummpController extends CommonController {
     private void addAllUrlsOfMainMenu(MarkupBuilder mkb) {
         // Browse menu
         mkb.url {
-            loc("${BioModels.BM_ROOT_URL}/search?query=*%3A*")
+            loc("${BioModels.BM_PROD_SEARCH_URL_PREFIX}?query=*%3A*")
             changefreq('daily')
             priority(0.8)
         }
         mkb.url {
-            loc("https://www.ebi.ac.uk/biomodels/parameterSearch/index?query=*%3A*&start=0&size=10&sort=model%3Aascending&is_curated=true")
+            loc("${BioModels.BM_ROOT_URL}/parameterSearch/index?query=*%3A*&start=0&size=10&sort=model%3Aascending&is_curated=true")
             changefreq('daily')
             priority(0.8)
         }
         mkb.url {
-            loc("https://www.ebi.ac.uk/biomodels/covid-19")
+            loc("${BioModels.BM_ROOT_URL}/covid-19")
             changefreq('yearly')
             priority(0.8)
         }
         mkb.url {
-            loc("https://www.ebi.ac.uk/biomodels/path2models")
+            loc("${BioModels.BM_ROOT_URL}/path2models")
             changefreq('yearly')
             priority(0.8)
         }
         mkb.url {
-            loc("https://www.ebi.ac.uk/biomodels/goChart/index")
+            loc("${BioModels.BM_ROOT_URL}/goChart/index")
             changefreq('yearly')
             priority(0.8)
         }
         mkb.url {
-            loc("https://www.ebi.ac.uk/biomodels/agedbrain")
+            loc("${BioModels.BM_ROOT_URL}/agedbrain")
             changefreq('yearly')
             priority(0.8)
         }
         mkb.url {
-            loc("https://www.ebi.ac.uk/biomodels/pdgsmm/index")
+            loc("${BioModels.BM_ROOT_URL}/pdgsmm/index")
             changefreq('yearly')
             priority(0.8)
         }
         mkb.url {
-            loc("https://www.ebi.ac.uk/biomodels/reproducibility")
+            loc("${BioModels.BM_ROOT_URL}/reproducibility")
             changefreq('yearly')
             priority(0.8)
         }
 
         // Submit menu
         mkb.url {
-            loc("https://www.ebi.ac.uk/biomodels/model/submission-guidelines-and-agreement")
+            loc("${BioModels.BM_ROOT_URL}/model/submission-guidelines-and-agreement")
             changefreq('yearly')
             priority(0.8)
         }
         mkb.url {
-            loc("https://www.ebi.ac.uk/biomodels/model/submit")
+            loc("${BioModels.BM_ROOT_URL}/model/submit")
             changefreq('yearly')
             priority(0.8)
         }
 
         // Curation menu
         mkb.url {
-            loc("https://www.ebi.ac.uk/biomodels/curation/fbc")
+            loc("${BioModels.BM_ROOT_URL}/curation/fbc")
             changefreq('yearly')
             priority(0.8)
         }
 
         // Help menu
         mkb.url {
-            loc("https://www.ebi.ac.uk/biomodels/faq")
+            loc("${BioModels.BM_ROOT_URL}/faq")
             changefreq('yearly')
             priority(0.8)
         }
         mkb.url {
-            loc("https://www.ebi.ac.uk/biomodels/user-guide/manual.html")
+            loc("${BioModels.BM_ROOT_URL}/user-guide/manual.html")
             changefreq('yearly')
             priority(0.8)
         }
         mkb.url {
-            loc("https://www.ebi.ac.uk/biomodels/curation-docs")
+            loc("${BioModels.BM_ROOT_URL}/curation-docs")
             changefreq('yearly')
             priority(0.8)
         }
         mkb.url {
-            loc("https://www.ebi.ac.uk/biomodels/dev")
+            loc("${BioModels.BM_ROOT_URL}/dev")
             changefreq('yearly')
             priority(0.8)
         }
         mkb.url {
-            loc("https://www.ebi.ac.uk/biomodels/courses")
+            loc("${BioModels.BM_ROOT_URL}/courses")
             changefreq('yearly')
             priority(0.8)
         }
         mkb.url {
-            loc("https://www.ebi.ac.uk/biomodels/tools/converters/")
+            loc("${BioModels.BM_ROOT_URL}/tools/converters/")
             changefreq('yearly')
             priority(0.8)
         }
 
         // About us menu
         mkb.url {
-            loc("https://www.ebi.ac.uk/biomodels/termsofuse")
+            loc("${BioModels.BM_ROOT_URL}/termsofuse")
             changefreq('yearly')
             priority(0.8)
         }
         mkb.url {
-            loc("https://www.ebi.ac.uk/biomodels/citation")
+            loc("${BioModels.BM_ROOT_URL}/citation")
             changefreq('yearly')
             priority(0.8)
         }
         mkb.url {
-            loc("https://www.ebi.ac.uk/biomodels/content/news")
+            loc("${BioModels.BM_ROOT_URL}/content/news")
             changefreq('yearly')
             priority(0.8)
         }
         mkb.url {
-            loc("https://www.ebi.ac.uk/biomodels/acknowledgements")
+            loc("${BioModels.BM_ROOT_URL}/acknowledgements")
             changefreq('yearly')
             priority(0.8)
         }
         mkb.url {
-            loc("https://www.ebi.ac.uk/biomodels/jobs")
+            loc("${BioModels.BM_ROOT_URL}/jobs")
             changefreq('yearly')
             priority(0.8)
         }
 
         // Contact us menu
         mkb.url {
-            loc("https://www.ebi.ac.uk/biomodels/contact")
+            loc("${BioModels.BM_ROOT_URL}/contact")
             changefreq('yearly')
             priority(0.8)
         }
@@ -372,7 +372,7 @@ class JummpController extends CommonController {
     private void addAllUrlsOfModelOfTheMonth(MarkupBuilder mkb) {
         // the Url of the index page of the Model of the month
         mkb.url {
-            loc("https://www.ebi.ac.uk/biomodels/content/model-of-the-month?all=yes")
+            loc("${BioModels.BM_ROOT_URL}/content/model-of-the-month?all=yes")
             changefreq('yearly')
             priority(0.8)
         }
@@ -380,7 +380,7 @@ class JummpController extends CommonController {
 
     private void addOtherUrls(MarkupBuilder mkb) {
         mkb.url {
-            loc("https://www.ebi.ac.uk/biomodels/competition/model-of-the-year-2023")
+            loc("${BioModels.BM_ROOT_URL}/competition/model-of-the-year-2023")
             changefreq('yearly')
             priority(0.8)
         }

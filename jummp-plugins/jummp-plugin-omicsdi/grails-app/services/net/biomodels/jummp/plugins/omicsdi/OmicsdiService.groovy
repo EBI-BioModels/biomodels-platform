@@ -26,6 +26,7 @@ package net.biomodels.jummp.plugins.omicsdi
 
 import grails.util.Environment
 import groovy.json.JsonBuilder
+import net.biomodels.jummp.core.constants.BioModels
 import org.perf4j.aop.Profiled
 
 /**
@@ -78,7 +79,7 @@ class OmicsdiService {
         String dbPassword = dsConfig?.password
         def dbSettings = ['url': dbUrl, 'username': dbUsername, 'password': dbPassword]
         def builder = new JsonBuilder()
-        String serverUrl = "https://www.ebi.ac.uk/biomodels"
+        String serverUrl = BioModels.BM_ROOT_URL
         if (Environment.current != Environment.PRODUCTION) {
             serverUrl = grailsApplication.config.grails.serverURL
         }

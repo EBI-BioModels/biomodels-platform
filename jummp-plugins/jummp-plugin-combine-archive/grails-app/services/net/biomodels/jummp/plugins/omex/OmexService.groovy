@@ -38,6 +38,7 @@ import com.hp.hpl.jena.rdf.model.Model
 import com.hp.hpl.jena.rdf.model.Resource
 import com.hp.hpl.jena.vocabulary.DCTerms
 import de.unirostock.sems.cbext.Formatizer
+import net.biomodels.jummp.core.constants.BioModels
 import net.biomodels.jummp.core.model.FileFormatServiceAdapter
 import net.biomodels.jummp.core.model.RepositoryFileTransportCommand as RFTC
 import net.biomodels.jummp.core.model.RevisionTransportCommand
@@ -217,7 +218,7 @@ class OmexService extends FileFormatServiceAdapter {
         String licenceValue = "https://creativecommons.org/publicdomain/zero/1.0/"
         String timeStamp = new Date().format("E LLL dd HH:mm:ss z yyyy")
         String provenanceValue = """\
-This model was downloaded from BioModels (https://www.ebi.ac.uk/biomodels/) on ${timeStamp}"""
+This model was downloaded from BioModels (${BioModels.BM_ROOT_URL}/) on ${timeStamp}"""
         MetadataManager mdm = arch.getMetadata()
         mdm.load()
         Model model = mdm.RDFModel
