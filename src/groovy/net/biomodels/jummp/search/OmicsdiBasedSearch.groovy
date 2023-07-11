@@ -29,7 +29,9 @@ import grails.util.Environment
 import grails.util.Holders
 import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
+import net.biomodels.jummp.annotationstore.ElementAnnotation
 import net.biomodels.jummp.annotationstore.ResourceReference
+import net.biomodels.jummp.annotationstore.Statement
 import net.biomodels.jummp.core.ModelSearchStrategy as MST
 import net.biomodels.jummp.core.constants.BioModels
 import net.biomodels.jummp.core.events.ModelOperationEvent
@@ -403,6 +405,49 @@ The root cause is ${e.toString()}""")
             log.debug "Clearing the indexing plans."
         }
         Revision.executeUpdate("delete IndexingPlan")
+    }
+
+    void clearIndex(RevisionTC revisionTC) {
+        List revisionAnnotationRecords = RevisionAnnotation.findAll { revision.id == rev.id }
+        List listElementAnnotation = revisionAnnotationRecords*.elementAnnotation
+
+        // delete RevisionAnnotation
+        List statements = new ArrayList<>()
+        revisionAnnotationRecords.each {
+            statements.add(it.elementAnnotation.statement)
+            it.delete(flush: true)
+        }
+
+        // delete ElementAnnotation
+        // it's unnecessary
+        /*listElementAnnotation.each {
+            it.delete(flush: true)
+        }*/
+
+        // delete Statement and ResourceReference
+        statements.each { def stmt ->
+
+            List rs = ElementAnnotation.findAllByStatement(stmt as Statement)
+            if (!rs?.size()) {
+                ResourceReference rr = stmt.object as ResourceReference
+                Set stmts = rr.statements
+                if (stmts?.size() == 1) {
+                    rr.delete(flush: true)
+                } else {
+                    Set updatedStmts = stmts.findAll { s ->
+                        s.id != stmt.id
+                    }
+                    rr.statements = updatedStmts
+                    rr.save(flush: true)
+
+                    stmt.delete(flush: true)
+
+                    if (!rr.statements?.size()) {
+                        rr.delete(flush: true)
+                    }
+                }
+            }
+        }
     }
 
     private Date formatParsedDateString(String dateString) {

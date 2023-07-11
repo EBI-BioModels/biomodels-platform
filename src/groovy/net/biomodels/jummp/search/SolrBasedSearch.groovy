@@ -169,6 +169,11 @@ class SolrBasedSearch implements ModelSearchStrategy, ApplicationListener<ModelO
         return rev?.files?.collect{it.path}
     }
 
+    @Profiled(tag="searchService.clearIndex")
+    void clearIndex(RevisionTransportCommand revisionTC) {
+
+    }
+
     /**
      * Adds a revision to the index
      *
