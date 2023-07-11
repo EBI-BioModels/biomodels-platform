@@ -108,10 +108,12 @@
     <div class="columns small-12 medium-10 large-10">
         <div id="amend-create-new-revision">
         <g:if test="${amendable}">
-            <g:checkBox name="isAmend" id="is-amend" value="${false}" title="You can overwrite the current updates on this version"/>
+            <g:checkBox name="isAmend" id="is-amend" value="${false}"
+                        title="You can overwrite the current updates on this version"/>
         </g:if>
         <g:else>
-            <g:checkBox name="isAmend" id="is-amend" value="${false}" disabled="true" title="This version is not overwritten."/>
+            <g:checkBox name="isAmend" id="is-amend" value="${false}" disabled="true"
+                        title="This version is not overwritten."/>
         </g:else>
         </div>
     </div>
