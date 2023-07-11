@@ -994,6 +994,12 @@ the allowed maximum size. Therfore, the automatic process of detecting the model
             workingMemory.put("modellingApproach", modellingApproach)
             workingMemory.put("otherInfo", latest.model.otherInfo)
             workingMemory.put("files", files)
+
+            // protect the first version: only allow to amend from the second version
+            List revisions = Model.get(latest.model.id).revisions as List
+            boolean amendable = revisions.size() >= 2
+            workingMemory.put("amendable", amendable)
+
             // the variable below is used for comparing the existing files and updated ones
             // then decide which changes have been made
             List existingFiles = files
