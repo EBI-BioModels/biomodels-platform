@@ -33,6 +33,8 @@ class AdminController extends CommonController {
 
     def dashboard() {
         String title = "Administration Dashboard | BioModels"
-        COMMON_PROPERTIES.putAll([layout: layout, title: title])
+        Map map = COMMON_PROPERTIES
+        map.putAll([layout: layout, title: title])
+        return map
     }
 }
