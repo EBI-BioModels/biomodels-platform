@@ -1268,17 +1268,24 @@ identifier are required"""
         if (!needsUpdating) {
             return false
         }
+
+        writeModelMainFile(document, revision, rID, identifiers)
+    }
+    private boolean writeModelMainFile(SBMLDocument document, RevisionTC revision, String rID, String... identifiers) {
         File sbmlFile = fetchMainFileFromRevision(revision)
         SBMLWriter sbmlWriter = new SBMLWriter()
+        boolean result = false
         try {
             sbmlWriter.writeSBML(document, sbmlFile)
-            return true
+            result = true
         } catch (SBMLException | IOException | XMLStreamException e) {
             def fn = sbmlFile.name
-            def msg = """Failed to add model annotations $identifiers to file $fn of revision $rID \
+            def msg = """Failed to add model annotations $identifiers to file $fn of $rID \
 due to an issue with JSBML"""
             log.error "$msg: $e"
             throw new ModelException(revision.model, msg)
+        } finally {
+            return result
         }
     }
 }
