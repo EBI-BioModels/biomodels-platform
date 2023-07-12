@@ -170,7 +170,6 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
             namespace = "doi"
         } else {
             throw new UnsupportedOperationException("BioModels only supports to add an annotation to SBML file for PubMed and DOI.")
-            return false
         }
         String[] identifiers = ["http://identifiers.org/$namespace:$publication.link"] as String[]
         addAnnotations2Model(revision, bqmIsDescribedBy, accessionPattern, identifiers)
@@ -185,45 +184,72 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
         String rID = Objects.requireNonNull(revision).identifier()
         Model model = Objects.requireNonNull(document).model
 
-        // resources with this pattern should be removed
-        Pattern targetAccessionPattern = Pattern.compile(accessionPattern)
+        MA ma = revision.model.modellingApproach
+        if (ma.accession.toLowerCase() != "other") {
+            // resources with this pattern should be removed
+            Pattern targetAccessionPattern = Pattern.compile(accessionPattern)
 
-        List<CVTerm> cVTerms = model.filterCVTerms(qualifier)
+            List<CVTerm> cVTerms = model.filterCVTerms(qualifier)
+            // there is no CVTerm associated with the qualifier. So add all without checking
+            if (cVTerms.isEmpty()) {
+                def cvTerm = new CVTerm(qualifier, identifiers)
+                if (!model.addCVTerm(cvTerm)) {
+                    throw new ModelException(revision.model, "Could not add a CVTerm for $identifiers")
+                }
+                return true
+            }
 
-        if (cVTerms.isEmpty()) {
-            def cvTerm = new CVTerm(qualifier, identifiers)
-            if (!model.addCVTerm(cvTerm)) {
-                throw new ModelException(revision.model, "Could not add a CVTerm for $identifiers")
+            // find the set of resources that should be kept
+            List filteredAnnotations = cVTerms.collect { CVTerm t ->
+                t.getResources().findAll { String xref ->
+                    if (!targetAccessionPattern.matcher(xref).find()) {
+                        return true
+                    }
+                    return false
+                }
+            }.flatten() as List<String>
+
+            for (CVTerm t: cVTerms) {
+                if (!model.removeCVTerm(t)) {
+                    throw new ModelException(revision.model, "Could not remove CVTerm $t for revision $rID")
+                }
+            }
+
+            // add the filtered ones to be retained and newly updated terms
+            List<String> idList = Arrays.asList(identifiers)
+            filteredAnnotations.addAll(idList)
+            String[] replacementAnnotations = filteredAnnotations as String[]
+            def replacementCVTerm = new CVTerm(qualifier, replacementAnnotations)
+            boolean haveAddedNewQualifier = model.addCVTerm(replacementCVTerm)
+            if (!haveAddedNewQualifier) {
+                String msg = "Could not insert qualifier for resources ${identifiers} to revision $rID"
+                throw new ModelException(revision.model, msg)
+            }
+            true
+        } else {
+            // remove the former modelling approach if we are in the update process
+            long mId = revision.model.id
+            if (mId) {
+                MA oldMA = net.biomodels.jummp.model.Model.get(mId).modellingApproach
+                if (!oldMA) {
+                    return true
+                }
+                List<CVTerm> cVTerms = model.filterCVTerms(qualifier)
+                List lstTermsToBeRemoved = cVTerms.collect { CVTerm t ->
+                    t.getResources().findAll { String resource ->
+                        resource == oldMA.resource
+                    }
+                }.flatten() as List<String>
+                String[] terms = lstTermsToBeRemoved as String[]
+                if (terms) {
+                    CVTerm cvTerm = new CVTerm(qualifier, terms)
+                    if (!model.removeCVTerm(cvTerm)) {
+                        throw new ModelException(revision.model, "Could not remove CVTerm $cvTerm for revision $rID")
+                    }
+                }
             }
             return true
         }
-
-        // find the set of resources that should be kept
-        List filteredAnnotations = cVTerms.collect { CVTerm t ->
-            t.getResources().findAll { String xref ->
-                if (!targetAccessionPattern.matcher(xref).find()) {
-                    return true
-                }
-                return false
-            }
-        }.flatten() as List<String>
-
-        for (CVTerm t: cVTerms) {
-            if (!model.removeCVTerm(t)) {
-                throw new ModelException(revision.model, "Could not remove CVTerm $t for revision $rID")
-            }
-        }
-
-        List<String> idList = Arrays.asList(identifiers)
-        filteredAnnotations.addAll(idList)
-        String[] replacementAnnotations = filteredAnnotations as String[]
-        def replacementCVTerm = new CVTerm(qualifier, replacementAnnotations)
-
-        boolean haveAddedNewQualifier = model.addCVTerm(replacementCVTerm)
-        if (!haveAddedNewQualifier) {
-            throw new ModelException(revision.model, "Could not insert qualifier for resources ${identifiers} to revision $rID")
-        }
-        true
     }
 
     private SBMLDocument getFileAsValidatedSBMLDocument(final File model, final List<String> errors) {
@@ -1252,15 +1278,13 @@ the user has attempted to update an blank value for the name attribute.""")
         boolean validRevision = revision && "SBML" == revision.format.identifier
         boolean validIdentifiers = null != identifiers && 0 != identifiers.length
         if (!validIdentifiers || !validRevision) {
-            String msg = """A revision whose main files are encoded in SBML and at least one model \
-identifier are required"""
+            String msg = """The revision ${revision?.id} has some errors or the annotation identifers are invalid."""
             throw new IllegalArgumentException(msg)
-            return false
         }
         SBMLDocument document = getFromCache(revision)
-        def rID = revision.identifier() ? "revision ${revision.identifier()}" : "the provisional revision in the new submission"
+        String rID = revision.identifier() ? "the revision ${revision.identifier()}" : "the provisional revision in the new submission"
         if (null == document) {
-            log.error("Cannot add $identifiers to the main files of the revision $rID as we could not parse its main files")
+            log.error("Cannot add $identifiers to the main files of $rID as we could not parse its main files")
             return false
         }
 
