@@ -1104,7 +1104,7 @@ the allowed maximum size. Therfore, the automatic process of detecting the model
             // if it has been provided
             addPublicationAsAnnotation(workingMemory)
 
-            if (workingMemory.get("isAmend") && workingMemory.get("amendable")) {
+            if (workingMemory.get("isAmend")) {
                 modelService.amendRevision(repoFiles, deleteFiles, revision)
             } else {
                 modelService.addRevision(repoFiles, deleteFiles, revision)
