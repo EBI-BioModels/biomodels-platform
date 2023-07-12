@@ -152,9 +152,7 @@ class SbmlService extends FileFormatServiceAdapter implements ISbmlService, Init
         final Qualifier bqbHasProperty = Qualifier.BQB_HAS_PROPERTY
         String[] identifiers = ["http://identifiers.org/mamo/${approach?.accession}"] as String[]
         String accessionPattern = "mamo[/:]MAMO_[0-9]{7}"
-        if ("other" != approach.accession.toLowerCase()) {
-            addAnnotations2Model(revision, bqbHasProperty, accessionPattern, identifiers)
-        }
+        addAnnotations2Model(revision, bqbHasProperty, accessionPattern, identifiers)
     }
 
     @Override
